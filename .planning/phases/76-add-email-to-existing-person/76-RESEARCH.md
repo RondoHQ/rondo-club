@@ -323,15 +323,15 @@ No major open questions. The implementation path is clear:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/components/MeetingDetailModal.jsx` - Current add person implementation from Phase 74
-- `/Users/joostdevalk/Code/stadion/src/components/PersonEditModal.jsx` - prefillData pattern from Phase 74
-- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - SearchModal pattern (lines 197-416)
-- `/Users/joostdevalk/Code/stadion/src/hooks/usePeople.js` - useUpdatePerson, useCreatePerson hooks
-- `/Users/joostdevalk/Code/stadion/includes/class-calendar-matcher.php` - Matcher::on_person_saved() hook
-- `/Users/joostdevalk/Code/stadion/src/components/ContactEditModal.jsx` - contact_info field structure
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/MeetingDetailModal.jsx` - Current add person implementation from Phase 74
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/PersonEditModal.jsx` - prefillData pattern from Phase 74
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` - SearchModal pattern (lines 197-416)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/usePeople.js` - useUpdatePerson, useCreatePerson hooks
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-calendar-matcher.php` - Matcher::on_person_saved() hook
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/ContactEditModal.jsx` - contact_info field structure
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/.planning/phases/74-add-person-from-meeting/74-01-PLAN.md` - Phase 74 implementation details
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/74-add-person-from-meeting/74-01-PLAN.md` - Phase 74 implementation details
 
 ## Metadata
 

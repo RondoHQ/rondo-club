@@ -40,7 +40,7 @@ score: 8/8 must-haves verified
 #### Artifact Detail: includes/class-rest-api.php
 
 **Level 1: Existence**
-✓ EXISTS - File present at /Users/joostdevalk/Code/stadion/includes/class-rest-api.php
+✓ EXISTS - File present at /Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php
 
 **Level 2: Substantive**
 ✓ SUBSTANTIVE - Total file: 2149 lines

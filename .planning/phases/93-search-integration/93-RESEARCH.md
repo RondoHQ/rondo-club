@@ -291,10 +291,10 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - Existing `global_search()` implementation (lines 1087-1209)
-- `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - `get_fields()` method (lines 376-414)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-custom-fields.php` - REST API structure
-- `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field types list (lines 6-21)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` - Existing `global_search()` implementation (lines 1087-1209)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/customfields/class-manager.php` - `get_fields()` method (lines 376-414)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-custom-fields.php` - REST API structure
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/FieldFormPanel.jsx` - Field types list (lines 6-21)
 
 ### Secondary (MEDIUM confidence)
 - WordPress WP_Query documentation on meta_query

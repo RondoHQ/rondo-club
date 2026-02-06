@@ -230,11 +230,11 @@ No paradigm shifts relevant to this phase - standard React component modificatio
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Direct code analysis
-- `/Users/joostdevalk/Code/stadion/.planning/phases/116-person-edit-restrictions/116-CONTEXT.md` - User decisions
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PersonDetail.jsx` - Direct code analysis
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/116-person-edit-restrictions/116-CONTEXT.md` - User decisions
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/package.json` - Stack versions verified
+- `/Users/joostdevalk/Code/rondo/rondo-club/package.json` - Stack versions verified
 
 ### Tertiary (LOW confidence)
 - None

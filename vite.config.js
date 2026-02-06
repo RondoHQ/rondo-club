@@ -59,7 +59,7 @@ export default defineConfig({
           },
         ],
         // Offline fallback page (must include base path)
-        navigateFallback: '/wp-content/themes/stadion/dist/offline.html',
+        navigateFallback: '/wp-content/themes/rondo-club/dist/offline.html',
         navigateFallbackDenylist: [
           /^\/wp-json\//,   // Don't use offline page for API requests
           /^\/wp-admin\//,  // Don't use offline page for admin
@@ -72,7 +72,7 @@ export default defineConfig({
   ],
 
   // Base path for production builds - WordPress theme location
-  base: '/wp-content/themes/stadion/dist/',
+  base: '/wp-content/themes/rondo-club/dist/',
 
   // Inject build timestamp for version checking
   define: {

@@ -192,7 +192,7 @@ Verified patterns from existing codebase:
 
 ### Complete ACF Field Group Structure
 ```json
-// Source: /Users/joostdevalk/Code/stadion/acf-json/group_todo_fields.json
+// Source: /Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_todo_fields.json
 {
     "key": "group_feedback_fields",
     "title": "Feedback Fields",
@@ -226,7 +226,7 @@ Verified patterns from existing codebase:
 
 ### Gallery Field for Attachments
 ```json
-// Source: /Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json (lines 75-84)
+// Source: /Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_person_fields.json (lines 75-84)
 {
     "key": "field_feedback_attachments",
     "label": "Attachments",
@@ -242,7 +242,7 @@ Verified patterns from existing codebase:
 
 ### Textarea Field for Long Text
 ```json
-// Source: /Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json (lines 102-107)
+// Source: /Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_person_fields.json (lines 102-107)
 {
     "key": "field_feedback_steps_to_reproduce",
     "label": "Steps to Reproduce",
@@ -280,13 +280,13 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-post-types.php` - 8 CPT registration patterns
-- `/Users/joostdevalk/Code/stadion/acf-json/group_todo_fields.json` - ACF field group with select, conditional logic
-- `/Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json` - ACF gallery field pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-post-types.php` - 8 CPT registration patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_todo_fields.json` - ACF field group with select, conditional logic
+- `/Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_person_fields.json` - ACF gallery field pattern
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/docs/prd-feedback-system.md` - PRD with field specifications
-- `/Users/joostdevalk/Code/stadion/.planning/milestones/v6.1-feedback-system/REQUIREMENTS.md` - Detailed requirements
+- `/Users/joostdevalk/Code/rondo/rondo-club/docs/prd-feedback-system.md` - PRD with field specifications
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/milestones/v6.1-feedback-system/REQUIREMENTS.md` - Detailed requirements
 
 ### Tertiary (LOW confidence)
 - None - all research based on existing codebase patterns

@@ -322,8 +322,8 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - Source code analysis
-- `/Users/joostdevalk/Code/stadion/.planning/phases/100-navigation-layout/100-CONTEXT.md` - User decisions
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` - Source code analysis
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/100-navigation-layout/100-CONTEXT.md` - User decisions
 
 ### Secondary (MEDIUM confidence)
 - Phase 99 research - Established pattern for Dutch localization approach

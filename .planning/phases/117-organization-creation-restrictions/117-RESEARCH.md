@@ -303,15 +303,15 @@ No paradigm shifts relevant to this phase - standard React component modificatio
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/Teams/TeamsList.jsx` - Direct code analysis
-- `/Users/joostdevalk/Code/stadion/src/pages/Commissies/CommissiesList.jsx` - Direct code analysis
-- `/Users/joostdevalk/Code/stadion/src/components/TeamEditModal.jsx` - Modal component analysis
-- `/Users/joostdevalk/Code/stadion/src/components/CommissieEditModal.jsx` - Modal component analysis
-- `/Users/joostdevalk/Code/stadion/src/hooks/useTeams.js` - Hook implementation
-- `/Users/joostdevalk/Code/stadion/.planning/phases/116-person-edit-restrictions/116-RESEARCH.md` - Prior phase pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Teams/TeamsList.jsx` - Direct code analysis
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Commissies/CommissiesList.jsx` - Direct code analysis
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/TeamEditModal.jsx` - Modal component analysis
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/CommissieEditModal.jsx` - Modal component analysis
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useTeams.js` - Hook implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/116-person-edit-restrictions/116-RESEARCH.md` - Prior phase pattern
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/package.json` - Stack versions verified
+- `/Users/joostdevalk/Code/rondo/rondo-club/package.json` - Stack versions verified
 
 ### Tertiary (LOW confidence)
 - None

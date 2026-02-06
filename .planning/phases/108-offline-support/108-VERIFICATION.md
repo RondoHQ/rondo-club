@@ -81,7 +81,7 @@ human_verification:
 | useOnlineStatus hook | OfflineBanner | import | ✓ WIRED | OfflineBanner imports and calls useOnlineStatus(), returns isOnline boolean |
 | useOnlineStatus hook | 10 edit modals | import | ✓ WIRED | All 10 modals import useOnlineStatus and use it to disable submit buttons |
 | main.jsx | TanStack Query | onlineManager.setEventListener | ✓ WIRED | Registered before QueryClient init, handles online/offline events, calls setOnline() |
-| vite.config.js | offline.html | navigateFallback | ✓ WIRED | Set to '/wp-content/themes/stadion/dist/offline.html', denylist configured |
+| vite.config.js | offline.html | navigateFallback | ✓ WIRED | Set to '/wp-content/themes/rondo-club/dist/offline.html', denylist configured |
 | App.jsx | OfflineBanner | JSX render | ✓ WIRED | OfflineBanner rendered after ReloadPrompt, visible across all routes |
 | Workbox | API cache | NetworkFirst strategy | ✓ WIRED | API routes (/wp-json/) cached with NetworkFirst, 24h expiration, 100 max entries |
 

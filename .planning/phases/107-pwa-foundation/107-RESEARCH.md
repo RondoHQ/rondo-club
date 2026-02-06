@@ -43,7 +43,7 @@ npm install -D pwa-asset-generator
 
 ### Recommended Project Structure
 ```
-stadion/
+rondo-club/
 ├── public/                     # Static assets served from root
 │   ├── icons/                  # PWA icons (all sizes)
 │   │   ├── icon-64x64.png
@@ -407,7 +407,7 @@ export default defineConfig({
       scope: '/',
 
       // Base URL for assets
-      base: '/wp-content/themes/stadion/dist/',
+      base: '/wp-content/themes/rondo-club/dist/',
 
       // Manifest URL
       manifestFilename: 'manifest.webmanifest',

@@ -16,7 +16,7 @@ Deployed and verified complete offline support implementation:
 
 2. **Bug Fix During Verification**
    - Fixed `navigateFallback` path in vite.config.js
-   - Changed from `/offline.html` to `/wp-content/themes/stadion/dist/offline.html`
+   - Changed from `/offline.html` to `/wp-content/themes/rondo-club/dist/offline.html`
    - Service worker now correctly serves fallback for uncached routes
 
 ## Verification Results

@@ -303,10 +303,10 @@ None - the implementation path is clear based on existing patterns in the codeba
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-google-sheets.php` - Existing export implementation (lines 108-131, 497-828)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - Forecast fee calculation (lines 2636-2758)
-- `/Users/joostdevalk/Code/stadion/src/pages/Contributie/ContributieList.jsx` - Frontend forecast handling (lines 77-176, 239-263)
-- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client methods (line 303)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-google-sheets.php` - Existing export implementation (lines 108-131, 497-828)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` - Forecast fee calculation (lines 2636-2758)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Contributie/ContributieList.jsx` - Frontend forecast handling (lines 77-176, 239-263)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/api/client.js` - API client methods (line 303)
 
 ## Metadata
 

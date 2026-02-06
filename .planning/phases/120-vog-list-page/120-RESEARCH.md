@@ -85,7 +85,7 @@ function VOGList() {
 }
 ```
 
-**Source:** `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` lines 1-400
+**Source:** `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` lines 1-400
 
 ### Pattern 2: Navigation Sub-Item with Count Badge
 
@@ -110,7 +110,7 @@ const navigation = [
 ];
 ```
 
-**Source:** Pattern derived from Settings tabs in `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` lines 750-765
+**Source:** Pattern derived from Settings tabs in `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Settings/Settings.jsx` lines 750-765
 
 ### Pattern 3: Badge Indicators for Row Status
 
@@ -136,7 +136,7 @@ const getBadge = (person) => {
 </span>
 ```
 
-**Source:** Badge pattern from `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` lines 159-175 (label badges)
+**Source:** Badge pattern from `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` lines 159-175 (label badges)
 
 ### Pattern 4: Custom Field Column Display
 
@@ -157,7 +157,7 @@ import CustomFieldColumn from '@/components/CustomFieldColumn';
 </td>
 ```
 
-**Source:** `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` lines 126-136
+**Source:** `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` lines 126-136
 
 ### Anti-Patterns to Avoid
 
@@ -266,7 +266,7 @@ const handleSort = (columnId) => {
 
 **Warning signs:** Sort parameter sent but no sorting happens server-side
 
-**Source:** `/Users/joostdevalk/Code/stadion/includes/class-rest-people.php` lines 1159-1196 (custom field sorting logic)
+**Source:** `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-people.php` lines 1159-1196 (custom field sorting logic)
 
 ## Code Examples
 
@@ -450,16 +450,16 @@ None - all technical questions resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - Complete list component pattern (lines 1-600)
-- `/Users/joostdevalk/Code/stadion/src/hooks/usePeople.js` - useFilteredPeople hook implementation (lines 88-146)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-people.php` - Backend filtering logic (lines 1007-1269)
-- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - Navigation structure (lines 43-52, 85-107)
-- `/Users/joostdevalk/Code/stadion/.planning/phases/120-vog-list-page/120-CONTEXT.md` - Phase requirements and decisions
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` - Complete list component pattern (lines 1-600)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/usePeople.js` - useFilteredPeople hook implementation (lines 88-146)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-people.php` - Backend filtering logic (lines 1007-1269)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` - Navigation structure (lines 43-52, 85-107)
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/120-vog-list-page/120-CONTEXT.md` - Phase requirements and decisions
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/.planning/phases/119-backend-foundation/119-01-PLAN.md` - VOG backend implementation details
-- `/Users/joostdevalk/Code/stadion/includes/class-vog-email.php` - VOG email service (lines 1-335)
-- `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` - FileCheck icon import and tab pattern (lines 3, 22, 750-765)
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/119-backend-foundation/119-01-PLAN.md` - VOG backend implementation details
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vog-email.php` - VOG email service (lines 1-335)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Settings/Settings.jsx` - FileCheck icon import and tab pattern (lines 3, 22, 750-765)
 
 ### Tertiary (LOW confidence)
 None - all findings verified with codebase inspection

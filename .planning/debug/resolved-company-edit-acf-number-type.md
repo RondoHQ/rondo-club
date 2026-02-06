@@ -55,4 +55,4 @@ fix:
 2. updateRowMutation now sanitizes merged ACF data, converting null/undefined to [] for known array-type fields (contact_info, investors, _assigned_workspaces)
 
 verification: Build succeeded, deployed to production. Ready for user verification.
-files_changed: ["/Users/joostdevalk/Code/stadion/src/pages/Teams/TeamsList.jsx"]
+files_changed: ["/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Teams/TeamsList.jsx"]

@@ -357,15 +357,15 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-membership-fees.php` - Complete Phase 124-125 implementation
-- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - Sidebar navigation pattern
-- `/Users/joostdevalk/Code/stadion/src/pages/VOG/VOGList.jsx` - Complete list page pattern
-- `/Users/joostdevalk/Code/stadion/src/App.jsx` - Routing configuration
-- `/Users/joostdevalk/Code/stadion/.planning/phases/125-family-discount/125-RESEARCH.md` - Family grouping patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-membership-fees.php` - Complete Phase 124-125 implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` - Sidebar navigation pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/VOG/VOGList.jsx` - Complete list page pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/App.jsx` - Routing configuration
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/125-family-discount/125-RESEARCH.md` - Family grouping patterns
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/src/hooks/useVOGCount.js` - Hook pattern for list data
-- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useVOGCount.js` - Hook pattern for list data
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/api/client.js` - API client patterns
 
 ### Tertiary (LOW confidence)
 - None

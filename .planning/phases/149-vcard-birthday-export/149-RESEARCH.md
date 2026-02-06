@@ -201,10 +201,10 @@ None - this is a straightforward fix with clear scope.
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/utils/vcard.js` - Current broken implementation
-- `/Users/joostdevalk/Code/stadion/includes/class-vcard-export.php` - PHP reference implementation (working)
-- `/Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json` - ACF field definition
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Call site showing personDates not passed
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/utils/vcard.js` - Current broken implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vcard-export.php` - PHP reference implementation (working)
+- `/Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_person_fields.json` - ACF field definition
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PersonDetail.jsx` - Call site showing personDates not passed
 
 ### Secondary (MEDIUM confidence)
 - [RFC 6350](https://www.rfc-editor.org/rfc/rfc6350.html) - vCard Format Specification for BDAY format

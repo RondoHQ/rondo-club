@@ -407,10 +407,10 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing codebase: `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php`
-- Existing codebase: `/Users/joostdevalk/Code/stadion/includes/class-calendar-connections.php`
-- Existing codebase: `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php`
-- Google API PHP Client: `/Users/joostdevalk/Code/stadion/vendor/google/apiclient-services/src/PeopleService.php`
+- Existing codebase: `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-oauth.php`
+- Existing codebase: `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-calendar-connections.php`
+- Existing codebase: `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-calendar.php`
+- Google API PHP Client: `/Users/joostdevalk/Code/rondo/rondo-club/vendor/google/apiclient-services/src/PeopleService.php`
 - [Google API PHP Client OAuth docs](https://github.com/googleapis/google-api-php-client/blob/main/docs/oauth-web.md)
 
 ### Secondary (MEDIUM confidence)

@@ -411,15 +411,15 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/components/MeetingDetailModal.jsx` - Current attendee display logic
-- `/Users/joostdevalk/Code/stadion/src/components/PersonEditModal.jsx` - Form structure and props
-- `/Users/joostdevalk/Code/stadion/src/hooks/usePeople.js` - useCreatePerson hook with onSuccess pattern
-- `/Users/joostdevalk/Code/stadion/src/hooks/useMeetings.js` - Meeting query keys for invalidation
-- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - Modal hosting pattern with createPersonMutation
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - Another example of useCreatePerson usage
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/MeetingDetailModal.jsx` - Current attendee display logic
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/PersonEditModal.jsx` - Form structure and props
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/usePeople.js` - useCreatePerson hook with onSuccess pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useMeetings.js` - Meeting query keys for invalidation
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` - Modal hosting pattern with createPersonMutation
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` - Another example of useCreatePerson usage
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/.planning/ROADMAP.md` - Phase requirements and success criteria
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/ROADMAP.md` - Phase requirements and success criteria
 
 ### Tertiary (LOW confidence)
 - None needed - all patterns well-established in codebase

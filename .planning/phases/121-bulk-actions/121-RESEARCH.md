@@ -490,16 +490,16 @@ function BulkActionResult({ sent, failed, errors }) {
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - Complete bulk selection pattern (lines 61-75, 326-344, 736-976, 1481-1531)
-- `/Users/joostdevalk/Code/stadion/src/pages/VOG/VOGList.jsx` - Current VOG list to extend (329 lines)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-people.php` - Bulk update endpoint pattern (lines 125-205, 882-958)
-- `/Users/joostdevalk/Code/stadion/includes/class-vog-email.php` - VOG email service (lines 132-232)
-- `/Users/joostdevalk/Code/stadion/src/hooks/usePeople.js` - useBulkUpdatePeople hook (lines 384-396)
-- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client patterns (lines 119-122)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` - Complete bulk selection pattern (lines 61-75, 326-344, 736-976, 1481-1531)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/VOG/VOGList.jsx` - Current VOG list to extend (329 lines)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-people.php` - Bulk update endpoint pattern (lines 125-205, 882-958)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vog-email.php` - VOG email service (lines 132-232)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/usePeople.js` - useBulkUpdatePeople hook (lines 384-396)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/api/client.js` - API client patterns (lines 119-122)
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/src/components/DeleteFieldDialog.jsx` - Modal confirmation pattern
-- `/Users/joostdevalk/Code/stadion/.planning/phases/121-bulk-actions/121-CONTEXT.md` - Phase requirements and decisions
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/DeleteFieldDialog.jsx` - Modal confirmation pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/121-bulk-actions/121-CONTEXT.md` - Phase requirements and decisions
 
 ### Tertiary (LOW confidence)
 None - all findings verified with codebase inspection

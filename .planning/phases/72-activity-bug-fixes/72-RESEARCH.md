@@ -237,12 +237,12 @@ const ICON_MAP = {
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/components/Timeline/QuickActivityModal.jsx` - Activity type definitions
-- `/Users/joostdevalk/Code/stadion/src/utils/timeline.js` - Activity type icon/label maps
-- `/Users/joostdevalk/Code/stadion/src/components/layout/Layout.jsx` - Topbar component (line 531)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Person header (line 1469)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - Selection toolbar z-index reference
-- `/Users/joostdevalk/Code/stadion/src/components/Timeline/TimelineView.jsx` - Icon map for timeline display
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/Timeline/QuickActivityModal.jsx` - Activity type definitions
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/utils/timeline.js` - Activity type icon/label maps
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` - Topbar component (line 531)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PersonDetail.jsx` - Person header (line 1469)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` - Selection toolbar z-index reference
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/Timeline/TimelineView.jsx` - Icon map for timeline display
 
 ### Secondary (MEDIUM confidence)
 - lucide-react documentation - Video icon availability confirmed via existing usage in PersonDetail.jsx

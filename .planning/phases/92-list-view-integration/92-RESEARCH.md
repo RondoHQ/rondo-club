@@ -470,12 +470,12 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - List view structure, SortableHeader pattern
-- `/Users/joostdevalk/Code/stadion/src/pages/Teams/TeamsList.jsx` - Team list view patterns
-- `/Users/joostdevalk/Code/stadion/src/components/CustomFieldsSection.jsx` - Type-specific rendering (Phase 91)
-- `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field form patterns
-- `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - Field storage, updatable properties
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-custom-fields.php` - API structure, metadata endpoint
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` - List view structure, SortableHeader pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Teams/TeamsList.jsx` - Team list view patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/CustomFieldsSection.jsx` - Type-specific rendering (Phase 91)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/FieldFormPanel.jsx` - Field form patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/customfields/class-manager.php` - Field storage, updatable properties
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-custom-fields.php` - API structure, metadata endpoint
 
 ### Secondary (MEDIUM confidence)
 - Phase 91 Research document - Type rendering patterns

@@ -293,11 +293,11 @@ None - all implementation details are clear from the codebase analysis.
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-comment-types.php` - Existing comment types pattern
-- `/Users/joostdevalk/Code/stadion/includes/class-vog-email.php` - Current VOG email sending implementation
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-people.php` - Filtered people API endpoint
-- `/Users/joostdevalk/Code/stadion/src/pages/VOG/VOGList.jsx` - Current VOG list implementation
-- `/Users/joostdevalk/Code/stadion/src/components/Timeline/TimelineView.jsx` - Timeline rendering patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-comment-types.php` - Existing comment types pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vog-email.php` - Current VOG email sending implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-people.php` - Filtered people API endpoint
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/VOG/VOGList.jsx` - Current VOG list implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/Timeline/TimelineView.jsx` - Timeline rendering patterns
 
 ### Secondary (MEDIUM confidence)
 - WordPress Comments API documentation

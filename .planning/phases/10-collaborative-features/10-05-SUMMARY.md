@@ -43,11 +43,11 @@ Integrated workspace activity (including @mentions) into the existing daily remi
   - Consistent presentation with email digest
 
 ## Files Modified
-- `/Users/joostdevalk/Code/stadion/includes/class-reminders.php` - Activity gathering
-- `/Users/joostdevalk/Code/stadion/includes/class-notification-channels.php` - Email and Slack digest formatting
-- `/Users/joostdevalk/Code/stadion/CHANGELOG.md` - Added changelog entry
-- `/Users/joostdevalk/Code/stadion/style.css` - Version bump to 1.60.0
-- `/Users/joostdevalk/Code/stadion/package.json` - Version bump to 1.60.0
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-reminders.php` - Activity gathering
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-notification-channels.php` - Email and Slack digest formatting
+- `/Users/joostdevalk/Code/rondo/rondo-club/CHANGELOG.md` - Added changelog entry
+- `/Users/joostdevalk/Code/rondo/rondo-club/style.css` - Version bump to 1.60.0
+- `/Users/joostdevalk/Code/rondo/rondo-club/package.json` - Version bump to 1.60.0
 
 ## Commits
 - `33f6674` - feat(10-05): integrate workspace activity into daily digest

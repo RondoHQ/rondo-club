@@ -13,7 +13,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Development Commands
 
-All commands run from `stadion/`:
+All commands run from `rondo-club/`:
 
 ```bash
 npm run dev      # Start Vite dev server (port 5173, HMR enabled)

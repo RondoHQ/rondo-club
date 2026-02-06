@@ -386,10 +386,10 @@ Things that couldn't be fully resolved:
   - [updateContact](https://developers.google.com/people/api/rest/v1/people/updateContact)
   - [updateContactPhoto](https://developers.google.com/people/api/rest/v1/people/updateContactPhoto)
 - Existing codebase files:
-  - `/Users/joostdevalk/Code/stadion/vendor/google/apiclient-services/src/PeopleService/Resource/People.php`
-  - `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-api-import.php`
-  - `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php`
-  - `/Users/joostdevalk/Code/stadion/includes/class-auto-title.php` (async cron pattern)
+  - `/Users/joostdevalk/Code/rondo/rondo-club/vendor/google/apiclient-services/src/PeopleService/Resource/People.php`
+  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-contacts-api-import.php`
+  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-oauth.php`
+  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-auto-title.php` (async cron pattern)
 
 ### Secondary (MEDIUM confidence)
 - google-api-php-client GitHub issues for PHP examples

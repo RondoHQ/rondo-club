@@ -55,7 +55,7 @@ wp-browser pulls in all required Codeception dependencies automatically.
 
 ### Recommended Project Structure
 ```
-stadion/
+rondo-club/
 ├── tests/
 │   ├── .env                    # Test environment config (gitignored)
 │   ├── .env.testing           # Template for .env (committed)

@@ -63,7 +63,7 @@ None detected. Clean implementation following WordPress and ACF best practices.
 #### 1. CPT Registration (class-post-types.php)
 
 **Level 1: Existence** ✓ PASS
-- File exists at /Users/joostdevalk/Code/stadion/includes/class-post-types.php
+- File exists at /Users/joostdevalk/Code/rondo/rondo-club/includes/class-post-types.php
 - register_discipline_case_post_type() method exists (lines 376-411)
 - Method called in register_post_types() on line 30
 
@@ -90,7 +90,7 @@ None detected. Clean implementation following WordPress and ACF best practices.
 #### 2. Taxonomy Registration (class-taxonomies.php)
 
 **Level 1: Existence** ✓ PASS
-- File exists at /Users/joostdevalk/Code/stadion/includes/class-taxonomies.php
+- File exists at /Users/joostdevalk/Code/rondo/rondo-club/includes/class-taxonomies.php
 - register_seizoen_taxonomy() method exists (lines 421-445)
 - Helper methods exist:
   - set_current_season() (lines 454-483)
@@ -124,7 +124,7 @@ None detected. Clean implementation following WordPress and ACF best practices.
 #### 3. ACF Field Group (group_discipline_case_fields.json)
 
 **Level 1: Existence** ✓ PASS
-- File exists at /Users/joostdevalk/Code/stadion/acf-json/group_discipline_case_fields.json
+- File exists at /Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_discipline_case_fields.json
 - 186 lines
 - Valid JSON (verified via python3 -m json.tool)
 

@@ -301,7 +301,7 @@ For MVP (subsequent milestone), prioritize:
 - [Fuzzy Matching 101: Complete Guide for 2026](https://matchdatapro.com/fuzzy-matching-101-a-complete-guide-for-2026/) - Duplicate detection algorithms
 
 ### Code Analysis:
-- `/Users/joostdevalk/Code/stadion/includes/class-auto-title.php` - Current title generation
-- `/Users/joostdevalk/Code/stadion/includes/class-vcard-export.php` - Current vCard export (lines 254: N field)
-- `/Users/joostdevalk/Code/stadion/includes/class-vcard-import.php` - Current vCard import (lines 326: N field parsing)
-- `/Users/joostdevalk/Code/stadion/src/components/PersonEditModal.jsx` - Current UI form
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-auto-title.php` - Current title generation
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vcard-export.php` - Current vCard export (lines 254: N field)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vcard-import.php` - Current vCard import (lines 326: N field parsing)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/PersonEditModal.jsx` - Current UI form

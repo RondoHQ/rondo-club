@@ -5,7 +5,7 @@
 ## Directory Layout
 
 ```
-stadion/
+rondo-club/
 ├── index.php              # WordPress template (React mount point)
 ├── functions.php          # Theme setup & class initialization
 ├── style.css              # Theme header (version metadata)
