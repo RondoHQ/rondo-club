@@ -2,13 +2,13 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\StadionTestCase;
-use STADION_Access_Control;
-use STADION_Visibility;
-use STADION_Workspace_Members;
-use STADION_User_Roles;
-use STADION_REST_People;
-use STADION_REST_Teams;
+use Tests\Support\RondoTestCase;
+use RONDO_Access_Control;
+use RONDO_Visibility;
+use RONDO_Workspace_Members;
+use RONDO_User_Roles;
+use RONDO_REST_People;
+use RONDO_REST_Teams;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -22,36 +22,36 @@ use WP_REST_Server;
  * - Sharing endpoints for people and teams
  * - Bulk update operations with ownership checks
  */
-class RelationshipsSharesTest extends StadionTestCase {
+class RelationshipsSharesTest extends RondoTestCase {
 
 	/**
-	 * STADION_Access_Control instance for access checks.
+	 * RONDO_Access_Control instance for access checks.
 	 *
-	 * @var STADION_Access_Control
+	 * @var RONDO_Access_Control
 	 */
-	private STADION_Access_Control $access_control;
+	private RONDO_Access_Control $access_control;
 
 	/**
 	 * REST People handler.
 	 *
-	 * @var STADION_REST_People
+	 * @var RONDO_REST_People
 	 */
-	private STADION_REST_People $rest_people;
+	private RONDO_REST_People $rest_people;
 
 	/**
 	 * REST Teams handler.
 	 *
-	 * @var STADION_REST_Teams
+	 * @var RONDO_REST_Teams
 	 */
-	private STADION_REST_Teams $rest_teams;
+	private RONDO_REST_Teams $rest_teams;
 
 	protected function set_up(): void {
 		parent::set_up();
-		$this->access_control = new STADION_Access_Control();
+		$this->access_control = new RONDO_Access_Control();
 
 		// Manually initialize REST API classes for testing
-		$this->rest_people    = new STADION_REST_People();
-		$this->rest_teams = new STADION_REST_Teams();
+		$this->rest_people    = new RONDO_REST_People();
+		$this->rest_teams = new RONDO_REST_Teams();
 
 		// Initialize the REST server and register routes
 		global $wp_rest_server;
@@ -60,14 +60,14 @@ class RelationshipsSharesTest extends StadionTestCase {
 	}
 
 	/**
-	 * Helper: Create an approved Stadion user.
+	 * Helper: Create an approved Rondo user.
 	 *
 	 * @param array $args Optional user arguments.
 	 * @return int User ID.
 	 */
 	protected function createApprovedUser( array $args = [] ): int {
-		$user_id = $this->createStadionUser( $args );
-		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
+		$user_id = $this->createRondoUser( $args );
+		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -94,7 +94,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		wp_insert_term( $term_name, 'workspace_access', [ 'slug' => $term_slug ] );
 
 		// Add owner as admin member
-		STADION_Workspace_Members::add( $workspace_id, $owner_id, STADION_Workspace_Members::ROLE_ADMIN );
+		RONDO_Workspace_Members::add( $workspace_id, $owner_id, RONDO_Workspace_Members::ROLE_ADMIN );
 
 		return $workspace_id;
 	}
@@ -138,7 +138,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 	/**
 	 * Test person-team relationship endpoint.
-	 * GET /stadion/v1/teams/{id}/people should return people working at the team.
+	 * GET /rondo/v1/teams/{id}/people should return people working at the team.
 	 */
 	public function test_team_people_endpoint_returns_employees(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_rel1' ] );
@@ -176,8 +176,8 @@ class RelationshipsSharesTest extends StadionTestCase {
 		];
 		update_field( 'work_history', $work_history, $person_id );
 
-		// GET /stadion/v1/teams/{id}/people
-		$response = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/people' );
+		// GET /rondo/v1/teams/{id}/people
+		$response = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/people' );
 
 		$this->assertEquals( 200, $response->get_status(), 'Response should be 200 OK' );
 
@@ -248,7 +248,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 			$former_person_id
 		);
 
-		$response = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/people' );
+		$response = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/people' );
 		$data     = $response->get_data();
 
 		$this->assertCount( 1, $data['current'], 'Should have 1 current employee' );
@@ -316,7 +316,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 	/**
 	 * Test sharing endpoint for people - add share.
-	 * POST /stadion/v1/people/{id}/shares
+	 * POST /rondo/v1/people/{id}/shares
 	 */
 	public function test_people_share_add(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share1' ] );
@@ -334,7 +334,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// POST share with Bob (view permission)
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/shares',
+			'/rondo/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
@@ -349,7 +349,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 	/**
 	 * Test sharing endpoint for people - get shares.
-	 * GET /stadion/v1/people/{id}/shares
+	 * GET /rondo/v1/people/{id}/shares
 	 */
 	public function test_people_share_get(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share2' ] );
@@ -364,10 +364,10 @@ class RelationshipsSharesTest extends StadionTestCase {
 			]
 		);
 
-		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
+		RONDO_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// GET shares
-		$response = $this->restRequest( 'GET', '/stadion/v1/people/' . $person_id . '/shares' );
+		$response = $this->restRequest( 'GET', '/rondo/v1/people/' . $person_id . '/shares' );
 
 		$this->assertEquals( 200, $response->get_status(), 'Get shares should return 200' );
 
@@ -379,7 +379,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 	/**
 	 * Test sharing endpoint for people - remove share.
-	 * DELETE /stadion/v1/people/{id}/shares/{user_id}
+	 * DELETE /rondo/v1/people/{id}/shares/{user_id}
 	 */
 	public function test_people_share_remove(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share3' ] );
@@ -394,18 +394,18 @@ class RelationshipsSharesTest extends StadionTestCase {
 			]
 		);
 
-		STADION_Visibility::add_share( $person_id, $bob_id, 'view' );
+		RONDO_Visibility::add_share( $person_id, $bob_id, 'view' );
 
 		// Verify share exists
-		$this->assertTrue( STADION_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should have share before removal' );
+		$this->assertTrue( RONDO_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should have share before removal' );
 
 		// DELETE share
-		$response = $this->restRequest( 'DELETE', '/stadion/v1/people/' . $person_id . '/shares/' . $bob_id );
+		$response = $this->restRequest( 'DELETE', '/rondo/v1/people/' . $person_id . '/shares/' . $bob_id );
 
 		$this->assertEquals( 200, $response->get_status(), 'Remove share should return 200' );
 
 		// Verify share removed
-		$this->assertFalse( STADION_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should not have share after removal' );
+		$this->assertFalse( RONDO_Visibility::user_has_share( $person_id, $bob_id ), 'Bob should not have share after removal' );
 	}
 
 	/**
@@ -426,31 +426,31 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Add share with view permission
 		$this->restRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/shares',
+			'/rondo/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
 			]
 		);
 
-		$this->assertEquals( 'view', STADION_Visibility::get_share_permission( $person_id, $bob_id ), 'Initial permission should be view' );
+		$this->assertEquals( 'view', RONDO_Visibility::get_share_permission( $person_id, $bob_id ), 'Initial permission should be view' );
 
 		// Update to edit permission
 		$this->restRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/shares',
+			'/rondo/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'edit',
 			]
 		);
 
-		$this->assertEquals( 'edit', STADION_Visibility::get_share_permission( $person_id, $bob_id ), 'Permission should be updated to edit' );
+		$this->assertEquals( 'edit', RONDO_Visibility::get_share_permission( $person_id, $bob_id ), 'Permission should be updated to edit' );
 	}
 
 	/**
 	 * Test sharing endpoint for teams.
-	 * POST/GET/DELETE /stadion/v1/teams/{id}/shares
+	 * POST/GET/DELETE /rondo/v1/teams/{id}/shares
 	 */
 	public function test_teams_share_lifecycle(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_share5' ] );
@@ -468,7 +468,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// POST share
 		$add_response = $this->restRequest(
 			'POST',
-			'/stadion/v1/teams/' . $team_id . '/shares',
+			'/rondo/v1/teams/' . $team_id . '/shares',
 			[
 				'user_id'    => $bob_id,
 				'permission' => 'view',
@@ -477,23 +477,23 @@ class RelationshipsSharesTest extends StadionTestCase {
 		$this->assertEquals( 200, $add_response->get_status(), 'Add share should return 200' );
 
 		// GET shares
-		$get_response = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/shares' );
+		$get_response = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/shares' );
 		$shares       = $get_response->get_data();
 		$this->assertCount( 1, $shares, 'Should have 1 share' );
 		$this->assertEquals( $bob_id, $shares[0]['user_id'], 'Share should be with Bob' );
 
 		// DELETE share
-		$del_response = $this->restRequest( 'DELETE', '/stadion/v1/teams/' . $team_id . '/shares/' . $bob_id );
+		$del_response = $this->restRequest( 'DELETE', '/rondo/v1/teams/' . $team_id . '/shares/' . $bob_id );
 		$this->assertEquals( 200, $del_response->get_status(), 'Delete share should return 200' );
 
 		// Verify share removed
-		$get_response2 = $this->restRequest( 'GET', '/stadion/v1/teams/' . $team_id . '/shares' );
+		$get_response2 = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/shares' );
 		$this->assertCount( 0, $get_response2->get_data(), 'Should have no shares after removal' );
 	}
 
 	/**
 	 * Test bulk update for people - visibility change.
-	 * POST /stadion/v1/people/bulk-update
+	 * POST /rondo/v1/people/bulk-update
 	 */
 	public function test_people_bulk_update_visibility(): void {
 		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk1' ] );
@@ -523,14 +523,14 @@ class RelationshipsSharesTest extends StadionTestCase {
 		);
 
 		// All should start as private (default)
-		$this->assertEquals( 'private', STADION_Visibility::get_visibility( $person1_id ) );
-		$this->assertEquals( 'private', STADION_Visibility::get_visibility( $person2_id ) );
-		$this->assertEquals( 'private', STADION_Visibility::get_visibility( $person3_id ) );
+		$this->assertEquals( 'private', RONDO_Visibility::get_visibility( $person1_id ) );
+		$this->assertEquals( 'private', RONDO_Visibility::get_visibility( $person2_id ) );
+		$this->assertEquals( 'private', RONDO_Visibility::get_visibility( $person3_id ) );
 
 		// Bulk update visibility to workspace
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/bulk-update',
+			'/rondo/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id, $person3_id ],
 				'updates' => [
@@ -546,9 +546,9 @@ class RelationshipsSharesTest extends StadionTestCase {
 		$this->assertCount( 3, $data['updated'], 'All 3 should be updated' );
 
 		// Verify visibility changed
-		$this->assertEquals( 'workspace', STADION_Visibility::get_visibility( $person1_id ) );
-		$this->assertEquals( 'workspace', STADION_Visibility::get_visibility( $person2_id ) );
-		$this->assertEquals( 'workspace', STADION_Visibility::get_visibility( $person3_id ) );
+		$this->assertEquals( 'workspace', RONDO_Visibility::get_visibility( $person1_id ) );
+		$this->assertEquals( 'workspace', RONDO_Visibility::get_visibility( $person2_id ) );
+		$this->assertEquals( 'workspace', RONDO_Visibility::get_visibility( $person3_id ) );
 	}
 
 	/**
@@ -568,7 +568,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Bulk update workspace assignment
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/bulk-update',
+			'/rondo/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -607,7 +607,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/bulk-update',
+			'/rondo/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -648,7 +648,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Bulk remove label
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/bulk-update',
+			'/rondo/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -685,7 +685,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/bulk-update',
+			'/rondo/v1/people/bulk-update',
 			[
 				'ids'     => [ $person1_id, $person2_id ],
 				'updates' => [
@@ -722,7 +722,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Bulk update visibility
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/teams/bulk-update',
+			'/rondo/v1/teams/bulk-update',
 			[
 				'ids'     => [ $team1_id, $team2_id ],
 				'updates' => [
@@ -735,8 +735,8 @@ class RelationshipsSharesTest extends StadionTestCase {
 		$this->assertTrue( $response->get_data()['success'] );
 
 		// Verify visibility changed
-		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $team1_id ) );
-		$this->assertEquals( 'shared', STADION_Visibility::get_visibility( $team2_id ) );
+		$this->assertEquals( 'shared', RONDO_Visibility::get_visibility( $team1_id ) );
+		$this->assertEquals( 'shared', RONDO_Visibility::get_visibility( $team2_id ) );
 	}
 
 	/**
@@ -757,7 +757,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Bulk add label
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/teams/bulk-update',
+			'/rondo/v1/teams/bulk-update',
 			[
 				'ids'     => [ $team1_id, $team2_id ],
 				'updates' => [
@@ -794,7 +794,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/teams/bulk-update',
+			'/rondo/v1/teams/bulk-update',
 			[
 				'ids'     => [ $team1_id, $team2_id ],
 				'updates' => [
@@ -823,7 +823,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/shares',
+			'/rondo/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $charlie_id,
 				'permission' => 'view',
@@ -846,7 +846,7 @@ class RelationshipsSharesTest extends StadionTestCase {
 		// Alice tries to share with herself
 		$response = $this->restRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/shares',
+			'/rondo/v1/people/' . $person_id . '/shares',
 			[
 				'user_id'    => $alice_id,
 				'permission' => 'view',

@@ -2,25 +2,25 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\StadionTestCase;
-use STADION_Access_Control;
-use STADION_User_Roles;
+use Tests\Support\RondoTestCase;
+use RONDO_Access_Control;
+use RONDO_User_Roles;
 use WP_REST_Request;
 use WP_REST_Server;
 
 /**
  * Tests for custom REST API endpoints: search, dashboard, reminders, and todos.
  *
- * Verifies /stadion/v1/ custom endpoints return correct data and enforce access control.
+ * Verifies /rondo/v1/ custom endpoints return correct data and enforce access control.
  */
-class SearchDashboardTest extends StadionTestCase {
+class SearchDashboardTest extends RondoTestCase {
 
 	/**
 	 * Access control instance for testing.
 	 *
-	 * @var STADION_Access_Control
+	 * @var RONDO_Access_Control
 	 */
-	private STADION_Access_Control $access_control;
+	private RONDO_Access_Control $access_control;
 
 	/**
 	 * REST server instance.
@@ -36,30 +36,30 @@ class SearchDashboardTest extends StadionTestCase {
 		parent::set_up();
 
 		// Create fresh access control instance for testing
-		$this->access_control = new STADION_Access_Control();
+		$this->access_control = new RONDO_Access_Control();
 
 		// Initialize REST server and ensure routes are registered
 		global $wp_rest_server;
 		$wp_rest_server = new WP_REST_Server();
 		$this->server   = $wp_rest_server;
 
-		// Instantiate REST API classes to register routes (bypasses stadion_is_rest_request() check)
-		new \STADION_REST_API();
-		new \STADION_REST_Todos();
+		// Instantiate REST API classes to register routes (bypasses rondo_is_rest_request() check)
+		new \RONDO_REST_API();
+		new \RONDO_REST_Todos();
 
 		// Trigger REST API initialization to register routes
 		do_action( 'rest_api_init' );
 	}
 
 	/**
-	 * Helper to create an approved Stadion user.
+	 * Helper to create an approved Rondo user.
 	 *
 	 * @param array $args User arguments
 	 * @return int User ID
 	 */
-	private function createApprovedStadionUser( array $args = [] ): int {
-		$user_id = $this->createStadionUser( $args );
-		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
+	private function createApprovedRondoUser( array $args = [] ): int {
+		$user_id = $this->createRondoUser( $args );
+		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -67,7 +67,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Helper to make an internal REST request.
 	 *
 	 * @param string $method HTTP method (GET, POST, etc.)
-	 * @param string $route REST route (e.g., '/stadion/v1/search')
+	 * @param string $route REST route (e.g., '/rondo/v1/search')
 	 * @param array $params Query parameters
 	 * @return \WP_REST_Response
 	 */
@@ -89,7 +89,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test basic search returns matching person.
 	 */
 	public function test_search_returns_matching_person(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create persons
@@ -107,7 +107,7 @@ class SearchDashboardTest extends StadionTestCase {
 		);
 
 		// Search for John
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => 'John' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'John' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -125,8 +125,8 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test search isolation - user A cannot see user B's contacts.
 	 */
 	public function test_search_isolation_between_users(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedStadionUser( [ 'user_login' => 'bob' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createApprovedRondoUser( [ 'user_login' => 'bob' ] );
 
 		// Create person for Alice
 		$alice_john = $this->createPerson(
@@ -146,7 +146,7 @@ class SearchDashboardTest extends StadionTestCase {
 
 		// Set current user to Alice and search
 		wp_set_current_user( $alice_id );
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => 'John' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'John' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -161,7 +161,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test search across custom post types (person and team).
 	 */
 	public function test_search_across_post_types(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -181,7 +181,7 @@ class SearchDashboardTest extends StadionTestCase {
 		);
 
 		// Search for Acme
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => 'Acme' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'Acme' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -200,11 +200,11 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test search validation - empty query returns 400.
 	 */
 	public function test_search_validation_empty_query(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Search with empty query - should fail validation
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => '' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => '' ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'Empty search query should return 400' );
 	}
@@ -213,11 +213,11 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test search validation - single character returns 400.
 	 */
 	public function test_search_validation_single_character(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Search with single character - should fail validation (min 2 chars)
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => 'A' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'A' ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'Single character search should return 400' );
 	}
@@ -227,12 +227,12 @@ class SearchDashboardTest extends StadionTestCase {
 	 */
 	public function test_search_blocked_for_unapproved_user(): void {
 		// Create unapproved user
-		$unapproved_id = $this->createStadionUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, STADION_User_Roles::APPROVAL_META_KEY, '0' );
+		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
+		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
 		// Attempt search
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => 'Test' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'Test' ] );
 
 		// Should be denied (403 Forbidden)
 		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied access to search' );
@@ -245,7 +245,7 @@ class SearchDashboardTest extends StadionTestCase {
 		wp_set_current_user( 0 );
 
 		// Attempt search
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/search', [ 'q' => 'Test' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'Test' ] );
 
 		// Should be denied (401 Unauthorized)
 		$this->assertEquals( 401, $response->get_status(), 'Logged out user should be denied access to search' );
@@ -259,7 +259,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test dashboard summary returns correct counts.
 	 */
 	public function test_dashboard_returns_correct_counts(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create 3 persons
@@ -297,7 +297,7 @@ class SearchDashboardTest extends StadionTestCase {
 		);
 
 		// Get dashboard
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -311,8 +311,8 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test dashboard isolation - user A only sees their own data in counts.
 	 */
 	public function test_dashboard_isolation_between_users(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedStadionUser( [ 'user_login' => 'bob' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createApprovedRondoUser( [ 'user_login' => 'bob' ] );
 
 		// Create 5 contacts for Alice
 		for ( $i = 1; $i <= 5; $i++ ) {
@@ -336,14 +336,14 @@ class SearchDashboardTest extends StadionTestCase {
 
 		// Get Alice's dashboard
 		wp_set_current_user( $alice_id );
-		$alice_response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$alice_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 		$alice_data     = $alice_response->get_data();
 
 		$this->assertEquals( 5, $alice_data['stats']['total_people'], 'Alice should see 5 people' );
 
 		// Get Bob's dashboard
 		wp_set_current_user( $bob_id );
-		$bob_response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$bob_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 		$bob_data     = $bob_response->get_data();
 
 		$this->assertEquals( 3, $bob_data['stats']['total_people'], 'Bob should see 3 people' );
@@ -353,11 +353,11 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test dashboard for new user with no data shows zero counts.
 	 */
 	public function test_dashboard_empty_for_new_user(): void {
-		$newuser_id = $this->createApprovedStadionUser( [ 'user_login' => 'emptyuser' ] );
+		$newuser_id = $this->createApprovedRondoUser( [ 'user_login' => 'emptyuser' ] );
 		wp_set_current_user( $newuser_id );
 
 		// Get dashboard for user with no data
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -370,11 +370,11 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test dashboard blocked for unapproved user.
 	 */
 	public function test_dashboard_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createStadionUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, STADION_User_Roles::APPROVAL_META_KEY, '0' );
+		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
+		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 
 		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied dashboard access' );
 	}
@@ -383,7 +383,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test reminders endpoint returns upcoming birthdays.
 	 */
 	public function test_reminders_returns_upcoming_birthdays(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a person with a birthdate 5 days from now (same month/day, any year)
@@ -399,7 +399,7 @@ class SearchDashboardTest extends StadionTestCase {
 		);
 
 		// Get reminders for next 30 days
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/reminders', [ 'days_ahead' => 30 ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders', [ 'days_ahead' => 30 ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -412,7 +412,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test reminders filters by days_ahead parameter.
 	 */
 	public function test_reminders_filters_by_days_ahead(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create a person with birthdate 60 days from now
@@ -428,7 +428,7 @@ class SearchDashboardTest extends StadionTestCase {
 		);
 
 		// Get reminders for next 30 days - should not include the 60-day birthday
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/reminders', [ 'days_ahead' => 30 ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders', [ 'days_ahead' => 30 ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -441,10 +441,10 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test reminders validation - days_ahead=0 returns 400.
 	 */
 	public function test_reminders_validation_zero_days(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/reminders', [ 'days_ahead' => 0 ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders', [ 'days_ahead' => 0 ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'days_ahead=0 should return 400' );
 	}
@@ -453,10 +453,10 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test reminders validation - days_ahead too large returns 400.
 	 */
 	public function test_reminders_validation_days_too_large(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/reminders', [ 'days_ahead' => 500 ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders', [ 'days_ahead' => 500 ] );
 
 		$this->assertEquals( 400, $response->get_status(), 'days_ahead=500 should return 400 (max 365)' );
 	}
@@ -465,11 +465,11 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test reminders blocked for unapproved user.
 	 */
 	public function test_reminders_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createStadionUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, STADION_User_Roles::APPROVAL_META_KEY, '0' );
+		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
+		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/reminders' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/reminders' );
 
 		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied reminders access' );
 	}
@@ -487,7 +487,7 @@ class SearchDashboardTest extends StadionTestCase {
 	private function createTodo( int $person_id, string $content, int $user_id, bool $completed = false, string $due_date = '' ): int {
 		$post_id = self::factory()->post->create(
 			[
-				'post_type'   => 'stadion_todo',
+				'post_type'   => 'rondo_todo',
 				'post_status' => 'publish',
 				'post_title'  => $content,
 				'post_author' => $user_id,
@@ -509,7 +509,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test todos endpoint returns uncompleted todos.
 	 */
 	public function test_todos_returns_uncompleted_todos(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -527,7 +527,7 @@ class SearchDashboardTest extends StadionTestCase {
 		$completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
 
 		// Get todos (default: uncompleted only)
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -542,7 +542,7 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test todos endpoint with completed=true returns all todos.
 	 */
 	public function test_todos_returns_all_with_completed_filter(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice_completed' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice_completed' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -560,7 +560,7 @@ class SearchDashboardTest extends StadionTestCase {
 		$completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
 
 		// Get all todos including completed (use string 'true' as that's what the REST API expects)
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'completed' => 'true' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'completed' => 'true' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -575,8 +575,8 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test todos endpoint isolation - user cannot see other user's todos.
 	 */
 	public function test_todos_isolation_between_users(): void {
-		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createApprovedStadionUser( [ 'user_login' => 'bob' ] );
+		$alice_id = $this->createApprovedRondoUser( [ 'user_login' => 'alice' ] );
+		$bob_id   = $this->createApprovedRondoUser( [ 'user_login' => 'bob' ] );
 
 		// Create person for Alice
 		$alice_person = $this->createPerson(
@@ -598,7 +598,7 @@ class SearchDashboardTest extends StadionTestCase {
 
 		// Get Alice's todos
 		wp_set_current_user( $alice_id );
-		$alice_response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$alice_response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 		$alice_data     = $alice_response->get_data();
 		$alice_todo_ids = array_column( $alice_data, 'id' );
 
@@ -607,7 +607,7 @@ class SearchDashboardTest extends StadionTestCase {
 
 		// Get Bob's todos
 		wp_set_current_user( $bob_id );
-		$bob_response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$bob_response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 		$bob_data     = $bob_response->get_data();
 		$bob_todo_ids = array_column( $bob_data, 'id' );
 
@@ -619,11 +619,11 @@ class SearchDashboardTest extends StadionTestCase {
 	 * Test todos blocked for unapproved user.
 	 */
 	public function test_todos_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createStadionUser( [ 'user_login' => 'unapproved' ] );
-		update_user_meta( $unapproved_id, STADION_User_Roles::APPROVAL_META_KEY, '0' );
+		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved' ] );
+		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied todos access' );
 	}

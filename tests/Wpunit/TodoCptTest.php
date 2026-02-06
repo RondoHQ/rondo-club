@@ -2,9 +2,9 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\StadionTestCase;
-use STADION_Access_Control;
-use STADION_User_Roles;
+use Tests\Support\RondoTestCase;
+use RONDO_Access_Control;
+use RONDO_User_Roles;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -17,7 +17,7 @@ use WP_REST_Server;
  * - REST API CRUD operations
  * - Dashboard integration (open_todos_count)
  */
-class TodoCptTest extends StadionTestCase {
+class TodoCptTest extends RondoTestCase {
 
 	/**
 	 * REST server instance.
@@ -38,23 +38,23 @@ class TodoCptTest extends StadionTestCase {
 		$this->server   = $wp_rest_server;
 
 		// Instantiate REST API classes to register routes
-		new \STADION_REST_API();
-		new \STADION_REST_Todos();
+		new \RONDO_REST_API();
+		new \RONDO_REST_Todos();
 
 		// Trigger REST API initialization
 		do_action( 'rest_api_init' );
 	}
 
 	/**
-	 * Helper to create an approved Stadion user.
+	 * Helper to create an approved Rondo user.
 	 *
 	 * @param string $prefix User login prefix for uniqueness
 	 * @return int User ID
 	 */
-	private function createApprovedStadionUser( string $prefix = 'user' ): int {
+	private function createApprovedRondoUser( string $prefix = 'user' ): int {
 		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createStadionUser( [ 'user_login' => $unique_id ] );
-		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
+		$user_id   = $this->createRondoUser( [ 'user_login' => $unique_id ] );
+		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 
@@ -76,11 +76,11 @@ class TodoCptTest extends StadionTestCase {
 		$data     = array_merge( $defaults, $data );
 
 		// Map status to post_status
-		$post_status = 'stadion_' . $data['status'];
+		$post_status = 'rondo_' . $data['status'];
 
 		$post_id = self::factory()->post->create(
 			[
-				'post_type'   => 'stadion_todo',
+				'post_type'   => 'rondo_todo',
 				'post_status' => $post_status,
 				'post_title'  => $data['content'],
 				'post_author' => $user_id,
@@ -125,24 +125,24 @@ class TodoCptTest extends StadionTestCase {
 	// =========================================================================
 
 	/**
-	 * Test that stadion_todo post type is registered.
+	 * Test that rondo_todo post type is registered.
 	 */
-	public function test_stadion_todo_post_type_registered(): void {
+	public function test_rondo_todo_post_type_registered(): void {
 		$this->assertTrue(
-			post_type_exists( 'stadion_todo' ),
-			'stadion_todo post type should be registered'
+			post_type_exists( 'rondo_todo' ),
+			'rondo_todo post type should be registered'
 		);
 	}
 
 	/**
-	 * Test stadion_todo post type supports REST API.
+	 * Test rondo_todo post type supports REST API.
 	 */
-	public function test_stadion_todo_has_rest_support(): void {
-		$post_type_obj = get_post_type_object( 'stadion_todo' );
+	public function test_rondo_todo_has_rest_support(): void {
+		$post_type_obj = get_post_type_object( 'rondo_todo' );
 
 		$this->assertTrue(
 			$post_type_obj->show_in_rest,
-			'stadion_todo should be available in REST API'
+			'rondo_todo should be available in REST API'
 		);
 	}
 
@@ -154,8 +154,8 @@ class TodoCptTest extends StadionTestCase {
 	 * Test user can only see their own todos.
 	 */
 	public function test_user_can_only_see_own_todos(): void {
-		$alice_id = $this->createApprovedStadionUser( 'alice' );
-		$bob_id   = $this->createApprovedStadionUser( 'bob' );
+		$alice_id = $this->createApprovedRondoUser( 'alice' );
+		$bob_id   = $this->createApprovedRondoUser( 'bob' );
 
 		// Create person for Alice
 		wp_set_current_user( $alice_id );
@@ -179,7 +179,7 @@ class TodoCptTest extends StadionTestCase {
 
 		// Query as Alice - should only see her own todos
 		wp_set_current_user( $alice_id );
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -196,9 +196,9 @@ class TodoCptTest extends StadionTestCase {
 	public function test_admin_sees_own_todos(): void {
 		// Create admin user
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		update_user_meta( $admin_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
+		update_user_meta( $admin_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
-		$regular_user_id = $this->createApprovedStadionUser( 'regular' );
+		$regular_user_id = $this->createApprovedRondoUser( 'regular' );
 
 		// Create person and todo for admin
 		wp_set_current_user( $admin_id );
@@ -222,7 +222,7 @@ class TodoCptTest extends StadionTestCase {
 
 		// Query as admin - in frontend context, admin sees only their own data
 		wp_set_current_user( $admin_id );
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -238,10 +238,10 @@ class TodoCptTest extends StadionTestCase {
 	// =========================================================================
 
 	/**
-	 * Test GET /stadion/v1/todos returns user's todos.
+	 * Test GET /rondo/v1/todos returns user's todos.
 	 */
 	public function test_get_todos_returns_user_todos(): void {
-		$user_id = $this->createApprovedStadionUser( 'todos_user' );
+		$user_id = $this->createApprovedRondoUser( 'todos_user' );
 		wp_set_current_user( $user_id );
 
 		// Create person and todos
@@ -254,7 +254,7 @@ class TodoCptTest extends StadionTestCase {
 		$todo1     = $this->createTodo( $person_id, $user_id, [ 'content' => 'Todo 1' ] );
 		$todo2     = $this->createTodo( $person_id, $user_id, [ 'content' => 'Todo 2' ] );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -266,10 +266,10 @@ class TodoCptTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test GET /stadion/v1/people/{id}/todos filters by person.
+	 * Test GET /rondo/v1/people/{id}/todos filters by person.
 	 */
 	public function test_get_person_todos_filters_by_person(): void {
-		$user_id = $this->createApprovedStadionUser( 'filter_user' );
+		$user_id = $this->createApprovedRondoUser( 'filter_user' );
 		wp_set_current_user( $user_id );
 
 		// Create two people
@@ -291,7 +291,7 @@ class TodoCptTest extends StadionTestCase {
 		$todo2 = $this->createTodo( $person2, $user_id, [ 'content' => 'Todo for Person 2' ] );
 
 		// Query todos for person 1 only
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/people/' . $person1 . '/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/people/' . $person1 . '/todos' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -303,10 +303,10 @@ class TodoCptTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test POST /stadion/v1/people/{id}/todos creates a stadion_todo post.
+	 * Test POST /rondo/v1/people/{id}/todos creates a rondo_todo post.
 	 */
-	public function test_create_todo_creates_stadion_todo_post(): void {
-		$user_id = $this->createApprovedStadionUser( 'creator_user' );
+	public function test_create_todo_creates_rondo_todo_post(): void {
+		$user_id = $this->createApprovedRondoUser( 'creator_user' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -318,7 +318,7 @@ class TodoCptTest extends StadionTestCase {
 
 		$response = $this->doRestRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/todos',
+			'/rondo/v1/people/' . $person_id . '/todos',
 			[
 				'content'  => 'New todo item',
 				'due_date' => '2026-02-01',
@@ -337,16 +337,16 @@ class TodoCptTest extends StadionTestCase {
 		// Verify post exists in database
 		$post = get_post( $data['id'] );
 		$this->assertNotNull( $post, 'Todo post should exist' );
-		$this->assertEquals( 'stadion_todo', $post->post_type, 'Post type should be stadion_todo' );
-		$this->assertEquals( 'stadion_open', $post->post_status, 'Post status should be stadion_open' );
+		$this->assertEquals( 'rondo_todo', $post->post_type, 'Post type should be rondo_todo' );
+		$this->assertEquals( 'rondo_open', $post->post_status, 'Post status should be rondo_open' );
 		$this->assertEquals( $user_id, (int) $post->post_author, 'Author should be current user' );
 	}
 
 	/**
-	 * Test PUT /stadion/v1/todos/{id} changes status.
+	 * Test PUT /rondo/v1/todos/{id} changes status.
 	 */
 	public function test_update_todo_changes_status(): void {
-		$user_id = $this->createApprovedStadionUser( 'updater_user' );
+		$user_id = $this->createApprovedRondoUser( 'updater_user' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -367,7 +367,7 @@ class TodoCptTest extends StadionTestCase {
 		// Update to completed
 		$response = $this->doRestRequest(
 			'PUT',
-			'/stadion/v1/todos/' . $todo_id,
+			'/rondo/v1/todos/' . $todo_id,
 			[
 				'status' => 'completed',
 			]
@@ -380,14 +380,14 @@ class TodoCptTest extends StadionTestCase {
 
 		// Verify in database
 		$post = get_post( $todo_id );
-		$this->assertEquals( 'stadion_completed', $post->post_status, 'Database should reflect completed status' );
+		$this->assertEquals( 'rondo_completed', $post->post_status, 'Database should reflect completed status' );
 	}
 
 	/**
-	 * Test DELETE /stadion/v1/todos/{id} removes the post.
+	 * Test DELETE /rondo/v1/todos/{id} removes the post.
 	 */
 	public function test_delete_todo_removes_post(): void {
-		$user_id = $this->createApprovedStadionUser( 'deleter_user' );
+		$user_id = $this->createApprovedRondoUser( 'deleter_user' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -402,7 +402,7 @@ class TodoCptTest extends StadionTestCase {
 		$this->assertNotNull( get_post( $todo_id ), 'Todo should exist before delete' );
 
 		// Delete
-		$response = $this->doRestRequest( 'DELETE', '/stadion/v1/todos/' . $todo_id );
+		$response = $this->doRestRequest( 'DELETE', '/rondo/v1/todos/' . $todo_id );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -422,7 +422,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test dashboard counts open todos correctly.
 	 */
 	public function test_dashboard_counts_open_todos(): void {
-		$user_id = $this->createApprovedStadionUser( 'dashboard_user' );
+		$user_id = $this->createApprovedRondoUser( 'dashboard_user' );
 		wp_set_current_user( $user_id );
 
 		// Create person and 3 open todos
@@ -458,7 +458,7 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Get dashboard
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -471,7 +471,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test completed todos are not counted in dashboard.
 	 */
 	public function test_completed_todos_not_counted(): void {
-		$user_id = $this->createApprovedStadionUser( 'completed_user' );
+		$user_id = $this->createApprovedRondoUser( 'completed_user' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -515,7 +515,7 @@ class TodoCptTest extends StadionTestCase {
 			]
 		);
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -527,8 +527,8 @@ class TodoCptTest extends StadionTestCase {
 	 * Test dashboard counts only user's own todos.
 	 */
 	public function test_dashboard_counts_only_own_todos(): void {
-		$alice_id = $this->createApprovedStadionUser( 'alice_dash' );
-		$bob_id   = $this->createApprovedStadionUser( 'bob_dash' );
+		$alice_id = $this->createApprovedRondoUser( 'alice_dash' );
+		$bob_id   = $this->createApprovedRondoUser( 'bob_dash' );
 
 		// Create 3 todos for Alice
 		wp_set_current_user( $alice_id );
@@ -558,13 +558,13 @@ class TodoCptTest extends StadionTestCase {
 
 		// Alice's dashboard should show 3 todos
 		wp_set_current_user( $alice_id );
-		$alice_response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$alice_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 		$alice_data     = $alice_response->get_data();
 		$this->assertEquals( 3, $alice_data['stats']['open_todos_count'], 'Alice should see 3 todos' );
 
 		// Bob's dashboard should show 5 todos
 		wp_set_current_user( $bob_id );
-		$bob_response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
+		$bob_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
 		$bob_data     = $bob_response->get_data();
 		$this->assertEquals( 5, $bob_data['stats']['open_todos_count'], 'Bob should see 5 todos' );
 	}
@@ -577,11 +577,11 @@ class TodoCptTest extends StadionTestCase {
 	 * Test todos endpoint blocked for unapproved user.
 	 */
 	public function test_todos_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createStadionUser( [ 'user_login' => 'unapproved_todo' ] );
-		update_user_meta( $unapproved_id, STADION_User_Roles::APPROVAL_META_KEY, '0' );
+		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved_todo' ] );
+		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
 		wp_set_current_user( $unapproved_id );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied todos access' );
 	}
@@ -592,7 +592,7 @@ class TodoCptTest extends StadionTestCase {
 	public function test_todos_blocked_for_logged_out_user(): void {
 		wp_set_current_user( 0 );
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$this->assertEquals( 401, $response->get_status(), 'Logged out user should be denied todos access' );
 	}
@@ -605,7 +605,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test todos endpoint returns open todos by default (status=open).
 	 */
 	public function test_todos_returns_open_by_default(): void {
-		$user_id = $this->createApprovedStadionUser( 'filter_complete' );
+		$user_id = $this->createApprovedRondoUser( 'filter_complete' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -642,7 +642,7 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Default request (status=open)
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos' );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
 		$data     = $response->get_data();
 		$todo_ids = array_column( $data, 'id' );
@@ -656,7 +656,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test todos endpoint includes all with status=all filter.
 	 */
 	public function test_todos_includes_all_with_status_all(): void {
-		$user_id = $this->createApprovedStadionUser( 'filter_all' );
+		$user_id = $this->createApprovedRondoUser( 'filter_all' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -692,7 +692,7 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Request with status=all
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'all' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'all' ] );
 
 		$data     = $response->get_data();
 		$todo_ids = array_column( $data, 'id' );
@@ -706,7 +706,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test todos endpoint returns only completed with status=completed.
 	 */
 	public function test_todos_returns_only_completed_with_status_completed(): void {
-		$user_id = $this->createApprovedStadionUser( 'filter_completed' );
+		$user_id = $this->createApprovedRondoUser( 'filter_completed' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -742,7 +742,7 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Request with status=completed
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'completed' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'completed' ] );
 
 		$data     = $response->get_data();
 		$todo_ids = array_column( $data, 'id' );
@@ -760,7 +760,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test status=awaiting filter returns only awaiting todos.
 	 */
 	public function test_todos_with_status_awaiting_returns_only_awaiting(): void {
-		$user_id = $this->createApprovedStadionUser( 'awaiting_filter1' );
+		$user_id = $this->createApprovedRondoUser( 'awaiting_filter1' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -805,7 +805,7 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Request with status=awaiting
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'awaiting' ] );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'awaiting' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -823,7 +823,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test status filters are mutually exclusive.
 	 */
 	public function test_todos_status_filters_are_mutually_exclusive(): void {
-		$user_id = $this->createApprovedStadionUser( 'awaiting_filter2' );
+		$user_id = $this->createApprovedRondoUser( 'awaiting_filter2' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -860,25 +860,25 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Test status=open returns only open
-		$response1 = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'open' ] );
+		$response1 = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'open' ] );
 		$data1     = $response1->get_data();
 		$this->assertCount( 1, $data1, 'status=open should return 1 todo' );
 		$this->assertEquals( $open_todo, $data1[0]['id'], 'Should return open todo' );
 
 		// Test status=awaiting returns only awaiting
-		$response2 = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'awaiting' ] );
+		$response2 = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'awaiting' ] );
 		$data2     = $response2->get_data();
 		$this->assertCount( 1, $data2, 'status=awaiting should return 1 todo' );
 		$this->assertEquals( $awaiting_todo, $data2[0]['id'], 'Should return awaiting todo' );
 
 		// Test status=completed returns only completed
-		$response3 = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'completed' ] );
+		$response3 = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'completed' ] );
 		$data3     = $response3->get_data();
 		$this->assertCount( 1, $data3, 'status=completed should return 1 todo' );
 		$this->assertEquals( $completed_todo, $data3[0]['id'], 'Should return completed todo' );
 
 		// Test status=all returns all
-		$response4 = $this->doRestRequest( 'GET', '/stadion/v1/todos', [ 'status' => 'all' ] );
+		$response4 = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'all' ] );
 		$data4     = $response4->get_data();
 		$this->assertCount( 3, $data4, 'status=all should return all 3 todos' );
 	}
@@ -891,7 +891,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test creating todo with awaiting status sets timestamp.
 	 */
 	public function test_create_todo_with_awaiting_status_sets_timestamp(): void {
-		$user_id = $this->createApprovedStadionUser( 'awaiting_create' );
+		$user_id = $this->createApprovedRondoUser( 'awaiting_create' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -903,7 +903,7 @@ class TodoCptTest extends StadionTestCase {
 
 		$response = $this->doRestRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/todos',
+			'/rondo/v1/people/' . $person_id . '/todos',
 			[
 				'content' => 'Waiting for reply',
 				'status'  => 'awaiting',
@@ -926,7 +926,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test updating todo to awaiting status sets timestamp.
 	 */
 	public function test_update_todo_to_awaiting_sets_timestamp(): void {
-		$user_id = $this->createApprovedStadionUser( 'awaiting_update' );
+		$user_id = $this->createApprovedRondoUser( 'awaiting_update' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -945,14 +945,14 @@ class TodoCptTest extends StadionTestCase {
 		);
 
 		// Verify initial state (open, not awaiting)
-		$initial = $this->doRestRequest( 'GET', '/stadion/v1/todos/' . $todo_id );
+		$initial = $this->doRestRequest( 'GET', '/rondo/v1/todos/' . $todo_id );
 		$this->assertEquals( 'open', $initial->get_data()['status'], 'Todo should be open initially' );
 
 		// Update to awaiting status
 		$before_update = time();
 		$response      = $this->doRestRequest(
 			'PUT',
-			'/stadion/v1/todos/' . $todo_id,
+			'/rondo/v1/todos/' . $todo_id,
 			[
 				'status' => 'awaiting',
 			]
@@ -975,7 +975,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test completing awaiting todo clears timestamp.
 	 */
 	public function test_complete_awaiting_todo_clears_timestamp(): void {
-		$user_id = $this->createApprovedStadionUser( 'awaiting_clear' );
+		$user_id = $this->createApprovedRondoUser( 'awaiting_clear' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -988,7 +988,7 @@ class TodoCptTest extends StadionTestCase {
 		// Create todo with awaiting status via REST
 		$create_response = $this->doRestRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/todos',
+			'/rondo/v1/people/' . $person_id . '/todos',
 			[
 				'content' => 'Waiting todo',
 				'status'  => 'awaiting',
@@ -997,14 +997,14 @@ class TodoCptTest extends StadionTestCase {
 		$todo_id         = $create_response->get_data()['id'];
 
 		// Verify it's awaiting
-		$awaiting = $this->doRestRequest( 'GET', '/stadion/v1/todos/' . $todo_id );
+		$awaiting = $this->doRestRequest( 'GET', '/rondo/v1/todos/' . $todo_id );
 		$this->assertEquals( 'awaiting', $awaiting->get_data()['status'], 'Todo should be awaiting' );
 		$this->assertNotNull( $awaiting->get_data()['awaiting_since'], 'Timestamp should be set' );
 
 		// Update to completed status
 		$response = $this->doRestRequest(
 			'PUT',
-			'/stadion/v1/todos/' . $todo_id,
+			'/rondo/v1/todos/' . $todo_id,
 			[
 				'status' => 'completed',
 			]
@@ -1021,7 +1021,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test reopening awaiting todo clears timestamp.
 	 */
 	public function test_reopen_awaiting_todo_clears_timestamp(): void {
-		$user_id = $this->createApprovedStadionUser( 'awaiting_reopen' );
+		$user_id = $this->createApprovedRondoUser( 'awaiting_reopen' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -1034,7 +1034,7 @@ class TodoCptTest extends StadionTestCase {
 		// Create todo with awaiting status
 		$create_response = $this->doRestRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/todos',
+			'/rondo/v1/people/' . $person_id . '/todos',
 			[
 				'content' => 'Waiting todo',
 				'status'  => 'awaiting',
@@ -1045,7 +1045,7 @@ class TodoCptTest extends StadionTestCase {
 		// Update to open status (reopen)
 		$response = $this->doRestRequest(
 			'PUT',
-			'/stadion/v1/todos/' . $todo_id,
+			'/rondo/v1/todos/' . $todo_id,
 			[
 				'status' => 'open',
 			]
@@ -1062,7 +1062,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test format_todo includes status and awaiting_since fields.
 	 */
 	public function test_format_todo_includes_status_and_awaiting_fields(): void {
-		$user_id = $this->createApprovedStadionUser( 'format_awaiting' );
+		$user_id = $this->createApprovedRondoUser( 'format_awaiting' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -1080,7 +1080,7 @@ class TodoCptTest extends StadionTestCase {
 			]
 		);
 
-		$response = $this->doRestRequest( 'GET', '/stadion/v1/todos/' . $todo_id );
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos/' . $todo_id );
 
 		$this->assertEquals( 200, $response->get_status() );
 
@@ -1095,7 +1095,7 @@ class TodoCptTest extends StadionTestCase {
 	 * Test status transitions follow expected flow.
 	 */
 	public function test_status_transition_flow(): void {
-		$user_id = $this->createApprovedStadionUser( 'status_flow' );
+		$user_id = $this->createApprovedRondoUser( 'status_flow' );
 		wp_set_current_user( $user_id );
 
 		$person_id = $this->createPerson(
@@ -1108,7 +1108,7 @@ class TodoCptTest extends StadionTestCase {
 		// Create open todo
 		$create_response = $this->doRestRequest(
 			'POST',
-			'/stadion/v1/people/' . $person_id . '/todos',
+			'/rondo/v1/people/' . $person_id . '/todos',
 			[
 				'content' => 'Test todo',
 			]
@@ -1117,21 +1117,21 @@ class TodoCptTest extends StadionTestCase {
 		$this->assertEquals( 'open', $create_response->get_data()['status'], 'New todo should be open' );
 
 		// Open -> Awaiting
-		$response1 = $this->doRestRequest( 'PUT', '/stadion/v1/todos/' . $todo_id, [ 'status' => 'awaiting' ] );
+		$response1 = $this->doRestRequest( 'PUT', '/rondo/v1/todos/' . $todo_id, [ 'status' => 'awaiting' ] );
 		$this->assertEquals( 'awaiting', $response1->get_data()['status'], 'Todo should transition to awaiting' );
 		$this->assertNotNull( $response1->get_data()['awaiting_since'], 'awaiting_since should be set' );
 
 		// Awaiting -> Completed
-		$response2 = $this->doRestRequest( 'PUT', '/stadion/v1/todos/' . $todo_id, [ 'status' => 'completed' ] );
+		$response2 = $this->doRestRequest( 'PUT', '/rondo/v1/todos/' . $todo_id, [ 'status' => 'completed' ] );
 		$this->assertEquals( 'completed', $response2->get_data()['status'], 'Todo should transition to completed' );
 		$this->assertNull( $response2->get_data()['awaiting_since'], 'awaiting_since should be cleared' );
 
 		// Completed -> Open (reopen)
-		$response3 = $this->doRestRequest( 'PUT', '/stadion/v1/todos/' . $todo_id, [ 'status' => 'open' ] );
+		$response3 = $this->doRestRequest( 'PUT', '/rondo/v1/todos/' . $todo_id, [ 'status' => 'open' ] );
 		$this->assertEquals( 'open', $response3->get_data()['status'], 'Todo should transition back to open' );
 
 		// Open -> Completed (direct completion without awaiting)
-		$response4 = $this->doRestRequest( 'PUT', '/stadion/v1/todos/' . $todo_id, [ 'status' => 'completed' ] );
+		$response4 = $this->doRestRequest( 'PUT', '/rondo/v1/todos/' . $todo_id, [ 'status' => 'completed' ] );
 		$this->assertEquals( 'completed', $response4->get_data()['status'], 'Todo should transition directly to completed' );
 	}
 }
