@@ -80,6 +80,7 @@ The nonce is available in `window.stadionConfig.nonce` when logged in to Stadion
 | `acf.nickname` | string | Nickname | Any string |
 | `acf.gender` | string | Gender | `male`, `female`, `non_binary`, `other`, `prefer_not_to_say` |
 | `acf.pronouns` | string | Pronouns | e.g., "hij/hem", "zij/haar" |
+| `acf.birthdate` | string | Birthdate | `Y-m-d` format (e.g., "1982-02-06"). Read-only in UI, synced from Sportlink |
 
 ### Contact Information
 
@@ -277,6 +278,7 @@ X-WP-Nonce: {nonce}
     "infix": "",
     "last_name": "de Vries",
     "gender": "male",
+    "birthdate": "",
     "contact_info": [...],
     "addresses": [...],
     "work_history": [],
@@ -349,6 +351,7 @@ X-WP-Nonce: {nonce}
     "nickname": "",
     "gender": "male",
     "pronouns": "",
+    "birthdate": "",
     "photo_gallery": [],
     "how_we_met": "",
     "met_date": "",
