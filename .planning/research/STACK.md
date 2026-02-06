@@ -131,7 +131,7 @@ const loadMoreRef = useInfiniteScroll(fetchNextPage, hasNextPage, isFetchingNext
 
 **Recommended pattern (server-side PHP):**
 ```php
-// In custom REST endpoint: /stadion/v1/people
+// In custom REST endpoint: /rondo/v1/people
 global $wpdb;
 
 // Single JOIN to wp_postmeta for work_history
@@ -212,7 +212,7 @@ export function useUpdateColumnPreferences() {
 **Backend (PHP REST endpoint):**
 ```php
 // In includes/class-rest-api.php (pattern already exists for theme_preferences)
-register_rest_route('stadion/v1', '/user/list-preferences', [
+register_rest_route('rondo/v1', '/user/list-preferences', [
   'methods' => 'GET',
   'callback' => function() {
     $user_id = get_current_user_id();
@@ -224,7 +224,7 @@ register_rest_route('stadion/v1', '/user/list-preferences', [
   },
 ]);
 
-register_rest_route('stadion/v1', '/user/list-preferences', [
+register_rest_route('rondo/v1', '/user/list-preferences', [
   'methods' => 'PATCH',
   'callback' => function($request) {
     $user_id = get_current_user_id();
@@ -350,8 +350,8 @@ When user scrolls past 10 pages, oldest pages are evicted from cache. Scrolling 
 ### Files to Modify
 
 **Backend:**
-- `includes/class-rest-api.php` - Add `/stadion/v1/people` endpoint with wpdb query
-- `includes/class-rest-api.php` - Add `/stadion/v1/user/list-preferences` endpoints
+- `includes/class-rest-api.php` - Add `/rondo/v1/people` endpoint with wpdb query
+- `includes/class-rest-api.php` - Add `/rondo/v1/user/list-preferences` endpoints
 
 **Frontend:**
 - `src/hooks/usePeople.js` - Add `usePeopleInfinite` hook
@@ -380,9 +380,9 @@ When user scrolls past 10 pages, oldest pages are evicted from cache. Scrolling 
 ## Recommended Approach
 
 ### Phase 1: Backend Foundation
-1. Create custom `/stadion/v1/people` endpoint with wpdb JOIN query
+1. Create custom `/rondo/v1/people` endpoint with wpdb JOIN query
 2. Implement server-side filtering (search, labels, team)
-3. Add `/stadion/v1/user/list-preferences` endpoints for column storage
+3. Add `/rondo/v1/user/list-preferences` endpoints for column storage
 4. Add indexes to wp_postmeta if needed
 
 ### Phase 2: Frontend Integration

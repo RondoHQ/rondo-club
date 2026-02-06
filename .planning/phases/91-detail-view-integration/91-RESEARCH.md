@@ -185,7 +185,7 @@ Problems that look simple but have existing solutions:
 **How to avoid:** Fetch field definitions for display (available to all logged-in users when fetching the post), but don't show Settings link to non-admins.
 **Warning signs:** Regular users see empty Custom Fields section.
 
-**Resolution:** The field definitions are needed to display values properly (to get label, type, etc.). However, the `/stadion/v1/custom-fields/{post_type}` endpoint requires `manage_options`. We have two options:
+**Resolution:** The field definitions are needed to display values properly (to get label, type, etc.). However, the `/rondo/v1/custom-fields/{post_type}` endpoint requires `manage_options`. We have two options:
 1. Create a new read-only endpoint for non-admins
 2. Include field definitions in the person/team REST response
 
@@ -343,7 +343,7 @@ function FieldDisplay({ field, value }) {
 Things that couldn't be fully resolved:
 
 1. **Field Definition Access for Non-Admins**
-   - What we know: Currently `/stadion/v1/custom-fields/{post_type}` requires `manage_options`
+   - What we know: Currently `/rondo/v1/custom-fields/{post_type}` requires `manage_options`
    - What's unclear: Non-admins need field definitions to display values properly
    - Recommendation: Add field definitions to person/team REST response via `rest_prepare` filter, OR create read-only endpoint for field metadata (label, type, choices only)
 

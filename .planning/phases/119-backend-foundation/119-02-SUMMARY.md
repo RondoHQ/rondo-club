@@ -48,7 +48,7 @@ VOG tab in Settings page with form for from email, new volunteer template, and r
 ## What Was Built
 
 1. **VOG API methods in client.js:**
-   - `getVOGSettings()` - fetches VOG configuration from `/stadion/v1/vog/settings`
+   - `getVOGSettings()` - fetches VOG configuration from `/rondo/v1/vog/settings`
    - `updateVOGSettings()` - saves VOG configuration via POST
 
 2. **VOG tab in Settings page:**
@@ -90,8 +90,8 @@ None - plan executed exactly as written.
 ### src/api/client.js (+4 lines)
 ```javascript
 // VOG Settings (admin only)
-getVOGSettings: () => api.get('/stadion/v1/vog/settings'),
-updateVOGSettings: (settings) => api.post('/stadion/v1/vog/settings', settings),
+getVOGSettings: () => api.get('/rondo/v1/vog/settings'),
+updateVOGSettings: (settings) => api.post('/rondo/v1/vog/settings', settings),
 ```
 
 ### src/pages/Settings/Settings.jsx (+161 lines)
@@ -107,7 +107,7 @@ updateVOGSettings: (settings) => api.post('/stadion/v1/vog/settings', settings),
 | From | To | Via |
 |------|------|-----|
 | Settings.jsx | client.js | prmApi.getVOGSettings / updateVOGSettings |
-| client.js | Backend | /stadion/v1/vog/settings endpoint |
+| client.js | Backend | /rondo/v1/vog/settings endpoint |
 
 ## Next Phase Readiness
 

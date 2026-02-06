@@ -192,7 +192,7 @@ class AutoTitle {
 **Example:**
 ```php
 // Source: includes/class-wp-cli.php line 854 (existing migration pattern)
-class STADION_Migration_CLI_Command {
+class RONDO_Migration_CLI_Command {
     /**
      * Migrate birthdates from important_dates to person post_meta
      *
@@ -474,7 +474,7 @@ $is_birthday = in_array('birthday', $date_types, true);
 
 if (defined('WP_CLI') && WP_CLI) {
     WP_CLI::add_command('stadion migrate-birthdates', [
-        'STADION_Migration_CLI_Command',
+        'RONDO_Migration_CLI_Command',
         'migrate_birthdates'
     ]);
 }

@@ -53,7 +53,7 @@ The current implementation follows this pattern:
 User clicks "Connect Google Calendar"
     |
     v
-GET /stadion/v1/calendar/auth/google
+GET /rondo/v1/calendar/auth/google
     |
     v
 GoogleOAuth::get_auth_url($user_id)
@@ -65,7 +65,7 @@ GoogleOAuth::get_auth_url($user_id)
 User redirected to Google, grants access
     |
     v
-GET /stadion/v1/calendar/auth/google/callback
+GET /rondo/v1/calendar/auth/google/callback
     - Validates state from transient
     - Exchanges code for tokens via GoogleOAuth::handle_callback()
     - Creates calendar connection with encrypted credentials
@@ -210,8 +210,8 @@ $actual_scopes = explode(' ', $token['scope']);
 $state = json_encode(['token' => $random_token, 'purpose' => 'contacts']);
 
 // Option 2: Separate endpoints (recommended)
-// /stadion/v1/calendar/auth/google/callback - calendar
-// /stadion/v1/google-contacts/callback      - contacts
+// /rondo/v1/calendar/auth/google/callback - calendar
+// /rondo/v1/google-contacts/callback      - contacts
 ```
 **Warning signs:** Calendar connections created when contacts intended
 
@@ -257,7 +257,7 @@ class GoogleOAuth {
         $client = new \Google\Client();
         $client->setClientId(GOOGLE_CALENDAR_CLIENT_ID);
         $client->setClientSecret(GOOGLE_CALENDAR_CLIENT_SECRET);
-        $client->setRedirectUri(rest_url('stadion/v1/google-contacts/callback'));
+        $client->setRedirectUri(rest_url('rondo/v1/google-contacts/callback'));
 
         // Set contacts scope based on access mode
         $scope = $readonly ? self::CONTACTS_SCOPE_READONLY : self::CONTACTS_SCOPE_READWRITE;
@@ -451,7 +451,7 @@ Things that couldn't be fully resolved:
 - `_stadion_google_contacts_pending_import` - Flag for auto-start import (Phase 80)
 
 ### API Endpoints to Add
-- `GET /stadion/v1/google-contacts/status` - Check connection status
-- `GET /stadion/v1/google-contacts/auth` - Initiate OAuth flow
-- `GET /stadion/v1/google-contacts/callback` - Handle OAuth callback
-- `DELETE /stadion/v1/google-contacts` - Disconnect and revoke
+- `GET /rondo/v1/google-contacts/status` - Check connection status
+- `GET /rondo/v1/google-contacts/auth` - Initiate OAuth flow
+- `GET /rondo/v1/google-contacts/callback` - Handle OAuth callback
+- `DELETE /rondo/v1/google-contacts` - Disconnect and revoke

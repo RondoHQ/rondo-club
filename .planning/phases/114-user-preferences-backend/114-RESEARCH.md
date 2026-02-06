@@ -8,9 +8,9 @@
 
 Research into implementing per-user column preference storage for the People list via WordPress REST API endpoints. This phase builds backend-only infrastructure to persist column visibility and order preferences in `wp_usermeta`, following established patterns in the Stadion codebase.
 
-Key findings: Stadion already implements multiple user preference endpoints (`/stadion/v1/user/theme-preferences`, `/user/dashboard-settings`) that provide proven patterns for this work. The Custom Fields Manager class exposes ACF field metadata programmatically, enabling preference validation against current field definitions. WordPress user_meta provides simple, per-user storage with immediate consistency.
+Key findings: Stadion already implements multiple user preference endpoints (`/rondo/v1/user/theme-preferences`, `/user/dashboard-settings`) that provide proven patterns for this work. The Custom Fields Manager class exposes ACF field metadata programmatically, enabling preference validation against current field definitions. WordPress user_meta provides simple, per-user storage with immediate consistency.
 
-The architecture is straightforward: two endpoints (GET and PATCH) at `/stadion/v1/user/list-preferences`, storing a simple array of column IDs in display order, with validation against active ACF fields to reject deleted field references.
+The architecture is straightforward: two endpoints (GET and PATCH) at `/rondo/v1/user/list-preferences`, storing a simple array of column IDs in display order, with validation against active ACF fields to reject deleted field references.
 
 **Primary recommendation:** Follow existing `update_theme_preferences()` pattern from class-rest-api.php — PATCH endpoint with optional parameters, merge with defaults, store in single user_meta key.
 
@@ -21,7 +21,7 @@ The architecture is straightforward: two endpoints (GET and PATCH) at `/stadion/
 | Technology | Version | Purpose | Why Standard |
 |------------|---------|---------|--------------|
 | WordPress user_meta | WP 6.0+ | Per-user preference storage | Native WordPress API, zero additional dependencies, immediate consistency |
-| WordPress REST API | WP 6.0+ | HTTP interface for preferences | Already used throughout Stadion (`/stadion/v1/*` namespace) |
+| WordPress REST API | WP 6.0+ | HTTP interface for preferences | Already used throughout Stadion (`/rondo/v1/*` namespace) |
 | ACF Custom Fields Manager | Current | Field metadata retrieval | Exposes active field definitions for validation (Phase 87-88) |
 | PHP 8.0+ | 8.0+ | Server-side validation | Project requirement |
 
@@ -53,7 +53,7 @@ No additional packages needed — uses WordPress core and existing Stadion class
 
 ```
 REST API Endpoints:
-/stadion/v1/user/list-preferences
+/rondo/v1/user/list-preferences
 ├── GET  - Retrieve current user's preferences (with defaults)
 └── PATCH - Update current user's preferences (partial updates)
 
@@ -133,7 +133,7 @@ public function update_dashboard_settings( $request ) {
 
 **Apply to Phase 114:**
 ```php
-// PATCH /stadion/v1/user/list-preferences
+// PATCH /rondo/v1/user/list-preferences
 public function update_list_preferences( $request ) {
     $user_id = get_current_user_id();
 
@@ -210,7 +210,7 @@ private function get_valid_column_ids(): array {
 
 **Structure:**
 ```php
-// GET /stadion/v1/user/list-preferences response
+// GET /rondo/v1/user/list-preferences response
 [
     'visible_columns' => [ 'team', 'labels', 'telephone', 'modified' ],
     'available_columns' => [
@@ -514,7 +514,7 @@ private function get_valid_column_ids(): array {
 
 // Get user's people list preferences
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/user/list-preferences',
     [
         'methods'             => \WP_REST_Server::READABLE,
@@ -525,7 +525,7 @@ register_rest_route(
 
 // Update user's people list preferences
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/user/list-preferences',
     [
         'methods'             => 'PATCH',

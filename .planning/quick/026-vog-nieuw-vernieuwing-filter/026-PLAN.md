@@ -108,7 +108,7 @@ if ( $vog_type === 'nieuw' ) {
 ```
   </action>
   <verify>Test via curl:
-- `curl -X GET "https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&vog_type=nieuw"` - should only return people without datum-vog
+- `curl -X GET "https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?huidig_vrijwilliger=1&vog_missing=1&vog_older_than_years=3&vog_type=nieuw"` - should only return people without datum-vog
 - `curl -X GET "...&vog_type=vernieuwing"` - should only return people with expired datum-vog
 - `curl -X GET "...&vog_type="` - should return both (current behavior)
   </verify>

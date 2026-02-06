@@ -7,9 +7,9 @@ Integrated workspace activity (including @mentions) into the existing daily remi
 
 ## Tasks Completed
 
-### Task 1: Add workspace activity gathering to STADION_Reminders
+### Task 1: Add workspace activity gathering to RONDO_Reminders
 - Updated `process_user_reminders()` to gather collaborative content:
-  - Calls `STADION_Mention_Notifications::get_queued_mentions()` to get pending mention notifications
+  - Calls `RONDO_Mention_Notifications::get_queued_mentions()` to get pending mention notifications
   - Calls new `get_workspace_activity()` method to get recent shared notes
 - Added `get_workspace_activity()` method that:
   - Gets user's workspace memberships from `_workspace_memberships` user meta
@@ -19,7 +19,7 @@ Integrated workspace activity (including @mentions) into the existing daily remi
 - Enhanced content check to include collaborative content before sending
 
 ### Task 2: Update email digest to include workspace activity section
-- Updated `STADION_Email_Channel::send()` to check for mentions and workspace activity
+- Updated `RONDO_Email_Channel::send()` to check for mentions and workspace activity
 - Subject line now indicates team activity: "[Site] Your digest (including team activity) - Date"
 - Added mentions section to `format_email_message()`:
   - Blue accent color heading "You were mentioned"
@@ -36,7 +36,7 @@ Integrated workspace activity (including @mentions) into the existing daily remi
 - Prevents unnecessary empty notification emails
 
 ### Bonus: Slack channel support
-- Updated `STADION_Slack_Channel::send()` with same content checks
+- Updated `RONDO_Slack_Channel::send()` with same content checks
 - Added mentions and workspace activity sections to `format_slack_blocks()`:
   - Uses Slack markdown formatting
   - Emoji indicators for sections
@@ -55,7 +55,7 @@ Integrated workspace activity (including @mentions) into the existing daily remi
 ## Technical Notes
 
 ### Mention Queue Integration
-- Mentions queued by `STADION_Mention_Notifications` when preference is 'digest'
+- Mentions queued by `RONDO_Mention_Notifications` when preference is 'digest'
 - `get_queued_mentions()` returns mention data and clears the queue
 - Called once per user during digest processing
 
@@ -82,7 +82,7 @@ Content checks at multiple levels:
 - [x] `npm run build` succeeds
 
 ## Integration Points
-- Uses `STADION_Mention_Notifications::get_queued_mentions()` from Plan 10-03
+- Uses `RONDO_Mention_Notifications::get_queued_mentions()` from Plan 10-03
 - Uses `workspace_access` taxonomy from Phase 7
 - Uses `_workspace_memberships` user meta from Phase 8
 - Uses `_note_visibility` comment meta from Plan 10-01

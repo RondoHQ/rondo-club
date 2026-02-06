@@ -92,7 +92,7 @@ $fees = get_option( 'stadion_membership_fees', [
 // Source: Stadion includes/class-rest-api.php (notification channels pattern)
 // In class-rest-api.php, add to register_routes()
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/membership-fees',
     [
         'methods'             => WP_REST_Server::READABLE,
@@ -102,7 +102,7 @@ register_rest_route(
 );
 
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/membership-fees',
     [
         'methods'             => WP_REST_Server::CREATABLE,
@@ -371,14 +371,14 @@ if ( $updated ) {
 const { data: fees, isLoading } = useQuery({
   queryKey: ['membership-fees'],
   queryFn: async () => {
-    const response = await prmApi.get('/stadion/v1/membership-fees');
+    const response = await prmApi.get('/rondo/v1/membership-fees');
     return response.data.fees;
   },
 });
 
 const updateFeesMutation = useMutation({
   mutationFn: async (fees) => {
-    const response = await prmApi.post('/stadion/v1/membership-fees', { fees });
+    const response = await prmApi.post('/rondo/v1/membership-fees', { fees });
     return response.data;
   },
   onSuccess: () => {

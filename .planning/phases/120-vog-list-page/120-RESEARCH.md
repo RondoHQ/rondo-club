@@ -9,7 +9,7 @@
 This phase creates a filtered list view for volunteers needing VOG (Verklaring Omtrent Gedrag) compliance. The implementation follows established patterns from the People List page with server-side filtering, pagination, and sortable columns. The backend filtering infrastructure already exists (Phase 119), so this is primarily a frontend implementation that adds a new route, navigation item, and reuses existing list patterns.
 
 **Key findings:**
-- Backend filtering endpoint `/stadion/v1/people/filtered` already supports VOG filters (`vog_missing` and `vog_older_than_years`)
+- Backend filtering endpoint `/rondo/v1/people/filtered` already supports VOG filters (`vog_missing` and `vog_older_than_years`)
 - `huidig-vrijwilliger` and `datum-vog` custom fields exist and are indexed
 - FileCheck icon already imported in Settings.jsx
 - PeopleList.jsx provides complete pattern for sortable, filterable list with custom field display
@@ -163,7 +163,7 @@ import CustomFieldColumn from '@/components/CustomFieldColumn';
 
 - **Don't fetch all people client-side and filter:** Use server-side filtering via `useFilteredPeople` for performance
 - **Don't hardcode column widths:** Use dynamic width patterns from PeopleList.jsx
-- **Don't create custom backend endpoint:** Existing `/stadion/v1/people/filtered` handles VOG filters
+- **Don't create custom backend endpoint:** Existing `/rondo/v1/people/filtered` handles VOG filters
 - **Don't duplicate list logic:** Reuse established patterns from PeopleList.jsx
 
 ## Don't Hand-Roll
@@ -429,7 +429,7 @@ function VOGRow({ person, customFieldsMap }) {
 
 | Old Approach | Current Approach | When Changed | Impact |
 |--------------|------------------|--------------|--------|
-| Client-side filtering with WP_Query | Server-side filtering with `/stadion/v1/people/filtered` | Phase 111-113 (v9.0) | Massive performance improvement for 1400+ contacts |
+| Client-side filtering with WP_Query | Server-side filtering with `/rondo/v1/people/filtered` | Phase 111-113 (v9.0) | Massive performance improvement for 1400+ contacts |
 | Separate endpoints per filter | Single flexible endpoint with query params | Phase 111 | Cleaner API, better caching |
 | Manual meta_query construction | Named filter parameters (`vogMissing`, `vogOlderThanYears`) | Phase 119 | Type-safe, self-documenting |
 

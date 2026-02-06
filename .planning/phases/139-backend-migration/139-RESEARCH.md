@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase implements user isolation for tasks (stadion_todo custom post type) by filtering queries based on the `post_author` field. The system already has a robust access control infrastructure (STADION_Access_Control class) that was recently refactored from shared access to user-isolated access. This phase extends that pattern to tasks, ensuring each user only sees tasks they created.
+This phase implements user isolation for tasks (stadion_todo custom post type) by filtering queries based on the `post_author` field. The system already has a robust access control infrastructure (RONDO_Access_Control class) that was recently refactored from shared access to user-isolated access. This phase extends that pattern to tasks, ensuring each user only sees tasks they created.
 
 The standard approach in WordPress is to use the native `post_author` field combined with WP_Query filtering. The codebase already filters person, team, important_date, and stadion_todo post types in the AccessControl class, but currently only blocks unapproved users - it doesn't filter by author. This phase adds author-based filtering to existing infrastructure.
 
@@ -224,7 +224,7 @@ Problems that look simple but have existing solutions:
 **Warning signs:** Migration completes but user reports seeing wrong tasks
 
 ### Pitfall 4: Not Handling get_all_todos Custom Endpoint
-**What goes wrong:** The custom `/stadion/v1/todos` endpoint in class-rest-todos.php uses get_posts() which respects pre_get_posts filters, but developers might assume it needs separate filtering
+**What goes wrong:** The custom `/rondo/v1/todos` endpoint in class-rest-todos.php uses get_posts() which respects pre_get_posts filters, but developers might assume it needs separate filtering
 **Why it happens:** Confusion about which filters apply to which query methods
 **How to avoid:**
 - Understand that `get_posts()` internally uses WP_Query, so `pre_get_posts` filters apply

@@ -34,7 +34,7 @@ Extended backend list-preferences API with column_order and column_widths storag
 
 ### Backend API Extension (class-rest-api.php)
 
-Extended the `/stadion/v1/user/list-preferences` endpoint created in Phase 114:
+Extended the `/rondo/v1/user/list-preferences` endpoint created in Phase 114:
 
 **GET Response now includes:**
 - `visible_columns` - array of visible column IDs (existing)
@@ -73,8 +73,8 @@ New TanStack Query hook at `src/hooks/useListPreferences.js`:
 ### API Client Addition (client.js)
 
 Added to `prmApi`:
-- `getListPreferences()` - GET /stadion/v1/user/list-preferences
-- `updateListPreferences(prefs)` - PATCH /stadion/v1/user/list-preferences
+- `getListPreferences()` - GET /rondo/v1/user/list-preferences
+- `updateListPreferences(prefs)` - PATCH /rondo/v1/user/list-preferences
 
 ## Decisions Made
 
@@ -94,7 +94,7 @@ None - plan executed exactly as written.
 **Backend verification (browser console):**
 ```javascript
 // Test column_order and column_widths storage
-await fetch('/wp-json/stadion/v1/user/list-preferences', {
+await fetch('/wp-json/rondo/v1/user/list-preferences', {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.wpApiSettings.nonce },
   body: JSON.stringify({
@@ -105,13 +105,13 @@ await fetch('/wp-json/stadion/v1/user/list-preferences', {
 // Returns: column_order and column_widths in response
 
 // Test GET returns stored values
-await fetch('/wp-json/stadion/v1/user/list-preferences', {
+await fetch('/wp-json/rondo/v1/user/list-preferences', {
   headers: { 'X-WP-Nonce': window.wpApiSettings.nonce }
 }).then(r => r.json());
 // Returns: column_order: ['team', 'labels', 'modified'], column_widths: { team: 200, labels: 150 }
 
 // Test reset clears all
-await fetch('/wp-json/stadion/v1/user/list-preferences', {
+await fetch('/wp-json/rondo/v1/user/list-preferences', {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.wpApiSettings.nonce },
   body: JSON.stringify({ reset: true })

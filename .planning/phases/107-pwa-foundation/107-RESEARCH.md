@@ -208,10 +208,10 @@ function stadion_pwa_meta_tags() {
     <meta name="apple-mobile-web-app-title" content="Stadion">
 
     <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="<?php echo STADION_THEME_URL; ?>/public/icons/apple-touch-icon-180x180.png">
+    <link rel="apple-touch-icon" href="<?php echo RONDO_THEME_URL; ?>/public/icons/apple-touch-icon-180x180.png">
 
     <!-- Manifest -->
-    <link rel="manifest" href="<?php echo STADION_THEME_URL; ?>/dist/manifest.webmanifest">
+    <link rel="manifest" href="<?php echo RONDO_THEME_URL; ?>/dist/manifest.webmanifest">
 
     <!-- Theme Color (will be updated dynamically by React) -->
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f97316">

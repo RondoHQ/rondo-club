@@ -52,7 +52,7 @@ metrics:
 
 ## What Was Built
 
-Extended the `/stadion/v1/people/filtered` endpoint to support sorting by custom ACF fields via `orderby=custom_{field_name}` parameter.
+Extended the `/rondo/v1/people/filtered` endpoint to support sorting by custom ACF fields via `orderby=custom_{field_name}` parameter.
 
 **Key capabilities:**
 - Validates custom field names against active CustomFields Manager definitions

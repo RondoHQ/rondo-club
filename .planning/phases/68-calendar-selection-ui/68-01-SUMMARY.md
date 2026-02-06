@@ -47,7 +47,7 @@ Users can now view available calendars for each connection and select which cale
    - Returns array of calendars with id, name, color, and primary flag
    - Handles errors gracefully, returns empty array on failure
 
-2. Added REST endpoint `GET /stadion/v1/calendar/connections/{id}/calendars`:
+2. Added REST endpoint `GET /rondo/v1/calendar/connections/{id}/calendars`:
    - Permission: requires approved user
    - Routes to appropriate provider based on connection type
    - Google: uses new `list_calendars()` method

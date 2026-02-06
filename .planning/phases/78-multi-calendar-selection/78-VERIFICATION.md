@@ -38,7 +38,7 @@ score: 5/5 must-haves verified
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| `src/pages/Settings/Settings.jsx` | `/stadion/v1/calendar/connections/{id}` | PUT request with calendar_ids array | WIRED | `data.calendar_ids = selectedCalendarIds` at line 1273, sent via `onSave()` |
+| `src/pages/Settings/Settings.jsx` | `/rondo/v1/calendar/connections/{id}` | PUT request with calendar_ids array | WIRED | `data.calendar_ids = selectedCalendarIds` at line 1273, sent via `onSave()` |
 | `includes/class-google-calendar-provider.php` | connection.calendar_ids | get_calendar_ids helper normalizes old/new format | WIRED | Returns array from `calendar_ids` (new) or `[calendar_id]` (old) or `['primary']` (default) |
 | EditConnectionModal | REST API response | Initializes from current_ids | WIRED | Lines 1203-1208 set `selectedCalendarIds` from `response.data.current_ids` array |
 

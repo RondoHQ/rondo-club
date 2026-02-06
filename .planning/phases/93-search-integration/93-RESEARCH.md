@@ -134,7 +134,7 @@ Problems that look simple but have existing solutions:
 | Getting field definitions | Custom database queries | `Manager::get_fields()` | Already handles active filtering |
 | Meta LIKE queries | Custom SQL | WP_Query meta_query with LIKE | WordPress handles escaping, indexing |
 | Scoring system | New scoring logic | Existing pattern in global_search | Maintains consistency |
-| Access control | Custom filtering | Existing STADION_Access_Control | Already filters by user |
+| Access control | Custom filtering | Existing RONDO_Access_Control | Already filters by user |
 
 **Key insight:** The existing search already does multi-step scoring with meta queries. Just add another step for custom fields.
 

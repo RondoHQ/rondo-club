@@ -31,7 +31,7 @@ score: 5/5 must-haves verified
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
 | `includes/class-vog-email.php` | VOG email service class | EXISTS, SUBSTANTIVE (334 lines), WIRED | Class with send(), get_from_email(), get_template_new(), get_template_renewal(), substitute_variables(), update methods |
-| `includes/class-rest-api.php` | VOG settings endpoints | MODIFIED, WIRED | GET/POST `/stadion/v1/vog/settings` at lines 503-530, callbacks at lines 2305-2340, admin-only permissions |
+| `includes/class-rest-api.php` | VOG settings endpoints | MODIFIED, WIRED | GET/POST `/rondo/v1/vog/settings` at lines 503-530, callbacks at lines 2305-2340, admin-only permissions |
 | `functions.php` | Class registration | MODIFIED, WIRED | `use Stadion\VOG\VOGEmail` at line 72, class_alias at line 271 |
 | `src/api/client.js` | VOG API methods | MODIFIED, WIRED | getVOGSettings() and updateVOGSettings() at lines 293-294 |
 | `src/pages/Settings/Settings.jsx` | VOG settings tab | MODIFIED, WIRED | VOGTab component (lines 3314-3418), tab in TABS array (line 22), state management (lines 119-127), fetch on mount (lines 285-302), save handler (lines 304-313) |
@@ -41,7 +41,7 @@ score: 5/5 must-haves verified
 | From | To | Via | Status | Details |
 |------|------|-----|--------|---------|
 | Settings.jsx | client.js | prmApi.getVOGSettings / updateVOGSettings | WIRED | Lines 293, 309 call API methods |
-| client.js | REST API | /stadion/v1/vog/settings | WIRED | Lines 293-294 define endpoint calls |
+| client.js | REST API | /rondo/v1/vog/settings | WIRED | Lines 293-294 define endpoint calls |
 | REST API | VOGEmail class | new VOGEmail() | WIRED | Lines 2306, 2317 instantiate class |
 | VOGEmail.send() | wp_mail() | wp_mail with filters | WIRED | Line 212 calls wp_mail(), lines 202-203 add from filters |
 | VOGEmail.send() | post_meta | update_post_meta | WIRED | Line 229 stores vog_email_sent_date |

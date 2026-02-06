@@ -50,7 +50,7 @@ re_verification: false
 |------|----|----|--------|---------|
 | PeopleList.jsx | useFilteredPeople hook | React hook import | ✓ WIRED | Import at line 4, call at line 442 with all filter params |
 | PeopleList.jsx | Pagination component | Component import | ✓ WIRED | Import at line 11, rendered at line 1023 with currentPage/totalPages props |
-| usePeople.js | /stadion/v1/people/filtered | API client method | ✓ WIRED | Calls `prmApi.getFilteredPeople(params)` at line 124 |
+| usePeople.js | /rondo/v1/people/filtered | API client method | ✓ WIRED | Calls `prmApi.getFilteredPeople(params)` at line 124 |
 | class-rest-people.php | Stadion\CustomFields\Manager | Field validation and type lookup | ✓ WIRED | Import at line 10, instantiated at lines 936 and 1067, calls `get_fields('person', false)` |
 | Pagination component | setPage callback | onPageChange prop | ✓ WIRED | Receives `onPageChange={setPage}` from PeopleList (line 1028), calls it on button clicks |
 

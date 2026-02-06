@@ -12,7 +12,7 @@ This research analyzes how to integrate infinite scroll with server-side filteri
 2. **Per-user column preferences** for customizable list views
 3. **Server-side sorting** including ACF custom fields
 
-Key findings: Stadion's architecture is well-suited for these enhancements. The existing REST endpoint pattern (`/wp/v2/people` + `/stadion/v1/*` for custom endpoints) provides clear integration points. TanStack Query's `useInfiniteQuery` replaces the current `usePeople()` implementation. User preferences fit naturally into existing user_meta storage patterns.
+Key findings: Stadion's architecture is well-suited for these enhancements. The existing REST endpoint pattern (`/wp/v2/people` + `/rondo/v1/*` for custom endpoints) provides clear integration points. TanStack Query's `useInfiniteQuery` replaces the current `usePeople()` implementation. User preferences fit naturally into existing user_meta storage patterns.
 
 ## Current Architecture Analysis
 
@@ -38,12 +38,12 @@ Backend (WordPress)
 │   ├── Standard WP_Query parameters
 │   └── ACF fields in response via _embed
 │
-├── /stadion/v1/people/* (custom endpoints)
+├── /rondo/v1/people/* (custom endpoints)
 │   ├── /people/bulk-update - bulk operations
 │   ├── /people/{id}/dates - person dates
 │   └── /people/{id}/timeline - person timeline
 │
-└── Access Control (STADION_Access_Control)
+└── Access Control (RONDO_Access_Control)
     ├── Hooks into WP_Query (pre_get_posts)
     ├── Approved users see all data
     └── Unapproved users see nothing
@@ -88,13 +88,13 @@ Backend (WordPress)
 │  usePeopleInfinite() (New Hook)                              │
 │  ├── Replaces usePeople() for list view                     │
 │  ├── useInfiniteQuery with page-based pagination            │
-│  ├── queryFn: GET /stadion/v1/people/filtered               │
+│  ├── queryFn: GET /rondo/v1/people/filtered               │
 │  ├── getNextPageParam: page+1 if hasMore                    │
 │  └── Flattens pages for rendering                           │
 │                                                               │
 │  useUserPreferences() (New Hook)                             │
-│  ├── GET /stadion/v1/user/list-preferences                  │
-│  ├── PATCH /stadion/v1/user/list-preferences                │
+│  ├── GET /rondo/v1/user/list-preferences                  │
+│  ├── PATCH /rondo/v1/user/list-preferences                │
 │  └── Manages column visibility, order, and default sort     │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
@@ -103,14 +103,14 @@ Backend (WordPress)
 │ Backend: WordPress REST API + Custom Endpoints              │
 ├─────────────────────────────────────────────────────────────┤
 │                                                               │
-│  /stadion/v1/people/filtered (New Endpoint)                  │
+│  /rondo/v1/people/filtered (New Endpoint)                  │
 │  ├── Server-side filtering (labels, birth_year, modified)   │
 │  ├── Server-side sorting (including ACF fields via JOIN)    │
 │  ├── Efficient pagination (LIMIT/OFFSET)                    │
 │  ├── Response: { people: [], hasMore: bool, total: int }    │
 │  └── Respects AccessControl (approved users only)           │
 │                                                               │
-│  /stadion/v1/user/list-preferences (New Endpoint)            │
+│  /rondo/v1/user/list-preferences (New Endpoint)            │
 │  ├── GET: Returns visible_columns, column_order, sort       │
 │  ├── PATCH: Updates preferences in user_meta                │
 │  └── Stored: wp_usermeta with key 'stadion_people_list_prefs'│
@@ -127,7 +127,7 @@ Backend (WordPress)
 
 ## Component Integration Points
 
-### 1. New REST Endpoint: `/stadion/v1/people/filtered`
+### 1. New REST Endpoint: `/rondo/v1/people/filtered`
 
 **Purpose:** Server-side filtering, sorting, and pagination for People list.
 
@@ -211,7 +211,7 @@ LIMIT {per_page} OFFSET {offset}
 - **Avoid LIKE on large tables** - Use full-text search for large datasets (100k+ records)
 - **Limit JOIN depth** - Maximum 3 JOINs per query to avoid exponential complexity
 
-### 2. New REST Endpoint: `/stadion/v1/user/list-preferences`
+### 2. New REST Endpoint: `/rondo/v1/user/list-preferences`
 
 **Purpose:** Store and retrieve per-user column preferences for People list.
 
@@ -250,14 +250,14 @@ LIMIT {per_page} OFFSET {offset}
 
 **Endpoints:**
 
-**GET** `/stadion/v1/user/list-preferences`
+**GET** `/rondo/v1/user/list-preferences`
 - Returns current user's preferences
 - Defaults if not set:
   - `visible_columns`: All core columns + active custom fields with `show_in_list_view: true`
   - `column_order`: Core columns first, then custom fields by `list_view_order`
   - `default_sort`: `{ field: 'first_name', order: 'asc' }`
 
-**PATCH** `/stadion/v1/user/list-preferences`
+**PATCH** `/rondo/v1/user/list-preferences`
 - Updates preferences (partial updates supported)
 - Validates:
   - `visible_columns` must be subset of available columns
@@ -438,29 +438,29 @@ User opens People list
 User opens People list
 └── PeopleList.jsx renders
     ├── useUserPreferences() - Fetches column settings
-    │   └── GET /stadion/v1/user/list-preferences
+    │   └── GET /rondo/v1/user/list-preferences
     │       └── Returns: visible_columns, column_order, default_sort
     │
     └── usePeopleInfinite(filters, sort) - Fetches first page
-        ├── GET /stadion/v1/people/filtered?page=1&per_page=20&orderby=first_name&order=asc
+        ├── GET /rondo/v1/people/filtered?page=1&per_page=20&orderby=first_name&order=asc
         │   └── Server applies filters, sorts, returns 20 people
         ├── Renders 20 people
         │
         └── User scrolls to bottom
             ├── Intersection Observer triggers
             ├── fetchNextPage() called
-            ├── GET /stadion/v1/people/filtered?page=2&per_page=20
+            ├── GET /rondo/v1/people/filtered?page=2&per_page=20
             └── Appends next 20 people to list
 
 User changes filter (e.g., adds label filter)
 └── usePeopleInfinite(newFilters, sort) - Query key changes
     ├── TanStack Query cache miss
-    ├── GET /stadion/v1/people/filtered?page=1&labels=3&orderby=first_name
+    ├── GET /rondo/v1/people/filtered?page=1&labels=3&orderby=first_name
     └── Renders filtered results
 
 User changes sort (e.g., sort by custom field)
 └── usePeopleInfinite(filters, newSort) - Query key changes
-    ├── GET /stadion/v1/people/filtered?page=1&orderby=custom_field_name&order=desc
+    ├── GET /rondo/v1/people/filtered?page=1&orderby=custom_field_name&order=desc
     └── Server JOINs wp_postmeta, sorts by ACF field
 ```
 
@@ -484,7 +484,7 @@ User changes sort (e.g., sort by custom field)
    - Handle AccessControl at SQL level
    - Return post IDs + pagination metadata
 
-2. **New REST Endpoint** (`/stadion/v1/people/filtered`)
+2. **New REST Endpoint** (`/rondo/v1/people/filtered`)
    - Add to `includes/class-rest-people.php`
    - Use Query Builder for data fetching
    - Transform results with existing `transformPerson()` pattern
@@ -529,7 +529,7 @@ User changes sort (e.g., sort by custom field)
 **Goal:** Store and retrieve per-user column preferences
 
 **Components:**
-1. **New REST Endpoints** (`/stadion/v1/user/list-preferences`)
+1. **New REST Endpoints** (`/rondo/v1/user/list-preferences`)
    - Add to `includes/class-rest-api.php`
    - GET: Return user preferences with defaults
    - PATCH: Update user preferences with validation
@@ -636,17 +636,17 @@ ON wp_posts (post_type, post_status, post_modified);
 **No breaking changes:**
 - `/wp/v2/people` endpoint unchanged
 - Existing API clients continue working
-- `/stadion/v1/people/filtered` is additive
+- `/rondo/v1/people/filtered` is additive
 
 ### Rollout Plan
 
 **Step 1:** Deploy Phase 1-2 (backend + infinite scroll)
-- Feature flag: `STADION_ENABLE_INFINITE_SCROLL` (default: true)
+- Feature flag: `RONDO_ENABLE_INFINITE_SCROLL` (default: true)
 - Monitor performance with Query Monitor
 - Rollback plan: Revert to usePeople() if issues
 
 **Step 2:** Deploy Phase 3-4 (preferences)
-- Feature flag: `STADION_ENABLE_COLUMN_PREFS` (default: true)
+- Feature flag: `RONDO_ENABLE_COLUMN_PREFS` (default: true)
 - Graceful degradation: Show all columns if preferences endpoint fails
 
 **Step 3:** Remove feature flags after 1 week stable
@@ -685,7 +685,7 @@ ON wp_posts (post_type, post_status, post_modified);
 - Remove deleted fields from visible_columns on GET
 - Show warning: "Some columns were removed because they no longer exist"
 
-**Detection:** GET /stadion/v1/user/list-preferences returns fewer columns than saved
+**Detection:** GET /rondo/v1/user/list-preferences returns fewer columns than saved
 
 ### Risk 4: AccessControl Bypass
 
@@ -860,8 +860,8 @@ if ($labels) {
 ### Developer Documentation
 
 **API Reference:**
-- Document `/stadion/v1/people/filtered` endpoint (request/response schemas)
-- Document `/stadion/v1/user/list-preferences` endpoint
+- Document `/rondo/v1/people/filtered` endpoint (request/response schemas)
+- Document `/rondo/v1/user/list-preferences` endpoint
 - Add examples to API client (`src/api/client.js` JSDoc comments)
 
 **Architecture Decision Record (ADR):**

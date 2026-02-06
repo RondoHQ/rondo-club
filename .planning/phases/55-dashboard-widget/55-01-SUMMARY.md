@@ -11,7 +11,7 @@ requires:
   - phase: 53-person-meetings-section
     provides: Person meetings REST endpoint and display patterns
 provides:
-  - Today's Meetings REST endpoint (/stadion/v1/calendar/today-meetings)
+  - Today's Meetings REST endpoint (/rondo/v1/calendar/today-meetings)
   - useTodayMeetings React hook
   - MeetingCard dashboard component
   - Today's Meetings dashboard widget
@@ -58,7 +58,7 @@ completed: 2026-01-15
 
 ## Accomplishments
 
-- Added GET /stadion/v1/calendar/today-meetings REST endpoint with matched people details
+- Added GET /rondo/v1/calendar/today-meetings REST endpoint with matched people details
 - Created useTodayMeetings hook with 5-minute stale time and 15-minute refetch interval
 - Built MeetingCard component displaying time, title, location, and attendee avatars
 - Integrated widget on Dashboard between Row 1 (Reminders/Todos) and Row 2 (Favorites)

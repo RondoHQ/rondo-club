@@ -147,4 +147,4 @@ Verified:
 
 - Phase 129: Backend forecast calculation logic
 - Phase 130: Frontend season selector implementation
-- API: `/stadion/v1/google-sheets/export-fees` with forecast parameter
+- API: `/rondo/v1/google-sheets/export-fees` with forecast parameter

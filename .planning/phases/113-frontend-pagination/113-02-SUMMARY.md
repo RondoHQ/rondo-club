@@ -152,7 +152,7 @@ useEffect triggers setPage(1)
   ↓
 useFilteredPeople({ page, filters... })
   ↓
-API call: /stadion/v1/people/filtered
+API call: /rondo/v1/people/filtered
   ↓
 Response: { people: [...], total: N, total_pages: N }
   ↓
@@ -250,7 +250,7 @@ None - plan executed exactly as written.
    - Requires authenticated session for API calls
 
 2. **Team column shows "-" for all rows**
-   - Backend `/stadion/v1/people/filtered` doesn't return team data
+   - Backend `/rondo/v1/people/filtered` doesn't return team data
    - Requires backend enhancement (not in current plan scope)
    - Alternative: Client-side team fetching (adds N+1 queries)
 

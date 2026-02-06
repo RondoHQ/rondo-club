@@ -30,7 +30,7 @@ key-files:
   modified:
     - includes/class-access-control.php: "Added author filtering for stadion_todo in both filter_queries() and filter_rest_query()"
     - includes/class-rest-api.php: "Replaced wp_count_posts() with prepared SQL queries filtering by post_author"
-    - includes/class-wp-cli.php: "Added STADION_Tasks_CLI_Command with verify_ownership method"
+    - includes/class-wp-cli.php: "Added RONDO_Tasks_CLI_Command with verify_ownership method"
 
 # Decision Log
 decisions:
@@ -56,8 +56,8 @@ metrics:
 Implemented complete backend user isolation for tasks (stadion_todo custom post type):
 
 1. **Access Control Filtering:**
-   - Extended `STADION_Access_Control::filter_queries()` to set `author` parameter for stadion_todo queries
-   - Extended `STADION_Access_Control::filter_rest_query()` to filter REST API queries by current user
+   - Extended `RONDO_Access_Control::filter_queries()` to set `author` parameter for stadion_todo queries
+   - Extended `RONDO_Access_Control::filter_rest_query()` to filter REST API queries by current user
    - Filtering applies after approval check, before VOG-only filtering (logical order)
    - No special admin exemption - all users see only their own tasks
 
@@ -67,7 +67,7 @@ Implemented complete backend user isolation for tasks (stadion_todo custom post 
    - Custom SQL necessary because `count_user_posts()` doesn't support custom post statuses
 
 3. **WP-CLI Migration Command:**
-   - Created `STADION_Tasks_CLI_Command` class with `verify_ownership` method
+   - Created `RONDO_Tasks_CLI_Command` class with `verify_ownership` method
    - Supports `--verify` flag (report only, no fixes)
    - Supports `--dry-run` flag (show what would be fixed)
    - Without flags, fixes invalid ownership by inferring from `related_persons` field
@@ -243,7 +243,7 @@ The frontend will automatically respect the new filtering because:
 1. **React components use standard queries:**
    - `useTodos()` hook calls REST API → `rest_stadion_todo_query` filter applies
    - `PersonDetail` uses `get_posts()` → `pre_get_posts` filter applies
-   - Dashboard uses `/stadion/v1/dashboard` → calls updated `count_open_todos()`
+   - Dashboard uses `/rondo/v1/dashboard` → calls updated `count_open_todos()`
 
 2. **No frontend changes required** for basic functionality
 

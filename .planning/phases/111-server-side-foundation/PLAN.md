@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan creates a new `/stadion/v1/people/filtered` REST endpoint that handles pagination, filtering, and sorting at the database layer using optimized `$wpdb` queries with JOINs. This replaces the current client-side approach of fetching all 1400+ people in a loop.
+This plan creates a new `/rondo/v1/people/filtered` REST endpoint that handles pagination, filtering, and sorting at the database layer using optimized `$wpdb` queries with JOINs. This replaces the current client-side approach of fetching all 1400+ people in a loop.
 
 ## Plan Structure
 
@@ -40,7 +40,7 @@ Wave 1 must complete before Wave 2 because the frontend requires the endpoint to
 
 After all plans execute:
 
-1. **Endpoint exists:** `GET /stadion/v1/people/filtered` returns paginated results
+1. **Endpoint exists:** `GET /rondo/v1/people/filtered` returns paginated results
 2. **Pagination works:** `page=1&per_page=100` returns first 100, `page=2` returns next 100
 3. **Label filtering works:** `labels[]=5&labels[]=7` returns people with ANY of those labels (OR logic)
 4. **Ownership filtering works:** `ownership=mine` returns only current user's people
@@ -129,7 +129,7 @@ After all plans execute:
 
 1. **Hook Integration Test**
    - Open PeopleList page, verify data loads
-   - Check Network tab, verify single request to `/stadion/v1/people/filtered`
+   - Check Network tab, verify single request to `/rondo/v1/people/filtered`
 
 ---
 

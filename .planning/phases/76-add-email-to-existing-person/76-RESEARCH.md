@@ -9,7 +9,7 @@
 This phase extends the Phase 74 "Add Person from Meeting" feature to allow users to add an unknown attendee's email address to an existing person instead of always creating a new person. The core challenge is introducing a choice popup when the Add button is clicked, implementing person search/select, and updating the existing person's contact_info ACF field.
 
 The codebase already has all necessary primitives:
-- Person search via `/stadion/v1/search` endpoint (used by SearchModal in Layout.jsx)
+- Person search via `/rondo/v1/search` endpoint (used by SearchModal in Layout.jsx)
 - Person update via `useUpdatePerson` hook using `wpApi.updatePerson`
 - contact_info ACF repeater field for storing emails
 - Calendar re-matching via `Matcher::on_person_saved()` hook (auto-triggers on acf/save_post)
@@ -315,7 +315,7 @@ async function addEmailToExistingPerson(personId, email) {
 
 No major open questions. The implementation path is clear:
 
-1. **Resolved:** How to search people - use existing `/stadion/v1/search` endpoint via useSearch hook
+1. **Resolved:** How to search people - use existing `/rondo/v1/search` endpoint via useSearch hook
 2. **Resolved:** How to update contact_info - use existing useUpdatePerson with ACF data
 3. **Resolved:** How to trigger calendar re-matching - automatic via existing `acf/save_post` hook
 4. **Resolved:** Meeting query invalidation - need to add to useUpdatePerson or custom hook

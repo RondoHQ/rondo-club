@@ -297,9 +297,9 @@ add_filter('acf/validate_value', 'stadion_validate_custom_field', 10, 4);
 
 ### Bulk Update Field Order API
 ```php
-// New endpoint: PUT /stadion/v1/custom-fields/{post_type}/order
+// New endpoint: PUT /rondo/v1/custom-fields/{post_type}/order
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/custom-fields/(?P<post_type>person|team)/order',
     [
         'methods' => 'PUT',

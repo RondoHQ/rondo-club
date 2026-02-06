@@ -13,7 +13,7 @@ Trigger calendar event re-matching when a person's email addresses change, ensur
 
 | # | Task | Status | Commit |
 |---|------|--------|--------|
-| 1 | Add re-matching method to STADION_Calendar_Matcher | Done | a4ee051 |
+| 1 | Add re-matching method to RONDO_Calendar_Matcher | Done | a4ee051 |
 | 2 | Hook person save to trigger re-matching | Done | 4c839eb |
 | 3 | Add WP-CLI command for manual re-matching | Done | ba8ef87, 778d8ab, 1e0b7e6 |
 
@@ -25,19 +25,19 @@ Trigger calendar event re-matching when a person's email addresses change, ensur
 
 ### includes/class-auto-title.php
 - Added `trigger_calendar_rematch($post_id)` method hooked to `acf/save_post` at priority 25
-- When a person is saved, triggers `STADION_Calendar_Matcher::on_person_saved()` to re-match events
+- When a person is saved, triggers `RONDO_Calendar_Matcher::on_person_saved()` to re-match events
 
 ### includes/class-wp-cli.php
-- Added `rematch` subcommand to `STADION_Calendar_CLI_Command` class
+- Added `rematch` subcommand to `RONDO_Calendar_CLI_Command` class
 - Command: `wp prm calendar rematch --user-id=ID`
 - Invalidates email cache and re-matches all calendar events for the specified user
 
 ## Verification
 
-- [x] `rematch_events_for_user()` method exists in STADION_Calendar_Matcher
-- [x] `on_person_saved()` method exists in STADION_Calendar_Matcher
-- [x] `trigger_calendar_rematch()` method exists in STADION_Auto_Title
-- [x] acf/save_post hook registered at priority 25 in STADION_Auto_Title constructor
+- [x] `rematch_events_for_user()` method exists in RONDO_Calendar_Matcher
+- [x] `on_person_saved()` method exists in RONDO_Calendar_Matcher
+- [x] `trigger_calendar_rematch()` method exists in RONDO_Auto_Title
+- [x] acf/save_post hook registered at priority 25 in RONDO_Auto_Title constructor
 - [x] WP-CLI command `wp prm calendar rematch` is available
 - [x] No PHP syntax errors in class-calendar-matcher.php
 - [x] No PHP syntax errors in class-auto-title.php

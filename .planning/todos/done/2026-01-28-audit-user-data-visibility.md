@@ -12,7 +12,7 @@ files:
 Currently the system may still have per-user data filtering where users only see posts they created. The requirement has changed: every user with access should see ALL data, not just their own.
 
 Need to audit:
-1. Is `STADION_Access_Control` still filtering data per-user?
+1. Is `RONDO_Access_Control` still filtering data per-user?
 2. Are there any REST API level filters restricting visibility?
 3. Is the documentation updated to reflect shared visibility?
 4. Are there UI elements still referencing "your" data vs shared data?

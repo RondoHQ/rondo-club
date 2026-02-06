@@ -39,7 +39,7 @@ Complete these items for Google Calendar integration to function. Claude automat
   - Application type: Web application
   - Name: Stadion Web Client
   - Authorized JavaScript origins: `https://your-domain.com`
-  - Authorized redirect URIs: `https://your-domain.com/wp-json/stadion/v1/calendar/auth/google/callback`
+  - Authorized redirect URIs: `https://your-domain.com/wp-json/rondo/v1/calendar/auth/google/callback`
   - Click Create
   - Copy Client ID and Client secret
 

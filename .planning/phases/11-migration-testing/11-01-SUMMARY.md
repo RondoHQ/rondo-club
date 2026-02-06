@@ -7,7 +7,7 @@
 ### Task 1: Create migrate-to-multiuser command
 - **Status**: Complete
 - **Commit**: eb6ec1b
-- **Changes**: Added `STADION_MultiUser_CLI_Command` class with `migrate` subcommand that:
+- **Changes**: Added `RONDO_MultiUser_CLI_Command` class with `migrate` subcommand that:
   - Displays welcome message explaining the migration
   - Sets visibility to "private" on all person, team, and important_date posts without visibility
   - Shows progress per post type and summary with counts
@@ -33,7 +33,7 @@ All verification checks pass:
 - [x] No PHP errors or warnings
 
 ## Files Modified
-- `includes/class-wp-cli.php` - Added STADION_MultiUser_CLI_Command class (234 lines)
+- `includes/class-wp-cli.php` - Added RONDO_MultiUser_CLI_Command class (234 lines)
 
 ## Production Verification
 

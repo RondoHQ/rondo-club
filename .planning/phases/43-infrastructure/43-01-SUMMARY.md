@@ -65,7 +65,7 @@ completed: 2026-01-15
 - Tailwind config extended with accent-* color utilities using CSS variables
 - Class-based dark mode enabled in Tailwind (darkMode: 'class')
 - useTheme hook with localStorage persistence and system preference detection
-- REST API endpoints for theme preferences (GET/PATCH /stadion/v1/user/theme-preferences)
+- REST API endpoints for theme preferences (GET/PATCH /rondo/v1/user/theme-preferences)
 
 ## Task Commits
 
@@ -110,8 +110,8 @@ None - no external service configuration required.
 - CSS custom properties visible in browser dev tools on :root
 - data-accent="teal" on html element switches accent variables
 - class="dark" on html element ready for dark variants (no dark styles yet)
-- GET /wp-json/stadion/v1/user/theme-preferences returns valid JSON
-- PATCH /wp-json/stadion/v1/user/theme-preferences updates user meta
+- GET /wp-json/rondo/v1/user/theme-preferences returns valid JSON
+- PATCH /wp-json/rondo/v1/user/theme-preferences updates user meta
 - useTheme hook can be imported and used in components
 
 ---

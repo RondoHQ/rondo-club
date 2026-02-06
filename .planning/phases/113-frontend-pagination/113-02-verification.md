@@ -69,17 +69,17 @@ Production URL: https://stadion.svawc.nl/people
 
 ```javascript
 // Test pagination API call
-fetch('https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?page=2&per_page=100', {
+fetch('https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?page=2&per_page=100', {
   headers: { 'X-WP-Nonce': wpApiSettings.nonce }
 }).then(r => r.json()).then(console.log)
 
 // Test with filters
-fetch('https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?page=1&per_page=100&labels[]=14', {
+fetch('https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?page=1&per_page=100&labels[]=14', {
   headers: { 'X-WP-Nonce': wpApiSettings.nonce }
 }).then(r => r.json()).then(console.log)
 
 // Test birth year filter
-fetch('https://stadion.svawc.nl/wp-json/stadion/v1/people/filtered?page=1&per_page=100&birth_year_from=1990&birth_year_to=1990', {
+fetch('https://stadion.svawc.nl/wp-json/rondo/v1/people/filtered?page=1&per_page=100&birth_year_from=1990&birth_year_to=1990', {
   headers: { 'X-WP-Nonce': wpApiSettings.nonce }
 }).then(r => r.json()).then(console.log)
 ```

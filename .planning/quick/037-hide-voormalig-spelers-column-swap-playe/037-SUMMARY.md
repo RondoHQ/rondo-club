@@ -44,7 +44,7 @@ Improved team detail page UX and performance through column reorganization and d
 
 **Commit:** 5619037d
 
-Optimized the REST endpoint `/stadion/v1/teams/{id}/people` by filtering people at the database level.
+Optimized the REST endpoint `/rondo/v1/teams/{id}/people` by filtering people at the database level.
 
 **Changes:**
 - Added meta_query to filter people with `work_history` count > 0

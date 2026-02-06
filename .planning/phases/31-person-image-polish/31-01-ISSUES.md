@@ -18,7 +18,7 @@
 **Phase/Plan:** 31-01
 **Severity:** Blocker
 **Feature:** Mobile todos FAB / Todos sidebar
-**Description:** The timeline endpoint (`/stadion/v1/people/{id}/timeline`) queries todos with `post_status => 'publish'` but todos use custom post statuses (stadion_open, stadion_awaiting, stadion_completed). Also returns deprecated `is_completed` field instead of `status` field expected by frontend.
+**Description:** The timeline endpoint (`/rondo/v1/people/{id}/timeline`) queries todos with `post_status => 'publish'` but todos use custom post statuses (stadion_open, stadion_awaiting, stadion_completed). Also returns deprecated `is_completed` field instead of `status` field expected by frontend.
 **Fix:** Updated `get_timeline()` method to query all todo statuses and return proper `status` field + `awaiting_since`.
 
 ---

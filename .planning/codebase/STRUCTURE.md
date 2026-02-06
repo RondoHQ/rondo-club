@@ -143,7 +143,7 @@ stadion/
 - `*Modal.jsx` - Modal dialog components
 - `use*.js` - React hooks
 - `class-*.php` - PHP service classes
-- `STADION_*` - PHP class name prefix
+- `RONDO_*` - PHP class name prefix
 
 ## Where to Add New Code
 
@@ -172,7 +172,7 @@ stadion/
 
 **New PHP Service:**
 - Implementation: `includes/class-{service-name}.php`
-- Instantiation: Add to `stadion_init()` in `functions.php`
+- Instantiation: Add to `rondo_init()` in `functions.php`
 
 ## Special Directories
 

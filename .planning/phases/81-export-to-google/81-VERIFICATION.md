@@ -21,7 +21,7 @@ score: 4/4 must-haves verified
 | 1 | New Stadion contact appears in user's Google Contacts after sync | VERIFIED | `on_person_saved()` hook triggers `queue_export()` which schedules `stadion_google_contact_export` cron job. `export_contact()` calls `create_google_contact()` which uses People API `createContact()`. Lines 52-148, 254-316 |
 | 2 | Stadion contact fields (name, email, phone, etc.) are correctly mapped to Google format | VERIFIED | Complete field mapping methods: `build_name()` (540-559), `build_email_addresses()` (567-595), `build_phone_numbers()` (603-638), `build_urls()` (646-683), `build_addresses()` (691-741), `build_teams()` (749-794). All use Google API objects (Name, EmailAddress, PhoneNumber, Address, Team, Url) |
 | 3 | Photos uploaded from Stadion appear in Google Contacts | VERIFIED | `upload_photo()` method (443-489) reads featured image via `get_post_thumbnail_id()`, base64 encodes it, and calls `updateContactPhoto()` API. Called after both create (309) and update (356) operations |
-| 4 | User can bulk export existing unlinked contacts to Google | VERIFIED | REST endpoint `POST /stadion/v1/google-contacts/bulk-export` (120-129), Settings UI bulk export button (2263-2330 in Settings.jsx), `bulk_export_unlinked()` method (926-1015) with sequential processing and 100ms delay |
+| 4 | User can bulk export existing unlinked contacts to Google | VERIFIED | REST endpoint `POST /rondo/v1/google-contacts/bulk-export` (120-129), Settings UI bulk export button (2263-2330 in Settings.jsx), `bulk_export_unlinked()` method (926-1015) with sequential processing and 100ms delay |
 
 **Score:** 4/4 truths verified
 

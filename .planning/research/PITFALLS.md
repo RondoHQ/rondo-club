@@ -72,7 +72,7 @@ $full_name = implode( ' ', $parts );
 - Create test: Person with infix="van", last_name="Dijk"
 - Search "van Dijk" - must return result
 - Search "Dijk" - must return result
-**Phase impact:** Phase 4 (Search updates) - Critical for REST API `/stadion/v1/search` endpoint
+**Phase impact:** Phase 4 (Search updates) - Critical for REST API `/rondo/v1/search` endpoint
 
 **Current search code:** Likely in `includes/class-rest-api.php` (search endpoint) - needs investigation
 
@@ -401,7 +401,7 @@ Based on pitfall analysis, critical tests before UAT:
 1. POST `/wp/v2/people` with infix - verify stored correctly
 2. GET `/wp/v2/people` - verify infix appears in `.acf.infix`
 3. GET `/wp/v2/people?orderby=last_name` - verify sorting correct
-4. GET `/stadion/v1/search?q=van+Dijk` - verify search works
+4. GET `/rondo/v1/search?q=van+Dijk` - verify search works
 
 **Frontend Tests (E2E):**
 1. PeopleList displays "John van Dijk" consistently

@@ -129,15 +129,15 @@ Create new API documentation file for the Custom Fields management API:
 3. Endpoints Overview table:
    Admin endpoints:
    | Method | Endpoint | Description |
-   | GET | /stadion/v1/custom-fields/{post_type} | List all fields |
-   | POST | /stadion/v1/custom-fields/{post_type} | Create new field |
-   | GET | /stadion/v1/custom-fields/{post_type}/{key} | Get single field |
-   | PUT | /stadion/v1/custom-fields/{post_type}/{key} | Update field |
-   | DELETE | /stadion/v1/custom-fields/{post_type}/{key} | Deactivate field |
-   | PUT | /stadion/v1/custom-fields/{post_type}/order | Reorder fields |
+   | GET | /rondo/v1/custom-fields/{post_type} | List all fields |
+   | POST | /rondo/v1/custom-fields/{post_type} | Create new field |
+   | GET | /rondo/v1/custom-fields/{post_type}/{key} | Get single field |
+   | PUT | /rondo/v1/custom-fields/{post_type}/{key} | Update field |
+   | DELETE | /rondo/v1/custom-fields/{post_type}/{key} | Deactivate field |
+   | PUT | /rondo/v1/custom-fields/{post_type}/order | Reorder fields |
 
    User endpoint:
-   | GET | /stadion/v1/custom-fields/{post_type}/metadata | Read-only field metadata |
+   | GET | /rondo/v1/custom-fields/{post_type}/metadata | Read-only field metadata |
 
    Note: {post_type} is either "person" or "team"
 

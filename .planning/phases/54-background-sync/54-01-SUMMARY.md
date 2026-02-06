@@ -74,15 +74,15 @@ completed: 2026-01-15
 
 Each task was committed atomically:
 
-1. **Task 1: Create STADION_Calendar_Sync class with WP-Cron scheduling** - `2941546` (feat)
+1. **Task 1: Create RONDO_Calendar_Sync class with WP-Cron scheduling** - `2941546` (feat)
 2. **Task 2: Extract shared activity creation logic (DRY)** - `c0729ff` (refactor)
 3. **Task 3: Add sync status REST endpoint and WP-CLI commands** - `821fa1f` (feat)
 
 ## Files Created/Modified
 - `includes/class-calendar-sync.php` - New class handling background sync, auto-logging, and sync utilities
-- `functions.php` - Added autoloader entry and initialization for STADION_Calendar_Sync
+- `functions.php` - Added autoloader entry and initialization for RONDO_Calendar_Sync
 - `includes/class-rest-calendar.php` - Refactored log_event_as_activity to use shared method, added sync status endpoint
-- `includes/class-wp-cli.php` - Added STADION_Calendar_CLI_Command with sync, status, and auto-log subcommands
+- `includes/class-wp-cli.php` - Added RONDO_Calendar_CLI_Command with sync, status, and auto-log subcommands
 
 ## Decisions Made
 - Used 15-minute interval as balance between data freshness and API load

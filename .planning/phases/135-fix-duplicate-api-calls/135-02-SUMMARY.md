@@ -114,10 +114,10 @@ None - no external service configuration required.
 - Production deployed at https://stadion.svawc.nl/
 - Network panel testing required to confirm single API calls per endpoint
 - Key endpoints to verify:
-  - /stadion/v1/dashboard
+  - /rondo/v1/dashboard
   - /wp/v2/users/me
-  - /stadion/v1/todos
-  - /stadion/v1/settings
+  - /rondo/v1/todos
+  - /rondo/v1/settings
 
 **Expected outcome:**
 If the double-mount hypothesis is correct, each endpoint should now appear only once in the network panel on initial page load (previously appeared 2x with ~270ms gap).

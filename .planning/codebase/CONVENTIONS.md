@@ -158,7 +158,7 @@
 - Constructor registers WordPress hooks
 - Methods handle hook callbacks
 - Static methods for utilities
-- `STADION_` prefix for all class names
+- `RONDO_` prefix for all class names
 
 **WordPress Integration:**
 - `add_action()` / `add_filter()` in constructor
@@ -169,7 +169,7 @@
 **Naming:**
 - snake_case for functions and variables
 - PascalCase for class names
-- UPPER_SNAKE_CASE for constants with `STADION_` prefix
+- UPPER_SNAKE_CASE for constants with `RONDO_` prefix
 
 ---
 

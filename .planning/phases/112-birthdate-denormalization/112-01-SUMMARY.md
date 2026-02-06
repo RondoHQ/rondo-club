@@ -84,7 +84,7 @@ Extended the AutoTitle class with two new hooks:
 
 ### Task 2: Add WP-CLI migrate-birthdates command
 
-Added `migrate_birthdates` method to `STADION_Migration_CLI_Command` class:
+Added `migrate_birthdates` method to `RONDO_Migration_CLI_Command` class:
 
 - Query all birthday important_dates using WP_Query with `tax_query` on `date_type=birthday`
 - Use `suppress_filters => true` to bypass access control (WP-CLI has no logged-in user)
@@ -201,7 +201,7 @@ public function clear_birthdate_on_delete( $post_id, $post )
 ### includes/class-wp-cli.php (+143 lines)
 
 **Changes:**
-- Added `migrate_birthdates()` method to STADION_Migration_CLI_Command class
+- Added `migrate_birthdates()` method to RONDO_Migration_CLI_Command class
 - Registered `wp stadion migrate-birthdates` command
 
 **Key features:**

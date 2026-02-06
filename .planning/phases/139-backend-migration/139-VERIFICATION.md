@@ -53,8 +53,8 @@ score: 7/7 must-haves verified
 
 **includes/class-wp-cli.php:**
 - Level 1 (Exists): ✓ File exists (2982 lines)
-- Level 2 (Substantive): ✓ `STADION_Tasks_CLI_Command` class has 153-line `verify_ownership()` method with full verification and fixing logic
-- Level 3 (Wired): ✓ Command registered at line 2981: `WP_CLI::add_command( 'stadion tasks', 'STADION_Tasks_CLI_Command' )`
+- Level 2 (Substantive): ✓ `RONDO_Tasks_CLI_Command` class has 153-line `verify_ownership()` method with full verification and fixing logic
+- Level 3 (Wired): ✓ Command registered at line 2981: `WP_CLI::add_command( 'stadion tasks', 'RONDO_Tasks_CLI_Command' )`
 
 ### Key Link Verification
 

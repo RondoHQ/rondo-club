@@ -31,7 +31,7 @@ key-files:
     - functions.php
 
 key-decisions:
-  - "Use separate callback endpoint /stadion/v1/google-contacts/callback to distinguish from calendar OAuth"
+  - "Use separate callback endpoint /rondo/v1/google-contacts/callback to distinguish from calendar OAuth"
   - "Store contacts connection in user meta (one per user) vs calendar connections array (multiple per user)"
   - "Do NOT revoke token on disconnect - user may have Calendar connected with same account"
   - "Set pending_import flag for Phase 80 to trigger auto-import after OAuth"
@@ -79,7 +79,7 @@ Each task was committed atomically:
 - `functions.php` - Added RESTGoogleContacts instantiation
 
 ## Decisions Made
-- **Separate callback endpoint:** Using `/stadion/v1/google-contacts/callback` instead of shared callback to allow different post-auth behavior (contacts redirects to subtab=contacts, sets pending_import flag)
+- **Separate callback endpoint:** Using `/rondo/v1/google-contacts/callback` instead of shared callback to allow different post-auth behavior (contacts redirects to subtab=contacts, sets pending_import flag)
 - **User-level storage:** GoogleContactsConnection stores one connection per user (unlike calendar connections which are per-calendar-resource) because Contacts sync is account-wide
 - **No token revocation on disconnect:** When user disconnects contacts, we don't revoke the Google token because they may still have Calendar connected with the same Google account
 - **Pending import flag:** OAuth callback sets `_stadion_google_contacts_pending_import` user meta for Phase 80 to detect and auto-start import
@@ -99,10 +99,10 @@ None - no external service configuration required. Google OAuth credentials (GOO
 - Backend OAuth infrastructure complete
 - Ready for Phase 79-02: Frontend settings UI for Google Contacts connection
 - REST endpoints deployed and verified on production:
-  - `GET /stadion/v1/google-contacts/status`
-  - `GET /stadion/v1/google-contacts/auth`
-  - `GET /stadion/v1/google-contacts/callback`
-  - `DELETE /stadion/v1/google-contacts`
+  - `GET /rondo/v1/google-contacts/status`
+  - `GET /rondo/v1/google-contacts/auth`
+  - `GET /rondo/v1/google-contacts/callback`
+  - `DELETE /rondo/v1/google-contacts`
 
 ---
 *Phase: 79-oauth-foundation*

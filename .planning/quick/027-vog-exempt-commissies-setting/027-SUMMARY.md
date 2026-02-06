@@ -79,8 +79,8 @@ This task adds the ability for administrators to exempt specific commissies from
 
 ## Verification
 
-- [x] API: GET /stadion/v1/vog/settings returns exempt_commissies array
-- [x] API: POST /stadion/v1/vog/settings accepts exempt_commissies and returns people_recalculated count
+- [x] API: GET /rondo/v1/vog/settings returns exempt_commissies array
+- [x] API: POST /rondo/v1/vog/settings accepts exempt_commissies and returns people_recalculated count
 - [x] UI: VOG settings tab shows commissies checkbox list
 - [x] Functional: Changes to exempt commissies trigger volunteer status recalculation
 - [x] Build: Production build succeeds

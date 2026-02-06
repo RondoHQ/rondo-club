@@ -20,8 +20,8 @@ Created comprehensive API documentation for adding and updating "leden" (people)
   - Visibility settings
 - **Code Examples** - JavaScript, PHP, and cURL
 - **Error Handling** - Common error responses
-- **Bulk Operations** - Using `/stadion/v1/people/bulk-update`
-- **Photo Upload** - Using `/stadion/v1/people/{id}/photo`
+- **Bulk Operations** - Using `/rondo/v1/people/bulk-update`
+- **Photo Upload** - Using `/rondo/v1/people/{id}/photo`
 
 ## Files Created
 

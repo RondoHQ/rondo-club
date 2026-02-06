@@ -8,7 +8,7 @@
 
 This phase extends the existing v12.0 membership fee calculation infrastructure to support next season forecasting. The research focused on WordPress REST API best practices for optional boolean parameters, PHP date manipulation for season key calculation, and performance optimization patterns for large datasets.
 
-The standard approach is to add an optional `forecast` boolean parameter to the existing `/stadion/v1/fees` endpoint, calculate the next season key using simple year arithmetic, and leverage the existing fee calculation methods with 100% pro-rata override. The infrastructure already exists - this is primarily a conditional logic layer on top of proven calculation methods.
+The standard approach is to add an optional `forecast` boolean parameter to the existing `/rondo/v1/fees` endpoint, calculate the next season key using simple year arithmetic, and leverage the existing fee calculation methods with 100% pro-rata override. The infrastructure already exists - this is primarily a conditional logic layer on top of proven calculation methods.
 
 **Primary recommendation:** Extend the existing `get_fee_list()` REST endpoint with a `forecast` boolean parameter that modifies season key (+1 year) and forces 100% pro-rata, reusing all existing calculation logic from `MembershipFees` class.
 
@@ -63,7 +63,7 @@ Forecast Calculation Flow:
 ```php
 // Source: WordPress REST API Handbook + existing /fees endpoint pattern
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/fees',
     [
         'methods'             => \WP_REST_Server::READABLE,

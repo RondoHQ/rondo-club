@@ -45,7 +45,7 @@ started: Was working before, recently broke
   implication: Data IS being saved to database. Problem must be on the READ side - either API not returning these properties, or frontend not reading them correctly
 
 - timestamp: 2026-01-29T10:18:00Z
-  checked: Production API response for /stadion/v1/custom-fields/person
+  checked: Production API response for /rondo/v1/custom-fields/person
   found: API correctly returns "show_in_list_view": false, "list_view_order": 999 for KNVB ID field
   implication: Both database and API are working. Problem must be in frontend form state or update logic
 

@@ -136,7 +136,7 @@ None - no external service configuration required.
 
 - All 14 feature classes now have PSR-4 compatible namespaces
 - Ready for Plan 66-03 (remaining classes) or Plan 66-04 (reference updates)
-- Note: Classes still reference old STADION_* names internally - will be fixed in Plan 66-04
+- Note: Classes still reference old RONDO_* names internally - will be fixed in Plan 66-04
 
 ---
 *Phase: 66-psr4-autoloader*

@@ -139,7 +139,7 @@ $total_dates  = wp_count_posts('important_date')->publish;
 ```php
 // Source: class-rest-api.php:2043-2054
 private function count_open_todos() {
-    // Query todos with access control (STADION_Access_Control hooks into WP_Query)
+    // Query todos with access control (RONDO_Access_Control hooks into WP_Query)
     $todos = get_posts([
         'post_type'      => 'stadion_todo',
         'post_status'    => 'stadion_open',

@@ -9,7 +9,7 @@ requires: []
 provides:
   - CustomFields Manager class with CRUD operations
   - ACF database persistence for custom field definitions
-  - Backward compatibility alias STADION_Custom_Fields_Manager
+  - Backward compatibility alias RONDO_Custom_Fields_Manager
 affects: [87-02, 87-03, 88, 89]
 
 # Tech tracking
@@ -74,7 +74,7 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 - `includes/customfields/class-manager.php` - Manager class with ensure_field_group, create_field, update_field, deactivate_field, reactivate_field, get_fields, get_field methods
-- `functions.php` - Added use statement and STADION_Custom_Fields_Manager alias
+- `functions.php` - Added use statement and RONDO_Custom_Fields_Manager alias
 - `tests/wpunit/CustomFields/ManagerTest.php` - 16 integration tests covering all CRUD operations
 
 ## Decisions Made

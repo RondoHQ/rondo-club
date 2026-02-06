@@ -324,7 +324,7 @@ public function calculate_next_occurrence( $date_string, $is_recurring ) {
 ```php
 // Source: class-rest-api.php (dashboard summary)
 // Upcoming reminders
-$reminders_handler  = new \STADION_Reminders();
+$reminders_handler  = new \RONDO_Reminders();
 $upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
 return rest_ensure_response([

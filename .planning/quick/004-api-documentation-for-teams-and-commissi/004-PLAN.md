@@ -11,8 +11,8 @@ Create comprehensive API documentation for the Teams and Commissies (Committees)
 Create `docs/api-teams.md` with:
 - All CRUD endpoints (`/wp/v2/teams`)
 - Field reference (title, website, contact_info repeater)
-- Logo upload endpoints (`/stadion/v1/teams/{id}/logo/upload`, `/stadion/v1/teams/{id}/logo`)
-- People by team endpoint (`/stadion/v1/teams/{team_id}/people`)
+- Logo upload endpoints (`/rondo/v1/teams/{id}/logo/upload`, `/rondo/v1/teams/{id}/logo`)
+- People by team endpoint (`/rondo/v1/teams/{team_id}/people`)
 - Direct sharing endpoints
 - Code examples (JavaScript, PHP, cURL)
 

@@ -45,7 +45,7 @@ key-files:
 ## What Was Built
 
 ### Backend Changes
-- Added `vog_type` REST parameter to `/stadion/v1/people/filtered` endpoint
+- Added `vog_type` REST parameter to `/rondo/v1/people/filtered` endpoint
 - Implemented filter logic with three states:
   - `nieuw`: Only people without datum-vog (no VOG on file)
   - `vernieuwing`: Only people with expired datum-vog (older than 3 years)

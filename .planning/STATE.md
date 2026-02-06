@@ -4,7 +4,7 @@
 
 See: .planning/PROJECT.md (updated 2026-02-06)
 
-**Core value:** Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Stadion unique.
+**Core value:** Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Rondo Club unique.
 **Current focus:** v19.0 complete — planning next milestone
 
 ## Current Position

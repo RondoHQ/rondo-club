@@ -8,7 +8,7 @@
 
 This phase integrates the Phase 144 backend club configuration API into the frontend Settings UI and performs a comprehensive rename of the AWC color system to a dynamic club color system. The implementation involves four parallel workstreams: (1) building an admin-only club configuration section in Settings.jsx, (2) updating the existing accent color picker to include club color as the first option, (3) integrating club color into login/favicon/PWA branding, and (4) performing a complete codebase rename from `awc` to `club` color keys.
 
-The codebase already has a mature theming system built on CSS custom properties (CSS variables) that supports runtime color switching without recompilation. The existing `useTheme` hook manages dark/light modes and accent colors via localStorage with immediate DOM updates. Phase 144 provides a fully functional REST API at `/stadion/v1/config` (GET for all users, POST for admin only) that returns `club_name`, `accent_color` (hex), and `freescout_url` with sensible defaults (#006935 green fallback).
+The codebase already has a mature theming system built on CSS custom properties (CSS variables) that supports runtime color switching without recompilation. The existing `useTheme` hook manages dark/light modes and accent colors via localStorage with immediate DOM updates. Phase 144 provides a fully functional REST API at `/rondo/v1/config` (GET for all users, POST for admin only) that returns `club_name`, `accent_color` (hex), and `freescout_url` with sensible defaults (#006935 green fallback).
 
 **Primary recommendation:** Use react-colorful (2.8 KB) with HexColorInput for the admin color picker, extend the existing useTheme hook to support club color as a dynamic accent option, and leverage the established CSS custom properties pattern for live preview with no page reload.
 
@@ -339,7 +339,7 @@ function ClubConfigSection({ isAdmin, clubConfig }) {
 
   const updateMutation = useMutation({
     mutationFn: (updates) =>
-      apiClient.post('/stadion/v1/config', updates),
+      apiClient.post('/rondo/v1/config', updates),
     onSuccess: (data) => {
       // Update window.stadionConfig for immediate UI refresh
       window.stadionConfig.clubName = data.club_name;
@@ -602,7 +602,7 @@ Things that couldn't be fully resolved:
   - `/Users/joostdevalk/Code/stadion/tailwind.config.js` - Tailwind configuration
   - `/Users/joostdevalk/Code/stadion/includes/class-club-config.php` - Backend API model
   - `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - REST endpoint implementation
-- Phase 144 verification: Complete backend API with GET/POST `/stadion/v1/config`
+- Phase 144 verification: Complete backend API with GET/POST `/rondo/v1/config`
 - [react-colorful npm](https://www.npmjs.com/package/react-colorful) - Official package documentation
 - [react-colorful GitHub](https://github.com/omgovich/react-colorful) - Library source and examples
 

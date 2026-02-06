@@ -8,7 +8,7 @@
 
 This phase extends the existing Google Sheets export functionality to support forecast mode. The research focused on understanding the existing implementation patterns in this codebase, as this is a feature extension rather than new technology adoption.
 
-The existing `export_fees` endpoint in `class-rest-google-sheets.php` already has a well-established pattern for exporting fee data to Google Sheets. The forecast mode was recently added to the fee list endpoint (`/stadion/v1/fees`) in Phase 130, which returns data with 100% pro-rata and excludes Nikki billing columns. The frontend in `ContributieList.jsx` already toggles between current and forecast modes, hiding Nikki columns when `isForecast` is true.
+The existing `export_fees` endpoint in `class-rest-google-sheets.php` already has a well-established pattern for exporting fee data to Google Sheets. The forecast mode was recently added to the fee list endpoint (`/rondo/v1/fees`) in Phase 130, which returns data with 100% pro-rata and excludes Nikki billing columns. The frontend in `ContributieList.jsx` already toggles between current and forecast modes, hiding Nikki columns when `isForecast` is true.
 
 The implementation requires: (1) adding a `forecast` parameter to the export endpoint, (2) adjusting the data fetching to use forecast mode, (3) modifying the spreadsheet structure to exclude Nikki columns, and (4) updating the sheet title to include "(Prognose)" indicator.
 
@@ -77,7 +77,7 @@ if (!$forecast) {
 
 ### Pattern 3: Forecast Fee Calculation
 
-The existing `/stadion/v1/fees` endpoint already handles forecast mode by:
+The existing `/rondo/v1/fees` endpoint already handles forecast mode by:
 1. Using next season key
 2. Setting 100% pro-rata for all members
 3. Omitting Nikki data

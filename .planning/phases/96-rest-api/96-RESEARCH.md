@@ -6,9 +6,9 @@
 
 ## Summary
 
-This phase implements REST API endpoints for the `stadion_feedback` custom post type under `stadion/v1/feedback`. The codebase already has extensive REST API patterns established through `Stadion\REST\Base` and multiple domain-specific REST classes (Todos, Workspaces, People, etc.).
+This phase implements REST API endpoints for the `stadion_feedback` custom post type under `rondo/v1/feedback`. The codebase already has extensive REST API patterns established through `Stadion\REST\Base` and multiple domain-specific REST classes (Todos, Workspaces, People, etc.).
 
-The key architectural decision is to follow the existing patterns rather than extending the built-in `wp/v2` REST controller. The codebase uses custom `stadion/v1` namespace endpoints with explicit formatting, permission callbacks, and ACF field handling.
+The key architectural decision is to follow the existing patterns rather than extending the built-in `wp/v2` REST controller. The codebase uses custom `rondo/v1` namespace endpoints with explicit formatting, permission callbacks, and ACF field handling.
 
 WordPress Application Passwords (built-in since WP 5.6) provide Basic Auth support out of the box for all REST endpoints. No additional authentication setup is required - the `is_user_logged_in()` function already works with Application Password authentication.
 
@@ -36,7 +36,7 @@ The established libraries/tools for this domain:
 ### Alternatives Considered
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
-| Custom `stadion/v1` endpoints | Extend `wp/v2/feedback` controller | `stadion/v1` matches existing patterns, gives more control over response format |
+| Custom `rondo/v1` endpoints | Extend `wp/v2/feedback` controller | `rondo/v1` matches existing patterns, gives more control over response format |
 | Manual permission checks | `rest_prepare_*` filters | Manual checks are explicit, match existing code style |
 
 **Installation:**
@@ -54,7 +54,7 @@ includes/
 
 ### Pattern 1: REST Controller Class Structure
 **What:** New REST classes extend `Stadion\REST\Base` and register routes in constructor via `rest_api_init`
-**When to use:** All custom REST endpoints under `stadion/v1`
+**When to use:** All custom REST endpoints under `rondo/v1`
 **Example:**
 ```php
 // Source: includes/class-rest-todos.php (existing pattern)
@@ -68,7 +68,7 @@ class Feedback extends Base {
 
     public function register_routes() {
         register_rest_route(
-            'stadion/v1',
+            'rondo/v1',
             '/feedback',
             [
                 'methods'             => \WP_REST_Server::READABLE,
@@ -188,7 +188,7 @@ public function get_feedback_list( $request ) {
 
 ### Anti-Patterns to Avoid
 - **Extending WP_REST_Controller directly:** The codebase uses custom Base class pattern instead
-- **Using filters on wp/v2 endpoints:** Create explicit stadion/v1 endpoints with full control
+- **Using filters on wp/v2 endpoints:** Create explicit rondo/v1 endpoints with full control
 - **Separate author lookup calls:** Embed author info in response per CONTEXT.md decision
 - **Using custom database tables:** Feedback uses CPT + ACF, not custom tables
 
@@ -248,7 +248,7 @@ Verified patterns from official sources and existing codebase:
 // Source: includes/class-rest-todos.php pattern
 public function register_routes() {
     // GET /feedback - List
-    register_rest_route( 'stadion/v1', '/feedback', [
+    register_rest_route( 'rondo/v1', '/feedback', [
         'methods'             => \WP_REST_Server::READABLE,
         'callback'            => [ $this, 'get_feedback_list' ],
         'permission_callback' => fn() => is_user_logged_in(),
@@ -256,14 +256,14 @@ public function register_routes() {
     ] );
 
     // POST /feedback - Create
-    register_rest_route( 'stadion/v1', '/feedback', [
+    register_rest_route( 'rondo/v1', '/feedback', [
         'methods'             => \WP_REST_Server::CREATABLE,
         'callback'            => [ $this, 'create_feedback' ],
         'permission_callback' => fn() => is_user_logged_in(),
     ] );
 
     // GET /feedback/{id} - Single
-    register_rest_route( 'stadion/v1', '/feedback/(?P<id>\d+)', [
+    register_rest_route( 'rondo/v1', '/feedback/(?P<id>\d+)', [
         'methods'             => \WP_REST_Server::READABLE,
         'callback'            => [ $this, 'get_feedback' ],
         'permission_callback' => [ $this, 'check_feedback_access' ],
@@ -273,7 +273,7 @@ public function register_routes() {
     ] );
 
     // PATCH /feedback/{id} - Update
-    register_rest_route( 'stadion/v1', '/feedback/(?P<id>\d+)', [
+    register_rest_route( 'rondo/v1', '/feedback/(?P<id>\d+)', [
         'methods'             => \WP_REST_Server::EDITABLE,
         'callback'            => [ $this, 'update_feedback' ],
         'permission_callback' => [ $this, 'check_feedback_access' ],
@@ -283,7 +283,7 @@ public function register_routes() {
     ] );
 
     // DELETE /feedback/{id} - Delete
-    register_rest_route( 'stadion/v1', '/feedback/(?P<id>\d+)', [
+    register_rest_route( 'rondo/v1', '/feedback/(?P<id>\d+)', [
         'methods'             => \WP_REST_Server::DELETABLE,
         'callback'            => [ $this, 'delete_feedback' ],
         'permission_callback' => [ $this, 'check_feedback_access' ],

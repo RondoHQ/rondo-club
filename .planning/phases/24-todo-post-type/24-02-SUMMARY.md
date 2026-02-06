@@ -18,7 +18,7 @@ affects: [24-03, 24-04, frontend]
 tech-stack:
   added: []
   patterns:
-    - STADION_REST_Todos extends STADION_REST_Base for shared infrastructure
+    - RONDO_REST_Todos extends RONDO_REST_Base for shared infrastructure
     - check_todo_access() permission pattern for single-item operations
 
 key-files:
@@ -29,10 +29,10 @@ key-files:
 
 key-decisions:
   - "Response format matches existing comment-based todo system"
-  - "All endpoints use existing access control via STADION_Access_Control"
+  - "All endpoints use existing access control via RONDO_Access_Control"
 
 patterns-established:
-  - "Todo REST class follows same pattern as STADION_REST_People, STADION_REST_Teams"
+  - "Todo REST class follows same pattern as RONDO_REST_People, RONDO_REST_Teams"
 
 issues-created: []
 
@@ -55,16 +55,16 @@ completed: 2026-01-14
 
 ## Accomplishments
 
-- Created `STADION_REST_Todos` class extending `STADION_REST_Base` with 6 endpoint methods
-- Registered class in autoloader and instantiation in `stadion_init()`
+- Created `RONDO_REST_Todos` class extending `RONDO_REST_Base` with 6 endpoint methods
+- Registered class in autoloader and instantiation in `rondo_init()`
 - Verified all endpoints work on production: GET, POST, PUT, DELETE operations tested successfully
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: Create STADION_REST_Todos class** - `5ae4036` (feat)
-2. **Task 2: Register STADION_REST_Todos in functions.php** - `e51a617` (feat)
+1. **Task 1: Create RONDO_REST_Todos class** - `5ae4036` (feat)
+2. **Task 2: Register RONDO_REST_Todos in functions.php** - `e51a617` (feat)
 3. **Task 3: Test REST API endpoints manually** - Testing verified (no commit needed)
 
 ## Files Created/Modified
@@ -76,12 +76,12 @@ Each task was committed atomically:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/stadion/v1/people/{person_id}/todos` | Get todos for specific person |
-| POST | `/stadion/v1/people/{person_id}/todos` | Create todo linked to person |
-| GET | `/stadion/v1/todos` | Get all todos (optional `completed` filter) |
-| GET | `/stadion/v1/todos/{id}` | Get single todo |
-| PUT | `/stadion/v1/todos/{id}` | Update todo |
-| DELETE | `/stadion/v1/todos/{id}` | Delete todo |
+| GET | `/rondo/v1/people/{person_id}/todos` | Get todos for specific person |
+| POST | `/rondo/v1/people/{person_id}/todos` | Create todo linked to person |
+| GET | `/rondo/v1/todos` | Get all todos (optional `completed` filter) |
+| GET | `/rondo/v1/todos/{id}` | Get single todo |
+| PUT | `/rondo/v1/todos/{id}` | Update todo |
+| DELETE | `/rondo/v1/todos/{id}` | Delete todo |
 
 ## Response Format
 
@@ -105,7 +105,7 @@ Response matches existing comment-based todo format for seamless frontend migrat
 ## Decisions Made
 
 1. **Response format**: Matched existing comment-based todo response exactly for seamless frontend migration
-2. **Access control**: Used existing `STADION_Access_Control` filters rather than custom permission checks
+2. **Access control**: Used existing `RONDO_Access_Control` filters rather than custom permission checks
 
 ## Deviations from Plan
 

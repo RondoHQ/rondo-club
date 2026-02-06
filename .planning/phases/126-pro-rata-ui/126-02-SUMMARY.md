@@ -75,7 +75,7 @@ decisions:
 
 Complete Contributie list view with REST API integration:
 
-1. **REST API Endpoint** (`/stadion/v1/fees`)
+1. **REST API Endpoint** (`/rondo/v1/fees`)
    - Returns calculated fees for all members
    - Optional season parameter (defaults to current season)
    - Includes full fee breakdown: base, family discount, pro-rata, final
@@ -153,7 +153,7 @@ export function useFeeList(params = {}) {
 ## Verification Results
 
 ✅ **REST Endpoint:**
-- `/stadion/v1/fees` returns correct JSON structure
+- `/rondo/v1/fees` returns correct JSON structure
 - Season parameter validation works
 - Category sorting matches expected order
 
@@ -206,7 +206,7 @@ No other deviations - plan executed as written.
 **Data Flow:**
 1. User visits `/contributie`
 2. `ContributieList` component mounts
-3. `useFeeList()` hook fetches from `/stadion/v1/fees`
+3. `useFeeList()` hook fetches from `/rondo/v1/fees`
 4. REST endpoint queries all persons, calls `MembershipFees->calculate_full_fee()`
 5. Results sorted by category priority, then name
 6. Component renders table with client-side re-sorting capability

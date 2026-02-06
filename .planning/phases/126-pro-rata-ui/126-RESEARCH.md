@@ -28,7 +28,7 @@ The established libraries/tools for this domain:
 ### Backend
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
-| WordPress REST API | Core | API endpoints | stadion/v1 namespace established |
+| WordPress REST API | Core | API endpoints | rondo/v1 namespace established |
 | ACF Pro | Latest | Custom fields | All person data stored via ACF |
 | MembershipFees class | Custom | Fee calculation | Phase 124-125 foundation |
 
@@ -226,7 +226,7 @@ Verified patterns from existing codebase:
 ```php
 // Source: includes/class-rest-api.php lines 22-40
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/fees',
     [
         'methods'             => \WP_REST_Server::READABLE,
@@ -390,6 +390,6 @@ Things that couldn't be fully resolved:
 2. **Pro-rata is straightforward:** Month-based quarter lookup, applied after family discount
 3. **Registration date field missing:** Must be created - recommend custom field named `registration_date`
 4. **VOGList is the template:** Same list pattern, filter dropdown, table structure
-5. **REST endpoint needed:** New `/stadion/v1/fees` endpoint returning calculated fee data
+5. **REST endpoint needed:** New `/rondo/v1/fees` endpoint returning calculated fee data
 6. **Address mismatch detection:** Compare last names within youth categories with different family keys
 7. **Pro-rata applies after family discount:** Order: base_fee -> discount -> prorata -> final

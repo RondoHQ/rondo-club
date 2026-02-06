@@ -83,7 +83,7 @@ Created `includes/class-google-contacts-sync.php` implementing:
 
 Updated `functions.php`:
 - Added `use Stadion\Contacts\GoogleContactsSync;`
-- Instantiate `new GoogleContactsSync()` in `stadion_init()`
+- Instantiate `new GoogleContactsSync()` in `rondo_init()`
 - Schedule sync on theme activation
 - Unschedule sync on theme deactivation
 

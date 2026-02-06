@@ -9,7 +9,7 @@ requires:
   - phase: 24-01
     provides: stadion_todo CPT registration
   - phase: 24-02
-    provides: STADION_REST_Todos class for CRUD operations
+    provides: RONDO_REST_Todos class for CRUD operations
 provides:
   - WP-CLI migration command for todos
   - Clean comment-types.php without todo code
@@ -36,7 +36,7 @@ key-decisions:
   - "Dashboard count_open_todos() uses WP_Query with access control filtering"
 
 patterns-established:
-  - "STADION_Todos_CLI_Command follows existing CLI command patterns"
+  - "RONDO_Todos_CLI_Command follows existing CLI command patterns"
 
 issues-created: []
 
@@ -59,10 +59,10 @@ completed: 2026-01-14
 
 ## Accomplishments
 
-- Created `STADION_Todos_CLI_Command` class with `migrate` subcommand for todo migration
+- Created `RONDO_Todos_CLI_Command` class with `migrate` subcommand for todo migration
 - Successfully migrated 13 comment-based todos to stadion_todo CPT posts on production
-- Removed all todo-related code from `STADION_Comment_Types` (152 lines)
-- Removed legacy `get_all_todos()` and `/stadion/v1/todos` route from `STADION_REST_API`
+- Removed all todo-related code from `RONDO_Comment_Types` (152 lines)
+- Removed legacy `get_all_todos()` and `/rondo/v1/todos` route from `RONDO_REST_API`
 - Updated `count_open_todos()` to query CPT instead of comments
 
 ## Task Commits
@@ -75,14 +75,14 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 
-- `includes/class-wp-cli.php` - Added `STADION_Todos_CLI_Command` class with migrate subcommand
+- `includes/class-wp-cli.php` - Added `RONDO_Todos_CLI_Command` class with migrate subcommand
 - `includes/class-comment-types.php` - Removed TYPE_TODO constant, todo routes, todo methods, todo meta
 - `includes/class-rest-api.php` - Removed get_all_todos(), updated count_open_todos() to use CPT
 
 ## Decisions Made
 
 1. **Migration behavior**: Original comments are deleted after successful CPT post creation (not preserved)
-2. **Dashboard count**: Uses `WP_Query` with automatic access control filtering via `STADION_Access_Control` hooks
+2. **Dashboard count**: Uses `WP_Query` with automatic access control filtering via `RONDO_Access_Control` hooks
 
 ## Deviations from Plan
 
@@ -100,7 +100,7 @@ None
 - `grep -c "todo" includes/class-comment-types.php` returns 0
 - `grep -c "get_all_todos" includes/class-rest-api.php` returns 0
 - Notes (5) and activities (25) remain in comments table unaffected
-- Todos accessible via `/stadion/v1/todos` from new `STADION_REST_Todos` class
+- Todos accessible via `/rondo/v1/todos` from new `RONDO_REST_Todos` class
 
 ## Next Phase Readiness
 

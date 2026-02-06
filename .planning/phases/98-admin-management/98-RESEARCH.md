@@ -8,7 +8,7 @@
 
 This phase implements admin-only feedback management within the Settings page, plus a user-facing application password UI for API access. The codebase already has extensive patterns for all required components: tab/subtab navigation (ConnectionsTab), sortable table views (PeopleList), confirmation dialogs (window.confirm), and application password management (existing CardDAV subtab).
 
-The backend REST API at `/stadion/v1/feedback` is fully complete (Phase 96), including admin-only permissions for status/priority changes and filtering/sorting support. The frontend implementation should follow existing Settings page patterns exactly.
+The backend REST API at `/rondo/v1/feedback` is fully complete (Phase 96), including admin-only permissions for status/priority changes and filtering/sorting support. The frontend implementation should follow existing Settings page patterns exactly.
 
 Key implementation areas:
 1. Add "Feedback" tab to Settings Admin section (admin-only)

@@ -26,9 +26,9 @@ The Stadion PHP codebase contains **41 classes** across **39 files** in the `inc
 
 | Class | Type | Line | Lines | Description |
 |-------|------|------|-------|-------------|
-| `STADION_Notification_Channel` | abstract | 15 | ~64 | Base class for notification channels |
-| `STADION_Email_Channel` | concrete | 79 | ~342 | Email notification implementation |
-| `STADION_Slack_Channel` | concrete | 426 | ~408 | Slack notification implementation |
+| `RONDO_Notification_Channel` | abstract | 15 | ~64 | Base class for notification channels |
+| `RONDO_Email_Channel` | concrete | 79 | ~342 | Email notification implementation |
+| `RONDO_Slack_Channel` | concrete | 426 | ~408 | Slack notification implementation |
 
 **Split Strategy:**
 1. `class-notification-channel.php` - Abstract base class (new file)
@@ -93,55 +93,55 @@ includes/
 #### Core WordPress Integration (5 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_Post_Types` | class-post-types.php | 402 | CPT registration |
-| `STADION_Taxonomies` | class-taxonomies.php | 527 | Taxonomy registration |
-| `STADION_Access_Control` | class-access-control.php | 481 | User data isolation |
-| `STADION_Visibility` | class-visibility.php | 164 | Visibility helpers |
-| `STADION_User_Roles` | class-user-roles.php | 399 | Custom role management |
+| `RONDO_Post_Types` | class-post-types.php | 402 | CPT registration |
+| `RONDO_Taxonomies` | class-taxonomies.php | 527 | Taxonomy registration |
+| `RONDO_Access_Control` | class-access-control.php | 481 | User data isolation |
+| `RONDO_Visibility` | class-visibility.php | 164 | Visibility helpers |
+| `RONDO_User_Roles` | class-user-roles.php | 399 | Custom role management |
 
 #### REST API Controllers (9 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_REST_Base` | class-rest-base.php | 227 | Abstract base controller |
-| `STADION_REST_API` | class-rest-api.php | 1178 | Legacy endpoints (dashboard, search) |
-| `STADION_REST_People` | class-rest-people.php | 774 | People CRUD |
-| `STADION_REST_Teams` | class-rest-teams.php | 601 | Teams CRUD |
-| `STADION_REST_Todos` | class-rest-todos.php | 492 | Todos CRUD |
-| `STADION_REST_Workspaces` | class-rest-workspaces.php | 1238 | Workspaces CRUD |
-| `STADION_REST_Slack` | class-rest-slack.php | 714 | Slack integration |
-| `STADION_REST_Import_Export` | class-rest-import-export.php | 423 | Import/Export endpoints |
-| `STADION_REST_Calendar` | class-rest-calendar.php | 1220 | Calendar endpoints |
+| `RONDO_REST_Base` | class-rest-base.php | 227 | Abstract base controller |
+| `RONDO_REST_API` | class-rest-api.php | 1178 | Legacy endpoints (dashboard, search) |
+| `RONDO_REST_People` | class-rest-people.php | 774 | People CRUD |
+| `RONDO_REST_Teams` | class-rest-teams.php | 601 | Teams CRUD |
+| `RONDO_REST_Todos` | class-rest-todos.php | 492 | Todos CRUD |
+| `RONDO_REST_Workspaces` | class-rest-workspaces.php | 1238 | Workspaces CRUD |
+| `RONDO_REST_Slack` | class-rest-slack.php | 714 | Slack integration |
+| `RONDO_REST_Import_Export` | class-rest-import-export.php | 423 | Import/Export endpoints |
+| `RONDO_REST_Calendar` | class-rest-calendar.php | 1220 | Calendar endpoints |
 
 #### Notification System (3 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_Notification_Channel` | class-notification-channels.php | 64 | Abstract base |
-| `STADION_Email_Channel` | class-notification-channels.php | 342 | Email notifications |
-| `STADION_Slack_Channel` | class-notification-channels.php | 408 | Slack notifications |
+| `RONDO_Notification_Channel` | class-notification-channels.php | 64 | Abstract base |
+| `RONDO_Email_Channel` | class-notification-channels.php | 342 | Email notifications |
+| `RONDO_Slack_Channel` | class-notification-channels.php | 408 | Slack notifications |
 
 #### Calendar System (6 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_Calendar_Connections` | class-calendar-connections.php | 156 | Connection management |
-| `STADION_Calendar_Matcher` | class-calendar-matcher.php | 297 | Email-to-person matching |
-| `STADION_Calendar_Sync` | class-calendar-sync.php | 450 | Background sync |
-| `STADION_Google_Calendar_Provider` | class-google-calendar-provider.php | 296 | Google Calendar API |
-| `STADION_CalDAV_Provider` | class-caldav-provider.php | 643 | CalDAV protocol |
-| `STADION_Google_OAuth` | class-google-oauth.php | 190 | OAuth flow |
+| `RONDO_Calendar_Connections` | class-calendar-connections.php | 156 | Connection management |
+| `RONDO_Calendar_Matcher` | class-calendar-matcher.php | 297 | Email-to-person matching |
+| `RONDO_Calendar_Sync` | class-calendar-sync.php | 450 | Background sync |
+| `RONDO_Google_Calendar_Provider` | class-google-calendar-provider.php | 296 | Google Calendar API |
+| `RONDO_CalDAV_Provider` | class-caldav-provider.php | 643 | CalDAV protocol |
+| `RONDO_Google_OAuth` | class-google-oauth.php | 190 | OAuth flow |
 
 #### Import/Export System (5 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_Monica_Import` | class-monica-import.php | 1040 | Monica CRM import |
-| `STADION_VCard_Import` | class-vcard-import.php | 1038 | VCard import |
-| `STADION_VCard_Export` | class-vcard-export.php | 940 | VCard export |
-| `STADION_Google_Contacts_Import` | class-google-contacts-import.php | 795 | Google Contacts import |
-| `STADION_ICal_Feed` | class-ical-feed.php | 477 | iCal feed generation |
+| `RONDO_Monica_Import` | class-monica-import.php | 1040 | Monica CRM import |
+| `RONDO_VCard_Import` | class-vcard-import.php | 1038 | VCard import |
+| `RONDO_VCard_Export` | class-vcard-export.php | 940 | VCard export |
+| `RONDO_Google_Contacts_Import` | class-google-contacts-import.php | 795 | Google Contacts import |
+| `RONDO_ICal_Feed` | class-ical-feed.php | 477 | iCal feed generation |
 
 #### CardDAV System (4 classes)
 | Class | File | Namespace | Responsibility |
 |-------|------|-----------|----------------|
-| `STADION_CardDAV_Server` | class-carddav-server.php | none | Server wrapper |
+| `RONDO_CardDAV_Server` | class-carddav-server.php | none | Server wrapper |
 | `CardDAVBackend` | carddav/class-carddav-backend.php | `Stadion\CardDAV` | Sabre backend |
 | `AuthBackend` | carddav/class-auth-backend.php | `Stadion\CardDAV` | Authentication |
 | `PrincipalBackend` | carddav/class-principal-backend.php | `Stadion\CardDAV` | Principal backend |
@@ -149,24 +149,24 @@ includes/
 #### Collaborative Features (5 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_Comment_Types` | class-comment-types.php | 616 | Notes/Activities |
-| `STADION_Workspace_Members` | class-workspace-members.php | 263 | Workspace membership |
-| `STADION_Mentions` | class-mentions.php | 53 | @mention parsing |
-| `STADION_Mention_Notifications` | class-mention-notifications.php | 110 | Mention notifications |
-| `STADION_Reminders` | class-reminders.php | 681 | Daily digest |
+| `RONDO_Comment_Types` | class-comment-types.php | 616 | Notes/Activities |
+| `RONDO_Workspace_Members` | class-workspace-members.php | 263 | Workspace membership |
+| `RONDO_Mentions` | class-mentions.php | 53 | @mention parsing |
+| `RONDO_Mention_Notifications` | class-mention-notifications.php | 110 | Mention notifications |
+| `RONDO_Reminders` | class-reminders.php | 681 | Daily digest |
 
 #### Data Processing (4 classes)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_Auto_Title` | class-auto-title.php | 208 | Auto-generate titles |
-| `STADION_Inverse_Relationships` | class-inverse-relationships.php | 660 | Bidirectional relationships |
-| `STADION_Todo_Migration` | class-todo-migration.php | 102 | Todo migration helper |
-| `STADION_Credential_Encryption` | class-credential-encryption.php | 56 | Sodium encryption |
+| `RONDO_Auto_Title` | class-auto-title.php | 208 | Auto-generate titles |
+| `RONDO_Inverse_Relationships` | class-inverse-relationships.php | 660 | Bidirectional relationships |
+| `RONDO_Todo_Migration` | class-todo-migration.php | 102 | Todo migration helper |
+| `RONDO_Credential_Encryption` | class-credential-encryption.php | 56 | Sodium encryption |
 
 #### CLI Commands (1 class)
 | Class | File | Lines | Responsibility |
 |-------|------|-------|----------------|
-| `STADION_WP_CLI` | class-wp-cli.php | 1720 | WP-CLI commands |
+| `RONDO_WP_CLI` | class-wp-cli.php | 1720 | WP-CLI commands |
 
 ---
 
@@ -251,57 +251,57 @@ includes/                        includes/
 | Current Class | Target Namespace | Target File |
 |---------------|------------------|-------------|
 | **Core** | | |
-| `STADION_Post_Types` | `Stadion\Core\PostTypes` | `core/PostTypes.php` |
-| `STADION_Taxonomies` | `Stadion\Core\Taxonomies` | `core/Taxonomies.php` |
-| `STADION_Access_Control` | `Stadion\Core\AccessControl` | `core/AccessControl.php` |
-| `STADION_Visibility` | `Stadion\Core\Visibility` | `core/Visibility.php` |
-| `STADION_User_Roles` | `Stadion\Core\UserRoles` | `core/UserRoles.php` |
-| `STADION_Auto_Title` | `Stadion\Core\AutoTitle` | `core/AutoTitle.php` |
+| `RONDO_Post_Types` | `Stadion\Core\PostTypes` | `core/PostTypes.php` |
+| `RONDO_Taxonomies` | `Stadion\Core\Taxonomies` | `core/Taxonomies.php` |
+| `RONDO_Access_Control` | `Stadion\Core\AccessControl` | `core/AccessControl.php` |
+| `RONDO_Visibility` | `Stadion\Core\Visibility` | `core/Visibility.php` |
+| `RONDO_User_Roles` | `Stadion\Core\UserRoles` | `core/UserRoles.php` |
+| `RONDO_Auto_Title` | `Stadion\Core\AutoTitle` | `core/AutoTitle.php` |
 | **REST API** | | |
-| `STADION_REST_Base` | `Stadion\REST\Base` | `rest/Base.php` |
-| `STADION_REST_API` | `Stadion\REST\Api` | `rest/Api.php` |
-| `STADION_REST_People` | `Stadion\REST\People` | `rest/People.php` |
-| `STADION_REST_Teams` | `Stadion\REST\Teams` | `rest/Teams.php` |
-| `STADION_REST_Todos` | `Stadion\REST\Todos` | `rest/Todos.php` |
-| `STADION_REST_Workspaces` | `Stadion\REST\Workspaces` | `rest/Workspaces.php` |
-| `STADION_REST_Slack` | `Stadion\REST\Slack` | `rest/Slack.php` |
-| `STADION_REST_Import_Export` | `Stadion\REST\ImportExport` | `rest/ImportExport.php` |
-| `STADION_REST_Calendar` | `Stadion\REST\Calendar` | `rest/Calendar.php` |
+| `RONDO_REST_Base` | `Stadion\REST\Base` | `rest/Base.php` |
+| `RONDO_REST_API` | `Stadion\REST\Api` | `rest/Api.php` |
+| `RONDO_REST_People` | `Stadion\REST\People` | `rest/People.php` |
+| `RONDO_REST_Teams` | `Stadion\REST\Teams` | `rest/Teams.php` |
+| `RONDO_REST_Todos` | `Stadion\REST\Todos` | `rest/Todos.php` |
+| `RONDO_REST_Workspaces` | `Stadion\REST\Workspaces` | `rest/Workspaces.php` |
+| `RONDO_REST_Slack` | `Stadion\REST\Slack` | `rest/Slack.php` |
+| `RONDO_REST_Import_Export` | `Stadion\REST\ImportExport` | `rest/ImportExport.php` |
+| `RONDO_REST_Calendar` | `Stadion\REST\Calendar` | `rest/Calendar.php` |
 | **Notifications** | | |
-| `STADION_Notification_Channel` | `Stadion\Notifications\Channel` | `notifications/Channel.php` |
-| `STADION_Email_Channel` | `Stadion\Notifications\EmailChannel` | `notifications/EmailChannel.php` |
-| `STADION_Slack_Channel` | `Stadion\Notifications\SlackChannel` | `notifications/SlackChannel.php` |
+| `RONDO_Notification_Channel` | `Stadion\Notifications\Channel` | `notifications/Channel.php` |
+| `RONDO_Email_Channel` | `Stadion\Notifications\EmailChannel` | `notifications/EmailChannel.php` |
+| `RONDO_Slack_Channel` | `Stadion\Notifications\SlackChannel` | `notifications/SlackChannel.php` |
 | **Calendar** | | |
-| `STADION_Calendar_Connections` | `Stadion\Calendar\Connections` | `calendar/Connections.php` |
-| `STADION_Calendar_Matcher` | `Stadion\Calendar\Matcher` | `calendar/Matcher.php` |
-| `STADION_Calendar_Sync` | `Stadion\Calendar\Sync` | `calendar/Sync.php` |
-| `STADION_Google_Calendar_Provider` | `Stadion\Calendar\GoogleProvider` | `calendar/GoogleProvider.php` |
-| `STADION_CalDAV_Provider` | `Stadion\Calendar\CalDAVProvider` | `calendar/CalDAVProvider.php` |
-| `STADION_Google_OAuth` | `Stadion\Calendar\GoogleOAuth` | `calendar/GoogleOAuth.php` |
+| `RONDO_Calendar_Connections` | `Stadion\Calendar\Connections` | `calendar/Connections.php` |
+| `RONDO_Calendar_Matcher` | `Stadion\Calendar\Matcher` | `calendar/Matcher.php` |
+| `RONDO_Calendar_Sync` | `Stadion\Calendar\Sync` | `calendar/Sync.php` |
+| `RONDO_Google_Calendar_Provider` | `Stadion\Calendar\GoogleProvider` | `calendar/GoogleProvider.php` |
+| `RONDO_CalDAV_Provider` | `Stadion\Calendar\CalDAVProvider` | `calendar/CalDAVProvider.php` |
+| `RONDO_Google_OAuth` | `Stadion\Calendar\GoogleOAuth` | `calendar/GoogleOAuth.php` |
 | **Import** | | |
-| `STADION_Monica_Import` | `Stadion\Import\Monica` | `import/Monica.php` |
-| `STADION_VCard_Import` | `Stadion\Import\VCard` | `import/VCard.php` |
-| `STADION_Google_Contacts_Import` | `Stadion\Import\GoogleContacts` | `import/GoogleContacts.php` |
+| `RONDO_Monica_Import` | `Stadion\Import\Monica` | `import/Monica.php` |
+| `RONDO_VCard_Import` | `Stadion\Import\VCard` | `import/VCard.php` |
+| `RONDO_Google_Contacts_Import` | `Stadion\Import\GoogleContacts` | `import/GoogleContacts.php` |
 | **Export** | | |
-| `STADION_VCard_Export` | `Stadion\Export\VCard` | `export/VCard.php` |
-| `STADION_ICal_Feed` | `Stadion\Export\ICalFeed` | `export/ICalFeed.php` |
+| `RONDO_VCard_Export` | `Stadion\Export\VCard` | `export/VCard.php` |
+| `RONDO_ICal_Feed` | `Stadion\Export\ICalFeed` | `export/ICalFeed.php` |
 | **CardDAV** (already namespaced) | | |
 | `Stadion\CardDAV\CardDAVBackend` | (keep) | `carddav/CardDAVBackend.php` |
 | `Stadion\CardDAV\AuthBackend` | (keep) | `carddav/AuthBackend.php` |
 | `Stadion\CardDAV\PrincipalBackend` | (keep) | `carddav/PrincipalBackend.php` |
-| `STADION_CardDAV_Server` | `Stadion\CardDAV\Server` | `carddav/Server.php` |
+| `RONDO_CardDAV_Server` | `Stadion\CardDAV\Server` | `carddav/Server.php` |
 | **Collaboration** | | |
-| `STADION_Comment_Types` | `Stadion\Collaboration\CommentTypes` | `collaboration/CommentTypes.php` |
-| `STADION_Workspace_Members` | `Stadion\Collaboration\WorkspaceMembers` | `collaboration/WorkspaceMembers.php` |
-| `STADION_Mentions` | `Stadion\Collaboration\Mentions` | `collaboration/Mentions.php` |
-| `STADION_Mention_Notifications` | `Stadion\Collaboration\MentionNotifications` | `collaboration/MentionNotifications.php` |
-| `STADION_Reminders` | `Stadion\Collaboration\Reminders` | `collaboration/Reminders.php` |
+| `RONDO_Comment_Types` | `Stadion\Collaboration\CommentTypes` | `collaboration/CommentTypes.php` |
+| `RONDO_Workspace_Members` | `Stadion\Collaboration\WorkspaceMembers` | `collaboration/WorkspaceMembers.php` |
+| `RONDO_Mentions` | `Stadion\Collaboration\Mentions` | `collaboration/Mentions.php` |
+| `RONDO_Mention_Notifications` | `Stadion\Collaboration\MentionNotifications` | `collaboration/MentionNotifications.php` |
+| `RONDO_Reminders` | `Stadion\Collaboration\Reminders` | `collaboration/Reminders.php` |
 | **Data** | | |
-| `STADION_Inverse_Relationships` | `Stadion\Data\InverseRelationships` | `data/InverseRelationships.php` |
-| `STADION_Todo_Migration` | `Stadion\Data\TodoMigration` | `data/TodoMigration.php` |
-| `STADION_Credential_Encryption` | `Stadion\Data\CredentialEncryption` | `data/CredentialEncryption.php` |
+| `RONDO_Inverse_Relationships` | `Stadion\Data\InverseRelationships` | `data/InverseRelationships.php` |
+| `RONDO_Todo_Migration` | `Stadion\Data\TodoMigration` | `data/TodoMigration.php` |
+| `RONDO_Credential_Encryption` | `Stadion\Data\CredentialEncryption` | `data/CredentialEncryption.php` |
 | **CLI** | | |
-| `STADION_WP_CLI` | `Stadion\CLI\Commands` | `cli/Commands.php` |
+| `RONDO_WP_CLI` | `Stadion\CLI\Commands` | `cli/Commands.php` |
 
 ---
 
@@ -317,7 +317,7 @@ includes/                        includes/
 **Step 2: Create folder structure**
 - Create subdirectories: `core/`, `rest/`, `notifications/`, `calendar/`, `import/`, `export/`, `collaboration/`, `data/`, `cli/`
 - Move files to appropriate folders
-- Keep old class names (STADION_* prefix)
+- Keep old class names (RONDO_* prefix)
 - Update autoloader paths in functions.php
 
 **Step 3: Verify**
@@ -340,7 +340,7 @@ includes/                        includes/
 - Ensure Composer autoloader is loaded early
 
 **Step 4: Backward Compatibility**
-- Add class aliases for old STADION_* names (optional, for plugin compatibility)
+- Add class aliases for old RONDO_* names (optional, for plugin compatibility)
 
 ---
 
@@ -382,7 +382,7 @@ After Phase 65 completes:
    - All class properties remain accessible
 
 2. **REST API endpoints unchanged**
-   - All `/stadion/v1/` endpoints work identically
+   - All `/rondo/v1/` endpoints work identically
    - Response formats preserved
 
 3. **Hook compatibility**
@@ -395,8 +395,8 @@ For backward compatibility, add class aliases in functions.php:
 
 ```php
 // Backward compatibility aliases
-class_alias( 'Stadion\Core\PostTypes', 'STADION_Post_Types' );
-class_alias( 'Stadion\Core\Taxonomies', 'STADION_Taxonomies' );
+class_alias( 'Stadion\Core\PostTypes', 'RONDO_Post_Types' );
+class_alias( 'Stadion\Core\Taxonomies', 'RONDO_Taxonomies' );
 // ... etc for all classes
 ```
 
@@ -450,4 +450,4 @@ After each phase:
 
 3. **Sabre library compatibility:** The CardDAV/CalDAV classes extend Sabre library base classes. Variable naming rules are relaxed for these files as Sabre uses camelCase.
 
-4. **REST controller inheritance:** All STADION_REST_* classes extend STADION_REST_Base. This inheritance chain must be preserved during namespace migration.
+4. **REST controller inheritance:** All RONDO_REST_* classes extend RONDO_REST_Base. This inheritance chain must be preserved during namespace migration.

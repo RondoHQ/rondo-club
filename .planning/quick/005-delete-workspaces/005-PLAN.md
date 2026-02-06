@@ -186,8 +186,8 @@ The Workspaces feature was part of the v2.0 Multi-User milestone but is no longe
   <action>
     1. functions.php:
        - Remove use statements for Workspaces, WorkspaceMembers, Visibility classes
-       - Remove class_alias entries for STADION_REST_Workspaces, STADION_Workspace_Members, STADION_Visibility
-       - Remove "new Workspaces();" instantiation in stadion_init()
+       - Remove class_alias entries for RONDO_REST_Workspaces, RONDO_Workspace_Members, RONDO_Visibility
+       - Remove "new Workspaces();" instantiation in rondo_init()
        - Remove "new WorkspaceMembers();" instantiation
 
     2. includes/class-post-types.php:

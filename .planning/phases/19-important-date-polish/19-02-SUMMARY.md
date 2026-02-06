@@ -31,11 +31,11 @@ This returns the person's full name since Person post titles are auto-generated 
 **Status:** COMPLETE
 **Commit:** 6355757
 
-Added `STADION_Dates_CLI_Command` class to `includes/class-wp-cli.php` with:
+Added `RONDO_Dates_CLI_Command` class to `includes/class-wp-cli.php` with:
 - `wp prm dates regenerate-titles` command
 - `--dry-run` option to preview changes
 - Skips dates with custom labels
-- Uses same title generation logic as `STADION_Auto_Title`
+- Uses same title generation logic as `RONDO_Auto_Title`
 - Registered as `prm dates` command namespace
 
 ## Files Modified

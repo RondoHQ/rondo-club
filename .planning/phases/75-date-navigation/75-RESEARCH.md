@@ -46,7 +46,7 @@ The established libraries/tools for this domain:
 src/pages/Dashboard.jsx          # Contains meetings card renderer
   - useTodayMeetings()           # Hook that fetches today's meetings
     - prmApi.getTodayMeetings()  # API client method
-      - /stadion/v1/calendar/today-meetings  # REST endpoint (currently hardcoded to today)
+      - /rondo/v1/calendar/today-meetings  # REST endpoint (currently hardcoded to today)
 ```
 
 ### Target Meeting Widget Structure
@@ -55,7 +55,7 @@ src/pages/Dashboard.jsx          # Contains meetings card renderer
   - useState(selectedDate)       # Track selected date (default: today)
   - useDateMeetings(date)        # New/modified hook accepting date
     - prmApi.getMeetingsForDate(date)  # New/modified API method
-      - /stadion/v1/calendar/today-meetings?date=YYYY-MM-DD  # Add date param
+      - /rondo/v1/calendar/today-meetings?date=YYYY-MM-DD  # Add date param
 ```
 
 ### Pattern 1: Date Navigation State Management

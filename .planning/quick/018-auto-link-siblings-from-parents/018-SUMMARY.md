@@ -144,7 +144,7 @@ Successfully created 270 sibling relationships across 138 families. Command outp
   - Added removal cleanup logic
 
 - `includes/class-wp-cli.php` (+244 lines)
-  - Added STADION_Relationships_CLI_Command class
+  - Added RONDO_Relationships_CLI_Command class
   - Registered `prm relationships` command
   - Implemented sync_siblings method with dry-run support
 

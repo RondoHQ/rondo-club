@@ -7,7 +7,7 @@ wave: 2
 depends_on:
   - 111-01
 requires:
-  - Backend endpoint /stadion/v1/people/filtered (111-01)
+  - Backend endpoint /rondo/v1/people/filtered (111-01)
 provides:
   - prmApi.getFilteredPeople() API client method
   - useFilteredPeople React hook for server-side filtering
@@ -44,14 +44,14 @@ completed: 2026-01-29
 
 # Phase 111 Plan 2: Frontend Hook Integration Summary
 
-**One-liner:** Added useFilteredPeople hook with API client method for server-side filtering/pagination via /stadion/v1/people/filtered endpoint
+**One-liner:** Added useFilteredPeople hook with API client method for server-side filtering/pagination via /rondo/v1/people/filtered endpoint
 
 ## What Was Built
 
 Created frontend integration for the new server-side filtered people endpoint:
 
 1. **API Client Method** (`prmApi.getFilteredPeople`)
-   - Calls `/stadion/v1/people/filtered` with query params
+   - Calls `/rondo/v1/people/filtered` with query params
    - Accepts: page, per_page, labels, ownership, modified_days, orderby, order
    - Returns: { people, total, page, total_pages }
 
@@ -80,7 +80,7 @@ Created frontend integration for the new server-side filtered people endpoint:
 Added to `prmApi` object in `src/api/client.js`:
 
 ```javascript
-getFilteredPeople: (params = {}) => api.get('/stadion/v1/people/filtered', { params })
+getFilteredPeople: (params = {}) => api.get('/rondo/v1/people/filtered', { params })
 ```
 
 Positioned after `bulkUpdatePeople` to maintain alphabetical organization.

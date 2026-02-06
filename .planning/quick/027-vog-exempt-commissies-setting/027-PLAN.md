@@ -28,7 +28,7 @@ must_haves:
       provides: "Multi-select UI for exempt commissies in VOG tab"
   key_links:
     - from: "src/pages/Settings/Settings.jsx"
-      to: "/stadion/v1/vog/settings"
+      to: "/rondo/v1/vog/settings"
       via: "API call on save"
     - from: "includes/class-rest-api.php"
       to: "includes/class-volunteer-status.php"
@@ -103,8 +103,8 @@ Output: Working exempt commissies setting in VOG tab with recalculation on save.
 Note: The exemption only affects VOG tracking. People in exempt commissies may still be volunteers for other purposes, but they won't trigger VOG requirements through that position.
   </action>
   <verify>
-    - Test API: `curl -X GET /wp-json/stadion/v1/vog/settings` includes `exempt_commissies: []`
-    - Test API: `curl -X POST /wp-json/stadion/v1/vog/settings -d '{"exempt_commissies": [123, 456]}'` saves and triggers recalculation
+    - Test API: `curl -X GET /wp-json/rondo/v1/vog/settings` includes `exempt_commissies: []`
+    - Test API: `curl -X POST /wp-json/rondo/v1/vog/settings -d '{"exempt_commissies": [123, 456]}'` saves and triggers recalculation
     - Verify option saved: `wp option get stadion_vog_exempt_commissies`
   </verify>
   <done>
@@ -227,8 +227,8 @@ Note: The exemption only affects VOG tracking. People in exempt commissies may s
 </tasks>
 
 <verification>
-- API: GET /stadion/v1/vog/settings returns exempt_commissies array
-- API: POST /stadion/v1/vog/settings with exempt_commissies saves and returns people_recalculated count
+- API: GET /rondo/v1/vog/settings returns exempt_commissies array
+- API: POST /rondo/v1/vog/settings with exempt_commissies saves and returns people_recalculated count
 - UI: VOG settings tab shows commissies checkbox list
 - Functional: Person in exempt commissie only (no other volunteer roles) does NOT appear in VOG list
 - Functional: Person in exempt commissie + non-exempt team role DOES appear in VOG list

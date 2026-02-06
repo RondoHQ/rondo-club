@@ -19,7 +19,7 @@ Phase 10 added collaborative features to Stadion, enabling team members to work 
 ### Plan 10-02: @Mentions Infrastructure
 **Deliverables:**
 - `MentionInput` React component using react-mentions library
-- `STADION_Mentions` PHP class for parsing and storing mentions
+- `RONDO_Mentions` PHP class for parsing and storing mentions
 - Workspace member search API endpoint
 - `_mentioned_users` comment meta storage
 - `stadion_user_mentioned` action hook
@@ -28,7 +28,7 @@ Phase 10 added collaborative features to Stadion, enabling team members to work 
 
 ### Plan 10-03: Mention Notifications
 **Deliverables:**
-- `STADION_Mention_Notifications` PHP class
+- `RONDO_Mention_Notifications` PHP class
 - Immediate email notifications (optional)
 - Digest queue via user meta
 - Settings UI for notification preference
@@ -92,7 +92,7 @@ Phase 10 added collaborative features to Stadion, enabling team members to work 
 ## Integration Points
 - Builds on workspace_access taxonomy (Phase 7)
 - Uses _workspace_memberships user meta (Phase 8)
-- Extends STADION_Reminders cron system
+- Extends RONDO_Reminders cron system
 - Integrates with existing notification channels
 
 ## Next Steps

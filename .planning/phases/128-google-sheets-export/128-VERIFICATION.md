@@ -33,13 +33,13 @@ score: 6/6 must-haves verified
 |----------|----------|--------|---------|
 | `includes/class-rest-google-sheets.php` | export_fees endpoint | VERIFIED | 1298 lines, export_fees method at line 497, endpoint registered at line 108 |
 | `src/pages/Contributie/ContributieList.jsx` | Export button in header | VERIFIED | 467 lines, handleExportToSheets at line 210, button at lines 336-357 |
-| `src/api/client.js` | exportFeesToSheets API method | VERIFIED | Line 302: exportFeesToSheets: (data) => api.post('/stadion/v1/google-sheets/export-fees', data) |
+| `src/api/client.js` | exportFeesToSheets API method | VERIFIED | Line 302: exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data) |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| ContributieList.jsx | /stadion/v1/google-sheets/export-fees | prmApi.exportFeesToSheets | WIRED | Line 218 calls prmApi.exportFeesToSheets with sort_field and sort_order |
+| ContributieList.jsx | /rondo/v1/google-sheets/export-fees | prmApi.exportFeesToSheets | WIRED | Line 218 calls prmApi.exportFeesToSheets with sort_field and sort_order |
 | class-rest-google-sheets.php | Google Sheets API | Google\Service\Sheets | WIRED | Line 533: $sheets_service = new \Google\Service\Sheets( $client ); Line 562: spreadsheets->create() |
 | Button onClick | handleExportToSheets | onClick handler | WIRED | Line 338: onClick={handleExportToSheets} |
 
@@ -89,7 +89,7 @@ No TODO, FIXME, placeholder, or stub patterns found in the implementation files.
 The Google Sheets export feature is fully implemented:
 
 1. **Backend** (`includes/class-rest-google-sheets.php`):
-   - `POST /stadion/v1/google-sheets/export-fees` endpoint registered
+   - `POST /rondo/v1/google-sheets/export-fees` endpoint registered
    - `export_fees()` method creates spreadsheet with nl_NL locale
    - `fetch_fee_data()` retrieves fee data with sorting
    - `build_fee_spreadsheet_data()` constructs 10-column structure with totals

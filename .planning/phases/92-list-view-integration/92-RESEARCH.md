@@ -6,7 +6,7 @@
 
 ## Summary
 
-This phase integrates custom fields into the People and Teams list views as additional columns. The Stadion codebase has well-established list view patterns in `PeopleList.jsx` and `TeamsList.jsx` that use table-based layouts with sortable headers, row selection, and filtering. Custom field definitions are already accessible via the REST API (`/stadion/v1/custom-fields/{post_type}/metadata`), and custom field values are exposed through ACF's REST API integration in the `acf` object of person/team responses.
+This phase integrates custom fields into the People and Teams list views as additional columns. The Stadion codebase has well-established list view patterns in `PeopleList.jsx` and `TeamsList.jsx` that use table-based layouts with sortable headers, row selection, and filtering. Custom field definitions are already accessible via the REST API (`/rondo/v1/custom-fields/{post_type}/metadata`), and custom field values are exposed through ACF's REST API integration in the `acf` object of person/team responses.
 
 The implementation requires:
 1. Settings to enable "show in list view" per field (stored in field definition)
@@ -167,7 +167,7 @@ Problems that look simple but have existing solutions:
 | Truncating text | Custom CSS | Tailwind `truncate` class | Already used for website column |
 | Date formatting | Custom formatter | `date-fns` format() | Already in use |
 | Boolean display | Custom icons | Existing true_false render pattern | Consistent with detail view |
-| Field metadata | Custom endpoint | `/stadion/v1/custom-fields/{post_type}/metadata` | Already exists from Phase 91 |
+| Field metadata | Custom endpoint | `/rondo/v1/custom-fields/{post_type}/metadata` | Already exists from Phase 91 |
 | Type-specific rendering | Build from scratch | Adapt from CustomFieldsSection.jsx | Same logic, compact display |
 
 **Key insight:** Phase 91 already implemented full type-specific rendering. For list views, we adapt that rendering to be more compact (truncated text, smaller images, etc.).
@@ -395,7 +395,7 @@ The existing field definition (stored via ACF) needs two new properties:
 These are stored in the ACF field definition and exposed via the metadata endpoint.
 
 ### Metadata Endpoint Update
-The `/stadion/v1/custom-fields/{post_type}/metadata` endpoint needs to include these properties:
+The `/rondo/v1/custom-fields/{post_type}/metadata` endpoint needs to include these properties:
 
 ```php
 // In class-rest-custom-fields.php get_field_metadata()

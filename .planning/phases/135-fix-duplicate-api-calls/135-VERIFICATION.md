@@ -35,7 +35,7 @@ score: 3/3 must-haves verified
 - Console showed `[useDashboard] Fetching at` logged twice, ~600ms apart
 - All API calls duplicated with same ~600ms pattern
 
-**Fix Applied:** Changed `wp_enqueue_script()` version parameter from `STADION_THEME_VERSION` to `null`, preventing the `?ver=` query string. Vite already hashes filenames (`main-Div6inYg.js`) for cache busting.
+**Fix Applied:** Changed `wp_enqueue_script()` version parameter from `RONDO_THEME_VERSION` to `null`, preventing the `?ver=` query string. Vite already hashes filenames (`main-Div6inYg.js`) for cache busting.
 
 ### Production Test Results (After Fix)
 

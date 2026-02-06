@@ -61,7 +61,7 @@ Added `register_workspace_access_taxonomy()` method with:
 Phase 7 continues with:
 - 07-02: Add `_visibility` post meta field
 - 07-03: Add workspace membership to user meta
-- 07-04: Update STADION_Access_Control for visibility checks
+- 07-04: Update RONDO_Access_Control for visibility checks
 
 ## Notes
 

@@ -14,7 +14,7 @@ The existing `class-rest-google-sheets.php` provides a complete template for the
 - Spreadsheet creation with formatting (bold headers, frozen rows, auto-resize)
 - Error handling and user feedback patterns
 
-The Contributie page already has all the data needed via the existing `/stadion/v1/fees` REST endpoint which returns fee calculations including Nikki integration data.
+The Contributie page already has all the data needed via the existing `/rondo/v1/fees` REST endpoint which returns fee calculations including Nikki integration data.
 
 **Primary recommendation:** Create a new `export-fees` endpoint following the `export-people` pattern, reusing all existing infrastructure. The frontend pattern from PeopleList.jsx can be directly adapted for ContributieList.jsx.
 
@@ -254,7 +254,7 @@ Problems that look simple but have existing solutions:
 ```php
 // Source: Follows pattern from class-rest-google-sheets.php line 81-106
 register_rest_route(
-    'stadion/v1',
+    'rondo/v1',
     '/google-sheets/export-fees',
     [
         'methods'             => \WP_REST_Server::CREATABLE,
@@ -376,7 +376,7 @@ const { data: sheetsStatus } = useQuery({
 
 ```javascript
 // Source: Add to src/api/client.js prmApi object
-exportFeesToSheets: (data) => api.post('/stadion/v1/google-sheets/export-fees', data),
+exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data),
 ```
 
 ## State of the Art

@@ -46,7 +46,7 @@ Created `Stadion\Fees\MembershipFees` class following the VOGEmail pattern:
 - `update_settings(array $fees)` validates and persists fee changes
 
 ### REST API Endpoints
-Registered at `/stadion/v1/membership-fees/settings`:
+Registered at `/rondo/v1/membership-fees/settings`:
 - **GET**: Returns all fee amounts with defaults
 - **POST**: Updates specified fee amounts, returns updated state
 - Admin-only access via `check_admin_permission` callback
@@ -90,6 +90,6 @@ None - plan executed exactly as written.
 ## Next Phase Readiness
 
 **Ready for Plan 123-02**: Frontend settings UI
-- API endpoints operational at `/stadion/v1/membership-fees/settings`
+- API endpoints operational at `/rondo/v1/membership-fees/settings`
 - API client methods available for React hooks
 - No blockers identified

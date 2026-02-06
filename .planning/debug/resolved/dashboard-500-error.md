@@ -14,7 +14,7 @@ next_action: Archive debug session and commit fix
 
 ## Symptoms
 
-expected: Dashboard API (/stadion/v1/dashboard) returns data successfully
+expected: Dashboard API (/rondo/v1/dashboard) returns data successfully
 actual: 500 internal server error with WordPress critical error message
 errors: {"code":"internal_server_error","message":"<p>There has been a critical error on this website.</p>...","data":{"status":500}}
 reproduction: Any dashboard request triggers the error

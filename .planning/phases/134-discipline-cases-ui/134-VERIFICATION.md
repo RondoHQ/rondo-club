@@ -37,7 +37,7 @@ score: 8/8 must-haves verified
 | `src/pages/DisciplineCases/DisciplineCasesList.jsx` | List page with season filter | VERIFIED | 171 lines (> 80 min), season dropdown, DisciplineCaseTable integration, batch person fetch |
 | `src/components/DisciplineCaseTable.jsx` | Reusable table component | VERIFIED | 251 lines (> 100 min), sortable, expandable rows, dark mode support |
 | `src/api/client.js` | API methods for discipline cases | VERIFIED | getDisciplineCases, getDisciplineCase, getSeasons methods at lines 97-102, getCurrentSeason at line 121 |
-| `includes/class-rest-api.php` | Current season endpoint | VERIFIED | /stadion/v1/current-season endpoint at lines 726-735, get_current_season callback at lines 3062-3077 |
+| `includes/class-rest-api.php` | Current season endpoint | VERIFIED | /rondo/v1/current-season endpoint at lines 726-735, get_current_season callback at lines 3062-3077 |
 
 ### Key Link Verification
 

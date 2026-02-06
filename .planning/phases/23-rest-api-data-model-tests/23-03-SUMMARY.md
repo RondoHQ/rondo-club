@@ -26,7 +26,7 @@ key-files:
 
 key-decisions:
   - "Initialize WP_REST_Server in set_up() to ensure routes are registered"
-  - "Manually instantiate STADION_REST_People and STADION_REST_Teams for proper route registration"
+  - "Manually instantiate RONDO_REST_People and RONDO_REST_Teams for proper route registration"
   - "Use rest_do_request() for testing REST endpoints vs. direct method calls"
 
 patterns-established:
@@ -56,8 +56,8 @@ completed: 2026-01-13
 ## Accomplishments
 
 - Created RelationshipsSharesTest with 21 comprehensive tests
-- Tested person-team relationships via `/stadion/v1/teams/{id}/people`
-- Tested person-dates relationships via `/stadion/v1/people/{id}/dates`
+- Tested person-team relationships via `/rondo/v1/teams/{id}/people`
+- Tested person-dates relationships via `/rondo/v1/people/{id}/dates`
 - Verified computed fields (is_deceased, birth_year) in person REST responses
 - Tested complete sharing lifecycle (add/get/remove) for people and teams
 - Verified share permission levels (view/edit) and updates
@@ -110,7 +110,7 @@ Both tasks implemented in a single test file, committed atomically:
 ## Decisions Made
 
 - **REST Server Initialization:** Required manually instantiating WP_REST_Server and triggering rest_api_init hook because test environment doesn't automatically detect REST requests
-- **Route Registration:** Explicitly created STADION_REST_People and STADION_REST_Teams instances in set_up() to ensure routes are registered before tests run
+- **Route Registration:** Explicitly created RONDO_REST_People and RONDO_REST_Teams instances in set_up() to ensure routes are registered before tests run
 
 ## Deviations from Plan
 
@@ -119,7 +119,7 @@ Both tasks implemented in a single test file, committed atomically:
 **1. [Rule 3 - Blocking] REST routes returning 404**
 - **Found during:** Initial test run
 - **Issue:** REST routes were not registered because `stadion_is_rest_request()` returned false in test environment
-- **Fix:** Manually initialize WP_REST_Server and STADION_REST_* classes in set_up()
+- **Fix:** Manually initialize WP_REST_Server and RONDO_REST_* classes in set_up()
 - **Verification:** All 21 tests pass
 
 ### Deferred Enhancements

@@ -35,7 +35,7 @@ score: 3/3 must-haves verified
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| ContributieList.jsx | /stadion/v1/google-sheets/export-fees | prmApi.exportFeesToSheets with forecast param | ✓ WIRED | Line 250: `forecast: isForecast` passed in API call; prmApi.exportFeesToSheets defined at client.js:303; isForecast state toggled by season selector at lines 401-402 |
+| ContributieList.jsx | /rondo/v1/google-sheets/export-fees | prmApi.exportFeesToSheets with forecast param | ✓ WIRED | Line 250: `forecast: isForecast` passed in API call; prmApi.exportFeesToSheets defined at client.js:303; isForecast state toggled by season selector at lines 401-402 |
 | export_fees endpoint | fetch_fee_data | forecast parameter passed | ✓ WIRED | Line 542: `$this->fetch_fee_data( $sort_field, $sort_order, $forecast )`; parameter extracted at line 516 from request |
 | fetch_fee_data | next season calculation | Uses forecast to determine season | ✓ WIRED | Lines 855-857: conditional `$fees->get_next_season_key()` vs `$fees->get_season_key()`; 100% pro-rata applied at lines 891-892 for forecast |
 | build_fee_spreadsheet_data | conditional headers/columns | Excludes Nikki based on forecast | ✓ WIRED | Lines 987-990: Nikki headers excluded when forecast; lines 1019-1022: Nikki data excluded from rows; lines 1031-1034: empty columns added for totals row |

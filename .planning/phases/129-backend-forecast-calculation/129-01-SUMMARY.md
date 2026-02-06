@@ -10,7 +10,7 @@ requires:
     provides: MembershipFees class with family discount and pro-rata calculation
 provides:
   - get_next_season_key() method for calculating next season
-  - /stadion/v1/fees?forecast=true endpoint for budget planning
+  - /rondo/v1/fees?forecast=true endpoint for budget planning
   - Forecast mode with 100% pro-rata and no Nikki data
 affects:
   - 130-frontend-forecast-ui (will consume forecast API)
@@ -56,7 +56,7 @@ completed: 2026-02-02
 
 ## Accomplishments
 - Added `get_next_season_key()` method to MembershipFees class
-- Extended `/stadion/v1/fees` endpoint with `forecast=true` parameter
+- Extended `/rondo/v1/fees` endpoint with `forecast=true` parameter
 - Forecast returns next season (2026-2027) with 100% pro-rata for all members
 - Family discounts correctly applied using existing address grouping logic
 - Nikki billing fields omitted from forecast response

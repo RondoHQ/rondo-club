@@ -13,7 +13,7 @@ estimated_time: 20 minutes
 
 ## Goal
 
-Add frontend integration for the new `/stadion/v1/people/filtered` endpoint by creating an API client method and a new `useFilteredPeople` hook that supports server-side filtering, sorting, and pagination.
+Add frontend integration for the new `/rondo/v1/people/filtered` endpoint by creating an API client method and a new `useFilteredPeople` hook that supports server-side filtering, sorting, and pagination.
 
 ## Context
 
@@ -42,7 +42,7 @@ Find the `prmApi` object (around line 109) and add this new method. Add it after
 
 ```javascript
 // Filtered people with server-side pagination/filtering/sorting
-getFilteredPeople: (params = {}) => api.get('/stadion/v1/people/filtered', { params }),
+getFilteredPeople: (params = {}) => api.get('/rondo/v1/people/filtered', { params }),
 ```
 
 The params object will be passed directly as query parameters:
@@ -199,7 +199,7 @@ After implementing, test in browser console:
 
 ```javascript
 // Test the API client directly
-const response = await window.stadionConfig.api.get('/stadion/v1/people/filtered', {
+const response = await window.stadionConfig.api.get('/rondo/v1/people/filtered', {
   params: { page: 1, per_page: 10, orderby: 'last_name', order: 'asc' }
 });
 console.log(response.data);

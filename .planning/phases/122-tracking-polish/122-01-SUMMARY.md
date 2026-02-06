@@ -107,7 +107,7 @@ Modified `includes/class-vog-email.php` to log successful email sends:
 
 Extended `includes/class-rest-people.php` filtered people endpoint:
 
-- Added `vog_email_status` parameter to `/stadion/v1/people/filtered` endpoint
+- Added `vog_email_status` parameter to `/rondo/v1/people/filtered` endpoint
 - Validates: 'sent', 'not_sent', or empty (all)
 - Implemented subquery filter: `SELECT DISTINCT comment_post_ID FROM wp_comments WHERE comment_type = 'stadion_email'`
 - Filter logic:
@@ -152,7 +152,7 @@ Timeline endpoint now includes email entries:
 ### API Filter Usage
 
 ```http
-GET /wp-json/stadion/v1/people/filtered?vog_email_status=not_sent
+GET /wp-json/rondo/v1/people/filtered?vog_email_status=not_sent
 ```
 
 Returns people who have never been sent a VOG email (no stadion_email comments).
@@ -240,8 +240,8 @@ Future optimization: If filtering by email metadata is needed, convert to JOIN w
 
 - [ ] Send VOG email via VOG list bulk action - verify stadion_email comment created
 - [ ] Check person timeline - verify email appears with metadata
-- [ ] API call: `GET /stadion/v1/people/filtered?vog_email_status=not_sent` - returns people without emails
-- [ ] API call: `GET /stadion/v1/people/filtered?vog_email_status=sent` - returns people with emails
+- [ ] API call: `GET /rondo/v1/people/filtered?vog_email_status=not_sent` - returns people without emails
+- [ ] API call: `GET /rondo/v1/people/filtered?vog_email_status=sent` - returns people with emails
 - [ ] Verify email_content_snapshot contains full HTML from template
 
 ### Test Data

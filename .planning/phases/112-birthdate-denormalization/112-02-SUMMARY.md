@@ -60,7 +60,7 @@ metrics:
 
 ## Accomplishments
 
-- Added birth_year_from and birth_year_to parameters to `/stadion/v1/people/filtered` endpoint
+- Added birth_year_from and birth_year_to parameters to `/rondo/v1/people/filtered` endpoint
 - Implemented SQL filtering using YEAR() function on _birthdate meta
 - Validated parameters reject years outside 1900-2100 range
 - Supports both exact year (single parameter) and range filtering (both parameters)

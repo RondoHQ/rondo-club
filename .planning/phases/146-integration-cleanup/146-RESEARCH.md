@@ -8,7 +8,7 @@
 
 This phase involves three interconnected tasks: externalizing the hardcoded FreeScout URL into the club config API, removing AWC/svawc.nl-specific references from documentation, and verifying the theme is installable by any club without code changes.
 
-The existing infrastructure is already in place for this work. The club config API (`/stadion/v1/config`) was implemented in Phase 144 and supports `freescout_url` as a field. The Settings page already has a UI for configuring this value. The primary work is:
+The existing infrastructure is already in place for this work. The club config API (`/rondo/v1/config`) was implemented in Phase 144 and supports `freescout_url` as a field. The Settings page already has a UI for configuring this value. The primary work is:
 
 1. **FreeScout URL externalization**: Replace the hardcoded `https://box.svawc.nl/customers/` URL in PersonDetail.jsx with dynamic construction using `window.stadionConfig.freescoutUrl`
 2. **Documentation cleanup**: Systematic find-and-replace of svawc.nl/AWC references with generic placeholders (example.com, "your club")

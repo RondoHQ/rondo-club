@@ -23,7 +23,7 @@
 - Files: Missing from repository root
 - Why: Not created during initial setup
 - Impact: New developers don't know required configuration
-- Fix approach: Create `.env.example` documenting `STADION_SLACK_CLIENT_ID`, `STADION_SLACK_CLIENT_SECRET`, `STADION_SLACK_SIGNING_SECRET`
+- Fix approach: Create `.env.example` documenting `RONDO_SLACK_CLIENT_ID`, `RONDO_SLACK_CLIENT_SECRET`, `RONDO_SLACK_SIGNING_SECRET`
 
 **Duplicated HTML Decode Logic:**
 - Issue: `decodeHtml()` pattern duplicated

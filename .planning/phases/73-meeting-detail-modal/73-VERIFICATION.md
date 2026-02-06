@@ -33,7 +33,7 @@ must_haves:
       status: verified
       evidence: "Line 15 lazy import, lines 798-806 modal usage"
     - from: "src/components/MeetingDetailModal.jsx"
-      to: "/stadion/v1/calendar/events/{id}/notes"
+      to: "/rondo/v1/calendar/events/{id}/notes"
       status: verified
       evidence: "Lines 15-16 useMeetingNotes/useUpdateMeetingNotes hooks"
     - from: "MeetingCard"
@@ -79,7 +79,7 @@ must_haves:
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
 | Dashboard.jsx | MeetingDetailModal | lazy import + state | VERIFIED | Import at line 15, modal rendered at lines 798-806, controlled by showMeetingModal state |
-| MeetingDetailModal | /stadion/v1/calendar/events/{id}/notes | useMeetingNotes hook | VERIFIED | Hook imported at line 6, used at lines 15-16, saves on blur via handleNotesSave |
+| MeetingDetailModal | /rondo/v1/calendar/events/{id}/notes | useMeetingNotes hook | VERIFIED | Hook imported at line 6, used at lines 15-16, saves on blur via handleNotesSave |
 | MeetingCard | MeetingDetailModal | onClick -> state | VERIFIED | onClick callback (line 275) triggers setSelectedMeeting/setShowMeetingModal (lines 644-646) |
 
 ### Requirements Coverage
@@ -138,7 +138,7 @@ All 9 requirements for Phase 73 have been verified:
 **Backend (Plan 01):**
 - format_today_meeting() returns attendees array with matched/unmatched status
 - format_today_meeting() returns description from post_content
-- GET/PUT /stadion/v1/calendar/events/{id}/notes endpoints working with auth
+- GET/PUT /rondo/v1/calendar/events/{id}/notes endpoints working with auth
 - useMeetingNotes and useUpdateMeetingNotes hooks correctly wired
 
 **Frontend (Plan 02):**

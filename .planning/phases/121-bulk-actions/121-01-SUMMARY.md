@@ -51,8 +51,8 @@ completed: 2026-01-30
 - **Files modified:** 2
 
 ## Accomplishments
-- POST /stadion/v1/vog/bulk-send endpoint for bulk email sending
-- POST /stadion/v1/vog/bulk-mark-requested endpoint for manual tracking
+- POST /rondo/v1/vog/bulk-send endpoint for bulk email sending
+- POST /rondo/v1/vog/bulk-mark-requested endpoint for manual tracking
 - Automatic template type selection (new vs renewal) based on datum-vog field
 - Detailed per-person success/failure results with error messages
 

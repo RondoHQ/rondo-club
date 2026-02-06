@@ -18,7 +18,7 @@ score: 8/8 must-haves verified
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | GET /stadion/v1/user/list-preferences returns user's visible_columns array | ✓ VERIFIED | Lines 1082-1102: get_list_preferences returns visible_columns from user_meta or DEFAULT_LIST_COLUMNS |
+| 1 | GET /rondo/v1/user/list-preferences returns user's visible_columns array | ✓ VERIFIED | Lines 1082-1102: get_list_preferences returns visible_columns from user_meta or DEFAULT_LIST_COLUMNS |
 | 2 | GET endpoint returns available_columns metadata for UI rendering | ✓ VERIFIED | Lines 1094-1100: Returns available_columns from get_available_columns_metadata() with id, label, type, custom flag |
 | 3 | PATCH endpoint saves visible_columns to user_meta | ✓ VERIFIED | Line 1157: update_user_meta($user_id, 'stadion_people_list_preferences', $validated_columns) |
 | 4 | PATCH with empty array resets to default columns | ✓ VERIFIED | Lines 1130-1138: Empty array check deletes user_meta and returns DEFAULT_LIST_COLUMNS |
@@ -57,7 +57,7 @@ score: 8/8 must-haves verified
 ✓ IMPORTED - Api class imported in functions.php line 33
 ✓ INSTANTIATED - new Api() called in functions.php line 346
 ✓ REGISTERED - register_routes hooked to rest_api_init in line 15
-✓ USED - Routes available at /wp-json/stadion/v1/user/list-preferences
+✓ USED - Routes available at /wp-json/rondo/v1/user/list-preferences
 
 ### Key Link Verification
 
@@ -96,8 +96,8 @@ score: 8/8 must-haves verified
 
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
-| 1 | User can save column preferences via `/stadion/v1/user/list-preferences` PATCH endpoint | ✓ VERIFIED | Route registered line 223-245, update_list_preferences handler lines 1110-1165 |
-| 2 | User can retrieve column preferences via `/stadion/v1/user/list-preferences` GET endpoint | ✓ VERIFIED | Route registered lines 212-220, get_list_preferences handler lines 1082-1102 |
+| 1 | User can save column preferences via `/rondo/v1/user/list-preferences` PATCH endpoint | ✓ VERIFIED | Route registered line 223-245, update_list_preferences handler lines 1110-1165 |
+| 2 | User can retrieve column preferences via `/rondo/v1/user/list-preferences` GET endpoint | ✓ VERIFIED | Route registered lines 212-220, get_list_preferences handler lines 1082-1102 |
 | 3 | Column preferences are stored in `wp_usermeta` with key `stadion_people_list_preferences` | ✓ VERIFIED | Lines 1086, 1115, 1131, 1157 all use exact key 'stadion_people_list_preferences' |
 | 4 | Default preferences include visible columns from ACF field config (active fields only) | ✓ VERIFIED | Line 1090 uses DEFAULT_LIST_COLUMNS ['team', 'labels', 'modified'], line 1178 calls get_fields('person', false) with false = active only |
 | 5 | Preferences validate against current custom field definitions (reject deleted fields) | ✓ VERIFIED | Lines 1142-1143: array_intersect($columns, $valid_columns) filters invalid/deleted fields silently |

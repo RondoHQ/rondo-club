@@ -8,7 +8,7 @@ tags: [php, wordpress, options-api, rest-api, configuration]
 requires: []
 provides:
   - ClubConfig service class with Options API storage
-  - REST endpoint /stadion/v1/config for reading and updating club settings
+  - REST endpoint /rondo/v1/config for reading and updating club settings
   - window.stadionConfig includes clubName, accentColor, freescoutUrl
   - Dynamic page title from club name setting
 affects: [145-frontend-settings-ui, 145-color-refactor]
@@ -58,7 +58,7 @@ completed: 2026-02-05
 
 ## Accomplishments
 - ClubConfig service class with Options API storage for club_name, accent_color, freescout_url
-- REST endpoint /stadion/v1/config with GET (all users) and POST (admin only) support
+- REST endpoint /rondo/v1/config with GET (all users) and POST (admin only) support
 - window.stadionConfig extended with clubName, accentColor, freescoutUrl
 - Dynamic page title reads from club name with "Stadion" fallback
 - All settings have sensible defaults (#006935 green, empty strings)
@@ -72,7 +72,7 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 - `includes/class-club-config.php` - Service class for club configuration with Options API storage, getters/setters with sanitization
-- `includes/class-rest-api.php` - Added /stadion/v1/config route registration and callback methods (get_club_config, update_club_config)
+- `includes/class-rest-api.php` - Added /rondo/v1/config route registration and callback methods (get_club_config, update_club_config)
 - `functions.php` - Added ClubConfig use statement and alias, extended stadion_get_js_config() with club settings, updated page title function
 
 ## Decisions Made
@@ -96,7 +96,7 @@ None - no external service configuration required.
 ## Next Phase Readiness
 
 **Ready for Phase 145** (Frontend Settings UI and Color Refactor):
-- Backend API complete at /stadion/v1/config
+- Backend API complete at /rondo/v1/config
 - window.stadionConfig includes all club configuration values
 - All CRUD operations tested via WP-CLI on production
 - Default values confirmed (#006935 green, empty strings)

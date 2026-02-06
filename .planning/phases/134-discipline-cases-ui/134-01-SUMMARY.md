@@ -68,10 +68,10 @@ disciplineCaseKeys = {
 
 ### 3. Backend Endpoint (includes/class-rest-api.php)
 
-Added `GET /stadion/v1/current-season` endpoint:
+Added `GET /rondo/v1/current-season` endpoint:
 - Returns current season term data (id, name, slug) or null
 - Requires user approval (check_user_approved)
-- Uses STADION_Taxonomies::get_current_season() from Phase 132
+- Uses RONDO_Taxonomies::get_current_season() from Phase 132
 
 ## Decisions Made
 
@@ -85,7 +85,7 @@ Added `GET /stadion/v1/current-season` endpoint:
 1. npm run lint passes (no new errors in added files)
 2. src/api/client.js contains getDisciplineCases, getSeasons methods
 3. src/hooks/useDisciplineCases.js exports all four hooks
-4. Backend /stadion/v1/current-season endpoint is registered and responds correctly
+4. Backend /rondo/v1/current-season endpoint is registered and responds correctly
 5. WordPress REST API exposes /wp/v2/discipline-cases and /wp/v2/seizoen endpoints
 
 ## Commits

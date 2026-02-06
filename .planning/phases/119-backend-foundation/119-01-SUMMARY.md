@@ -61,11 +61,11 @@ A complete email service for VOG (Verklaring Omtrent Gedrag) compliance manageme
 
 Added to `includes/class-rest-api.php`:
 
-**GET /stadion/v1/vog/settings**
+**GET /rondo/v1/vog/settings**
 - Permission: Admin only (`check_admin_permission`)
 - Returns: `{ from_email, template_new, template_renewal }`
 
-**POST /stadion/v1/vog/settings**
+**POST /rondo/v1/vog/settings**
 - Permission: Admin only (`check_admin_permission`)
 - Args: `from_email` (optional, email), `template_new` (optional), `template_renewal` (optional)
 - Returns: Updated settings
@@ -74,7 +74,7 @@ Added to `includes/class-rest-api.php`:
 
 Added to `functions.php`:
 - `use Stadion\VOG\VOGEmail` import statement
-- `STADION_VOG_Email` class alias for backward compatibility
+- `RONDO_VOG_Email` class alias for backward compatibility
 - Class autoloaded via Composer classmap
 
 ## Technical Decisions

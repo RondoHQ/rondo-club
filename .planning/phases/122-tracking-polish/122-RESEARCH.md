@@ -12,7 +12,7 @@ The existing infrastructure is well-suited for this implementation. The codebase
 
 The VOG list currently uses a filtered people API endpoint that supports server-side filtering. Adding an email status filter requires extending this endpoint with a new parameter and implementing the filter logic based on comment metadata.
 
-**Primary recommendation:** Extend the existing comment types system with `TYPE_EMAIL` and store sent email content as comment meta, then add a filter parameter to the `/stadion/v1/people/filtered` endpoint for email status filtering.
+**Primary recommendation:** Extend the existing comment types system with `TYPE_EMAIL` and store sent email content as comment meta, then add a filter parameter to the `/rondo/v1/people/filtered` endpoint for email status filtering.
 
 ## Standard Stack
 
@@ -75,7 +75,7 @@ const getIconForItem = (item) => {
 
 ### API Filtering Pattern
 
-The `/stadion/v1/people/filtered` endpoint uses JOIN-based filtering. Follow existing patterns:
+The `/rondo/v1/people/filtered` endpoint uses JOIN-based filtering. Follow existing patterns:
 
 ```php
 // Pattern from class-rest-people.php for custom field filters
