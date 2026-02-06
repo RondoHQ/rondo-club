@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: null, // We'll inject meta tags via PHP in Plan 02
       manifest: {
-        name: 'Stadion',
-        short_name: 'Stadion',
+        name: 'Rondo Club',
+        short_name: 'Rondo Club',
         description: 'Club data management',
         theme_color: '#006935',
         background_color: '#ffffff',
