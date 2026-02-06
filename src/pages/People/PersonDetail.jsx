@@ -2,10 +2,10 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Gift, Heart, Pencil, MessageCircle, X, Camera, Download,
+  MapPin, Globe, Building2, Calendar, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, usePersonDates, useDeleteNote, useDeleteDate, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople, peopleKeys } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -16,7 +16,6 @@ import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
-import ImportantDateModal from '@/components/ImportantDateModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
@@ -38,9 +37,7 @@ export default function PersonDetail() {
   const queryClient = useQueryClient();
   const { data: person, isLoading, error } = usePerson(id);
   const { data: timeline } = usePersonTimeline(id);
-  const { data: personDates } = usePersonDates(id);
   const deleteNote = useDeleteNote();
-  const deleteDate = useDeleteDate();
   const updatePerson = useUpdatePerson();
   const createNote = useCreateNote();
   const createActivity = useCreateActivity();
@@ -92,14 +89,11 @@ export default function PersonDetail() {
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showTodoModal, setShowTodoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showDateModal, setShowDateModal] = useState(false);
   const [showRelationshipModal, setShowRelationshipModal] = useState(false);
   const [isSavingContacts, setIsSavingContacts] = useState(false);
-  const [isSavingDate, setIsSavingDate] = useState(false);
   const [isSavingRelationship, setIsSavingRelationship] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
-  const [editingDate, setEditingDate] = useState(null);
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   
@@ -141,32 +135,14 @@ export default function PersonDetail() {
     ? new Date(person.acf.birthdate)
     : null;
 
-  // Find death date from person dates
-  const deathDate = personDates?.find(d => {
-    const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-    return dateType?.toLowerCase() === 'died';
-  });
-  const deathDateValue = deathDate?.date_value ? new Date(deathDate.date_value) : null;
-  const deathYearUnknown = deathDate?.year_unknown ?? false;
+  // Deceased status (is_deceased always returns false now - death date feature removed)
+  const isDeceased = person?.is_deceased || false;
 
-  // Calculate age - if died, show age at death, otherwise current age
-  const isDeceased = !!deathDateValue;
-  const age = birthDate ? (isDeceased
-    ? differenceInYears(deathDateValue, birthDate)
-    : differenceInYears(new Date(), birthDate)
-  ) : null;
+  // Calculate age - current age only (death date feature removed)
+  const age = birthDate ? differenceInYears(new Date(), birthDate) : null;
 
   // Format birthdate for display: "6 feb 1982"
   const formattedBirthdate = birthDate ? format(birthDate, 'd MMM yyyy') : null;
-
-  // Get all dates including birthday (for Important Dates card)
-  // Sort by date ascending
-  const allDates = personDates ? [...personDates].sort((a, b) => {
-    const dateA = a.date_value ? new Date(a.date_value) : new Date(0);
-    const dateB = b.date_value ? new Date(b.date_value) : new Date(0);
-    // Sort by date ascending (earliest first)
-    return dateA - dateB;
-  }) : [];
 
   // Handle saving all contacts from modal
   const handleSaveContacts = async (contacts) => {
@@ -188,48 +164,6 @@ export default function PersonDetail() {
       alert('Contacten konden niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingContacts(false);
-    }
-  };
-
-  // Handle saving an important date from modal
-  const handleSaveDate = async (data) => {
-    setIsSavingDate(true);
-    try {
-      if (editingDate) {
-        // Update existing date
-        await wpApi.updateDate(editingDate.id, {
-          title: data.title,
-          date_type: data.date_type,
-          acf: {
-            date_value: data.date_value,
-            related_people: data.related_people,
-            is_recurring: data.is_recurring,
-            year_unknown: data.year_unknown,
-          },
-        });
-      } else {
-        // Create new date
-        await wpApi.createDate({
-          title: data.title,
-          status: 'publish',
-          date_type: data.date_type,
-          acf: {
-            date_value: data.date_value,
-            related_people: data.related_people,
-            is_recurring: data.is_recurring,
-            year_unknown: data.year_unknown,
-          },
-        });
-      }
-      
-      queryClient.invalidateQueries({ queryKey: peopleKeys.dates(id) });
-      queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      setShowDateModal(false);
-      setEditingDate(null);
-    } catch {
-      alert('Datum kon niet worden opgeslagen. Probeer het opnieuw.');
-    } finally {
-      setIsSavingDate(false);
     }
   };
 
@@ -387,15 +321,6 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['person', relatedPersonId] });
     }
     queryClient.invalidateQueries({ queryKey: ['people'] });
-  };
-
-  // Handle deleting a date
-  const handleDeleteDate = async (dateId) => {
-    if (!window.confirm('Weet je zeker dat je deze belangrijke datum wilt verwijderen?')) {
-      return;
-    }
-
-    await deleteDate.mutateAsync({ dateId, personId: id });
   };
 
   // Handle deleting a note
@@ -682,7 +607,6 @@ export default function PersonDetail() {
     try {
       downloadVCard(person, {
         teamMap,
-        personDates: personDates || [],
       });
     } catch {
       alert('vCard kon niet worden geëxporteerd. Probeer het opnieuw.');
@@ -737,60 +661,32 @@ export default function PersonDetail() {
     })),
   });
 
-  // Fetch dates for related people to calculate ages for sorting
-  const relatedPersonIds = person?.acf?.relationships
-    ?.map(rel => rel.related_person)
-    .filter(Boolean) || [];
-  
-  const relatedPersonDatesQueries = useQueries({
-    queries: relatedPersonIds.map(personId => ({
-      queryKey: ['person-dates', personId],
-      queryFn: async () => {
-        const response = await prmApi.getPersonDates(personId);
-        return response.data;
-      },
-      enabled: !!personId,
-    })),
-  });
-
-  // Create a map of person ID to age for sorting
+  // Create a map of person ID to age for sorting (using birth_year from allPeople)
   const personAgeMap = useMemo(() => {
     const ageMap = {};
-    relatedPersonDatesQueries.forEach((query, index) => {
-      if (query.data && relatedPersonIds[index]) {
-        const personId = relatedPersonIds[index];
-        // Find birthday
-        const birthday = query.data.find(d => {
-          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-          return dateType?.toLowerCase() === 'birthday';
-        });
-        if (birthday?.date_value) {
-          const birthDate = new Date(birthday.date_value);
-          ageMap[personId] = differenceInYears(new Date(), birthDate);
-        } else {
-          // If no birthday, use a very large number so they appear last
-          ageMap[personId] = -1;
-        }
+    if (!allPeople) return ageMap;
+
+    allPeople.forEach(p => {
+      if (p.birth_year) {
+        const currentYear = new Date().getFullYear();
+        ageMap[p.id] = currentYear - p.birth_year;
+      } else {
+        ageMap[p.id] = -1;
       }
     });
     return ageMap;
-  }, [relatedPersonDatesQueries, relatedPersonIds]);
+  }, [allPeople]);
 
-  // Create a map of person ID to deceased status
+  // Create a map of person ID to deceased status (using is_deceased from allPeople)
   const personDeceasedMap = useMemo(() => {
     const map = {};
-    relatedPersonDatesQueries.forEach((query, index) => {
-      if (query.data && relatedPersonIds[index]) {
-        const personId = relatedPersonIds[index];
-        const hasDiedDate = query.data.some(d => {
-          const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-          return dateType?.toLowerCase() === 'died';
-        });
-        map[personId] = hasDiedDate;
-      }
+    if (!allPeople) return map;
+
+    allPeople.forEach(p => {
+      map[p.id] = p.is_deceased || false;
     });
     return map;
-  }, [relatedPersonDatesQueries, relatedPersonIds]);
+  }, [allPeople]);
 
   // Sort relationships by age (descending - oldest first)
   const sortedRelationships = useMemo(() => {
@@ -1127,16 +1023,7 @@ export default function PersonDetail() {
             {acf.nickname && (
               <p className="text-gray-500 dark:text-gray-400">"{acf.nickname}"</p>
             )}
-            {isDeceased && deathDateValue && (
-              <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
-                {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
-                {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
-                {acf.pronouns && <span>{acf.pronouns}</span>}
-                {(getGenderSymbol(acf.gender) || acf.pronouns) && <span>&nbsp;—&nbsp;</span>}
-                <span>Overleden op {format(deathDateValue, deathYearUnknown ? 'd MMMM' : 'd MMMM yyyy')}{age !== null && ` op ${age}-jarige leeftijd`}</span>
-              </p>
-            )}
-            {!isDeceased && (getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && (
+            {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
@@ -1405,80 +1292,6 @@ export default function PersonDetail() {
             )}
             </div>
           )}
-
-          {/* Important Dates */}
-          <div className="card p-6 break-inside-avoid mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Belangrijke datums</h2>
-              <button
-                onClick={() => {
-                  setEditingDate(null);
-                  setShowDateModal(true);
-                }}
-                className="btn-secondary text-sm"
-                title="Belangrijke datum toevoegen"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            {allDates.length > 0 ? (
-              <div className="space-y-3">
-                {allDates.map((date) => {
-                  const dateType = Array.isArray(date.date_type) ? date.date_type[0] : date.date_type;
-                  const dateTypeLower = dateType?.toLowerCase() || '';
-                  const isDied = dateTypeLower.includes('died');
-                  const Icon = dateTypeLower.includes('wedding') || dateTypeLower.includes('marriage') ? Heart :
-                               dateTypeLower.includes('birthday') ? Gift : Calendar;
-
-                  const dateFormat = date.year_unknown ? 'MMMM d' : 'MMMM d, yyyy';
-
-                  return (
-                    <div key={date.id} className="flex items-start group">
-                      <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mr-3">
-                        {isDied ? (
-                          <span className="text-gray-500 text-lg font-semibold">†</span>
-                        ) : (
-                          <Icon className="w-4 h-4 text-gray-500" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{date.title}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {date.date_value && format(new Date(date.date_value), dateFormat)}
-                        </p>
-                        {dateType && (
-                          <p className="text-xs text-gray-400 capitalize">{dateType}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => {
-                            setEditingDate(date);
-                            setShowDateModal(true);
-                          }}
-                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title="Datum bewerken"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteDate(date.id)}
-                          className="p-1 hover:bg-red-50 rounded"
-                          title="Datum verwijderen"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen belangrijke datums. <button onClick={() => { setEditingDate(null); setShowDateModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
-              </p>
-            )}
-          </div>
 
             {/* Addresses - only show for living people */}
             {!isDeceased && (
@@ -2002,21 +1815,7 @@ export default function PersonDetail() {
             isLoading={isSavingContacts}
             contactInfo={(acf.contact_info || []).filter(contact => contact.contact_type !== 'slack')}
           />
-          
-          <ImportantDateModal
-            isOpen={showDateModal}
-            onClose={() => {
-              setShowDateModal(false);
-              setEditingDate(null);
-            }}
-            onSubmit={handleSaveDate}
-            isLoading={isSavingDate}
-            dateItem={editingDate}
-            personId={id}
-            allPeople={allPeople || []}
-            isPeopleLoading={isPeopleLoading}
-          />
-          
+
           <RelationshipEditModal
             isOpen={showRelationshipModal}
             onClose={() => {

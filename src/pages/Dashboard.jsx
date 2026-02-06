@@ -462,10 +462,8 @@ function StatsRow({ stats }) {
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
       <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
-      {canAccessVOG ? (
+      {canAccessVOG && (
         <VOGStatCard />
-      ) : (
-        <StatCard title="Herinneringen" value={stats?.total_dates || 0} icon={Calendar} href="/dates" />
       )}
       {canAccessFairplay ? (
         <TuchtzakenStatCard />
@@ -639,7 +637,6 @@ export default function Dashboard() {
         title="Komende herinneringen"
         icon={Calendar}
         count={upcoming_reminders?.length}
-        linkTo="/dates"
         emptyMessage="Geen komende herinneringen"
       >
         {upcoming_reminders?.length > 0 &&

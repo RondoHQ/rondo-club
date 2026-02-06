@@ -18,7 +18,6 @@ const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
 const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
 const CommissiesList = lazy(() => import('@/pages/Commissies/CommissiesList'));
 const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDetail'));
-const DatesList = lazy(() => import('@/pages/Dates/DatesList'));
 const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
@@ -218,16 +217,6 @@ const router = createBrowserRouter([
           // Commissies routes
           { path: 'commissies', element: <CommissiesList /> },
           { path: 'commissies/:id', element: <CommissieDetail /> },
-
-          // Dates routes - restricted from VOG/Fair Play users
-          {
-            path: 'dates',
-            element: (
-              <RestrictedRoute>
-                <DatesList />
-              </RestrictedRoute>
-            ),
-          },
 
           // Todos routes - accessible to all users (tasks are user-isolated at backend)
           { path: 'todos', element: <TodosList /> },

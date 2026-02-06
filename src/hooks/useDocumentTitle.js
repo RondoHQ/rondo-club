@@ -19,7 +19,7 @@ export function useDocumentTitle(title) {
  * Examples: /people/123 -> '123', /teams/456/edit -> '456'
  */
 function extractRouteId(pathname) {
-  const match = pathname.match(/\/(?:people|teams|dates)\/(\d+)/);
+  const match = pathname.match(/\/(?:people|teams)\/(\d+)/);
   return match ? match[1] : null;
 }
 
@@ -67,16 +67,6 @@ export function useRouteTitle(customTitle = null) {
           title = 'Team';
         } else {
           title = 'Teams';
-        }
-      } else if (path.startsWith('/dates')) {
-        if (path === '/dates' || path === '/dates/') {
-          title = 'Datums';
-        } else if (path === '/dates/new') {
-          title = 'Nieuwe datum';
-        } else if (path.endsWith('/edit')) {
-          title = 'Datum bewerken';
-        } else {
-          title = 'Datums';
         }
       } else if (path.startsWith('/settings')) {
         title = 'Instellingen';
