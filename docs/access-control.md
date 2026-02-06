@@ -20,10 +20,10 @@ New users who register or are created in WordPress start as unapproved. An admin
 
 ```php
 // Check if a user is approved
-$is_approved = STADION_User_Roles::is_user_approved( $user_id );
+$is_approved = Rondo\Core\UserRoles::is_user_approved( $user_id );
 
 // Approve a user
-STADION_User_Roles::approve_user( $user_id );
+Rondo\Core\UserRoles::approve_user( $user_id );
 ```
 
 Administrators (users with `manage_options` capability) are always considered approved.
@@ -38,7 +38,7 @@ Access control applies to these post types:
 
 - `person` - Contact records
 - `team` - Team/company records
-- `stadion_todo` - Todo items
+- `rondo_todo` - Todo items
 
 Standard WordPress posts and pages are not affected.
 
@@ -88,7 +88,7 @@ $query = new WP_Query([
 
 ## User Roles
 
-Rondo Club creates a custom user role called **"Rondo User"** (`stadion_user`) on theme activation.
+Rondo Club creates a custom user role called **"Rondo User"** (`rondo_user`) on theme activation.
 
 **Capabilities:**
 

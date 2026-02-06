@@ -482,7 +482,7 @@ X-WP-Nonce: {nonce}
 ### JavaScript (Create Field)
 
 ```javascript
-const API_BASE = 'https://your-site.com/wp-json/stadion/v1';
+const API_BASE = 'https://your-site.com/wp-json/rondo/v1';
 
 // Create a custom field (admin only)
 async function createCustomField(postType, fieldConfig) {

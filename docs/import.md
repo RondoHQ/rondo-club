@@ -202,8 +202,8 @@ decisions: {"3": "merge", "7": "new", "12": "skip"}
 
 | Class | File | Purpose |
 |-------|------|---------|
-| `STADION_VCard_Import` | `includes/class-vcard-import.php` | vCard parsing and import |
-| `STADION_Google_Contacts_Import` | `includes/class-google-contacts-import.php` | Google CSV parsing and import |
+| `Rondo\Import\VCardImport` | `includes/class-vcard-import.php` | vCard parsing and import |
+| `Rondo\Import\GoogleContactsImport` | `includes/class-google-contacts-import.php` | Google CSV parsing and import |
 
 ### Frontend Components
 
@@ -358,13 +358,13 @@ Duplicate detection respects access control boundaries:
 1. Create a new PHP class in `includes/`:
 
 ```php
-class STADION_Custom_Import {
+class Rondo_Custom_Import {
     public function __construct() {
         add_action('rest_api_init', [$this, 'register_routes']);
     }
     
     public function register_routes() {
-        register_rest_route('stadion/v1', '/import/custom', [
+        register_rest_route('rondo/v1', '/import/custom', [
             'methods' => 'POST',
             'callback' => [$this, 'handle_import'],
             'permission_callback' => [$this, 'check_permission'],
@@ -384,8 +384,8 @@ class STADION_Custom_Import {
 2. Register the class in `functions.php`:
 
 ```php
-require_once STADION_PLUGIN_DIR . '/class-custom-import.php';
-new STADION_Custom_Import();
+require_once RONDO_PLUGIN_DIR . '/class-custom-import.php';
+new Rondo_Custom_Import();
 ```
 
 3. Create a React component in `src/components/import/`:

@@ -145,7 +145,7 @@ Player roles (not counted as volunteer):
 Honorary/membership roles (excluded):
 `Donateur`, `Erelid`, `Lid van Verdienste`, `Verenigingslid voor het leven (contributievrij)`
 
-Commissies listed in the `stadion_vog_exempt_commissies` option are also excluded from volunteer status.
+Commissies listed in the `rondo_vog_exempt_commissies` option are also excluded from volunteer status.
 
 ## Related Documentation
 

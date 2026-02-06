@@ -195,7 +195,7 @@ Represents collaborative workspaces for multi-user features (Phase 7+).
 | Supports | title, editor, author, thumbnail |
 | Public | No (private, accessed via REST API) |
 
-**Membership:** Stored in user meta via `STADION_Workspace_Members` class (see below).
+**Membership:** Stored in user meta via `Rondo\Collaboration\WorkspaceMembers` class (see below).
 
 ---
 
@@ -238,7 +238,7 @@ For `shared` visibility, the `_shared_with` post meta stores sharing details:
 ]
 ```
 
-**Helper Class:** `STADION_Visibility` provides static methods for managing visibility:
+**Helper Class:** `Rondo\Core\Visibility` provides static methods for managing visibility:
 
 | Method | Description |
 |--------|-------------|

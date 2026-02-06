@@ -26,7 +26,7 @@ New users cannot access any data until an administrator approves them.
 Alternatively, use WP-CLI:
 
 ```bash
-wp stadion approve-user <user_id>
+wp rondo approve-user <user_id>
 ```
 
 ### Approval Status
@@ -41,7 +41,7 @@ wp stadion approve-user <user_id>
 
 ### Rondo User Role
 
-Rondo Club creates a custom WordPress role called **"Rondo User"** (`stadion_user`).
+Rondo Club creates a custom WordPress role called **"Rondo User"** (`rondo_user`).
 
 **Capabilities:**
 

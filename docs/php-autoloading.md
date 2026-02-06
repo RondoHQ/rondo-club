@@ -1,37 +1,41 @@
 # PHP Class Autoloading
 
+> **Note:** This document describes the pre-Composer autoloading architecture (before v4.4). Since v4.4, Rondo Club uses Composer PSR-4 autoloading with namespaced classes (e.g., `Rondo\Core\PostTypes`). The conditional initialization pattern described below is still used in `rondo_init()`. Class names shown here reflect the current naming.
+
 ## Overview
 
 Rondo Club uses a conditional class loading system to optimize performance. Instead of loading all PHP classes on every page request, classes are loaded only when they are needed.
 
 ## How It Works
 
-### SPL Autoloader
+### Composer PSR-4 Autoloader
 
-The `stadion_autoloader()` function is registered with PHP's SPL autoload system. When a class is referenced for the first time, PHP automatically calls this function to load the class file.
+Since v4.4, Rondo Club uses Composer's PSR-4 autoloader. Classes are organized under the `Rondo\` namespace and mapped to the `includes/` directory.
+
+Previously, the `rondo_autoloader()` function was registered with PHP's SPL autoload system:
 
 ```php
-function stadion_autoloader($class_name) {
-    // Only handle STADION_ prefixed classes
-    if (strpos($class_name, 'STADION_') !== 0) {
+function rondo_autoloader($class_name) {
+    // Only handle RONDO_ prefixed classes
+    if (strpos($class_name, 'RONDO_') !== 0) {
         return;
     }
-    
+
     $class_map = [
-        'STADION_Post_Types' => 'class-post-types.php',
+        'RONDO_Post_Types' => 'class-post-types.php',
         // ... other classes
     ];
-    
+
     if (isset($class_map[$class_name])) {
-        require_once STADION_PLUGIN_DIR . '/' . $class_map[$class_name];
+        require_once RONDO_THEME_DIR . '/' . $class_map[$class_name];
     }
 }
-spl_autoload_register('stadion_autoloader');
+spl_autoload_register('rondo_autoloader');
 ```
 
 ### Conditional Initialization
 
-The `stadion_init()` function determines which classes to instantiate based on the request context:
+The `rondo_init()` function determines which classes to instantiate based on the request context:
 
 | Context | Classes Loaded |
 |---------|----------------|
@@ -48,17 +52,17 @@ The `stadion_init()` function determines which classes to instantiate based on t
 
 These classes are essential for WordPress integration and must be loaded on every request:
 
-- **STADION_Post_Types** - Registers custom post types (person, team)
-- **STADION_Taxonomies** - Registers taxonomies (labels, relationship types)
-- **STADION_Access_Control** - Row-level security filtering
+- **Rondo\Core\PostTypes** - Registers custom post types (person, team)
+- **Rondo\Core\Taxonomies** - Registers taxonomies (labels, relationship types)
+- **Rondo\Core\AccessControl** - Row-level security filtering
 
 ### Content Management Classes
 
 These classes handle content creation and modification:
 
-- **STADION_Auto_Title** - Auto-generates post titles
-- **STADION_Inverse_Relationships** - Syncs bidirectional relationships
-- **STADION_Comment_Types** - Notes and activities system
+- **Rondo\Core\AutoTitle** - Auto-generates post titles
+- **Rondo\Core\InverseRelationships** - Syncs bidirectional relationships
+- **Rondo\Collaboration\CommentTypes** - Notes and activities system
 
 Loaded for: Admin, REST API, Cron
 
@@ -66,23 +70,23 @@ Loaded for: Admin, REST API, Cron
 
 These classes provide REST API endpoints:
 
-- **STADION_REST_API** - Custom `/rondo/v1/` endpoints
-- **STADION_VCard_Import** - vCard import
-- **STADION_Google_Contacts_Import** - Google Contacts import
+- **Rondo\REST\Api** - Custom `/rondo/v1/` endpoints
+- **Rondo\Import\VCardImport** - vCard import
+- **Rondo\Import\GoogleContactsImport** - Google Contacts import
 
 Loaded for: REST API requests only
 
 ### Utility Classes
 
-- **STADION_Reminders** - Daily reminder cron job (Admin, Cron only)
-- **STADION_ICal_Feed** - Calendar feed generation (All requests for hook registration)
+- **Rondo\Core\Reminders** - Daily reminder cron job (Admin, Cron only)
+- **Rondo\Calendar\ICalFeed** - Calendar feed generation (All requests for hook registration)
 
 ## Context Detection
 
 The system uses helper functions to detect the request context:
 
 ```php
-function stadion_is_rest_request() {
+function rondo_is_rest_request() {
     if (defined('REST_REQUEST') && REST_REQUEST) {
         return true;
     }
@@ -91,7 +95,7 @@ function stadion_is_rest_request() {
     return strpos($_SERVER['REQUEST_URI'], '/' . $rest_prefix . '/') !== false;
 }
 
-function stadion_is_ical_request() {
+function rondo_is_ical_request() {
     return strpos($_SERVER['REQUEST_URI'], '/prm-ical/') !== false;
 }
 ```
@@ -100,23 +104,24 @@ function stadion_is_ical_request() {
 
 When adding a new PHP class:
 
-1. **Add to autoloader map** in `functions.php`:
+1. **Create a namespaced class** in `includes/`:
    ```php
-   $class_map = [
-       // existing entries...
-       'STADION_Your_Class' => 'class-your-class.php',
-   ];
+   namespace Rondo\YourNamespace;
+
+   class YourClass {
+       // ...
+   }
    ```
 
-2. **Add initialization** in the appropriate context section of `stadion_init()`:
+2. **Add initialization** in the appropriate context section of `rondo_init()`:
    ```php
    // If only needed for REST API
    if ($is_rest) {
-       new STADION_Your_Class();
+       new Rondo\YourNamespace\YourClass();
    }
-   
+
    // If always needed
-   new STADION_Your_Class();
+   new Rondo\YourNamespace\YourClass();
    ```
 
 ## Performance Benefits
@@ -133,11 +138,10 @@ The conditional loading system provides several benefits:
 To see which classes are loaded on a request, you can temporarily add logging:
 
 ```php
-function stadion_autoloader($class_name) {
-    if (strpos($class_name, 'STADION_') !== 0) return;
-    
+function rondo_autoloader($class_name) {
+    if (strpos($class_name, 'Rondo\\') !== 0) return;
+
     error_log('Autoloading: ' . $class_name);
     // ... rest of autoloader
 }
 ```
-

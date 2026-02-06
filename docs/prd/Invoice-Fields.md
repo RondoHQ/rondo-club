@@ -187,7 +187,7 @@ No database migration required - fields use standard ACF post_meta storage.
 
 ```bash
 # After sync, check person has invoice data
-curl -u user:pass "https://stadion/wp-json/wp/v2/people/123" | jq '.acf | {
+curl -u user:pass "https://rondo-club.example/wp-json/wp/v2/people/123" | jq '.acf | {
   "factuur-adres": .["factuur-adres"],
   "factuur-email": .["factuur-email"],
   "factuur-referentie": .["factuur-referentie"]

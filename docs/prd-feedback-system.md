@@ -34,11 +34,11 @@ Currently, there's no built-in mechanism for users to report bugs or request fea
 
 ### 1. Feedback Post Type
 
-Create a new custom post type `stadion_feedback` with the following characteristics:
+Create a new custom post type `rondo_feedback` with the following characteristics:
 
 | Property | Value |
 |----------|-------|
-| Post Type Slug | `stadion_feedback` |
+| Post Type Slug | `rondo_feedback` |
 | Singular | Feedback |
 | Plural | Feedback |
 | Public | No |
@@ -111,7 +111,7 @@ After successful submission:
 
 ### 4. REST API Endpoints
 
-All endpoints under namespace `stadion/v1/feedback`.
+All endpoints under namespace `rondo/v1/feedback`.
 
 #### 4.1 List Feedback
 
@@ -261,7 +261,7 @@ X-WP-Nonce: {nonce}
 Add to `class-post-types.php`:
 
 ```php
-'stadion_feedback' => [
+'rondo_feedback' => [
     'label' => 'Feedback',
     'public' => false,
     'show_in_rest' => true,
@@ -277,7 +277,7 @@ Add to `class-post-types.php`:
 Create `class-rest-feedback.php`:
 
 - Extend existing REST patterns in the codebase
-- Register routes under `stadion/v1/feedback`
+- Register routes under `rondo/v1/feedback`
 - Implement CRUD operations with ACF field handling
 - Add application password authentication check
 
@@ -286,7 +286,7 @@ Create `class-rest-feedback.php`:
 Create `acf-json/group_feedback_fields.json`:
 
 - Define all feedback fields
-- Set location rule to `stadion_feedback` post type
+- Set location rule to `rondo_feedback` post type
 - Configure conditional logic for bug vs feature request fields
 
 ### 2. Frontend Components
@@ -458,18 +458,18 @@ Add to crontab for automated processing:
 
 ```bash
 # Process all approved feedback daily at 2 AM
-0 2 * * * /path/to/stadion/bin/get-feedback.sh --loop
+0 2 * * * /path/to/rondo-club/bin/get-feedback.sh --loop
 
 # Process bugs every 6 hours
-0 */6 * * * /path/to/stadion/bin/get-feedback.sh --type=bug --loop
+0 */6 * * * /path/to/rondo-club/bin/get-feedback.sh --type=bug --loop
 ```
 
 **Environment Variables:**
 
 Required in `.env`:
-- `STADION_API_URL` - WordPress site URL
-- `STADION_API_USER` - WordPress username
-- `STADION_API_PASSWORD` - Application password
+- `RONDO_API_URL` - WordPress site URL
+- `RONDO_API_USER` - WordPress username
+- `RONDO_API_PASSWORD` - Application password
 - `CLAUDE_PATH` - Path to Claude Code binary (optional, defaults to `claude`)
 - `HOMEBREW_PATH` - Homebrew bin path for cron (optional)
 - `USER_HOME` - User home directory for cron (optional)

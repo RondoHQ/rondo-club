@@ -25,8 +25,8 @@ Fee settings are stored in WordPress options with season-specific keys:
 
 | Option Key | Purpose |
 |------------|---------|
-| `stadion_membership_fees_YYYY-YYYY` | Fee settings for specific season (e.g., `stadion_membership_fees_2025-2026`) |
-| `stadion_membership_fees` | Legacy global option (deprecated, auto-migrated on first read) |
+| `rondo_membership_fees_YYYY-YYYY` | Fee settings for specific season (e.g., `rondo_membership_fees_2025-2026`) |
+| `rondo_membership_fees` | Legacy global option (deprecated, auto-migrated on first read) |
 
 ### Fee Structure
 
@@ -49,10 +49,10 @@ Each season option stores an array of fee types:
 
 When `get_settings_for_season()` is called for the **current season** and:
 1. No season-specific option exists for current season
-2. Legacy global option `stadion_membership_fees` exists
+2. Legacy global option `rondo_membership_fees` exists
 
 The system will:
-1. Copy legacy global option → current season option (`stadion_membership_fees_2025-2026`)
+1. Copy legacy global option → current season option (`rondo_membership_fees_2025-2026`)
 2. Delete the legacy global option
 3. Return the migrated values
 

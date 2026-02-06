@@ -47,7 +47,7 @@ webcal://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
 
 ## Implementation
 
-### Class: `STADION_ICal_Feed`
+### Class: `Rondo\Calendar\ICalFeed`
 
 Located in `includes/class-ical-feed.php`.
 
@@ -55,7 +55,7 @@ Located in `includes/class-ical-feed.php`.
 
 | Component | Purpose |
 |-----------|---------|
-| `TOKEN_META_KEY` | User meta key: `stadion_ical_token` |
+| `TOKEN_META_KEY` | User meta key: `rondo_ical_token` |
 | `TOKEN_LENGTH` | 32 bytes (64 hex characters) |
 | Personal Rewrite Rule | `^calendar/([a-f0-9]+)\.ics$` |
 | Workspace Rewrite Rule | `^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$` |
@@ -70,13 +70,13 @@ bin2hex(random_bytes(32))
 
 **Token Storage:**
 ```php
-update_user_meta($user_id, 'stadion_ical_token', $token);
+update_user_meta($user_id, 'rondo_ical_token', $token);
 ```
 
 **Token Lookup:**
 ```sql
 SELECT user_id FROM wp_usermeta 
-WHERE meta_key = 'stadion_ical_token' AND meta_value = '{token}'
+WHERE meta_key = 'rondo_ical_token' AND meta_value = '{token}'
 ```
 
 ## REST API Endpoints
@@ -279,7 +279,7 @@ The feed uses WordPress rewrite rules:
 ```php
 add_rewrite_rule(
     '^calendar/([a-f0-9]+)\.ics$',
-    'index.php?stadion_ical_feed=1&stadion_ical_token=$matches[1]',
+    'index.php?rondo_ical_feed=1&rondo_ical_token=$matches[1]',
     'top'
 );
 ```
@@ -288,16 +288,16 @@ add_rewrite_rule(
 ```php
 add_rewrite_rule(
     '^workspace/([0-9]+)/calendar/([a-f0-9]+)\.ics$',
-    'index.php?stadion_workspace_ical=1&stadion_workspace_id=$matches[1]&stadion_ical_token=$matches[2]',
+    'index.php?rondo_workspace_ical=1&rondo_workspace_id=$matches[1]&rondo_ical_token=$matches[2]',
     'top'
 );
 ```
 
 **Query Variables:**
-- `stadion_ical_feed` - Triggers personal feed handler
-- `stadion_workspace_ical` - Triggers workspace feed handler
-- `stadion_ical_token` - User's authentication token
-- `stadion_workspace_id` - Workspace post ID
+- `rondo_ical_feed` - Triggers personal feed handler
+- `rondo_workspace_ical` - Triggers workspace feed handler
+- `rondo_ical_token` - User's authentication token
+- `rondo_workspace_id` - Workspace post ID
 
 **Note:** After theme activation, rewrite rules are flushed to register these rules.
 
@@ -305,7 +305,7 @@ add_rewrite_rule(
 
 ```php
 header('Content-Type: text/calendar; charset=utf-8');
-header('Content-Disposition: attachment; filename="stadion.ics"');
+header('Content-Disposition: attachment; filename="rondo.ics"');
 header('Cache-Control: no-cache, must-revalidate');
 header('Pragma: no-cache');
 ```

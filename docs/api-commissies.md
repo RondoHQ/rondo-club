@@ -40,7 +40,7 @@ For requests from the Rondo Club frontend (same browser session), use the REST n
 X-WP-Nonce: {nonce_value}
 ```
 
-The nonce is available in `window.stadionConfig.nonce` when logged in to Rondo Club.
+The nonce is available in `window.rondoConfig.nonce` when logged in to Rondo Club.
 
 ---
 
@@ -367,7 +367,7 @@ X-WP-Nonce: {nonce}
 
 ```javascript
 const API_BASE = 'https://your-site.com/wp-json';
-const nonce = window.stadionConfig?.nonce || 'your-nonce';
+const nonce = window.rondoConfig?.nonce || 'your-nonce';
 
 // Create a commissie
 async function createCommissie(data) {

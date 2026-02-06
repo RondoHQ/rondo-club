@@ -127,7 +127,7 @@ const api = axios.create({
 ```
 
 **Interceptors:**
-- **Request:** Updates nonce from `window.stadionConfig` before each request
+- **Request:** Updates nonce from `window.rondoConfig` before each request
 - **Response:** Handles 401 (redirect to login) and 403 (log error)
 
 ### API Helpers
@@ -157,10 +157,10 @@ prmApi.uploadPersonPhoto(personId, file)
 
 ## WordPress Configuration
 
-The app receives configuration from WordPress via `window.stadionConfig`:
+The app receives configuration from WordPress via `window.rondoConfig`:
 
 ```js
-window.stadionConfig = {
+window.rondoConfig = {
   apiUrl: '/wp-json',
   nonce: 'abc123...',
   isLoggedIn: true,
@@ -419,13 +419,13 @@ When the app is installed as a PWA or loaded in a mobile browser (Add to Home Sc
 3. **Update Banner**: When a new version is detected, a banner appears at the top of the screen with a "Reload" button
 
 **How it works:**
-1. On app load, the current version is stored from `window.stadionConfig.version`
+1. On app load, the current version is stored from `window.rondoConfig.version`
 2. Every 5 minutes (and when the user returns to the tab), the hook fetches `/rondo/v1/version`
 3. If the server version differs from the loaded version, `hasUpdate` becomes true
 4. The `UpdateBanner` component renders at the top of `App.jsx` when an update is available
 5. User clicks "Reload" → `window.location.reload(true)` forces a fresh load
 
-**Note:** The version is embedded in both the HTML response (via `stadionConfig`) and the asset filenames (via Vite's hash-based naming), ensuring a reload fetches all new assets.
+**Note:** The version is embedded in both the HTML response (via `rondoConfig`) and the asset filenames (via Vite's hash-based naming), ensuring a reload fetches all new assets.
 
 ## Related Documentation
 
