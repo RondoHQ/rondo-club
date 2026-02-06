@@ -1,6 +1,6 @@
 # iCal Calendar Feed
 
-This document describes the iCal calendar subscription feature that allows users to subscribe to their important dates in external calendar applications.
+This document describes the iCal calendar subscription feature that allows users to subscribe to birthdays in external calendar applications.
 
 ## Overview
 
