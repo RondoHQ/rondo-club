@@ -42,7 +42,10 @@ Plans:
 **Goal**: vCard exports include BDAY field from person.birthdate
 **Depends on**: Phase 148
 **Gap Closure**: Closes integration gap from v19.0 audit (vCard reads from deleted personDates)
-**Plans:** 0 plans
+**Plans:** 1 plans
+
+Plans:
+- [ ] 149-01-PLAN.md — Update vCard export to read from person.acf.birthdate
 
 ### Phase 150: Update Documentation
 **Goal**: Documentation reflects new birthdate model without "important dates" references
@@ -56,7 +59,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 147. Birthdate Field & Widget | 1/1 | Complete | 2026-02-06 |
 | 148. Infrastructure Removal | 2/2 | Complete | 2026-02-06 |
-| 149. Fix vCard Birthday Export | 0/0 | Pending | - |
+| 149. Fix vCard Birthday Export | 0/1 | Planned | - |
 | 150. Update Documentation | 0/0 | Pending | - |
 
 ---
@@ -66,3 +69,4 @@ Plans:
 *Phase 148 planned: 2026-02-06*
 *Phase 148 completed: 2026-02-06*
 *Phases 149-150 added: 2026-02-06 (gap closure from audit)*
+*Phase 149 planned: 2026-02-06*
