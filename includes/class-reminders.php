@@ -20,17 +20,17 @@ class Reminders {
 
 	public function __construct() {
 		// Register per-user cron hook (new system)
-		add_action( 'stadion_user_reminder', [ $this, 'process_user_reminders' ] );
+		add_action( 'rondo_user_reminder', [ $this, 'process_user_reminders' ] );
 
 		// Register legacy cron hook (deprecated, kept for backward compatibility)
-		add_action( 'stadion_daily_reminder_check', [ $this, 'process_daily_reminders' ] );
+		add_action( 'rondo_daily_reminder_check', [ $this, 'process_daily_reminders' ] );
 
 		// Add custom cron schedule if needed
 		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
 
 		// Initialize notification channels
 		$this->channels = [
-			new \STADION_Email_Channel(),
+			new \RONDO_Email_Channel(),
 		];
 	}
 
@@ -42,7 +42,7 @@ class Reminders {
 	 */
 	public function schedule_user_reminder( $user_id ) {
 		// Get user's preferred notification time
-		$preferred_time = get_user_meta( $user_id, 'stadion_notification_time', true );
+		$preferred_time = get_user_meta( $user_id, 'rondo_notification_time', true );
 		if ( empty( $preferred_time ) ) {
 			$preferred_time = '09:00';
 		}
@@ -69,14 +69,14 @@ class Reminders {
 		$scheduled = wp_schedule_event(
 			$next_run->getTimestamp(),
 			'daily',
-			'stadion_user_reminder',
+			'rondo_user_reminder',
 			[ $user_id ]
 		);
 
 		if ( $scheduled === false ) {
 			return new \WP_Error(
 				'cron_schedule_failed',
-				sprintf( __( 'Failed to schedule reminder cron for user %d.', 'stadion' ), $user_id )
+				sprintf( __( 'Failed to schedule reminder cron for user %d.', 'rondo' ), $user_id )
 			);
 		}
 
@@ -90,10 +90,10 @@ class Reminders {
 	 * @return bool True on success
 	 */
 	public function unschedule_user_reminder( $user_id ) {
-		$timestamp = wp_next_scheduled( 'stadion_user_reminder', [ $user_id ] );
+		$timestamp = wp_next_scheduled( 'rondo_user_reminder', [ $user_id ] );
 
 		if ( $timestamp !== false ) {
-			wp_unschedule_event( $timestamp, 'stadion_user_reminder', [ $user_id ] );
+			wp_unschedule_event( $timestamp, 'rondo_user_reminder', [ $user_id ] );
 		}
 
 		return true;
@@ -143,7 +143,7 @@ class Reminders {
 					! empty( $digest_data['todos']['rest_of_week'] );
 
 		// Get queued mention notifications
-		$mentions = \STADION_Mention_Notifications::get_queued_mentions( $user_id );
+		$mentions = \RONDO_Mention_Notifications::get_queued_mentions( $user_id );
 
 		// Get recent workspace activity (notes on shared contacts in user's workspaces)
 		$workspace_activity = $this->get_workspace_activity( $user_id );
@@ -168,7 +168,7 @@ class Reminders {
 
 		// Update expired work history (only once per day, not per user)
 		// Use a transient to ensure this only runs once per day
-		$transient_key = 'stadion_work_history_updated_' . gmdate( 'Y-m-d' );
+		$transient_key = 'rondo_work_history_updated_' . gmdate( 'Y-m-d' );
 		if ( false === get_transient( $transient_key ) ) {
 			$this->update_expired_work_history();
 			set_transient( $transient_key, true, DAY_IN_SECONDS );
@@ -233,7 +233,7 @@ class Reminders {
 		$comments = get_comments(
 			[
 				'post__in'       => $contacts,
-				'type'           => 'stadion_note',
+				'type'           => 'rondo_note',
 				'author__not_in' => [ $user_id ], // Not user's own notes
 				'date_query'     => [
 					'after' => $since,
@@ -273,9 +273,9 @@ class Reminders {
 	 * Add custom cron schedules
 	 */
 	public function add_cron_schedules( $schedules ) {
-		$schedules['stadion_twice_daily'] = [
+		$schedules['rondo_twice_daily'] = [
 			'interval' => 12 * HOUR_IN_SECONDS,
-			'display'  => __( 'Twice Daily', 'stadion' ),
+			'display'  => __( 'Twice Daily', 'rondo' ),
 		];
 
 		return $schedules;
@@ -419,7 +419,7 @@ class Reminders {
 	 * @return array Digest data with today, tomorrow, rest_of_week, and todos keys
 	 */
 	public function get_weekly_digest( $user_id ) {
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 		$today          = new \DateTime( 'today', wp_timezone() );
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 		$end_of_week    = ( clone $today )->modify( '+7 days' );
@@ -529,7 +529,7 @@ class Reminders {
 	 * @return array Todos grouped by today, tomorrow, rest_of_week
 	 */
 	private function get_user_todos_for_digest( $user_id, $today, $end_of_week ) {
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 
 		$todos = [
@@ -559,7 +559,7 @@ class Reminders {
 		$todo_comments = get_comments(
 			[
 				'post__in'   => $person_ids,
-				'type'       => 'stadion_todo',
+				'type'       => 'rondo_todo',
 				'status'     => 'approve',
 				'meta_query' => [
 					'relation' => 'AND',
@@ -725,7 +725,7 @@ class Reminders {
 		$all_reminders = $this->get_upcoming_reminders( $days_ahead );
 
 		// Filter to only include reminders for people this user can access
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 		$user_reminders = [];
 
 		foreach ( $all_reminders as $reminder ) {

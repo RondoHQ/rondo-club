@@ -23,7 +23,7 @@ class AutoTitle {
 		add_action( 'rest_after_insert_person', [ $this, 'trigger_calendar_rematch_rest' ], 25, 2 );
 
 		// Handle async calendar rematch cron job
-		add_action( 'stadion_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
+		add_action( 'rondo_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
 
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
@@ -70,7 +70,7 @@ class AutoTitle {
 			'auth_header' => isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? 'present' : 'missing',
 		];
 
-		error_log( 'STADION REST DEBUG [REQUEST]: ' . wp_json_encode( $log_data ) );
+		error_log( 'RONDO REST DEBUG [REQUEST]: ' . wp_json_encode( $log_data ) );
 
 		return $result;
 	}
@@ -108,7 +108,7 @@ class AutoTitle {
 			];
 		}
 
-		error_log( 'STADION REST DEBUG [RESPONSE]: ' . wp_json_encode( $log_data ) );
+		error_log( 'RONDO REST DEBUG [RESPONSE]: ' . wp_json_encode( $log_data ) );
 
 		return $response;
 	}
@@ -137,7 +137,7 @@ class AutoTitle {
 		// Inject a temporary title if not set - will be replaced by auto_generate_person_title()
 		$title = $request->get_param( 'title' );
 		if ( empty( $title ) ) {
-			$request->set_param( 'title', __( 'New Person', 'stadion' ) );
+			$request->set_param( 'title', __( 'New Person', 'rondo' ) );
 		}
 
 		return $result;
@@ -179,7 +179,7 @@ class AutoTitle {
 	public function set_temporary_title_rest( $prepared_post, $request ) {
 		// Only set temporary title if no title was provided
 		if ( empty( $prepared_post->post_title ) ) {
-			$prepared_post->post_title = __( 'New Person', 'stadion' );
+			$prepared_post->post_title = __( 'New Person', 'rondo' );
 		}
 
 		return $prepared_post;
@@ -206,7 +206,7 @@ class AutoTitle {
 		$full_name = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 
 		if ( empty( $full_name ) ) {
-			$full_name = __( 'Unnamed Person', 'stadion' );
+			$full_name = __( 'Unnamed Person', 'rondo' );
 		}
 
 		// Unhook to prevent infinite loop
@@ -243,7 +243,7 @@ class AutoTitle {
 		$full_name = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 
 		if ( empty( $full_name ) ) {
-			$full_name = __( 'Unnamed Person', 'stadion' );
+			$full_name = __( 'Unnamed Person', 'rondo' );
 		}
 
 		wp_update_post(
@@ -345,13 +345,13 @@ class AutoTitle {
 		$scheduled[ $post_id ] = true;
 
 		// Clear any existing scheduled event for this person
-		$timestamp = wp_next_scheduled( 'stadion_async_calendar_rematch', [ $post_id ] );
+		$timestamp = wp_next_scheduled( 'rondo_async_calendar_rematch', [ $post_id ] );
 		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'stadion_async_calendar_rematch', [ $post_id ] );
+			wp_unschedule_event( $timestamp, 'rondo_async_calendar_rematch', [ $post_id ] );
 		}
 
 		// Schedule to run immediately (next cron tick)
-		wp_schedule_single_event( time(), 'stadion_async_calendar_rematch', [ $post_id ] );
+		wp_schedule_single_event( time(), 'rondo_async_calendar_rematch', [ $post_id ] );
 
 		// Trigger cron to run soon (non-blocking)
 		spawn_cron();
@@ -363,7 +363,7 @@ class AutoTitle {
 	 * @param int $post_id Person post ID.
 	 */
 	public function handle_async_calendar_rematch( int $post_id ): void {
-		\Stadion\Calendar\Matcher::on_person_saved( $post_id );
+		\Rondo\Calendar\Matcher::on_person_saved( $post_id );
 	}
 
 }

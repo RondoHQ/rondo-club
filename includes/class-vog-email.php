@@ -4,7 +4,7 @@
  *
  * Handles VOG (Verklaring Omtrent Gedrag) email sending and settings management.
  *
- * @package Stadion\VOG
+ * @package Rondo\VOG
  */
 
 namespace Rondo\VOG;
@@ -21,27 +21,27 @@ class VOGEmail {
 	/**
 	 * Option key for from email address
 	 */
-	const OPTION_FROM_EMAIL = 'stadion_vog_from_email';
+	const OPTION_FROM_EMAIL = 'rondo_vog_from_email';
 
 	/**
 	 * Option key for from name
 	 */
-	const OPTION_FROM_NAME = 'stadion_vog_from_name';
+	const OPTION_FROM_NAME = 'rondo_vog_from_name';
 
 	/**
 	 * Option key for new volunteer template
 	 */
-	const OPTION_TEMPLATE_NEW = 'stadion_vog_template_new';
+	const OPTION_TEMPLATE_NEW = 'rondo_vog_template_new';
 
 	/**
 	 * Option key for renewal template
 	 */
-	const OPTION_TEMPLATE_RENEWAL = 'stadion_vog_template_renewal';
+	const OPTION_TEMPLATE_RENEWAL = 'rondo_vog_template_renewal';
 
 	/**
 	 * Option key for exempt commissies (commissies that don't require VOG)
 	 */
-	const OPTION_EXEMPT_COMMISSIES = 'stadion_vog_exempt_commissies';
+	const OPTION_EXEMPT_COMMISSIES = 'rondo_vog_exempt_commissies';
 
 	/**
 	 * Custom from email for current send operation
@@ -200,7 +200,7 @@ class VOGEmail {
 		if ( ! in_array( $template_type, [ 'new', 'renewal' ], true ) ) {
 			return new \WP_Error(
 				'invalid_template_type',
-				__( 'Invalid template type. Must be "new" or "renewal".', 'stadion' )
+				__( 'Invalid template type. Must be "new" or "renewal".', 'rondo' )
 			);
 		}
 
@@ -209,7 +209,7 @@ class VOGEmail {
 		if ( ! $person || 'person' !== $person->post_type ) {
 			return new \WP_Error(
 				'invalid_person',
-				__( 'Invalid person ID.', 'stadion' )
+				__( 'Invalid person ID.', 'rondo' )
 			);
 		}
 
@@ -218,7 +218,7 @@ class VOGEmail {
 		if ( ! $recipient_email ) {
 			return new \WP_Error(
 				'no_email',
-				__( 'No email address found for this person.', 'stadion' )
+				__( 'No email address found for this person.', 'rondo' )
 			);
 		}
 
@@ -240,7 +240,7 @@ class VOGEmail {
 				// Format date for display (ACF returns Y-m-d format)
 				$vars['previous_vog_date'] = date_i18n( get_option( 'date_format' ), strtotime( $previous_vog_date ) );
 			} else {
-				$vars['previous_vog_date'] = __( 'onbekend', 'stadion' );
+				$vars['previous_vog_date'] = __( 'onbekend', 'rondo' );
 			}
 		}
 
@@ -252,8 +252,8 @@ class VOGEmail {
 
 		// Build subject
 		$subject = 'new' === $template_type
-			? __( 'VOG aanvraag', 'stadion' )
-			: __( 'VOG vernieuwing', 'stadion' );
+			? __( 'VOG aanvraag', 'rondo' )
+			: __( 'VOG vernieuwing', 'rondo' );
 
 		// Store from email for filter
 		$this->current_from_email = $this->get_from_email();
@@ -281,7 +281,7 @@ class VOGEmail {
 		if ( ! $result ) {
 			return new \WP_Error(
 				'send_failed',
-				__( 'Failed to send email.', 'stadion' )
+				__( 'Failed to send email.', 'rondo' )
 			);
 		}
 
@@ -289,7 +289,7 @@ class VOGEmail {
 		update_post_meta( $person_id, 'vog_email_sent_date', current_time( 'Y-m-d H:i:s' ) );
 
 		// Log email to timeline
-		$comment_types = new \Stadion\Collaboration\CommentTypes();
+		$comment_types = new \Rondo\Collaboration\CommentTypes();
 		$comment_types->create_email_log(
 			$person_id,
 			[

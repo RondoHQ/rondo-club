@@ -4,7 +4,7 @@
  *
  * Handles membership fee settings storage and retrieval using the WordPress Options API.
  *
- * @package Stadion\Fees
+ * @package Rondo\Fees
  */
 
 namespace Rondo\Fees;
@@ -21,7 +21,7 @@ class MembershipFees {
 	/**
 	 * Option key for storing all membership fee settings
 	 */
-	const OPTION_KEY = 'stadion_membership_fees';
+	const OPTION_KEY = 'rondo_membership_fees';
 
 	/**
 	 * Default fee amounts (in euros)
@@ -51,7 +51,7 @@ class MembershipFees {
 	 * @return string Option key for season-specific fee storage.
 	 */
 	public function get_option_key_for_season( string $season ): string {
-		return 'stadion_membership_fees_' . $season;
+		return 'rondo_membership_fees_' . $season;
 	}
 
 	/**
@@ -649,7 +649,7 @@ class MembershipFees {
 	 * @return string Meta key for fee cache storage.
 	 */
 	public function get_fee_cache_meta_key( ?string $season = null ): string {
-		return 'stadion_fee_cache_' . ( $season ?: $this->get_season_key() );
+		return 'rondo_fee_cache_' . ( $season ?: $this->get_season_key() );
 	}
 
 	/**

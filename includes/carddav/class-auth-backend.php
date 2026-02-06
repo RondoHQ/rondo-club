@@ -5,7 +5,7 @@
  * Uses WordPress Application Passwords for authentication.
  * WordPress 6.8+ uses BLAKE2b hashing ($generic$ prefix) for app passwords.
  *
- * @package Stadion
+ * @package Rondo
  */
 
 namespace Rondo\CardDAV;

@@ -2,10 +2,10 @@
 /**
  * Google Contacts Export Class
  *
- * Exports Stadion contacts to Google Contacts via People API.
+ * Exports Rondo contacts to Google Contacts via People API.
  * Handles field mapping, contact creation, updates, and photo uploads.
  *
- * @package Stadion
+ * @package Rondo
  */
 
 namespace Rondo\Export;
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class GoogleContactsExport
  *
- * Exports Stadion person records to Google Contacts.
+ * Exports Rondo person records to Google Contacts.
  */
 class GoogleContactsExport {
 
@@ -50,7 +50,7 @@ class GoogleContactsExport {
 	public static function init(): void {
 		$instance = new self( 0 ); // User ID set per-save.
 		add_action( 'save_post_person', [ $instance, 'on_person_saved' ], 20, 3 );
-		add_action( 'stadion_google_contact_export', [ $instance, 'handle_async_export' ], 10, 2 );
+		add_action( 'rondo_google_contact_export', [ $instance, 'handle_async_export' ], 10, 2 );
 		add_action( 'before_delete_post', [ $instance, 'on_person_deleted' ], 10, 2 );
 	}
 
@@ -105,13 +105,13 @@ class GoogleContactsExport {
 		$queued[ $key ] = true;
 
 		// Clear any existing scheduled event.
-		$timestamp = wp_next_scheduled( 'stadion_google_contact_export', [ $post_id, $user_id ] );
+		$timestamp = wp_next_scheduled( 'rondo_google_contact_export', [ $post_id, $user_id ] );
 		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'stadion_google_contact_export', [ $post_id, $user_id ] );
+			wp_unschedule_event( $timestamp, 'rondo_google_contact_export', [ $post_id, $user_id ] );
 		}
 
 		// Schedule immediate execution.
-		wp_schedule_single_event( time(), 'stadion_google_contact_export', [ $post_id, $user_id ] );
+		wp_schedule_single_event( time(), 'rondo_google_contact_export', [ $post_id, $user_id ] );
 		spawn_cron();
 	}
 
@@ -738,7 +738,7 @@ class GoogleContactsExport {
 			$phone = new PhoneNumber();
 			$phone->setValue( $value );
 
-			// Map Stadion type to Google type.
+			// Map Rondo type to Google type.
 			if ( $contact_type === 'mobile' ) {
 				$phone->setType( 'mobile' );
 			} else {
@@ -970,9 +970,9 @@ class GoogleContactsExport {
 	}
 
 	/**
-	 * Map Stadion label to Google type
+	 * Map Rondo label to Google type
 	 *
-	 * @param string $label Stadion label (e.g., "Work", "Home").
+	 * @param string $label Rondo label (e.g., "Work", "Home").
 	 * @return string Google type string.
 	 */
 	private function map_label_to_google_type( string $label ): string {
@@ -1056,7 +1056,7 @@ class GoogleContactsExport {
 		// Verify user has readwrite access.
 		$connection = GoogleContactsConnection::get_connection( $this->user_id );
 		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
-			$stats['errors'][] = __( 'Google Contacts is not connected with read-write access.', 'stadion' );
+			$stats['errors'][] = __( 'Google Contacts is not connected with read-write access.', 'rondo' );
 			return $stats;
 		}
 
@@ -1112,7 +1112,7 @@ class GoogleContactsExport {
 					$stats['failed']++;
 					$stats['errors'][] = sprintf(
 						/* translators: %d: contact ID */
-						__( 'Failed to export contact ID %d.', 'stadion' ),
+						__( 'Failed to export contact ID %d.', 'rondo' ),
 						$post_id
 					);
 				}
@@ -1120,7 +1120,7 @@ class GoogleContactsExport {
 				$stats['failed']++;
 				$stats['errors'][] = sprintf(
 					/* translators: 1: contact ID, 2: error message */
-					__( 'Error exporting contact ID %1$d: %2$s', 'stadion' ),
+					__( 'Error exporting contact ID %1$d: %2$s', 'rondo' ),
 					$post_id,
 					$e->getMessage()
 				);

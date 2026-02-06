@@ -21,7 +21,7 @@ class CredentialEncryption {
 	 */
 	private static function get_key(): string {
 		// Use WordPress AUTH_KEY as basis, hash to proper length for sodium
-		return hash( 'sha256', AUTH_KEY . 'stadion_calendar', true );
+		return hash( 'sha256', AUTH_KEY . 'rondo_calendar', true );
 	}
 
 	/**

@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MentionNotifications {
 
 	public function __construct() {
-		add_action( 'stadion_user_mentioned', [ $this, 'handle_mentions' ], 10, 3 );
+		add_action( 'rondo_user_mentioned', [ $this, 'handle_mentions' ], 10, 3 );
 	}
 
 	/**
@@ -43,7 +43,7 @@ class MentionNotifications {
 			}
 
 			// Check user preference
-			$pref = get_user_meta( $user_id, 'stadion_mention_notifications', true );
+			$pref = get_user_meta( $user_id, 'rondo_mention_notifications', true );
 			if ( $pref === 'never' ) {
 				continue;
 			}
@@ -110,7 +110,7 @@ class MentionNotifications {
 	}
 
 	/**
-	 * Get and clear queued mentions for a user (called by STADION_Reminders)
+	 * Get and clear queued mentions for a user (called by RONDO_Reminders)
 	 *
 	 * @param int $user_id User ID
 	 * @return array Array of mention data for digest

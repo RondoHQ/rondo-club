@@ -3,7 +3,7 @@
  * REST API Endpoints for Feedback Custom Post Type
  *
  * Provides CRUD operations for feedback (bug reports and feature requests)
- * via the REST API at stadion/v1/feedback.
+ * via the REST API at rondo/v1/feedback.
  */
 
 namespace Rondo\REST;
@@ -28,7 +28,7 @@ class Feedback extends Base {
 	public function register_routes() {
 		// List feedback
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/feedback',
 			[
 				[
@@ -51,7 +51,7 @@ class Feedback extends Base {
 
 		// Single feedback operations
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/feedback/(?P<id>\d+)',
 			[
 				[
@@ -166,7 +166,7 @@ class Feedback extends Base {
 		$feedback    = get_post( $feedback_id );
 
 		// Return false for non-existent posts
-		if ( ! $feedback || $feedback->post_type !== 'stadion_feedback' ) {
+		if ( ! $feedback || $feedback->post_type !== 'rondo_feedback' ) {
 			return false;
 		}
 
@@ -191,7 +191,7 @@ class Feedback extends Base {
 
 		// Build query args
 		$args = [
-			'post_type'      => 'stadion_feedback',
+			'post_type'      => 'rondo_feedback',
 			'post_status'    => 'publish',
 			'posts_per_page' => $request->get_param( 'per_page' ),
 			'paged'          => $request->get_param( 'page' ),
@@ -285,7 +285,7 @@ class Feedback extends Base {
 		if ( empty( $title ) ) {
 			return new \WP_Error(
 				'rest_missing_param',
-				__( 'Title is required.', 'stadion' ),
+				__( 'Title is required.', 'rondo' ),
 				[ 'status' => 400, 'params' => [ 'title' => 'Title is required' ] ]
 			);
 		}
@@ -293,7 +293,7 @@ class Feedback extends Base {
 		if ( empty( $feedback_type ) ) {
 			return new \WP_Error(
 				'rest_missing_param',
-				__( 'Feedback type is required.', 'stadion' ),
+				__( 'Feedback type is required.', 'rondo' ),
 				[ 'status' => 400, 'params' => [ 'feedback_type' => 'Feedback type is required' ] ]
 			);
 		}
@@ -302,7 +302,7 @@ class Feedback extends Base {
 		if ( ! in_array( $feedback_type, [ 'bug', 'feature_request' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
-				__( 'Invalid feedback type.', 'stadion' ),
+				__( 'Invalid feedback type.', 'rondo' ),
 				[ 'status' => 400, 'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ] ]
 			);
 		}
@@ -310,7 +310,7 @@ class Feedback extends Base {
 		// Create the post
 		$post_id = wp_insert_post(
 			[
-				'post_type'    => 'stadion_feedback',
+				'post_type'    => 'rondo_feedback',
 				'post_title'   => sanitize_text_field( $title ),
 				'post_content' => wp_kses_post( $request->get_param( 'content' ) ?? '' ),
 				'post_status'  => 'publish',
@@ -321,7 +321,7 @@ class Feedback extends Base {
 		if ( is_wp_error( $post_id ) ) {
 			return new \WP_Error(
 				'rest_cannot_create',
-				__( 'Failed to create feedback.', 'stadion' ),
+				__( 'Failed to create feedback.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -398,10 +398,10 @@ class Feedback extends Base {
 		$feedback_id = (int) $request->get_param( 'id' );
 		$feedback    = get_post( $feedback_id );
 
-		if ( ! $feedback || $feedback->post_type !== 'stadion_feedback' ) {
+		if ( ! $feedback || $feedback->post_type !== 'rondo_feedback' ) {
 			return new \WP_Error(
 				'rest_not_found',
-				__( 'Feedback not found.', 'stadion' ),
+				__( 'Feedback not found.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -419,10 +419,10 @@ class Feedback extends Base {
 		$feedback_id = (int) $request->get_param( 'id' );
 		$feedback    = get_post( $feedback_id );
 
-		if ( ! $feedback || $feedback->post_type !== 'stadion_feedback' ) {
+		if ( ! $feedback || $feedback->post_type !== 'rondo_feedback' ) {
 			return new \WP_Error(
 				'rest_not_found',
-				__( 'Feedback not found.', 'stadion' ),
+				__( 'Feedback not found.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -434,7 +434,7 @@ class Feedback extends Base {
 		if ( $new_status !== null && ! $is_admin ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'Only administrators can change feedback status.', 'stadion' ),
+				__( 'Only administrators can change feedback status.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -443,7 +443,7 @@ class Feedback extends Base {
 		if ( $new_priority !== null && ! $is_admin ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'Only administrators can change feedback priority.', 'stadion' ),
+				__( 'Only administrators can change feedback priority.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -453,7 +453,7 @@ class Feedback extends Base {
 		if ( $feedback_type !== null && ! in_array( $feedback_type, [ 'bug', 'feature_request' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
-				__( 'Invalid feedback type.', 'stadion' ),
+				__( 'Invalid feedback type.', 'rondo' ),
 				[ 'status' => 400, 'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ] ]
 			);
 		}
@@ -461,7 +461,7 @@ class Feedback extends Base {
 		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'resolved', 'declined' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
-				__( 'Invalid status.', 'stadion' ),
+				__( 'Invalid status.', 'rondo' ),
 				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "resolved", or "declined"' ] ]
 			);
 		}
@@ -469,7 +469,7 @@ class Feedback extends Base {
 		if ( $new_priority !== null && ! in_array( $new_priority, [ 'low', 'medium', 'high', 'critical' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
-				__( 'Invalid priority.', 'stadion' ),
+				__( 'Invalid priority.', 'rondo' ),
 				[ 'status' => 400, 'params' => [ 'priority' => 'Must be "low", "medium", "high", or "critical"' ] ]
 			);
 		}
@@ -564,10 +564,10 @@ class Feedback extends Base {
 		$feedback_id = (int) $request->get_param( 'id' );
 		$feedback    = get_post( $feedback_id );
 
-		if ( ! $feedback || $feedback->post_type !== 'stadion_feedback' ) {
+		if ( ! $feedback || $feedback->post_type !== 'rondo_feedback' ) {
 			return new \WP_Error(
 				'rest_not_found',
-				__( 'Feedback not found.', 'stadion' ),
+				__( 'Feedback not found.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
 		}
@@ -577,7 +577,7 @@ class Feedback extends Base {
 		if ( ! $result ) {
 			return new \WP_Error(
 				'rest_cannot_delete',
-				__( 'Failed to delete feedback.', 'stadion' ),
+				__( 'Failed to delete feedback.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
 		}

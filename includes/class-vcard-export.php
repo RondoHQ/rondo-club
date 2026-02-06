@@ -4,7 +4,7 @@
  *
  * Generates vCard 3.0 format from person data for CardDAV server.
  *
- * @package Stadion
+ * @package Rondo
  */
 
 namespace Rondo\Export;

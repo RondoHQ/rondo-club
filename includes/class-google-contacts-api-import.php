@@ -2,7 +2,7 @@
 /**
  * Google Contacts API Import Class
  *
- * Imports contacts from Google Contacts via People API into Stadion.
+ * Imports contacts from Google Contacts via People API into Rondo.
  * Matches existing contacts by email only, fills gaps without overwriting.
  */
 
@@ -213,7 +213,7 @@ class GoogleContactsAPI {
 	/**
 	 * Unlink a contact that was deleted in Google
 	 *
-	 * Removes Google metadata from the Stadion person but preserves all other data.
+	 * Removes Google metadata from the Rondo person but preserves all other data.
 	 *
 	 * @param string $resource_name Google resource name (people/c123...).
 	 */
@@ -235,7 +235,7 @@ class GoogleContactsAPI {
 
 		$post_id = $posts[0]->ID;
 
-		// Remove Google-related meta but preserve Stadion data
+		// Remove Google-related meta but preserve Rondo data
 		delete_post_meta( $post_id, '_google_contact_id' );
 		delete_post_meta( $post_id, '_google_etag' );
 		delete_post_meta( $post_id, '_google_last_import' );
@@ -247,7 +247,7 @@ class GoogleContactsAPI {
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log(
 				sprintf(
-					'STADION_Google_Contacts: Unlinked contact %d (was %s) - deleted in Google',
+					'RONDO_Google_Contacts: Unlinked contact %d (was %s) - deleted in Google',
 					$post_id,
 					$resource_name
 				)
@@ -983,14 +983,14 @@ class GoogleContactsAPI {
 	}
 
 	/**
-	 * Detect field-level conflicts between Google and Stadion
+	 * Detect field-level conflicts between Google and Rondo
 	 *
-	 * Compares Google values, Stadion values, and last-synced snapshot to determine
+	 * Compares Google values, Rondo values, and last-synced snapshot to determine
 	 * which fields were modified in both systems since last sync.
 	 *
 	 * @param int    $post_id      Post ID.
 	 * @param object $google_person Google Person object.
-	 * @return array Array of conflicts, each with field, google_value, stadion_value, kept_value.
+	 * @return array Array of conflicts, each with field, google_value, rondo_value, kept_value.
 	 */
 	private function detect_field_conflicts( int $post_id, object $google_person ): array {
 		$conflicts = [];
@@ -1003,8 +1003,8 @@ class GoogleContactsAPI {
 			return $conflicts;
 		}
 
-		// Get current Stadion values.
-		$stadion_values = $this->get_field_snapshot( $post_id );
+		// Get current Rondo values.
+		$rondo_values = $this->get_field_snapshot( $post_id );
 
 		// Extract Google values from person object.
 		$google_values = $this->extract_google_field_values( $google_person );
@@ -1014,19 +1014,19 @@ class GoogleContactsAPI {
 
 		foreach ( $fields as $field ) {
 			$snapshot_value = $snapshot[ $field ] ?? '';
-			$stadion_value   = $stadion_values[ $field ] ?? '';
+			$rondo_value   = $rondo_values[ $field ] ?? '';
 			$google_value   = $google_values[ $field ] ?? '';
 
 			// Conflict: both systems changed this field since last sync.
-			// (Google value differs from snapshot AND Stadion value differs from snapshot).
-			if ( $google_value !== $snapshot_value && $stadion_value !== $snapshot_value ) {
+			// (Google value differs from snapshot AND Rondo value differs from snapshot).
+			if ( $google_value !== $snapshot_value && $rondo_value !== $snapshot_value ) {
 				// Only log if values are actually different (not just both changed to same value).
-				if ( $google_value !== $stadion_value ) {
+				if ( $google_value !== $rondo_value ) {
 					$conflicts[] = [
 						'field'        => $field,
 						'google_value' => $google_value,
-						'stadion_value' => $stadion_value,
-						'kept_value'   => $stadion_value, // Stadion wins.
+						'rondo_value' => $rondo_value,
+						'kept_value'   => $rondo_value, // Rondo wins.
 					];
 				}
 			}
@@ -1101,7 +1101,7 @@ class GoogleContactsAPI {
 	 * Log conflict resolution as activity entry
 	 *
 	 * Creates an activity entry on the person showing which fields had conflicts
-	 * and that Stadion values were kept.
+	 * and that Rondo values were kept.
 	 *
 	 * @param int   $post_id   Post ID.
 	 * @param array $conflicts Array of conflicts from detect_field_conflicts().
@@ -1112,12 +1112,12 @@ class GoogleContactsAPI {
 		}
 
 		// Format conflict details as bullet list.
-		$lines = [ 'Sync conflict resolved (Stadion wins):' ];
+		$lines = [ 'Sync conflict resolved (Rondo wins):' ];
 		foreach ( $conflicts as $conflict ) {
 			$field_label  = ucfirst( str_replace( '_', ' ', $conflict['field'] ) );
 			$google_value = $conflict['google_value'] ?: '(empty)';
-			$stadion_value = $conflict['stadion_value'] ?: '(empty)';
-			$lines[]      = sprintf( '- %s: Google had "%s", kept "%s"', $field_label, $google_value, $stadion_value );
+			$rondo_value = $conflict['rondo_value'] ?: '(empty)';
+			$lines[]      = sprintf( '- %s: Google had "%s", kept "%s"', $field_label, $google_value, $rondo_value );
 		}
 		$content = implode( "\n", $lines );
 
@@ -1139,7 +1139,7 @@ class GoogleContactsAPI {
 	}
 
 	/**
-	 * Map Google phone type to Stadion contact type
+	 * Map Google phone type to Rondo contact type
 	 *
 	 * @param string|null $google_type Google phone type.
 	 * @return string 'mobile' or 'phone'.

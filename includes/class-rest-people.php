@@ -36,7 +36,7 @@ class People extends Base {
 	public function register_routes() {
 		// Dates by person
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/dates',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -54,7 +54,7 @@ class People extends Base {
 
 		// Sideload Gravatar image
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/gravatar',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -78,7 +78,7 @@ class People extends Base {
 
 		// Upload person photo with proper filename
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/photo',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -96,7 +96,7 @@ class People extends Base {
 
 		// Sharing endpoints
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/(?P<id>\d+)/shares',
 			[
 				[
@@ -113,7 +113,7 @@ class People extends Base {
 		);
 
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -124,7 +124,7 @@ class People extends Base {
 
 		// Bulk update endpoint
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/bulk-update',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -206,7 +206,7 @@ class People extends Base {
 
 		// Filtered people with server-side pagination, filtering, and sorting
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/filtered',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -379,7 +379,7 @@ class People extends Base {
 		$email     = sanitize_email( $request->get_param( 'email' ) );
 
 		if ( empty( $email ) ) {
-			return new \WP_Error( 'missing_email', __( 'Email address is required.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_email', __( 'Email address is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Generate Gravatar URL
@@ -406,7 +406,7 @@ class People extends Base {
 		$tmp = download_url( $gravatar_url );
 
 		if ( is_wp_error( $tmp ) ) {
-			return new \WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'stadion' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'download_failed', __( 'Failed to download Gravatar image.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
 		// Get person's name for filename
@@ -422,12 +422,12 @@ class People extends Base {
 		];
 
 		// Sideload the file
-		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( __( '%s Gravatar', 'stadion' ), $first_name . ' ' . $last_name ) );
+		$attachment_id = media_handle_sideload( $file_array, $person_id, sprintf( __( '%s Gravatar', 'rondo' ), $first_name . ' ' . $last_name ) );
 
 		// Clean up temp file if sideload failed
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp );
-			return new \WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'stadion' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'sideload_failed', __( 'Failed to sideload Gravatar image.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
 		// Set as featured image
@@ -454,13 +454,13 @@ class People extends Base {
 		// Verify person exists
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' ) {
-			return new \WP_Error( 'person_not_found', __( 'Person not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'person_not_found', __( 'Person not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
@@ -468,7 +468,7 @@ class People extends Base {
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Get person's name for filename
@@ -701,12 +701,12 @@ class People extends Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new \WP_Error( 'invalid_user', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
@@ -721,7 +721,7 @@ class People extends Base {
 				return rest_ensure_response(
 					[
 						'success' => true,
-						'message' => __( 'Share updated.', 'stadion' ),
+						'message' => __( 'Share updated.', 'rondo' ),
 					]
 				);
 			}
@@ -737,7 +737,7 @@ class People extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Shared successfully.', 'stadion' ),
+				'message' => __( 'Shared successfully.', 'rondo' ),
 			]
 		);
 	}
@@ -766,7 +766,7 @@ class People extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Share removed.', 'stadion' ),
+				'message' => __( 'Share removed.', 'rondo' ),
 			]
 		);
 	}
@@ -783,7 +783,7 @@ class People extends Base {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You must be logged in to perform this action.', 'stadion' ),
+				__( 'You must be logged in to perform this action.', 'rondo' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -798,7 +798,7 @@ class People extends Base {
 			if ( ! $post || $post->post_type !== 'person' ) {
 				return new \WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Person with ID %d not found.', 'stadion' ), $post_id ),
+					sprintf( __( 'Person with ID %d not found.', 'rondo' ), $post_id ),
 					[ 'status' => 404 ]
 				);
 			}
@@ -807,7 +807,7 @@ class People extends Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new \WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update person with ID %d.', 'stadion' ), $post_id ),
+					sprintf( __( 'You do not have permission to update person with ID %d.', 'rondo' ), $post_id ),
 					[ 'status' => 403 ]
 				);
 			}
@@ -982,7 +982,7 @@ class People extends Base {
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
-		$access_control = new \Stadion\Core\AccessControl();
+		$access_control = new \Rondo\Core\AccessControl();
 		if ( ! $access_control->is_user_approved() ) {
 			return rest_ensure_response( [
 				'people'      => [],

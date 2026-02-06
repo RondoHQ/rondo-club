@@ -45,7 +45,7 @@ abstract class Base {
 		}
 
 		// Check if user is approved
-		return \STADION_User_Roles::is_user_approved( $user_id );
+		return \RONDO_User_Roles::is_user_approved( $user_id );
 	}
 
 	/**
@@ -79,7 +79,7 @@ abstract class Base {
 		}
 
 		$person_id      = $request->get_param( 'person_id' );
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 
 		return $access_control->user_can_access_post( $person_id );
 	}

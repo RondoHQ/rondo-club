@@ -28,7 +28,7 @@ class Teams extends Base {
 	public function register_routes() {
 		// People by company
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/teams/(?P<team_id>\d+)/people',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -46,7 +46,7 @@ class Teams extends Base {
 
 		// Set team logo (featured image) - by media ID
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/teams/(?P<team_id>\d+)/logo',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -70,7 +70,7 @@ class Teams extends Base {
 
 		// Upload team logo with proper filename
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/teams/(?P<team_id>\d+)/logo/upload',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -88,7 +88,7 @@ class Teams extends Base {
 
 		// Sharing endpoints
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/teams/(?P<id>\d+)/shares',
 			[
 				[
@@ -105,7 +105,7 @@ class Teams extends Base {
 		);
 
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/teams/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -116,7 +116,7 @@ class Teams extends Base {
 
 		// Bulk update teams
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/teams/bulk-update',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -193,11 +193,11 @@ class Teams extends Base {
 		$user_id    = get_current_user_id();
 
 		// Check if user can access this team
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $team_id, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this team.', 'stadion' ),
+				__( 'You do not have permission to access this team.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -307,20 +307,20 @@ class Teams extends Base {
 		// Verify team exists
 		$team = get_post( $team_id );
 		if ( ! $team || $team->post_type !== 'team' ) {
-			return new \WP_Error( 'company_not_found', __( 'Team not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'company_not_found', __( 'Team not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Verify media exists
 		$media = get_post( $media_id );
 		if ( ! $media || $media->post_type !== 'attachment' ) {
-			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Set as featured image
 		$result = set_post_thumbnail( $team_id, $media_id );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set team logo.', 'stadion' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set team logo.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -345,13 +345,13 @@ class Teams extends Base {
 		// Verify team exists
 		$team = get_post( $team_id );
 		if ( ! $team || $team->post_type !== 'team' ) {
-			return new \WP_Error( 'company_not_found', __( 'Team not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'company_not_found', __( 'Team not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Check for uploaded file
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
@@ -359,7 +359,7 @@ class Teams extends Base {
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Get company name for filename
@@ -473,12 +473,12 @@ class Teams extends Base {
 		// Validate user exists
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new \WP_Error( 'invalid_user', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Can't share with yourself
 		if ( $user_id === get_current_user_id() ) {
-			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Get current shares
@@ -493,7 +493,7 @@ class Teams extends Base {
 				return rest_ensure_response(
 					[
 						'success' => true,
-						'message' => __( 'Share updated.', 'stadion' ),
+						'message' => __( 'Share updated.', 'rondo' ),
 					]
 				);
 			}
@@ -509,7 +509,7 @@ class Teams extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Shared successfully.', 'stadion' ),
+				'message' => __( 'Shared successfully.', 'rondo' ),
 			]
 		);
 	}
@@ -538,7 +538,7 @@ class Teams extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Share removed.', 'stadion' ),
+				'message' => __( 'Share removed.', 'rondo' ),
 			]
 		);
 	}
@@ -553,7 +553,7 @@ class Teams extends Base {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You must be logged in to perform this action.', 'stadion' ),
+				__( 'You must be logged in to perform this action.', 'rondo' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -568,7 +568,7 @@ class Teams extends Base {
 			if ( ! $post || $post->post_type !== 'team' ) {
 				return new \WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Team with ID %d not found.', 'stadion' ), $post_id ),
+					sprintf( __( 'Team with ID %d not found.', 'rondo' ), $post_id ),
 					[ 'status' => 404 ]
 				);
 			}
@@ -577,7 +577,7 @@ class Teams extends Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new \WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update company with ID %d.', 'stadion' ), $post_id ),
+					sprintf( __( 'You do not have permission to update company with ID %d.', 'rondo' ), $post_id ),
 					[ 'status' => 403 ]
 				);
 			}

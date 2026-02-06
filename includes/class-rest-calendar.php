@@ -29,9 +29,9 @@ class Calendar extends Base {
 	public function register_routes() {
 		// ===== Connection CRUD endpoints =====
 
-		// GET /stadion/v1/calendar/connections - List user's connections
+		// GET /rondo/v1/calendar/connections - List user's connections
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -40,9 +40,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// POST /stadion/v1/calendar/connections - Add new connection
+		// POST /rondo/v1/calendar/connections - Add new connection
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -114,9 +114,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// GET /stadion/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Get single connection
+		// GET /rondo/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Get single connection
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -134,9 +134,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// PUT /stadion/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Update connection
+		// PUT /rondo/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Update connection
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
@@ -202,9 +202,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// DELETE /stadion/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Delete connection
+		// DELETE /rondo/v1/calendar/connections/(?P<id>[a-z0-9_]+) - Delete connection
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -222,9 +222,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// POST /stadion/v1/calendar/connections/(?P<id>[a-z0-9_]+)/sync - Trigger sync
+		// POST /rondo/v1/calendar/connections/(?P<id>[a-z0-9_]+)/sync - Trigger sync
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)/sync',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -244,9 +244,9 @@ class Calendar extends Base {
 
 		// ===== OAuth endpoints (stubs for Phase 48) =====
 
-		// GET /stadion/v1/calendar/auth/google - Initiate OAuth
+		// GET /rondo/v1/calendar/auth/google - Initiate OAuth
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/auth/google',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -255,9 +255,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// GET /stadion/v1/calendar/auth/google/callback - OAuth callback
+		// GET /rondo/v1/calendar/auth/google/callback - OAuth callback
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/auth/google/callback',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -266,9 +266,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// POST /stadion/v1/calendar/auth/caldav/test - Test CalDAV credentials
+		// POST /rondo/v1/calendar/auth/caldav/test - Test CalDAV credentials
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/auth/caldav/test',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -295,9 +295,9 @@ class Calendar extends Base {
 
 		// ===== Events and meetings endpoints (stubs for Phase 51+) =====
 
-		// GET /stadion/v1/calendar/events - List cached events
+		// GET /rondo/v1/calendar/events - List cached events
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/events',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -325,9 +325,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// GET /stadion/v1/people/(?P<person_id>\d+)/meetings - Person meetings
+		// GET /rondo/v1/people/(?P<person_id>\d+)/meetings - Person meetings
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/people/(?P<person_id>\d+)/meetings',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -360,9 +360,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// POST /stadion/v1/calendar/events/(?P<id>\d+)/log - Log as activity
+		// POST /rondo/v1/calendar/events/(?P<id>\d+)/log - Log as activity
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/events/(?P<id>\d+)/log',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -380,9 +380,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// GET /stadion/v1/calendar/sync/status - Background sync status
+		// GET /rondo/v1/calendar/sync/status - Background sync status
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/sync/status',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -391,9 +391,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// GET /stadion/v1/calendar/today-meetings - Today's meetings for dashboard
+		// GET /rondo/v1/calendar/today-meetings - Today's meetings for dashboard
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/today-meetings',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -402,9 +402,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// GET /stadion/v1/calendar/connections/{id}/calendars - List available calendars
+		// GET /rondo/v1/calendar/connections/{id}/calendars - List available calendars
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/connections/(?P<id>[a-z0-9_]+)/calendars',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -424,9 +424,9 @@ class Calendar extends Base {
 
 		// ===== Meeting notes endpoints =====
 
-		// GET /stadion/v1/calendar/events/{id}/notes - Get meeting notes
+		// GET /rondo/v1/calendar/events/{id}/notes - Get meeting notes
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/events/(?P<id>\d+)/notes',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -444,9 +444,9 @@ class Calendar extends Base {
 			]
 		);
 
-		// PUT /stadion/v1/calendar/events/{id}/notes - Update meeting notes
+		// PUT /rondo/v1/calendar/events/{id}/notes - Update meeting notes
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/calendar/events/(?P<id>\d+)/notes',
 			[
 				'methods'             => \WP_REST_Server::EDITABLE,
@@ -478,7 +478,7 @@ class Calendar extends Base {
 	 */
 	public function get_connections( $request ) {
 		$user_id     = get_current_user_id();
-		$connections = \STADION_Calendar_Connections::get_user_connections( $user_id );
+		$connections = \RONDO_Calendar_Connections::get_user_connections( $user_id );
 
 		// Remove sensitive credentials from response
 		$safe_connections = array_map(
@@ -504,16 +504,16 @@ class Calendar extends Base {
 
 		// Validate required fields
 		if ( empty( $data['provider'] ) || ! in_array( $data['provider'], [ 'google', 'caldav' ], true ) ) {
-			return new \WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_provider', __( 'Invalid provider. Must be "google" or "caldav".', 'rondo' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $data['name'] ) ) {
-			return new \WP_Error( 'missing_name', __( 'Connection name is required.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_name', __( 'Connection name is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Encrypt credentials if provided
 		$credentials = '';
 		if ( ! empty( $data['credentials'] ) && is_array( $data['credentials'] ) ) {
-			$credentials = \Stadion\Data\CredentialEncryption::encrypt( $data['credentials'] );
+			$credentials = \Rondo\Data\CredentialEncryption::encrypt( $data['credentials'] );
 		}
 
 		// Build connection data
@@ -531,12 +531,12 @@ class Calendar extends Base {
 			'last_error'     => null,
 		];
 
-		$id = \STADION_Calendar_Connections::add_connection( $user_id, $connection );
+		$id = \RONDO_Calendar_Connections::add_connection( $user_id, $connection );
 
 		return rest_ensure_response(
 			[
 				'id'      => $id,
-				'message' => __( 'Connection created.', 'stadion' ),
+				'message' => __( 'Connection created.', 'rondo' ),
 			]
 		);
 	}
@@ -550,10 +550,10 @@ class Calendar extends Base {
 	public function get_connection( $request ) {
 		$user_id    = get_current_user_id();
 		$id         = $request->get_param( 'id' );
-		$connection = \STADION_Calendar_Connections::get_connection( $user_id, $id );
+		$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $id );
 
 		if ( ! $connection ) {
-			return new \WP_Error( 'not_found', __( 'Connection not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Remove sensitive credentials from response
@@ -573,9 +573,9 @@ class Calendar extends Base {
 		$id      = $request->get_param( 'id' );
 		$data    = $request->get_json_params();
 
-		$connection = \STADION_Calendar_Connections::get_connection( $user_id, $id );
+		$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new \WP_Error( 'not_found', __( 'Connection not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Sanitize updatable fields
@@ -615,16 +615,16 @@ class Calendar extends Base {
 			$updates['calendar_name'] = '';
 
 			// Detect removed calendars for cleanup
-			$old_calendar_ids  = \Stadion\Calendar\GoogleProvider::get_calendar_ids( $connection );
+			$old_calendar_ids  = \Rondo\Calendar\GoogleProvider::get_calendar_ids( $connection );
 			$removed_calendars = array_diff( $old_calendar_ids, $new_calendar_ids );
 		}
 
 		// Handle credential updates (re-encrypt)
 		if ( ! empty( $data['credentials'] ) && is_array( $data['credentials'] ) ) {
-			$updates['credentials'] = \Stadion\Data\CredentialEncryption::encrypt( $data['credentials'] );
+			$updates['credentials'] = \Rondo\Data\CredentialEncryption::encrypt( $data['credentials'] );
 		}
 
-		\STADION_Calendar_Connections::update_connection( $user_id, $id, $updates );
+		\RONDO_Calendar_Connections::update_connection( $user_id, $id, $updates );
 
 		// Delete events from removed calendars
 		$deleted_count = 0;
@@ -632,7 +632,7 @@ class Calendar extends Base {
 			$deleted_count = $this->delete_events_for_calendars( $user_id, $id, $removed_calendars );
 		}
 
-		$message = __( 'Connection updated.', 'stadion' );
+		$message = __( 'Connection updated.', 'rondo' );
 		if ( $deleted_count > 0 ) {
 			$message = sprintf(
 				/* translators: %d: number of events deleted */
@@ -640,7 +640,7 @@ class Calendar extends Base {
 					'Connection updated. %d event removed.',
 					'Connection updated. %d events removed.',
 					$deleted_count,
-					'stadion'
+					'rondo'
 				),
 				$deleted_count
 			);
@@ -659,14 +659,14 @@ class Calendar extends Base {
 		$user_id = get_current_user_id();
 		$id      = $request->get_param( 'id' );
 
-		$connection = \STADION_Calendar_Connections::get_connection( $user_id, $id );
+		$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $id );
 		if ( ! $connection ) {
-			return new \WP_Error( 'not_found', __( 'Connection not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
-		\STADION_Calendar_Connections::delete_connection( $user_id, $id );
+		\RONDO_Calendar_Connections::delete_connection( $user_id, $id );
 
-		return rest_ensure_response( [ 'message' => __( 'Connection deleted.', 'stadion' ) ] );
+		return rest_ensure_response( [ 'message' => __( 'Connection deleted.', 'rondo' ) ] );
 	}
 
 	/**
@@ -680,9 +680,9 @@ class Calendar extends Base {
 		$connection_id = $request->get_param( 'id' );
 
 		// Get connection
-		$connection = \STADION_Calendar_Connections::get_connection( $user_id, $connection_id );
+		$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $connection_id );
 		if ( ! $connection ) {
-			return new \WP_Error( 'not_found', __( 'Connection not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Check provider
@@ -691,7 +691,7 @@ class Calendar extends Base {
 		if ( ! in_array( $provider, [ 'google', 'caldav' ], true ) ) {
 			return new \WP_Error(
 				'invalid_provider',
-				__( 'Unknown calendar provider.', 'stadion' ),
+				__( 'Unknown calendar provider.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -702,13 +702,13 @@ class Calendar extends Base {
 		try {
 			// Route to appropriate provider
 			if ( $provider === 'caldav' ) {
-				$result = \STADION_CalDAV_Provider::sync( $user_id, $connection );
+				$result = \RONDO_CalDAV_Provider::sync( $user_id, $connection );
 			} else {
-				$result = \STADION_Google_Calendar_Provider::sync( $user_id, $connection );
+				$result = \RONDO_Google_Calendar_Provider::sync( $user_id, $connection );
 			}
 
 			// Update last_sync timestamp and clear error
-			\STADION_Calendar_Connections::update_connection(
+			\RONDO_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
 				[
@@ -719,7 +719,7 @@ class Calendar extends Base {
 
 			return rest_ensure_response(
 				[
-					'message' => __( 'Sync completed successfully.', 'stadion' ),
+					'message' => __( 'Sync completed successfully.', 'rondo' ),
 					'created' => $result['created'],
 					'updated' => $result['updated'],
 					'deleted' => $result['deleted'] ?? 0,
@@ -728,7 +728,7 @@ class Calendar extends Base {
 			);
 		} catch ( Exception $e ) {
 			// Update last_error
-			\STADION_Calendar_Connections::update_connection(
+			\RONDO_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
 				[
@@ -750,21 +750,21 @@ class Calendar extends Base {
 	 */
 	public function google_auth_init( $request ) {
 		// Check if Google OAuth is configured
-		if ( ! \STADION_Google_OAuth::is_configured() ) {
+		if ( ! \RONDO_Google_OAuth::is_configured() ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Google Calendar integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'stadion' ),
+				__( 'Google Calendar integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
 
 		$user_id  = get_current_user_id();
-		$auth_url = \STADION_Google_OAuth::get_auth_url( $user_id );
+		$auth_url = \RONDO_Google_OAuth::get_auth_url( $user_id );
 
 		if ( empty( $auth_url ) ) {
 			return new \WP_Error(
 				'auth_url_failed',
-				__( 'Failed to generate authorization URL.', 'stadion' ),
+				__( 'Failed to generate authorization URL.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -817,10 +817,10 @@ class Calendar extends Base {
 
 		try {
 			// Exchange code for tokens
-			$tokens = \STADION_Google_OAuth::handle_callback( $code, $user_id );
+			$tokens = \RONDO_Google_OAuth::handle_callback( $code, $user_id );
 
 			// Encrypt tokens for storage
-			$encrypted_credentials = \Stadion\Data\CredentialEncryption::encrypt( $tokens );
+			$encrypted_credentials = \Rondo\Data\CredentialEncryption::encrypt( $tokens );
 
 			// Create calendar connection
 			$connection = [
@@ -837,7 +837,7 @@ class Calendar extends Base {
 				'last_error'     => null,
 			];
 
-			\STADION_Calendar_Connections::add_connection( $user_id, $connection );
+			\RONDO_Calendar_Connections::add_connection( $user_id, $connection );
 
 			// Redirect to settings page with success
 			$this->html_redirect( home_url( '/settings/connections/calendars&connected=google' ) );
@@ -891,17 +891,17 @@ class Calendar extends Base {
 
 		// Validate required parameters
 		if ( empty( $url ) ) {
-			return new \WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_url', __( 'CalDAV server URL is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $username ) ) {
-			return new \WP_Error( 'missing_username', __( 'Username is required.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_username', __( 'Username is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 		if ( empty( $password ) ) {
-			return new \WP_Error( 'missing_password', __( 'Password is required.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'missing_password', __( 'Password is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Test the connection
-		$result = \STADION_CalDAV_Provider::test_connection( $url, $username, $password );
+		$result = \RONDO_CalDAV_Provider::test_connection( $url, $username, $password );
 
 		if ( ! $result['success'] ) {
 			return new \WP_Error( 'connection_failed', $result['error'], [ 'status' => 400 ] );
@@ -911,7 +911,7 @@ class Calendar extends Base {
 			[
 				'success'   => true,
 				'calendars' => $result['calendars'],
-				'message'   => $result['message'] ?? __( 'Connection successful.', 'stadion' ),
+				'message'   => $result['message'] ?? __( 'Connection successful.', 'rondo' ),
 			]
 		);
 	}
@@ -1259,7 +1259,7 @@ class Calendar extends Base {
 
 		// Fall back to connection name if no specific calendar name stored
 		if ( empty( $calendar_name ) && $connection_id ) {
-			$connection = \STADION_Calendar_Connections::get_connection( $user_id, $connection_id );
+			$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection ) {
 				$calendar_name = $connection['name'] ?? '';
 			}
@@ -1322,11 +1322,11 @@ class Calendar extends Base {
 	 * @return WP_REST_Response Response with sync status.
 	 */
 	public function get_sync_status( $request ) {
-		$status = \STADION_Calendar_Sync::get_sync_status();
+		$status = \RONDO_Calendar_Sync::get_sync_status();
 
 		// Add current user's connection details
 		$user_id          = get_current_user_id();
-		$user_connections = \STADION_Calendar_Connections::get_user_connections( $user_id );
+		$user_connections = \RONDO_Calendar_Connections::get_user_connections( $user_id );
 
 		// Remove sensitive credential data and add next_sync calculation
 		$safe_connections = array_map(
@@ -1370,7 +1370,7 @@ class Calendar extends Base {
 		$user_id = get_current_user_id();
 
 		// Check if user has any calendar connections
-		$connections     = \STADION_Calendar_Connections::get_user_connections( $user_id );
+		$connections     = \RONDO_Calendar_Connections::get_user_connections( $user_id );
 		$has_connections = ! empty( $connections );
 
 		if ( ! $has_connections ) {
@@ -1504,7 +1504,7 @@ class Calendar extends Base {
 
 		// Fall back to connection name if no specific calendar name stored
 		if ( empty( $calendar_name ) && $connection_id ) {
-			$connection = \STADION_Calendar_Connections::get_connection( $user_id, $connection_id );
+			$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection ) {
 				$calendar_name = $connection['name'] ?? '';
 			}
@@ -1524,7 +1524,7 @@ class Calendar extends Base {
 		// Get Google Calendar link for deeplink (only for Google connections)
 		$google_calendar_link = null;
 		if ( $connection_id ) {
-			$connection = \STADION_Calendar_Connections::get_connection( $user_id, $connection_id );
+			$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $connection_id );
 			if ( $connection && ( $connection['provider'] ?? '' ) === 'google' ) {
 				// First try stored html_link, then fall back to raw_data for existing events
 				$google_calendar_link = get_post_meta( $event->ID, '_html_link', true );
@@ -1558,7 +1558,7 @@ class Calendar extends Base {
 	 * Log a calendar event as an activity
 	 *
 	 * Creates activity records for all matched people on the event.
-	 * Uses shared logic from \STADION_Calendar_Sync::create_activity_from_event().
+	 * Uses shared logic from \RONDO_Calendar_Sync::create_activity_from_event().
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response|WP_Error Response with activity count or error.
@@ -1570,18 +1570,18 @@ class Calendar extends Base {
 		// Get and verify the event
 		$event = get_post( $event_id );
 		if ( ! $event || $event->post_type !== 'calendar_event' ) {
-			return new \WP_Error( 'not_found', __( 'Event not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Event not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Verify ownership
 		if ( (int) $event->post_author !== $user_id ) {
-			return new \WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'stadion' ), [ 'status' => 403 ] );
+			return new \WP_Error( 'forbidden', __( 'You do not have permission to log this event.', 'rondo' ), [ 'status' => 403 ] );
 		}
 
 		// Check if already logged
 		$already_logged = get_post_meta( $event_id, '_logged_as_activity', true );
 		if ( $already_logged ) {
-			return new \WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'already_logged', __( 'This event has already been logged as an activity.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Get matched people
@@ -1589,14 +1589,14 @@ class Calendar extends Base {
 		$matched_people      = $matched_people_json ? json_decode( $matched_people_json, true ) : [];
 
 		if ( empty( $matched_people ) || ! is_array( $matched_people ) ) {
-			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		// Use shared activity creation logic from STADION_Calendar_Sync
-		$activities_created = \STADION_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
+		// Use shared activity creation logic from RONDO_Calendar_Sync
+		$activities_created = \RONDO_Calendar_Sync::create_activity_from_event( $event_id, $user_id, $matched_people );
 
 		if ( $activities_created === 0 ) {
-			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_matches', __( 'No matched people found for this event.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Mark event as logged
@@ -1612,7 +1612,7 @@ class Calendar extends Base {
 						'%d activity logged.',
 						'%d activities logged.',
 						$activities_created,
-						'stadion'
+						'rondo'
 					),
 					$activities_created
 				),
@@ -1633,9 +1633,9 @@ class Calendar extends Base {
 		$connection_id = $request->get_param( 'id' );
 
 		// Get connection
-		$connection = \STADION_Calendar_Connections::get_connection( $user_id, $connection_id );
+		$connection = \RONDO_Calendar_Connections::get_connection( $user_id, $connection_id );
 		if ( ! $connection ) {
-			return new \WP_Error( 'not_found', __( 'Connection not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Connection not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		$provider   = $connection['provider'] ?? '';
@@ -1643,24 +1643,24 @@ class Calendar extends Base {
 		$current_id = $connection['calendar_id'] ?? '';
 
 		// Get current calendar IDs (handles both old and new format)
-		$current_ids = \Stadion\Calendar\GoogleProvider::get_calendar_ids( $connection );
+		$current_ids = \Rondo\Calendar\GoogleProvider::get_calendar_ids( $connection );
 
 		try {
 			if ( $provider === 'google' ) {
 				// Google: Use the new list_calendars method
-				$calendars = \Stadion\Calendar\GoogleProvider::list_calendars( $connection );
+				$calendars = \Rondo\Calendar\GoogleProvider::list_calendars( $connection );
 			} elseif ( $provider === 'caldav' ) {
 				// CalDAV: Decrypt credentials and use existing discover_calendars method
-				$credentials = \Stadion\Data\CredentialEncryption::decrypt( $connection['credentials'] );
+				$credentials = \Rondo\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 				if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {
 					return new \WP_Error(
 						'invalid_credentials',
-						__( 'Invalid CalDAV credentials. Please update your connection settings.', 'stadion' ),
+						__( 'Invalid CalDAV credentials. Please update your connection settings.', 'rondo' ),
 						[ 'status' => 400 ]
 					);
 				}
 
-				$calendars = \Stadion\Calendar\CalDAVProvider::discover_calendars(
+				$calendars = \Rondo\Calendar\CalDAVProvider::discover_calendars(
 					$credentials['url'],
 					$credentials['username'],
 					$credentials['password']
@@ -1668,14 +1668,14 @@ class Calendar extends Base {
 			} else {
 				return new \WP_Error(
 					'invalid_provider',
-					__( 'Unknown calendar provider.', 'stadion' ),
+					__( 'Unknown calendar provider.', 'rondo' ),
 					[ 'status' => 400 ]
 				);
 			}
 		} catch ( \Exception $e ) {
 			return new \WP_Error(
 				'fetch_failed',
-				sprintf( __( 'Failed to fetch calendars: %s', 'stadion' ), $e->getMessage() ),
+				sprintf( __( 'Failed to fetch calendars: %s', 'rondo' ), $e->getMessage() ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -1702,12 +1702,12 @@ class Calendar extends Base {
 		// Get and verify the event
 		$event = get_post( $event_id );
 		if ( ! $event || $event->post_type !== 'calendar_event' ) {
-			return new \WP_Error( 'not_found', __( 'Event not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Event not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Verify ownership
 		if ( (int) $event->post_author !== $user_id ) {
-			return new \WP_Error( 'forbidden', __( 'You do not have permission to view this event.', 'stadion' ), [ 'status' => 403 ] );
+			return new \WP_Error( 'forbidden', __( 'You do not have permission to view this event.', 'rondo' ), [ 'status' => 403 ] );
 		}
 
 		$notes = get_post_meta( $event_id, '_meeting_notes', true );
@@ -1733,12 +1733,12 @@ class Calendar extends Base {
 		// Get and verify the event
 		$event = get_post( $event_id );
 		if ( ! $event || $event->post_type !== 'calendar_event' ) {
-			return new \WP_Error( 'not_found', __( 'Event not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'not_found', __( 'Event not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		// Verify ownership
 		if ( (int) $event->post_author !== $user_id ) {
-			return new \WP_Error( 'forbidden', __( 'You do not have permission to edit this event.', 'stadion' ), [ 'status' => 403 ] );
+			return new \WP_Error( 'forbidden', __( 'You do not have permission to edit this event.', 'rondo' ), [ 'status' => 403 ] );
 		}
 
 		update_post_meta( $event_id, '_meeting_notes', $notes );
@@ -1746,7 +1746,7 @@ class Calendar extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Notes saved.', 'stadion' ),
+				'message' => __( 'Notes saved.', 'rondo' ),
 			]
 		);
 	}
@@ -1801,7 +1801,7 @@ class Calendar extends Base {
 		if ( $deleted_count > 0 && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			error_log(
 				sprintf(
-					'STADION_Calendar: Deleted %d events for user %d from connection %s (calendars: %s)',
+					'RONDO_Calendar: Deleted %d events for user %d from connection %s (calendars: %s)',
 					$deleted_count,
 					$user_id,
 					$connection_id,

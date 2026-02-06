@@ -1,6 +1,6 @@
 <?php
 /**
- * Access Control for Stadion CRM
+ * Access Control for Rondo CRM
  *
  * All approved users can see all data. Unapproved users see nothing.
  */
@@ -16,7 +16,7 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = [ 'person', 'team', 'stadion_todo' ];
+	private $controlled_post_types = [ 'person', 'team', 'rondo_todo' ];
 
 	public function __construct() {
 		// Filter queries to block unapproved users
@@ -25,12 +25,12 @@ class AccessControl {
 		// Filter REST API queries
 		add_filter( 'rest_person_query', [ $this, 'filter_rest_query' ], 10, 2 );
 		add_filter( 'rest_company_query', [ $this, 'filter_rest_query' ], 10, 2 );
-		add_filter( 'rest_stadion_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_rondo_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
 
 		// Filter REST API single item access
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_company', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_stadion_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 	}
 
 	/**
@@ -55,7 +55,7 @@ class AccessControl {
 			return true;
 		}
 
-		return \STADION_User_Roles::is_user_approved( $user_id );
+		return \RONDO_User_Roles::is_user_approved( $user_id );
 	}
 
 	/**
@@ -185,7 +185,7 @@ class AccessControl {
 		}
 
 		// User isolation for tasks - users only see their own tasks
-		if ( $post_type === 'stadion_todo' ) {
+		if ( $post_type === 'rondo_todo' ) {
 			$query->set( 'author', get_current_user_id() );
 		}
 
@@ -214,9 +214,9 @@ class AccessControl {
 		}
 
 		// User isolation for tasks - users only see their own tasks
-		// Check if this is a stadion_todo query by examining current filter
+		// Check if this is a rondo_todo query by examining current filter
 		$current_filter = current_filter();
-		if ( $current_filter === 'rest_stadion_todo_query' ) {
+		if ( $current_filter === 'rest_rondo_todo_query' ) {
 			$args['author'] = get_current_user_id();
 		}
 
@@ -233,7 +233,7 @@ class AccessControl {
 		if ( ! $this->is_user_approved( $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'Your account is pending approval. Please contact an administrator.', 'stadion' ),
+				__( 'Your account is pending approval. Please contact an administrator.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -242,7 +242,7 @@ class AccessControl {
 		if ( $post->post_status === 'trash' ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'This item has been deleted.', 'stadion' ),
+				__( 'This item has been deleted.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
 		}

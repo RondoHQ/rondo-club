@@ -1,8 +1,8 @@
 <?php
 /**
- * User Roles for Stadion
+ * User Roles for Rondo
  *
- * Registers custom user role for Stadion users with minimal permissions
+ * Registers custom user role for Rondo users with minimal permissions
  */
 
 namespace Rondo\Core;
@@ -13,9 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserRoles {
 
-	const ROLE_NAME              = 'stadion_user';
-	const ROLE_DISPLAY_NAME      = 'Stadion User';
-	const APPROVAL_META_KEY      = 'stadion_user_approved';
+	const ROLE_NAME              = 'rondo_user';
+	const ROLE_DISPLAY_NAME      = 'Rondo User';
+	const APPROVAL_META_KEY      = 'rondo_user_approved';
 	const FAIRPLAY_CAPABILITY    = 'fairplay';
 	const VOG_CAPABILITY         = 'vog';
 	const FINANCIEEL_CAPABILITY  = 'financieel';
@@ -44,7 +44,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Register the Stadion User role
+	 * Register the Rondo User role
 	 */
 	public function register_role() {
 		// Get the role capabilities
@@ -67,7 +67,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Remove the Stadion User role
+	 * Remove the Rondo User role
 	 */
 	public function remove_role() {
 		// Remove fairplay, VOG, and financieel capabilities from administrator role
@@ -91,7 +91,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Get capabilities for Stadion User role
+	 * Get capabilities for Rondo User role
 	 *
 	 * Minimal permissions needed to:
 	 * - Create, edit, and delete their own people and teams

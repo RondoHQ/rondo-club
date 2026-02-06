@@ -28,7 +28,7 @@ class Commissies extends Base {
 	public function register_routes() {
 		// People by commissie
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/commissies/(?P<commissie_id>\d+)/people',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -46,7 +46,7 @@ class Commissies extends Base {
 
 		// Set commissie logo (featured image) - by media ID
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/commissies/(?P<commissie_id>\d+)/logo',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -70,7 +70,7 @@ class Commissies extends Base {
 
 		// Upload commissie logo with proper filename
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/commissies/(?P<commissie_id>\d+)/logo/upload',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -88,7 +88,7 @@ class Commissies extends Base {
 
 		// Sharing endpoints
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/commissies/(?P<id>\d+)/shares',
 			[
 				[
@@ -105,7 +105,7 @@ class Commissies extends Base {
 		);
 
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/commissies/(?P<id>\d+)/shares/(?P<user_id>\d+)',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -116,7 +116,7 @@ class Commissies extends Base {
 
 		// Bulk update commissies
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/commissies/bulk-update',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -193,11 +193,11 @@ class Commissies extends Base {
 		$user_id      = get_current_user_id();
 
 		// Check if user can access this commissie
-		$access_control = new \STADION_Access_Control();
+		$access_control = new \RONDO_Access_Control();
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $commissie_id, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You do not have permission to access this commissie.', 'stadion' ),
+				__( 'You do not have permission to access this commissie.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
@@ -312,18 +312,18 @@ class Commissies extends Base {
 
 		$commissie = get_post( $commissie_id );
 		if ( ! $commissie || $commissie->post_type !== 'commissie' ) {
-			return new \WP_Error( 'commissie_not_found', __( 'Commissie not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'commissie_not_found', __( 'Commissie not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		$media = get_post( $media_id );
 		if ( ! $media || $media->post_type !== 'attachment' ) {
-			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'media_not_found', __( 'Media not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		$result = set_post_thumbnail( $commissie_id, $media_id );
 
 		if ( ! $result ) {
-			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set commissie logo.', 'stadion' ), [ 'status' => 500 ] );
+			return new \WP_Error( 'set_thumbnail_failed', __( 'Failed to set commissie logo.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
 		return rest_ensure_response(
@@ -347,19 +347,19 @@ class Commissies extends Base {
 
 		$commissie = get_post( $commissie_id );
 		if ( ! $commissie || $commissie->post_type !== 'commissie' ) {
-			return new \WP_Error( 'commissie_not_found', __( 'Commissie not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'commissie_not_found', __( 'Commissie not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		$files = $request->get_file_params();
 		if ( empty( $files['file'] ) ) {
-			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'no_file', __( 'No file uploaded.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		$file = $files['file'];
 
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
 		if ( ! in_array( $file['type'], $allowed_types ) ) {
-			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		$commissie_name = $commissie->post_title;
@@ -464,11 +464,11 @@ class Commissies extends Base {
 
 		$user = get_user_by( 'ID', $user_id );
 		if ( ! $user ) {
-			return new \WP_Error( 'invalid_user', __( 'User not found.', 'stadion' ), [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		if ( $user_id === get_current_user_id() ) {
-			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'stadion' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		$shares = get_field( '_shared_with', $post_id ) ?: [];
@@ -480,7 +480,7 @@ class Commissies extends Base {
 				return rest_ensure_response(
 					[
 						'success' => true,
-						'message' => __( 'Share updated.', 'stadion' ),
+						'message' => __( 'Share updated.', 'rondo' ),
 					]
 				);
 			}
@@ -495,7 +495,7 @@ class Commissies extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Shared successfully.', 'stadion' ),
+				'message' => __( 'Shared successfully.', 'rondo' ),
 			]
 		);
 	}
@@ -524,7 +524,7 @@ class Commissies extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Share removed.', 'stadion' ),
+				'message' => __( 'Share removed.', 'rondo' ),
 			]
 		);
 	}
@@ -539,7 +539,7 @@ class Commissies extends Base {
 		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'You must be logged in to perform this action.', 'stadion' ),
+				__( 'You must be logged in to perform this action.', 'rondo' ),
 				[ 'status' => 401 ]
 			);
 		}
@@ -554,7 +554,7 @@ class Commissies extends Base {
 			if ( ! $post || $post->post_type !== 'commissie' ) {
 				return new \WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Commissie with ID %d not found.', 'stadion' ), $post_id ),
+					sprintf( __( 'Commissie with ID %d not found.', 'rondo' ), $post_id ),
 					[ 'status' => 404 ]
 				);
 			}
@@ -562,7 +562,7 @@ class Commissies extends Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new \WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update commissie with ID %d.', 'stadion' ), $post_id ),
+					sprintf( __( 'You do not have permission to update commissie with ID %d.', 'rondo' ), $post_id ),
 					[ 'status' => 403 ]
 				);
 			}

@@ -34,9 +34,9 @@ class GoogleSheets extends Base {
 	 * Register custom REST routes for Google Sheets domain
 	 */
 	public function register_routes() {
-		// GET /stadion/v1/google-sheets/status - Check connection status
+		// GET /rondo/v1/google-sheets/status - Check connection status
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-sheets/status',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -45,9 +45,9 @@ class GoogleSheets extends Base {
 			]
 		);
 
-		// GET /stadion/v1/google-sheets/auth - Initiate OAuth flow
+		// GET /rondo/v1/google-sheets/auth - Initiate OAuth flow
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-sheets/auth',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -56,9 +56,9 @@ class GoogleSheets extends Base {
 			]
 		);
 
-		// GET /stadion/v1/google-sheets/callback - OAuth callback (public for redirect)
+		// GET /rondo/v1/google-sheets/callback - OAuth callback (public for redirect)
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-sheets/callback',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -67,9 +67,9 @@ class GoogleSheets extends Base {
 			]
 		);
 
-		// DELETE /stadion/v1/google-sheets/disconnect - Disconnect
+		// DELETE /rondo/v1/google-sheets/disconnect - Disconnect
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-sheets/disconnect',
 			[
 				'methods'             => \WP_REST_Server::DELETABLE,
@@ -78,9 +78,9 @@ class GoogleSheets extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-sheets/export-people - Export people to Sheets
+		// POST /rondo/v1/google-sheets/export-people - Export people to Sheets
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-sheets/export-people',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -105,9 +105,9 @@ class GoogleSheets extends Base {
 			]
 		);
 
-		// POST /stadion/v1/google-sheets/export-fees - Export fee list to Sheets
+		// POST /rondo/v1/google-sheets/export-fees - Export fee list to Sheets
 		register_rest_route(
-			'stadion/v1',
+			'rondo/v1',
 			'/google-sheets/export-fees',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
@@ -170,7 +170,7 @@ class GoogleSheets extends Base {
 		if ( ! GoogleOAuth::is_configured() ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Google integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'stadion' ),
+				__( 'Google integration is not configured. Please add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET to wp-config.php.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -179,7 +179,7 @@ class GoogleSheets extends Base {
 		if ( GoogleSheetsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'already_connected',
-				__( 'Google Sheets is already connected. Please disconnect first to reconnect.', 'stadion' ),
+				__( 'Google Sheets is already connected. Please disconnect first to reconnect.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -190,7 +190,7 @@ class GoogleSheets extends Base {
 		if ( empty( $auth_url ) ) {
 			return new \WP_Error(
 				'auth_url_failed',
-				__( 'Failed to generate authorization URL.', 'stadion' ),
+				__( 'Failed to generate authorization URL.', 'rondo' ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -291,7 +291,7 @@ class GoogleSheets extends Base {
 		if ( ! GoogleSheetsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Sheets is not connected.', 'stadion' ),
+				__( 'Google Sheets is not connected.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -302,7 +302,7 @@ class GoogleSheets extends Base {
 		return rest_ensure_response(
 			[
 				'success' => true,
-				'message' => __( 'Google Sheets disconnected.', 'stadion' ),
+				'message' => __( 'Google Sheets disconnected.', 'rondo' ),
 			]
 		);
 	}
@@ -320,7 +320,7 @@ class GoogleSheets extends Base {
 		if ( ! GoogleSheetsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Sheets is not connected. Please connect first.', 'stadion' ),
+				__( 'Google Sheets is not connected. Please connect first.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -506,7 +506,7 @@ class GoogleSheets extends Base {
 		if ( ! GoogleSheetsConnection::is_connected( $user_id ) ) {
 			return new \WP_Error(
 				'not_connected',
-				__( 'Google Sheets is not connected. Please connect first.', 'stadion' ),
+				__( 'Google Sheets is not connected. Please connect first.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -849,7 +849,7 @@ class GoogleSheets extends Base {
 	 * @return array Fee data with season and members.
 	 */
 	private function fetch_fee_data( string $sort_field, string $sort_order, bool $forecast = false ): array {
-		$fees = new \Stadion\Fees\MembershipFees();
+		$fees = new \Rondo\Fees\MembershipFees();
 
 		// Use next season for forecast
 		$season = $forecast
@@ -1059,7 +1059,7 @@ class GoogleSheets extends Base {
 		$people_api = new People();
 
 		// Create a mock REST request with our parameters
-		$request = new \WP_REST_Request( 'GET', '/stadion/v1/people' );
+		$request = new \WP_REST_Request( 'GET', '/rondo/v1/people' );
 		foreach ( $params as $key => $value ) {
 			if ( $value !== null && $value !== '' ) {
 				$request->set_param( $key, $value );
@@ -1146,7 +1146,7 @@ class GoogleSheets extends Base {
 		}
 
 		// Check custom fields for label
-		$manager       = new \Stadion\CustomFields\Manager();
+		$manager       = new \Rondo\CustomFields\Manager();
 		$custom_fields = $manager->get_fields( 'person', false );
 
 		foreach ( $custom_fields as $field ) {

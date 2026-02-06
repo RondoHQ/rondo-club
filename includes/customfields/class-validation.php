@@ -4,7 +4,7 @@
  *
  * Provides validation hooks for custom field values including unique constraint.
  *
- * @package Stadion\CustomFields
+ * @package Rondo\CustomFields
  */
 
 namespace Rondo\CustomFields;
@@ -107,7 +107,7 @@ class Validation {
 		if ( ! empty( $existing ) ) {
 			return sprintf(
 				/* translators: %s is the field label. */
-				__( '%s must be unique. This value is already in use.', 'stadion' ),
+				__( '%s must be unique. This value is already in use.', 'rondo' ),
 				$field['label']
 			);
 		}

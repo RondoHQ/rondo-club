@@ -52,7 +52,7 @@ class CalDAVProvider {
 			if ( ! $supported ) {
 				return [
 					'success' => false,
-					'error'   => __( 'Server does not support CalDAV. Please check the URL.', 'stadion' ),
+					'error'   => __( 'Server does not support CalDAV. Please check the URL.', 'rondo' ),
 				];
 			}
 
@@ -63,7 +63,7 @@ class CalDAVProvider {
 				return [
 					'success'   => true,
 					'calendars' => [],
-					'message'   => __( 'Connected successfully but no calendars found.', 'stadion' ),
+					'message'   => __( 'Connected successfully but no calendars found.', 'rondo' ),
 				];
 			}
 
@@ -79,20 +79,20 @@ class CalDAVProvider {
 			if ( strpos( $error_message, '401' ) !== false || strpos( $error_message, 'Unauthorized' ) !== false ) {
 				return [
 					'success' => false,
-					'error'   => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'stadion' ),
+					'error'   => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'rondo' ),
 				];
 			}
 
 			if ( strpos( $error_message, '404' ) !== false ) {
 				return [
 					'success' => false,
-					'error'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'stadion' ),
+					'error'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'rondo' ),
 				];
 			}
 
 			return [
 				'success' => false,
-				'error'   => sprintf( __( 'Connection failed: %s', 'stadion' ), $error_message ),
+				'error'   => sprintf( __( 'Connection failed: %s', 'rondo' ), $error_message ),
 			];
 		}
 	}
@@ -169,7 +169,7 @@ class CalDAVProvider {
 
 			return self::parse_calendar_response( $response['body'], $url );
 		} catch ( Exception $e ) {
-			error_log( 'STADION_CalDAV_Provider: Failed to discover calendars: ' . $e->getMessage() );
+			error_log( 'RONDO_CalDAV_Provider: Failed to discover calendars: ' . $e->getMessage() );
 			return [];
 		}
 	}
@@ -231,7 +231,7 @@ class CalDAVProvider {
 				];
 			}
 		} catch ( Exception $e ) {
-			error_log( 'STADION_CalDAV_Provider: Failed to parse calendar response: ' . $e->getMessage() );
+			error_log( 'RONDO_CalDAV_Provider: Failed to parse calendar response: ' . $e->getMessage() );
 		}
 
 		return $calendars;
@@ -251,7 +251,7 @@ class CalDAVProvider {
 		$connection_id = $connection['id'] ?? '';
 
 		// Prevent concurrent syncs for same connection (race condition fix)
-		$lock_key = 'stadion_sync_lock_' . $user_id . '_' . $connection_id;
+		$lock_key = 'rondo_sync_lock_' . $user_id . '_' . $connection_id;
 		if ( get_transient( $lock_key ) ) {
 			// Another sync is in progress, skip this one
 			return [
@@ -282,9 +282,9 @@ class CalDAVProvider {
 	 */
 	private static function do_sync( int $user_id, array $connection ): array {
 		// Decrypt credentials
-		$credentials = \Stadion\Data\CredentialEncryption::decrypt( $connection['credentials'] );
+		$credentials = \Rondo\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['url'] ) || empty( $credentials['username'] ) || empty( $credentials['password'] ) ) {
-			throw new \Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'stadion' ) );
+			throw new \Exception( __( 'Invalid CalDAV credentials. Please reconnect your calendar.', 'rondo' ) );
 		}
 
 		$url      = $credentials['url'];
@@ -355,7 +355,7 @@ class CalDAVProvider {
 			);
 
 			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
-				throw new \Exception( sprintf( __( 'CalDAV server returned error: %d', 'stadion' ), $response['statusCode'] ) );
+				throw new \Exception( sprintf( __( 'CalDAV server returned error: %d', 'rondo' ), $response['statusCode'] ) );
 			}
 
 			// Parse response and upsert events
@@ -379,8 +379,8 @@ class CalDAVProvider {
 			];
 
 		} catch ( \Exception $e ) {
-			error_log( 'STADION_CalDAV_Provider: Sync failed: ' . $e->getMessage() );
-			throw new \Exception( sprintf( __( 'Sync failed: %s', 'stadion' ), $e->getMessage() ) );
+			error_log( 'RONDO_CalDAV_Provider: Sync failed: ' . $e->getMessage() );
+			throw new \Exception( sprintf( __( 'Sync failed: %s', 'rondo' ), $e->getMessage() ) );
 		}
 	}
 
@@ -464,7 +464,7 @@ class CalDAVProvider {
 				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 					error_log(
 						sprintf(
-							'STADION_CalDAV_Provider: Deleted event %d (UID: %s) - no longer exists in source calendar',
+							'RONDO_CalDAV_Provider: Deleted event %d (UID: %s) - no longer exists in source calendar',
 							$event_id,
 							$event_uid
 						)
@@ -531,15 +531,15 @@ class CalDAVProvider {
 								++$updated;
 							}
 						} catch ( \Exception $e ) {
-							error_log( 'STADION_CalDAV_Provider: Failed to upsert event: ' . $e->getMessage() );
+							error_log( 'RONDO_CalDAV_Provider: Failed to upsert event: ' . $e->getMessage() );
 						}
 					}
 				} catch ( \Exception $e ) {
-					error_log( 'STADION_CalDAV_Provider: Failed to parse iCalendar: ' . $e->getMessage() );
+					error_log( 'RONDO_CalDAV_Provider: Failed to parse iCalendar: ' . $e->getMessage() );
 				}
 			}
 		} catch ( \Exception $e ) {
-			error_log( 'STADION_CalDAV_Provider: Failed to parse REPORT response: ' . $e->getMessage() );
+			error_log( 'RONDO_CalDAV_Provider: Failed to parse REPORT response: ' . $e->getMessage() );
 		}
 
 		return [
@@ -666,7 +666,7 @@ class CalDAVProvider {
 		update_post_meta( $post_id, '_raw_data', wp_json_encode( $raw_data ) );
 
 		// Run contact matching
-		$matches = \STADION_Calendar_Matcher::match_attendees( $user_id, $attendees );
+		$matches = \RONDO_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
 		return [

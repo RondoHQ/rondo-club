@@ -5,7 +5,7 @@
  * Automatically invalidates cached membership fees when relevant fields change.
  * Hooks into ACF update_value filters and REST API updates.
  *
- * @package Stadion\Fees
+ * @package Rondo\Fees
  */
 
 namespace Rondo\Fees;
@@ -54,10 +54,10 @@ class FeeCacheInvalidator {
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
 
 		// Settings changes affect all people - trigger bulk recalculation
-		add_action( 'update_option_stadion_membership_fees', [ $this, 'schedule_bulk_recalculation' ], 10, 2 );
+		add_action( 'update_option_rondo_membership_fees', [ $this, 'schedule_bulk_recalculation' ], 10, 2 );
 
 		// Cron hook for background recalculation
-		add_action( 'stadion_recalculate_all_fees', [ $this, 'recalculate_all_fees_background' ] );
+		add_action( 'rondo_recalculate_all_fees', [ $this, 'recalculate_all_fees_background' ] );
 	}
 
 	/**
@@ -180,13 +180,13 @@ class FeeCacheInvalidator {
 		$cleared = $this->fees->clear_all_fee_caches( $season );
 
 		// Schedule background recalculation (10 seconds from now)
-		if ( ! wp_next_scheduled( 'stadion_recalculate_all_fees', [ $season ] ) ) {
-			wp_schedule_single_event( time() + 10, 'stadion_recalculate_all_fees', [ $season ] );
+		if ( ! wp_next_scheduled( 'rondo_recalculate_all_fees', [ $season ] ) ) {
+			wp_schedule_single_event( time() + 10, 'rondo_recalculate_all_fees', [ $season ] );
 		}
 
 		// Log for debugging
 		error_log( sprintf(
-			'[Stadion Fee Cache] Settings changed: cleared %d caches for season %s, recalculation scheduled',
+			'[Rondo Fee Cache] Settings changed: cleared %d caches for season %s, recalculation scheduled',
 			$cleared,
 			$season
 		) );
@@ -228,7 +228,7 @@ class FeeCacheInvalidator {
 		}
 
 		error_log( sprintf(
-			'[Stadion Fee Cache] Bulk recalculation complete: %d calculated, %d skipped for season %s',
+			'[Rondo Fee Cache] Bulk recalculation complete: %d calculated, %d skipped for season %s',
 			$calculated,
 			$skipped,
 			$season

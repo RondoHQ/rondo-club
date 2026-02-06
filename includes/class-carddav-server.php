@@ -4,7 +4,7 @@
  *
  * Initializes and routes requests to the Sabre/DAV CardDAV server.
  *
- * @package Stadion
+ * @package Rondo
  */
 
 namespace Rondo\CardDAV;
@@ -98,15 +98,15 @@ class Server {
 		}
 
 		// Include backend classes
-		require_once \STADION_PLUGIN_DIR . '/carddav/class-auth-backend.php';
-		require_once \STADION_PLUGIN_DIR . '/carddav/class-principal-backend.php';
-		require_once \STADION_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
+		require_once \RONDO_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+		require_once \RONDO_PLUGIN_DIR . '/carddav/class-principal-backend.php';
+		require_once \RONDO_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
 
 		try {
 			// Create backends
-			$authBackend      = new \Stadion\CardDAV\AuthBackend();
-			$principalBackend = new \Stadion\CardDAV\PrincipalBackend();
-			$carddavBackend   = new \Stadion\CardDAV\CardDAVBackend();
+			$authBackend      = new \Rondo\CardDAV\AuthBackend();
+			$principalBackend = new \Rondo\CardDAV\PrincipalBackend();
+			$carddavBackend   = new \Rondo\CardDAV\CardDAVBackend();
 
 			// Create directory tree
 			$tree = [
@@ -119,7 +119,7 @@ class Server {
 			$server->setBaseUri( self::BASE_URI );
 
 			// Add plugins
-			$server->addPlugin( new \Sabre\DAV\Auth\Plugin( $authBackend, 'Stadion' ) );
+			$server->addPlugin( new \Sabre\DAV\Auth\Plugin( $authBackend, 'Rondo' ) );
 			$server->addPlugin( new \Sabre\DAV\Browser\Plugin() );
 			$server->addPlugin( new \Sabre\CardDAV\Plugin() );
 			$server->addPlugin( new \Sabre\DAVACL\Plugin() );

@@ -76,7 +76,7 @@ class GoogleOAuth {
 	 * @return string The callback URL
 	 */
 	private static function get_redirect_uri(): string {
-		return rest_url( 'stadion/v1/calendar/auth/google/callback' );
+		return rest_url( 'rondo/v1/calendar/auth/google/callback' );
 	}
 
 	/**
@@ -145,7 +145,7 @@ class GoogleOAuth {
 			return null;
 		}
 
-		$credentials = \Stadion\Data\CredentialEncryption::decrypt( $connection['credentials'] );
+		$credentials = \Rondo\Data\CredentialEncryption::decrypt( $connection['credentials'] );
 		if ( ! $credentials || empty( $credentials['access_token'] ) ) {
 			return null;
 		}
@@ -174,7 +174,7 @@ class GoogleOAuth {
 					// Connection must have a user context for update
 					$user_id = $connection['user_id'] ?? get_current_user_id();
 					if ( $user_id ) {
-						\STADION_Calendar_Connections::update_credentials(
+						\RONDO_Calendar_Connections::update_credentials(
 							$user_id,
 							$connection['id'],
 							$new_credentials
@@ -188,7 +188,7 @@ class GoogleOAuth {
 				if ( ! empty( $connection['id'] ) ) {
 					$user_id = $connection['user_id'] ?? get_current_user_id();
 					if ( $user_id ) {
-						\STADION_Calendar_Connections::update_connection(
+						\RONDO_Calendar_Connections::update_connection(
 							$user_id,
 							$connection['id'],
 							[ 'last_error' => $e->getMessage() ]
@@ -249,7 +249,7 @@ class GoogleOAuth {
 		$client = new \Google\Client();
 		$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
 		$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
-		$client->setRedirectUri( rest_url( 'stadion/v1/google-contacts/callback' ) );
+		$client->setRedirectUri( rest_url( 'rondo/v1/google-contacts/callback' ) );
 
 		// Set contacts scope based on access mode, plus email for user identification
 		$contacts_scope = $readonly ? self::CONTACTS_SCOPE_READONLY : self::CONTACTS_SCOPE_READWRITE;
@@ -377,7 +377,7 @@ class GoogleOAuth {
 		$client = new \Google\Client();
 		$client->setClientId( GOOGLE_OAUTH_CLIENT_ID );
 		$client->setClientSecret( GOOGLE_OAUTH_CLIENT_SECRET );
-		$client->setRedirectUri( rest_url( 'stadion/v1/google-sheets/callback' ) );
+		$client->setRedirectUri( rest_url( 'rondo/v1/google-sheets/callback' ) );
 
 		// Set Sheets scope
 		$client->setScopes( [ self::SHEETS_SCOPE ] );

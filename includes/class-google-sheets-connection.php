@@ -26,7 +26,7 @@ class GoogleSheetsConnection {
 	/**
 	 * User meta key for storing Google Sheets connection data
 	 */
-	const META_KEY = '_stadion_google_sheets_connection';
+	const META_KEY = '_rondo_google_sheets_connection';
 
 	/**
 	 * Get the Google Sheets connection for a user
