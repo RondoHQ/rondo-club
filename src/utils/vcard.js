@@ -90,7 +90,6 @@ function getCurrentJob(workHistory, teamMap = {}) {
  * @param {Object} person - Person object from API
  * @param {Object} options - Optional parameters
  * @param {Object} options.teamMap - Map of team ID to team data/name
- * @param {Array} options.personDates - Array of person dates (for birthday)
  * @returns {string} - vCard content
  */
 export function generateVCard(person, options = {}) {
@@ -98,7 +97,7 @@ export function generateVCard(person, options = {}) {
     throw new Error('Person data is required');
   }
 
-  const { teamMap = {}, personDates = [] } = options;
+  const { teamMap = {} } = options;
   const acf = person.acf || {};
   const lines = [];
   
@@ -194,17 +193,11 @@ export function generateVCard(person, options = {}) {
     lines.push(`TITLE:${escapeVCardValue(title)}`);
   }
   
-  // Birthday from important dates
-  if (personDates && Array.isArray(personDates)) {
-    const birthday = personDates.find(d => {
-      const dateType = Array.isArray(d.date_type) ? d.date_type[0] : d.date_type;
-      return dateType?.toLowerCase() === 'birthday';
-    });
-    if (birthday?.date_value) {
-      const bday = formatVCardDate(birthday.date_value);
-      if (bday) {
-        lines.push(`BDAY:${bday}`);
-      }
+  // Birthday from person birthdate field
+  if (acf.birthdate) {
+    const bday = formatVCardDate(acf.birthdate);
+    if (bday) {
+      lines.push(`BDAY:${bday}`);
     }
   }
   
@@ -238,7 +231,6 @@ export function generateVCard(person, options = {}) {
  * @param {Object} options - Optional parameters
  * @param {string} options.filename - Optional filename (defaults to person name)
  * @param {Object} options.teamMap - Map of team ID to team data/name
- * @param {Array} options.personDates - Array of person dates (for birthday)
  */
 export function downloadVCard(person, options = {}) {
   const { filename, ...vcardOptions } = options;
