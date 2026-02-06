@@ -57,7 +57,7 @@ The class intercepts data access at multiple levels:
 **Check if user is approved:**
 
 ```php
-$access_control = new Stadion\Core\AccessControl();
+$access_control = new Rondo\Core\AccessControl();
 $can_access = $access_control->is_user_approved( $user_id );
 ```
 
