@@ -83,6 +83,18 @@
             }
         },
         {
+            "key": "field_birthdate",
+            "label": "Birthdate",
+            "name": "birthdate",
+            "type": "date_picker",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_photo_gallery",
             "label": "Photo Gallery",
             "name": "photo_gallery",
