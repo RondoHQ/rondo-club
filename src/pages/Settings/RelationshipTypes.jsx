@@ -148,7 +148,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
 export default function RelationshipTypes() {
   useDocumentTitle('Relatietypes - Instellingen');
   const queryClient = useQueryClient();
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Check if user is admin

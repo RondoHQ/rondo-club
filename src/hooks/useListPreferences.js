@@ -54,7 +54,7 @@ export function useListPreferences() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['user', 'list-preferences'],
     queryFn: async () => {
-      const response = await api.get('/stadion/v1/user/list-preferences');
+      const response = await api.get('/rondo/v1/user/list-preferences');
       return response.data;
     },
     // Use localStorage widths as placeholder to prevent flicker
@@ -82,7 +82,7 @@ export function useListPreferences() {
   // PATCH preferences with optimistic update
   const updateMutation = useMutation({
     mutationFn: async (updates) => {
-      const response = await api.patch('/stadion/v1/user/list-preferences', updates);
+      const response = await api.patch('/rondo/v1/user/list-preferences', updates);
       return response.data;
     },
     onMutate: async (updates) => {

@@ -207,7 +207,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
   // Sort attendees: matched first, then alphabetically
   // Use localAttendees if available (after email was added), otherwise use meeting data
   // Filter out the current user's linked person
-  const currentUserPersonId = window.stadionConfig?.currentUserPersonId;
+  const currentUserPersonId = window.rondoConfig?.currentUserPersonId;
   const attendeesSource = localAttendees || meeting.attendees || [];
   const filteredAttendees = attendeesSource.filter(
     att => !currentUserPersonId || !att.person_id || att.person_id !== currentUserPersonId

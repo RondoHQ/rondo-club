@@ -13,7 +13,7 @@ export default function VCardImport() {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await api.post('/stadion/v1/import/vcard/validate', formData, {
+      const response = await api.post('/rondo/v1/import/vcard/validate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
@@ -33,7 +33,7 @@ export default function VCardImport() {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await api.post('/stadion/v1/import/vcard', formData, {
+      const response = await api.post('/rondo/v1/import/vcard', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;

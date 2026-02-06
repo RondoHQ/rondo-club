@@ -91,7 +91,7 @@ function TypeBadge({ type }) {
 
 export default function FeedbackManagement() {
   useDocumentTitle('Feedbackbeheer - Instellingen');
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Filter and sort state

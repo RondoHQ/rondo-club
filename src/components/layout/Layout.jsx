@@ -42,7 +42,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { APP_NAME } from '@/constants/app';
 
 // Get site name from WordPress config or fall back to APP_NAME
-const getSiteName = () => window.stadionConfig?.siteName || APP_NAME;
+const getSiteName = () => window.rondoConfig?.siteName || APP_NAME;
 import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 

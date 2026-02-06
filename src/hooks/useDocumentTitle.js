@@ -8,7 +8,7 @@ import { APP_NAME } from '@/constants/app';
 export function useDocumentTitle(title) {
   useEffect(() => {
     if (title) {
-      const siteName = window.stadionConfig?.siteName || APP_NAME;
+      const siteName = window.rondoConfig?.siteName || APP_NAME;
       document.title = `${title} - ${siteName}`;
     }
   }, [title]);
@@ -75,7 +75,7 @@ export function useRouteTitle(customTitle = null) {
       }
     }
     
-    const siteName = window.stadionConfig?.siteName || APP_NAME;
+    const siteName = window.rondoConfig?.siteName || APP_NAME;
     document.title = `${title} - ${siteName}`;
   }, [location.pathname, customTitle]);
 }

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 export function useAuth() {
-  const config = window.stadionConfig || {};
+  const config = window.rondoConfig || {};
   
   return useMemo(() => ({
     isLoggedIn: config.isLoggedIn || false,
