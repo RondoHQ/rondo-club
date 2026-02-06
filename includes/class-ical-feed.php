@@ -1,8 +1,8 @@
 <?php
 /**
- * iCal Feed for Important Dates
+ * iCal Feed for Birthdays
  *
- * Generates an iCal feed of all important dates accessible to a user,
+ * Generates an iCal feed of all birthday dates accessible to a user,
  * authenticated via a secret token URL.
  */
 
@@ -408,8 +408,8 @@ class ICalFeed {
 			exit;
 		}
 
-		// Get all important dates for contacts in this workspace
-		$dates = $this->get_workspace_important_dates( $workspace_id );
+		// Get all birthday dates for contacts in this workspace
+		$dates = $this->get_workspace_birthdays( $workspace_id );
 
 		// Generate iCal output with workspace-specific calendar name
 		$this->output_workspace_ical( $dates, $workspace->post_title );
@@ -421,7 +421,7 @@ class ICalFeed {
 	 * @param int $workspace_id The workspace post ID.
 	 * @return array Array of date data for iCal generation.
 	 */
-	private function get_workspace_important_dates( $workspace_id ) {
+	private function get_workspace_birthdays( $workspace_id ) {
 		// Get term ID for this workspace
 		$term = get_term_by( 'slug', 'workspace-' . $workspace_id, 'workspace_access' );
 		if ( ! $term ) {
