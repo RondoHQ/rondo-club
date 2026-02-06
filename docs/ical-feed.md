@@ -4,7 +4,7 @@ This document describes the iCal calendar subscription feature that allows users
 
 ## Overview
 
-Stadion generates iCal feeds for users containing birthdays from person records. There are two types of feeds:
+Rondo Club generates iCal feeds for users containing birthdays from person records. There are two types of feeds:
 
 1. **Personal Feed** - Contains birthdays for all people accessible to the user
 2. **Workspace Feed** - Contains birthdays for contacts shared with a workspace
@@ -267,7 +267,7 @@ https://your-site.com/workspace/{workspace_id}/calendar/{token}.ics
 
 ### Calendar Name
 
-Workspace calendars are named "Stadion - {Workspace Name}" to help users identify them in their calendar app.
+Workspace calendars are named "Rondo Club - {Workspace Name}" to help users identify them in their calendar app.
 
 ## Technical Details
 

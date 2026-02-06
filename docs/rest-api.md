@@ -1,6 +1,6 @@
 # REST API
 
-This document describes all REST API endpoints available in Stadion, including both WordPress standard endpoints and custom endpoints.
+This document describes all REST API endpoints available in Rondo Club, including both WordPress standard endpoints and custom endpoints.
 
 ## Authentication
 
@@ -15,7 +15,7 @@ The nonce is automatically injected by the frontend via `window.wpApiSettings.no
 
 ## API Namespaces
 
-Stadion uses two API namespaces:
+Rondo Club uses two API namespaces:
 
 | Namespace | Purpose |
 |-----------|---------|

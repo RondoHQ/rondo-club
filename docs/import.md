@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stadion supports importing contacts from multiple sources:
+Rondo Club supports importing contacts from multiple sources:
 
 - **vCard (.vcf)**: Universal contact format from Apple Contacts, Outlook, Android, and most contact apps
 - **Google Contacts CSV**: Export from Google Contacts
@@ -26,7 +26,7 @@ vCard is a universal standard format supported by virtually all contact manageme
 
 **Field Mapping**:
 
-| vCard Field | Stadion Field |
+| vCard Field | Rondo Club Field |
 |-------------|--------------|
 | `N` (Name) | `first_name`, `infix` (position 3), `last_name` |
 | `FN` (Formatted Name) | Fallback for `first_name`/`last_name` |
@@ -58,7 +58,7 @@ Export from Google Contacts using the "Google CSV" format.
 
 **Field Mapping**:
 
-| Google Field | Stadion Field |
+| Google Field | Rondo Club Field |
 |--------------|--------------|
 | `Given Name` or `First Name` | `first_name` |
 | `Additional Name` or `Middle Name` | `infix` (tussenvoegsel) |

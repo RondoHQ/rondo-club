@@ -1,10 +1,10 @@
 # Access Control
 
-This document describes the access control system in Stadion.
+This document describes the access control system in Rondo Club.
 
 ## Overview
 
-Stadion uses a simple **shared access model**: all approved users can see and edit all data. This makes it ideal for teams that collaborate on the same contact database.
+Rondo Club uses a simple **shared access model**: all approved users can see and edit all data. This makes it ideal for teams that collaborate on the same contact database.
 
 **Key principles:**
 
@@ -14,7 +14,7 @@ Stadion uses a simple **shared access model**: all approved users can see and ed
 
 ## User Approval
 
-New users who register or are created in WordPress start as unapproved. An administrator must approve them before they can access Stadion data.
+New users who register or are created in WordPress start as unapproved. An administrator must approve them before they can access Rondo Club data.
 
 **Checking approval status:**
 
@@ -88,7 +88,7 @@ $query = new WP_Query([
 
 ## User Roles
 
-Stadion creates a custom user role called **"Rondo User"** (`stadion_user`) on theme activation.
+Rondo Club creates a custom user role called **"Rondo User"** (`stadion_user`) on theme activation.
 
 **Capabilities:**
 

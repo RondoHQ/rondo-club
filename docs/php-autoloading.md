@@ -2,7 +2,7 @@
 
 ## Overview
 
-Stadion uses a conditional class loading system to optimize performance. Instead of loading all PHP classes on every page request, classes are loaded only when they are needed.
+Rondo Club uses a conditional class loading system to optimize performance. Instead of loading all PHP classes on every page request, classes are loaded only when they are needed.
 
 ## How It Works
 

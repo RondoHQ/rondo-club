@@ -1,6 +1,6 @@
 # Invoice Fields for Person CPT
 
-**Stadion CRM - Invoice/Billing Data Fields for Person**
+**Rondo Club CRM - Invoice/Billing Data Fields for Person**
 
 ---
 
@@ -174,7 +174,7 @@ No database migration required - fields use standard ACF post_meta storage.
 
 ### Steps
 
-1. Add ACF field definitions to Stadion Person field group
+1. Add ACF field definitions to Rondo Club Person field group
 2. Expose in REST API (automatic via ACF)
 3. Add "Financieel" card to Person detail view
 4. Deploy sportlink-sync changes to populate data
@@ -211,4 +211,4 @@ curl -u user:pass "https://stadion/wp-json/wp/v2/people/123" | jq '.acf | {
 1. **Editable in UI**: Allow manual edits with conflict detection vs Sportlink
 2. **Bank Account**: Add `factuur-iban` field for IBAN numbers
 3. **Payment Method**: Track preferred payment method (automatic incasso, overboeking)
-4. **Invoice History**: Link to invoice records if Stadion adds billing features
+4. **Invoice History**: Link to invoice records if Rondo Club adds billing features

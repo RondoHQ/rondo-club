@@ -1,6 +1,6 @@
 # Data Model
 
-This document describes the custom post types, taxonomies, and ACF field groups that make up the Stadion data model.
+This document describes the custom post types, taxonomies, and ACF field groups that make up the Rondo Club data model.
 
 ## Custom Post Types
 

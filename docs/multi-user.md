@@ -1,14 +1,14 @@
 # Multi-User System
 
-This document describes Stadion's multi-user setup and user management.
+This document describes Rondo Club's multi-user setup and user management.
 
 ## Overview
 
-Stadion uses a **shared access model**: all approved users can see and edit all data. This makes it ideal for teams collaborating on a shared contact database.
+Rondo Club uses a **shared access model**: all approved users can see and edit all data. This makes it ideal for teams collaborating on a shared contact database.
 
 **Key features:**
 
-- Multiple users can access the same Stadion installation
+- Multiple users can access the same Rondo Club installation
 - All approved users see all contacts, teams, dates, and todos
 - New users require administrator approval before accessing data
 - User activity is tracked via post author and note author fields
@@ -19,7 +19,7 @@ New users cannot access any data until an administrator approves them.
 
 ### Approving Users
 
-1. Go to **Settings > User Approval** in Stadion
+1. Go to **Settings > User Approval** in Rondo Club
 2. Review pending users
 3. Click **Approve** to grant access
 
@@ -41,13 +41,13 @@ wp stadion approve-user <user_id>
 
 ### Rondo User Role
 
-Stadion creates a custom WordPress role called **"Rondo User"** (`stadion_user`).
+Rondo Club creates a custom WordPress role called **"Rondo User"** (`stadion_user`).
 
 **Capabilities:**
 
 - Create, edit, and delete people, teams, dates
 - Upload files (photos, logos)
-- Access the Stadion frontend
+- Access the Rondo Club frontend
 
 **Restrictions:**
 

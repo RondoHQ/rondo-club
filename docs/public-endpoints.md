@@ -4,7 +4,7 @@ This document lists REST API endpoints that do not require WordPress authenticat
 
 ## Current Public Endpoints
 
-There are currently no public Stadion endpoints that bypass WordPress authentication.
+There are currently no public Rondo Club endpoints that bypass WordPress authentication.
 
 ## Security Review Checklist
 

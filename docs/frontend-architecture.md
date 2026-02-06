@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-This document describes the React Single Page Application (SPA) that powers the Stadion frontend.
+This document describes the React Single Page Application (SPA) that powers the Rondo Club frontend.
 
 ## Technology Stack
 
