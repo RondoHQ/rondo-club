@@ -64,29 +64,6 @@ class SearchDashboardTest extends StadionTestCase {
 	}
 
 	/**
-	 * Helper to create an important date post.
-	 *
-	 * @param array $args Post arguments
-	 * @param array $acf ACF field values
-	 * @return int Post ID
-	 */
-	private function createImportantDatePost( array $args = [], array $acf = [] ): int {
-		$defaults = [
-			'post_type'   => 'important_date',
-			'post_status' => 'publish',
-			'post_author' => get_current_user_id() ?: 1,
-		];
-
-		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
-
-		foreach ( $acf as $field => $value ) {
-			update_field( $field, $value, $post_id );
-		}
-
-		return $post_id;
-	}
-
-	/**
 	 * Helper to make an internal REST request.
 	 *
 	 * @param string $method HTTP method (GET, POST, etc.)
@@ -319,16 +296,6 @@ class SearchDashboardTest extends StadionTestCase {
 			]
 		);
 
-		// Create 5 important dates
-		for ( $i = 1; $i <= 5; $i++ ) {
-			$this->createImportantDatePost(
-				[
-					'post_author' => $alice_id,
-					'post_title'  => "Date $i",
-				]
-			);
-		}
-
 		// Get dashboard
 		$response = $this->doRestRequest( 'GET', '/stadion/v1/dashboard' );
 
@@ -338,7 +305,6 @@ class SearchDashboardTest extends StadionTestCase {
 		$this->assertArrayHasKey( 'stats', $data );
 		$this->assertEquals( 3, $data['stats']['total_people'], 'Dashboard should report 3 people' );
 		$this->assertEquals( 2, $data['stats']['total_teams'], 'Dashboard should report 2 teams' );
-		$this->assertEquals( 5, $data['stats']['total_dates'], 'Dashboard should report 5 dates' );
 	}
 
 	/**
@@ -398,7 +364,6 @@ class SearchDashboardTest extends StadionTestCase {
 		$data = $response->get_data();
 		$this->assertEquals( 0, $data['stats']['total_people'], 'New user should see 0 people' );
 		$this->assertEquals( 0, $data['stats']['total_teams'], 'New user should see 0 teams' );
-		$this->assertEquals( 0, $data['stats']['total_dates'], 'New user should see 0 dates' );
 	}
 
 	/**
@@ -415,31 +380,21 @@ class SearchDashboardTest extends StadionTestCase {
 	}
 
 	/**
-	 * Test reminders endpoint returns upcoming dates.
+	 * Test reminders endpoint returns upcoming birthdays.
 	 */
-	public function test_reminders_returns_upcoming_dates(): void {
+	public function test_reminders_returns_upcoming_birthdays(): void {
 		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create a person to link the date to
-		$person_id = $this->createPerson(
+		// Create a person with a birthdate 5 days from now (same month/day, any year)
+		$upcoming_date = gmdate( 'Y-m-d', strtotime( '+5 days' ) );
+		$this->createPerson(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Person',
-			]
-		);
-
-		// Create date 5 days from now
-		$upcoming_date = gmdate( 'Y-m-d', strtotime( '+5 days' ) );
-		$this->createImportantDatePost(
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Upcoming Birthday',
 			],
 			[
-				'date_value'     => $upcoming_date,
-				'is_recurring'   => true,
-				'related_people' => [ $person_id ],
+				'birthdate' => $upcoming_date,
 			]
 		);
 
@@ -460,36 +415,26 @@ class SearchDashboardTest extends StadionTestCase {
 		$alice_id = $this->createApprovedStadionUser( [ 'user_login' => 'alice' ] );
 		wp_set_current_user( $alice_id );
 
-		// Create a person to link the date to
-		$person_id = $this->createPerson(
+		// Create a person with birthdate 60 days from now
+		$far_date = gmdate( 'Y-m-d', strtotime( '+60 days' ) );
+		$this->createPerson(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Test Person',
-			]
-		);
-
-		// Create date 60 days from now
-		$far_date = gmdate( 'Y-m-d', strtotime( '+60 days' ) );
-		$this->createImportantDatePost(
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Far Future Date',
 			],
 			[
-				'date_value'     => $far_date,
-				'is_recurring'   => true,
-				'related_people' => [ $person_id ],
+				'birthdate' => $far_date,
 			]
 		);
 
-		// Get reminders for next 30 days - should not include the 60-day date
+		// Get reminders for next 30 days - should not include the 60-day birthday
 		$response = $this->doRestRequest( 'GET', '/stadion/v1/reminders', [ 'days_ahead' => 30 ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
 		$data = $response->get_data();
 		$this->assertIsArray( $data );
-		// The 60-day date should NOT be in the 30-day results
+		// The 60-day birthday should NOT be in the 30-day results
 	}
 
 	/**

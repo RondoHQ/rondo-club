@@ -11,8 +11,8 @@ use WP_REST_Server;
 /**
  * Tests for WordPress REST API CRUD operations on CPTs.
  *
- * Verifies that standard REST API endpoints work correctly for person, team,
- * and important_date post types with proper access control and ACF field handling.
+ * Verifies that standard REST API endpoints work correctly for person and team
+ * post types with proper access control and ACF field handling.
  */
 class CptCrudTest extends StadionTestCase {
 
@@ -46,22 +46,6 @@ class CptCrudTest extends StadionTestCase {
 		$user_id   = $this->createStadionUser( [ 'user_login' => $unique_id ] );
 		update_user_meta( $user_id, STADION_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
-	}
-
-	/**
-	 * Helper to create an important date post without requiring a linked person.
-	 *
-	 * @param array $args Post arguments
-	 * @return int Post ID
-	 */
-	private function createImportantDatePost( array $args = [] ): int {
-		$defaults = [
-			'post_type'   => 'important_date',
-			'post_status' => 'publish',
-			'post_author' => get_current_user_id() ?: 1,
-		];
-
-		return self::factory()->post->create( array_merge( $defaults, $args ) );
 	}
 
 	/**
@@ -353,7 +337,7 @@ class CptCrudTest extends StadionTestCase {
 	}
 
 	// =========================================================================
-	// Task 2: Test CRUD for team and important_date CPTs
+	// Task 2: Test CRUD for team CPT
 	// =========================================================================
 
 	/**
@@ -511,168 +495,6 @@ class CptCrudTest extends StadionTestCase {
 		$this->assertEquals( 'publish', $post->post_status );
 	}
 
-	/**
-	 * Test important_date CREATE via POST.
-	 */
-	public function test_important_date_create_via_rest_api(): void {
-		$user_id = $this->createApprovedStadionUser( 'creator' );
-		wp_set_current_user( $user_id );
-
-		// Create a person first to link to
-		$person_id = $this->createPerson(
-			[
-				'post_author' => $user_id,
-				'post_title'  => 'Test Person',
-			]
-		);
-
-		$response = $this->restRequest(
-			'POST',
-			'/wp/v2/important-dates',
-			[
-				'title'  => 'Birthday',
-				'status' => 'publish',
-			]
-		);
-
-		$this->assertEquals( 201, $response->get_status(), 'Should return 201 Created' );
-
-		$data = $response->get_data();
-		$this->assertArrayHasKey( 'id', $data );
-
-		$post = get_post( $data['id'] );
-		$this->assertEquals( $user_id, (int) $post->post_author );
-	}
-
-	/**
-	 * Test important_date READ access control.
-	 */
-	public function test_important_date_read_access_control(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
-
-		wp_set_current_user( $owner_id );
-		$date_id = $this->createImportantDatePost(
-			[
-				'post_title'  => 'Owner Birthday',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Owner can read
-		$response = $this->restRequest( 'GET', '/wp/v2/important-dates/' . $date_id );
-		$this->assertEquals( 200, $response->get_status(), 'Owner should read date' );
-
-		// Non-owner denied
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'GET', '/wp/v2/important-dates/' . $date_id );
-		$status   = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
-			'Non-owner should be denied (got status ' . $status . ')'
-		);
-	}
-
-	/**
-	 * Test important_date UPDATE access control.
-	 */
-	public function test_important_date_update_access_control(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
-
-		wp_set_current_user( $owner_id );
-		$date_id = $this->createImportantDatePost(
-			[
-				'post_title'  => 'Original Event',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Owner can update
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/important-dates/' . $date_id,
-			[
-				'title' => 'Updated Event',
-			]
-		);
-		$this->assertEquals( 200, $response->get_status() );
-
-		// Non-owner denied
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/important-dates/' . $date_id,
-			[
-				'title' => 'Hacked Event',
-			]
-		);
-		$this->assertTrue( in_array( $response->get_status(), [ 403, 401 ], true ) );
-	}
-
-	/**
-	 * Test important_date DELETE as owner.
-	 *
-	 * Note: Returns 404 due to access control filter (see person delete test comment).
-	 * The important assertion is that the post is actually trashed.
-	 */
-	public function test_important_date_delete_as_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-
-		wp_set_current_user( $owner_id );
-		$date_id = $this->createImportantDatePost(
-			[
-				'post_title'  => 'Delete Event',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Verify exists before delete
-		$pre_post = get_post( $date_id );
-		$this->assertEquals( 'publish', $pre_post->post_status );
-
-		// Owner can delete
-		$response = $this->restRequest( 'DELETE', '/wp/v2/important-dates/' . $date_id );
-		$status   = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 200, 404 ], true ),
-			'Owner delete should succeed or return 404 (got status ' . $status . ')'
-		);
-
-		// Verify post is trashed
-		$post = get_post( $date_id );
-		$this->assertEquals( 'trash', $post->post_status, 'Post should be trashed' );
-	}
-
-	/**
-	 * Test important_date DELETE denied for non-owner.
-	 */
-	public function test_important_date_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedStadionUser( 'owner' );
-		$other_id = $this->createApprovedStadionUser( 'other' );
-
-		wp_set_current_user( $owner_id );
-		$date_id = $this->createImportantDatePost(
-			[
-				'post_title'  => 'Delete Event',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Non-owner denied (gets 404 because access control filters the post)
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'DELETE', '/wp/v2/important-dates/' . $date_id );
-		$status   = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401, 404 ], true ),
-			'Non-owner should not be able to delete (got status ' . $status . ')'
-		);
-
-		// Verify still exists
-		$post = get_post( $date_id );
-		$this->assertEquals( 'publish', $post->post_status );
-	}
-
 	// =========================================================================
 	// Task 2 Continued: ACF Fields in REST Responses
 	// =========================================================================
@@ -736,46 +558,6 @@ class CptCrudTest extends StadionTestCase {
 		$this->assertArrayHasKey( 'acf', $data, 'Response should include acf key' );
 		$this->assertEquals( 'https://example.com', $data['acf']['website'], 'website should match' );
 		$this->assertEquals( 'Technology', $data['acf']['industry'], 'industry should match' );
-	}
-
-	/**
-	 * Test important_date ACF fields appear in REST response.
-	 */
-	public function test_important_date_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedStadionUser( 'acfuser' );
-		wp_set_current_user( $user_id );
-
-		// Create a person to link to
-		$person_id = $this->createPerson(
-			[
-				'post_author' => $user_id,
-				'post_title'  => 'Birthday Person',
-			]
-		);
-
-		$date_id = $this->createImportantDatePost(
-			[
-				'post_title'  => 'Birthday Test',
-				'post_author' => $user_id,
-			]
-		);
-
-		// Set ACF fields
-		update_field( 'date_value', '2000-06-15', $date_id );
-		update_field( 'is_recurring', true, $date_id );
-		update_field( 'year_unknown', false, $date_id );
-		update_field( 'related_people', [ $person_id ], $date_id );
-
-		$response = $this->restRequest( 'GET', '/wp/v2/important-dates/' . $date_id );
-
-		$this->assertEquals( 200, $response->get_status() );
-
-		$data = $response->get_data();
-
-		$this->assertArrayHasKey( 'acf', $data, 'Response should include acf key' );
-		$this->assertEquals( '2000-06-15', $data['acf']['date_value'], 'date_value should match' );
-		$this->assertTrue( (bool) $data['acf']['is_recurring'], 'is_recurring should be true' );
-		$this->assertFalse( (bool) $data['acf']['year_unknown'], 'year_unknown should be false' );
 	}
 
 	/**
@@ -847,38 +629,5 @@ class CptCrudTest extends StadionTestCase {
 		$this->assertEquals( 200, $response->get_status() );
 		$this->assertEquals( 'https://new.com', get_field( 'website', $team_id ) );
 		$this->assertEquals( 'Finance', get_field( 'industry', $team_id ), 'industry should be unchanged' );
-	}
-
-	/**
-	 * Test important_date ACF field update via REST.
-	 */
-	public function test_important_date_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedStadionUser( 'acfupdater' );
-		wp_set_current_user( $user_id );
-
-		$date_id = $this->createImportantDatePost(
-			[
-				'post_title'  => 'Update Event',
-				'post_author' => $user_id,
-			]
-		);
-
-		update_field( 'date_value', '2000-01-01', $date_id );
-		update_field( 'is_recurring', false, $date_id );
-
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/important-dates/' . $date_id,
-			[
-				'acf' => [
-					'date_value'   => '2000-12-25',
-					'is_recurring' => true,
-				],
-			]
-		);
-
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertEquals( '2000-12-25', get_field( 'date_value', $date_id ) );
-		$this->assertTrue( (bool) get_field( 'is_recurring', $date_id ) );
 	}
 }

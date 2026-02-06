@@ -78,30 +78,4 @@ abstract class StadionTestCase extends WPTestCase {
 		return self::factory()->user->create( array_merge( $defaults, $args ) );
 	}
 
-	/**
-	 * Create an important date linked to a person.
-	 *
-	 * @param int   $person_id Person to link to
-	 * @param array $args Post arguments
-	 * @param array $acf ACF field values
-	 * @return int Post ID
-	 */
-	protected function createImportantDate( int $person_id, array $args = [], array $acf = [] ): int {
-		$defaults = [
-			'post_type'   => 'important_date',
-			'post_status' => 'publish',
-			'post_author' => get_current_user_id() ?: 1,
-		];
-
-		$post_id = self::factory()->post->create( array_merge( $defaults, $args ) );
-
-		// Link to person via ACF relationship field
-		update_field( 'person', $person_id, $post_id );
-
-		foreach ( $acf as $field => $value ) {
-			update_field( $field, $value, $post_id );
-		}
-
-		return $post_id;
-	}
 }
