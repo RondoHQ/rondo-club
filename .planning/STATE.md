@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 ## Current Position
 
 Phase: 147 of 148 (Birthdate Field & Widget)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Last activity: 2026-02-06 - Roadmap created for v19.0
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-02-06 - Completed 147-01-PLAN.md
 
-Progress: [..........] 0%
+Progress: [█.........] 50% (1/2 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 5 min
+- Total execution time: 0.08 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 147   | 1     | 5min  | 5min     |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: N/A (new milestone)
+- Last 5 plans: 5min
+- Trend: First plan in v19.0
 
 *Updated after each plan completion*
 
@@ -40,6 +40,11 @@ Progress: [..........] 0%
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+Recent decisions from v19.0 (Phase 147):
+- **Store birthdate directly on person records** - Not as Important Date CPT, simpler data model
+- **Display format: age + birthdate** - "43 jaar (6 feb 1982)" includes full birth year for clarity
+- **Dashboard widget only shows birthdays** - Other Important Dates removed, Phase 148 will remove infrastructure
 
 Recent decisions from v17.0:
 - **Individual WordPress option keys for club config** - Separate options allow independent updates
@@ -59,8 +64,8 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-06
-Stopped at: Roadmap created for v19.0 Birthdate Simplification
+Last session: 2026-02-06T09:20:16Z
+Stopped at: Completed 147-01-PLAN.md - Phase 147 complete
 Resume file: None
 
 ---
