@@ -25,7 +25,7 @@ timeline: Currently happening
 ## Evidence
 
 - timestamp: 2026-01-26T10:05:00Z
-  checked: /Users/joostdevalk/Code/sportlink-sync/prepare-stadion-teams.js
+  checked: /Users/joostdevalk/Code/rondo/rondo-sync/prepare-stadion-teams.js
   found: extractTeamName() function (lines 11-18) returns UnionTeams or ClubTeams field as-is without splitting
   implication: When a member belongs to multiple teams, the field contains "2, JO7-3" and this entire string is treated as one team name
 
@@ -42,4 +42,4 @@ verification: PASSED - Ran prepare-stadion-teams.js --verbose and confirmed:
   - 57 unique teams extracted from 1068 members
   - Teams are now individual values (1, 2, 3, 4, 5, etc.)
   - No comma-separated team names found in output (grep test passed)
-files_changed: ['/Users/joostdevalk/Code/sportlink-sync/prepare-stadion-teams.js']
+files_changed: ['/Users/joostdevalk/Code/rondo/rondo-sync/prepare-stadion-teams.js']

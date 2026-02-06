@@ -65,7 +65,7 @@ acf-json/
 **When to use:** Data synced from external systems (Sportlink) that needs REST API access but not public WordPress URLs
 **Example:**
 ```php
-// Source: /Users/joostdevalk/Code/stadion/includes/class-post-types.php (team CPT, lines 93-111)
+// Source: /Users/joostdevalk/Code/rondo/rondo-club/includes/class-post-types.php (team CPT, lines 93-111)
 $args = [
     'labels'             => $labels,
     'public'             => false,              // Not publicly accessible via WordPress URLs
@@ -120,7 +120,7 @@ register_taxonomy(
 **When to use:** Always, for any CPT that needs REST API access
 **Example:**
 ```json
-// Source: /Users/joostdevalk/Code/stadion/acf-json/group_important_date_fields.json
+// Source: /Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_important_date_fields.json
 {
     "key": "group_discipline_case_fields",
     "title": "Discipline Case Fields",
@@ -353,7 +353,7 @@ Verified patterns from official sources and existing Stadion implementation:
 
 ### Register discipline_case CPT
 ```php
-// Source: Based on /Users/joostdevalk/Code/stadion/includes/class-post-types.php patterns
+// Source: Based on /Users/joostdevalk/Code/rondo/rondo-club/includes/class-post-types.php patterns
 private function register_discipline_case_post_type() {
     $labels = [
         'name'               => _x( 'Tuchtzaken', 'Post type general name', 'stadion' ),
@@ -394,7 +394,7 @@ private function register_discipline_case_post_type() {
 
 ### Register seizoen Taxonomy
 ```php
-// Source: Based on /Users/joostdevalk/Code/stadion/includes/class-taxonomies.php patterns
+// Source: Based on /Users/joostdevalk/Code/rondo/rondo-club/includes/class-taxonomies.php patterns
 private function register_seizoen_taxonomy() {
     $labels = [
         'name'          => _x( 'Seizoenen', 'taxonomy general name', 'stadion' ),
@@ -424,7 +424,7 @@ private function register_seizoen_taxonomy() {
 
 ### ACF Field Group JSON Structure
 ```json
-// Source: Pattern from /Users/joostdevalk/Code/stadion/acf-json/group_important_date_fields.json
+// Source: Pattern from /Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_important_date_fields.json
 {
     "key": "group_discipline_case_fields",
     "title": "Discipline Case Fields",

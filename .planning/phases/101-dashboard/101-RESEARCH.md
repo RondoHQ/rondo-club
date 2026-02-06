@@ -401,14 +401,14 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/Dashboard.jsx` - Source code analysis (947 lines)
-- `/Users/joostdevalk/Code/stadion/src/components/DashboardCustomizeModal.jsx` - Source code analysis (245 lines)
-- `/Users/joostdevalk/Code/stadion/.planning/phases/101-dashboard/101-CONTEXT.md` - User decisions and terminology
-- `/Users/joostdevalk/Code/stadion/.planning/phases/100-navigation-layout/100-CONTEXT.md` - Phase 100 terminology for consistency
-- `/Users/joostdevalk/Code/stadion/.planning/phases/100-navigation-layout/100-RESEARCH.md` - Phase 100 patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Dashboard.jsx` - Source code analysis (947 lines)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/DashboardCustomizeModal.jsx` - Source code analysis (245 lines)
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/101-dashboard/101-CONTEXT.md` - User decisions and terminology
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/100-navigation-layout/100-CONTEXT.md` - Phase 100 terminology for consistency
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/phases/100-navigation-layout/100-RESEARCH.md` - Phase 100 patterns
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/src/utils/dateFormat.js` - Verified Dutch date formatting already configured (Phase 99)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/utils/dateFormat.js` - Verified Dutch date formatting already configured (Phase 99)
 
 ### Tertiary (LOW confidence)
 - N/A

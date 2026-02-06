@@ -262,9 +262,9 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- Codebase analysis: `/Users/joostdevalk/Code/stadion/src/pages/Dashboard.jsx` - existing widget implementation
-- Codebase analysis: `/Users/joostdevalk/Code/stadion/src/hooks/useMeetings.js` - existing hook patterns
-- Codebase analysis: `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php` - API endpoint
+- Codebase analysis: `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Dashboard.jsx` - existing widget implementation
+- Codebase analysis: `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useMeetings.js` - existing hook patterns
+- Codebase analysis: `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-calendar.php` - API endpoint
 
 ### Secondary (MEDIUM confidence)
 - [date-fns official documentation](https://date-fns.org/) - date manipulation functions

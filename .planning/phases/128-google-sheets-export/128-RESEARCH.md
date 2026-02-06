@@ -402,12 +402,12 @@ None identified. The implementation path is clear:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-google-sheets.php` - Complete export pattern (lines 287-464)
-- `/Users/joostdevalk/Code/stadion/includes/class-google-sheets-connection.php` - Connection management
-- `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php` - OAuth and token refresh
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PeopleList.jsx` - Frontend export pattern (lines 1043-1102)
-- `/Users/joostdevalk/Code/stadion/src/pages/Contributie/ContributieList.jsx` - Target component
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - Fee list endpoint (lines 2570-2655)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-google-sheets.php` - Complete export pattern (lines 287-464)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-sheets-connection.php` - Connection management
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-oauth.php` - OAuth and token refresh
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PeopleList.jsx` - Frontend export pattern (lines 1043-1102)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Contributie/ContributieList.jsx` - Target component
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` - Fee list endpoint (lines 2570-2655)
 
 ### Secondary (MEDIUM confidence)
 - [Google Sheets API - SpreadsheetProperties](https://developers.google.com/workspace/sheets/api/reference/rest/v4/spreadsheets) - Locale settings

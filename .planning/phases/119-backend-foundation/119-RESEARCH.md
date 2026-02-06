@@ -273,15 +273,15 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-email-channel.php` - Existing email sending pattern
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - REST API patterns, notification settings
-- `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` - Settings UI tab pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-email-channel.php` - Existing email sending pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` - REST API patterns, notification settings
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Settings/Settings.jsx` - Settings UI tab pattern
 - https://developer.wordpress.org/reference/functions/wp_mail/ - Official wp_mail documentation
 - https://developer.wordpress.org/reference/functions/get_option/ - Official Options API documentation
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/.planning/REQUIREMENTS.md` - Phase requirements
-- `/Users/joostdevalk/Code/stadion/.planning/ROADMAP.md` - Milestone context
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/REQUIREMENTS.md` - Phase requirements
+- `/Users/joostdevalk/Code/rondo/rondo-club/.planning/ROADMAP.md` - Milestone context
 
 ### Tertiary (LOW confidence)
 - None

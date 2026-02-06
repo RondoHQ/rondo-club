@@ -233,7 +233,7 @@ Verified patterns from official sources and existing codebase:
 
 ### Sortable List Setup (from DashboardCustomizeModal.jsx)
 ```jsx
-// Source: /Users/joostdevalk/Code/stadion/src/components/DashboardCustomizeModal.jsx lines 107-134
+// Source: /Users/joostdevalk/Code/rondo/rondo-club/src/components/DashboardCustomizeModal.jsx lines 107-134
 const sensors = useSensors(
   useSensor(PointerSensor, {
     activationConstraint: { distance: 8 },

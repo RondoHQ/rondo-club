@@ -335,9 +335,9 @@ GoogleContactsConnection::update_connection($user_id, [
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` - Existing ConnectionsContactsSubtab implementation
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-google-contacts.php` - Status endpoint response structure
-- `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-connection.php` - Connection storage model
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Settings/Settings.jsx` - Existing ConnectionsContactsSubtab implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-google-contacts.php` - Status endpoint response structure
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-contacts-connection.php` - Connection storage model
 
 ### Secondary (MEDIUM confidence)
 - Google Contacts URL format verified via browser testing pattern `https://contacts.google.com/person/people/c*`

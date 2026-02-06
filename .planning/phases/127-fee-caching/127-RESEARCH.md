@@ -474,11 +474,11 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-membership-fees.php` - Complete fee calculation implementation with snapshot methods
-- `/Users/joostdevalk/Code/stadion/includes/class-volunteer-status.php` - ACF hook pattern for auto-calculation
-- `/Users/joostdevalk/Code/stadion/includes/class-inverse-relationships.php` - acf/update_value hook pattern
-- `/Users/joostdevalk/Code/stadion/includes/class-vog-email.php` - Option array storage pattern
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - Existing fee endpoint at line 2572 using registratiedatum
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-membership-fees.php` - Complete fee calculation implementation with snapshot methods
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-volunteer-status.php` - ACF hook pattern for auto-calculation
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-inverse-relationships.php` - acf/update_value hook pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vog-email.php` - Option array storage pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` - Existing fee endpoint at line 2572 using registratiedatum
 
 ### Secondary (MEDIUM confidence)
 - WordPress Codex: Post Meta API - https://developer.wordpress.org/reference/functions/update_post_meta/

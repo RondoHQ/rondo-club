@@ -35,13 +35,13 @@ Extended the iCal feed system to support workspace-scoped calendars, allowing wo
   - Fallback message when iCal feed not enabled in Settings
 
 ## Files Modified
-- `/Users/joostdevalk/Code/stadion/includes/class-ical-feed.php` - Workspace feed implementation
-- `/Users/joostdevalk/Code/stadion/src/pages/Workspaces/WorkspaceDetail.jsx` - Calendar subscription UI
-- `/Users/joostdevalk/Code/stadion/src/api/client.js` - Added getIcalUrl helper
-- `/Users/joostdevalk/Code/stadion/docs/ical-feed.md` - Updated documentation
-- `/Users/joostdevalk/Code/stadion/CHANGELOG.md` - Added changelog entry
-- `/Users/joostdevalk/Code/stadion/style.css` - Version bump to 1.58.0
-- `/Users/joostdevalk/Code/stadion/package.json` - Version bump to 1.58.0
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-ical-feed.php` - Workspace feed implementation
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Workspaces/WorkspaceDetail.jsx` - Calendar subscription UI
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/api/client.js` - Added getIcalUrl helper
+- `/Users/joostdevalk/Code/rondo/rondo-club/docs/ical-feed.md` - Updated documentation
+- `/Users/joostdevalk/Code/rondo/rondo-club/CHANGELOG.md` - Added changelog entry
+- `/Users/joostdevalk/Code/rondo/rondo-club/style.css` - Version bump to 1.58.0
+- `/Users/joostdevalk/Code/rondo/rondo-club/package.json` - Version bump to 1.58.0
 
 ## Commits
 - `b2e85a6` - feat(10-04): add workspace iCal calendar feed support

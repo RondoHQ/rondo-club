@@ -377,17 +377,17 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/components/Timeline/TodoModal.jsx` - Modal pattern
-- `/Users/joostdevalk/Code/stadion/src/components/ImportantDateModal.jsx` - Modal with scrolling
-- `/Users/joostdevalk/Code/stadion/src/components/ShareModal.jsx` - User list pattern
-- `/Users/joostdevalk/Code/stadion/src/pages/Dashboard.jsx` - MeetingCard component
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Full MeetingCard component
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-calendar.php` - Meeting API endpoints
-- `/Users/joostdevalk/Code/stadion/src/hooks/useMeetings.js` - Meeting hooks
-- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client methods
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/Timeline/TodoModal.jsx` - Modal pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/ImportantDateModal.jsx` - Modal with scrolling
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/ShareModal.jsx` - User list pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Dashboard.jsx` - MeetingCard component
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PersonDetail.jsx` - Full MeetingCard component
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-calendar.php` - Meeting API endpoints
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useMeetings.js` - Meeting hooks
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/api/client.js` - API client methods
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-calendar-matcher.php` - Attendee matching logic
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-calendar-matcher.php` - Attendee matching logic
 
 ### Tertiary (LOW confidence)
 - None - all findings verified with codebase

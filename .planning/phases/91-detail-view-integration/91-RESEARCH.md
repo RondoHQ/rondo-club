@@ -360,14 +360,14 @@ Things that couldn't be fully resolved:
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/src/pages/People/PersonDetail.jsx` - Detail page structure, section patterns
-- `/Users/joostdevalk/Code/stadion/src/pages/Teams/TeamDetail.jsx` - Team detail patterns
-- `/Users/joostdevalk/Code/stadion/src/components/FieldFormPanel.jsx` - Field type options, form patterns
-- `/Users/joostdevalk/Code/stadion/src/components/ContactEditModal.jsx` - Modal editing pattern
-- `/Users/joostdevalk/Code/stadion/includes/customfields/class-manager.php` - Field storage, types
-- `/Users/joostdevalk/Code/stadion/includes/class-rest-custom-fields.php` - API structure
-- `/Users/joostdevalk/Code/stadion/src/api/client.js` - API client methods
-- `/Users/joostdevalk/Code/stadion/src/pages/Settings/CustomFields.jsx` - Field management UI
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/People/PersonDetail.jsx` - Detail page structure, section patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Teams/TeamDetail.jsx` - Team detail patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/FieldFormPanel.jsx` - Field type options, form patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/ContactEditModal.jsx` - Modal editing pattern
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/customfields/class-manager.php` - Field storage, types
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-custom-fields.php` - API structure
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/api/client.js` - API client methods
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Settings/CustomFields.jsx` - Field management UI
 
 ### Secondary (MEDIUM confidence)
 - ACF documentation on REST API field exposure (via `show_in_rest: 1`)

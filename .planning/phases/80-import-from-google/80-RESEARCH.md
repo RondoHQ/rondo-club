@@ -580,16 +580,16 @@ use Google\Service\PeopleService\ListConnectionsResponse;
 ## Sources
 
 ### Primary (HIGH confidence)
-- `/Users/joostdevalk/Code/stadion/acf-json/group_person_fields.json` - ACF field structure
-- `/Users/joostdevalk/Code/stadion/includes/class-google-oauth.php` - OAuth handling
-- `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-connection.php` - Connection storage
-- `/Users/joostdevalk/Code/stadion/includes/class-google-contacts-import.php` - CSV import patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_person_fields.json` - ACF field structure
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-oauth.php` - OAuth handling
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-contacts-connection.php` - Connection storage
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-google-contacts-import.php` - CSV import patterns
 - [Google People API - people.connections.list](https://developers.google.com/people/api/rest/v1/people.connections/list)
 - [Google People API - Person Resource](https://developers.google.com/people/api/rest/v1/people#Person)
 
 ### Secondary (MEDIUM confidence)
-- `/Users/joostdevalk/Code/stadion/includes/class-monica-import.php` - Batch import patterns
-- `/Users/joostdevalk/Code/stadion/includes/class-vcard-import.php` - Photo sideloading patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-monica-import.php` - Batch import patterns
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vcard-import.php` - Photo sideloading patterns
 
 ## Metadata
 

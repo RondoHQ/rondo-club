@@ -274,7 +274,7 @@ public function get_pwa_manifest( $request ) {
         'scope' => '/',
         'icons' => [
             [
-                'src' => '/wp-content/themes/stadion/public/icons/icon-192x192.png',
+                'src' => '/wp-content/themes/rondo-club/public/icons/icon-192x192.png',
                 'sizes' => '192x192',
                 'type' => 'image/png',
             ],

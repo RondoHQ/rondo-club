@@ -596,12 +596,12 @@ Things that couldn't be fully resolved:
 
 ### Primary (HIGH confidence)
 - Existing codebase files:
-  - `/Users/joostdevalk/Code/stadion/src/hooks/useTheme.js` - Current theming implementation
-  - `/Users/joostdevalk/Code/stadion/src/pages/Settings/Settings.jsx` - Settings UI patterns
-  - `/Users/joostdevalk/Code/stadion/src/index.css` - CSS custom properties setup
-  - `/Users/joostdevalk/Code/stadion/tailwind.config.js` - Tailwind configuration
-  - `/Users/joostdevalk/Code/stadion/includes/class-club-config.php` - Backend API model
-  - `/Users/joostdevalk/Code/stadion/includes/class-rest-api.php` - REST endpoint implementation
+  - `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useTheme.js` - Current theming implementation
+  - `/Users/joostdevalk/Code/rondo/rondo-club/src/pages/Settings/Settings.jsx` - Settings UI patterns
+  - `/Users/joostdevalk/Code/rondo/rondo-club/src/index.css` - CSS custom properties setup
+  - `/Users/joostdevalk/Code/rondo/rondo-club/tailwind.config.js` - Tailwind configuration
+  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-club-config.php` - Backend API model
+  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` - REST endpoint implementation
 - Phase 144 verification: Complete backend API with GET/POST `/rondo/v1/config`
 - [react-colorful npm](https://www.npmjs.com/package/react-colorful) - Official package documentation
 - [react-colorful GitHub](https://github.com/omgovich/react-colorful) - Library source and examples

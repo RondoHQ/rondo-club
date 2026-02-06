@@ -307,7 +307,7 @@ if [ "$DRY_RUN" = true ]; then
 
     while IFS=$'\t' read -r signature error_type message file line_num; do
         # Convert server path to local path
-        local_file="${file/*themes\/stadion/$PROJECT_ROOT}"
+        local_file="${file/*themes\/rondo-club/$PROJECT_ROOT}"
 
         echo -e "${YELLOW}[$error_type]${NC} $local_file:$line_num" >&2
         echo "  $message" >&2
@@ -327,7 +327,7 @@ FAILED_COUNT=0
 
 while IFS=$'\t' read -r signature error_type message file line_num; do
     # Convert server path to local path
-    local_file="${file/*themes\/stadion/$PROJECT_ROOT}"
+    local_file="${file/*themes\/rondo-club/$PROJECT_ROOT}"
 
     echo "" >&2
     echo -e "${YELLOW}Processing: [$error_type] ${local_file}:${line_num}${NC}" >&2
