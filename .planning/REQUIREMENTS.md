@@ -58,32 +58,32 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| LOGIC-01 | TBD | Pending |
-| LOGIC-02 | TBD | Pending |
-| LOGIC-03 | TBD | Pending |
-| LOGIC-04 | TBD | Pending |
-| LOGIC-05 | TBD | Pending |
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| API-04 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| DISPLAY-01 | TBD | Pending |
-| DISPLAY-02 | TBD | Pending |
-| DISPLAY-03 | TBD | Pending |
+| DATA-01 | 155 | Pending |
+| DATA-02 | 155 | Pending |
+| DATA-03 | 155 | Pending |
+| LOGIC-01 | 156 | Pending |
+| LOGIC-02 | 156 | Pending |
+| LOGIC-03 | 156 | Pending |
+| LOGIC-04 | 156 | Pending |
+| LOGIC-05 | 156 | Pending |
+| API-01 | 157 | Pending |
+| API-02 | 157 | Pending |
+| API-03 | 157 | Pending |
+| API-04 | 157 | Pending |
+| UI-01 | 158 | Pending |
+| UI-02 | 158 | Pending |
+| UI-03 | 158 | Pending |
+| UI-04 | 158 | Pending |
+| UI-05 | 158 | Pending |
+| DISPLAY-01 | 159 | Pending |
+| DISPLAY-02 | 159 | Pending |
+| DISPLAY-03 | 159 | Pending |
 
 **Coverage:**
 - v21.0 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 after initial definition*
+*Last updated: 2026-02-07 — traceability updated with phase mappings*
