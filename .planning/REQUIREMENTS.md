@@ -1,69 +1,89 @@
-# Requirements: Rondo Club v20.0 Configurable Roles
+# Requirements: Rondo Club v21.0 Per-Season Fee Categories
 
-**Defined:** 2026-02-06
-**Core Value:** Replace hardcoded club-specific arrays with settings and dynamic queries so any club can use Rondo Club without code changes.
+**Defined:** 2026-02-07
+**Core Value:** Fee categories are fully configurable per season, removing all hardcoded category definitions from the codebase.
 
-## v20.0 Requirements
+## v21.0 Requirements
 
-### Dynamic Filters
+### Data Model
 
-- [ ] **FILT-01**: Age group filter on People list is populated dynamically from distinct `leeftijdsgroep` values in the database
-- [ ] **FILT-02**: Member type filter on People list is populated dynamically from distinct `type-lid` values in the database
-- [ ] **FILT-03**: REST API endpoint returns available filter options for age group and member type
-- [ ] **FILT-04**: Filter options update automatically when new values appear via sync (no code changes needed)
+- [ ] **DATA-01**: Fee category definitions (slug, label, amount, age_min, age_max, is_youth, sort_order) are stored per season in the existing `rondo_membership_fees_{season}` WordPress option
+- [ ] **DATA-02**: On first load, current season option is auto-enriched with today's hardcoded category values (migration)
+- [ ] **DATA-03**: Creating a new season auto-copies the full category configuration from the previous season
 
-### Role Settings
+### Backend Logic
 
-- [ ] **ROLE-01**: Admin can configure which job titles count as "player roles" via Settings UI
-- [ ] **ROLE-02**: Player role options are populated from actual job titles in work_history data
-- [ ] **ROLE-03**: Admin can configure which roles are "excluded/honorary" via Settings UI
-- [ ] **ROLE-04**: Excluded role options are populated from actual job titles in commissie work_history data
-- [ ] **ROLE-05**: Volunteer status calculation uses configured player roles instead of hardcoded array
-- [ ] **ROLE-06**: Team detail page uses configured player roles for player/staff split instead of hardcoded array
-- [ ] **ROLE-07**: Volunteer status calculation uses configured excluded roles instead of hardcoded array
-- [ ] **ROLE-08**: Settings stored as WordPress options (portable, no code changes per club)
+- [ ] **LOGIC-01**: `parse_age_group()` reads age ranges from season category config instead of hardcoded values
+- [ ] **LOGIC-02**: `VALID_TYPES` is derived from season category config (no hardcoded constant)
+- [ ] **LOGIC-03**: `youth_categories` is derived from `is_youth` flag in category config (no hardcoded arrays)
+- [ ] **LOGIC-04**: Category sort order is derived from config (removing duplicated `category_order` arrays from `class-rest-api.php`, `class-rest-google-sheets.php`, and `ContributieList.jsx`)
+- [ ] **LOGIC-05**: Fee calculation correctly uses per-season categories for both current and forecast modes
 
-### Sync Cleanup
+### REST API
 
-- [ ] **SYNC-01**: Default role fallbacks (`Lid`, `Speler`, `Staflid`) removed from rondo-sync code
+- [ ] **API-01**: Fee settings GET endpoint returns full category definitions per season (not just amounts)
+- [ ] **API-02**: Fee settings POST endpoint accepts category add, edit, remove, and reorder operations
+- [ ] **API-03**: Fee list endpoint includes category metadata (labels, sort order) in response so frontend does not need hardcoded mappings
+- [ ] **API-04**: Category validation: no duplicate slugs, required fields (slug, label, amount), age ranges don't overlap
+
+### Settings UI
+
+- [ ] **UI-01**: Admin can manage fee categories in the fee settings section (add, edit, remove categories)
+- [ ] **UI-02**: Per-category fields editable: slug, label, amount, age range (min/max), youth flag
+- [ ] **UI-03**: Season selector for managing category configs of different seasons
+- [ ] **UI-04**: Drag-and-drop reordering of categories in the settings UI
+- [ ] **UI-05**: Visual age range coverage display showing gaps or overlaps between categories
+
+### Frontend Display
+
+- [ ] **DISPLAY-01**: Fee list category badges (labels, colors) are derived from API response, not hardcoded `FEE_CATEGORIES`
+- [ ] **DISPLAY-02**: Category colors are auto-assigned from a fixed palette based on sort order
+- [ ] **DISPLAY-03**: Google Sheets export uses dynamic category definitions from config
 
 ## Future Requirements
 
-- Fee category definitions centralized and configurable — needs more design thought (parked)
-- Sportlink free field mapping configurable per club — separate todo, depends on Sportlink API investigation
+- Configurable category colors per category — deferred, auto-assigned palette sufficient for now
+- Per-category discount rules — currently family discount is universal, could be per-category in future
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Fee category configuration | Needs more design thought, parked for future milestone |
-| Sportlink free field definitions | Separate todo, requires Sportlink API investigation |
-| Server path renaming | Requires server-side migration, separate effort |
-| SQL table/column renaming | Requires database migration, separate effort |
+| Custom category colors | Auto-assigned palette is simpler and consistent |
+| Category archival/history | Seasons already provide temporal separation |
+| Category import/export | WordPress options are portable enough |
+| Sportlink age class auto-mapping | Age ranges are set manually per category; auto-detect would need Sportlink API investigation |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILT-01 | Phase 151 | Pending |
-| FILT-02 | Phase 151 | Pending |
-| FILT-03 | Phase 151 | Pending |
-| FILT-04 | Phase 151 | Pending |
-| ROLE-01 | Phase 152 | Pending |
-| ROLE-02 | Phase 152 | Pending |
-| ROLE-03 | Phase 152 | Pending |
-| ROLE-04 | Phase 152 | Pending |
-| ROLE-05 | Phase 153 | Pending |
-| ROLE-06 | Phase 153 | Pending |
-| ROLE-07 | Phase 153 | Pending |
-| ROLE-08 | Phase 152 | Pending |
-| SYNC-01 | Phase 154 | Pending |
+| DATA-01 | TBD | Pending |
+| DATA-02 | TBD | Pending |
+| DATA-03 | TBD | Pending |
+| LOGIC-01 | TBD | Pending |
+| LOGIC-02 | TBD | Pending |
+| LOGIC-03 | TBD | Pending |
+| LOGIC-04 | TBD | Pending |
+| LOGIC-05 | TBD | Pending |
+| API-01 | TBD | Pending |
+| API-02 | TBD | Pending |
+| API-03 | TBD | Pending |
+| API-04 | TBD | Pending |
+| UI-01 | TBD | Pending |
+| UI-02 | TBD | Pending |
+| UI-03 | TBD | Pending |
+| UI-04 | TBD | Pending |
+| UI-05 | TBD | Pending |
+| DISPLAY-01 | TBD | Pending |
+| DISPLAY-02 | TBD | Pending |
+| DISPLAY-03 | TBD | Pending |
 
 **Coverage:**
-- v20.0 requirements: 13 total
-- Mapped to phases: 13
-- Unmapped: 0
+- v21.0 requirements: 20 total
+- Mapped to phases: 0
+- Unmapped: 20
 
 ---
-*Requirements defined: 2026-02-06*
-*Last updated: 2026-02-06 after roadmap creation*
+*Requirements defined: 2026-02-07*
+*Last updated: 2026-02-07 after initial definition*
