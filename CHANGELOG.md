@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Removed
-- Family tree visualization feature (route `/people/:id/family-tree`, vis-network/vis-data dependencies)
+### Added
+- Dynamic filter options on People list derived from database values instead of hardcoded arrays
+- REST API endpoint `/rondo/v1/people/filter-options` returning available filters with counts
+- Filter dropdowns show count of matching people per option (e.g., "Junior (42)")
+- Loading and error states for filter dropdowns with retry functionality
+- Generic filter infrastructure for easily adding future dynamic filters
 
 ### Changed
-- Documentation updated from "Stadion" to "Rondo Club" across all README, AGENTS, docs, and planning files
+- People list "Type lid" filter now shows only values that exist in the database
+- People list "Leeftijdsgroep" filter now shows only values that exist in the database
+
+### Removed
+- Family tree visualization feature (route `/people/:id/family-tree`, vis-network/vis-data dependencies)
+- Hardcoded filter option arrays for Type lid and Leeftijdsgroep in PeopleList
 
 ## [19.1.0] - 2026-02-07
 

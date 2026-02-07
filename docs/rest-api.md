@@ -220,6 +220,58 @@ Get all people who work or worked at a team.
 
 ---
 
+### People Filter Options
+
+**GET** `/rondo/v1/people/filter-options`
+
+Returns available filter options for the People list with counts. Options are derived dynamically from database values.
+
+**Authentication:** Required (approved user)
+
+**Response:**
+```json
+{
+  "total": 523,
+  "age_groups": [
+    { "value": "Onder 6", "count": 12 },
+    { "value": "Onder 7", "count": 18 },
+    { "value": "Onder 8", "count": 24 },
+    { "value": "Onder 9", "count": 31 },
+    { "value": "Onder 9 Meiden", "count": 15 },
+    { "value": "Onder 10", "count": 28 },
+    { "value": "Onder 11", "count": 35 },
+    { "value": "Onder 11 Meiden", "count": 18 },
+    { "value": "Onder 12", "count": 42 },
+    { "value": "Onder 13", "count": 38 },
+    { "value": "Onder 13 Meiden", "count": 19 },
+    { "value": "Onder 14", "count": 45 },
+    { "value": "Onder 15", "count": 41 },
+    { "value": "Onder 15 Meiden", "count": 22 },
+    { "value": "Onder 16", "count": 39 },
+    { "value": "Onder 17", "count": 36 },
+    { "value": "Onder 17 Meiden", "count": 20 },
+    { "value": "Onder 18", "count": 33 },
+    { "value": "Onder 19", "count": 29 },
+    { "value": "Senioren", "count": 87 },
+    { "value": "Senioren Vrouwen", "count": 34 }
+  ],
+  "member_types": [
+    { "value": "Junior", "count": 142 },
+    { "value": "Senior", "count": 287 },
+    { "value": "Donateur", "count": 51 },
+    { "value": "Lid van Verdienste", "count": 8 }
+  ]
+}
+```
+
+**Notes:**
+- Only values with at least 1 matching person are included
+- Age groups sorted youngest to oldest (numeric extraction from "Onder X"), gender variants after base groups
+- Member types sorted in priority order (new types from sync appear at end)
+- Frontend caches with 5-minute staleTime
+
+---
+
 ### Current User
 
 **GET** `/rondo/v1/user/me`
