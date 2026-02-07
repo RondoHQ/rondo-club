@@ -11,7 +11,7 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 
 ## Phases
 
-- [ ] **Phase 151: Dynamic Filters** - Derive filter options from actual database values instead of hardcoded lists
+- [x] **Phase 151: Dynamic Filters** - Derive filter options from actual database values instead of hardcoded lists
 - [ ] **Phase 152: Role Settings** - Admin UI and backend storage for configurable player roles and excluded roles
 - [ ] **Phase 153: Wire Up Role Settings** - Replace hardcoded role arrays with settings lookups in business logic
 - [ ] **Phase 154: Sync Cleanup** - Remove default role fallbacks from rondo-sync
@@ -34,8 +34,8 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
   4. The REST API provides an endpoint (or extended response) that returns available filter options for both fields
 **Plans:** 2 plans
 Plans:
-  - [ ] 151-01-PLAN.md -- Backend REST endpoint for filter options with generic infrastructure
-  - [ ] 151-02-PLAN.md -- Frontend hook, dynamic dropdowns, documentation
+  - [x] 151-01-PLAN.md -- Backend REST endpoint for filter options with generic infrastructure
+  - [x] 151-02-PLAN.md -- Frontend hook, dynamic dropdowns, documentation
 
 ### Phase 152: Role Settings
 **Goal**: Admins can configure which job titles are "player roles" and which are "excluded/honorary roles" via the Settings UI
@@ -133,7 +133,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 151. Dynamic Filters | v20.0 | 0/2 | Planned | - |
+| 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
 | 152. Role Settings | v20.0 | 0/TBD | Not started | - |
 | 153. Wire Up Role Settings | v20.0 | 0/TBD | Not started | - |
 | 154. Sync Cleanup | v20.0 | 0/TBD | Not started | - |
@@ -145,4 +145,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 — v21.0 phases 155-159 added*
+*Last updated: 2026-02-07 — Phase 151 complete*
