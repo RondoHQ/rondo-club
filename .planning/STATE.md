@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 155 of 159 (Fee Category Data Model) — first phase of v21.0
-Plan: —
-Status: Ready to plan
-Last activity: 2026-02-07 — Roadmap created for v21.0 (phases 155-159)
+Phase: 151 of 159 (Dynamic Filters) — first plan of v20.0
+Plan: 01 of 02
+Status: In progress
+Last activity: 2026-02-07 — Completed 151-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 0.6%
 
 ## Accumulated Context
 
@@ -27,6 +27,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Season detection (July 1 boundary) and next-season support already implemented
 - Forecast mode already works for next season
 - User chose: WordPress options storage, copy-previous for new seasons, fully configurable age ranges
+- Generic filter config pattern established (151-01): map filter key → meta_key + sort_method
+- Smart age group sorting uses numeric extraction + gender variant detection (151-01)
+- Member types use priority array with unknown types at end (151-01)
 
 ### Pending Todos
 
@@ -41,8 +44,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: Roadmap created for v21.0 milestone
+Last session: 2026-02-07T20:42:00Z
+Stopped at: Completed 151-01-PLAN.md (Dynamic filter options endpoint)
 Resume file: None
 
 ---
