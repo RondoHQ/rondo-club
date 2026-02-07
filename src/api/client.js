@@ -283,6 +283,11 @@ export const prmApi = {
   getVOGSettings: () => api.get('/rondo/v1/vog/settings'),
   updateVOGSettings: (settings) => api.post('/rondo/v1/vog/settings', settings),
 
+  // Volunteer Role Classification (admin only)
+  getAvailableRoles: () => api.get('/rondo/v1/volunteer-roles/available'),
+  getVolunteerRoleSettings: () => api.get('/rondo/v1/volunteer-roles/settings'),
+  updateVolunteerRoleSettings: (settings) => api.post('/rondo/v1/volunteer-roles/settings', settings),
+
   // Membership Fee Settings (admin only)
   getMembershipFeeSettings: () => api.get('/rondo/v1/membership-fees/settings'),
   updateMembershipFeeSettings: (settings, season) => api.post('/rondo/v1/membership-fees/settings', { ...settings, season }),
