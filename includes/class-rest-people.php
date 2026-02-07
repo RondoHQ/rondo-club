@@ -213,21 +213,21 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filtered_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
-					'page'          => [
+					'page'                 => [
 						'default'           => 1,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'per_page'      => [
+					'per_page'             => [
 						'default'           => 100,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'labels'        => [
+					'labels'               => [
 						'default'           => [],
 						'validate_callback' => function ( $param ) {
 							if ( ! is_array( $param ) ) {
@@ -244,13 +244,13 @@ class People extends Base {
 							return array_map( 'absint', $param );
 						},
 					],
-					'ownership'     => [
+					'ownership'            => [
 						'default'           => 'all',
 						'validate_callback' => function ( $param ) {
 							return in_array( $param, [ 'mine', 'shared', 'all' ], true );
 						},
 					],
-					'modified_days' => [
+					'modified_days'        => [
 						'default'           => null,
 						'validate_callback' => function ( $param ) {
 							return $param === null || $param === '' || ( is_numeric( $param ) && (int) $param > 0 );
@@ -259,11 +259,11 @@ class People extends Base {
 							return $param === null || $param === '' ? null : absint( $param );
 						},
 					],
-					'orderby'       => [
+					'orderby'              => [
 						'default'           => 'first_name',
 						'validate_callback' => [ $this, 'validate_orderby_param' ],
 					],
-					'order'         => [
+					'order'                => [
 						'default'           => 'asc',
 						'validate_callback' => function ( $param ) {
 							return in_array( strtolower( $param ), [ 'asc', 'desc' ], true );
@@ -272,7 +272,7 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
-					'birth_year_from' => [
+					'birth_year_from'      => [
 						'description'       => 'Filter by birth year (minimum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -280,7 +280,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_year_to' => [
+					'birth_year_to'        => [
 						'description'       => 'Filter by birth year (maximum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -289,7 +289,7 @@ class People extends Base {
 						},
 					],
 					// Custom field filters
-					'huidig_vrijwilliger' => [
+					'huidig_vrijwilliger'  => [
 						'description'       => 'Filter by current volunteer status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -297,7 +297,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'financiele_blokkade' => [
+					'financiele_blokkade'  => [
 						'description'       => 'Filter by financial block status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -305,12 +305,12 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'type_lid' => [
+					'type_lid'             => [
 						'description'       => 'Filter by member type',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'foto_missing' => [
+					'foto_missing'         => [
 						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -318,7 +318,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_missing' => [
+					'vog_missing'          => [
 						'description'       => 'Filter for people without VOG date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -334,7 +334,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 10;
 						},
 					],
-					'vog_email_status' => [
+					'vog_email_status'     => [
 						'description'       => 'Filter by VOG email status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -342,7 +342,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'vog_type' => [
+					'vog_type'             => [
 						'description'       => 'Filter by VOG type (nieuw=no VOG, vernieuwing=expired VOG)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -350,12 +350,12 @@ class People extends Base {
 							return in_array( $value, [ '', 'nieuw', 'vernieuwing' ], true );
 						},
 					],
-					'leeftijdsgroep' => [
+					'leeftijdsgroep'       => [
 						'description'       => 'Filter by age group',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'vog_justis_status' => [
+					'vog_justis_status'    => [
 						'description'       => 'Filter by VOG Justis status (submitted, not_submitted, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -364,6 +364,17 @@ class People extends Base {
 						},
 					],
 				],
+			]
+		);
+
+		// Filter options endpoint
+		register_rest_route(
+			'rondo/v1',
+			'/people/filter-options',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_filter_options' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
 	}
@@ -984,12 +995,14 @@ class People extends Base {
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
 		$access_control = new \Rondo\Core\AccessControl();
 		if ( ! $access_control->is_user_approved() ) {
-			return rest_ensure_response( [
-				'people'      => [],
-				'total'       => 0,
-				'page'        => $page,
-				'total_pages' => 0,
-			] );
+			return rest_ensure_response(
+				[
+					'people'      => [],
+					'total'       => 0,
+					'page'        => $page,
+					'total_pages' => 0,
+				]
+			);
 		}
 
 		$offset = ( $page - 1 ) * $per_page;
@@ -998,7 +1011,7 @@ class People extends Base {
 		$volunteers_only = $access_control->should_filter_volunteers_only();
 
 		// Build query components
-		$select_fields  = "p.ID, p.post_modified, p.post_author";
+		$select_fields  = 'p.ID, p.post_modified, p.post_author';
 		$join_clauses   = [];
 		$where_clauses  = [
 			"p.post_type = 'person'",
@@ -1010,7 +1023,7 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ix ON p.ID = ix.post_id AND ix.meta_key = 'infix'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ln ON p.ID = ln.post_id AND ln.meta_key = 'last_name'";
-		$select_fields .= ", fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name";
+		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 
 		// VOG-only users can only see volunteers
 		if ( $volunteers_only ) {
@@ -1039,9 +1052,9 @@ class People extends Base {
 			$join_clauses[] = "INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id";
 			$join_clauses[] = "INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'person_label'";
 
-			$placeholders     = implode( ',', array_fill( 0, count( $labels ), '%d' ) );
-			$where_clauses[]  = "tt.term_id IN ($placeholders)";
-			$prepare_values   = array_merge( $prepare_values, $labels );
+			$placeholders    = implode( ',', array_fill( 0, count( $labels ), '%d' ) );
+			$where_clauses[] = "tt.term_id IN ($placeholders)";
+			$prepare_values  = array_merge( $prepare_values, $labels );
 		}
 
 		// Birth year filter (uses denormalized _birthdate meta from Phase 112)
@@ -1050,16 +1063,16 @@ class People extends Base {
 
 			if ( $birth_year_from !== null && $birth_year_to !== null ) {
 				// Range filter
-				$where_clauses[]  = "YEAR(bd.meta_value) BETWEEN %d AND %d";
+				$where_clauses[]  = 'YEAR(bd.meta_value) BETWEEN %d AND %d';
 				$prepare_values[] = $birth_year_from;
 				$prepare_values[] = $birth_year_to;
 			} elseif ( $birth_year_from !== null ) {
 				// Minimum year only (treat as exact match for single year)
-				$where_clauses[]  = "YEAR(bd.meta_value) = %d";
+				$where_clauses[]  = 'YEAR(bd.meta_value) = %d';
 				$prepare_values[] = $birth_year_from;
 			} else {
 				// Maximum year only (treat as exact match for single year)
-				$where_clauses[]  = "YEAR(bd.meta_value) = %d";
+				$where_clauses[]  = 'YEAR(bd.meta_value) = %d';
 				$prepare_values[] = $birth_year_to;
 			}
 		}
@@ -1086,14 +1099,14 @@ class People extends Base {
 		// Type lid (member type) - select filter
 		if ( ! empty( $type_lid ) ) {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} tl ON p.ID = tl.post_id AND tl.meta_key = 'type-lid'";
-			$where_clauses[]  = "tl.meta_value = %s";
+			$where_clauses[]  = 'tl.meta_value = %s';
 			$prepare_values[] = $type_lid;
 		}
 
 		// Leeftijdsgroep (age group) - select filter
 		if ( ! empty( $leeftijdsgroep ) ) {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} lg ON p.ID = lg.post_id AND lg.meta_key = 'leeftijdsgroep'";
-			$where_clauses[]  = "lg.meta_value = %s";
+			$where_clauses[]  = 'lg.meta_value = %s';
 			$prepare_values[] = $leeftijdsgroep;
 		}
 
@@ -1170,8 +1183,8 @@ class People extends Base {
 					$field_name = substr( $orderby, 7 );
 
 					// Get the field definition to determine type-appropriate sorting
-					$manager = new Manager();
-					$fields  = $manager->get_fields( 'person', false );
+					$manager    = new Manager();
+					$fields     = $manager->get_fields( 'person', false );
 					$field_type = null;
 
 					foreach ( $fields as $field ) {
@@ -1293,11 +1306,194 @@ class People extends Base {
 			$people[] = $person;
 		}
 
-		return rest_ensure_response( [
-			'people'      => $people,
-			'total'       => $total,
-			'page'        => $page,
-			'total_pages' => (int) ceil( $total / $per_page ),
-		] );
+		return rest_ensure_response(
+			[
+				'people'      => $people,
+				'total'       => $total,
+				'page'        => $page,
+				'total_pages' => (int) ceil( $total / $per_page ),
+			]
+		);
+	}
+
+	/**
+	 * Get dynamic filter configuration
+	 *
+	 * Maps filter keys to their meta_key and sort method.
+	 * This makes adding future dynamic filters trivial.
+	 *
+	 * @return array Filter configuration.
+	 */
+	private function get_dynamic_filter_config() {
+		return [
+			'age_groups'   => [
+				'meta_key'    => 'leeftijdsgroep',
+				'sort_method' => 'sort_age_groups',
+			],
+			'member_types' => [
+				'meta_key'    => 'type-lid',
+				'sort_method' => 'sort_member_types',
+			],
+		];
+	}
+
+	/**
+	 * Get filter options with counts
+	 *
+	 * Returns dynamic filter options for the People list.
+	 * Each option includes the value and count of matching people.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response with filter options and counts.
+	 */
+	public function get_filter_options( $request ) {
+		global $wpdb;
+
+		// Double-check access control (permission_callback should have caught this)
+		$access_control = new \Rondo\Core\AccessControl();
+		if ( ! $access_control->is_user_approved() ) {
+			return rest_ensure_response(
+				[
+					'total'        => 0,
+					'age_groups'   => [],
+					'member_types' => [],
+				]
+			);
+		}
+
+		// Get total count of published person posts
+		$total = (int) $wpdb->get_var(
+			"SELECT COUNT(*)
+			 FROM {$wpdb->posts}
+			 WHERE post_type = 'person'
+			   AND post_status = 'publish'"
+		);
+
+		$result = [ 'total' => $total ];
+
+		// Get filter configuration
+		$filters = $this->get_dynamic_filter_config();
+
+		// Query each filter
+		foreach ( $filters as $filter_key => $config ) {
+			$meta_key    = $config['meta_key'];
+			$sort_method = $config['sort_method'];
+
+			// Query DISTINCT meta_values with COUNT using GROUP BY
+			$sql = $wpdb->prepare(
+				"SELECT pm.meta_value AS value, COUNT(DISTINCT p.ID) AS count
+				 FROM {$wpdb->posts} p
+				 INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+				 WHERE p.post_type = 'person'
+				   AND p.post_status = 'publish'
+				   AND pm.meta_key = %s
+				   AND pm.meta_value != ''
+				 GROUP BY pm.meta_value
+				 HAVING count > 0",
+				$meta_key
+			);
+
+			$rows = $wpdb->get_results( $sql );
+
+			// Convert to array with value and count
+			$options = [];
+			foreach ( $rows as $row ) {
+				$options[] = [
+					'value' => $row->value,
+					'count' => (int) $row->count,
+				];
+			}
+
+			// Apply sort method
+			if ( method_exists( $this, $sort_method ) ) {
+				$options = $this->$sort_method( $options );
+			}
+
+			$result[ $filter_key ] = $options;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Sort age groups intelligently
+	 *
+	 * Sorts age groups youngest to oldest with smart numeric extraction.
+	 * - "Onder 6" before "Onder 7", etc.
+	 * - Within same number, base value before gender variant (e.g., "Onder 9" before "Onder 9 Meiden")
+	 * - Non-numeric values (e.g., "Senioren", "Senioren Vrouwen") sort to end
+	 * - Among non-numeric, base before gender variant
+	 *
+	 * @param array $options Array of options with value and count.
+	 * @return array Sorted array.
+	 */
+	private function sort_age_groups( $options ) {
+		usort(
+			$options,
+			function ( $a, $b ) {
+				$a_value = $a['value'];
+				$b_value = $b['value'];
+
+				// Extract numeric part from "Onder X" pattern
+				$a_has_number = preg_match( '/(\d+)/', $a_value, $a_matches );
+				$b_has_number = preg_match( '/(\d+)/', $b_value, $b_matches );
+
+				$a_number = $a_has_number ? (int) $a_matches[1] : 9999;
+				$b_number = $b_has_number ? (int) $b_matches[1] : 9999;
+
+				// Primary sort: by number (youngest to oldest)
+				if ( $a_number !== $b_number ) {
+					return $a_number - $b_number;
+				}
+
+				// Secondary sort: gender variants after base groups
+				$a_has_gender = strpos( $a_value, 'Meiden' ) !== false || strpos( $a_value, 'Vrouwen' ) !== false;
+				$b_has_gender = strpos( $b_value, 'Meiden' ) !== false || strpos( $b_value, 'Vrouwen' ) !== false;
+
+				if ( $a_has_gender !== $b_has_gender ) {
+					return $a_has_gender ? 1 : -1;
+				}
+
+				// Tertiary sort: alphabetical
+				return strcmp( $a_value, $b_value );
+			}
+		);
+
+		return $options;
+	}
+
+	/**
+	 * Sort member types in priority order
+	 *
+	 * Sorts member types in meaningful priority order.
+	 * Values not in priority array sort to end (allows new types from sync to appear automatically).
+	 *
+	 * @param array $options Array of options with value and count.
+	 * @return array Sorted array.
+	 */
+	private function sort_member_types( $options ) {
+		$priority = [
+			'Junior'             => 1,
+			'Senior'             => 2,
+			'Donateur'           => 3,
+			'Lid van Verdienste' => 4,
+		];
+
+		usort(
+			$options,
+			function ( $a, $b ) use ( $priority ) {
+				$a_priority = $priority[ $a['value'] ] ?? 99;
+				$b_priority = $priority[ $b['value'] ] ?? 99;
+
+				if ( $a_priority !== $b_priority ) {
+					return $a_priority - $b_priority;
+				}
+
+				// Same priority: alphabetical
+				return strcmp( $a['value'], $b['value'] );
+			}
+		);
+
+		return $options;
 	}
 }
