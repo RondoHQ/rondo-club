@@ -32,7 +32,10 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
   2. Member type filter dropdown on People list shows only values that exist in the database
   3. When a new age group or member type value arrives via sync, it appears in the filter options without any code change
   4. The REST API provides an endpoint (or extended response) that returns available filter options for both fields
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+  - [ ] 151-01-PLAN.md -- Backend REST endpoint for filter options with generic infrastructure
+  - [ ] 151-02-PLAN.md -- Frontend hook, dynamic dropdowns, documentation
 
 ### Phase 152: Role Settings
 **Goal**: Admins can configure which job titles are "player roles" and which are "excluded/honorary roles" via the Settings UI
@@ -130,7 +133,7 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 151. Dynamic Filters | v20.0 | 0/TBD | Not started | - |
+| 151. Dynamic Filters | v20.0 | 0/2 | Planned | - |
 | 152. Role Settings | v20.0 | 0/TBD | Not started | - |
 | 153. Wire Up Role Settings | v20.0 | 0/TBD | Not started | - |
 | 154. Sync Cleanup | v20.0 | 0/TBD | Not started | - |
