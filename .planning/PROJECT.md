@@ -368,6 +368,17 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - [ ] Member type filter options are derived dynamically from the database
 - [ ] Default role fallbacks removed from rondo-sync
 
+**v21.0 Per-Season Fee Categories** — Replace hardcoded fee category definitions with per-season configurable categories stored in WordPress options.
+
+- [ ] Fee categories (name, label, amount, age range, youth flag, sort order) are configurable per season
+- [ ] Admin can manage fee categories via Settings UI with add/remove/reorder
+- [ ] Admin can configure age-range-to-category mappings per season
+- [ ] New seasons auto-copy categories from the previous season as starting point
+- [ ] parse_age_group() reads age ranges from season config instead of hardcoded values
+- [ ] Frontend receives category metadata from API (no hardcoded FEE_CATEGORIES)
+- [ ] Category order, youth_categories, and VALID_TYPES all derived from season config
+- [ ] Migration: current season enriched with today's hardcoded values on first load
+
 ### Out of Scope
 
 - Mobile app — future consideration
@@ -540,4 +551,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Integration URLs externalized to config | FreeScout link checks window.stadionConfig first, hides feature if not configured | ✓ Good |
 
 ---
-*Last updated: 2026-02-06 after v20.0 Configurable Roles milestone started*
+*Last updated: 2026-02-07 after v21.0 Per-Season Fee Categories milestone started*
