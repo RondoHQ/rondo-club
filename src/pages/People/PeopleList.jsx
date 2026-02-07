@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings, FileSpreadsheet } from 'lucide-react';
-import { useFilteredPeople, useBulkUpdatePeople } from '@/hooks/usePeople';
+import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -785,6 +785,14 @@ export default function PeopleList() {
   const totalPeople = data?.total || 0;
   const totalPages = data?.total_pages || 0;
 
+  // Fetch filter options for dynamic dropdowns
+  const {
+    data: filterOptions,
+    isLoading: filterOptionsLoading,
+    error: filterOptionsError,
+    refetch: refetchFilterOptions,
+  } = useFilterOptions();
+
   const bulkUpdateMutation = useBulkUpdatePeople();
 
   // Note: Page reset is handled automatically in updateSearchParams when filters change
@@ -923,6 +931,24 @@ export default function PeopleList() {
       }
     }
   }, [hasActiveFilters, totalPeople, isLoading, searchParams, updateSearchParams]);
+
+  // Validate URL filter params against loaded filter options
+  // If a filter value in the URL doesn't exist in the database, clear it
+  useEffect(() => {
+    if (!filterOptions || filterOptionsLoading) return;
+
+    const validTypeValues = filterOptions.member_types.map(o => o.value);
+    const validAgeValues = filterOptions.age_groups.map(o => o.value);
+
+    if (typeLid && !validTypeValues.includes(typeLid)) {
+      setTypeLid('');
+    }
+    if (leeftijdsgroep && !validAgeValues.includes(leeftijdsgroep)) {
+      setLeeftijdsgroep('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterOptions, filterOptionsLoading]);
+  // NOTE: Deliberately not including typeLid/leeftijdsgroep in deps to avoid infinite loop
 
   const handleLabelToggle = (labelId) => {
     setSelectedLabelIds(prev =>
@@ -1232,17 +1258,42 @@ export default function PeopleList() {
                     <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                       Type lid
                     </h3>
-                    <select
-                      value={typeLid}
-                      onChange={(e) => setTypeLid(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
-                    >
-                      <option value="">Alle</option>
-                      <option value="Junior">Junior</option>
-                      <option value="Senior">Senior</option>
-                      <option value="Donateur">Donateur</option>
-                      <option value="Lid van Verdienste">Lid van Verdienste</option>
-                    </select>
+                    {filterOptionsLoading ? (
+                      <select
+                        disabled
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      >
+                        <option value="">Laden...</option>
+                      </select>
+                    ) : filterOptionsError ? (
+                      <div>
+                        <select
+                          disabled
+                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        >
+                          <option value="">Fout bij laden</option>
+                        </select>
+                        <button
+                          onClick={() => refetchFilterOptions()}
+                          className="text-xs text-accent-600 dark:text-accent-400 hover:underline mt-1"
+                        >
+                          Opnieuw proberen
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={typeLid}
+                        onChange={(e) => setTypeLid(e.target.value)}
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      >
+                        <option value="">Alle ({filterOptions?.total || 0})</option>
+                        {filterOptions?.member_types?.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.value} ({opt.count})
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   {/* Leeftijdsgroep Filter */}
@@ -1250,34 +1301,42 @@ export default function PeopleList() {
                     <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                       Leeftijdsgroep
                     </h3>
-                    <select
-                      value={leeftijdsgroep}
-                      onChange={(e) => setLeeftijdsgroep(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
-                    >
-                      <option value="">Alle</option>
-                      <option value="Onder 6">Onder 6</option>
-                      <option value="Onder 7">Onder 7</option>
-                      <option value="Onder 8">Onder 8</option>
-                      <option value="Onder 9">Onder 9</option>
-                      <option value="Onder 9 Meiden">Onder 9 Meiden</option>
-                      <option value="Onder 10">Onder 10</option>
-                      <option value="Onder 11">Onder 11</option>
-                      <option value="Onder 11 Meiden">Onder 11 Meiden</option>
-                      <option value="Onder 12">Onder 12</option>
-                      <option value="Onder 13">Onder 13</option>
-                      <option value="Onder 13 Meiden">Onder 13 Meiden</option>
-                      <option value="Onder 14">Onder 14</option>
-                      <option value="Onder 15">Onder 15</option>
-                      <option value="Onder 15 Meiden">Onder 15 Meiden</option>
-                      <option value="Onder 16">Onder 16</option>
-                      <option value="Onder 17">Onder 17</option>
-                      <option value="Onder 17 Meiden">Onder 17 Meiden</option>
-                      <option value="Onder 18">Onder 18</option>
-                      <option value="Onder 19">Onder 19</option>
-                      <option value="Senioren">Senioren</option>
-                      <option value="Senioren Vrouwen">Senioren Vrouwen</option>
-                    </select>
+                    {filterOptionsLoading ? (
+                      <select
+                        disabled
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      >
+                        <option value="">Laden...</option>
+                      </select>
+                    ) : filterOptionsError ? (
+                      <div>
+                        <select
+                          disabled
+                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        >
+                          <option value="">Fout bij laden</option>
+                        </select>
+                        <button
+                          onClick={() => refetchFilterOptions()}
+                          className="text-xs text-accent-600 dark:text-accent-400 hover:underline mt-1"
+                        >
+                          Opnieuw proberen
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={leeftijdsgroep}
+                        onChange={(e) => setLeeftijdsgroep(e.target.value)}
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      >
+                        <option value="">Alle ({filterOptions?.total || 0})</option>
+                        {filterOptions?.age_groups?.map(opt => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.value} ({opt.count})
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   {/* Foto Missing Filter */}

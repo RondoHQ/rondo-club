@@ -10,6 +10,7 @@ export const peopleKeys = {
   lists: () => [...peopleKeys.all, 'list'],
   list: (filters) => [...peopleKeys.lists(), filters],
   filtered: (filters) => [...peopleKeys.all, 'filtered', filters],
+  filterOptions: () => [...peopleKeys.all, 'filter-options'],
   details: () => [...peopleKeys.all, 'detail'],
   detail: (id) => [...peopleKeys.details(), id],
   timeline: (id) => [...peopleKeys.detail(id), 'timeline'],
@@ -154,6 +155,25 @@ export function useFilteredPeople(filters = {}, options = {}) {
     // Keep previous data while fetching new page for smoother UX
     placeholderData: (previousData) => previousData,
     // Allow staleTime, enabled, etc. to be passed
+    ...options,
+  });
+}
+
+/**
+ * Hook for fetching dynamic filter options with counts.
+ * Returns available age groups and member types from the database.
+ *
+ * @param {Object} options - TanStack Query options
+ * @returns {Object} TanStack Query result with { total, age_groups, member_types }
+ */
+export function useFilterOptions(options = {}) {
+  return useQuery({
+    queryKey: peopleKeys.filterOptions(),
+    queryFn: async () => {
+      const response = await prmApi.getFilterOptions();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - options change only on sync
     ...options,
   });
 }
