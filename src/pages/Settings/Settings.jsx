@@ -37,6 +37,7 @@ const ADMIN_SUBTABS = [
   { id: 'users', label: 'Gebruikers', icon: Users },
   { id: 'fees', label: 'Contributie', icon: Coins },
   { id: 'vog', label: 'VOG' },
+  { id: 'rollen', label: 'Rollen' },
 ];
 
 export default function Settings() {
@@ -126,6 +127,14 @@ export default function Settings() {
   const [vogSaving, setVogSaving] = useState(false);
   const [vogMessage, setVogMessage] = useState('');
   const [vogCommissies, setVogCommissies] = useState([]);
+
+  // Volunteer role classification state
+  const [availableRoles, setAvailableRoles] = useState([]);
+  const [roleSettings, setRoleSettings] = useState({ player_roles: [], excluded_roles: [] });
+  const [roleDefaults, setRoleDefaults] = useState({ default_player_roles: [], default_excluded_roles: [] });
+  const [rolesLoading, setRolesLoading] = useState(true);
+  const [rolesSaving, setRolesSaving] = useState(false);
+  const [rolesMessage, setRolesMessage] = useState('');
 
   // Membership fee settings state
   const [currentSeasonFees, setCurrentSeasonFees] = useState({
@@ -284,6 +293,31 @@ export default function Settings() {
     fetchFeeSettings();
   }, [isAdmin]);
 
+  // Fetch volunteer role settings on mount (admin only)
+  useEffect(() => {
+    const fetchRoleSettings = async () => {
+      if (!isAdmin) {
+        setRolesLoading(false);
+        return;
+      }
+      try {
+        const [availableResponse, settingsResponse] = await Promise.all([
+          prmApi.getAvailableRoles(),
+          prmApi.getVolunteerRoleSettings(),
+        ]);
+        setAvailableRoles(availableResponse.data || []);
+        const { player_roles, excluded_roles, default_player_roles, default_excluded_roles } = settingsResponse.data;
+        setRoleSettings({ player_roles, excluded_roles });
+        setRoleDefaults({ default_player_roles, default_excluded_roles });
+      } catch {
+        // Role settings fetch failed silently
+      } finally {
+        setRolesLoading(false);
+      }
+    };
+    fetchRoleSettings();
+  }, [isAdmin]);
+
   // Handle VOG settings save
   const handleVogSave = async () => {
     setVogSaving(true);
@@ -302,6 +336,26 @@ export default function Settings() {
       setVogMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setVogSaving(false);
+    }
+  };
+
+  // Handle volunteer role settings save
+  const handleRolesSave = async () => {
+    setRolesSaving(true);
+    setRolesMessage('');
+    try {
+      const response = await prmApi.updateVolunteerRoleSettings(roleSettings);
+      const { player_roles, excluded_roles, people_recalculated } = response.data;
+      setRoleSettings({ player_roles, excluded_roles });
+      setRolesMessage(
+        people_recalculated !== undefined && people_recalculated !== null
+          ? `Rolclassificatie opgeslagen. ${people_recalculated} personen herberekend.`
+          : 'Rolclassificatie opgeslagen'
+      );
+    } catch (error) {
+      setRolesMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
+    } finally {
+      setRolesSaving(false);
     }
   };
 
@@ -670,6 +724,14 @@ export default function Settings() {
           vogMessage={vogMessage}
           handleVogSave={handleVogSave}
           vogCommissies={vogCommissies}
+          availableRoles={availableRoles}
+          roleSettings={roleSettings}
+          setRoleSettings={setRoleSettings}
+          roleDefaults={roleDefaults}
+          rolesLoading={rolesLoading}
+          rolesSaving={rolesSaving}
+          rolesMessage={rolesMessage}
+          handleRolesSave={handleRolesSave}
           />
         ) : null;
       case 'about':
@@ -3145,6 +3207,14 @@ function AdminTabWithSubtabs({
   vogMessage,
   handleVogSave,
   vogCommissies,
+  availableRoles,
+  roleSettings,
+  setRoleSettings,
+  roleDefaults,
+  rolesLoading,
+  rolesSaving,
+  rolesMessage,
+  handleRolesSave,
 }) {
   return (
     <div className="space-y-6">
@@ -3192,6 +3262,17 @@ function AdminTabWithSubtabs({
           vogMessage={vogMessage}
           handleVogSave={handleVogSave}
           commissies={vogCommissies}
+        />
+      ) : activeSubtab === 'rollen' ? (
+        <RollenTab
+          availableRoles={availableRoles}
+          roleSettings={roleSettings}
+          setRoleSettings={setRoleSettings}
+          roleDefaults={roleDefaults}
+          rolesLoading={rolesLoading}
+          rolesSaving={rolesSaving}
+          rolesMessage={rolesMessage}
+          handleRolesSave={handleRolesSave}
         />
       ) : null}
     </div>
@@ -3560,6 +3641,155 @@ function VOGTab({
             {vogMessage && (
               <span className={`text-sm ${vogMessage.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                 {vogMessage}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Rollen Tab Component - Volunteer role classification
+function RollenTab({
+  availableRoles,
+  roleSettings,
+  setRoleSettings,
+  roleDefaults,
+  rolesLoading,
+  rolesSaving,
+  rolesMessage,
+  handleRolesSave,
+}) {
+  // Combine all roles: available from DB + configured in settings (deduplicated, sorted)
+  const allRoles = [...new Set([
+    ...availableRoles,
+    ...roleSettings.player_roles,
+    ...roleSettings.excluded_roles,
+  ])].sort((a, b) => a.localeCompare(b, 'nl'));
+
+  const getClassification = (role) => {
+    if (roleSettings.player_roles.includes(role)) return 'player';
+    if (roleSettings.excluded_roles.includes(role)) return 'excluded';
+    return 'volunteer';
+  };
+
+  const handleClassificationChange = (role, classification) => {
+    setRoleSettings(prev => {
+      const newPlayerRoles = prev.player_roles.filter(r => r !== role);
+      const newExcludedRoles = prev.excluded_roles.filter(r => r !== role);
+
+      if (classification === 'player') {
+        newPlayerRoles.push(role);
+      } else if (classification === 'excluded') {
+        newExcludedRoles.push(role);
+      }
+
+      return {
+        player_roles: newPlayerRoles,
+        excluded_roles: newExcludedRoles,
+      };
+    });
+  };
+
+  const isDefault = (role) => {
+    return roleDefaults.default_player_roles.includes(role) || roleDefaults.default_excluded_roles.includes(role);
+  };
+
+  const getDefaultClassification = (role) => {
+    if (roleDefaults.default_player_roles.includes(role)) return 'player';
+    if (roleDefaults.default_excluded_roles.includes(role)) return 'excluded';
+    return 'volunteer';
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          Rolclassificatie
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Bepaal hoe functies uit Sportlink worden geclassificeerd voor de vrijwilligersstatus.
+        </p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          Functies die als &lsquo;Speler&rsquo; zijn gemarkeerd tellen niet mee als vrijwilligersposities bij teams. Functies die als &lsquo;Uitgesloten&rsquo; zijn gemarkeerd worden nergens als vrijwilliger geteld. Alle andere functies tellen als vrijwilligersrol.
+        </p>
+      </div>
+
+      {rolesLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
+        </div>
+      ) : allRoles.length === 0 ? (
+        <div className="text-sm text-gray-500 dark:text-gray-400 py-4">
+          Geen functies gevonden. Functies worden automatisch geladen vanuit Sportlink-sync.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Role classification table */}
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr,auto] gap-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Functie</span>
+              <div className="grid grid-cols-3 gap-6 text-center">
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Vrijwilliger</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Speler</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Uitgesloten</span>
+              </div>
+            </div>
+            {/* Rows */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
+              {allRoles.map(role => {
+                const classification = getClassification(role);
+                const hasDefault = isDefault(role);
+                const defaultClass = getDefaultClassification(role);
+                const isModified = hasDefault && classification !== defaultClass;
+                return (
+                  <div key={role} className="grid grid-cols-[1fr,auto] gap-4 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 items-center">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm text-gray-900 dark:text-gray-100 truncate">{role}</span>
+                      {isModified && (
+                        <span className="text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap">(gewijzigd)</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 gap-6">
+                      {['volunteer', 'player', 'excluded'].map(type => (
+                        <label key={type} className="flex items-center justify-center w-24 cursor-pointer">
+                          <input
+                            type="radio"
+                            name={`role-${role}`}
+                            checked={classification === type}
+                            onChange={() => handleClassificationChange(role, type)}
+                            className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Save button and message */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleRolesSave}
+              disabled={rolesSaving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+            >
+              {rolesSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Opslaan...
+                </>
+              ) : (
+                'Opslaan'
+              )}
+            </button>
+            {rolesMessage && (
+              <span className={`text-sm ${rolesMessage.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {rolesMessage}
               </span>
             )}
           </div>
