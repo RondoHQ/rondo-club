@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Personal CRM system includes a powerful bidirectional relationship system that automatically synchronizes relationships between people. When you create a relationship from Person A to Person B, the system automatically creates the inverse relationship from Person B to Person A.
+The system includes a bidirectional relationship system that automatically synchronizes relationships between people. When you create a relationship from Person A to Person B, the system automatically creates the inverse relationship from Person B to Person A.
 
 ## How Relationships Work
 
@@ -11,7 +11,7 @@ The Personal CRM system includes a powerful bidirectional relationship system th
 Relationships are stored as an ACF (Advanced Custom Fields) repeater field on each Person post. Each relationship entry contains:
 
 - **Related Person**: The ID of the person this relationship refers to
-- **Relationship Type**: A taxonomy term ID indicating the type of relationship (e.g., Parent, Child, Spouse, Friend)
+- **Relationship Type**: A taxonomy term ID indicating the type of relationship (Parent, Child, or Sibling)
 - **Custom Label**: An optional override label for the relationship
 
 ### Automatic Bidirectional Sync
@@ -28,52 +28,35 @@ The inverse relationship type is determined by the ACF field configuration on th
 
 **Scenario**: You create a relationship where Person A is a "Parent" to Person B.
 
-1. System stores: Person A → Person B = "Parent"
-2. System looks up inverse mapping: "Parent" → "Child"
-3. System creates: Person B → Person A = "Child"
+1. System stores: Person A -> Person B = "Parent"
+2. System looks up inverse mapping: "Parent" -> "Child"
+3. System creates: Person B -> Person A = "Child"
 
-Both relationships are now synchronized. If you later change Person A's relationship to "Grandparent", the system will:
-- Remove the old "Child" relationship from Person B
-- Create a new "Grandchild" relationship from Person B to Person A
+Both relationships are now synchronized.
 
-## Relationship Types
+## Default Relationship Types
+
+Three relationship types are included by default:
 
 ### Symmetric Relationships
 
-Some relationships are symmetric - the inverse is the same type:
-
-- **Spouse** → **Spouse**
-- **Friend** → **Friend**
-- **Colleague** → **Colleague**
-- **Acquaintance** → **Acquaintance**
-- **Sibling** → **Sibling**
-- **Cousin** → **Cousin**
+- **Sibling** <> **Sibling** (same type as inverse)
 
 ### Asymmetric Relationships
 
-Most relationships have a specific inverse:
+- **Parent** <> **Child** (each maps to the other)
 
-- **Parent** ↔ **Child**
-- **Grandparent** ↔ **Grandchild**
-- **Boss** ↔ **Subordinate**
-- **Mentor** ↔ **Mentee**
-- **Uncle** ↔ **Nephew**
-- **Aunt** ↔ **Niece**
+### Automatic Sibling Sync
 
-### Gender-Dependent Relationships
+When a parent-child relationship is created, the system automatically creates sibling relationships between all children who share the same parent. If a parent-child link is removed and the child has no remaining parents, sibling relationships are cleaned up.
 
-Some relationship types depend on the gender of the people involved:
+## Custom Relationship Types
 
-- **Aunt/Uncle**: Depends on Person A's gender (aunt if female, uncle if male)
-- **Niece/Nephew**: Depends on Person B's gender (niece if female, nephew if male)
+Users can add custom relationship types via Settings > Relationship Types. Each custom type can be configured with an inverse mapping:
 
-When creating an inverse relationship, the system automatically resolves gender-dependent types based on the related person's gender.
-
-**Example**: 
-- Person A (female) creates "Aunt" relationship to Person B
-- System creates inverse: Person B → Person A
-- If Person B is female: inverse = "Niece"
-- If Person B is male: inverse = "Nephew"
+- For symmetric types: set the inverse to the same type
+- For asymmetric types: set each type's inverse to its counterpart
+- Leave the inverse empty for one-way relationships
 
 ## Creating Relationships
 
@@ -128,29 +111,23 @@ The system prevents infinite loops when syncing relationships. If Person A and P
 
 If the related person doesn't exist or isn't accessible, the inverse relationship creation is skipped.
 
-### Missing Gender Information
-
-For gender-dependent relationships, if the related person's gender is not set, the system will use a default behavior (typically the first option in the gender-dependent group).
-
 ## Best Practices
 
 1. **Always set inverse mappings**: Configure inverse relationships for all relationship types you use
-2. **Use specific types**: Prefer specific types (aunt, uncle) over generic ones when gender is known
-3. **Keep mappings consistent**: Ensure bidirectional mappings are set up correctly (if A→B maps to C, then C→A should map back to A's type)
-4. **Test relationships**: After configuring new relationship types, test that inverses are created correctly
+2. **Keep mappings consistent**: Ensure bidirectional mappings are set up correctly (if A->B maps to C, then C->A should map back to A's type)
+3. **Test relationships**: After configuring new relationship types, test that inverses are created correctly
 
 ## Troubleshooting
 
 ### Inverse relationship not created
 
-- Check that the relationship type has an inverse mapping configured in Settings → Relationship Types
+- Check that the relationship type has an inverse mapping configured in Settings > Relationship Types
 - Verify both people exist and are accessible
 - Check for JavaScript errors in the browser console
 
 ### Wrong inverse type created
 
-- Verify the inverse mapping is correct in Settings → Relationship Types
-- For gender-dependent types, ensure both people have gender set correctly
+- Verify the inverse mapping is correct in Settings > Relationship Types
 - Check that the relationship type taxonomy terms exist
 
 ### Duplicate relationships
@@ -158,4 +135,3 @@ For gender-dependent relationships, if the related person's gender is not set, t
 - The system prevents duplicates automatically
 - If duplicates appear, check for conflicting relationship entries
 - Use the delete function to remove incorrect relationships
-

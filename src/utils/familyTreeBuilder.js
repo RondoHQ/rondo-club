@@ -7,7 +7,7 @@
 
 import { decodeHtml } from './formatters';
 
-const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child', 'spouse', 'lover', 'partner'];
+const FAMILY_RELATIONSHIP_TYPES = ['parent', 'child', 'sibling'];
 
 export function isFamilyRelationshipType(typeSlug) {
   return FAMILY_RELATIONSHIP_TYPES.includes(typeSlug?.toLowerCase());
@@ -21,9 +21,8 @@ function isChildType(typeSlug) {
   return typeSlug?.toLowerCase() === 'child';
 }
 
-function isSpouseType(typeSlug) {
-  const slug = typeSlug?.toLowerCase();
-  return slug === 'spouse' || slug === 'lover' || slug === 'partner';
+function isSiblingType(typeSlug) {
+  return typeSlug?.toLowerCase() === 'sibling';
 }
 
 /**
@@ -132,14 +131,14 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
             to: relatedPersonId,
             type: 'parent-child',
           });
-        } else if (isSpouseType(relType)) {
-          const [first, second] = personId < relatedPersonId 
-            ? [personId, relatedPersonId] 
+        } else if (isSiblingType(relType)) {
+          const [first, second] = personId < relatedPersonId
+            ? [personId, relatedPersonId]
             : [relatedPersonId, personId];
           edges.push({
             from: first,
             to: second,
-            type: 'spouse',
+            type: 'sibling',
           });
         }
       }
@@ -164,7 +163,7 @@ export function buildFamilyGraph(startPersonId, allPeople, relationshipMap) {
  * - Parents = generation -1 (above)
  * - Grandparents = generation -2
  * - Children = generation +1 (below)
- * - Spouses share the same level as their partner
+ * - Siblings share the same level
  * @param {Object} graph - The graph object with nodes and edges
  * @param {number} startPersonId - The ID of the person to start from
  * @param {Object} deceasedMap - Map of person ID to deceased status (optional)
@@ -177,21 +176,21 @@ export function graphToVisFormat(graph, startPersonId, deceasedMap = {}) {
   // Build adjacency lists
   const childToParents = new Map();
   const parentToChildren = new Map();
-  const spouseOf = new Map(); // person -> [spouse IDs]
-  
+  const siblingOf = new Map();
+
   nodes.forEach(node => {
     childToParents.set(node.id, []);
     parentToChildren.set(node.id, []);
-    spouseOf.set(node.id, []);
+    siblingOf.set(node.id, []);
   });
-  
+
   edges.forEach(edge => {
     if (edge.type === 'parent-child') {
       childToParents.get(edge.to)?.push(edge.from);
       parentToChildren.get(edge.from)?.push(edge.to);
-    } else if (edge.type === 'spouse') {
-      spouseOf.get(edge.from)?.push(edge.to);
-      spouseOf.get(edge.to)?.push(edge.from);
+    } else if (edge.type === 'sibling') {
+      siblingOf.get(edge.from)?.push(edge.to);
+      siblingOf.get(edge.to)?.push(edge.from);
     }
   });
   
@@ -225,13 +224,13 @@ export function graphToVisFormat(graph, startPersonId, deceasedMap = {}) {
       }
     }
     
-    // Spouses are same generation
-    const spouses = spouseOf.get(id) || [];
-    for (const spouseId of spouses) {
-      if (!visited.has(spouseId)) {
-        visited.add(spouseId);
-        generations.set(spouseId, generation);
-        queue.push({ id: spouseId, generation: generation });
+    // Siblings are same generation
+    const siblings = siblingOf.get(id) || [];
+    for (const siblingId of siblings) {
+      if (!visited.has(siblingId)) {
+        visited.add(siblingId);
+        generations.set(siblingId, generation);
+        queue.push({ id: siblingId, generation: generation });
       }
     }
   }
@@ -331,23 +330,21 @@ export function graphToVisFormat(graph, startPersonId, deceasedMap = {}) {
   
   // Create vis.js edges
   const visEdges = edges.map((edge, index) => {
-    const isSpouse = edge.type === 'spouse';
-    
+    const isSibling = edge.type === 'sibling';
+
     return {
       id: `edge-${index}`,
       from: edge.from,
       to: edge.to,
       arrows: { to: { enabled: false } },
       color: {
-        color: isSpouse ? '#ec4899' : '#9ca3af',
-        highlight: isSpouse ? '#db2777' : '#6b7280',
+        color: isSibling ? '#60a5fa' : '#9ca3af',
+        highlight: isSibling ? '#3b82f6' : '#6b7280',
       },
       width: 2,
-      dashes: isSpouse ? [5, 5] : false,
+      dashes: isSibling ? [5, 5] : false,
       smooth: false,
-      // Spouse edges are very short to pull partners together
-      // Parent-child edges are much longer to allow spreading
-      length: isSpouse ? 50 : 300,
+      length: 300,
     };
   });
   
