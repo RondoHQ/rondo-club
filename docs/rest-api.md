@@ -821,6 +821,68 @@ Common error codes:
 
 ---
 
+### Volunteer Role Classification (Admin Only)
+
+Manage how Sportlink job titles are classified for volunteer status calculation.
+
+**GET** `/rondo/v1/volunteer-roles/available`
+
+Returns all distinct `job_title` values from `work_history` across all person posts.
+
+**Permission:** Admin only
+
+**Response:** Array of strings (role names), sorted alphabetically.
+
+---
+
+**GET** `/rondo/v1/volunteer-roles/settings`
+
+Returns current and default role classification arrays.
+
+**Permission:** Admin only
+
+**Response:**
+```json
+{
+  "player_roles": ["Aanvaller", "Keeper", ...],
+  "excluded_roles": ["Donateur", "Erelid", ...],
+  "default_player_roles": ["Aanvaller", "Keeper", ...],
+  "default_excluded_roles": ["Donateur", "Erelid", ...]
+}
+```
+
+---
+
+**POST** `/rondo/v1/volunteer-roles/settings`
+
+Update role classifications. Triggers volunteer status recalculation for all people.
+
+**Permission:** Admin only
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `player_roles` | array | Role names classified as player (not volunteer) |
+| `excluded_roles` | array | Role names excluded from volunteer count entirely |
+
+**Response:**
+```json
+{
+  "player_roles": ["Aanvaller", ...],
+  "excluded_roles": ["Donateur", ...],
+  "people_recalculated": 245
+}
+```
+
+**WordPress Options:**
+- `rondo_player_roles` - Array of player role names
+- `rondo_excluded_roles` - Array of excluded role names
+
+When no option is set, hardcoded defaults from `VolunteerStatus` class are used.
+
+---
+
 ## Related Documentation
 
 - [Access Control](./access-control.md) - How permissions work

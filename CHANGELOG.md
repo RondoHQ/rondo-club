@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation updated from "Stadion" to "Rondo Club" across all README, AGENTS, docs, and planning files
 
+## [19.1.0] - 2026-02-07
+
+### Added
+- Configurable role classification for volunteer status in Settings > Beheer > Rollen
+- REST API endpoints for volunteer role management (`/rondo/v1/volunteer-roles/available`, `/rondo/v1/volunteer-roles/settings`)
+- WordPress options `rondo_player_roles` and `rondo_excluded_roles` replace hardcoded constants
+- Admin UI to classify Sportlink job titles as Speler, Uitgesloten, or Vrijwilliger
+- Saving role classifications triggers automatic volunteer status recalculation for all people
+
 ## [19.0.1] - 2026-02-06
 
 ### Fixed
