@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 151 of 159 (Dynamic Filters) — first plan of v20.0
-Plan: 01 of 02
-Status: In progress
-Last activity: 2026-02-07 — Completed 151-01-PLAN.md
+Phase: 151 of 159 (Dynamic Filters) — first phase of v20.0
+Plan: 02 of 02
+Status: Phase complete
+Last activity: 2026-02-07 — Completed 151-02-PLAN.md
 
-Progress: [█░░░░░░░░░] 0.6%
+Progress: [██████████] 100%
 
 ## Accumulated Context
 
@@ -30,6 +30,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Generic filter config pattern established (151-01): map filter key → meta_key + sort_method
 - Smart age group sorting uses numeric extraction + gender variant detection (151-01)
 - Member types use priority array with unknown types at end (151-01)
+- Filter options cached 5 minutes in frontend (151-02) - changes only on sync
+- Stale URL params cleared silently (151-02) for better UX
 
 ### Pending Todos
 
@@ -44,8 +46,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-07T20:42:00Z
-Stopped at: Completed 151-01-PLAN.md (Dynamic filter options endpoint)
+Last session: 2026-02-07T20:50:14Z
+Stopped at: Completed 151-02-PLAN.md (Dynamic filter dropdowns)
 Resume file: None
 
 ---
