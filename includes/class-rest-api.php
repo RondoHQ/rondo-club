@@ -740,6 +740,55 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Volunteer role classification - available roles (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-roles/available',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_available_volunteer_roles' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
+		// Volunteer role classification settings (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-roles/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_volunteer_role_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_volunteer_role_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'player_roles'   => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+							'sanitize_callback' => function ( $param ) {
+								return array_values( array_unique( array_map( 'sanitize_text_field', $param ) ) );
+							},
+						],
+						'excluded_roles' => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+							'sanitize_callback' => function ( $param ) {
+								return array_values( array_unique( array_map( 'sanitize_text_field', $param ) ) );
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2933,6 +2982,74 @@ class Api extends Base {
 		}
 
 		return count( $people );
+	}
+
+	/**
+	 * Get all distinct job_title values from work_history across all person posts.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response List of distinct role names.
+	 */
+	public function get_available_volunteer_roles( $request ) {
+		global $wpdb;
+
+		// ACF repeater stores work_history rows as post meta with keys like:
+		// work_history_0_job_title, work_history_1_job_title, etc.
+		$results = $wpdb->get_col(
+			"SELECT DISTINCT meta_value FROM {$wpdb->postmeta}
+			 WHERE meta_key LIKE 'work_history_%_job_title'
+			 AND meta_value != ''
+			 ORDER BY meta_value ASC"
+		);
+
+		return rest_ensure_response( $results ?: [] );
+	}
+
+	/**
+	 * Get current volunteer role classification settings.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Settings with current and default role arrays.
+	 */
+	public function get_volunteer_role_settings( $request ) {
+		return rest_ensure_response(
+			[
+				'player_roles'           => \Rondo\Core\VolunteerStatus::get_player_roles(),
+				'excluded_roles'         => \Rondo\Core\VolunteerStatus::get_excluded_roles(),
+				'default_player_roles'   => \Rondo\Core\VolunteerStatus::get_default_player_roles(),
+				'default_excluded_roles' => \Rondo\Core\VolunteerStatus::get_default_excluded_roles(),
+			]
+		);
+	}
+
+	/**
+	 * Update volunteer role classification settings.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Updated settings with recalculation count.
+	 */
+	public function update_volunteer_role_settings( $request ) {
+		$player_roles   = $request->get_param( 'player_roles' );
+		$excluded_roles = $request->get_param( 'excluded_roles' );
+
+		if ( $player_roles !== null ) {
+			update_option( \Rondo\Core\VolunteerStatus::OPTION_PLAYER_ROLES, $player_roles );
+		}
+
+		if ( $excluded_roles !== null ) {
+			update_option( \Rondo\Core\VolunteerStatus::OPTION_EXCLUDED_ROLES, $excluded_roles );
+		}
+
+		// Trigger volunteer status recalculation for all people
+		$people_recalculated = $this->trigger_vog_recalculation();
+
+		return rest_ensure_response(
+			[
+				'player_roles'        => \Rondo\Core\VolunteerStatus::get_player_roles(),
+				'excluded_roles'      => \Rondo\Core\VolunteerStatus::get_excluded_roles(),
+				'people_recalculated' => $people_recalculated,
+			]
+		);
 	}
 
 	/**

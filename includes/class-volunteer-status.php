@@ -21,12 +21,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class VolunteerStatus {
 
 	/**
-	 * Player roles that do NOT count as volunteer positions.
+	 * Option key for player roles.
+	 *
+	 * @var string
+	 */
+	const OPTION_PLAYER_ROLES = 'rondo_player_roles';
+
+	/**
+	 * Option key for excluded roles.
+	 *
+	 * @var string
+	 */
+	const OPTION_EXCLUDED_ROLES = 'rondo_excluded_roles';
+
+	/**
+	 * Default player roles that do NOT count as volunteer positions.
 	 * These are actual player positions on a team.
+	 * Used as fallback when no option is set.
 	 *
 	 * @var array
 	 */
-	private const PLAYER_ROLES = [
+	private const DEFAULT_PLAYER_ROLES = [
 		'Aanvaller',
 		'Verdediger',
 		'Keeper',
@@ -39,12 +54,13 @@ class VolunteerStatus {
 	];
 
 	/**
-	 * Honorary/membership roles that do NOT count as volunteer positions.
+	 * Default honorary/membership roles that do NOT count as volunteer positions.
 	 * These are passive membership types, not active volunteering.
+	 * Used as fallback when no option is set.
 	 *
 	 * @var array
 	 */
-	private const EXCLUDED_ROLES = [
+	private const DEFAULT_EXCLUDED_ROLES = [
 		'Donateur',
 		'Erelid',
 		'Lid van Verdienste',
@@ -57,6 +73,44 @@ class VolunteerStatus {
 	 * @var string
 	 */
 	private const VOLUNTEER_FIELD_KEY = 'field_custom_person_huidig-vrijwilliger';
+
+	/**
+	 * Get the configured player roles from options, with defaults as fallback.
+	 *
+	 * @return array Player role names.
+	 */
+	public static function get_player_roles(): array {
+		$roles = get_option( self::OPTION_PLAYER_ROLES, null );
+		return is_array( $roles ) ? $roles : self::DEFAULT_PLAYER_ROLES;
+	}
+
+	/**
+	 * Get the configured excluded roles from options, with defaults as fallback.
+	 *
+	 * @return array Excluded role names.
+	 */
+	public static function get_excluded_roles(): array {
+		$roles = get_option( self::OPTION_EXCLUDED_ROLES, null );
+		return is_array( $roles ) ? $roles : self::DEFAULT_EXCLUDED_ROLES;
+	}
+
+	/**
+	 * Get the default player roles.
+	 *
+	 * @return array Default player role names.
+	 */
+	public static function get_default_player_roles(): array {
+		return self::DEFAULT_PLAYER_ROLES;
+	}
+
+	/**
+	 * Get the default excluded roles.
+	 *
+	 * @return array Default excluded role names.
+	 */
+	public static function get_default_excluded_roles(): array {
+		return self::DEFAULT_EXCLUDED_ROLES;
+	}
 
 	/**
 	 * Constructor.
@@ -191,7 +245,7 @@ class VolunteerStatus {
 		$job_title   = $position['job_title'] ?? '';
 
 		// Check if it's an excluded role (honorary/membership positions)
-		if ( ! empty( $job_title ) && in_array( $job_title, self::EXCLUDED_ROLES, true ) ) {
+		if ( ! empty( $job_title ) && in_array( $job_title, self::get_excluded_roles(), true ) ) {
 			return false;
 		}
 
@@ -219,7 +273,7 @@ class VolunteerStatus {
 			}
 
 			// Check if it's NOT a player role
-			return ! in_array( $job_title, self::PLAYER_ROLES, true );
+			return ! in_array( $job_title, self::get_player_roles(), true );
 		}
 
 		// If entity_type is not set but team is set, try to determine from post type
@@ -239,7 +293,7 @@ class VolunteerStatus {
 				if ( empty( $job_title ) ) {
 					return false;
 				}
-				return ! in_array( $job_title, self::PLAYER_ROLES, true );
+				return ! in_array( $job_title, self::get_player_roles(), true );
 			}
 		}
 
