@@ -873,9 +873,9 @@ class Api extends Base {
 	 */
 	public function restore_relationship_type_defaults( $request ) {
 		// Get the taxonomies class instance
-		$taxonomies = new \RONDO_Taxonomies();
+		$taxonomies = new \Rondo\Core\Taxonomies();
 
-		// Call the setup method (make it public or add a public wrapper)
+		// Call the setup method
 		if ( method_exists( $taxonomies, 'setup_default_relationship_configurations' ) ) {
 			$taxonomies->setup_default_relationship_configurations();
 

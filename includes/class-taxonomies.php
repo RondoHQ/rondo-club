@@ -153,43 +153,9 @@ class Taxonomies {
 	 */
 	private function add_default_relationship_types() {
 		$defaults = [
-			// Basic relationships
-			'partner'      => __( 'Partner', 'rondo' ),
-			'spouse'       => __( 'Spouse', 'rondo' ),
-			'friend'       => __( 'Friend', 'rondo' ),
-			'colleague'    => __( 'Colleague', 'rondo' ),
-			'acquaintance' => __( 'Acquaintance', 'rondo' ),
-			'ex'           => __( 'Ex', 'rondo' ),
-
-			// Family - immediate
-			'parent'       => __( 'Parent', 'rondo' ),
-			'child'        => __( 'Child', 'rondo' ),
-			'sibling'      => __( 'Sibling', 'rondo' ),
-
-			// Family - extended
-			'grandparent'  => __( 'Grandparent', 'rondo' ),
-			'grandchild'   => __( 'Grandchild', 'rondo' ),
-			'uncle'        => __( 'Uncle', 'rondo' ),
-			'aunt'         => __( 'Aunt', 'rondo' ),
-			'nephew'       => __( 'Nephew', 'rondo' ),
-			'niece'        => __( 'Niece', 'rondo' ),
-			'cousin'       => __( 'Cousin', 'rondo' ),
-
-			// Family - step/in-law
-			'stepparent'   => __( 'Stepparent', 'rondo' ),
-			'stepchild'    => __( 'Stepchild', 'rondo' ),
-			'stepsibling'  => __( 'Stepsibling', 'rondo' ),
-			'inlaw'        => __( 'In-law', 'rondo' ),
-
-			// Family - other
-			'godparent'    => __( 'Godparent', 'rondo' ),
-			'godchild'     => __( 'Godchild', 'rondo' ),
-
-			// Professional
-			'boss'         => __( 'Boss', 'rondo' ),
-			'subordinate'  => __( 'Subordinate', 'rondo' ),
-			'mentor'       => __( 'Mentor', 'rondo' ),
-			'mentee'       => __( 'Mentee', 'rondo' ),
+			'parent'  => __( 'Parent', 'rondo' ),
+			'child'   => __( 'Child', 'rondo' ),
+			'sibling' => __( 'Sibling', 'rondo' ),
 		];
 
 		foreach ( $defaults as $slug => $name ) {
@@ -198,13 +164,13 @@ class Taxonomies {
 			}
 		}
 
-		// Set up default configurations (inverse mappings and gender-dependent settings)
+		// Set up default configurations (inverse mappings)
 		$this->setup_default_relationship_configurations();
 	}
 
 	/**
 	 * Set up default relationship type configurations
-	 * Includes inverse mappings and gender-dependent settings
+	 * Includes inverse mappings for symmetric and asymmetric types
 	 */
 	public function setup_default_relationship_configurations() {
 		// ACF must be loaded for get_field/update_field to work
@@ -229,7 +195,7 @@ class Taxonomies {
 		}
 
 		// Symmetric relationships (same type as inverse)
-		$symmetric = [ 'spouse', 'friend', 'colleague', 'acquaintance', 'sibling', 'cousin', 'partner' ];
+		$symmetric = [ 'sibling' ];
 		foreach ( $symmetric as $slug ) {
 			if ( isset( $types[ $slug ] ) ) {
 				$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $types[ $slug ] );
@@ -239,20 +205,10 @@ class Taxonomies {
 			}
 		}
 
-		// Asymmetric parent-child relationships
+		// Asymmetric relationships
 		$asymmetric = [
-			'parent'      => 'child',
-			'child'       => 'parent',
-			'grandparent' => 'grandchild',
-			'grandchild'  => 'grandparent',
-			'stepparent'  => 'stepchild',
-			'stepchild'   => 'stepparent',
-			'godparent'   => 'godchild',
-			'godchild'    => 'godparent',
-			'boss'        => 'subordinate',
-			'subordinate' => 'boss',
-			'mentor'      => 'mentee',
-			'mentee'      => 'mentor',
+			'parent' => 'child',
+			'child'  => 'parent',
 		];
 
 		foreach ( $asymmetric as $from_slug => $to_slug ) {
@@ -260,53 +216,6 @@ class Taxonomies {
 				$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $types[ $from_slug ] );
 				if ( ! $inverse ) {
 					update_field( 'inverse_relationship_type', $types[ $to_slug ], 'relationship_type_' . $types[ $from_slug ] );
-				}
-			}
-		}
-
-		// Gender-dependent relationships
-		// Aunt/Uncle group - these map to Niece/Nephew based on the related person's gender
-		$aunt_uncle_group = [ 'aunt', 'uncle' ];
-		foreach ( $aunt_uncle_group as $slug ) {
-			if ( isset( $types[ $slug ] ) ) {
-				$term_id             = $types[ $slug ];
-				$is_gender_dependent = get_field( 'is_gender_dependent', 'relationship_type_' . $term_id );
-				if ( ! $is_gender_dependent ) {
-					update_field( 'is_gender_dependent', true, 'relationship_type_' . $term_id );
-					update_field( 'gender_dependent_group', 'aunt_uncle', 'relationship_type_' . $term_id );
-				}
-
-				// Set inverse to any type in niece_nephew group (will be resolved based on related person's gender)
-				// Use niece as the default mapping, but resolution will pick niece or nephew based on gender
-				if ( isset( $types['niece'] ) ) {
-					$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $term_id );
-					if ( ! $inverse ) {
-						// Map to niece_nephew group - will resolve to niece (if related person is female) or nephew (if male)
-						update_field( 'inverse_relationship_type', $types['niece'], 'relationship_type_' . $term_id );
-					}
-				}
-			}
-		}
-
-		// Niece/Nephew group - these map to Aunt/Uncle based on the related person's gender
-		$niece_nephew_group = [ 'niece', 'nephew' ];
-		foreach ( $niece_nephew_group as $slug ) {
-			if ( isset( $types[ $slug ] ) ) {
-				$term_id             = $types[ $slug ];
-				$is_gender_dependent = get_field( 'is_gender_dependent', 'relationship_type_' . $term_id );
-				if ( ! $is_gender_dependent ) {
-					update_field( 'is_gender_dependent', true, 'relationship_type_' . $term_id );
-					update_field( 'gender_dependent_group', 'niece_nephew', 'relationship_type_' . $term_id );
-				}
-
-				// Set inverse to any type in aunt_uncle group (will be resolved based on related person's gender)
-				// Use aunt as the default mapping, but resolution will pick aunt or uncle based on gender
-				if ( isset( $types['aunt'] ) ) {
-					$inverse = get_field( 'inverse_relationship_type', 'relationship_type_' . $term_id );
-					if ( ! $inverse ) {
-						// Map to aunt_uncle group - will resolve to aunt (if related person is female) or uncle (if male)
-						update_field( 'inverse_relationship_type', $types['aunt'], 'relationship_type_' . $term_id );
-					}
 				}
 			}
 		}

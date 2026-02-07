@@ -12,35 +12,8 @@
             "return_format": "id",
             "allow_null": 1,
             "multiple": 0,
-            "instructions": "Select the inverse relationship type. For example, if this is 'Parent', select 'Child'. If this is 'Spouse', select 'Spouse' (same type). Leave empty if this relationship type has no inverse.",
+            "instructions": "Select the inverse relationship type. For example, if this is 'Parent', select 'Child'. If this is 'Sibling', select 'Sibling' (same type). Leave empty if this relationship type has no inverse.",
             "required": 0
-        },
-        {
-            "key": "field_is_gender_dependent",
-            "label": "Is Gender Dependent",
-            "name": "is_gender_dependent",
-            "type": "true_false",
-            "message": "This relationship type depends on the gender of the people involved",
-            "default_value": 0,
-            "ui": 1,
-            "instructions": "Check if this relationship type depends on gender (e.g., aunt/uncle, niece/nephew). When creating inverses, the system will resolve to the correct gender-specific type."
-        },
-        {
-            "key": "field_gender_dependent_group",
-            "label": "Gender Dependent Group",
-            "name": "gender_dependent_group",
-            "type": "text",
-            "instructions": "Group name for gender variants (e.g., 'aunt_uncle', 'niece_nephew'). Types in the same group will be resolved based on gender when creating inverse relationships.",
-            "conditional_logic": [
-                [
-                    {
-                        "field": "field_is_gender_dependent",
-                        "operator": "==",
-                        "value": "1"
-                    }
-                ]
-            ],
-            "placeholder": "e.g., aunt_uncle, niece_nephew"
         }
     ],
     "location": [
@@ -61,4 +34,3 @@
     "active": true,
     "show_in_rest": 1
 }
-
