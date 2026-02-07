@@ -125,6 +125,9 @@ export const prmApi = {
   // Filtered people with server-side pagination/filtering/sorting
   getFilteredPeople: (params = {}) => api.get('/rondo/v1/people/filtered', { params }),
 
+  // Filter options for dynamic dropdowns
+  getFilterOptions: () => api.get('/rondo/v1/people/filter-options'),
+
   // Current user
   getCurrentUser: () => api.get('/rondo/v1/user/me'),
   
