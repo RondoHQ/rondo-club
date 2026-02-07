@@ -13,7 +13,6 @@ import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components
 const PeopleList = lazy(() => import('@/pages/People/PeopleList'));
 const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
-const FamilyTree = lazy(() => import('@/pages/People/FamilyTree'));
 const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
 const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
 const CommissiesList = lazy(() => import('@/pages/Commissies/CommissiesList'));
@@ -177,7 +176,6 @@ const router = createBrowserRouter([
 
           // People routes
           { path: 'people', element: <PeopleList /> },
-          { path: 'people/:id/family-tree', element: <FamilyTree /> },
           { path: 'people/:id', element: <PersonDetail /> },
 
           // VOG route - requires VOG capability
