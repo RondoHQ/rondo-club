@@ -4,6 +4,16 @@
 
 Relationship Types are taxonomy terms that define the types of relationships between people. Each relationship type can be configured with an inverse relationship type, which determines what relationship is automatically created on the other person's record.
 
+## Default Types
+
+Three relationship types are included by default:
+
+| Type | Inverse | Category |
+|------|---------|----------|
+| Parent | Child | Asymmetric |
+| Child | Parent | Asymmetric |
+| Sibling | Sibling | Symmetric |
+
 ## Accessing Relationship Types Settings
 
 1. Navigate to **Settings** in the main navigation
@@ -15,8 +25,8 @@ Relationship Types are taxonomy terms that define the types of relationships bet
 1. Click **Add Relationship Type**
 2. Enter the **Name** (e.g., "Godparent", "Neighbor", "Teammate")
 3. Optionally select an **Inverse Relationship Type**:
-   - For symmetric relationships, select the same type (e.g., "Friend" → "Friend")
-   - For asymmetric relationships, select the inverse (e.g., "Parent" → "Child")
+   - For symmetric relationships, select the same type (e.g., "Friend" -> "Friend")
+   - For asymmetric relationships, select the inverse (e.g., "Mentor" -> "Mentee")
    - Leave empty if there's no inverse
 4. Click **Save**
 
@@ -35,47 +45,16 @@ The new relationship type will be available immediately when creating relationsh
 
 ### Symmetric Relationships
 
-For relationships where both sides are the same type:
+For relationships where both sides are the same type, select the same relationship type as its inverse:
 
-- **Spouse** → **Spouse**
-- **Friend** → **Friend**
-- **Colleague** → **Colleague**
-- **Acquaintance** → **Acquaintance**
+- **Sibling** -> **Sibling**
 
-Simply select the same relationship type as its inverse.
+### Asymmetric Relationships
 
-### Parent-Child Relationships
+For hierarchical or directional relationships, set each type to map to its counterpart:
 
-For hierarchical family relationships:
-
-- **Parent** → **Child**
-- **Child** → **Parent**
-- **Grandparent** → **Grandchild**
-- **Grandchild** → **Grandparent**
-- **Stepparent** → **Stepchild**
-- **Stepchild** → **Stepparent**
-- **Godparent** → **Godchild**
-- **Godchild** → **Godparent**
-
-### Extended Family
-
-For aunt/uncle and niece/nephew relationships:
-
-- **Uncle** → **Nephew** (if related person is male) or **Niece** (if related person is female)
-- **Aunt** → **Nephew** (if related person is male) or **Niece** (if related person is female)
-- **Nephew** → **Uncle** (if related person is male) or **Aunt** (if related person is female)
-- **Niece** → **Uncle** (if related person is male) or **Aunt** (if related person is female)
-
-These are gender-dependent and will be automatically resolved based on the related person's gender.
-
-### Professional Relationships
-
-For work-related connections:
-
-- **Boss** → **Subordinate**
-- **Subordinate** → **Boss**
-- **Mentor** → **Mentee**
-- **Mentee** → **Mentor**
+- **Parent** -> **Child**
+- **Child** -> **Parent**
 
 ### No Inverse
 
@@ -94,44 +73,21 @@ The inverse relationship type selector is searchable:
 3. Select from the filtered results
 4. The selector includes all types, including the current type itself (for symmetric relationships)
 
-## Common Configurations
+## Common Configuration
 
-### Complete Family Tree Setup
-
-```
-Parent → Child
-Child → Parent
-Grandparent → Grandchild
-Grandchild → Grandparent
-Stepparent → Stepchild
-Stepchild → Stepparent
-Uncle → Nephew/Niece (gender-dependent)
-Aunt → Nephew/Niece (gender-dependent)
-Nephew → Uncle/Aunt (gender-dependent)
-Niece → Uncle/Aunt (gender-dependent)
-Cousin → Cousin
-Sibling → Sibling
-```
-
-### Professional Network
+### Family Tree Setup
 
 ```
-Boss → Subordinate
-Subordinate → Boss
-Mentor → Mentee
-Mentee → Mentor
-Colleague → Colleague
+Parent -> Child
+Child -> Parent
+Sibling -> Sibling
 ```
 
-### Social Relationships
+This is the default configuration. The system also automatically creates sibling relationships when multiple children share the same parent.
 
-```
-Friend → Friend
-Acquaintance → Acquaintance
-Partner → Partner
-Spouse → Spouse
-Ex → Ex
-```
+## Restore Defaults
+
+If you need to restore the default inverse mappings, use the **Restore Defaults** button on the Relationship Types settings page. This will reset the inverse mappings for parent, child, and sibling to their default configuration without affecting any custom types you may have added.
 
 ## Best Practices
 
@@ -139,7 +95,6 @@ Ex → Ex
 2. **Use consistent naming**: Keep relationship type names clear and consistent
 3. **Test mappings**: After configuring, create a test relationship to verify the inverse is created correctly
 4. **Document custom types**: If you create custom relationship types, document their purpose and inverse mappings
-5. **Review periodically**: Check your relationship types list periodically to ensure all mappings are correct
 
 ## Deleting Relationship Types
 
@@ -155,7 +110,6 @@ Ex → Ex
 
 - Verify the inverse mapping is set correctly
 - Check that both relationship types exist
-- Ensure the related person's gender is set (for gender-dependent types)
 
 ### Can't find a relationship type
 
@@ -166,6 +120,4 @@ Ex → Ex
 ### Wrong inverse created
 
 - Double-check the inverse mapping configuration
-- For gender-dependent types, verify both people have correct gender values
 - Test with a new relationship to see if the issue persists
-
