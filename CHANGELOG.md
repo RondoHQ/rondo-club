@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Family tree visualization feature (route `/people/:id/family-tree`, vis-network/vis-data dependencies)
+
 ### Changed
 - Documentation updated from "Stadion" to "Rondo Club" across all README, AGENTS, docs, and planning files
 

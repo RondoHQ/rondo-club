@@ -20,7 +20,6 @@ src/
 ├── api/
 │   └── client.js         # Axios instance and API helpers
 ├── components/
-│   ├── family-tree/      # Family tree visualization components
 │   ├── import/           # Import wizard components
 │   └── layout/           # Layout wrapper component
 ├── constants/
@@ -77,7 +76,6 @@ Main routing component:
 | `/people/new` | `PersonForm` | Create contact |
 | `/people/:id` | `PersonDetail` | View contact |
 | `/people/:id/edit` | `PersonForm` | Edit contact |
-| `/people/:id/family-tree` | `FamilyTree` | Family tree visualization |
 | `/people/:personId/contact/new` | `ContactDetailForm` | Add contact method |
 | `/people/:personId/work-history/new` | `WorkHistoryForm` | Add work history |
 | `/people/:personId/relationship/new` | `RelationshipForm` | Add relationship |
@@ -337,10 +335,6 @@ const { hasUpdate, currentVersion, latestVersion, reload, checkVersion } = useVe
 | `getPersonInitial(person)` | Get first initial for avatars |
 | `sanitizePersonAcf(acfData, overrides)` | Sanitize ACF data for API |
 
-### `src/utils/familyTreeBuilder.js`
-
-Builds vis.js network data from person relationships. See [Family Tree](./family-tree.md).
-
 ## Constants
 
 ### `src/constants/app.js`
@@ -431,6 +425,5 @@ When the app is installed as a PWA or loaded in a mobile browser (Add to Home Sc
 
 - [REST API](./rest-api.md) - Backend API reference
 - [Data Model](./data-model.md) - Post types and fields
-- [Family Tree](./family-tree.md) - Visualization feature
 - [Architecture](./architecture.md) - Overall system architecture
 
