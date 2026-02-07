@@ -1359,12 +1359,6 @@ export default function PersonDetail() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold">Relaties</h2>
                 <div className="flex items-center gap-2">
-                  <Link
-                    to={`/people/${id}/family-tree`}
-                    className="btn-secondary text-sm"
-                  >
-                    Bekijk stamboom
-                  </Link>
                   <button
                     onClick={() => {
                       setEditingRelationship(null);
