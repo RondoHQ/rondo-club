@@ -41,8 +41,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-5 todo(s) in `.planning/todos/pending/`:
+6 todo(s) in `.planning/todos/pending/`:
 - **public-vog-upload-and-validation**: Public VOG Upload and Validation (area: api)
+- **remove-contact-import-feature**: Remove contact import feature (area: ui)
 - **remove-how-we-met-and-met-date-fields**: Remove how_we_met and met_date fields (area: data-model)
 - **remove-user-approval-system**: Remove user approval system (area: auth)
 - **soft-delete-inactive-members**: Soft-delete inactive members instead of hard delete (area: data-model)
