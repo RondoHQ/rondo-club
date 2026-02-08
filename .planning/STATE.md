@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 
 ## Current Position
 
-Phase: 155 of 159 (Fee Category Data Model) — first phase of v21.0
+Phase: 156 of 159 (Fee Category Backend Logic) — second phase of v21.0
 Plan: 01 of 01 complete
 Status: Phase complete
-Last activity: 2026-02-08 — Completed 155-01-PLAN.md (category data model foundation)
+Last activity: 2026-02-08 — Completed 156-01-PLAN.md (config-driven fee calculation)
 
-Progress: [██░░░░░░░░] 20% (1/5 v21.0 phases complete)
+Progress: [████░░░░░░] 40% (2/5 v21.0 phases complete)
 
 ## Accumulated Context
 
@@ -30,6 +30,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 155-01:** Category data structure is slug-keyed objects with label, amount, age ranges, youth flag, sort order
 - **Phase 155-01:** Copy-forward clones entire category configuration from previous season
 - **Phase 155-01:** No backward compatibility layer - clean break from flat amount format
+- **Phase 156-01:** Age class matching uses exact string comparison, not regex/range calculation
+- **Phase 156-01:** Automatic migration from age_min/age_max to age_classes (empty array as catch-all)
+- **Phase 156-01:** Category with lowest sort_order wins when age class appears in multiple categories
+- **Phase 156-01:** Season parameter flows through entire calculation chain for forecast mode
 
 ### Pending Todos
 
@@ -44,12 +48,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- **Phase 155 deployment blocker:** Do not deploy Phase 155 alone. Must deploy together with Phase 156 (or after) to avoid breaking existing fee calculations. Phase 155 changes the data structure; Phase 156 updates the code that reads it.
+- **Phase 155-156 deployment blocker:** Do not deploy Phase 155 or 156 alone. Must deploy together with Phase 157 and 158 to avoid breaking existing fee calculations. Phase 155 changes the data structure, Phase 156 updates the code that reads it, Phase 157 updates REST API, Phase 158 provides admin UI to populate age_classes. Deploy all four together once Phase 158 is complete.
 
 ## Session Continuity
 
-Last session: 2026-02-08 22:51
-Stopped at: Completed Phase 155 Plan 01 (category data model foundation)
+Last session: 2026-02-08 23:53
+Stopped at: Completed Phase 156 Plan 01 (config-driven fee calculation)
 Resume file: None
 
 ---
