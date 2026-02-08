@@ -7,13 +7,13 @@
 
 ### Data Model
 
-- [x] **DATA-01**: Fee category definitions (slug, label, amount, age_min, age_max, is_youth, sort_order) are stored per season in the existing `rondo_membership_fees_{season}` WordPress option
+- [x] **DATA-01**: Fee category definitions (slug, label, amount, age_classes, is_youth, sort_order) are stored per season in the existing `rondo_membership_fees_{season}` WordPress option
 - [x] **DATA-02**: On first load, current season option is auto-enriched with today's hardcoded category values (migration) *(Intentionally skipped per CONTEXT.md: no auto-migration, manual data population for single-club app)*
 - [x] **DATA-03**: Creating a new season auto-copies the full category configuration from the previous season
 
 ### Backend Logic
 
-- [ ] **LOGIC-01**: `parse_age_group()` reads age ranges from season category config instead of hardcoded values
+- [ ] **LOGIC-01**: `parse_age_group()` is replaced by `get_category_by_age_class()` which matches Sportlink age class strings against season category `age_classes` arrays
 - [ ] **LOGIC-02**: `VALID_TYPES` is derived from season category config (no hardcoded constant)
 - [ ] **LOGIC-03**: `youth_categories` is derived from `is_youth` flag in category config (no hardcoded arrays)
 - [ ] **LOGIC-04**: Category sort order is derived from config (removing duplicated `category_order` arrays from `class-rest-api.php`, `class-rest-google-sheets.php`, and `ContributieList.jsx`)
@@ -24,15 +24,15 @@
 - [ ] **API-01**: Fee settings GET endpoint returns full category definitions per season (not just amounts)
 - [ ] **API-02**: Fee settings POST endpoint accepts category add, edit, remove, and reorder operations
 - [ ] **API-03**: Fee list endpoint includes category metadata (labels, sort order) in response so frontend does not need hardcoded mappings
-- [ ] **API-04**: Category validation: no duplicate slugs, required fields (slug, label, amount), age ranges don't overlap
+- [ ] **API-04**: Category validation: no duplicate slugs, required fields (slug, label, amount), duplicate age class assignment warning
 
 ### Settings UI
 
 - [ ] **UI-01**: Admin can manage fee categories in the fee settings section (add, edit, remove categories)
-- [ ] **UI-02**: Per-category fields editable: slug, label, amount, age range (min/max), youth flag
+- [ ] **UI-02**: Per-category fields editable: slug, label, amount, age_classes (Sportlink age class strings), youth flag
 - [ ] **UI-03**: Season selector for managing category configs of different seasons
 - [ ] **UI-04**: Drag-and-drop reordering of categories in the settings UI
-- [ ] **UI-05**: Visual age range coverage display showing gaps or overlaps between categories
+- [ ] **UI-05**: Visual age class coverage display showing which Sportlink age classes are assigned to which categories
 
 ### Frontend Display
 
@@ -52,7 +52,7 @@
 | Custom category colors | Auto-assigned palette is simpler and consistent |
 | Category archival/history | Seasons already provide temporal separation |
 | Category import/export | WordPress options are portable enough |
-| Sportlink age class auto-mapping | Age ranges are set manually per category; auto-detect would need Sportlink API investigation |
+| Auto-detect age classes from Sportlink | Age classes are configured manually per category; auto-populate from Sportlink member data could be added later |
 
 ## Traceability
 
