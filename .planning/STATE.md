@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 
 ## Current Position
 
-Phase: 153 of 159 (Wire Up Role Settings) — third phase of v20.0
+Phase: 154 of 159 (Sync Cleanup) — fourth phase of v20.0
 Plan: 1 of 1
 Status: Phase complete
-Last activity: 2026-02-08 — Completed 153-01-PLAN.md (wire up role settings to TeamDetail)
+Last activity: 2026-02-08 — Completed 154-01-PLAN.md (remove hardcoded role fallbacks from rondo-sync)
 
-Progress: [███████░░░] 75% (3/4 v20.0 phases)
+Progress: [████████░░] 100% (4/4 v20.0 phases complete)
 
 ## Accumulated Context
 
@@ -35,6 +35,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - GET /rondo/v1/volunteer-roles/settings accessible to all authenticated users, POST admin-only (153-01)
 - Settings hooks use 5-minute staleTime for rarely-changing data (153-01)
 - Team detail player/staff split driven by configured role settings (153-01)
+- Skip-and-warn pattern for missing data instead of silent fallbacks (154-01)
+- rondo-sync passes through Sportlink role descriptions without modification (154-01)
+- Database migrations use PRAGMA table_info checks before ALTER TABLE (154-01)
 
 ### Pending Todos
 
@@ -45,12 +48,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- v20.0 Configurable Roles (phases 152-154 remaining) — v21.0 phases 155-159 depend on v20.0 completing first
+None - v20.0 Configurable Roles is complete (phases 152-154 done)
 
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 153-01-PLAN.md
+Stopped at: Completed 154-01-PLAN.md
 Resume file: None
 
 ---
