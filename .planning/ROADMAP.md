@@ -20,7 +20,7 @@
 ### v21.0 Per-Season Fee Categories (Planned)
 
 - [x] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration — completed 2026-02-08
-- [ ] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups
+- [x] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups — completed 2026-02-08
 - [ ] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API
 - [ ] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
@@ -52,8 +52,8 @@ Plans:
   5. Fee calculation produces correct results for both current season and forecast mode using per-season categories
 **Plans**: 2 plans
 Plans:
-- [ ] 156-01-PLAN.md — Rewrite MembershipFees class: replace hardcoded constants, parse_age_group(), and fee lookups with config-driven helpers
-- [ ] 156-02-PLAN.md — Replace hardcoded category_order arrays in REST API and Google Sheets, update developer documentation
+- [x] 156-01-PLAN.md — Rewrite MembershipFees class: replace hardcoded constants, parse_age_group(), and fee lookups with config-driven helpers
+- [x] 156-02-PLAN.md — Replace hardcoded category_order arrays in REST API and Google Sheets, update developer documentation
 
 ### Phase 157: Fee Category REST API
 **Goal**: The REST API exposes full category definitions and supports CRUD operations for managing categories
@@ -96,11 +96,11 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
-| 156. Fee Category Backend Logic | v21.0 | 0/2 | Not started | - |
+| 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
 | 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
 | 158. Fee Category Settings UI | v21.0 | 0/TBD | Not started | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 — Phase 155 complete*
+*Last updated: 2026-02-08 — Phase 156 complete*
