@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - People list "Type lid" filter now shows only values that exist in the database
 - People list "Leeftijdsgroep" filter now shows only values that exist in the database
+- Team detail page player/staff split now reads from configured role settings instead of hardcoded array
+
+### Fixed
+- Volunteer role settings API endpoint now accessible to all authenticated users (was admin-only for GET)
 
 ### Removed
 - Family tree visualization feature (route `/people/:id/family-tree`, vis-network/vis-data dependencies)
