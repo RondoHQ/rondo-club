@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 ## Current Position
 
 Phase: 155 of 159 (Fee Category Data Model) — first phase of v21.0
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-08 — v20.0 Configurable Roles milestone completed and archived
+Plan: 01 of 01 complete
+Status: Phase complete
+Last activity: 2026-02-08 — Completed 155-01-PLAN.md (category data model foundation)
 
-Progress: [░░░░░░░░░░] 0% (0/5 v21.0 phases complete)
+Progress: [██░░░░░░░░] 20% (1/5 v21.0 phases complete)
 
 ## Accumulated Context
 
@@ -27,6 +27,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Season detection (July 1 boundary) and next-season support already implemented
 - Forecast mode already works for next season
 - User chose: WordPress options storage, copy-previous for new seasons, fully configurable age ranges
+- **Phase 155-01:** Category data structure is slug-keyed objects with label, amount, age ranges, youth flag, sort order
+- **Phase 155-01:** Copy-forward clones entire category configuration from previous season
+- **Phase 155-01:** No backward compatibility layer - clean break from flat amount format
 
 ### Pending Todos
 
@@ -41,12 +44,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-None
+- **Phase 155 deployment blocker:** Do not deploy Phase 155 alone. Must deploy together with Phase 156 (or after) to avoid breaking existing fee calculations. Phase 155 changes the data structure; Phase 156 updates the code that reads it.
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: v20.0 milestone completed and archived
+Last session: 2026-02-08 22:51
+Stopped at: Completed Phase 155 Plan 01 (category data model foundation)
 Resume file: None
 
 ---
