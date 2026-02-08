@@ -485,6 +485,97 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get the previous season key (one year behind current/specified season)
+	 *
+	 * Takes a season key in "YYYY-YYYY" format and returns the previous season.
+	 * Example: "2025-2026" returns "2024-2025"
+	 *
+	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
+	 * @return string|null Previous season key in "YYYY-YYYY" format, or null if format is invalid.
+	 */
+	public function get_previous_season_key( string $season ): ?string {
+		// Validate format: "YYYY-YYYY"
+		if ( ! preg_match( '/^(\d{4})-(\d{4})$/', $season, $matches ) ) {
+			return null;
+		}
+
+		$season_start_year = (int) $matches[1];
+
+		// Previous season is -1 year
+		$prev_start_year = $season_start_year - 1;
+
+		return $prev_start_year . '-' . $season_start_year;
+	}
+
+	/**
+	 * Get fee categories for a specific season
+	 *
+	 * Returns the slug-keyed array of category objects for the specified season.
+	 * Each category object contains: label, amount, age_min, age_max, is_youth, sort_order.
+	 *
+	 * If the season option does not exist, attempts to copy from the previous season.
+	 * If no previous season data exists, returns an empty array.
+	 *
+	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
+	 * @return array Slug-keyed array of category objects, or empty array if no data.
+	 */
+	public function get_categories_for_season( string $season ): array {
+		$season_key = $this->get_option_key_for_season( $season );
+		$stored     = get_option( $season_key, false );
+
+		// If season option exists and is an array, return it as-is
+		if ( $stored !== false && is_array( $stored ) ) {
+			return $stored;
+		}
+
+		// Season option doesn't exist - try copy-forward from previous season
+		$previous_season = $this->get_previous_season_key( $season );
+
+		if ( $previous_season !== null ) {
+			$previous_season_key = $this->get_option_key_for_season( $previous_season );
+			$previous_stored     = get_option( $previous_season_key, false );
+
+			// If previous season has data, copy it to the new season
+			if ( $previous_stored !== false && is_array( $previous_stored ) ) {
+				update_option( $season_key, $previous_stored );
+				return $previous_stored;
+			}
+		}
+
+		// No data for this season or previous season - return empty array
+		return [];
+	}
+
+	/**
+	 * Save fee categories for a specific season
+	 *
+	 * Persists the slug-keyed array of category objects to the season-specific option.
+	 * Each category object should contain: label, amount, age_min, age_max, is_youth, sort_order.
+	 *
+	 * @param array  $categories Slug-keyed array of category objects.
+	 * @param string $season     Season key in "YYYY-YYYY" format (e.g., "2025-2026").
+	 * @return bool True on success, false on failure.
+	 */
+	public function save_categories_for_season( array $categories, string $season ): bool {
+		$season_key = $this->get_option_key_for_season( $season );
+		return update_option( $season_key, $categories );
+	}
+
+	/**
+	 * Get a single fee category by slug for a specific season
+	 *
+	 * @param string      $slug   The category slug (e.g., "senior", "junior").
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array|null Category object or null if not found.
+	 */
+	public function get_category( string $slug, ?string $season = null ): ?array {
+		$season     = $season ?: $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		return $categories[ $slug ] ?? null;
+	}
+
+	/**
 	 * Get the post meta key for storing fee snapshots
 	 *
 	 * @param string|null $season Optional season key, defaults to current season.
