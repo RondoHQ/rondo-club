@@ -6,7 +6,7 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 
 ## Milestones
 
-- 🚧 **v20.0 Configurable Roles** - Phases 151-154 (in progress)
+- ✅ **v20.0 Configurable Roles** - Phases 151-154 (complete)
 - 📋 **v21.0 Per-Season Fee Categories** - Phases 155-159 (planned)
 
 ## Phases
@@ -14,7 +14,7 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 - [x] **Phase 151: Dynamic Filters** - Derive filter options from actual database values instead of hardcoded lists
 - [x] **Phase 152: Role Settings** - Admin UI and backend storage for configurable player roles and excluded roles
 - [x] **Phase 153: Wire Up Role Settings** - Replace hardcoded role arrays with settings lookups in business logic
-- [ ] **Phase 154: Sync Cleanup** - Remove default role fallbacks from rondo-sync
+- [x] **Phase 154: Sync Cleanup** - Remove default role fallbacks from rondo-sync
 - [ ] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration
 - [ ] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups
 - [ ] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API
@@ -70,7 +70,7 @@ Plans:
   2. Rondo-sync continues to function correctly when Rondo Club has role settings configured
 **Plans:** 1 plan
 Plans:
-  - [ ] 154-01-PLAN.md -- Remove hardcoded role fallbacks, drop member_type column, simplify role lookup
+  - [x] 154-01-PLAN.md -- Remove hardcoded role fallbacks, drop member_type column, simplify role lookup
 
 ---
 
@@ -141,7 +141,7 @@ Plans:
 | 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
 | 152. Role Settings | v20.0 | 0/0 | ✓ Complete (pre-existing) | 2026-02-07 |
 | 153. Wire Up Role Settings | v20.0 | 1/1 | ✓ Complete | 2026-02-08 |
-| 154. Sync Cleanup | v20.0 | 0/1 | Not started | - |
+| 154. Sync Cleanup | v20.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
 | 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
 | 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
@@ -150,4 +150,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 -- Phase 154 planned (1 plan in 1 wave)*
+*Last updated: 2026-02-08 -- Phase 154 complete, v20.0 milestone complete*

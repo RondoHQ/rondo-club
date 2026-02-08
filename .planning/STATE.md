@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-07)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** v20.0 Configurable Roles
+**Current focus:** v20.0 Configurable Roles (complete) → v21.0 Per-Season Fee Categories (next)
 
 ## Current Position
 
