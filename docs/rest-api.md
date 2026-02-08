@@ -891,7 +891,7 @@ Returns all distinct `job_title` values from `work_history` across all person po
 
 Returns current and default role classification arrays.
 
-**Permission:** Admin only
+**Permission:** All authenticated users (read access for team detail page player/staff split)
 
 **Response:**
 ```json

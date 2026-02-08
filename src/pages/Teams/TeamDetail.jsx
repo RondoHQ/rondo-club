@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
@@ -33,7 +34,10 @@ export default function TeamDetail() {
       return response.data;
     },
   });
-  
+
+  // Fetch role settings for player/staff split
+  const { data: roleSettings } = useVolunteerRoleSettings();
+
   // Fetch parent team if exists
   const { data: parentTeam } = useQuery({
     queryKey: ['team', team?.parent],
@@ -327,7 +331,7 @@ export default function TeamDetail() {
       {/* Members section - 3 columns: Staf, Spelers, Custom Fields */}
       {(() => {
         // Player roles that identify someone as a player vs staff
-        const playerRoles = ['Aanvaller', 'Verdediger', 'Keeper', 'Middenvelder', 'Teamspeler', 'Speler', 'Champions league', 'Zondag recranten', 'Zaterdag recreanten'];
+        const playerRoles = roleSettings?.player_roles || [];
         const isPlayerRole = (jobTitle) => playerRoles.includes(jobTitle);
 
         // Split current members into players and staff
