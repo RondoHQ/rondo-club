@@ -68,7 +68,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. The rondo-sync codebase contains no default fallback values for Lid, Speler, or Staflid roles
   2. Rondo-sync continues to function correctly when Rondo Club has role settings configured
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+  - [ ] 154-01-PLAN.md -- Remove hardcoded role fallbacks, drop member_type column, simplify role lookup
 
 ---
 
@@ -139,7 +141,7 @@ Plans:
 | 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
 | 152. Role Settings | v20.0 | 0/0 | ✓ Complete (pre-existing) | 2026-02-07 |
 | 153. Wire Up Role Settings | v20.0 | 1/1 | ✓ Complete | 2026-02-08 |
-| 154. Sync Cleanup | v20.0 | 0/TBD | Not started | - |
+| 154. Sync Cleanup | v20.0 | 0/1 | Not started | - |
 | 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
 | 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
 | 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
@@ -148,4 +150,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 -- Phase 153 complete (1/1 plans executed, verified)*
+*Last updated: 2026-02-08 -- Phase 154 planned (1 plan in 1 wave)*
