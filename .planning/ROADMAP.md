@@ -12,7 +12,7 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 ## Phases
 
 - [x] **Phase 151: Dynamic Filters** - Derive filter options from actual database values instead of hardcoded lists
-- [ ] **Phase 152: Role Settings** - Admin UI and backend storage for configurable player roles and excluded roles
+- [x] **Phase 152: Role Settings** - Admin UI and backend storage for configurable player roles and excluded roles
 - [ ] **Phase 153: Wire Up Role Settings** - Replace hardcoded role arrays with settings lookups in business logic
 - [ ] **Phase 154: Sync Cleanup** - Remove default role fallbacks from rondo-sync
 - [ ] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration
@@ -46,7 +46,8 @@ Plans:
   2. The player role options are populated from actual work_history job titles in the database (not hardcoded)
   3. Admin can select which roles are excluded/honorary, with options populated from actual commissie work_history data
   4. Role settings are stored as WordPress options and persist across sessions
-**Plans**: TBD
+**Plans**: 0 plans (pre-existing implementation satisfied all criteria)
+**Note**: Role settings UI, REST API, and WordPress options storage were implemented in v19.1.0 as a quick task. All success criteria verified met.
 
 ### Phase 153: Wire Up Role Settings
 **Goal**: Business logic uses configured role settings instead of hardcoded arrays
@@ -134,7 +135,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
-| 152. Role Settings | v20.0 | 0/TBD | Not started | - |
+| 152. Role Settings | v20.0 | 0/0 | ✓ Complete (pre-existing) | 2026-02-07 |
 | 153. Wire Up Role Settings | v20.0 | 0/TBD | Not started | - |
 | 154. Sync Cleanup | v20.0 | 0/TBD | Not started | - |
 | 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
@@ -145,4 +146,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 — Phase 151 complete*
+*Last updated: 2026-02-07 — Phase 152 complete (pre-existing)*
