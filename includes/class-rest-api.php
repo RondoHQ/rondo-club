@@ -2826,7 +2826,7 @@ class Api extends Base {
 		}
 
 		// Sort by category priority, then name
-		$category_order = [ 'mini' => 1, 'pupil' => 2, 'junior' => 3, 'senior' => 4, 'recreant' => 5, 'donateur' => 6 ];
+		$category_order = $fees->get_category_sort_order( $season );
 		usort(
 			$results,
 			function ( $a, $b ) use ( $category_order ) {
