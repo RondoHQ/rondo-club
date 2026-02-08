@@ -23,26 +23,6 @@ class MembershipFees {
 	 */
 	const OPTION_KEY = 'rondo_membership_fees';
 
-	/**
-	 * Default fee amounts (in euros)
-	 *
-	 * @var array<string, int>
-	 */
-	const DEFAULTS = [
-		'mini'     => 130,
-		'pupil'    => 180,
-		'junior'   => 230,
-		'senior'   => 255,
-		'recreant' => 65,
-		'donateur' => 55,
-	];
-
-	/**
-	 * Valid fee type keys
-	 *
-	 * @var array<string>
-	 */
-	const VALID_TYPES = [ 'mini', 'pupil', 'junior', 'senior', 'recreant', 'donateur' ];
 
 	/**
 	 * Get the option key for a specific season
@@ -57,57 +37,40 @@ class MembershipFees {
 	/**
 	 * Get fee settings for a specific season
 	 *
-	 * Handles automatic migration from old global option to current season on first read.
+	 * Returns a flat array of fee type => amount pairs for backward compatibility
+	 * with the REST API settings endpoint. Reads from the category configuration.
 	 *
 	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
 	 * @return array<string, int> Array of fee type => amount pairs.
 	 */
 	public function get_settings_for_season( string $season ): array {
-		$season_key = $this->get_option_key_for_season( $season );
-		$stored     = get_option( $season_key, false );
+		$categories = $this->get_categories_for_season( $season );
 
-		// If season option exists, use it
-		if ( $stored !== false && is_array( $stored ) ) {
-			$settings = array_merge( self::DEFAULTS, $stored );
-			return array_map( 'intval', $settings );
+		$settings = [];
+		foreach ( $categories as $slug => $category ) {
+			$settings[ $slug ] = (int) ( $category['amount'] ?? 0 );
 		}
 
-		// Season option doesn't exist - check for migration
-		$current_season = $this->get_season_key();
-		if ( $season === $current_season ) {
-			// Check if old global option exists (migration needed)
-			$old_stored = get_option( self::OPTION_KEY, false );
-
-			if ( $old_stored !== false && is_array( $old_stored ) ) {
-				// Migrate: copy old global option to season-specific option
-				update_option( $season_key, $old_stored );
-				// Delete old global option (one-time migration)
-				delete_option( self::OPTION_KEY );
-				// Return the migrated values
-				$settings = array_merge( self::DEFAULTS, $old_stored );
-				return array_map( 'intval', $settings );
-			}
-		}
-
-		// No data for this season, return defaults
-		return self::DEFAULTS;
+		return $settings;
 	}
 
 	/**
-	 * Update fee settings for a specific season
+	 * Update fee amounts for a specific season
 	 *
-	 * @param array<string, mixed> $fees   Array of fee type => amount pairs to update.
+	 * Updates the amount field within category objects. Only modifies amounts
+	 * for categories that exist in the season's configuration.
+	 *
+	 * @param array<string, mixed> $fees   Array of category slug => amount pairs to update.
 	 * @param string               $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
 	 * @return bool True on success, false on failure.
 	 */
 	public function update_settings_for_season( array $fees, string $season ): bool {
-		// Get current settings for this season
-		$current = $this->get_settings_for_season( $season );
+		$categories  = $this->get_categories_for_season( $season );
+		$valid_slugs = array_keys( $categories );
 
-		// Validate and merge new values
 		foreach ( $fees as $type => $amount ) {
-			// Skip invalid types
-			if ( ! in_array( $type, self::VALID_TYPES, true ) ) {
+			// Skip categories not in this season's config
+			if ( ! in_array( $type, $valid_slugs, true ) ) {
 				continue;
 			}
 
@@ -116,12 +79,10 @@ class MembershipFees {
 				continue;
 			}
 
-			$current[ $type ] = (int) $amount;
+			$categories[ $type ]['amount'] = (int) $amount;
 		}
 
-		// Save to season-specific option
-		$season_key = $this->get_option_key_for_season( $season );
-		return update_option( $season_key, $current );
+		return $this->save_categories_for_season( $categories, $season );
 	}
 
 	/**
@@ -135,23 +96,23 @@ class MembershipFees {
 	}
 
 	/**
-	 * Get a single fee amount by type
+	 * Get a single fee amount by category slug
 	 *
-	 * @param string      $type   The fee type (mini, pupil, junior, senior, recreant, donateur).
+	 * Reads the amount from the category configuration for the specified season.
+	 *
+	 * @param string      $type   The fee category slug (e.g., "senior", "pupil").
 	 * @param string|null $season Optional season key, defaults to current season.
-	 * @return int The fee amount in euros
+	 * @return int The fee amount in euros, or 0 if category not found.
 	 */
 	public function get_fee( string $type, ?string $season = null ): int {
-		$settings = $season !== null
-			? $this->get_settings_for_season( $season )
-			: $this->get_all_settings();
+		$season   = $season ?? $this->get_season_key();
+		$category = $this->get_category( $type, $season );
 
-		if ( ! isset( $settings[ $type ] ) ) {
-			// Return 0 for unknown types
+		if ( $category === null || ! isset( $category['amount'] ) ) {
 			return 0;
 		}
 
-		return $settings[ $type ];
+		return (int) $category['amount'];
 	}
 
 	/**
@@ -166,66 +127,132 @@ class MembershipFees {
 	}
 
 	/**
-	 * Parse leeftijdsgroep (age group) to fee category
+	 * Find fee category by matching Sportlink age class against season config
 	 *
-	 * Normalizes the age group string and maps it to the appropriate fee category.
-	 * Strips " Meiden" and " Vrouwen" suffixes before matching.
+	 * Replaces the former parse_age_group() method. Instead of hardcoded age ranges,
+	 * matches the member's Sportlink AgeClassDescription against the age_classes arrays
+	 * stored in the season's category configuration.
 	 *
-	 * @param string $leeftijdsgroep The age group string (e.g., "Onder 14", "Senioren", "Onder 8 Meiden").
-	 * @return string|null The fee category (mini, pupil, junior, senior) or null if unrecognized.
+	 * Normalizes input by stripping " Meiden" and " Vrouwen" suffixes (Sportlink
+	 * appends these for girls' teams).
+	 *
+	 * If a class appears in multiple categories, the category with the lowest sort_order wins.
+	 * A category with null/empty age_classes acts as a catch-all for unmatched classes.
+	 *
+	 * @param string      $leeftijdsgroep Sportlink AgeClassDescription (e.g., "Onder 10", "Senioren").
+	 * @param string|null $season         Optional season key, defaults to current season.
+	 * @return string|null Category slug or null if no match and no catch-all exists.
 	 */
-	public function parse_age_group( string $leeftijdsgroep ): ?string {
-		// Normalize: trim and strip " Meiden" / " Vrouwen" suffixes
+	public function get_category_by_age_class( string $leeftijdsgroep, ?string $season = null ): ?string {
+		$season     = $season ?? $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		// Empty config = no categories defined (silent per CONTEXT.md)
+		if ( empty( $categories ) ) {
+			return null;
+		}
+
+		// Normalize: strip " Meiden" and " Vrouwen" suffixes
 		$normalized = preg_replace( '/\s+(Meiden|Vrouwen)$/i', '', trim( $leeftijdsgroep ) );
 
-		// Handle empty string after normalization
 		if ( empty( $normalized ) ) {
 			return null;
 		}
 
-		// Handle "Senioren" (case-insensitive)
-		if ( strcasecmp( $normalized, 'Senioren' ) === 0 ) {
-			return 'senior';
-		}
+		// Sort by sort_order so lowest sort_order wins on overlap
+		uasort( $categories, function ( $a, $b ) {
+			return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
+		} );
 
-		// Handle "JO23" format (treated as senior)
-		if ( preg_match( '/^JO\s*23$/i', $normalized ) ) {
-			return 'senior';
-		}
+		$catch_all_slug = null;
 
-		// Extract number from "Onder X" format
-		if ( preg_match( '/^Onder\s+(\d+)$/i', $normalized, $matches ) ) {
-			$age = (int) $matches[1];
+		foreach ( $categories as $slug => $category ) {
+			// Validate required field (fail loudly per CONTEXT.md)
+			if ( ! isset( $category['amount'] ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( "Rondo fee category '{$slug}' missing 'amount' for season {$season}" );
+				return null;
+			}
 
-			// Map age ranges to fee categories
-			if ( $age >= 6 && $age <= 7 ) {
-				return 'mini';
-			}
-			if ( $age >= 8 && $age <= 11 ) {
-				return 'pupil';
-			}
-			if ( $age >= 12 && $age <= 19 ) {
-				return 'junior';
-			}
-		}
+			$age_classes = $category['age_classes'] ?? null;
 
-		// Handle "JO" format (e.g., JO14, JO8)
-		if ( preg_match( '/^JO\s*(\d+)$/i', $normalized, $matches ) ) {
-			$age = (int) $matches[1];
+			// Null/empty age_classes = catch-all
+			if ( $age_classes === null || ( is_array( $age_classes ) && empty( $age_classes ) ) ) {
+				if ( $catch_all_slug === null ) {
+					$catch_all_slug = $slug;
+				}
+				continue;
+			}
 
-			if ( $age >= 6 && $age <= 7 ) {
-				return 'mini';
-			}
-			if ( $age >= 8 && $age <= 11 ) {
-				return 'pupil';
-			}
-			if ( $age >= 12 && $age <= 19 ) {
-				return 'junior';
+			// Exact string match (case-insensitive)
+			foreach ( (array) $age_classes as $age_class ) {
+				if ( strcasecmp( $normalized, trim( $age_class ) ) === 0 ) {
+					return $slug;
+				}
 			}
 		}
 
-		// Unrecognized format
-		return null;
+		return $catch_all_slug;
+	}
+
+	/**
+	 * Get valid category slugs for a season
+	 *
+	 * Replaces the former VALID_TYPES constant. Returns the category slugs
+	 * defined in the season's configuration.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array<string> Array of category slugs.
+	 */
+	public function get_valid_category_slugs( ?string $season = null ): array {
+		$season     = $season ?? $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		return array_keys( $categories );
+	}
+
+	/**
+	 * Get youth category slugs for a season
+	 *
+	 * Replaces all hardcoded youth_categories arrays. Returns category slugs
+	 * where is_youth flag is true in the season's configuration.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array<string> Array of youth category slugs.
+	 */
+	public function get_youth_category_slugs( ?string $season = null ): array {
+		$season     = $season ?? $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		return array_keys(
+			array_filter(
+				$categories,
+				function ( $cat ) {
+					return ! empty( $cat['is_youth'] );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Get category sort order map for a season
+	 *
+	 * Replaces all hardcoded category_order arrays. Returns a map of
+	 * category slug to sort_order value from the season's configuration.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array<string, int> Map of category slug => sort_order.
+	 */
+	public function get_category_sort_order( ?string $season = null ): array {
+		$season     = $season ?? $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		$order = [];
+		foreach ( $categories as $slug => $category ) {
+			$order[ $slug ] = $category['sort_order'] ?? 999;
+		}
+
+		return $order;
 	}
 
 	/**
@@ -360,11 +387,12 @@ class MembershipFees {
 
 		// Parse age group if available
 		if ( ! empty( $leeftijdsgroep ) ) {
-			$category = $this->parse_age_group( $leeftijdsgroep );
+			$category = $this->get_category_by_age_class( $leeftijdsgroep, $season );
 		}
 
 		// Youth categories: Return immediately (priority over everything)
-		if ( in_array( $category, [ 'mini', 'pupil', 'junior' ], true ) ) {
+		$youth_categories = $this->get_youth_category_slugs( $season );
+		if ( in_array( $category, $youth_categories, true ) ) {
 			return [
 				'category'       => $category,
 				'base_fee'       => $this->get_fee( $category, $season ),
@@ -508,10 +536,47 @@ class MembershipFees {
 	}
 
 	/**
+	 * Migrate category data from age_min/age_max format to age_classes format
+	 *
+	 * Phase 155 stored categories with age_min and age_max integer fields.
+	 * Phase 156 replaces these with an age_classes array of Sportlink
+	 * AgeClassDescription strings. This method detects the old format and
+	 * converts it, removing the age_min and age_max fields.
+	 *
+	 * Categories that already have age_classes (or have neither format)
+	 * are left unchanged.
+	 *
+	 * @param array $categories Slug-keyed array of category objects.
+	 * @return array Migrated categories with age_classes arrays.
+	 */
+	private function maybe_migrate_age_classes( array $categories ): array {
+		$needs_migration = false;
+
+		foreach ( $categories as $slug => $category ) {
+			// Detect old format: has age_min or age_max but no age_classes
+			if ( ( isset( $category['age_min'] ) || isset( $category['age_max'] ) )
+				 && ! isset( $category['age_classes'] ) ) {
+				$needs_migration = true;
+
+				// Set age_classes to empty array (catch-all) since we cannot
+				// reverse-map age ranges to Sportlink age class strings.
+				// Admin must populate the correct age_classes values manually.
+				$categories[ $slug ]['age_classes'] = [];
+
+				// Remove old fields
+				unset( $categories[ $slug ]['age_min'] );
+				unset( $categories[ $slug ]['age_max'] );
+			}
+		}
+
+		return $categories;
+	}
+
+	/**
 	 * Get fee categories for a specific season
 	 *
 	 * Returns the slug-keyed array of category objects for the specified season.
-	 * Each category object contains: label, amount, age_min, age_max, is_youth, sort_order.
+	 * Each category object contains: label, amount, age_classes, is_youth, sort_order.
 	 *
 	 * If the season option does not exist, attempts to copy from the previous season.
 	 * If no previous season data exists, returns an empty array.
@@ -523,9 +588,16 @@ class MembershipFees {
 		$season_key = $this->get_option_key_for_season( $season );
 		$stored     = get_option( $season_key, false );
 
-		// If season option exists and is an array, return it as-is
+		// If season option exists and is an array, migrate if needed and return
 		if ( $stored !== false && is_array( $stored ) ) {
-			return $stored;
+			$migrated = $this->maybe_migrate_age_classes( $stored );
+
+			// If migration changed anything, persist the updated format
+			if ( $migrated !== $stored ) {
+				update_option( $season_key, $migrated );
+			}
+
+			return $migrated;
 		}
 
 		// Season option doesn't exist - try copy-forward from previous season
@@ -537,8 +609,9 @@ class MembershipFees {
 
 			// If previous season has data, copy it to the new season
 			if ( $previous_stored !== false && is_array( $previous_stored ) ) {
-				update_option( $season_key, $previous_stored );
-				return $previous_stored;
+				$migrated = $this->maybe_migrate_age_classes( $previous_stored );
+				update_option( $season_key, $migrated );
+				return $migrated;
 			}
 		}
 
@@ -550,7 +623,7 @@ class MembershipFees {
 	 * Save fee categories for a specific season
 	 *
 	 * Persists the slug-keyed array of category objects to the season-specific option.
-	 * Each category object should contain: label, amount, age_min, age_max, is_youth, sort_order.
+	 * Each category object should contain: label, amount, age_classes, is_youth, sort_order.
 	 *
 	 * @param array  $categories Slug-keyed array of category objects.
 	 * @param string $season     Season key in "YYYY-YYYY" format (e.g., "2025-2026").
@@ -679,7 +752,7 @@ class MembershipFees {
 		}
 
 		// Calculate fresh
-		$result = $this->calculate_fee( $person_id );
+		$result = $this->calculate_fee( $person_id, $season );
 
 		if ( $result === null ) {
 			return null;
@@ -975,7 +1048,7 @@ class MembershipFees {
 		$person_data = [];
 
 		// Youth categories eligible for family discount
-		$youth_categories = [ 'mini', 'pupil', 'junior' ];
+		$youth_categories = $this->get_youth_category_slugs( $season );
 
 		foreach ( $query->posts as $person_id ) {
 			// Calculate fee for this person using season-specific rates
@@ -1182,7 +1255,7 @@ class MembershipFees {
 		}
 
 		// Youth categories eligible for family discount
-		$youth_categories = [ 'mini', 'pupil', 'junior' ];
+		$youth_categories = $this->get_youth_category_slugs( $season );
 
 		// Non-youth: no family discount eligible
 		if ( ! in_array( $fee_data['category'], $youth_categories, true ) ) {
@@ -1326,7 +1399,7 @@ class MembershipFees {
 	 */
 	public function get_calculation_status( int $person_id ): array {
 		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
-		$parsed         = ! empty( $leeftijdsgroep ) ? $this->parse_age_group( $leeftijdsgroep ) : null;
+		$parsed         = ! empty( $leeftijdsgroep ) ? $this->get_category_by_age_class( $leeftijdsgroep ) : null;
 		$teams          = $this->get_current_teams( $person_id );
 		$is_donateur    = $this->is_donateur( $person_id );
 		$fee_result     = $this->calculate_fee( $person_id );
