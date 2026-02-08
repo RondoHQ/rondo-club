@@ -36,7 +36,9 @@
   2. On first load after upgrade, the current season option is automatically enriched with category metadata matching today's hardcoded values (migration is transparent)
   3. Creating a new season copies the full category configuration from the previous season as a starting point
   4. Existing fee calculation continues to work correctly after the data model change (no regression)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 155-01-PLAN.md — Add category helper methods and update copy-forward in MembershipFees + developer docs
 
 ### Phase 156: Fee Category Backend Logic
 **Goal**: All fee calculation logic reads from per-season category config instead of hardcoded constants
