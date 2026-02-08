@@ -13,7 +13,7 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 
 - [x] **Phase 151: Dynamic Filters** - Derive filter options from actual database values instead of hardcoded lists
 - [x] **Phase 152: Role Settings** - Admin UI and backend storage for configurable player roles and excluded roles
-- [ ] **Phase 153: Wire Up Role Settings** - Replace hardcoded role arrays with settings lookups in business logic
+- [x] **Phase 153: Wire Up Role Settings** - Replace hardcoded role arrays with settings lookups in business logic
 - [ ] **Phase 154: Sync Cleanup** - Remove default role fallbacks from rondo-sync
 - [ ] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration
 - [ ] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups
@@ -59,7 +59,7 @@ Plans:
   3. Volunteer status calculation respects the excluded/honorary roles setting, excluding those people from volunteer counts
 **Plans:** 1 plan
 Plans:
-  - [ ] 153-01-PLAN.md -- Fix API permission, create useVolunteerRoleSettings hook, wire TeamDetail
+  - [x] 153-01-PLAN.md -- Fix API permission, create useVolunteerRoleSettings hook, wire TeamDetail
 
 ### Phase 154: Sync Cleanup
 **Goal**: Rondo-sync no longer ships with default role fallbacks, relying entirely on Rondo Club settings
@@ -138,7 +138,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
 | 152. Role Settings | v20.0 | 0/0 | ✓ Complete (pre-existing) | 2026-02-07 |
-| 153. Wire Up Role Settings | v20.0 | 0/1 | Planned | - |
+| 153. Wire Up Role Settings | v20.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 154. Sync Cleanup | v20.0 | 0/TBD | Not started | - |
 | 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
 | 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
@@ -148,4 +148,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 -- Phase 153 planned (1 plan)*
+*Last updated: 2026-02-08 -- Phase 153 complete (1/1 plans executed, verified)*
