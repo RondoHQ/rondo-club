@@ -50,7 +50,10 @@ Plans:
   3. The `youth_categories` list is derived from the `is_youth` flag on each category in the config
   4. Category sort order comes from a single source (config `sort_order`), removing the duplicated `category_order` arrays from `class-rest-api.php`, `class-rest-google-sheets.php`, and `ContributieList.jsx`
   5. Fee calculation produces correct results for both current season and forecast mode using per-season categories
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 156-01-PLAN.md — Rewrite MembershipFees class: replace hardcoded constants, parse_age_group(), and fee lookups with config-driven helpers
+- [ ] 156-02-PLAN.md — Replace hardcoded category_order arrays in REST API and Google Sheets, update developer documentation
 
 ### Phase 157: Fee Category REST API
 **Goal**: The REST API exposes full category definitions and supports CRUD operations for managing categories
@@ -93,7 +96,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
-| 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
+| 156. Fee Category Backend Logic | v21.0 | 0/2 | Not started | - |
 | 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
 | 158. Fee Category Settings UI | v21.0 | 0/TBD | Not started | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
