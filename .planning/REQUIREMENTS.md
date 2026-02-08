@@ -7,9 +7,9 @@
 
 ### Data Model
 
-- [ ] **DATA-01**: Fee category definitions (slug, label, amount, age_min, age_max, is_youth, sort_order) are stored per season in the existing `rondo_membership_fees_{season}` WordPress option
-- [ ] **DATA-02**: On first load, current season option is auto-enriched with today's hardcoded category values (migration)
-- [ ] **DATA-03**: Creating a new season auto-copies the full category configuration from the previous season
+- [x] **DATA-01**: Fee category definitions (slug, label, amount, age_min, age_max, is_youth, sort_order) are stored per season in the existing `rondo_membership_fees_{season}` WordPress option
+- [x] **DATA-02**: On first load, current season option is auto-enriched with today's hardcoded category values (migration) *(Intentionally skipped per CONTEXT.md: no auto-migration, manual data population for single-club app)*
+- [x] **DATA-03**: Creating a new season auto-copies the full category configuration from the previous season
 
 ### Backend Logic
 
@@ -58,9 +58,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | 155 | Pending |
-| DATA-02 | 155 | Pending |
-| DATA-03 | 155 | Pending |
+| DATA-01 | 155 | Complete |
+| DATA-02 | 155 | Complete (skipped per CONTEXT.md) |
+| DATA-03 | 155 | Complete |
 | LOGIC-01 | 156 | Pending |
 | LOGIC-02 | 156 | Pending |
 | LOGIC-03 | 156 | Pending |
@@ -86,4 +86,4 @@
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-07 — traceability updated with phase mappings*
+*Last updated: 2026-02-08 — Phase 155 requirements marked Complete*

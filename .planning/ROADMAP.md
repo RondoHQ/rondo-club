@@ -19,7 +19,7 @@
 
 ### v21.0 Per-Season Fee Categories (Planned)
 
-- [ ] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration
+- [x] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration — completed 2026-02-08
 - [ ] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups
 - [ ] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API
 - [ ] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories
@@ -38,7 +38,7 @@
   4. Existing fee calculation continues to work correctly after the data model change (no regression)
 **Plans**: 1 plan
 Plans:
-- [ ] 155-01-PLAN.md — Add category helper methods and update copy-forward in MembershipFees + developer docs
+- [x] 155-01-PLAN.md — Add category helper methods and update copy-forward in MembershipFees + developer docs
 
 ### Phase 156: Fee Category Backend Logic
 **Goal**: All fee calculation logic reads from per-season category config instead of hardcoded constants
@@ -92,7 +92,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
+| 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
 | 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
 | 158. Fee Category Settings UI | v21.0 | 0/TBD | Not started | - |
@@ -100,4 +100,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 — v20.0 milestone archived, v21.0 phases active*
+*Last updated: 2026-02-08 — Phase 155 complete*
