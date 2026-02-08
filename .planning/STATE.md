@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 ## Current Position
 
 Phase: 156 of 159 (Fee Category Backend Logic) — second phase of v21.0
-Plan: 01 of 01 complete
+Plan: 02 of 02 complete
 Status: Phase complete
-Last activity: 2026-02-08 — Completed 156-01-PLAN.md (config-driven fee calculation)
+Last activity: 2026-02-08 — Completed 156-02-PLAN.md (dynamic sort order in REST & docs)
 
 Progress: [████░░░░░░] 40% (2/5 v21.0 phases complete)
 
@@ -34,6 +34,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 156-01:** Automatic migration from age_min/age_max to age_classes (empty array as catch-all)
 - **Phase 156-01:** Category with lowest sort_order wins when age class appears in multiple categories
 - **Phase 156-01:** Season parameter flows through entire calculation chain for forecast mode
+- **Phase 156-02:** Eliminated all hardcoded category_order arrays in favor of get_category_sort_order()
+- **Phase 156-02:** REST API and Google Sheets export respect per-season category configuration
 
 ### Pending Todos
 
@@ -52,8 +54,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-08 23:53
-Stopped at: Completed Phase 156 Plan 01 (config-driven fee calculation)
+Last session: 2026-02-08 15:55
+Stopped at: Completed Phase 156 Plan 02 (dynamic sort order in REST & docs)
 Resume file: None
 
 ---
