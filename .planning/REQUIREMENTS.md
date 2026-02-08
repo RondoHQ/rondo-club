@@ -13,11 +13,11 @@
 
 ### Backend Logic
 
-- [ ] **LOGIC-01**: `parse_age_group()` is replaced by `get_category_by_age_class()` which matches Sportlink age class strings against season category `age_classes` arrays
-- [ ] **LOGIC-02**: `VALID_TYPES` is derived from season category config (no hardcoded constant)
-- [ ] **LOGIC-03**: `youth_categories` is derived from `is_youth` flag in category config (no hardcoded arrays)
-- [ ] **LOGIC-04**: Category sort order is derived from config (removing duplicated `category_order` arrays from `class-rest-api.php`, `class-rest-google-sheets.php`, and `ContributieList.jsx`)
-- [ ] **LOGIC-05**: Fee calculation correctly uses per-season categories for both current and forecast modes
+- [x] **LOGIC-01**: `parse_age_group()` is replaced by `get_category_by_age_class()` which matches Sportlink age class strings against season category `age_classes` arrays
+- [x] **LOGIC-02**: `VALID_TYPES` is derived from season category config (no hardcoded constant)
+- [x] **LOGIC-03**: `youth_categories` is derived from `is_youth` flag in category config (no hardcoded arrays)
+- [x] **LOGIC-04**: Category sort order is derived from config (removing duplicated `category_order` arrays from `class-rest-api.php`, `class-rest-google-sheets.php`, and `ContributieList.jsx`)
+- [x] **LOGIC-05**: Fee calculation correctly uses per-season categories for both current and forecast modes
 
 ### REST API
 
@@ -61,11 +61,11 @@
 | DATA-01 | 155 | Complete |
 | DATA-02 | 155 | Complete (skipped per CONTEXT.md) |
 | DATA-03 | 155 | Complete |
-| LOGIC-01 | 156 | Pending |
-| LOGIC-02 | 156 | Pending |
-| LOGIC-03 | 156 | Pending |
-| LOGIC-04 | 156 | Pending |
-| LOGIC-05 | 156 | Pending |
+| LOGIC-01 | 156 | Complete |
+| LOGIC-02 | 156 | Complete |
+| LOGIC-03 | 156 | Complete |
+| LOGIC-04 | 156 | Complete |
+| LOGIC-05 | 156 | Complete |
 | API-01 | 157 | Pending |
 | API-02 | 157 | Pending |
 | API-03 | 157 | Pending |
@@ -86,4 +86,4 @@
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-08 — Phase 155 requirements marked Complete*
+*Last updated: 2026-02-08 — Phase 156 requirements marked Complete*
