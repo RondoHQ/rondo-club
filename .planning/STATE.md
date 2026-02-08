@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-07)
 ## Current Position
 
 Phase: 153 of 159 (Wire Up Role Settings) — third phase of v20.0
-Plan: —
-Status: Ready to discuss/plan
-Last activity: 2026-02-07 — Phase 152 (Role Settings) marked complete (pre-existing v19.1.0 implementation)
+Plan: 1 of 1
+Status: Phase complete
+Last activity: 2026-02-08 — Completed 153-01-PLAN.md (wire up role settings to TeamDetail)
 
-Progress: [█████░░░░░] 50% (2/4 v20.0 phases)
+Progress: [███████░░░] 75% (3/4 v20.0 phases)
 
 ## Accumulated Context
 
@@ -32,6 +32,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - Member types use priority array with unknown types at end (151-01)
 - Filter options cached 5 minutes in frontend (151-02) - changes only on sync
 - Stale URL params cleared silently (151-02) for better UX
+- GET /rondo/v1/volunteer-roles/settings accessible to all authenticated users, POST admin-only (153-01)
+- Settings hooks use 5-minute staleTime for rarely-changing data (153-01)
+- Team detail player/staff split driven by configured role settings (153-01)
 
 ### Pending Todos
 
@@ -46,9 +49,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-07
-Stopped at: Phase 152 marked complete (pre-existing), discussing Phase 153
+Last session: 2026-02-08
+Stopped at: Completed 153-01-PLAN.md
 Resume file: None
 
 ---
-*State updated: 2026-02-07*
+*State updated: 2026-02-08*
