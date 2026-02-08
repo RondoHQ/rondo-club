@@ -752,7 +752,7 @@ class Api extends Base {
 			]
 		);
 
-		// Volunteer role classification settings (admin only)
+		// Volunteer role classification settings (read: all users, write: admin)
 		register_rest_route(
 			'rondo/v1',
 			'/volunteer-roles/settings',
@@ -760,7 +760,7 @@ class Api extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_volunteer_role_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_user_approved' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
