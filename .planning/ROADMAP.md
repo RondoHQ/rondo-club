@@ -1,20 +1,24 @@
-# Roadmap: Rondo Club v20.0 Configurable Roles
-
-## Overview
-
-Replace hardcoded club-specific arrays with database-driven settings and dynamic queries so any sports club can use Rondo Club without code changes. This milestone removes the last club-specific assumptions from the codebase by making filter options dynamic, role classifications configurable, and cleaning up default fallbacks from the sync layer.
+# Roadmap: Rondo Club
 
 ## Milestones
 
-- ✅ **v20.0 Configurable Roles** - Phases 151-154 (complete)
-- 📋 **v21.0 Per-Season Fee Categories** - Phases 155-159 (planned)
+- SHIPPED **v20.0 Configurable Roles** — Phases 151-154 (shipped 2026-02-08) — [Archive](milestones/v20.0-ROADMAP.md)
+- **v21.0 Per-Season Fee Categories** — Phases 155-159 (planned)
 
 ## Phases
 
-- [x] **Phase 151: Dynamic Filters** - Derive filter options from actual database values instead of hardcoded lists
-- [x] **Phase 152: Role Settings** - Admin UI and backend storage for configurable player roles and excluded roles
-- [x] **Phase 153: Wire Up Role Settings** - Replace hardcoded role arrays with settings lookups in business logic
-- [x] **Phase 154: Sync Cleanup** - Remove default role fallbacks from rondo-sync
+<details>
+<summary>v20.0 Configurable Roles (Phases 151-154) — SHIPPED 2026-02-08</summary>
+
+- [x] Phase 151: Dynamic Filters (2/2 plans) — completed 2026-02-07
+- [x] Phase 152: Role Settings (0/0 plans, pre-existing) — completed 2026-02-07
+- [x] Phase 153: Wire Up Role Settings (1/1 plan) — completed 2026-02-08
+- [x] Phase 154: Sync Cleanup (1/1 plan) — completed 2026-02-08
+
+</details>
+
+### v21.0 Per-Season Fee Categories (Planned)
+
 - [ ] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration
 - [ ] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups
 - [ ] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API
@@ -22,57 +26,6 @@ Replace hardcoded club-specific arrays with database-driven settings and dynamic
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
 
 ## Phase Details
-
-### Phase 151: Dynamic Filters
-**Goal**: Filter options on the People list are derived from actual data in the database, not hardcoded arrays
-**Depends on**: Nothing (first phase in milestone)
-**Requirements**: FILT-01, FILT-02, FILT-03, FILT-04
-**Success Criteria** (what must be TRUE):
-  1. Age group filter dropdown on People list shows only values that exist in the database
-  2. Member type filter dropdown on People list shows only values that exist in the database
-  3. When a new age group or member type value arrives via sync, it appears in the filter options without any code change
-  4. The REST API provides an endpoint (or extended response) that returns available filter options for both fields
-**Plans:** 2 plans
-Plans:
-  - [x] 151-01-PLAN.md -- Backend REST endpoint for filter options with generic infrastructure
-  - [x] 151-02-PLAN.md -- Frontend hook, dynamic dropdowns, documentation
-
-### Phase 152: Role Settings
-**Goal**: Admins can configure which job titles are "player roles" and which are "excluded/honorary roles" via the Settings UI
-**Depends on**: Nothing (independent of Phase 151)
-**Requirements**: ROLE-01, ROLE-02, ROLE-03, ROLE-04, ROLE-08
-**Success Criteria** (what must be TRUE):
-  1. Admin can open a Role Settings section in the Settings UI and select which job titles count as player roles
-  2. The player role options are populated from actual work_history job titles in the database (not hardcoded)
-  3. Admin can select which roles are excluded/honorary, with options populated from actual commissie work_history data
-  4. Role settings are stored as WordPress options and persist across sessions
-**Plans**: 0 plans (pre-existing implementation satisfied all criteria)
-**Note**: Role settings UI, REST API, and WordPress options storage were implemented in v19.1.0 as a quick task. All success criteria verified met.
-
-### Phase 153: Wire Up Role Settings
-**Goal**: Business logic uses configured role settings instead of hardcoded arrays
-**Depends on**: Phase 152 (settings must exist before they can be consumed)
-**Requirements**: ROLE-05, ROLE-06, ROLE-07
-**Success Criteria** (what must be TRUE):
-  1. Volunteer status calculation reads player roles from settings and correctly identifies volunteers (people without a player role)
-  2. Team detail page splits members into players and staff using the configured player roles
-  3. Volunteer status calculation respects the excluded/honorary roles setting, excluding those people from volunteer counts
-**Plans:** 1 plan
-Plans:
-  - [x] 153-01-PLAN.md -- Fix API permission, create useVolunteerRoleSettings hook, wire TeamDetail
-
-### Phase 154: Sync Cleanup
-**Goal**: Rondo-sync no longer ships with default role fallbacks, relying entirely on Rondo Club settings
-**Depends on**: Phase 153 (settings must be wired up before removing fallbacks)
-**Requirements**: SYNC-01
-**Success Criteria** (what must be TRUE):
-  1. The rondo-sync codebase contains no default fallback values for Lid, Speler, or Staflid roles
-  2. Rondo-sync continues to function correctly when Rondo Club has role settings configured
-**Plans:** 1 plan
-Plans:
-  - [x] 154-01-PLAN.md -- Remove hardcoded role fallbacks, drop member_type column, simplify role lookup
-
----
 
 ### Phase 155: Fee Category Data Model
 **Goal**: Fee category definitions are stored per season in WordPress options with automatic migration from hardcoded values
@@ -132,16 +85,11 @@ Plans:
 
 ## Progress
 
-**Execution Order:** 151 → 152 → 153 → 154 → 155 → 156 → 157 → 158/159
-(Note: 151 and 152 are independent and could execute in parallel)
+**Execution Order:** 155 → 156 → 157 → 158/159
 (Note: 158 and 159 are independent and could execute in parallel)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
-| 152. Role Settings | v20.0 | 0/0 | ✓ Complete (pre-existing) | 2026-02-07 |
-| 153. Wire Up Role Settings | v20.0 | 1/1 | ✓ Complete | 2026-02-08 |
-| 154. Sync Cleanup | v20.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
 | 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
 | 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
@@ -150,4 +98,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 -- Phase 154 complete, v20.0 milestone complete*
+*Last updated: 2026-02-08 — v20.0 milestone archived, v21.0 phases active*

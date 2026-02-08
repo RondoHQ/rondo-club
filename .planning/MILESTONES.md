@@ -1,5 +1,32 @@
 # Project Milestones: Rondo Club
 
+## v20.0 Configurable Roles (Shipped: 2026-02-08)
+
+**Delivered:** Replaced hardcoded club-specific arrays with database-driven settings and dynamic queries so any sports club can use Rondo Club without code changes. Filter options are now dynamic, role classifications are configurable, and sync layer has no default fallbacks.
+
+**Phases completed:** 151-154 (4 phases, 4 plans)
+
+**Key accomplishments:**
+
+- Dynamic filter infrastructure deriving People list filter options from actual database values with smart sorting and counts
+- Role settings admin UI for configuring player roles and excluded/honorary roles (pre-existing from v19.1.0)
+- Business logic wired to configured settings — volunteer status and team detail player/staff split no longer use hardcoded arrays
+- Sync layer cleaned up — rondo-sync passes through role descriptions without modification, all hardcoded fallbacks removed
+- Generic extensibility patterns established (filter config, skip-and-warn) for future use
+
+**Stats:**
+
+- 50 files changed (rondo-club) + 7 files (rondo-sync)
+- +4,853 / -2,229 lines changed (rondo-club)
+- 4 phases, 4 plans, 7 tasks
+- 2 days (2026-02-06 → 2026-02-08)
+
+**Git range:** `f672b4fb` → `52913e7c` (22 commits, rondo-club)
+
+**What's next:** v21.0 Per-Season Fee Categories
+
+---
+
 ## v19.0 Birthdate Simplification (Shipped: 2026-02-06)
 
 **Delivered:** Simplified birthdate handling by moving from the Important Dates CPT to a direct person field, then removed the now-unnecessary Important Dates infrastructure entirely. Reduces complexity and aligns with the Sportlink data model.

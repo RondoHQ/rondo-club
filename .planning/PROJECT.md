@@ -358,15 +358,16 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Reminders and iCal systems generate from person birthdate field — v19.0
 - Data model reduced from 3 CPTs to 2 (person, team) — v19.0
 
+**v20.0 Configurable Roles (shipped 2026-02-08):**
+- Admin can configure which job titles count as "player roles" (options from actual data) — v20.0
+- Admin can configure which roles are excluded/honorary (options from actual data) — v20.0
+- Age group filter options derived dynamically from the database — v20.0
+- Member type filter options derived dynamically from the database — v20.0
+- Generic filter infrastructure via get_dynamic_filter_config() — v20.0
+- Team detail player/staff split driven by configured role settings — v20.0
+- Default role fallbacks removed from rondo-sync (skip-and-warn pattern) — v20.0
+
 ### Active
-
-**v20.0 Configurable Roles** — Replace hardcoded club-specific arrays with settings and dynamic queries so any club can use Rondo Club without code changes.
-
-- [ ] Admin can configure which job titles count as "player roles" (options populated from actual work_history data)
-- [ ] Admin can configure which roles are excluded/honorary (options populated from actual commissie data)
-- [ ] Age group filter options are derived dynamically from the database
-- [ ] Member type filter options are derived dynamically from the database
-- [ ] Default role fallbacks removed from rondo-sync
 
 **v21.0 Per-Season Fee Categories** — Replace hardcoded fee category definitions with per-season configurable categories stored in WordPress options.
 
@@ -549,6 +550,14 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Auto-migration for breaking localStorage changes | loadPreferences() auto-converts 'awc' to 'club' on load for zero user disruption | ✓ Good |
 | Lighthouse artifact exclusion from AWC cleanup | lighthouse-full.json contains svawc.nl references but is historical test data, not source code | ✓ Good |
 | Integration URLs externalized to config | FreeScout link checks window.stadionConfig first, hides feature if not configured | ✓ Good |
+| Generic filter config pattern | `get_dynamic_filter_config()` maps filter key → meta_key + sort_method, makes future filters trivial | ✓ Good |
+| Smart age group sorting | Numeric extraction from "Onder X" pattern, then gender variant detection | ✓ Good |
+| Member type priority sorting | Explicit priority array with unknown types at end (priority 99) | ✓ Good |
+| 5-minute staleTime for filter/role settings | Rarely-changing data, changes only on sync | ✓ Good |
+| GET role settings accessible to all users | Non-admins need role data for team detail page display | ✓ Good |
+| Skip-and-warn in rondo-sync | Missing role descriptions logged as warning, entry skipped — makes data quality visible | ✓ Good |
+| Remove member_type from sync layer | Classification now happens in Rondo Club settings, not sync pipeline | ✓ Good |
+| PRAGMA table_info before ALTER TABLE | Safe migration pattern for SQLite schema changes | ✓ Good |
 
 ---
-*Last updated: 2026-02-07 after v21.0 Per-Season Fee Categories milestone started*
+*Last updated: 2026-02-08 after v20.0 Configurable Roles milestone*
