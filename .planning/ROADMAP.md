@@ -57,7 +57,9 @@ Plans:
   1. Volunteer status calculation reads player roles from settings and correctly identifies volunteers (people without a player role)
   2. Team detail page splits members into players and staff using the configured player roles
   3. Volunteer status calculation respects the excluded/honorary roles setting, excluding those people from volunteer counts
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+  - [ ] 153-01-PLAN.md -- Fix API permission, create useVolunteerRoleSettings hook, wire TeamDetail
 
 ### Phase 154: Sync Cleanup
 **Goal**: Rondo-sync no longer ships with default role fallbacks, relying entirely on Rondo Club settings
@@ -136,7 +138,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 151. Dynamic Filters | v20.0 | 2/2 | ✓ Complete | 2026-02-07 |
 | 152. Role Settings | v20.0 | 0/0 | ✓ Complete (pre-existing) | 2026-02-07 |
-| 153. Wire Up Role Settings | v20.0 | 0/TBD | Not started | - |
+| 153. Wire Up Role Settings | v20.0 | 0/1 | Planned | - |
 | 154. Sync Cleanup | v20.0 | 0/TBD | Not started | - |
 | 155. Fee Category Data Model | v21.0 | 0/TBD | Not started | - |
 | 156. Fee Category Backend Logic | v21.0 | 0/TBD | Not started | - |
@@ -146,4 +148,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-07 — Phase 152 complete (pre-existing)*
+*Last updated: 2026-02-08 -- Phase 153 planned (1 plan)*
