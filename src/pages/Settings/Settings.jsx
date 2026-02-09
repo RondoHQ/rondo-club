@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi, wpApi } from '@/api/client';
-import { useTheme, COLOR_SCHEMES, ACCENT_COLORS } from '@/hooks/useTheme';
+import { useTheme, COLOR_SCHEMES } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
@@ -709,18 +708,15 @@ export default function Settings() {
 
 // Appearance Tab Component
 function AppearanceTab() {
-  const { colorScheme, setColorScheme, effectiveColorScheme, accentColor, setAccentColor } = useTheme();
+  const { colorScheme, setColorScheme, effectiveColorScheme } = useTheme();
   const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
-  const [clubColor, setClubColor] = useState(config.accentColor || '#006935');
-  const [originalClubColor] = useState(config.accentColor || '#006935');
   const [freescoutUrl, setFreescoutUrl] = useState(config.freescoutUrl || '');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Profile link state
   const [linkedPerson, setLinkedPerson] = useState(null);
@@ -781,31 +777,6 @@ function AppearanceTab() {
     }
   };
 
-  const handleClubColorChange = (color) => {
-    setClubColor(color);
-    // Live preview: if user's current accent is 'club', update CSS vars immediately
-    if (accentColor === 'club') {
-      const root = document.documentElement;
-      // Set key shades for live preview (500, 600, 700 are most visible in UI)
-      root.style.setProperty('--color-electric-cyan', color);
-      root.style.setProperty('--color-electric-cyan', color);
-      root.style.setProperty('--color-bright-cobalt', color);
-    }
-  };
-
-  // Cleanup effect: revert preview if navigating away without saving
-  useEffect(() => {
-    return () => {
-      // Revert preview if color was changed but not saved
-      if (accentColor === 'club') {
-        // Clear inline CSS overrides - useTheme will re-apply from rondoConfig
-        const root = document.documentElement;
-        for (const shade of ['500', '600', '700']) {
-          root.style.removeProperty(`--color-accent-${shade}`);
-        }
-      }
-    };
-  }, [accentColor]);
 
   const handleSaveClubConfig = async () => {
     setSavingClubConfig(true);
@@ -813,23 +784,11 @@ function AppearanceTab() {
     try {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
-        accent_color: clubColor,
         freescout_url: freescoutUrl,
       });
       // Update window.rondoConfig with saved values
       window.rondoConfig.clubName = response.data.club_name;
-      window.rondoConfig.accentColor = response.data.accent_color;
       window.rondoConfig.freescoutUrl = response.data.freescout_url;
-
-      // Clear preview overrides so useTheme can apply full scale
-      if (accentColor === 'club') {
-        const root = document.documentElement;
-        for (const shade of ['500', '600', '700']) {
-          root.style.removeProperty(`--color-accent-${shade}`);
-        }
-        // useTheme's applyTheme will now generate the full scale from the new rondoConfig value
-        setAccentColor('club');
-      }
 
       setClubConfigSaved(true);
       setTimeout(() => setClubConfigSaved(false), 3000);
@@ -846,30 +805,6 @@ function AppearanceTab() {
     { id: 'system', label: 'Systeem', icon: Monitor },
   ];
 
-  // Map accent color names to Tailwind color classes
-  const accentColorClasses = {
-    club: 'bg-club-600',
-    orange: 'bg-orange-500',
-    teal: 'bg-teal-500',
-    indigo: 'bg-indigo-500',
-    emerald: 'bg-emerald-500',
-    violet: 'bg-violet-500',
-    pink: 'bg-pink-500',
-    fuchsia: 'bg-fuchsia-500',
-    rose: 'bg-rose-500',
-  };
-
-  const accentRingClasses = {
-    club: 'ring-club-600',
-    orange: 'ring-orange-500',
-    teal: 'ring-teal-500',
-    indigo: 'ring-indigo-500',
-    emerald: 'ring-emerald-500',
-    violet: 'ring-violet-500',
-    pink: 'ring-pink-500',
-    fuchsia: 'ring-fuchsia-500',
-    rose: 'ring-rose-500',
-  };
 
   return (
     <div className="space-y-6">
@@ -895,39 +830,6 @@ function AppearanceTab() {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Wordt getoond op het inlogscherm en in de paginatitel.
               </p>
-            </div>
-
-            {/* Club Color */}
-            <div>
-              <label className="label">Clubkleur</label>
-              <div className="flex gap-4 items-start">
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowColorPicker(!showColorPicker)}
-                    className="w-12 h-12 rounded-lg border-2 border-gray-300 dark:border-gray-600 cursor-pointer hover:scale-105 transition-transform"
-                    style={{ backgroundColor: clubColor }}
-                    title="Klik om kleurkiezer te openen"
-                  />
-                  {showColorPicker && (
-                    <div className="mt-2">
-                      <HexColorPicker color={clubColor} onChange={handleClubColorChange} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 max-w-[200px]">
-                  <HexColorInput
-                    color={clubColor}
-                    onChange={handleClubColorChange}
-                    className="input"
-                    prefixed
-                    placeholder="#006935"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Live voorbeeld zichtbaar als je accentkleur op "Club" staat.
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* FreeScout URL */}
@@ -999,43 +901,6 @@ function AppearanceTab() {
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
           Momenteel <span className="font-medium">{effectiveColorScheme}</span> modus
           {colorScheme === 'system' && ' (op basis van je systeeminstelling)'}
-        </p>
-      </div>
-
-      {/* Accent color card */}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Accentkleur</h2>
-        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Kies de accentkleur voor knoppen, links en andere interactieve elementen.
-        </p>
-
-        {/* Accent color picker */}
-        <div className="flex flex-wrap gap-3">
-          {ACCENT_COLORS.map((color) => {
-            const isSelected = accentColor === color;
-            return (
-              <button
-                key={color}
-                onClick={() => setAccentColor(color)}
-                style={color === 'club' ? { backgroundColor: window.rondoConfig?.accentColor || '#006935' } : undefined}
-                className={`
-                  w-10 h-10 rounded-full transition-transform hover:scale-110
-                  ${color !== 'club' ? accentColorClasses[color] : ''}
-                  ${isSelected ? `ring-2 ring-offset-2 ${color !== 'club' ? accentRingClasses[color] : 'ring-current'} dark:ring-offset-gray-800` : ''}
-                `}
-                title={color === 'club' ? 'Club' : color.charAt(0).toUpperCase() + color.slice(1)}
-                aria-label={`Selecteer ${color === 'club' ? 'Club' : color} accentkleur`}
-              />
-            );
-          })}
-        </div>
-
-        {/* Current accent indicator */}
-        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          Geselecteerd: <span className="font-medium">{accentColor === 'club' ? 'Club' : accentColor.charAt(0).toUpperCase() + accentColor.slice(1)}</span>
-          {accentColor === 'club' && (
-            <span className="text-gray-400 dark:text-gray-500"> (past zich aan wanneer de beheerder de clubkleur wijzigt)</span>
-          )}
         </p>
       </div>
 
