@@ -48,7 +48,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-2 todo(s) in `.planning/todos/pending/`:
+3 todo(s) in `.planning/todos/pending/`:
+- **improve-teams-page-with-play-day-and-gender-columns**: Improve teams page with play day and gender columns (area: ui)
 - **move-contributie-settings-to-dedicated-menu-item**: Move contributie settings to dedicated menu item (area: ui)
 - **treasurer-fee-income-overview-by-category**: Treasurer fee income overview by category (area: ui)
 
