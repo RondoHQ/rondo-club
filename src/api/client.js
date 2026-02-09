@@ -294,6 +294,7 @@ export const prmApi = {
   // Membership Fee Settings (admin only)
   getMembershipFeeSettings: () => api.get('/rondo/v1/membership-fees/settings'),
   updateMembershipFeeSettings: (settings, season) => api.post('/rondo/v1/membership-fees/settings', { ...settings, season }),
+  getAvailableWerkfuncties: () => api.get('/rondo/v1/werkfuncties/available'),
 
   // Club configuration (admin only)
   getClubConfig: () => api.get('/rondo/v1/config'),

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle } from 'lucide-react';
-import { prmApi } from '@/api/client';
+import { prmApi, wpApi } from '@/api/client';
 import {
   DndContext,
   closestCenter,
@@ -87,6 +87,16 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
                 Catch-all voor niet-toegewezen klassen
               </p>
             )}
+            {category.matching_teams && category.matching_teams.length > 0 && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Teams: {category.matching_teams.length} team(s) geselecteerd
+              </p>
+            )}
+            {category.matching_werkfuncties && category.matching_werkfuncties.length > 0 && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Werkfuncties: {category.matching_werkfuncties.join(', ')}
+              </p>
+            )}
           </div>
 
           {/* Actions */}
@@ -113,12 +123,14 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
 }
 
 // EditCategoryForm component for inline editing
-function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = false, availableAgeGroups = [] }) {
+function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = false, availableAgeGroups = [], allTeams = [], availableWerkfuncties = [] }) {
   const [formData, setFormData] = useState({
     label: category?.label || '',
     amount: category?.amount ?? 0,
     age_classes: category?.age_classes || [],
     is_youth: category?.is_youth ?? false,
+    matching_teams: category?.matching_teams || [],
+    matching_werkfuncties: category?.matching_werkfuncties || [],
   });
 
   const handleSubmit = (e) => {
@@ -129,6 +141,8 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
       amount: parseFloat(formData.amount) || 0,
       age_classes: formData.age_classes,
       is_youth: formData.is_youth,
+      matching_teams: formData.matching_teams,
+      matching_werkfuncties: formData.matching_werkfuncties,
     });
   };
 
@@ -138,6 +152,24 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
       age_classes: prev.age_classes.includes(value)
         ? prev.age_classes.filter(v => v !== value)
         : [...prev.age_classes, value],
+    }));
+  };
+
+  const toggleTeam = (teamId) => {
+    setFormData(prev => ({
+      ...prev,
+      matching_teams: prev.matching_teams.includes(teamId)
+        ? prev.matching_teams.filter(id => id !== teamId)
+        : [...prev.matching_teams, teamId],
+    }));
+  };
+
+  const toggleWerkfunctie = (wf) => {
+    setFormData(prev => ({
+      ...prev,
+      matching_werkfuncties: prev.matching_werkfuncties.includes(wf)
+        ? prev.matching_werkfuncties.filter(w => w !== wf)
+        : [...prev.matching_werkfuncties, wf],
     }));
   };
 
@@ -220,6 +252,62 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
         <label htmlFor="is_youth" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Familiekorting mogelijk?
         </label>
+      </div>
+
+      {/* Matching teams */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Teams die deze categorie krijgen
+        </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          Leden die uitsluitend in geselecteerde teams spelen krijgen deze categorie.
+          Laat leeg als deze categorie niet op basis van teams wordt toegewezen.
+        </p>
+        {allTeams.length > 0 ? (
+          <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5 bg-white dark:bg-gray-700">
+            {allTeams.map(team => (
+              <label key={team.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-1 py-0.5">
+                <input
+                  type="checkbox"
+                  checked={formData.matching_teams.includes(team.id)}
+                  onChange={() => toggleTeam(team.id)}
+                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{team.title.rendered}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">Laden...</p>
+        )}
+      </div>
+
+      {/* Matching werkfuncties */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Werkfuncties die deze categorie krijgen
+        </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          Leden met een geselecteerde werkfunctie krijgen deze categorie.
+          Laat leeg als deze categorie niet op basis van werkfuncties wordt toegewezen.
+        </p>
+        {availableWerkfuncties.length > 0 ? (
+          <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5 bg-white dark:bg-gray-700">
+            {availableWerkfuncties.map(wf => (
+              <label key={wf} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-1 py-0.5">
+                <input
+                  type="checkbox"
+                  checked={formData.matching_werkfuncties.includes(wf)}
+                  onChange={() => toggleWerkfunctie(wf)}
+                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{wf}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">Geen werkfuncties gevonden</p>
+        )}
       </div>
 
       {/* Actions */}
@@ -434,6 +522,28 @@ export default function FeeCategorySettings() {
     staleTime: 5 * 60 * 1000,
   });
   const availableAgeGroups = filterOptions?.age_groups || [];
+
+  // Fetch all teams for matching rules multi-select
+  const { data: allTeams } = useQuery({
+    queryKey: ['teams', 'all-for-settings'],
+    queryFn: async () => {
+      const response = await wpApi.get('/wp/v2/team', {
+        params: { per_page: 100, orderby: 'title', order: 'asc' }
+      });
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch available werkfuncties for matching rules multi-select
+  const { data: availableWerkfuncties } = useQuery({
+    queryKey: ['werkfuncties', 'available'],
+    queryFn: async () => {
+      const response = await prmApi.getAvailableWerkfuncties();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Save mutation with optimistic updates
   const saveMutation = useMutation({
@@ -764,6 +874,8 @@ export default function FeeCategorySettings() {
                       onCancel={handleCancel}
                       isSaving={saveMutation.isPending}
                       availableAgeGroups={availableAgeGroups}
+                      allTeams={allTeams || []}
+                      availableWerkfuncties={availableWerkfuncties || []}
                     />
                   );
                 }
@@ -792,6 +904,8 @@ export default function FeeCategorySettings() {
           isSaving={saveMutation.isPending}
           isNew={true}
           availableAgeGroups={availableAgeGroups}
+          allTeams={allTeams || []}
+          availableWerkfuncties={availableWerkfuncties || []}
         />
       ) : (
         <button
