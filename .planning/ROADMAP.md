@@ -99,7 +99,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 169-01-PLAN.md — Former member fee logic, pro-rata override, diagnostics, and documentation
+- [x] 169-01-PLAN.md — Former member fee logic, pro-rata override, diagnostics, and documentation
 
 ## Progress
 
@@ -111,8 +111,8 @@ Phases execute in numeric order: 166 → 167 → 168 → 169
 | 166. Backend Foundation | 1/1 | ✓ Complete | 2026-02-09 |
 | 167. Core Filtering | 1/1 | ✓ Complete | 2026-02-09 |
 | 168. Visibility Controls | 1/1 | ✓ Complete | 2026-02-09 |
-| 169. Contributie Logic | 0/1 | Not started | - |
+| 169. Contributie Logic | 1/1 | ✓ Complete | 2026-02-09 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-09 — Phase 169 Contributie Logic planned*
+*Last updated: 2026-02-09 — Phase 169 Contributie Logic complete*
