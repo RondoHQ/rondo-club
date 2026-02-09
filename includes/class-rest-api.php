@@ -141,36 +141,6 @@ class Api extends Base {
 			]
 		);
 
-		// Get user theme preferences
-		register_rest_route(
-			'rondo/v1',
-			'/user/theme-preferences',
-			[
-				'methods'             => \WP_REST_Server::READABLE,
-				'callback'            => [ $this, 'get_theme_preferences' ],
-				'permission_callback' => 'is_user_logged_in',
-			]
-		);
-
-		// Update user theme preferences
-		register_rest_route(
-			'rondo/v1',
-			'/user/theme-preferences',
-			[
-				'methods'             => 'PATCH',
-				'callback'            => [ $this, 'update_theme_preferences' ],
-				'permission_callback' => 'is_user_logged_in',
-				'args'                => [
-					'color_scheme' => [
-						'required'          => false,
-						'validate_callback' => function ( $param ) {
-							return in_array( $param, [ 'light', 'dark', 'system' ], true );
-						},
-					],
-				],
-			]
-		);
-
 		// Get user dashboard settings
 		register_rest_route(
 			'rondo/v1',
@@ -1141,57 +1111,6 @@ class Api extends Base {
 	/**
 	 * Get user's theme preferences
 	 */
-	public function get_theme_preferences( $request ) {
-		$user_id = get_current_user_id();
-
-		$color_scheme = get_user_meta( $user_id, 'rondo_color_scheme', true );
-		if ( empty( $color_scheme ) ) {
-			$color_scheme = 'system';
-		}
-
-		return rest_ensure_response(
-			[
-				'color_scheme' => $color_scheme,
-			]
-		);
-	}
-
-	/**
-	 * Update user's theme preferences
-	 */
-	public function update_theme_preferences( $request ) {
-		$user_id = get_current_user_id();
-
-		// Valid values for validation
-		$valid_color_schemes = [ 'light', 'dark', 'system' ];
-
-		$color_scheme = $request->get_param( 'color_scheme' );
-
-		// Update color scheme if provided and valid
-		if ( $color_scheme !== null ) {
-			if ( ! in_array( $color_scheme, $valid_color_schemes, true ) ) {
-				return new \WP_Error(
-					'invalid_color_scheme',
-					__( 'Invalid color scheme. Valid values: light, dark, system.', 'rondo' ),
-					[ 'status' => 400 ]
-				);
-			}
-			update_user_meta( $user_id, 'rondo_color_scheme', $color_scheme );
-		}
-
-		// Return updated preferences
-		$updated_color_scheme = get_user_meta( $user_id, 'rondo_color_scheme', true );
-		if ( empty( $updated_color_scheme ) ) {
-			$updated_color_scheme = 'system';
-		}
-
-		return rest_ensure_response(
-			[
-				'color_scheme' => $updated_color_scheme,
-			]
-		);
-	}
-
 	/**
 	 * Default visible columns for People list.
 	 * Name column is always visible and first - not included here.
