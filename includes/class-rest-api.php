@@ -757,6 +757,17 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Werkfuncties - available werkfuncties from database (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/werkfuncties/available',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_available_werkfuncties' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
 	}
 
 	/**
@@ -2752,6 +2763,46 @@ class Api extends Base {
 					}
 				}
 			}
+
+			// Validate matching_teams (optional, must be array of integers if present)
+			if ( isset( $category['matching_teams'] ) ) {
+				if ( ! is_array( $category['matching_teams'] ) ) {
+					$errors[] = [
+						'field'   => "categories.{$slug}.matching_teams",
+						'message' => 'matching_teams must be an array',
+					];
+				} else {
+					foreach ( $category['matching_teams'] as $team_id ) {
+						if ( ! is_numeric( $team_id ) || (int) $team_id <= 0 ) {
+							$errors[] = [
+								'field'   => "categories.{$slug}.matching_teams",
+								'message' => 'matching_teams must contain valid team IDs (positive integers)',
+							];
+							break;
+						}
+					}
+				}
+			}
+
+			// Validate matching_werkfuncties (optional, must be array of strings if present)
+			if ( isset( $category['matching_werkfuncties'] ) ) {
+				if ( ! is_array( $category['matching_werkfuncties'] ) ) {
+					$errors[] = [
+						'field'   => "categories.{$slug}.matching_werkfuncties",
+						'message' => 'matching_werkfuncties must be an array',
+					];
+				} else {
+					foreach ( $category['matching_werkfuncties'] as $wf ) {
+						if ( ! is_string( $wf ) || trim( $wf ) === '' ) {
+							$errors[] = [
+								'field'   => "categories.{$slug}.matching_werkfuncties",
+								'message' => 'matching_werkfuncties must contain non-empty strings',
+							];
+							break;
+						}
+					}
+				}
+			}
 		}
 
 		return [ 'errors' => $errors, 'warnings' => $warnings ];
@@ -3204,6 +3255,47 @@ class Api extends Base {
 				'people_recalculated' => $people_recalculated,
 			]
 		);
+	}
+
+	/**
+	 * Get all distinct werkfunctie values from the database.
+	 *
+	 * Queries all people who have a werkfuncties field, unserializes the data,
+	 * and returns unique werkfunctie values sorted alphabetically.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response List of distinct werkfunctie names.
+	 */
+	public function get_available_werkfuncties( $request ) {
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					[
+						'key'     => 'werkfuncties',
+						'compare' => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		$all_werkfuncties = [];
+		foreach ( $people as $person_id ) {
+			$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
+			foreach ( $werkfuncties as $wf ) {
+				if ( is_string( $wf ) && trim( $wf ) !== '' ) {
+					$all_werkfuncties[ trim( $wf ) ] = true;
+				}
+			}
+		}
+
+		$unique = array_keys( $all_werkfuncties );
+		sort( $unique );
+
+		return rest_ensure_response( $unique );
 	}
 
 	/**
