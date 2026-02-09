@@ -183,7 +183,7 @@ export default function TodosList() {
   // Get the icon for the header
   const getHeaderIcon = () => {
     if (statusFilter === 'completed') {
-      return <CheckSquare className="w-5 h-5 mr-2 text-accent-600 dark:text-accent-400" />;
+      return <CheckSquare className="w-5 h-5 mr-2 text-electric-cyan dark:text-electric-cyan" />;
     }
     if (statusFilter === 'awaiting') {
       return <Clock className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />;
@@ -194,7 +194,7 @@ export default function TodosList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -230,7 +230,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('open')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'open' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'open' ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Te doen
@@ -247,7 +247,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('completed')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'completed' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'completed' ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Afgerond
@@ -255,7 +255,7 @@ export default function TodosList() {
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              statusFilter === 'all' ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              statusFilter === 'all' ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             Alle

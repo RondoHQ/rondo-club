@@ -222,7 +222,7 @@ export default function PersonEditModal({
                 <div
                   className={`relative rounded-lg border-2 border-dashed p-3 text-center transition-colors ${
                     dragActive
-                      ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
+                      ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight'
                       : vcardFile && !vcardError
                       ? 'border-green-300 bg-green-50 dark:border-green-600 dark:bg-green-900/30'
                       : 'border-gray-300 hover:border-gray-400 dark:border-gray-600 dark:hover:border-gray-500'
@@ -242,7 +242,7 @@ export default function PersonEditModal({
                   
                   {parseVcardMutation.isPending ? (
                     <div className="flex items-center justify-center gap-2 py-1">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-600 dark:border-accent-400"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
                       <span className="text-sm text-gray-600 dark:text-gray-300">vCard verwerken...</span>
                     </div>
                   ) : vcardFile && !vcardError ? (
@@ -265,7 +265,7 @@ export default function PersonEditModal({
                     <div className="flex items-center justify-center gap-2 py-1">
                       <Upload className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-300">
-                        Sleep een vCard of <span className="text-accent-600 dark:text-accent-400">blader</span>
+                        Sleep een vCard of <span className="text-electric-cyan dark:text-electric-cyan">blader</span>
                       </span>
                     </div>
                   )}

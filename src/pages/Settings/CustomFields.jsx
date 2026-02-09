@@ -103,7 +103,7 @@ function SortableFieldRow({ field, onEdit, onDelete, getFieldTypeLabel }) {
         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(field)}
-            className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
+            className="p-2 text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/30 rounded"
             title="Bewerken"
           >
             <Edit2 className="w-4 h-4" />
@@ -355,7 +355,7 @@ export default function CustomFields() {
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
           </div>
         )}
 

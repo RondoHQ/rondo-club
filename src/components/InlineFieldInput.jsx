@@ -26,7 +26,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
           placeholder={field.placeholder || ''}
           disabled={disabled}
         />
@@ -39,7 +39,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
           placeholder={field.placeholder || ''}
           disabled={disabled}
         />
@@ -57,7 +57,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
             min={field.min}
             max={field.max}
             step={field.step}
-            className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+            className="w-20 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
             disabled={disabled}
           />
           {field.append && <span className="text-gray-400 text-xs">{field.append}</span>}
@@ -71,7 +71,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           value={value ? format(new Date(value), 'yyyy-MM-dd') : ''}
           onChange={(e) => onChange(field.name, e.target.value)}
           onKeyDown={onKeyDown}
-          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         />
       );
@@ -82,7 +82,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         >
           {field.allow_null !== false && <option value="">-- Selecteer --</option>}
@@ -98,7 +98,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           value={value ? '1' : '0'}
           onChange={(e) => onChange(field.name, e.target.value === '1')}
           onKeyDown={onKeyDown}
-          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         >
           <option value="0">{field.ui_off_text || 'Nee'}</option>
@@ -113,7 +113,7 @@ export default function InlineFieldInput({ field, value, onChange, disabled, onK
           value={value ?? ''}
           onChange={(e) => onChange(field.name, e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+          className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
           disabled={disabled}
         />
       );

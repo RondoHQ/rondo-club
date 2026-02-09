@@ -112,7 +112,7 @@ export default function TodoItem({
         }
       >
         {todo.status === 'completed' ? (
-          <CheckSquare2 className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+          <CheckSquare2 className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
         ) : todo.status === 'awaiting' ? (
           <Clock className="w-5 h-5 text-orange-500 dark:text-orange-400" />
         ) : (
@@ -166,7 +166,7 @@ export default function TodoItem({
                 {/* Primary person name link */}
                 <Link
                   to={`/people/${displayPersons[0].id}`}
-                  className="ml-2 text-xs text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
+                  className="ml-2 text-xs text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
                 >
                   {displayPersons[0].name}
                   {displayPersons.length > 1 && (

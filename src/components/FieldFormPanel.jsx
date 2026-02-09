@@ -359,7 +359,7 @@ export default function FieldFormPanel({
 
   // Common input styling
   const inputClass =
-    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500';
+    'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan';
   const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
   const hintClass = 'mt-1 text-xs text-gray-500 dark:text-gray-400';
 
@@ -697,7 +697,7 @@ export default function FieldFormPanel({
                 type="checkbox"
                 checked={formData.allow_null}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
               />
               <label htmlFor="allow_null" className="text-sm text-gray-700 dark:text-gray-300">
                 Lege optie toestaan
@@ -757,7 +757,7 @@ export default function FieldFormPanel({
                     value="vertical"
                     checked={formData.layout === 'vertical'}
                     onChange={handleChange}
-                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Verticaal</span>
                 </label>
@@ -768,7 +768,7 @@ export default function FieldFormPanel({
                     value="horizontal"
                     checked={formData.layout === 'horizontal'}
                     onChange={handleChange}
-                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Horizontaal</span>
                 </label>
@@ -781,7 +781,7 @@ export default function FieldFormPanel({
                 type="checkbox"
                 checked={formData.toggle}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
               />
               <label htmlFor="toggle" className="text-sm text-gray-700 dark:text-gray-300">
                 Alles aan/uit (selecteer/deselecteer alles)
@@ -803,7 +803,7 @@ export default function FieldFormPanel({
                 type="checkbox"
                 checked={formData.ui}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
               />
               <label htmlFor="ui" className="text-sm text-gray-700 dark:text-gray-300">
                 Weergeven als schakelaar
@@ -1038,7 +1038,7 @@ export default function FieldFormPanel({
                         return { ...prev, relationship_post_types: types };
                       });
                     }}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Leden</span>
                 </label>
@@ -1054,7 +1054,7 @@ export default function FieldFormPanel({
                         return { ...prev, relationship_post_types: types };
                       });
                     }}
-                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Teams</span>
                 </label>
@@ -1072,7 +1072,7 @@ export default function FieldFormPanel({
                     onChange={() => {
                       setFormData((prev) => ({ ...prev, relationship_max: 1 }));
                     }}
-                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Enkelvoudig</span>
                 </label>
@@ -1084,7 +1084,7 @@ export default function FieldFormPanel({
                     onChange={() => {
                       setFormData((prev) => ({ ...prev, relationship_max: 0 }));
                     }}
-                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                    className="w-4 h-4 border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">Meervoudig</span>
                 </label>
@@ -1192,7 +1192,7 @@ export default function FieldFormPanel({
                   value={formData.label}
                   onChange={handleChange}
                   placeholder="bijv. LinkedIn Profiel"
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan ${
                     errors.label
                       ? 'border-red-500 dark:border-red-400'
                       : 'border-gray-300 dark:border-gray-600'
@@ -1217,7 +1217,7 @@ export default function FieldFormPanel({
                   value={formData.type}
                   onChange={handleChange}
                   disabled={isEditing}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 ${
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan ${
                     errors.type
                       ? 'border-red-500 dark:border-red-400'
                       : 'border-gray-300 dark:border-gray-600'
@@ -1253,7 +1253,7 @@ export default function FieldFormPanel({
                       type="checkbox"
                       checked={formData.required}
                       onChange={handleChange}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                     />
                     <label htmlFor="required" className="text-sm text-gray-700 dark:text-gray-300">
                       Verplicht veld
@@ -1268,7 +1268,7 @@ export default function FieldFormPanel({
                       type="checkbox"
                       checked={formData.unique}
                       onChange={handleChange}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                     />
                     <label htmlFor="unique" className="text-sm text-gray-700 dark:text-gray-300">
                       Unieke waarde
@@ -1283,7 +1283,7 @@ export default function FieldFormPanel({
                       type="checkbox"
                       checked={formData.editable_in_ui}
                       onChange={handleChange}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                     />
                     <label htmlFor="editable_in_ui" className="text-sm text-gray-700 dark:text-gray-300">
                       Bewerkbaar in UI
@@ -1308,7 +1308,7 @@ export default function FieldFormPanel({
                   onChange={handleChange}
                   rows={3}
                   placeholder="Helptekst getoond aan gebruikers bij invullen van dit veld"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan"
                 />
               </div>
             </div>

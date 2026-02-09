@@ -96,7 +96,7 @@ export default function NoteModal({
                   type="checkbox"
                   checked={visibility === 'shared'}
                   onChange={(e) => setVisibility(e.target.checked ? 'shared' : 'private')}
-                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
+                  className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan dark:bg-gray-700"
                   disabled={isLoading}
                 />
                 <span className="flex items-center gap-1.5">

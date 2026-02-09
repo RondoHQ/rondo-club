@@ -47,7 +47,7 @@ function FeeRow({ member, isOdd, isForecast, categories }) {
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
-          className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400"
+          className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-electric-cyan dark:hover:text-electric-cyan"
         >
           {member.first_name}
         </Link>
@@ -57,7 +57,7 @@ function FeeRow({ member, isOdd, isForecast, categories }) {
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
-          className="text-sm text-gray-700 dark:text-gray-300 hover:text-accent-600 dark:hover:text-accent-400"
+          className="text-sm text-gray-700 dark:text-gray-300 hover:text-electric-cyan dark:hover:text-electric-cyan"
         >
           {member.last_name}
         </Link>
@@ -305,7 +305,7 @@ export default function ContributieList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }

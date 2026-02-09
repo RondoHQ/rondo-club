@@ -260,7 +260,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
           placeholder="Wat moet er gedaan worden?"
           disabled={isLoading}
           autoFocus
@@ -276,7 +276,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           type="date"
           value={formatDateForInput(dueDate)}
           onChange={(e) => setDueDate(e.target.value || '')}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
           disabled={isLoading}
         />
       </div>
@@ -347,7 +347,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
             <button
               type="button"
               onClick={() => setIsPersonDropdownOpen(!isPersonDropdownOpen)}
-              className="flex items-center gap-1 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300"
+              className="flex items-center gap-1 text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light"
               disabled={isLoading}
             >
               <Plus className="w-4 h-4" />
@@ -365,7 +365,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
                       value={personSearchQuery}
                       onChange={(e) => setPersonSearchQuery(e.target.value)}
                       placeholder="Leden zoeken..."
-                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
+                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
                       autoFocus
                     />
                   </div>

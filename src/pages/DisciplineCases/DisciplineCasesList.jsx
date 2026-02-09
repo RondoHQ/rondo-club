@@ -127,7 +127,7 @@ export default function DisciplineCasesList() {
             <select
               value={selectedSeasonId ?? ''}
               onChange={handleSeasonChange}
-              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
             >
               <option value="">Alle seizoenen</option>
               {seasons.map((season) => (

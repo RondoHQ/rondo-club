@@ -51,7 +51,7 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
 
   return (
     <tr
-      className={`group hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'} ${isEditing ? 'ring-2 ring-accent-500 ring-inset' : ''}`}
+      className={`group hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'} ${isEditing ? 'ring-2 ring-electric-cyan ring-inset' : ''}`}
       onKeyDown={isEditing ? handleKeyDown : undefined}
     >
       <td className="pl-4 pr-2 py-3 w-10">
@@ -60,7 +60,7 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
           className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
         >
           {isSelected ? (
-            <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+            <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
           ) : (
             <Square className="w-5 h-5" />
           )}
@@ -88,12 +88,12 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
             value={editedFields._name ?? ''}
             onChange={(e) => handleFieldChange('_name', e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full px-2 py-1 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-accent-500 focus:border-accent-500 dark:bg-gray-700 dark:text-gray-100"
+            className="w-full px-2 py-1 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
             disabled={isUpdating}
             autoFocus
           />
         ) : (
-          <Link to={`/commissies/${commissie.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-accent-600 dark:hover:text-accent-400">
+          <Link to={`/commissies/${commissie.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-electric-cyan dark:hover:text-electric-cyan">
             {getCommissieName(commissie)}
           </Link>
         )}
@@ -143,7 +143,7 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
         ) : (
           <button
             onClick={() => onStartEdit(commissie.id)}
-            className="p-1.5 text-gray-400 hover:text-accent-600 hover:bg-accent-50 dark:hover:text-accent-400 dark:hover:bg-accent-900/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1.5 text-gray-400 hover:text-electric-cyan hover:bg-cyan-50 dark:hover:text-electric-cyan dark:hover:bg-obsidian/20 rounded opacity-0 group-hover:opacity-100 transition-opacity"
             title="Edit row"
           >
             <Pencil className="w-4 h-4" />
@@ -190,9 +190,9 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
                 title={isAllSelected ? 'Deselect all' : 'Select all'}
               >
                 {isAllSelected ? (
-                  <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                  <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
                 ) : isSomeSelected ? (
-                  <MinusSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                  <MinusSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
                 ) : (
                   <Square className="w-5 h-5" />
                 )}
@@ -509,12 +509,12 @@ export default function CommissiesList() {
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${hasActiveFilters ? 'bg-accent-50 text-accent-700 border-accent-200' : ''}`}
+              className={`btn-secondary ${hasActiveFilters ? 'bg-cyan-50 text-bright-cobalt border-cyan-200' : ''}`}
             >
               <Filter className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
-                <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
+                <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
                   {ownershipFilter !== 'all' ? 1 : 0}
                 </span>
               )}
@@ -552,11 +552,11 @@ export default function CommissiesList() {
                           />
                           <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full mr-3 ${
                             ownershipFilter === option.value
-                              ? 'border-accent-600'
+                              ? 'border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {ownershipFilter === option.value && (
-                              <div className="w-2 h-2 bg-accent-600 rounded-full" />
+                              <div className="w-2 h-2 bg-electric-cyan rounded-full" />
                             )}
                           </div>
                           <span className="text-sm text-gray-700 dark:text-gray-200">{option.label}</span>
@@ -569,7 +569,7 @@ export default function CommissiesList() {
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
+                      className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                     >
                       Alle filters wissen
                     </button>
@@ -583,9 +583,9 @@ export default function CommissiesList() {
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
               {ownershipFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-900/50 text-accent-800 dark:text-accent-200 rounded-full text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-obsidian/50 text-deep-midnight dark:text-cyan-200 rounded-full text-xs">
                   {ownershipFilter === 'mine' ? 'Mijn commissies' : 'Gedeeld met mij'}
-                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-accent-600 dark:hover:text-accent-300">
+                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-electric-cyan dark:hover:text-electric-cyan-light">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -598,7 +598,7 @@ export default function CommissiesList() {
       {/* Loading */}
       {isLoading && (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
         </div>
       )}
       
@@ -640,8 +640,8 @@ export default function CommissiesList() {
       
       {/* Selection toolbar - sticky */}
       {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-accent-50 border border-accent-200 rounded-lg px-4 py-2 shadow-sm">
-          <span className="text-sm text-accent-800 font-medium">
+        <div className="sticky top-0 z-20 flex items-center justify-between bg-cyan-50 border border-cyan-200 rounded-lg px-4 py-2 shadow-sm">
+          <span className="text-sm text-deep-midnight font-medium">
             {selectedIds.size} {selectedIds.size === 1 ? 'commissie' : 'commissies'} geselecteerd
           </span>
           <div className="flex items-center gap-3">
@@ -649,7 +649,7 @@ export default function CommissiesList() {
             <div className="relative" ref={bulkDropdownRef}>
               <button
                 onClick={() => setShowBulkDropdown(!showBulkDropdown)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent-700 bg-white border border-accent-300 rounded-md hover:bg-accent-50"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-bright-cobalt bg-white border border-electric-cyan-light rounded-md hover:bg-cyan-50"
               >
                 Acties
                 <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
@@ -673,7 +673,7 @@ export default function CommissiesList() {
             </div>
             <button
               onClick={clearSelection}
-              className="text-sm text-accent-600 hover:text-accent-800 font-medium"
+              className="text-sm text-electric-cyan hover:text-deep-midnight font-medium"
             >
               Selectie wissen
             </button>

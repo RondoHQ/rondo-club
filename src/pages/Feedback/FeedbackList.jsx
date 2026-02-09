@@ -67,7 +67,7 @@ export default function FeedbackList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -105,7 +105,7 @@ export default function FeedbackList() {
             onClick={() => setTypeFilter('')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               typeFilter === ''
-                ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300'
+                ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
@@ -141,7 +141,7 @@ export default function FeedbackList() {
             onClick={() => setStatusFilter('open')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               statusFilter === 'open'
-                ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300'
+                ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
@@ -151,7 +151,7 @@ export default function FeedbackList() {
             onClick={() => setStatusFilter('')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               statusFilter === ''
-                ? 'bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300'
+                ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >

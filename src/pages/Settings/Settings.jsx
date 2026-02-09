@@ -787,9 +787,9 @@ function AppearanceTab() {
     if (accentColor === 'club') {
       const root = document.documentElement;
       // Set key shades for live preview (500, 600, 700 are most visible in UI)
-      root.style.setProperty('--color-accent-500', color);
-      root.style.setProperty('--color-accent-600', color);
-      root.style.setProperty('--color-accent-700', color);
+      root.style.setProperty('--color-electric-cyan', color);
+      root.style.setProperty('--color-electric-cyan', color);
+      root.style.setProperty('--color-bright-cobalt', color);
     }
   };
 
@@ -984,7 +984,7 @@ function AppearanceTab() {
                 className={`
                   flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
                   ${isSelected
-                    ? 'bg-accent-500 text-white'
+                    ? 'bg-electric-cyan text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
                 `}
               >
@@ -1087,7 +1087,7 @@ function AppearanceTab() {
                     value={personSearchQuery}
                     onChange={(e) => setPersonSearchQuery(e.target.value)}
                     placeholder="Zoek je persoonsrecord..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm placeholder:text-gray-400 bg-white dark:bg-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-accent-500 focus:border-accent-500 outline-none"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm placeholder:text-gray-400 bg-white dark:bg-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan outline-none"
                     autoFocus
                   />
                 </div>
@@ -1325,7 +1325,7 @@ function CalendarsTab() {
     }
     // CalDAV icon
     return (
-      <Calendar className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+      <Calendar className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
     );
   };
 
@@ -1461,7 +1461,7 @@ function CalendarsTab() {
             className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4 transition-colors dark:border-gray-700 dark:hover:bg-gray-800"
           >
             <div className="p-3 bg-gray-100 rounded-lg dark:bg-gray-700">
-              <Calendar className="w-6 h-6 text-accent-600 dark:text-accent-400" />
+              <Calendar className="w-6 h-6 text-electric-cyan dark:text-electric-cyan" />
             </div>
             <div className="flex-1">
               <p className="font-medium dark:text-gray-100">CalDAV-agenda toevoegen</p>
@@ -1965,7 +1965,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                               : [...prev, cal.id]
                           );
                         }}
-                        className="rounded border-gray-300 text-accent-600 focus:ring-accent-500 dark:border-gray-600 dark:bg-gray-800"
+                        className="rounded border-gray-300 text-electric-cyan focus:ring-electric-cyan dark:border-gray-600 dark:bg-gray-800"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {cal.name}{cal.primary ? ' (Primair)' : ''}
@@ -2053,7 +2053,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 onChange={(e) => setSyncEnabled(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:peer-focus:ring-accent-800"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-electric-cyan-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-electric-cyan dark:peer-focus:ring-deep-midnight"></div>
             </label>
           </div>
 
@@ -2070,7 +2070,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
                 onChange={(e) => setAutoLog(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:peer-focus:ring-accent-800"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-electric-cyan-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-electric-cyan dark:peer-focus:ring-deep-midnight"></div>
             </label>
           </div>
 
@@ -2251,7 +2251,7 @@ function ConnectionsTab({
               onClick={() => setActiveSubtab(subtab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
                 ${isActive
-                  ? 'bg-accent-100 text-accent-700 dark:bg-accent-800 dark:text-accent-100'
+                  ? 'bg-cyan-100 text-bright-cobalt dark:bg-deep-midnight dark:text-cyan-100'
                   : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                 }`}
             >
@@ -2407,7 +2407,7 @@ function ConnectionsContactsSubtab({
                 {!googleContactsImporting && (
                   <button
                     onClick={handleImportGoogleContacts}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-300 hover:text-accent-800 dark:hover:text-accent-200"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-bright-cobalt dark:text-electric-cyan-light hover:text-deep-midnight dark:hover:text-cyan-200"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Opnieuw importeren
@@ -2426,7 +2426,7 @@ function ConnectionsContactsSubtab({
 
           {/* Import Progress */}
           {googleContactsImporting && (
-            <div className="flex items-center gap-2 text-accent-600 dark:text-accent-400">
+            <div className="flex items-center gap-2 text-electric-cyan dark:text-electric-cyan">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Contacten importeren van Google...</span>
             </div>
@@ -2563,7 +2563,7 @@ function ConnectionsContactsSubtab({
               <button
                 onClick={handleContactsSync}
                 disabled={isSyncing || googleContactsImporting}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-accent-600 text-white hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md bg-electric-cyan text-white hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50"
               >
                 {isSyncing ? (
                   <>
@@ -2617,7 +2617,7 @@ function ConnectionsContactsSubtab({
           {googleContactsStatus.sync_history?.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <details className="group">
-                <summary className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-accent-600 dark:hover:text-accent-400 flex items-center gap-1">
+                <summary className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-electric-cyan dark:hover:text-electric-cyan flex items-center gap-1">
                   <span>Synchronisatiegeschiedenis</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     ({googleContactsStatus.sync_history.length} recente)
@@ -2741,7 +2741,7 @@ function ConnectionsCardDAVSubtab({
             Applicatiewachtwoorden voor CardDAV worden beheerd in{' '}
             <button
               onClick={() => setActiveTab('api-access')}
-              className="text-accent-600 dark:text-accent-400 hover:underline"
+              className="text-electric-cyan dark:text-electric-cyan hover:underline"
             >
               Instellingen &gt; API-toegang
             </button>
@@ -2791,7 +2791,7 @@ function NotificationsTab({
                 disabled={savingChannels}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600 dark:bg-gray-600 dark:peer-checked:bg-accent-500"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-electric-cyan-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-electric-cyan dark:bg-gray-600 dark:peer-checked:bg-electric-cyan"></div>
             </label>
           </div>
 
@@ -3023,8 +3023,8 @@ function DataTab() {
             onClick={() => handleExport('vcard')}
             className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
           >
-            <div className="p-3 bg-accent-50 rounded-lg">
-              <FileCode className="w-6 h-6 text-accent-600" />
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <FileCode className="w-6 h-6 text-electric-cyan" />
             </div>
             <div className="flex-1">
               <p className="font-medium">Exporteren als vCard (.vcf)</p>
@@ -3039,8 +3039,8 @@ function DataTab() {
             onClick={() => handleExport('google-csv')}
             className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
           >
-            <div className="p-3 bg-accent-50 rounded-lg">
-              <FileSpreadsheet className="w-6 h-6 text-accent-600" />
+            <div className="p-3 bg-cyan-50 rounded-lg">
+              <FileSpreadsheet className="w-6 h-6 text-electric-cyan" />
             </div>
             <div className="flex-1">
               <p className="font-medium">Exporteren als Google Contacten CSV</p>
@@ -3235,7 +3235,7 @@ function VOGTab({
 
       {vogLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
         </div>
       ) : (
         <div className="space-y-6">
@@ -3250,7 +3250,7 @@ function VOGTab({
               value={vogSettings.from_email}
               onChange={(e) => setVogSettings(prev => ({ ...prev, from_email: e.target.value }))}
               placeholder="vog@vereniging.nl"
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Het e-mailadres dat als afzender wordt gebruikt voor VOG e-mails.
@@ -3268,7 +3268,7 @@ function VOGTab({
               value={vogSettings.from_name}
               onChange={(e) => setVogSettings(prev => ({ ...prev, from_name: e.target.value }))}
               placeholder="Vereniging VOG"
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               De naam die als afzender wordt weergegeven voor VOG e-mails.
@@ -3285,7 +3285,7 @@ function VOGTab({
               rows={8}
               value={vogSettings.template_new}
               onChange={(e) => setVogSettings(prev => ({ ...prev, template_new: e.target.value }))}
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}
@@ -3302,7 +3302,7 @@ function VOGTab({
               rows={8}
               value={vogSettings.template_renewal}
               onChange={(e) => setVogSettings(prev => ({ ...prev, template_renewal: e.target.value }))}
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm font-mono"
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{previous_vog_date}'}
@@ -3333,7 +3333,7 @@ function VOGTab({
                             : (prev.exempt_commissies || []).filter(i => i !== id)
                         }));
                       }}
-                      className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-electric-cyan focus:ring-electric-cyan border-gray-300 rounded"
                     />
                     <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
                       {commissie.title?.rendered || commissie.title}
@@ -3353,7 +3353,7 @@ function VOGTab({
             <button
               onClick={handleVogSave}
               disabled={vogSaving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
             >
               {vogSaving ? (
                 <>
@@ -3444,7 +3444,7 @@ function RollenTab({
 
       {rolesLoading ? (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
         </div>
       ) : allRoles.length === 0 ? (
         <div className="text-sm text-gray-500 dark:text-gray-400 py-4">
@@ -3486,7 +3486,7 @@ function RollenTab({
                             name={`role-${role}`}
                             checked={classification === type}
                             onChange={() => handleClassificationChange(role, type)}
-                            className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300"
+                            className="h-4 w-4 text-electric-cyan focus:ring-electric-cyan border-gray-300"
                           />
                         </label>
                       ))}
@@ -3502,7 +3502,7 @@ function RollenTab({
             <button
               onClick={handleRolesSave}
               disabled={rolesSaving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
             >
               {rolesSaving ? (
                 <>

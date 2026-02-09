@@ -45,7 +45,7 @@ function SortableColumnItem({ column, isVisible, onToggleVisibility, isCustomFie
       style={style}
       className={`flex items-center gap-3 p-3 rounded-lg border-2 ${
         isDragging
-          ? 'border-accent-300 dark:border-accent-600 shadow-lg bg-white dark:bg-gray-800'
+          ? 'border-electric-cyan-light dark:border-electric-cyan shadow-lg bg-white dark:bg-gray-800'
           : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
       }`}
     >
@@ -65,7 +65,7 @@ function SortableColumnItem({ column, isVisible, onToggleVisibility, isCustomFie
           type="checkbox"
           checked={isVisible}
           onChange={() => onToggleVisibility(column.id)}
-          className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
+          className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan dark:bg-gray-700"
         />
         <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-100">
           {column.label}
@@ -232,7 +232,7 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
             </div>
           ) : (
             <>
@@ -252,7 +252,7 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
                       type="checkbox"
                       checked={true}
                       disabled
-                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 bg-gray-100 dark:bg-gray-600 cursor-not-allowed"
+                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan bg-gray-100 dark:bg-gray-600 cursor-not-allowed"
                     />
                     <span className="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400">
                       {columnMap['name']?.label || 'Naam'}
@@ -302,7 +302,7 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
         <div className="flex items-center justify-between p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button
             onClick={handleReset}
-            className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"
+            className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan"
           >
             <RotateCcw className="w-4 h-4" />
             Standaardinstellingen herstellen

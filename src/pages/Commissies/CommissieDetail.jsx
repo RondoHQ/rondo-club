@@ -181,7 +181,7 @@ export default function CommissieDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -259,7 +259,7 @@ export default function CommissieDetail() {
             {parentCommissie && (
               <Link 
                 to={`/commissies/${parentCommissie.id}`}
-                className="text-sm text-accent-600 dark:text-accent-400 hover:underline flex items-center mb-1"
+                className="text-sm text-electric-cyan dark:text-electric-cyan hover:underline flex items-center mb-1"
               >
                 <GitBranch className="w-3 h-3 mr-1" />
                 Subcommissie van {getCommissieName(parentCommissie)}
@@ -271,7 +271,7 @@ export default function CommissieDetail() {
                 href={acf.website} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-accent-600 dark:text-accent-400 hover:underline flex items-center mt-1"
+                className="text-electric-cyan dark:text-electric-cyan hover:underline flex items-center mt-1"
               >
                 <Globe className="w-4 h-4 mr-1" />
                 {acf.website}

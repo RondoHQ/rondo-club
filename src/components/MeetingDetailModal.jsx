@@ -229,7 +229,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
                 href={meeting.google_calendar_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"
+                className="text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan"
                 title="Openen in Google Agenda"
               >
                 <ExternalLink className="w-5 h-5" />
@@ -279,7 +279,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
                 href={meeting.meeting_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-accent-600 dark:text-accent-400 hover:underline break-all"
+                className="text-sm text-electric-cyan dark:text-electric-cyan hover:underline break-all"
               >
                 Deelnemen aan vergadering
               </a>
@@ -401,7 +401,7 @@ function AttendeeRow({
       <div className="flex-1 min-w-0">
         <p className={`text-sm truncate ${
           attendee.matched
-            ? 'font-medium text-accent-600 dark:text-accent-400'
+            ? 'font-medium text-electric-cyan dark:text-electric-cyan'
             : 'text-gray-600 dark:text-gray-400'
         }`}>
           {displayName}
@@ -419,7 +419,7 @@ function AttendeeRow({
             e.stopPropagation();
             onAddPerson(attendee);
           }}
-          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+          className="flex-shrink-0 p-1.5 text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
           title="Toevoegen als contact"
         >
           <UserPlus className="w-4 h-4" />

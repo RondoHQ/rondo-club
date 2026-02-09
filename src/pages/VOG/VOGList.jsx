@@ -120,7 +120,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
   return (
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isSelected
-        ? 'bg-accent-50 dark:bg-accent-900/30'
+        ? 'bg-cyan-50 dark:bg-obsidian/30'
         : isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     }`}>
       {/* Checkbox column */}
@@ -130,7 +130,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           {isSelected ? (
-            <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+            <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
           ) : (
             <Square className="w-5 h-5" />
           )}
@@ -174,7 +174,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           : 'text-gray-500 dark:text-gray-400'
       }`}>
         {email ? (
-          <a href={`mailto:${email}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+          <a href={`mailto:${email}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
             {email}
           </a>
         ) : '-'}
@@ -187,7 +187,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           : 'text-gray-500 dark:text-gray-400'
       }`}>
         {phone ? (
-          <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+          <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
             {phone}
           </a>
         ) : '-'}
@@ -524,7 +524,7 @@ export default function VOGList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -563,8 +563,8 @@ export default function VOGList() {
       <div className="space-y-4">
         {/* Selection toolbar - sticky */}
         {selectedIds.size > 0 && (
-          <div className="sticky top-0 z-20 flex items-center justify-between bg-accent-50 dark:bg-accent-800 border border-accent-200 dark:border-accent-700 rounded-lg px-4 py-2 shadow-sm">
-            <span className="text-sm text-accent-800 dark:text-accent-200 font-medium">
+          <div className="sticky top-0 z-20 flex items-center justify-between bg-cyan-50 dark:bg-deep-midnight border border-cyan-200 dark:border-bright-cobalt rounded-lg px-4 py-2 shadow-sm">
+            <span className="text-sm text-deep-midnight dark:text-cyan-200 font-medium">
               {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} geselecteerd
             </span>
             <div className="flex items-center gap-3">
@@ -572,7 +572,7 @@ export default function VOGList() {
               <div className="relative" ref={bulkDropdownRef}>
                 <button
                   onClick={() => setShowBulkDropdown(!showBulkDropdown)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-200 bg-white dark:bg-gray-800 border border-accent-300 dark:border-accent-600 rounded-md hover:bg-accent-50 dark:hover:bg-gray-700"
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-bright-cobalt dark:text-cyan-200 bg-white dark:bg-gray-800 border border-electric-cyan-light dark:border-electric-cyan rounded-md hover:bg-cyan-50 dark:hover:bg-gray-700"
                 >
                   Acties
                   <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
@@ -616,7 +616,7 @@ export default function VOGList() {
               </div>
               <button
                 onClick={clearSelection}
-                className="text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300 font-medium"
+                className="text-sm text-electric-cyan dark:text-electric-cyan hover:text-deep-midnight dark:hover:text-electric-cyan-light font-medium"
               >
                 Selectie wissen
               </button>
@@ -631,12 +631,12 @@ export default function VOGList() {
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter) ? 'bg-accent-50 text-accent-700 border-accent-200 dark:bg-accent-900/30 dark:text-accent-300 dark:border-accent-700' : ''}`}
+                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter) ? 'bg-cyan-50 text-bright-cobalt border-cyan-200 dark:bg-obsidian/30 dark:text-electric-cyan-light dark:border-bright-cobalt' : ''}`}
               >
                 <Filter className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Filter</span>
                 {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
-                  <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
+                  <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
                     {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0)}
                   </span>
                 )}
@@ -664,7 +664,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             vogTypeFilter === ''
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {vogTypeFilter === '' && (
@@ -684,7 +684,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             vogTypeFilter === 'nieuw'
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {vogTypeFilter === 'nieuw' && (
@@ -704,7 +704,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             vogTypeFilter === 'vernieuwing'
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {vogTypeFilter === 'vernieuwing' && (
@@ -733,7 +733,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             emailStatusFilter === ''
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {emailStatusFilter === '' && (
@@ -753,7 +753,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             emailStatusFilter === 'not_sent'
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {emailStatusFilter === 'not_sent' && (
@@ -773,7 +773,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             emailStatusFilter === 'sent'
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {emailStatusFilter === 'sent' && (
@@ -802,7 +802,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             justisStatusFilter === ''
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {justisStatusFilter === '' && (
@@ -822,7 +822,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             justisStatusFilter === 'not_submitted'
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {justisStatusFilter === 'not_submitted' && (
@@ -842,7 +842,7 @@ export default function VOGList() {
                           />
                           <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                             justisStatusFilter === 'submitted'
-                              ? 'bg-accent-600 border-accent-600'
+                              ? 'bg-electric-cyan border-electric-cyan'
                               : 'border-gray-300 dark:border-gray-500'
                           }`}>
                             {justisStatusFilter === 'submitted' && (
@@ -864,7 +864,7 @@ export default function VOGList() {
                           setVogTypeFilter('');
                           setJustisStatusFilter('');
                         }}
-                        className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
+                        className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                       >
                         Alle filters wissen
                       </button>
@@ -878,33 +878,33 @@ export default function VOGList() {
             {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
               <div className="flex items-center gap-2">
                 {emailStatusFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
                     Email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
                     <button
                       onClick={() => setEmailStatusFilter('')}
-                      className="hover:text-accent-900 dark:hover:text-accent-100"
+                      className="hover:text-obsidian dark:hover:text-cyan-100"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </span>
                 )}
                 {vogTypeFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
                     Type: {vogTypeFilter === 'nieuw' ? 'Nieuw' : 'Vernieuwing'}
                     <button
                       onClick={() => setVogTypeFilter('')}
-                      className="hover:text-accent-900 dark:hover:text-accent-100"
+                      className="hover:text-obsidian dark:hover:text-cyan-100"
                     >
                       <X className="w-3 h-3" />
                     </button>
                   </span>
                 )}
                 {justisStatusFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 border border-accent-200 dark:border-accent-700 rounded">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
                     Justis: {justisStatusFilter === 'submitted' ? 'Aangevraagd' : 'Niet aangevraagd'}
                     <button
                       onClick={() => setJustisStatusFilter('')}
-                      className="hover:text-accent-900 dark:hover:text-accent-100"
+                      className="hover:text-obsidian dark:hover:text-cyan-100"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -954,9 +954,9 @@ export default function VOGList() {
                     title={isAllSelected ? 'Deselecteer alles' : 'Selecteer alles'}
                   >
                     {isAllSelected ? (
-                      <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                      <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
                     ) : isSomeSelected ? (
-                      <MinusSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                      <MinusSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
                     ) : (
                       <Square className="w-5 h-5" />
                     )}
@@ -1073,7 +1073,7 @@ export default function VOGList() {
               </div>
               <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
                 {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md">
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
                     Sluiten
                   </button>
                 ) : (
@@ -1081,7 +1081,7 @@ export default function VOGList() {
                     <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
                       Annuleren
                     </button>
-                    <button onClick={handleSendEmails} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
+                    <button onClick={handleSendEmails} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
                       {bulkActionLoading ? 'Verzenden...' : `Verstuur naar ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
@@ -1128,7 +1128,7 @@ export default function VOGList() {
               </div>
               <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
                 {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md">
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
                     Sluiten
                   </button>
                 ) : (
@@ -1136,7 +1136,7 @@ export default function VOGList() {
                     <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
                       Annuleren
                     </button>
-                    <button onClick={handleMarkRequested} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
+                    <button onClick={handleMarkRequested} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
                       {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
@@ -1183,7 +1183,7 @@ export default function VOGList() {
               </div>
               <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
                 {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md">
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
                     Sluiten
                   </button>
                 ) : (
@@ -1191,7 +1191,7 @@ export default function VOGList() {
                     <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
                       Annuleren
                     </button>
-                    <button onClick={handleMarkJustis} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-accent-600 hover:bg-accent-700 rounded-md disabled:opacity-50">
+                    <button onClick={handleMarkJustis} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
                       {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>

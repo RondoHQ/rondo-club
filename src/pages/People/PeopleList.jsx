@@ -68,7 +68,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
         >
           {isSelected ? (
-            <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+            <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
           ) : (
             <Square className="w-5 h-5" />
           )}
@@ -191,7 +191,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {email ? (
-                <a href={`mailto:${email}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+                <a href={`mailto:${email}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
                   {email}
                 </a>
               ) : '-'}
@@ -208,7 +208,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {phone ? (
-                <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-accent-600 dark:hover:text-accent-400">
+                <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
                   {phone}
                 </a>
               ) : '-'}
@@ -279,16 +279,16 @@ function ResizableHeader({
       {/* Resize handle */}
       <div
         {...resizeHandlers}
-        className={`absolute top-0 right-0 w-2 h-full cursor-col-resize group/resize flex items-center justify-center hover:bg-accent-300/50 dark:hover:bg-accent-600/50 transition-colors ${
-          isResizing ? 'bg-accent-400/50 dark:bg-accent-500/50' : ''
+        className={`absolute top-0 right-0 w-2 h-full cursor-col-resize group/resize flex items-center justify-center hover:bg-electric-cyan-light/50 dark:hover:bg-electric-cyan/50 transition-colors ${
+          isResizing ? 'bg-electric-cyan/50 dark:bg-electric-cyan/50' : ''
         }`}
         style={{ touchAction: 'none' }}
       >
         {/* Visual indicator line */}
         <div className={`w-px h-4 rounded-full transition-colors ${
           isResizing
-            ? 'bg-accent-500 dark:bg-accent-400'
-            : 'bg-gray-300 dark:bg-gray-600 group-hover/resize:bg-accent-400 dark:group-hover/resize:bg-accent-500'
+            ? 'bg-electric-cyan dark:bg-electric-cyan'
+            : 'bg-gray-300 dark:bg-gray-600 group-hover/resize:bg-electric-cyan dark:group-hover/resize:bg-electric-cyan'
         }`} />
       </div>
     </th>
@@ -328,9 +328,9 @@ function PersonListView({
                 title={isAllSelected ? 'Deselect all' : 'Select all'}
               >
                 {isAllSelected ? (
-                  <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                  <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
                 ) : isSomeSelected ? (
-                  <MinusSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                  <MinusSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
                 ) : (
                   <Square className="w-5 h-5" />
                 )}
@@ -437,7 +437,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
             placeholder="Teams zoeken..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg text-sm focus:ring-accent-500 focus:border-accent-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg text-sm focus:ring-electric-cyan focus:border-electric-cyan"
           />
 
           {/* Option to clear organization */}
@@ -447,16 +447,16 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
             disabled={isLoading}
             className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
               selectedTeamId === 'clear'
-                ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
+                ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
-            <X className={`w-5 h-5 ${selectedTeamId === 'clear' ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
+            <X className={`w-5 h-5 ${selectedTeamId === 'clear' ? 'text-electric-cyan dark:text-electric-cyan' : 'text-gray-400 dark:text-gray-500'}`} />
             <div className="flex-1">
               <div className="text-sm font-medium text-gray-900 dark:text-gray-50">Team verwijderen</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Verwijder huidig team van geselecteerde leden</div>
             </div>
-            {selectedTeamId === 'clear' && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
+            {selectedTeamId === 'clear' && <Check className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />}
           </button>
 
           {/* Team list */}
@@ -476,15 +476,15 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isSelected
-                        ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
+                        ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
-                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'}`} />
+                    <Building2 className={`w-5 h-5 ${isSelected ? 'text-electric-cyan dark:text-electric-cyan' : 'text-gray-400 dark:text-gray-500'}`} />
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-50">{team.name}</div>
                     </div>
-                    {isSelected && <Check className="w-5 h-5 text-accent-600 dark:text-accent-400" />}
+                    {isSelected && <Check className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />}
                   </button>
                 );
               })
@@ -554,7 +554,7 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
               type="button"
               onClick={() => { setMode('add'); setSelectedLabelIds([]); }}
               className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'add' ? 'bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                mode === 'add' ? 'bg-cyan-100 dark:bg-obsidian/50 text-bright-cobalt dark:text-electric-cyan-light' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               Labels toevoegen
@@ -589,13 +589,13 @@ function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isL
                     disabled={isLoading}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
-                        ? mode === 'add' ? 'border-accent-500 bg-accent-50 dark:bg-accent-800' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                        ? mode === 'add' ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
                       isChecked
-                        ? mode === 'add' ? 'bg-accent-600 border-accent-600' : 'bg-red-600 border-red-600'
+                        ? mode === 'add' ? 'bg-electric-cyan border-electric-cyan' : 'bg-red-600 border-red-600'
                         : 'border-gray-300 dark:border-gray-500'
                     }`}>
                       {isChecked && <Check className="w-3 h-3 text-white" />}
@@ -1130,12 +1130,12 @@ export default function PeopleList() {
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${hasActiveFilters ? 'bg-accent-50 text-accent-700 border-accent-200' : ''}`}
+              className={`btn-secondary ${hasActiveFilters ? 'bg-cyan-50 text-bright-cobalt border-cyan-200' : ''}`}
             >
               <Filter className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
-                <span className="ml-2 px-1.5 py-0.5 bg-accent-600 text-white text-xs rounded-full">
+                <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
                   {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
                    (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
                    (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0)}
@@ -1170,7 +1170,7 @@ export default function PeopleList() {
                             />
                             <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
                               selectedLabelIds.includes(label.id)
-                                ? 'bg-accent-600 border-accent-600'
+                                ? 'bg-electric-cyan border-electric-cyan'
                                 : 'border-gray-300 dark:border-gray-500'
                             }`}>
                               {selectedLabelIds.includes(label.id) && (
@@ -1193,7 +1193,7 @@ export default function PeopleList() {
                       <select
                         value={selectedBirthYear}
                         onChange={(e) => setSelectedBirthYear(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                       >
                         <option value="">Alle jaren</option>
                         {availableBirthYears.map(year => (
@@ -1211,7 +1211,7 @@ export default function PeopleList() {
                     <select
                       value={lastModifiedFilter}
                       onChange={(e) => setLastModifiedFilter(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                     >
                       <option value="">Alle tijden</option>
                       <option value="7">Laatste 7 dagen</option>
@@ -1229,7 +1229,7 @@ export default function PeopleList() {
                     <select
                       value={huidigeVrijwilliger}
                       onChange={(e) => setHuidigeVrijwilliger(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                     >
                       <option value="">Alle</option>
                       <option value="1">Ja</option>
@@ -1245,7 +1245,7 @@ export default function PeopleList() {
                     <select
                       value={financieleBlokkade}
                       onChange={(e) => setFinancieleBlokkade(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                     >
                       <option value="">Alle</option>
                       <option value="1">Ja</option>
@@ -1261,7 +1261,7 @@ export default function PeopleList() {
                     {filterOptionsLoading ? (
                       <select
                         disabled
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                       >
                         <option value="">Laden...</option>
                       </select>
@@ -1269,13 +1269,13 @@ export default function PeopleList() {
                       <div>
                         <select
                           disabled
-                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                         >
                           <option value="">Fout bij laden</option>
                         </select>
                         <button
                           onClick={() => refetchFilterOptions()}
-                          className="text-xs text-accent-600 dark:text-accent-400 hover:underline mt-1"
+                          className="text-xs text-electric-cyan dark:text-electric-cyan hover:underline mt-1"
                         >
                           Opnieuw proberen
                         </button>
@@ -1284,7 +1284,7 @@ export default function PeopleList() {
                       <select
                         value={typeLid}
                         onChange={(e) => setTypeLid(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                       >
                         <option value="">Alle ({filterOptions?.total || 0})</option>
                         {filterOptions?.member_types?.map(opt => (
@@ -1304,7 +1304,7 @@ export default function PeopleList() {
                     {filterOptionsLoading ? (
                       <select
                         disabled
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                       >
                         <option value="">Laden...</option>
                       </select>
@@ -1312,13 +1312,13 @@ export default function PeopleList() {
                       <div>
                         <select
                           disabled
-                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                         >
                           <option value="">Fout bij laden</option>
                         </select>
                         <button
                           onClick={() => refetchFilterOptions()}
-                          className="text-xs text-accent-600 dark:text-accent-400 hover:underline mt-1"
+                          className="text-xs text-electric-cyan dark:text-electric-cyan hover:underline mt-1"
                         >
                           Opnieuw proberen
                         </button>
@@ -1327,7 +1327,7 @@ export default function PeopleList() {
                       <select
                         value={leeftijdsgroep}
                         onChange={(e) => setLeeftijdsgroep(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                       >
                         <option value="">Alle ({filterOptions?.total || 0})</option>
                         {filterOptions?.age_groups?.map(opt => (
@@ -1347,7 +1347,7 @@ export default function PeopleList() {
                     <select
                       value={fotoMissing}
                       onChange={(e) => setFotoMissing(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                     >
                       <option value="">Alle</option>
                       <option value="1">Ontbreekt</option>
@@ -1372,7 +1372,7 @@ export default function PeopleList() {
                           updateSearchParams({ vogMissing: '', vogOuder: null });
                         }
                       }}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-accent-500 focus:border-accent-500"
+                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
                     >
                       <option value="">Alle</option>
                       <option value="missing">Ontbreekt</option>
@@ -1385,7 +1385,7 @@ export default function PeopleList() {
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="w-full text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
+                      className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                     >
                       Alle filters wissen
                     </button>
@@ -1558,7 +1558,7 @@ export default function PeopleList() {
       {/* Loading state */}
       {(isLoading || prefsLoading) && (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
         </div>
       )}
 
@@ -1584,8 +1584,8 @@ export default function PeopleList() {
 
       {/* Selection toolbar - sticky */}
       {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-accent-50 dark:bg-accent-800 border border-accent-200 dark:border-accent-700 rounded-lg px-4 py-2 shadow-sm">
-          <span className="text-sm text-accent-800 dark:text-accent-200 font-medium">
+        <div className="sticky top-0 z-20 flex items-center justify-between bg-cyan-50 dark:bg-deep-midnight border border-cyan-200 dark:border-bright-cobalt rounded-lg px-4 py-2 shadow-sm">
+          <span className="text-sm text-deep-midnight dark:text-cyan-200 font-medium">
             {selectedIds.size} {selectedIds.size === 1 ? 'lid' : 'leden'} geselecteerd
           </span>
           <div className="flex items-center gap-3">
@@ -1593,7 +1593,7 @@ export default function PeopleList() {
             <div className="relative" ref={bulkDropdownRef}>
               <button
                 onClick={() => setShowBulkDropdown(!showBulkDropdown)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-accent-700 dark:text-accent-200 bg-white dark:bg-gray-800 border border-accent-300 dark:border-accent-600 rounded-md hover:bg-accent-50 dark:hover:bg-gray-700"
+                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-bright-cobalt dark:text-cyan-200 bg-white dark:bg-gray-800 border border-electric-cyan-light dark:border-electric-cyan rounded-md hover:bg-cyan-50 dark:hover:bg-gray-700"
               >
                 Acties
                 <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
@@ -1627,7 +1627,7 @@ export default function PeopleList() {
             </div>
             <button
               onClick={clearSelection}
-              className="text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300 font-medium"
+              className="text-sm text-electric-cyan dark:text-electric-cyan hover:text-deep-midnight dark:hover:text-electric-cyan-light font-medium"
             >
               Selectie wissen
             </button>
@@ -1638,7 +1638,7 @@ export default function PeopleList() {
       {/* Loading indicator for page navigation */}
       {isFetching && !isLoading && (
         <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg px-4 py-2 flex items-center gap-2 z-50">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-600" />
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-electric-cyan" />
           <span className="text-sm text-gray-600 dark:text-gray-300">Laden...</span>
         </div>
       )}

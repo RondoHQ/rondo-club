@@ -165,7 +165,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                         onClick={() => setActivityType(type.id)}
                         className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg transition-colors ${
                           isSelected
-                            ? 'border-accent-600 bg-accent-50 dark:bg-accent-800 text-accent-700 dark:text-accent-100'
+                            ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight text-bright-cobalt dark:text-cyan-100'
                             : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
                         }`}
                         disabled={isLoading}
@@ -189,7 +189,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                     type="date"
                     value={formatDateForInput(activityDate)}
                     onChange={(e) => setActivityDate(e.target.value || '')}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                     disabled={isLoading}
                   />
                 </div>
@@ -202,7 +202,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                     type="time"
                     value={activityTime}
                     onChange={(e) => setActivityTime(e.target.value || '')}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                     disabled={isLoading}
                   />
                 </div>
@@ -220,13 +220,13 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                     {getSelectedPeople().map((person) => (
                       <span
                         key={person.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 bg-accent-100 dark:bg-accent-800 text-accent-700 dark:text-accent-300 rounded-full text-sm"
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light rounded-full text-sm"
                       >
                         {person.name}
                         <button
                           type="button"
                           onClick={() => removeParticipant(person.id)}
-                          className="hover:text-accent-900 dark:hover:text-accent-100"
+                          className="hover:text-obsidian dark:hover:text-cyan-100"
                           disabled={isLoading}
                         >
                           <X className="w-3 h-3" />
@@ -273,7 +273,7 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
                                 type="button"
                                 onClick={() => toggleParticipant(person.id)}
                                 className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-900 dark:text-gray-50 ${
-                                  isSelected ? 'bg-accent-50 dark:bg-accent-800' : ''
+                                  isSelected ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                                 }`}
                               >
                                 <input
