@@ -3,7 +3,7 @@
 ## Milestones
 
 - SHIPPED **v20.0 Configurable Roles** — Phases 151-154 (shipped 2026-02-08) — [Archive](milestones/v20.0-ROADMAP.md)
-- **v21.0 Per-Season Fee Categories** — Phases 155-159 (planned)
+- **v21.0 Per-Season Fee Categories** — Phases 155-160 (planned)
 
 ## Phases
 
@@ -24,6 +24,7 @@
 - [x] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API — completed 2026-02-09
 - [ ] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
+- [ ] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded
 
 ## Phase Details
 
@@ -94,10 +95,21 @@ Plans:
   3. Google Sheets export uses dynamic category definitions from the API config, not hardcoded column layouts
 **Plans**: TBD
 
+### Phase 160: Configurable Family Discount
+**Goal**: Family discount percentages are configurable per season instead of hardcoded 0%/25%/50%
+**Depends on**: Phase 158 (Settings UI must exist to add discount config)
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. Family discount tiers (2nd child %, 3rd+ child %) are stored per season in the same WordPress options alongside categories
+  2. `get_family_discount_rate()` reads from season config instead of hardcoded values
+  3. Admin can configure family discount percentages in the fee category settings UI
+  4. Changing discount percentages correctly affects fee calculations for the relevant season
+**Plans**: TBD
+
 ## Progress
 
-**Execution Order:** 155 → 156 → 157 → 158/159
-(Note: 158 and 159 are independent and could execute in parallel)
+**Execution Order:** 155 → 156 → 157 → 158 → 159/160
+(Note: 159 and 160 are independent and could execute in parallel)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -106,7 +118,8 @@ Plans:
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 158. Fee Category Settings UI | v21.0 | 0/2 | In progress | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
+| 160. Configurable Family Discount | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 158 planned (2 plans in 2 waves)*
+*Last updated: 2026-02-09 — Phase 160 added (Configurable Family Discount)*
