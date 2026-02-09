@@ -27,6 +27,15 @@
   background: linear-gradient(135deg, var(--color-electric-cyan), var(--color-bright-cobalt));
 }
 
+/* Gradient text utility */
+@utility text-brand-gradient {
+  background: linear-gradient(135deg, var(--color-electric-cyan), var(--color-bright-cobalt));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: var(--color-electric-cyan);
+}
+
 /* Prevent iOS standalone mode bounce/reload on overscroll */
 @supports (overscroll-behavior-y: none) {
   /* Apply to html/body for full coverage */
@@ -87,7 +96,7 @@
   .card,
   .btn,
   .input {
-    transition-property: background-color, border-color, color;
+    transition-property: background-color, border-color, color, transform, box-shadow;
     transition-duration: 150ms;
     transition-timing-function: ease-in-out;
   }
@@ -146,31 +155,37 @@
 
 /* Custom component classes */
 .btn {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
-  @apply bg-electric-cyan text-white hover:bg-bright-cobalt focus:ring-electric-cyan dark:bg-gray-700 dark:text-electric-cyan dark:border dark:border-electric-cyan dark:hover:bg-gray-600 dark:hover:text-electric-cyan-light;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
+  @apply bg-brand-gradient text-white hover:shadow-lg hover:shadow-cyan-500/50 focus:ring-electric-cyan dark:bg-deep-midnight dark:text-electric-cyan dark:border dark:border-electric-cyan dark:hover:bg-gray-700 dark:hover:text-electric-cyan-light dark:hover:border-electric-cyan-light;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
-  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-electric-cyan dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
+  @apply bg-bright-cobalt text-white hover:bg-bright-cobalt/90 hover:shadow-md focus:ring-electric-cyan dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700;
 }
 
 .btn-danger {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
   @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 dark:bg-red-500 dark:hover:bg-red-400;
 }
 
 .btn-danger-outline {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
   @apply bg-transparent text-red-500 border border-red-500 hover:bg-red-50 hover:text-red-600 focus:ring-red-500 dark:text-red-400 dark:border-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300;
 }
 
+.btn-glass {
+  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-electric-cyan focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply bg-white/15 backdrop-blur-lg border border-slate-200 text-gray-900 hover:bg-white/25;
+  @apply dark:bg-gray-800/15 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700/25 dark:focus:ring-offset-gray-900;
+}
+
 .input {
-  @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-xs focus:outline-hidden focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100;
+  @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-xs focus:outline-hidden focus:ring-[3px] focus:ring-cyan-300/50 focus:border-electric-cyan dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:focus:ring-cyan-500/30 dark:focus:border-electric-cyan-light;
 }
 
 .label {
@@ -178,5 +193,9 @@
 }
 
 .card {
-  @apply bg-white rounded-lg shadow-xs border border-gray-200 dark:bg-gray-800 dark:border-gray-700;
+  @apply bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden transition-all duration-200 ease-in-out hover:-translate-y-0.5 dark:bg-gray-800 dark:border-gray-700;
+  background-image: linear-gradient(to right, var(--color-electric-cyan), var(--color-bright-cobalt));
+  background-size: 100% 3px;
+  background-position: top;
+  background-repeat: no-repeat;
 }
