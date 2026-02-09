@@ -363,6 +363,15 @@ class People extends Base {
 							return in_array( $value, [ '', 'submitted', 'not_submitted' ], true );
 						},
 					],
+					'include_former'       => [
+						'description'       => 'Include former members in results (1=include, empty=exclude)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -990,6 +999,7 @@ class People extends Base {
 		$vog_type             = $request->get_param( 'vog_type' );
 		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
 		$vog_justis_status    = $request->get_param( 'vog_justis_status' );
+		$include_former       = $request->get_param( 'include_former' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1019,9 +1029,13 @@ class People extends Base {
 		];
 		$prepare_values = [];
 
-		// Exclude former members by default
-		$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'";
-		$where_clauses[] = "(fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')";
+		// Former member handling
+		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'";
+		if ( $include_former !== '1' ) {
+			// Default: exclude former members
+			$where_clauses[] = "(fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')";
+		}
+		$select_fields .= ', fm.meta_value AS is_former_member';
 
 		// Always JOIN meta for first_name, infix, and last_name (needed for display and sorting)
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
@@ -1279,14 +1293,15 @@ class People extends Base {
 		$people = [];
 		foreach ( $results as $row ) {
 			$person = [
-				'id'         => (int) $row->ID,
-				'first_name' => $this->sanitize_text( $row->first_name ?: '' ),
-				'infix'      => $this->sanitize_text( $row->infix ?: '' ),
-				'last_name'  => $this->sanitize_text( $row->last_name ?: '' ),
-				'modified'   => $row->post_modified,
+				'id'            => (int) $row->ID,
+				'first_name'    => $this->sanitize_text( $row->first_name ?: '' ),
+				'infix'         => $this->sanitize_text( $row->infix ?: '' ),
+				'last_name'     => $this->sanitize_text( $row->last_name ?: '' ),
+				'modified'      => $row->post_modified,
+				'former_member' => ( $row->is_former_member === '1' ),
 				// These are fetched post-query to avoid complex JOINs
-				'thumbnail'  => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
-				'labels'     => wp_get_post_terms( $row->ID, 'person_label', [ 'fields' => 'names' ] ),
+				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
+				'labels'        => wp_get_post_terms( $row->ID, 'person_label', [ 'fields' => 'names' ] ),
 			];
 
 			// Add ACF fields for custom field columns
