@@ -3,7 +3,7 @@
 ## Milestones
 
 - SHIPPED **v20.0 Configurable Roles** — Phases 151-154 (shipped 2026-02-08) — [Archive](milestones/v20.0-ROADMAP.md)
-- **v21.0 Per-Season Fee Categories** — Phases 155-160 (planned)
+- **v21.0 Per-Season Fee Categories** — Phases 155-161 (planned)
 
 ## Phases
 
@@ -25,6 +25,7 @@
 - [ ] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
 - [ ] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded
+- [ ] **Phase 161: Configurable Matching Rules** - Replace hardcoded team name and werkfunctie matching with configurable per-category rules
 
 ## Phase Details
 
@@ -106,10 +107,22 @@ Plans:
   4. Changing discount percentages correctly affects fee calculations for the relevant season
 **Plans**: TBD
 
+### Phase 161: Configurable Matching Rules
+**Goal**: Fee category assignment uses configurable matching rules (teams, werkfuncties) instead of hardcoded logic
+**Depends on**: Phase 158 (Settings UI must exist for rule configuration)
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. Each category can optionally specify matching teams (multi-select from all teams in system) — replaces hardcoded `is_recreational_team()` string matching
+  2. Each category can optionally specify matching werkfuncties (multi-select) — replaces hardcoded `is_donateur()` check
+  3. `calculate_fee()` reads matching rules from category config instead of hardcoded slug checks for 'recreant' and 'donateur'
+  4. Admin can configure team and werkfunctie matching in the fee category settings UI
+  5. Existing fee calculations produce the same results after migration (matching rules pre-populated from current hardcoded values)
+**Plans**: TBD
+
 ## Progress
 
-**Execution Order:** 155 → 156 → 157 → 158 → 159/160
-(Note: 159 and 160 are independent and could execute in parallel)
+**Execution Order:** 155 → 156 → 157 → 158 → 159/160/161
+(Note: 159, 160 and 161 are independent and could execute in parallel)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -119,7 +132,8 @@ Plans:
 | 158. Fee Category Settings UI | v21.0 | 0/2 | In progress | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 | 160. Configurable Family Discount | v21.0 | 0/TBD | Not started | - |
+| 161. Configurable Matching Rules | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 160 added (Configurable Family Discount)*
+*Last updated: 2026-02-09 — Phase 161 added (Configurable Matching Rules)*
