@@ -30,26 +30,30 @@ export function formatPercentage(rate) {
 }
 
 /**
- * Membership fee category configuration
- * Contains labels and colors for each category
+ * Fixed palette of Tailwind color classes for fee category badges.
+ * Indexed by sort_order from the API categories metadata.
+ * Uses modulo for categories beyond the palette size.
  */
-export const FEE_CATEGORIES = {
-  mini: { label: 'Mini', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
-  pupil: { label: 'Pupil', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
-  junior: { label: 'Junior', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' },
-  senior: { label: 'Senior', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' },
-  recreant: { label: 'Recreant', color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' },
-  donateur: { label: 'Donateur', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' },
-};
+export const CATEGORY_COLOR_PALETTE = [
+  'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+];
 
 /**
- * Get the label for a fee category
+ * Get Tailwind color classes for a category based on its sort order.
  *
- * @param {string} category - Category key
- * @returns {string} Category label
+ * @param {number|undefined} sortOrder - The category's sort_order from API metadata
+ * @returns {string} Tailwind color class string
  */
-export function getCategoryLabel(category) {
-  return FEE_CATEGORIES[category]?.label ?? category;
+export function getCategoryColor(sortOrder) {
+  if (sortOrder === undefined || sortOrder === null) {
+    return CATEGORY_COLOR_PALETTE[0];
+  }
+  return CATEGORY_COLOR_PALETTE[sortOrder % CATEGORY_COLOR_PALETTE.length];
 }
 
 /**
