@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.2.0] - 2026-02-09
+
+### Added
+- Former member fee calculation logic: eligible former members appear in contributie list
+- `is_former_member_in_season()` method checks if former member qualifies for season (lid-sinds before season end)
+- Former members use normal pro-rata based on lid-sinds (leaving doesn't affect fee)
+- Former member exclusion from fee forecast (won't be members next season)
+- Family discount calculation excludes ineligible former members from family groups
+- `is_former_member` field in fee API responses (`/rondo/v1/fees`, `/rondo/v1/fees/person/{id}`)
+- Fee cache invalidation on `former_member` field changes
+- Former member season eligibility diagnostics in `get_calculation_status()`
+- Google Sheets export applies former member fee rules
+- Contributie Logic section in developer documentation (`features/former-members.md`)
+
 ## [23.1.0] - 2026-02-09
 
 ### Added
