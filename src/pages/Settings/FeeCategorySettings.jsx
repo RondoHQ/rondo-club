@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle, Copy } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
 import {
   DndContext,
@@ -652,6 +652,30 @@ export default function FeeCategorySettings() {
     },
   });
 
+  // Copy season mutation
+  const copyMutation = useMutation({
+    mutationFn: async ({ from_season, to_season }) => {
+      const response = await prmApi.copySeasonCategories(from_season, to_season);
+      return response.data;
+    },
+    onSuccess: (responseData) => {
+      queryClient.setQueryData(['membership-fee-settings'], responseData);
+      setSaveErrors([]);
+      setSaveWarnings([]);
+      setSuccessMessage('Categorieën gekopieerd van huidig seizoen');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    },
+    onError: (error) => {
+      const errorData = error.response?.data?.data;
+      const errorMessage = error.response?.data?.message || error.message || 'Er is een fout opgetreden';
+      setSaveErrors([{ field: 'general', message: errorMessage }]);
+      setSaveWarnings([]);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['membership-fee-settings'] });
+    },
+  });
+
   // Drag-and-drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -826,6 +850,41 @@ export default function FeeCategorySettings() {
           Volgend seizoen ({data?.next_season?.key})
         </button>
       </div>
+
+      {/* Copy from current season button (only show on next season when empty) */}
+      {selectedSeason === 'next' &&
+       Object.keys(categories).length === 0 &&
+       Object.keys(data?.current_season?.categories || {}).length > 0 && (
+        <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+          <button
+            onClick={() => {
+              if (confirm(`Categorieën van seizoen ${data?.current_season?.key} kopiëren naar ${data?.next_season?.key}?`)) {
+                copyMutation.mutate({
+                  from_season: data.current_season.key,
+                  to_season: data.next_season.key,
+                });
+              }
+            }}
+            disabled={copyMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {copyMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Bezig met kopiëren...
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Kopieer categorieën van huidig seizoen
+              </>
+            )}
+          </button>
+          <p className="mt-2 text-sm text-blue-800 dark:text-blue-300">
+            Het volgend seizoen heeft nog geen categorieën. Klik om de categorieën en familiekorting van het huidige seizoen te kopiëren.
+          </p>
+        </div>
+      )}
 
       {/* Family discount section */}
       <FamilyDiscountSection
