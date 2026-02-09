@@ -10,17 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 166 of 169 (Backend Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-09 — v23.0 Former Members roadmap created
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-02-09 — Completed 166-01-PLAN.md (Backend Foundation)
 
-Progress: [████████████████████████████░░░░] 97.6% (165/169 phases)
+Progress: [████████████████████████████░░░░] 98.2% (166/169 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 168 plans across v1.0-v22.0
+- Total plans completed: 169 plans across v1.0-v22.0 and v23.0 (in progress)
 - Recent milestones:
+  - v23.0: 1 plan so far (Phase 166 complete)
   - v22.0: 7 plans, 1 day (2026-02-09)
   - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
   - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
@@ -40,6 +41,8 @@ Recent decisions affecting current work:
 - Server-side pagination and filtering pattern (v9.0, phases 111-115)
 - Generic filter infrastructure via get_dynamic_filter_config() (v20.0, phase 151)
 - Config-driven fee calculation with season-specific categories (v21.0, phases 155-161)
+- [Phase 166]: Mark former members with PUT instead of DELETE to preserve history
+- [Phase 166]: Keep former members in tracking DB to detect rejoining
 
 ### Pending Todos
 
@@ -62,11 +65,16 @@ Recent decisions affecting current work:
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
 
+**Phase 166-01 Metrics:**
+- Duration: 229 seconds (3m 49s)
+- Tasks: 3
+- Files modified: 4 across 3 repositories (rondo-club, rondo-sync, developer)
+
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Roadmap creation for v23.0 Former Members
-Resume file: None - ready for phase planning
+Stopped at: Completed 166-01-PLAN.md (Backend Foundation)
+Resume file: None - Phase 166 complete, ready for Phase 167
 
 ---
 *State updated: 2026-02-09*
