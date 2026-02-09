@@ -106,6 +106,16 @@
             "max": 50
         },
         {
+            "key": "field_former_member",
+            "label": "Oud-lid",
+            "name": "former_member",
+            "type": "true_false",
+            "default_value": 0,
+            "ui": 1,
+            "message": "Dit lid is niet meer actief bij de club",
+            "readonly": 1
+        },
+        {
             "key": "field_person_contact",
             "label": "Contact Info",
             "name": "",
