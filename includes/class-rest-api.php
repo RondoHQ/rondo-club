@@ -2894,12 +2894,24 @@ class Api extends Base {
 			}
 		);
 
+		// Get category metadata for frontend
+		$categories_raw = $fees->get_categories_for_season( $season );
+		$categories_meta = [];
+		foreach ( $categories_raw as $slug => $category ) {
+			$categories_meta[ $slug ] = [
+				'label'      => $category['label'] ?? $slug,
+				'sort_order' => $category['sort_order'] ?? 999,
+				'is_youth'   => $category['is_youth'] ?? false,
+			];
+		}
+
 		return rest_ensure_response(
 			[
-				'season'   => $season,
-				'forecast' => (bool) $forecast,
-				'total'    => count( $results ),
-				'members'  => $results,
+				'season'     => $season,
+				'forecast'   => (bool) $forecast,
+				'total'      => count( $results ),
+				'members'    => $results,
+				'categories' => $categories_meta,
 			]
 		);
 	}
