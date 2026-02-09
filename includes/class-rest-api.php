@@ -1898,11 +1898,32 @@ class Api extends Base {
 
 		// Get post counts (all approved users see all data)
 		// Access control is already applied via WP_Query filters
-		$total_people     = wp_count_posts( 'person' )->publish;
+		// Exclude former members from people count
+		$people_query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					'relation' => 'OR',
+					[
+						'key'     => 'former_member',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'     => 'former_member',
+						'value'   => '1',
+						'compare' => '!=',
+					],
+				],
+			]
+		);
+		$total_people     = $people_query->found_posts;
 		$total_teams      = wp_count_posts( 'team' )->publish;
 		$total_commissies = wp_count_posts( 'commissie' )->publish;
 
-		// Recent people
+		// Recent people (exclude former members)
 		$recent_people = get_posts(
 			[
 				'post_type'      => 'person',
@@ -1910,6 +1931,18 @@ class Api extends Base {
 				'post_status'    => 'publish',
 				'orderby'        => 'modified',
 				'order'          => 'DESC',
+				'meta_query'     => [
+					'relation' => 'OR',
+					[
+						'key'     => 'former_member',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'     => 'former_member',
+						'value'   => '1',
+						'compare' => '!=',
+					],
+				],
 			]
 		);
 
@@ -2072,15 +2105,18 @@ class Api extends Base {
 
 		// Query to get people with their most recent activity date
 		// No post__in filter needed - approved users see all people
+		// Exclude former members from recently contacted
 		$query = $wpdb->prepare(
 			"SELECT c.comment_post_ID as person_id, MAX(cm.meta_value) as last_activity_date
              FROM {$wpdb->comments} c
              INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'activity_date'
              INNER JOIN {$wpdb->posts} p ON c.comment_post_ID = p.ID
+             LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
              WHERE c.comment_type = 'rondo_activity'
              AND c.comment_approved = '1'
              AND p.post_type = 'person'
              AND p.post_status = 'publish'
+             AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
              GROUP BY c.comment_post_ID
              ORDER BY last_activity_date DESC
              LIMIT %d",

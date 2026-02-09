@@ -1019,6 +1019,10 @@ class People extends Base {
 		];
 		$prepare_values = [];
 
+		// Exclude former members by default
+		$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'";
+		$where_clauses[] = "(fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')";
+
 		// Always JOIN meta for first_name, infix, and last_name (needed for display and sorting)
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ix ON p.ID = ix.post_id AND ix.meta_key = 'infix'";
