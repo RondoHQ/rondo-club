@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 
 Phase: v21.0 complete (phases 155-161)
 Status: Milestone shipped and archived
-Last activity: 2026-02-09 — Completed quick task 42: copy season button for fee categories
+Last activity: 2026-02-09 — Completed quick task 43: Remove contact import feature
 
 ## Accumulated Context
 
@@ -41,7 +41,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed quick task 42: copy season button for fee categories.
+Stopped at: Completed quick task 43: Remove contact import feature.
 Resume file: None
 
 ---
