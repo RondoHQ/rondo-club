@@ -3090,6 +3090,10 @@ class Api extends Base {
 			);
 		}
 
+		// Look up category label from season config
+		$season_categories = $fees->get_categories_for_season( $season );
+		$category_label    = $season_categories[ $fee_data['category'] ]['label'] ?? $fee_data['category'];
+
 		// Get Nikki data for this year
 		$nikki_year  = substr( $season, 0, 4 );
 		$nikki_total = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_total', true );
@@ -3104,6 +3108,7 @@ class Api extends Base {
 				'season'                 => $season,
 				'calculable'             => true,
 				'category'               => $fee_data['category'],
+				'category_label'         => $category_label,
 				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'],
 				'base_fee'               => $fee_data['base_fee'],
 				'family_discount_rate'   => $fee_data['family_discount_rate'],

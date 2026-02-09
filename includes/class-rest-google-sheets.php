@@ -990,15 +990,12 @@ class GoogleSheets extends Base {
 		}
 		$data[] = $headers;
 
-		// Category labels
-		$category_labels = [
-			'mini'     => 'Mini',
-			'pupil'    => 'Pupil',
-			'junior'   => 'Junior',
-			'senior'   => 'Senior',
-			'recreant' => 'Recreant',
-			'donateur' => 'Donateur',
-		];
+		// Derive category labels from API response metadata
+		$categories      = $fee_data['categories'] ?? [];
+		$category_labels = [];
+		foreach ( $categories as $slug => $meta ) {
+			$category_labels[ $slug ] = $meta['label'] ?? $slug;
+		}
 
 		// Totals
 		$total_base_fee  = 0;
