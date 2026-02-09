@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.1.0] - 2026-02-09
+
+### Added
+- Configurable family discount: admin can set second child and third child discount percentages per season
+- Family discount configuration stored per season in WordPress options with fallback to defaults (25%/50%)
+- FamilyDiscountSection component in fee category settings UI
+- REST API validation for family discount percentages (0-100 range, warning if 2nd >= 3rd)
+
+### Changed
+- `get_family_discount_rate()` reads from per-season config instead of returning hardcoded values
+- GET/POST `/rondo/v1/membership-fees/settings` now includes `family_discount` field
+
 ## [21.0.0] - 2026-02-09
 
 ### Added
