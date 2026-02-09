@@ -378,6 +378,11 @@ function SearchModal({ isOpen, onClose }) {
                           <span className="text-sm font-medium flex-1 truncate">
                             {person.name}
                           </span>
+                          {person.former_member && (
+                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300 flex-shrink-0">
+                              Oud-lid
+                            </span>
+                          )}
                           {isSelected && (
                             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">Enter</kbd>
                           )}

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.1.0] - 2026-02-09
+
+### Added
+- "Toon oud-leden" toggle in People list filter dropdown to show former members
+- "Oud-lid" badge visual indicator for former members in People list rows
+- "Oud-lid" badge in global search results for former members
+- `include_former` parameter on `/rondo/v1/people/filtered` endpoint (1=include, empty=exclude)
+- `former_member` boolean field in filtered people response
+- `former_member` field in `format_person_summary()` (affects search, dashboard, all person summaries)
+- Reduced opacity (60%) styling for former member rows in People list
+- Former member filter state persisted in URL (`?oudLeden=1`)
+- Former member toggle counted in active filters badge
+- Export to Google Sheets includes former members when toggle is active
+- Developer documentation for former member system (`features/former-members.md`)
+
 ## [22.0.0] - 2026-02-09
 
 ### Added
