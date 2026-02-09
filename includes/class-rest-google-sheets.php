@@ -874,6 +874,15 @@ class GoogleSheets extends Base {
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
+			$is_former = ( get_field( 'former_member', $person->ID ) == true );
+
+			// Former members: only include if in current season, exclude from forecast
+			if ( $is_former ) {
+				if ( $forecast || ! $fees->is_former_member_in_season( $person->ID, $season ) ) {
+					continue;
+				}
+			}
+
 			// Get person name
 			$first_name = get_field( 'first_name', $person->ID ) ?: '';
 			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
