@@ -391,6 +391,20 @@ Club administrators can manage their members, teams, and important dates through
 
 ### Active
 
+## Current Milestone: v23.0 Former Members
+
+**Goal:** Archive former members when they leave the club (detected by rondo-sync), hiding them from default views while preserving all data. Findable through global search and a filter toggle on the Leden list.
+
+**Target features:**
+- Former member status field on person records (set via REST API by rondo-sync)
+- REST API endpoint documentation for marking members as former
+- Archived by default: hidden from Leden list, dashboard stats, and team rosters
+- Filter toggle on Leden list to show former members ("Toon oud-leden")
+- Global search includes former members (with visual distinction)
+- Contributie: include former members who were active during part of the season (no pro-rata for leavers), exclude otherwise
+- Team rosters automatically exclude former members
+- All historical data preserved (notes, activities, relationships, fees)
+
 ### Out of Scope
 
 - Mobile app — future consideration
