@@ -98,10 +98,11 @@ Plans:
 7. Dark mode uses adapted brand colors throughout (dark: classes updated, not removed)
 8. Hover transitions use 200ms ease with translateY(-2px) lift effect
 
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 164-01: Component styling updates
+- [ ] 164-01-PLAN.md — Update component classes with brand styling (buttons, cards, inputs, dark mode, glass variant)
+- [ ] 164-02-PLAN.md — Apply gradient text treatment to page and section headings
 
 ---
 
@@ -144,7 +145,7 @@ Plans:
 | 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 162. Foundation | v22.0 | 1/1 | ✓ Complete | 2026-02-09 |
 | 163. Color Migration | v22.0 | 3/3 | ✓ Complete | 2026-02-09 |
-| 164. Component Styling | v22.0 | 0/1 | Not started | - |
+| 164. Component Styling | v22.0 | 0/2 | Not started | - |
 | 165. PWA & Backend | v22.0 | 0/1 | Not started | - |
 
 ---
