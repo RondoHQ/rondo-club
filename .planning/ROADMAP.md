@@ -82,10 +82,10 @@ Plans:
   2. When filter is enabled, former members appear with visual distinction
   3. Global search includes former members with "oud-lid" indicator
   4. Former members are easily discoverable when needed
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 168-01: TBD
+- [ ] 168-01-PLAN.md — Add include_former filter param, Toon oud-leden toggle, oud-lid search indicator
 
 #### Phase 169: Contributie Logic
 **Goal**: Fee calculations correctly handle former members (include if active during season, full fee with no pro-rata for leavers)
