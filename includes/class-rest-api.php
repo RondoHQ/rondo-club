@@ -574,7 +574,7 @@ class Api extends Base {
 					'callback'            => [ $this, 'update_membership_fee_settings' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'season'   => [
+						'season'     => [
 							'required'          => true,
 							'type'              => 'string',
 							'validate_callback' => function ( $param, $request, $key ) {
@@ -583,41 +583,9 @@ class Api extends Base {
 								return in_array( $param, $valid, true );
 							},
 						],
-						'mini'     => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return is_numeric( $param ) && $param >= 0;
-							},
-						],
-						'pupil'    => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return is_numeric( $param ) && $param >= 0;
-							},
-						],
-						'junior'   => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return is_numeric( $param ) && $param >= 0;
-							},
-						],
-						'senior'   => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return is_numeric( $param ) && $param >= 0;
-							},
-						],
-						'recreant' => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return is_numeric( $param ) && $param >= 0;
-							},
-						],
-						'donateur' => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return is_numeric( $param ) && $param >= 0;
-							},
+						'categories' => [
+							'required' => true,
+							'type'     => 'object',
 						],
 					],
 				],
@@ -2633,48 +2601,136 @@ class Api extends Base {
 		$membership_fees = new \Rondo\Fees\MembershipFees();
 		$current_season  = $membership_fees->get_season_key();
 		$next_season     = $membership_fees->get_next_season_key();
+		$season          = $request->get_param( 'season' );
+		$categories      = $request->get_param( 'categories' );
 
-		// Get season parameter
-		$season = $request->get_param( 'season' );
-
-		// Validate season is either current or next
-		if ( ! in_array( $season, [ $current_season, $next_season ], true ) ) {
+		// Validate category structure
+		$validation = $this->validate_category_config( $categories );
+		if ( ! empty( $validation['errors'] ) ) {
 			return new \WP_Error(
-				'invalid_season',
-				'Season must be either current season or next season',
-				[ 'status' => 400 ]
+				'invalid_categories',
+				'Category validation failed',
+				[
+					'status'   => 400,
+					'errors'   => $validation['errors'],
+					'warnings' => $validation['warnings'],
+				]
 			);
 		}
 
-		// Extract fee values
-		$fees      = [];
-		$fee_types = [ 'mini', 'pupil', 'junior', 'senior', 'recreant', 'donateur' ];
+		// Save categories for the specified season
+		$membership_fees->save_categories_for_season( $categories, $season );
 
-		foreach ( $fee_types as $type ) {
-			$value = $request->get_param( $type );
-			if ( $value !== null ) {
-				$fees[ $type ] = (int) $value;
+		// Return updated settings for both seasons
+		$response = [
+			'current_season' => [
+				'key'        => $current_season,
+				'categories' => $membership_fees->get_categories_for_season( $current_season ),
+			],
+			'next_season'    => [
+				'key'        => $next_season,
+				'categories' => $membership_fees->get_categories_for_season( $next_season ),
+			],
+		];
+
+		// Include warnings if any
+		if ( ! empty( $validation['warnings'] ) ) {
+			$response['warnings'] = $validation['warnings'];
+		}
+
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Validate category configuration structure
+	 *
+	 * Checks for required fields, duplicate slugs, and duplicate age class assignments.
+	 * Returns both errors (block save) and warnings (informational).
+	 *
+	 * @param mixed $categories The categories data to validate.
+	 * @return array Array with 'errors' and 'warnings' keys.
+	 */
+	private function validate_category_config( $categories ) {
+		$errors   = [];
+		$warnings = [];
+
+		// Must be an array/object
+		if ( ! is_array( $categories ) ) {
+			$errors[] = [ 'field' => 'categories', 'message' => 'Categories must be an object' ];
+			return [ 'errors' => $errors, 'warnings' => $warnings ];
+		}
+
+		// Empty array is valid (per Phase 156 pattern: silent for missing config)
+		if ( empty( $categories ) ) {
+			return [ 'errors' => [], 'warnings' => [] ];
+		}
+
+		$seen_slugs    = [];
+		$age_class_map = [];
+
+		foreach ( $categories as $slug => $category ) {
+			// Validate slug is not empty
+			if ( empty( $slug ) || ! is_string( $slug ) ) {
+				$errors[] = [ 'field' => 'slug', 'message' => 'Category slug is required and must be a string' ];
+				continue;
+			}
+
+			// Validate slug format (lowercase, no spaces — use sanitize_title for normalization check)
+			$normalized_slug = sanitize_title( $slug );
+			if ( $normalized_slug !== $slug ) {
+				$errors[] = [
+					'field'   => "categories.{$slug}",
+					'message' => "Invalid slug format. Use lowercase letters, numbers, and hyphens only. Suggested: '{$normalized_slug}'",
+				];
+			}
+
+			// Check for duplicate slugs (case-insensitive)
+			$lower_slug = strtolower( $slug );
+			if ( isset( $seen_slugs[ $lower_slug ] ) ) {
+				$errors[] = [
+					'field'   => "categories.{$slug}",
+					'message' => "Duplicate slug '{$slug}'",
+				];
+			}
+			$seen_slugs[ $lower_slug ] = true;
+
+			// Validate required field: label
+			if ( ! isset( $category['label'] ) || ! is_string( $category['label'] ) || trim( $category['label'] ) === '' ) {
+				$errors[] = [
+					'field'   => "categories.{$slug}.label",
+					'message' => 'Label is required',
+				];
+			}
+
+			// Validate required field: amount (must be numeric, non-negative)
+			if ( ! isset( $category['amount'] ) || ! is_numeric( $category['amount'] ) || (float) $category['amount'] < 0 ) {
+				$errors[] = [
+					'field'   => "categories.{$slug}.amount",
+					'message' => 'Amount is required and must be a non-negative number',
+				];
+			}
+
+			// Track age class assignments for overlap detection (warning, not error per API-04)
+			if ( isset( $category['age_classes'] ) && is_array( $category['age_classes'] ) ) {
+				foreach ( $category['age_classes'] as $age_class ) {
+					if ( ! is_string( $age_class ) ) {
+						continue;
+					}
+					$normalized_class = strtolower( trim( $age_class ) );
+					if ( isset( $age_class_map[ $normalized_class ] ) ) {
+						$warnings[] = [
+							'field'      => "categories.{$slug}.age_classes",
+							'message'    => "Age class '{$age_class}' is also assigned to category '{$age_class_map[ $normalized_class ]}'",
+							'categories' => [ $age_class_map[ $normalized_class ], $slug ],
+						];
+					} else {
+						$age_class_map[ $normalized_class ] = $slug;
+					}
+				}
 			}
 		}
 
-		// Update settings for the specified season
-		if ( ! empty( $fees ) ) {
-			$membership_fees->update_settings_for_season( $fees, $season );
-		}
-
-		// Return updated settings for both seasons
-		return rest_ensure_response(
-			[
-				'current_season' => [
-					'key'  => $current_season,
-					'fees' => $membership_fees->get_settings_for_season( $current_season ),
-				],
-				'next_season'    => [
-					'key'  => $next_season,
-					'fees' => $membership_fees->get_settings_for_season( $next_season ),
-				],
-			]
-		);
+		return [ 'errors' => $errors, 'warnings' => $warnings ];
 	}
 
 	/**
