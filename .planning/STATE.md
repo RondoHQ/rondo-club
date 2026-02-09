@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 165 of 165 (PWA & Backend Cleanup)
-Plan: Ready to plan
-Status: Phase 164 complete and verified (8/8 must-haves passed) — ready for Phase 165 planning
-Last activity: 2026-02-09 — Phase 164 executed and verified (2/2 plans, 53 gradient headings, brand component styling)
+Plan: 1 of 1 complete
+Status: Phase 165 Plan 01 complete — PWA manifest and favicon updated, login page fixed, dead API code removed
+Last activity: 2026-02-09 — Phase 165-01 executed (PWA assets updated to electric-cyan, REST API cleanup)
 
-Progress: [██████████████░░░░░░] 75% (164/165 total phases complete, 3/4 v22.0 phases)
+Progress: [████████████████████] 100% (165/165 total phases complete, 4/4 v22.0 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 167 plans across v1.0-v22.0
+- Total plans completed: 168 plans across v1.0-v22.0
 - v21.0 completed: 12 plans, 2 days (2026-02-08 → 2026-02-09)
-- v22.0 in progress: 6/7 plans complete (162-01, 163-01, 163-02, 163-03, 164-01, 164-02) — 1 remaining (165-01)
+- v22.0 completed: 7 plans (162-01, 163-01, 163-02, 163-03, 164-01, 164-02, 165-01)
 
 ## Accumulated Context
 
@@ -41,6 +41,8 @@ Recent decisions affecting v22.0:
 - [Phase 164-01]: Use ease-in-out instead of ease for Tailwind v4 compatibility
 - [Phase 164-02]: Preserve "Toegang geweigerd" error headings without gradient for visual distinction
 - [Phase 164-02]: Exclude modal h2 titles and filter labels from gradient application
+- [Phase 165-01]: Use hardcoded RGB values rgba(8, 145, 178, ...) in PHP for electric-cyan transparency effects
+- [Phase 165-01]: Preserve dark mode functionality (localStorage-based) while removing dead REST API endpoints
 
 ### Pending Todos
 
@@ -67,7 +69,7 @@ Recent decisions affecting v22.0:
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 164 complete and verified — ready for Phase 165 planning
+Stopped at: Phase 165-01 complete — PWA & Backend Cleanup finished
 Resume file: None
 
 ---
