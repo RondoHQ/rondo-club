@@ -15,7 +15,7 @@ export default defineConfig({
         name: 'Rondo Club',
         short_name: 'Rondo Club',
         description: 'Club data management',
-        theme_color: '#006935',
+        theme_color: '#0891b2',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',
