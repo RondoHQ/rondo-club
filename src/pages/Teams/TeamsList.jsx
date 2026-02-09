@@ -10,6 +10,18 @@ import { getTeamName } from '@/utils/formatters';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
 
+function getSpeeldag(activiteit) {
+  if (!activiteit) return '';
+  const parts = activiteit.split(/veld\s*-\s*/i);
+  return parts.length > 1 ? parts[parts.length - 1].trim() : activiteit;
+}
+
+function getGenderLabel(gender) {
+  if (!gender) return '';
+  const map = { male: 'Man', female: 'Vrouw', Mannen: 'Man', Vrouwen: 'Vrouw', Gemengd: 'Gemengd' };
+  return map[gender] || gender;
+}
+
 function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
   // Local state for edited field values (includes name, website, and custom fields)
   const [editedFields, setEditedFields] = useState({});
@@ -97,6 +109,12 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
             {getTeamName(team)}
           </Link>
         )}
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {getSpeeldag(team.acf?.activiteit)}
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+        {getGenderLabel(team.acf?.gender)}
       </td>
       {listViewFields.map(field => (
         <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
@@ -200,6 +218,8 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
             </th>
             <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="speeldag" label="Speeldag" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="gender" label="Gender" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
@@ -239,7 +259,8 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
 export default function TeamsList() {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all', 'mine', 'shared'
+  const [speeldagFilter, setSpeeldagFilter] = useState(new Set());
+  const [genderFilter, setGenderFilter] = useState(new Set());
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -322,9 +343,6 @@ export default function TeamsList() {
     setEditingRowId(null);
   };
 
-  // Get current user ID from rondoConfig
-  const currentUserId = window.rondoConfig?.userId;
-
   const { data: teams, isLoading, error } = useQuery({
     queryKey: ['teams', search],
     queryFn: async () => {
@@ -385,10 +403,11 @@ export default function TeamsList() {
     };
   }, []);
 
-  const hasActiveFilters = ownershipFilter !== 'all';
+  const hasActiveFilters = speeldagFilter.size > 0 || genderFilter.size > 0;
 
   const clearFilters = () => {
-    setOwnershipFilter('all');
+    setSpeeldagFilter(new Set());
+    setGenderFilter(new Set());
   };
 
   // Selection helper functions
@@ -406,21 +425,32 @@ export default function TeamsList() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
+  // Compute unique filter options from teams data
+  const speeldagOptions = useMemo(() => {
+    if (!teams) return [];
+    return [...new Set(teams.map(t => getSpeeldag(t.acf?.activiteit)).filter(Boolean))].sort();
+  }, [teams]);
+
+  const genderOptions = useMemo(() => {
+    if (!teams) return [];
+    return [...new Set(teams.map(t => getGenderLabel(t.acf?.gender)).filter(Boolean))].sort();
+  }, [teams]);
+
   // Filter teams
   const filteredTeams = useMemo(() => {
     if (!teams) return [];
 
     let filtered = [...teams];
 
-    // Apply ownership filter
-    if (ownershipFilter === 'mine') {
-      filtered = filtered.filter(team => team.author === currentUserId);
-    } else if (ownershipFilter === 'shared') {
-      filtered = filtered.filter(team => team.author !== currentUserId);
+    if (speeldagFilter.size > 0) {
+      filtered = filtered.filter(t => speeldagFilter.has(getSpeeldag(t.acf?.activiteit)));
+    }
+    if (genderFilter.size > 0) {
+      filtered = filtered.filter(t => genderFilter.has(getGenderLabel(t.acf?.gender)));
     }
 
     return filtered;
-  }, [teams, ownershipFilter, currentUserId]);
+  }, [teams, speeldagFilter, genderFilter]);
 
   // Sort filtered teams
   const sortedTeams = useMemo(() => {
@@ -432,6 +462,12 @@ export default function TeamsList() {
       if (sortField === 'name') {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
+      } else if (sortField === 'speeldag') {
+        valueA = getSpeeldag(a.acf?.activiteit).toLowerCase();
+        valueB = getSpeeldag(b.acf?.activiteit).toLowerCase();
+      } else if (sortField === 'gender') {
+        valueA = getGenderLabel(a.acf?.gender).toLowerCase();
+        valueB = getGenderLabel(b.acf?.gender).toLowerCase();
       } else if (sortField.startsWith('custom_')) {
         // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
@@ -487,7 +523,7 @@ export default function TeamsList() {
   // Clear selection when filters change
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [ownershipFilter, teams]);
+  }, [speeldagFilter, genderFilter, teams]);
   
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -515,7 +551,7 @@ export default function TeamsList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
-                  {ownershipFilter !== 'all' ? 1 : 0}
+                  {speeldagFilter.size + genderFilter.size}
                 </span>
               )}
             </button>
@@ -527,43 +563,87 @@ export default function TeamsList() {
                 className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
               >
                 <div className="p-4 space-y-4">
-                  {/* Ownership Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Eigenaar
-                    </h3>
-                    <div className="space-y-1">
-                      {[
-                        { value: 'all', label: 'Alle teams' },
-                        { value: 'mine', label: 'Mijn teams' },
-                        { value: 'shared', label: 'Gedeeld met mij' },
-                      ].map(option => (
-                        <label
-                          key={option.value}
-                          className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
-                        >
-                          <input
-                            type="radio"
-                            name="ownership"
-                            value={option.value}
-                            checked={ownershipFilter === option.value}
-                            onChange={(e) => setOwnershipFilter(e.target.value)}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-4 h-4 border-2 rounded-full mr-3 ${
-                            ownershipFilter === option.value
-                              ? 'border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {ownershipFilter === option.value && (
-                              <div className="w-2 h-2 bg-electric-cyan rounded-full" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">{option.label}</span>
-                        </label>
-                      ))}
+                  {/* Speeldag Filter */}
+                  {speeldagOptions.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        Speeldag
+                      </h3>
+                      <div className="space-y-1">
+                        {speeldagOptions.map(option => (
+                          <label
+                            key={option}
+                            className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={speeldagFilter.has(option)}
+                              onChange={() => {
+                                setSpeeldagFilter(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(option)) next.delete(option);
+                                  else next.add(option);
+                                  return next;
+                                });
+                              }}
+                              className="sr-only"
+                            />
+                            <div className={`flex items-center justify-center w-4 h-4 border-2 rounded mr-3 ${
+                              speeldagFilter.has(option)
+                                ? 'border-electric-cyan bg-electric-cyan'
+                                : 'border-gray-300 dark:border-gray-500'
+                            }`}>
+                              {speeldagFilter.has(option) && (
+                                <Check className="w-3 h-3 text-white" />
+                              )}
+                            </div>
+                            <span className="text-sm text-gray-700 dark:text-gray-200">{option}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Gender Filter */}
+                  {genderOptions.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        Gender
+                      </h3>
+                      <div className="space-y-1">
+                        {genderOptions.map(option => (
+                          <label
+                            key={option}
+                            className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={genderFilter.has(option)}
+                              onChange={() => {
+                                setGenderFilter(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(option)) next.delete(option);
+                                  else next.add(option);
+                                  return next;
+                                });
+                              }}
+                              className="sr-only"
+                            />
+                            <div className={`flex items-center justify-center w-4 h-4 border-2 rounded mr-3 ${
+                              genderFilter.has(option)
+                                ? 'border-electric-cyan bg-electric-cyan'
+                                : 'border-gray-300 dark:border-gray-500'
+                            }`}>
+                              {genderFilter.has(option) && (
+                                <Check className="w-3 h-3 text-white" />
+                              )}
+                            </div>
+                            <span className="text-sm text-gray-700 dark:text-gray-200">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Clear Filters */}
                   {hasActiveFilters && (
@@ -582,14 +662,22 @@ export default function TeamsList() {
           {/* Active Filter Chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
-              {ownershipFilter !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-obsidian/50 text-deep-midnight dark:text-cyan-200 rounded-full text-xs">
-                  {ownershipFilter === 'mine' ? 'Mijn teams' : 'Gedeeld met mij'}
-                  <button onClick={() => setOwnershipFilter('all')} className="hover:text-electric-cyan dark:hover:text-electric-cyan-light">
+              {[...speeldagFilter].map(val => (
+                <span key={`speeldag-${val}`} className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-obsidian/50 text-deep-midnight dark:text-cyan-200 rounded-full text-xs">
+                  {val}
+                  <button onClick={() => setSpeeldagFilter(prev => { const next = new Set(prev); next.delete(val); return next; })} className="hover:text-electric-cyan dark:hover:text-electric-cyan-light">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
-              )}
+              ))}
+              {[...genderFilter].map(val => (
+                <span key={`gender-${val}`} className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-obsidian/50 text-deep-midnight dark:text-cyan-200 rounded-full text-xs">
+                  {val}
+                  <button onClick={() => setGenderFilter(prev => { const next = new Set(prev); next.delete(val); return next; })} className="hover:text-electric-cyan dark:hover:text-electric-cyan-light">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
             </div>
           )}
         </div>
