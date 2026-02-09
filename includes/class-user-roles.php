@@ -15,7 +15,6 @@ class UserRoles {
 
 	const ROLE_NAME              = 'rondo_user';
 	const ROLE_DISPLAY_NAME      = 'Rondo User';
-	const APPROVAL_META_KEY      = 'rondo_user_approved';
 	const FAIRPLAY_CAPABILITY    = 'fairplay';
 	const VOG_CAPABILITY         = 'vog';
 	const FINANCIEEL_CAPABILITY  = 'financieel';
@@ -124,16 +123,15 @@ class UserRoles {
 
 
 	/**
-	 * Check if a user is approved
+	 * Check if a user ID is valid
 	 *
-	 * Note: User approval workflow has been removed (registration is disabled).
-	 * All logged-in users are now considered approved.
+	 * Kept for backward compatibility with existing code.
+	 * Simply returns true if user ID exists.
 	 *
 	 * @param int $user_id User ID to check.
-	 * @return bool Always returns true for valid user IDs.
+	 * @return bool True if user ID is valid.
 	 */
 	public static function is_user_approved( $user_id ) {
-		// All logged-in users are approved (approval workflow removed)
 		return (bool) $user_id;
 	}
 

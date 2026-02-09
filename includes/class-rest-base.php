@@ -25,27 +25,19 @@ abstract class Base {
 	}
 
 	/**
-	 * Check if user is logged in and approved
+	 * Check if user is logged in
 	 *
-	 * Permission callback for endpoints requiring an approved user.
-	 * Admins are always considered approved.
+	 * Permission callback for endpoints requiring authentication.
 	 *
-	 * @return bool True if user is logged in and approved, false otherwise.
+	 * @return bool True if user is logged in, false otherwise.
 	 */
 	public function check_user_approved() {
 		if ( ! is_user_logged_in() ) {
 			return false;
 		}
 
-		$user_id = get_current_user_id();
-
-		// Admins are always approved
-		if ( user_can( $user_id, 'manage_options' ) ) {
-			return true;
-		}
-
-		// Check if user is approved
-		return \RONDO_User_Roles::is_user_approved( $user_id );
+		// All logged-in users can access data
+		return true;
 	}
 
 	/**
@@ -63,7 +55,7 @@ abstract class Base {
 	 * Check if user can access a person
 	 *
 	 * Permission callback for person-specific endpoints.
-	 * Verifies user is approved and owns the person post.
+	 * Verifies user is logged in and can access the person post.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return bool True if user can access the person, false otherwise.
@@ -73,7 +65,7 @@ abstract class Base {
 			return false;
 		}
 
-		// Check approval first
+		// Check authentication first
 		if ( ! $this->check_user_approved() ) {
 			return false;
 		}
@@ -88,7 +80,7 @@ abstract class Base {
 	 * Check if user can edit a person
 	 *
 	 * Permission callback for person edit endpoints.
-	 * Verifies user is approved and has edit capability for the person post.
+	 * Verifies user is logged in and has edit capability for the person post.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return bool True if user can edit the person, false otherwise.
@@ -98,7 +90,7 @@ abstract class Base {
 			return false;
 		}
 
-		// Check approval first
+		// Check authentication first
 		if ( ! $this->check_user_approved() ) {
 			return false;
 		}
@@ -118,7 +110,7 @@ abstract class Base {
 	 * Check if user can edit a team
 	 *
 	 * Permission callback for team edit endpoints.
-	 * Verifies user is approved and has edit capability for the team post.
+	 * Verifies user is logged in and has edit capability for the team post.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return bool True if user can edit the team, false otherwise.
@@ -128,7 +120,7 @@ abstract class Base {
 			return false;
 		}
 
-		// Check approval first
+		// Check authentication first
 		if ( ! $this->check_user_approved() ) {
 			return false;
 		}

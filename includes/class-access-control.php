@@ -2,7 +2,7 @@
 /**
  * Access Control for Rondo CRM
  *
- * All approved users can see all data. Unapproved users see nothing.
+ * All logged-in users can see all data.
  */
 
 namespace Rondo\Core;
@@ -34,9 +34,9 @@ class AccessControl {
 	}
 
 	/**
-	 * Check if a user is approved and can access data
+	 * Check if a user is logged in and can access data
 	 *
-	 * All approved users can see all data. Admins are always approved.
+	 * All logged-in users can access data.
 	 *
 	 * @param int|null $user_id User ID (optional, defaults to current user).
 	 * @return bool Whether the user can access data.
@@ -50,12 +50,8 @@ class AccessControl {
 			return false;
 		}
 
-		// Admins are always approved
-		if ( user_can( $user_id, 'manage_options' ) ) {
-			return true;
-		}
-
-		return \RONDO_User_Roles::is_user_approved( $user_id );
+		// All logged-in users can access data
+		return true;
 	}
 
 	/**
@@ -102,7 +98,7 @@ class AccessControl {
 	/**
 	 * Check if a user can access a post
 	 *
-	 * All approved users can access all posts. Only trashed posts are hidden.
+	 * All logged-in users can access all posts. Only trashed posts are hidden.
 	 *
 	 * @param int      $post_id Post ID.
 	 * @param int|null $user_id User ID (optional, defaults to current user).
@@ -160,9 +156,9 @@ class AccessControl {
 	}
 
 	/**
-	 * Filter WP_Query to block unapproved users
+	 * Filter WP_Query for access control
 	 *
-	 * Approved users see all posts. Unapproved users see nothing.
+	 * Logged-in users see all posts. Not logged-in users see nothing.
 	 */
 	public function filter_queries( $query ) {
 		// Respect suppress_filters flag
@@ -177,9 +173,9 @@ class AccessControl {
 			return;
 		}
 
-		// Check if user is approved
+		// Check if user is logged in
 		if ( ! $this->is_user_approved() ) {
-			// Unapproved or not logged in - show nothing
+			// Not logged in - show nothing
 			$query->set( 'post__in', [ 0 ] );
 			return;
 		}
@@ -204,11 +200,11 @@ class AccessControl {
 	/**
 	 * Filter REST API queries
 	 *
-	 * Approved users see all posts. Unapproved users see nothing.
+	 * Logged-in users see all posts. Not logged-in users see nothing.
 	 */
 	public function filter_rest_query( $args, $request ) {
 		if ( ! $this->is_user_approved() ) {
-			// Unapproved or not logged in - show nothing
+			// Not logged in - show nothing
 			$args['post__in'] = [ 0 ];
 			return $args;
 		}
@@ -229,11 +225,11 @@ class AccessControl {
 	public function filter_rest_single_access( $response, $post, $request ) {
 		$user_id = get_current_user_id();
 
-		// Check if user is approved
+		// Check if user is logged in
 		if ( ! $this->is_user_approved( $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',
-				__( 'Your account is pending approval. Please contact an administrator.', 'rondo' ),
+				__( 'You do not have permission to access this resource.', 'rondo' ),
 				[ 'status' => 403 ]
 			);
 		}
