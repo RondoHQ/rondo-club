@@ -23,7 +23,7 @@
 - [x] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups — completed 2026-02-08
 - [x] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API — completed 2026-02-09
 - [x] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories — completed 2026-02-09
-- [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
+- [x] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API — completed 2026-02-09
 - [x] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded — completed 2026-02-09
 - [x] **Phase 161: Configurable Matching Rules** - Replace hardcoded team name and werkfunctie matching with configurable per-category rules — completed 2026-02-09
 
@@ -96,7 +96,7 @@ Plans:
   3. Google Sheets export uses dynamic category definitions from the API config, not hardcoded column layouts
 **Plans**: 1 plan
 Plans:
-- [ ] 159-01-PLAN.md — Remove all hardcoded category definitions from frontend and export, replace with API-driven data
+- [x] 159-01-PLAN.md — Remove all hardcoded category definitions from frontend and export, replace with API-driven data
 
 ### Phase 160: Configurable Family Discount
 **Goal**: Family discount percentages are configurable per season instead of hardcoded 0%/25%/50%
@@ -138,10 +138,10 @@ Plans:
 | 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 159. Fee Category Frontend Display | v21.0 | 0/1 | Not started | - |
+| 159. Fee Category Frontend Display | v21.0 | 1/1 | ✓ Complete | 2026-02-09 |
 | 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 161 completed*
+*Last updated: 2026-02-09 — Phase 159 completed*
