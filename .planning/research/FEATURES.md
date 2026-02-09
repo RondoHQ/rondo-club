@@ -1,307 +1,147 @@
-# Feature Landscape: Infix/Tussenvoegsel Field
+# Feature Landscape
 
-**Domain:** Dutch name handling in CRM systems
-**Researched:** 2026-02-05
-**Confidence:** HIGH (based on official Dutch naming conventions, vCard RFC 6350, and existing Stadion implementation analysis)
-
-## Executive Summary
-
-Adding an infix/tussenvoegsel field to person records requires coordinated changes across 8 integration points: storage, display, auto-title generation, sorting, search, duplicate detection, vCard import/export, and Google Contacts sync. The Dutch naming convention is well-established: infixes are lowercase when preceded by a first name ("Jan van Dijk"), uppercase when standalone ("Van Dijk"), and ignored during alphabetical sorting (van Dijk files under "D").
-
-The vCard standard (RFC 6350) does not have a dedicated infix position in the N field, requiring a workaround using the "Additional Names" field (position 3). This impacts import/export compatibility with systems that follow strict vCard interpretation.
+**Domain:** React SPA Design System Refresh (Brand-Aligned)
+**Researched:** 2026-02-09
 
 ## Table Stakes
 
-Features users expect when an infix field exists. Missing these = incomplete implementation.
+Features users expect in modern design system refreshes. Missing any = incomplete migration, users notice inconsistency.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Display format: "First Infix Last"** | Dutch convention for full names | Low | "Jan van Dijk" not "Jan Van Dijk" |
-| **Lowercase infix in display** | Dutch grammar rule when preceded by first name | Low | Apply in all display contexts |
-| **Sort by last name, ignore infix** | Dutch telephone directory convention | Medium | van Dijk under "D" not "V" |
-| **Auto-title includes infix** | Title = full display name | Low | Update AutoTitle class to include infix |
-| **vCard N field export with infix** | Standard contact exchange format | Medium | Use Additional Names field (position 3) |
-| **vCard N field import with infix** | Parse incoming contacts correctly | Medium | Parse position 3 as infix |
-| **Search finds "van dijk"** | Users type full name to search | Medium | Include infix in search index |
-| **Search finds "dijk" alone** | Users may omit infix when searching | Medium | Search last_name with and without infix |
-| **Empty infix handling** | Not all Dutch names have infixes | Low | Display and sort correctly when empty |
-| **Google Contacts sync with infix** | Bidirectional sync must preserve infix | High | Map to middle name or structured name field |
-| **Duplicate detection includes infix** | "Jan van Dijk" ≠ "Jan Dijk" | Medium | Match on all three name components |
-| **API returns infix field** | REST API consumers need access | Low | Add to person endpoint response |
-| **UI field for infix input** | Users must be able to set/edit | Low | Add between first_name and last_name |
+| Fixed brand color palette | Users expect consistent brand identity across web properties; dynamic user colors undermine brand recognition | Low | Replaces existing dynamic accent color picker. Must update all `accent-*` references to fixed gradient colors |
+| Gradient buttons (primary/secondary/ghost) | Modern UI convention 2026; signals visual hierarchy and interactivity | Low | Three variants expected: filled gradient (CTA), outlined (secondary), glass (tertiary) |
+| Card gradient top border | Established pattern for visual accent without overwhelming content; signals category/status | Low | 3px top border with gradient, consistent across all card components |
+| Consistent focus ring styling | WCAG 2.4.7 requirement; users expect visible focus indicators | Low | Must update all inputs/buttons to use new brand gradient colors in focus rings |
+| Typography consistency | Users notice font mismatches immediately; undermines brand trust | Low | Apply Montserrat to headings throughout (currently using Inter for all text) |
+| Responsive gradient behavior | Gradients must work across mobile/tablet/desktop without banding or performance issues | Medium | Test gradient rendering on different screen densities and devices |
+| Dark/light mode parity | If keeping dark mode, both modes must have equivalent visual weight and polish | Medium | Decision point: remove dark mode entirely OR adapt gradients/glass for dark mode |
 
 ## Differentiators
 
-Features that enhance the infix implementation. Not expected, but valued.
+Features that set this design refresh apart. Not expected, but make the app feel premium and on-brand.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Capitalization context awareness** | "Van Dijk is hier" vs "Jan van Dijk" | High | Uppercase when no first name precedes |
-| **Infix validation list** | Prevent typos like "vam" or "dde" | Low | Validate against known list (van, de, van der, etc.) |
-| **Infix auto-suggestion** | Speed up data entry | Low | Dropdown/autocomplete from common list |
-| **Compound infix support** | Handle "van der", "van den", "van de" | Low | Store as single string, no special parsing |
-| **Infix normalization** | Standardize "v.d." → "van der" | Medium | Apply on save, preserve user intent |
-| **Formal address generation** | "Dhr. Van Dijk" (uppercase when formal) | Medium | Context-specific formatting rules |
-| **Bulk import infix detection** | Parse existing "last_name" fields to extract infixes | High | One-time migration helper |
-| **Infix statistics** | Show distribution of infixes in database | Low | Dashboard widget for data quality |
-| **vCard NICKNAME fallback** | Export "Dijk" as nickname for systems without infix | Low | Helps with systems that can't parse N field correctly |
+| Glass morphism header | Creates modern, layered visual depth; signals premium product quality | Medium | backdrop-filter: blur(12px), rgba background with 10-40% opacity, requires colorful content underneath to "pop" |
+| Gradient text in headings | Reinforces brand identity in every page; creates visual cohesion with rondo.club website | Low | Use bg-clip-text with gradient, ensure fallback color for accessibility |
+| Animated gradient borders | Creates micro-delight; signals active/interactive state | High | CSS @property with conic-gradient animation. Skip for MVP—complexity vs impact ratio poor |
+| PWA theme-color gradient | Browser chrome matches app gradient on mobile; seamless branded experience | Low | Update meta theme-color to electric-cyan, maintain existing dynamic favicon color logic |
+| Hover gradient shifts | Button gradients subtly shift on hover; reinforces interactivity | Medium | Use gradient angle rotation or stop position shift, ensure 60fps performance |
+| Input gradient focus ring | Focus indicators use brand gradient instead of solid color | Medium | Box-shadow with gradient requires workaround (pseudo-element or multiple shadows), accessibility concerns if contrast insufficient |
 
 ## Anti-Features
 
-Features to explicitly NOT build. Common mistakes in this domain.
+Features to explicitly NOT build or migrate.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Uppercase infix by default** | Violates Dutch grammar rules | Always lowercase unless context requires uppercase |
-| **Sort by infix** | Not Dutch convention | Ignore infix, sort by last_name only |
-| **Separate "prefix" from "infix"** | Overcomplicates data model | Single "infix" field is sufficient |
-| **Split compound infixes** | "van der" is one unit, not two | Store as single string |
-| **Require infix for all persons** | Many names don't have infixes | Make field optional |
-| **Auto-capitalize infix in search** | Search should be case-insensitive anyway | Use case-insensitive search matching |
-| **Show infix in separate column in lists** | Takes up space, breaks name flow | Show as part of full name column |
-| **Validate infix against strict list** | Rare/historical infixes exist | Warn but don't block unknown infixes |
-| **Store infix with last_name** | Makes parsing and sorting complex | Keep as separate field |
+| Dynamic user color picker | Undermines brand consistency; maintenance burden for multi-color support across 40+ pages | Remove Settings > Appearance > Accent Color section entirely. Hardcode electric-cyan/bright-cobalt gradient |
+| Dark mode (if removing) | If removing: reduces maintenance surface, simplifies gradient/glass implementation, forces single polished experience | Remove dark mode toggle, remove all dark:* Tailwind classes, remove useTheme colorScheme logic, simplify CSS variables |
+| Gradient backgrounds on large surfaces | Causes visual fatigue, accessibility issues (text contrast), poor for data-dense interfaces | Use gradients only for accents: buttons, borders, headings. Keep cards/modals solid white/gray |
+| Glass morphism on interactive elements | NN/g best practice: never apply transparency to buttons, toggles, navigation—reduces perceivability | Apply glass only to header, avoid on buttons, forms, CTAs |
+| Per-component gradient customization | Creates inconsistency, maintenance nightmare, contradicts design system purpose | Define 2-3 gradient presets in Tailwind config, apply uniformly |
+| Animated gradient on scroll | Performance killer on mobile; distracting in data-heavy app | Static gradients only, reserve animation for explicit hover/focus states |
 
 ## Feature Dependencies
 
 ```
-Storage Schema Change (infix field)
-  ↓
-Auto-Title Generation (includes infix)
-  ↓
-Display in UI (PersonEditModal, PeopleList)
-  ↓
-├─ Search (full name with infix)
-├─ Sorting (ignore infix, sort by last_name)
-├─ Duplicate Detection (match first+infix+last)
-└─ Export/Import
-   ├─ vCard (N field position 3)
-   └─ Google Contacts (map to middle name)
+Fixed Brand Palette
+  ├─> Gradient Buttons (depends on defined gradient stops)
+  ├─> Card Top Border (depends on gradient definition)
+  ├─> Focus Ring Styling (depends on brand colors)
+  └─> PWA theme-color (depends on primary brand color)
+
+Typography Update
+  └─> Gradient Text in Headings (must be applied to Montserrat headings)
+
+Glass Morphism Header
+  └─> Requires gradient background or colorful content layer underneath
+
+Remove Dynamic Color Picker (if doing)
+  ├─> Simplifies CSS variables (no runtime injection)
+  ├─> Simplifies useTheme.js (remove accentColor state)
+  └─> Enables deletion of ~200 lines of color generation logic
+
+Remove Dark Mode (if doing)
+  ├─> Simplifies all component styling (no dark:* variants)
+  ├─> Simplifies CSS variables (~50% reduction)
+  ├─> Simplifies useTheme.js (remove colorScheme state)
+  └─> Enables deletion of ~150 lines of dark mode logic
 ```
-
-**Critical path:** Storage → Auto-Title → Display → Search
-**High-risk:** vCard import/export (no standard position), Google Contacts sync (custom mapping)
-
-## Integration Surface Analysis
-
-### 1. Storage (ACF Field)
-**What changes:** Add `infix` text field to person CPT
-**Complexity:** Low
-**Risk:** Low (additive change)
-
-### 2. Auto-Title Generation (class-auto-title.php)
-**Current:** `$full_name = trim( $first_name . ' ' . $last_name );`
-**New:** `$full_name = trim( $first_name . ' ' . $infix . ' ' . $last_name );`
-**Complexity:** Low
-**Risk:** Low (affects display everywhere)
-
-### 3. Display Formatting
-**Surfaces:**
-- PersonEditModal: Input field between first and last name
-- PeopleList: Name column shows full name with infix
-- PersonDetail: Header shows full name with infix
-- Timeline entries: Author name includes infix
-- Search results: Highlighted name includes infix
-
-**Complexity:** Low (template changes)
-**Risk:** Low (visual only)
-
-### 4. Sorting (REST API + Frontend)
-**Current:** Sort by `first_name` or `last_name` meta query
-**New:** Continue sorting by `last_name` (ignore infix)
-**Complexity:** Low (no change needed if infix stored separately)
-**Risk:** Medium (must verify sorting doesn't break)
-
-### 5. Search (Global Search)
-**Current:** Searches `post_title` (auto-generated from first+last)
-**New:** Title includes infix, so search already works
-**Complexity:** Low (automatic via title)
-**Risk:** Low (inherits from auto-title)
-
-### 6. Duplicate Detection (vCard import, manual checks)
-**Current:** Match on `first_name` + `last_name` (exact)
-**New:** Match on `first_name` + `infix` + `last_name`
-**Complexity:** Medium
-**Risk:** High (may miss existing duplicates if infix added later)
-
-### 7. vCard Export (class-vcard-export.php)
-**Current:** `N:last_name;first_name;;;`
-**New:** `N:last_name;first_name;infix;;`
-**Complexity:** Medium
-**Risk:** High (position 3 may not be interpreted as infix by all systems)
-
-### 8. vCard Import (class-vcard-import.php)
-**Current:** Parses `N` field parts[0]=last, parts[1]=first
-**New:** Parse parts[2]=infix (if present)
-**Complexity:** Medium
-**Risk:** High (incoming vCards may use position 3 for middle name, not infix)
-
-### 9. Google Contacts Sync (if exists)
-**Status:** Unknown (not found in code review)
-**Expected mapping:** Use "middle name" field
-**Complexity:** High (if bidirectional sync)
-**Risk:** High (data loss if mapping incorrect)
-
-## Edge Cases
-
-### Empty Infix
-**Scenario:** Person with no infix (e.g., "Jan Jansen")
-**Handling:**
-- Display: "Jan Jansen" (no extra space)
-- Sorting: By "Jansen"
-- vCard: `N:Jansen;Jan;;;` (position 3 empty)
-**Risk:** Low (trim whitespace in auto-title)
-
-### Compound Infix
-**Scenario:** "van der", "van den", "van de"
-**Handling:** Store as single string "van der"
-**Display:** "Jan van der Berg"
-**Sorting:** By "Berg" (ignore entire "van der")
-**Risk:** Low (no parsing needed)
-
-### Capitalization
-**Scenario:** User enters "Van" instead of "van"
-**Handling:**
-- Option A: Auto-lowercase on save (opinionated)
-- Option B: Store as entered, lowercase in display (preserves intent)
-**Recommendation:** Option B (less data loss)
-**Risk:** Medium (inconsistent data entry)
-
-### Unknown Infix
-**Scenario:** Historical or rare infix like "des", "d'"
-**Handling:** Allow any value, no strict validation
-**Risk:** Low (edge case)
-
-### vCard Import Ambiguity
-**Scenario:** Import vCard with position 3 = "Paul" (middle name, not infix)
-**Handling:**
-- Cannot distinguish middle name from infix programmatically
-- Require manual review if position 3 looks like middle name
-**Risk:** High (incorrect infix assignment)
-
-### Duplicate with/without Infix
-**Scenario:** Existing "Jan Dijk" vs new "Jan van Dijk"
-**Handling:**
-- Current: No match (different last_name)
-- New: Should these be flagged as potential duplicates?
-**Recommendation:** Fuzzy match warning, not hard block
-**Risk:** High (false negatives in duplicate detection)
-
-### Sportlink Sync Read-Only
-**Scenario:** Name fields are read-only in UI (Sportlink-synced)
-**Handling:** Infix field also read-only in UI, editable via API
-**Risk:** Low (consistent with existing fields)
-
-## Display Context Matrix
-
-| Context | Format | Capitalization | Example |
-|---------|--------|----------------|---------|
-| Full name in list | First Infix Last | Lowercase infix | Jan van Dijk |
-| Full name in detail | First Infix Last | Lowercase infix | Jan van Dijk |
-| Formal address (if implemented) | Title Last | Uppercase infix | Dhr. Van Dijk |
-| Search result highlight | First Infix Last | Lowercase infix | Jan **van Dijk** |
-| Timeline byline | First Infix Last | Lowercase infix | Door Jan van Dijk |
-| Sorting key (invisible) | Last | Ignore infix | Dijk |
-| vCard FN field | First Infix Last | Lowercase infix | Jan van Dijk |
-| vCard N field | Last;First;Infix | Lowercase infix | Dijk;Jan;van |
 
 ## MVP Recommendation
 
-For MVP (subsequent milestone), prioritize:
+Prioritize (Phase 1 - Core Brand Identity):
+1. **Fixed brand color palette** - Foundation for everything else
+2. **Gradient buttons (primary + secondary)** - Most visible interactive elements, high impact
+3. **Card gradient top border** - Low effort, high visual impact across dashboard
+4. **Typography (Montserrat headings)** - Brand alignment, low risk
+5. **Remove dynamic color picker** - Simplifies implementation, reduces maintenance
 
-### Phase 1: Core Implementation
-1. **Storage:** Add `infix` ACF field (text, optional)
-2. **Auto-title:** Include infix in title generation
-3. **Display:** Show infix in PersonEditModal, PeopleList, PersonDetail
-4. **UI field:** Add input between first_name and last_name (read-only if Sportlink-synced)
+Defer (Phase 2 - Polish):
+- Glass morphism header (requires testing backdrop-filter performance)
+- Gradient text in headings (works better after typography is consistent)
+- Hover gradient shifts (nice-to-have, non-critical)
+- Input gradient focus rings (accessibility validation needed)
 
-**Rationale:** These four give immediate user value and are low-risk.
+Defer (Future - If Requested):
+- Animated gradient borders (high complexity, low ROI)
+- Dark mode removal decision (requires user research, impacts existing users)
 
-### Phase 2: Search & Sort
-5. **Search:** Verify auto-title change makes infix searchable
-6. **Sorting:** Verify sorting by last_name ignores infix correctly
+## Complexity Assessment by Feature Type
 
-**Rationale:** Search inherits from auto-title (free). Sorting needs verification.
+| Feature Type | Typical Implementation | Risk Level |
+|--------------|----------------------|------------|
+| Color Palette Swap | Update CSS variables, search/replace color references | Low - mechanical change |
+| Gradient Buttons | Add Tailwind gradient utilities, update button component classes | Low - additive change |
+| Glass Morphism | backdrop-filter CSS, test browser support (97% as of 2026), performance test on mobile | Medium - requires testing |
+| Typography | Update Tailwind config, add Google Fonts, replace font-sans with font-heading selectively | Low - well-documented pattern |
+| Remove Dynamic Features | Delete code, update tests, migration guide for existing users | Medium - breaking change management |
+| Gradient Focus Rings | box-shadow gradients require workaround, contrast validation for WCAG | Medium - accessibility concerns |
 
-### Phase 3: Import/Export
-7. **vCard export:** Map infix to N field position 3
-8. **vCard import:** Parse N field position 3 as infix
-9. **Duplicate detection:** Include infix in match logic
+## Migration Considerations
 
-**Rationale:** Essential for data interchange, but highest risk (vCard ambiguity).
+### Breaking Changes for Users
 
-### Defer to Post-MVP:
-- **Capitalization context awareness:** Complexity high, edge case
-- **Infix validation list:** Nice-to-have, not critical
-- **Bulk import infix detection:** One-time need, manual acceptable
-- **Google Contacts sync:** Requires investigation (not found in code)
-- **Formal address generation:** No use case identified yet
+| Change | User Impact | Mitigation |
+|--------|-------------|------------|
+| Remove dynamic color picker | Users lose personalization, existing saved preferences ignored | Document in changelog, provide rationale (brand consistency) |
+| Remove dark mode | Users in dark environments lose preferred mode | HIGH IMPACT - requires user research before committing. If removing, provide "coming soon" timeline for reintroduced dark mode with new design |
+| Fixed gradient colors | Existing accent-* usage may have incorrect contrast ratios with new colors | Audit all text-on-accent uses, ensure WCAG AA compliance |
 
-## Implementation Risks
+### Backward Compatibility Strategy
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| **vCard position 3 ambiguity** | High | Document expectation, test with major clients (Apple, Google, Outlook) |
-| **Existing data without infix** | Medium | Leave empty, do not attempt auto-parsing |
-| **Duplicate detection false negatives** | Medium | Add fuzzy matching for "van Dijk" vs "Dijk" |
-| **Sportlink sync override** | Medium | Confirm infix field included in Sportlink API |
-| **Google Contacts sync unmapped** | High | Investigate if sync exists, update mapping |
-| **Capitalization inconsistency** | Low | Store lowercase, document convention |
-| **Sorting regression** | Medium | Add test cases for "van Dijk" under "D" |
-
-## Data Quality Considerations
-
-**Current state:**
-- 0 person records have `infix` field (field doesn't exist yet)
-- Unknown how many existing last_name fields contain infixes
-
-**Post-implementation:**
-- New records: Infix entered during creation
-- Existing records: Remain empty unless manually updated
-- Import from vCard: Infix parsed from position 3 (if present)
-
-**Migration path:**
-- Do NOT attempt automatic parsing of existing last_name fields
-- Reason: Ambiguous (is "van Dijk" last_name or infix+last_name?)
-- Let infix field populate organically via:
-  1. Manual edits
-  2. vCard imports
-  3. Sportlink sync (if API includes infix)
-
-## Testing Checklist
-
-**Before deployment, verify:**
-
-- [ ] Person with infix displays correctly: "Jan van Dijk"
-- [ ] Person without infix displays correctly: "Jan Jansen"
-- [ ] Compound infix displays correctly: "Jan van der Berg"
-- [ ] Sorting places "van Dijk" under "D" not "V"
-- [ ] Search finds "van dijk" (full query)
-- [ ] Search finds "dijk" (last name only)
-- [ ] vCard export includes infix in N field position 3
-- [ ] vCard import parses infix from N field position 3
-- [ ] vCard import handles empty position 3 gracefully
-- [ ] Duplicate detection catches "Jan van Dijk" vs "Jan van Dijk"
-- [ ] Duplicate detection distinguishes "Jan van Dijk" vs "Jan Dijk"
-- [ ] Auto-title handles empty infix (no double space)
-- [ ] UI field is read-only when Sportlink-synced
-- [ ] API returns infix in person response
+1. **CSS Variables as Abstraction Layer**: Keep `--color-accent-*` variables, update values to gradient-compatible colors. This minimizes component changes.
+2. **Graceful Degradation**: Use `@supports (backdrop-filter: blur(12px))` for glass morphism, provide solid background fallback.
+3. **Progressive Enhancement**: Apply gradient buttons first, then layer in hover effects, then glass morphism. Each layer independently valuable.
 
 ## Sources
 
-### HIGH Confidence Sources:
-- [Tussenvoegsel - Wikipedia](https://en.wikipedia.org/wiki/Tussenvoegsel) - Comprehensive overview of Dutch name prefixes
-- [Dutch Genealogy: How to capitalize Dutch names with prefixes](https://www.dutchgenealogy.nl/how-to-capitalize-dutch-names-with-prefixes/) - Authoritative capitalization rules
-- [RFC 6350: vCard Format Specification](https://www.rfc-editor.org/rfc/rfc6350) - Official vCard standard
-- [Dutch name - Wikipedia](https://en.wikipedia.org/wiki/Dutch_name) - Dutch naming conventions
+### Glassmorphism & Modern UI (2026)
+- [Dark Glassmorphism: The Aesthetic That Will Define UI in 2026](https://medium.com/@developer_89726/dark-glassmorphism-the-aesthetic-that-will-define-ui-in-2026-93aa4153088f)
+- [12 Glassmorphism UI Features, Best Practices, and Examples](https://uxpilot.ai/blogs/glassmorphism-ui)
+- [How to create a glassmorphism effect in React](https://blog.logrocket.com/how-to-create-glassmorphism-effect-react/)
+- [Glassmorphism: Definition and Best Practices - NN/G](https://www.nngroup.com/articles/glassmorphism/)
 
-### MEDIUM Confidence Sources:
-- [HubSpot Community: Dutch surnames](https://community.hubspot.com/t5/CRM/Searching-for-a-solution-for-Dutch-surnames/m-p/352499) - CRM implementation patterns
-- [Salesforce Ideas: Name Fields to support Dutch conventions](https://ideas.salesforce.com/s/idea/a0B8W00000GdhfWUAR/name-fields-to-support-dutch-conventions-tussenvoegsel) - Commercial CRM approaches
-- [Fuzzy Matching 101: Complete Guide for 2026](https://matchdatapro.com/fuzzy-matching-101-a-complete-guide-for-2026/) - Duplicate detection algorithms
+### Tailwind CSS Gradient Patterns
+- [Tailwind CSS Gradient | Pagedone](https://pagedone.io/docs/gradient)
+- [How to create gradient borders with tailwindcss](https://dev.to/tailus/how-to-create-gradient-borders-with-tailwindcss-4gk2)
+- [A guide to adding gradients with Tailwind CSS](https://blog.logrocket.com/guide-adding-gradients-tailwind-css/)
+- [Create a Gradient Border With TailwindCSS and React](https://hackernoon.com/create-a-gradient-border-blog-postcard-using-tailwind-css-and-nextjs-a-how-to-guide)
 
-### Code Analysis:
-- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-auto-title.php` - Current title generation
-- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vcard-export.php` - Current vCard export (lines 254: N field)
-- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-vcard-import.php` - Current vCard import (lines 326: N field parsing)
-- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/PersonEditModal.jsx` - Current UI form
+### Focus Rings & Accessibility
+- [Ring Color - Tailwind CSS](https://tailwindcss.com/docs/ring-color)
+- [Tailwind CSS Outline vs Ring: Key Differences](https://www.codegenes.net/blog/what-s-the-difference-between-outline-and-ring-in-tailwind/)
+- [Applying Global Focus Styles in Tailwind CSS](https://github.com/tailwindlabs/tailwindcss/discussions/13338)
+
+### Design System Migration Best Practices
+- [Design System Updates in Strapi 5](https://docs.strapi.io/cms/migration/v4-to-v5/breaking-changes/design-system)
+- [How do you handle design system updates and changes without breaking existing components?](https://www.linkedin.com/advice/0/how-do-you-handle-design-system-updates-changes)
+- [Tips and tricks for Design System migrations](https://medium.com/@nonisnilukshi/tips-and-tricks-for-design-system-migrations-5beafb8e58c5)
+- [Visual Breaking Change in Design Systems](https://medium.com/eightshapes-llc/visual-breaking-change-in-design-systems-1e9109fac9c4)
+
+### Brand Color Systems
+- [UI Color Palette 2026: Best Practices](https://www.interaction-design.org/literature/article/ui-color-palette)
+- [Create Consistent Color Palettes for Design Systems](https://hybridheroes.de/blog/consistent-ui-color-palettes/)
+- [Creating A Design System: Building a Color Palette](https://www.uxpin.com/create-design-system-guide/build-color-palette-for-design-system)
