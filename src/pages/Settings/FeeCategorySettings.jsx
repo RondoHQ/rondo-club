@@ -116,12 +116,12 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
 }
 
 // EditCategoryForm component for inline editing
-function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = false }) {
+function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = false, availableAgeGroups = [] }) {
   const [formData, setFormData] = useState({
     slug: slug || '',
     label: category?.label || '',
     amount: category?.amount ?? 0,
-    age_classes: category?.age_classes ? category.age_classes.join(', ') : '',
+    age_classes: category?.age_classes || [],
     is_youth: category?.is_youth ?? false,
   });
 
@@ -134,17 +134,21 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const age_classes_array = formData.age_classes
-      .split(',')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
     onSave(formData.slug, {
       label: formData.label,
       amount: parseFloat(formData.amount) || 0,
-      age_classes: age_classes_array,
+      age_classes: formData.age_classes,
       is_youth: formData.is_youth,
     });
+  };
+
+  const toggleAgeClass = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      age_classes: prev.age_classes.includes(value)
+        ? prev.age_classes.filter(v => v !== value)
+        : [...prev.age_classes, value],
+    }));
   };
 
   return (
@@ -202,21 +206,31 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
         </div>
       </div>
 
-      {/* Age classes field */}
+      {/* Age classes multi-select from database */}
       <div>
-        <label htmlFor="age_classes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Leeftijdsklassen <span className="text-xs text-gray-500">(komma-gescheiden)</span>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Leeftijdsgroepen
         </label>
-        <input
-          type="text"
-          id="age_classes"
-          value={formData.age_classes}
-          onChange={(e) => setFormData(prev => ({ ...prev, age_classes: e.target.value }))}
-          placeholder="bijv: Mini A, Mini B, Pupil A"
-          className="w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
-        />
+        {availableAgeGroups.length > 0 ? (
+          <div className="border border-gray-300 dark:border-gray-600 rounded-md p-3 max-h-48 overflow-y-auto space-y-1.5 bg-white dark:bg-gray-700">
+            {availableAgeGroups.map(({ value, count }) => (
+              <label key={value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 rounded px-1 py-0.5">
+                <input
+                  type="checkbox"
+                  checked={formData.age_classes.includes(value)}
+                  onChange={() => toggleAgeClass(value)}
+                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{value}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">({count})</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">Laden...</p>
+        )}
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Laat leeg voor catch-all (alle niet-toegewezen klassen)
+          Selecteer geen groepen voor catch-all (alle niet-toegewezen groepen)
         </p>
       </div>
 
@@ -330,6 +344,17 @@ export default function FeeCategorySettings() {
       return response.data;
     },
   });
+
+  // Fetch available age groups from the database (same as Leeftijdsgroep filter on /people)
+  const { data: filterOptions } = useQuery({
+    queryKey: ['people', 'filter-options'],
+    queryFn: async () => {
+      const response = await prmApi.getFilterOptions();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const availableAgeGroups = filterOptions?.age_groups || [];
 
   // Save mutation with optimistic updates
   const saveMutation = useMutation({
@@ -448,7 +473,7 @@ export default function FeeCategorySettings() {
   };
 
   // Handle edit
-  const handleEdit = (slug, category) => {
+  const handleEdit = (slug) => {
     clearMessages();
     setEditingSlug(slug);
     setIsAddingNew(false);
@@ -614,6 +639,7 @@ export default function FeeCategorySettings() {
                       onSave={handleSave}
                       onCancel={handleCancel}
                       isSaving={saveMutation.isPending}
+                      availableAgeGroups={availableAgeGroups}
                     />
                   );
                 }
@@ -641,6 +667,7 @@ export default function FeeCategorySettings() {
           onCancel={handleCancel}
           isSaving={saveMutation.isPending}
           isNew={true}
+          availableAgeGroups={availableAgeGroups}
         />
       ) : (
         <button
