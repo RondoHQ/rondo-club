@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Phase 168 - Visibility Controls (complete, ready for Phase 169)
+**Current focus:** Phase 169 - Contributie Logic (complete)
 
 ## Current Position
 
-Phase: 168 of 169 (Visibility Controls)
+Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-09 — Completed 168-01-PLAN.md (Visibility Controls)
+Last activity: 2026-02-09 — Completed 169-01-PLAN.md (Contributie Logic)
 
-Progress: [████████████████████████████░░░░] 99.4% (168/169 phases)
+Progress: [████████████████████████████████] 100% (169/169 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 171 plans across v1.0-v22.0 and v23.0 (in progress)
+- Total plans completed: 172 plans across v1.0-v23.0
 - Recent milestones:
-  - v23.0: 3 plans so far (Phases 166-168 complete)
+  - v23.0: 4 plans, 1 day (Phases 166-169 complete, 2026-02-09)
   - v22.0: 7 plans, 1 day (2026-02-09)
   - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
   - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
@@ -48,6 +48,10 @@ Recent decisions affecting current work:
 - [Phase 168]: Place "Toon oud-leden" toggle at top of filter dropdown for prominence
 - [Phase 168]: Use reduced opacity (60%) instead of greying out former member rows
 - [Phase 168]: Use loose comparison (== true) for ACF true_false fields returning string '1'
+- [Phase 169]: Former members use normal pro-rata based on lid-sinds (leaving doesn't create second pro-rata)
+- [Phase 169]: Season eligibility determined by lid-sinds before season end (July 1 of end year)
+- [Phase 169]: Former members excluded from forecast entirely (won't be members next season)
+- [Phase 169]: Family discount calculation excludes ineligible former members to prevent incorrect reductions
 
 ### Pending Todos
 
@@ -86,11 +90,16 @@ Recent decisions affecting current work:
 - Tasks: 2
 - Files modified: 8 across 2 repositories (rondo-club, developer)
 
+**Phase 169-01 Metrics:**
+- Duration: 84 seconds (1m 24s)
+- Tasks: 2
+- Files modified: 8 across 2 repositories (rondo-club, developer)
+
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 168-01-PLAN.md (Visibility Controls)
-Resume file: None - Phase 168 complete, ready for Phase 169
+Stopped at: Completed 169-01-PLAN.md (Contributie Logic)
+Resume file: None - Phase 169 complete, v23.0 milestone finished
 
 ---
 *State updated: 2026-02-09*
