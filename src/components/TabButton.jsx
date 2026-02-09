@@ -22,7 +22,7 @@ export default function TabButton({ label, isActive, onClick }) {
       onClick={onClick}
       className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
         isActive
-          ? 'border-accent-600 text-accent-600'
+          ? 'border-electric-cyan text-electric-cyan'
           : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300'
       }`}
     >

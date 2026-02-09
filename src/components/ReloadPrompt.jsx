@@ -88,10 +88,10 @@ export function ReloadPrompt() {
 
       {/* Update available notification */}
       {needRefresh && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-accent-200 dark:border-accent-700 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-cyan-200 dark:border-bright-cobalt p-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
-              <RefreshCw className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+              <RefreshCw className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -111,7 +111,7 @@ export function ReloadPrompt() {
             </button>
             <button
               onClick={() => updateServiceWorker(true)}
-              className="px-3 py-1.5 text-sm bg-accent-600 text-white rounded-md hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+              className="px-3 py-1.5 text-sm bg-electric-cyan text-white rounded-md hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:ring-offset-2"
             >
               Nu herladen
             </button>

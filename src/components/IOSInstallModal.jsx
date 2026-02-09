@@ -61,7 +61,7 @@ export function IOSInstallModal() {
 
         <ol className="space-y-4">
           <li className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900 text-accent-600 dark:text-accent-400 flex items-center justify-center text-sm font-medium">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-100 dark:bg-obsidian text-electric-cyan dark:text-electric-cyan flex items-center justify-center text-sm font-medium">
               1
             </div>
             <div className="flex-1 text-sm">
@@ -69,20 +69,20 @@ export function IOSInstallModal() {
                 Tik op het Deel-icoon
               </p>
               <div className="inline-flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700 rounded-md">
-                <Share className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+                <Share className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
               </div>
             </div>
           </li>
 
           <li className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900 text-accent-600 dark:text-accent-400 flex items-center justify-center text-sm font-medium">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-100 dark:bg-obsidian text-electric-cyan dark:text-electric-cyan flex items-center justify-center text-sm font-medium">
               2
             </div>
             <div className="flex-1 text-sm">
               <p className="text-gray-900 dark:text-gray-100 mb-2">
                 Scroll omlaag en kies &ldquo;Zet op beginscherm&rdquo;
               </p>
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-accent-600 dark:text-accent-400">
+              <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-electric-cyan dark:text-electric-cyan">
                 <Plus className="w-4 h-4" />
                 <span className="text-sm font-medium">Zet op beginscherm</span>
               </div>
@@ -90,7 +90,7 @@ export function IOSInstallModal() {
           </li>
 
           <li className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-accent-100 dark:bg-accent-900 text-accent-600 dark:text-accent-400 flex items-center justify-center text-sm font-medium">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-cyan-100 dark:bg-obsidian text-electric-cyan dark:text-electric-cyan flex items-center justify-center text-sm font-medium">
               3
             </div>
             <div className="flex-1 text-sm">

@@ -106,7 +106,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                       <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Type</label>
                       <select
                         {...register(`contacts.${index}.contact_type`, { required: true })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                         disabled={isLoading}
                       >
                         <option value="">Selecteer type...</option>
@@ -124,7 +124,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                       <input
                         {...register(`contacts.${index}.contact_label`)}
                         placeholder="bijv. Werk"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                         disabled={isLoading}
                       />
                     </div>
@@ -135,7 +135,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                       <input
                         {...register(`contacts.${index}.contact_value`, { required: true })}
                         placeholder="bijv. jan@voorbeeld.nl"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                         disabled={isLoading}
                       />
                     </div>

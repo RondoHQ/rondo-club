@@ -142,7 +142,7 @@ export default function FeedbackManagement() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-accent-600 dark:text-accent-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-electric-cyan dark:text-electric-cyan" />
       </div>
     );
   }
@@ -325,7 +325,7 @@ export default function FeedbackManagement() {
                       <td className="px-4 py-3 whitespace-nowrap">
                         <Link
                           to={`/feedback/${item.id}`}
-                          className="inline-flex items-center gap-1 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-800 dark:hover:text-accent-300"
+                          className="inline-flex items-center gap-1 text-sm text-electric-cyan dark:text-electric-cyan hover:text-deep-midnight dark:hover:text-electric-cyan-light"
                         >
                           <Eye className="w-4 h-4" />
                           Bekijken

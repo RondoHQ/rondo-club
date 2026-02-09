@@ -70,7 +70,7 @@ function SortableCard({ id, isVisible, onToggleVisibility }) {
           type="checkbox"
           checked={isVisible}
           onChange={() => onToggleVisibility(id)}
-          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500 dark:bg-gray-700"
+          className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan dark:bg-gray-700"
         />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-gray-900 dark:text-gray-50">

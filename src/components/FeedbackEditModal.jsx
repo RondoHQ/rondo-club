@@ -196,7 +196,7 @@ export default function FeedbackEditModal({
                     {...register('feedback_type')}
                     type="radio"
                     value="bug"
-                    className="w-4 h-4 text-accent-600 border-gray-300 dark:border-gray-600 focus:ring-accent-500 dark:bg-gray-700"
+                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
                     disabled={isLoading}
                   />
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Bugmelding</span>
@@ -206,7 +206,7 @@ export default function FeedbackEditModal({
                     {...register('feedback_type')}
                     type="radio"
                     value="feature_request"
-                    className="w-4 h-4 text-accent-600 border-gray-300 dark:border-gray-600 focus:ring-accent-500 dark:bg-gray-700"
+                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
                     disabled={isLoading}
                   />
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Functieverzoek</span>
@@ -285,7 +285,7 @@ export default function FeedbackEditModal({
               <div
                 className={`relative rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
                   dragActive
-                    ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
+                    ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight'
                     : 'border-gray-300 hover:border-gray-400 dark:border-gray-600'
                 }`}
                 onDragEnter={handleDrag}
@@ -303,14 +303,14 @@ export default function FeedbackEditModal({
                 />
                 {isUploading ? (
                   <div className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-600 dark:border-accent-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
                     <span className="text-sm text-gray-600 dark:text-gray-300">Uploaden...</span>
                   </div>
                 ) : (
                   <>
                     <Upload className="w-6 h-6 mx-auto text-gray-400 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Sleep screenshots of <span className="text-accent-600 dark:text-accent-400">blader</span>
+                      Sleep screenshots of <span className="text-electric-cyan dark:text-electric-cyan">blader</span>
                     </p>
                   </>
                 )}

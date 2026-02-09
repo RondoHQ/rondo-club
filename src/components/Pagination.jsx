@@ -95,7 +95,7 @@ export default function Pagination({ currentPage, totalPages, totalItems, itemsP
                 onClick={() => onPageChange(page)}
                 className={`min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? 'bg-accent-600 text-white'
+                    ? 'bg-electric-cyan text-white'
                     : 'border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
                 }`}
                 aria-current={isActive ? 'page' : undefined}

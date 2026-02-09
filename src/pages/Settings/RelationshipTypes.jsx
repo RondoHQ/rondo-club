@@ -118,7 +118,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
                 type="button"
                 onClick={() => handleSelect(null)}
                 className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                  !value ? 'bg-accent-50 dark:bg-accent-800' : ''
+                  !value ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                 }`}
               >
                 <span className="text-gray-500 dark:text-gray-400 italic">Geen (geen omgekeerd)</span>
@@ -129,7 +129,7 @@ function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes
                   type="button"
                   onClick={() => handleSelect(type.id)}
                   className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-50 ${
-                    value === type.id.toString() ? 'bg-accent-50 dark:bg-accent-800' : ''
+                    value === type.id.toString() ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                   }`}
                 >
                   {type.name}
@@ -330,7 +330,7 @@ export default function RelationshipTypes() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -496,7 +496,7 @@ export default function RelationshipTypes() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(type)}
-                          className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
+                          className="p-2 text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/30 rounded"
                           title="Bewerken"
                         >
                           <Edit2 className="w-4 h-4" />

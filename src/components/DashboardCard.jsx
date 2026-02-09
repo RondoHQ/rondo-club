@@ -46,7 +46,7 @@ export default function DashboardCard({
         ) : linkTo ? (
           <Link
             to={linkTo}
-            className="text-sm text-accent-600 hover:text-accent-700 dark:text-accent-400 dark:hover:text-accent-300 flex items-center"
+            className="text-sm text-electric-cyan hover:text-bright-cobalt dark:text-electric-cyan dark:hover:text-electric-cyan-light flex items-center"
           >
             {linkText} <ArrowRight className="w-4 h-4 ml-1" />
           </Link>

@@ -132,7 +132,7 @@ function SearchableCountrySelector({ value, onChange, disabled }) {
                 type="button"
                 onClick={() => handleSelect(country)}
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                  value === country ? 'bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300' : 'text-gray-900 dark:text-gray-100'
+                  value === country ? 'bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light' : 'text-gray-900 dark:text-gray-100'
                 }`}
               >
                 {country}

@@ -76,7 +76,7 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
               )}
             </h4>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">
-              Bedrag: <span className="text-accent-600 dark:text-accent-400">&euro; {category.amount}</span>
+              Bedrag: <span className="text-electric-cyan dark:text-electric-cyan">&euro; {category.amount}</span>
             </p>
             {category.age_classes && category.age_classes.length > 0 ? (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -103,7 +103,7 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => onEdit(slug, category)}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/30 rounded"
               title="Bewerken"
             >
               <Edit2 className="w-4 h-4" />
@@ -174,7 +174,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-4 space-y-4 border-2 border-accent-200 dark:border-accent-800">
+    <form onSubmit={handleSubmit} className="card p-4 space-y-4 border-2 border-cyan-200 dark:border-deep-midnight">
       {/* Label field */}
       <div>
         <label htmlFor="label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -186,7 +186,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           value={formData.label}
           onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
           required
-          className="w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
+          className="w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
         />
       </div>
 
@@ -207,7 +207,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
             value={formData.amount}
             onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
             required
-            className="w-full pl-8 pr-3 py-2 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
+            className="w-full pl-8 pr-3 py-2 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
           />
         </div>
       </div>
@@ -225,7 +225,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
                   type="checkbox"
                   checked={formData.age_classes.includes(value)}
                   onChange={() => toggleAgeClass(value)}
-                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{value}</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500">({count})</span>
@@ -247,7 +247,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           id="is_youth"
           checked={formData.is_youth}
           onChange={(e) => setFormData(prev => ({ ...prev, is_youth: e.target.checked }))}
-          className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+          className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
         />
         <label htmlFor="is_youth" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Familiekorting mogelijk?
@@ -271,7 +271,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
                   type="checkbox"
                   checked={formData.matching_teams.includes(team.id)}
                   onChange={() => toggleTeam(team.id)}
-                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{team.title.rendered}</span>
               </label>
@@ -299,7 +299,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
                   type="checkbox"
                   checked={formData.matching_werkfuncties.includes(wf)}
                   onChange={() => toggleWerkfunctie(wf)}
-                  className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
+                  className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{wf}</span>
               </label>
@@ -315,7 +315,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
         <button
           type="submit"
           disabled={isSaving || !formData.label}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
         >
           {isSaving ? (
             <>
@@ -330,7 +330,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
         >
           Annuleren
         </button>
@@ -446,7 +446,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
               step="1"
               value={secondChild}
               onChange={(e) => { setSecondChild(e.target.value); setIsDirty(true); }}
-              className="w-full pr-8 px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
+              className="w-full pr-8 px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
           </div>
@@ -465,7 +465,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
               step="1"
               value={thirdChild}
               onChange={(e) => { setThirdChild(e.target.value); setIsDirty(true); }}
-              className="w-full pr-8 px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
+              className="w-full pr-8 px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
           </div>
@@ -477,7 +477,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
         <button
           onClick={handleSave}
           disabled={isSaving || !isDirty}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
         >
           {isSaving ? (
             <>
@@ -491,7 +491,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
         <button
           onClick={handleReset}
           disabled={isSaving}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
         >
           Reset naar standaard
         </button>
@@ -810,7 +810,7 @@ export default function FeeCategorySettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-accent-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-electric-cyan" />
       </div>
     );
   }
@@ -833,7 +833,7 @@ export default function FeeCategorySettings() {
           onClick={() => handleSeasonChange('current')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             selectedSeason === 'current'
-              ? 'bg-accent-600 text-white'
+              ? 'bg-electric-cyan text-white'
               : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
           }`}
         >
@@ -843,7 +843,7 @@ export default function FeeCategorySettings() {
           onClick={() => handleSeasonChange('next')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             selectedSeason === 'next'
-              ? 'bg-accent-600 text-white'
+              ? 'bg-electric-cyan text-white'
               : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
           }`}
         >
@@ -975,7 +975,7 @@ export default function FeeCategorySettings() {
         <button
           onClick={handleAddNew}
           disabled={saveMutation.isPending}
-          className="w-full card p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-accent-400 dark:hover:border-accent-600 hover:bg-accent-50 dark:hover:bg-accent-900/10 transition-colors flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400 disabled:opacity-50"
+          className="w-full card p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-electric-cyan dark:hover:border-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/10 transition-colors flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan disabled:opacity-50"
         >
           <Plus className="w-5 h-5" />
           Nieuwe categorie

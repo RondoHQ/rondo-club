@@ -206,7 +206,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
       case 'wysiwyg':
         return (
           <div
-            className="prose prose-sm dark:prose-invert max-w-none prose-a:text-accent-600 dark:prose-a:text-accent-400"
+            className="prose prose-sm dark:prose-invert max-w-none prose-a:text-electric-cyan dark:prose-a:text-electric-cyan"
             dangerouslySetInnerHTML={{ __html: processHtmlLinks(value) }}
           />
         );
@@ -215,7 +215,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
         return (
           <a
             href={`mailto:${value}`}
-            className="text-accent-600 dark:text-accent-400 hover:underline"
+            className="text-electric-cyan dark:text-electric-cyan hover:underline"
           >
             {value}
           </a>
@@ -227,7 +227,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
             href={value}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent-600 dark:text-accent-400 hover:underline inline-flex items-center gap-1"
+            className="text-electric-cyan dark:text-electric-cyan hover:underline inline-flex items-center gap-1"
           >
             {value}
             <ExternalLink className="w-3 h-3" />
@@ -323,7 +323,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
             href={fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent-600 dark:text-accent-400 hover:underline inline-flex items-center gap-1"
+            className="text-electric-cyan dark:text-electric-cyan hover:underline inline-flex items-center gap-1"
           >
             <FileText className="w-4 h-4" />
             {filename}
@@ -342,7 +342,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
             href={value.url}
             target={value.target || '_blank'}
             rel="noopener noreferrer"
-            className="text-accent-600 dark:text-accent-400 hover:underline inline-flex items-center gap-1"
+            className="text-electric-cyan dark:text-electric-cyan hover:underline inline-flex items-center gap-1"
           >
             <LinkIcon className="w-4 h-4" />
             {value.title || value.url}

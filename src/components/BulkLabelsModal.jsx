@@ -78,7 +78,7 @@ export default function BulkLabelsModal({
               }}
               className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 mode === 'add'
-                  ? 'bg-accent-100 dark:bg-accent-900/50 text-accent-700 dark:text-accent-300'
+                  ? 'bg-cyan-100 dark:bg-obsidian/50 text-bright-cobalt dark:text-electric-cyan-light'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
@@ -120,7 +120,7 @@ export default function BulkLabelsModal({
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
                       isChecked
                         ? mode === 'add'
-                          ? 'border-accent-500 bg-accent-50 dark:bg-accent-800'
+                          ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight'
                           : 'border-red-500 bg-red-50 dark:bg-red-900/30'
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
@@ -129,7 +129,7 @@ export default function BulkLabelsModal({
                       className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
                         isChecked
                           ? mode === 'add'
-                            ? 'bg-accent-600 border-accent-600'
+                            ? 'bg-electric-cyan border-electric-cyan'
                             : 'bg-red-600 border-red-600'
                           : 'border-gray-300 dark:border-gray-500'
                       }`}

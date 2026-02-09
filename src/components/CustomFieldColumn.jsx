@@ -79,7 +79,7 @@ export default function CustomFieldColumn({ field, value }) {
       return (
         <a
           href={`mailto:${value}`}
-          className="text-accent-600 dark:text-accent-400 hover:underline truncate block max-w-32"
+          className="text-electric-cyan dark:text-electric-cyan hover:underline truncate block max-w-32"
           title={value}
         >
           {value}
@@ -93,7 +93,7 @@ export default function CustomFieldColumn({ field, value }) {
           href={value.startsWith('http') ? value : `https://${value}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent-600 dark:text-accent-400 hover:underline truncate block max-w-32"
+          className="text-electric-cyan dark:text-electric-cyan hover:underline truncate block max-w-32"
           title={value}
         >
           {displayUrl}
@@ -183,7 +183,7 @@ export default function CustomFieldColumn({ field, value }) {
             href={value.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-accent-600 dark:text-accent-400 hover:underline truncate block max-w-32"
+            className="text-electric-cyan dark:text-electric-cyan hover:underline truncate block max-w-32"
             title={value.title || value.url}
           >
             {value.title || 'Link'}

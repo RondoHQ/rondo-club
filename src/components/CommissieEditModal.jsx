@@ -336,7 +336,7 @@ export default function CommissieEditModal({
                 <button
                   type="button"
                   onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                   disabled={isLoadingCommissies || isLoading}
                 >
                   {selectedParent ? (
@@ -371,7 +371,7 @@ export default function CommissieEditModal({
                           value={parentSearchQuery}
                           onChange={(e) => setParentSearchQuery(e.target.value)}
                           placeholder="Commissies zoeken..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
                           autoFocus
                         />
                       </div>
@@ -387,7 +387,7 @@ export default function CommissieEditModal({
                           setParentSearchQuery('');
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          !selectedParentId ? 'bg-accent-50 dark:bg-accent-800' : ''
+                          !selectedParentId ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                         }`}
                       >
                         <span className="text-sm text-gray-500 dark:text-gray-400 italic">Geen hoofdcommissie</span>
@@ -409,7 +409,7 @@ export default function CommissieEditModal({
                               setParentSearchQuery('');
                             }}
                             className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              selectedParentId === String(c.id) ? 'bg-accent-50 dark:bg-accent-800' : ''
+                              selectedParentId === String(c.id) ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
                             }`}
                           >
                             {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
@@ -490,7 +490,7 @@ export default function CommissieEditModal({
                 <button
                   type="button"
                   onClick={() => setIsInvestorsDropdownOpen(!isInvestorsDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
                   disabled={isLoadingCommissies || isLoadingPeople || isLoading}
                 >
                   <span className="text-gray-400 dark:text-gray-500">Sponsor toevoegen...</span>
@@ -508,7 +508,7 @@ export default function CommissieEditModal({
                           value={investorsSearchQuery}
                           onChange={(e) => setInvestorsSearchQuery(e.target.value)}
                           placeholder="Leden en commissies zoeken..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-accent-500"
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
                           autoFocus
                         />
                       </div>

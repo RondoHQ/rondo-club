@@ -15,7 +15,7 @@ export default function PullToRefreshWrapper({
   // Stadion-style spinner matching existing loading patterns
   const refreshingContent = (
     <div className="flex justify-center py-4">
-      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-600 dark:border-accent-400" />
+      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-electric-cyan dark:border-electric-cyan" />
     </div>
   );
 

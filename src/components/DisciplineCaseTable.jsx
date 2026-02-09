@@ -161,7 +161,7 @@ export default function DisciplineCaseTable({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-32">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -252,7 +252,7 @@ export default function DisciplineCaseTable({
                         <Link
                           to={`/people/${dc.acf?.person}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-2 hover:text-accent-600"
+                          className="flex items-center gap-2 hover:text-electric-cyan"
                         >
                           <PersonAvatar
                             thumbnail={person.thumbnail}

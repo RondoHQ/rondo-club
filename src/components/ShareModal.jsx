@@ -87,7 +87,7 @@ export default function ShareModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Zoek gebruikers op naam of e-mail..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-accent-500 focus:border-accent-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan"
               />
             </div>
 
@@ -97,7 +97,7 @@ export default function ShareModal({
               <select
                 value={selectedPermission}
                 onChange={(e) => setSelectedPermission(e.target.value)}
-                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-accent-500 focus:border-accent-500"
+                className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:ring-electric-cyan focus:border-electric-cyan"
               >
                 <option value="view">Kan bekijken</option>
                 <option value="edit">Kan bewerken</option>
@@ -131,7 +131,7 @@ export default function ShareModal({
                         <button
                           onClick={() => handleAddShare(user)}
                           disabled={addShareMutation.isPending}
-                          className="p-2 text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/30 rounded-full"
+                          className="p-2 text-electric-cyan dark:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/30 rounded-full"
                         >
                           <UserPlus className="w-4 h-4" />
                         </button>

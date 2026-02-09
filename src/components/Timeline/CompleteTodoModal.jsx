@@ -41,9 +41,9 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
 
             <button
               onClick={onComplete}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-accent-300 dark:hover:border-accent-600 hover:bg-accent-50 dark:hover:bg-accent-900/30 transition-colors text-left"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-electric-cyan-light dark:hover:border-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/30 transition-colors text-left"
             >
-              <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400 flex-shrink-0" />
+              <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan flex-shrink-0" />
               <div className="flex-1">
                 <p className="font-medium text-gray-900 dark:text-gray-50">Afronden</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Markeer de taak als volledig afgerond</p>

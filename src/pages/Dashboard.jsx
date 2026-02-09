@@ -58,8 +58,8 @@ function StatCard({ title, value, icon: Icon, href }) {
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
           <p className="mt-1 text-2xl font-semibold dark:text-gray-50">{value}</p>
         </div>
-        <div className="p-2 bg-accent-50 dark:bg-gray-700 rounded-lg">
-          <Icon className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+        <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
+          <Icon className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
         </div>
       </div>
     </Link>
@@ -158,7 +158,7 @@ function TodoCard({ todo, onToggle, onView }) {
         title={todo.status === 'completed' ? 'Heropenen' : 'Voltooien'}
       >
         {todo.status === 'completed' ? (
-          <CheckSquare className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+          <CheckSquare className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
         ) : (
           <Square className={`w-5 h-5 ${isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'}`} />
         )}
@@ -252,15 +252,15 @@ function MeetingCard({ meeting, onClick, isNext }) {
 
   const cardContent = (
     <>
-      <div className={`text-sm font-medium w-16 flex-shrink-0 ${isNow ? 'font-semibold text-accent-600 dark:text-white/90' : 'text-accent-600 dark:text-accent-400'}`}>
+      <div className={`text-sm font-medium w-16 flex-shrink-0 ${isNow ? 'font-semibold text-electric-cyan dark:text-white/90' : 'text-electric-cyan dark:text-electric-cyan'}`}>
         {meeting.all_day ? 'Hele dag' : <>{formattedStartTime} - <br />{formattedEndTime}</>}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${isNow ? 'text-accent-900 dark:text-white' : 'text-gray-900 dark:text-gray-50'}`}>
+        <p className={`text-sm font-medium truncate ${isNow ? 'text-obsidian dark:text-white' : 'text-gray-900 dark:text-gray-50'}`}>
           {meeting.title}
         </p>
         {meeting.location && (
-          <p className={`text-xs truncate ${isNow ? 'text-accent-700 dark:text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+          <p className={`text-xs truncate ${isNow ? 'text-bright-cobalt dark:text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
             {meeting.location}
           </p>
         )}
@@ -284,7 +284,7 @@ function MeetingCard({ meeting, onClick, isNext }) {
   const buttonClasses = [
     'w-full flex items-center p-3 rounded-lg transition-colors text-left',
     isPast ? 'opacity-50' : '',
-    isNow ? 'bg-accent-50 dark:bg-accent-800 ring-1 ring-accent-200 dark:ring-accent-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700',
+    isNow ? 'bg-cyan-50 dark:bg-deep-midnight ring-1 ring-cyan-200 dark:ring-bright-cobalt' : 'hover:bg-gray-50 dark:hover:bg-gray-700',
   ].filter(Boolean).join(' ');
 
   return (
@@ -307,8 +307,8 @@ function EmptyState() {
   return (
     <div className="card p-12 text-center">
       <div className="flex justify-center mb-4">
-        <div className="p-4 bg-accent-50 dark:bg-gray-700 rounded-full">
-          <Sparkles className="w-12 h-12 text-accent-600 dark:text-accent-400" />
+        <div className="p-4 bg-cyan-50 dark:bg-gray-700 rounded-full">
+          <Sparkles className="w-12 h-12 text-electric-cyan dark:text-electric-cyan" />
         </div>
       </div>
       <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Welkom bij {APP_NAME}!</h2>
@@ -318,7 +318,7 @@ function EmptyState() {
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
           to="/people/new"
-          className="inline-flex items-center px-6 py-3 bg-accent-600 text-white rounded-lg hover:bg-accent-700 dark:hover:bg-accent-500 transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-electric-cyan text-white rounded-lg hover:bg-bright-cobalt dark:hover:bg-electric-cyan transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Voeg je eerste lid toe
@@ -421,8 +421,8 @@ function VOGStatCard() {
     <Link to="/vog" className="card p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">VOG Status</p>
-        <div className="p-2 bg-accent-50 dark:bg-gray-700 rounded-lg">
-          <FileCheck className="w-5 h-5 text-accent-600 dark:text-accent-400" />
+        <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
+          <FileCheck className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
         </div>
       </div>
       <div className="flex items-center justify-between gap-4">
@@ -605,7 +605,7 @@ export default function Dashboard() {
       {!isToday(selectedDate) && (
         <button
           onClick={handleToday}
-          className="px-2 py-1 text-xs font-medium text-accent-600 dark:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-800 dark:hover:text-accent-100 rounded transition-colors"
+          className="px-2 py-1 text-xs font-medium text-electric-cyan dark:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-deep-midnight dark:hover:text-cyan-100 rounded transition-colors"
         >
           Vandaag
         </button>
@@ -733,7 +733,7 @@ export default function Dashboard() {
         linkTo="/people"
         emptyMessage={
           <>
-            Nog geen leden. <Link to="/people/new" className="text-accent-600 dark:text-accent-400">Voeg iemand toe</Link>
+            Nog geen leden. <Link to="/people/new" className="text-electric-cyan dark:text-electric-cyan">Voeg iemand toe</Link>
           </>
         }
       >

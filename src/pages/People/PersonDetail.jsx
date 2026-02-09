@@ -862,7 +862,7 @@ export default function PersonDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -1010,7 +1010,7 @@ export default function PersonDetail() {
                         <span className="text-gray-400 dark:text-gray-500"> bij </span>
                         <Link
                           to={`/${group.teamType === 'commissie' ? 'commissies' : 'teams'}/${group.teamId}`}
-                          className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
+                          className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
                         >
                           {group.teamName}
                         </Link>
@@ -1087,7 +1087,7 @@ export default function PersonDetail() {
                     <button
                       onClick={handleAddLabel}
                       disabled={!selectedLabelToAdd}
-                      className="text-xs px-2 py-1 bg-accent-600 text-white rounded hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="text-xs px-2 py-1 bg-electric-cyan text-white rounded hover:bg-bright-cobalt disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Toevoegen
                     </button>
@@ -1258,7 +1258,7 @@ export default function PersonDetail() {
                                 href={linkHref}
                                 target={linkTarget || undefined}
                                 rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                                className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline"
+                                className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
                               >
                                 {contact.contact_value}
                               </a>
@@ -1273,7 +1273,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen contactgegevens. <button onClick={() => setShowContactModal(true)} className="text-accent-600 hover:underline">Toevoegen</button>
+                Nog geen contactgegevens. <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button>
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
@@ -1283,7 +1283,7 @@ export default function PersonDetail() {
                   href={`https://contacts.google.com/${acf.contact_info.find(c => c.contact_type === 'email').contact_value}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-accent-600 dark:hover:text-accent-400"
+                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>View in Google Contacts</span>
@@ -1319,7 +1319,7 @@ export default function PersonDetail() {
                               href={googleMapsUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:underline text-sm"
+                              className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline text-sm"
                             >
                               {addressLines.map((line, i) => (
                                 <span key={i} className="block">{line}</span>
@@ -1413,7 +1413,7 @@ export default function PersonDetail() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  Nog geen relaties. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-accent-600 hover:underline">Toevoegen</button>
+                  Nog geen relaties. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button>
                 </p>
               )}
             </div>
@@ -1502,7 +1502,7 @@ export default function PersonDetail() {
                         {job.team && teamData && (
                           <Link
                             to={`/${teamData.type === 'commissie' ? 'commissies' : 'teams'}/${job.team}`}
-                            className="text-sm text-accent-600 hover:underline"
+                            className="text-sm text-electric-cyan hover:underline"
                           >
                             {teamData.name}
                           </Link>
@@ -1558,7 +1558,7 @@ export default function PersonDetail() {
                         </div>
                       )}
                       <div className="ml-3">
-                        <p className="text-sm font-medium group-hover:text-accent-600">{investment.name}</p>
+                        <p className="text-sm font-medium group-hover:text-electric-cyan">{investment.name}</p>
                         {investment.industry && (
                           <p className="text-xs text-gray-500 dark:text-gray-400">{investment.industry}</p>
                         )}
@@ -1606,7 +1606,7 @@ export default function PersonDetail() {
                 <div className="flex items-center gap-2">
                   <h2 className="font-semibold">Taken</h2>
                   {openTodosCount > 0 && (
-                    <span className="bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                    <span className="bg-cyan-100 text-bright-cobalt text-xs font-medium px-2 py-0.5 rounded-full">
                       {openTodosCount}
                     </span>
                   )}
@@ -1651,12 +1651,12 @@ export default function PersonDetail() {
       {/* Mobile Todos FAB - visible on screens below lg */}
       <button
         onClick={() => setShowMobileTodos(true)}
-        className="fixed bottom-6 right-6 z-40 lg:hidden bg-accent-600 hover:bg-accent-700 text-white rounded-full p-4 shadow-lg transition-colors"
+        className="fixed bottom-6 right-6 z-40 lg:hidden bg-electric-cyan hover:bg-bright-cobalt text-white rounded-full p-4 shadow-lg transition-colors"
         title="Taken bekijken"
       >
         <CheckSquare2 className="w-6 h-6" />
         {openTodosCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
+          <span className="absolute -top-1 -right-1 bg-cyan-100 text-bright-cobalt text-xs font-medium px-2 py-0.5 rounded-full min-w-[20px] text-center">
             {openTodosCount}
           </span>
         )}
@@ -1681,7 +1681,7 @@ export default function PersonDetail() {
               <div className="flex items-center gap-2">
                 <h2 className="font-semibold text-lg">Taken</h2>
                 {openTodosCount > 0 && (
-                  <span className="bg-accent-100 text-accent-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                  <span className="bg-cyan-100 text-bright-cobalt text-xs font-medium px-2 py-0.5 rounded-full">
                     {openTodosCount}
                   </span>
                 )}

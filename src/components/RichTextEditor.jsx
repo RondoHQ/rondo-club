@@ -20,7 +20,7 @@ const MenuButton = ({ onClick, isActive, disabled, children, title }) => (
     disabled={disabled}
     title={title}
     className={`p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
-      isActive ? 'bg-gray-200 dark:bg-gray-600 text-accent-600 dark:text-accent-400' : 'text-gray-600 dark:text-gray-400'
+      isActive ? 'bg-gray-200 dark:bg-gray-600 text-electric-cyan dark:text-electric-cyan' : 'text-gray-600 dark:text-gray-400'
     } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
   >
     {children}
@@ -144,7 +144,7 @@ export default function RichTextEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-accent-600 hover:text-accent-700 underline',
+          class: 'text-electric-cyan hover:text-bright-cobalt underline',
         },
       }),
     ],
@@ -171,7 +171,7 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className={`border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-accent-500 focus-within:border-transparent ${
+    <div className={`border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-electric-cyan focus-within:border-transparent ${
       disabled ? 'bg-gray-100 dark:bg-gray-800 opacity-60' : 'bg-white dark:bg-gray-700'
     }`}>
       <MenuBar editor={editor} />

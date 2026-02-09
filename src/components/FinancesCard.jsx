@@ -127,7 +127,7 @@ export default function FinancesCard({ personId }) {
                     {index > 0 && (index === feeData.family_members.length - 1 ? ' en ' : ', ')}
                     <Link
                       to={`/people/${member.id}`}
-                      className="text-accent-600 dark:text-accent-400 hover:underline"
+                      className="text-electric-cyan dark:text-electric-cyan hover:underline"
                     >
                       {member.name}
                     </Link>

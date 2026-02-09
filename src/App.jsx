@@ -12,14 +12,14 @@ function UpdateBanner() {
   if (!hasUpdate) return null;
   
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] bg-accent-600 text-white py-2 px-4 shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[100] bg-electric-cyan text-white py-2 px-4 shadow-lg">
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-4 text-sm">
         <span>
           A new version ({latestVersion}) is available.
         </span>
         <button
           onClick={reload}
-          className="inline-flex items-center gap-2 px-3 py-1 bg-white text-accent-600 rounded-md font-medium hover:bg-accent-50 transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1 bg-white text-electric-cyan rounded-md font-medium hover:bg-cyan-50 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Reload

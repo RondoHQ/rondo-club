@@ -57,7 +57,7 @@ export default function FeedbackDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 dark:border-accent-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
       </div>
     );
   }
@@ -68,7 +68,7 @@ export default function FeedbackDetail() {
         <p className="text-red-600 dark:text-red-400">
           Failed to load feedback: {error.message}
         </p>
-        <Link to="/feedback" className="text-accent-600 dark:text-accent-400 hover:underline mt-4 inline-block">
+        <Link to="/feedback" className="text-electric-cyan dark:text-electric-cyan hover:underline mt-4 inline-block">
           Back to feedback list
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default function FeedbackDetail() {
     return (
       <div className="card p-8 text-center">
         <p className="text-gray-500 dark:text-gray-400">Feedback not found.</p>
-        <Link to="/feedback" className="text-accent-600 dark:text-accent-400 hover:underline mt-4 inline-block">
+        <Link to="/feedback" className="text-electric-cyan dark:text-electric-cyan hover:underline mt-4 inline-block">
           Back to feedback list
         </Link>
       </div>
@@ -251,7 +251,7 @@ export default function FeedbackDetail() {
                 rel="noopener noreferrer"
                 className="group block"
               >
-                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group-hover:border-accent-500 transition-colors">
+                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group-hover:border-electric-cyan transition-colors">
                   <img
                     src={attachment.thumbnail || attachment.url}
                     alt={attachment.title || `Attachment ${index + 1}`}

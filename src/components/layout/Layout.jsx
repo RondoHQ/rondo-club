@@ -93,7 +93,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-accent-600 dark:text-accent-400">
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-electric-cyan dark:text-electric-cyan">
           <StadiumIcon className="w-5 h-5" />
           {getSiteName()}
         </Link>
@@ -127,7 +127,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
                     item.indent ? 'pl-8 pr-3' : 'px-3'
                   } ${
                     isActive
-                      ? 'bg-accent-50 text-accent-700 dark:bg-gray-700 dark:text-accent-400 dark:border-l-2 dark:border-accent-400'
+                      ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan dark:border-l-2 dark:border-electric-cyan'
                       : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
                   }`
                 }
@@ -207,8 +207,8 @@ function UserMenu() {
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 bg-accent-100 rounded-full flex items-center justify-center dark:bg-accent-900">
-            <span className="text-sm font-medium text-accent-700 dark:text-accent-300">{initials}</span>
+          <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center dark:bg-obsidian">
+            <span className="text-sm font-medium text-bright-cobalt dark:text-electric-cyan-light">{initials}</span>
           </div>
         )}
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform dark:text-gray-400 ${isOpen ? 'rotate-180' : ''}`} />
@@ -355,7 +355,7 @@ function SearchModal({ isOpen, onClose }) {
               </div>
             ) : isSearchLoading ? (
               <div className="px-4 py-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan mx-auto"></div>
                 <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Zoeken...</p>
               </div>
             ) : hasResults ? (
@@ -374,7 +374,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={person.id}
                           onClick={() => handleResultClick('person', person.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-gray-700 dark:text-accent-400 dark:ring-1 dark:ring-accent-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-cyan-50 text-obsidian dark:bg-gray-700 dark:text-electric-cyan dark:ring-1 dark:ring-electric-cyan' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {person.thumbnail ? (
@@ -414,7 +414,7 @@ function SearchModal({ isOpen, onClose }) {
                           key={team.id}
                           onClick={() => handleResultClick('team', team.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                            isSelected ? 'bg-accent-50 text-accent-900 dark:bg-gray-700 dark:text-accent-400 dark:ring-1 dark:ring-accent-500' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                            isSelected ? 'bg-cyan-50 text-obsidian dark:bg-gray-700 dark:text-electric-cyan dark:ring-1 dark:ring-electric-cyan' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
                           {team.thumbnail ? (
