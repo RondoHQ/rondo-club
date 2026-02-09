@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 ## Current Position
 
 Phase: 157 of 159 (Fee Category REST API) — third phase of v21.0
-Plan: 01 of 02 complete
-Status: In progress
-Last activity: 2026-02-09 — Completed 157-01-PLAN.md (settings endpoints with full category support)
+Plan: 02 of 02 complete
+Status: Phase complete
+Last activity: 2026-02-09 — Completed Phase 157 (Fee Category REST API with full CRUD and category metadata)
 
-Progress: [████░░░░░░] 40% (4/10 v21.0 plans complete)
+Progress: [█████░░░░░] 50% (5/10 v21.0 plans complete)
 
 ## Accumulated Context
 
@@ -40,6 +40,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 157-01:** POST /membership-fees/settings uses full replacement pattern with structured validation
 - **Phase 157-01:** Validation distinguishes errors (block save) from warnings (informational)
 - **Phase 157-01:** Empty categories array is valid for reset functionality
+- **Phase 157-02:** GET /fees includes categories metadata (label, sort_order, is_youth) for dynamic frontend rendering
+- **Phase 157-02:** Category metadata in fee list returns only display-relevant fields, not full config
 
 ### Pending Todos
 
@@ -58,8 +60,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-09 09:41
-Stopped at: Completed Phase 157 Plan 01 (settings endpoints with full category support)
+Last session: 2026-02-09 10:20
+Stopped at: Completed Phase 157 Plan 02 (category metadata in fee list and REST API documentation)
 Resume file: None
 
 ---
