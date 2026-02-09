@@ -205,17 +205,31 @@ class Teams extends Base {
 		// Query people who have work_history data
 		// We filter at database level by checking for work_history count > 0
 		// This reduces the dataset before PHP filtering
+		// Also exclude former members from team rosters
 		$people = get_posts(
 			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
 				'meta_query'     => [
+					'relation' => 'AND',
 					[
 						'key'     => 'work_history',
 						'value'   => 0,
 						'compare' => '>',
 						'type'    => 'NUMERIC',
+					],
+					[
+						'relation' => 'OR',
+						[
+							'key'     => 'former_member',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'     => 'former_member',
+							'value'   => '1',
+							'compare' => '!=',
+						],
 					],
 				],
 				'fields'         => 'ids', // Only get IDs first for efficiency
