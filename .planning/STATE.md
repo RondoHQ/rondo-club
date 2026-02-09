@@ -5,20 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** v22.0 Design Refresh
+**Current focus:** v22.0 Design Refresh (Phase 162 - Foundation)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-09 — Milestone v22.0 started
+Phase: 162 of 165 (Foundation - Tailwind v4 & Tokens)
+Plan: Ready to plan
+Status: Roadmap created, ready for phase planning
+Last activity: 2026-02-09 — v22.0 roadmap created with 4 phases
+
+Progress: [████░░░░░░░░░░░░░░░░] 0% (161/165 total phases complete)
+
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 161 plans across v1.0-v21.0
+- v21.0 completed: 12 plans, 2 days (2026-02-08 → 2026-02-09)
+- v22.0 estimated: 4 plans
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+
+Recent decisions affecting v22.0:
+- User explicitly chose to KEEP dark mode and adapt it to brand colors (not remove it)
+- Glass morphism and decorative blobs deferred to future
+- Clean break to Tailwind v4 (no backward compatibility with v3)
 
 ### Pending Todos
 
@@ -42,7 +56,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Milestone v22.0 Design Refresh started.
+Stopped at: v22.0 roadmap created with 4 phases covering all 19 requirements
 Resume file: None
 
 ---

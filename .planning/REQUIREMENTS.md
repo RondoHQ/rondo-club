@@ -61,31 +61,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOKENS-01 | — | Pending |
-| TOKENS-02 | — | Pending |
-| TOKENS-03 | — | Pending |
-| TOKENS-04 | — | Pending |
-| COLOR-01 | — | Pending |
-| COLOR-02 | — | Pending |
-| COLOR-03 | — | Pending |
-| COLOR-04 | — | Pending |
-| COLOR-05 | — | Pending |
-| COMP-01 | — | Pending |
-| COMP-02 | — | Pending |
-| COMP-03 | — | Pending |
-| COMP-04 | — | Pending |
-| COMP-05 | — | Pending |
-| COMP-06 | — | Pending |
-| COMP-07 | — | Pending |
-| PWA-01 | — | Pending |
-| PWA-02 | — | Pending |
-| PWA-03 | — | Pending |
+| TOKENS-01 | Phase 162 | Pending |
+| TOKENS-02 | Phase 162 | Pending |
+| TOKENS-03 | Phase 162 | Pending |
+| TOKENS-04 | Phase 162 | Pending |
+| COLOR-01 | Phase 163 | Pending |
+| COLOR-02 | Phase 163 | Pending |
+| COLOR-03 | Phase 163 | Pending |
+| COLOR-04 | Phase 163 | Pending |
+| COLOR-05 | Phase 164 | Pending |
+| COMP-01 | Phase 164 | Pending |
+| COMP-02 | Phase 164 | Pending |
+| COMP-03 | Phase 164 | Pending |
+| COMP-04 | Phase 164 | Pending |
+| COMP-05 | Phase 164 | Pending |
+| COMP-06 | Phase 164 | Pending |
+| COMP-07 | Phase 164 | Pending |
+| PWA-01 | Phase 165 | Pending |
+| PWA-02 | Phase 165 | Pending |
+| PWA-03 | Phase 165 | Pending |
 
 **Coverage:**
 - v22.0 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19 ⚠️
+- Mapped to phases: 19
+- Unmapped: 0 ✓
+
+**Phase mapping:**
+- Phase 162 (Foundation): 4 requirements (TOKENS-01 through TOKENS-04)
+- Phase 163 (Color Migration): 4 requirements (COLOR-01 through COLOR-04)
+- Phase 164 (Component Styling): 8 requirements (COLOR-05, COMP-01 through COMP-07)
+- Phase 165 (PWA & Backend): 3 requirements (PWA-01 through PWA-03)
 
 ---
 *Requirements defined: 2026-02-09*
-*Last updated: 2026-02-09 after initial definition*
+*Last updated: 2026-02-09 after roadmap creation — 100% coverage achieved*
