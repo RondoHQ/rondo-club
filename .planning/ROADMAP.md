@@ -49,10 +49,10 @@
 3. Montserrat font loads for heading elements with weights 600 and 700
 4. Cyan-to-cobalt gradient utility works in components (bg-brand-gradient)
 
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 162-01: Tailwind v4 migration and brand tokens
+- [ ] 162-01-PLAN.md — Tailwind v4 migration, brand tokens, Montserrat font, gradient utility
 
 ---
 
