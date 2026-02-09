@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Phase 169 - Contributie Logic (complete)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
 Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-09 — Completed 169-01-PLAN.md (Contributie Logic)
+Status: v23.0 milestone complete
+Last activity: 2026-02-09 — v23.0 Former Members shipped
 
 Progress: [████████████████████████████████] 100% (169/169 phases)
 
@@ -27,7 +27,7 @@ Progress: [███████████████████████
   - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
 
 **Recent Trend:**
-- Last 3 milestones averaged 1-2 days each
+- Last 4 milestones averaged 1-2 days each
 - Velocity: Stable
 
 ## Accumulated Context
@@ -35,23 +35,13 @@ Progress: [███████████████████████
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Recent decisions affecting future work:
 
 - Skip-and-warn pattern for missing sync data (established 154-01)
 - Server-side pagination and filtering pattern (v9.0, phases 111-115)
 - Generic filter infrastructure via get_dynamic_filter_config() (v20.0, phase 151)
 - Config-driven fee calculation with season-specific categories (v21.0, phases 155-161)
-- [Phase 166]: Mark former members with PUT instead of DELETE to preserve history
-- [Phase 166]: Keep former members in tracking DB to detect rejoining
-- [Phase 167]: Apply former member filtering at database query level for performance
-- [Phase 167]: Use NULL-safe exclusion pattern for former_member field
-- [Phase 168]: Place "Toon oud-leden" toggle at top of filter dropdown for prominence
-- [Phase 168]: Use reduced opacity (60%) instead of greying out former member rows
-- [Phase 168]: Use loose comparison (== true) for ACF true_false fields returning string '1'
-- [Phase 169]: Former members use normal pro-rata based on lid-sinds (leaving doesn't create second pro-rata)
-- [Phase 169]: Season eligibility determined by lid-sinds before season end (July 1 of end year)
-- [Phase 169]: Former members excluded from forecast entirely (won't be members next season)
-- [Phase 169]: Family discount calculation excludes ineligible former members to prevent incorrect reductions
+- NULL-safe exclusion pattern for former_member field (v23.0, phase 167)
 
 ### Pending Todos
 
@@ -75,31 +65,11 @@ Recent decisions affecting current work:
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
 
-**Phase 166-01 Metrics:**
-- Duration: 229 seconds (3m 49s)
-- Tasks: 3
-- Files modified: 4 across 3 repositories (rondo-club, rondo-sync, developer)
-
-**Phase 167-01 Metrics:**
-- Duration: 112 seconds (1m 52s)
-- Tasks: 2
-- Files modified: 3
-
-**Phase 168-01 Metrics:**
-- Duration: 380 seconds (6m 20s)
-- Tasks: 2
-- Files modified: 8 across 2 repositories (rondo-club, developer)
-
-**Phase 169-01 Metrics:**
-- Duration: 84 seconds (1m 24s)
-- Tasks: 2
-- Files modified: 8 across 2 repositories (rondo-club, developer)
-
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 169-01-PLAN.md (Contributie Logic)
-Resume file: None - Phase 169 complete, v23.0 milestone finished
+Stopped at: v23.0 Former Members milestone shipped
+Resume file: None — no active milestone, fresh for next
 
 ---
 *State updated: 2026-02-09*
