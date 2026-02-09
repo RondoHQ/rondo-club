@@ -58,7 +58,6 @@ export default function PersonEditModal({
       phone: '',
       phone_type: 'mobile',
       birthday: '',
-      how_we_met: '',
     },
   });
 
@@ -88,7 +87,6 @@ export default function PersonEditModal({
           phone: phoneContact?.contact_value || '',
           phone_type: phoneContact?.contact_type || 'mobile',
           birthday: '', // Birthday is stored separately
-          how_we_met: person.acf?.how_we_met || '',
         });
       } else if (prefillData) {
         // Pre-fill mode - use provided data from external context (e.g., meeting attendee)
@@ -103,7 +101,6 @@ export default function PersonEditModal({
           phone: '',
           phone_type: 'mobile',
           birthday: '',
-          how_we_met: '',
         });
       } else {
         // Creating - reset to defaults
@@ -118,7 +115,6 @@ export default function PersonEditModal({
           phone: '',
           phone_type: 'mobile',
           birthday: '',
-          how_we_met: '',
         });
       }
     }
@@ -168,7 +164,6 @@ export default function PersonEditModal({
           phone: data.phone || '',
           phone_type: data.phone_type || 'mobile',
           birthday: data.birthday || '',
-          how_we_met: data.note || '',
         });
         
         // Show notice if multiple contacts in file
@@ -416,18 +411,6 @@ export default function PersonEditModal({
                 />
               </div>
             )}
-
-            {/* How we met */}
-            <div>
-              <label className="label">Hoe we elkaar kennen</label>
-              <textarea
-                {...register('how_we_met')}
-                className="input"
-                rows={3}
-                placeholder="We ontmoetten elkaar bij..."
-                disabled={isLoading}
-              />
-            </div>
           </div>
           
           <div className="flex justify-end gap-2 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
