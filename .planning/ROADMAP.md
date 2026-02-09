@@ -120,7 +120,10 @@ Plans:
   3. `calculate_fee()` reads matching rules from category config instead of hardcoded slug checks for 'recreant' and 'donateur'
   4. Admin can configure team and werkfunctie matching in the fee category settings UI
   5. Existing fee calculations produce the same results after migration (matching rules pre-populated from current hardcoded values)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 161-01-PLAN.md — Backend: matching rules data model, migration, config-driven calculate_fee(), REST validation and werkfuncties endpoint
+- [ ] 161-02-PLAN.md — Frontend: matching rules UI in FeeCategorySettings, version bump, deploy
 
 ## Progress
 
@@ -135,7 +138,7 @@ Plans:
 | 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 | 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 161. Configurable Matching Rules | v21.0 | 0/TBD | Not started | - |
+| 161. Configurable Matching Rules | v21.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
