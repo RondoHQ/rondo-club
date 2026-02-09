@@ -24,7 +24,7 @@
 - [x] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API — completed 2026-02-09
 - [x] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories — completed 2026-02-09
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
-- [ ] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded
+- [x] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded — completed 2026-02-09
 - [ ] **Phase 161: Configurable Matching Rules** - Replace hardcoded team name and werkfunctie matching with configurable per-category rules
 
 ## Phase Details
@@ -107,8 +107,8 @@ Plans:
   4. Changing discount percentages correctly affects fee calculations for the relevant season
 **Plans**: 2 plans
 Plans:
-- [ ] 160-01-PLAN.md — Backend: add discount config helpers, update get_family_discount_rate(), extend REST API with validation
-- [ ] 160-02-PLAN.md — Frontend: add FamilyDiscountSection to settings UI, version bump, docs
+- [x] 160-01-PLAN.md — Backend: add discount config helpers, update get_family_discount_rate(), extend REST API with validation
+- [x] 160-02-PLAN.md — Frontend: add FamilyDiscountSection to settings UI, version bump, docs
 
 ### Phase 161: Configurable Matching Rules
 **Goal**: Fee category assignment uses configurable matching rules (teams, werkfuncties) instead of hardcoded logic
@@ -134,9 +134,9 @@ Plans:
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
-| 160. Configurable Family Discount | v21.0 | 0/2 | Not started | - |
+| 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 161. Configurable Matching Rules | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 158 completed, Phase 161 added*
+*Last updated: 2026-02-09 — Phase 160 completed*
