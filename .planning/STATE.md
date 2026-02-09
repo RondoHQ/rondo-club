@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 
 ## Current Position
 
-Phase: 160 of 161 (Configurable Family Discount) — fifth phase of v21.0
-Plan: 02 of 02 complete
-Status: Complete
-Last activity: 2026-02-09 — Phase 160 complete (configurable family discount UI and backend)
+Phase: 161 of 161 (Configurable Matching Rules) — final phase of v21.0
+Plan: 01 of 02 complete
+Status: In Progress
+Last activity: 2026-02-09 — Phase 161-01 complete (config-driven matching rules backend)
 
-Progress: [█████████░] 95% (10/10 v21.0 plans complete, 1 phase remaining: 161-configurable-matching-rules)
+Progress: [█████████░] 96% (11/12 v21.0 plans complete, 1 plan remaining: 161-02-matching-rules-ui)
 
 ## Accumulated Context
 
@@ -55,6 +55,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 160-01:** Validation warns (not errors) if second child discount >= third child discount (allows flexibility)
 - **Phase 160-02:** Separate discountMutation avoids sending categories when only discount changes
 - **Phase 160-02:** FamilyDiscountSection placed prominently above category list for visibility
+- **Phase 161-01:** Config-driven matching replaces hardcoded is_recreational_team() and is_donateur() checks
+- **Phase 161-01:** Team matching uses ANY match (admin explicitly selects teams), werkfunctie matching is case-insensitive
+- **Phase 161-01:** Migration auto-populates matching_teams for 'recreant', matching_werkfuncties=['Donateur'] for 'donateur'
+- **Phase 161-01:** Priority order: youth > team matching > werkfunctie matching > age-class fallback
 
 ### Pending Todos
 
@@ -74,7 +78,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 160 complete. Next: Phase 161 (Configurable Matching Rules) - final v21.0 phase.
+Stopped at: Phase 161-01 complete (config-driven matching rules backend). Next: Phase 161-02 (matching rules UI).
 Resume file: None
 
 ---
