@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 
 Phase: v21.0 complete (phases 155-161)
 Status: Milestone shipped and archived
-Last activity: 2026-02-09 — v21.0 Per-Season Fee Categories shipped
+Last activity: 2026-02-09 — Completed quick task 42: copy season button for fee categories
 
 ## Accumulated Context
 
@@ -34,10 +34,16 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 None.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
+
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: v21.0 milestone archived. Ready for next milestone.
+Stopped at: Completed quick task 42: copy season button for fee categories.
 Resume file: None
 
 ---
