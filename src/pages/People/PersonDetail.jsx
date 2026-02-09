@@ -994,7 +994,7 @@ export default function PersonDetail() {
 
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold dark:text-gray-50">
+              <h1 className="text-2xl font-bold text-brand-gradient">
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
               </h1>

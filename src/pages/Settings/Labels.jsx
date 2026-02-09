@@ -161,7 +161,7 @@ export default function Labels() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-brand-gradient flex items-center gap-2">
             <Tag className="w-6 h-6" />
             Labels
           </h1>

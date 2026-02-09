@@ -269,7 +269,7 @@ export default function TeamDetail() {
                 Onderdeel van {getTeamName(parentTeam)}
               </Link>
             )}
-            <h1 className="text-2xl font-bold">{getTeamName(team)}</h1>
+            <h1 className="text-2xl font-bold text-brand-gradient">{getTeamName(team)}</h1>
             {/* Subtitle: Activiteit - Gender */}
             {(acf.activiteit || acf.gender) && (
               <p className="text-gray-500 dark:text-gray-400">
