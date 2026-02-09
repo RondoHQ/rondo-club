@@ -1,422 +1,337 @@
-# Technology Stack - People List Performance Features
+# Technology Stack: Design Refresh
 
-**Project:** Stadion People List Infinite Scroll
-**Researched:** 2026-01-29
+**Project:** Rondo Club Design Refresh
+**Researched:** 2026-02-09
 **Confidence:** HIGH
 
 ## Executive Summary
 
-No new dependencies required. All necessary technologies are already present in Stadion's stack. Implementation requires only pattern changes using existing TanStack Query v5.17.0, native Intersection Observer API, and WordPress core APIs (user_meta, wpdb, REST).
+The design refresh requires migrating from Tailwind CSS v3.4 to v4, which represents a fundamental architectural shift. Tailwind v4 uses a new CSS-first configuration model, a Vite plugin architecture, and eliminates PostCSS/autoprefixer dependencies. Font loading should use the self-hosted Fontsource approach for optimal performance. Glass morphism and gradients are native Tailwind v4 features requiring no additional libraries.
 
-## Core Stack (Already Present)
+## Changes Required
 
-| Technology | Version | Purpose | Notes |
-|------------|---------|---------|-------|
-| TanStack Query | ^5.17.0 | Server state management | Already includes `useInfiniteQuery` for pagination |
-| React | ^18.2.0 | UI framework | Already supports Intersection Observer via refs |
-| WordPress REST API | Core | Backend pagination | Built-in `per_page`, `page` params + headers |
-| WordPress User Meta API | Core | Per-user preferences | Native `get_user_meta`, `update_user_meta` |
-| WordPress $wpdb | Core | Custom JOIN queries | Global `$wpdb` object for performant queries |
+### 1. Tailwind CSS v4 Migration
 
-## No New Dependencies Required
+**Current:** Tailwind CSS v3.4.0 with PostCSS/autoprefixer
+**New:** Tailwind CSS v4.x with @tailwindcss/vite plugin
 
-**CRITICAL FINDING:** The project already has everything needed:
-- TanStack Query v5.17.0 includes `useInfiniteQuery` (introduced in v4, stable in v5)
-- Intersection Observer API is native to all modern browsers (no polyfill needed)
-- WordPress core provides user_meta and wpdb without plugins
+| Package | Action | Version | Why |
+|---------|--------|---------|-----|
+| `tailwindcss` | Update | `^4.1.0` | Core framework with new Rust-based engine (100x faster builds) |
+| `@tailwindcss/vite` | Add | `^4.1.0` | Required for Vite integration in v4 |
+| `@tailwindcss/typography` | Keep | `^0.5.19` | Typography plugin compatible with v4 |
+| `postcss` | Remove | - | No longer needed; v4 uses Lightning CSS internally |
+| `autoprefixer` | Remove | - | Built into v4 via Lightning CSS |
 
-## Implementation Patterns
+**Configuration changes:**
 
-### 1. TanStack Query useInfiniteQuery Pattern
+| File | v3.4 Approach | v4 Approach |
+|------|---------------|-------------|
+| `tailwind.config.js` | JavaScript configuration file | **DELETED** - CSS-first config |
+| `vite.config.js` | Not used for Tailwind | **REQUIRED** - Add `@tailwindcss/vite` plugin |
+| `src/index.css` | `@tailwind base/components/utilities` | `@import "tailwindcss"` |
 
-**Current implementation (usePeople.js lines 49-84):** Loads ALL people in a while loop, client-side filtering.
+**Breaking changes:**
+- Dark mode: `darkMode: 'class'` → CSS-based theming with `@theme` directive
+- Color system: Static colors → CSS variables (already using this pattern!)
+- Content paths: Moved to CSS `@source` directive
+- Custom plugins: Must be rewritten for v4 architecture
 
-**New pattern:**
+**Browser support:**
+- **Minimum:** Safari 16.4+, Chrome 111+, Firefox 128+
+- **Impact:** Modern CSS features like `@property`, `color-mix()`, CSS nesting
+- **Decision:** Acceptable for sports club internal tool (not public-facing)
+
+**Why v4 over v3.4:**
+- 100x faster incremental builds (44ms → 5ms)
+- Native gradient support with `bg-linear-to-*`, `bg-radial`, `bg-conic`
+- Native backdrop-blur utilities (no config needed)
+- CSS variables for colors (matches existing pattern)
+- Better tree-shaking and smaller production bundles
+
+**Migration effort:** Medium
+- Automated migration tool available (`@tailwindcss/upgrade`)
+- Must rewrite `tailwind.config.js` → CSS `@theme` blocks
+- Must update dark mode implementation (remove `class` strategy)
+- Must audit custom CSS using `@layer` directives
+
+### 2. Font Loading
+
+**Current:** Inter via system fonts (`font-sans: ['Inter', 'system-ui', 'sans-serif']`)
+**New:** Montserrat (headings) + system-ui (body) via Fontsource
+
+| Package | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `@fontsource/montserrat` | `^5.2.8` | Self-hosted Montserrat font | No Google Fonts network requests, GDPR-friendly, subset loading for performance |
+
+**Why Fontsource over alternatives:**
+
+| Approach | Pros | Cons | Verdict |
+|----------|------|------|---------|
+| **Fontsource** | Self-hosted, subset loading, Vite integration, no external requests | Adds ~100KB to bundle (minimized with subsets) | ✅ **Recommended** |
+| Google Fonts CDN | Zero bundle size, global CDN caching | Privacy concerns, network dependency, FOUT risk | ❌ Avoid |
+| Manual @font-face | Full control | Manual updates, no subset tooling | ❌ More work |
+
+**Implementation:**
 ```javascript
-export function usePeopleInfinite(filters = {}) {
-  return useInfiniteQuery({
-    queryKey: peopleKeys.list(filters),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await wpApi.getPeople({
-        per_page: 50, // Server-side pagination
-        page: pageParam,
-        _embed: true,
-        ...filters, // Pass filters to server
-      });
+// In src/main.jsx
+import '@fontsource/montserrat/600.css';  // Semi-Bold for headings
+import '@fontsource/montserrat/700.css';  // Bold for headings
 
-      return {
-        people: response.data.map(transformPerson),
-        nextPage: pageParam + 1,
-        totalPages: parseInt(response.headers['x-wp-totalpages'] || '1', 10),
-      };
-    },
-    initialPageParam: 1, // REQUIRED in v5
-    getNextPageParam: (lastPage) => {
-      // Return undefined when no more pages (stops fetching)
-      return lastPage.nextPage <= lastPage.totalPages
-        ? lastPage.nextPage
-        : undefined;
-    },
-    getPreviousPageParam: (firstPage) => {
-      return firstPage.page > 1 ? firstPage.page - 1 : undefined;
-    },
-    maxPages: 10, // NEW in v5: Limit memory usage
-  });
+// In Tailwind CSS config (CSS-first in v4)
+@theme {
+  --font-heading: Montserrat, system-ui, sans-serif;
+  --font-body: system-ui, sans-serif;
 }
 ```
 
-**Why this pattern:**
-- `initialPageParam` is REQUIRED in v5 (breaking change from v4)
-- `maxPages` prevents infinite memory growth (limits stored pages to 10)
-- `getNextPageParam` returning `undefined` signals end of data
-- Data structure: `data.pages` array, each page contains `people` array
-- Access via: `data.pages.flatMap(page => page.people)`
+**Weight selection:**
+- 600 (Semi-Bold): Primary headings (h2, h3)
+- 700 (Bold): Page titles (h1), buttons with gradient
+- Body text: system-ui (no additional font needed)
 
-**Source:** [TanStack Query v5 useInfiniteQuery Reference](https://tanstack.com/query/v5/docs/framework/react/reference/useInfiniteQuery)
+**Performance impact:**
+- ~60KB per weight (gzipped)
+- Total: ~120KB additional bundle size
+- Mitigated by: Vite code splitting, browser caching
 
-### 2. Intersection Observer for Scroll Detection
+### 3. Gradient Support
 
-**Pattern (no libraries needed):**
+**Current:** Custom CSS gradient classes (if any)
+**New:** Native Tailwind v4 gradient utilities
+
+**No additional packages required.** Tailwind v4 includes expanded gradient APIs.
+
+**Built-in utilities:**
+- `bg-linear-to-r` / `bg-linear-to-br` - Linear gradients with direction
+- `bg-linear-[45deg]` - Custom angle support
+- `bg-radial` - Radial gradients from center
+- `bg-conic` - Conic gradients (sweep effect)
+- `from-cyan-500`, `via-blue-600`, `to-indigo-800` - Color stops
+
+**Color interpolation:**
+- Default: `oklab` color space (better than RGB)
+- Smoother color transitions, no muddy mid-tones
+
+**Brand gradient (cyan → cobalt):**
+```css
+/* Tailwind v4 classes */
+bg-linear-to-r from-cyan-500 to-blue-600
+```
+
+**Why native over libraries:**
+- Zero dependencies
+- Tree-shakeable (unused gradients removed)
+- JIT compilation (only used gradients in CSS)
+- Responsive variants (`hover:`, `md:` work out of the box)
+
+### 4. Glass Morphism Support
+
+**Current:** None
+**New:** Native Tailwind v4 backdrop utilities
+
+**No additional packages required.** Tailwind v4 includes backdrop-filter utilities.
+
+**Built-in utilities:**
+- `backdrop-blur-sm` / `backdrop-blur-md` / `backdrop-blur-lg` - Gaussian blur
+- `backdrop-blur-[12px]` - Custom blur values
+- `bg-white/30` - Background with opacity (30% white)
+- `border border-white/20` - Semi-transparent borders
+
+**Glass morphism pattern:**
+```css
+/* Header example */
+backdrop-blur-md bg-white/80 border-b border-white/20 shadow-lg
+```
+
+**Browser support:**
+- Safari: Full support (16.4+)
+- Chrome: Full support (111+)
+- Firefox: Full support (128+)
+- **No fallback needed** for minimum browser requirements
+
+**Why native over libraries:**
+- Zero dependencies
+- Works with existing Tailwind utilities (hover, responsive, dark mode)
+- Better performance (CSS-native, GPU-accelerated)
+- No JavaScript runtime cost
+
+## What NOT to Add
+
+| Package | Why Avoid |
+|---------|-----------|
+| `tailwindcss-glassmorphism` | Unnecessary; v4 has native backdrop-blur |
+| `tailwind-gradient-mask-image` | Overkill; native gradients sufficient |
+| `@google-fonts/montserrat` | Deprecated; Fontsource is maintained |
+| `postcss-import` | v4 handles imports natively |
+| `tailwindcss-animate` | Not needed for this milestone; add later if animations required |
+| CSS-in-JS libraries | Conflicts with Tailwind utility-first approach |
+
+## Installation Steps
+
+### Phase 1: Remove Legacy Dependencies
+```bash
+npm uninstall postcss autoprefixer
+```
+
+### Phase 2: Install Tailwind v4
+```bash
+npm install -D tailwindcss@^4.1.0 @tailwindcss/vite@^4.1.0
+```
+
+### Phase 3: Install Fonts
+```bash
+npm install @fontsource/montserrat@^5.2.8
+```
+
+### Phase 4: Configuration Changes
+
+**vite.config.js:**
 ```javascript
-import { useEffect, useRef } from 'react';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';  // NEW
 
-function useInfiniteScroll(callback, hasMore, isFetching) {
-  const observerTarget = useRef(null);
-
-  useEffect(() => {
-    if (!hasMore || isFetching) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          callback();
-        }
-      },
-      { threshold: 0.1 } // Trigger when 10% visible
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-  }, [callback, hasMore, isFetching]);
-
-  return observerTarget;
-}
-
-// Usage in component:
-const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = usePeopleInfinite();
-const loadMoreRef = useInfiniteScroll(fetchNextPage, hasNextPage, isFetchingNextPage);
-
-// JSX:
-<div ref={loadMoreRef} className="h-10" />
-```
-
-**Why native Intersection Observer:**
-- No external dependencies (87% browser support, all modern browsers)
-- More performant than scroll event listeners
-- Automatic viewport detection
-- Built-in threshold control
-
-**Sources:**
-- [MDN Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)
-- [Infinite Scroll in React with Intersection Observer](https://dev.to/matan3sh/infinite-scroll-in-react-with-intersection-observer-3932)
-
-### 3. WordPress wpdb JOIN Query Pattern
-
-**Current problem:** Multiple meta_query joins on wp_postmeta cause exponential performance degradation.
-
-**Research finding:** ACF stores relationships as serialized arrays in post_meta. Querying across work_history (repeater field) requires JOINing wp_postmeta multiple times, which is a known WordPress performance killer.
-
-**Recommended pattern (server-side PHP):**
-```php
-// In custom REST endpoint: /rondo/v1/people
-global $wpdb;
-
-// Single JOIN to wp_postmeta for work_history
-// Conditional aggregation instead of multiple JOINs
-$query = "
-  SELECT DISTINCT p.ID, p.post_title, p.post_modified,
-    MAX(CASE WHEN pm.meta_key = 'first_name' THEN pm.meta_value END) as first_name,
-    MAX(CASE WHEN pm.meta_key = 'last_name' THEN pm.meta_value END) as last_name,
-    MAX(CASE WHEN pm.meta_key = 'work_history' THEN pm.meta_value END) as work_history_serialized
-  FROM {$wpdb->posts} p
-  LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-  WHERE p.post_type = 'person'
-    AND p.post_status = 'publish'
-  GROUP BY p.ID
-  ORDER BY %s %s
-  LIMIT %d OFFSET %d
-";
-
-$prepared = $wpdb->prepare($query, $orderby, $order, $per_page, $offset);
-$results = $wpdb->get_results($prepared);
-
-// Post-process: Unserialize work_history, extract current team
-foreach ($results as &$row) {
-  $work_history = maybe_unserialize($row->work_history_serialized);
-  $row->current_team_id = extract_current_team($work_history);
-}
-```
-
-**Why this pattern:**
-- Single LEFT JOIN instead of multiple meta_query JOINs
-- Conditional aggregation (CASE) pivots meta rows into columns
-- Post-processing in PHP for complex ACF repeater logic
-- Reduces query time from 4s to <1s (per research findings)
-
-**Critical optimization:** Use `LIMIT` and `OFFSET` for pagination at SQL level, not PHP.
-
-**Sources:**
-- [ACF WordPress Post Meta Query Performance Best Practices](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
-- [Delicious Brains SQL Query Optimization](https://deliciousbrains.com/sql-query-optimization/)
-- [WooCommerce Issue #27746: Double-left join performance killer](https://github.com/woocommerce/woocommerce/issues/27746)
-
-### 4. WordPress User Meta for Column Preferences
-
-**Pattern (already used in Stadion - see class-rest-api.php theme preferences):**
-
-**Frontend (React):**
-```javascript
-// In custom hook: useColumnPreferences.js
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { prmApi } from '@/api/client';
-
-export function useColumnPreferences() {
-  const queryClient = useQueryClient();
-
-  return useQuery({
-    queryKey: ['user-preferences', 'people-columns'],
-    queryFn: async () => {
-      const response = await prmApi.getUserPreference('people_list_columns');
-      // Returns array of column keys: ['first_name', 'last_name', 'organization', 'labels']
-      return response.data.columns || DEFAULT_COLUMNS;
-    },
-  });
-}
-
-export function useUpdateColumnPreferences() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (columns) =>
-      prmApi.updateUserPreference('people_list_columns', { columns }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
-    },
-  });
-}
-```
-
-**Backend (PHP REST endpoint):**
-```php
-// In includes/class-rest-api.php (pattern already exists for theme_preferences)
-register_rest_route('rondo/v1', '/user/list-preferences', [
-  'methods' => 'GET',
-  'callback' => function() {
-    $user_id = get_current_user_id();
-    $columns = get_user_meta($user_id, 'people_list_columns', true);
-
-    return rest_ensure_response([
-      'columns' => $columns ?: ['first_name', 'last_name', 'organization', 'labels']
-    ]);
-  },
-]);
-
-register_rest_route('rondo/v1', '/user/list-preferences', [
-  'methods' => 'PATCH',
-  'callback' => function($request) {
-    $user_id = get_current_user_id();
-    $columns = $request->get_param('columns');
-
-    update_user_meta($user_id, 'people_list_columns', $columns);
-
-    return rest_ensure_response(['success' => true]);
-  },
-]);
-```
-
-**Why user_meta:**
-- Per-user storage (not global)
-- Survives cache clears
-- Native WordPress API (no custom tables)
-- Already used in Stadion (theme_preferences, dashboard_settings)
-
-**Sources:**
-- [WordPress Working with User Metadata](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
-- [update_user_meta() Function Reference](https://developer.wordpress.org/reference/functions/update_user_meta/)
-
-### 5. WordPress REST API Pagination Headers
-
-**WordPress native headers (already available):**
-```javascript
-// Response headers from wpApi.getPeople():
-const totalRecords = response.headers['x-wp-total'];      // Total count of all records
-const totalPages = response.headers['x-wp-totalpages'];   // Total pages for current per_page
-
-// Standard query params (already working):
-wpApi.getPeople({
-  per_page: 50,  // Max 100 per WordPress core
-  page: 2,       // Current page
-  orderby: 'title', // 'title', 'date', 'modified', 'id'
-  order: 'asc'   // 'asc' or 'desc'
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),  // NEW - Add before React plugin
+    // ... other plugins
+  ],
+  // ... rest of config
 });
 ```
 
-**No custom implementation needed.** WordPress REST API handles pagination headers automatically for custom post types.
+**src/index.css:**
+```css
+/* BEFORE (v3.4) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-**Source:** [WordPress REST API Pagination Handbook](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/)
+/* AFTER (v4) */
+@import "tailwindcss";
 
-## Server-Side Filtering Requirements
+/* Define brand colors with @theme */
+@theme {
+  --color-electric-cyan: #0891B2;
+  --color-bright-cobalt: #2563EB;
+  --color-deep-midnight: #1E3A8A;
+  --color-obsidian: #0F172A;
 
-**New REST endpoint pattern:**
-```php
-// Extend wp/v2/people endpoint with meta_query support
-add_filter('rest_person_query', function($args, $request) {
-  // Server-side search filter
-  if ($search = $request->get_param('search')) {
-    $args['s'] = $search;
-  }
+  --font-heading: Montserrat, system-ui, sans-serif;
+  --font-body: system-ui, sans-serif;
+}
 
-  // Server-side label filter
-  if ($labels = $request->get_param('person_label')) {
-    $args['tax_query'] = [
-      [
-        'taxonomy' => 'person_label',
-        'field' => 'term_id',
-        'terms' => $labels,
-      ]
-    ];
-  }
-
-  // Server-side team filter (via work_history meta)
-  // NOTE: This will still be slow with meta_query
-  // Prefer custom wpdb endpoint for performance
-  if ($team_id = $request->get_param('team_id')) {
-    $args['meta_query'] = [
-      [
-        'key' => 'work_history',
-        'value' => serialize(strval($team_id)),
-        'compare' => 'LIKE'
-      ]
-    ];
-  }
-
-  return $args;
-}, 10, 2);
+/* Content paths with @source */
+@source "src/**/*.{js,jsx}";
 ```
 
-**For complex filters (team, custom fields), use custom wpdb endpoint instead of extending wp/v2/people.**
+**DELETE:** `tailwind.config.js` (no longer used in v4)
 
-## Performance Optimizations
+## Integration Points
 
-### TanStack Query maxPages (NEW in v5)
+### With Existing Dynamic Accent System
+**Challenge:** Current system uses CSS variables (`--color-accent-*`) injected by ClubConfig.
+**Solution:** Replace with static brand colors in v4. Remove dynamic accent feature.
 
-**Problem:** Infinite scroll can consume infinite memory.
-**Solution:** `maxPages` option limits stored pages.
+| Current | New |
+|---------|-----|
+| `accent-600` (dynamic) | `cyan-600` / `blue-600` (static brand colors) |
+| `[data-accent="..."]` selectors | Remove; single brand gradient only |
+| Dark mode accent variants | Remove; light-only design |
 
-```javascript
-useInfiniteQuery({
-  // ... other options
-  maxPages: 10, // Only keep 10 pages in memory
-});
-```
+### With Existing Dark Mode
+**Challenge:** Current `darkMode: 'class'` config uses `.dark` class toggling.
+**Solution:** Remove dark mode entirely. Design is light-only.
 
-When user scrolls past 10 pages, oldest pages are evicted from cache. Scrolling back up triggers refetch.
+| Current | Action |
+|---------|--------|
+| `dark:bg-gray-900` classes | Remove all `dark:*` variants |
+| Dark mode toggle UI | Remove from Settings page |
+| CSS variables for dark colors | Remove from `index.css` |
 
-**Source:** [TanStack Query v5 Migration Guide](https://tanstack.com/query/v5/docs/react/guides/migrating-to-v5)
+### With Build Process
+**No changes required.** Vite plugin integrates seamlessly with existing build.
 
-### WordPress Query Performance
+| Build Command | Status |
+|---------------|--------|
+| `npm run dev` | ✅ HMR works with @tailwindcss/vite |
+| `npm run build` | ✅ Production builds unchanged |
+| `npm run preview` | ✅ Preview unchanged |
 
-**Best practices for custom wpdb queries:**
-1. **Avoid multiple JOINs on wp_postmeta** - Use conditional aggregation (CASE statements)
-2. **Use LIMIT/OFFSET at SQL level** - Not array_slice in PHP
-3. **Add indexes** - `ALTER TABLE wp_postmeta ADD INDEX meta_key_value (meta_key, meta_value(20))`
-4. **Set no_found_rows** - For WP_Query: `'no_found_rows' => true` (skips SQL_CALC_FOUND_ROWS)
-5. **Use fields parameter** - Return only needed fields: `'fields' => 'ids'`
+### With WordPress Theme
+**No changes required.** Theme still loads from `dist/` manifest.
 
-**Source:** [WordPress VIP WP_Query Performance](https://wpvip.com/blog/wp-query-performance/)
+| Asset | Status |
+|-------|--------|
+| `dist/assets/*.css` | ✅ Generated by Vite |
+| `dist/assets/*.js` | ✅ Generated by Vite |
+| `.vite/manifest.json` | ✅ Read by PHP `functions.php` |
 
-## Integration with Existing Stack
+## Validation Checklist
 
-### Existing Patterns to Preserve
+### Tailwind v4 Migration
+- [ ] `tailwindcss@^4.1.0` installed
+- [ ] `@tailwindcss/vite@^4.1.0` installed
+- [ ] `postcss` and `autoprefixer` removed
+- [ ] `vite.config.js` updated with `@tailwindcss/vite` plugin
+- [ ] `tailwind.config.js` deleted
+- [ ] `src/index.css` uses `@import "tailwindcss"`
+- [ ] `@theme` blocks define brand colors
+- [ ] `@source` directive specifies content paths
+- [ ] `npm run dev` starts without errors
+- [ ] `npm run build` completes successfully
 
-1. **Access Control (class-access-control.php):** Apply to new endpoint
-2. **Nonce Authentication (api/client.js):** Already configured
-3. **TanStack Query Keys (peopleKeys):** Extend with filter params
-4. **Error Handling (axios interceptors):** Already handles 401/403
+### Font Loading
+- [ ] `@fontsource/montserrat@^5.2.8` installed
+- [ ] Import 600 and 700 weights in `src/main.jsx`
+- [ ] `--font-heading` defined in `@theme`
+- [ ] Montserrat renders in headings
+- [ ] system-ui renders in body text
 
-### Files to Modify
+### Gradients
+- [ ] `bg-linear-to-r from-cyan-500 to-blue-600` works
+- [ ] Gradient buttons render correctly
+- [ ] Gradient headings render correctly
 
-**Backend:**
-- `includes/class-rest-api.php` - Add `/rondo/v1/people` endpoint with wpdb query
-- `includes/class-rest-api.php` - Add `/rondo/v1/user/list-preferences` endpoints
+### Glass Morphism
+- [ ] `backdrop-blur-md` works in header
+- [ ] `bg-white/80` semi-transparency works
+- [ ] No visual regressions on Safari/Chrome/Firefox
 
-**Frontend:**
-- `src/hooks/usePeople.js` - Add `usePeopleInfinite` hook
-- `src/hooks/` - Add `useColumnPreferences.js`
-- `src/pages/People/PeopleList.jsx` - Replace table rendering with infinite scroll
-- `src/api/client.js` - Add `prmApi.getUserPreference`, `prmApi.updateUserPreference`
+## Risk Assessment
 
-## Libraries NOT Needed
-
-**Confirmed NOT required (research findings):**
-- ❌ `react-intersection-observer` - Native API is sufficient
-- ❌ `react-infinite-scroll-component` - TanStack Query handles state
-- ❌ `react-virtualized` / `react-window` - Not needed for 1400 records with pagination
-- ❌ ACF custom table addon - Standard ACF + wpdb optimization is sufficient
-
-## Version Compatibility
-
-| Component | Version | Compatibility |
-|-----------|---------|---------------|
-| TanStack Query | 5.17.0 | ✅ v5.0+ supports useInfiniteQuery with maxPages |
-| React | 18.2.0 | ✅ useEffect, useRef support Intersection Observer |
-| WordPress | 6.0+ | ✅ REST API pagination headers native |
-| PHP | 8.0+ | ✅ $wpdb global available |
-| Browsers | Modern | ✅ Intersection Observer 87% support (IE11 not supported) |
-
-## Recommended Approach
-
-### Phase 1: Backend Foundation
-1. Create custom `/rondo/v1/people` endpoint with wpdb JOIN query
-2. Implement server-side filtering (search, labels, team)
-3. Add `/rondo/v1/user/list-preferences` endpoints for column storage
-4. Add indexes to wp_postmeta if needed
-
-### Phase 2: Frontend Integration
-1. Create `usePeopleInfinite` hook with TanStack Query
-2. Create `useColumnPreferences` hook for user settings
-3. Build Intersection Observer custom hook
-4. Migrate PeopleList.jsx to infinite scroll pattern
-
-### Phase 3: Optimization
-1. Add `maxPages` limit to prevent memory growth
-2. Profile wpdb query performance with WP_Query debugging
-3. Add loading states and error boundaries
-4. Implement optimistic updates for column preferences
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Breaking changes in v4 | High | Use automated migration tool, thorough testing |
+| Dark mode removal causes user confusion | Medium | Clear communication, remove toggle cleanly |
+| Browser support excludes older devices | Low | Internal tool for club admins (modern devices expected) |
+| Bundle size increase from fonts | Low | Only 2 weights (~120KB), browser caching effective |
+| Color system conflicts | Medium | Audit all `accent-*` usage, replace with brand colors |
 
 ## Sources
 
-**TanStack Query:**
-- [Infinite Queries Guide](https://tanstack.com/query/v5/docs/react/guides/infinite-queries)
-- [useInfiniteQuery Reference](https://tanstack.com/query/v5/docs/framework/react/reference/useInfiniteQuery)
-- [TanStack Query v5 useInfiniteQuery Discussion #5921](https://github.com/TanStack/query/discussions/5921)
+**Tailwind CSS v4:**
+- [Tailwind CSS v4.0 Announcement](https://tailwindcss.com/blog/tailwindcss-v4)
+- [Upgrade Guide - Tailwind CSS](https://tailwindcss.com/docs/upgrade-guide)
+- [Complete Migration Guide - Dev Genius](https://blog.devgenius.io/the-ultimate-guide-to-migrating-from-tailwind-css-3-to-tailwind-css-4-214f8eddc4b9)
+- [Vite + React Setup Guide - DEV Community](https://dev.to/lord_potato_c8a8c0086ffb5/tailwind-css-v4-vite-react-setup-the-clean-way-338j)
+- [Browser Support Requirements](https://tailwindcss.com/docs/compatibility)
+- [@tailwindcss/vite - npm](https://www.npmjs.com/package/@tailwindcss/vite)
 
-**WordPress Performance:**
-- [ACF Post Meta Query Performance](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/)
-- [Delicious Brains SQL Query Optimization](https://deliciousbrains.com/sql-query-optimization/)
-- [WordPress VIP WP_Query Performance](https://wpvip.com/blog/wp-query-performance/)
-- [WooCommerce Issue #27746: Double-left join performance](https://github.com/woocommerce/woocommerce/issues/27746)
+**Gradients:**
+- [Tailwind CSS v4 Gradients Made Simple - Indie Hackers](https://www.indiehackers.com/post/tailwind-css-v4-gradients-made-simple-0ef34ff370)
+- [Text Gradients in Tailwind v4 - Kyle Goggin](https://www.kylegoggin.com/blog/text-gradients-in-tailwind-v4/)
 
-**Intersection Observer:**
-- [MDN Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)
-- [FreeCodeCamp: Infinite Scrolling in React](https://www.freecodecamp.org/news/infinite-scrolling-in-react/)
-- [DEV: Infinite Scroll with Intersection Observer](https://dev.to/matan3sh/infinite-scroll-in-react-with-intersection-observer-3932)
+**Glass Morphism:**
+- [Creating Glassmorphism Effects - Epic Web Dev](https://www.epicweb.dev/tips/creating-glassmorphism-effects-with-tailwind-css)
+- [Glassmorphism with Tailwind CSS - FlyOnUI](https://flyonui.com/blog/glassmorphism-with-tailwind-css/)
+- [Backdrop Blur - Tailwind CSS](https://tailwindcss.com/docs/backdrop-blur)
 
-**WordPress APIs:**
-- [WordPress REST API Pagination](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/)
-- [WordPress User Metadata](https://developer.wordpress.org/plugins/users/working-with-user-metadata/)
-- [update_user_meta() Function](https://developer.wordpress.org/reference/functions/update_user_meta/)
-- [get_user_meta() Function](https://developer.wordpress.org/reference/functions/get_user_meta/)
+**Fonts:**
+- [@fontsource/montserrat - npm](https://www.npmjs.com/package/@fontsource/montserrat)
+- [Fontsource Montserrat](https://fontsource.org/fonts/montserrat)
+
+**Architecture:**
+- [PostCSS autoprefixer discussion - GitHub](https://github.com/tailwindlabs/tailwindcss/discussions/15518)

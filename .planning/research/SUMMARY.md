@@ -1,291 +1,340 @@
 # Project Research Summary
 
-**Project:** Stadion v9.0 - People List Performance & Customization
-**Domain:** WordPress/React CRM Data Management
-**Researched:** 2026-01-29
+**Project:** Rondo Club Design Refresh
+**Domain:** React SPA design system refresh (brand alignment, Tailwind migration, dynamic theming removal)
+**Researched:** 2026-02-09
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This research covers the addition of infinite scroll with server-side filtering/sorting and per-user column customization to Stadion's existing People list. The domain is well-understood: modern CRM contact lists require server-side pagination to scale beyond 100+ records, with filters and sorting applied at the database layer rather than client-side. The current implementation loads all 1400+ people client-side, which works but has reached its scalability limit.
+This project migrates Rondo Club from a sophisticated dynamic theming system (user-selected accent colors, dark mode, CSS variables) to a fixed brand identity using Tailwind CSS v4's new architecture. The migration involves three core changes: upgrading Tailwind CSS v3.4 to v4 (new CSS-first configuration model), replacing 549 accent-* color references with fixed cyan/cobalt brand gradients, and removing 1,877 dark mode classes to focus on a single polished light experience.
 
-The recommended approach builds on Stadion's existing architecture without new dependencies. All necessary tools are present: TanStack Query v5.17.0 includes `useInfiniteQuery` for pagination, WordPress REST API provides native pagination headers, and `$wpdb` enables custom JOIN queries for ACF field filtering. The key technical shift is moving from client-side operations (fetch all, filter in-memory) to server-side operations (filter/sort in SQL, fetch in pages). User preferences are stored in WordPress user_meta, following Stadion's existing pattern for dashboard settings.
+The recommended approach follows a four-phase structure: Foundation (Tailwind v4 migration + CSS variable cleanup), Core Components (buttons, cards, layout), Feature Components (modals, forms, lists), and Polish (glass morphism, typography, PWA assets). This order minimizes risk by establishing the stable base (design tokens) before modifying visual elements. The architecture requires no backend changes beyond removing theme customization logic from WordPress settings.
 
-The critical risk is **access control bypass** in custom SQL queries. Stadion's `RONDO_Access_Control` class filters data through WordPress's `pre_get_posts` hook, but custom `$wpdb` queries bypass this entirely. All custom endpoints must explicitly apply access control checks before running queries. Secondary risks include SQL injection via unsanitized filter parameters, ACF JOIN performance degradation with 4+ meta filters, and TanStack Query cache invalidation issues with infinite scroll. Each has well-documented mitigation strategies from the research.
+Key risks include incomplete dark mode class removal causing visual inconsistencies, breaking CSS variable references when removing the accent system, and mobile performance degradation from glass morphism backdrop-filter effects. These are mitigated through automated detection (ESLint rules), two-phase color migration (replace usages before deleting definitions), and strict blur limits (max 10px on mobile) with fallback backgrounds.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new dependencies required. All necessary technologies are already present in Stadion's stack and properly versioned for this work.
+**Core technology: Tailwind CSS v4 with Vite integration**
+
+The migration requires Tailwind CSS v4, which fundamentally changes from JavaScript configuration (tailwind.config.js) to a CSS-first model using @theme directives in index.css. This is not an optional upgrade—the design refresh depends on v4's native gradient utilities and simplified color system. The v4 architecture removes PostCSS/autoprefixer dependencies (replaced by Lightning CSS internally) and uses a new Vite plugin for integration.
 
 **Core technologies:**
-- **TanStack Query v5.17.0**: Server state with `useInfiniteQuery` for pagination — already integrated, v5 includes `maxPages` to limit memory usage
-- **WordPress REST API**: Native pagination with `per_page`, `page` params and `X-WP-Total` headers — no custom pagination logic needed
-- **WordPress $wpdb**: Custom JOIN queries for ACF field sorting/filtering — essential for performance with ACF repeater fields
-- **WordPress user_meta**: Per-user preference storage — pattern already used for `theme_preferences` and `dashboard_settings`
-- **Intersection Observer API**: Native browser API for infinite scroll detection — no react-intersection-observer library needed
+- **Tailwind CSS v4.1.0**: Core framework with 100x faster builds, native gradient support (bg-linear-to-*, bg-radial), native backdrop-blur utilities, CSS variables for colors
+- **@tailwindcss/vite v4.1.0**: Required Vite plugin for v4 integration (replaces PostCSS approach)
+- **@fontsource/montserrat v5.2.8**: Self-hosted typography (weights 600 + 700 for headings), GDPR-friendly, subset loading for performance
+- **Remove**: postcss, autoprefixer (no longer needed in v4)
 
-**Key finding:** The project does NOT need react-virtualized, react-window, or custom table libraries. Current dataset size (1400 people) works fine with standard infinite scroll. Virtual scrolling is only needed above 5,000+ records.
+**Critical version requirements:**
+- Minimum browser support: Safari 16.4+, Chrome 111+, Firefox 128+ (acceptable for internal sports club tool)
+- Tailwind v4 is BREAKING: tailwind.config.js must be deleted, configuration moves to CSS @theme blocks
+
+**Font loading strategy:**
+- Fontsource over Google Fonts CDN (privacy, no external requests, subset control)
+- Load only 2 weights: 600 (Semi-Bold) for h2/h3, 700 (Bold) for h1/buttons
+- Import in src/main.jsx, define --font-heading in @theme
+- ~120KB bundle size increase (mitigated by code splitting)
 
 ### Expected Features
 
-Research distinguishes between table stakes (users expect this), differentiators (competitive advantage), and anti-features (common mistakes to avoid).
-
 **Must have (table stakes):**
-- Server-side filtering by labels, birth year, modified date, team — users expect filters to work on ALL data, not just loaded records
-- Server-side sorting by core fields and ACF custom fields — same expectation across entire dataset
-- Total count display ("Showing X of Y people") — users want to know dataset size
-- Loading indicators with skeleton screens — feedback during data fetching
-- Persistent scroll position on navigation back — browser handles this for traditional pagination, requires state management for infinite scroll
-- Column visibility toggle and order persistence — standard table feature in 2026
+- **Fixed brand color palette** — Replaces dynamic accent color picker; users expect consistent brand identity
+- **Gradient buttons (primary/secondary/ghost)** — Modern UI convention 2026; three variants expected for visual hierarchy
+- **Card gradient top border** — 3px gradient border signals visual accent without overwhelming content
+- **Consistent focus ring styling** — WCAG 2.4.7 requirement; must update all inputs/buttons to use brand gradient colors
+- **Typography consistency** — Apply Montserrat to headings throughout (replacing Inter); users notice font mismatches immediately
+- **Responsive gradient behavior** — Gradients must work across mobile/tablet/desktop without banding
 
 **Should have (competitive differentiators):**
-- Virtual scrolling for 10K+ records — not needed now, defer to future if dataset grows
-- Intelligent prefetching — TanStack Query supports this, improves perceived performance
-- Saved filter presets — high complexity, defer to v2+
-- Column drag-and-drop reordering — medium complexity, nice-to-have enhancement
-- Export filtered results to CSV — useful for power users
+- **Glass morphism header** — backdrop-blur(12px) + rgba background creates modern layered depth
+- **Gradient text in headings** — bg-clip-text with gradient reinforces brand identity
+- **PWA theme-color gradient** — Browser chrome matches app gradient on mobile
+- **Hover gradient shifts** — Button gradients subtly shift on hover to reinforce interactivity
 
-**Defer (v2+):**
-- Real-time updates via WebSocket — very high complexity, overkill for Stadion's use case
-- Multi-column sorting (sort by last name, then first name) — requires backend support for multiple `orderby` parameters
-- Keyboard navigation (arrow keys, Enter to open) — accessibility benefit, not critical for v9.0
-
-**Critical anti-features to avoid:**
-- Client-side filtering on incomplete data — current problem, must use server-side for datasets >100 records
-- True infinite scroll without pagination underneath — breaks back button, impossible to share position
-- Too many columns by default — causes horizontal scrolling death, default to 4-6 key columns
-- Fetch all data then virtualize — current Stadion approach, works until ~5K records but wrong pattern
-- Non-sticky table headers — users lose context when scrolling
+**Explicitly exclude (anti-features):**
+- **Dynamic user color picker** — Undermines brand consistency; must remove Settings > Appearance > Accent Color section
+- **Dark mode** — Reduces maintenance surface, simplifies gradient/glass implementation; remove toggle + all dark:* classes
+- **Gradient backgrounds on large surfaces** — Causes visual fatigue; use gradients only for accents (buttons, borders, headings)
+- **Glass morphism on interactive elements** — NN/g best practice: never apply transparency to buttons (reduces perceivability)
+- **Animated gradient borders** — High complexity, low ROI; defer to future if requested
 
 ### Architecture Approach
 
-Stadion's WordPress/React split architecture is well-suited for this enhancement. The system uses two REST API namespaces: `/wp/v2/*` for standard WordPress endpoints and `/rondo/v1/*` for custom endpoints. The new functionality fits naturally into this pattern by adding `/rondo/v1/people/filtered` for server-side operations and `/rondo/v1/user/list-preferences` for column settings.
+The design refresh replaces three architectural layers: Design Token Layer (dynamic accent colors → fixed Tailwind tokens), Component Layer (update 69 JSX components to use new brand classes), and Configuration Layer (remove WordPress theme customization system). The current architecture uses 385 lines of useTheme.js for runtime CSS variable injection, supports 8 selectable accent colors via [data-accent="X"] variants, and implements sophisticated dark mode with localStorage persistence. The new architecture eliminates all runtime theme logic in favor of static Tailwind classes, resulting in ~30KB bundle savings (remove useTheme + react-colorful).
 
 **Major components:**
+1. **Foundation Layer** — Tailwind v4 config migration (delete tailwind.config.js, create @theme blocks in index.css), remove CSS variable system (lines 117-355 in index.css), delete useTheme.js hook
+2. **Color System Migration** — Replace 549 accent-* references with electric-cyan/bright-cobalt, define 5 brand tokens (electric-cyan #0891B2, bright-cobalt #2563EB, deep-midnight #1E3A8A, obsidian #0F172A, keep slate scale)
+3. **Component Updates** — Update buttons (bg-brand-gradient with hover lift), cards (3px gradient top border via ::before), modals (remove dark mode backgrounds), forms (cyan focus rings)
+4. **Backend Cleanup** — Remove ClubConfig::get_accent_color() method, remove rondoConfig.accentColor localization, delete color picker from Settings page
 
-1. **Custom People Query Builder** (`includes/class-people-query-builder.php`) — Builds efficient `$wpdb` queries with conditional JOINs for ACF fields, applies filters at SQL level, handles pagination with LIMIT/OFFSET, integrates AccessControl checks
-2. **Filtered People REST Endpoint** (`/rondo/v1/people/filtered`) — Receives filter/sort/page params, uses Query Builder for data fetching, transforms results with existing `transformPerson()` pattern, returns paginated response with `{ people: [], pagination: {} }`
-3. **User Preferences REST Endpoints** (`/rondo/v1/user/list-preferences`) — GET returns user's column preferences with defaults, PATCH updates preferences with validation, stores in `wp_usermeta` with key `stadion_people_list_preferences`
-4. **usePeopleInfinite Hook** (`src/hooks/usePeopleInfinite.js`) — Replaces current `usePeople()` for list view, uses `useInfiniteQuery` with `initialPageParam`, `getNextPageParam`, and `maxPages` (v5 requirement), flattens pages for rendering
-5. **useUserPreferences Hook** (`src/hooks/useUserPreferences.js`) — Fetches/updates column preferences with optimistic updates for instant feedback
-
-**Data flow change:** Current implementation uses `usePeople()` to fetch ALL people in a while loop (100 per request), then filters/sorts client-side in `PeopleList.jsx`. New implementation fetches 20-50 records per page on-demand, with filters/sorting applied server-side before transmission. TanStack Query's `maxPages` option limits cached pages to prevent memory growth.
-
-**Performance optimization:** Custom SQL queries use conditional aggregation (CASE statements) instead of multiple LEFT JOINs on `wp_postmeta`. For work_history filtering (ACF repeater), denormalize `_current_team_id` to separate meta field to avoid slow LIKE queries on serialized data. Cache expensive queries with WordPress transients (5 min TTL), invalidate on person create/update/delete.
+**Critical architectural decision:**
+Stay on Tailwind v3.4 OR upgrade to v4? STACK.md recommends v4 for native gradients and backdrop-blur. ARCHITECTURE.md notes syntax mismatch but recommends v3.4 for stability. **Resolution: Upgrade to v4** — gradient utilities and simplified color system are essential for the design refresh, and v4 architecture aligns better with removing dynamic theming.
 
 ### Critical Pitfalls
 
-Research identified 12 pitfalls across three severity levels. The top 5 require explicit prevention strategies.
+1. **Incomplete Dark Mode Class Removal (1,877 instances)** — Missing even 5% creates broken layouts with invisible text on white backgrounds. Prevention: Automated ESLint rule that fails build if dark: classes detected, systematic file-by-file checklist, visual regression screenshots.
 
-1. **Access Control Bypass with Custom $wpdb Queries** — Custom SQL queries bypass WordPress's `pre_get_posts` filter, which is how `RONDO_Access_Control` enforces user approval checks. Prevention: Always call `$access_control->is_user_approved()` before running queries OR add reusable `get_sql_where_clause()` method to AccessControl class that returns SQL fragment like `"p.ID = 0"` for unapproved users. Test with unapproved user account to verify they see empty list.
+2. **CSS Variable References Break When Accent System Removed (339 instances)** — Removing CSS variables without replacing ALL accent-* references causes components to lose color styling. Prevention: Two-phase migration (replace usages first, remove definitions second), grep verification after replacement, test production build locally before deploy.
 
-2. **SQL Injection via Unsanitized Filter Parameters** — Filter values and ACF field names inserted directly into SQL without proper escaping. Prevention: Always use `$wpdb->prepare()` with correct placeholders (%s, %d), whitelist ACF field names from `acf_get_fields()` configuration, sanitize filter arrays with `array_map('absint')` for IDs and `sanitize_text_field()` for strings. NEVER build dynamic column/table names from user input without whitelist validation first.
+3. **Tailwind v3→v4 Migration Breaks Custom Color Configuration** — Build completely fails if v4 installed without migrating config from tailwind.config.js to @theme directive. Prevention: Use official migration tool (npx @tailwindcss/upgrade@next), migrate config in dedicated phase BEFORE design changes, test build succeeds before component updates.
 
-3. **Post_Meta JOIN Performance Degradation** — Each ACF filter adds another LEFT JOIN to `wp_postmeta`, causing queries to slow from 50ms to 2-5s with 3-4 filters active. Prevention: Use STRAIGHT_JOIN hint to force MySQL join order, add composite index on `(post_id, meta_key, meta_value)`, limit JOINs to 3-4 maximum (fall back to two-step query if more), cache filter results aggressively with transients (5 min), denormalize frequently-filtered fields like current_team to separate meta field.
+4. **Gradient Text WebKit-Prefix Breaks in Firefox/Safari** — Requires -webkit-background-clip: text and proper fallbacks, or text becomes invisible. Prevention: Always include vendor prefix, add color fallback before gradient, use @supports feature detection, test on Firefox/Safari/Chrome/Edge.
 
-4. **TanStack Query Stale Data After Mutations** — User creates/edits person, returns to list, sees old data because `useInfiniteQuery` with high `staleTime` doesn't refetch automatically. Prevention: Invalidate AND refetch on mutations with `queryClient.invalidateQueries({ queryKey: ['people'], refetchType: 'active' })`, use shorter staleTime (30 seconds not Infinity), implement optimistic updates for create/edit, use `resetQueries()` instead of `invalidateQueries()` to clear all pages after mutations.
-
-5. **Infinite Scroll Doesn't Refetch All Pages on Invalidation** — User scrolls to page 5, creates person, returns to list. Only page 1 refetches, pages 2-5 show old data. Prevention: Use `queryClient.resetQueries()` instead of `invalidateQueries()` to clear all cached pages after mutations, optimistically insert new items into page 1's cache, use `maxPages: 3-10` to limit cached pages, show "data may be stale" warning on deep pages with refresh button.
-
-**Secondary pitfalls:** Race conditions with rapid filter changes (fix: debounce 300ms, use TanStack Query's automatic request cancellation with AbortSignal), memory leaks with large result sets (fix: always use pagination, never `posts_per_page: -1`), nonce validation bypassed in custom endpoints (fix: use existing `check_user_approved()` permission callback from Base class), ACF repeater query complexity (fix: denormalize `_current_team_id` before implementing team filters).
+5. **Glass Morphism Backdrop-Filter Destroys Mobile Performance** — Forces GPU compositing causing lag/frame drops on mobile. Prevention: Limit blur to 10px max (5px on mobile via media query), apply only to header (not cards/lists), provide solid fallback background, test on actual low-end Android device.
 
 ## Implications for Roadmap
 
-Based on research, the work naturally divides into 4 sequential phases. Backend foundation must come first (can't do infinite scroll without the endpoint), then frontend integration, then preferences (which depends on both).
+Based on research, suggested phase structure:
 
-### Phase 1: Server-Side Foundation
+### Phase 1: Foundation - Tailwind v4 Migration
+**Rationale:** Must establish stable base before any visual changes. Tailwind v4 architecture is fundamentally different (CSS-first config, no tailwind.config.js), so migration must complete first to avoid conflicts. This phase breaks the existing system but app should still run (with broken styling).
 
-**Rationale:** Frontend can't implement infinite scroll or server-side filtering until the backend endpoint exists. This phase builds the data layer that all subsequent phases depend on. Starting here de-risks the entire milestone by proving query performance early.
+**Delivers:**
+- Tailwind v4 installed with @tailwindcss/vite plugin
+- tailwind.config.js deleted, @theme blocks in index.css
+- PostCSS/autoprefixer removed
+- Brand color tokens defined (electric-cyan, bright-cobalt, etc.)
+- Build succeeds (UI broken expected)
 
-**Delivers:** Custom `/rondo/v1/people/filtered` endpoint returning paginated, filtered, sorted people data with response format: `{ people: [], pagination: { page, per_page, total_items, total_pages, has_more } }`
+**Addresses:**
+- Tailwind v4 architecture (STACK.md)
+- Foundation for gradient utilities and backdrop-blur (FEATURES.md)
 
-**Addresses features:**
-- Server-side filtering (labels, birth year, modified date, search) — table stakes feature
-- Server-side sorting (core fields + ACF custom fields) — table stakes feature
-- Pagination with total count — table stakes feature
+**Avoids:**
+- Pitfall #3 (config migration breaks build)
+- Establishes automated validation for Pitfall #1 (dark mode cleanup)
 
-**Avoids pitfalls:**
-- **Pitfall 1 (Access Control Bypass)** — Must add `is_user_approved()` check before all queries
-- **Pitfall 2 (SQL Injection)** — All filter params passed through `$wpdb->prepare()` with whitelist validation
-- **Pitfall 6 (Memory Leaks)** — Enforce pagination limits (max per_page: 100, default: 20)
-- **Pitfall 7 (Nonce Validation)** — Use existing `check_user_approved()` permission callback
+**Research needed:** Standard Tailwind migration patterns (skip research-phase)
 
-**Technical implementation:**
-1. Create `includes/class-people-query-builder.php` with efficient `$wpdb` JOIN queries
-2. Add filtered endpoint to `includes/class-rest-people.php`
-3. Add composite index on `wp_postmeta` if needed
-4. Test with Query Monitor to verify query performance <0.1s
+---
 
-**Testing criteria:** Endpoint returns correct data for all filter combinations, respects AccessControl (unapproved users see nothing), all queries under 100ms with 1400 records, no SQL injection vulnerabilities.
+### Phase 2: Color System Migration
+**Rationale:** Replace dynamic accent system with fixed brand colors. Must use two-phase approach: first replace all 549 accent-* usages with new brand colors, then remove CSS variable definitions. This order prevents breaking references.
 
-### Phase 2: Infinite Scroll Frontend
+**Delivers:**
+- All accent-* classes replaced with electric-cyan/bright-cobalt
+- CSS variable system removed from index.css (lines 117-355)
+- [data-accent="X"] variants deleted
+- useTheme.js hook deleted (385 lines)
+- WordPress ClubConfig accent color methods removed
+- Production build validation (no purged classes)
 
-**Rationale:** With backend endpoint proven, replace client-side loading with server-side pagination. This phase keeps existing filtering/sorting UI (state management unchanged) but moves data source from `usePeople()` to `usePeopleInfinite()`. Proving infinite scroll works before adding preferences complexity reduces integration risk.
+**Uses:**
+- Brand color tokens from Phase 1 (electric-cyan #0891B2, bright-cobalt #2563EB)
+- Gradient utilities from Tailwind v4 (bg-linear-to-r from-cyan-500 to-blue-600)
 
-**Delivers:** People list with infinite scroll, server-side filtering/sorting active, total count display, loading states, Intersection Observer triggering next page fetch
+**Implements:**
+- Design Token Layer replacement (ARCHITECTURE.md)
+- Fixed brand palette (FEATURES.md table stakes)
 
-**Addresses features:**
-- Infinite scroll pattern — replaces load-all approach
-- Loading indicators — skeleton screens for first page load
-- Persistent scroll position — browser handles automatically
+**Avoids:**
+- Pitfall #2 (CSS variable references break)
+- Pitfall #8 (production CSS purging)
+- Pitfall #9 (transition effects break)
 
-**Avoids pitfalls:**
-- **Pitfall 4 (Stale Data)** — Use `staleTime: 30000` (30 seconds) not Infinity, invalidate with `refetchType: 'active'`
-- **Pitfall 5 (Race Conditions)** — Debounce filter changes 300ms, pass AbortSignal to axios
-- **Pitfall 9 (Refetch Pages)** — Use `resetQueries()` on mutations, implement `maxPages: 10`
+**Research needed:** None (mechanical find/replace work)
 
-**Technical implementation:**
-1. Create `src/hooks/usePeopleInfinite.js` using TanStack Query `useInfiniteQuery`
-2. Add `getPeopleFiltered()` method to `src/api/client.js`
-3. Modify `src/pages/People/PeopleList.jsx` to use new hook
-4. Add Intersection Observer for scroll detection
-5. Add "Load More" button as fallback
+---
 
-**Testing criteria:** Infinite scroll loads next page on reaching bottom, filters trigger query key change and refetch from page 1, sorting updates results without breaking scroll, creating person resets query and new person appears in list.
+### Phase 3: Core Component Updates
+**Rationale:** Update buttons, cards, and layout system after color foundation is stable. These are the most visible UI elements with highest impact. Component updates depend on Phase 2's brand colors being in place.
 
-### Phase 3: User Preferences Backend
+**Delivers:**
+- Button variants (btn-primary with gradient, btn-secondary solid, btn-glass transparent)
+- Card component with 3px gradient top border (::before pseudo-element)
+- Hover states with translateY(-2px) lift and colored shadows
+- Layout components (Sidebar, Header) with brand colors
+- Focus ring updates (cyan glow on all inputs)
 
-**Rationale:** Column preferences require storage and retrieval endpoints before frontend can implement the UI. Building backend first allows testing preference persistence independently of UI complexity. Pattern follows existing `theme_preferences` endpoint structure.
+**Uses:**
+- bg-brand-gradient utility from Phase 1
+- Brand colors from Phase 2
+- Native backdrop-blur for glass effects (STACK.md)
 
-**Delivers:** `/rondo/v1/user/list-preferences` endpoints (GET/PATCH) storing `visible_columns`, `column_order`, `default_sort` in `wp_usermeta` with key `stadion_people_list_preferences`
+**Implements:**
+- Component Layer updates (ARCHITECTURE.md)
+- Gradient buttons, card borders, focus rings (FEATURES.md table stakes)
 
-**Addresses features:**
-- Persistent column preferences — foundation for customization
-- Default preferences for new users — pulls from custom fields metadata `show_in_list_view`
+**Avoids:**
+- Breaking dependencies by updating components before color system ready
 
-**Avoids pitfalls:**
-- **Pitfall 10 (Sync Between Devices)** — Server-side storage ensures consistency across sessions
-- Column preference conflicts — Validates preferences against current custom field definitions, removes deleted fields
+**Research needed:** None (standard component styling patterns)
 
-**Technical implementation:**
-1. Add endpoints to `includes/class-rest-api.php` (or new `class-rest-user-preferences.php`)
-2. Implement GET with defaults from ACF field configuration
-3. Implement PATCH with validation (whitelist allowed columns)
-4. Store in user_meta with `get_user_meta()`/`update_user_meta()`
+---
 
-**Testing criteria:** Preferences persist across sessions, validation rejects invalid columns, defaults work for new users, multiple users have independent preferences.
+### Phase 4: Feature Components & Dark Mode Cleanup
+**Rationale:** Update remaining components (modals, forms, lists, timeline) and complete dark mode removal. Can be done in parallel after Phase 3. This is the largest scope but lowest risk since core UI is stable.
 
-### Phase 4: Column Preferences UI
+**Delivers:**
+- All 14 modals updated (remove dark mode backgrounds, update to slate-50)
+- All form components with cyan focus rings
+- Lists (People, Teams, Dates) with updated styling
+- Timeline activity/note cards updated
+- All 1,877 dark:* classes removed (automated find/replace with validation)
+- ESLint rule enforcing no dark: classes
 
-**Rationale:** With backend preferences proven, build the UI for column customization. This is the final enhancement phase — not a blocker for core infinite scroll functionality. Can be deferred to v9.1 if needed.
+**Addresses:**
+- Feature Components layer (ARCHITECTURE.md)
+- Remove dark mode anti-feature (FEATURES.md)
 
-**Delivers:** Column settings modal/dropdown with visibility toggle, drag-and-drop reordering, default sort selection, immediate save to server, people list renders only visible columns in user's preferred order
+**Avoids:**
+- Pitfall #1 (incomplete dark mode cleanup via automation)
+- Pitfall #7 (missing PHP backend dark mode cleanup)
 
-**Addresses features:**
-- Column visibility toggle — table stakes feature
-- Column order persistence — table stakes feature
-- Column drag-and-drop reordering (if time) — nice-to-have differentiator
+**Research needed:** None (component styling work)
 
-**Avoids pitfalls:**
-- **Pitfall 10 (Sync)** — Save to server immediately on change, refetch on window focus
-- **Pitfall 11 (Sort Indicator)** — Server includes sort metadata in response, UI uses as source of truth
+---
 
-**Technical implementation:**
-1. Create `src/hooks/useUserPreferences.js` with optimistic updates
-2. Build Column Settings component (modal or dropdown)
-3. Add drag-and-drop with TanStack Table's `onColumnOrderChange`
-4. Update `PeopleList.jsx` to render based on preferences
-5. Show sync status indicator during save
+### Phase 5: Typography & Font Loading
+**Rationale:** Add Montserrat font and apply to headings throughout the app. Separate phase to avoid font loading issues interfering with component styling work. Includes font loading optimization to prevent FOUT/FOIT.
 
-**Testing criteria:** Column visibility changes persist on refresh, drag-and-drop reordering works, preferences sync between browser tabs (refetch on focus), default sort applies on initial load.
+**Delivers:**
+- @fontsource/montserrat installed (weights 600 + 700)
+- Fonts imported in src/main.jsx with font-display: swap
+- --font-heading defined in @theme
+- All h1/h2/h3 elements use Montserrat
+- Preload tags for critical font files
+- Subset loading for performance
+
+**Uses:**
+- Fontsource self-hosted fonts (STACK.md)
+- Typography update (FEATURES.md table stakes)
+
+**Avoids:**
+- Pitfall #6 (FOUT/FOIT without optimization)
+
+**Research needed:** None (standard font loading patterns)
+
+---
+
+### Phase 6: Visual Polish & Glass Morphism
+**Rationale:** Add glass morphism header and gradient text after core UI is stable. Separate phase because these effects require careful performance testing and browser compatibility validation.
+
+**Delivers:**
+- Glass morphism header (backdrop-blur(10px) + rgba(255,255,255,0.85))
+- Gradient text component for section headings
+- Mobile-specific blur reduction (5px on mobile via media query)
+- Fallback backgrounds for unsupported browsers (@supports)
+- Performance validation on low-end Android device
+
+**Addresses:**
+- Glass morphism header, gradient text (FEATURES.md differentiators)
+- GlassPanel and GradientText components (ARCHITECTURE.md)
+
+**Avoids:**
+- Pitfall #5 (mobile performance from backdrop-filter)
+- Pitfall #4 (gradient text browser compatibility)
+
+**Research needed:** Mobile performance testing (standard patterns)
+
+---
+
+### Phase 7: Backend & PWA Cleanup
+**Rationale:** Final cleanup phase for backend code, PWA assets, and dead code removal. Completes the migration by removing all traces of old theming system.
+
+**Delivers:**
+- Settings page theme controls removed (color picker, dark mode toggle)
+- PWA manifest.json updated (theme_color: #0891B2)
+- Static favicon with electric-cyan fill (remove dynamic generation)
+- Database cleanup (remove dark mode user preferences from user meta)
+- Dead code removal (remaining accent-* references)
+- Build-time validation (no unused CSS)
+
+**Addresses:**
+- Configuration Layer cleanup (ARCHITECTURE.md)
+- PWA theme-color (FEATURES.md)
+
+**Avoids:**
+- Pitfall #7 (missing PHP backend cleanup)
+
+**Research needed:** None (cleanup work)
+
+---
 
 ### Phase Ordering Rationale
 
-- **Backend before frontend:** Can't implement infinite scroll without the endpoint. Building `/rondo/v1/people/filtered` first de-risks query performance and access control before frontend integration.
-- **Infinite scroll before preferences:** Proves server-side pagination works with existing UI before adding preferences complexity. Reduces integration surface area.
-- **Preferences backend before UI:** Allows testing storage/retrieval independently. Follows pattern of separating data layer from presentation.
-- **Sequential not parallel:** Each phase depends on previous phase's output. Phase 2 needs Phase 1's endpoint, Phase 4 needs Phase 3's storage.
+**Phase 1 must complete first:** Tailwind v4 architecture is incompatible with v3 config. Migration tool must run before any design changes to avoid merge conflicts.
 
-**Critical path:** Phases 1-2 deliver core functionality (infinite scroll with server-side filtering). Phases 3-4 add column customization enhancement. If timeline pressure, Phase 4 can be deferred to v9.1 without impacting core milestone goal.
+**Phase 2 depends on Phase 1:** Brand color tokens must be defined in @theme before replacing accent-* references. Two-phase approach (replace usages → remove definitions) prevents breaking references.
+
+**Phase 3 depends on Phase 2:** Buttons and cards need brand colors to be stable. Gradient utilities from v4 required for button backgrounds.
+
+**Phases 4-7 can be parallelized after Phase 3:** Feature components, typography, glass morphism, and backend cleanup are independent once core UI is updated.
+
+**Why this grouping:** Architecture research (ARCHITECTURE.md) identifies three layers (tokens, components, config). Phase structure maps directly to these layers with additional phases for specialized work (typography, visual effects). Pitfalls research guides phase boundaries—each phase has clear mitigation strategies for its associated risks.
 
 ### Research Flags
 
-**Phases needing deeper research during planning:**
-- **None** — All phases use well-documented patterns (TanStack Query infinite scroll, WordPress REST endpoints, user_meta storage). Research findings are comprehensive and high-confidence.
-
 **Phases with standard patterns (skip research-phase):**
-- **All phases** — TanStack Query's `useInfiniteQuery` is thoroughly documented with examples. WordPress REST API pagination and user_meta patterns are core WordPress functionality. ACF query optimization has extensive community knowledge.
+- **Phase 1 (Tailwind v4 Migration):** Official upgrade tool + well-documented migration guide
+- **Phase 2 (Color System):** Mechanical find/replace with clear mapping
+- **Phase 3 (Core Components):** Standard component styling patterns
+- **Phase 4 (Feature Components):** Standard component styling patterns
+- **Phase 5 (Typography):** Standard font loading patterns (Fontsource + preload)
+- **Phase 7 (Backend Cleanup):** Standard cleanup work
 
-**Validation checkpoints:**
-- **Phase 1:** Test query performance with Query Monitor before proceeding. If queries exceed 0.1s, implement STRAIGHT_JOIN or caching before continuing.
-- **Phase 2:** Test cache invalidation with create/edit person before proceeding. If stale data issues, adjust `staleTime` and invalidation strategy.
-- **Phase 3:** Test with multiple users to verify preferences isolation before building UI.
-
-**No research-phase calls needed** — Proceed directly to implementation using documented patterns from research files.
+**Phases needing validation during execution:**
+- **Phase 6 (Glass Morphism):** Requires mobile performance testing on actual low-end Android device (not research, just validation)
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All technologies already present and properly versioned. TanStack Query v5.17.0 confirmed to include `useInfiniteQuery` with `maxPages`. No new dependencies required. |
-| Features | HIGH | Research drew from modern CRM UX patterns (2026 standards), multiple sources agree on table stakes vs. differentiators. Clear distinction between must-have and nice-to-have. |
-| Architecture | HIGH | Proposed architecture fits naturally into existing Stadion patterns. Custom endpoints follow established `/rondo/v1/*` namespace. User preferences match `theme_preferences` pattern. |
-| Pitfalls | HIGH | All critical pitfalls have documented mitigation strategies. Access control bypass, SQL injection, and JOIN performance are well-understood WordPress issues with proven solutions. |
+| Stack | HIGH | Official Tailwind v4 docs + migration guide + Fontsource npm package; browser support requirements clearly documented |
+| Features | HIGH | NN/g glassmorphism guidelines + design system migration best practices; clear consensus on table stakes vs differentiators |
+| Architecture | HIGH | Detailed analysis of existing codebase (tailwind.config.js, index.css, useTheme.js); clear understanding of component dependencies |
+| Pitfalls | HIGH | 1,877 dark mode classes + 549 accent references counted via grep; performance concerns validated via MDN + community sources |
 
 **Overall confidence:** HIGH
 
-All four research dimensions returned high-confidence findings with multiple corroborating sources. The domain (WordPress/React CRM lists) is well-understood, patterns are established, and pitfalls are documented with prevention strategies.
+All four research areas have verified sources (official documentation, established codebase analysis, quantified scope). The main architectural decision (v3 vs v4) has clear rationale supported by STACK.md requirements. Pitfall prevention strategies are concrete and actionable.
 
 ### Gaps to Address
 
-**No critical gaps identified.** Research was thorough and conclusive across all dimensions.
+**Gap 1: Exact gradient color stops for brand gradient**
+- STYLE.md defines electric-cyan (#0891B2) and bright-cobalt (#2563EB) as endpoints
+- Need to validate gradient angle (135deg vs 90deg) and intermediate stops if needed
+- Resolution: Use 135deg per STYLE.md, no intermediate stops (two-color gradient sufficient)
 
-**Minor validation points:**
-- **Composite index performance:** Research recommends adding `CREATE INDEX idx_meta_key_value ON wp_postmeta (post_id, meta_key, meta_value(191))` but actual performance gain needs measurement with Stadion's dataset size. Decision: Test with Query Monitor during Phase 1 implementation, only add if queries exceed 0.1s.
-- **Denormalization necessity:** Research suggests denormalizing `_current_team_id` to avoid ACF repeater LIKE queries, but impact depends on whether team filtering is implemented in v9.0 scope. Decision: If Phase 1 includes team filtering, implement denormalization. If not, defer until team filter feature is added.
-- **maxPages optimal value:** Research suggests `maxPages: 3-10` but optimal value depends on user behavior patterns. Decision: Start with `maxPages: 10` during Phase 2, monitor memory usage, adjust if needed.
+**Gap 2: Typography weight usage beyond headings**
+- Montserrat defined for h1/h2/h3, but what about buttons, labels, nav items?
+- Resolution: Phase 5 should document which elements get Montserrat vs system-ui
 
-**Architecture decisions to validate during Phase 1:**
-- Confirm `RONDO_Access_Control::is_user_approved()` is correct method for custom query filtering
-- Verify ACF field names whitelist can be pulled from `acf_get_fields('group_person_fields')`
-- Test `transformPerson()` function works with custom endpoint response structure
+**Gap 3: Contrast ratio validation for cyan/blue palette**
+- New brand colors must meet WCAG AA (4.5:1 for text, 3:1 for UI elements)
+- Resolution: Phase 2 must include contrast validation for all text-on-accent uses
+
+**Gap 4: Settings page content after removing theme controls**
+- What remains in Settings page after removing color picker, dark mode toggle?
+- Resolution: Phase 7 must audit Settings page; keep club name input, remove Appearance section entirely
+
+**Gap 5: User communication strategy for breaking changes**
+- Users lose dark mode and color customization without warning
+- Resolution: Phase 7 must update CHANGELOG.md with rationale (brand consistency, performance, maintenance)
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-**Stack Research:**
-- [TanStack Query v5 useInfiniteQuery Reference](https://tanstack.com/query/v5/docs/framework/react/reference/useInfiniteQuery) — Infinite query API with v5 breaking changes
-- [TanStack Query v5 Migration Guide](https://tanstack.com/query/v5/docs/react/guides/migrating-to-v5) — `maxPages` option and `initialPageParam` requirement
-- [WordPress REST API Pagination Handbook](https://developer.wordpress.org/rest-api/using-the-rest-api/pagination/) — Native pagination headers and parameters
-- [MDN Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) — Native scroll detection without libraries
-- [WordPress Working with User Metadata](https://developer.wordpress.org/plugins/users/working-with-user-metadata/) — Official user_meta API documentation
-
-**Performance Optimization:**
-- [ACF WordPress Post Meta Query Performance Best Practices](https://www.advancedcustomfields.com/blog/wordpress-post-meta-query/) — Official ACF performance guidance
-- [Delicious Brains SQL Query Optimization](https://deliciousbrains.com/sql-query-optimization/) — WordPress-specific query patterns
-- [WordPress VIP WP_Query Performance](https://wpvip.com/blog/wp-query-performance/) — Enterprise-scale performance patterns
-
-**Security:**
-- [Patchstack SQL Injection Prevention Guide](https://patchstack.com/articles/sql-injection/) — WordPress SQL injection vectors and prevention
-- [WordPress REST API Authentication](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/) — Official nonce validation documentation
-- [WordPress Modular DS Plugin CVE-2026-23550](https://thehackernews.com/2026/01/critical-wordpress-modular-ds-plugin.html) — Recent authentication bypass case study
+- **Tailwind CSS v4 Official Docs** — Migration guide, @theme directive, gradient utilities, backdrop-blur, browser support requirements
+- **@tailwindcss/vite npm package** — Vite plugin integration for v4
+- **@fontsource/montserrat npm package** — Self-hosted font specifications, weight availability
+- **MDN Web Docs** — background-clip browser support, backdrop-filter performance, vendor prefixes
+- **Tailwind CSS Documentation** — Dark mode config, color system, safelist, content configuration
 
 ### Secondary (MEDIUM confidence)
-
-**Features & UX:**
-- [Pagination vs. infinite scroll: Making the right decision for UX](https://blog.logrocket.com/ux-design/pagination-vs-infinite-scroll-ux/) — LogRocket UX research (2025)
-- [TanStack Table Pagination Guide](https://tanstack.com/table/v8/docs/guide/pagination) — Table pagination patterns
-- [TanStack Table Column Visibility APIs](https://tanstack.com/table/v8/docs/api/features/column-visibility) — Column management patterns
-- [Skeleton loading screen design](https://blog.logrocket.com/ux-design/skeleton-loading-screen-design/) — Loading state best practices
-
-**Architecture Patterns:**
-- [React Table Server Side Pagination with Sorting and Search Filters](https://dev.to/inimist/react-table-server-side-pagination-with-sorting-and-search-3163) — Server-side filtering implementation
-- [Sorting/Orderby for custom meta fields in WordPress REST API](https://iamshishir.com/sorting-orderby-for-custom-meta-fields-in-wordpress/) — ACF field sorting in REST
-- [TanStack Query: Caching, Pagination, and Infinite Scrolling](https://medium.com/@lakshaykapoor08/%EF%B8%8F-caching-pagination-and-infinite-scrolling-with-tanstack-query-4212b24d3806) — Infinite scroll implementation guide
-
-**Pitfalls:**
-- [TanStack Query Issue #5648](https://github.com/TanStack/query/issues/5648) — Programmatic invalidation issues
-- [TanStack Query Discussion #7569](https://github.com/TanStack/query/discussions/7569) — Infinite query refetch behavior
-- [WordPress Core Ticket #20134](https://core.trac.wordpress.org/ticket/20134) — Complex meta query performance
-- [WooCommerce Issue #27746](https://github.com/woocommerce/woocommerce/issues/27746) — Double-left join performance problems
+- **Dev.to Tailwind v4 Migration Guides** — Community migration experiences, real-world pitfalls
+- **NN/g Glassmorphism Guidelines** — Best practices for backdrop-filter on interactive elements
+- **LogRocket Gradient Guides** — Tailwind gradient implementation patterns
+- **Google Fonts Knowledge Base** — FOUT/FOIT optimization strategies
 
 ### Tertiary (LOW confidence)
-- Various Medium/DEV.to articles on infinite scroll implementation — Used for pattern validation, not primary source
-- Community forum discussions on ACF performance — Anecdotal but consistent with official guidance
+- **Design system migration best practices** — General web search results aggregated for guidance
+- **Mobile performance for backdrop-filter** — Medium articles + community discussions (requires validation on actual devices)
 
 ---
-*Research completed: 2026-01-29*
+
+*Research completed: 2026-02-09*
 *Ready for roadmap: yes*
