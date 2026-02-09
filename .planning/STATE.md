@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 
 ## Current Position
 
-Phase: 156 of 159 (Fee Category Backend Logic) — second phase of v21.0
-Plan: 02 of 02 complete
-Status: Phase complete
-Last activity: 2026-02-08 — Completed 156-02-PLAN.md (dynamic sort order in REST & docs)
+Phase: 157 of 159 (Fee Category REST API) — third phase of v21.0
+Plan: 01 of 02 complete
+Status: In progress
+Last activity: 2026-02-09 — Completed 157-01-PLAN.md (settings endpoints with full category support)
 
-Progress: [████░░░░░░] 40% (2/5 v21.0 phases complete)
+Progress: [████░░░░░░] 40% (4/10 v21.0 plans complete)
 
 ## Accumulated Context
 
@@ -36,6 +36,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 156-01:** Season parameter flows through entire calculation chain for forecast mode
 - **Phase 156-02:** Eliminated all hardcoded category_order arrays in favor of get_category_sort_order()
 - **Phase 156-02:** REST API and Google Sheets export respect per-season category configuration
+- **Phase 157-01:** GET /membership-fees/settings returns full category objects (not flat amounts)
+- **Phase 157-01:** POST /membership-fees/settings uses full replacement pattern with structured validation
+- **Phase 157-01:** Validation distinguishes errors (block save) from warnings (informational)
+- **Phase 157-01:** Empty categories array is valid for reset functionality
 
 ### Pending Todos
 
@@ -50,13 +54,13 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- **Phase 155-156 deployment blocker:** Do not deploy Phase 155 or 156 alone. Must deploy together with Phase 157 and 158 to avoid breaking existing fee calculations. Phase 155 changes the data structure, Phase 156 updates the code that reads it, Phase 157 updates REST API, Phase 158 provides admin UI to populate age_classes. Deploy all four together once Phase 158 is complete.
+- **Phase 155-158 deployment blocker:** Do not deploy Phase 155, 156, or 157 alone. Must deploy together with Phase 158 to avoid breaking existing fee calculations. Phase 155 changes the data structure, Phase 156 updates the code that reads it, Phase 157 updates REST API, Phase 158 provides admin UI to populate age_classes. Deploy all four together once Phase 158 is complete.
 
 ## Session Continuity
 
-Last session: 2026-02-08 15:55
-Stopped at: Completed Phase 156 Plan 02 (dynamic sort order in REST & docs)
+Last session: 2026-02-09 09:41
+Stopped at: Completed Phase 157 Plan 01 (settings endpoints with full category support)
 Resume file: None
 
 ---
-*State updated: 2026-02-08*
+*State updated: 2026-02-09*
