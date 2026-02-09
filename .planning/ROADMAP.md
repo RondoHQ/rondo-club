@@ -64,7 +64,10 @@ Plans:
   2. The fee settings POST endpoint accepts operations to add, edit, remove, and reorder categories
   3. The fee list endpoint includes category metadata (labels, sort order) in its response so the frontend needs no hardcoded mappings
   4. Category validation rejects duplicate slugs, missing required fields, and overlapping age ranges
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 157-01-PLAN.md — Update settings GET/POST endpoints for full category objects with validation
+- [ ] 157-02-PLAN.md — Add categories metadata to fee list endpoint and update developer docs
 
 ### Phase 158: Fee Category Settings UI
 **Goal**: Admins can manage fee categories per season through the Settings UI
@@ -97,7 +100,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
-| 157. Fee Category REST API | v21.0 | 0/TBD | Not started | - |
+| 157. Fee Category REST API | v21.0 | 0/2 | Planned | - |
 | 158. Fee Category Settings UI | v21.0 | 0/TBD | Not started | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 
