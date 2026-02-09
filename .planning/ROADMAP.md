@@ -121,10 +121,10 @@ Plans:
 4. Settings page no longer shows theme customization controls
 5. Production build contains no dead code from removed theming system
 
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 165-01: PWA and backend cleanup
+- [ ] 165-01-PLAN.md — Update PWA assets to electric-cyan, fix login page bugs, remove dead theming code from REST API
 
 ---
 
