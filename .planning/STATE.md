@@ -21,8 +21,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-2 todo(s) in `.planning/todos/pending/`:
-- **switch-to-new-website-design-style**: Switch to new website design style (area: ui)
+1 todo(s) in `.planning/todos/pending/`:
 - **treasurer-fee-income-overview-by-category**: Treasurer fee income overview by category (area: ui)
 
 ### Blockers/Concerns
