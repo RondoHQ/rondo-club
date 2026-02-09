@@ -3280,7 +3280,7 @@ class Api extends Base {
 				'fields'         => 'ids',
 				'meta_query'     => [
 					[
-						'key'     => 'werkfuncties',
+						'key'     => 'work_history',
 						'compare' => 'EXISTS',
 					],
 				],
@@ -3289,10 +3289,13 @@ class Api extends Base {
 
 		$all_werkfuncties = [];
 		foreach ( $people as $person_id ) {
-			$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
-			foreach ( $werkfuncties as $wf ) {
-				if ( is_string( $wf ) && trim( $wf ) !== '' ) {
-					$all_werkfuncties[ trim( $wf ) ] = true;
+			$work_history = get_field( 'work_history', $person_id ) ?: [];
+			foreach ( $work_history as $position ) {
+				if ( ! empty( $position['job_title'] ) && is_string( $position['job_title'] ) ) {
+					$job_title = trim( $position['job_title'] );
+					if ( $job_title !== '' ) {
+						$all_werkfuncties[ $job_title ] = true;
+					}
 				}
 			}
 		}
