@@ -24,11 +24,6 @@ class ClubConfig {
 	const OPTION_CLUB_NAME = 'rondo_club_name';
 
 	/**
-	 * Option key for accent color
-	 */
-	const OPTION_ACCENT_COLOR = 'rondo_accent_color';
-
-	/**
 	 * Option key for FreeScout URL
 	 */
 	const OPTION_FREESCOUT_URL = 'rondo_freescout_url';
@@ -40,7 +35,6 @@ class ClubConfig {
 	 */
 	const DEFAULTS = [
 		'club_name'     => '',
-		'accent_color'  => '#006935',
 		'freescout_url' => '',
 	];
 
@@ -51,23 +45,6 @@ class ClubConfig {
 	 */
 	public function get_club_name(): string {
 		return get_option( self::OPTION_CLUB_NAME, self::DEFAULTS['club_name'] );
-	}
-
-	/**
-	 * Get accent color
-	 *
-	 * @return string The accent color in hex format (default: #006935)
-	 */
-	public function get_accent_color(): string {
-		$color = get_option( self::OPTION_ACCENT_COLOR, self::DEFAULTS['accent_color'] );
-
-		// Validate the color
-		$sanitized = sanitize_hex_color( $color );
-		if ( ! $sanitized ) {
-			return self::DEFAULTS['accent_color'];
-		}
-
-		return $sanitized;
 	}
 
 	/**
@@ -87,7 +64,6 @@ class ClubConfig {
 	public function get_all_settings(): array {
 		return [
 			'club_name'     => $this->get_club_name(),
-			'accent_color'  => $this->get_accent_color(),
 			'freescout_url' => $this->get_freescout_url(),
 		];
 	}
@@ -101,20 +77,6 @@ class ClubConfig {
 	public function update_club_name( string $name ): bool {
 		$sanitized = sanitize_text_field( $name );
 		return update_option( self::OPTION_CLUB_NAME, $sanitized );
-	}
-
-	/**
-	 * Update accent color
-	 *
-	 * @param string $color The accent color in hex format.
-	 * @return bool True on success, false on failure (invalid color)
-	 */
-	public function update_accent_color( string $color ): bool {
-		$sanitized = sanitize_hex_color( $color );
-		if ( ! $sanitized ) {
-			return false;
-		}
-		return update_option( self::OPTION_ACCENT_COLOR, $sanitized );
 	}
 
 	/**
