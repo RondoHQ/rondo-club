@@ -79,7 +79,10 @@ Plans:
   3. Admin can switch between seasons to manage category configs for different seasons
   4. Admin can drag-and-drop to reorder categories, and the new order persists
   5. A visual display shows age range coverage across categories, highlighting gaps or overlaps
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 158-01-PLAN.md — Create FeeCategorySettings component with season selector, DnD category list, CRUD, validation display, and age class coverage
+- [ ] 158-02-PLAN.md — Wire into Settings.jsx, remove old FeesSubtab, version bump to 21.0.0, deploy
 
 ### Phase 159: Fee Category Frontend Display
 **Goal**: The contributie list and Google Sheets export derive all category information from the API response
@@ -101,9 +104,9 @@ Plans:
 | 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 158. Fee Category Settings UI | v21.0 | 0/TBD | Not started | - |
+| 158. Fee Category Settings UI | v21.0 | 0/2 | In progress | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 157 complete*
+*Last updated: 2026-02-09 — Phase 158 planned (2 plans in 2 waves)*
