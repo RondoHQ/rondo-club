@@ -1338,22 +1338,6 @@ export default function PersonDetail() {
               </div>
             )}
 
-            {/* How we met */}
-            {(acf.how_we_met || acf.met_date) && (
-              <div className="card p-6 break-inside-avoid mb-6">
-                <h2 className="font-semibold mb-3">How we met</h2>
-                {acf.met_date && (
-                  <p className="text-sm text-gray-500 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-1" />
-                    {format(new Date(acf.met_date), 'MMMM d, yyyy')}
-                  </p>
-                )}
-                {acf.how_we_met && (
-                  <p className="text-sm">{acf.how_we_met}</p>
-                )}
-              </div>
-            )}
-
             {/* Relationships */}
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">

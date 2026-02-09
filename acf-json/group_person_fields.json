@@ -106,28 +106,6 @@
             "max": 50
         },
         {
-            "key": "field_person_story",
-            "label": "Story",
-            "name": "",
-            "type": "tab",
-            "placement": "top"
-        },
-        {
-            "key": "field_how_we_met",
-            "label": "How We Met",
-            "name": "how_we_met",
-            "type": "textarea",
-            "rows": 4
-        },
-        {
-            "key": "field_met_date",
-            "label": "When We Met",
-            "name": "met_date",
-            "type": "date_picker",
-            "display_format": "F j, Y",
-            "return_format": "Y-m-d"
-        },
-        {
             "key": "field_person_contact",
             "label": "Contact Info",
             "name": "",

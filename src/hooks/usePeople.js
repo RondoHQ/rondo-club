@@ -252,7 +252,6 @@ export function useCreatePerson({ onSuccess } = {}) {
           nickname: data.nickname,
           gender: data.gender || null,
           pronouns: data.pronouns || null,
-          how_we_met: data.how_we_met,
           contact_info: contactInfo,
         },
       };
