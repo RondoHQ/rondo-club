@@ -2578,12 +2578,14 @@ class Api extends Base {
 		return rest_ensure_response(
 			[
 				'current_season' => [
-					'key'        => $current_season,
-					'categories' => $membership_fees->get_categories_for_season( $current_season ),
+					'key'             => $current_season,
+					'categories'      => $membership_fees->get_categories_for_season( $current_season ),
+					'family_discount' => $membership_fees->get_family_discount_config( $current_season ),
 				],
 				'next_season'    => [
-					'key'        => $next_season,
-					'categories' => $membership_fees->get_categories_for_season( $next_season ),
+					'key'             => $next_season,
+					'categories'      => $membership_fees->get_categories_for_season( $next_season ),
+					'family_discount' => $membership_fees->get_family_discount_config( $next_season ),
 				],
 			]
 		);
@@ -2603,17 +2605,26 @@ class Api extends Base {
 		$next_season     = $membership_fees->get_next_season_key();
 		$season          = $request->get_param( 'season' );
 		$categories      = $request->get_param( 'categories' );
+		$family_discount = $request->get_param( 'family_discount' );
 
 		// Validate category structure
 		$validation = $this->validate_category_config( $categories );
-		if ( ! empty( $validation['errors'] ) ) {
+
+		// Validate family discount config (if provided)
+		$discount_validation = $this->validate_family_discount_config( $family_discount );
+
+		// Merge all errors and warnings
+		$all_errors   = array_merge( $validation['errors'], $discount_validation['errors'] );
+		$all_warnings = array_merge( $validation['warnings'], $discount_validation['warnings'] );
+
+		if ( ! empty( $all_errors ) ) {
 			return new \WP_Error(
-				'invalid_categories',
-				'Category validation failed',
+				'invalid_settings',
+				'Settings validation failed',
 				[
 					'status'   => 400,
-					'errors'   => $validation['errors'],
-					'warnings' => $validation['warnings'],
+					'errors'   => $all_errors,
+					'warnings' => $all_warnings,
 				]
 			);
 		}
@@ -2621,21 +2632,34 @@ class Api extends Base {
 		// Save categories for the specified season
 		$membership_fees->save_categories_for_season( $categories, $season );
 
+		// Save family discount config (if provided)
+		if ( $family_discount !== null ) {
+			$membership_fees->save_family_discount_config(
+				[
+					'second_child_percent' => (float) ( $family_discount['second_child_percent'] ?? 25 ),
+					'third_child_percent'  => (float) ( $family_discount['third_child_percent'] ?? 50 ),
+				],
+				$season
+			);
+		}
+
 		// Return updated settings for both seasons
 		$response = [
 			'current_season' => [
-				'key'        => $current_season,
-				'categories' => $membership_fees->get_categories_for_season( $current_season ),
+				'key'             => $current_season,
+				'categories'      => $membership_fees->get_categories_for_season( $current_season ),
+				'family_discount' => $membership_fees->get_family_discount_config( $current_season ),
 			],
 			'next_season'    => [
-				'key'        => $next_season,
-				'categories' => $membership_fees->get_categories_for_season( $next_season ),
+				'key'             => $next_season,
+				'categories'      => $membership_fees->get_categories_for_season( $next_season ),
+				'family_discount' => $membership_fees->get_family_discount_config( $next_season ),
 			],
 		];
 
 		// Include warnings if any
-		if ( ! empty( $validation['warnings'] ) ) {
-			$response['warnings'] = $validation['warnings'];
+		if ( ! empty( $all_warnings ) ) {
+			$response['warnings'] = $all_warnings;
 		}
 
 		return rest_ensure_response( $response );
@@ -2728,6 +2752,68 @@ class Api extends Base {
 					}
 				}
 			}
+		}
+
+		return [ 'errors' => $errors, 'warnings' => $warnings ];
+	}
+
+	/**
+	 * Validate family discount configuration
+	 *
+	 * Ensures percentages are valid numbers between 0 and 100.
+	 * Null/missing config is valid (defaults will be used).
+	 *
+	 * @param mixed $config The family_discount config to validate.
+	 * @return array Array with 'errors' and 'warnings' keys.
+	 */
+	private function validate_family_discount_config( $config ) {
+		$errors   = [];
+		$warnings = [];
+
+		// Null/missing is valid (use defaults)
+		if ( $config === null ) {
+			return [ 'errors' => [], 'warnings' => [] ];
+		}
+
+		// Must be an array
+		if ( ! is_array( $config ) ) {
+			$errors[] = [
+				'field'   => 'family_discount',
+				'message' => 'Familiekorting configuratie moet een object zijn',
+			];
+			return [ 'errors' => $errors, 'warnings' => $warnings ];
+		}
+
+		// Validate second_child_percent
+		if ( isset( $config['second_child_percent'] ) ) {
+			$value = $config['second_child_percent'];
+			if ( ! is_numeric( $value ) || $value < 0 || $value > 100 ) {
+				$errors[] = [
+					'field'   => 'family_discount.second_child_percent',
+					'message' => 'Korting tweede kind moet tussen 0 en 100 procent zijn',
+				];
+			}
+		}
+
+		// Validate third_child_percent
+		if ( isset( $config['third_child_percent'] ) ) {
+			$value = $config['third_child_percent'];
+			if ( ! is_numeric( $value ) || $value < 0 || $value > 100 ) {
+				$errors[] = [
+					'field'   => 'family_discount.third_child_percent',
+					'message' => 'Korting derde kind en verder moet tussen 0 en 100 procent zijn',
+				];
+			}
+		}
+
+		// Warning if second child discount >= third child discount
+		$second = is_numeric( $config['second_child_percent'] ?? null ) ? (float) $config['second_child_percent'] : 25;
+		$third  = is_numeric( $config['third_child_percent'] ?? null ) ? (float) $config['third_child_percent'] : 50;
+		if ( $second > 0 && $third > 0 && $second >= $third ) {
+			$warnings[] = [
+				'field'   => 'family_discount',
+				'message' => 'Korting tweede kind is doorgaans lager dan korting derde kind',
+			];
 		}
 
 		return [ 'errors' => $errors, 'warnings' => $warnings ];
