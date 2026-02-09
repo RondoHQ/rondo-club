@@ -329,10 +329,11 @@ class MembershipFees {
 	 *
 	 * Recreational teams have "recreant" or "walking football" or "walking voetbal" in their name.
 	 *
+	 * @deprecated Used only by migration logic. Config-driven matching replaces this.
 	 * @param int $team_id The team post ID.
 	 * @return bool True if the team is recreational.
 	 */
-	public function is_recreational_team( int $team_id ): bool {
+	private function is_recreational_team( int $team_id ): bool {
 		$team = get_post( $team_id );
 
 		if ( ! $team || $team->post_type !== 'team' ) {
@@ -349,10 +350,11 @@ class MembershipFees {
 	 *
 	 * Returns true only if the person has exactly one werkfunctie and it is "Donateur".
 	 *
+	 * @deprecated Used only by migration logic. Config-driven matching replaces this.
 	 * @param int $person_id The person post ID.
 	 * @return bool True if the person is a donateur only.
 	 */
-	public function is_donateur( int $person_id ): bool {
+	private function is_donateur( int $person_id ): bool {
 		$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
 
 		if ( empty( $werkfuncties ) ) {
@@ -364,16 +366,144 @@ class MembershipFees {
 	}
 
 	/**
+	 * Find all recreational team IDs from the database
+	 *
+	 * Used by migration logic to populate matching_teams for 'recreant' category.
+	 * Queries all teams and filters using the deprecated is_recreational_team() method.
+	 *
+	 * @return array<int> Array of team post IDs that match recreational criteria.
+	 */
+	private function find_recreational_team_ids(): array {
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'team',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'post_status'    => 'publish',
+				'no_found_rows'  => true,
+			]
+		);
+
+		$recreational_ids = [];
+		foreach ( $query->posts as $team_id ) {
+			if ( $this->is_recreational_team( $team_id ) ) {
+				$recreational_ids[] = $team_id;
+			}
+		}
+
+		return $recreational_ids;
+	}
+
+	/**
+	 * Get category by team matching
+	 *
+	 * Finds the first category (by sort_order) whose matching_teams array contains
+	 * any of the provided team IDs. Filters out deleted teams (non-publish status).
+	 *
+	 * @param array<int>  $team_ids Array of team post IDs to match against.
+	 * @param string|null $season   Optional season key, defaults to current season.
+	 * @return string|null Category slug or null if no match.
+	 */
+	private function get_category_by_team_match( array $team_ids, ?string $season = null ): ?string {
+		if ( empty( $team_ids ) ) {
+			return null;
+		}
+
+		$season     = $season ?? $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		if ( empty( $categories ) ) {
+			return null;
+		}
+
+		// Sort by sort_order (lowest first)
+		uasort( $categories, function ( $a, $b ) {
+			return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
+		} );
+
+		foreach ( $categories as $slug => $category ) {
+			$matching_teams = $category['matching_teams'] ?? [];
+
+			if ( empty( $matching_teams ) || ! is_array( $matching_teams ) ) {
+				continue;
+			}
+
+			// Check if any of person's teams are in this category's matching_teams
+			foreach ( $team_ids as $team_id ) {
+				// Filter out deleted teams
+				if ( get_post_status( $team_id ) !== 'publish' ) {
+					continue;
+				}
+
+				if ( in_array( $team_id, $matching_teams, true ) ) {
+					return $slug;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get category by werkfunctie matching
+	 *
+	 * Finds the first category (by sort_order) whose matching_werkfuncties array contains
+	 * any of the provided werkfuncties. Uses case-insensitive comparison with trimming.
+	 *
+	 * @param array<string> $werkfuncties Array of werkfunctie strings to match against.
+	 * @param string|null   $season       Optional season key, defaults to current season.
+	 * @return string|null Category slug or null if no match.
+	 */
+	private function get_category_by_werkfunctie_match( array $werkfuncties, ?string $season = null ): ?string {
+		if ( empty( $werkfuncties ) ) {
+			return null;
+		}
+
+		$season     = $season ?? $this->get_season_key();
+		$categories = $this->get_categories_for_season( $season );
+
+		if ( empty( $categories ) ) {
+			return null;
+		}
+
+		// Sort by sort_order (lowest first)
+		uasort( $categories, function ( $a, $b ) {
+			return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
+		} );
+
+		foreach ( $categories as $slug => $category ) {
+			$matching_werkfuncties = $category['matching_werkfuncties'] ?? [];
+
+			if ( empty( $matching_werkfuncties ) || ! is_array( $matching_werkfuncties ) ) {
+				continue;
+			}
+
+			// Check if any of person's werkfuncties match (case-insensitive)
+			foreach ( $werkfuncties as $person_wf ) {
+				$person_wf_trimmed = trim( $person_wf );
+
+				foreach ( $matching_werkfuncties as $category_wf ) {
+					if ( strcasecmp( $person_wf_trimmed, trim( $category_wf ) ) === 0 ) {
+						return $slug;
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Calculate the fee for a person
 	 *
 	 * Determines the correct fee category and amount based on the person's
 	 * age group, team membership, and work functions.
 	 *
-	 * Priority order: Youth > Senior/Recreant > Donateur
-	 * - Youth (mini/pupil/junior): Always get age-based fee
-	 * - Senior: Regular senior fee, unless ALL teams are recreational
-	 * - Recreant: Senior with only recreational teams
-	 * - Donateur: Only if no valid age group and no teams
+	 * Priority order: Youth > Team matching > Werkfunctie matching > Non-youth age class fallback
+	 * - Youth categories: Matched by age class, return immediately (highest priority)
+	 * - Team matching: Config-driven matching via matching_teams arrays
+	 * - Werkfunctie matching: Config-driven matching via matching_werkfuncties arrays
+	 * - Age class fallback: Non-youth age class match (e.g., senior) as last resort
 	 *
 	 * @param int         $person_id The person post ID.
 	 * @param string|null $season    Optional season key for fee lookup, defaults to current season.
@@ -383,88 +513,63 @@ class MembershipFees {
 	public function calculate_fee( int $person_id, ?string $season = null ): ?array {
 		// Get leeftijdsgroep from person
 		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
-		$category       = null;
+		$age_class_category = null;
 
 		// Parse age group if available
 		if ( ! empty( $leeftijdsgroep ) ) {
-			$category = $this->get_category_by_age_class( $leeftijdsgroep, $season );
+			$age_class_category = $this->get_category_by_age_class( $leeftijdsgroep, $season );
 		}
 
 		// Youth categories: Return immediately (priority over everything)
 		$youth_categories = $this->get_youth_category_slugs( $season );
-		if ( in_array( $category, $youth_categories, true ) ) {
+		if ( $age_class_category && in_array( $age_class_category, $youth_categories, true ) ) {
 			return [
-				'category'       => $category,
-				'base_fee'       => $this->get_fee( $category, $season ),
+				'category'       => $age_class_category,
+				'base_fee'       => $this->get_fee( $age_class_category, $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
 		}
 
-		// Senior category: Check for recreational teams
-		if ( $category === 'senior' ) {
-			$teams = $this->get_current_teams( $person_id );
-
-			// Senior with no teams: check donateur status
-			if ( empty( $teams ) ) {
-				// If senior with no teams but is donateur, they're still a senior member
-				// If no teams and not a playing member, exclude
-				if ( $this->is_donateur( $person_id ) ) {
-					// Has senior leeftijdsgroep but only donateur function, no teams
-					// Treat as donateur
-					return [
-						'category'       => 'donateur',
-						'base_fee'       => $this->get_fee( 'donateur', $season ),
-						'leeftijdsgroep' => $leeftijdsgroep,
-						'person_id'      => $person_id,
-					];
-				}
-
-				// Senior with no teams and not donateur - exclude
-				return null;
-			}
-
-			// Check if ALL teams are recreational
-			$all_recreational = true;
-			foreach ( $teams as $team_id ) {
-				if ( ! $this->is_recreational_team( $team_id ) ) {
-					$all_recreational = false;
-					break;
-				}
-			}
-
-			// If ALL teams are recreational, use recreant fee
-			// Otherwise, use senior fee (higher fee wins)
-			$fee_category = $all_recreational ? 'recreant' : 'senior';
-
-			return [
-				'category'       => $fee_category,
-				'base_fee'       => $this->get_fee( $fee_category, $season ),
-				'leeftijdsgroep' => $leeftijdsgroep,
-				'person_id'      => $person_id,
-			];
-		}
-
-		// No valid leeftijdsgroep or parse failed
-		// Check if person has teams (data issue - exclude)
+		// Check team matching (config-driven)
 		$teams = $this->get_current_teams( $person_id );
-
 		if ( ! empty( $teams ) ) {
-			// Has teams but no valid age group - data issue, exclude
-			return null;
+			$team_matched_category = $this->get_category_by_team_match( $teams, $season );
+			if ( $team_matched_category !== null ) {
+				return [
+					'category'       => $team_matched_category,
+					'base_fee'       => $this->get_fee( $team_matched_category, $season ),
+					'leeftijdsgroep' => $leeftijdsgroep,
+					'person_id'      => $person_id,
+				];
+			}
 		}
 
-		// No teams, check if donateur
-		if ( $this->is_donateur( $person_id ) ) {
+		// Check werkfunctie matching (config-driven)
+		$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
+		if ( ! empty( $werkfuncties ) ) {
+			$werkfunctie_matched_category = $this->get_category_by_werkfunctie_match( $werkfuncties, $season );
+			if ( $werkfunctie_matched_category !== null ) {
+				return [
+					'category'       => $werkfunctie_matched_category,
+					'base_fee'       => $this->get_fee( $werkfunctie_matched_category, $season ),
+					'leeftijdsgroep' => $leeftijdsgroep,
+					'person_id'      => $person_id,
+				];
+			}
+		}
+
+		// Fallback: Use non-youth age class match if we had one
+		if ( $age_class_category !== null ) {
 			return [
-				'category'       => 'donateur',
-				'base_fee'       => $this->get_fee( 'donateur', $season ),
+				'category'       => $age_class_category,
+				'base_fee'       => $this->get_fee( $age_class_category, $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
 		}
 
-		// No valid category, no teams, not donateur - exclude
+		// No valid category found - exclude
 		return null;
 	}
 
@@ -573,6 +678,52 @@ class MembershipFees {
 	}
 
 	/**
+	 * Migrate category data to include matching_teams and matching_werkfuncties fields
+	 *
+	 * Phase 161 adds configurable team and werkfunctie matching rules to category objects.
+	 * This method auto-populates defaults for existing categories:
+	 * - 'recreant' category: matching_teams populated from recreational team IDs in database
+	 * - 'donateur' category: matching_werkfuncties set to ['Donateur']
+	 * - All other categories: empty arrays for both fields
+	 *
+	 * Only persists if migration actually changed anything.
+	 *
+	 * @param array $categories Slug-keyed array of category objects.
+	 * @return array Migrated categories with matching rules.
+	 */
+	private function maybe_migrate_matching_rules( array $categories ): array {
+		$needs_migration = false;
+
+		foreach ( $categories as $slug => $category ) {
+			// Add matching_teams if missing
+			if ( ! isset( $category['matching_teams'] ) ) {
+				$needs_migration = true;
+
+				if ( $slug === 'recreant' ) {
+					// Populate with current recreational team IDs
+					$categories[ $slug ]['matching_teams'] = $this->find_recreational_team_ids();
+				} else {
+					$categories[ $slug ]['matching_teams'] = [];
+				}
+			}
+
+			// Add matching_werkfuncties if missing
+			if ( ! isset( $category['matching_werkfuncties'] ) ) {
+				$needs_migration = true;
+
+				if ( $slug === 'donateur' ) {
+					// Populate with default donateur werkfunctie
+					$categories[ $slug ]['matching_werkfuncties'] = [ 'Donateur' ];
+				} else {
+					$categories[ $slug ]['matching_werkfuncties'] = [];
+				}
+			}
+		}
+
+		return $categories;
+	}
+
+	/**
 	 * Get fee categories for a specific season
 	 *
 	 * Returns the slug-keyed array of category objects for the specified season.
@@ -591,6 +742,7 @@ class MembershipFees {
 		// If season option exists and is an array, migrate if needed and return
 		if ( $stored !== false && is_array( $stored ) ) {
 			$migrated = $this->maybe_migrate_age_classes( $stored );
+			$migrated = $this->maybe_migrate_matching_rules( $migrated );
 
 			// If migration changed anything, persist the updated format
 			if ( $migrated !== $stored ) {
@@ -610,6 +762,7 @@ class MembershipFees {
 			// If previous season has data, copy it to the new season
 			if ( $previous_stored !== false && is_array( $previous_stored ) ) {
 				$migrated = $this->maybe_migrate_age_classes( $previous_stored );
+				$migrated = $this->maybe_migrate_matching_rules( $migrated );
 				update_option( $season_key, $migrated );
 				return $migrated;
 			}
