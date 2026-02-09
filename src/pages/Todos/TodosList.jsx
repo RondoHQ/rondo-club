@@ -204,7 +204,7 @@ export default function TodosList() {
       <div className="space-y-6">
         {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Taken</h1>
+        <h1 className="text-2xl font-bold text-brand-gradient">Taken</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowGlobalTodoModal(true)}

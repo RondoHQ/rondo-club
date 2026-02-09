@@ -265,7 +265,7 @@ export default function CommissieDetail() {
                 Subcommissie van {getCommissieName(parentCommissie)}
               </Link>
             )}
-            <h1 className="text-2xl font-bold">{getCommissieName(commissie)}</h1>
+            <h1 className="text-2xl font-bold text-brand-gradient">{getCommissieName(commissie)}</h1>
             {acf.website && (
               <a 
                 href={acf.website} 

@@ -158,7 +158,7 @@ export default function FeedbackManagement() {
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden md:inline">Terug naar Instellingen</span>
         </Link>
-        <h1 className="text-2xl font-semibold dark:text-gray-50">Feedbackbeheer</h1>
+        <h1 className="text-2xl font-semibold text-brand-gradient">Feedbackbeheer</h1>
       </div>
 
       {/* Filters */}

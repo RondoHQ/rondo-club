@@ -311,7 +311,7 @@ function EmptyState() {
           <Sparkles className="w-12 h-12 text-electric-cyan dark:text-electric-cyan" />
         </div>
       </div>
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 mb-2">Welkom bij {APP_NAME}!</h2>
+      <h2 className="text-2xl font-semibold text-brand-gradient mb-2">Welkom bij {APP_NAME}!</h2>
       <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
         Begin met het toevoegen van je eerste lid, team of datum. Je dashboard vult zich naarmate je meer informatie toevoegt.
       </p>

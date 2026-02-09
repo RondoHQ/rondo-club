@@ -117,7 +117,7 @@ export default function FeedbackDetail() {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-2xl font-bold text-brand-gradient">
               {feedback.title}
             </h1>
           </div>

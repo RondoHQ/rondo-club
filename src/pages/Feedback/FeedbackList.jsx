@@ -87,7 +87,7 @@ export default function FeedbackList() {
       <div className="space-y-6">
         {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Feedback</h1>
+        <h1 className="text-2xl font-bold text-brand-gradient">Feedback</h1>
         <button
           onClick={() => setShowModal(true)}
           className="btn-primary text-sm flex items-center gap-2"
