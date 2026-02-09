@@ -71,7 +71,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 167-01-PLAN.md — Exclude former members from filtered people endpoint, dashboard stats, and team rosters
+- [x] 167-01-PLAN.md — Exclude former members from filtered people endpoint, dashboard stats, and team rosters
 
 #### Phase 168: Visibility Controls
 **Goal**: Users can find former members through search and a dedicated filter toggle
@@ -109,10 +109,10 @@ Phases execute in numeric order: 166 → 167 → 168 → 169
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 166. Backend Foundation | 1/1 | ✓ Complete | 2026-02-09 |
-| 167. Core Filtering | 0/? | Not started | - |
+| 167. Core Filtering | 1/1 | ✓ Complete | 2026-02-09 |
 | 168. Visibility Controls | 0/? | Not started | - |
 | 169. Contributie Logic | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-09 — Phase 166 Backend Foundation complete*
+*Last updated: 2026-02-09 — Phase 167 Core Filtering complete*
