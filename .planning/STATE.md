@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 ## Current Position
 
 Phase: 160 of 161 (Configurable Family Discount) — fifth phase of v21.0
-Plan: 01 of 02 complete
-Status: In Progress
-Last activity: 2026-02-09 — Phase 160 Plan 01 complete (backend configurable discount)
+Plan: 02 of 02 complete
+Status: Complete
+Last activity: 2026-02-09 — Phase 160 complete (configurable family discount UI and backend)
 
-Progress: [█████████░] 90% (9/10 v21.0 plans complete, 1 plan + 1 phase remaining)
+Progress: [█████████░] 95% (10/10 v21.0 plans complete, 1 phase remaining: 161-configurable-matching-rules)
 
 ## Accumulated Context
 
@@ -53,6 +53,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 160-01:** Family discount stored in separate option (rondo_family_discount_{season}) to avoid conflicts with category saves
 - **Phase 160-01:** Copy-forward pattern: new seasons inherit previous season's discount config automatically
 - **Phase 160-01:** Validation warns (not errors) if second child discount >= third child discount (allows flexibility)
+- **Phase 160-02:** Separate discountMutation avoids sending categories when only discount changes
+- **Phase 160-02:** FamilyDiscountSection placed prominently above category list for visibility
 
 ### Pending Todos
 
@@ -72,7 +74,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 160 Plan 01 complete. Next: Phase 160 Plan 02 (UI) or Phase 159/161 (independent).
+Stopped at: Phase 160 complete. Next: Phase 161 (Configurable Matching Rules) - final v21.0 phase.
 Resume file: None
 
 ---
