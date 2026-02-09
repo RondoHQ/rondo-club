@@ -2,68 +2,22 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-08)
+See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** v21.0 Per-Season Fee Categories (next milestone)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 159 of 161 (Fee Category Frontend Display) — COMPLETE
-Plan: 01 of 01 complete
-Status: All phases complete — v21.0 milestone ready for completion
-Last activity: 2026-02-09 — Phase 159-01 complete (fee category frontend display)
-
-Progress: [██████████] 100% (13/13 v21.0 plans complete — all phases verified)
+Phase: v21.0 complete (phases 155-161)
+Status: Milestone shipped and archived
+Last activity: 2026-02-09 — v21.0 Per-Season Fee Categories shipped
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-
-- Season key format YYYY-YYYY already established (v12.0)
-- Per-season fee amounts already stored in WordPress options (`rondo_membership_fees_{season}`)
-- Season detection (July 1 boundary) and next-season support already implemented
-- Forecast mode already works for next season
-- User chose: WordPress options storage, copy-previous for new seasons, fully configurable age ranges
-- **Phase 155-01:** Category data structure is slug-keyed objects with label, amount, age ranges, youth flag, sort order
-- **Phase 155-01:** Copy-forward clones entire category configuration from previous season
-- **Phase 155-01:** No backward compatibility layer - clean break from flat amount format
-- **Phase 156-01:** Age class matching uses exact string comparison, not regex/range calculation
-- **Phase 156-01:** Automatic migration from age_min/age_max to age_classes (empty array as catch-all)
-- **Phase 156-01:** Category with lowest sort_order wins when age class appears in multiple categories
-- **Phase 156-01:** Season parameter flows through entire calculation chain for forecast mode
-- **Phase 156-02:** Eliminated all hardcoded category_order arrays in favor of get_category_sort_order()
-- **Phase 156-02:** REST API and Google Sheets export respect per-season category configuration
-- **Phase 157-01:** GET /membership-fees/settings returns full category objects (not flat amounts)
-- **Phase 157-01:** POST /membership-fees/settings uses full replacement pattern with structured validation
-- **Phase 157-01:** Validation distinguishes errors (block save) from warnings (informational)
-- **Phase 157-01:** Empty categories array is valid for reset functionality
-- **Phase 157-02:** GET /fees includes categories metadata (label, sort_order, is_youth) for dynamic frontend rendering
-- **Phase 157-02:** Category metadata in fee list returns only display-relevant fields, not full config
-- **Phase 158-01:** FeeCategorySettings component is self-contained (fetches own data via TanStack Query)
-- **Phase 158-01:** Validation display distinguishes blocking errors (red) from informational warnings (amber)
-- **Phase 158-01:** Auto-slug generation from label for new categories reduces user error
-- **Phase 158-01:** Age class coverage summary always visible (not just after save) for better UX
-- **Phase 158-02:** Age classes fetched from database (filter-options endpoint), not free text
-- **Phase 158-02:** Slug field removed from UI, auto-derived from label
-- **Phase 158-02:** is_youth field relabeled as "Familiekorting mogelijk?" — reflects actual purpose
-- **Phase 158-02:** Donateur is a werkfunctie, not a type-lid — Phase 161 should use werkfuncties for matching
-- **Phase 160-01:** Family discount stored in separate option (rondo_family_discount_{season}) to avoid conflicts with category saves
-- **Phase 160-01:** Copy-forward pattern: new seasons inherit previous season's discount config automatically
-- **Phase 160-01:** Validation warns (not errors) if second child discount >= third child discount (allows flexibility)
-- **Phase 160-02:** Separate discountMutation avoids sending categories when only discount changes
-- **Phase 160-02:** FamilyDiscountSection placed prominently above category list for visibility
-- **Phase 161-01:** Config-driven matching replaces hardcoded is_recreational_team() and is_donateur() checks
-- **Phase 161-01:** Team matching uses ANY match (admin explicitly selects teams), werkfunctie matching is case-insensitive
-- **Phase 161-01:** Migration auto-populates matching_teams for 'recreant', matching_werkfuncties=['Donateur'] for 'donateur'
-- **Phase 161-01:** Priority order: youth > team matching > werkfunctie matching > age-class fallback
-- **Phase 161-02:** Team and werkfunctie matching UI uses multi-select checkboxes in fee category settings
-- **Phase 161-02:** Category cards show matching rules summary (team count, werkfunctie names)
-- **Phase 159-01:** Removed FEE_CATEGORIES hardcoded object in favor of API-driven category metadata
-- **Phase 159-01:** Category colors use fixed palette indexed by sort_order for visual consistency across app
-- **Phase 159-01:** Google Sheets export derives labels from API categories metadata
 
 ### Pending Todos
 
@@ -78,12 +32,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Blockers/Concerns
 
-- Phases 155-158 deployed together on 2026-02-09 — deployment blocker resolved.
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 159 complete. All v21.0 phases (155-161) executed and verified. Ready for milestone completion.
+Stopped at: v21.0 milestone archived. Ready for next milestone.
 Resume file: None
 
 ---

@@ -367,18 +367,20 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - Team detail player/staff split driven by configured role settings — v20.0
 - Default role fallbacks removed from rondo-sync (skip-and-warn pattern) — v20.0
 
+**v21.0 Per-Season Fee Categories (shipped 2026-02-09):**
+- ✓ Fee categories (slug, label, amount, age classes, youth flag, sort order) configurable per season — v21.0
+- ✓ Admin can manage fee categories via Settings UI with add/edit/remove/reorder — v21.0
+- ✓ Admin can configure Sportlink age class-to-category mappings per season — v21.0
+- ✓ New seasons auto-copy categories from the previous season — v21.0
+- ✓ Config-driven fee calculation replaces hardcoded parse_age_group() — v21.0
+- ✓ Frontend receives category metadata from API (no hardcoded FEE_CATEGORIES) — v21.0
+- ✓ Category order, youth_categories, and VALID_TYPES all derived from season config — v21.0
+- ✓ Family discount percentages configurable per season — v21.0
+- ✓ Team and werkfunctie matching rules configurable per category — v21.0
+
 ### Active
 
-**v21.0 Per-Season Fee Categories** — Replace hardcoded fee category definitions with per-season configurable categories stored in WordPress options.
-
-- [ ] Fee categories (name, label, amount, age range, youth flag, sort order) are configurable per season
-- [ ] Admin can manage fee categories via Settings UI with add/remove/reorder
-- [ ] Admin can configure age-range-to-category mappings per season
-- [ ] New seasons auto-copy categories from the previous season as starting point
-- [ ] parse_age_group() reads age ranges from season config instead of hardcoded values
-- [ ] Frontend receives category metadata from API (no hardcoded FEE_CATEGORIES)
-- [ ] Category order, youth_categories, and VALID_TYPES all derived from season config
-- [ ] Migration: current season enriched with today's hardcoded values on first load
+(No active milestone — use `/gsd:new-milestone` to start next)
 
 ### Out of Scope
 
@@ -558,6 +560,20 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Skip-and-warn in rondo-sync | Missing role descriptions logged as warning, entry skipped — makes data quality visible | ✓ Good |
 | Remove member_type from sync layer | Classification now happens in Rondo Club settings, not sync pipeline | ✓ Good |
 | PRAGMA table_info before ALTER TABLE | Safe migration pattern for SQLite schema changes | ✓ Good |
+| Slug-keyed category objects | Categories stored as slug→{label, amount, age_classes, is_youth, sort_order} for O(1) lookup | ✓ Good |
+| No backward compat for flat amounts | Clean break from old format, single-club app with manual data setup | ✓ Good |
+| Age class exact string matching | Match Sportlink age class strings against category config arrays, not regex/ranges | ✓ Good |
+| Lowest sort_order wins for age class conflicts | Deterministic resolution when age class assigned to multiple categories | ✓ Good |
+| Full replacement pattern for POST settings | Categories array fully replaced on save, simpler than patch operations | ✓ Good |
+| Errors vs warnings in validation | Errors block save (duplicate slugs), warnings are informational (duplicate age classes) | ✓ Good |
+| Auto-slug from label | Slug auto-derived when creating categories, reduces admin error | ✓ Good |
+| Database-driven age class multi-select | Age classes from filter-options endpoint, not free text input | ✓ Good |
+| is_youth relabeled "Familiekorting mogelijk?" | Reflects actual business meaning for admins | ✓ Good |
+| Separate family discount option | rondo_family_discount_{season} avoids conflicts with category saves | ✓ Good |
+| Copy-forward for new season config | New seasons auto-inherit categories and discount config from previous | ✓ Good |
+| Config-driven matching rules | Team/werkfunctie matching per category replaces hardcoded is_recreational_team()/is_donateur() | ✓ Good |
+| Priority order: youth > team > werkfunctie > age-class | Deterministic category assignment hierarchy | ✓ Good |
+| Fixed palette for category colors | Colors auto-assigned by sort_order position, no per-category color config needed | ✓ Good |
 
 ---
-*Last updated: 2026-02-08 after v20.0 Configurable Roles milestone*
+*Last updated: 2026-02-09 after v21.0 Per-Season Fee Categories milestone*
