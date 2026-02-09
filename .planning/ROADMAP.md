@@ -96,10 +96,10 @@ Plans:
   2. Former members who left mid-season are charged full season fee (no pro-rata discount)
   3. Former members who joined after season start are excluded from contributie list
   4. Fee calculation diagnostics correctly explain former member treatment
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 169-01: TBD
+- [ ] 169-01-PLAN.md — Former member fee logic, pro-rata override, diagnostics, and documentation
 
 ## Progress
 
@@ -111,8 +111,8 @@ Phases execute in numeric order: 166 → 167 → 168 → 169
 | 166. Backend Foundation | 1/1 | ✓ Complete | 2026-02-09 |
 | 167. Core Filtering | 1/1 | ✓ Complete | 2026-02-09 |
 | 168. Visibility Controls | 1/1 | ✓ Complete | 2026-02-09 |
-| 169. Contributie Logic | 0/? | Not started | - |
+| 169. Contributie Logic | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-09 — Phase 168 Visibility Controls complete*
+*Last updated: 2026-02-09 — Phase 169 Contributie Logic planned*
