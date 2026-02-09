@@ -973,7 +973,7 @@ export default function PersonDetail() {
               </div>
             )}
             {/* Upload overlay */}
-            <div className="absolute inset-0 rounded-full bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
+            <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
                  onClick={() => fileInputRef.current?.click()}
             >
               {isUploadingPhoto ? (
@@ -1667,7 +1667,7 @@ export default function PersonDetail() {
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black bg-opacity-50"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setShowMobileTodos(false)}
           />
           {/* Panel */}
