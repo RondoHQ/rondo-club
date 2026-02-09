@@ -68,10 +68,10 @@ Plans:
   1. Leden list (server-side filtered endpoint) excludes former members by default
   2. Dashboard member count does not include former members
   3. Team rosters do not show former members in player or staff lists
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 167-01: TBD
+- [ ] 167-01-PLAN.md — Exclude former members from filtered people endpoint, dashboard stats, and team rosters
 
 #### Phase 168: Visibility Controls
 **Goal**: Users can find former members through search and a dedicated filter toggle
