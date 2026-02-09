@@ -649,6 +649,65 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get family discount configuration for a season
+	 *
+	 * Returns discount percentages stored in a separate WordPress option.
+	 * Implements copy-forward: if no config exists for the requested season,
+	 * copies from the previous season. Falls back to default values (25% for
+	 * 2nd child, 50% for 3rd+) only if no previous season config exists either.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array Array with 'second_child_percent' and 'third_child_percent' keys.
+	 */
+	public function get_family_discount_config( ?string $season = null ): array {
+		$season   = $season ?: $this->get_season_key();
+		$defaults = [
+			'second_child_percent' => 25,
+			'third_child_percent'  => 50,
+		];
+
+		$config = get_option( 'rondo_family_discount_' . $season, false );
+
+		if ( $config !== false && is_array( $config ) ) {
+			return [
+				'second_child_percent' => $config['second_child_percent'] ?? $defaults['second_child_percent'],
+				'third_child_percent'  => $config['third_child_percent'] ?? $defaults['third_child_percent'],
+			];
+		}
+
+		// Season option doesn't exist - try copy-forward from previous season
+		// (follows same pattern as get_categories_for_season() lines 603-615)
+		$previous_season = $this->get_previous_season_key( $season );
+
+		if ( $previous_season !== null ) {
+			$previous_config = get_option( 'rondo_family_discount_' . $previous_season, false );
+
+			if ( $previous_config !== false && is_array( $previous_config ) ) {
+				// Copy previous season's config to the new season
+				update_option( 'rondo_family_discount_' . $season, $previous_config );
+				return [
+					'second_child_percent' => $previous_config['second_child_percent'] ?? $defaults['second_child_percent'],
+					'third_child_percent'  => $previous_config['third_child_percent'] ?? $defaults['third_child_percent'],
+				];
+			}
+		}
+
+		// No data for this season or previous season - return defaults
+		return $defaults;
+	}
+
+	/**
+	 * Save family discount configuration for a season
+	 *
+	 * @param array  $config Array with 'second_child_percent' and 'third_child_percent' keys.
+	 * @param string $season Season key in "YYYY-YYYY" format.
+	 * @return bool True on success, false on failure.
+	 */
+	public function save_family_discount_config( array $config, string $season ): bool {
+		return update_option( 'rondo_family_discount_' . $season, $config );
+	}
+
+	/**
 	 * Get the post meta key for storing fee snapshots
 	 *
 	 * @param string|null $season Optional season key, defaults to current season.
@@ -1118,19 +1177,25 @@ class MembershipFees {
 	 * Get discount rate based on family position
 	 *
 	 * Position is 1-indexed where position 1 is the most expensive youth member
-	 * who pays full fee. Position 2 gets 25% off, position 3+ gets 50% off.
+	 * who pays full fee. Discount percentages are read from season config, with
+	 * fallback to default values (25% for 2nd child, 50% for 3rd+).
 	 *
-	 * @param int $position 1-indexed position in family (1=most expensive, pays full).
-	 * @return float Discount rate (0.0, 0.25, or 0.50).
+	 * @param int         $position 1-indexed position in family (1=most expensive, pays full).
+	 * @param string|null $season   Optional season key, defaults to current season.
+	 * @return float Discount rate (0.0 to 1.0).
 	 */
-	public function get_family_discount_rate( int $position ): float {
+	public function get_family_discount_rate( int $position, ?string $season = null ): float {
 		if ( $position <= 1 ) {
-			return 0.0;  // First member pays full fee
+			return 0.0;  // First member always pays full fee
 		}
+
+		$config = $this->get_family_discount_config( $season );
+
 		if ( $position === 2 ) {
-			return 0.25; // Second member gets 25% off
+			return $config['second_child_percent'] / 100.0;
 		}
-		return 0.50;     // Third+ get 50% off
+
+		return $config['third_child_percent'] / 100.0;
 	}
 
 	/**
@@ -1344,7 +1409,7 @@ class MembershipFees {
 		}
 
 		// Calculate discount
-		$discount_rate   = $this->get_family_discount_rate( $position );
+		$discount_rate   = $this->get_family_discount_rate( $position, $season );
 		$discount_amount = round( $fee_data['base_fee'] * $discount_rate, 2 );
 		$final_fee       = $fee_data['base_fee'] - $discount_amount;
 
