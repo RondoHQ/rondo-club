@@ -22,7 +22,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-1 todo(s) in `.planning/todos/pending/`:
+2 todo(s) in `.planning/todos/pending/`:
+- **move-contributie-settings-to-dedicated-menu-item**: Move contributie settings to dedicated menu item (area: ui)
 - **treasurer-fee-income-overview-by-category**: Treasurer fee income overview by category (area: ui)
 
 ### Blockers/Concerns
