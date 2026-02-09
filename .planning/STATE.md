@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 
 ## Current Position
 
-Phase: 158 of 161 (Fee Category Settings UI) — fourth phase of v21.0
-Plan: 02 of 02 complete
-Status: Complete
-Last activity: 2026-02-09 — Phase 158 verified and approved on production
+Phase: 160 of 161 (Configurable Family Discount) — fifth phase of v21.0
+Plan: 01 of 02 complete
+Status: In Progress
+Last activity: 2026-02-09 — Phase 160 Plan 01 complete (backend configurable discount)
 
-Progress: [████████░░] 80% (8/10 v21.0 plans complete, 3 phases remaining)
+Progress: [█████████░] 90% (9/10 v21.0 plans complete, 1 plan + 1 phase remaining)
 
 ## Accumulated Context
 
@@ -50,6 +50,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 158-02:** Slug field removed from UI, auto-derived from label
 - **Phase 158-02:** is_youth field relabeled as "Familiekorting mogelijk?" — reflects actual purpose
 - **Phase 158-02:** Donateur is a werkfunctie, not a type-lid — Phase 161 should use werkfuncties for matching
+- **Phase 160-01:** Family discount stored in separate option (rondo_family_discount_{season}) to avoid conflicts with category saves
+- **Phase 160-01:** Copy-forward pattern: new seasons inherit previous season's discount config automatically
+- **Phase 160-01:** Validation warns (not errors) if second child discount >= third child discount (allows flexibility)
 
 ### Pending Todos
 
@@ -69,7 +72,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 158 complete. Next: Phase 159, 160, or 161 (independent, can run in parallel).
+Stopped at: Phase 160 Plan 01 complete. Next: Phase 160 Plan 02 (UI) or Phase 159/161 (independent).
 Resume file: None
 
 ---
