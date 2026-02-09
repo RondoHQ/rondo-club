@@ -74,9 +74,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 163-01-PLAN.md — Bulk CSS class migration (accent-* to brand colors) and data-accent system deletion
-- [ ] 163-02-PLAN.md — Simplify useTheme hook, remove color picker from Settings, uninstall react-colorful
-- [ ] 163-03-PLAN.md — Remove accent_color from ClubConfig, REST API, and rondoConfig global
+- [x] 163-01-PLAN.md — Bulk CSS class migration (accent-* to brand colors) and data-accent system deletion — completed 2026-02-09
+- [x] 163-02-PLAN.md — Simplify useTheme hook, remove color picker from Settings, uninstall react-colorful — completed 2026-02-09
+- [x] 163-03-PLAN.md — Remove accent_color from ClubConfig, REST API, and rondoConfig global — completed 2026-02-09
 
 ---
 
@@ -143,10 +143,10 @@ Plans:
 | 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 162. Foundation | v22.0 | 1/1 | ✓ Complete | 2026-02-09 |
-| 163. Color Migration | v22.0 | 0/3 | Planned | - |
+| 163. Color Migration | v22.0 | 3/3 | ✓ Complete | 2026-02-09 |
 | 164. Component Styling | v22.0 | 0/1 | Not started | - |
 | 165. PWA & Backend | v22.0 | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 162 completed*
+*Last updated: 2026-02-09 — Phase 163 completed*
