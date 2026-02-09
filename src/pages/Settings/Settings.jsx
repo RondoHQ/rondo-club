@@ -3144,19 +3144,6 @@ function AdminTab({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Gebruikersbeheer</h2>
-        <div className="space-y-3">
-          <Link
-            to="/settings/user-approval"
-            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            <p className="font-medium">Gebruikersgoedkeuring</p>
-            <p className="text-sm text-gray-500">Keur toegang goed of weiger voor nieuwe gebruikers</p>
-          </Link>
-        </div>
-      </div>
-      
-      <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">Configuratie</h2>
         <div className="space-y-3">
           <Link
