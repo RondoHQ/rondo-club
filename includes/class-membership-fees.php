@@ -752,23 +752,8 @@ class MembershipFees {
 			return $migrated;
 		}
 
-		// Season option doesn't exist - try copy-forward from previous season
-		$previous_season = $this->get_previous_season_key( $season );
-
-		if ( $previous_season !== null ) {
-			$previous_season_key = $this->get_option_key_for_season( $previous_season );
-			$previous_stored     = get_option( $previous_season_key, false );
-
-			// If previous season has data, copy it to the new season
-			if ( $previous_stored !== false && is_array( $previous_stored ) ) {
-				$migrated = $this->maybe_migrate_age_classes( $previous_stored );
-				$migrated = $this->maybe_migrate_matching_rules( $migrated );
-				update_option( $season_key, $migrated );
-				return $migrated;
-			}
-		}
-
-		// No data for this season or previous season - return empty array
+		// Season option doesn't exist - return empty array
+		// Manual copy is now handled via REST endpoint (POST /rondo/v1/membership-fees/copy-season)
 		return [];
 	}
 
@@ -828,24 +813,8 @@ class MembershipFees {
 			];
 		}
 
-		// Season option doesn't exist - try copy-forward from previous season
-		// (follows same pattern as get_categories_for_season() lines 603-615)
-		$previous_season = $this->get_previous_season_key( $season );
-
-		if ( $previous_season !== null ) {
-			$previous_config = get_option( 'rondo_family_discount_' . $previous_season, false );
-
-			if ( $previous_config !== false && is_array( $previous_config ) ) {
-				// Copy previous season's config to the new season
-				update_option( 'rondo_family_discount_' . $season, $previous_config );
-				return [
-					'second_child_percent' => $previous_config['second_child_percent'] ?? $defaults['second_child_percent'],
-					'third_child_percent'  => $previous_config['third_child_percent'] ?? $defaults['third_child_percent'],
-				];
-			}
-		}
-
-		// No data for this season or previous season - return defaults
+		// Season option doesn't exist - return defaults
+		// Manual copy is now handled via REST endpoint (POST /rondo/v1/membership-fees/copy-season)
 		return $defaults;
 	}
 
