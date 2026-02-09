@@ -389,21 +389,18 @@ Club administrators can manage their members, teams, and important dates through
 - ✓ PWA assets updated to electric-cyan, favicon fixed, dead REST API endpoints removed — v22.0
 - ✓ Rondo logo integrated as favicon, login page, and sidebar brand mark — v22.0
 
+**v23.0 Former Members (shipped 2026-02-09):**
+- ✓ Former member ACF field with rondo-sync marking (PUT instead of DELETE) — v23.0
+- ✓ Database-level filtering excludes former members from Leden list, dashboard stats, and team rosters — v23.0
+- ✓ "Toon oud-leden" toggle with URL-persisted state and "Oud-lid" badges — v23.0
+- ✓ Global search includes former members with "oud-lid" visual indicator — v23.0
+- ✓ Fee calculations include former members active during season (lid-sinds before season end) — v23.0
+- ✓ Former members excluded from forecast and ineligible members excluded from family discount — v23.0
+- ✓ Fee cache invalidation on former_member field changes — v23.0
+
 ### Active
 
-## Current Milestone: v23.0 Former Members
-
-**Goal:** Archive former members when they leave the club (detected by rondo-sync), hiding them from default views while preserving all data. Findable through global search and a filter toggle on the Leden list.
-
-**Target features:**
-- Former member status field on person records (set via REST API by rondo-sync)
-- REST API endpoint documentation for marking members as former
-- Archived by default: hidden from Leden list, dashboard stats, and team rosters
-- Filter toggle on Leden list to show former members ("Toon oud-leden")
-- Global search includes former members (with visual distinction)
-- Contributie: include former members who were active during part of the season (no pro-rata for leavers), exclude otherwise
-- Team rosters automatically exclude former members
-- All historical data preserved (notes, activities, relationships, fees)
+(No active milestone — ready for next milestone planning)
 
 ### Out of Scope
 
@@ -606,6 +603,17 @@ Club administrators can manage their members, teams, and important dates through
 | Exclude modal h2 and filter labels from gradient | Visual distinction for error headings and form labels | ✓ Good |
 | Glass morphism deferred to future | Mobile performance concerns, not critical for brand alignment | Deferred |
 | Decorative blobs deferred to future | Polish feature, can be added later | Deferred |
+| Mark former members with PUT instead of DELETE | Preserves all member history, enables rejoin detection | ✓ Good |
+| Keep former members in rondo-sync tracking DB | Detects if member rejoins the club later | ✓ Good |
+| NULL-safe exclusion pattern for former_member | Handles NULL, empty string, and '0' as "active member" | ✓ Good |
+| Database query-level filtering for former members | Performance over PHP-level filtering for large datasets | ✓ Good |
+| "Toon oud-leden" toggle at top of filter dropdown | Prominent placement for critical use case (former member inquiries) | ✓ Good |
+| Reduced opacity (60%) for former member rows | Maintains readability while providing visual distinction | ✓ Good |
+| Loose comparison for ACF true_false fields | ACF returns '1' string, not boolean — use `== true` | ✓ Good |
+| Former members use normal pro-rata from lid-sinds | Leaving doesn't create second pro-rata; simple and consistent | ✓ Good |
+| Season eligibility: lid-sinds before July 1 of end year | Clear cutoff for season membership determination | ✓ Good |
+| Former members excluded from forecast entirely | Won't be members next season; prevents inflated budget projections | ✓ Good |
+| Family discount excludes ineligible former members | Prevents incorrect discount reductions for remaining family | ✓ Good |
 
 ---
-*Last updated: 2026-02-09 after v22.0 Design Refresh shipped*
+*Last updated: 2026-02-09 after v23.0 Former Members shipped*

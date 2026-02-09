@@ -877,3 +877,31 @@
 
 ---
 
+
+## v23.0 Former Members (Shipped: 2026-02-09)
+
+**Delivered:** Archive former members when they leave the club (detected by rondo-sync), hiding them from default views while preserving all data. Findable through global search, a filter toggle on the Leden list, and correctly handled in fee calculations.
+
+**Phases completed:** 166-169 (4 phases, 4 plans, 9 tasks)
+
+**Key accomplishments:**
+
+- Former member ACF field with rondo-sync marking (PUT instead of DELETE) preserving all member history and enabling rejoin detection
+- Database-level filtering excludes former members from Leden list, dashboard stats, and team rosters using NULL-safe exclusion pattern
+- "Toon oud-leden" toggle with URL-persisted state and "Oud-lid" badges in People list and global search
+- Fee calculations correctly include former members active during the season (lid-sinds before season end), exclude from forecast
+- Fee cache invalidation on former_member field changes, family discount excludes ineligible former members
+
+**Stats:**
+
+- 33 files changed (rondo-club) + cross-repo (rondo-sync, developer)
+- +2,958 / -268 lines changed
+- 4 phases, 4 plans, 9 tasks
+- 1 day (2026-02-09)
+
+**Git range:** `bcd3d739` → `2945c7b6`
+
+**What's next:** To be determined
+
+---
+
