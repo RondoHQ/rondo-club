@@ -58,7 +58,7 @@
 **Plans**: 1 plan
 
 Plans:
-- [ ] 166-01-PLAN.md — Add former_member ACF field, update rondo-sync to mark instead of delete, update API docs
+- [x] 166-01-PLAN.md — Add former_member ACF field, update rondo-sync to mark instead of delete, update API docs
 
 #### Phase 167: Core Filtering
 **Goal**: Former members are hidden by default from the Leden list, dashboard stats, and team rosters
@@ -108,11 +108,11 @@ Phases execute in numeric order: 166 → 167 → 168 → 169
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 166. Backend Foundation | 0/1 | Planned | - |
+| 166. Backend Foundation | 1/1 | ✓ Complete | 2026-02-09 |
 | 167. Core Filtering | 0/? | Not started | - |
 | 168. Visibility Controls | 0/? | Not started | - |
 | 169. Contributie Logic | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-09 — v23.0 Former Members roadmap initialized*
+*Last updated: 2026-02-09 — Phase 166 Backend Foundation complete*
