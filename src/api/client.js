@@ -213,10 +213,6 @@ export const prmApi = {
   // iCal feed
   getIcalUrl: () => api.get('/rondo/v1/user/ical-url'),
 
-  // Theme preferences
-  getThemePreferences: () => api.get('/rondo/v1/user/theme-preferences'),
-  updateThemePreferences: (prefs) => api.patch('/rondo/v1/user/theme-preferences', prefs),
-
   // Dashboard settings
   getDashboardSettings: () => api.get('/rondo/v1/user/dashboard-settings'),
   updateDashboardSettings: (settings) => api.patch('/rondo/v1/user/dashboard-settings', settings),

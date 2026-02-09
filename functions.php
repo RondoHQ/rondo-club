@@ -1030,7 +1030,7 @@ function rondo_login_styles() {
 			text-align: center;
 			font-size: 28px;
 			font-weight: 600;
-			color: <?php echo esc_attr( $color_darkest ); ?>;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
 			margin-top: 10px;
 			letter-spacing: -0.5px;
 		}
@@ -1038,16 +1038,16 @@ function rondo_login_styles() {
 		/* Form box */
 		.login form {
 			background: #ffffff;
-			border: 1px solid <?php echo esc_attr( $color_border ); ?>;
+			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
 			border-radius: 12px;
-			box-shadow: 0 10px 25px rgba(<?php echo "$r, $g, $b"; ?>, 0.1);
+			box-shadow: 0 10px 25px rgba(8, 145, 178, 0.1);
 			padding: 26px 24px;
 		}
 
 		/* Input fields */
 		.login input[type="text"],
 		.login input[type="password"] {
-			border: 1px solid <?php echo esc_attr( $color_border ); ?>;
+			border: 1px solid <?php echo esc_attr( $brand_color_border ); ?>;
 			border-radius: 8px;
 			padding: 10px 14px;
 			font-size: 15px;
@@ -1056,14 +1056,14 @@ function rondo_login_styles() {
 
 		.login input[type="text"]:focus,
 		.login input[type="password"]:focus {
-			border-color: <?php echo esc_attr( $club_color ); ?>;
-			box-shadow: 0 0 0 3px rgba(<?php echo "$r, $g, $b"; ?>, 0.15);
+			border-color: <?php echo esc_attr( $brand_color ); ?>;
+			box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
 			outline: none;
 		}
 
 		/* Labels */
 		.login label {
-			color: <?php echo esc_attr( $color_darkest ); ?>;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
 			font-weight: 500;
 			font-size: 14px;
 		}
