@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 
 ## Current Position
 
-Phase: 161 of 161 (Configurable Matching Rules) — final phase of v21.0
-Plan: 01 of 02 complete
-Status: In Progress
-Last activity: 2026-02-09 — Phase 161-01 complete (config-driven matching rules backend)
+Phase: 161 of 161 (Configurable Matching Rules) — COMPLETE
+Plan: 02 of 02 complete
+Status: Complete
+Last activity: 2026-02-09 — Phase 161-02 complete (matching rules UI)
 
-Progress: [█████████░] 96% (11/12 v21.0 plans complete, 1 plan remaining: 161-02-matching-rules-ui)
+Progress: [██████████] 100% (12/12 v21.0 plans complete — milestone ready for verification)
 
 ## Accumulated Context
 
@@ -59,6 +59,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 161-01:** Team matching uses ANY match (admin explicitly selects teams), werkfunctie matching is case-insensitive
 - **Phase 161-01:** Migration auto-populates matching_teams for 'recreant', matching_werkfuncties=['Donateur'] for 'donateur'
 - **Phase 161-01:** Priority order: youth > team matching > werkfunctie matching > age-class fallback
+- **Phase 161-02:** Team and werkfunctie matching UI uses multi-select checkboxes in fee category settings
+- **Phase 161-02:** Category cards show matching rules summary (team count, werkfunctie names)
 
 ### Pending Todos
 
@@ -78,7 +80,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 161-01 complete (config-driven matching rules backend). Next: Phase 161-02 (matching rules UI).
+Stopped at: Phase 161-02 complete (matching rules UI). v21.0 milestone complete — ready for verification.
 Resume file: None
 
 ---
