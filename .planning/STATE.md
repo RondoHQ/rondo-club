@@ -21,8 +21,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-5 todo(s) in `.planning/todos/pending/`:
-- **remove-contact-import-feature**: Remove contact import feature (area: ui)
+4 todo(s) in `.planning/todos/pending/`:
 - **remove-how-we-met-and-met-date-fields**: Remove how_we_met and met_date fields (area: data-model)
 - **remove-user-approval-system**: Remove user approval system (area: auth)
 - **switch-to-new-website-design-style**: Switch to new website design style (area: ui)
@@ -36,6 +35,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
 
 ## Session Continuity
