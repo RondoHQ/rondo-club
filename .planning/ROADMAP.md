@@ -101,11 +101,14 @@ Plans:
 **Depends on**: Phase 158 (Settings UI must exist to add discount config)
 **Requirements**: TBD
 **Success Criteria** (what must be TRUE):
-  1. Family discount tiers (2nd child %, 3rd+ child %) are stored per season in the same WordPress options alongside categories
+  1. Family discount tiers (2nd child %, 3rd+ child %) are stored per season in `rondo_family_discount_{season}` WordPress option
   2. `get_family_discount_rate()` reads from season config instead of hardcoded values
   3. Admin can configure family discount percentages in the fee category settings UI
   4. Changing discount percentages correctly affects fee calculations for the relevant season
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 160-01-PLAN.md — Backend: add discount config helpers, update get_family_discount_rate(), extend REST API with validation
+- [ ] 160-02-PLAN.md — Frontend: add FamilyDiscountSection to settings UI, version bump, docs
 
 ### Phase 161: Configurable Matching Rules
 **Goal**: Fee category assignment uses configurable matching rules (teams, werkfuncties) instead of hardcoded logic
@@ -131,7 +134,7 @@ Plans:
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
-| 160. Configurable Family Discount | v21.0 | 0/TBD | Not started | - |
+| 160. Configurable Family Discount | v21.0 | 0/2 | Not started | - |
 | 161. Configurable Matching Rules | v21.0 | 0/TBD | Not started | - |
 
 ---
