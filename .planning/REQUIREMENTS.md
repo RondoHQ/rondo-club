@@ -58,23 +58,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
-| LIST-01 | TBD | Pending |
-| LIST-02 | TBD | Pending |
-| DASH-01 | TBD | Pending |
-| SRCH-01 | TBD | Pending |
-| TEAM-01 | TBD | Pending |
-| FEE-01 | TBD | Pending |
-| FEE-02 | TBD | Pending |
+| DATA-01 | Phase 166 | Pending |
+| DATA-02 | Phase 166 | Pending |
+| SYNC-01 | Phase 166 | Pending |
+| SYNC-02 | Phase 166 | Pending |
+| LIST-01 | Phase 167 | Pending |
+| DASH-01 | Phase 167 | Pending |
+| TEAM-01 | Phase 167 | Pending |
+| LIST-02 | Phase 168 | Pending |
+| SRCH-01 | Phase 168 | Pending |
+| FEE-01 | Phase 169 | Pending |
+| FEE-02 | Phase 169 | Pending |
 
 **Coverage:**
 - v23.0 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11
+- Mapped to phases: 11
+- Unmapped: 0
+
+**Coverage validation:** All requirements mapped ✓
 
 ---
 *Requirements defined: 2026-02-09*
-*Last updated: 2026-02-09 after initial definition*
+*Last updated: 2026-02-09 after roadmap creation*

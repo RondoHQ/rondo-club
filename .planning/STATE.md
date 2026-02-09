@@ -5,29 +5,41 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** v23.0 Former Members
+**Current focus:** Phase 166 - Backend Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-09 — Milestone v23.0 started
+Phase: 166 of 169 (Backend Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-09 — v23.0 Former Members roadmap created
 
-Progress: No phases yet
+Progress: [████████████████████████████░░░░] 97.6% (165/169 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 168 plans across v1.0-v22.0
-- v22.0 completed: 7 plans, 1 day (2026-02-09)
-- v21.0 completed: 12 plans, 2 days (2026-02-08 → 2026-02-09)
+- Recent milestones:
+  - v22.0: 7 plans, 1 day (2026-02-09)
+  - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
+  - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
+
+**Recent Trend:**
+- Last 3 milestones averaged 1-2 days each
+- Velocity: Stable
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- Skip-and-warn pattern for missing sync data (established 154-01)
+- Server-side pagination and filtering pattern (v9.0, phases 111-115)
+- Generic filter infrastructure via get_dynamic_filter_config() (v20.0, phase 151)
+- Config-driven fee calculation with season-specific categories (v21.0, phases 155-161)
 
 ### Pending Todos
 
@@ -53,8 +65,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Milestone v23.0 started — defining requirements
-Resume file: None
+Stopped at: Roadmap creation for v23.0 Former Members
+Resume file: None - ready for phase planning
 
 ---
 *State updated: 2026-02-09*
