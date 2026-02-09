@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Planning next milestone
+**Current focus:** v22.0 Design Refresh
 
 ## Current Position
 
-Phase: v21.0 complete (phases 155-161)
-Status: Milestone shipped and archived
-Last activity: 2026-02-09 — Completed quick task 45: Remove user approval system
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-09 — Milestone v22.0 started
 
 ## Accumulated Context
 
@@ -40,7 +41,7 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed quick task 45: Remove user approval system.
+Stopped at: Milestone v22.0 Design Refresh started.
 Resume file: None
 
 ---

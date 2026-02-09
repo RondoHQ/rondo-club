@@ -380,7 +380,20 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 
 ### Active
 
-(No active milestone — use `/gsd:new-milestone` to start next)
+## Current Milestone: v22.0 Design Refresh
+
+**Goal:** Restyle the entire React SPA to match the rondo.club brand design (STYLE.md), replacing the dynamic accent color system with fixed brand colors, and removing user-selectable color schemes.
+
+**Target features:**
+- Replace dynamic accent color system with fixed brand palette (electric-cyan, bright-cobalt, deep-midnight, obsidian)
+- Montserrat font for headings, system-ui for body
+- Cyan-to-cobalt gradient system for buttons, headings, card borders
+- Three button variants: primary (gradient), secondary (cobalt), glass (transparent)
+- Card components with gradient top border and new shadow system
+- Glass morphism header (sticky, blurred backdrop)
+- Input focus rings with cyan glow
+- Remove user-selectable color scheme (ClubConfig accent_color, react-colorful, useTheme dynamic injection)
+- Light-only UI (slate-50/white backgrounds, no dark mode)
 
 ### Out of Scope
 
@@ -576,4 +589,4 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Fixed palette for category colors | Colors auto-assigned by sort_order position, no per-category color config needed | ✓ Good |
 
 ---
-*Last updated: 2026-02-09 after v21.0 Per-Season Fee Categories milestone*
+*Last updated: 2026-02-09 after v22.0 Design Refresh milestone started*
