@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Phase 167 - Core Filtering
+**Current focus:** Phase 168 - Visibility Controls (complete, ready for Phase 169)
 
 ## Current Position
 
