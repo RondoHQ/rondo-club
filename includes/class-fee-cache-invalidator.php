@@ -50,6 +50,9 @@ class FeeCacheInvalidator {
 		// lid-sinds changes affect pro-rata calculation (PRO-04)
 		add_filter( 'acf/update_value/name=lid-sinds', [ $this, 'invalidate_person_cache' ], 10, 3 );
 
+		// former_member changes affect fee eligibility
+		add_filter( 'acf/update_value/name=former_member', [ $this, 'invalidate_person_cache' ], 10, 3 );
+
 		// REST API updates
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
 

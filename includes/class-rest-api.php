@@ -2961,6 +2961,18 @@ class Api extends Base {
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
+			$is_former = ( get_field( 'former_member', $person->ID ) == true );
+
+			// Former members: only include if they have lid-sinds in current season
+			if ( $is_former && ! $fees->is_former_member_in_season( $person->ID, $season ) ) {
+				continue;
+			}
+
+			// Former members: excluded from forecast (they won't be members next season)
+			if ( $forecast && $is_former ) {
+				continue;
+			}
+
 			if ( $forecast ) {
 				// Forecast: calculate fee with family discount, override pro-rata to 100%
 				$fee_data = $fees->calculate_fee_with_family_discount( $person->ID, $season );
@@ -3008,6 +3020,7 @@ class Api extends Base {
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
 				'from_cache'             => $fee_data['from_cache'] ?? false,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
+				'is_former_member'       => $is_former,
 			];
 
 			// Only include Nikki data for current season (not forecast)
@@ -3078,6 +3091,20 @@ class Api extends Base {
 			$season = $fees->get_season_key();
 		}
 
+		// Check if person is a former member not in the requested season
+		$is_former = ( get_field( 'former_member', $person_id ) == true );
+		if ( $is_former && ! $fees->is_former_member_in_season( $person_id, $season ) ) {
+			return rest_ensure_response(
+				[
+					'person_id'        => $person_id,
+					'season'           => $season,
+					'calculable'       => false,
+					'is_former_member' => true,
+					'message'          => 'Oud-lid valt niet binnen dit seizoen.',
+				]
+			);
+		}
+
 		// Get fee data with caching
 		$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
 
@@ -3129,6 +3156,7 @@ class Api extends Base {
 				'nikki_total'            => $nikki_total !== '' ? (float) $nikki_total : null,
 				'nikki_saldo'            => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
 				'financiele_blokkade'    => (bool) $financiele_blokkade,
+				'is_former_member'       => $is_former,
 			]
 		);
 	}

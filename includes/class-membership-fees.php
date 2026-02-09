@@ -325,6 +325,50 @@ class MembershipFees {
 	}
 
 	/**
+	 * Check if a former member should be included in the season's fee list
+	 *
+	 * A former member qualifies if their lid-sinds date is BEFORE the end of the season
+	 * (July 1 of the season's end year). This includes:
+	 * - Members who joined before season start and left during it (normal fee, no pro-rata)
+	 * - Members who joined mid-season and left during it (pro-rata based on lid-sinds)
+	 *
+	 * Former members whose lid-sinds is after the season end date are excluded
+	 * (they never participated in that season).
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return bool True if former member qualifies for season, false otherwise.
+	 */
+	public function is_former_member_in_season( int $person_id, ?string $season = null ): bool {
+		// Only applies to former members
+		$is_former = ( get_field( 'former_member', $person_id ) == true );
+		if ( ! $is_former ) {
+			return false;
+		}
+
+		// Get lid-sinds date
+		$lid_sinds = get_field( 'lid-sinds', $person_id );
+		if ( empty( $lid_sinds ) ) {
+			// Cannot determine eligibility without membership date
+			return false;
+		}
+
+		// Calculate season end date (July 1 of season's end year)
+		$season          = $season ?? $this->get_season_key();
+		$season_end_year = (int) substr( $season, 5, 4 );
+		$season_end_date = strtotime( $season_end_year . '-07-01' );
+
+		// Parse lid-sinds timestamp
+		$lid_sinds_ts = strtotime( $lid_sinds );
+		if ( $lid_sinds_ts === false ) {
+			return false;
+		}
+
+		// Qualifies if joined before season end
+		return ( $lid_sinds_ts < $season_end_date );
+	}
+
+	/**
 	 * Check if a team is a recreational team
 	 *
 	 * Recreational teams have "recreant" or "walking football" or "walking voetbal" in their name.
@@ -1048,6 +1092,10 @@ class MembershipFees {
 			return null;
 		}
 
+		// Add former member flag for diagnostics
+		$is_former               = ( get_field( 'former_member', $person_id ) == true );
+		$result['is_former_member'] = $is_former;
+
 		// Save to cache
 		$this->save_fee_cache( $person_id, $result, $season );
 
@@ -1232,6 +1280,12 @@ class MembershipFees {
 		$youth_categories = $this->get_youth_category_slugs( $season );
 
 		foreach ( $query->posts as $person_id ) {
+			// Skip former members not eligible for this season's fee list
+			$is_former = ( get_field( 'former_member', $person_id ) == true );
+			if ( $is_former && ! $this->is_former_member_in_season( $person_id, $season ) ) {
+				continue; // Skip former members not in this season
+			}
+
 			// Calculate fee for this person using season-specific rates
 			$fee_data = $this->calculate_fee( $person_id, $season );
 
@@ -1404,6 +1458,9 @@ class MembershipFees {
 		$fee_after_discount = $fee_data['final_fee'];
 		$prorata_amount     = round( $fee_after_discount * $prorata_percentage, 2 );
 
+		// Add former member flag for diagnostics
+		$is_former = ( get_field( 'former_member', $person_id ) == true );
+
 		// Add pro-rata fields to result
 		return array_merge(
 			$fee_data,
@@ -1412,6 +1469,7 @@ class MembershipFees {
 				'prorata_percentage'  => $prorata_percentage,
 				'fee_after_discount'  => $fee_after_discount,
 				'final_fee'           => $prorata_amount,  // Override final_fee with pro-rata amount
+				'is_former_member'    => $is_former,
 			]
 		);
 	}
@@ -1591,6 +1649,10 @@ class MembershipFees {
 		$is_donateur    = $this->is_donateur( $person_id );
 		$fee_result     = $this->calculate_fee( $person_id );
 
+		// Check former member status
+		$is_former               = ( get_field( 'former_member', $person_id ) == true );
+		$former_member_in_season = $is_former ? $this->is_former_member_in_season( $person_id ) : false;
+
 		// Determine reason if not calculable
 		$reason = 'calculable';
 
@@ -1606,15 +1668,22 @@ class MembershipFees {
 			}
 		}
 
+		// Override reason if former member not in season
+		if ( $is_former && ! $former_member_in_season ) {
+			$reason = 'former_member_not_in_season';
+		}
+
 		return [
-			'has_leeftijdsgroep'  => ! empty( $leeftijdsgroep ),
-			'leeftijdsgroep_value' => $leeftijdsgroep ?: null,
-			'parsed_category'     => $parsed,
-			'has_teams'           => ! empty( $teams ),
-			'team_count'          => count( $teams ),
-			'is_donateur'         => $is_donateur,
-			'calculable'          => $fee_result !== null,
-			'reason'              => $reason,
+			'has_leeftijdsgroep'      => ! empty( $leeftijdsgroep ),
+			'leeftijdsgroep_value'    => $leeftijdsgroep ?: null,
+			'parsed_category'         => $parsed,
+			'has_teams'               => ! empty( $teams ),
+			'team_count'              => count( $teams ),
+			'is_donateur'             => $is_donateur,
+			'is_former_member'        => $is_former,
+			'former_member_in_season' => $former_member_in_season,
+			'calculable'              => $fee_result !== null,
+			'reason'                  => $reason,
 		];
 	}
 }
