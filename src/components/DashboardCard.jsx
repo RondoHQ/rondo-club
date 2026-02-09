@@ -32,7 +32,7 @@ export default function DashboardCard({
   return (
     <div className="card">
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <h2 className="font-semibold flex items-center dark:text-gray-50">
+        <h2 className="font-semibold text-brand-gradient flex items-center">
           {Icon && <Icon className="w-5 h-5 mr-2 text-gray-500 dark:text-gray-400" />}
           {title}
           {count != null && count > 0 && (

@@ -294,7 +294,7 @@ export default function TeamDetail() {
       {/* Subsidiaries */}
       {childTeams.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <GitBranch className="w-5 h-5 mr-2" />
             Subteams
           </h2>
@@ -347,7 +347,7 @@ export default function TeamDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Staf */}
             <div className="card p-6">
-              <h2 className="font-semibold mb-4 flex items-center">
+              <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
                 <Users className="w-5 h-5 mr-2" />
                 Staf
               </h2>
@@ -381,7 +381,7 @@ export default function TeamDetail() {
 
             {/* Spelers */}
             <div className="card p-6">
-              <h2 className="font-semibold mb-4 flex items-center">
+              <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
                 <Users className="w-5 h-5 mr-2" />
                 Spelers
               </h2>
@@ -431,7 +431,7 @@ export default function TeamDetail() {
       {/* Sponsors */}
       {investorDetails.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
             Sponsoren
           </h2>
@@ -483,7 +483,7 @@ export default function TeamDetail() {
       {/* Invested in (teams/commissies this team sponsors) */}
       {investments.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
             Investeert in
           </h2>
@@ -527,7 +527,7 @@ export default function TeamDetail() {
       {/* Contact info */}
       {acf.contact_info?.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4">Contactgegevens</h2>
+          <h2 className="font-semibold text-brand-gradient mb-4">Contactgegevens</h2>
           <div className="space-y-3">
             {acf.contact_info.map((contact, index) => (
               <div key={index}>

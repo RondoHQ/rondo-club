@@ -284,7 +284,7 @@ export default function CommissieDetail() {
       {/* Subsidiaries */}
       {childCommissies.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <GitBranch className="w-5 h-5 mr-2" />
             Subcommissies
           </h2>
@@ -321,7 +321,7 @@ export default function CommissieDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Current Employees */}
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
             Leden
           </h2>
@@ -355,7 +355,7 @@ export default function CommissieDetail() {
         
         {/* Former Employees */}
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <Users className="w-5 h-5 mr-2" />
             Voormalige leden
           </h2>
@@ -392,7 +392,7 @@ export default function CommissieDetail() {
       {/* Investors */}
       {investorDetails.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
             Sponsoren
           </h2>
@@ -444,7 +444,7 @@ export default function CommissieDetail() {
       {/* Invested in (teams/commissies this organization has invested in) */}
       {investments.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4 flex items-center">
+          <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
             <TrendingUp className="w-5 h-5 mr-2" />
             Investeert in
           </h2>
@@ -488,7 +488,7 @@ export default function CommissieDetail() {
       {/* Contact info */}
       {acf.contact_info?.length > 0 && (
         <div className="card p-6">
-          <h2 className="font-semibold mb-4">Contactgegevens</h2>
+          <h2 className="font-semibold text-brand-gradient mb-4">Contactgegevens</h2>
           <div className="space-y-3">
             {acf.contact_info.map((contact, index) => (
               <div key={index}>

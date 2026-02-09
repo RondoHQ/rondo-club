@@ -811,7 +811,7 @@ function AppearanceTab() {
       {/* Club Configuration card (admin only) */}
       {isAdmin && (
         <div className="card p-6">
-          <h2 className="text-lg font-semibold mb-2 dark:text-gray-100">Clubconfiguratie</h2>
+          <h2 className="text-lg font-semibold text-brand-gradient mb-2">Clubconfiguratie</h2>
           <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
             Configureer clubinstellingen. Wijzigingen gelden voor alle gebruikers.
           </p>
@@ -869,7 +869,7 @@ function AppearanceTab() {
 
       {/* Color scheme card */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Kleurenschema</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Kleurenschema</h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
           Kies hoe {APP_NAME} eruitziet. Selecteer een thema of synchroniseer met je systeeminstellingen.
         </p>
@@ -906,7 +906,7 @@ function AppearanceTab() {
 
       {/* Profile link card */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4 flex items-center gap-2">
           <LinkIcon className="w-5 h-5" />
           Profielkoppeling
         </h2>
@@ -1214,7 +1214,7 @@ function CalendarsTab() {
 
       {/* Connections list */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Agendakoppelingen</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Agendakoppelingen</h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
           Koppel je agenda's om automatisch afspraken te synchroniseren en contacten te vinden.
         </p>
@@ -1298,7 +1298,7 @@ function CalendarsTab() {
 
       {/* Add connection section */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Koppeling toevoegen</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Koppeling toevoegen</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={handleConnectGoogle}
@@ -1340,7 +1340,7 @@ function CalendarsTab() {
 
       {/* Important Dates Subscription */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Abonneer op belangrijke datums in je agenda</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Abonneer op belangrijke datums in je agenda</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
           Abonneer op je belangrijke datums in elke agenda-app (Apple Agenda, Google Agenda, Outlook, etc.)
         </p>
@@ -2211,7 +2211,7 @@ function ConnectionsContactsSubtab({
 
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Google Contacten</h2>
+      <h2 className="text-lg font-semibold text-brand-gradient mb-4">Google Contacten</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
         Synchroniseer je contacten met Google Contacten voor naadloze toegang op al je apparaten.
       </p>
@@ -2553,7 +2553,7 @@ function ConnectionsCardDAVSubtab({
 }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">CardDAV-synchronisatie</h2>
+      <h2 className="text-lg font-semibold text-brand-gradient mb-4">CardDAV-synchronisatie</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
         Synchroniseer je contacten met apps zoals Apple Contacten, Android Contacten of Thunderbird via CardDAV.
       </p>
@@ -2630,7 +2630,7 @@ function NotificationsTab({
 }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Meldingen</h2>
+      <h2 className="text-lg font-semibold text-brand-gradient mb-4">Meldingen</h2>
       <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
         Kies hoe je dagelijkse herinneringen wilt ontvangen over je belangrijke datums.
       </p>
@@ -2734,7 +2734,7 @@ function APIAccessTab({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">Applicatiewachtwoorden</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Applicatiewachtwoorden</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
           Maak applicatiewachtwoorden aan voor API-toegang vanuit externe tools en scripts.
           Deze wachtwoorden werken met de REST API en CardDAV-synchronisatie.
@@ -2846,7 +2846,7 @@ function APIAccessTab({
 
       {/* API information card */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4 dark:text-gray-100">API-informatie</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">API-informatie</h2>
         <div className="space-y-3">
           <div>
             <label className="text-xs text-gray-500 dark:text-gray-400">Gebruikersnaam</label>
@@ -2878,7 +2878,7 @@ function DataTab() {
     <div className="space-y-6">
       {/* Export Section */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Gegevens exporteren</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Gegevens exporteren</h2>
         <p className="text-sm text-gray-600 mb-6">
           Exporteer al je contacten in een formaat dat compatibel is met andere contactbeheersystemen.
         </p>
@@ -3009,7 +3009,7 @@ function AdminTab({
   return (
     <div className="space-y-6">
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Configuratie</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Configuratie</h2>
         <div className="space-y-3">
           <Link
             to="/settings/relationship-types"
@@ -3043,7 +3043,7 @@ function AdminTab({
       </div>
 
       <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Systeemacties</h2>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Systeemacties</h2>
         <div className="space-y-3">
           <button
             onClick={handleTriggerReminders}
@@ -3394,7 +3394,7 @@ function RollenTab({
 function AboutTab({ config }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold mb-4">Over {APP_NAME}</h2>
+      <h2 className="text-lg font-semibold text-brand-gradient mb-4">Over {APP_NAME}</h2>
       <div className="space-y-4">
         <div>
           <p className="text-sm text-gray-600">
