@@ -294,6 +294,7 @@ export const prmApi = {
   // Membership Fee Settings (admin only)
   getMembershipFeeSettings: () => api.get('/rondo/v1/membership-fees/settings'),
   updateMembershipFeeSettings: (settings, season) => api.post('/rondo/v1/membership-fees/settings', { ...settings, season }),
+  copySeasonCategories: (fromSeason, toSeason) => api.post('/rondo/v1/membership-fees/copy-season', { from_season: fromSeason, to_season: toSeason }),
   getAvailableWerkfuncties: () => api.get('/rondo/v1/werkfuncties/available'),
 
   // Club configuration (admin only)
