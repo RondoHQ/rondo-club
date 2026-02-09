@@ -82,7 +82,7 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Leeftijdsklassen: {category.age_classes.join(', ')}
               </p>
-            ) : (
+            ) : (!category.matching_teams?.length && !category.matching_werkfuncties?.length) && (
               <p className="text-sm italic text-gray-500 dark:text-gray-500 mt-1">
                 Catch-all voor niet-toegewezen klassen
               </p>
@@ -360,9 +360,16 @@ function AgeCoverageSummary({ categories, warnings }) {
               <span className="text-gray-700 dark:text-gray-300">
                 {category.age_classes.join(', ')}
               </span>
-            ) : (
+            ) : (!category.matching_teams?.length && !category.matching_werkfuncties?.length) ? (
               <span className="italic text-gray-500 dark:text-gray-500">
                 (Catch-all voor niet-toegewezen klassen)
+              </span>
+            ) : (
+              <span className="italic text-gray-500 dark:text-gray-500">
+                (Geen leeftijdsklassen — toewijzing via {[
+                  category.matching_teams?.length && 'teams',
+                  category.matching_werkfuncties?.length && 'werkfuncties',
+                ].filter(Boolean).join(' en ')})
               </span>
             )}
           </div>
