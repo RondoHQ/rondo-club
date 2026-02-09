@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** v22.0 Design Refresh (Phase 164 - Component Styling & Dark Mode Adaptation)
+**Current focus:** v22.0 Design Refresh (Phase 165 - PWA & Backend Cleanup)
 
 ## Current Position
 
-Phase: 164 of 165 (Component Styling & Dark Mode Adaptation)
-Plan: 2 of 2 complete
-Status: Phase 164 complete — gradient headings applied across all pages
-Last activity: 2026-02-09 — Plan 164-02 executed (2 tasks, 17 files modified, 9 minutes)
+Phase: 165 of 165 (PWA & Backend Cleanup)
+Plan: Ready to plan
+Status: Phase 164 complete and verified (8/8 must-haves passed) — ready for Phase 165 planning
+Last activity: 2026-02-09 — Phase 164 executed and verified (2/2 plans, 53 gradient headings, brand component styling)
 
-Progress: [████████████████████] 100% (164/165 total phases, 4/4 v22.0 phases, 2/2 phase 164 plans)
+Progress: [██████████████░░░░░░] 75% (164/165 total phases complete, 3/4 v22.0 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 167 plans across v1.0-v22.0
 - v21.0 completed: 12 plans, 2 days (2026-02-08 → 2026-02-09)
-- v22.0 in progress: 6/7 plans complete (162-01, 163-01, 163-02, 163-03, 164-01, 164-02)
+- v22.0 in progress: 6/7 plans complete (162-01, 163-01, 163-02, 163-03, 164-01, 164-02) — 1 remaining (165-01)
 
 ## Accumulated Context
 
@@ -63,12 +63,11 @@ Recent decisions affecting v22.0:
 | 44 | Remove how_we_met and met_date fields | 2026-02-09 | 018b294c | [44-remove-how-we-met-and-met-date-fields](./quick/44-remove-how-we-met-and-met-date-fields/) |
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
-| Phase 164 P01 | 2 | 1 tasks | 1 files |
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 164-02-PLAN.md
+Stopped at: Phase 164 complete and verified — ready for Phase 165 planning
 Resume file: None
 
 ---

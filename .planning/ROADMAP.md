@@ -101,8 +101,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 164-01-PLAN.md — Update component classes with brand styling (buttons, cards, inputs, dark mode, glass variant)
-- [ ] 164-02-PLAN.md — Apply gradient text treatment to page and section headings
+- [x] 164-01-PLAN.md — Update component classes with brand styling (buttons, cards, inputs, dark mode, glass variant) — completed 2026-02-09
+- [x] 164-02-PLAN.md — Apply gradient text treatment to page and section headings — completed 2026-02-09
 
 ---
 
@@ -145,9 +145,9 @@ Plans:
 | 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 162. Foundation | v22.0 | 1/1 | ✓ Complete | 2026-02-09 |
 | 163. Color Migration | v22.0 | 3/3 | ✓ Complete | 2026-02-09 |
-| 164. Component Styling | v22.0 | 0/2 | Not started | - |
+| 164. Component Styling | v22.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 165. PWA & Backend | v22.0 | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 163 completed*
+*Last updated: 2026-02-09 — Phase 164 completed*
