@@ -527,7 +527,7 @@ export default function FeeCategorySettings() {
   const { data: allTeams } = useQuery({
     queryKey: ['teams', 'all-for-settings'],
     queryFn: async () => {
-      const response = await wpApi.get('/wp/v2/team', {
+      const response = await wpApi.get('/wp/v2/teams', {
         params: { per_page: 100, orderby: 'title', order: 'asc' }
       });
       return response.data;
