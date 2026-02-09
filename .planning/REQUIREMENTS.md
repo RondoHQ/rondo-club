@@ -21,10 +21,10 @@
 
 ### REST API
 
-- [ ] **API-01**: Fee settings GET endpoint returns full category definitions per season (not just amounts)
-- [ ] **API-02**: Fee settings POST endpoint accepts category add, edit, remove, and reorder operations
-- [ ] **API-03**: Fee list endpoint includes category metadata (labels, sort order) in response so frontend does not need hardcoded mappings
-- [ ] **API-04**: Category validation: no duplicate slugs, required fields (slug, label, amount), duplicate age class assignment warning
+- [x] **API-01**: Fee settings GET endpoint returns full category definitions per season (not just amounts)
+- [x] **API-02**: Fee settings POST endpoint accepts category add, edit, remove, and reorder operations
+- [x] **API-03**: Fee list endpoint includes category metadata (labels, sort order) in response so frontend does not need hardcoded mappings
+- [x] **API-04**: Category validation: no duplicate slugs, required fields (slug, label, amount), duplicate age class assignment warning
 
 ### Settings UI
 
@@ -66,10 +66,10 @@
 | LOGIC-03 | 156 | Complete |
 | LOGIC-04 | 156 | Complete |
 | LOGIC-05 | 156 | Complete |
-| API-01 | 157 | Pending |
-| API-02 | 157 | Pending |
-| API-03 | 157 | Pending |
-| API-04 | 157 | Pending |
+| API-01 | 157 | Complete |
+| API-02 | 157 | Complete |
+| API-03 | 157 | Complete |
+| API-04 | 157 | Complete |
 | UI-01 | 158 | Pending |
 | UI-02 | 158 | Pending |
 | UI-03 | 158 | Pending |
@@ -86,4 +86,4 @@
 
 ---
 *Requirements defined: 2026-02-07*
-*Last updated: 2026-02-08 — Phase 156 requirements marked Complete*
+*Last updated: 2026-02-09 — Phase 157 requirements marked Complete*

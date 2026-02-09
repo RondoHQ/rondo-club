@@ -21,7 +21,7 @@
 
 - [x] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration — completed 2026-02-08
 - [x] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups — completed 2026-02-08
-- [ ] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API
+- [x] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API — completed 2026-02-09
 - [ ] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
 
@@ -60,14 +60,14 @@ Plans:
 **Depends on**: Phase 156 (backend logic must read from config for API responses to be meaningful)
 **Requirements**: API-01, API-02, API-03, API-04
 **Success Criteria** (what must be TRUE):
-  1. The fee settings GET endpoint returns full category definitions (slug, label, amount, age range, youth flag, sort order) per season
+  1. The fee settings GET endpoint returns full category definitions (slug, label, amount, age_classes, is_youth, sort_order) per season
   2. The fee settings POST endpoint accepts operations to add, edit, remove, and reorder categories
   3. The fee list endpoint includes category metadata (labels, sort order) in its response so the frontend needs no hardcoded mappings
-  4. Category validation rejects duplicate slugs, missing required fields, and overlapping age ranges
-**Plans**: 2 plans
+  4. Category validation rejects duplicate slugs and missing required fields, and warns about duplicate age class assignments
+**Plans**: 2 plans (complete)
 Plans:
-- [ ] 157-01-PLAN.md — Update settings GET/POST endpoints for full category objects with validation
-- [ ] 157-02-PLAN.md — Add categories metadata to fee list endpoint and update developer docs
+- [x] 157-01-PLAN.md — Update settings GET/POST endpoints for full category objects with validation
+- [x] 157-02-PLAN.md — Add categories metadata to fee list endpoint and update developer docs
 
 ### Phase 158: Fee Category Settings UI
 **Goal**: Admins can manage fee categories per season through the Settings UI
@@ -100,10 +100,10 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
-| 157. Fee Category REST API | v21.0 | 0/2 | Planned | - |
+| 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 158. Fee Category Settings UI | v21.0 | 0/TBD | Not started | - |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-08 — Phase 156 complete*
+*Last updated: 2026-02-09 — Phase 157 complete*
