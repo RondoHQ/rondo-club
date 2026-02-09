@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle } from 'lucide-react';
 import { prmApi } from '@/api/client';
@@ -300,6 +300,111 @@ function AgeCoverageSummary({ categories, warnings }) {
   );
 }
 
+// FamilyDiscountSection component
+function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
+  const [secondChild, setSecondChild] = useState(discountConfig?.second_child_percent ?? 25);
+  const [thirdChild, setThirdChild] = useState(discountConfig?.third_child_percent ?? 50);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Sync with external data when season changes
+  useEffect(() => {
+    setSecondChild(discountConfig?.second_child_percent ?? 25);
+    setThirdChild(discountConfig?.third_child_percent ?? 50);
+    setIsDirty(false);
+  }, [discountConfig?.second_child_percent, discountConfig?.third_child_percent]);
+
+  const handleSave = () => {
+    onSave({
+      second_child_percent: parseFloat(secondChild) || 0,
+      third_child_percent: parseFloat(thirdChild) || 0,
+    });
+    setIsDirty(false);
+  };
+
+  const handleReset = () => {
+    setSecondChild(25);
+    setThirdChild(50);
+    setIsDirty(true);
+  };
+
+  return (
+    <div className="card p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+      <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+        Familiekorting
+      </h4>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Configureer de kortingspercentages voor het tweede en derde kind binnen een gezin.
+        Het eerste kind betaalt altijd het volledige tarief.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="second_child_percent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Tweede kind
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              id="second_child_percent"
+              min="0"
+              max="100"
+              step="1"
+              value={secondChild}
+              onChange={(e) => { setSecondChild(e.target.value); setIsDirty(true); }}
+              className="w-full pr-8 px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Standaard: 25%</p>
+        </div>
+        <div>
+          <label htmlFor="third_child_percent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Derde kind en verder
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              id="third_child_percent"
+              min="0"
+              max="100"
+              step="1"
+              value={thirdChild}
+              onChange={(e) => { setThirdChild(e.target.value); setIsDirty(true); }}
+              className="w-full pr-8 px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">%</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Standaard: 50%</p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !isDirty}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Opslaan...
+            </>
+          ) : (
+            'Opslaan'
+          )}
+        </button>
+        <button
+          onClick={handleReset}
+          disabled={isSaving}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
+        >
+          Reset naar standaard
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Main FeeCategorySettings component
 export default function FeeCategorySettings() {
   const queryClient = useQueryClient();
@@ -401,6 +506,37 @@ export default function FeeCategorySettings() {
     },
   });
 
+  // Discount mutation (separate from categories to avoid sending categories when only discount changes)
+  const discountMutation = useMutation({
+    mutationFn: async ({ family_discount, season }) => {
+      const response = await prmApi.updateMembershipFeeSettings({ family_discount }, season);
+      return response.data;
+    },
+    onSuccess: (responseData) => {
+      queryClient.setQueryData(['membership-fee-settings'], responseData);
+      if (responseData.warnings && responseData.warnings.length > 0) {
+        setSaveWarnings(responseData.warnings);
+      } else {
+        setSaveWarnings([]);
+      }
+      setSaveErrors([]);
+      setSuccessMessage('Familiekorting opgeslagen');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    },
+    onError: (error) => {
+      const errorData = error.response?.data?.data;
+      if (errorData?.errors) {
+        setSaveErrors(errorData.errors);
+      } else {
+        setSaveErrors([{ field: 'general', message: error.message || 'Er is een fout opgetreden' }]);
+      }
+      setSaveWarnings([]);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['membership-fee-settings'] });
+    },
+  });
+
   // Drag-and-drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -418,6 +554,7 @@ export default function FeeCategorySettings() {
   const activeSeason = selectedSeason === 'current' ? data?.current_season : data?.next_season;
   const activeSeasonKey = activeSeason?.key;
   const categories = activeSeason?.categories || {};
+  const activeDiscount = activeSeason?.family_discount || { second_child_percent: 25, third_child_percent: 50 };
 
   // Sort categories by sort_order
   const sortedCategorySlugs = Object.entries(categories)
@@ -525,6 +662,12 @@ export default function FeeCategorySettings() {
     setSuccessMessage('');
   };
 
+  // Handle discount save
+  const handleDiscountSave = (discountConfig) => {
+    clearMessages();
+    discountMutation.mutate({ family_discount: discountConfig, season: activeSeasonKey });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -568,6 +711,13 @@ export default function FeeCategorySettings() {
           Volgend seizoen ({data?.next_season?.key})
         </button>
       </div>
+
+      {/* Family discount section */}
+      <FamilyDiscountSection
+        discountConfig={activeDiscount}
+        onSave={handleDiscountSave}
+        isSaving={discountMutation.isPending}
+      />
 
       {/* Error display */}
       {saveErrors.length > 0 && (
