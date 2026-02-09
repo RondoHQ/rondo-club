@@ -584,7 +584,7 @@ export default function Layout({ children }) {
         <div className="fixed inset-0 z-40 lg:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-black dark:bg-opacity-50"
+            className="fixed inset-0 bg-gray-600/75 dark:bg-black/50"
             onClick={() => setSidebarOpen(false)}
           />
 

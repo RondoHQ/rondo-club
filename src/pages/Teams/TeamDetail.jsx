@@ -240,7 +240,7 @@ export default function TeamDetail() {
             )}
             {/* Upload overlay */}
             <div 
-              className="absolute inset-0 rounded-lg bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center cursor-pointer"
+              className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
               onClick={() => fileInputRef.current?.click()}
             >
               {isUploadingLogo ? (
