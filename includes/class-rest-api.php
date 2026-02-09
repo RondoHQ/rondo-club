@@ -167,12 +167,6 @@ class Api extends Base {
 							return in_array( $param, [ 'light', 'dark', 'system' ], true );
 						},
 					],
-					'accent_color' => [
-						'required'          => false,
-						'validate_callback' => function ( $param ) {
-							return in_array( $param, [ 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose' ], true );
-						},
-					],
 				],
 			]
 		);
@@ -721,12 +715,6 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'accent_color'  => [
-							'required'          => false,
-							'validate_callback' => function ( $param ) {
-								return empty( $param ) || sanitize_hex_color( $param );
-							},
-						],
 						'freescout_url' => [
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
@@ -1161,15 +1149,9 @@ class Api extends Base {
 			$color_scheme = 'system';
 		}
 
-		$accent_color = get_user_meta( $user_id, 'rondo_accent_color', true );
-		if ( empty( $accent_color ) ) {
-			$accent_color = 'orange';
-		}
-
 		return rest_ensure_response(
 			[
 				'color_scheme' => $color_scheme,
-				'accent_color' => $accent_color,
 			]
 		);
 	}
@@ -1182,10 +1164,8 @@ class Api extends Base {
 
 		// Valid values for validation
 		$valid_color_schemes = [ 'light', 'dark', 'system' ];
-		$valid_accent_colors = [ 'orange', 'teal', 'indigo', 'emerald', 'violet', 'pink', 'fuchsia', 'rose' ];
 
 		$color_scheme = $request->get_param( 'color_scheme' );
-		$accent_color = $request->get_param( 'accent_color' );
 
 		// Update color scheme if provided and valid
 		if ( $color_scheme !== null ) {
@@ -1199,33 +1179,15 @@ class Api extends Base {
 			update_user_meta( $user_id, 'rondo_color_scheme', $color_scheme );
 		}
 
-		// Update accent color if provided and valid
-		if ( $accent_color !== null ) {
-			if ( ! in_array( $accent_color, $valid_accent_colors, true ) ) {
-				return new \WP_Error(
-					'invalid_accent_color',
-					__( 'Invalid accent color.', 'rondo' ),
-					[ 'status' => 400 ]
-				);
-			}
-			update_user_meta( $user_id, 'rondo_accent_color', $accent_color );
-		}
-
 		// Return updated preferences
 		$updated_color_scheme = get_user_meta( $user_id, 'rondo_color_scheme', true );
 		if ( empty( $updated_color_scheme ) ) {
 			$updated_color_scheme = 'system';
 		}
 
-		$updated_accent_color = get_user_meta( $user_id, 'rondo_accent_color', true );
-		if ( empty( $updated_accent_color ) ) {
-			$updated_accent_color = 'orange';
-		}
-
 		return rest_ensure_response(
 			[
 				'color_scheme' => $updated_color_scheme,
-				'accent_color' => $updated_accent_color,
 			]
 		);
 	}
@@ -2988,12 +2950,6 @@ class Api extends Base {
 		$club_name = $request->get_param( 'club_name' );
 		if ( $club_name !== null ) {
 			$club_config->update_club_name( $club_name );
-		}
-
-		// Update accent_color if provided
-		$accent_color = $request->get_param( 'accent_color' );
-		if ( $accent_color !== null ) {
-			$club_config->update_accent_color( $accent_color );
 		}
 
 		// Update freescout_url if provided
