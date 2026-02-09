@@ -124,7 +124,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 165-01-PLAN.md — Update PWA assets to electric-cyan, fix login page bugs, remove dead theming code from REST API
+- [x] 165-01-PLAN.md — Update PWA assets to electric-cyan, fix login page bugs, remove dead theming code from REST API — completed 2026-02-09
 
 ---
 
@@ -146,8 +146,8 @@ Plans:
 | 162. Foundation | v22.0 | 1/1 | ✓ Complete | 2026-02-09 |
 | 163. Color Migration | v22.0 | 3/3 | ✓ Complete | 2026-02-09 |
 | 164. Component Styling | v22.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 165. PWA & Backend | v22.0 | 0/1 | Not started | - |
+| 165. PWA & Backend | v22.0 | 1/1 | ✓ Complete | 2026-02-09 |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 164 completed*
+*Last updated: 2026-02-09 — Phase 165 completed*
