@@ -592,6 +592,33 @@ class Api extends Base {
 			]
 		);
 
+		// Copy season categories (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/membership-fees/copy-season',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'copy_season_categories' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'from_season' => [
+						'required'          => true,
+						'type'              => 'string',
+						'validate_callback' => function ( $param ) {
+							return preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+					'to_season'   => [
+						'required'          => true,
+						'type'              => 'string',
+						'validate_callback' => function ( $param ) {
+							return preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Get membership fee list
 		register_rest_route(
 			'rondo/v1',
@@ -2674,6 +2701,76 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Copy season categories from one season to another
+	 *
+	 * Copies both fee categories and family discount configuration from a source
+	 * season to a destination season. Validates that destination is empty.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Response with updated settings or error.
+	 */
+	public function copy_season_categories( $request ) {
+		$membership_fees = new \Rondo\Fees\MembershipFees();
+		$from_season     = $request->get_param( 'from_season' );
+		$to_season       = $request->get_param( 'to_season' );
+
+		// Validate seasons are different
+		if ( $from_season === $to_season ) {
+			return new \WP_Error(
+				'invalid_copy',
+				'Bron- en bestemmingsseizoen moeten verschillend zijn',
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Check if destination season already has categories
+		$existing_categories = $membership_fees->get_categories_for_season( $to_season );
+		if ( ! empty( $existing_categories ) ) {
+			return new \WP_Error(
+				'destination_not_empty',
+				'Bestemmingsseizoen heeft al categorieën gedefinieerd',
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Get source season data
+		$source_categories = $membership_fees->get_categories_for_season( $from_season );
+		if ( empty( $source_categories ) ) {
+			return new \WP_Error(
+				'source_empty',
+				'Bronseizoen heeft geen categorieën om te kopiëren',
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Copy categories
+		$membership_fees->save_categories_for_season( $source_categories, $to_season );
+
+		// Copy family discount config
+		$source_discount = $membership_fees->get_family_discount_config( $from_season );
+		$membership_fees->save_family_discount_config( $source_discount, $to_season );
+
+		// Return updated settings for both seasons
+		$current_season = $membership_fees->get_season_key();
+		$next_season    = $membership_fees->get_next_season_key();
+
+		return rest_ensure_response(
+			[
+				'current_season' => [
+					'key'             => $current_season,
+					'categories'      => $membership_fees->get_categories_for_season( $current_season ),
+					'family_discount' => $membership_fees->get_family_discount_config( $current_season ),
+				],
+				'next_season'    => [
+					'key'             => $next_season,
+					'categories'      => $membership_fees->get_categories_for_season( $next_season ),
+					'family_discount' => $membership_fees->get_family_discount_config( $next_season ),
+				],
+			]
+		);
 	}
 
 	/**
