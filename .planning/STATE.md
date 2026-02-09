@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** No active milestone — ready for next
+**Current focus:** v23.0 Former Members
 
 ## Current Position
 
-Phase: None active
-Plan: None active
-Status: v22.0 Design Refresh shipped and archived
-Last activity: 2026-02-09 — v22.0 milestone completed
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-09 — Milestone v23.0 started
 
-Progress: No active milestone
+Progress: No phases yet
 
 ## Performance Metrics
 
@@ -53,7 +53,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: v22.0 Design Refresh shipped and archived
+Stopped at: Milestone v23.0 started — defining requirements
 Resume file: None
 
 ---
