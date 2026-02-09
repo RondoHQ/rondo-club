@@ -52,8 +52,6 @@ use Rondo\Notifications\EmailChannel;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
-use Rondo\Import\VCard as VCardImport;
-use Rondo\Import\GoogleContacts;
 use Rondo\Import\GoogleContactsAPI;
 use Rondo\Export\VCard as VCardExport;
 use Rondo\Export\ICalFeed;
@@ -209,12 +207,6 @@ if ( ! class_exists( 'RONDO_Reminders' ) ) {
 }
 
 // Import classes
-if ( ! class_exists( 'RONDO_VCard_Import' ) ) {
-	class_alias( VCardImport::class, 'RONDO_VCard_Import' );
-}
-if ( ! class_exists( 'RONDO_Google_Contacts_Import' ) ) {
-	class_alias( GoogleContacts::class, 'RONDO_Google_Contacts_Import' );
-}
 if ( ! class_exists( 'RONDO_Google_Contacts_API_Import' ) ) {
 	class_alias( GoogleContactsAPI::class, 'RONDO_Google_Contacts_API_Import' );
 }
@@ -368,8 +360,6 @@ function rondo_init() {
 		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
-		new VCardImport();
-		new GoogleContacts();
 	}
 
 	// Reminders - only for admin or cron
