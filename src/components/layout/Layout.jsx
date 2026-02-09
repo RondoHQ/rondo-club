@@ -20,21 +20,8 @@ import {
   Gavel
 } from 'lucide-react';
 
-// Stadium icon component matching favicon
-const StadiumIcon = ({ className }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className={className}
-  >
-    <path
-      fillRule="evenodd"
-      d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
+// Logo URL from theme directory
+const getLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/public/icons/rondo-logo.png`;
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
@@ -93,9 +80,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
     <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold text-electric-cyan dark:text-electric-cyan">
-          <StadiumIcon className="w-5 h-5" />
-          {getSiteName()}
+        <Link to="/" className="flex items-center gap-2 text-xl font-bold">
+          <img src={getLogoUrl()} alt="Rondo" className="w-7 h-7" />
+          <span className="text-brand-gradient">{getSiteName()}</span>
         </Link>
         {mobile && (
           <button onClick={onClose} className="p-2 -mr-2 dark:text-gray-300">
