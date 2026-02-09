@@ -818,3 +818,33 @@
 **What's next:** v2.0 Multi-User
 
 ---
+
+## v21.0 Per-Season Fee Categories (Shipped: 2026-02-09)
+
+**Delivered:** Replaced all hardcoded fee category definitions with fully configurable per-season categories — admins can manage fee categories, family discounts, and matching rules through a settings UI, with all display surfaces rendering dynamically from the API.
+
+**Phases completed:** 155-161 (7 phases, 12 plans, 14 tasks)
+
+**Key accomplishments:**
+
+- Slug-keyed category data model with full metadata (label, amount, age classes, youth flag, sort order) and copy-forward for new seasons
+- Config-driven fee calculation using Sportlink age class matching, replacing all hardcoded constants and parse_age_group()
+- REST API for full category CRUD with structured validation (errors vs warnings) and full replacement pattern
+- Admin Settings UI with drag-and-drop reordering, inline CRUD, age class coverage display, and season selector
+- All display surfaces (contributie list, person finance card, Google Sheets export) render dynamically from API metadata
+- Family discount percentages configurable per season with separate WordPress option and copy-forward
+- Team and werkfunctie matching rules configurable per category, replacing hardcoded is_recreational_team() and is_donateur()
+
+**Stats:**
+
+- 70 files changed
+- +14,187 / -863 lines changed
+- 7 phases, 12 plans, 14 tasks
+- 2 days (2026-02-08 → 2026-02-09)
+
+**Git range:** `feat(155-01)` → `feat(161-02)`
+
+**What's next:** To be determined
+
+---
+
