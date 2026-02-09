@@ -71,10 +71,12 @@ Plans:
 4. ClubConfig accent_color option and REST API field are removed from backend
 5. Production build includes no unused accent-* classes
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 163-01: Color system replacement
+- [ ] 163-01-PLAN.md — Bulk CSS class migration (accent-* to brand colors) and data-accent system deletion
+- [ ] 163-02-PLAN.md — Simplify useTheme hook, remove color picker from Settings, uninstall react-colorful
+- [ ] 163-03-PLAN.md — Remove accent_color from ClubConfig, REST API, and rondoConfig global
 
 ---
 
@@ -141,7 +143,7 @@ Plans:
 | 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 162. Foundation | v22.0 | 1/1 | ✓ Complete | 2026-02-09 |
-| 163. Color Migration | v22.0 | 0/1 | Not started | - |
+| 163. Color Migration | v22.0 | 0/3 | Planned | - |
 | 164. Component Styling | v22.0 | 0/1 | Not started | - |
 | 165. PWA & Backend | v22.0 | 0/1 | Not started | - |
 
