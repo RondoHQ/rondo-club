@@ -25,7 +25,7 @@
 - [x] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories — completed 2026-02-09
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
 - [x] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded — completed 2026-02-09
-- [ ] **Phase 161: Configurable Matching Rules** - Replace hardcoded team name and werkfunctie matching with configurable per-category rules
+- [x] **Phase 161: Configurable Matching Rules** - Replace hardcoded team name and werkfunctie matching with configurable per-category rules — completed 2026-02-09
 
 ## Phase Details
 
@@ -122,8 +122,8 @@ Plans:
   5. Existing fee calculations produce the same results after migration (matching rules pre-populated from current hardcoded values)
 **Plans**: 2 plans
 Plans:
-- [ ] 161-01-PLAN.md — Backend: matching rules data model, migration, config-driven calculate_fee(), REST validation and werkfuncties endpoint
-- [ ] 161-02-PLAN.md — Frontend: matching rules UI in FeeCategorySettings, version bump, deploy
+- [x] 161-01-PLAN.md — Backend: matching rules data model, migration, config-driven calculate_fee(), REST validation and werkfuncties endpoint
+- [x] 161-02-PLAN.md — Frontend: matching rules UI in FeeCategorySettings, version bump, deploy
 
 ## Progress
 
@@ -138,8 +138,8 @@ Plans:
 | 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 | 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 161. Configurable Matching Rules | v21.0 | 0/2 | Not started | - |
+| 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 160 completed*
+*Last updated: 2026-02-09 — Phase 161 completed*
