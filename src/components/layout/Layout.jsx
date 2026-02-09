@@ -81,7 +81,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-          <img src={getLogoUrl()} alt="Rondo" className="w-7 h-7" />
+          <img src={getLogoUrl()} alt="Rondo" className="w-16 h-16" />
           <span className="text-brand-gradient">{getSiteName()}</span>
         </Link>
         {mobile && (

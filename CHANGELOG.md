@@ -7,8 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [22.0.0] - 2026-02-09
+
+### Added
+- Tailwind CSS v4 with CSS-first @theme configuration and OKLCH color space brand tokens
+- Brand color palette: electric-cyan, bright-cobalt, deep-midnight, obsidian
+- Montserrat font for headings via @fontsource/montserrat (weights 600, 700)
+- Cyan-to-cobalt gradient utilities (bg-brand-gradient, text-brand-gradient)
+- Gradient text treatment on page headings and section titles
+- Primary gradient buttons (cyan → cobalt) with hover lift effect
+- Glass button variant with transparent background
+- Card components with 3px gradient top border
+- Input/textarea focus states with electric-cyan border and cyan glow ring
+- Rondo logo integrated as favicon, login page logo, and sidebar brand mark
+- PWA icon generation script using Rondo logo source
+
+### Changed
+- Migrated from Tailwind CSS v3.4 to v4 (clean break, no backward compatibility)
+- Dark mode adapted to use brand colors (preserved, not removed)
+- PWA manifest theme-color updated to electric-cyan (#0891B2)
+- Login page restyled with brand gradient and Rondo logo
+- Hover transitions standardized to 200ms ease-in-out with translateY(-2px) lift
+- useTheme hook simplified (dark mode toggle only, no dynamic color injection)
+
 ### Removed
+- Dynamic accent color system (CSS variable injection, accent-* scale, data-accent attributes)
+- react-colorful color picker dependency
+- Color picker UI from Settings page
+- ClubConfig accent_color WordPress option and REST API field
+- Dead REST API theme endpoints (/rondo/v1/config accent_color field)
 - Contact import feature (vCard and Google CSV file upload) - replaced by live Google Contacts API sync
+- User approval system
+- how_we_met and met_date person fields
 
 ## [21.1.0] - 2026-02-09
 

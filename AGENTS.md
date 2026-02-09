@@ -209,7 +209,17 @@ Test your changes as much as you can before claiming something works.
 
 ### Rule 6: Update documentation
 
-Update the documentation in the /docs folder with all relevant information from the change. If the (sub-)system you made changes to is not documented yet, document that system too.
+Developer documentation lives in the **developer docs site** at `../developer/src/content/docs/`. This site is deployed to `developer.rondo.club`.
+
+When making changes, update the relevant docs there. Each doc file requires Starlight frontmatter (`title:` in YAML front matter). The docs are organized as:
+- `api/` — Rondo Club REST API reference
+- `features/` — Feature documentation (access control, relationships, etc.)
+- `integrations/` — CardDAV, iCal, import
+- `architecture/` — Frontend, PHP autoloading, relationship system
+
+PRDs and product specs still live in `docs/prd/` within this repo.
+
+If the (sub-)system you made changes to is not documented yet, document that system too.
 
 ### Rule 7: Git Commit & Push
 

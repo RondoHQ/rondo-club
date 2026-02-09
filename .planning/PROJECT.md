@@ -2,11 +2,11 @@
 
 ## What This Is
 
-A major milestone transforming Rondo Club from a single-user personal CRM into a multi-user collaborative platform. Combines Clay.earth's intimate relationship focus with Twenty CRM's team collaboration features while preserving privacy and personal connection.
+A React-powered WordPress theme for sports club management. Administrators manage members, teams, fees, and important dates through a modern branded SPA with Tailwind CSS v4, OKLCH color tokens, and PWA support.
 
 ## Core Value
 
-Add workspaces and sharing to enable team collaboration while maintaining the personal, relationship-focused experience that makes Rondo Club unique.
+Club administrators can manage their members, teams, and important dates through a single integrated system.
 
 ## Requirements
 
@@ -378,22 +378,18 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 - ✓ Family discount percentages configurable per season — v21.0
 - ✓ Team and werkfunctie matching rules configurable per category — v21.0
 
+**v22.0 Design Refresh (shipped 2026-02-09):**
+- ✓ Tailwind CSS v4 with CSS-first @theme configuration and OKLCH color tokens — v22.0
+- ✓ Brand color palette: electric-cyan, bright-cobalt, deep-midnight, obsidian (fixed, not dynamic) — v22.0
+- ✓ Montserrat font for headings via Fontsource (weights 600, 700) — v22.0
+- ✓ Cyan-to-cobalt gradient utility for buttons, headings, card borders — v22.0
+- ✓ Dynamic accent color system removed (useTheme simplified, react-colorful uninstalled, ClubConfig accent_color removed) — v22.0
+- ✓ Component styling: gradient buttons, 3px gradient card borders, cyan glow focus rings, 200ms hover lift — v22.0
+- ✓ Dark mode adapted to brand colors (preserved, not removed) — v22.0
+- ✓ PWA assets updated to electric-cyan, favicon fixed, dead REST API endpoints removed — v22.0
+- ✓ Rondo logo integrated as favicon, login page, and sidebar brand mark — v22.0
+
 ### Active
-
-## Current Milestone: v22.0 Design Refresh
-
-**Goal:** Restyle the entire React SPA to match the rondo.club brand design (STYLE.md), replacing the dynamic accent color system with fixed brand colors, and removing user-selectable color schemes.
-
-**Target features:**
-- Replace dynamic accent color system with fixed brand palette (electric-cyan, bright-cobalt, deep-midnight, obsidian)
-- Montserrat font for headings, system-ui for body
-- Cyan-to-cobalt gradient system for buttons, headings, card borders
-- Three button variants: primary (gradient), secondary (cobalt), glass (transparent)
-- Card components with gradient top border and new shadow system
-- Glass morphism header (sticky, blurred backdrop)
-- Input focus rings with cyan glow
-- Remove user-selectable color scheme (ClubConfig accent_color, react-colorful, useTheme dynamic injection)
-- Light-only UI (slate-50/white backgrounds, no dark mode)
 
 ### Out of Scope
 
@@ -587,6 +583,15 @@ Add workspaces and sharing to enable team collaboration while maintaining the pe
 | Config-driven matching rules | Team/werkfunctie matching per category replaces hardcoded is_recreational_team()/is_donateur() | ✓ Good |
 | Priority order: youth > team > werkfunctie > age-class | Deterministic category assignment hierarchy | ✓ Good |
 | Fixed palette for category colors | Colors auto-assigned by sort_order position, no per-category color config needed | ✓ Good |
+| Clean break to Tailwind v4 | No backward compatibility with v3, single-club app | ✓ Good |
+| OKLCH color space for brand tokens | Wider P3 gamut, perceptually uniform lightness | ✓ Good |
+| Keep dark mode, adapt to brand colors | User preference to preserve dark mode, not remove it | ✓ Good |
+| Fixed brand color in PHP (#0891b2 sRGB) | PHP-rendered elements use hardcoded electric-cyan, no dynamic theming | ✓ Good |
+| Hardcoded rgba(8, 145, 178, ...) in PHP | Electric-cyan transparency effects for login page | ✓ Good |
+| ease-in-out for Tailwind v4 transitions | Tailwind v4 doesn't support ease, use ease-in-out instead | ✓ Good |
+| Exclude modal h2 and filter labels from gradient | Visual distinction for error headings and form labels | ✓ Good |
+| Glass morphism deferred to future | Mobile performance concerns, not critical for brand alignment | Deferred |
+| Decorative blobs deferred to future | Polish feature, can be added later | Deferred |
 
 ---
-*Last updated: 2026-02-09 after v22.0 Design Refresh milestone started*
+*Last updated: 2026-02-09 after v22.0 Design Refresh shipped*
