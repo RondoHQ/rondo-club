@@ -2610,12 +2610,12 @@ class Api extends Base {
 		return rest_ensure_response(
 			[
 				'current_season' => [
-					'key'  => $current_season,
-					'fees' => $membership_fees->get_settings_for_season( $current_season ),
+					'key'        => $current_season,
+					'categories' => $membership_fees->get_categories_for_season( $current_season ),
 				],
 				'next_season'    => [
-					'key'  => $next_season,
-					'fees' => $membership_fees->get_settings_for_season( $next_season ),
+					'key'        => $next_season,
+					'categories' => $membership_fees->get_categories_for_season( $next_season ),
 				],
 			]
 		);
