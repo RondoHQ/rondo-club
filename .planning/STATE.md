@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Phase 166 - Backend Foundation
+**Current focus:** Phase 167 - Core Filtering
 
 ## Current Position
 
-Phase: 166 of 169 (Backend Foundation)
+Phase: 167 of 169 (Core Filtering)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-09 — Completed 166-01-PLAN.md (Backend Foundation)
+Last activity: 2026-02-09 — Completed 167-01-PLAN.md (Core Filtering)
 
-Progress: [████████████████████████████░░░░] 98.2% (166/169 phases)
+Progress: [████████████████████████████░░░░] 98.8% (167/169 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 169 plans across v1.0-v22.0 and v23.0 (in progress)
+- Total plans completed: 170 plans across v1.0-v22.0 and v23.0 (in progress)
 - Recent milestones:
-  - v23.0: 1 plan so far (Phase 166 complete)
+  - v23.0: 2 plans so far (Phases 166-167 complete)
   - v22.0: 7 plans, 1 day (2026-02-09)
   - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
   - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
@@ -43,6 +43,8 @@ Recent decisions affecting current work:
 - Config-driven fee calculation with season-specific categories (v21.0, phases 155-161)
 - [Phase 166]: Mark former members with PUT instead of DELETE to preserve history
 - [Phase 166]: Keep former members in tracking DB to detect rejoining
+- [Phase 167]: Apply former member filtering at database query level for performance
+- [Phase 167]: Use NULL-safe exclusion pattern for former_member field
 
 ### Pending Todos
 
@@ -69,12 +71,13 @@ Recent decisions affecting current work:
 - Duration: 229 seconds (3m 49s)
 - Tasks: 3
 - Files modified: 4 across 3 repositories (rondo-club, rondo-sync, developer)
+| Phase 167 P01 | 112 | 2 tasks | 3 files |
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 166-01-PLAN.md (Backend Foundation)
-Resume file: None - Phase 166 complete, ready for Phase 167
+Stopped at: Completed 167-01-PLAN.md (Core Filtering)
+Resume file: None - Phase 167 complete, ready for Phase 168
 
 ---
 *State updated: 2026-02-09*
