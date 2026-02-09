@@ -22,7 +22,7 @@
 - [x] **Phase 155: Fee Category Data Model** - Store fee category definitions per season in WordPress options with auto-migration — completed 2026-02-08
 - [x] **Phase 156: Fee Category Backend Logic** - Replace hardcoded fee logic with config-driven category lookups — completed 2026-02-08
 - [x] **Phase 157: Fee Category REST API** - Expose category definitions and CRUD operations through the API — completed 2026-02-09
-- [ ] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories
+- [x] **Phase 158: Fee Category Settings UI** - Admin interface for managing per-season fee categories — completed 2026-02-09
 - [ ] **Phase 159: Fee Category Frontend Display** - Contributie list and export consume dynamic category data from API
 - [ ] **Phase 160: Configurable Family Discount** - Make family discount percentages configurable per season instead of hardcoded
 - [ ] **Phase 161: Configurable Matching Rules** - Replace hardcoded team name and werkfunctie matching with configurable per-category rules
@@ -81,10 +81,10 @@ Plans:
   3. Admin can switch between seasons to manage category configs for different seasons
   4. Admin can drag-and-drop to reorder categories, and the new order persists
   5. A visual display shows age range coverage across categories, highlighting gaps or overlaps
-**Plans**: 2 plans
+**Plans**: 2 plans (complete)
 Plans:
-- [ ] 158-01-PLAN.md — Create FeeCategorySettings component with season selector, DnD category list, CRUD, validation display, and age class coverage
-- [ ] 158-02-PLAN.md — Wire into Settings.jsx, remove old FeesSubtab, version bump to 21.0.0, deploy
+- [x] 158-01-PLAN.md — Create FeeCategorySettings component with season selector, DnD category list, CRUD, validation display, and age class coverage
+- [x] 158-02-PLAN.md — Wire into Settings.jsx, remove old FeesSubtab, version bump to 21.0.0, deploy
 
 ### Phase 159: Fee Category Frontend Display
 **Goal**: The contributie list and Google Sheets export derive all category information from the API response
@@ -129,11 +129,11 @@ Plans:
 | 155. Fee Category Data Model | v21.0 | 1/1 | ✓ Complete | 2026-02-08 |
 | 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 158. Fee Category Settings UI | v21.0 | 0/2 | In progress | - |
+| 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
 | 160. Configurable Family Discount | v21.0 | 0/TBD | Not started | - |
 | 161. Configurable Matching Rules | v21.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-06*
-*Last updated: 2026-02-09 — Phase 161 added (Configurable Matching Rules)*
+*Last updated: 2026-02-09 — Phase 158 completed, Phase 161 added*
