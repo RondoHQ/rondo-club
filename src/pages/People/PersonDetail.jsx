@@ -1191,7 +1191,7 @@ export default function PersonDetail() {
           {!isDeceased && (
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Contactgegevens</h2>
+                <h2 className="font-semibold text-brand-gradient">Contactgegevens</h2>
                 <button
                   onClick={() => setShowContactModal(true)}
                   className="btn-secondary text-sm"
@@ -1296,7 +1296,7 @@ export default function PersonDetail() {
             {/* Addresses - only show for living people */}
             {!isDeceased && (
               <div className="card p-6 break-inside-avoid mb-6">
-                <h2 className="font-semibold mb-4">Adressen</h2>
+                <h2 className="font-semibold text-brand-gradient mb-4">Adressen</h2>
                 {acf.addresses?.length > 0 ? (
                   <div className="space-y-3">
                     {acf.addresses.map((address, index) => {
@@ -1341,7 +1341,7 @@ export default function PersonDetail() {
             {/* Relationships */}
             <div className="card p-6 break-inside-avoid mb-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="font-semibold">Relaties</h2>
+                <h2 className="font-semibold text-brand-gradient">Relaties</h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
@@ -1440,7 +1440,7 @@ export default function PersonDetail() {
         {activeTab === 'timeline' && (
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">Tijdlijn</h2>
+              <h2 className="font-semibold text-brand-gradient">Tijdlijn</h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowNoteModal(true)}
@@ -1477,7 +1477,7 @@ export default function PersonDetail() {
           <div className="columns-1 md:columns-2 gap-6">
             {/* Work history - spans both columns */}
           <div className="card p-6 mb-6 [column-span:all]">
-            <h2 className="font-semibold mb-4">Functiegeschiedenis</h2>
+            <h2 className="font-semibold text-brand-gradient mb-4">Functiegeschiedenis</h2>
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
                 {sortedWorkHistory.map((job) => {
@@ -1530,7 +1530,7 @@ export default function PersonDetail() {
           {/* Investments */}
           {investments.length > 0 && (
             <div className="card p-6 break-inside-avoid mb-6">
-              <h2 className="font-semibold mb-4 flex items-center">
+              <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
                 <TrendingUp className="w-5 h-5 mr-2" />
                 Investments
               </h2>
@@ -1578,7 +1578,7 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center gap-3 mb-4">
               <Gavel className="w-5 h-5 text-gray-500" />
-              <h2 className="font-semibold">Tuchtzaken</h2>
+              <h2 className="font-semibold text-brand-gradient">Tuchtzaken</h2>
             </div>
             <DisciplineCaseTable
               cases={disciplineCases}
@@ -1604,7 +1604,7 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-semibold">Taken</h2>
+                  <h2 className="font-semibold text-brand-gradient">Taken</h2>
                   {openTodosCount > 0 && (
                     <span className="bg-cyan-100 text-bright-cobalt text-xs font-medium px-2 py-0.5 rounded-full">
                       {openTodosCount}
@@ -1679,7 +1679,7 @@ export default function PersonDetail() {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2">
-                <h2 className="font-semibold text-lg">Taken</h2>
+                <h2 className="font-semibold text-brand-gradient text-lg">Taken</h2>
                 {openTodosCount > 0 && (
                   <span className="bg-cyan-100 text-bright-cobalt text-xs font-medium px-2 py-0.5 rounded-full">
                     {openTodosCount}

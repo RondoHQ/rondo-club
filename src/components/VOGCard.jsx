@@ -80,7 +80,7 @@ export default function VOGCard({ acfData }) {
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <StatusIcon className={`w-5 h-5 ${statusColorClass}`} />
-        <h2 className="font-semibold">VOG Status</h2>
+        <h2 className="font-semibold text-brand-gradient">VOG Status</h2>
       </div>
 
       {/* Status Banner */}

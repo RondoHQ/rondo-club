@@ -459,7 +459,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
     <>
       <div className="card p-6 break-inside-avoid mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold">Aangepaste velden</h2>
+          <h2 className="font-semibold text-brand-gradient">Aangepaste velden</h2>
           {hasEditableFields && (
             <button
               onClick={() => setShowModal(true)}
