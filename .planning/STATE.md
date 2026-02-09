@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 
 ## Current Position
 
-Phase: 167 of 169 (Core Filtering)
+Phase: 168 of 169 (Visibility Controls)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-09 — Completed 167-01-PLAN.md (Core Filtering)
+Last activity: 2026-02-09 — Completed 168-01-PLAN.md (Visibility Controls)
 
-Progress: [████████████████████████████░░░░] 98.8% (167/169 phases)
+Progress: [████████████████████████████░░░░] 99.4% (168/169 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 170 plans across v1.0-v22.0 and v23.0 (in progress)
+- Total plans completed: 171 plans across v1.0-v22.0 and v23.0 (in progress)
 - Recent milestones:
-  - v23.0: 2 plans so far (Phases 166-167 complete)
+  - v23.0: 3 plans so far (Phases 166-168 complete)
   - v22.0: 7 plans, 1 day (2026-02-09)
   - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
   - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
@@ -45,6 +45,9 @@ Recent decisions affecting current work:
 - [Phase 166]: Keep former members in tracking DB to detect rejoining
 - [Phase 167]: Apply former member filtering at database query level for performance
 - [Phase 167]: Use NULL-safe exclusion pattern for former_member field
+- [Phase 168]: Place "Toon oud-leden" toggle at top of filter dropdown for prominence
+- [Phase 168]: Use reduced opacity (60%) instead of greying out former member rows
+- [Phase 168]: Use loose comparison (== true) for ACF true_false fields returning string '1'
 
 ### Pending Todos
 
@@ -72,13 +75,22 @@ Recent decisions affecting current work:
 - Duration: 229 seconds (3m 49s)
 - Tasks: 3
 - Files modified: 4 across 3 repositories (rondo-club, rondo-sync, developer)
-| Phase 167 P01 | 112 | 2 tasks | 3 files |
+
+**Phase 167-01 Metrics:**
+- Duration: 112 seconds (1m 52s)
+- Tasks: 2
+- Files modified: 3
+
+**Phase 168-01 Metrics:**
+- Duration: 380 seconds (6m 20s)
+- Tasks: 2
+- Files modified: 8 across 2 repositories (rondo-club, developer)
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 167-01-PLAN.md (Core Filtering)
-Resume file: None - Phase 167 complete, ready for Phase 168
+Stopped at: Completed 168-01-PLAN.md (Visibility Controls)
+Resume file: None - Phase 168 complete, ready for Phase 169
 
 ---
 *State updated: 2026-02-09*
