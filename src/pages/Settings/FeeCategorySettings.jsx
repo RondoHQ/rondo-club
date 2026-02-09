@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle } from 'lucide-react';
 import { prmApi } from '@/api/client';
@@ -71,13 +71,10 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
               {category.label}
               {category.is_youth && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                  Jeugd
+                  Familiekorting
                 </span>
               )}
             </h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Slug: <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">{slug}</code>
-            </p>
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">
               Bedrag: <span className="text-accent-600 dark:text-accent-400">&euro; {category.amount}</span>
             </p>
@@ -118,23 +115,16 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
 // EditCategoryForm component for inline editing
 function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = false, availableAgeGroups = [] }) {
   const [formData, setFormData] = useState({
-    slug: slug || '',
     label: category?.label || '',
     amount: category?.amount ?? 0,
     age_classes: category?.age_classes || [],
     is_youth: category?.is_youth ?? false,
   });
 
-  // Auto-generate slug from label for new categories
-  useEffect(() => {
-    if (isNew && formData.label && !formData.slug) {
-      setFormData(prev => ({ ...prev, slug: slugify(prev.label) }));
-    }
-  }, [formData.label, formData.slug, isNew]);
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData.slug, {
+    const effectiveSlug = isNew ? slugify(formData.label) : slug;
+    onSave(effectiveSlug, {
       label: formData.label,
       amount: parseFloat(formData.amount) || 0,
       age_classes: formData.age_classes,
@@ -153,22 +143,6 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-4 border-2 border-accent-200 dark:border-accent-800">
-      {/* Slug field (only editable for new categories) */}
-      <div>
-        <label htmlFor="slug" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Slug {isNew && <span className="text-xs text-gray-500">(kleine-letters-met-streepjes)</span>}
-        </label>
-        <input
-          type="text"
-          id="slug"
-          value={formData.slug}
-          onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-          disabled={!isNew}
-          required
-          className="w-full px-3 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 disabled:opacity-50 disabled:bg-gray-100 dark:disabled:bg-gray-800"
-        />
-      </div>
-
       {/* Label field */}
       <div>
         <label htmlFor="label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -244,7 +218,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           className="rounded border-gray-300 dark:border-gray-600 text-accent-600 focus:ring-accent-500"
         />
         <label htmlFor="is_youth" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Jeugdcategorie
+          Familiekorting mogelijk?
         </label>
       </div>
 
@@ -252,7 +226,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
       <div className="flex items-center gap-3 pt-2">
         <button
           type="submit"
-          disabled={isSaving || !formData.slug || !formData.label}
+          disabled={isSaving || !formData.label}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
         >
           {isSaving ? (
