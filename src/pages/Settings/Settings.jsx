@@ -9,8 +9,6 @@ import apiClient from '@/api/client';
 import { prmApi, wpApi } from '@/api/client';
 import { useTheme, COLOR_SCHEMES, ACCENT_COLORS } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
-import VCardImport from '@/components/import/VCardImport';
-import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
 import FeeCategorySettings from './FeeCategorySettings';
@@ -2861,24 +2859,6 @@ function NotificationsTab({
   );
 }
 
-// Data Tab Component - Import types configuration
-const importTypes = [
-  {
-    id: 'vcard',
-    name: 'vCard',
-    description: 'Apple Contacten, Outlook, Android',
-    icon: FileCode,
-    component: VCardImport,
-  },
-  {
-    id: 'google',
-    name: 'Google Contacten',
-    description: 'CSV-export van Google',
-    icon: FileSpreadsheet,
-    component: GoogleContactsImport,
-  },
-];
-
 // API Access Tab Component - Application password management
 function APIAccessTab({
   appPasswords, appPasswordsLoading, config,
@@ -3021,8 +3001,6 @@ function APIAccessTab({
 }
 
 function DataTab() {
-  const [activeImportType, setActiveImportType] = useState('vcard');
-
   const handleExport = (format) => {
     if (format === 'vcard') {
       window.location.href = '/wp-json/rondo/v1/export/vcard';
@@ -3030,57 +3008,9 @@ function DataTab() {
       window.location.href = '/wp-json/rondo/v1/export/google-csv';
     }
   };
-  
-  const ActiveImportComponent = importTypes.find(t => t.id === activeImportType)?.component;
 
   return (
     <div className="space-y-6">
-      {/* Import Section */}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold mb-4">Gegevens importeren</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Importeer je contacten vanuit verschillende bronnen. Bestaande contacten met dezelfde naam worden bijgewerkt in plaats van gedupliceerd.
-        </p>
-
-        {/* Import type tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-6" aria-label="Import types">
-            {importTypes.map((type) => {
-              const Icon = type.icon;
-              const isActive = activeImportType === type.id;
-              return (
-                <button
-                  key={type.id}
-                  onClick={() => setActiveImportType(type.id)}
-                  className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    isActive
-                      ? 'border-accent-500 text-accent-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon
-                    className={`mr-2 h-5 w-5 ${
-                      isActive ? 'text-accent-500' : 'text-gray-400 group-hover:text-gray-500'
-                    }`}
-                  />
-                  <div className="text-left">
-                    <span className="block">{type.name}</span>
-                    <span className={`block text-xs font-normal ${
-                      isActive ? 'text-accent-400' : 'text-gray-400'
-                    }`}>
-                      {type.description}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Active import component */}
-        {ActiveImportComponent && <ActiveImportComponent />}
-      </div>
-      
       {/* Export Section */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold mb-4">Gegevens exporteren</h2>
