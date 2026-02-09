@@ -4,7 +4,7 @@ import { Coins, AlertTriangle, Users, Calendar, Gavel } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { formatCurrency, formatPercentage, getCategoryLabel } from '@/utils/formatters';
+import { formatCurrency, formatPercentage } from '@/utils/formatters';
 
 /**
  * Finances card showing membership fee details for a person
@@ -94,7 +94,7 @@ export default function FinancesCard({ personId }) {
         {/* Category & Base Fee */}
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            {getCategoryLabel(feeData.category)}
+            {feeData.category_label ?? feeData.category}
             {feeData.leeftijdsgroep && (
               <span className="text-xs ml-1 text-gray-400">({feeData.leeftijdsgroep})</span>
             )}

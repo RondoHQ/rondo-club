@@ -5,7 +5,7 @@ import { useFeeList } from '@/hooks/useFees';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import { formatCurrency, formatPercentage, FEE_CATEGORIES } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
 
 // Get next season label from current season
 function getNextSeasonLabel(currentSeason) {
@@ -35,7 +35,7 @@ function SortableHeader({ label, columnId, sortField, sortOrder, onSort, classNa
 }
 
 // Fee row component
-function FeeRow({ member, isOdd, isForecast }) {
+function FeeRow({ member, isOdd, isForecast, categories }) {
   const hasDiscount = member.family_discount_rate > 0;
   const hasProrata = member.prorata_percentage < 1.0;
 
@@ -65,8 +65,8 @@ function FeeRow({ member, isOdd, isForecast }) {
 
       {/* Category */}
       <td className="px-4 py-3 whitespace-nowrap">
-        <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${FEE_CATEGORIES[member.category]?.color ?? 'bg-gray-100 text-gray-700'}`}>
-          {FEE_CATEGORIES[member.category]?.label ?? member.category}
+        <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getCategoryColor(categories?.[member.category]?.sort_order)}`}>
+          {categories?.[member.category]?.label ?? member.category}
         </span>
       </td>
 
@@ -245,7 +245,10 @@ export default function ContributieList() {
   });
 
   // Sort members client-side
-  const categoryOrder = { mini: 1, pupil: 2, junior: 3, senior: 4, recreant: 5, donateur: 6 };
+  const categoryOrder = {};
+  Object.entries(data?.categories || {}).forEach(([slug, meta]) => {
+    categoryOrder[slug] = meta.sort_order ?? 999;
+  });
 
   const sortedMembers = [...filteredMembers].sort((a, b) => {
     let cmp = 0;
@@ -534,6 +537,7 @@ export default function ContributieList() {
                   member={member}
                   isOdd={index % 2 === 1}
                   isForecast={isForecast}
+                  categories={data?.categories}
                 />
               ))}
             </tbody>
