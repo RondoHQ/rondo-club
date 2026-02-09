@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 164 of 165 (Component Styling & Dark Mode Adaptation)
-Plan: 1 of 2 complete
-Status: Plan 164-01 complete — component classes updated with brand styling
-Last activity: 2026-02-09 — Plan 164-01 executed (1 task, 1 file modified, 2 minutes)
+Plan: 2 of 2 complete
+Status: Phase 164 complete — gradient headings applied across all pages
+Last activity: 2026-02-09 — Plan 164-02 executed (2 tasks, 17 files modified, 9 minutes)
 
-Progress: [██████████░░░░░░░░░░] 50% (164/165 total phases, 3/4 v22.0 phases, 1/2 phase 164 plans)
+Progress: [████████████████████] 100% (164/165 total phases, 4/4 v22.0 phases, 2/2 phase 164 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 166 plans across v1.0-v22.0
+- Total plans completed: 167 plans across v1.0-v22.0
 - v21.0 completed: 12 plans, 2 days (2026-02-08 → 2026-02-09)
-- v22.0 in progress: 5/7 plans complete (162-01, 163-01, 163-02, 163-03, 164-01)
+- v22.0 in progress: 6/7 plans complete (162-01, 163-01, 163-02, 163-03, 164-01, 164-02)
 
 ## Accumulated Context
 
@@ -39,6 +39,8 @@ Recent decisions affecting v22.0:
 - [Phase 163]: Use #0891b2 (electric-cyan sRGB) as fixed brand color for PHP-rendered elements
 - [Phase 163]: Accent color system fully removed — dynamic theming eliminated from frontend and backend
 - [Phase 164-01]: Use ease-in-out instead of ease for Tailwind v4 compatibility
+- [Phase 164-02]: Preserve "Toegang geweigerd" error headings without gradient for visual distinction
+- [Phase 164-02]: Exclude modal h2 titles and filter labels from gradient application
 
 ### Pending Todos
 
@@ -66,7 +68,7 @@ Recent decisions affecting v22.0:
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 164-01-PLAN.md
+Stopped at: Completed 164-02-PLAN.md
 Resume file: None
 
 ---
