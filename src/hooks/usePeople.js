@@ -140,6 +140,7 @@ export function useFilteredPeople(filters = {}, options = {}) {
     vog_type: filters.vogType || null,
     leeftijdsgroep: filters.leeftijdsgroep || null,
     vog_justis_status: filters.vogJustisStatus || null,
+    include_former: filters.includeFormer || null,
   };
 
   return useQuery({

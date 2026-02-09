@@ -61,7 +61,7 @@ const COLUMN_SORT_FIELDS = {
 
 function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidths, customFieldsMap, isSelected, onToggleSelection, isOdd }) {
   return (
-    <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'}`}>
+    <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'} ${person.former_member ? 'opacity-60' : ''}`}>
       <td className="pl-4 pr-2 py-3 w-10 sticky left-0 z-[1] bg-inherit">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
@@ -101,6 +101,11 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
             {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
             {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
+          {person.former_member && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
+              Oud-lid
+            </span>
+          )}
         </Link>
       </td>
       {/* Dynamic columns based on visible_columns order */}
@@ -653,6 +658,7 @@ export default function PeopleList() {
   const fotoMissing = searchParams.get('fotoMissing') || '';
   const vogMissing = searchParams.get('vogMissing') || '';
   const vogOlderThanYears = searchParams.get('vogOuder') ? parseInt(searchParams.get('vogOuder'), 10) : null;
+  const includeFormer = searchParams.get('oudLeden') || '';
 
   // Helper to update URL params
   const updateSearchParams = useCallback((updates) => {
@@ -730,6 +736,10 @@ export default function PeopleList() {
     updateSearchParams({ vogOuder: value });
   }, [updateSearchParams]);
 
+  const setIncludeFormer = useCallback((value) => {
+    updateSearchParams({ oudLeden: value });
+  }, [updateSearchParams]);
+
   // Local UI state (not persisted in URL)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -778,6 +788,7 @@ export default function PeopleList() {
     fotoMissing,
     vogMissing,
     vogOlderThanYears,
+    includeFormer: includeFormer || null,
   });
 
   // Extract data from response
@@ -916,7 +927,8 @@ export default function PeopleList() {
   }, []);
 
   const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter ||
-    huidigeVrijwilliger || financieleBlokkade || typeLid || leeftijdsgroep || fotoMissing || vogMissing || vogOlderThanYears;
+    huidigeVrijwilliger || financieleBlokkade || typeLid || leeftijdsgroep || fotoMissing || vogMissing || vogOlderThanYears ||
+    includeFormer;
 
   // Update filteredCount URL param when filters are active and data is loaded
   useEffect(() => {
@@ -999,7 +1011,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, page, people]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1085,6 +1097,7 @@ export default function PeopleList() {
         foto_missing: fotoMissing || undefined,
         vog_missing: vogMissing || undefined,
         vog_older_than_years: vogOlderThanYears || undefined,
+        include_former: includeFormer || undefined,
         orderby: sortField,
         order: sortOrder,
       };
@@ -1138,7 +1151,8 @@ export default function PeopleList() {
                 <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
                   {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
                    (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
-                   (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0)}
+                   (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0) +
+                   (includeFormer ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1150,6 +1164,23 @@ export default function PeopleList() {
                 className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
               >
                 <div className="p-4 space-y-4">
+                  {/* Former Members Toggle */}
+                  <div>
+                    <label className="flex items-center cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={includeFormer === '1'}
+                          onChange={() => setIncludeFormer(includeFormer === '1' ? '' : '1')}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-electric-cyan transition-colors"></div>
+                        <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
+                      </div>
+                      <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Toon oud-leden</span>
+                    </label>
+                  </div>
+
                   {/* Labels Filter */}
                   {availableLabelsWithIds.length > 0 && (
                     <div>
