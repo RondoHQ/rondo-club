@@ -94,7 +94,9 @@ Plans:
   1. The contributie list page renders category badges (labels, colors) using data from the API response, with no hardcoded `FEE_CATEGORIES` object in the frontend
   2. Category colors are auto-assigned from a fixed palette based on sort order position
   3. Google Sheets export uses dynamic category definitions from the API config, not hardcoded column layouts
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 159-01-PLAN.md — Remove all hardcoded category definitions from frontend and export, replace with API-driven data
 
 ### Phase 160: Configurable Family Discount
 **Goal**: Family discount percentages are configurable per season instead of hardcoded 0%/25%/50%
@@ -136,7 +138,7 @@ Plans:
 | 156. Fee Category Backend Logic | v21.0 | 2/2 | ✓ Complete | 2026-02-08 |
 | 157. Fee Category REST API | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 158. Fee Category Settings UI | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
-| 159. Fee Category Frontend Display | v21.0 | 0/TBD | Not started | - |
+| 159. Fee Category Frontend Display | v21.0 | 0/1 | Not started | - |
 | 160. Configurable Family Discount | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 | 161. Configurable Matching Rules | v21.0 | 2/2 | ✓ Complete | 2026-02-09 |
 
