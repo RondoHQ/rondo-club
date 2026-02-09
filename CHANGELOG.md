@@ -14,10 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Family discount configuration stored per season in WordPress options with fallback to defaults (25%/50%)
 - FamilyDiscountSection component in fee category settings UI
 - REST API validation for family discount percentages (0-100 range, warning if 2nd >= 3rd)
+- Configurable matching rules: each fee category can specify matching teams (by ID) and matching werkfuncties
+- Admin UI for selecting teams and werkfuncties per fee category in Settings
+- GET /rondo/v1/werkfuncties/available endpoint for listing distinct werkfunctie values
+- Auto-migration: existing 'recreant' categories pre-populated with recreational team IDs, 'donateur' with Donateur werkfunctie
 
 ### Changed
 - `get_family_discount_rate()` reads from per-season config instead of returning hardcoded values
 - GET/POST `/rondo/v1/membership-fees/settings` now includes `family_discount` field
+- `calculate_fee()` now uses config-driven team and werkfunctie matching instead of hardcoded `is_recreational_team()` and `is_donateur()`
+- `is_recreational_team()` and `is_donateur()` deprecated (kept for migration only)
 
 ## [21.0.0] - 2026-02-09
 
