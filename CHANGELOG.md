@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [21.0.0] - 2026-02-09
+
+### Added
+- Per-season fee category management UI in Settings > Beheer > Contributie
+- Season selector toggle for managing current and next season categories
+- Drag-and-drop reordering of fee categories with sort order persistence
+- Inline editing of category fields: label, amount, age classes, youth flag
+- Age class coverage summary showing which Sportlink age classes map to which categories
+- API validation feedback: errors (blocking) and warnings (informational) displayed in UI
+- Fee category data model with per-season storage in WordPress options
+- Config-driven fee calculation replacing hardcoded category constants
+- REST API endpoints for category CRUD with structured validation
+
+### Changed
+- Fee calculation now reads from per-season category configuration instead of hardcoded values
+- Fee settings UI is fully dynamic - no hardcoded fee type names
+- Category sort order derived from config, removing duplicated arrays across codebase
+- Fee list REST API response includes category metadata for dynamic frontend rendering
+
+### Removed
+- Hardcoded fee type definitions (mini, pupil, junior, senior, recreant, donateur) from Settings UI
+- Hardcoded category_order arrays from REST API, Google Sheets export, and ContributieList
+- Old flat-amount fee settings UI replaced with full category management
+
+## [20.0.0] - 2026-02-08
+
 ### Added
 - Dynamic filter options on People list derived from database values instead of hardcoded arrays
 - REST API endpoint `/rondo/v1/people/filter-options` returning available filters with counts

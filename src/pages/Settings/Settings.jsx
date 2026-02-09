@@ -13,6 +13,7 @@ import VCardImport from '@/components/import/VCardImport';
 import GoogleContactsImport from '@/components/import/GoogleContactsImport';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
+import FeeCategorySettings from './FeeCategorySettings';
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
@@ -135,19 +136,6 @@ export default function Settings() {
   const [rolesLoading, setRolesLoading] = useState(true);
   const [rolesSaving, setRolesSaving] = useState(false);
   const [rolesMessage, setRolesMessage] = useState('');
-
-  // Membership fee settings state
-  const [currentSeasonFees, setCurrentSeasonFees] = useState({
-    key: '',
-    fees: { mini: 130, pupil: 180, junior: 230, senior: 255, recreant: 65, donateur: 55 },
-  });
-  const [nextSeasonFees, setNextSeasonFees] = useState({
-    key: '',
-    fees: { mini: 130, pupil: 180, junior: 230, senior: 255, recreant: 65, donateur: 55 },
-  });
-  const [feeLoading, setFeeLoading] = useState(true);
-  const [feeSaving, setFeeSaving] = useState(false);
-  const [feeMessage, setFeeMessage] = useState('');
 
   // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
@@ -273,26 +261,6 @@ export default function Settings() {
     fetchVogSettings();
   }, [isAdmin]);
 
-  // Fetch membership fee settings on mount (admin only)
-  useEffect(() => {
-    const fetchFeeSettings = async () => {
-      if (!isAdmin) {
-        setFeeLoading(false);
-        return;
-      }
-      try {
-        const response = await prmApi.getMembershipFeeSettings();
-        setCurrentSeasonFees(response.data.current_season);
-        setNextSeasonFees(response.data.next_season);
-      } catch {
-        // Fee settings fetch failed silently
-      } finally {
-        setFeeLoading(false);
-      }
-    };
-    fetchFeeSettings();
-  }, [isAdmin]);
-
   // Fetch volunteer role settings on mount (admin only)
   useEffect(() => {
     const fetchRoleSettings = async () => {
@@ -356,22 +324,6 @@ export default function Settings() {
       setRolesMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setRolesSaving(false);
-    }
-  };
-
-  // Handle membership fee settings save
-  const handleSeasonFeeSave = async (season, fees) => {
-    setFeeSaving(true);
-    setFeeMessage('');
-    try {
-      const response = await prmApi.updateMembershipFeeSettings(fees, season);
-      setCurrentSeasonFees(response.data.current_season);
-      setNextSeasonFees(response.data.next_season);
-      setFeeMessage('Contributie-instellingen opgeslagen');
-    } catch (error) {
-      setFeeMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
-    } finally {
-      setFeeSaving(false);
     }
   };
 
@@ -709,15 +661,7 @@ export default function Settings() {
             handleRescheduleCron={handleRescheduleCron}
             reschedulingCron={reschedulingCron}
             cronMessage={cronMessage}
-            currentSeasonFees={currentSeasonFees}
-            setCurrentSeasonFees={setCurrentSeasonFees}
-            nextSeasonFees={nextSeasonFees}
-            setNextSeasonFees={setNextSeasonFees}
-            feeLoading={feeLoading}
-            feeSaving={feeSaving}
-            feeMessage={feeMessage}
-            handleSeasonFeeSave={handleSeasonFeeSave}
-          vogSettings={vogSettings}
+            vogSettings={vogSettings}
           setVogSettings={setVogSettings}
           vogLoading={vogLoading}
           vogSaving={vogSaving}
@@ -3192,14 +3136,6 @@ function AdminTabWithSubtabs({
   handleRescheduleCron,
   reschedulingCron,
   cronMessage,
-  currentSeasonFees,
-  setCurrentSeasonFees,
-  nextSeasonFees,
-  setNextSeasonFees,
-  feeLoading,
-  feeSaving,
-  feeMessage,
-  handleSeasonFeeSave,
   vogSettings,
   setVogSettings,
   vogLoading,
@@ -3243,16 +3179,7 @@ function AdminTabWithSubtabs({
           cronMessage={cronMessage}
         />
       ) : activeSubtab === 'fees' ? (
-        <FeesSubtab
-          currentSeasonFees={currentSeasonFees}
-          setCurrentSeasonFees={setCurrentSeasonFees}
-          nextSeasonFees={nextSeasonFees}
-          setNextSeasonFees={setNextSeasonFees}
-          feeLoading={feeLoading}
-          feeSaving={feeSaving}
-          feeMessage={feeMessage}
-          handleSeasonFeeSave={handleSeasonFeeSave}
-        />
+        <FeeCategorySettings />
       ) : activeSubtab === 'vog' ? (
         <VOGTab
           vogSettings={vogSettings}
@@ -3275,124 +3202,6 @@ function AdminTabWithSubtabs({
           handleRolesSave={handleRolesSave}
         />
       ) : null}
-    </div>
-  );
-}
-
-// Fees Subtab Component
-function FeesSubtab({
-  currentSeasonFees,
-  setCurrentSeasonFees,
-  nextSeasonFees,
-  setNextSeasonFees,
-  feeLoading,
-  feeSaving,
-  feeMessage,
-  handleSeasonFeeSave,
-}) {
-  const FEE_TYPES = [
-    { key: 'mini', label: 'Mini', description: 'Leeftijd 4-6 jaar' },
-    { key: 'pupil', label: 'Pupil', description: 'Leeftijd 7-12 jaar' },
-    { key: 'junior', label: 'Junior', description: 'Leeftijd 13-17 jaar' },
-    { key: 'senior', label: 'Senior', description: 'Leeftijd 18+ jaar' },
-    { key: 'recreant', label: 'Recreant', description: 'Recreatief lid' },
-    { key: 'donateur', label: 'Donateur', description: 'Steunend lid' },
-  ];
-
-  const renderSeasonSection = (seasonData, setSeasonData, seasonLabel) => (
-    <div className="card p-6">
-      <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        {seasonLabel}: {seasonData.key}
-      </h4>
-      <div className="space-y-4">
-        {FEE_TYPES.map(({ key, label, description }) => (
-          <div key={key} className="flex items-center gap-4">
-            <div className="flex-1">
-              <label
-                htmlFor={`fee-${seasonData.key}-${key}`}
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {label}
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                &euro;
-              </span>
-              <input
-                type="number"
-                id={`fee-${seasonData.key}-${key}`}
-                min="0"
-                step="1"
-                value={seasonData.fees[key] ?? 0}
-                onChange={(e) =>
-                  setSeasonData((prev) => ({
-                    ...prev,
-                    fees: {
-                      ...prev.fees,
-                      [key]: parseInt(e.target.value, 10) || 0,
-                    },
-                  }))
-                }
-                className="w-28 pl-8 pr-3 py-2 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-accent-500 focus:ring-accent-500 sm:text-sm"
-              />
-            </div>
-          </div>
-        ))}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => handleSeasonFeeSave(seasonData.key, seasonData.fees)}
-            disabled={feeSaving}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-accent-600 hover:bg-accent-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent-500 disabled:opacity-50"
-          >
-            {feeSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Opslaan...
-              </>
-            ) : (
-              'Opslaan'
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-          Contributie-instellingen
-        </h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Configureer de contributiebedragen per leeftijdscategorie voor het huidige en volgende seizoen.
-        </p>
-      </div>
-
-      {feeLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-accent-500" />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {renderSeasonSection(currentSeasonFees, setCurrentSeasonFees, 'Huidig seizoen')}
-          {renderSeasonSection(nextSeasonFees, setNextSeasonFees, 'Volgend seizoen')}
-
-          {feeMessage && (
-            <div
-              className={`text-sm ${
-                feeMessage.startsWith('Fout')
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-green-600 dark:text-green-400'
-              }`}
-            >
-              {feeMessage}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
