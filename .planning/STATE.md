@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** v22.0 Design Refresh (Phase 163 - Color System Migration)
+**Current focus:** v22.0 Design Refresh (Phase 164 - Component Styling & Dark Mode Adaptation)
 
 ## Current Position
 
-Phase: 163 of 165 (Color System Migration)
-Plan: 3 of 3 complete
-Status: Phase 163-03 complete — removed accent_color from backend (ClubConfig, REST API, login page)
-Last activity: 2026-02-09 — Phase 163-03 executed (2/2 tasks, 3 files, 175 lines deleted)
+Phase: 164 of 165 (Component Styling & Dark Mode Adaptation)
+Plan: Ready to plan
+Status: Phase 163 complete and verified (13/13 must-haves passed) — ready for Phase 164 planning
+Last activity: 2026-02-09 — Phase 163 executed and verified (3/3 plans, 645 lines removed, 60 components migrated)
 
-Progress: [██████░░░░░░░░░░░░░░] 30% (163/165 total phases, 4/4 v22.0 plans complete)
+Progress: [██████████░░░░░░░░░░] 50% (163/165 total phases complete, 2/4 v22.0 phases)
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 165 plans across v1.0-v22.0
 - v21.0 completed: 12 plans, 2 days (2026-02-08 → 2026-02-09)
-- v22.0 in progress: 4/4 plans complete (162-01, 163-01, 163-02, 163-03)
+- v22.0 in progress: 4/7 plans complete (162-01, 163-01, 163-02, 163-03)
 
 ## Accumulated Context
 
@@ -37,6 +37,7 @@ Recent decisions affecting v22.0:
 - Preserve accent color system until Phase 163 (incremental migration approach)
 - Complete Tailwind v4 migration manually after upgrade tool failure (ensure correctness)
 - [Phase 163]: Use #0891b2 (electric-cyan sRGB) as fixed brand color for PHP-rendered elements
+- [Phase 163]: Accent color system fully removed — dynamic theming eliminated from frontend and backend
 
 ### Pending Todos
 
@@ -56,13 +57,10 @@ None.
 | 44 | Remove how_we_met and met_date fields | 2026-02-09 | 018b294c | [44-remove-how-we-met-and-met-date-fields](./quick/44-remove-how-we-met-and-met-date-fields/) |
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
-| Phase 163 P02 | 3 | 2 tasks | 4 files |
-| Phase 163 P03 | 263 | 2 tasks | 3 files |
-
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 163-03 complete — accent color system fully removed from backend
+Stopped at: Phase 163 complete and verified — ready for Phase 164 planning
 Resume file: None
 
 ---
