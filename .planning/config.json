@@ -3,7 +3,7 @@
   "depth": "standard",
   "model_profile": "balanced",
   "workflow": {
-    "research": true,
+    "research": false,
     "plan_check": true,
     "verifier": true
   },
