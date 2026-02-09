@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-08)
 
 ## Current Position
 
-Phase: 157 of 159 (Fee Category REST API) — third phase of v21.0
-Plan: 02 of 02 complete
-Status: Phase complete, verified
-Last activity: 2026-02-09 — Completed and verified Phase 157 (Fee Category REST API)
+Phase: 158 of 159 (Fee Category Settings UI) — fourth phase of v21.0
+Plan: 01 of 02 complete
+Status: In progress
+Last activity: 2026-02-09 — Completed 158-01 (FeeCategorySettings component)
 
-Progress: [█████░░░░░] 50% (5/10 v21.0 plans complete)
+Progress: [██████░░░░] 60% (6/10 v21.0 plans complete)
 
 ## Accumulated Context
 
@@ -42,6 +42,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 157-01:** Empty categories array is valid for reset functionality
 - **Phase 157-02:** GET /fees includes categories metadata (label, sort_order, is_youth) for dynamic frontend rendering
 - **Phase 157-02:** Category metadata in fee list returns only display-relevant fields, not full config
+- **Phase 158-01:** FeeCategorySettings component is self-contained (fetches own data via TanStack Query)
+- **Phase 158-01:** Validation display distinguishes blocking errors (red) from informational warnings (amber)
+- **Phase 158-01:** Auto-slug generation from label for new categories reduces user error
+- **Phase 158-01:** Age class coverage summary always visible (not just after save) for better UX
 
 ### Pending Todos
 
@@ -60,8 +64,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-02-09 11:00
-Stopped at: Phase 157 complete and verified. Ready for Phase 158 (Fee Category Settings UI).
+Last session: 2026-02-09 10:14
+Stopped at: Completed 158-01 (FeeCategorySettings component). Ready for 158-02 (integration).
 Resume file: None
 
 ---
