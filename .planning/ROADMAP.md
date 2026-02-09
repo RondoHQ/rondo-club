@@ -85,7 +85,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 168-01-PLAN.md — Add include_former filter param, Toon oud-leden toggle, oud-lid search indicator
+- [x] 168-01-PLAN.md — Add include_former filter param, Toon oud-leden toggle, oud-lid search indicator
 
 #### Phase 169: Contributie Logic
 **Goal**: Fee calculations correctly handle former members (include if active during season, full fee with no pro-rata for leavers)
@@ -110,9 +110,9 @@ Phases execute in numeric order: 166 → 167 → 168 → 169
 |-------|----------------|--------|-----------|
 | 166. Backend Foundation | 1/1 | ✓ Complete | 2026-02-09 |
 | 167. Core Filtering | 1/1 | ✓ Complete | 2026-02-09 |
-| 168. Visibility Controls | 0/? | Not started | - |
+| 168. Visibility Controls | 1/1 | ✓ Complete | 2026-02-09 |
 | 169. Contributie Logic | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-09 — Phase 167 Core Filtering complete*
+*Last updated: 2026-02-09 — Phase 168 Visibility Controls complete*
