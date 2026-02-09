@@ -61,6 +61,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - **Phase 161-01:** Priority order: youth > team matching > werkfunctie matching > age-class fallback
 - **Phase 161-02:** Team and werkfunctie matching UI uses multi-select checkboxes in fee category settings
 - **Phase 161-02:** Category cards show matching rules summary (team count, werkfunctie names)
+- **Phase 159-01:** Removed FEE_CATEGORIES hardcoded object in favor of API-driven category metadata
+- **Phase 159-01:** Category colors use fixed palette indexed by sort_order for visual consistency across app
+- **Phase 159-01:** Google Sheets export derives labels from API categories metadata
 
 ### Pending Todos
 
@@ -80,7 +83,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 161-02 complete (matching rules UI). v21.0 milestone complete — ready for verification.
+Stopped at: Phase 159-01 complete (fee category frontend display). v21.0 milestone complete — all 12 plans executed, ready for verification and deployment.
 Resume file: None
 
 ---
