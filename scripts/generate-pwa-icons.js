@@ -17,14 +17,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = join(__dirname, '..');
 
 async function generateIcons() {
-  const svgPath = join(projectRoot, 'favicon.svg');
+  const logoPath = join(projectRoot, 'public', 'icons', 'rondo-logo.png');
   const iconsDir = join(projectRoot, 'public', 'icons');
 
   // Create icons directory
   await mkdir(iconsDir, { recursive: true });
 
   // Read the SVG
-  const svgBuffer = await sharp(svgPath)
+  const svgBuffer = await sharp(logoPath)
     .resize(512, 512)
     .png()
     .toBuffer();
@@ -37,7 +37,7 @@ async function generateIcons() {
   ];
 
   for (const { name, size } of sizes) {
-    await sharp(svgPath)
+    await sharp(logoPath)
       .resize(size, size)
       .png()
       .toFile(join(iconsDir, name));
@@ -63,7 +63,7 @@ async function generateIcons() {
     .toBuffer();
 
   // Resize the icon to fit in safe area
-  const iconBuffer = await sharp(svgPath)
+  const iconBuffer = await sharp(logoPath)
     .resize(iconSize, iconSize)
     .png()
     .toBuffer();

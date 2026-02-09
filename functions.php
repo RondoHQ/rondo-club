@@ -673,6 +673,15 @@ function rondo_pwa_meta_tags() {
 }
 add_action( 'wp_head', 'rondo_pwa_meta_tags', 2 );
 
+/**
+ * Add Rondo favicon to frontend pages.
+ */
+function rondo_site_favicon() {
+	$icon_url = RONDO_THEME_URL . '/public/icons/rondo-logo.png';
+	echo '<link rel="icon" type="image/png" sizes="192x192" href="' . esc_url( $icon_url ) . '">' . "\n";
+	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( RONDO_THEME_URL . '/favicon.svg' ) . '">' . "\n";
+}
+add_action( 'wp_head', 'rondo_site_favicon', 3 );
 
 /**
  * Hide admin bar on frontend - it interferes with the SPA interface
@@ -994,11 +1003,8 @@ function rondo_login_styles() {
 	// Use club name if configured, otherwise site name
 	$display_name = ! empty( $club_name ) ? $club_name : $site_name;
 
-	// Generate inline SVG logo with fixed brand color
-	$logo_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . esc_attr( $brand_color ) . '">'
-		. '<path fill-rule="evenodd" d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z" clip-rule="evenodd"/>'
-		. '</svg>';
-	$logo_data_url = 'data:image/svg+xml,' . rawurlencode( $logo_svg );
+	// Rondo logo URL
+	$logo_url = RONDO_THEME_URL . '/public/icons/rondo-logo.png';
 	?>
 	<style type="text/css">
 		/* Background gradient */
@@ -1014,7 +1020,7 @@ function rondo_login_styles() {
 
 		/* Logo */
 		#login h1 a {
-			background-image: url('<?php echo esc_attr( $logo_data_url ); ?>');
+			background-image: url('<?php echo esc_url( $logo_url ); ?>');
 			background-size: contain;
 			background-position: center center;
 			background-repeat: no-repeat;
@@ -1166,15 +1172,8 @@ add_action( 'login_enqueue_scripts', 'rondo_login_styles' );
  * Add favicon to login page
  */
 function rondo_login_favicon() {
-	// Fixed brand color (electric-cyan from Phase 162)
-	$brand_color = '#0891b2';
-
-	$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . $brand_color . '">'
-		. '<path fill-rule="evenodd" d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z" clip-rule="evenodd"/>'
-		. '</svg>';
-	$data_url = 'data:image/svg+xml,' . rawurlencode( $svg );
-
-	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $data_url, array( 'data' ) ) . '">';
+	$icon_url = RONDO_THEME_URL . '/public/icons/rondo-logo.png';
+	echo '<link rel="icon" type="image/png" sizes="192x192" href="' . esc_url( $icon_url ) . '">';
 }
 add_action( 'login_head', 'rondo_login_favicon' );
 
