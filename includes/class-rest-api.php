@@ -381,7 +381,7 @@ class Api extends Base {
 		);
 
 		// Current user info
-		// Allow logged-in users (not just approved) so we can check approval status
+		// Allow all logged-in users
 		register_rest_route(
 			'rondo/v1',
 			'/user/me',
@@ -2329,9 +2329,6 @@ class Api extends Base {
 		// Get admin URL
 		$admin_url = admin_url();
 
-		// Check approval status
-		$is_approved = \RONDO_User_Roles::is_user_approved( $user_id );
-
 		return rest_ensure_response(
 			[
 				'id'                  => $user_id,
@@ -2339,7 +2336,6 @@ class Api extends Base {
 				'email'               => $user->user_email,
 				'avatar_url'          => $avatar_url,
 				'is_admin'            => $is_admin,
-				'is_approved'         => $is_approved,
 				'can_access_fairplay'   => current_user_can( 'fairplay' ),
 				'can_access_vog'        => current_user_can( 'vog' ),
 				'can_access_financieel' => current_user_can( 'financieel' ),
@@ -2361,7 +2357,6 @@ class Api extends Base {
 				'id'          => $user->ID,
 				'name'        => $user->display_name,
 				'email'       => $user->user_email,
-				'is_approved' => \RONDO_User_Roles::is_user_approved( $user->ID ),
 				'registered'  => $user->user_registered,
 			];
 		}
