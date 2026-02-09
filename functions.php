@@ -414,7 +414,6 @@ function rondo_migrate_options() {
 		'stadion_vog_template_renewal' => 'rondo_vog_template_renewal',
 		'stadion_vog_exempt_commissies' => 'rondo_vog_exempt_commissies',
 		'stadion_club_name'            => 'rondo_club_name',
-		'stadion_accent_color'         => 'rondo_accent_color',
 		'stadion_freescout_url'        => 'rondo_freescout_url',
 	];
 
@@ -437,7 +436,6 @@ function rondo_migrate_options() {
 		'stadion_notification_time'        => 'rondo_notification_time',
 		'stadion_mention_notifications'    => 'rondo_mention_notifications',
 		'stadion_color_scheme'             => 'rondo_color_scheme',
-		'stadion_accent_color'             => 'rondo_accent_color',
 		'stadion_dashboard_visible_cards'  => 'rondo_dashboard_visible_cards',
 		'stadion_dashboard_card_order'     => 'rondo_dashboard_card_order',
 		'stadion_people_list_preferences'  => 'rondo_people_list_preferences',
@@ -630,7 +628,6 @@ function rondo_get_js_config() {
 		'buildTime'           => $build_time,
 		'currentUserPersonId' => $linked_person_id ?: null,
 		'clubName'            => $club_settings['club_name'],
-		'accentColor'         => $club_settings['accent_color'],
 		'freescoutUrl'        => $club_settings['freescout_url'],
 	];
 }
@@ -651,20 +648,11 @@ add_action( 'wp_head', 'rondo_theme_add_config_to_head', 0 );
  * inject meta tags since WordPress uses PHP templates, not index.html.
  */
 function rondo_pwa_meta_tags() {
-	$theme_url   = RONDO_THEME_URL;
-	$club_config = new \Rondo\Config\ClubConfig();
-	$settings    = $club_config->get_all_settings();
-	$club_color  = esc_attr( $settings['accent_color'] );
+	$theme_url = RONDO_THEME_URL;
 
-	// Calculate light variant for dark mode (same as useTheme.js)
-	$color_rgb = sscanf( $club_color, '#%02x%02x%02x' );
-	$r = $color_rgb[0];
-	$g = $color_rgb[1];
-	$b = $color_rgb[2];
-	$light_r = min( 255, round( $r + ( 255 - $r ) * 0.40 ) );
-	$light_g = min( 255, round( $g + ( 255 - $g ) * 0.40 ) );
-	$light_b = min( 255, round( $b + ( 255 - $b ) * 0.40 ) );
-	$club_color_dark = sprintf( '#%02x%02x%02x', $light_r, $light_g, $light_b );
+	// Fixed brand color (electric-cyan from Phase 162)
+	$brand_color_light = '#0891b2';
+	$brand_color_dark  = '#06b6d4';
 	?>
 	<!-- PWA Meta Tags -->
 	<meta name="mobile-web-app-capable" content="yes">
@@ -678,30 +666,13 @@ function rondo_pwa_meta_tags() {
 	<!-- Manifest -->
 	<link rel="manifest" href="<?php echo esc_url( $theme_url . '/dist/manifest.webmanifest' ); ?>">
 
-	<!-- Theme Color (dynamic club color, React will update when accent changes) -->
-	<meta name="theme-color" media="(prefers-color-scheme: light)" content="<?php echo $club_color; ?>">
-	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="<?php echo $club_color_dark; ?>">
+	<!-- Theme Color (fixed brand colors) -->
+	<meta name="theme-color" media="(prefers-color-scheme: light)" content="<?php echo $brand_color_light; ?>">
+	<meta name="theme-color" media="(prefers-color-scheme: dark)" content="<?php echo $brand_color_dark; ?>">
 	<?php
 }
 add_action( 'wp_head', 'rondo_pwa_meta_tags', 2 );
 
-/**
- * Add favicon to head
- *
- * Note: Dynamic favicon is handled by React's useTheme hook (src/hooks/useTheme.js)
- * which generates an inline SVG with the current accent color. The static favicon
- * below is only used before React hydrates, then React takes over management.
- *
- * To support dynamic accent colors, we don't output a static favicon here.
- * React will create the favicon link element on mount with the user's accent color.
- */
-// Removed static favicon output - React manages favicon dynamically via useTheme.js
-// function rondo_theme_add_favicon() {
-//     $favicon_url = RONDO_THEME_URL . '/favicon.svg';
-//     echo '<link rel="icon" type="image/svg+xml" href="' . esc_url($favicon_url) . '">';
-//     echo '<link rel="alternate icon" href="' . esc_url($favicon_url) . '">';
-// }
-// add_action('wp_head', 'rondo_theme_add_favicon', 1);
 
 /**
  * Hide admin bar on frontend - it interferes with the SPA interface
@@ -1003,55 +974,28 @@ add_filter( 'acf/update_value/name=datum-vog', 'rondo_reset_vog_tracking_on_datu
  * Custom login page styling
  */
 function rondo_login_styles() {
-	$site_name   = get_bloginfo( 'name' );
+	$site_name = get_bloginfo( 'name' );
 
-	// Get club configuration for dynamic theming
+	// Get club name for display
 	$club_config = new \Rondo\Config\ClubConfig();
 	$settings    = $club_config->get_all_settings();
-	$club_color  = $settings['accent_color']; // Defaults to #006935
 	$club_name   = $settings['club_name'];
 
-	// Pre-calculate color variants for CSS
-	$color_rgb = sscanf( $club_color, '#%02x%02x%02x' );
-	$r = $color_rgb[0];
-	$g = $color_rgb[1];
-	$b = $color_rgb[2];
+	// Fixed brand color (electric-cyan from Phase 162)
+	$brand_color = '#0891b2';
 
-	// Darker variant (multiply by 0.75)
-	$dark_r = max( 0, round( $r * 0.75 ) );
-	$dark_g = max( 0, round( $g * 0.75 ) );
-	$dark_b = max( 0, round( $b * 0.75 ) );
-	$color_dark = sprintf( '#%02x%02x%02x', $dark_r, $dark_g, $dark_b );
-
-	// Darkest variant (multiply by 0.55)
-	$darkest_r = max( 0, round( $r * 0.55 ) );
-	$darkest_g = max( 0, round( $g * 0.55 ) );
-	$darkest_b = max( 0, round( $b * 0.55 ) );
-	$color_darkest = sprintf( '#%02x%02x%02x', $darkest_r, $darkest_g, $darkest_b );
-
-	// Very light tint for backgrounds (mix with white at 94%)
-	$light_r = min( 255, round( $r + ( 255 - $r ) * 0.94 ) );
-	$light_g = min( 255, round( $g + ( 255 - $g ) * 0.94 ) );
-	$light_b = min( 255, round( $b + ( 255 - $b ) * 0.94 ) );
-	$color_lightest = sprintf( '#%02x%02x%02x', $light_r, $light_g, $light_b );
-
-	// Light tint for gradients (mix with white at 85%)
-	$mid_r = min( 255, round( $r + ( 255 - $r ) * 0.85 ) );
-	$mid_g = min( 255, round( $g + ( 255 - $g ) * 0.85 ) );
-	$mid_b = min( 255, round( $b + ( 255 - $b ) * 0.85 ) );
-	$color_light = sprintf( '#%02x%02x%02x', $mid_r, $mid_g, $mid_b );
-
-	// Medium light tint for borders (mix with white at 72%)
-	$border_r = min( 255, round( $r + ( 255 - $r ) * 0.72 ) );
-	$border_g = min( 255, round( $g + ( 255 - $g ) * 0.72 ) );
-	$border_b = min( 255, round( $b + ( 255 - $b ) * 0.72 ) );
-	$color_border = sprintf( '#%02x%02x%02x', $border_r, $border_g, $border_b );
+	// Pre-calculated color variants
+	$brand_color_dark    = '#0e7490';  // Darker shade
+	$brand_color_darkest = '#155e75';  // Darkest shade
+	$brand_color_light   = '#67e8f9';  // Light tint
+	$brand_color_lightest = '#cffafe'; // Very light tint for backgrounds
+	$brand_color_border  = '#a5f3fc';  // Medium light tint for borders
 
 	// Use club name if configured, otherwise site name
 	$display_name = ! empty( $club_name ) ? $club_name : $site_name;
 
-	// Generate inline SVG logo with club color (avoids caching issues with static favicon.svg)
-	$logo_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . esc_attr( $club_color ) . '">'
+	// Generate inline SVG logo with fixed brand color
+	$logo_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . esc_attr( $brand_color ) . '">'
 		. '<path fill-rule="evenodd" d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z" clip-rule="evenodd"/>'
 		. '</svg>';
 	$logo_data_url = 'data:image/svg+xml,' . rawurlencode( $logo_svg );
@@ -1059,7 +1003,7 @@ function rondo_login_styles() {
 	<style type="text/css">
 		/* Background gradient */
 		body.login {
-			background: linear-gradient(135deg, <?php echo esc_attr( $color_lightest ); ?> 0%, <?php echo esc_attr( $color_light ); ?> 50%, <?php echo esc_attr( $color_border ); ?> 100%);
+			background: linear-gradient(135deg, <?php echo esc_attr( $brand_color_lightest ); ?> 0%, <?php echo esc_attr( $brand_color_light ); ?> 50%, <?php echo esc_attr( $brand_color_border ); ?> 100%);
 			font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 		}
 
@@ -1133,10 +1077,10 @@ function rondo_login_styles() {
 		.login .button-primary,
 		.login #wp-submit,
 		.wp-core-ui .button-primary {
-			background: linear-gradient(135deg, <?php echo esc_attr( $color_light ); ?> 0%, <?php echo esc_attr( $club_color ); ?> 100%) !important;
+			background: linear-gradient(135deg, <?php echo esc_attr( $brand_color_light ); ?> 0%, <?php echo esc_attr( $brand_color ); ?> 100%) !important;
 			border: none !important;
 			border-radius: 8px !important;
-			box-shadow: 0 4px 12px rgba(<?php echo "$r, $g, $b"; ?>, 0.3) !important;
+			box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3) !important;
 			color: #ffffff !important;
 			font-weight: 600 !important;
 			font-size: 15px !important;
@@ -1153,8 +1097,8 @@ function rondo_login_styles() {
 		.login #wp-submit:focus,
 		.wp-core-ui .button-primary:hover,
 		.wp-core-ui .button-primary:focus {
-			background: linear-gradient(135deg, <?php echo esc_attr( $club_color ); ?> 0%, <?php echo esc_attr( $color_dark ); ?> 100%) !important;
-			box-shadow: 0 6px 16px rgba(<?php echo "$dark_r, $dark_g, $dark_b"; ?>, 0.4) !important;
+			background: linear-gradient(135deg, <?php echo esc_attr( $brand_color ); ?> 0%, <?php echo esc_attr( $brand_color_dark ); ?> 100%) !important;
+			box-shadow: 0 6px 16px rgba(14, 116, 144, 0.4) !important;
 			border-color: transparent !important;
 		}
 
@@ -1169,13 +1113,13 @@ function rondo_login_styles() {
 		}
 
 		.login input[type="checkbox"] {
-			accent-color: <?php echo esc_attr( $club_color ); ?>;
+			accent-color: <?php echo esc_attr( $brand_color ); ?>;
 		}
 
 		/* Links */
 		.login #nav a,
 		.login #backtoblog a {
-			color: <?php echo esc_attr( $color_dark ); ?>;
+			color: <?php echo esc_attr( $brand_color_dark ); ?>;
 			text-decoration: none;
 			font-size: 13px;
 			transition: color 0.2s;
@@ -1183,20 +1127,20 @@ function rondo_login_styles() {
 
 		.login #nav a:hover,
 		.login #backtoblog a:hover {
-			color: <?php echo esc_attr( $color_darkest ); ?>;
+			color: <?php echo esc_attr( $brand_color_darkest ); ?>;
 			text-decoration: underline;
 		}
 
 		/* Error/message boxes */
 		.login .message,
 		.login .success {
-			border-left-color: <?php echo esc_attr( $club_color ); ?>;
-			background: <?php echo esc_attr( $color_lightest ); ?>;
+			border-left-color: <?php echo esc_attr( $brand_color ); ?>;
+			background: <?php echo esc_attr( $brand_color_lightest ); ?>;
 		}
 
 		/* Notice info message styling */
 		.login .notice.notice-info.message {
-			border-left-color: <?php echo esc_attr( $club_color ); ?> !important;
+			border-left-color: <?php echo esc_attr( $brand_color ); ?> !important;
 			margin-top: 20px !important;
 		}
 
@@ -1206,7 +1150,7 @@ function rondo_login_styles() {
 
 		/* Privacy policy link */
 		.login .privacy-policy-page-link a {
-			color: <?php echo esc_attr( $color_dark ); ?>;
+			color: <?php echo esc_attr( $brand_color_dark ); ?>;
 		}
 
 		/* Hide "Go to site" for cleaner look */
@@ -1222,11 +1166,10 @@ add_action( 'login_enqueue_scripts', 'rondo_login_styles' );
  * Add favicon to login page
  */
 function rondo_login_favicon() {
-	$club_config = new \Rondo\Config\ClubConfig();
-	$settings    = $club_config->get_all_settings();
-	$club_color  = esc_attr( $settings['accent_color'] );
+	// Fixed brand color (electric-cyan from Phase 162)
+	$brand_color = '#0891b2';
 
-	$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . $club_color . '">'
+	$svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' . $brand_color . '">'
 		. '<path fill-rule="evenodd" d="M12 2C6.5 2 2 5.5 2 9v6c0 3.5 4.5 7 10 7s10-3.5 10-7V9c0-3.5-4.5-7-10-7zm0 2c4.4 0 8 2.7 8 5s-3.6 5-8 5-8-2.7-8-5 3.6-5 8-5zm0 4c-2.2 0-4 .9-4 2s1.8 2 4 2 4-.9 4-2-1.8-2-4-2z" clip-rule="evenodd"/>'
 		. '</svg>';
 	$data_url = 'data:image/svg+xml,' . rawurlencode( $svg );
