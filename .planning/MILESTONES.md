@@ -848,3 +848,32 @@
 
 ---
 
+
+## v22.0 Design Refresh (Shipped: 2026-02-09)
+
+**Delivered:** Complete visual rebrand of the React SPA — migrated to Tailwind CSS v4 with OKLCH brand tokens, replaced the dynamic accent color system with fixed brand palette (electric-cyan, bright-cobalt, deep-midnight, obsidian), applied gradient text treatment to headings, new button/card/input styling, adapted dark mode, and cleaned up PWA assets and backend theming code.
+
+**Phases completed:** 162-165 (4 phases, 7 plans, 13 tasks)
+
+**Key accomplishments:**
+
+- Tailwind CSS v4 migration with CSS-first @theme configuration, OKLCH color tokens, and Montserrat headings
+- Fixed brand palette replacing dynamic accent color system — useTheme hook simplified, react-colorful removed, ClubConfig accent_color eliminated
+- Component styling refresh: gradient buttons, cards with 3px gradient top border, cyan glow focus rings, 200ms hover lift transitions
+- Gradient text treatment on page headings and section titles (cyan-to-cobalt)
+- Dark mode adapted to brand colors (preserved, not removed)
+- PWA manifest/favicon updated to electric-cyan, dead REST API theme endpoints removed, Rondo logo integrated throughout
+
+**Stats:**
+
+- 112 files changed
+- +8,937 / -4,347 lines changed
+- 4 phases, 7 plans, 13 tasks
+- 1 day (2026-02-09)
+
+**Git range:** `a854e517` → `57ec0dde` (38 commits)
+
+**What's next:** To be determined
+
+---
+
