@@ -3202,6 +3202,9 @@ class Api extends Base {
 		$aggregates    = [];
 		$total_members = 0;
 
+		// Pre-load youth slugs for forecast reclassification (only youth members age up)
+		$current_youth_slugs = $forecast ? $fees->get_youth_category_slugs( $fees->get_season_key() ) : [];
+
 		foreach ( $rows as $row ) {
 			$fee_data = maybe_unserialize( $row->meta_value );
 
@@ -3214,19 +3217,45 @@ class Api extends Base {
 				continue;
 			}
 
-			$cat = $fee_data['category'];
-			if ( ! isset( $aggregates[ $cat ] ) ) {
-				$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'final_fee' => 0 ];
-			}
-			$aggregates[ $cat ]['count']++;
-			$aggregates[ $cat ]['base_fee'] += $fee_data['base_fee'] ?? 0;
-			$aggregates[ $cat ]['family_discount'] += $fee_data['family_discount_amount'] ?? 0;
-
-			// Forecast uses fee_after_discount (100% pro-rata), current uses final_fee
 			if ( $forecast ) {
-				$aggregates[ $cat ]['final_fee'] += $fee_data['fee_after_discount'] ?? $fee_data['final_fee'] ?? 0;
+				$current_cat = $fee_data['category'];
+
+				// Only reclassify youth category members (non-youth are matched by team/werkfunctie)
+				if ( in_array( $current_cat, $current_youth_slugs, true ) ) {
+					$leeftijdsgroep = $fee_data['leeftijdsgroep'] ?? '';
+					if ( ! empty( $leeftijdsgroep ) ) {
+						$next_age_class = $fees->predict_next_season_age_class( $leeftijdsgroep );
+						$next_cat       = $fees->get_category_by_age_class( $next_age_class, $season );
+					} else {
+						$next_cat = null;
+					}
+					$cat = $next_cat ?? $current_cat;
+				} else {
+					$cat = $current_cat;
+				}
+				$base_fee = $fees->get_fee( $cat, $season );
+
+				// Recalculate family discount with new base fee but same rate
+				$discount_rate   = $fee_data['family_discount_rate'] ?? 0;
+				$discount_amount = round( $base_fee * $discount_rate, 2 );
+				$final_fee       = $base_fee - $discount_amount;
+
+				if ( ! isset( $aggregates[ $cat ] ) ) {
+					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'final_fee' => 0 ];
+				}
+				$aggregates[ $cat ]['count']++;
+				$aggregates[ $cat ]['base_fee']        += $base_fee;
+				$aggregates[ $cat ]['family_discount'] += $discount_amount;
+				$aggregates[ $cat ]['final_fee']        += $final_fee;
 			} else {
-				$aggregates[ $cat ]['final_fee'] += $fee_data['final_fee'] ?? 0;
+				$cat = $fee_data['category'];
+				if ( ! isset( $aggregates[ $cat ] ) ) {
+					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'final_fee' => 0 ];
+				}
+				$aggregates[ $cat ]['count']++;
+				$aggregates[ $cat ]['base_fee']        += $fee_data['base_fee'] ?? 0;
+				$aggregates[ $cat ]['family_discount'] += $fee_data['family_discount_amount'] ?? 0;
+				$aggregates[ $cat ]['final_fee']        += $fee_data['final_fee'] ?? 0;
 			}
 			$total_members++;
 		}
