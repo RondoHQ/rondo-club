@@ -485,25 +485,6 @@ class Api extends Base {
 			]
 		);
 
-		// Bulk mark VOG as requested (records current date)
-		register_rest_route(
-			'rondo/v1',
-			'/vog/bulk-mark-requested',
-			[
-				'methods'             => \WP_REST_Server::CREATABLE,
-				'callback'            => [ $this, 'bulk_mark_vog_requested' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
-				'args'                => [
-					'ids' => [
-						'required'          => true,
-						'validate_callback' => function ( $param ) {
-							return is_array( $param ) && ! empty( $param );
-						},
-					],
-				],
-			]
-		);
-
 		// Bulk mark VOG as submitted to Justis
 		register_rest_route(
 			'rondo/v1',
@@ -3602,55 +3583,6 @@ class Api extends Base {
 			[
 				'results' => $results,
 				'sent'    => $sent,
-				'failed'  => $failed,
-				'total'   => count( $ids ),
-			]
-		);
-	}
-
-	/**
-	 * Bulk mark VOG as requested for multiple people
-	 *
-	 * Records the current date in the vog-email-verzonden field without sending email.
-	 * Used when VOG request was made through other channels (phone, in-person).
-	 *
-	 * @param \WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response Response with results.
-	 */
-	public function bulk_mark_vog_requested( $request ) {
-		$ids          = $request->get_param( 'ids' );
-		$current_date = current_time( 'Y-m-d' );
-
-		$marked  = 0;
-		$failed  = 0;
-		$results = [];
-
-		foreach ( $ids as $person_id ) {
-			$person = get_post( (int) $person_id );
-
-			if ( ! $person || 'person' !== $person->post_type ) {
-				++$failed;
-				$results[] = [
-					'id'      => $person_id,
-					'success' => false,
-					'error'   => 'Invalid person ID',
-				];
-				continue;
-			}
-
-			// Update ACF field
-			update_field( 'vog-email-verzonden', $current_date, $person_id );
-			++$marked;
-			$results[] = [
-				'id'      => $person_id,
-				'success' => true,
-			];
-		}
-
-		return rest_ensure_response(
-			[
-				'results' => $results,
-				'marked'  => $marked,
 				'failed'  => $failed,
 				'total'   => count( $ids ),
 			]
