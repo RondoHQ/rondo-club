@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import { ArrowUp, ArrowDown, CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, FileSpreadsheet } from 'lucide-react';
 import { useFilteredPeople } from '@/hooks/usePeople';
@@ -263,8 +264,10 @@ export default function VOGList() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const bulkDropdownRef = useRef(null);
+  const filterButtonRef = useRef(null);
   const filterRef = useRef(null);
   const filterDropdownRef = useRef(null);
+  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
 
   // Google Sheets export state
   const [isExporting, setIsExporting] = useState(false);
@@ -642,9 +645,16 @@ export default function VOGList() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
             {/* Filter Dropdown Button */}
-            <div className="relative" ref={filterRef}>
+            <div ref={filterRef}>
               <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                ref={filterButtonRef}
+                onClick={() => {
+                  if (!isFilterOpen && filterButtonRef.current) {
+                    const rect = filterButtonRef.current.getBoundingClientRect();
+                    setFilterDropdownPos({ top: rect.bottom + 8, left: rect.left });
+                  }
+                  setIsFilterOpen(!isFilterOpen);
+                }}
                 className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) ? 'bg-cyan-50 text-bright-cobalt border-cyan-200 dark:bg-obsidian/30 dark:text-electric-cyan-light dark:border-bright-cobalt' : ''}`}
               >
                 <Filter className="w-4 h-4 md:mr-2" />
@@ -656,11 +666,12 @@ export default function VOGList() {
                 )}
               </button>
 
-              {/* Filter Dropdown Panel */}
-              {isFilterOpen && (
+              {/* Filter Dropdown Panel - rendered via portal to escape overflow clipping */}
+              {isFilterOpen && createPortal(
                 <div
                   ref={filterDropdownRef}
-                  className="absolute top-full left-0 mt-2 w-64 max-h-[calc(100vh-12rem)] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+                  className="fixed w-64 max-h-[calc(100vh-4rem)] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+                  style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
                 >
                   <div className="p-4 space-y-4">
                     {/* VOG Type Filter */}
@@ -954,7 +965,8 @@ export default function VOGList() {
                       </button>
                     )}
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
             </div>
 
