@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
 Status: v23.0 milestone complete
-Last activity: 2026-02-10 - Completed quick task 47: Move VOG settings to VOG page with tabbed layout
+Last activity: 2026-02-10 - Completed quick task 48: Add Familiekorting total column to Contributie Overzicht
 
 Progress: [████████████████████████████████] 100% (169/169 phases)
 
@@ -57,6 +57,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 48 | Add Familiekorting total column to Contributie Overzicht | 2026-02-10 | f82d0882 | [48-add-familiekorting-total-column-to-contr](./quick/48-add-familiekorting-total-column-to-contr/) |
 | 47 | Move VOG settings to VOG page with tabbed layout | 2026-02-10 | b330601d | [47-move-vog-settings-to-vog-page-with-tabbe](./quick/47-move-vog-settings-to-vog-page-with-tabbe/) |
 | 46 | Add filter for people with lid-tot date in future | 2026-02-10 | 31904658 | [46-add-filter-for-people-with-lid-tot-date-](./quick/46-add-filter-for-people-with-lid-tot-date-/) |
 | 45 | Remove user approval system | 2026-02-09 | 955466f3 | [45-remove-user-approval-system](./quick/45-remove-user-approval-system/) |
@@ -67,7 +68,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Quick task 47 complete
+Stopped at: Quick task 48 complete
 Resume file: None — no active milestone, fresh for next
 
 ---
