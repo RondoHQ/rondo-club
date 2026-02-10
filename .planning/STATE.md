@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
 Status: v23.0 milestone complete
-Last activity: 2026-02-09 — v23.0 Former Members shipped
+Last activity: 2026-02-10 - Completed quick task 46: Add filter for people with lid-tot date in the future
 
 Progress: [████████████████████████████████] 100% (169/169 phases)
 
