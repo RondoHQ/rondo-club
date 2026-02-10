@@ -659,6 +659,7 @@ export default function PeopleList() {
   const vogMissing = searchParams.get('vogMissing') || '';
   const vogOlderThanYears = searchParams.get('vogOuder') ? parseInt(searchParams.get('vogOuder'), 10) : null;
   const includeFormer = searchParams.get('oudLeden') || '';
+  const lidTotFuture = searchParams.get('lidTot') || '';
 
   // Helper to update URL params
   const updateSearchParams = useCallback((updates) => {
@@ -740,6 +741,10 @@ export default function PeopleList() {
     updateSearchParams({ oudLeden: value });
   }, [updateSearchParams]);
 
+  const setLidTotFuture = useCallback((value) => {
+    updateSearchParams({ lidTot: value });
+  }, [updateSearchParams]);
+
   // Local UI state (not persisted in URL)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -789,6 +794,7 @@ export default function PeopleList() {
     vogMissing,
     vogOlderThanYears,
     includeFormer: includeFormer || null,
+    lidTotFuture: lidTotFuture || null,
   });
 
   // Extract data from response
@@ -928,7 +934,7 @@ export default function PeopleList() {
 
   const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter ||
     huidigeVrijwilliger || financieleBlokkade || typeLid || leeftijdsgroep || fotoMissing || vogMissing || vogOlderThanYears ||
-    includeFormer;
+    includeFormer || lidTotFuture;
 
   // Update filteredCount URL param when filters are active and data is loaded
   useEffect(() => {
@@ -1011,7 +1017,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, page, people]);
+  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1098,6 +1104,7 @@ export default function PeopleList() {
         vog_missing: vogMissing || undefined,
         vog_older_than_years: vogOlderThanYears || undefined,
         include_former: includeFormer || undefined,
+        lid_tot_future: lidTotFuture || undefined,
         orderby: sortField,
         order: sortOrder,
       };
@@ -1152,7 +1159,7 @@ export default function PeopleList() {
                   {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
                    (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
                    (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0) +
-                   (includeFormer ? 1 : 0)}
+                   (includeFormer ? 1 : 0) + (lidTotFuture ? 1 : 0)}
                 </span>
               )}
             </button>
@@ -1178,6 +1185,23 @@ export default function PeopleList() {
                         <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
                       </div>
                       <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Toon oud-leden</span>
+                    </label>
+                  </div>
+
+                  {/* Lid-tot in Future Toggle */}
+                  <div>
+                    <label className="flex items-center cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={lidTotFuture === '1'}
+                          onChange={() => setLidTotFuture(lidTotFuture === '1' ? '' : '1')}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-electric-cyan transition-colors"></div>
+                        <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
+                      </div>
+                      <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Lid-tot in de toekomst</span>
                     </label>
                   </div>
 
@@ -1541,6 +1565,17 @@ export default function PeopleList() {
                   VOG ouder dan {vogOlderThanYears} jaar
                   <button
                     onClick={() => setVogOlderThanYears(null)}
+                    className="hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {lidTotFuture === '1' && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
+                  Lid-tot in de toekomst
+                  <button
+                    onClick={() => setLidTotFuture('')}
                     className="hover:text-gray-600 dark:hover:text-gray-300"
                   >
                     <X className="w-3 h-3" />
