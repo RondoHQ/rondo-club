@@ -510,6 +510,25 @@ class Api extends Base {
 			]
 		);
 
+		// Bulk send VOG reminder emails
+		register_rest_route(
+			'rondo/v1',
+			'/vog/bulk-send-reminder',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'bulk_send_vog_reminders' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'ids' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_array( $param ) && ! empty( $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Membership fee settings (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -814,6 +833,12 @@ class Api extends Base {
 		$vog_justis = get_post_meta( $post->ID, 'vog_justis_submitted_date', true );
 		if ( $vog_justis ) {
 			$data['acf']['vog_justis_submitted_date'] = $vog_justis;
+		}
+
+		// Add VOG reminder sent date from post meta
+		$vog_reminder = get_post_meta( $post->ID, 'vog_reminder_sent_date', true );
+		if ( $vog_reminder ) {
+			$data['acf']['vog_reminder_sent_date'] = $vog_reminder;
 		}
 
 		$response->set_data( $data );
@@ -3648,6 +3673,57 @@ class Api extends Base {
 			[
 				'results' => $results,
 				'marked'  => $marked,
+				'failed'  => $failed,
+				'total'   => count( $ids ),
+			]
+		);
+	}
+
+	/**
+	 * Bulk send VOG reminder emails
+	 *
+	 * Sends VOG reminder emails to selected people. Determines the correct template
+	 * (reminder_new or reminder_renewal) based on the presence of an existing VOG date.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with results.
+	 */
+	public function bulk_send_vog_reminders( $request ) {
+		$ids       = $request->get_param( 'ids' );
+		$vog_email = new \Rondo\VOG\VOGEmail();
+
+		$results = [];
+		$sent    = 0;
+		$failed  = 0;
+
+		foreach ( $ids as $person_id ) {
+			// Determine template type based on datum-vog
+			$datum_vog     = get_field( 'datum-vog', $person_id );
+			$template_type = empty( $datum_vog ) ? 'reminder_new' : 'reminder_renewal';
+
+			$result = $vog_email->send_reminder( (int) $person_id, $template_type );
+
+			if ( $result === true ) {
+				++$sent;
+				$results[] = [
+					'id'      => $person_id,
+					'success' => true,
+					'type'    => $template_type,
+				];
+			} else {
+				++$failed;
+				$results[] = [
+					'id'      => $person_id,
+					'success' => false,
+					'error'   => is_wp_error( $result ) ? $result->get_error_message() : 'Unknown error',
+				];
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'results' => $results,
+				'sent'    => $sent,
 				'failed'  => $failed,
 				'total'   => count( $ids ),
 			]
