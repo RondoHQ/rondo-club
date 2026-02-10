@@ -372,6 +372,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'lid_tot_future'       => [
+						'description'       => 'Filter for people with lid-tot date in the future (1=future only, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -1000,6 +1009,7 @@ class People extends Base {
 		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
 		$vog_justis_status    = $request->get_param( 'vog_justis_status' );
 		$include_former       = $request->get_param( 'include_former' );
+		$lid_tot_future       = $request->get_param( 'lid_tot_future' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1181,6 +1191,14 @@ class People extends Base {
 			} elseif ( $vog_justis_status === 'not_submitted' ) {
 				$where_clauses[] = "(vjs.meta_value IS NULL OR vjs.meta_value = '')";
 			}
+		}
+
+		// Lid-tot (membership end date) future filter
+		if ( $lid_tot_future === '1' ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} lt ON p.ID = lt.post_id AND lt.meta_key = 'lid-tot'";
+			$today            = gmdate( 'Y-m-d' );
+			$where_clauses[]  = "(lt.meta_value IS NOT NULL AND lt.meta_value != '' AND lt.meta_value >= %s)";
+			$prepare_values[] = $today;
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)
