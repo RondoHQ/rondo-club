@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [23.2.1] - 2026-02-10
+
+### Changed
+- Move VOG settings from Settings > Admin > VOG into the VOG page itself as an admin-only Instellingen tab
+- VOG page now uses tabbed layout matching the Contributie page pattern (Overzicht + Instellingen)
+- Non-admin users only see the Overzicht tab on the VOG page
+
+### Removed
+- VOG subtab from Settings Admin section (all VOG state, effects, handlers, and component removed)
+
 ## [23.2.0] - 2026-02-09
 
 ### Added
