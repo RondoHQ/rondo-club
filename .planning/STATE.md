@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
 Status: v23.0 milestone complete
-Last activity: 2026-02-10 - Completed quick task 49: Forecast uses predicted next-season age class
+Last activity: 2026-02-10 - Completed quick task 50: Remove "Markeren als aangevraagd" action from VOG page
 
 Progress: [████████████████████████████████] 100% (169/169 phases)
 
@@ -57,6 +57,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 50 | Remove "Markeren als aangevraagd" action from VOG page | 2026-02-10 | 49ae76b7 | [50-remove-markeren-als-aangevraagd-action-f](./quick/50-remove-markeren-als-aangevraagd-action-f/) |
 | 49 | Forecast uses predicted next-season age class | 2026-02-10 | dfcb7641 | [49-forecast-uses-predicted-next-season-age-](./quick/49-forecast-uses-predicted-next-season-age-/) |
 | 48 | Add Familiekorting total column to Contributie Overzicht | 2026-02-10 | f82d0882 | [48-add-familiekorting-total-column-to-contr](./quick/48-add-familiekorting-total-column-to-contr/) |
 | 47 | Move VOG settings to VOG page with tabbed layout | 2026-02-10 | b330601d | [47-move-vog-settings-to-vog-page-with-tabbe](./quick/47-move-vog-settings-to-vog-page-with-tabbe/) |
@@ -69,7 +70,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Quick task 49 complete
+Stopped at: Quick task 50 complete
 Resume file: None — no active milestone, fresh for next
 
 ---
