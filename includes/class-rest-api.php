@@ -3164,18 +3164,39 @@ class Api extends Base {
 		$cache_season  = $forecast ? $fees->get_season_key() : $season;
 		$fee_cache_key = $fees->get_fee_cache_meta_key( $cache_season );
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT pm.meta_value
-				FROM {$wpdb->postmeta} pm
-				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-				WHERE pm.meta_key = %s
-				AND p.post_type = 'person'
-				AND p.post_status = 'publish'",
-				$fee_cache_key
-			)
-		);
+		if ( $forecast ) {
+			// Forecast: exclude members leaving before next season starts (lid-tot < July 1).
+			$next_season_start = substr( $season, 0, 4 ) . '-07-01';
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT pm.meta_value
+					FROM {$wpdb->postmeta} pm
+					INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+					LEFT JOIN {$wpdb->postmeta} lt ON lt.post_id = p.ID AND lt.meta_key = 'lid-tot'
+					WHERE pm.meta_key = %s
+					AND p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND (lt.meta_value IS NULL OR lt.meta_value = '' OR lt.meta_value >= %s)",
+					$fee_cache_key,
+					$next_season_start
+				)
+			);
+		} else {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT pm.meta_value
+					FROM {$wpdb->postmeta} pm
+					INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+					WHERE pm.meta_key = %s
+					AND p.post_type = 'person'
+					AND p.post_status = 'publish'",
+					$fee_cache_key
+				)
+			);
+		}
 
 		// Aggregate in PHP (unserialize each cached fee record)
 		$aggregates    = [];
