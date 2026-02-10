@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
 Status: v23.0 milestone complete
-Last activity: 2026-02-10 - Completed quick task 50: Remove "Markeren als aangevraagd" action from VOG page
+Last activity: 2026-02-10 - Completed quick task 51: Add VOG reminder email (auto-sent 7 days after Justis date)
 
 Progress: [████████████████████████████████] 100% (169/169 phases)
 
@@ -57,6 +57,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 51 | Add VOG reminder email (auto-sent 7 days after Justis date) | 2026-02-10 | f3e69c26 | [51-add-vog-reminder-email-sent-automaticall](./quick/51-add-vog-reminder-email-sent-automaticall/) |
 | 50 | Remove "Markeren als aangevraagd" action from VOG page | 2026-02-10 | 49ae76b7 | [50-remove-markeren-als-aangevraagd-action-f](./quick/50-remove-markeren-als-aangevraagd-action-f/) |
 | 49 | Forecast uses predicted next-season age class | 2026-02-10 | dfcb7641 | [49-forecast-uses-predicted-next-season-age-](./quick/49-forecast-uses-predicted-next-season-age-/) |
 | 48 | Add Familiekorting total column to Contributie Overzicht | 2026-02-10 | f82d0882 | [48-add-familiekorting-total-column-to-contr](./quick/48-add-familiekorting-total-column-to-contr/) |
@@ -70,7 +71,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Quick task 50 complete
+Stopped at: Quick task 51 complete
 Resume file: None — no active milestone, fresh for next
 
 ---
