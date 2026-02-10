@@ -1,17 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet, Filter, TrendingUp } from 'lucide-react';
+import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet, Filter } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
-
-// Get next season label from current season
-function getNextSeasonLabel(currentSeason) {
-  const startYear = parseInt(currentSeason.substring(0, 4));
-  return `${startYear + 1}-${startYear + 2}`;
-}
+import SeasonSelector from './SeasonSelector';
 
 
 // Sortable header component
@@ -344,38 +339,12 @@ export function ContributieList() {
       <div className="space-y-4">
         {/* Season indicator */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <span>Seizoen:</span>
-              <select
-                value={isForecast ? 'forecast' : 'current'}
-                onChange={(e) => setIsForecast(e.target.value === 'forecast')}
-                className="btn-secondary appearance-none pr-8 bg-no-repeat bg-right"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                  backgroundSize: '1.25rem',
-                  paddingRight: '2rem',
-                }}
-              >
-                <option value="current">{data?.season || '2025-2026'} (huidig)</option>
-                <option value="forecast">
-                  {data?.season ? getNextSeasonLabel(data.season) : '2026-2027'} (prognose)
-                </option>
-              </select>
-            </div>
-            {isForecast && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
-                <TrendingUp className="w-4 h-4" />
-                <span className="font-medium">Prognose</span>
-                <span className="text-blue-600 dark:text-blue-400">
-                  (o.b.v. huidige ledenstand)
-                </span>
-              </div>
-            )}
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {sortedMembers.length} leden
-            </div>
-          </div>
+          <SeasonSelector
+            season={data?.season}
+            isForecast={isForecast}
+            onForecastChange={setIsForecast}
+            memberCount={sortedMembers.length}
+          />
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee, 2)}</span>
