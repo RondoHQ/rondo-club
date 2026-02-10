@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TrendingUp, Coins } from 'lucide-react';
-import { useFeeList } from '@/hooks/useFees';
+import { useFeeSummary } from '@/hooks/useFees';
 import { formatCurrency, getCategoryColor } from '@/utils/formatters';
 
 // Get next season label from current season
@@ -12,7 +12,7 @@ function getNextSeasonLabel(currentSeason) {
 export function ContributieOverzicht() {
   const [isForecast, setIsForecast] = useState(false);
 
-  const { data, isLoading, error } = useFeeList(
+  const { data, isLoading, error } = useFeeSummary(
     isForecast ? { forecast: true } : {}
   );
 
@@ -34,23 +34,11 @@ export function ContributieOverzicht() {
     );
   }
 
-  const members = data?.members ?? [];
+  const aggregates = data?.aggregates ?? {};
   const categories = data?.categories ?? {};
 
-  // Aggregate by category
-  const categoryAggregates = {};
-  for (const member of members) {
-    const cat = member.category;
-    if (!categoryAggregates[cat]) {
-      categoryAggregates[cat] = { count: 0, baseFee: 0, finalFee: 0 };
-    }
-    categoryAggregates[cat].count += 1;
-    categoryAggregates[cat].baseFee += member.base_fee;
-    categoryAggregates[cat].finalFee += member.final_fee;
-  }
-
   // Sort categories by sort_order
-  const sortedCategories = Object.entries(categoryAggregates).sort((a, b) => {
+  const sortedCategories = Object.entries(aggregates).sort((a, b) => {
     const orderA = categories[a[0]]?.sort_order ?? 999;
     const orderB = categories[b[0]]?.sort_order ?? 999;
     return orderA - orderB;
@@ -60,8 +48,8 @@ export function ContributieOverzicht() {
   const grandTotal = sortedCategories.reduce(
     (acc, [, agg]) => ({
       count: acc.count + agg.count,
-      baseFee: acc.baseFee + agg.baseFee,
-      finalFee: acc.finalFee + agg.finalFee,
+      baseFee: acc.baseFee + agg.base_fee,
+      finalFee: acc.finalFee + agg.final_fee,
     }),
     { count: 0, baseFee: 0, finalFee: 0 }
   );
@@ -99,7 +87,7 @@ export function ContributieOverzicht() {
             </div>
           )}
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {members.length} leden
+            {data?.total ?? 0} leden
           </div>
         </div>
       </div>
@@ -155,10 +143,10 @@ export function ContributieOverzicht() {
                     {agg.count}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                    {formatCurrency(agg.baseFee, 2)}
+                    {formatCurrency(agg.base_fee, 2)}
                   </td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
-                    {formatCurrency(agg.finalFee, 2)}
+                    {formatCurrency(agg.final_fee, 2)}
                   </td>
                 </tr>
               ))}

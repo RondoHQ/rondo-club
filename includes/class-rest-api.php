@@ -608,6 +608,30 @@ class Api extends Base {
 			]
 		);
 
+		// Get fee summary (aggregated by category — lightweight for overview tab)
+		register_rest_route(
+			'rondo/v1',
+			'/fees/summary',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_fee_summary' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'season'   => [
+						'default'           => null,
+						'validate_callback' => function ( $param ) {
+							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+					'forecast' => [
+						'default'           => false,
+						'sanitize_callback' => 'rest_sanitize_boolean',
+						'validate_callback' => 'rest_is_boolean',
+					],
+				],
+			]
+		);
+
 		// Get single person fee data
 		register_rest_route(
 			'rondo/v1',
@@ -3104,6 +3128,142 @@ class Api extends Base {
 				'forecast'   => (bool) $forecast,
 				'total'      => count( $results ),
 				'members'    => $results,
+				'categories' => $categories_meta,
+			]
+		);
+	}
+
+	/**
+	 * Get fee summary aggregated by category.
+	 *
+	 * Lightweight endpoint for the Overzicht tab — reads only the fee cache meta
+	 * key from postmeta in a single SQL query, aggregates in PHP. No full post
+	 * objects or meta cache priming needed.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_fee_summary( $request ) {
+		global $wpdb;
+
+		$forecast = $request->get_param( 'forecast' );
+		$fees     = new \Rondo\Fees\MembershipFees();
+
+		if ( $forecast ) {
+			$season = $fees->get_next_season_key();
+		} else {
+			$season = $request->get_param( 'season' );
+			if ( $season === null ) {
+				$season = $fees->get_season_key();
+			}
+		}
+
+		$fee_cache_key = $fees->get_fee_cache_meta_key( $season );
+
+		// For forecast, we need to calculate fees (can't use cache for a different season's pro-rata).
+		// For current season, read cached fee data directly from postmeta in a single query.
+		if ( $forecast ) {
+			// Forecast: fall back to the full fee list logic but only aggregate
+			$full_request = new \WP_REST_Request( 'GET', '/rondo/v1/fees' );
+			$full_request->set_param( 'forecast', true );
+			$full_response = $this->get_fee_list( $full_request );
+			$full_data     = $full_response->get_data();
+
+			// Aggregate from full response
+			$aggregates = [];
+			foreach ( $full_data['members'] as $member ) {
+				$cat = $member['category'];
+				if ( ! isset( $aggregates[ $cat ] ) ) {
+					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'final_fee' => 0 ];
+				}
+				$aggregates[ $cat ]['count']++;
+				$aggregates[ $cat ]['base_fee']  += $member['base_fee'];
+				$aggregates[ $cat ]['final_fee'] += $member['final_fee'];
+			}
+
+			$categories_raw  = $fees->get_categories_for_season( $season );
+			$categories_meta = [];
+			foreach ( $categories_raw as $slug => $category ) {
+				$categories_meta[ $slug ] = [
+					'label'      => $category['label'] ?? $slug,
+					'sort_order' => $category['sort_order'] ?? 999,
+					'is_youth'   => $category['is_youth'] ?? false,
+				];
+			}
+
+			$total_members = array_sum( array_column( $aggregates, 'count' ) );
+
+			return rest_ensure_response(
+				[
+					'season'     => $season,
+					'forecast'   => true,
+					'total'      => $total_members,
+					'aggregates' => $aggregates,
+					'categories' => $categories_meta,
+				]
+			);
+		}
+
+		// Current season: single SQL query to read only the fee cache meta values.
+		// This avoids loading full post objects or priming all meta.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT pm.meta_value
+				FROM {$wpdb->postmeta} pm
+				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				WHERE pm.meta_key = %s
+				AND p.post_type = 'person'
+				AND p.post_status = 'publish'",
+				$fee_cache_key
+			)
+		);
+
+		// Aggregate in PHP (unserialize each cached fee record)
+		$aggregates    = [];
+		$total_members = 0;
+
+		foreach ( $rows as $row ) {
+			$fee_data = maybe_unserialize( $row->meta_value );
+
+			if ( ! is_array( $fee_data ) || empty( $fee_data['category'] ) ) {
+				continue;
+			}
+
+			$cat = $fee_data['category'];
+			if ( ! isset( $aggregates[ $cat ] ) ) {
+				$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'final_fee' => 0 ];
+			}
+			$aggregates[ $cat ]['count']++;
+			$aggregates[ $cat ]['base_fee']  += $fee_data['base_fee'] ?? 0;
+			$aggregates[ $cat ]['final_fee'] += $fee_data['final_fee'] ?? 0;
+			$total_members++;
+		}
+
+		// Round aggregated values to avoid floating point artifacts
+		foreach ( $aggregates as &$agg ) {
+			$agg['base_fee']  = round( $agg['base_fee'], 2 );
+			$agg['final_fee'] = round( $agg['final_fee'], 2 );
+		}
+		unset( $agg );
+
+		// Get category metadata for frontend
+		$categories_raw  = $fees->get_categories_for_season( $season );
+		$categories_meta = [];
+		foreach ( $categories_raw as $slug => $category ) {
+			$categories_meta[ $slug ] = [
+				'label'      => $category['label'] ?? $slug,
+				'sort_order' => $category['sort_order'] ?? 999,
+				'is_youth'   => $category['is_youth'] ?? false,
+			];
+		}
+
+		return rest_ensure_response(
+			[
+				'season'     => $season,
+				'forecast'   => false,
+				'total'      => $total_members,
+				'aggregates' => $aggregates,
 				'categories' => $categories_meta,
 			]
 		);

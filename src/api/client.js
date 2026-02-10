@@ -299,6 +299,7 @@ export const prmApi = {
 
   // Membership fees
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),
+  getFeeSummary: (params = {}) => api.get('/rondo/v1/fees/summary', { params }),
   getPersonFee: (personId, params = {}) => api.get(`/rondo/v1/fees/person/${personId}`, { params }),
   exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data),
 
