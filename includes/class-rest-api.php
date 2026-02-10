@@ -3216,10 +3216,11 @@ class Api extends Base {
 
 			$cat = $fee_data['category'];
 			if ( ! isset( $aggregates[ $cat ] ) ) {
-				$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'final_fee' => 0 ];
+				$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'final_fee' => 0 ];
 			}
 			$aggregates[ $cat ]['count']++;
 			$aggregates[ $cat ]['base_fee'] += $fee_data['base_fee'] ?? 0;
+			$aggregates[ $cat ]['family_discount'] += $fee_data['family_discount_amount'] ?? 0;
 
 			// Forecast uses fee_after_discount (100% pro-rata), current uses final_fee
 			if ( $forecast ) {
@@ -3232,8 +3233,9 @@ class Api extends Base {
 
 		// Round aggregated values to avoid floating point artifacts
 		foreach ( $aggregates as &$agg ) {
-			$agg['base_fee']  = round( $agg['base_fee'], 2 );
-			$agg['final_fee'] = round( $agg['final_fee'], 2 );
+			$agg['base_fee']        = round( $agg['base_fee'], 2 );
+			$agg['family_discount'] = round( $agg['family_discount'], 2 );
+			$agg['final_fee']       = round( $agg['final_fee'], 2 );
 		}
 		unset( $agg );
 
