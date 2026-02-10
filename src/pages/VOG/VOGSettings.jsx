@@ -8,6 +8,8 @@ export default function VOGSettings() {
     from_name: '',
     template_new: '',
     template_renewal: '',
+    reminder_template_new: '',
+    reminder_template_renewal: '',
     exempt_commissies: [],
   });
   const [vogLoading, setVogLoading] = useState(true);
@@ -139,6 +141,50 @@ export default function VOGSettings() {
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{previous_vog_date}'}
+            </p>
+          </div>
+
+          {/* Section separator */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h4 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-4">
+              Herinnering templates
+            </h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Deze e-mails worden automatisch verstuurd 7 dagen nadat de VOG bij Justis is ingediend.
+            </p>
+          </div>
+
+          {/* Reminder template for new volunteers */}
+          <div>
+            <label htmlFor="vog-reminder-template-new" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Herinnering template nieuwe vrijwilliger
+            </label>
+            <textarea
+              id="vog-reminder-template-new"
+              rows={8}
+              value={vogSettings.reminder_template_new}
+              onChange={(e) => setVogSettings(prev => ({ ...prev, reminder_template_new: e.target.value }))}
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Beschikbare variabelen: {'{first_name}'}, {'{email_sent_date}'}, {'{justis_date}'}
+            </p>
+          </div>
+
+          {/* Reminder template for renewals */}
+          <div>
+            <label htmlFor="vog-reminder-template-renewal" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Herinnering template verlenging
+            </label>
+            <textarea
+              id="vog-reminder-template-renewal"
+              rows={8}
+              value={vogSettings.reminder_template_renewal}
+              onChange={(e) => setVogSettings(prev => ({ ...prev, reminder_template_renewal: e.target.value }))}
+              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Beschikbare variabelen: {'{first_name}'}, {'{email_sent_date}'}, {'{justis_date}'}, {'{previous_vog_date}'}
             </p>
           </div>
 
