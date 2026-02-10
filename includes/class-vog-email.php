@@ -44,6 +44,16 @@ class VOGEmail {
 	const OPTION_EXEMPT_COMMISSIES = 'rondo_vog_exempt_commissies';
 
 	/**
+	 * Option key for new volunteer reminder template
+	 */
+	const OPTION_REMINDER_TEMPLATE_NEW = 'rondo_vog_reminder_template_new';
+
+	/**
+	 * Option key for renewal reminder template
+	 */
+	const OPTION_REMINDER_TEMPLATE_RENEWAL = 'rondo_vog_reminder_template_renewal';
+
+	/**
 	 * Custom from email for current send operation
 	 *
 	 * @var string|null
@@ -127,17 +137,45 @@ class VOGEmail {
 	}
 
 	/**
+	 * Get the reminder template for new volunteers
+	 *
+	 * @return string Reminder template content
+	 */
+	public function get_reminder_template_new(): string {
+		$template = get_option( self::OPTION_REMINDER_TEMPLATE_NEW, '' );
+		if ( empty( $template ) ) {
+			return $this->get_default_reminder_template_new();
+		}
+		return $template;
+	}
+
+	/**
+	 * Get the reminder template for renewal requests
+	 *
+	 * @return string Reminder template content
+	 */
+	public function get_reminder_template_renewal(): string {
+		$template = get_option( self::OPTION_REMINDER_TEMPLATE_RENEWAL, '' );
+		if ( empty( $template ) ) {
+			return $this->get_default_reminder_template_renewal();
+		}
+		return $template;
+	}
+
+	/**
 	 * Get all VOG settings
 	 *
 	 * @return array Settings array with from_email, from_name, template_new, template_renewal, exempt_commissies
 	 */
 	public function get_all_settings(): array {
 		return [
-			'from_email'         => $this->get_from_email(),
-			'from_name'          => $this->get_from_name(),
-			'template_new'       => $this->get_template_new(),
-			'template_renewal'   => $this->get_template_renewal(),
-			'exempt_commissies'  => $this->get_exempt_commissies(),
+			'from_email'              => $this->get_from_email(),
+			'from_name'               => $this->get_from_name(),
+			'template_new'            => $this->get_template_new(),
+			'template_renewal'        => $this->get_template_renewal(),
+			'reminder_template_new'   => $this->get_reminder_template_new(),
+			'reminder_template_renewal' => $this->get_reminder_template_renewal(),
+			'exempt_commissies'       => $this->get_exempt_commissies(),
 		];
 	}
 
@@ -186,6 +224,28 @@ class VOGEmail {
 	public function update_template_renewal( string $template ): bool {
 		$sanitized = sanitize_textarea_field( $template );
 		return update_option( self::OPTION_TEMPLATE_RENEWAL, $sanitized );
+	}
+
+	/**
+	 * Update the new volunteer reminder template
+	 *
+	 * @param string $template Template content
+	 * @return bool True on success
+	 */
+	public function update_reminder_template_new( string $template ): bool {
+		$sanitized = sanitize_textarea_field( $template );
+		return update_option( self::OPTION_REMINDER_TEMPLATE_NEW, $sanitized );
+	}
+
+	/**
+	 * Update the renewal reminder template
+	 *
+	 * @param string $template Template content
+	 * @return bool True on success
+	 */
+	public function update_reminder_template_renewal( string $template ): bool {
+		$sanitized = sanitize_textarea_field( $template );
+		return update_option( self::OPTION_REMINDER_TEMPLATE_RENEWAL, $sanitized );
 	}
 
 	/**
@@ -402,5 +462,264 @@ Wij verzoeken je vriendelijk om een nieuwe VOG aan te vragen.
 Met sportieve groet,
 De vereniging
 EOT;
+	}
+
+	/**
+	 * Get default reminder template for new volunteers
+	 *
+	 * @return string Default Dutch template
+	 */
+	private function get_default_reminder_template_new(): string {
+		return <<<EOT
+Beste {first_name},
+
+Op {email_sent_date} hebben wij je gevraagd om een VOG aan te vragen. Je hebt deze op {justis_date} bij Justis ingediend.
+
+We willen je erop wijzen dat je de VOG nog moet uploaden in ons systeem zodra je deze hebt ontvangen.
+
+Mocht je vragen hebben, neem dan gerust contact met ons op.
+
+Met sportieve groet,
+De vereniging
+EOT;
+	}
+
+	/**
+	 * Get default reminder template for renewal requests
+	 *
+	 * @return string Default Dutch template
+	 */
+	private function get_default_reminder_template_renewal(): string {
+		return <<<EOT
+Beste {first_name},
+
+Op {email_sent_date} hebben wij je gevraagd om je VOG (van {previous_vog_date}) te vernieuwen. Je hebt deze op {justis_date} bij Justis ingediend.
+
+We willen je erop wijzen dat je de nieuwe VOG nog moet uploaden in ons systeem zodra je deze hebt ontvangen.
+
+Mocht je vragen hebben, neem dan gerust contact met ons op.
+
+Met sportieve groet,
+De vereniging
+EOT;
+	}
+
+	/**
+	 * Send a VOG reminder email to a person
+	 *
+	 * Sent automatically 7 days after Justis submission date.
+	 *
+	 * @param int    $person_id     The person post ID
+	 * @param string $template_type Template type: 'reminder_new' or 'reminder_renewal'
+	 * @return true|\WP_Error True on success, WP_Error on failure
+	 */
+	public function send_reminder( int $person_id, string $template_type ) {
+		// Validate template type
+		if ( ! in_array( $template_type, [ 'reminder_new', 'reminder_renewal' ], true ) ) {
+			return new \WP_Error(
+				'invalid_template_type',
+				__( 'Invalid template type. Must be "reminder_new" or "reminder_renewal".', 'rondo' )
+			);
+		}
+
+		// Get person post
+		$person = get_post( $person_id );
+		if ( ! $person || 'person' !== $person->post_type ) {
+			return new \WP_Error(
+				'invalid_person',
+				__( 'Invalid person ID.', 'rondo' )
+			);
+		}
+
+		// Get person's email from contact_info ACF field
+		$recipient_email = $this->get_person_email( $person_id );
+		if ( ! $recipient_email ) {
+			return new \WP_Error(
+				'no_email',
+				__( 'No email address found for this person.', 'rondo' )
+			);
+		}
+
+		// Get person's first name
+		$first_name = get_field( 'first_name', $person_id );
+		if ( empty( $first_name ) ) {
+			$first_name = $person->post_title;
+		}
+
+		// Get email sent date
+		$email_sent_date = get_post_meta( $person_id, 'vog_email_sent_date', true );
+		if ( $email_sent_date ) {
+			$email_sent_date = date_i18n( get_option( 'date_format' ), strtotime( $email_sent_date ) );
+		} else {
+			$email_sent_date = __( 'onbekend', 'rondo' );
+		}
+
+		// Get Justis submitted date
+		$justis_date = get_post_meta( $person_id, 'vog_justis_submitted_date', true );
+		if ( $justis_date ) {
+			$justis_date = date_i18n( get_option( 'date_format' ), strtotime( $justis_date ) );
+		} else {
+			$justis_date = __( 'onbekend', 'rondo' );
+		}
+
+		// Build substitution variables
+		$vars = [
+			'first_name'      => $first_name,
+			'email_sent_date' => $email_sent_date,
+			'justis_date'     => $justis_date,
+		];
+
+		// For renewal, get previous VOG date
+		if ( 'reminder_renewal' === $template_type ) {
+			$previous_vog_date = get_field( 'datum-vog', $person_id );
+			if ( $previous_vog_date ) {
+				// Format date for display (ACF returns Y-m-d format)
+				$vars['previous_vog_date'] = date_i18n( get_option( 'date_format' ), strtotime( $previous_vog_date ) );
+			} else {
+				$vars['previous_vog_date'] = __( 'onbekend', 'rondo' );
+			}
+		}
+
+		// Get template
+		$template = 'reminder_new' === $template_type ? $this->get_reminder_template_new() : $this->get_reminder_template_renewal();
+
+		// Substitute variables
+		$message = $this->substitute_variables( $template, $vars );
+
+		// Build subject
+		$subject = 'reminder_new' === $template_type
+			? __( 'VOG herinnering', 'rondo' )
+			: __( 'VOG herinnering - vernieuwing', 'rondo' );
+
+		// Store from email for filter
+		$this->current_from_email = $this->get_from_email();
+
+		// Add filters for custom from address
+		add_filter( 'wp_mail_from', [ $this, 'filter_mail_from' ] );
+		add_filter( 'wp_mail_from_name', [ $this, 'filter_mail_from_name' ] );
+
+		// Set content type to HTML
+		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+
+		// Convert newlines to <br> for HTML email
+		$html_message = nl2br( esc_html( $message ) );
+
+		// Send email
+		$result = wp_mail( $recipient_email, $subject, $html_message, $headers );
+
+		// Remove filters after sending
+		remove_filter( 'wp_mail_from', [ $this, 'filter_mail_from' ] );
+		remove_filter( 'wp_mail_from_name', [ $this, 'filter_mail_from_name' ] );
+
+		// Clear stored email
+		$this->current_from_email = null;
+
+		if ( ! $result ) {
+			return new \WP_Error(
+				'send_failed',
+				__( 'Failed to send email.', 'rondo' )
+			);
+		}
+
+		// Record reminder sent date in post meta
+		update_post_meta( $person_id, 'vog_reminder_sent_date', current_time( 'Y-m-d H:i:s' ) );
+
+		// Log email to timeline
+		$comment_types = new \Rondo\Collaboration\CommentTypes();
+		$comment_types->create_email_log(
+			$person_id,
+			[
+				'template_type' => $template_type,
+				'recipient'     => $recipient_email,
+				'subject'       => $subject,
+				'content'       => $html_message,
+			]
+		);
+
+		return true;
+	}
+
+	/**
+	 * Schedule the daily reminder cron job
+	 *
+	 * Called on theme activation.
+	 */
+	public static function schedule_reminder_cron(): void {
+		if ( ! wp_next_scheduled( 'rondo_vog_reminder_check' ) ) {
+			wp_schedule_event( strtotime( 'tomorrow 08:00' ), 'daily', 'rondo_vog_reminder_check' );
+		}
+	}
+
+	/**
+	 * Unschedule the daily reminder cron job
+	 *
+	 * Called on theme deactivation.
+	 */
+	public static function unschedule_reminder_cron(): void {
+		wp_clear_scheduled_hook( 'rondo_vog_reminder_check' );
+	}
+
+	/**
+	 * Process pending VOG reminders
+	 *
+	 * Called by daily cron. Finds people with Justis submission date
+	 * exactly 7 days ago and no reminder sent yet, then sends reminder email.
+	 *
+	 * @return int Number of reminders sent
+	 */
+	public function process_pending_reminders(): int {
+		// Calculate date 7 days ago
+		$seven_days_ago = date( 'Y-m-d', strtotime( '-7 days' ) );
+
+		// Query for people with Justis date 7 days ago and no reminder sent
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'     => 'vog_justis_submitted_date',
+						'value'   => $seven_days_ago,
+						'compare' => 'LIKE', // LIKE handles datetime format (Y-m-d H:i:s)
+						'type'    => 'DATE',
+					],
+					[
+						'key'     => 'vog_reminder_sent_date',
+						'compare' => 'NOT EXISTS',
+					],
+				],
+			]
+		);
+
+		$sent_count = 0;
+
+		if ( $query->have_posts() ) {
+			foreach ( $query->posts as $person ) {
+				$person_id = $person->ID;
+
+				// Determine template type based on previous VOG date
+				$previous_vog_date = get_field( 'datum-vog', $person_id );
+				$template_type     = empty( $previous_vog_date ) ? 'reminder_new' : 'reminder_renewal';
+
+				// Send reminder
+				$result = $this->send_reminder( $person_id, $template_type );
+
+				if ( true === $result ) {
+					$sent_count++;
+				}
+			}
+		}
+
+		return $sent_count;
+	}
+
+	/**
+	 * Initialize cron hooks
+	 *
+	 * Called on theme load to register the cron action.
+	 */
+	public function __construct() {
+		add_action( 'rondo_vog_reminder_check', [ $this, 'process_pending_reminders' ] );
 	}
 }

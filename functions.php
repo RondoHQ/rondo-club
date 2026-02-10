@@ -367,6 +367,10 @@ function rondo_init() {
 		new Reminders();
 	}
 
+	// VOG Email - initialize for cron hook registration
+	// Must run on all requests to ensure cron action is registered
+	new VOGEmail();
+
 	// Calendar sync - needs hooks registered for cron schedule filter
 	// Initialize on all requests to register cron_schedules filter
 	new Sync();
@@ -837,6 +841,9 @@ function rondo_theme_activation() {
 	$contacts_sync = new GoogleContactsSync();
 	$contacts_sync->schedule_sync();
 
+	// Schedule VOG reminder cron
+	VOGEmail::schedule_reminder_cron();
+
 	// Also handle theme-specific rewrite rules
 	rondo_theme_rewrite_rules();
 
@@ -863,6 +870,9 @@ function rondo_theme_deactivation() {
 	// Clear Google Contacts sync cron job
 	$contacts_sync = new GoogleContactsSync();
 	$contacts_sync->unschedule_sync();
+
+	// Clear VOG reminder cron job
+	VOGEmail::unschedule_reminder_cron();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
 	$user_roles = new UserRoles();
