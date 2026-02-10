@@ -116,6 +116,30 @@
             "readonly": 1
         },
         {
+            "key": "field_lid_tot",
+            "label": "Lid tot",
+            "name": "lid-tot",
+            "type": "date_picker",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_datum_overlijden",
+            "label": "Datum overlijden",
+            "name": "datum-overlijden",
+            "type": "date_picker",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_person_contact",
             "label": "Contact Info",
             "name": "",
