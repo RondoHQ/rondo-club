@@ -455,6 +455,12 @@ class Api extends Base {
 						'template_renewal' => [
 							'required' => false,
 						],
+						'reminder_template_new' => [
+							'required' => false,
+						],
+						'reminder_template_renewal' => [
+							'required' => false,
+						],
 						'exempt_commissies' => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
@@ -2472,11 +2478,13 @@ class Api extends Base {
 	public function update_vog_settings( $request ) {
 		$vog_email = new \Rondo\VOG\VOGEmail();
 
-		$from_email        = $request->get_param( 'from_email' );
-		$from_name         = $request->get_param( 'from_name' );
-		$template_new      = $request->get_param( 'template_new' );
-		$template_renewal  = $request->get_param( 'template_renewal' );
-		$exempt_commissies = $request->get_param( 'exempt_commissies' );
+		$from_email              = $request->get_param( 'from_email' );
+		$from_name               = $request->get_param( 'from_name' );
+		$template_new            = $request->get_param( 'template_new' );
+		$template_renewal        = $request->get_param( 'template_renewal' );
+		$reminder_template_new   = $request->get_param( 'reminder_template_new' );
+		$reminder_template_renewal = $request->get_param( 'reminder_template_renewal' );
+		$exempt_commissies       = $request->get_param( 'exempt_commissies' );
 
 		// Update provided settings
 		if ( $from_email !== null ) {
@@ -2493,6 +2501,14 @@ class Api extends Base {
 
 		if ( $template_renewal !== null ) {
 			$vog_email->update_template_renewal( $template_renewal );
+		}
+
+		if ( $reminder_template_new !== null ) {
+			$vog_email->update_reminder_template_new( $reminder_template_new );
+		}
+
+		if ( $reminder_template_renewal !== null ) {
+			$vog_email->update_reminder_template_renewal( $reminder_template_renewal );
 		}
 
 		// Track if exempt commissies changed for recalculation
