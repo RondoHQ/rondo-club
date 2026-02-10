@@ -870,74 +870,68 @@ export default function VOGList() {
                       </div>
                     </div>
 
-                    {/* Herinnering filter */}
-                    <div className="space-y-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-                      <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Herinnering
-                      </h4>
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                    {/* Herinnering Status Filter */}
+                    <div>
+                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                        Herinnering status
+                      </h3>
+                      <div className="space-y-1">
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
                           <input
-                            type="radio"
-                            name="reminderStatus"
+                            type="checkbox"
                             checked={reminderStatusFilter === ''}
-                            onChange={() => {
-                              setReminderStatusFilter('');
-                              setIsFilterOpen(false);
-                            }}
-                            className={`${
-                              reminderStatusFilter === ''
-                                ? 'text-bright-cobalt dark:text-electric-cyan'
-                                : ''
-                            }`}
+                            onChange={() => setReminderStatusFilter('')}
+                            className="sr-only"
                           />
-                          {reminderStatusFilter === '' && (
-                            <Check className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan" />
-                          )}
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            reminderStatusFilter === ''
+                              ? 'bg-electric-cyan border-electric-cyan'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {reminderStatusFilter === '' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
                           <span className="text-sm text-gray-700 dark:text-gray-200">
                             Alle
                           </span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
                           <input
-                            type="radio"
-                            name="reminderStatus"
+                            type="checkbox"
                             checked={reminderStatusFilter === 'not_sent'}
-                            onChange={() => {
-                              setReminderStatusFilter('not_sent');
-                              setIsFilterOpen(false);
-                            }}
-                            className={`${
-                              reminderStatusFilter === 'not_sent'
-                                ? 'text-bright-cobalt dark:text-electric-cyan'
-                                : ''
-                            }`}
+                            onChange={() => setReminderStatusFilter('not_sent')}
+                            className="sr-only"
                           />
-                          {reminderStatusFilter === 'not_sent' && (
-                            <Check className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan" />
-                          )}
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            reminderStatusFilter === 'not_sent'
+                              ? 'bg-electric-cyan border-electric-cyan'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {reminderStatusFilter === 'not_sent' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
                           <span className="text-sm text-gray-700 dark:text-gray-200">
                             Niet verzonden
                           </span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
                           <input
-                            type="radio"
-                            name="reminderStatus"
+                            type="checkbox"
                             checked={reminderStatusFilter === 'sent'}
-                            onChange={() => {
-                              setReminderStatusFilter('sent');
-                              setIsFilterOpen(false);
-                            }}
-                            className={`${
-                              reminderStatusFilter === 'sent'
-                                ? 'text-bright-cobalt dark:text-electric-cyan'
-                                : ''
-                            }`}
+                            onChange={() => setReminderStatusFilter('sent')}
+                            className="sr-only"
                           />
-                          {reminderStatusFilter === 'sent' && (
-                            <Check className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan" />
-                          )}
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
+                            reminderStatusFilter === 'sent'
+                              ? 'bg-electric-cyan border-electric-cyan'
+                              : 'border-gray-300 dark:border-gray-500'
+                          }`}>
+                            {reminderStatusFilter === 'sent' && (
+                              <Check className="w-3 h-3 text-white" />
+                            )}
+                          </div>
                           <span className="text-sm text-gray-700 dark:text-gray-200">
                             Wel verzonden
                           </span>
