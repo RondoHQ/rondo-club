@@ -22,7 +22,7 @@ const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const VOGList = lazy(() => import('@/pages/VOG/VOGList'));
-const ContributieList = lazy(() => import('@/pages/Contributie/ContributieList'));
+const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
 const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const Labels = lazy(() => import('@/pages/Settings/Labels'));
@@ -187,12 +187,20 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Contributie route - requires financieel capability
+          // Contributie routes - requires financieel capability
           {
             path: 'contributie',
             element: (
               <FinancieelRoute>
-                <ContributieList />
+                <Contributie />
+              </FinancieelRoute>
+            ),
+          },
+          {
+            path: 'contributie/:tab',
+            element: (
+              <FinancieelRoute>
+                <Contributie />
               </FinancieelRoute>
             ),
           },

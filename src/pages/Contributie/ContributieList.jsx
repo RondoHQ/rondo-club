@@ -155,7 +155,7 @@ function EmptyState() {
   );
 }
 
-export default function ContributieList() {
+export function ContributieList() {
   const [sortField, setSortField] = useState('last_name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [showNoNikkiOnly, setShowNoNikkiOnly] = useState(false);

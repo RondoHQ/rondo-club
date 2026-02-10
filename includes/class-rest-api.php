@@ -2933,7 +2933,6 @@ class Api extends Base {
 
 		// Determine season
 		if ( $forecast ) {
-			// Forecast always uses next season (ignore season parameter)
 			$season = $fees->get_next_season_key();
 		} else {
 			$season = $request->get_param( 'season' );
@@ -2942,91 +2941,132 @@ class Api extends Base {
 			}
 		}
 
-		// Nikki year = first 4 chars of season (2025-2026 => 2025)
-		$nikki_year = substr( $season, 0, 4 );
+		$fee_cache_key = $fees->get_fee_cache_meta_key( $season );
+		$nikki_year    = substr( $season, 0, 4 );
 
-		// Query all person posts
+		// Use fields => 'ids' for a lightweight query, then prime the meta cache
+		// in a single query so all subsequent get_post_meta() calls are O(1).
 		$query = new \WP_Query(
 			[
 				'post_type'      => 'person',
 				'posts_per_page' => -1,
 				'post_status'    => 'publish',
-				'orderby'        => 'meta_value',
-				'meta_key'       => 'first_name',
-				'order'          => 'ASC',
 				'no_found_rows'  => true,
+				'fields'         => 'ids',
 			]
 		);
 
-		$results = [];
+		// Prime meta cache for all person IDs in one query.
+		// fields => 'ids' skips automatic meta cache priming, so we do it explicitly.
+		update_meta_cache( 'post', $query->posts );
 
-		foreach ( $query->posts as $person ) {
-			$is_former = ( get_field( 'former_member', $person->ID ) == true );
+		// Season end date for former-member eligibility check
+		$season_end_year = (int) substr( $season, 5, 4 );
+		$season_end_ts   = strtotime( $season_end_year . '-07-01' );
 
-			// Former members: only include if they have lid-sinds in current season
-			if ( $is_former && ! $fees->is_former_member_in_season( $person->ID, $season ) ) {
+		$results      = [];
+		$uncached_ids = [];
+
+		foreach ( $query->posts as $person_id ) {
+			$is_former = ! empty( get_post_meta( $person_id, 'former_member', true ) );
+
+			// Former members: check season eligibility inline
+			if ( $is_former ) {
+				if ( $forecast ) {
+					continue;
+				}
+				$lid_sinds = get_post_meta( $person_id, 'lid-sinds', true );
+				if ( empty( $lid_sinds ) ) {
+					continue;
+				}
+				$lid_sinds_ts = strtotime( $lid_sinds );
+				if ( $lid_sinds_ts === false || $lid_sinds_ts >= $season_end_ts ) {
+					continue;
+				}
+			}
+
+			// Read cached fee directly from meta (already in object cache)
+			$fee_data = get_post_meta( $person_id, $fee_cache_key, true );
+
+			if ( ! is_array( $fee_data ) || empty( $fee_data['category'] ) ) {
+				$uncached_ids[] = $person_id;
 				continue;
 			}
 
-			// Former members: excluded from forecast (they won't be members next season)
-			if ( $forecast && $is_former ) {
-				continue;
+			$result = [
+				'id'                     => $person_id,
+				'first_name'             => get_post_meta( $person_id, 'first_name', true ) ?: '',
+				'last_name'              => get_post_meta( $person_id, 'last_name', true ) ?: '',
+				'category'               => $fee_data['category'],
+				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'] ?? null,
+				'base_fee'               => $fee_data['base_fee'],
+				'family_discount_rate'   => $fee_data['family_discount_rate'] ?? 0.0,
+				'family_discount_amount' => $fee_data['family_discount_amount'] ?? 0,
+				'fee_after_discount'     => $fee_data['fee_after_discount'] ?? $fee_data['final_fee'],
+				'prorata_percentage'     => $fee_data['prorata_percentage'] ?? 1.0,
+				'final_fee'              => $fee_data['final_fee'],
+				'family_key'             => $fee_data['family_key'] ?? null,
+				'family_size'            => $fee_data['family_size'] ?? null,
+				'family_position'        => $fee_data['family_position'] ?? null,
+				'lid_sinds'              => $fee_data['registration_date'] ?? null,
+				'from_cache'             => true,
+				'calculated_at'          => $fee_data['calculated_at'] ?? null,
+				'is_former_member'       => $is_former,
+			];
+
+			if ( ! $forecast ) {
+				$nikki_total           = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_total', true );
+				$nikki_saldo           = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_saldo', true );
+				$result['nikki_total'] = $nikki_total !== '' ? (float) $nikki_total : null;
+				$result['nikki_saldo'] = $nikki_saldo !== '' ? (float) $nikki_saldo : null;
 			}
 
+			$results[] = $result;
+		}
+
+		// Fallback: calculate fees for uncached members (rare after background recalculation)
+		foreach ( $uncached_ids as $person_id ) {
 			if ( $forecast ) {
-				// Forecast: calculate fee with family discount, override pro-rata to 100%
-				$fee_data = $fees->calculate_fee_with_family_discount( $person->ID, $season );
-
-				// Skip non-calculable members
+				$fee_data = $fees->calculate_fee_with_family_discount( $person_id, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
-
-				// Override pro-rata to 100% for forecast
 				$fee_data['prorata_percentage'] = 1.0;
 				$fee_data['final_fee']          = $fee_data['fee_after_discount'] ?? $fee_data['final_fee'];
 				$fee_data['registration_date']  = null;
 				$fee_data['from_cache']         = false;
 				$fee_data['calculated_at']      = current_time( 'Y-m-d H:i:s' );
 			} else {
-				// Normal: use cached calculation with lid-sinds pro-rata
-				$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
-
-				// Skip non-calculable members
+				$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
 			}
 
-			// Get person name
-			$first_name = get_field( 'first_name', $person->ID ) ?: '';
-			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
-
 			$result = [
-				'id'                     => $person->ID,
-				'first_name'             => $first_name,
-				'last_name'              => $last_name,
+				'id'                     => $person_id,
+				'first_name'             => get_post_meta( $person_id, 'first_name', true ) ?: '',
+				'last_name'              => get_post_meta( $person_id, 'last_name', true ) ?: '',
 				'category'               => $fee_data['category'],
-				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'],
+				'leeftijdsgroep'         => $fee_data['leeftijdsgroep'] ?? null,
 				'base_fee'               => $fee_data['base_fee'],
-				'family_discount_rate'   => $fee_data['family_discount_rate'],
-				'family_discount_amount' => $fee_data['family_discount_amount'],
+				'family_discount_rate'   => $fee_data['family_discount_rate'] ?? 0.0,
+				'family_discount_amount' => $fee_data['family_discount_amount'] ?? 0,
 				'fee_after_discount'     => $fee_data['fee_after_discount'] ?? $fee_data['final_fee'],
-				'prorata_percentage'     => $fee_data['prorata_percentage'],
+				'prorata_percentage'     => $fee_data['prorata_percentage'] ?? 1.0,
 				'final_fee'              => $fee_data['final_fee'],
-				'family_key'             => $fee_data['family_key'],
-				'family_size'            => $fee_data['family_size'],
-				'family_position'        => $fee_data['family_position'],
+				'family_key'             => $fee_data['family_key'] ?? null,
+				'family_size'            => $fee_data['family_size'] ?? null,
+				'family_position'        => $fee_data['family_position'] ?? null,
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
 				'from_cache'             => $fee_data['from_cache'] ?? false,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
-				'is_former_member'       => $is_former,
+				'is_former_member'       => false,
 			];
 
-			// Only include Nikki data for current season (not forecast)
 			if ( ! $forecast ) {
-				$nikki_total           = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_total', true );
-				$nikki_saldo           = get_post_meta( $person->ID, '_nikki_' . $nikki_year . '_saldo', true );
+				$nikki_total           = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_total', true );
+				$nikki_saldo           = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_saldo', true );
 				$result['nikki_total'] = $nikki_total !== '' ? (float) $nikki_total : null;
 				$result['nikki_saldo'] = $nikki_saldo !== '' ? (float) $nikki_saldo : null;
 			}
@@ -3048,7 +3088,7 @@ class Api extends Base {
 		);
 
 		// Get category metadata for frontend
-		$categories_raw = $fees->get_categories_for_season( $season );
+		$categories_raw  = $fees->get_categories_for_season( $season );
 		$categories_meta = [];
 		foreach ( $categories_raw as $slug => $category ) {
 			$categories_meta[ $slug ] = [

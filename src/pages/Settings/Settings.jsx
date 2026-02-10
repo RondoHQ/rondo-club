@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, Coins, X, Users, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
+import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { format, formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
@@ -10,7 +10,7 @@ import { useTheme, COLOR_SCHEMES } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
-import FeeCategorySettings from './FeeCategorySettings';
+
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
@@ -33,7 +33,7 @@ const CONNECTION_SUBTABS = [
 // Admin subtabs configuration (VOG moved here from main tabs)
 const ADMIN_SUBTABS = [
   { id: 'users', label: 'Gebruikers', icon: Users },
-  { id: 'fees', label: 'Contributie', icon: Coins },
+
   { id: 'vog', label: 'VOG' },
   { id: 'rollen', label: 'Rollen' },
 ];
@@ -2973,8 +2973,6 @@ function AdminTabWithSubtabs({
           reschedulingCron={reschedulingCron}
           cronMessage={cronMessage}
         />
-      ) : activeSubtab === 'fees' ? (
-        <FeeCategorySettings />
       ) : activeSubtab === 'vog' ? (
         <VOGTab
           vogSettings={vogSettings}
