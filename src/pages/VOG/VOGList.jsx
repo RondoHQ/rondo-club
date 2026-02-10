@@ -660,7 +660,7 @@ export default function VOGList() {
               {isFilterOpen && (
                 <div
                   ref={filterDropdownRef}
-                  className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+                  className="absolute top-full left-0 mt-2 w-64 max-h-[calc(100vh-12rem)] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
                 >
                   <div className="p-4 space-y-4">
                     {/* VOG Type Filter */}
