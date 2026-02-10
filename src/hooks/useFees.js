@@ -7,6 +7,7 @@ import { prmApi } from '@/api/client';
 export const feeKeys = {
   all: ['fees'],
   list: (params) => [...feeKeys.all, 'list', params],
+  summary: (params) => [...feeKeys.all, 'summary', params],
   person: (personId, params) => [...feeKeys.all, 'person', personId, params],
 };
 
@@ -21,6 +22,23 @@ export function useFeeList(params = {}) {
     queryKey: feeKeys.list(params),
     queryFn: async () => {
       const response = await prmApi.getFeeList(params);
+      return response.data;
+    },
+  });
+}
+
+/**
+ * Hook for fetching the fee summary (aggregated by category)
+ * Lightweight alternative to useFeeList for the overview tab.
+ *
+ * @param {Object} params - Optional params (season, forecast)
+ * @returns {Object} Query result with data, isLoading, error
+ */
+export function useFeeSummary(params = {}) {
+  return useQuery({
+    queryKey: feeKeys.summary(params),
+    queryFn: async () => {
+      const response = await prmApi.getFeeSummary(params);
       return response.data;
     },
   });
