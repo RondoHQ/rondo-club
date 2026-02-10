@@ -254,6 +254,7 @@ export default function VOGList() {
   const [emailStatusFilter, setEmailStatusFilter] = useState('');
   const [vogTypeFilter, setVogTypeFilter] = useState('');
   const [justisStatusFilter, setJustisStatusFilter] = useState('');
+  const [reminderStatusFilter, setReminderStatusFilter] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -285,6 +286,7 @@ export default function VOGList() {
     vogEmailStatus: emailStatusFilter,
     vogType: vogTypeFilter,
     vogJustisStatus: justisStatusFilter,
+    vogReminderStatus: reminderStatusFilter,
     orderby,
     order,
   });
@@ -488,6 +490,7 @@ export default function VOGList() {
         vog_email_status: emailStatusFilter || undefined,
         vog_type: vogTypeFilter || undefined,
         vog_justis_status: justisStatusFilter || undefined,
+        vog_reminder_status: reminderStatusFilter || undefined,
         orderby,
         order,
       };
@@ -642,13 +645,13 @@ export default function VOGList() {
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter) ? 'bg-cyan-50 text-bright-cobalt border-cyan-200 dark:bg-obsidian/30 dark:text-electric-cyan-light dark:border-bright-cobalt' : ''}`}
+                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) ? 'bg-cyan-50 text-bright-cobalt border-cyan-200 dark:bg-obsidian/30 dark:text-electric-cyan-light dark:border-bright-cobalt' : ''}`}
               >
                 <Filter className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Filter</span>
-                {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
+                {(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) && (
                   <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
-                    {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0)}
+                    {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0) + (reminderStatusFilter ? 1 : 0)}
                   </span>
                 )}
               </button>
@@ -867,13 +870,89 @@ export default function VOGList() {
                       </div>
                     </div>
 
+                    {/* Herinnering filter */}
+                    <div className="space-y-2 pb-4 border-b border-gray-200 dark:border-gray-700">
+                      <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Herinnering
+                      </h4>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                          <input
+                            type="radio"
+                            name="reminderStatus"
+                            checked={reminderStatusFilter === ''}
+                            onChange={() => {
+                              setReminderStatusFilter('');
+                              setIsFilterOpen(false);
+                            }}
+                            className={`${
+                              reminderStatusFilter === ''
+                                ? 'text-bright-cobalt dark:text-electric-cyan'
+                                : ''
+                            }`}
+                          />
+                          {reminderStatusFilter === '' && (
+                            <Check className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan" />
+                          )}
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Alle
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                          <input
+                            type="radio"
+                            name="reminderStatus"
+                            checked={reminderStatusFilter === 'not_sent'}
+                            onChange={() => {
+                              setReminderStatusFilter('not_sent');
+                              setIsFilterOpen(false);
+                            }}
+                            className={`${
+                              reminderStatusFilter === 'not_sent'
+                                ? 'text-bright-cobalt dark:text-electric-cyan'
+                                : ''
+                            }`}
+                          />
+                          {reminderStatusFilter === 'not_sent' && (
+                            <Check className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan" />
+                          )}
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Niet verzonden
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                          <input
+                            type="radio"
+                            name="reminderStatus"
+                            checked={reminderStatusFilter === 'sent'}
+                            onChange={() => {
+                              setReminderStatusFilter('sent');
+                              setIsFilterOpen(false);
+                            }}
+                            className={`${
+                              reminderStatusFilter === 'sent'
+                                ? 'text-bright-cobalt dark:text-electric-cyan'
+                                : ''
+                            }`}
+                          />
+                          {reminderStatusFilter === 'sent' && (
+                            <Check className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan" />
+                          )}
+                          <span className="text-sm text-gray-700 dark:text-gray-200">
+                            Wel verzonden
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
                     {/* Clear Filters */}
-                    {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
+                    {(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) && (
                       <button
                         onClick={() => {
                           setEmailStatusFilter('');
                           setVogTypeFilter('');
                           setJustisStatusFilter('');
+                          setReminderStatusFilter('');
                         }}
                         className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
                       >
@@ -886,7 +965,7 @@ export default function VOGList() {
             </div>
 
             {/* Active Filter Chips */}
-            {(emailStatusFilter || vogTypeFilter || justisStatusFilter) && (
+            {(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) && (
               <div className="flex items-center gap-2">
                 {emailStatusFilter && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
@@ -915,6 +994,17 @@ export default function VOGList() {
                     Justis: {justisStatusFilter === 'submitted' ? 'Aangevraagd' : 'Niet aangevraagd'}
                     <button
                       onClick={() => setJustisStatusFilter('')}
+                      className="hover:text-obsidian dark:hover:text-cyan-100"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {reminderStatusFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
+                    Herinnering: {reminderStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
+                    <button
+                      onClick={() => setReminderStatusFilter('')}
                       className="hover:text-obsidian dark:hover:text-cyan-100"
                     >
                       <X className="w-3 h-3" />
