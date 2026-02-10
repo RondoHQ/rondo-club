@@ -59,6 +59,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 46 | Add filter for people with lid-tot date in future | 2026-02-10 | 31904658 | [46-add-filter-for-people-with-lid-tot-date-](./quick/46-add-filter-for-people-with-lid-tot-date-/) |
 | 45 | Remove user approval system | 2026-02-09 | 955466f3 | [45-remove-user-approval-system](./quick/45-remove-user-approval-system/) |
 | 44 | Remove how_we_met and met_date fields | 2026-02-09 | 018b294c | [44-remove-how-we-met-and-met-date-fields](./quick/44-remove-how-we-met-and-met-date-fields/) |
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
@@ -66,9 +67,9 @@ Recent decisions affecting future work:
 
 ## Session Continuity
 
-Last session: 2026-02-09
-Stopped at: v23.0 Former Members milestone shipped
+Last session: 2026-02-10
+Stopped at: Quick task 46 complete
 Resume file: None — no active milestone, fresh for next
 
 ---
-*State updated: 2026-02-09*
+*State updated: 2026-02-10*
