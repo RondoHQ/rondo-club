@@ -1201,7 +1201,7 @@ export default function PeopleList() {
                         <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-electric-cyan transition-colors"></div>
                         <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
                       </div>
-                      <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Lid-tot in de toekomst</span>
+                      <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Afmelding in de toekomst</span>
                     </label>
                   </div>
 
@@ -1573,7 +1573,7 @@ export default function PeopleList() {
               )}
               {lidTotFuture === '1' && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Lid-tot in de toekomst
+                  Afmelding in de toekomst
                   <button
                     onClick={() => setLidTotFuture('')}
                     className="hover:text-gray-600 dark:hover:text-gray-300"
