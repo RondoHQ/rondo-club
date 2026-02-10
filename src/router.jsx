@@ -21,7 +21,7 @@ const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
 const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
 const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
 const Settings = lazy(() => import('@/pages/Settings/Settings'));
-const VOGList = lazy(() => import('@/pages/VOG/VOGList'));
+const VOG = lazy(() => import('@/pages/VOG/VOG'));
 const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
 const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
@@ -177,12 +177,20 @@ const router = createBrowserRouter([
           { path: 'people', element: <PeopleList /> },
           { path: 'people/:id', element: <PersonDetail /> },
 
-          // VOG route - requires VOG capability
+          // VOG routes - requires VOG capability
           {
             path: 'vog',
             element: (
               <VOGRoute>
-                <VOGList />
+                <VOG />
+              </VOGRoute>
+            ),
+          },
+          {
+            path: 'vog/:tab',
+            element: (
+              <VOGRoute>
+                <VOG />
               </VOGRoute>
             ),
           },
