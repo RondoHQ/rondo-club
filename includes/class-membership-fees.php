@@ -127,6 +127,40 @@ class MembershipFees {
 	}
 
 	/**
+	 * Predict next season's Sportlink age class from current age class
+	 *
+	 * KNVB age classes follow the pattern "Onder N" where N is based on birth year.
+	 * Each season, every youth player moves up one year: "Onder 10" becomes "Onder 11".
+	 * The highest youth class "Onder 19" promotes to "Senioren".
+	 * Gender suffixes (" Meiden", " Vrouwen") are preserved.
+	 *
+	 * @param string $current_age_class Sportlink AgeClassDescription (e.g., "Onder 10", "Onder 15 Meiden").
+	 * @return string Predicted age class for next season.
+	 */
+	public function predict_next_season_age_class( string $current_age_class ): string {
+		// Extract gender suffix if present
+		$suffix = '';
+		if ( preg_match( '/(\s+(Meiden|Vrouwen))$/i', $current_age_class, $matches ) ) {
+			$suffix = $matches[1];
+		}
+
+		// Match "Onder N" pattern
+		if ( preg_match( '/^Onder\s+(\d+)/i', $current_age_class, $matches ) ) {
+			$age = (int) $matches[1];
+
+			// Onder 19 promotes to Senioren (with appropriate suffix)
+			if ( $age >= 19 ) {
+				return 'Senioren' . ( $suffix === ' Meiden' ? ' Vrouwen' : $suffix );
+			}
+
+			return 'Onder ' . ( $age + 1 ) . $suffix;
+		}
+
+		// Non-youth classes (Senioren, etc.) stay the same
+		return $current_age_class;
+	}
+
+	/**
 	 * Find fee category by matching Sportlink age class against season config
 	 *
 	 * Replaces the former parse_age_group() method. Instead of hardcoded age ranges,
