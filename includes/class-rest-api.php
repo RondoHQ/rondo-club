@@ -3158,54 +3158,12 @@ class Api extends Base {
 			}
 		}
 
-		$fee_cache_key = $fees->get_fee_cache_meta_key( $season );
+		// Single SQL query to read only the fee cache meta values.
+		// For forecast, we use the current season's cache but treat fee_after_discount
+		// as final_fee (100% pro-rata) and exclude former members.
+		$cache_season  = $forecast ? $fees->get_season_key() : $season;
+		$fee_cache_key = $fees->get_fee_cache_meta_key( $cache_season );
 
-		// For forecast, we need to calculate fees (can't use cache for a different season's pro-rata).
-		// For current season, read cached fee data directly from postmeta in a single query.
-		if ( $forecast ) {
-			// Forecast: fall back to the full fee list logic but only aggregate
-			$full_request = new \WP_REST_Request( 'GET', '/rondo/v1/fees' );
-			$full_request->set_param( 'forecast', true );
-			$full_response = $this->get_fee_list( $full_request );
-			$full_data     = $full_response->get_data();
-
-			// Aggregate from full response
-			$aggregates = [];
-			foreach ( $full_data['members'] as $member ) {
-				$cat = $member['category'];
-				if ( ! isset( $aggregates[ $cat ] ) ) {
-					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'final_fee' => 0 ];
-				}
-				$aggregates[ $cat ]['count']++;
-				$aggregates[ $cat ]['base_fee']  += $member['base_fee'];
-				$aggregates[ $cat ]['final_fee'] += $member['final_fee'];
-			}
-
-			$categories_raw  = $fees->get_categories_for_season( $season );
-			$categories_meta = [];
-			foreach ( $categories_raw as $slug => $category ) {
-				$categories_meta[ $slug ] = [
-					'label'      => $category['label'] ?? $slug,
-					'sort_order' => $category['sort_order'] ?? 999,
-					'is_youth'   => $category['is_youth'] ?? false,
-				];
-			}
-
-			$total_members = array_sum( array_column( $aggregates, 'count' ) );
-
-			return rest_ensure_response(
-				[
-					'season'     => $season,
-					'forecast'   => true,
-					'total'      => $total_members,
-					'aggregates' => $aggregates,
-					'categories' => $categories_meta,
-				]
-			);
-		}
-
-		// Current season: single SQL query to read only the fee cache meta values.
-		// This avoids loading full post objects or priming all meta.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
@@ -3230,13 +3188,24 @@ class Api extends Base {
 				continue;
 			}
 
+			// Forecast: skip former members (they won't be members next season)
+			if ( $forecast && ! empty( $fee_data['is_former_member'] ) ) {
+				continue;
+			}
+
 			$cat = $fee_data['category'];
 			if ( ! isset( $aggregates[ $cat ] ) ) {
 				$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'final_fee' => 0 ];
 			}
 			$aggregates[ $cat ]['count']++;
-			$aggregates[ $cat ]['base_fee']  += $fee_data['base_fee'] ?? 0;
-			$aggregates[ $cat ]['final_fee'] += $fee_data['final_fee'] ?? 0;
+			$aggregates[ $cat ]['base_fee'] += $fee_data['base_fee'] ?? 0;
+
+			// Forecast uses fee_after_discount (100% pro-rata), current uses final_fee
+			if ( $forecast ) {
+				$aggregates[ $cat ]['final_fee'] += $fee_data['fee_after_discount'] ?? $fee_data['final_fee'] ?? 0;
+			} else {
+				$aggregates[ $cat ]['final_fee'] += $fee_data['final_fee'] ?? 0;
+			}
 			$total_members++;
 		}
 
