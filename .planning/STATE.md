@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 Phase: 169 of 169 (Contributie Logic)
 Plan: 1 of 1 in current phase
 Status: v23.0 milestone complete
-Last activity: 2026-02-10 - Completed quick task 52: Change VOG reminder to manual bulk action
+Last activity: 2026-02-10 - Completed quick task 53: Reset VOG tracking dates when datum-vog updates
 
 Progress: [████████████████████████████████] 100% (169/169 phases)
 
@@ -57,6 +57,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 53 | Reset VOG tracking dates when datum-vog updates | 2026-02-10 | 295b61f5 | [53-reset-vog-tracking-dates-when-datum-vog-](./quick/53-reset-vog-tracking-dates-when-datum-vog-/) |
 | 52 | Change VOG reminder to manual bulk action with date column | 2026-02-10 | 06e4d0f8 | [52-change-vog-reminder-to-manual-bulk-actio](./quick/52-change-vog-reminder-to-manual-bulk-actio/) |
 | 51 | Add VOG reminder email (auto-sent 7 days after Justis date) | 2026-02-10 | f3e69c26 | [51-add-vog-reminder-email-sent-automaticall](./quick/51-add-vog-reminder-email-sent-automaticall/) |
 | 50 | Remove "Markeren als aangevraagd" action from VOG page | 2026-02-10 | 49ae76b7 | [50-remove-markeren-als-aangevraagd-action-f](./quick/50-remove-markeren-als-aangevraagd-action-f/) |
@@ -72,7 +73,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Quick task 52 complete
+Stopped at: Quick task 53 complete
 Resume file: None — no active milestone, fresh for next
 
 ---
