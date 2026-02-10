@@ -230,6 +230,17 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           ? format(new Date(person.acf['vog_justis_submitted_date']), 'yyyy-MM-dd')
           : '-'}
       </td>
+
+      {/* Reminder date */}
+      <td className={`px-4 py-3 text-sm ${
+        isSelected
+          ? 'text-gray-700 dark:text-gray-100'
+          : 'text-gray-500 dark:text-gray-400'
+      }`}>
+        {person.acf?.['vog_reminder_sent_date']
+          ? format(new Date(person.acf['vog_reminder_sent_date']), 'yyyy-MM-dd')
+          : '-'}
+      </td>
     </tr>
   );
 }
@@ -260,6 +271,7 @@ export default function VOGList() {
   // Modal state
   const [showSendEmailModal, setShowSendEmailModal] = useState(false);
   const [showMarkJustisModal, setShowMarkJustisModal] = useState(false);
+  const [showSendReminderModal, setShowSendReminderModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [bulkActionResult, setBulkActionResult] = useState(null);
 
@@ -406,6 +418,14 @@ export default function VOGList() {
     },
   });
 
+  const sendRemindersMutation = useMutation({
+    mutationFn: ({ ids }) => prmApi.bulkSendVOGReminders(ids),
+    onSuccess: (response) => {
+      setBulkActionResult(response.data);
+      queryClient.invalidateQueries({ queryKey: ['people', 'filtered'] });
+    },
+  });
+
   // Bulk action handlers
   const handleSendEmails = async () => {
     setBulkActionLoading(true);
@@ -427,9 +447,20 @@ export default function VOGList() {
     }
   };
 
+  const handleSendReminders = async () => {
+    setBulkActionLoading(true);
+    setBulkActionResult(null);
+    try {
+      await sendRemindersMutation.mutateAsync({ ids: Array.from(selectedIds) });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const handleCloseModal = () => {
     setShowSendEmailModal(false);
     setShowMarkJustisModal(false);
+    setShowSendReminderModal(false);
     setBulkActionResult(null);
     if (bulkActionResult && (bulkActionResult.sent > 0 || bulkActionResult?.marked > 0)) {
       clearSelection();
@@ -447,7 +478,7 @@ export default function VOGList() {
 
     try {
       // VOG-specific columns
-      const columns = ['name', 'knvb-id', 'email', 'phone', 'datum-vog', 'vog_email_sent_date', 'vog_justis_submitted_date'];
+      const columns = ['name', 'knvb-id', 'email', 'phone', 'datum-vog', 'vog_email_sent_date', 'vog_justis_submitted_date', 'vog_reminder_sent_date'];
 
       // VOG-specific filters (matching the useFilteredPeople params in VOGList)
       const filters = {
@@ -579,6 +610,16 @@ export default function VOGList() {
                       >
                         <CheckCircle className="w-4 h-4" />
                         Markeren bij Justis aangevraagd...
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowBulkDropdown(false);
+                          setShowSendReminderModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Herinnering verzenden...
                       </button>
                     </div>
                   </div>
@@ -984,6 +1025,13 @@ export default function VOGList() {
                   sortOrder={order}
                   onSort={handleSort}
                 />
+                <SortableHeader
+                  label="Herinnering"
+                  columnId="custom_vog_reminder_sent_date"
+                  sortField={orderby}
+                  sortOrder={order}
+                  onSort={handleSort}
+                />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1108,6 +1156,66 @@ export default function VOGList() {
                     </button>
                     <button onClick={handleMarkJustis} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
                       {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Send Reminder Modal */}
+        {showSendReminderModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">VOG herinnering verzenden</h2>
+                <button onClick={handleCloseModal} disabled={bulkActionLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                {bulkActionResult ? (
+                  <div className="space-y-2">
+                    {bulkActionResult.sent > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        {bulkActionResult.sent} herinnering{bulkActionResult.sent > 1 ? 'en' : ''} verzonden
+                      </p>
+                    )}
+                    {bulkActionResult.failed > 0 && (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {bulkActionResult.failed} mislukt
+                      </p>
+                    )}
+                    {bulkActionResult.results?.filter(r => !r.success).map((r, i) => (
+                      <p key={i} className="text-xs text-gray-500 dark:text-gray-400 pl-2">
+                        ID {r.id}: {r.error}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Verstuur VOG herinnering naar {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'}.
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Het systeem selecteert automatisch de juiste template (nieuw of vernieuwing) op basis van de bestaande VOG datum.
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
+                {bulkActionResult ? (
+                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
+                    Sluiten
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                      Annuleren
+                    </button>
+                    <button onClick={handleSendReminders} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
+                      {bulkActionLoading ? 'Verzenden...' : `Verstuur naar ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
                 )}
