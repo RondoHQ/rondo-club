@@ -45,9 +45,7 @@ Recent decisions affecting future work:
 
 ### Pending Todos
 
-2 todo(s) in `.planning/todos/pending/`:
-- **move-contributie-settings-to-dedicated-menu-item**: Move contributie settings to dedicated menu item (area: ui)
-- **treasurer-fee-income-overview-by-category**: Treasurer fee income overview by category (area: ui)
+0 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
