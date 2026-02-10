@@ -306,4 +306,5 @@ export const prmApi = {
   // VOG Bulk Operations
   bulkSendVOGEmails: (ids) => api.post('/rondo/v1/vog/bulk-send', { ids }),
   bulkMarkVOGJustis: (ids) => api.post('/rondo/v1/vog/bulk-mark-justis', { ids }),
+  bulkSendVOGReminders: (ids) => api.post('/rondo/v1/vog/bulk-send-reminder', { ids }),
 };
