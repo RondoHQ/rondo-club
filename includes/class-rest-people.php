@@ -363,6 +363,14 @@ class People extends Base {
 							return in_array( $value, [ '', 'submitted', 'not_submitted' ], true );
 						},
 					],
+					'vog_reminder_status'  => [
+						'description'       => 'Filter by VOG reminder status (sent, not_sent, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
+						},
+					],
 					'include_former'       => [
 						'description'       => 'Include former members in results (1=include, empty=exclude)',
 						'type'              => 'string',
@@ -1008,6 +1016,7 @@ class People extends Base {
 		$vog_type             = $request->get_param( 'vog_type' );
 		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
 		$vog_justis_status    = $request->get_param( 'vog_justis_status' );
+		$vog_reminder_status  = $request->get_param( 'vog_reminder_status' );
 		$include_former       = $request->get_param( 'include_former' );
 		$lid_tot_future       = $request->get_param( 'lid_tot_future' );
 
@@ -1190,6 +1199,17 @@ class People extends Base {
 				$where_clauses[] = "(vjs.meta_value IS NOT NULL AND vjs.meta_value != '')";
 			} elseif ( $vog_justis_status === 'not_submitted' ) {
 				$where_clauses[] = "(vjs.meta_value IS NULL OR vjs.meta_value = '')";
+			}
+		}
+
+		// VOG Reminder status filter (sent/not_sent based on vog_reminder_sent_date meta field)
+		if ( $vog_reminder_status !== null && $vog_reminder_status !== '' ) {
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} vrs ON p.ID = vrs.post_id AND vrs.meta_key = 'vog_reminder_sent_date'";
+
+			if ( $vog_reminder_status === 'sent' ) {
+				$where_clauses[] = "(vrs.meta_value IS NOT NULL AND vrs.meta_value != '')";
+			} elseif ( $vog_reminder_status === 'not_sent' ) {
+				$where_clauses[] = "(vrs.meta_value IS NULL OR vrs.meta_value = '')";
 			}
 		}
 
