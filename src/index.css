@@ -193,7 +193,7 @@
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden transition-all duration-200 ease-in-out hover:-translate-y-0.5 dark:bg-gray-800 dark:border-gray-700;
+  @apply bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden dark:bg-gray-800 dark:border-gray-700;
   background-image: linear-gradient(to right, var(--color-electric-cyan), var(--color-bright-cobalt));
   background-size: 100% 3px;
   background-position: top;
