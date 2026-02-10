@@ -209,7 +209,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
         )}
       </td>
 
-      {/* Verzonden date */}
+      {/* 1e email date */}
       <td className={`px-4 py-3 text-sm ${
         isSelected
           ? 'text-gray-700 dark:text-gray-100'
@@ -890,7 +890,7 @@ export default function VOGList() {
               <div className="flex items-center gap-2">
                 {emailStatusFilter && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
-                    Email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
+                    1e email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
                     <button
                       onClick={() => setEmailStatusFilter('')}
                       className="hover:text-obsidian dark:hover:text-cyan-100"
@@ -1012,7 +1012,7 @@ export default function VOGList() {
                   onSort={handleSort}
                 />
                 <SortableHeader
-                  label="Verzonden"
+                  label="1e email"
                   columnId="custom_vog_email_sent_date"
                   sortField={orderby}
                   sortOrder={order}
