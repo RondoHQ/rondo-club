@@ -114,6 +114,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.vogEmailStatus - 'sent' or 'not_sent' to filter by email status
  * @param {string} filters.vogType - 'nieuw', 'vernieuwing', or '' for all
  * @param {string} filters.vogJustisStatus - 'submitted' or 'not_submitted' to filter by Justis status
+ * @param {string} filters.vogReminderStatus - 'sent' or 'not_sent' to filter by reminder status
  * @param {string} filters.lidTotFuture - '1' to show only people with lid-tot date in the future
  * @param {Object} options - TanStack Query options (staleTime, enabled, etc.)
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
@@ -141,6 +142,7 @@ export function useFilteredPeople(filters = {}, options = {}) {
     vog_type: filters.vogType || null,
     leeftijdsgroep: filters.leeftijdsgroep || null,
     vog_justis_status: filters.vogJustisStatus || null,
+    vog_reminder_status: filters.vogReminderStatus || null,
     include_former: filters.includeFormer || null,
     lid_tot_future: filters.lidTotFuture || null,
   };
