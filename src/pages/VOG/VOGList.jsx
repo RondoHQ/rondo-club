@@ -259,7 +259,6 @@ export default function VOGList() {
 
   // Modal state
   const [showSendEmailModal, setShowSendEmailModal] = useState(false);
-  const [showMarkRequestedModal, setShowMarkRequestedModal] = useState(false);
   const [showMarkJustisModal, setShowMarkJustisModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [bulkActionResult, setBulkActionResult] = useState(null);
@@ -399,14 +398,6 @@ export default function VOGList() {
     },
   });
 
-  const markRequestedMutation = useMutation({
-    mutationFn: ({ ids }) => prmApi.bulkMarkVOGRequested(ids),
-    onSuccess: (response) => {
-      setBulkActionResult(response.data);
-      queryClient.invalidateQueries({ queryKey: ['people', 'filtered'] });
-    },
-  });
-
   const markJustisMutation = useMutation({
     mutationFn: ({ ids }) => prmApi.bulkMarkVOGJustis(ids),
     onSuccess: (response) => {
@@ -426,16 +417,6 @@ export default function VOGList() {
     }
   };
 
-  const handleMarkRequested = async () => {
-    setBulkActionLoading(true);
-    setBulkActionResult(null);
-    try {
-      await markRequestedMutation.mutateAsync({ ids: Array.from(selectedIds) });
-    } finally {
-      setBulkActionLoading(false);
-    }
-  };
-
   const handleMarkJustis = async () => {
     setBulkActionLoading(true);
     setBulkActionResult(null);
@@ -448,7 +429,6 @@ export default function VOGList() {
 
   const handleCloseModal = () => {
     setShowSendEmailModal(false);
-    setShowMarkRequestedModal(false);
     setShowMarkJustisModal(false);
     setBulkActionResult(null);
     if (bulkActionResult && (bulkActionResult.sent > 0 || bulkActionResult?.marked > 0)) {
@@ -589,16 +569,6 @@ export default function VOGList() {
                       >
                         <Mail className="w-4 h-4" />
                         VOG email verzenden...
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowBulkDropdown(false);
-                          setShowMarkRequestedModal(true);
-                        }}
-                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        Markeren als aangevraagd...
                       </button>
                       <button
                         onClick={() => {
@@ -1083,61 +1053,6 @@ export default function VOGList() {
                     </button>
                     <button onClick={handleSendEmails} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
                       {bulkActionLoading ? 'Verzenden...' : `Verstuur naar ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Mark Requested Modal */}
-        {showMarkRequestedModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-              <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Markeren als aangevraagd</h2>
-                <button onClick={handleCloseModal} disabled={bulkActionLoading} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-4 space-y-4">
-                {bulkActionResult ? (
-                  <div className="space-y-2">
-                    {bulkActionResult.marked > 0 && (
-                      <p className="text-sm text-green-600 dark:text-green-400">
-                        {bulkActionResult.marked} vrijwilliger{bulkActionResult.marked > 1 ? 's' : ''} gemarkeerd
-                      </p>
-                    )}
-                    {bulkActionResult.failed > 0 && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {bulkActionResult.failed} mislukt
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      Markeer {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} als &quot;VOG aangevraagd&quot;.
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Dit registreert de huidige datum als datum van VOG-aanvraag, zonder een email te versturen.
-                    </p>
-                  </>
-                )}
-              </div>
-              <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
-                {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
-                    Sluiten
-                  </button>
-                ) : (
-                  <>
-                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
-                      Annuleren
-                    </button>
-                    <button onClick={handleMarkRequested} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
-                      {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
                 )}
