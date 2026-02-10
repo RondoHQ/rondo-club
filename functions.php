@@ -974,6 +974,7 @@ function rondo_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $or
 	if ( $value !== $original && ! empty( $value ) ) {
 		delete_post_meta( $post_id, 'vog_email_sent_date' );
 		delete_post_meta( $post_id, 'vog_justis_submitted_date' );
+		delete_post_meta( $post_id, 'vog_reminder_sent_date' );
 	}
 	return $value;
 }
