@@ -65,11 +65,11 @@ export function ContributieOverzicht() {
             <select
               value={isForecast ? 'forecast' : 'current'}
               onChange={(e) => setIsForecast(e.target.value === 'forecast')}
-              className="btn-secondary appearance-none pr-8 bg-no-repeat bg-right"
+              className="btn-secondary appearance-none pr-10 bg-no-repeat"
               style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
                 backgroundSize: '1.25rem',
-                paddingRight: '2rem',
+                backgroundPosition: 'right 0.625rem center',
               }}
             >
               <option value="current">{data?.season || '2025-2026'} (huidig)</option>
