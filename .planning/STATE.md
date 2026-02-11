@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 
 Phase: 171 of 174 (Export Command Foundation)
 Plan: 4 of 4 in current phase
-Status: Plan 04 complete
-Last activity: 2026-02-11 — Completed 171-04 (Settings Export and Meta Refinement)
+Status: Phase 171 complete (all plans done)
+Last activity: 2026-02-11 — Completed 171-03 (Discipline Cases, Todos, and Comments Export)
 
 Progress: [████░░░░░░] 38% (5/13 plans complete)
 
@@ -32,6 +32,7 @@ Progress: [████░░░░░░] 38% (5/13 plans complete)
 - Velocity: Stable
 
 **Latest Execution:**
+- Phase 171, Plan 03: 5 minutes, 2 tasks, 1 files modified (2026-02-11)
 - Phase 171, Plan 04: 2 minutes, 2 tasks, 1 files modified (2026-02-11)
 - Phase 171, Plan 02: 4 minutes, 2 tasks, 1 files modified (2026-02-11)
 
@@ -42,6 +43,8 @@ Progress: [████░░░░░░] 38% (5/13 plans complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting future work:
 
+- resolve_post_id() helper pattern for ACF post object vs ID handling (v24.0, phase 171-03)
+- Skip comments not on person posts to exclude irrelevant data (v24.0, phase 171-03)
 - Dynamic post_meta scanning for nikki and fee fields using regex pattern matching (v24.0, phase 171-02)
 - Sequential reference ID numbering starting at 1 for fixture portability (v24.0, phase 171-01)
 - Reference ID system for portable fixtures using {entity_type}:{number} format (v24.0, phase 170-01)
@@ -81,13 +84,14 @@ Recent decisions affecting future work:
 | 44 | Remove how_we_met and met_date fields | 2026-02-09 | 018b294c | [44-remove-how-we-met-and-met-date-fields](./quick/44-remove-how-we-met-and-met-date-fields/) |
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
+| Phase 171 P03 | 5 | 2 tasks | 1 files |
 | Phase 171 P02 | 4 | 2 tasks | 1 files |
 | Phase 171 P04 | 2 | 2 tasks | 1 files |
 
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed 171-04-PLAN.md
+Stopped at: Completed Phase 171, Plan 03 - Discipline Cases, Todos, and Comments Export
 Resume file: None
 
 ---
