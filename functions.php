@@ -70,6 +70,7 @@ use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
+use Rondo\Demo\DemoImport;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -475,6 +476,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 	if ( ! class_exists( 'RONDO_Demo_Anonymizer' ) ) {
 		class_alias( DemoAnonymizer::class, 'RONDO_Demo_Anonymizer' );
+	}
+	if ( ! class_exists( 'RONDO_Demo_Import' ) ) {
+		class_alias( DemoImport::class, 'RONDO_Demo_Import' );
 	}
 }
 
