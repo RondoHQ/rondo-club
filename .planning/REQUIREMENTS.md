@@ -51,26 +51,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXPORT-01 | — | Pending |
-| EXPORT-02 | — | Pending |
-| EXPORT-03 | — | Pending |
-| EXPORT-04 | — | Pending |
-| EXPORT-05 | — | Pending |
-| EXPORT-06 | — | Pending |
-| EXPORT-07 | — | Pending |
-| EXPORT-08 | — | Pending |
-| IMP-01 | — | Pending |
-| IMP-02 | — | Pending |
-| IMP-03 | — | Pending |
-| IMP-04 | — | Pending |
-| FIX-01 | — | Pending |
-| FIX-02 | — | Pending |
+| EXPORT-01 | Phase 171 | Pending |
+| EXPORT-02 | Phase 172 | Pending |
+| EXPORT-03 | Phase 171 | Pending |
+| EXPORT-04 | Phase 172 | Pending |
+| EXPORT-05 | Phase 172 | Pending |
+| EXPORT-06 | Phase 171 | Pending |
+| EXPORT-07 | Phase 171 | Pending |
+| EXPORT-08 | Phase 171 | Pending |
+| IMP-01 | Phase 173 | Pending |
+| IMP-02 | Phase 173 | Pending |
+| IMP-03 | Phase 173 | Pending |
+| IMP-04 | Phase 174 | Pending |
+| FIX-01 | Phase 170 | Pending |
+| FIX-02 | Phase 170 | Pending |
 
 **Coverage:**
 - v24.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
+
+**Coverage validation:** ✓ 100% requirement coverage
 
 ---
 *Requirements defined: 2026-02-11*
-*Last updated: 2026-02-11 after initial definition*
+*Last updated: 2026-02-11 after roadmap creation*
