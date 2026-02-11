@@ -104,7 +104,7 @@ class DemoExport {
 		$meta = [
 			'version'       => '1.0',
 			'exported_at'   => gmdate( 'c' ),
-			'source'        => 'Production export',
+			'source'        => 'Production export, anonymized',
 			'record_counts' => [
 				'people'           => count( $people ),
 				'teams'            => count( $teams ),
@@ -719,6 +719,103 @@ class DemoExport {
 	}
 
 	/**
+	 * Anonymize discipline case
+	 *
+	 * @param array $case Discipline case array.
+	 * @return array Anonymized discipline case array.
+	 */
+	private function anonymize_discipline_case( $case ) {
+		$person_ref = $case['acf']['person'] ?? null;
+
+		// Rebuild title with fake name if person ref exists.
+		if ( $person_ref ) {
+			$identity = $this->anonymizer->generate_identity( $person_ref );
+			$name_parts = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
+			$fake_name  = implode( ' ', $name_parts );
+
+			$match_description = $case['acf']['match_description'] ?? '';
+			$match_date        = $case['acf']['match_date'] ?? '';
+
+			$case['title'] = sprintf( '%s - %s - %s', $fake_name, $match_description, $match_date );
+		}
+
+		// Randomize dossier_id (7 digits + ".0").
+		$case['acf']['dossier_id'] = sprintf( '%d.0', mt_rand( 1000000, 9999999 ) );
+
+		return $case;
+	}
+
+	/**
+	 * Anonymize comment
+	 *
+	 * @param array $comment Comment array.
+	 * @return array Anonymized comment array.
+	 */
+	private function anonymize_comment( $comment ) {
+		$type = $comment['type'] ?? '';
+
+		switch ( $type ) {
+			case 'rondo_email':
+				// Replace email recipient with fake email from person's identity.
+				$person_ref = $comment['person'] ?? null;
+				if ( $person_ref && isset( $comment['meta'] ) ) {
+					$identity = $this->anonymizer->generate_identity( $person_ref );
+					$comment['meta']['email_recipient'] = $identity['email'];
+					// Replace email content snapshot with placeholder.
+					$comment['meta']['email_content_snapshot'] = 'Demo email content';
+				}
+				break;
+
+			case 'rondo_note':
+				// Replace note content with generic text.
+				$comment['content'] = 'Demo notitie';
+				break;
+
+			case 'rondo_activity':
+				// Replace activity content with generic text.
+				$comment['content'] = 'Activiteit gelogd';
+				break;
+		}
+
+		return $comment;
+	}
+
+	/**
+	 * Anonymize todo
+	 *
+	 * @param array $todo Todo array.
+	 * @return array Anonymized todo array.
+	 */
+	private function anonymize_todo( $todo ) {
+		// List of generic Dutch todo titles.
+		$generic_titles = [
+			'Terugbellen',
+			'Opvolgen',
+			'Mail sturen',
+			'Afspraak maken',
+			'Documenten checken',
+			'Gegevens bijwerken',
+			'Contact opnemen',
+			'Uitnodiging sturen',
+			'Formulier invullen',
+			'Betaling controleren',
+		];
+
+		// Pick a title based on seeded random using todo ref.
+		$ref = $todo['_ref'] ?? '';
+		$hash = crc32( $ref );
+		$index = abs( $hash ) % count( $generic_titles );
+
+		$todo['title'] = $generic_titles[ $index ];
+
+		// Strip content and notes (may contain PII).
+		$todo['content'] = null;
+		$todo['acf']['notes'] = null;
+
+		return $todo;
+	}
+
+	/**
 	 * Export teams
 	 *
 	 * @return array Array of team objects.
@@ -865,6 +962,9 @@ class DemoExport {
 				'seizoen' => $seizoen,
 			];
 
+			// Anonymize discipline case.
+			$case = $this->anonymize_discipline_case( $case );
+
 			$cases[] = $case;
 		}
 
@@ -924,6 +1024,9 @@ class DemoExport {
 					'due_date'        => $this->normalize_value( get_field( 'due_date', $post->ID ) ),
 				],
 			];
+
+			// Anonymize todo.
+			$todo = $this->anonymize_todo( $todo );
 
 			$todos[] = $todo;
 		}
@@ -1011,6 +1114,9 @@ class DemoExport {
 			if ( ! empty( $meta ) ) {
 				$exported_comment['meta'] = $meta;
 			}
+
+			// Anonymize comment.
+			$exported_comment = $this->anonymize_comment( $exported_comment );
 
 			$exported[] = $exported_comment;
 			$counts[ $comment->comment_type ]++;
