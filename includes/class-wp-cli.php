@@ -20,6 +20,7 @@ use Rondo\Contacts\GoogleContactsSync;
 use Rondo\Contacts\GoogleContactsConnection;
 use Rondo\Import\GoogleContactsAPI;
 use Rondo\Collaboration\CommentTypes;
+use Rondo\Demo\DemoExport;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -2603,6 +2604,54 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Demo WP-CLI Commands
+	 */
+	class RONDO_Demo_CLI_Command {
+
+		/**
+		 * Export production data to a demo fixture file.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--output=<path>]
+		 * : Output file path for the fixture JSON. Defaults to fixtures/demo-fixture.json in theme directory.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo demo export
+		 *     wp rondo demo export --output=/tmp/demo-data.json
+		 *
+		 * @when after_wp_load
+		 */
+		public function export( $args, $assoc_args ) {
+			$default_path = RONDO_THEME_DIR . '/fixtures/demo-fixture.json';
+			$output_path = isset( $assoc_args['output'] ) ? $assoc_args['output'] : $default_path;
+
+			// Ensure output directory exists
+			$dir = dirname( $output_path );
+			if ( ! is_dir( $dir ) ) {
+				wp_mkdir_p( $dir );
+			}
+
+			WP_CLI::log( sprintf( 'Exporting demo data to: %s', $output_path ) );
+
+			$exporter = new DemoExport( $output_path );
+			$fixture = $exporter->export();
+
+			WP_CLI::success( sprintf(
+				'Export complete! %d people, %d teams, %d commissies, %d discipline cases, %d todos, %d comments exported to %s',
+				$fixture['meta']['record_counts']['people'],
+				$fixture['meta']['record_counts']['teams'],
+				$fixture['meta']['record_counts']['commissies'],
+				$fixture['meta']['record_counts']['discipline_cases'],
+				$fixture['meta']['record_counts']['todos'],
+				$fixture['meta']['record_counts']['comments'],
+				$output_path
+			));
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
 	WP_CLI::add_command( 'prm people', 'RONDO_People_CLI_Command' );
@@ -2618,4 +2667,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );
 	WP_CLI::add_command( 'prm relationships', 'RONDO_Relationships_CLI_Command' );
 	WP_CLI::add_command( 'rondo tasks', 'RONDO_Tasks_CLI_Command' );
+	WP_CLI::add_command( 'rondo demo', 'RONDO_Demo_CLI_Command' );
 }
