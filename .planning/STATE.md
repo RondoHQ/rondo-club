@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 171 of 174 (Export Command Foundation)
-Plan: 2 of 4 in current phase
-Status: Plan 02 complete
-Last activity: 2026-02-11 — Completed 171-02 (People, Teams, Commissies, and Taxonomies Export)
+Plan: 4 of 4 in current phase
+Status: Plan 04 complete
+Last activity: 2026-02-11 — Completed 171-04 (Settings Export and Meta Refinement)
 
-Progress: [██░░░░░░░░] 23% (3/13 plans complete)
+Progress: [████░░░░░░] 38% (5/13 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 175 plans across v1.0-v24.0 (in progress)
-- v24.0 plans: 3 of 13 complete
+- Total plans completed: 177 plans across v1.0-v24.0 (in progress)
+- v24.0 plans: 5 of 13 complete
 - Recent milestones:
   - v23.0: 4 plans, 1 day (Phases 166-169 complete, 2026-02-09)
   - v22.0: 7 plans, 1 day (2026-02-09)
@@ -32,6 +32,7 @@ Progress: [██░░░░░░░░] 23% (3/13 plans complete)
 - Velocity: Stable
 
 **Latest Execution:**
+- Phase 171, Plan 04: 2 minutes, 2 tasks, 1 files modified (2026-02-11)
 - Phase 171, Plan 02: 4 minutes, 2 tasks, 1 files modified (2026-02-11)
 
 ## Accumulated Context
@@ -49,6 +50,9 @@ Recent decisions affecting future work:
 - Generic filter infrastructure via get_dynamic_filter_config() (v20.0, phase 151)
 - Config-driven fee calculation with season-specific categories (v21.0, phases 155-161)
 - NULL-safe exclusion pattern for former_member field (v23.0, phase 167)
+- [Phase 171]: Dynamic season discovery via seizoen taxonomy for fee/discount configs
+- [Phase 171]: Meta record_counts derived from actual exported arrays instead of ref_maps
+- [Phase 171]: VOG exempt commissies converted to fixture refs during export
 
 ### Pending Todos
 
@@ -78,11 +82,12 @@ Recent decisions affecting future work:
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
 | Phase 171 P02 | 4 | 2 tasks | 1 files |
+| Phase 171 P04 | 2 | 2 tasks | 1 files |
 
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed Phase 171, Plan 02 - People, Teams, Commissies, and Taxonomies Export
+Stopped at: Completed 171-04-PLAN.md
 Resume file: None
 
 ---
