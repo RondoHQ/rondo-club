@@ -90,10 +90,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 171-01: WP-CLI export command structure
-- [ ] 171-02: Export people, teams, commissies
-- [ ] 171-03: Export discipline cases, tasks, activities
-- [ ] 171-04: Export settings data
+- [x] 171-01: WP-CLI export command structure
+- [x] 171-02: Export people, teams, commissies
+- [x] 171-03: Export discipline cases, tasks, activities
+- [x] 171-04: Export settings data
 
 #### Phase 172: Data Anonymization
 
@@ -160,11 +160,11 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 170. Fixture Format Design | v24.0 | 1/1 | ✓ Complete | 2026-02-11 |
-| 171. Export Command Foundation | v24.0 | 0/4 | Not started | - |
+| 171. Export Command Foundation | v24.0 | 4/4 | ✓ Complete | 2026-02-11 |
 | 172. Data Anonymization | v24.0 | 0/3 | Not started | - |
 | 173. Import Command | v24.0 | 0/3 | Not started | - |
 | 174. End-to-End Verification | v24.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-11 — Phase 170 complete*
+*Last updated: 2026-02-11 — Phase 171 complete*
