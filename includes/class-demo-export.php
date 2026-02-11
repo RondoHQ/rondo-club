@@ -807,11 +807,80 @@ class DemoExport {
 	}
 
 	/**
-	 * Export settings (stub - to be implemented in plan 04)
+	 * Export settings (WordPress options)
 	 *
-	 * @return array Empty array for now.
+	 * @return array Object with all settings needed for demo.
 	 */
 	protected function export_settings() {
-		return [];
+		$settings = [];
+
+		// Club name (required)
+		$settings['rondo_club_name'] = get_option( 'rondo_club_name', '' );
+
+		// Get all seasons to discover dynamic option keys
+		$seasons = get_terms(
+			[
+				'taxonomy'   => 'seizoen',
+				'hide_empty' => false,
+			]
+		);
+
+		$fee_config_count = 0;
+		$discount_config_count = 0;
+
+		if ( ! is_wp_error( $seasons ) ) {
+			foreach ( $seasons as $season ) {
+				$season_slug = $season->slug;
+
+				// Membership fees for this season
+				$fee_option_key = "rondo_membership_fees_{$season_slug}";
+				$fee_config = get_option( $fee_option_key );
+				if ( $fee_config ) {
+					$settings[ $fee_option_key ] = $fee_config;
+					$fee_config_count++;
+				}
+
+				// Family discount for this season
+				$discount_option_key = "rondo_family_discount_{$season_slug}";
+				$discount_config = get_option( $discount_option_key );
+				if ( $discount_config ) {
+					$settings[ $discount_option_key ] = $discount_config;
+					$discount_config_count++;
+				}
+			}
+		}
+
+		// Player roles and excluded roles
+		$settings['rondo_player_roles'] = get_option( 'rondo_player_roles', [] );
+		$settings['rondo_excluded_roles'] = get_option( 'rondo_excluded_roles', [] );
+
+		// VOG email settings (nullable)
+		$settings['rondo_vog_from_email'] = $this->normalize_value( get_option( 'rondo_vog_from_email', '' ) );
+		$settings['rondo_vog_from_name'] = $this->normalize_value( get_option( 'rondo_vog_from_name', '' ) );
+
+		// VOG email templates (nullable, HTML)
+		$settings['rondo_vog_template_new'] = $this->normalize_value( get_option( 'rondo_vog_template_new', '' ) );
+		$settings['rondo_vog_template_renewal'] = $this->normalize_value( get_option( 'rondo_vog_template_renewal', '' ) );
+		$settings['rondo_vog_reminder_template_new'] = $this->normalize_value( get_option( 'rondo_vog_reminder_template_new', '' ) );
+		$settings['rondo_vog_reminder_template_renewal'] = $this->normalize_value( get_option( 'rondo_vog_reminder_template_renewal', '' ) );
+
+		// VOG exempt commissies (convert post IDs to fixture refs)
+		$exempt_commissies = get_option( 'rondo_vog_exempt_commissies', [] );
+		$exempt_commissies_refs = [];
+
+		if ( is_array( $exempt_commissies ) ) {
+			foreach ( $exempt_commissies as $commissie_id ) {
+				$ref = $this->get_ref( $commissie_id, 'commissie' );
+				if ( $ref ) {
+					$exempt_commissies_refs[] = $ref;
+				}
+			}
+		}
+
+		$settings['rondo_vog_exempt_commissies'] = $exempt_commissies_refs;
+
+		WP_CLI::log( sprintf( '  Exported settings (%d fee configs, %d family discount configs)', $fee_config_count, $discount_config_count ) );
+
+		return $settings;
 	}
 }
