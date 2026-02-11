@@ -68,6 +68,7 @@ use Rondo\VOG\VOGEmail;
 use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
+use Rondo\Demo\DemoExport;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -466,6 +467,11 @@ add_action( 'rest_api_init', 'rondo_migrate_options' );
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
 	new TodoMigration();
+
+	// Class alias for backward compatibility
+	if ( ! class_exists( 'RONDO_Demo_Export' ) ) {
+		class_alias( DemoExport::class, 'RONDO_Demo_Export' );
+	}
 }
 
 /**
