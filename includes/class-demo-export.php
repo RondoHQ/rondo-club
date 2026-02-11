@@ -43,6 +43,13 @@ class DemoExport {
 	private $output_path;
 
 	/**
+	 * Anonymizer instance
+	 *
+	 * @var DemoAnonymizer
+	 */
+	private $anonymizer;
+
+	/**
 	 * Constructor
 	 *
 	 * @param string $output_path Path to write the JSON fixture file.
@@ -62,6 +69,10 @@ class DemoExport {
 		// Build reference ID mappings for all entities
 		WP_CLI::log( 'Building reference ID mappings...' );
 		$this->build_ref_maps();
+
+		// Initialize anonymizer
+		$this->anonymizer = new DemoAnonymizer();
+		WP_CLI::log( 'Anonymizer initialized with seed 42' );
 
 		// Export all entity sections
 		WP_CLI::log( 'Exporting people...' );
@@ -378,6 +389,9 @@ class DemoExport {
 				'post_meta' => $this->export_person_post_meta( $post->ID ),
 			];
 
+			// Anonymize person PII.
+			$person = $this->anonymize_person( $person );
+
 			$people[] = $person;
 		}
 
@@ -569,6 +583,139 @@ class DemoExport {
 		}
 
 		return $post_meta;
+	}
+
+	/**
+	 * Anonymize person PII
+	 *
+	 * @param array $person Person array from export_people.
+	 * @return array Anonymized person array.
+	 */
+	private function anonymize_person( $person ) {
+		$ref    = $person['_ref'];
+		$gender = $person['acf']['gender'] ?? null;
+
+		// Generate consistent fake identity for this person.
+		$identity = $this->anonymizer->generate_identity( $ref, $gender );
+
+		// Replace name fields.
+		$person['acf']['first_name'] = $identity['first_name'];
+		$person['acf']['infix']      = $identity['infix'];
+		$person['acf']['last_name']  = $identity['last_name'];
+		$person['acf']['nickname']   = null; // Strip nicknames.
+
+		// Rebuild title from fake name.
+		$name_parts     = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
+		$person['title'] = implode( ' ', $name_parts );
+
+		// Replace contact_info.
+		$person['acf']['contact_info'] = $this->anonymize_contact_info( $person['acf']['contact_info'], $identity );
+
+		// Replace addresses.
+		$person['acf']['addresses'] = $this->anonymize_addresses( $person['acf']['addresses'] );
+
+		// Replace Sportlink fields that contain PII.
+		$person['acf']['relatiecode']        = $this->anonymizer->generate_relatiecode();
+		$person['acf']['freescout-id']       = null; // Strip external system ID.
+		$person['acf']['factuur-adres']      = null; // Strip invoice address (real address).
+		$person['acf']['factuur-email']      = null; // Strip invoice email.
+		$person['acf']['factuur-referentie'] = null; // Strip invoice reference.
+
+		return $person;
+	}
+
+	/**
+	 * Anonymize contact_info array
+	 *
+	 * @param array $contact_info Contact info array.
+	 * @param array $identity     Generated identity.
+	 * @return array Anonymized contact info array.
+	 */
+	private function anonymize_contact_info( $contact_info, $identity ) {
+		if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
+			return [];
+		}
+
+		$anonymized  = [];
+		$email_count = 0;
+
+		foreach ( $contact_info as $row ) {
+			$contact_type  = $row['contact_type'] ?? '';
+			$contact_label = $row['contact_label'] ?? '';
+			$contact_value = $row['contact_value'] ?? '';
+
+			// Replace based on contact type.
+			switch ( $contact_type ) {
+				case 'email':
+					// First email gets identity email, additional emails get variants.
+					if ( 0 === $email_count ) {
+						$contact_value = $identity['email'];
+					} else {
+						// Generate variant (add number).
+						$contact_value = str_replace( '@', $email_count . '@', $identity['email'] );
+					}
+					$email_count++;
+					break;
+
+				case 'phone':
+				case 'mobile':
+					// Generate fake phone.
+					$contact_value = $this->anonymizer->generate_phone();
+					break;
+
+				case 'website':
+				case 'linkedin':
+				case 'twitter':
+				case 'bluesky':
+				case 'threads':
+				case 'instagram':
+				case 'facebook':
+				case 'other':
+					// Strip social media and other links.
+					$contact_value = null;
+					break;
+			}
+
+			$anonymized[] = [
+				'contact_type'  => $contact_type,
+				'contact_label' => $contact_label,
+				'contact_value' => $contact_value,
+			];
+		}
+
+		return $anonymized;
+	}
+
+	/**
+	 * Anonymize addresses array
+	 *
+	 * @param array $addresses Addresses array.
+	 * @return array Anonymized addresses array.
+	 */
+	private function anonymize_addresses( $addresses ) {
+		if ( empty( $addresses ) || ! is_array( $addresses ) ) {
+			return [];
+		}
+
+		$anonymized = [];
+
+		foreach ( $addresses as $row ) {
+			$address_label = $row['address_label'] ?? '';
+
+			// Generate fake address.
+			$fake_address = $this->anonymizer->generate_address();
+
+			$anonymized[] = [
+				'address_label' => $address_label,
+				'street'        => $fake_address['street'] . ' ' . $fake_address['house_number'],
+				'postal_code'   => $fake_address['postal_code'],
+				'city'          => $fake_address['city'],
+				'state'         => null,
+				'country'       => 'Nederland',
+			];
+		}
+
+		return $anonymized;
 	}
 
 	/**
