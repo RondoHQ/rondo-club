@@ -621,6 +621,9 @@ class DemoExport {
 		$person['acf']['factuur-email']      = null; // Strip invoice email.
 		$person['acf']['factuur-referentie'] = null; // Strip invoice reference.
 
+		// Strip photo date (no photo = no photo date).
+		$person['acf']['datum-foto'] = null;
+
 		return $person;
 	}
 
@@ -716,6 +719,55 @@ class DemoExport {
 		}
 
 		return $anonymized;
+	}
+
+	/**
+	 * Strip organization contact info (teams/commissies)
+	 *
+	 * @param array $contact_info Contact info array.
+	 * @return array Genericized contact info array.
+	 */
+	private function strip_org_contact_info( $contact_info ) {
+		if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
+			return [];
+		}
+
+		$stripped = [];
+
+		foreach ( $contact_info as $row ) {
+			$contact_type  = $row['contact_type'] ?? '';
+			$contact_label = $row['contact_label'] ?? '';
+			$contact_value = $row['contact_value'] ?? '';
+
+			// Genericize based on contact type.
+			switch ( $contact_type ) {
+				case 'email':
+					$contact_value = 'team@rondo-demo.nl';
+					break;
+
+				case 'phone':
+				case 'mobile':
+					$contact_value = '06-00000000';
+					break;
+
+				case 'website':
+					// Keep websites as-is (public information).
+					break;
+
+				default:
+					// Other types: set to null.
+					$contact_value = null;
+					break;
+			}
+
+			$stripped[] = [
+				'contact_type'  => $contact_type,
+				'contact_label' => $contact_label,
+				'contact_value' => $contact_value,
+			];
+		}
+
+		return $stripped;
 	}
 
 	/**
@@ -842,7 +894,7 @@ class DemoExport {
 				'parent'  => $post->post_parent > 0 ? $this->get_ref( $post->post_parent, 'team' ) : null,
 				'acf'     => [
 					'website'      => $this->normalize_value( get_field( 'website', $post->ID ) ),
-					'contact_info' => $this->export_contact_info( $post->ID ),
+					'contact_info' => $this->strip_org_contact_info( $this->export_contact_info( $post->ID ) ),
 				],
 			];
 
@@ -881,7 +933,7 @@ class DemoExport {
 				'parent'  => $post->post_parent > 0 ? $this->get_ref( $post->post_parent, 'commissie' ) : null,
 				'acf'     => [
 					'website'      => $this->normalize_value( get_field( 'website', $post->ID ) ),
-					'contact_info' => $this->export_contact_info( $post->ID ),
+					'contact_info' => $this->strip_org_contact_info( $this->export_contact_info( $post->ID ) ),
 				],
 			];
 
