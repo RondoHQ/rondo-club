@@ -70,7 +70,7 @@ Recent decisions affecting future work:
 
 ### Pending Todos
 
-3 todo(s) in `.planning/todos/pending/`
+4 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
