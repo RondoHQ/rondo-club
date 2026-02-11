@@ -787,12 +787,99 @@ class DemoExport {
 	}
 
 	/**
-	 * Export comments (stub - to be implemented in plan 02)
+	 * Export comments (notes, activities, emails)
 	 *
-	 * @return array Empty array for now.
+	 * @return array Array of comment objects.
 	 */
 	protected function export_comments() {
-		return [];
+		$comments = get_comments(
+			[
+				'type__in' => [ 'rondo_note', 'rondo_activity', 'rondo_email' ],
+				'number'   => 0,
+				'orderby'  => 'comment_date',
+				'order'    => 'ASC',
+			]
+		);
+
+		$exported = [];
+		$counts   = [
+			'rondo_note'     => 0,
+			'rondo_activity' => 0,
+			'rondo_email'    => 0,
+		];
+
+		foreach ( $comments as $comment ) {
+			// Skip comments not on person posts
+			$person_ref = $this->get_ref( $comment->comment_post_ID, 'person' );
+			if ( ! $person_ref ) {
+				continue;
+			}
+
+			// Build base comment object
+			$exported_comment = [
+				'type'      => $comment->comment_type,
+				'person'    => $person_ref,
+				'content'   => $comment->comment_content,
+				'date'      => gmdate( 'Y-m-d\TH:i:s', strtotime( $comment->comment_date ) ),
+				'author_id' => $comment->user_id > 0 ? (int) $comment->user_id : null,
+			];
+
+			// Build type-specific meta
+			$meta = [];
+
+			switch ( $comment->comment_type ) {
+				case 'rondo_note':
+					$note_visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
+					$meta['_note_visibility'] = ! empty( $note_visibility ) ? $note_visibility : 'shared';
+					break;
+
+				case 'rondo_activity':
+					$meta['activity_type'] = $this->normalize_value( get_comment_meta( $comment->comment_ID, 'activity_type', true ) );
+					$meta['activity_date'] = $this->normalize_value( get_comment_meta( $comment->comment_ID, 'activity_date', true ) );
+					$meta['activity_time'] = $this->normalize_value( get_comment_meta( $comment->comment_ID, 'activity_time', true ) );
+
+					// Participants - convert WordPress IDs to fixture refs
+					$participants      = get_comment_meta( $comment->comment_ID, 'participants', true );
+					$participants_refs = [];
+					if ( is_array( $participants ) ) {
+						foreach ( $participants as $participant_id ) {
+							$participant_ref = $this->get_ref( $participant_id, 'person' );
+							if ( $participant_ref ) {
+								$participants_refs[] = $participant_ref;
+							}
+						}
+					}
+					$meta['participants'] = $participants_refs;
+					break;
+
+				case 'rondo_email':
+					$meta['email_template_type']    = get_comment_meta( $comment->comment_ID, 'email_template_type', true );
+					$meta['email_recipient']        = get_comment_meta( $comment->comment_ID, 'email_recipient', true );
+					$meta['email_subject']          = get_comment_meta( $comment->comment_ID, 'email_subject', true );
+					$meta['email_content_snapshot'] = get_comment_meta( $comment->comment_ID, 'email_content_snapshot', true );
+					break;
+			}
+
+			// Only add meta if not empty
+			if ( ! empty( $meta ) ) {
+				$exported_comment['meta'] = $meta;
+			}
+
+			$exported[] = $exported_comment;
+			$counts[ $comment->comment_type ]++;
+		}
+
+		WP_CLI::log(
+			sprintf(
+				'  Exported %d comments (%d notes, %d activities, %d emails)',
+				count( $exported ),
+				$counts['rondo_note'],
+				$counts['rondo_activity'],
+				$counts['rondo_email']
+			)
+		);
+
+		return $exported;
 	}
 
 	/**
