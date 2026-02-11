@@ -111,9 +111,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 172-01-PLAN.md -- Dutch fake data generator class
-- [ ] 172-02-PLAN.md -- Anonymize person PII in export pipeline
-- [ ] 172-03-PLAN.md -- Strip photos and fake financials
+- [x] 172-01: Dutch fake data generator class
+- [x] 172-02: Anonymize person PII in export pipeline
+- [x] 172-03: Strip photos and fake financials
 
 #### Phase 173: Import Command
 
@@ -161,7 +161,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 170. Fixture Format Design | v24.0 | 1/1 | ✓ Complete | 2026-02-11 |
 | 171. Export Command Foundation | v24.0 | 4/4 | ✓ Complete | 2026-02-11 |
-| 172. Data Anonymization | v24.0 | 0/3 | Not started | - |
+| 172. Data Anonymization | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
 | 173. Import Command | v24.0 | 0/3 | Not started | - |
 | 174. End-to-End Verification | v24.0 | 0/2 | Not started | - |
 
