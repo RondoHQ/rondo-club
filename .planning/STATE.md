@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Phase 171 - Export Command Foundation
+**Current focus:** Phase 172 - Data Anonymization
 
 ## Current Position
 
-Phase: 171 of 174 (Export Command Foundation)
-Plan: 4 of 4 in current phase
-Status: Phase 171 complete (all plans done)
-Last activity: 2026-02-11 — Completed 171-03 (Discipline Cases, Todos, and Comments Export)
+Phase: 172 of 174 (Data Anonymization)
+Plan: 0 of 3 in current phase
+Status: Not started
+Last activity: 2026-02-11 — Completed Phase 171 (Export Command Foundation)
 
 Progress: [████░░░░░░] 38% (5/13 plans complete)
 
@@ -32,9 +32,7 @@ Progress: [████░░░░░░] 38% (5/13 plans complete)
 - Velocity: Stable
 
 **Latest Execution:**
-- Phase 171, Plan 03: 5 minutes, 2 tasks, 1 files modified (2026-02-11)
-- Phase 171, Plan 04: 2 minutes, 2 tasks, 1 files modified (2026-02-11)
-- Phase 171, Plan 02: 4 minutes, 2 tasks, 1 files modified (2026-02-11)
+- Phase 171: 4 plans, 3 waves, ~15 minutes total (2026-02-11)
 
 ## Accumulated Context
 
@@ -84,14 +82,10 @@ Recent decisions affecting future work:
 | 44 | Remove how_we_met and met_date fields | 2026-02-09 | 018b294c | [44-remove-how-we-met-and-met-date-fields](./quick/44-remove-how-we-met-and-met-date-fields/) |
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
-| Phase 171 P03 | 5 | 2 tasks | 1 files |
-| Phase 171 P02 | 4 | 2 tasks | 1 files |
-| Phase 171 P04 | 2 | 2 tasks | 1 files |
-
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed Phase 171, Plan 03 - Discipline Cases, Todos, and Comments Export
+Stopped at: Completed Phase 171 - Export Command Foundation (all 4 plans)
 Resume file: None
 
 ---
