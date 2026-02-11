@@ -333,12 +333,268 @@ class DemoExport {
 	}
 
 	/**
-	 * Export people (stub - to be implemented in plan 02)
+	 * Export people
 	 *
-	 * @return array Empty array for now.
+	 * @return array Array of person objects.
 	 */
 	protected function export_people() {
-		return [];
+		$posts = get_posts(
+			[
+				'post_type'    => 'person',
+				'numberposts'  => -1,
+				'post_status'  => 'any',
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			]
+		);
+
+		$people = [];
+		$total  = count( $posts );
+
+		foreach ( $posts as $i => $post ) {
+			// Progress logging every 100 people
+			if ( 0 === ( $i + 1 ) % 100 ) {
+				WP_CLI::log( sprintf( '  Exported %d / %d people...', $i + 1, $total ) );
+			}
+
+			$person = [
+				'_ref'   => $this->get_ref( $post->ID, 'person' ),
+				'title'  => $post->post_title,
+				'status' => $post->post_status,
+				'acf'    => [
+					// Basic Information
+					'first_name'        => get_field( 'first_name', $post->ID ),
+					'infix'             => $this->normalize_value( get_field( 'infix', $post->ID ) ),
+					'last_name'         => get_field( 'last_name', $post->ID ),
+					'nickname'          => $this->normalize_value( get_field( 'nickname', $post->ID ) ),
+					'gender'            => $this->normalize_value( get_field( 'gender', $post->ID ) ),
+					'pronouns'          => $this->normalize_value( get_field( 'pronouns', $post->ID ) ),
+					'birthdate'         => get_field( 'birthdate', $post->ID ),
+					'former_member'     => (bool) get_field( 'former_member', $post->ID ),
+					'lid-tot'           => $this->normalize_value( get_field( 'lid-tot', $post->ID ) ),
+					'datum-overlijden'  => $this->normalize_value( get_field( 'datum-overlijden', $post->ID ) ),
+
+					// Contact Information
+					'contact_info'      => $this->export_contact_info( $post->ID ),
+
+					// Addresses
+					'addresses'         => $this->export_addresses( $post->ID ),
+
+					// Work History
+					'work_history'      => $this->export_work_history( $post->ID ),
+
+					// Relationships
+					'relationships'     => $this->export_relationships( $post->ID ),
+
+					// Sportlink-Synced Fields
+					'lid-sinds'         => $this->normalize_value( get_field( 'lid-sinds', $post->ID ) ),
+					'leeftijdsgroep'    => $this->normalize_value( get_field( 'leeftijdsgroep', $post->ID ) ),
+					'datum-vog'         => $this->normalize_value( get_field( 'datum-vog', $post->ID ) ),
+					'datum-foto'        => $this->normalize_value( get_field( 'datum-foto', $post->ID ) ),
+					'type-lid'          => $this->normalize_value( get_field( 'type-lid', $post->ID ) ),
+					'huidig-vrijwilliger' => $this->normalize_value( get_field( 'huidig-vrijwilliger', $post->ID ) ),
+					'financiele-blokkade' => (bool) get_field( 'financiele-blokkade', $post->ID ),
+					'relatiecode'       => $this->normalize_value( get_field( 'relatiecode', $post->ID ) ),
+					'werkfuncties'      => $this->export_werkfuncties( $post->ID ),
+					'freescout-id'      => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
+					'factuur-adres'     => $this->normalize_value( get_field( 'factuur-adres', $post->ID ) ),
+					'factuur-email'     => $this->normalize_value( get_field( 'factuur-email', $post->ID ) ),
+					'factuur-referentie' => $this->normalize_value( get_field( 'factuur-referentie', $post->ID ) ),
+				],
+				'post_meta' => $this->export_person_post_meta( $post->ID ),
+			];
+
+			$people[] = $person;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d people', count( $people ) ) );
+
+		return $people;
+	}
+
+	/**
+	 * Export addresses repeater field
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Array of address objects.
+	 */
+	private function export_addresses( $post_id ) {
+		$addresses = get_field( 'addresses', $post_id );
+
+		if ( ! $addresses || ! is_array( $addresses ) ) {
+			return [];
+		}
+
+		$exported = [];
+
+		foreach ( $addresses as $row ) {
+			$exported[] = [
+				'address_label' => $row['address_label'] ?? '',
+				'street'        => $row['street'] ?? '',
+				'postal_code'   => $row['postal_code'] ?? '',
+				'city'          => $row['city'] ?? '',
+				'state'         => $row['state'] ?? '',
+				'country'       => $row['country'] ?? '',
+			];
+		}
+
+		return $exported;
+	}
+
+	/**
+	 * Export work_history repeater field
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Array of work history objects.
+	 */
+	private function export_work_history( $post_id ) {
+		$work_history = get_field( 'work_history', $post_id );
+
+		if ( ! $work_history || ! is_array( $work_history ) ) {
+			return [];
+		}
+
+		$exported = [];
+
+		foreach ( $work_history as $row ) {
+			$team_id     = $row['team'] ?? null;
+			$team_ref    = null;
+			$entity_type = null;
+
+			if ( $team_id ) {
+				$post_type   = get_post_type( $team_id );
+				$entity_type = $post_type;
+				$team_ref    = $this->get_ref( $team_id, $post_type );
+			}
+
+			$exported[] = [
+				'team'        => $team_ref,
+				'entity_type' => $entity_type,
+				'job_title'   => $row['job_title'] ?? '',
+				'description' => $this->normalize_value( $row['description'] ?? '' ),
+				'start_date'  => $this->normalize_value( $row['start_date'] ?? '' ),
+				'end_date'    => $this->normalize_value( $row['end_date'] ?? '' ),
+				'is_current'  => (bool) ( $row['is_current'] ?? false ),
+			];
+		}
+
+		return $exported;
+	}
+
+	/**
+	 * Export relationships repeater field
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Array of relationship objects.
+	 */
+	private function export_relationships( $post_id ) {
+		$relationships = get_field( 'relationships', $post_id );
+
+		if ( ! $relationships || ! is_array( $relationships ) ) {
+			return [];
+		}
+
+		$exported = [];
+
+		foreach ( $relationships as $row ) {
+			$related_person_id = $row['related_person'] ?? null;
+			$relationship_type_id = $row['relationship_type'] ?? null;
+
+			// Skip if related person is not in the ref map
+			if ( ! $related_person_id || ! $this->get_ref( $related_person_id, 'person' ) ) {
+				continue;
+			}
+
+			// Convert relationship type to slug-based ref
+			$relationship_type_ref = null;
+			if ( $relationship_type_id ) {
+				$term = get_term( $relationship_type_id );
+				if ( $term && ! is_wp_error( $term ) ) {
+					$relationship_type_ref = 'relationship_type:' . $term->slug;
+				}
+			}
+
+			// Skip if no relationship type
+			if ( ! $relationship_type_ref ) {
+				continue;
+			}
+
+			$exported[] = [
+				'related_person'     => $this->get_ref( $related_person_id, 'person' ),
+				'relationship_type'  => $relationship_type_ref,
+				'relationship_label' => $this->normalize_value( $row['relationship_label'] ?? '' ),
+			];
+		}
+
+		return $exported;
+	}
+
+	/**
+	 * Export werkfuncties repeater field (Sportlink-synced)
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Array of werkfunctie objects.
+	 */
+	private function export_werkfuncties( $post_id ) {
+		$werkfuncties = get_field( 'werkfuncties', $post_id );
+
+		if ( ! $werkfuncties || ! is_array( $werkfuncties ) ) {
+			return [];
+		}
+
+		$exported = [];
+
+		foreach ( $werkfuncties as $row ) {
+			$team_id     = $row['team'] ?? null;
+			$team_ref    = null;
+			$entity_type = null;
+
+			if ( $team_id ) {
+				$post_type   = get_post_type( $team_id );
+				$entity_type = $post_type;
+				$team_ref    = $this->get_ref( $team_id, $post_type );
+			}
+
+			$exported[] = [
+				'team'        => $team_ref,
+				'entity_type' => $entity_type,
+				'job_title'   => $row['job_title'] ?? '',
+				'description' => $this->normalize_value( $row['description'] ?? '' ),
+				'start_date'  => $this->normalize_value( $row['start_date'] ?? '' ),
+				'end_date'    => $this->normalize_value( $row['end_date'] ?? '' ),
+				'is_current'  => (bool) ( $row['is_current'] ?? false ),
+			];
+		}
+
+		return $exported;
+	}
+
+	/**
+	 * Export person post_meta (non-ACF fields)
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Object with post meta fields.
+	 */
+	private function export_person_post_meta( $post_id ) {
+		$post_meta = [
+			'vog_email_sent_date'      => $this->normalize_value( get_post_meta( $post_id, 'vog_email_sent_date', true ) ),
+			'vog_justis_submitted_date' => $this->normalize_value( get_post_meta( $post_id, 'vog_justis_submitted_date', true ) ),
+			'vog_reminder_sent_date'   => $this->normalize_value( get_post_meta( $post_id, 'vog_reminder_sent_date', true ) ),
+		];
+
+		// Scan for dynamic meta keys (nikki, fee snapshots/forecasts)
+		$all_meta = get_post_meta( $post_id );
+
+		foreach ( $all_meta as $meta_key => $meta_values ) {
+			// Match _nikki_*_total, _nikki_*_saldo, _fee_snapshot_*, _fee_forecast_*
+			if ( preg_match( '/^_nikki_(\d+)_(total|saldo)$/', $meta_key ) ||
+				preg_match( '/^_fee_(snapshot|forecast)_/', $meta_key ) ) {
+				$value = $meta_values[0] ?? null;
+				$post_meta[ $meta_key ] = $this->normalize_value( $value );
+			}
+		}
+
+		return $post_meta;
 	}
 
 	/**
