@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 172 of 174 (Data Anonymization)
-Plan: 0 of 3 in current phase
-Status: Not started
-Last activity: 2026-02-11 — Completed Phase 171 (Export Command Foundation)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-11 — Completed plan 172-01 (Dutch Fake Data Generator)
 
-Progress: [████░░░░░░] 38% (5/13 plans complete)
+Progress: [████░░░░░░] 46% (6/13 plans complete)
 
 ## Performance Metrics
 
@@ -41,6 +41,9 @@ Progress: [████░░░░░░] 38% (5/13 plans complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting future work:
 
+- Seeded mt_rand() for reproducible fake data generation (v24.0, phase 172-01)
+- Per-ref identity caching ensures same person gets same fake identity (v24.0, phase 172-01)
+- Weighted infix distribution (40% have infix) mirrors realistic Dutch names (v24.0, phase 172-01)
 - resolve_post_id() helper pattern for ACF post object vs ID handling (v24.0, phase 171-03)
 - Skip comments not on person posts to exclude irrelevant data (v24.0, phase 171-03)
 - Dynamic post_meta scanning for nikki and fee fields using regex pattern matching (v24.0, phase 171-02)
@@ -85,7 +88,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed Phase 171 - Export Command Foundation (all 4 plans)
+Stopped at: Completed plan 172-01-PLAN.md (Dutch Fake Data Generator)
 Resume file: None
 
 ---
