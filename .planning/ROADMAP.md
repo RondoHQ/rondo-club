@@ -71,7 +71,7 @@
 **Plans**: 1 plan
 
 Plans:
-- [ ] 170-01: Design fixture JSON schema
+- [x] 170-01: Design fixture JSON schema
 
 #### Phase 171: Export Command Foundation
 
@@ -159,7 +159,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 170. Fixture Format Design | v24.0 | 0/1 | Not started | - |
+| 170. Fixture Format Design | v24.0 | 1/1 | ✓ Complete | 2026-02-11 |
 | 171. Export Command Foundation | v24.0 | 0/4 | Not started | - |
 | 172. Data Anonymization | v24.0 | 0/3 | Not started | - |
 | 173. Import Command | v24.0 | 0/3 | Not started | - |
@@ -167,4 +167,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-11 — v24.0 Demo Data roadmap created*
+*Last updated: 2026-02-11 — Phase 170 complete*
