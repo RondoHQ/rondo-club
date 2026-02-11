@@ -63,11 +63,7 @@ class DemoExport {
 		WP_CLI::log( 'Building reference ID mappings...' );
 		$this->build_ref_maps();
 
-		// Build meta section
-		WP_CLI::log( 'Building meta section...' );
-		$meta = $this->build_meta();
-
-		// Build all entity sections (stubs for now)
+		// Export all entity sections
 		WP_CLI::log( 'Exporting people...' );
 		$people = $this->export_people();
 
@@ -91,6 +87,22 @@ class DemoExport {
 
 		WP_CLI::log( 'Exporting settings...' );
 		$settings = $this->export_settings();
+
+		// Build meta section AFTER exporting entities (to use actual counts)
+		WP_CLI::log( 'Building meta section...' );
+		$meta = [
+			'version'       => '1.0',
+			'exported_at'   => gmdate( 'c' ),
+			'source'        => 'Production export',
+			'record_counts' => [
+				'people'           => count( $people ),
+				'teams'            => count( $teams ),
+				'commissies'       => count( $commissies ),
+				'discipline_cases' => count( $discipline_cases ),
+				'todos'            => count( $todos ),
+				'comments'         => count( $comments ),
+			],
+		];
 
 		// Assemble complete fixture
 		$fixture = [
@@ -251,44 +263,6 @@ class DemoExport {
 		return null;
 	}
 
-	/**
-	 * Build meta section
-	 *
-	 * @return array Meta object with version, timestamp, source, and record counts.
-	 */
-	private function build_meta() {
-		$comment_count = $this->count_comments_by_type();
-
-		return [
-			'version'       => '1.0',
-			'exported_at'   => gmdate( 'c' ),
-			'source'        => 'Production export',
-			'record_counts' => [
-				'people'           => count( $this->ref_maps['person'] ),
-				'teams'            => count( $this->ref_maps['team'] ),
-				'commissies'       => count( $this->ref_maps['commissie'] ),
-				'discipline_cases' => count( $this->ref_maps['discipline_case'] ),
-				'todos'            => count( $this->ref_maps['todo'] ),
-				'comments'         => $comment_count,
-			],
-		];
-	}
-
-	/**
-	 * Count comments by Rondo comment types
-	 *
-	 * @return int Total count of notes, activities, and email logs.
-	 */
-	private function count_comments_by_type() {
-		$comment_count = get_comments(
-			[
-				'type__in' => [ 'rondo_note', 'rondo_activity', 'rondo_email' ],
-				'count'    => true,
-			]
-		);
-
-		return (int) $comment_count;
-	}
 
 	/**
 	 * Normalize a value - convert empty values to null
@@ -676,21 +650,140 @@ class DemoExport {
 	}
 
 	/**
-	 * Export discipline cases (stub - to be implemented in plan 02)
+	 * Resolve post ID from ACF field value
 	 *
-	 * @return array Empty array for now.
+	 * ACF can return either a post object or just an ID depending on return format.
+	 *
+	 * @param mixed $field_value ACF field value.
+	 * @return int|null Post ID or null if invalid.
 	 */
-	protected function export_discipline_cases() {
-		return [];
+	private function resolve_post_id( $field_value ) {
+		if ( is_object( $field_value ) && isset( $field_value->ID ) ) {
+			return (int) $field_value->ID;
+		}
+		if ( is_numeric( $field_value ) ) {
+			return (int) $field_value;
+		}
+		return null;
 	}
 
 	/**
-	 * Export todos (stub - to be implemented in plan 02)
+	 * Export discipline cases
 	 *
-	 * @return array Empty array for now.
+	 * @return array Array of discipline case objects.
+	 */
+	protected function export_discipline_cases() {
+		$posts = get_posts(
+			[
+				'post_type'    => 'discipline_case',
+				'numberposts'  => -1,
+				'post_status'  => 'any',
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			]
+		);
+
+		$cases = [];
+
+		foreach ( $posts as $post ) {
+			// Get person reference
+			$person_field = get_field( 'person', $post->ID );
+			$person_id    = $this->resolve_post_id( $person_field );
+			$person_ref   = $person_id ? $this->get_ref( $person_id, 'person' ) : null;
+
+			// Get seizoen (taxonomy term)
+			$seizoen      = null;
+			$seizoen_terms = wp_get_post_terms( $post->ID, 'seizoen' );
+			if ( ! empty( $seizoen_terms ) && ! is_wp_error( $seizoen_terms ) ) {
+				$seizoen = $seizoen_terms[0]->slug;
+			}
+
+			$case = [
+				'_ref'   => $this->get_ref( $post->ID, 'discipline_case' ),
+				'title'  => $post->post_title,
+				'status' => $post->post_status,
+				'acf'    => [
+					'dossier_id'            => get_field( 'dossier_id', $post->ID ),
+					'person'                => $person_ref,
+					'match_date'            => $this->normalize_value( get_field( 'match_date', $post->ID ) ),
+					'processing_date'       => $this->normalize_value( get_field( 'processing_date', $post->ID ) ),
+					'match_description'     => $this->normalize_value( get_field( 'match_description', $post->ID ) ),
+					'team_name'             => $this->normalize_value( get_field( 'team_name', $post->ID ) ),
+					'charge_codes'          => $this->normalize_value( get_field( 'charge_codes', $post->ID ) ),
+					'charge_description'    => $this->normalize_value( get_field( 'charge_description', $post->ID ) ),
+					'sanction_description'  => $this->normalize_value( get_field( 'sanction_description', $post->ID ) ),
+					'administrative_fee'    => $this->normalize_value( (float) get_field( 'administrative_fee', $post->ID ) ),
+					'is_charged'            => (bool) get_field( 'is_charged', $post->ID ),
+				],
+				'seizoen' => $seizoen,
+			];
+
+			$cases[] = $case;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d discipline cases', count( $cases ) ) );
+
+		return $cases;
+	}
+
+	/**
+	 * Export todos
+	 *
+	 * @return array Array of todo objects.
 	 */
 	protected function export_todos() {
-		return [];
+		$posts = get_posts(
+			[
+				'post_type'    => 'rondo_todo',
+				'numberposts'  => -1,
+				'post_status'  => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ],
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			]
+		);
+
+		$todos = [];
+
+		foreach ( $posts as $post ) {
+			// Get related persons (array of post IDs)
+			$related_persons_field = get_field( 'related_persons', $post->ID );
+			$related_persons_refs  = [];
+
+			if ( is_array( $related_persons_field ) ) {
+				foreach ( $related_persons_field as $person_field ) {
+					$person_id = $this->resolve_post_id( $person_field );
+					if ( $person_id ) {
+						$person_ref = $this->get_ref( $person_id, 'person' );
+						if ( $person_ref ) {
+							$related_persons_refs[] = $person_ref;
+						}
+					}
+				}
+			}
+
+			// Convert post_date to ISO 8601
+			$date = get_post_time( 'c', false, $post->ID );
+
+			$todo = [
+				'_ref'    => $this->get_ref( $post->ID, 'todo' ),
+				'title'   => $post->post_title,
+				'content' => ! empty( $post->post_content ) ? $post->post_content : null,
+				'status'  => $post->post_status,
+				'date'    => $date,
+				'acf'     => [
+					'related_persons' => $related_persons_refs,
+					'notes'           => $this->normalize_value( get_field( 'notes', $post->ID ) ),
+					'awaiting_since'  => $this->normalize_value( get_field( 'awaiting_since', $post->ID ) ),
+					'due_date'        => $this->normalize_value( get_field( 'due_date', $post->ID ) ),
+				],
+			];
+
+			$todos[] = $todo;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d todos', count( $todos ) ) );
+
+		return $todos;
 	}
 
 	/**
