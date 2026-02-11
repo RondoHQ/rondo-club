@@ -69,6 +69,7 @@ use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
 use Rondo\Demo\DemoExport;
+use Rondo\Demo\DemoAnonymizer;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -471,6 +472,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	// Class alias for backward compatibility
 	if ( ! class_exists( 'RONDO_Demo_Export' ) ) {
 		class_alias( DemoExport::class, 'RONDO_Demo_Export' );
+	}
+	if ( ! class_exists( 'RONDO_Demo_Anonymizer' ) ) {
+		class_alias( DemoAnonymizer::class, 'RONDO_Demo_Anonymizer' );
 	}
 }
 
