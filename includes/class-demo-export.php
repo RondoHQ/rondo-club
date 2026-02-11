@@ -624,6 +624,9 @@ class DemoExport {
 		// Strip photo date (no photo = no photo date).
 		$person['acf']['datum-foto'] = null;
 
+		// Anonymize financial data in post_meta.
+		$person['post_meta'] = $this->anonymize_financials( $person['post_meta'] );
+
 		return $person;
 	}
 
@@ -722,6 +725,76 @@ class DemoExport {
 	}
 
 	/**
+	 * Anonymize financial data in post_meta
+	 *
+	 * @param array $post_meta Post meta array.
+	 * @return array Anonymized post meta array.
+	 */
+	private function anonymize_financials( $post_meta ) {
+		if ( empty( $post_meta ) || ! is_array( $post_meta ) ) {
+			return $post_meta;
+		}
+
+		foreach ( $post_meta as $meta_key => $value ) {
+			// Nikki total fields.
+			if ( preg_match( '/^_nikki_(\d+)_total$/', $meta_key ) ) {
+				$rand = mt_rand( 1, 100 );
+				if ( $rand <= 70 ) {
+					// 70% chance: 100-300.
+					$post_meta[ $meta_key ] = (string) mt_rand( 100, 300 );
+				} elseif ( $rand <= 90 ) {
+					// 20% chance: 50-100.
+					$post_meta[ $meta_key ] = (string) mt_rand( 50, 100 );
+				} else {
+					// 10% chance: 0.
+					$post_meta[ $meta_key ] = '0';
+				}
+			}
+
+			// Nikki saldo fields.
+			if ( preg_match( '/^_nikki_(\d+)_saldo$/', $meta_key ) ) {
+				$rand = mt_rand( 1, 100 );
+				if ( $rand <= 80 ) {
+					// 80% chance: 0 (most people pay).
+					$post_meta[ $meta_key ] = '0';
+				} elseif ( $rand <= 95 ) {
+					// 15% chance: positive amount (owes money).
+					$post_meta[ $meta_key ] = (string) mt_rand( 10, 100 );
+				} else {
+					// 5% chance: negative amount (overpaid).
+					$post_meta[ $meta_key ] = (string) ( -1 * mt_rand( 10, 50 ) );
+				}
+			}
+
+			// Fee snapshot fields.
+			if ( preg_match( '/^_fee_snapshot_/', $meta_key ) ) {
+				$fake_snapshot = [
+					'category'          => 'demo',
+					'base_amount'       => mt_rand( 50, 300 ),
+					'pro_rata_factor'   => 1.0,
+					'family_discount'   => 0,
+					'final_amount'      => mt_rand( 50, 300 ),
+				];
+				$post_meta[ $meta_key ] = serialize( $fake_snapshot );
+			}
+
+			// Fee forecast fields.
+			if ( preg_match( '/^_fee_forecast_/', $meta_key ) ) {
+				$fake_forecast = [
+					'category'          => 'demo',
+					'base_amount'       => mt_rand( 50, 300 ),
+					'pro_rata_factor'   => 1.0,
+					'family_discount'   => 0,
+					'final_amount'      => mt_rand( 50, 300 ),
+				];
+				$post_meta[ $meta_key ] = serialize( $fake_forecast );
+			}
+		}
+
+		return $post_meta;
+	}
+
+	/**
 	 * Strip organization contact info (teams/commissies)
 	 *
 	 * @param array $contact_info Contact info array.
@@ -793,6 +866,11 @@ class DemoExport {
 
 		// Randomize dossier_id (7 digits + ".0").
 		$case['acf']['dossier_id'] = sprintf( '%d.0', mt_rand( 1000000, 9999999 ) );
+
+		// Randomize administrative fee (typical values: 10.00, 19.60, 30.00, 40.60, 50.00).
+		$base = mt_rand( 1, 5 ) * 10;
+		$cents = mt_rand( 0, 1 ) * 0.60;
+		$case['acf']['administrative_fee'] = $base + $cents;
 
 		return $case;
 	}
@@ -1363,6 +1441,24 @@ class DemoExport {
 		}
 
 		$settings['rondo_vog_exempt_commissies'] = $exempt_commissies_refs;
+
+		// Anonymize VOG email settings.
+		$settings['rondo_vog_from_email'] = 'vog@rondo-demo.nl';
+		$settings['rondo_vog_from_name'] = $settings['rondo_club_name'] ?: 'Demo Club';
+
+		// Replace VOG email templates with demo placeholders.
+		if ( ! empty( $settings['rondo_vog_template_new'] ) ) {
+			$settings['rondo_vog_template_new'] = '<p>Dit is een demo e-mailtemplate.</p>';
+		}
+		if ( ! empty( $settings['rondo_vog_template_renewal'] ) ) {
+			$settings['rondo_vog_template_renewal'] = '<p>Dit is een demo e-mailtemplate.</p>';
+		}
+		if ( ! empty( $settings['rondo_vog_reminder_template_new'] ) ) {
+			$settings['rondo_vog_reminder_template_new'] = '<p>Dit is een demo e-mailtemplate.</p>';
+		}
+		if ( ! empty( $settings['rondo_vog_reminder_template_renewal'] ) ) {
+			$settings['rondo_vog_reminder_template_renewal'] = '<p>Dit is een demo e-mailtemplate.</p>';
+		}
 
 		WP_CLI::log( sprintf( '  Exported settings (%d fee configs, %d family discount configs)', $fee_config_count, $discount_config_count ) );
 
