@@ -130,9 +130,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 173-01: WP-CLI import command structure
-- [ ] 173-02: Date-shifting algorithm
-- [ ] 173-03: Clean flag implementation
+- [x] 173-01: WP-CLI import command structure
+- [x] 173-02: Date-shifting algorithm
+- [x] 173-03: Clean flag implementation
 
 #### Phase 174: End-to-End Verification
 
@@ -162,9 +162,9 @@ Plans:
 | 170. Fixture Format Design | v24.0 | 1/1 | ✓ Complete | 2026-02-11 |
 | 171. Export Command Foundation | v24.0 | 4/4 | ✓ Complete | 2026-02-11 |
 | 172. Data Anonymization | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
-| 173. Import Command | v24.0 | 0/3 | Not started | - |
+| 173. Import Command | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
 | 174. End-to-End Verification | v24.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-11 — Phase 171 complete*
+*Last updated: 2026-02-11 — Phase 173 complete*
