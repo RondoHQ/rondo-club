@@ -51,6 +51,36 @@
                     }
                 }
             ]
+        },
+        {
+            "key": "field_team_publicteamid",
+            "label": "PublicTeamId",
+            "name": "publicteamid",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_team_activiteit",
+            "label": "Activiteit",
+            "name": "activiteit",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_team_gender",
+            "label": "Gender",
+            "name": "gender",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
         }
     ],
     "location": [

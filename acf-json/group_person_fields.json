@@ -401,6 +401,253 @@
                     }
                 }
             ]
+        },
+        {
+            "key": "field_person_sportlink",
+            "label": "Sportlink",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_knvb_id",
+            "label": "KNVB ID",
+            "name": "knvb-id",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_isparent",
+            "label": "isParent",
+            "name": "isparent",
+            "type": "true_false",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Yes",
+            "ui_off_text": "No"
+        },
+        {
+            "key": "field_type_lid",
+            "label": "Type lid",
+            "name": "type-lid",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_leeftijdsgroep",
+            "label": "Leeftijdsgroep",
+            "name": "leeftijdsgroep",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_lid_sinds",
+            "label": "Lid sinds",
+            "name": "lid-sinds",
+            "type": "date_picker",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_datum_foto",
+            "label": "Datum foto",
+            "name": "datum-foto",
+            "type": "date_picker",
+            "display_format": "Y-m-d",
+            "return_format": "Y-m-d",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_datum_vog",
+            "label": "Datum VOG",
+            "name": "datum-vog",
+            "type": "date_picker",
+            "display_format": "Y-m-d",
+            "return_format": "Y-m-d",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_huidig_vrijwilliger",
+            "label": "Huidig vrijwilliger",
+            "name": "huidig-vrijwilliger",
+            "type": "true_false",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee"
+        },
+        {
+            "key": "field_financiele_blokkade",
+            "label": "Financi\u00eble blokkade",
+            "name": "financiele-blokkade",
+            "type": "true_false",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee"
+        },
+        {
+            "key": "field_freescout_id",
+            "label": "Freescout ID",
+            "name": "freescout-id",
+            "type": "number",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_person_contributie",
+            "label": "Contributie",
+            "name": "",
+            "type": "tab",
+            "placement": "top"
+        },
+        {
+            "key": "field_nikki_contributie_status",
+            "label": "NIKKI contributie status",
+            "name": "nikki-contributie-status",
+            "type": "wysiwyg",
+            "tabs": "all",
+            "toolbar": "full",
+            "media_upload": 1
+        },
+        {
+            "key": "field_nikki_2025_total",
+            "label": "NIKKI 2025 totaal",
+            "name": "_nikki_2025_total",
+            "type": "number",
+            "instructions": "Hoofdsom contributie 2025",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2025_saldo",
+            "label": "NIKKI 2025 saldo",
+            "name": "_nikki_2025_saldo",
+            "type": "number",
+            "instructions": "Openstaand saldo 2025",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2025_status",
+            "label": "NIKKI 2025 status",
+            "name": "_nikki_2025_status",
+            "type": "text",
+            "instructions": "Betalingsstatus 2025",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2024_total",
+            "label": "NIKKI 2024 totaal",
+            "name": "_nikki_2024_total",
+            "type": "number",
+            "instructions": "Hoofdsom contributie 2024",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2024_saldo",
+            "label": "NIKKI 2024 saldo",
+            "name": "_nikki_2024_saldo",
+            "type": "number",
+            "instructions": "Openstaand saldo 2024",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2024_status",
+            "label": "NIKKI 2024 status",
+            "name": "_nikki_2024_status",
+            "type": "text",
+            "instructions": "Betalingsstatus 2024",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2023_total",
+            "label": "NIKKI 2023 totaal",
+            "name": "_nikki_2023_total",
+            "type": "number",
+            "instructions": "Hoofdsom contributie 2023",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2023_saldo",
+            "label": "NIKKI 2023 saldo",
+            "name": "_nikki_2023_saldo",
+            "type": "number",
+            "instructions": "Openstaand saldo 2023",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2023_status",
+            "label": "NIKKI 2023 status",
+            "name": "_nikki_2023_status",
+            "type": "text",
+            "instructions": "Betalingsstatus 2023",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2022_total",
+            "label": "NIKKI 2022 totaal",
+            "name": "_nikki_2022_total",
+            "type": "number",
+            "instructions": "Hoofdsom contributie 2022",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2022_saldo",
+            "label": "NIKKI 2022 saldo",
+            "name": "_nikki_2022_saldo",
+            "type": "number",
+            "instructions": "Openstaand saldo 2022",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_nikki_2022_status",
+            "label": "NIKKI 2022 status",
+            "name": "_nikki_2022_status",
+            "type": "text",
+            "instructions": "Betalingsstatus 2022",
+            "wrapper": {
+                "width": "33"
+            }
         }
     ],
     "location": [
