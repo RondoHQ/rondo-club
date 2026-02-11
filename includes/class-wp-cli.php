@@ -2659,10 +2659,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * [--input=<path>]
 		 * : Input fixture JSON file path. Defaults to fixtures/demo-fixture.json in theme directory.
 		 *
+		 * [--clean]
+		 * : Remove all existing Rondo data before importing. Use this to start fresh.
+		 *
 		 * ## EXAMPLES
 		 *
 		 *     wp rondo demo import
 		 *     wp rondo demo import --input=/tmp/demo-data.json
+		 *     wp rondo demo import --clean
+		 *     wp rondo demo import --input=/tmp/demo-data.json --clean
 		 *
 		 * @when after_wp_load
 		 */
@@ -2682,6 +2687,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( sprintf( 'Importing demo data from: %s', $input_path ) );
 
 			$importer = new DemoImport( $input_path );
+
+		if ( isset( $assoc_args['clean'] ) && $assoc_args['clean'] ) {
+			WP_CLI::log( 'Cleaning existing data...' );
+			$importer->clean();
+			WP_CLI::log( '' );
+		}
 			$importer->import();
 
 			WP_CLI::success( 'Import complete!' );
