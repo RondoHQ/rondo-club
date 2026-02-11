@@ -21,6 +21,7 @@ use Rondo\Contacts\GoogleContactsConnection;
 use Rondo\Import\GoogleContactsAPI;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Demo\DemoExport;
+use Rondo\Demo\DemoImport;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -2648,6 +2649,42 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$fixture['meta']['record_counts']['comments'],
 				$output_path
 			));
+		}
+
+		/**
+		 * Import demo data from a fixture file.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--input=<path>]
+		 * : Input fixture JSON file path. Defaults to fixtures/demo-fixture.json in theme directory.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo demo import
+		 *     wp rondo demo import --input=/tmp/demo-data.json
+		 *
+		 * @when after_wp_load
+		 */
+		public function import( $args, $assoc_args ) {
+			$default_path = RONDO_THEME_DIR . '/fixtures/demo-fixture.json';
+			$input_path = isset( $assoc_args['input'] ) ? $assoc_args['input'] : $default_path;
+
+			// Validate file exists and is readable
+			if ( ! file_exists( $input_path ) ) {
+				WP_CLI::error( sprintf( 'Fixture file not found: %s', $input_path ) );
+			}
+
+			if ( ! is_readable( $input_path ) ) {
+				WP_CLI::error( sprintf( 'Fixture file not readable: %s', $input_path ) );
+			}
+
+			WP_CLI::log( sprintf( 'Importing demo data from: %s', $input_path ) );
+
+			$importer = new DemoImport( $input_path );
+			$importer->import();
+
+			WP_CLI::success( 'Import complete!' );
 		}
 	}
 
