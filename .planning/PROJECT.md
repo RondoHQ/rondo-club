@@ -400,7 +400,16 @@ Club administrators can manage their members, teams, and important dates through
 
 ### Active
 
-(No active milestone — ready for next milestone planning)
+## Current Milestone: v24.0 Demo Data
+
+**Goal:** Create a demo data pipeline that anonymizes production data into a portable fixture, enabling realistic demo environments that always look "fresh."
+
+**Target features:**
+- WP-CLI export command: extract all data from production, anonymize PII, remove photos, fake financial amounts
+- WP-CLI import command: load fixture with date-shifting so demo always has recent activity
+- Static JSON fixture format committed to repo
+- Dutch fake data (names, addresses, phones, emails)
+- Full dataset coverage: people, teams, commissies, discipline cases, tasks, activities, fee config, Nikki data
 
 ### Out of Scope
 
@@ -616,4 +625,4 @@ Club administrators can manage their members, teams, and important dates through
 | Family discount excludes ineligible former members | Prevents incorrect discount reductions for remaining family | ✓ Good |
 
 ---
-*Last updated: 2026-02-09 after v23.0 Former Members shipped*
+*Last updated: 2026-02-11 after v24.0 Demo Data milestone started*

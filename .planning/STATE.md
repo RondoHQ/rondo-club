@@ -2,19 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-09)
+See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Planning next milestone
+**Current focus:** v24.0 Demo Data
 
 ## Current Position
 
-Phase: 169 of 169 (Contributie Logic)
-Plan: 1 of 1 in current phase
-Status: v23.0 milestone complete
-Last activity: 2026-02-10 - Completed quick task 54: Rename "Verzonden" to "1e email" and add Herinnering filter
-
-Progress: [████████████████████████████████] 100% (169/169 phases)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-11 — Milestone v24.0 started
 
 ## Performance Metrics
 
@@ -73,9 +71,9 @@ Recent decisions affecting future work:
 
 ## Session Continuity
 
-Last session: 2026-02-10
-Stopped at: Quick task 54 complete
-Resume file: None — no active milestone, fresh for next
+Last session: 2026-02-11
+Stopped at: v24.0 milestone started, defining requirements
+Resume file: None
 
 ---
-*State updated: 2026-02-10*
+*State updated: 2026-02-11*
