@@ -152,8 +152,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 174-01: UI verification checklist
-- [ ] 174-02: Commit fixture to repository
+- [ ] 174-01: Generate fixture, import, and verify all pages
+- [ ] 174-02: Commit fixture, version bump, and ship v24.0
 
 ## Progress
 
