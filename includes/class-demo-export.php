@@ -291,6 +291,48 @@ class DemoExport {
 	}
 
 	/**
+	 * Normalize a value - convert empty values to null
+	 *
+	 * @param mixed $value The value to normalize.
+	 * @return mixed The normalized value (null if empty).
+	 */
+	private function normalize_value( $value ) {
+		if ( is_string( $value ) && '' === $value ) {
+			return null;
+		}
+		if ( false === $value || ( is_array( $value ) && empty( $value ) ) ) {
+			return null;
+		}
+		return $value;
+	}
+
+	/**
+	 * Export contact_info repeater field
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Array of contact info objects.
+	 */
+	private function export_contact_info( $post_id ) {
+		$contact_info = get_field( 'contact_info', $post_id );
+
+		if ( ! $contact_info || ! is_array( $contact_info ) ) {
+			return [];
+		}
+
+		$exported = [];
+
+		foreach ( $contact_info as $row ) {
+			$exported[] = [
+				'contact_type'  => $row['contact_type'] ?? '',
+				'contact_label' => $row['contact_label'] ?? '',
+				'contact_value' => $row['contact_value'] ?? '',
+			];
+		}
+
+		return $exported;
+	}
+
+	/**
 	 * Export people (stub - to be implemented in plan 02)
 	 *
 	 * @return array Empty array for now.
@@ -300,21 +342,81 @@ class DemoExport {
 	}
 
 	/**
-	 * Export teams (stub - to be implemented in plan 03)
+	 * Export teams
 	 *
-	 * @return array Empty array for now.
+	 * @return array Array of team objects.
 	 */
 	protected function export_teams() {
-		return [];
+		$posts = get_posts(
+			[
+				'post_type'    => 'team',
+				'numberposts'  => -1,
+				'post_status'  => [ 'publish', 'draft', 'private' ],
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			]
+		);
+
+		$teams = [];
+
+		foreach ( $posts as $post ) {
+			$team = [
+				'_ref'    => $this->get_ref( $post->ID, 'team' ),
+				'title'   => $post->post_title,
+				'content' => ! empty( $post->post_content ) ? $post->post_content : null,
+				'status'  => $post->post_status,
+				'parent'  => $post->post_parent > 0 ? $this->get_ref( $post->post_parent, 'team' ) : null,
+				'acf'     => [
+					'website'      => $this->normalize_value( get_field( 'website', $post->ID ) ),
+					'contact_info' => $this->export_contact_info( $post->ID ),
+				],
+			];
+
+			$teams[] = $team;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d teams', count( $teams ) ) );
+
+		return $teams;
 	}
 
 	/**
-	 * Export commissies (stub - to be implemented in plan 03)
+	 * Export commissies
 	 *
-	 * @return array Empty array for now.
+	 * @return array Array of commissie objects.
 	 */
 	protected function export_commissies() {
-		return [];
+		$posts = get_posts(
+			[
+				'post_type'    => 'commissie',
+				'numberposts'  => -1,
+				'post_status'  => [ 'publish', 'draft', 'private' ],
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			]
+		);
+
+		$commissies = [];
+
+		foreach ( $posts as $post ) {
+			$commissie = [
+				'_ref'    => $this->get_ref( $post->ID, 'commissie' ),
+				'title'   => $post->post_title,
+				'content' => ! empty( $post->post_content ) ? $post->post_content : null,
+				'status'  => $post->post_status,
+				'parent'  => $post->post_parent > 0 ? $this->get_ref( $post->post_parent, 'commissie' ) : null,
+				'acf'     => [
+					'website'      => $this->normalize_value( get_field( 'website', $post->ID ) ),
+					'contact_info' => $this->export_contact_info( $post->ID ),
+				],
+			];
+
+			$commissies[] = $commissie;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d commissies', count( $commissies ) ) );
+
+		return $commissies;
 	}
 
 	/**
@@ -345,12 +447,107 @@ class DemoExport {
 	}
 
 	/**
-	 * Export taxonomies (stub - to be implemented in plan 04)
+	 * Export taxonomies
 	 *
-	 * @return array Empty array for now.
+	 * @return array Object containing relationship_types and seizoenen arrays.
 	 */
 	protected function export_taxonomies() {
-		return [];
+		$taxonomies = [
+			'relationship_types' => $this->export_relationship_types(),
+			'seizoenen'          => $this->export_seizoenen(),
+		];
+
+		return $taxonomies;
+	}
+
+	/**
+	 * Export relationship type taxonomy terms
+	 *
+	 * @return array Array of relationship type objects.
+	 */
+	private function export_relationship_types() {
+		$terms = get_terms(
+			[
+				'taxonomy'   => 'relationship_type',
+				'hide_empty' => false,
+			]
+		);
+
+		if ( is_wp_error( $terms ) ) {
+			WP_CLI::warning( 'Failed to get relationship_type terms: ' . $terms->get_error_message() );
+			return [];
+		}
+
+		$relationship_types = [];
+
+		foreach ( $terms as $term ) {
+			$inverse_field = get_field( 'inverse_relationship_type', 'relationship_type_' . $term->term_id );
+			$inverse_ref   = null;
+
+			if ( $inverse_field ) {
+				// ACF returns term ID - convert to slug
+				if ( is_numeric( $inverse_field ) ) {
+					$inverse_term = get_term( $inverse_field );
+					if ( $inverse_term && ! is_wp_error( $inverse_term ) ) {
+						$inverse_ref = 'relationship_type:' . $inverse_term->slug;
+					}
+				} elseif ( is_object( $inverse_field ) && isset( $inverse_field->slug ) ) {
+					$inverse_ref = 'relationship_type:' . $inverse_field->slug;
+				}
+			}
+
+			$relationship_type = [
+				'_ref' => 'relationship_type:' . $term->slug,
+				'name' => $term->name,
+				'slug' => $term->slug,
+				'acf'  => [
+					'inverse_relationship_type' => $inverse_ref,
+				],
+			];
+
+			$relationship_types[] = $relationship_type;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d relationship types', count( $relationship_types ) ) );
+
+		return $relationship_types;
+	}
+
+	/**
+	 * Export seizoen taxonomy terms
+	 *
+	 * @return array Array of seizoen objects.
+	 */
+	private function export_seizoenen() {
+		$terms = get_terms(
+			[
+				'taxonomy'   => 'seizoen',
+				'hide_empty' => false,
+			]
+		);
+
+		if ( is_wp_error( $terms ) ) {
+			WP_CLI::warning( 'Failed to get seizoen terms: ' . $terms->get_error_message() );
+			return [];
+		}
+
+		$seizoenen = [];
+
+		foreach ( $terms as $term ) {
+			$is_current = (bool) get_term_meta( $term->term_id, 'is_current_season', true );
+
+			$seizoen = [
+				'name'       => $term->name,
+				'slug'       => $term->slug,
+				'is_current' => $is_current,
+			];
+
+			$seizoenen[] = $seizoen;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d seizoenen', count( $seizoenen ) ) );
+
+		return $seizoenen;
 	}
 
 	/**
