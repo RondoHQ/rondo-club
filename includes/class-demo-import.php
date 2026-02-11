@@ -742,6 +742,7 @@ class DemoImport {
 
 				$resolved_work_history[] = [
 					'team'        => $resolved_team_id,
+					'entity_type' => $row['entity_type'] ?? '',
 					'job_title'   => $row['job_title'] ?? '',
 					'description' => $row['description'] ?? null,
 					'start_date'  => $this->shift_date( $row['start_date'] ?? null ),
@@ -764,6 +765,7 @@ class DemoImport {
 
 				$resolved_werkfuncties[] = [
 					'team'        => $resolved_team_id,
+					'entity_type' => $row['entity_type'] ?? '',
 					'job_title'   => $row['job_title'] ?? '',
 					'description' => $row['description'] ?? null,
 					'start_date'  => $this->shift_date( $row['start_date'] ?? null ),
