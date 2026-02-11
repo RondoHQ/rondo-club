@@ -111,9 +111,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 172-01: Dutch fake data generator library
-- [ ] 172-02: Anonymize person PII
-- [ ] 172-03: Strip photos and fake financials
+- [ ] 172-01-PLAN.md -- Dutch fake data generator class
+- [ ] 172-02-PLAN.md -- Anonymize person PII in export pipeline
+- [ ] 172-03-PLAN.md -- Strip photos and fake financials
 
 #### Phase 173: Import Command
 
