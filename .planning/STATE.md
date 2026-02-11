@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 172 of 174 (Data Anonymization)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-11 — Completed plan 172-01 (Dutch Fake Data Generator)
+Last activity: 2026-02-11 — Completed plan 172-02 (Anonymize Export Pipeline)
 
-Progress: [████░░░░░░] 46% (6/13 plans complete)
+Progress: [█████░░░░░] 53% (7/13 plans complete)
 
 ## Performance Metrics
 
@@ -32,6 +32,7 @@ Progress: [████░░░░░░] 46% (6/13 plans complete)
 - Velocity: Stable
 
 **Latest Execution:**
+- Phase 172-02: 2 tasks, 2 commits, 143 seconds (2026-02-11)
 - Phase 171: 4 plans, 3 waves, ~15 minutes total (2026-02-11)
 
 ## Accumulated Context
@@ -41,6 +42,7 @@ Progress: [████░░░░░░] 46% (6/13 plans complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting future work:
 
+- Post-processing anonymization pattern: anonymize after building entity, before adding to export array (v24.0, phase 172-02)
 - Seeded mt_rand() for reproducible fake data generation (v24.0, phase 172-01)
 - Per-ref identity caching ensures same person gets same fake identity (v24.0, phase 172-01)
 - Weighted infix distribution (40% have infix) mirrors realistic Dutch names (v24.0, phase 172-01)
@@ -88,7 +90,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-11
-Stopped at: Completed plan 172-01-PLAN.md (Dutch Fake Data Generator)
+Stopped at: Completed plan 172-02-PLAN.md (Anonymize Export Pipeline)
 Resume file: None
 
 ---
