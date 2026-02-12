@@ -3476,7 +3476,7 @@ class Api extends Base {
 	/**
 	 * Trigger bulk fee recalculation
 	 *
-	 * Admin-only endpoint to clear all fee caches and schedule recalculation.
+	 * Admin-only endpoint to clear all fee caches and run recalculation synchronously.
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response Response with recalculation status.
@@ -3493,10 +3493,9 @@ class Api extends Base {
 		$cleared = $fees->clear_all_fee_caches( $season );
 		$fees->clear_all_family_discount_meta();
 
-		// Schedule background recalculation
-		if ( ! wp_next_scheduled( 'rondo_recalculate_all_fees', [ $season ] ) ) {
-			wp_schedule_single_event( time() + 10, 'rondo_recalculate_all_fees', [ $season ] );
-		}
+		// Run recalculation synchronously
+		$invalidator = new \Rondo\Fees\FeeCacheInvalidator();
+		$invalidator->recalculate_all_fees_background( $season );
 
 		return rest_ensure_response(
 			[
@@ -3504,7 +3503,7 @@ class Api extends Base {
 				'season'        => $season,
 				'cleared_count' => $cleared,
 				'message'       => sprintf(
-					'Cleared %d fee caches for season %s. Background recalculation scheduled.',
+					'%d contributies herberekend voor seizoen %s.',
 					$cleared,
 					$season
 				),
