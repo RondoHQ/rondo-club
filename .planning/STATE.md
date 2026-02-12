@@ -71,6 +71,9 @@ Recent decisions affecting future work:
 - [Phase 171]: Dynamic season discovery via seizoen taxonomy for fee/discount configs
 - [Phase 171]: Meta record_counts derived from actual exported arrays instead of ref_maps
 - [Phase 171]: VOG exempt commissies converted to fixture refs during export
+- [Phase 174-02]: Remove example fixture - real production fixture supersedes example
+- [Phase 174-02]: Dual deployment strategy: production gets version bump and banner code (hidden), demo shows banner
+- [Phase 174-02]: Update all planning docs atomically for consistent milestone state
 
 ### Pending Todos
 
@@ -109,6 +112,8 @@ Recent decisions affecting future work:
 | 44 | Remove how_we_met and met_date fields | 2026-02-09 | 018b294c | [44-remove-how-we-met-and-met-date-fields](./quick/44-remove-how-we-met-and-met-date-fields/) |
 | 43 | Remove contact import feature | 2026-02-09 | 8f0584ca | [43-remove-contact-import-feature](./quick/43-remove-contact-import-feature/) |
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
+| Phase 174 P02 | 1798 | 1 tasks | 8 files |
+
 ## Session Continuity
 
 Last session: 2026-02-12
