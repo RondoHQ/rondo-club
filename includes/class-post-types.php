@@ -63,7 +63,7 @@ class PostTypes {
 			'hierarchical'       => false,
 			'menu_position'      => 5,
 			'menu_icon'          => 'dashicons-groups',
-			'supports'           => [ 'title', 'thumbnail', 'comments', 'author' ],
+			'supports'           => [ 'title', 'thumbnail', 'comments', 'author', 'custom-fields' ],
 		];
 
 		register_post_type( 'person', $args );
