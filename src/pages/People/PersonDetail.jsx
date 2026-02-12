@@ -1501,7 +1501,7 @@ export default function PersonDetail() {
               onUpdateField={(fieldName, value) => {
                 updatePerson.mutateAsync({
                   id,
-                  data: { acf: { first_name: person.acf.first_name, last_name: person.acf.last_name, [fieldName]: value } },
+                  data: { meta: { [fieldName]: value } },
                 });
               }}
               isUpdating={updatePerson.isPending}

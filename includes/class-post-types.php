@@ -67,6 +67,17 @@ class PostTypes {
 		];
 
 		register_post_type( 'person', $args );
+
+		// Register VOG tracking meta fields for REST API access.
+		$vog_meta_fields = [ 'vog_email_sent_date', 'vog_justis_submitted_date', 'vog_reminder_sent_date' ];
+		foreach ( $vog_meta_fields as $field ) {
+			register_post_meta( 'person', $field, [
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_text_field',
+			] );
+		}
 	}
 
 	/**
