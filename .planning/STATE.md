@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 174 of 174 (End-to-End Verification)
 Plan: 0 of 2 in current phase
 Status: Not started
-Last activity: 2026-02-12 — Completed quick task 63: Make VOG email verzonden and Justis aanvraag dates editable
+Last activity: 2026-02-12 — Completed quick task 64: Rework contributie overzicht to show full fee calculation chain
 
 Progress: [████████░░] 85% (11/13 plans complete)
 
@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 64 | Rework contributie overzicht to show full fee calculation chain | 2026-02-12 | 878844cc | [64-using-the-new-membership-fees-system-rew](./quick/64-using-the-new-membership-fees-system-rew/) |
 | 63 | Make VOG email verzonden and Justis aanvraag dates editable | 2026-02-12 | 2add0f3a | [63-make-vog-email-verzonden-and-justis-aanv](./quick/63-make-vog-email-verzonden-and-justis-aanv/) |
 | 62 | Make Vrijwilliger badge more prominent | 2026-02-12 | cb0d13f1 | [62-make-vrijwilliger-badge-more-prominent](./quick/62-make-vrijwilliger-badge-more-prominent/) |
 | 61 | Add Vrijwilliger badge to volunteers on PersonDetail | 2026-02-12 | 4f496a3c | [61-add-vrijwilliger-badge-to-volunteers-sim](./quick/61-add-vrijwilliger-badge-to-volunteers-sim/) |
@@ -107,7 +108,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed Quick Task 63 - Make VOG email verzonden and Justis aanvraag dates editable
+Stopped at: Completed Quick Task 64 - Rework contributie overzicht to show full fee calculation chain
 Resume file: None
 
 ---
