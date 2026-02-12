@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 174 of 174 (End-to-End Verification)
 Plan: 0 of 2 in current phase
 Status: Not started
-Last activity: 2026-02-12 — Completed quick task 61: Add Vrijwilliger badge to volunteers
+Last activity: 2026-02-12 — Completed quick task 62: Make Vrijwilliger badge more prominent
 
 Progress: [████████░░] 85% (11/13 plans complete)
 
@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 62 | Make Vrijwilliger badge more prominent | 2026-02-12 | cb0d13f1 | [62-make-vrijwilliger-badge-more-prominent](./quick/62-make-vrijwilliger-badge-more-prominent/) |
 | 61 | Add Vrijwilliger badge to volunteers on PersonDetail | 2026-02-12 | 4f496a3c | [61-add-vrijwilliger-badge-to-volunteers-sim](./quick/61-add-vrijwilliger-badge-to-volunteers-sim/) |
 | 60 | Distinguish former members on PersonDetail | 2026-02-12 | 000124c4 | [60-distinguish-former-members-on-person-det](./quick/60-distinguish-former-members-on-person-det/) |
 | 59 | Weight current members above former members in search | 2026-02-12 | d1c54abe | [59-weight-current-members-above-former-memb](./quick/59-weight-current-members-above-former-memb/) |
@@ -105,7 +106,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed Quick Task 61 - Add Vrijwilliger badge to volunteers
+Stopped at: Completed Quick Task 62 - Make Vrijwilliger badge more prominent
 Resume file: None
 
 ---
