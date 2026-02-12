@@ -1803,6 +1803,15 @@ class Api extends Base {
 			}
 		}
 
+		// Apply former member penalty to prioritize current members
+		foreach ( $people_results as $person_id => &$item ) {
+			$is_former = get_field( 'former_member', $person_id );
+			if ( $is_former === '1' ) {
+				$item['score'] -= 50;
+			}
+		}
+		unset( $item ); // Break reference
+
 		// Sort by score descending, take top 10
 		uasort(
 			$people_results,
