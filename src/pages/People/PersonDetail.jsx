@@ -998,12 +998,12 @@ export default function PersonDetail() {
               <h1 className="text-2xl font-bold text-brand-gradient">
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
-                {acf.former_member && (
-                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
-                    Oud-lid
-                  </span>
-                )}
               </h1>
+              {acf.former_member && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
+                  Oud-lid
+                </span>
+              )}
             </div>
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
