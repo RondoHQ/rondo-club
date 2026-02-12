@@ -20,6 +20,7 @@ import RelationshipEditModal from '@/components/RelationshipEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
+import SportlinkCard from '@/components/SportlinkCard';
 import { format, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1599,6 +1600,9 @@ export default function PersonDetail() {
 
             {/* VOG Card */}
             <VOGCard acfData={person?.acf} />
+
+            {/* Sportlink Card */}
+            <SportlinkCard acfData={person?.acf} />
 
             {/* Todos Card */}
             <div className="card p-6">
