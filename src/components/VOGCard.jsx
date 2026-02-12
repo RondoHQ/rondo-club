@@ -122,7 +122,6 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                   }
                   setEditingField(null);
                 }}
-                onBlur={() => setEditingField(null)}
               />
             ) : (
               <button
@@ -154,7 +153,6 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                   }
                   setEditingField(null);
                 }}
-                onBlur={() => setEditingField(null)}
               />
             ) : (
               <button
