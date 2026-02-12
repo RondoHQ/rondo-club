@@ -1039,7 +1039,7 @@ export default function PersonDetail() {
                   Oud-lid
                 </span>
               )}
-              {acf.huidig_vrijwilliger && (
+              {acf['huidig-vrijwilliger'] && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan/10 text-electric-cyan dark:bg-electric-cyan/20 dark:text-electric-cyan-light">
                   Vrijwilliger
                 </span>
