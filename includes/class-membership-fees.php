@@ -1384,6 +1384,204 @@ class MembershipFees {
 	}
 
 	/**
+	 * Recalculate family discount positions for all persons
+	 *
+	 * Builds family groups once and stores _family_discount_rate and
+	 * _family_discount_position as flat post meta on each person.
+	 * Non-youth, single-member family, or no-address persons get rate=0, position=empty.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return int Number of persons updated.
+	 */
+	public function recalculate_all_family_positions( ?string $season = null ): int {
+		$season = $season ?: $this->get_season_key();
+		$groups = $this->build_family_groups( $season );
+
+		$families    = $groups['families'];
+		$person_data = $groups['person_data'];
+		$updated     = 0;
+
+		// Track which person IDs we process via family groups
+		$processed_ids = [];
+
+		// Process multi-member families: assign positions and discount rates
+		foreach ( $families as $family_key => $members ) {
+			if ( count( $members ) <= 1 ) {
+				// Single-member family: position 1, rate 0
+				foreach ( $members as $member_id ) {
+					update_post_meta( $member_id, '_family_discount_rate', '0' );
+					update_post_meta( $member_id, '_family_discount_position', '1' );
+					$processed_ids[] = $member_id;
+					$updated++;
+				}
+				continue;
+			}
+
+			// Multi-member family: members are already sorted by fee descending
+			foreach ( $members as $index => $member_id ) {
+				$position      = $index + 1;
+				$discount_rate = $this->get_family_discount_rate( $position, $season );
+
+				update_post_meta( $member_id, '_family_discount_rate', (string) $discount_rate );
+				update_post_meta( $member_id, '_family_discount_position', (string) $position );
+				$processed_ids[] = $member_id;
+				$updated++;
+			}
+		}
+
+		// Clear meta for all persons NOT in family groups (non-youth, no address, etc.)
+		$all_persons = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+
+		foreach ( $all_persons->posts as $person_id ) {
+			if ( ! in_array( (int) $person_id, $processed_ids, true ) ) {
+				update_post_meta( $person_id, '_family_discount_rate', '0' );
+				update_post_meta( $person_id, '_family_discount_position', '' );
+				$updated++;
+			}
+		}
+
+		return $updated;
+	}
+
+	/**
+	 * Recalculate family discount positions for a specific person's family
+	 *
+	 * Finds all youth members at the same family_key and recalculates
+	 * positions and discount rates for that small group.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return int Number of persons updated.
+	 */
+	public function recalculate_family_positions_for_person( int $person_id, ?string $season = null ): int {
+		$season     = $season ?: $this->get_season_key();
+		$family_key = $this->get_family_key( $person_id );
+
+		// No valid address: clear this person's meta and return
+		if ( $family_key === null ) {
+			update_post_meta( $person_id, '_family_discount_rate', '0' );
+			update_post_meta( $person_id, '_family_discount_position', '' );
+			return 1;
+		}
+
+		// Find all youth members at the same family key
+		$youth_categories = $this->get_youth_category_slugs( $season );
+		$all_persons      = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+
+		$family_members = [];
+
+		foreach ( $all_persons->posts as $pid ) {
+			$pid = (int) $pid;
+
+			// Skip former members not in season
+			$is_former = ( get_field( 'former_member', $pid ) == true );
+			if ( $is_former && ! $this->is_former_member_in_season( $pid, $season ) ) {
+				continue;
+			}
+
+			// Check if same family key
+			$pid_key = $this->get_family_key( $pid );
+			if ( $pid_key !== $family_key ) {
+				continue;
+			}
+
+			// Check if youth category
+			$fee_data = $this->calculate_fee( $pid, $season );
+			if ( $fee_data === null || ! in_array( $fee_data['category'], $youth_categories, true ) ) {
+				// Not youth: clear meta
+				update_post_meta( $pid, '_family_discount_rate', '0' );
+				update_post_meta( $pid, '_family_discount_position', '' );
+				continue;
+			}
+
+			$family_members[] = [
+				'person_id' => $pid,
+				'base_fee'  => $fee_data['base_fee'],
+			];
+		}
+
+		// Sort by base_fee descending, then person_id ascending as tiebreaker
+		usort(
+			$family_members,
+			function ( $a, $b ) {
+				$cmp = $b['base_fee'] <=> $a['base_fee'];
+				if ( $cmp !== 0 ) {
+					return $cmp;
+				}
+				return $a['person_id'] <=> $b['person_id'];
+			}
+		);
+
+		$updated = 0;
+
+		if ( count( $family_members ) <= 1 ) {
+			// Single or no youth member: position 1 (or empty), rate 0
+			foreach ( $family_members as $member ) {
+				update_post_meta( $member['person_id'], '_family_discount_rate', '0' );
+				update_post_meta( $member['person_id'], '_family_discount_position', '1' );
+				$updated++;
+			}
+			return $updated;
+		}
+
+		// Multi-member: assign positions
+		foreach ( $family_members as $index => $member ) {
+			$position      = $index + 1;
+			$discount_rate = $this->get_family_discount_rate( $position, $season );
+
+			update_post_meta( $member['person_id'], '_family_discount_rate', (string) $discount_rate );
+			update_post_meta( $member['person_id'], '_family_discount_position', (string) $position );
+			$updated++;
+		}
+
+		return $updated;
+	}
+
+	/**
+	 * Clear family discount meta for all persons
+	 *
+	 * Removes _family_discount_rate and _family_discount_position from all persons.
+	 *
+	 * @return int Number of persons cleared.
+	 */
+	public function clear_all_family_discount_meta(): int {
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+
+		$cleared = 0;
+		foreach ( $query->posts as $person_id ) {
+			delete_post_meta( $person_id, '_family_discount_rate' );
+			delete_post_meta( $person_id, '_family_discount_position' );
+			$cleared++;
+		}
+
+		return $cleared;
+	}
+
+	/**
 	 * Get discount rate based on family position
 	 *
 	 * Position is 1-indexed where position 1 is the most expensive youth member
@@ -1569,7 +1767,31 @@ class MembershipFees {
 			);
 		}
 
-		// Build family groups
+		// Try stored meta first (fast path)
+		$stored_rate     = get_post_meta( $person_id, '_family_discount_rate', true );
+		$stored_position = get_post_meta( $person_id, '_family_discount_position', true );
+
+		if ( $stored_rate !== '' && $stored_position !== '' ) {
+			$discount_rate   = (float) $stored_rate;
+			$position        = (int) $stored_position;
+			$discount_amount = round( $fee_data['base_fee'] * $discount_rate, 2 );
+			$final_fee       = $fee_data['base_fee'] - $discount_amount;
+
+			return array_merge(
+				$fee_data,
+				[
+					'family_discount_rate'   => $discount_rate,
+					'family_discount_amount' => $discount_amount,
+					'final_fee'              => $final_fee,
+					'family_position'        => $position,
+					'family_key'             => $family_key,
+					'family_size'            => null, // Derived on demand in REST endpoint
+					'family_members'         => [],   // Derived on demand in REST endpoint
+				]
+			);
+		}
+
+		// Fallback: build family groups (backward-compatible for uncached state)
 		$groups         = $this->build_family_groups( $season );
 		$families       = $groups['families'];
 		$person_data    = $groups['person_data'];
