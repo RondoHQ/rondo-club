@@ -7,6 +7,7 @@ import { format } from '@/utils/dateFormat';
  */
 export default function SportlinkCard({ acfData }) {
   // Get Sportlink field values
+  const knvbId = acfData?.['knvb-id'];
   const lidSinds = acfData?.['lid-sinds'];
   const lidTot = acfData?.['lid-tot'];
   const leeftijdsgroep = acfData?.leeftijdsgroep;
@@ -15,7 +16,7 @@ export default function SportlinkCard({ acfData }) {
   const isParent = acfData?.isparent;
 
   // Check if at least one field (other than isparent alone) is populated
-  const hasData = lidSinds || lidTot || leeftijdsgroep || typeLid || datumFoto;
+  const hasData = knvbId || lidSinds || lidTot || leeftijdsgroep || typeLid || datumFoto;
 
   // Hide card if no Sportlink data
   if (!hasData) {
@@ -24,6 +25,7 @@ export default function SportlinkCard({ acfData }) {
 
   // Field configuration with Dutch labels
   const fields = [
+    { key: 'knvb-id', label: 'KNVB ID', value: knvbId, type: 'text' },
     { key: 'lid-sinds', label: 'Lid sinds', value: lidSinds, type: 'date' },
     { key: 'lid-tot', label: 'Lid tot', value: lidTot, type: 'date' },
     { key: 'leeftijdsgroep', label: 'Leeftijdsgroep', value: leeftijdsgroep, type: 'text' },
