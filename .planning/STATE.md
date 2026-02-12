@@ -2,19 +2,16 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-11)
+See: .planning/PROJECT.md (updated 2026-02-12)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** No active milestone — v24.0 Demo Data shipped
+**Current focus:** No active milestone — v24.0 Demo Data archived
 
 ## Current Position
 
-Phase: 174 of 174 (End-to-End Verification)
-Plan: 2 of 2 in current phase
-Status: Complete
-Last activity: 2026-02-12 — Completed v24.0 Demo Data milestone
-
-Progress: [██████████] 100% (13/13 plans complete)
+No active milestone or phase.
+Last milestone: v24.0 Demo Data (shipped & archived 2026-02-12)
+Last activity: 2026-02-12 — Archived v24.0 milestone
 
 ## Performance Metrics
 
@@ -44,36 +41,15 @@ Progress: [██████████] 100% (13/13 plans complete)
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting future work:
+Cross-milestone patterns affecting future work:
 
-- Demo banner uses amber background for high visibility without alarm (v24.0, phase 174-01)
-- Demo site identified via rondo_is_demo_site WordPress option (v24.0, phase 174-01)
-- Full-year birthdate shifting preserves age accuracy (v24.0, phase 173-02)
-- Leap year handling: Feb 29 → Feb 28 in non-leap years (v24.0, phase 173-02)
-- Dynamic meta key shifting for nikki and fee data via regex (v24.0, phase 173-02)
-- Strip photos entirely rather than anonymize (photos ARE identity, cannot be meaningfully anonymized) (v24.0, phase 172-03)
-- Weighted financial amounts (70/20/10 distribution) mirror realistic fee patterns (v24.0, phase 172-03)
-- Generic organizational contacts (team@rondo-demo.nl) safer than fake personal data (v24.0, phase 172-03)
-- Post-processing anonymization pattern: anonymize after building entity, before adding to export array (v24.0, phase 172-02)
-- Seeded mt_rand() for reproducible fake data generation (v24.0, phase 172-01)
-- Per-ref identity caching ensures same person gets same fake identity (v24.0, phase 172-01)
-- Weighted infix distribution (40% have infix) mirrors realistic Dutch names (v24.0, phase 172-01)
-- resolve_post_id() helper pattern for ACF post object vs ID handling (v24.0, phase 171-03)
-- Skip comments not on person posts to exclude irrelevant data (v24.0, phase 171-03)
-- Dynamic post_meta scanning for nikki and fee fields using regex pattern matching (v24.0, phase 171-02)
-- Sequential reference ID numbering starting at 1 for fixture portability (v24.0, phase 171-01)
-- Reference ID system for portable fixtures using {entity_type}:{number} format (v24.0, phase 170-01)
 - Skip-and-warn pattern for missing sync data (established 154-01)
 - Server-side pagination and filtering pattern (v9.0, phases 111-115)
 - Generic filter infrastructure via get_dynamic_filter_config() (v20.0, phase 151)
 - Config-driven fee calculation with season-specific categories (v21.0, phases 155-161)
 - NULL-safe exclusion pattern for former_member field (v23.0, phase 167)
-- [Phase 171]: Dynamic season discovery via seizoen taxonomy for fee/discount configs
-- [Phase 171]: Meta record_counts derived from actual exported arrays instead of ref_maps
-- [Phase 171]: VOG exempt commissies converted to fixture refs during export
-- [Phase 174-02]: Remove example fixture - real production fixture supersedes example
-- [Phase 174-02]: Dual deployment strategy: production gets version bump and banner code (hidden), demo shows banner
-- [Phase 174-02]: Update all planning docs atomically for consistent milestone state
+- Reference ID system for portable fixtures using {entity_type}:{number} format (v24.0)
+- Demo site identified via rondo_is_demo_site WordPress option (v24.0)
 
 ### Pending Todos
 
@@ -117,7 +93,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed v24.0 Demo Data milestone — all 13 plans shipped
+Stopped at: Archived v24.0 Demo Data milestone
 Resume file: None
 
 ---

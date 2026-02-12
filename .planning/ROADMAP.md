@@ -6,7 +6,7 @@
 - ✅ **v21.0 Per-Season Fee Categories** — Phases 155-161 (shipped 2026-02-09) — [Archive](milestones/v21.0-ROADMAP.md)
 - ✅ **v22.0 Design Refresh** — Phases 162-165 (shipped 2026-02-09) — [Archive](milestones/v22.0-ROADMAP.md)
 - ✅ **v23.0 Former Members** — Phases 166-169 (shipped 2026-02-09) — [Archive](milestones/v23.0-ROADMAP.md)
-- ✅ **v24.0 Demo Data** — Phases 170-174 (shipped 2026-02-12)
+- ✅ **v24.0 Demo Data** — Phases 170-174 (shipped 2026-02-12) — [Archive](milestones/v24.0-ROADMAP.md)
 
 ## Phases
 
@@ -56,116 +56,14 @@
 <details>
 <summary>v24.0 Demo Data (Phases 170-174) — SHIPPED 2026-02-12</summary>
 
-#### Phase 170: Fixture Format Design
-
-**Goal**: Define the JSON fixture structure that will contain all demo data
-**Depends on**: Nothing (first phase)
-**Requirements**: FIX-01, FIX-02
-**Success Criteria** (what must be TRUE):
-  1. A JSON schema exists documenting the fixture format
-  2. The fixture format includes all entity types (people, teams, commissies, discipline cases, tasks, activities, settings)
-  3. The fixture format includes all necessary relationship data
-  4. The fixture format is self-contained with no external dependencies
-
-**Plans**: 1 plan
-
-Plans:
-- [x] 170-01: Design fixture JSON schema
-
-#### Phase 171: Export Command Foundation
-
-**Goal**: Users can export production data to a fixture file
-**Depends on**: Phase 170
-**Requirements**: EXPORT-01, EXPORT-03, EXPORT-06, EXPORT-07, EXPORT-08
-**Success Criteria** (what must be TRUE):
-  1. User can run `wp rondo demo export` and it creates a JSON file
-  2. The export includes all people records with their ACF fields
-  3. The export includes all teams and commissies with their data
-  4. The export includes discipline cases, tasks, and activities
-  5. All relationships between entities are preserved in the export (person-team links, task-person links, etc.)
-  6. Settings data (fee categories, role config, family discount) is included in the export
-  7. Team and commissie names appear unchanged in the export
-
-**Plans**: 4 plans
-
-Plans:
-- [x] 171-01: WP-CLI export command structure
-- [x] 171-02: Export people, teams, commissies
-- [x] 171-03: Export discipline cases, tasks, activities
-- [x] 171-04: Export settings data
-
-#### Phase 172: Data Anonymization
-
-**Goal**: Production PII is replaced with realistic Dutch fake data
-**Depends on**: Phase 171
-**Requirements**: EXPORT-02, EXPORT-04, EXPORT-05
-**Success Criteria** (what must be TRUE):
-  1. All person names are replaced with Dutch fake names (first, infix, last)
-  2. All email addresses are replaced with fake emails
-  3. All phone numbers are replaced with fake Dutch phone numbers
-  4. All addresses are replaced with fake Dutch addresses (street, postal code, city)
-  5. All photos and avatars are excluded from the export
-  6. Financial amounts (Nikki data) are replaced with plausible fake values
-
-**Plans**: 3 plans
-
-Plans:
-- [x] 172-01: Dutch fake data generator class
-- [x] 172-02: Anonymize person PII in export pipeline
-- [x] 172-03: Strip photos and fake financials
-
-#### Phase 173: Import Command
-
-**Goal**: Users can load the fixture into a target WordPress instance
-**Depends on**: Phase 172
-**Requirements**: IMP-01, IMP-02, IMP-03
-**Success Criteria** (what must be TRUE):
-  1. User can run `wp rondo demo import` and it loads all fixture data
-  2. All dates are shifted relative to today (birthdays, activities, task creation dates, etc.)
-  3. User can run `wp rondo demo import --clean` to wipe existing data before import
-  4. Import creates all posts, terms, and meta correctly
-  5. Import preserves all relationships from the fixture
-
-**Plans**: 3 plans
-
-Plans:
-- [x] 173-01: WP-CLI import command structure
-- [x] 173-02: Date-shifting algorithm
-- [x] 173-03: Clean flag implementation
-
-#### Phase 174: End-to-End Verification
-
-**Goal**: Demo data renders correctly throughout the entire application
-**Depends on**: Phase 173
-**Requirements**: IMP-04
-**Success Criteria** (what must be TRUE):
-  1. Leden page displays all imported people
-  2. Teams page displays all imported teams
-  3. Contributie page calculates fees for imported people
-  4. Tuchtzaken page displays imported discipline cases
-  5. Tasks page displays imported tasks
-  6. Dashboard widgets display imported data correctly
-  7. Global search finds imported people
-  8. Person detail pages display all related data (work history, activities, tasks, etc.)
-
-**Plans**: 2 plans
-
-Plans:
-- [x] 174-01: Demo banner, export from production, deploy to demo, import with --clean
-- [x] 174-02: Verify all pages on demo site, commit fixture, version bump, ship v24.0
+- [x] Phase 170: Fixture Format Design (1/1 plan) — completed 2026-02-11
+- [x] Phase 171: Export Command Foundation (4/4 plans) — completed 2026-02-11
+- [x] Phase 172: Data Anonymization (3/3 plans) — completed 2026-02-11
+- [x] Phase 173: Import Command (3/3 plans) — completed 2026-02-11
+- [x] Phase 174: End-to-End Verification (2/2 plans) — completed 2026-02-12
 
 </details>
 
-## Progress
-
-| Phase | Milestone | Plans Complete | Status | Completed |
-|-------|-----------|----------------|--------|-----------|
-| 170. Fixture Format Design | v24.0 | 1/1 | ✓ Complete | 2026-02-11 |
-| 171. Export Command Foundation | v24.0 | 4/4 | ✓ Complete | 2026-02-11 |
-| 172. Data Anonymization | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
-| 173. Import Command | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
-| 174. End-to-End Verification | v24.0 | 2/2 | ✓ Complete | 2026-02-12 |
-
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-12 — v24.0 Demo Data shipped*
+*Last updated: 2026-02-12 — v24.0 Demo Data archived*
