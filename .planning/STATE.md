@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 174 of 174 (End-to-End Verification)
 Plan: 0 of 2 in current phase
 Status: Not started
-Last activity: 2026-02-12 — Completed quick task 59: Weight current members above former members in search
+Last activity: 2026-02-12 — Completed quick task 61: Add Vrijwilliger badge to volunteers
 
 Progress: [████████░░] 85% (11/13 plans complete)
 
@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 61 | Add Vrijwilliger badge to volunteers on PersonDetail | 2026-02-12 | 4f496a3c | [61-add-vrijwilliger-badge-to-volunteers-sim](./quick/61-add-vrijwilliger-badge-to-volunteers-sim/) |
 | 60 | Distinguish former members on PersonDetail | 2026-02-12 | 000124c4 | [60-distinguish-former-members-on-person-det](./quick/60-distinguish-former-members-on-person-det/) |
 | 59 | Weight current members above former members in search | 2026-02-12 | d1c54abe | [59-weight-current-members-above-former-memb](./quick/59-weight-current-members-above-former-memb/) |
 | 58 | Reorganize PersonDetail into 3-column layout | 2026-02-12 | d40461e7 | [58-reorganize-persondetail-into-3-column-la](./quick/58-reorganize-persondetail-into-3-column-la/) |
@@ -104,7 +105,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed Quick Task 60 - Distinguish former members on PersonDetail
+Stopped at: Completed Quick Task 61 - Add Vrijwilliger badge to volunteers
 Resume file: None
 
 ---
