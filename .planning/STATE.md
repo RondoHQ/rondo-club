@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 174 of 174 (End-to-End Verification)
 Plan: 0 of 2 in current phase
 Status: Not started
-Last activity: 2026-02-12 — Completed quick task 55: Improve Vrijgestelde commissies multi-select UX
+Last activity: 2026-02-12 — Completed quick task 56: Add Sportlink info card to PersonDetail sidebar
 
 Progress: [████████░░] 85% (11/13 plans complete)
 
@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 56 | Add Sportlink info card to PersonDetail sidebar | 2026-02-12 | 0f5f1e48 | [56-add-sportlink-info-card-to-persondetail-](./quick/56-add-sportlink-info-card-to-persondetail-/) |
 | 55 | Improve vrijgestelde commissies multi-select with chips and search | 2026-02-12 | f57409d2 | [55-improve-vrijgestelde-commissies-multi-se](./quick/55-improve-vrijgestelde-commissies-multi-se/) |
 | 54 | Rename "Verzonden" to "1e email" and add Herinnering filter | 2026-02-10 | a55a12ff | [54-rename-verzonden-to-1e-email-and-add-her](./quick/54-rename-verzonden-to-1e-email-and-add-her/) |
 | 53 | Reset VOG tracking dates when datum-vog updates | 2026-02-10 | 295b61f5 | [53-reset-vog-tracking-dates-when-datum-vog-](./quick/53-reset-vog-tracking-dates-when-datum-vog-/) |
@@ -99,7 +100,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed Quick Task 55 - Improve vrijgestelde commissies multi-select
+Stopped at: Completed Quick Task 56 - Add Sportlink info card to PersonDetail sidebar
 Resume file: None
 
 ---
