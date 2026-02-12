@@ -116,18 +116,13 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
                 autoFocus
                 disabled={isUpdating}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onUpdateField('vog_email_sent_date', e.target.value);
                     setEditingField(null);
                   }
                 }}
-                onBlur={(e) => {
-                  const value = e.target.value;
-                  if (value && value !== (emailSentDate || '')) {
-                    onUpdateField('vog_email_sent_date', value);
-                  }
-                  setEditingField(null);
-                }}
+                onBlur={() => setEditingField(null)}
               />
             ) : (
               <button
@@ -153,18 +148,13 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
                 autoFocus
                 disabled={isUpdating}
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onUpdateField('vog_justis_submitted_date', e.target.value);
                     setEditingField(null);
                   }
                 }}
-                onBlur={(e) => {
-                  const value = e.target.value;
-                  if (value && value !== (justisSubmittedDate || '')) {
-                    onUpdateField('vog_justis_submitted_date', value);
-                  }
-                  setEditingField(null);
-                }}
+                onBlur={() => setEditingField(null)}
               />
             ) : (
               <button
