@@ -905,3 +905,34 @@
 
 ---
 
+
+## v24.0 Demo Data (Shipped: 2026-02-12)
+
+**Delivered:** Built a complete demo data pipeline — export production data with anonymization, import into any WordPress instance with date-shifting, and committed a fixture file for the demo site at demo.rondo.club.
+
+**Phases completed:** 170-174 (5 phases, 13 plans)
+
+**Key accomplishments:**
+
+- Portable JSON fixture format with reference ID system for cross-entity relationships without WordPress IDs
+- WP-CLI export pipeline (`wp rondo demo export`) capturing all entity types: people, teams, commissies, discipline cases, tasks, activities, fee config, Nikki data
+- Dutch fake data anonymization with seeded reproducible generation — names, addresses, phones, emails, financial amounts
+- Photos stripped entirely (not anonymizable), organizational contacts genericized
+- WP-CLI import command (`wp rondo demo import [--clean]`) with date-shifting algorithm preserving relative timing
+- Leap year handling, season-aware date shifting for fee configs and discipline cases
+- Demo site banner (amber) distinguishing demo from production environments
+- Deploy script for demo.rondo.club
+
+**Stats:**
+
+- 91 files changed
+- ~271K insertions (mostly fixture JSON data)
+- 5 phases, 13 plans
+- 2 days (2026-02-11 → 2026-02-12)
+
+**Git range:** `ee2b5068` → `9e61eef8` (33 feat commits)
+
+**What's next:** To be determined
+
+---
+

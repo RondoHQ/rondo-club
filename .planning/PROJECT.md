@@ -643,4 +643,4 @@ No current milestone.
 | Demo banner uses amber background | High visibility without alarm, clear "this is not real" signal | ✓ Good |
 
 ---
-*Last updated: 2026-02-12 after v24.0 Demo Data milestone shipped*
+*Last updated: 2026-02-12 after v24.0 Demo Data milestone archived*
