@@ -1004,6 +1004,11 @@ export default function PersonDetail() {
                   Oud-lid
                 </span>
               )}
+              {acf.huidig_vrijwilliger && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan/10 text-electric-cyan dark:bg-electric-cyan/20 dark:text-electric-cyan-light">
+                  Vrijwilliger
+                </span>
+              )}
             </div>
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
