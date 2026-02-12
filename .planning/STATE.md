@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 55 | Improve vrijgestelde commissies multi-select with chips and search | 2026-02-12 | f57409d2 | [55-improve-vrijgestelde-commissies-multi-se](./quick/55-improve-vrijgestelde-commissies-multi-se/) |
 | 54 | Rename "Verzonden" to "1e email" and add Herinnering filter | 2026-02-10 | a55a12ff | [54-rename-verzonden-to-1e-email-and-add-her](./quick/54-rename-verzonden-to-1e-email-and-add-her/) |
 | 53 | Reset VOG tracking dates when datum-vog updates | 2026-02-10 | 295b61f5 | [53-reset-vog-tracking-dates-when-datum-vog-](./quick/53-reset-vog-tracking-dates-when-datum-vog-/) |
 | 52 | Change VOG reminder to manual bulk action with date column | 2026-02-10 | 06e4d0f8 | [52-change-vog-reminder-to-manual-bulk-actio](./quick/52-change-vog-reminder-to-manual-bulk-actio/) |
@@ -97,9 +98,9 @@ Recent decisions affecting future work:
 | 42 | Add copy-from-current-season button to next season fee categories | 2026-02-09 | 742369d5 | [42-add-copy-from-current-season-button-to-n](./quick/42-add-copy-from-current-season-button-to-n/) |
 ## Session Continuity
 
-Last session: 2026-02-11
-Stopped at: Completed Phase 173 - Import Command (all 3 plans)
+Last session: 2026-02-12
+Stopped at: Completed Quick Task 55 - Improve vrijgestelde commissies multi-select
 Resume file: None
 
 ---
-*State updated: 2026-02-11*
+*State updated: 2026-02-12*
