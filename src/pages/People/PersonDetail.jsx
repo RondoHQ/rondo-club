@@ -1187,10 +1187,12 @@ export default function PersonDetail() {
         <div className="lg:col-span-2 min-w-0 space-y-6">
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="columns-1 md:columns-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Column 1: Contactgegevens, Adressen, Custom Fields */}
+            <div className="space-y-6">
             {/* Contact info - only show for living people */}
           {!isDeceased && (
-            <div className="card p-6 break-inside-avoid mb-6">
+            <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-brand-gradient">Contactgegevens</h2>
                 <button
@@ -1296,7 +1298,7 @@ export default function PersonDetail() {
 
             {/* Addresses - only show for living people */}
             {!isDeceased && (
-              <div className="card p-6 break-inside-avoid mb-6">
+              <div className="card p-6">
                 <h2 className="font-semibold text-brand-gradient mb-4">Adressen</h2>
                 {acf.addresses?.length > 0 ? (
                   <div className="space-y-3">
@@ -1339,8 +1341,30 @@ export default function PersonDetail() {
               </div>
             )}
 
+            {/* Custom Fields */}
+            <CustomFieldsSection
+              postType="person"
+              postId={parseInt(id)}
+              acfData={person?.acf}
+              onUpdate={(newAcfValues) => {
+                const acfData = sanitizePersonAcf(person.acf, newAcfValues);
+                updatePerson.mutateAsync({
+                  id,
+                  data: { acf: acfData },
+                });
+              }}
+              isUpdating={updatePerson.isPending}
+              excludeLabelPrefixes={['Nikki', 'Financiële', 'Datum VOG', 'VOG', 'Freescout']}
+            />
+            </div>
+
+            {/* Column 2: Sportlink, Relaties, VOG */}
+            <div className="space-y-6">
+            {/* Sportlink Card */}
+            <SportlinkCard acfData={person?.acf} />
+
             {/* Relationships */}
-            <div className="card p-6 break-inside-avoid mb-6">
+            <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
                 <div className="flex items-center gap-2">
@@ -1419,21 +1443,9 @@ export default function PersonDetail() {
               )}
             </div>
 
-            {/* Custom Fields */}
-            <CustomFieldsSection
-              postType="person"
-              postId={parseInt(id)}
-              acfData={person?.acf}
-              onUpdate={(newAcfValues) => {
-                const acfData = sanitizePersonAcf(person.acf, newAcfValues);
-                updatePerson.mutateAsync({
-                  id,
-                  data: { acf: acfData },
-                });
-              }}
-              isUpdating={updatePerson.isPending}
-              excludeLabelPrefixes={['Nikki', 'Financiële', 'Datum VOG', 'VOG', 'Freescout']}
-            />
+            {/* VOG Card */}
+            <VOGCard acfData={person?.acf} />
+            </div>
           </div>
         )}
 
@@ -1597,12 +1609,6 @@ export default function PersonDetail() {
           <div className="sticky top-6">
             {/* Finances Card */}
             <FinancesCard personId={parseInt(id)} />
-
-            {/* VOG Card */}
-            <VOGCard acfData={person?.acf} />
-
-            {/* Sportlink Card */}
-            <SportlinkCard acfData={person?.acf} />
 
             {/* Todos Card */}
             <div className="card p-6">
