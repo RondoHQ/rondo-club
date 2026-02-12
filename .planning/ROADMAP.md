@@ -6,7 +6,7 @@
 - ✅ **v21.0 Per-Season Fee Categories** — Phases 155-161 (shipped 2026-02-09) — [Archive](milestones/v21.0-ROADMAP.md)
 - ✅ **v22.0 Design Refresh** — Phases 162-165 (shipped 2026-02-09) — [Archive](milestones/v22.0-ROADMAP.md)
 - ✅ **v23.0 Former Members** — Phases 166-169 (shipped 2026-02-09) — [Archive](milestones/v23.0-ROADMAP.md)
-- 🚧 **v24.0 Demo Data** — Phases 170-174 (in progress)
+- ✅ **v24.0 Demo Data** — Phases 170-174 (shipped 2026-02-12)
 
 ## Phases
 
@@ -53,9 +53,8 @@
 
 </details>
 
-### 🚧 v24.0 Demo Data (In Progress)
-
-**Milestone Goal:** Create a demo data pipeline that anonymizes production data into a portable fixture, enabling realistic demo environments that always look "fresh."
+<details>
+<summary>v24.0 Demo Data (Phases 170-174) — SHIPPED 2026-02-12</summary>
 
 #### Phase 170: Fixture Format Design
 
@@ -152,8 +151,10 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 174-01: Demo banner, export from production, deploy to demo, import with --clean
-- [ ] 174-02: Verify all pages on demo site, commit fixture, version bump, ship v24.0
+- [x] 174-01: Demo banner, export from production, deploy to demo, import with --clean
+- [x] 174-02: Verify all pages on demo site, commit fixture, version bump, ship v24.0
+
+</details>
 
 ## Progress
 
@@ -163,8 +164,8 @@ Plans:
 | 171. Export Command Foundation | v24.0 | 4/4 | ✓ Complete | 2026-02-11 |
 | 172. Data Anonymization | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
 | 173. Import Command | v24.0 | 3/3 | ✓ Complete | 2026-02-11 |
-| 174. End-to-End Verification | v24.0 | 0/2 | Not started | - |
+| 174. End-to-End Verification | v24.0 | 2/2 | ✓ Complete | 2026-02-12 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-11 — Phase 173 complete*
+*Last updated: 2026-02-12 — v24.0 Demo Data shipped*
