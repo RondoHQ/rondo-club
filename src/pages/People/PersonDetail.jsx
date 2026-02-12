@@ -1499,9 +1499,12 @@ export default function PersonDetail() {
               acfData={person?.acf}
               personId={parseInt(id)}
               onUpdateField={(fieldName, value) => {
+                const acfData = sanitizePersonAcf(person.acf, {
+                  [fieldName]: value,
+                });
                 updatePerson.mutateAsync({
                   id,
-                  data: { acf: { [fieldName]: value } },
+                  data: { acf: acfData },
                 });
               }}
               isUpdating={updatePerson.isPending}

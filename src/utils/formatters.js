@@ -172,7 +172,10 @@ export function formatDateValue(dateString, yearUnknown = false, formatFn) {
 export function sanitizePersonAcf(acfData, overrides = {}) {
   // Fields that are select/enum and should be null instead of empty string
   const enumFields = ['gender'];
-  
+
+  // Fields that expect number|null — convert empty strings to null, string numbers to numbers
+  const numericFields = ['freescout-id'];
+
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['contact_info', 'addresses', 'work_history', 'relationships', 'photo_gallery'];
   
@@ -184,14 +187,23 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
       sanitized[field] = null;
     }
   });
-  
+
+  // Convert numeric fields to proper type
+  numericFields.forEach(field => {
+    if (sanitized[field] === '' || sanitized[field] === undefined) {
+      sanitized[field] = null;
+    } else if (typeof sanitized[field] === 'string') {
+      sanitized[field] = Number(sanitized[field]);
+    }
+  });
+
   // Ensure repeater fields are arrays
   repeaterFields.forEach(field => {
     if (!Array.isArray(sanitized[field])) {
       sanitized[field] = [];
     }
   });
-  
+
   // Apply overrides
   Object.assign(sanitized, overrides);
 
