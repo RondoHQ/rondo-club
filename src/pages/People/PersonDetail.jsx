@@ -1040,7 +1040,7 @@ export default function PersonDetail() {
                 </span>
               )}
               {acf['huidig-vrijwilliger'] && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan/10 text-electric-cyan dark:bg-electric-cyan/20 dark:text-electric-cyan-light">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan text-white dark:bg-electric-cyan dark:text-white">
                   Vrijwilliger
                 </span>
               )}
