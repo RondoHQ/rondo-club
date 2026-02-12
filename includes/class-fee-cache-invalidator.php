@@ -118,9 +118,18 @@ class FeeCacheInvalidator {
 		// Get family key BEFORE the address update (using current saved value)
 		$old_family_key = $this->fees->get_family_key( $post_id );
 
-		// If person was in a family, invalidate all family members
+		// If person was in a family, invalidate all family members at old address
 		if ( $old_family_key !== null ) {
 			$this->invalidate_family_by_key( $old_family_key, $post_id );
+		}
+
+		// Clear family discount meta for this person (will be recalculated on next cache miss)
+		delete_post_meta( $post_id, '_family_discount_rate' );
+		delete_post_meta( $post_id, '_family_discount_position' );
+
+		// Recalculate positions for old family (after address change, new family is lazy)
+		if ( $old_family_key !== null ) {
+			$this->recalculate_family_positions_by_key( $old_family_key );
 		}
 
 		return $value;
@@ -143,8 +152,28 @@ class FeeCacheInvalidator {
 		foreach ( $families[ $family_key ] as $member_id ) {
 			if ( (int) $member_id !== $exclude_id ) {
 				$this->fees->clear_fee_cache( (int) $member_id );
+				delete_post_meta( $member_id, '_family_discount_rate' );
+				delete_post_meta( $member_id, '_family_discount_position' );
 			}
 		}
+	}
+
+	/**
+	 * Recalculate family discount positions for all persons at a given family key
+	 *
+	 * @param string $family_key The family key (postal code + house number).
+	 */
+	private function recalculate_family_positions_by_key( string $family_key ): void {
+		$groups   = $this->fees->build_family_groups();
+		$families = $groups['families'];
+
+		if ( ! isset( $families[ $family_key ] ) || empty( $families[ $family_key ] ) ) {
+			return;
+		}
+
+		// Use the first member to trigger recalculation for the whole family
+		$first_member = (int) $families[ $family_key ][0];
+		$this->fees->recalculate_family_positions_for_person( $first_member );
 	}
 
 	/**
@@ -179,8 +208,9 @@ class FeeCacheInvalidator {
 	public function schedule_bulk_recalculation( $old_value, $new_value ) {
 		$season = $this->fees->get_season_key();
 
-		// Clear all caches immediately
+		// Clear all caches and family discount meta immediately
 		$cleared = $this->fees->clear_all_fee_caches( $season );
+		$this->fees->clear_all_family_discount_meta();
 
 		// Schedule background recalculation (10 seconds from now)
 		if ( ! wp_next_scheduled( 'rondo_recalculate_all_fees', [ $season ] ) ) {
@@ -204,6 +234,16 @@ class FeeCacheInvalidator {
 	 * @param string $season The season key.
 	 */
 	public function recalculate_all_fees_background( $season ) {
+		// Recalculate all family positions first (single pass over all persons)
+		$positions_updated = $this->fees->recalculate_all_family_positions( $season );
+
+		error_log( sprintf(
+			'[Rondo Fee Cache] Family positions recalculated: %d persons updated for season %s',
+			$positions_updated,
+			$season
+		) );
+
+		// Now recalculate individual fees (which read stored meta instead of rebuilding groups)
 		$query = new \WP_Query(
 			[
 				'post_type'      => 'person',

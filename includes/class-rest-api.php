@@ -3393,6 +3393,34 @@ class Api extends Base {
 		$season_categories = $fees->get_categories_for_season( $season );
 		$category_label    = $season_categories[ $fee_data['category'] ]['label'] ?? $fee_data['category'];
 
+		// Derive family_members and family_size from family_key if not already populated
+		$family_members = $fee_data['family_members'] ?? [];
+		$family_size    = $fee_data['family_size'];
+		$family_key     = $fee_data['family_key'] ?? null;
+
+		if ( $family_key !== null && empty( $family_members ) && ( $fee_data['family_position'] ?? 0 ) > 0 ) {
+			// Derive siblings from family_key: find other youth persons at same address
+			$groups         = $fees->build_family_groups( $season );
+			$group_families = $groups['families'];
+			$group_members  = $group_families[ $family_key ] ?? [];
+
+			$family_size = count( $group_members );
+			foreach ( $group_members as $member_id ) {
+				if ( (int) $member_id !== $person_id ) {
+					$first_name = get_field( 'first_name', $member_id ) ?: '';
+					$last_name  = get_field( 'last_name', $member_id ) ?: '';
+					$name       = trim( $first_name . ' ' . $last_name );
+					if ( empty( $name ) ) {
+						$name = get_the_title( $member_id );
+					}
+					$family_members[] = [
+						'id'   => (int) $member_id,
+						'name' => $name,
+					];
+				}
+			}
+		}
+
 		// Get Nikki data for this year
 		$nikki_year  = substr( $season, 0, 4 );
 		$nikki_total = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_total', true );
@@ -3415,10 +3443,10 @@ class Api extends Base {
 				'fee_after_discount'     => $fee_data['fee_after_discount'],
 				'prorata_percentage'     => $fee_data['prorata_percentage'],
 				'final_fee'              => $fee_data['final_fee'],
-				'family_key'             => $fee_data['family_key'],
-				'family_size'            => $fee_data['family_size'],
+				'family_key'             => $family_key,
+				'family_size'            => $family_size,
 				'family_position'        => $fee_data['family_position'],
-				'family_members'         => $fee_data['family_members'] ?? [],
+				'family_members'         => $family_members,
 				'lid_sinds'              => $fee_data['registration_date'] ?? null,
 				'from_cache'             => $fee_data['from_cache'] ?? false,
 				'calculated_at'          => $fee_data['calculated_at'] ?? null,
@@ -3446,8 +3474,9 @@ class Api extends Base {
 			$season = $fees->get_season_key();
 		}
 
-		// Clear all caches
+		// Clear all caches and family discount meta
 		$cleared = $fees->clear_all_fee_caches( $season );
+		$fees->clear_all_family_discount_meta();
 
 		// Schedule background recalculation
 		if ( ! wp_next_scheduled( 'rondo_recalculate_all_fees', [ $season ] ) ) {
