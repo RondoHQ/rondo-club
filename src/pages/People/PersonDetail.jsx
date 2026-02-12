@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel
+  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
@@ -83,8 +83,11 @@ export default function PersonDetail() {
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
   const fileInputRef = useRef(null);
-  
+  const config = window.rondoConfig || {};
+
   // Modal states
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -604,13 +607,33 @@ export default function PersonDetail() {
   // Handle vCard export
   const handleExportVCard = () => {
     if (!person) return;
-    
+
     try {
       downloadVCard(person, {
         teamMap,
       });
     } catch {
       alert('vCard kon niet worden geëxporteerd. Probeer het opnieuw.');
+    }
+  };
+
+  // Handle Sportlink sync
+  const handleSyncFromSportlink = async () => {
+    const knvbId = person?.acf?.['knvb-id'];
+    if (!knvbId || isSyncing) return;
+
+    setIsSyncing(true);
+    setSyncStatus(null);
+    try {
+      await prmApi.syncFromSportlink(knvbId);
+      setSyncStatus('success');
+      await queryClient.invalidateQueries({ queryKey: ['people', 'detail', id] });
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus(null), 3000);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -935,6 +958,18 @@ export default function PersonDetail() {
           <span className="hidden md:inline">Terug naar leden</span>
         </Link>
         <div className="flex gap-2">
+          {config.isAdmin && acf['knvb-id'] && (
+            <button
+              onClick={handleSyncFromSportlink}
+              disabled={isSyncing}
+              className="btn-secondary"
+            >
+              <RefreshCw className={`w-4 h-4 md:mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span className="hidden md:inline">
+                {syncStatus === 'success' ? 'Bijgewerkt!' : syncStatus === 'error' ? 'Fout' : 'Ververs uit Sportlink'}
+              </span>
+            </button>
+          )}
           <button onClick={handleExportVCard} className="btn-secondary">
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>

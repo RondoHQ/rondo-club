@@ -773,6 +773,24 @@ class Api extends Base {
 			]
 		);
 
+		// Sportlink individual sync (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/sportlink/sync-individual',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'sync_individual_from_sportlink' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'knvb_id' => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
 		// Werkfuncties - available werkfuncties from database (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -3758,5 +3776,55 @@ class Api extends Base {
 				'slug' => $current_season->slug,
 			]
 		);
+	}
+
+	/**
+	 * Proxy a single-member sync request to the Rondo Sync server.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Response from sync server or error.
+	 */
+	public function sync_individual_from_sportlink( $request ) {
+		if ( ! defined( 'RONDO_SYNC_URL' ) || ! defined( 'RONDO_SYNC_API_KEY' ) ) {
+			return new \WP_Error(
+				'sync_not_configured',
+				'Sportlink sync is not configured. Add RONDO_SYNC_URL and RONDO_SYNC_API_KEY to wp-config.php.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		$knvb_id  = $request->get_param( 'knvb_id' );
+		$response = wp_remote_post(
+			rtrim( RONDO_SYNC_URL, '/' ) . '/api/sync/individual',
+			[
+				'headers' => [
+					'Content-Type'   => 'application/json',
+					'X-Sync-API-Key' => RONDO_SYNC_API_KEY,
+				],
+				'body'    => wp_json_encode( [ 'knvb_id' => $knvb_id ] ),
+				'timeout' => 30,
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new \WP_Error(
+				'sync_request_failed',
+				$response->get_error_message(),
+				[ 'status' => 502 ]
+			);
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( $status_code >= 400 ) {
+			return new \WP_Error(
+				'sync_error',
+				$body['error'] ?? 'Sync server returned an error.',
+				[ 'status' => $status_code ]
+			);
+		}
+
+		return rest_ensure_response( $body );
 	}
 }
