@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 174 of 174 (End-to-End Verification)
-Plan: 0 of 2 in current phase
-Status: Not started
-Last activity: 2026-02-12 — Completed quick task 64: Rework contributie overzicht to show full fee calculation chain
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-12 — Completed 174-01: Demo banner and export-import pipeline
 
-Progress: [████████░░] 85% (11/13 plans complete)
+Progress: [█████████░] 92% (12/13 plans complete)
 
 ## Performance Metrics
 
@@ -32,6 +32,8 @@ Progress: [████████░░] 85% (11/13 plans complete)
 - Velocity: Stable
 
 **Latest Execution:**
+- Phase 174: 1 plan, 2 tasks, 2 commits (2026-02-12)
+  - 174-01: 2 tasks, 1208 seconds
 - Phase 173: 3 plans, 5 tasks, 8 commits (2026-02-11)
   - 173-01: 2 tasks, 173 seconds
   - 173-02: 1 task, 331 seconds
@@ -44,6 +46,8 @@ Progress: [████████░░] 85% (11/13 plans complete)
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting future work:
 
+- Demo banner uses amber background for high visibility without alarm (v24.0, phase 174-01)
+- Demo site identified via rondo_is_demo_site WordPress option (v24.0, phase 174-01)
 - Full-year birthdate shifting preserves age accuracy (v24.0, phase 173-02)
 - Leap year handling: Feb 29 → Feb 28 in non-leap years (v24.0, phase 173-02)
 - Dynamic meta key shifting for nikki and fee data via regex (v24.0, phase 173-02)
@@ -108,7 +112,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed Quick Task 64 - Rework contributie overzicht to show full fee calculation chain
+Stopped at: Completed 174-01-PLAN.md - Demo banner and export-import pipeline
 Resume file: None
 
 ---
