@@ -152,8 +152,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 174-01: Generate fixture, import, and verify all pages
-- [ ] 174-02: Commit fixture, version bump, and ship v24.0
+- [ ] 174-01: Demo banner, export from production, deploy to demo, import with --clean
+- [ ] 174-02: Verify all pages on demo site, commit fixture, version bump, ship v24.0
 
 ## Progress
 
