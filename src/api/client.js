@@ -301,6 +301,7 @@ export const prmApi = {
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),
   getFeeSummary: (params = {}) => api.get('/rondo/v1/fees/summary', { params }),
   getPersonFee: (personId, params = {}) => api.get(`/rondo/v1/fees/person/${personId}`, { params }),
+  recalculateAllFees: (params = {}) => api.post('/rondo/v1/fees/recalculate', params),
   exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data),
 
   // VOG Bulk Operations

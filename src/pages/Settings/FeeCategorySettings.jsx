@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle, Copy } from 'lucide-react';
+import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle, Copy, RefreshCw } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
 import {
   DndContext,
@@ -676,6 +676,27 @@ export default function FeeCategorySettings() {
     },
   });
 
+  // Recalculate all fees mutation
+  const recalculateMutation = useMutation({
+    mutationFn: async (season) => {
+      const response = await prmApi.recalculateAllFees({ season });
+      return response.data;
+    },
+    onSuccess: (responseData) => {
+      setSaveErrors([]);
+      setSaveWarnings([]);
+      setSuccessMessage(responseData.message || 'Herberekening ingepland');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      // Invalidate fee queries so overzicht refreshes
+      queryClient.invalidateQueries({ queryKey: ['fees'] });
+    },
+    onError: (error) => {
+      const errorMessage = error.response?.data?.message || error.message || 'Er is een fout opgetreden';
+      setSaveErrors([{ field: 'general', message: errorMessage }]);
+      setSaveWarnings([]);
+    },
+  });
+
   // Drag-and-drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -892,6 +913,37 @@ export default function FeeCategorySettings() {
         onSave={handleDiscountSave}
         isSaving={discountMutation.isPending}
       />
+
+      {/* Recalculate button */}
+      {Object.keys(categories).length > 0 && (
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              if (confirm('Alle contributies herberekenen voor dit seizoen? Dit kan even duren.')) {
+                clearMessages();
+                recalculateMutation.mutate(activeSeasonKey);
+              }
+            }}
+            disabled={recalculateMutation.isPending}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+          >
+            {recalculateMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Herberekenen...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-4 h-4" />
+                Herbereken alle contributies
+              </>
+            )}
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Wist alle caches en berekent familiekortingen en contributies opnieuw.
+          </p>
+        </div>
+      )}
 
       {/* Error display */}
       {saveErrors.length > 0 && (
