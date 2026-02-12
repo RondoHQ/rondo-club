@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 60 | Distinguish former members on PersonDetail | 2026-02-12 | 000124c4 | [60-distinguish-former-members-on-person-det](./quick/60-distinguish-former-members-on-person-det/) |
 | 59 | Weight current members above former members in search | 2026-02-12 | d1c54abe | [59-weight-current-members-above-former-memb](./quick/59-weight-current-members-above-former-memb/) |
 | 58 | Reorganize PersonDetail into 3-column layout | 2026-02-12 | d40461e7 | [58-reorganize-persondetail-into-3-column-la](./quick/58-reorganize-persondetail-into-3-column-la/) |
 | 57 | Show KNVB ID in Sportlink card | 2026-02-12 | 9b666ae6 | [57-show-knvb-id-in-sportlink-card](./quick/57-show-knvb-id-in-sportlink-card/) |
@@ -103,7 +104,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed Quick Task 59 - Weight current members above former members in search
+Stopped at: Completed Quick Task 60 - Distinguish former members on PersonDetail
 Resume file: None
 
 ---
