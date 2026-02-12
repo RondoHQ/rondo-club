@@ -45,9 +45,11 @@ export function ContributieOverzicht() {
       count: acc.count + agg.count,
       baseFee: acc.baseFee + agg.base_fee,
       familyDiscount: acc.familyDiscount + (agg.family_discount ?? 0),
+      feeAfterDiscount: acc.feeAfterDiscount + (agg.fee_after_discount ?? 0),
+      prorataAmount: acc.prorataAmount + (agg.prorata_amount ?? 0),
       finalFee: acc.finalFee + agg.final_fee,
     }),
-    { count: 0, baseFee: 0, familyDiscount: 0, finalFee: 0 }
+    { count: 0, baseFee: 0, familyDiscount: 0, feeAfterDiscount: 0, prorataAmount: 0, finalFee: 0 }
   );
 
   return (
@@ -95,6 +97,12 @@ export function ContributieOverzicht() {
                   Familiekorting
                 </th>
                 <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  Na korting
+                </th>
+                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  Pro-rata
+                </th>
+                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                   Netto totaal
                 </th>
               </tr>
@@ -121,6 +129,12 @@ export function ContributieOverzicht() {
                   <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
                     {agg.family_discount > 0 ? `- ${formatCurrency(agg.family_discount, 2)}` : formatCurrency(0, 2)}
                   </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                    {formatCurrency(agg.fee_after_discount, 2)}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                    {agg.prorata_amount > 0 ? `- ${formatCurrency(agg.prorata_amount, 2)}` : formatCurrency(0, 2)}
+                  </td>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
                     {formatCurrency(agg.final_fee, 2)}
                   </td>
@@ -140,6 +154,12 @@ export function ContributieOverzicht() {
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
                   {grandTotal.familyDiscount > 0 ? `- ${formatCurrency(grandTotal.familyDiscount, 2)}` : formatCurrency(0, 2)}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {formatCurrency(grandTotal.feeAfterDiscount, 2)}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {grandTotal.prorataAmount > 0 ? `- ${formatCurrency(grandTotal.prorataAmount, 2)}` : formatCurrency(0, 2)}
                 </td>
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
                   {formatCurrency(grandTotal.finalFee, 2)}
