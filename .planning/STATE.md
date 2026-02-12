@@ -5,27 +5,27 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** Phase 174 - End-to-End Verification
+**Current focus:** No active milestone — v24.0 Demo Data shipped
 
 ## Current Position
 
 Phase: 174 of 174 (End-to-End Verification)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-12 — Completed 174-01: Demo banner and export-import pipeline
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-02-12 — Completed v24.0 Demo Data milestone
 
-Progress: [█████████░] 92% (12/13 plans complete)
+Progress: [██████████] 100% (13/13 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 181 plans across v1.0-v24.0 (in progress)
-- v24.0 plans: 11 of 13 complete
+- Total plans completed: 183 plans across v1.0-v24.0
+- v24.0 plans: 13 of 13 complete
 - Recent milestones:
+  - v24.0: 13 plans, 2 days (2026-02-11 → 2026-02-12)
   - v23.0: 4 plans, 1 day (Phases 166-169 complete, 2026-02-09)
   - v22.0: 7 plans, 1 day (2026-02-09)
   - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
-  - v20.0: 4 plans, 2 days (2026-02-06 → 2026-02-08)
 
 **Recent Trend:**
 - Last 4 milestones averaged 1-2 days each
@@ -112,7 +112,7 @@ Recent decisions affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Completed 174-01-PLAN.md - Demo banner and export-import pipeline
+Stopped at: Completed v24.0 Demo Data milestone — all 13 plans shipped
 Resume file: None
 
 ---

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.0.0] - 2026-02-12
+
+### Added
+- Demo data pipeline: `wp rondo demo export` creates anonymized fixture from production data
+- Demo data pipeline: `wp rondo demo import [--clean]` loads fixture into any WordPress instance
+- Dutch fake data generator (names with infixes, addresses, phone numbers, emails)
+- Date-shifting on import so demo data always looks current relative to today
+- Data anonymization: fake names, emails, phones, addresses replace real PII
+- Weighted fake financial amounts for realistic fee patterns
+- Season-aware date shifting for fee configs and discipline case seasons
+- Demo fixture file (`fixtures/demo-fixture.json`) committed for portable demo environments
+- Demo site banner ("DEMO OMGEVING") distinguishes demo from production
+- `bin/deploy-demo.sh` script for deploying to demo.rondo.club
+
+### Removed
+- Photos and avatars stripped from demo fixture (photos are identity, not anonymizable)
+
 ## [23.2.1] - 2026-02-10
 
 ### Changed

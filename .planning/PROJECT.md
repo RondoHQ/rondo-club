@@ -395,21 +395,25 @@ Club administrators can manage their members, teams, and important dates through
 - ✓ "Toon oud-leden" toggle with URL-persisted state and "Oud-lid" badges — v23.0
 - ✓ Global search includes former members with "oud-lid" visual indicator — v23.0
 - ✓ Fee calculations include former members active during season (lid-sinds before season end) — v23.0
-- ✓ Former members excluded from forecast and ineligible members excluded from family discount — v23.0
+- ✓ Former members excluded from forecast and ineligible former members excluded from family discount — v23.0
 - ✓ Fee cache invalidation on former_member field changes — v23.0
+
+**v24.0 Demo Data (shipped 2026-02-12):**
+- ✓ WP-CLI export command: `wp rondo demo export` extracts and anonymizes production data — v24.0
+- ✓ WP-CLI import command: `wp rondo demo import [--clean]` loads fixture with date-shifting — v24.0
+- ✓ Static JSON fixture format committed to repository — v24.0
+- ✓ Dutch fake data generator (names with infixes, addresses, phone numbers, emails) — v24.0
+- ✓ Full dataset coverage: people, teams, commissies, discipline cases, tasks, activities, fee config, Nikki data — v24.0
+- ✓ Data anonymization: fake names, emails, phones, addresses replace real PII — v24.0
+- ✓ Photos and avatars excluded from fixture (not anonymizable) — v24.0
+- ✓ Weighted fake financial amounts for realistic fee patterns — v24.0
+- ✓ Season-aware date shifting for fee configs and discipline cases — v24.0
+- ✓ Demo site banner distinguishes demo from production environments — v24.0
+- ✓ Deploy script for demo.rondo.club — v24.0
 
 ### Active
 
-## Current Milestone: v24.0 Demo Data
-
-**Goal:** Create a demo data pipeline that anonymizes production data into a portable fixture, enabling realistic demo environments that always look "fresh."
-
-**Target features:**
-- WP-CLI export command: extract all data from production, anonymize PII, remove photos, fake financial amounts
-- WP-CLI import command: load fixture with date-shifting so demo always has recent activity
-- Static JSON fixture format committed to repo
-- Dutch fake data (names, addresses, phones, emails)
-- Full dataset coverage: people, teams, commissies, discipline cases, tasks, activities, fee config, Nikki data
+No current milestone.
 
 ### Out of Scope
 
@@ -623,6 +627,20 @@ Club administrators can manage their members, teams, and important dates through
 | Season eligibility: lid-sinds before July 1 of end year | Clear cutoff for season membership determination | ✓ Good |
 | Former members excluded from forecast entirely | Won't be members next season; prevents inflated budget projections | ✓ Good |
 | Family discount excludes ineligible former members | Prevents incorrect discount reductions for remaining family | ✓ Good |
+| Reference ID system for fixtures | Portable {entity_type}:{number} format enables cross-entity refs without WordPress IDs | ✓ Good |
+| Sequential reference numbering | Simple 1-based sequence per entity type, human-readable in fixture JSON | ✓ Good |
+| Post-processing anonymization pattern | Anonymize after building entity, before adding to export array | ✓ Good |
+| Seeded mt_rand() for reproducible fakes | Seed 42 enables consistent fake data across exports | ✓ Good |
+| Per-ref identity caching | Same person gets same fake identity across all references | ✓ Good |
+| Weighted infix distribution | 40% have infix, mirrors realistic Dutch names | ✓ Good |
+| Strip photos entirely | Photos ARE identity, cannot be meaningfully anonymized | ✓ Good |
+| Weighted financial amounts | 70/20/10 distribution mirrors realistic fee patterns | ✓ Good |
+| Generic organizational contacts | team@rondo-demo.nl safer than fake personal data | ✓ Good |
+| Full-year birthdate shifting | Preserves age accuracy by shifting complete years | ✓ Good |
+| Leap year handling | Feb 29 → Feb 28 in non-leap years during date shifts | ✓ Good |
+| Dynamic meta key shifting | Regex pattern matching for nikki and fee data via scan_and_shift_meta_keys() | ✓ Good |
+| Demo site identified via WordPress option | rondo_is_demo_site flag simple and reliable | ✓ Good |
+| Demo banner uses amber background | High visibility without alarm, clear "this is not real" signal | ✓ Good |
 
 ---
-*Last updated: 2026-02-11 after v24.0 Demo Data milestone started*
+*Last updated: 2026-02-12 after v24.0 Demo Data milestone shipped*
