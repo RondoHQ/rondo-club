@@ -3289,30 +3289,45 @@ class Api extends Base {
 				$final_fee       = $base_fee - $discount_amount;
 
 				if ( ! isset( $aggregates[ $cat ] ) ) {
-					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'final_fee' => 0 ];
+					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'fee_after_discount' => 0, 'prorata_amount' => 0, 'final_fee' => 0 ];
 				}
 				$aggregates[ $cat ]['count']++;
 				$aggregates[ $cat ]['base_fee']        += $base_fee;
 				$aggregates[ $cat ]['family_discount'] += $discount_amount;
+				$aggregates[ $cat ]['fee_after_discount'] += $final_fee; // Forecast assumes full season
+				$aggregates[ $cat ]['prorata_amount']     += 0; // No pro-rata in forecast
 				$aggregates[ $cat ]['final_fee']        += $final_fee;
 			} else {
 				$cat = $fee_data['category'];
 				if ( ! isset( $aggregates[ $cat ] ) ) {
-					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'final_fee' => 0 ];
+					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'fee_after_discount' => 0, 'prorata_amount' => 0, 'final_fee' => 0 ];
 				}
 				$aggregates[ $cat ]['count']++;
 				$aggregates[ $cat ]['base_fee']        += $fee_data['base_fee'] ?? 0;
 				$aggregates[ $cat ]['family_discount'] += $fee_data['family_discount_amount'] ?? 0;
-				$aggregates[ $cat ]['final_fee']        += $fee_data['final_fee'] ?? 0;
+
+				// fee_after_discount exists in cache since calculate_full_fee (line 1702 in class-membership-fees.php)
+				// Fallback calculation for older caches
+				$fee_after_discount = $fee_data['fee_after_discount'] ?? ( $fee_data['base_fee'] - $fee_data['family_discount_amount'] );
+				$aggregates[ $cat ]['fee_after_discount'] += $fee_after_discount;
+
+				// prorata_amount = fee_after_discount - final_fee
+				$final_fee     = $fee_data['final_fee'] ?? 0;
+				$prorata_amount = $fee_after_discount - $final_fee;
+				$aggregates[ $cat ]['prorata_amount'] += $prorata_amount;
+
+				$aggregates[ $cat ]['final_fee']        += $final_fee;
 			}
 			$total_members++;
 		}
 
 		// Round aggregated values to avoid floating point artifacts
 		foreach ( $aggregates as &$agg ) {
-			$agg['base_fee']        = round( $agg['base_fee'], 2 );
-			$agg['family_discount'] = round( $agg['family_discount'], 2 );
-			$agg['final_fee']       = round( $agg['final_fee'], 2 );
+			$agg['base_fee']          = round( $agg['base_fee'], 2 );
+			$agg['family_discount']   = round( $agg['family_discount'], 2 );
+			$agg['fee_after_discount'] = round( $agg['fee_after_discount'], 2 );
+			$agg['prorata_amount']    = round( $agg['prorata_amount'], 2 );
+			$agg['final_fee']         = round( $agg['final_fee'], 2 );
 		}
 		unset( $agg );
 
