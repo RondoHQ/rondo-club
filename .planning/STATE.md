@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 174 of 174 (End-to-End Verification)
 Plan: 0 of 2 in current phase
 Status: Not started
-Last activity: 2026-02-12 — Completed quick task 56: Add Sportlink info card to PersonDetail sidebar
+Last activity: 2026-02-12 — Completed quick task 57: Show KNVB ID in Sportlink card
 
 Progress: [████████░░] 85% (11/13 plans complete)
 
@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 57 | Show KNVB ID in Sportlink card | 2026-02-12 | 9b666ae6 | [57-show-knvb-id-in-sportlink-card](./quick/57-show-knvb-id-in-sportlink-card/) |
 | 56 | Add Sportlink info card to PersonDetail sidebar | 2026-02-12 | 0f5f1e48 | [56-add-sportlink-info-card-to-persondetail-](./quick/56-add-sportlink-info-card-to-persondetail-/) |
 | 55 | Improve vrijgestelde commissies multi-select with chips and search | 2026-02-12 | f57409d2 | [55-improve-vrijgestelde-commissies-multi-se](./quick/55-improve-vrijgestelde-commissies-multi-se/) |
 | 54 | Rename "Verzonden" to "1e email" and add Herinnering filter | 2026-02-10 | a55a12ff | [54-rename-verzonden-to-1e-email-and-add-her](./quick/54-rename-verzonden-to-1e-email-and-add-her/) |
