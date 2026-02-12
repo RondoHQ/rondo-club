@@ -117,8 +117,9 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 autoFocus
                 disabled={isUpdating}
                 onChange={(e) => {
-                  if (e.target.value) {
-                    onUpdateField('vog_email_sent_date', e.target.value);
+                  const val = e.target.value;
+                  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
+                    onUpdateField('vog_email_sent_date', val);
                     setEditingField(null);
                   }
                 }}
@@ -149,8 +150,9 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 autoFocus
                 disabled={isUpdating}
                 onChange={(e) => {
-                  if (e.target.value) {
-                    onUpdateField('vog_justis_submitted_date', e.target.value);
+                  const val = e.target.value;
+                  if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
+                    onUpdateField('vog_justis_submitted_date', val);
                     setEditingField(null);
                   }
                 }}
