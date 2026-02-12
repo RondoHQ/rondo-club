@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 Phase: 174 of 174 (End-to-End Verification)
 Plan: 0 of 2 in current phase
 Status: Not started
-Last activity: 2026-02-12 — Completed quick task 57: Show KNVB ID in Sportlink card
+Last activity: 2026-02-12 — Completed quick task 58: Reorganize PersonDetail 3-column layout
 
 Progress: [████████░░] 85% (11/13 plans complete)
 
@@ -82,6 +82,7 @@ Recent decisions affecting future work:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 58 | Reorganize PersonDetail into 3-column layout | 2026-02-12 | d40461e7 | [58-reorganize-persondetail-into-3-column-la](./quick/58-reorganize-persondetail-into-3-column-la/) |
 | 57 | Show KNVB ID in Sportlink card | 2026-02-12 | 9b666ae6 | [57-show-knvb-id-in-sportlink-card](./quick/57-show-knvb-id-in-sportlink-card/) |
 | 56 | Add Sportlink info card to PersonDetail sidebar | 2026-02-12 | 0f5f1e48 | [56-add-sportlink-info-card-to-persondetail-](./quick/56-add-sportlink-info-card-to-persondetail-/) |
 | 55 | Improve vrijgestelde commissies multi-select with chips and search | 2026-02-12 | f57409d2 | [55-improve-vrijgestelde-commissies-multi-se](./quick/55-improve-vrijgestelde-commissies-multi-se/) |
