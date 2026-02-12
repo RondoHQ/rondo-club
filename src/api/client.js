@@ -307,4 +307,7 @@ export const prmApi = {
   bulkSendVOGEmails: (ids) => api.post('/rondo/v1/vog/bulk-send', { ids }),
   bulkMarkVOGJustis: (ids) => api.post('/rondo/v1/vog/bulk-mark-justis', { ids }),
   bulkSendVOGReminders: (ids) => api.post('/rondo/v1/vog/bulk-send-reminder', { ids }),
+
+  // Sportlink sync
+  syncFromSportlink: (knvbId) => api.post('/rondo/v1/sportlink/sync-individual', { knvb_id: knvbId }),
 };
