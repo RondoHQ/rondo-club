@@ -1805,8 +1805,7 @@ class Api extends Base {
 
 		// Apply former member penalty to prioritize current members
 		foreach ( $people_results as $person_id => &$item ) {
-			$is_former = get_field( 'former_member', $person_id );
-			if ( $is_former === '1' ) {
+			if ( get_field( 'former_member', $person_id ) ) {
 				$item['score'] -= 50;
 			}
 		}
