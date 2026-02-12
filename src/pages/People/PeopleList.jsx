@@ -318,9 +318,9 @@ function PersonListView({
   onColumnWidthChange,
 }) {
   return (
-    <div className="card !overflow-x-auto max-h-[calc(100vh-12rem)] !overflow-y-auto">
+    <div className="card !overflow-x-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+        <thead className="bg-gray-50 dark:bg-gray-800">
           <tr className="shadow-sm dark:shadow-gray-900/50">
             {/* Checkbox column - sticky */}
             <th
