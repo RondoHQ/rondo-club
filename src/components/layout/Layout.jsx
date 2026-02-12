@@ -541,11 +541,23 @@ function Header({ onMenuClick, onOpenSearch }) {
   );
 }
 
+function DemoBanner() {
+  const isDemo = window.rondoConfig?.isDemo;
+  if (!isDemo) return null;
+
+  return (
+    <div className="h-7 bg-amber-400 text-amber-900 text-xs font-semibold flex items-center justify-center shrink-0">
+      DEMO OMGEVING — Dit is geen echte data
+    </div>
+  );
+}
+
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const mainRef = useRef(null);
   const location = useLocation();
+  const isDemo = window.rondoConfig?.isDemo;
 
   // Fetch dashboard stats for navigation counts
   const { data: dashboardData } = useDashboard();
@@ -578,11 +590,13 @@ export default function Layout({ children }) {
   }, []);
   
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:w-64 lg:flex-col">
-        <Sidebar stats={stats} />
-      </div>
+    <>
+      <DemoBanner />
+      <div className={`flex ${isDemo ? 'h-[calc(100vh-28px)]' : 'h-screen'} bg-gray-50 dark:bg-gray-900`}>
+        {/* Desktop sidebar */}
+        <div className="hidden lg:flex lg:w-64 lg:flex-col">
+          <Sidebar stats={stats} />
+        </div>
 
       {/* Mobile sidebar */}
       {sidebarOpen && (
@@ -617,6 +631,7 @@ export default function Layout({ children }) {
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
       />
-    </div>
+      </div>
+    </>
   );
 }
