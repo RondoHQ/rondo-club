@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
+import SearchableMultiSelect from '@/components/SearchableMultiSelect';
 
 export default function VOGSettings() {
   const [vogSettings, setVogSettings] = useState({
@@ -196,35 +197,13 @@ export default function VOGSettings() {
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
               Selecteer commissies die vrijgesteld zijn van de VOG-verplichting. Leden van deze commissies verschijnen niet in de VOG-lijst.
             </p>
-            <div className="mt-2 border rounded-md border-gray-300 dark:border-gray-600 max-h-48 overflow-y-auto">
-              {commissies.length > 0 ? (
-                commissies.map(commissie => (
-                  <label key={commissie.id} className="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={vogSettings.exempt_commissies?.includes(commissie.id)}
-                      onChange={(e) => {
-                        const id = commissie.id;
-                        setVogSettings(prev => ({
-                          ...prev,
-                          exempt_commissies: e.target.checked
-                            ? [...(prev.exempt_commissies || []), id]
-                            : (prev.exempt_commissies || []).filter(i => i !== id)
-                        }));
-                      }}
-                      className="h-4 w-4 text-electric-cyan focus:ring-electric-cyan border-gray-300 rounded"
-                    />
-                    <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">
-                      {commissie.title?.rendered || commissie.title}
-                    </span>
-                  </label>
-                ))
-              ) : (
-                <p className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                  Geen commissies gevonden
-                </p>
-              )}
-            </div>
+            <SearchableMultiSelect
+              options={commissies.map(c => ({ id: c.id, label: c.title?.rendered || c.title }))}
+              selectedIds={vogSettings.exempt_commissies || []}
+              onChange={(newIds) => setVogSettings(prev => ({ ...prev, exempt_commissies: newIds }))}
+              placeholder="Commissie zoeken..."
+              emptyMessage="Geen commissies gevonden"
+            />
           </div>
 
           {/* Save button and message */}
