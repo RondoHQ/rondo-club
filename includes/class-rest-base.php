@@ -205,6 +205,7 @@ abstract class Base {
 			'thumbnail'      => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 			'labels'         => wp_get_post_terms( $post->ID, 'person_label', [ 'fields' => 'names' ] ),
 			'former_member'  => ( get_field( 'former_member', $post->ID ) == true ),
+			'huidig_vrijwilliger' => ( get_field( 'huidig-vrijwilliger', $post->ID ) == true ),
 		];
 	}
 
