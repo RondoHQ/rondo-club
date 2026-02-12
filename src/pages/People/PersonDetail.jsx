@@ -21,7 +21,7 @@ import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
-import { format, differenceInYears } from '@/utils/dateFormat';
+import { format, parseISO, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -943,7 +943,7 @@ export default function PersonDetail() {
       </div>
       
       {/* Profile header */}
-      <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : ''}`}>
+      <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
         {/* VOG Status Badge */}
         {vogStatus && (
           <div className="absolute top-4 right-4">
@@ -998,6 +998,11 @@ export default function PersonDetail() {
               <h1 className="text-2xl font-bold text-brand-gradient">
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
+                {acf.former_member && (
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
+                    Oud-lid
+                  </span>
+                )}
               </h1>
             </div>
             {groupedPositions.length > 0 && (
@@ -1024,7 +1029,7 @@ export default function PersonDetail() {
             {acf.nickname && (
               <p className="text-gray-500 dark:text-gray-400">"{acf.nickname}"</p>
             )}
-            {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && (
+            {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade'] || acf['lid-tot']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
@@ -1036,6 +1041,12 @@ export default function PersonDetail() {
                   <>
                     {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
                     <span className="text-red-600 dark:text-red-400 font-medium">Financiële blokkade</span>
+                  </>
+                )}
+                {acf['lid-tot'] && (
+                  <>
+                    {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && <span>&nbsp;—&nbsp;</span>}
+                    <span>Lid tot: {format(parseISO(acf['lid-tot']), 'd MMMM yyyy')}</span>
                   </>
                 )}
               </p>
