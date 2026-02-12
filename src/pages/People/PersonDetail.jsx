@@ -1039,6 +1039,11 @@ export default function PersonDetail() {
                   Oud-lid
                 </span>
               )}
+              {!acf.former_member && acf['lid-tot'] && new Date(acf['lid-tot']) > new Date() && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                  Afmelding in de toekomst
+                </span>
+              )}
               {acf['huidig-vrijwilliger'] && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan text-white dark:bg-electric-cyan dark:text-white">
                   Vrijwilliger
