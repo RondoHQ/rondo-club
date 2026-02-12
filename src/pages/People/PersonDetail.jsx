@@ -1495,7 +1495,20 @@ export default function PersonDetail() {
             </div>
 
             {/* VOG Card */}
-            <VOGCard acfData={person?.acf} />
+            <VOGCard
+              acfData={person?.acf}
+              personId={parseInt(id)}
+              onUpdateField={(fieldName, value) => {
+                const acfData = sanitizePersonAcf(person.acf, {
+                  [fieldName]: value,
+                });
+                updatePerson.mutateAsync({
+                  id,
+                  data: { acf: acfData },
+                });
+              }}
+              isUpdating={updatePerson.isPending}
+            />
             </div>
           </div>
         )}

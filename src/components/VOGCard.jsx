@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck } from 'lucide-react';
 import { format } from '@/utils/dateFormat';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -27,8 +28,9 @@ function calculateVogStatus(vogDate) {
  * VOG status card for person detail page
  * Shows VOG information only for current volunteers
  */
-export default function VOGCard({ acfData }) {
+export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }) {
   const { data: currentUser } = useCurrentUser();
+  const [editingField, setEditingField] = useState(null);
 
   // Hide card if user doesn't have VOG capability
   if (!currentUser?.can_access_vog) {
@@ -107,9 +109,30 @@ export default function VOGCard({ acfData }) {
             <span className="text-gray-600 dark:text-gray-400">
               E-mail verzonden:
             </span>
-            <span className={emailSentDate ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500 italic'}>
-              {emailSentDate ? format(new Date(emailSentDate), 'd MMM yyyy') : 'Nog niet'}
-            </span>
+            {editingField === 'vog_email_sent_date' ? (
+              <input
+                type="date"
+                defaultValue={emailSentDate || ''}
+                className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
+                autoFocus
+                disabled={isUpdating}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onUpdateField('vog_email_sent_date', e.target.value);
+                  }
+                  setEditingField(null);
+                }}
+                onBlur={() => setEditingField(null)}
+              />
+            ) : (
+              <button
+                onClick={() => setEditingField('vog_email_sent_date')}
+                disabled={isUpdating || !personId}
+                className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
+              >
+                {emailSentDate ? format(new Date(emailSentDate), 'd MMM yyyy') : 'Nog niet'}
+              </button>
+            )}
           </div>
 
           {/* Justis Submitted */}
@@ -118,9 +141,30 @@ export default function VOGCard({ acfData }) {
             <span className="text-gray-600 dark:text-gray-400">
               Justis aanvraag:
             </span>
-            <span className={justisSubmittedDate ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500 italic'}>
-              {justisSubmittedDate ? format(new Date(justisSubmittedDate), 'd MMM yyyy') : 'Nog niet'}
-            </span>
+            {editingField === 'vog_justis_submitted_date' ? (
+              <input
+                type="date"
+                defaultValue={justisSubmittedDate || ''}
+                className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
+                autoFocus
+                disabled={isUpdating}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    onUpdateField('vog_justis_submitted_date', e.target.value);
+                  }
+                  setEditingField(null);
+                }}
+                onBlur={() => setEditingField(null)}
+              />
+            ) : (
+              <button
+                onClick={() => setEditingField('vog_justis_submitted_date')}
+                disabled={isUpdating || !personId}
+                className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
+              >
+                {justisSubmittedDate ? format(new Date(justisSubmittedDate), 'd MMM yyyy') : 'Nog niet'}
+              </button>
+            )}
           </div>
         </div>
       )}
