@@ -96,8 +96,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 176-01-PLAN.md — Remove label backend (commissie_label taxonomy), all label API methods, Settings/Labels page, BulkLabelsModal
-- [ ] 176-02-PLAN.md — Remove label UI from PeopleList, TeamsList, CommissiesList, and PersonDetail
+- [x] 176-01-PLAN.md — Remove label backend (commissie_label taxonomy), all label API methods, Settings/Labels page, BulkLabelsModal
+- [x] 176-02-PLAN.md — Remove label UI from PeopleList, TeamsList, CommissiesList, and PersonDetail
 
 #### Phase 177: Documentation Updates
 **Goal**: Update documentation to reflect simplified data model
@@ -120,9 +120,9 @@ Phases execute in numeric order: 175 → 176 → 177
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
-| 176. Frontend Cleanup | v24.1 | 0/2 | Not started | - |
+| 176. Frontend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 177. Documentation Updates | v24.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-13 — Phase 175 Backend Cleanup complete*
+*Last updated: 2026-02-13 — Phase 176 Frontend Cleanup complete*
