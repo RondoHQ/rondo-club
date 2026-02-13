@@ -25,6 +25,47 @@ class Taxonomies {
 		$this->register_commissie_label_taxonomy();
 		$this->register_relationship_type_taxonomy();
 		$this->register_seizoen_taxonomy();
+
+		// One-time cleanup: remove stale person_label and team_label data
+		$this->cleanup_removed_taxonomies();
+	}
+
+	/**
+	 * Clean up removed taxonomies (person_label, team_label)
+	 *
+	 * Runs once after deployment to remove all person_label and team_label
+	 * terms and relationships from the database.
+	 */
+	private function cleanup_removed_taxonomies() {
+		// Only run once
+		if ( get_option( 'rondo_labels_cleaned' ) === '1' ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// Delete term relationships for person_label and team_label
+		$wpdb->query(
+			"DELETE tr FROM {$wpdb->term_relationships} tr
+			INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+			WHERE tt.taxonomy IN ('person_label', 'team_label')"
+		);
+
+		// Delete term taxonomy entries for person_label and team_label
+		$wpdb->query(
+			"DELETE FROM {$wpdb->term_taxonomy}
+			WHERE taxonomy IN ('person_label', 'team_label')"
+		);
+
+		// Clean up orphaned terms (terms not in any term_taxonomy)
+		$wpdb->query(
+			"DELETE t FROM {$wpdb->terms} t
+			LEFT JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+			WHERE tt.term_id IS NULL"
+		);
+
+		// Mark as cleaned
+		update_option( 'rondo_labels_cleaned', '1', false );
 	}
 
 	/**
