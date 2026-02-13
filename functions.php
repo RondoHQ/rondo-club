@@ -71,6 +71,7 @@ use Rondo\Config\ClubConfig;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
+use Rondo\Demo\DemoProtection;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -312,6 +313,7 @@ function rondo_init() {
 	new Taxonomies();
 	new AccessControl();
 	new UserRoles();
+	new DemoProtection();
 
 	// iCal feed - only load for iCal requests
 	if ( rondo_is_ical_request() ) {
@@ -644,6 +646,7 @@ function rondo_get_js_config() {
 		'clubName'            => $club_settings['club_name'],
 		'freescoutUrl'        => $club_settings['freescout_url'],
 		'isDemo'              => (bool) get_option( 'rondo_is_demo_site', false ),
+		'isDemoUser'          => (bool) get_option( 'rondo_is_demo_site', false ) && $user && 'demo' === $user->user_login,
 	];
 }
 
