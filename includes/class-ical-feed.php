@@ -206,7 +206,7 @@ class ICalFeed {
 	 * Output the iCal feed
 	 */
 	private function output_feed( $user_id ) {
-		// Get all important dates accessible to this user
+		// Get all birthday events accessible to this user
 		$dates = $this->get_user_dates( $user_id );
 
 		// Set headers
@@ -258,8 +258,7 @@ class ICalFeed {
 				'title'        => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
 				'date_value'   => $person->birthdate,
 				'is_recurring' => true, // Birthdays always recur
-				'date_type'    => 'Birthday',
-				'people'       => [
+					'people'       => [
 					[
 						'id'   => $person->ID,
 						'name' => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
@@ -368,11 +367,6 @@ class ICalFeed {
 			$lines[] = 'RRULE:FREQ=YEARLY';
 		}
 
-		// Add categories if date type exists
-		if ( ! empty( $date['date_type'] ) ) {
-			$lines[] = 'CATEGORIES:' . $this->escape_ical_text( $date['date_type'] );
-		}
-
 		$lines[] = 'END:VEVENT';
 
 		return $lines;
@@ -454,7 +448,6 @@ class ICalFeed {
 				'title'        => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
 				'date_value'   => $person->birthdate,
 				'is_recurring' => true, // Birthdays always recur
-				'date_type'    => 'Birthday',
 				'people'       => [
 					[
 						'id'   => $person->ID,

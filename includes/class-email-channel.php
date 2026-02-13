@@ -109,7 +109,7 @@ class EmailChannel extends Channel {
 
 		$html  = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
 		$html .= sprintf(
-			'<p>Hello %s,</p><p>Here are your important dates and to-dos for this week:</p>',
+			'<p>Hello %s,</p><p>Here are your birthdays and to-dos for this week:</p>',
 			esc_html( $user->display_name )
 		);
 
