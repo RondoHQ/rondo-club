@@ -93,10 +93,11 @@ Plans:
   2. Label columns are removed from PeopleList, TeamsList, CommissiesList
   3. BulkLabelsModal and label bulk actions are removed from all list views
   4. Frontend builds successfully with no TypeScript/ESLint errors
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 176-01: TBD
+- [ ] 176-01-PLAN.md — Remove Settings/Labels page, person_label/team_label API methods, and hook cleanup
+- [ ] 176-02-PLAN.md — Remove label UI from PeopleList, TeamsList, and PersonDetail
 
 #### Phase 177: Documentation Updates
 **Goal**: Update documentation to reflect simplified data model
@@ -119,7 +120,7 @@ Phases execute in numeric order: 175 → 176 → 177
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
-| 176. Frontend Cleanup | v24.1 | 0/TBD | Not started | - |
+| 176. Frontend Cleanup | v24.1 | 0/2 | Not started | - |
 | 177. Documentation Updates | v24.1 | 0/TBD | Not started | - |
 
 ---
