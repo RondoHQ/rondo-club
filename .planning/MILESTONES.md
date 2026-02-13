@@ -936,3 +936,32 @@
 
 ---
 
+
+## v24.1 Dead Feature Removal (Shipped: 2026-02-13)
+
+**Delivered:** Removed unused label taxonomies (person_label, team_label, commissie_label), all label UI components, and cleaned up residual important_date/date_type references left over from v19.0, simplifying the codebase and data model.
+
+**Phases completed:** 175-177 (3 phases, 6 plans)
+
+**Key accomplishments:**
+
+- Removed person_label, team_label, and commissie_label taxonomy registration, REST API endpoints, and database cleanup on activation
+- Removed residual important_date/date_type references from reminders, iCal, WP-CLI systems, and deprecated CLI commands
+- Removed Settings/Labels page, BulkLabelsModal, and all label API client methods and hooks
+- Removed label columns, badges, and UI from PeopleList, TeamsList, CommissiesList, and PersonDetail
+- Updated AGENTS.md to reflect simplified data model (2 main CPTs, 3 supporting CPTs, 2 taxonomies)
+- Updated developer documentation site with accurate data model, REST API, and architecture docs
+
+**Stats:**
+
+- 44 files changed
+- +2,496 / -2,038 lines changed (net: -458 lines removed)
+- 3 phases, 6 plans
+- 1 day (2026-02-13)
+
+**Git range:** `7977a95a` → `2e687520` (22 commits)
+
+**What's next:** To be determined
+
+---
+

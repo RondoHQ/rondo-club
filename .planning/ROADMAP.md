@@ -7,7 +7,7 @@
 - ✅ **v22.0 Design Refresh** — Phases 162-165 (shipped 2026-02-09) — [Archive](milestones/v22.0-ROADMAP.md)
 - ✅ **v23.0 Former Members** — Phases 166-169 (shipped 2026-02-09) — [Archive](milestones/v23.0-ROADMAP.md)
 - ✅ **v24.0 Demo Data** — Phases 170-174 (shipped 2026-02-12) — [Archive](milestones/v24.0-ROADMAP.md)
-- 🚧 **v24.1 Dead Feature Removal** — Phases 175-177 (in progress)
+- ✅ **v24.1 Dead Feature Removal** — Phases 175-177 (shipped 2026-02-13) — [Archive](milestones/v24.1-ROADMAP.md)
 
 ## Phases
 
@@ -65,58 +65,16 @@
 
 </details>
 
-### 🚧 v24.1 Dead Feature Removal (In Progress)
+<details>
+<summary>v24.1 Dead Feature Removal (Phases 175-177) — SHIPPED 2026-02-13</summary>
 
-**Milestone Goal:** Remove unused taxonomies (person_label, team_label) and clean up residual important_date/date_type references left over from v19.0, simplifying the codebase.
+- [x] Phase 175: Backend Cleanup (2/2 plans) — completed 2026-02-13
+- [x] Phase 176: Frontend Cleanup (2/2 plans) — completed 2026-02-13
+- [x] Phase 177: Documentation Updates (2/2 plans) — completed 2026-02-13
 
-#### Phase 175: Backend Cleanup
-**Goal**: Remove taxonomy registration and REST endpoints, clean up residual references
-**Depends on**: Nothing (first phase)
-**Requirements**: LABEL-01, LABEL-02, LABEL-03, LABEL-09, CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04
-**Success Criteria** (what must be TRUE):
-  1. person_label and team_label taxonomies are unregistered and removed from the database
-  2. REST API responses no longer include label fields
-  3. important_date and date_type references are removed from reminders, iCal, and CLI systems
-  4. Backend code passes linting with no references to removed features
-**Plans**: 2 plans
-
-Plans:
-- [x] 175-01-PLAN.md — Remove label taxonomies and REST API label references
-- [x] 175-02-PLAN.md — Remove residual important_date/date_type references and deprecated CLI commands
-
-#### Phase 176: Frontend Cleanup
-**Goal**: Remove UI components, columns, badges, and modals for labels
-**Depends on**: Phase 175
-**Requirements**: LABEL-04, LABEL-05, LABEL-06, LABEL-07, LABEL-08, LABEL-10
-**Success Criteria** (what must be TRUE):
-  1. Settings/Labels page is removed from navigation and deleted
-  2. Label columns are removed from PeopleList, TeamsList, CommissiesList
-  3. BulkLabelsModal and label bulk actions are removed from all list views
-  4. Frontend builds successfully with no TypeScript/ESLint errors
-**Plans**: 2 plans
-
-Plans:
-- [x] 176-01-PLAN.md — Remove label backend (commissie_label taxonomy), all label API methods, Settings/Labels page, BulkLabelsModal
-- [x] 176-02-PLAN.md — Remove label UI from PeopleList, TeamsList, CommissiesList, and PersonDetail
-
-#### Phase 177: Documentation Updates
-**Goal**: Update documentation to reflect simplified data model
-**Depends on**: Phase 176
-**Requirements**: DOCS-01, DOCS-02
-**Success Criteria** (what must be TRUE):
-  1. AGENTS.md no longer references removed taxonomies or labels feature
-  2. Developer documentation reflects simplified data model (2 CPTs, not 3)
-  3. Data model diagrams/tables show current state without removed features
-**Plans**: 2 plans
-
-Plans:
-- [x] 177-01-PLAN.md — Update AGENTS.md, bump version to 24.1.0, add changelog entry
-- [x] 177-02-PLAN.md — Update developer docs site (data-model, REST API, architecture, reminders, iCal, people API)
+</details>
 
 ## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 175 → 176 → 177
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -126,4 +84,4 @@ Phases execute in numeric order: 175 → 176 → 177
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-13 — Phase 177 Documentation Updates complete*
+*Last updated: 2026-02-13 — v24.1 Dead Feature Removal shipped*
