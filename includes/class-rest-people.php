@@ -155,9 +155,7 @@ class People extends Base {
 								return false;
 							}
 							// Must have at least one supported update type
-							$has_update = array_key_exists( 'organization_id', $param )
-								|| isset( $param['labels_add'] )
-								|| isset( $param['labels_remove'] );
+							$has_update = array_key_exists( 'organization_id', $param );
 							if ( ! $has_update ) {
 								return false;
 							}
@@ -171,28 +169,6 @@ class People extends Base {
 									// Validate organization exists as published team post
 									$org = get_post( (int) $org_id );
 									if ( ! $org || $org->post_type !== 'team' || $org->post_status !== 'publish' ) {
-										return false;
-									}
-								}
-							}
-							// Validate labels_add if provided
-							if ( isset( $param['labels_add'] ) ) {
-								if ( ! is_array( $param['labels_add'] ) ) {
-									return false;
-								}
-								foreach ( $param['labels_add'] as $term_id ) {
-									if ( ! is_numeric( $term_id ) ) {
-										return false;
-									}
-								}
-							}
-							// Validate labels_remove if provided
-							if ( isset( $param['labels_remove'] ) ) {
-								if ( ! is_array( $param['labels_remove'] ) ) {
-									return false;
-								}
-								foreach ( $param['labels_remove'] as $term_id ) {
-									if ( ! is_numeric( $term_id ) ) {
 										return false;
 									}
 								}
@@ -226,23 +202,6 @@ class People extends Base {
 							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
 						},
 						'sanitize_callback' => 'absint',
-					],
-					'labels'               => [
-						'default'           => [],
-						'validate_callback' => function ( $param ) {
-							if ( ! is_array( $param ) ) {
-								return false;
-							}
-							foreach ( $param as $id ) {
-								if ( ! is_numeric( $id ) ) {
-									return false;
-								}
-							}
-							return true;
-						},
-						'sanitize_callback' => function ( $param ) {
-							return array_map( 'absint', $param );
-						},
 					],
 					'ownership'            => [
 						'default'           => 'all',
@@ -856,12 +815,10 @@ class People extends Base {
 	/**
 	 * Bulk update multiple people
 	 *
-	 * Updates organization and/or labels for multiple people at once.
+	 * Updates organization for multiple people at once.
 	 *
 	 * Supported updates:
 	 * - organization_id: Team post ID to set as current employer (null to clear)
-	 * - labels_add: Array of person_label term IDs to add
-	 * - labels_remove: Array of person_label term IDs to remove
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return WP_REST_Response Response with success/failure details.
@@ -914,18 +871,6 @@ class People extends Base {
 					update_field( 'work_history', $work_history, $post_id );
 				}
 
-				// Add labels if provided (append, don't replace)
-				if ( ! empty( $updates['labels_add'] ) ) {
-					$term_ids = array_map( 'intval', $updates['labels_add'] );
-					wp_set_object_terms( $post_id, $term_ids, 'person_label', true );
-				}
-
-				// Remove labels if provided
-				if ( ! empty( $updates['labels_remove'] ) ) {
-					$term_ids = array_map( 'intval', $updates['labels_remove'] );
-					wp_remove_object_terms( $post_id, $term_ids, 'person_label' );
-				}
-
 				$updated[] = $post_id;
 			} catch ( Exception $e ) {
 				$failed[] = [
@@ -952,7 +897,7 @@ class People extends Base {
 	 */
 	public function validate_orderby_param( $param ) {
 		// Check built-in fields first.
-		$built_in_fields = [ 'first_name', 'last_name', 'modified' ];
+		$built_in_fields = [ 'first_name', 'last_name', 'modified', 'custom_datum-vog' ];
 		if ( in_array( $param, $built_in_fields, true ) ) {
 			return true;
 		}
@@ -997,7 +942,6 @@ class People extends Base {
 		// Extract validated parameters
 		$page            = (int) $request->get_param( 'page' );
 		$per_page        = (int) $request->get_param( 'per_page' );
-		$labels          = $request->get_param( 'labels' ) ?: [];
 		$ownership       = $request->get_param( 'ownership' );
 		$modified_days   = $request->get_param( 'modified_days' );
 		$birth_year_from = $request->get_param( 'birth_year_from' );
@@ -1082,16 +1026,6 @@ class People extends Base {
 			$date_threshold   = gmdate( 'Y-m-d H:i:s', strtotime( "-{$modified_days} days" ) );
 			$where_clauses[]  = 'p.post_modified >= %s';
 			$prepare_values[] = $date_threshold;
-		}
-
-		// Label filter (taxonomy terms with OR logic)
-		if ( ! empty( $labels ) ) {
-			$join_clauses[] = "INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id";
-			$join_clauses[] = "INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'person_label'";
-
-			$placeholders    = implode( ',', array_fill( 0, count( $labels ), '%d' ) );
-			$where_clauses[] = "tt.term_id IN ($placeholders)";
-			$prepare_values  = array_merge( $prepare_values, $labels );
 		}
 
 		// Birth year filter (uses denormalized _birthdate meta from Phase 112)
@@ -1233,6 +1167,11 @@ class People extends Base {
 			case 'modified':
 				$order_clause = "ORDER BY p.post_modified $order";
 				break;
+			case 'custom_datum-vog':
+				// ACF date field - not a custom field from Manager, so handle explicitly
+				$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = 'datum-vog'";
+				$order_clause   = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
+				break;
 			default:
 				// Check if this is a custom field (starts with 'custom_')
 				if ( strpos( $orderby, 'custom_' ) === 0 ) {
@@ -1339,7 +1278,6 @@ class People extends Base {
 				'former_member' => ( $row->is_former_member === '1' ),
 				// These are fetched post-query to avoid complex JOINs
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
-				'labels'        => wp_get_post_terms( $row->ID, 'person_label', [ 'fields' => 'names' ] ),
 			];
 
 			// Add ACF fields for custom field columns
