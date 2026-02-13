@@ -1,8 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, ChevronDown, Tag, Check, Pencil } from 'lucide-react';
+import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
@@ -263,15 +262,11 @@ export default function TeamsList() {
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [showBulkDropdown, setShowBulkDropdown] = useState(false);
-  const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [editingRowId, setEditingRowId] = useState(null);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
-  const bulkDropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const bulkUpdateMutation = useBulkUpdateTeams();
   const queryClient = useQueryClient();
 
   const handleRefresh = async () => {
@@ -375,13 +370,6 @@ export default function TeamsList() {
         !filterRef.current.contains(event.target)
       ) {
         setIsFilterOpen(false);
-      }
-      // Also close bulk dropdown when clicking outside
-      if (
-        bulkDropdownRef.current &&
-        !bulkDropdownRef.current.contains(event.target)
-      ) {
-        setShowBulkDropdown(false);
       }
     };
 
@@ -721,23 +709,6 @@ export default function TeamsList() {
             {selectedIds.size} {selectedIds.size === 1 ? 'team' : 'teams'} geselecteerd
           </span>
           <div className="flex items-center gap-3">
-            {/* Bulk Actions Dropdown */}
-            <div className="relative" ref={bulkDropdownRef}>
-              <button
-                onClick={() => setShowBulkDropdown(!showBulkDropdown)}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-bright-cobalt bg-white border border-electric-cyan-light rounded-md hover:bg-cyan-50"
-              >
-                Acties
-                <ChevronDown className={`w-4 h-4 transition-transform ${showBulkDropdown ? 'rotate-180' : ''}`} />
-              </button>
-              {showBulkDropdown && (
-                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
-                  <div className="py-1">
-                    {/* Bulk actions placeholder - labels removed */}
-                  </div>
-                </div>
-              )}
-            </div>
             <button
               onClick={clearSelection}
               className="text-sm text-electric-cyan hover:text-deep-midnight font-medium"

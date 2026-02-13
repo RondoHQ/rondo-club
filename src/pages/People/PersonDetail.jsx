@@ -80,8 +80,6 @@ export default function PersonDetail() {
   const hasDisciplineCases = disciplineCases && disciplineCases.length > 0;
 
   const [activeTab, setActiveTab] = useState('profile');
-  const [isAddingLabel, setIsAddingLabel] = useState(false);
-  const [selectedLabelToAdd, setSelectedLabelToAdd] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
@@ -109,27 +107,6 @@ export default function PersonDetail() {
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
 
-  // Fetch available labels
-  const { data: availableLabelsData } = useQuery({
-    queryKey: ['person-labels'],
-    queryFn: async () => {
-      const response = await wpApi.getPersonLabels();
-      return response.data;
-    },
-  });
-  
-  const availableLabels = availableLabelsData || [];
-  const currentLabelNames = person?.labels || [];
-  
-  // Get current label term IDs from embedded terms
-  const currentLabelTermIds = person?._embedded?.['wp:term']?.flat()
-    ?.filter(term => term?.taxonomy === 'person_label')
-    ?.map(term => term.id) || [];
-  
-  const availableLabelsToAdd = availableLabels.filter(
-    label => !currentLabelNames.includes(label.name)
-  );
-  
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
   useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Lid');
@@ -525,46 +502,6 @@ export default function PersonDetail() {
     } else if (item.type === 'todo') {
       handleDeleteTodo(item.id);
     }
-  };
-
-  // Handle removing a label
-  const handleRemoveLabel = async (labelToRemove) => {
-    // Find the term ID for the label to remove
-    const labelTerm = person?._embedded?.['wp:term']?.flat()
-      ?.find(term => term?.taxonomy === 'person_label' && term?.name === labelToRemove);
-    
-    if (!labelTerm) return;
-    
-    // Remove the term ID from current labels
-    const updatedTermIds = currentLabelTermIds.filter(termId => termId !== labelTerm.id);
-    
-    await updatePerson.mutateAsync({
-      id,
-      data: {
-        person_label: updatedTermIds,
-      },
-    });
-  };
-
-  // Handle adding a label
-  const handleAddLabel = async () => {
-    if (!selectedLabelToAdd) return;
-    
-    const labelToAdd = availableLabels.find(l => l.id.toString() === selectedLabelToAdd);
-    if (!labelToAdd) return;
-    
-    // Add the new term ID to current labels
-    const updatedTermIds = [...currentLabelTermIds, labelToAdd.id];
-    
-    await updatePerson.mutateAsync({
-      id,
-      data: {
-        person_label: updatedTermIds,
-      },
-    });
-    
-    setSelectedLabelToAdd('');
-    setIsAddingLabel(false);
   };
 
   // Handle photo upload
@@ -1096,73 +1033,9 @@ export default function PersonDetail() {
                 )}
               </p>
             )}
-            <div>
-              <div className="flex flex-wrap gap-2 items-center">
-                {person.labels && person.labels.length > 0 && (
-                  person.labels.map((label, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 group/label"
-                    >
-                      {label}
-                      <button
-                        onClick={() => handleRemoveLabel(label)}
-                        className="opacity-0 group-hover/label:opacity-100 transition-opacity hover:bg-gray-200 dark:bg-gray-600 rounded-full p-0.5"
-                        title="Label verwijderen"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))
-                )}
-                {!isAddingLabel ? (
-                  availableLabelsToAdd.length > 0 && (
-                    <button
-                      onClick={() => setIsAddingLabel(true)}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 transition-colors"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Label toevoegen
-                    </button>
-                  )
-                ) : (
-                  <div className="inline-flex items-center gap-2">
-                    <select
-                      value={selectedLabelToAdd}
-                      onChange={(e) => setSelectedLabelToAdd(e.target.value)}
-                      className="text-xs border border-gray-300 rounded px-2 py-1"
-                      autoFocus
-                      disabled={availableLabelsToAdd.length === 0}
-                    >
-                      <option value="">Selecteer een label...</option>
-                      {availableLabelsToAdd.map(label => (
-                        <option key={label.id} value={label.id}>
-                          {label.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={handleAddLabel}
-                      disabled={!selectedLabelToAdd}
-                      className="text-xs px-2 py-1 bg-electric-cyan text-white rounded hover:bg-bright-cobalt disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Toevoegen
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsAddingLabel(false);
-                        setSelectedLabelToAdd('');
-                      }}
-                      className="text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                    >
-                      Annuleren
-                    </button>
-                  </div>
-                )}
-              </div>
-              {sortedSocialLinks.length > 0 && (
-                <div className="flex items-center gap-3 mt-4">
-                  {sortedSocialLinks.map((contact, index) => {
+            {sortedSocialLinks.length > 0 && (
+              <div className="flex items-center gap-3 mt-4">
+                {sortedSocialLinks.map((contact, index) => {
                     // Ensure URL has protocol
                     let url = contact.contact_value;
                     if (!url.match(/^https?:\/\//i)) {
@@ -1217,10 +1090,9 @@ export default function PersonDetail() {
                         <SocialIcon className="w-5 h-5" />
                       </a>
                     );
-                  })}
-                </div>
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
