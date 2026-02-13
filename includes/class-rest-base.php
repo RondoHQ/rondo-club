@@ -203,7 +203,6 @@ abstract class Base {
 			'first_name'     => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
 			'last_name'      => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
 			'thumbnail'      => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-			'labels'         => wp_get_post_terms( $post->ID, 'person_label', [ 'fields' => 'names' ] ),
 			'former_member'  => ( get_field( 'former_member', $post->ID ) == true ),
 			'huidig_vrijwilliger' => ( get_field( 'huidig-vrijwilliger', $post->ID ) == true ),
 		];
@@ -223,7 +222,6 @@ abstract class Base {
 			'name'      => $this->sanitize_text( $post->post_title ),
 			'thumbnail' => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
 			'website'   => $this->sanitize_url( get_field( 'website', $post->ID ) ),
-			'labels'    => wp_get_post_terms( $post->ID, 'team_label', [ 'fields' => 'names' ] ),
 		];
 	}
 

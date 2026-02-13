@@ -22,69 +22,9 @@ class Taxonomies {
 	 * Register all custom taxonomies
 	 */
 	public function register_taxonomies() {
-		$this->register_person_label_taxonomy();
-		$this->register_team_label_taxonomy();
 		$this->register_commissie_label_taxonomy();
 		$this->register_relationship_type_taxonomy();
 		$this->register_seizoen_taxonomy();
-	}
-
-	/**
-	 * Register Person Label Taxonomy
-	 */
-	private function register_person_label_taxonomy() {
-		$labels = [
-			'name'          => _x( 'Labels', 'taxonomy general name', 'rondo' ),
-			'singular_name' => _x( 'Label', 'taxonomy singular name', 'rondo' ),
-			'search_items'  => __( 'Search Labels', 'rondo' ),
-			'all_items'     => __( 'All Labels', 'rondo' ),
-			'edit_item'     => __( 'Edit Label', 'rondo' ),
-			'update_item'   => __( 'Update Label', 'rondo' ),
-			'add_new_item'  => __( 'Add New Label', 'rondo' ),
-			'new_item_name' => __( 'New Label Name', 'rondo' ),
-			'menu_name'     => __( 'Labels', 'rondo' ),
-		];
-
-		$args = [
-			'hierarchical'      => false,
-			'labels'            => $labels,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'show_in_rest'      => true,
-			'query_var'         => true,
-			'rewrite'           => [ 'slug' => 'person-label' ],
-		];
-
-		register_taxonomy( 'person_label', [ 'person' ], $args );
-	}
-
-	/**
-	 * Register Team Label Taxonomy
-	 */
-	private function register_team_label_taxonomy() {
-		$labels = [
-			'name'          => _x( 'Team Labels', 'taxonomy general name', 'rondo' ),
-			'singular_name' => _x( 'Team Label', 'taxonomy singular name', 'rondo' ),
-			'search_items'  => __( 'Search Team Labels', 'rondo' ),
-			'all_items'     => __( 'All Team Labels', 'rondo' ),
-			'edit_item'     => __( 'Edit Team Label', 'rondo' ),
-			'update_item'   => __( 'Update Team Label', 'rondo' ),
-			'add_new_item'  => __( 'Add New Team Label', 'rondo' ),
-			'new_item_name' => __( 'New Team Label Name', 'rondo' ),
-			'menu_name'     => __( 'Labels', 'rondo' ),
-		];
-
-		$args = [
-			'hierarchical'      => false,
-			'labels'            => $labels,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'show_in_rest'      => true,
-			'query_var'         => true,
-			'rewrite'           => [ 'slug' => 'team-label' ],
-		];
-
-		register_taxonomy( 'team_label', [ 'team' ], $args );
 	}
 
 	/**

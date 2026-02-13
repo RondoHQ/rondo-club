@@ -1142,7 +1142,6 @@ class GoogleSheets extends Base {
 			'email'      => 'E-mail',
 			'phone'      => 'Telefoon',
 			'team'       => 'Team',
-			'labels'     => 'Labels',
 			'modified'   => 'Laatst gewijzigd',
 		];
 
@@ -1186,8 +1185,6 @@ class GoogleSheets extends Base {
 				return $this->get_first_phone( $person );
 			case 'team':
 				return $this->get_current_team_name( $person );
-			case 'labels':
-				return $this->get_labels( $person );
 			case 'modified':
 				return $person['acf']['modified'] ?? '';
 			default:
@@ -1244,23 +1241,6 @@ class GoogleSheets extends Base {
 			}
 		}
 		return '';
-	}
-
-	/**
-	 * Get labels as comma-separated string
-	 *
-	 * @param array $person Person data.
-	 * @return string Labels.
-	 */
-	private function get_labels( array $person ): string {
-		$labels     = wp_get_post_terms( $person['id'], 'person_label' );
-		$label_names = array_map(
-			function ( $label ) {
-				return $label->name;
-			},
-			$labels
-		);
-		return implode( ', ', $label_names );
 	}
 
 	/**
