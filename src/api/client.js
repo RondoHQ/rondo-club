@@ -65,21 +65,6 @@ export const wpApi = {
   getEntity: (id) => api.get(`/rondo/v1/entity/${id}`),
 
   // Taxonomies
-  getPersonLabels: () => api.get('/wp/v2/person_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
-  createPersonLabel: (data) => api.post('/wp/v2/person_label', data),
-  updatePersonLabel: (id, data) => api.post(`/wp/v2/person_label/${id}`, data),
-  deletePersonLabel: (id) => api.delete(`/wp/v2/person_label/${id}?force=true`),
-
-  getTeamLabels: () => api.get('/wp/v2/team_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
-  createTeamLabel: (data) => api.post('/wp/v2/team_label', data),
-  updateTeamLabel: (id, data) => api.post(`/wp/v2/team_label/${id}`, data),
-  deleteTeamLabel: (id) => api.delete(`/wp/v2/team_label/${id}?force=true`),
-
-  getCommissieLabels: () => api.get('/wp/v2/commissie_label', { params: { per_page: 100, _fields: 'id,name,slug,count' } }),
-  createCommissieLabel: (data) => api.post('/wp/v2/commissie_label', data),
-  updateCommissieLabel: (id, data) => api.post(`/wp/v2/commissie_label/${id}`, data),
-  deleteCommissieLabel: (id) => api.delete(`/wp/v2/commissie_label/${id}?force=true`),
-
   getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100, _fields: 'id,name,slug,acf' } }),
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
   updateRelationshipType: (id, data) => api.post(`/wp/v2/relationship_type/${id}`, data),

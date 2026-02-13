@@ -103,7 +103,7 @@ export function useListPreferences() {
           return {
             ...old,
             visible_columns: old.available_columns
-              ? ['team', 'labels', 'modified'] // Default columns
+              ? ['team', 'modified'] // Default columns
               : [],
             column_order: old.available_columns
               ? old.available_columns.map((c) => c.id)

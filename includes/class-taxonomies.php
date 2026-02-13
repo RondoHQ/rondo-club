@@ -22,39 +22,38 @@ class Taxonomies {
 	 * Register all custom taxonomies
 	 */
 	public function register_taxonomies() {
-		$this->register_commissie_label_taxonomy();
 		$this->register_relationship_type_taxonomy();
 		$this->register_seizoen_taxonomy();
 
-		// One-time cleanup: remove stale person_label and team_label data
+		// One-time cleanup: remove stale person_label, team_label, and commissie_label data
 		$this->cleanup_removed_taxonomies();
 	}
 
 	/**
-	 * Clean up removed taxonomies (person_label, team_label)
+	 * Clean up removed taxonomies (person_label, team_label, commissie_label)
 	 *
-	 * Runs once after deployment to remove all person_label and team_label
+	 * Runs once after deployment to remove all person_label, team_label, and commissie_label
 	 * terms and relationships from the database.
 	 */
 	private function cleanup_removed_taxonomies() {
-		// Only run once
-		if ( get_option( 'rondo_labels_cleaned' ) === '1' ) {
+		// Only run once (v2 includes commissie_label cleanup)
+		if ( get_option( 'rondo_labels_cleaned_v2' ) === '1' ) {
 			return;
 		}
 
 		global $wpdb;
 
-		// Delete term relationships for person_label and team_label
+		// Delete term relationships for person_label, team_label, and commissie_label
 		$wpdb->query(
 			"DELETE tr FROM {$wpdb->term_relationships} tr
 			INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-			WHERE tt.taxonomy IN ('person_label', 'team_label')"
+			WHERE tt.taxonomy IN ('person_label', 'team_label', 'commissie_label')"
 		);
 
-		// Delete term taxonomy entries for person_label and team_label
+		// Delete term taxonomy entries for person_label, team_label, and commissie_label
 		$wpdb->query(
 			"DELETE FROM {$wpdb->term_taxonomy}
-			WHERE taxonomy IN ('person_label', 'team_label')"
+			WHERE taxonomy IN ('person_label', 'team_label', 'commissie_label')"
 		);
 
 		// Clean up orphaned terms (terms not in any term_taxonomy)
@@ -64,37 +63,8 @@ class Taxonomies {
 			WHERE tt.term_id IS NULL"
 		);
 
-		// Mark as cleaned
-		update_option( 'rondo_labels_cleaned', '1', false );
-	}
-
-	/**
-	 * Register Commissie Label Taxonomy
-	 */
-	private function register_commissie_label_taxonomy() {
-		$labels = [
-			'name'          => _x( 'Commissie Labels', 'taxonomy general name', 'rondo' ),
-			'singular_name' => _x( 'Commissie Label', 'taxonomy singular name', 'rondo' ),
-			'search_items'  => __( 'Search Commissie Labels', 'rondo' ),
-			'all_items'     => __( 'All Commissie Labels', 'rondo' ),
-			'edit_item'     => __( 'Edit Commissie Label', 'rondo' ),
-			'update_item'   => __( 'Update Commissie Label', 'rondo' ),
-			'add_new_item'  => __( 'Add New Commissie Label', 'rondo' ),
-			'new_item_name' => __( 'New Commissie Label Name', 'rondo' ),
-			'menu_name'     => __( 'Labels', 'rondo' ),
-		];
-
-		$args = [
-			'hierarchical'      => false,
-			'labels'            => $labels,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'show_in_rest'      => true,
-			'query_var'         => true,
-			'rewrite'           => [ 'slug' => 'commissie-label' ],
-		];
-
-		register_taxonomy( 'commissie_label', [ 'commissie' ], $args );
+		// Mark as cleaned (v2)
+		update_option( 'rondo_labels_cleaned_v2', '1', false );
 	}
 
 	/**
