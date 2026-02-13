@@ -732,10 +732,9 @@ function rondo_redirect_backend_urls() {
 
 	// Map post types to frontend routes
 	$route_map = [
-		'person'         => 'people',
-		'team'           => 'teams',
-		'commissie'      => 'commissies',
-		'important_date' => 'dates',
+		'person'    => 'people',
+		'team'      => 'teams',
+		'commissie' => 'commissies',
 	];
 
 	if ( ! isset( $route_map[ $post_type ] ) ) {
