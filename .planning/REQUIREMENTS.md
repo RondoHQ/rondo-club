@@ -51,28 +51,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LABEL-01 | — | Pending |
-| LABEL-02 | — | Pending |
-| LABEL-03 | — | Pending |
-| LABEL-04 | — | Pending |
-| LABEL-05 | — | Pending |
-| LABEL-06 | — | Pending |
-| LABEL-07 | — | Pending |
-| LABEL-08 | — | Pending |
-| LABEL-09 | — | Pending |
-| LABEL-10 | — | Pending |
-| CLEAN-01 | — | Pending |
-| CLEAN-02 | — | Pending |
-| CLEAN-03 | — | Pending |
-| CLEAN-04 | — | Pending |
-| DOCS-01 | — | Pending |
-| DOCS-02 | — | Pending |
+| LABEL-01 | Phase 175 | Pending |
+| LABEL-02 | Phase 175 | Pending |
+| LABEL-03 | Phase 175 | Pending |
+| LABEL-04 | Phase 176 | Pending |
+| LABEL-05 | Phase 176 | Pending |
+| LABEL-06 | Phase 176 | Pending |
+| LABEL-07 | Phase 176 | Pending |
+| LABEL-08 | Phase 176 | Pending |
+| LABEL-09 | Phase 175 | Pending |
+| LABEL-10 | Phase 176 | Pending |
+| CLEAN-01 | Phase 175 | Pending |
+| CLEAN-02 | Phase 175 | Pending |
+| CLEAN-03 | Phase 175 | Pending |
+| CLEAN-04 | Phase 175 | Pending |
+| DOCS-01 | Phase 177 | Pending |
+| DOCS-02 | Phase 177 | Pending |
 
 **Coverage:**
 - v24.1 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16
+- Mapped to phases: 16
+- Unmapped: 0
+
+**Phase mapping:**
+- Phase 175 (Backend Cleanup): 8 requirements (LABEL-01, LABEL-02, LABEL-03, LABEL-09, CLEAN-01, CLEAN-02, CLEAN-03, CLEAN-04)
+- Phase 176 (Frontend Cleanup): 6 requirements (LABEL-04, LABEL-05, LABEL-06, LABEL-07, LABEL-08, LABEL-10)
+- Phase 177 (Documentation Updates): 2 requirements (DOCS-01, DOCS-02)
 
 ---
 *Requirements defined: 2026-02-12*
-*Last updated: 2026-02-12 after initial definition*
+*Last updated: 2026-02-13 after roadmap creation — 100% coverage achieved*
