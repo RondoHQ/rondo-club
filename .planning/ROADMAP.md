@@ -81,8 +81,8 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 175-01-PLAN.md — Remove label taxonomies and REST API label references
-- [ ] 175-02-PLAN.md — Remove residual important_date/date_type references and deprecated CLI commands
+- [x] 175-01-PLAN.md — Remove label taxonomies and REST API label references
+- [x] 175-02-PLAN.md — Remove residual important_date/date_type references and deprecated CLI commands
 
 #### Phase 176: Frontend Cleanup
 **Goal**: Remove UI components, columns, badges, and modals for labels
@@ -118,10 +118,10 @@ Phases execute in numeric order: 175 → 176 → 177
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 175. Backend Cleanup | v24.1 | 0/2 | Planned | - |
+| 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 176. Frontend Cleanup | v24.1 | 0/TBD | Not started | - |
 | 177. Documentation Updates | v24.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-13 — v24.1 Dead Feature Removal milestone added*
+*Last updated: 2026-02-13 — Phase 175 Backend Cleanup complete*
