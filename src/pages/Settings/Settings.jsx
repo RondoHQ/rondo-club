@@ -2934,13 +2934,6 @@ function AdminTab({
             <p className="text-sm text-gray-500">Beheer relatietypes en hun omgekeerde koppelingen</p>
           </Link>
           <Link
-            to="/settings/labels"
-            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            <p className="font-medium">Labels</p>
-            <p className="text-sm text-gray-500">Beheer labels voor personen en organisaties</p>
-          </Link>
-          <Link
             to="/settings/custom-fields"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
