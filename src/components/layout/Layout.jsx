@@ -204,16 +204,18 @@ function UserMenu() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
           <div className="py-1">
-            <a
-              href={user.profile_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
-              onClick={() => setIsOpen(false)}
-            >
-              <User className="w-4 h-4 mr-2" />
-              <span className="hidden md:inline">Profiel bewerken</span>
-            </a>
+            {!window.rondoConfig?.isDemoUser && (
+              <a
+                href={user.profile_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
+                onClick={() => setIsOpen(false)}
+              >
+                <User className="w-4 h-4 mr-2" />
+                <span className="hidden md:inline">Profiel bewerken</span>
+              </a>
+            )}
             {user.is_admin && (
               <a
                 href={user.admin_url}
