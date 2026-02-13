@@ -615,8 +615,7 @@ class People extends Base {
 
 		$data = $response->get_data();
 
-		// Deceased status is no longer computed from important_date
-		// (that system was removed in v19.0)
+		// Deceased status field (reserved for future use)
 		$data['is_deceased'] = false;
 
 		// Get birth year from birthdate field on person

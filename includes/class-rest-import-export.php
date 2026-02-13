@@ -360,7 +360,7 @@ class ImportExport extends Base {
 	 *
 	 * @param array $person_data Person data from REST API.
 	 * @param array $team_map Map of company IDs to names.
-	 * @param array $person_dates Array of person's important dates.
+	 * @param array $person_dates Unused parameter (reserved for future use).
 	 * @return string vCard content.
 	 */
 	private function generate_vcard_from_person( $person_data, $team_map = [], $person_dates = [] ) {

@@ -86,9 +86,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					WP_CLI::warning( 'No users found to notify.' );
 					WP_CLI::log( '' );
 					WP_CLI::log( 'This could mean:' );
-					WP_CLI::log( '1. No important dates exist in the system' );
-					WP_CLI::log( '2. Important dates exist but have no related people' );
-					WP_CLI::log( '3. People exist but are not linked to any dates' );
+					WP_CLI::log( '1. No people with birthdates exist in the system' );
+					WP_CLI::log( '2. People exist but have no birthdates set' );
 					WP_CLI::log( '' );
 					WP_CLI::log( 'Run with --debug flag for more details: wp prm reminders trigger --debug' );
 					WP_CLI::log( 'Or specify a user: wp prm reminders trigger --user=1' );
@@ -360,17 +359,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 		}
 
-		/**
-		 * Migrate birthdates from important_dates to person post_meta
-		 *
-		 * @deprecated The important_date post type was removed in v19.0.
-		 *             Birthdates are now stored directly on person records.
-		 *
-		 * @when after_wp_load
-		 */
-		public function migrate_birthdates( $args, $assoc_args ) {
-			WP_CLI::error( 'This migration command is obsolete. The important_date post type was removed in v19.0. Birthdates are now stored directly on person records.' );
-		}
 	}
 
 	/**
@@ -620,26 +608,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::success( sprintf( 'Queued %d contact(s) for resync. Next sync will pull all contacts.', $total_contacts ) );
 			WP_CLI::log( '' );
 			WP_CLI::log( 'To trigger the resync, open your CardDAV client (iPhone Contacts, etc.) and pull down to refresh.' );
-		}
-	}
-
-	/**
-	 * Important Dates WP-CLI Commands
-	 *
-	 * @deprecated The important_date post type was removed in v19.0.
-	 *             These commands are no longer functional.
-	 */
-	class RONDO_Dates_CLI_Command {
-
-		/**
-		 * Regenerate all Important Date titles using current naming convention.
-		 *
-		 * @deprecated The important_date post type was removed in v19.0.
-		 *
-		 * @when after_wp_load
-		 */
-		public function regenerate_titles( $args, $assoc_args ) {
-			WP_CLI::error( 'This command is obsolete. The important_date post type was removed in v19.0.' );
 		}
 	}
 
@@ -2018,19 +1986,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		/**
-		 * Update important_date references from duplicate to original
-		 *
-		 * @deprecated The important_date post type was removed in v19.0.
-		 *             This method is kept for backward compatibility but does nothing.
-		 *
-		 * @param int $duplicate_id The duplicate person ID.
-		 * @param int $original_id  The original person ID.
-		 */
-		private function update_date_references( $duplicate_id, $original_id ) {
-			// No-op: important_date post type was removed in v19.0
-		}
-
-		/**
 		 * Backfill volunteer status for all people
 		 *
 		 * Recalculates and updates the huidig-vrijwilliger field for all people
@@ -2706,10 +2661,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'rondo google-contacts', 'RONDO_Google_Contacts_CLI_Command' );
 	WP_CLI::add_command( 'prm reminders', 'RONDO_Reminders_CLI_Command' );
 	WP_CLI::add_command( 'prm migrate', 'RONDO_Migration_CLI_Command' );
-	WP_CLI::add_command( 'rondo migrate-birthdates', [ 'RONDO_Migration_CLI_Command', 'migrate_birthdates' ] );
 	WP_CLI::add_command( 'prm vcard', 'RONDO_VCard_CLI_Command' );
 	WP_CLI::add_command( 'prm carddav', 'RONDO_CardDAV_CLI_Command' );
-	WP_CLI::add_command( 'prm dates', 'RONDO_Dates_CLI_Command' );
 	WP_CLI::add_command( 'prm todos', 'RONDO_Todos_CLI_Command' );
 	WP_CLI::add_command( 'prm calendar', 'RONDO_Calendar_CLI_Command' );
 	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );
