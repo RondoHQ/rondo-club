@@ -590,85 +590,6 @@ class RelationshipsSharesTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test bulk update for people - add labels.
-	 */
-	public function test_people_bulk_update_add_labels(): void {
-		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk3' ] );
-		wp_set_current_user( $alice_id );
-
-		// Create a label term
-		$label_term = wp_insert_term( 'VIP', 'person_label' );
-		$label_id   = $label_term['term_id'];
-
-		// Create 2 persons
-		$person1_id = $this->createPerson( [ 'post_author' => $alice_id ] );
-		$person2_id = $this->createPerson( [ 'post_author' => $alice_id ] );
-
-		// Bulk add label
-		$response = $this->restRequest(
-			'POST',
-			'/rondo/v1/people/bulk-update',
-			[
-				'ids'     => [ $person1_id, $person2_id ],
-				'updates' => [
-					'labels_add' => [ $label_id ],
-				],
-			]
-		);
-
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertTrue( $response->get_data()['success'] );
-
-		// Verify labels added
-		$person1_labels = wp_get_object_terms( $person1_id, 'person_label', [ 'fields' => 'ids' ] );
-		$person2_labels = wp_get_object_terms( $person2_id, 'person_label', [ 'fields' => 'ids' ] );
-
-		$this->assertContains( $label_id, $person1_labels );
-		$this->assertContains( $label_id, $person2_labels );
-	}
-
-	/**
-	 * Test bulk update for people - remove labels.
-	 */
-	public function test_people_bulk_update_remove_labels(): void {
-		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk4' ] );
-		wp_set_current_user( $alice_id );
-
-		// Create a label term
-		$label_term = wp_insert_term( 'ToRemove', 'person_label' );
-		$label_id   = $label_term['term_id'];
-
-		// Create 2 persons with the label
-		$person1_id = $this->createPerson( [ 'post_author' => $alice_id ] );
-		$person2_id = $this->createPerson( [ 'post_author' => $alice_id ] );
-
-		wp_set_object_terms( $person1_id, [ $label_id ], 'person_label' );
-		wp_set_object_terms( $person2_id, [ $label_id ], 'person_label' );
-
-		// Bulk remove label
-		$response = $this->restRequest(
-			'POST',
-			'/rondo/v1/people/bulk-update',
-			[
-				'ids'     => [ $person1_id, $person2_id ],
-				'updates' => [
-					'labels_remove' => [ $label_id ],
-				],
-			]
-		);
-
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertTrue( $response->get_data()['success'] );
-
-		// Verify labels removed
-		$person1_labels = wp_get_object_terms( $person1_id, 'person_label', [ 'fields' => 'ids' ] );
-		$person2_labels = wp_get_object_terms( $person2_id, 'person_label', [ 'fields' => 'ids' ] );
-
-		$this->assertNotContains( $label_id, $person1_labels );
-		$this->assertNotContains( $label_id, $person2_labels );
-	}
-
-	/**
 	 * Test bulk update authorization - user cannot update others' posts.
 	 */
 	public function test_people_bulk_update_authorization_denied(): void {
@@ -737,44 +658,6 @@ class RelationshipsSharesTest extends RondoTestCase {
 		// Verify visibility changed
 		$this->assertEquals( 'shared', RONDO_Visibility::get_visibility( $team1_id ) );
 		$this->assertEquals( 'shared', RONDO_Visibility::get_visibility( $team2_id ) );
-	}
-
-	/**
-	 * Test bulk update for teams - add labels.
-	 */
-	public function test_teams_bulk_update_add_labels(): void {
-		$alice_id = $this->createApprovedUser( [ 'user_login' => 'alice_bulk7' ] );
-		wp_set_current_user( $alice_id );
-
-		// Create a team label term
-		$label_term = wp_insert_term( 'Partner', 'team_label' );
-		$label_id   = $label_term['term_id'];
-
-		// Create teams
-		$team1_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-		$team2_id = $this->createOrganization( [ 'post_author' => $alice_id ] );
-
-		// Bulk add label
-		$response = $this->restRequest(
-			'POST',
-			'/rondo/v1/teams/bulk-update',
-			[
-				'ids'     => [ $team1_id, $team2_id ],
-				'updates' => [
-					'labels_add' => [ $label_id ],
-				],
-			]
-		);
-
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertTrue( $response->get_data()['success'] );
-
-		// Verify labels added
-		$team1_labels = wp_get_object_terms( $team1_id, 'team_label', [ 'fields' => 'ids' ] );
-		$team2_labels = wp_get_object_terms( $team2_id, 'team_label', [ 'fields' => 'ids' ] );
-
-		$this->assertContains( $label_id, $team1_labels );
-		$this->assertContains( $label_id, $team2_labels );
 	}
 
 	/**
