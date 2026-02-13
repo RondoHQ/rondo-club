@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [24.1.0] - 2026-02-13
+
+### Removed
+- Removed `person_label` and `team_label` taxonomy registrations and all database data
+- Removed `commissie_label` taxonomy registration and database data
+- Removed Settings/Labels management page from frontend
+- Removed BulkLabelsModal component and label bulk actions from all list views
+- Removed label columns, badges, and filters from PeopleList, TeamsList, CommissiesList
+- Removed label add/remove controls from PersonDetail
+- Removed all label-related API client methods (12 methods)
+- Removed `date_type` field from reminders and iCal birthday data
+- Removed `CATEGORIES` line from iCal birthday events
+- Removed deprecated `RONDO_Dates_CLI_Command` WP-CLI class
+- Removed deprecated `migrate_birthdates` and `update_date_references` WP-CLI commands
+- Removed residual `important_date` references from route map, REST API, and CLI
+- Removed teams and commissies bulk-update endpoints (were labels-only)
+
+### Changed
+- Updated email notification wording from "important dates" to "birthdays"
+- Updated CLI reminder messages to reflect birthday-only system
+- Simplified people bulk-update endpoint (organization_id only)
+- Updated AGENTS.md and developer docs to reflect simplified data model
+
 ## [24.0.0] - 2026-02-12
 
 ### Added
