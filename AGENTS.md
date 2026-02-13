@@ -4,7 +4,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 ## Project Overview
 
-**Rondo Club** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams (synced from Sportlink), and important dates.
+**Rondo Club** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams, and club operations.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
@@ -42,8 +42,8 @@ Entry point: `functions.php`
 - Registers activation/deactivation hooks for rewrites and cron via theme activation hooks
 
 **Key classes:**
-- `Rondo\Core\PostTypes` - Registers Person, Team, Important Date CPTs
-- `Rondo\Core\Taxonomies` - Registers labels and relationship types
+- `Rondo\Core\PostTypes` - Registers Person, Team, Commissie, and other CPTs
+- `Rondo\Core\Taxonomies` - Registers relationship types and seizoen taxonomy
 - `Rondo\Core\AutoTitle` - Auto-generates post titles
 - `Rondo\Core\AccessControl` - Row-level user data filtering at query and REST levels
 - `Rondo\Core\UserRoles` - Registers custom "Rondo User" role with minimal permissions
@@ -63,7 +63,7 @@ Entry point: `src/main.jsx`
 - `App.jsx` - Routing with ProtectedRoute wrapper
 - `api/client.js` - Axios client with WordPress nonce injection
 - `hooks/` - Custom hooks (useAuth, usePeople, useDashboard)
-- `pages/` - Route components for People, Teams, Dates, Settings
+- `pages/` - Route components for People, Teams, Commissies, Settings
 
 **State management:**
 - TanStack Query for server state/caching
@@ -71,7 +71,7 @@ Entry point: `src/main.jsx`
 - Zustand available for client state
 
 **API client uses two namespaces:**
-- `/wp/v2/` - Standard WordPress REST (people, teams, important-dates)
+- `/wp/v2/` - Standard WordPress REST (people, teams, commissies)
 - `/rondo/v1/` - Custom endpoints (dashboard, search, timeline)
 
 ## Data Model
@@ -79,12 +79,13 @@ Entry point: `src/main.jsx`
 **Custom Post Types:**
 - `person` - Contact records with relationships, work history, photo gallery
 - `team` - Teams with logo, industry, contact info (post type slug remains `team` for backward compatibility)
-- `important_date` - Recurring dates linked to people (reminders sent via daily digest)
+- `commissie` - Committees with staff members and team structure
+- `rondo_todo` - Task/todo items linked to people
+- `discipline_case` - Discipline/incident tracking
 
 **Taxonomies:**
-- `person_label`, `team_label` - Tags
 - `relationship_type` - Relationship classifications
-- `date_type` - Date categorization
+- `seizoen` - Season classification for discipline cases
 
 ## Access Control
 
@@ -269,9 +270,24 @@ The script reads server credentials from `.env` (see `.env.example` for required
 
 **Production URL:** See `DEPLOY_PRODUCTION_URL` in `.env`
 
+### Rondo Club Sites
+
+All three sites are on the same server. SSH always requires **port 18765** and uses key-based auth.
+
+| Site | URL | SSH User | Purpose |
+|------|-----|----------|---------|
+| **Production** | https://rondo.svawc.nl | `u27-qkfuzqfj63zn` | Live site — deploy target, user tests here |
+| **Demo** | https://demo.rondo.club | `u26-b0fnaayuzqqg` | Demo environment |
+| **Old site** | https://stadion.svawc.nl | `u19-uuugmprbtnev` | Legacy — only access when explicitly asked |
+
+**SSH host:** `c1130624.sgvps.net`
+**SSH port:** `18765`
+
+Each user's WordPress install lives at `~/www/<domain>/public_html/` and the theme at `.../wp-content/themes/rondo-club/`.
+
 ### SSH Access
 
-When connecting via SSH to the production server, **always include the port**:
+When connecting via SSH, **always include the port**. Use `.env` for production credentials:
 
 ```bash
 source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "command here"
@@ -280,5 +296,7 @@ source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "co
 For WP-CLI commands on production:
 
 ```bash
-source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cd $DEPLOY_REMOTE_THEME_PATH && wp <command>"
+source .env && ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cd $DEPLOY_REMOTE_WP_PATH && wp <command>"
 ```
+
+**Important:** Never deploy to or run destructive commands on the old site (stadion.svawc.nl) unless the user specifically asks.
