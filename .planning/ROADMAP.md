@@ -78,10 +78,11 @@
   2. REST API responses no longer include label fields
   3. important_date and date_type references are removed from reminders, iCal, and CLI systems
   4. Backend code passes linting with no references to removed features
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 175-01: TBD
+- [ ] 175-01-PLAN.md — Remove label taxonomies and REST API label references
+- [ ] 175-02-PLAN.md — Remove residual important_date/date_type references and deprecated CLI commands
 
 #### Phase 176: Frontend Cleanup
 **Goal**: Remove UI components, columns, badges, and modals for labels
@@ -117,7 +118,7 @@ Phases execute in numeric order: 175 → 176 → 177
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 175. Backend Cleanup | v24.1 | 0/TBD | Not started | - |
+| 175. Backend Cleanup | v24.1 | 0/2 | Planned | - |
 | 176. Frontend Cleanup | v24.1 | 0/TBD | Not started | - |
 | 177. Documentation Updates | v24.1 | 0/TBD | Not started | - |
 
