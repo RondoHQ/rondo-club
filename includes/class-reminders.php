@@ -333,7 +333,6 @@ class Reminders {
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
 				'is_recurring'    => true,
 				'year_unknown'    => false,
-				'date_type'       => [ 'Birthday' ],
 				'related_people'  => [
 					[
 						'id'        => $person->ID,
@@ -481,7 +480,6 @@ class Reminders {
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
 				'is_recurring'    => true,
 				'year_unknown'    => false,
-				'date_type'       => [ 'Birthday' ],
 				'related_people'  => [
 					[
 						'id'        => $person->ID,
