@@ -33,7 +33,7 @@ Progress: [███░░░░░░░] 33% (v24.1: 1 of 3 phases complete)
 
 **Latest Execution:**
 - Phase 175: 2 plans, 4 tasks, 4 commits (2026-02-13)
-  - 175-01: 2 tasks, TBD seconds
+  - 175-01: 2 tasks, 282 seconds
   - 175-02: 2 tasks, 244 seconds
 - Phase 174: 1 plan, 2 tasks, 2 commits (2026-02-12)
   - 174-01: 2 tasks, 1208 seconds
