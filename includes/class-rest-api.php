@@ -2328,7 +2328,7 @@ class Api extends Base {
 	 * Get list of users (admin only)
 	 */
 	public function get_users( $request ) {
-		$users = get_users( [ 'role' => \RONDO_User_Roles::ROLE_NAME ] );
+		$users = get_users( [ 'role__in' => \Rondo\Core\UserRoles::get_role_slugs() ] );
 
 		$user_list = [];
 		foreach ( $users as $user ) {

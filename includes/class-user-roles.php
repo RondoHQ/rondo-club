@@ -19,6 +19,17 @@ class UserRoles {
 	const VOG_CAPABILITY         = 'vog';
 	const FINANCIEEL_CAPABILITY  = 'financieel';
 
+	/**
+	 * All Rondo roles: slug => [ display_name, extra capabilities ]
+	 * Each role gets the base rondo_user capabilities plus the listed extras.
+	 */
+	const ROLES = [
+		'rondo_user'     => [ 'Rondo User', [] ],
+		'rondo_fairplay' => [ 'Rondo FairPlay', [ 'fairplay' ] ],
+		'rondo_vog'      => [ 'Rondo VOG', [ 'vog' ] ],
+		'rondo_bestuur'  => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel' ] ],
+	];
+
 	public function __construct() {
 		// Register role on theme activation
 		add_action( 'after_switch_theme', [ $this, 'register_role' ] );
@@ -34,27 +45,30 @@ class UserRoles {
 	}
 
 	/**
-	 * Ensure the role exists (for themes already active)
+	 * Ensure all roles exist (for themes already active)
 	 */
 	public function ensure_role_exists() {
-		if ( ! get_role( self::ROLE_NAME ) ) {
-			$this->register_role();
+		foreach ( self::ROLES as $slug => $_ ) {
+			if ( ! get_role( $slug ) ) {
+				$this->register_role();
+				return;
+			}
 		}
 	}
 
 	/**
-	 * Register the Rondo User role
+	 * Register all Rondo roles
 	 */
 	public function register_role() {
-		// Get the role capabilities
-		$capabilities = $this->get_role_capabilities();
+		$base_capabilities = $this->get_role_capabilities();
 
-		// Add the role
-		add_role(
-			self::ROLE_NAME,
-			self::ROLE_DISPLAY_NAME,
-			$capabilities
-		);
+		foreach ( self::ROLES as $slug => [ $display_name, $extra_caps ] ) {
+			$capabilities = $base_capabilities;
+			foreach ( $extra_caps as $cap ) {
+				$capabilities[ $cap ] = true;
+			}
+			add_role( $slug, $display_name, $capabilities );
+		}
 
 		// Add fairplay, VOG, and financieel capabilities to administrator role
 		$admin_role = get_role( 'administrator' );
@@ -66,7 +80,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Remove the Rondo User role
+	 * Remove all Rondo roles
 	 */
 	public function remove_role() {
 		// Remove fairplay, VOG, and financieel capabilities from administrator role
@@ -77,16 +91,14 @@ class UserRoles {
 			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
 		}
 
-		// Get all users with this role
-		$users = get_users( [ 'role' => self::ROLE_NAME ] );
-
-		// Reassign to subscriber role before removing
-		foreach ( $users as $user ) {
-			$user->set_role( 'subscriber' );
+		foreach ( self::ROLES as $slug => $_ ) {
+			// Reassign users to subscriber before removing role
+			$users = get_users( [ 'role' => $slug ] );
+			foreach ( $users as $user ) {
+				$user->set_role( 'subscriber' );
+			}
+			remove_role( $slug );
 		}
-
-		// Remove the role
-		remove_role( self::ROLE_NAME );
 	}
 
 	/**
@@ -121,6 +133,25 @@ class UserRoles {
 		];
 	}
 
+
+	/**
+	 * Get all Rondo role slugs
+	 *
+	 * @return string[] Array of role slugs.
+	 */
+	public static function get_role_slugs() {
+		return array_keys( self::ROLES );
+	}
+
+	/**
+	 * Check if a user has any Rondo role
+	 *
+	 * @param \WP_User $user User to check.
+	 * @return bool True if user has any Rondo role.
+	 */
+	public static function has_rondo_role( $user ) {
+		return ! empty( array_intersect( self::get_role_slugs(), $user->roles ) );
+	}
 
 	/**
 	 * Check if a user ID is valid
