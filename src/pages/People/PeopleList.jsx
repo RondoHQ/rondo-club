@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Tag, Settings, FileSpreadsheet } from 'lucide-react';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Settings, FileSpreadsheet } from 'lucide-react';
 import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -55,7 +55,6 @@ const COLUMN_SORT_FIELDS = {
   first_name: 'first_name',
   last_name: 'last_name',
   team: 'organization',
-  labels: 'labels',
   modified: 'modified',
 };
 
@@ -143,34 +142,6 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {teamName || '-'}
-            </td>
-          );
-        }
-
-        if (colId === 'labels') {
-          return (
-            <td
-              key={colId}
-              className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
-              style={style}
-            >
-              {person.labels && person.labels.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {person.labels.slice(0, 3).map((label) => (
-                    <span
-                      key={label}
-                      className="inline-flex px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                    >
-                      {label}
-                    </span>
-                  ))}
-                  {person.labels.length > 3 && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">+{person.labels.length - 3} meer</span>
-                  )}
-                </div>
-              ) : (
-                '-'
-              )}
             </td>
           );
         }
@@ -515,135 +486,11 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
   );
 }
 
-// Bulk Labels Modal Component
-function BulkLabelsModal({ isOpen, onClose, selectedCount, labels, onSubmit, isLoading }) {
-  const [mode, setMode] = useState('add'); // 'add' or 'remove'
-  const [selectedLabelIds, setSelectedLabelIds] = useState([]);
-
-  // Reset when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setMode('add');
-      setSelectedLabelIds([]);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleLabelToggle = (labelId) => {
-    setSelectedLabelIds(prev =>
-      prev.includes(labelId)
-        ? prev.filter(id => id !== labelId)
-        : [...prev, labelId]
-    );
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-gray-50">Labels beheren</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" disabled={isLoading}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {mode === 'add' ? 'Voeg labels toe aan' : 'Verwijder labels van'} {selectedCount} {selectedCount === 1 ? 'lid' : 'leden'}:
-          </p>
-
-          {/* Mode toggle */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-600 p-1">
-            <button
-              type="button"
-              onClick={() => { setMode('add'); setSelectedLabelIds([]); }}
-              className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'add' ? 'bg-cyan-100 dark:bg-obsidian/50 text-bright-cobalt dark:text-electric-cyan-light' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              Labels toevoegen
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('remove'); setSelectedLabelIds([]); }}
-              className={`flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                mode === 'remove' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
-            >
-              Labels verwijderen
-            </button>
-          </div>
-
-          {/* Label list */}
-          {(!labels || labels.length === 0) ? (
-            <div className="text-center py-6 text-gray-500 dark:text-gray-400">
-              <Tag className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-              <p className="text-sm">Geen labels beschikbaar.</p>
-              <p className="text-xs">Maak eerst labels aan om deze functie te gebruiken.</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {labels.map((label) => {
-                const isChecked = selectedLabelIds.includes(label.id);
-                return (
-                  <button
-                    key={label.id}
-                    type="button"
-                    onClick={() => handleLabelToggle(label.id)}
-                    disabled={isLoading}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${
-                      isChecked
-                        ? mode === 'add' ? 'border-electric-cyan bg-cyan-50 dark:bg-deep-midnight' : 'border-red-500 bg-red-50 dark:bg-red-900/30'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                    }`}
-                  >
-                    <div className={`flex items-center justify-center w-5 h-5 border-2 rounded ${
-                      isChecked
-                        ? mode === 'add' ? 'bg-electric-cyan border-electric-cyan' : 'bg-red-600 border-red-600'
-                        : 'border-gray-300 dark:border-gray-500'
-                    }`}>
-                      {isChecked && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-50">{label.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
-            Annuleren
-          </button>
-          <button
-            type="button"
-            onClick={() => onSubmit(mode, selectedLabelIds)}
-            className={mode === 'add' ? 'btn-primary' : 'bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50'}
-            disabled={isLoading || selectedLabelIds.length === 0}
-          >
-            {isLoading
-              ? (mode === 'add' ? 'Toevoegen...' : 'Verwijderen...')
-              : `${selectedLabelIds.length} label${selectedLabelIds.length === 1 ? '' : 's'} ${mode === 'add' ? 'toevoegen' : 'verwijderen'}`
-            }
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function PeopleList() {
   // URL-based filter state for persistence on back navigation
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Parse filters from URL
-  const selectedLabelIds = useMemo(() => {
-    const labels = searchParams.get('labels');
-    return labels ? labels.split(',').map(Number).filter(Boolean) : [];
-  }, [searchParams]);
-
   const selectedBirthYear = searchParams.get('birthYear') || '';
   const lastModifiedFilter = searchParams.get('modified') || '';
   const sortField = searchParams.get('sort') || 'first_name';
@@ -683,11 +530,6 @@ export default function PeopleList() {
   }, [setSearchParams]);
 
   // Filter setters that update URL
-  const setSelectedLabelIds = useCallback((value) => {
-    const newValue = typeof value === 'function' ? value(selectedLabelIds) : value;
-    updateSearchParams({ labels: newValue });
-  }, [selectedLabelIds, updateSearchParams]);
-
   const setSelectedBirthYear = useCallback((value) => {
     updateSearchParams({ birthYear: value });
   }, [updateSearchParams]);
@@ -750,7 +592,6 @@ export default function PeopleList() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
-  const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -778,12 +619,11 @@ export default function PeopleList() {
   const { data, isLoading, isFetching, error } = useFilteredPeople({
     page,
     perPage: 100,
-    labels: selectedLabelIds,
     ownership: 'all',
     modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
     birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
     birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
-    orderby: sortField.startsWith('custom_') ? sortField : sortField === 'organization' || sortField === 'labels' ? 'first_name' : sortField,
+    orderby: sortField.startsWith('custom_') ? sortField : sortField === 'organization' ? 'first_name' : sortField,
     order: sortOrder,
     // Custom field filters
     huidigeVrijwilliger,
@@ -817,18 +657,6 @@ export default function PeopleList() {
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['people', 'list'] });
   };
-
-  // Fetch person labels
-  const { data: labelsData } = useQuery({
-    queryKey: ['person-labels'],
-    queryFn: async () => {
-      const response = await wpApi.getPersonLabels();
-      return response.data;
-    },
-  });
-
-  // Labels with IDs for the bulk modal
-  const availableLabelsWithIds = labelsData || [];
 
   // Fetch custom field definitions for list view columns
   const { data: customFields = [] } = useQuery({
@@ -864,7 +692,7 @@ export default function PeopleList() {
   const visibleColumns = useMemo(() => {
     if (!preferences?.visible_columns || !preferences?.column_order) {
       // Fallback to default columns if preferences not loaded
-      return ['team', 'labels'];
+      return ['team'];
     }
 
     // Filter column_order to only visible columns, excluding 'name'
@@ -932,7 +760,7 @@ export default function PeopleList() {
     };
   }, []);
 
-  const hasActiveFilters = selectedLabelIds.length > 0 || selectedBirthYear || lastModifiedFilter ||
+  const hasActiveFilters = selectedBirthYear || lastModifiedFilter ||
     huidigeVrijwilliger || financieleBlokkade || typeLid || leeftijdsgroep || fotoMissing || vogMissing || vogOlderThanYears ||
     includeFormer || lidTotFuture;
 
@@ -967,14 +795,6 @@ export default function PeopleList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterOptions, filterOptionsLoading]);
   // NOTE: Deliberately not including typeLid/leeftijdsgroep in deps to avoid infinite loop
-
-  const handleLabelToggle = (labelId) => {
-    setSelectedLabelIds(prev =>
-      prev.includes(labelId)
-        ? prev.filter(id => id !== labelId)
-        : [...prev, labelId]
-    );
-  };
 
   const clearFilters = () => {
     setSearchParams(prev => {
@@ -1017,7 +837,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedLabelIds, selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, page, people]);
+  }, [selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1093,7 +913,6 @@ export default function PeopleList() {
       // Build filter params from current URL state (matching useFilteredPeople params)
       const filters = {
         search: searchParams.get('search') || undefined,
-        labels: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
         modified_days: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : undefined,
         birth_year_from: selectedBirthYear || undefined,
         birth_year_to: selectedBirthYear || undefined,
@@ -1156,7 +975,7 @@ export default function PeopleList() {
               <span className="hidden md:inline">Filter</span>
               {hasActiveFilters && (
                 <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
-                  {selectedLabelIds.length + (selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
+                  {(selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
                    (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
                    (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0) +
                    (includeFormer ? 1 : 0) + (lidTotFuture ? 1 : 0)}
@@ -1204,40 +1023,6 @@ export default function PeopleList() {
                       <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Afmelding in de toekomst</span>
                     </label>
                   </div>
-
-                  {/* Labels Filter */}
-                  {availableLabelsWithIds.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Labels
-                      </h3>
-                      <div className="space-y-1 max-h-48 overflow-y-auto">
-                        {availableLabelsWithIds.map(label => (
-                          <label
-                            key={label.id}
-                            className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedLabelIds.includes(label.id)}
-                              onChange={() => handleLabelToggle(label.id)}
-                              className="sr-only"
-                            />
-                            <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                              selectedLabelIds.includes(label.id)
-                                ? 'bg-electric-cyan border-electric-cyan'
-                                : 'border-gray-300 dark:border-gray-500'
-                            }`}>
-                              {selectedLabelIds.includes(label.id) && (
-                                <Check className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <span className="text-sm text-gray-700 dark:text-gray-200">{label.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Birth Year Filter */}
                   {availableBirthYears.length > 0 && (
@@ -1453,23 +1238,6 @@ export default function PeopleList() {
           {/* Active Filter Chips */}
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2">
-              {selectedLabelIds.map(labelId => {
-                const label = availableLabelsWithIds.find(l => l.id === labelId);
-                return label ? (
-                  <span
-                    key={labelId}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs"
-                  >
-                    {label.name}
-                    <button
-                      onClick={() => handleLabelToggle(labelId)}
-                      className="hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ) : null;
-              })}
               {selectedBirthYear && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
                   Geboren {selectedBirthYear}
@@ -1677,16 +1445,6 @@ export default function PeopleList() {
                       <Building2 className="w-4 h-4" />
                       Team instellen...
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowBulkDropdown(false);
-                        setShowBulkLabelsModal(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
-                      <Tag className="w-4 h-4" />
-                      Labels beheren...
-                    </button>
                   </div>
                 </div>
               )}
@@ -1778,31 +1536,6 @@ export default function PeopleList() {
             });
             clearSelection();
             setShowBulkOrganizationModal(false);
-          } finally {
-            setBulkActionLoading(false);
-          }
-        }}
-        isLoading={bulkActionLoading}
-      />
-
-      {/* Bulk Labels Modal */}
-      <BulkLabelsModal
-        isOpen={showBulkLabelsModal}
-        onClose={() => setShowBulkLabelsModal(false)}
-        selectedCount={selectedIds.size}
-        labels={availableLabelsWithIds}
-        onSubmit={async (mode, labelIds) => {
-          setBulkActionLoading(true);
-          try {
-            const updates = mode === 'add'
-              ? { labels_add: labelIds }
-              : { labels_remove: labelIds };
-            await bulkUpdateMutation.mutateAsync({
-              ids: Array.from(selectedIds),
-              updates
-            });
-            clearSelection();
-            setShowBulkLabelsModal(false);
           } finally {
             setBulkActionLoading(false);
           }
