@@ -24,11 +24,6 @@ function transformPerson(person) {
                     person._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
                     null;
 
-  // Extract labels from embedded terms
-  const labels = person._embedded?.['wp:term']?.flat()
-    ?.filter(term => term?.taxonomy === 'person_label')
-    ?.map(term => term.name) || [];
-
   // Decode HTML entities in the person's name
   const decodedName = decodeHtml(person.title?.rendered || '');
 
@@ -43,7 +38,6 @@ function transformPerson(person) {
     birth_year: person.birth_year || null,
     modified: person.modified || null,
     thumbnail,
-    labels,
   };
 }
 
@@ -98,7 +92,6 @@ export function usePeople(params = {}, options = {}) {
  * @param {Object} filters - Filter and pagination options
  * @param {number} filters.page - Page number (default: 1)
  * @param {number} filters.perPage - Results per page (default: 100, max: 100)
- * @param {number[]} filters.labels - Array of label term IDs (OR logic)
  * @param {string} filters.ownership - 'mine', 'shared', or 'all' (default: 'all')
  * @param {number} filters.modifiedDays - Only people modified within N days
  * @param {number} filters.birthYearFrom - Filter by birth year (minimum, inclusive)
@@ -124,7 +117,6 @@ export function useFilteredPeople(filters = {}, options = {}) {
   const params = {
     page: filters.page || 1,
     per_page: filters.perPage || 100,
-    labels: filters.labels || [],
     ownership: filters.ownership || 'all',
     modified_days: filters.modifiedDays || null,
     birth_year_from: filters.birthYearFrom || null,
