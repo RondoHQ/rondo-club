@@ -1,12 +1,12 @@
-# Rondo Club Multi-User Transformation
+# Rondo Club
 
 ## What This Is
 
-A React-powered WordPress theme for sports club management. Administrators manage members, teams, fees, and important dates through a modern branded SPA with Tailwind CSS v4, OKLCH color tokens, and PWA support.
+A React-powered WordPress theme for sports club management. Administrators manage members, teams, fees, and club operations through a modern branded SPA with Tailwind CSS v4, OKLCH color tokens, and PWA support.
 
 ## Core Value
 
-Club administrators can manage their members, teams, and important dates through a single integrated system.
+Club administrators can manage their members, teams, and club operations through a single integrated system.
 
 ## Requirements
 
@@ -411,17 +411,23 @@ Club administrators can manage their members, teams, and important dates through
 - ✓ Demo site banner distinguishes demo from production environments — v24.0
 - ✓ Deploy script for demo.rondo.club — v24.0
 
+**v24.1 Dead Feature Removal (shipped 2026-02-13):**
+- ✓ person_label, team_label, commissie_label taxonomies removed from PHP — v24.1
+- ✓ Labels REST API endpoints and response fields removed — v24.1
+- ✓ Settings/Labels page removed from frontend — v24.1
+- ✓ BulkLabelsModal and label bulk actions removed from all list views — v24.1
+- ✓ Label columns/badges removed from PeopleList, TeamsList, CommissiesList — v24.1
+- ✓ Label references removed from PersonDetail — v24.1
+- ✓ Label-related API client methods and hooks removed — v24.1
+- ✓ Label-related tests removed — v24.1
+- ✓ important_date/date_type residual references removed from reminders, iCal, CLI — v24.1
+- ✓ Deprecated WP-CLI commands removed — v24.1
+- ✓ AGENTS.md updated to reflect simplified data model — v24.1
+- ✓ Developer documentation updated — v24.1
+
 ### Active
 
-## Current Milestone: v24.1 Dead Feature Removal
-
-**Goal:** Remove unused taxonomies (person_label, team_label) and clean up residual important_date/date_type references left over from v19.0, simplifying the codebase.
-
-**Target features:**
-- Remove person_label and team_label taxonomy registration, REST endpoints, frontend UI, and tests
-- Remove Labels settings page, BulkLabelsModal, label columns/badges from all list views
-- Clean up important_date/date_type residual references in PHP backend (reminders, iCal, CLI, REST)
-- Update AGENTS.md and developer documentation
+(No active milestone — ready for next milestone)
 
 ### Out of Scope
 
@@ -439,23 +445,20 @@ Club administrators can manage their members, teams, and important dates through
 
 ## Context
 
-**Codebase State (post v1.0):**
-- WordPress theme (PHP 8.0+) with React 18 SPA
-- REST API split into domain-specific classes (Base, People, Teams, Slack, Import/Export)
-- Security hardened (sodium encryption, XSS protection, webhook validation)
-- Production code cleaned up (no console.error, documented env vars)
-- Full codebase map available in `.planning/codebase/`
+**Codebase State (post v24.1):**
+- WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
+- Version 24.1.0 — simplified data model: 2 main CPTs (person, team), 3 supporting CPTs (rondo_todo, discipline_case, calendar_event), 2 taxonomies (relationship_type, seizoen)
+- All label taxonomies (person_label, team_label, commissie_label) and important_date/date_type residuals removed
+- REST API split into domain-specific classes, security hardened, PSR-4 namespaced
+- Demo site at demo.rondo.club with anonymized fixture data
+- Developer docs at developer.rondo.club
+- 140 pre-existing lint warnings/errors in JSX (not blocking)
 
 **Key Existing Files:**
 - `includes/class-rest-base.php` — Base REST class with shared utilities
-- `includes/class-access-control.php` — Current author-based access control (to be extended)
-- `includes/class-post-types.php` — CPT registration (add workspace here)
-- `includes/class-taxonomies.php` — Taxonomy registration (add workspace_access here)
-
-**Reference Documents:**
-- `Rondo Club-Multi-User-Project-Plan.md` — Detailed technical design for multi-user phases
-- `.planning/milestones/v5.0-google-contacts-sync.md` — Technical design for Google Contacts sync
-- `docs/prd/Custom-Fields-Implementation-Plan.md` — PRD for custom fields (adapted to ACF-native approach)
+- `includes/class-access-control.php` — Row-level user data filtering
+- `includes/class-post-types.php` — CPT registration
+- `includes/class-taxonomies.php` — Taxonomy registration (relationship_type, seizoen only)
 
 ## Constraints
 
@@ -649,6 +652,11 @@ Club administrators can manage their members, teams, and important dates through
 | Dynamic meta key shifting | Regex pattern matching for nikki and fee data via scan_and_shift_meta_keys() | ✓ Good |
 | Demo site identified via WordPress option | rondo_is_demo_site flag simple and reliable | ✓ Good |
 | Demo banner uses amber background | High visibility without alarm, clear "this is not real" signal | ✓ Good |
+| Remove labels entirely, not deprecate | Single-club app, no external consumers, clean removal safer than soft deprecation | ✓ Good |
+| DB cleanup on activation hook | Clean taxonomy terms from DB automatically when theme activates post-removal | ✓ Good |
+| Bump cleanup option to v2 for commissie_label | Re-run cleanup on existing installs that already ran v1 without commissie_label | ✓ Good |
+| Remove 'labels' from default visible columns | Prevents errors in list preferences that reference removed feature | ✓ Good |
+| Generic style.css description | "React-powered club management theme" instead of listing specific features | ✓ Good |
 
 ---
-*Last updated: 2026-02-12 after v24.1 Dead Feature Removal milestone started*
+*Last updated: 2026-02-13 after v24.1 Dead Feature Removal milestone*
