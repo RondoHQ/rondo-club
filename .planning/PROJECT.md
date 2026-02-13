@@ -413,7 +413,15 @@ Club administrators can manage their members, teams, and important dates through
 
 ### Active
 
-No current milestone.
+## Current Milestone: v24.1 Dead Feature Removal
+
+**Goal:** Remove unused taxonomies (person_label, team_label) and clean up residual important_date/date_type references left over from v19.0, simplifying the codebase.
+
+**Target features:**
+- Remove person_label and team_label taxonomy registration, REST endpoints, frontend UI, and tests
+- Remove Labels settings page, BulkLabelsModal, label columns/badges from all list views
+- Clean up important_date/date_type residual references in PHP backend (reminders, iCal, CLI, REST)
+- Update AGENTS.md and developer documentation
 
 ### Out of Scope
 
@@ -643,4 +651,4 @@ No current milestone.
 | Demo banner uses amber background | High visibility without alarm, clear "this is not real" signal | ✓ Good |
 
 ---
-*Last updated: 2026-02-12 after v24.0 Demo Data milestone archived*
+*Last updated: 2026-02-12 after v24.1 Dead Feature Removal milestone started*

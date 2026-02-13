@@ -5,13 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-12)
 
 **Core value:** Club administrators can manage their members, teams, and important dates through a single integrated system
-**Current focus:** No active milestone — v24.0 Demo Data archived
+**Current focus:** v24.1 Dead Feature Removal — removing unused taxonomies and residual code
 
 ## Current Position
 
-No active milestone or phase.
-Last milestone: v24.0 Demo Data (shipped & archived 2026-02-12)
-Last activity: 2026-02-12 — Archived v24.0 milestone
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-12 — Milestone v24.1 started
 
 ## Performance Metrics
 
@@ -53,7 +54,7 @@ Cross-milestone patterns affecting future work:
 
 ### Pending Todos
 
-3 todo(s) in `.planning/todos/pending/`
+2 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
@@ -93,7 +94,7 @@ Cross-milestone patterns affecting future work:
 ## Session Continuity
 
 Last session: 2026-02-12
-Stopped at: Archived v24.0 Demo Data milestone
+Stopped at: Defining v24.1 requirements
 Resume file: None
 
 ---
