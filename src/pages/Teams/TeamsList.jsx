@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBulkUpdateTeams } from '@/hooks/useTeams';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import BulkLabelsModal from '@/components/BulkLabelsModal';
 import { getTeamName } from '@/utils/formatters';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
@@ -265,7 +264,6 @@ export default function TeamsList() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
-  const [showBulkLabelsModal, setShowBulkLabelsModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [editingRowId, setEditingRowId] = useState(null);
   const filterRef = useRef(null);
@@ -350,16 +348,6 @@ export default function TeamsList() {
       return response.data;
     },
   });
-
-  // Fetch team labels
-  const { data: teamLabelsData } = useQuery({
-    queryKey: ['team-labels'],
-    queryFn: async () => {
-      const response = await wpApi.getTeamLabels();
-      return response.data;
-    },
-  });
-  const teamLabels = teamLabelsData || [];
 
   // Fetch custom field definitions for list view columns
   const { data: customFields = [] } = useQuery({
@@ -745,16 +733,7 @@ export default function TeamsList() {
               {showBulkDropdown && (
                 <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
                   <div className="py-1">
-                    <button
-                      onClick={() => {
-                        setShowBulkDropdown(false);
-                        setShowBulkLabelsModal(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50"
-                    >
-                      <Tag className="w-4 h-4" />
-                      Labels beheren...
-                    </button>
+                    {/* Bulk actions placeholder - labels removed */}
                   </div>
                 </div>
               )}
@@ -796,33 +775,6 @@ export default function TeamsList() {
           onCancelEdit={handleCancelEdit}
         />
       )}
-
-      {/* Bulk Labels Modal */}
-      <BulkLabelsModal
-        isOpen={showBulkLabelsModal}
-        onClose={() => setShowBulkLabelsModal(false)}
-        selectedCount={selectedIds.size}
-        labels={teamLabels}
-        onSubmit={async (mode, labelIds) => {
-          setBulkActionLoading(true);
-          try {
-            await bulkUpdateMutation.mutateAsync({
-              ids: Array.from(selectedIds),
-              updates: {
-                labels: labelIds,
-                label_mode: mode
-              }
-            });
-            clearSelection();
-            setShowBulkLabelsModal(false);
-          } finally {
-            setBulkActionLoading(false);
-          }
-        }}
-        isLoading={bulkActionLoading}
-        entityName="team"
-        entityNamePlural="teams"
-      />
 
       </div>
     </PullToRefreshWrapper>

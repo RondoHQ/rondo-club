@@ -25,7 +25,6 @@ const VOG = lazy(() => import('@/pages/VOG/VOG'));
 const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
 const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
-const Labels = lazy(() => import('@/pages/Settings/Labels'));
 const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));
 const Login = lazy(() => import('@/pages/Login'));
@@ -257,7 +256,6 @@ const router = createBrowserRouter([
           { path: 'settings/:tab', element: <Settings /> },
           { path: 'settings/:tab/:subtab', element: <Settings /> },
           { path: 'settings/relationship-types', element: <RelationshipTypes /> },
-          { path: 'settings/labels', element: <Labels /> },
           { path: 'settings/custom-fields', element: <CustomFields /> },
           { path: 'settings/feedback', element: <FeedbackManagement /> },
 
