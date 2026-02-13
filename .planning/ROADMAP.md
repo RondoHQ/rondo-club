@@ -107,10 +107,11 @@ Plans:
   1. AGENTS.md no longer references removed taxonomies or labels feature
   2. Developer documentation reflects simplified data model (2 CPTs, not 3)
   3. Data model diagrams/tables show current state without removed features
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 177-01: TBD
+- [ ] 177-01-PLAN.md — Update AGENTS.md, bump version to 24.1.0, add changelog entry
+- [ ] 177-02-PLAN.md — Update developer docs site (data-model, REST API, architecture, reminders, iCal, people API)
 
 ## Progress
 
@@ -121,7 +122,7 @@ Phases execute in numeric order: 175 → 176 → 177
 |-------|-----------|----------------|--------|-----------|
 | 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 176. Frontend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
-| 177. Documentation Updates | v24.1 | 0/TBD | Not started | - |
+| 177. Documentation Updates | v24.1 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
