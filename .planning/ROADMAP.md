@@ -96,8 +96,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 176-01-PLAN.md — Remove Settings/Labels page, person_label/team_label API methods, and hook cleanup
-- [ ] 176-02-PLAN.md — Remove label UI from PeopleList, TeamsList, and PersonDetail
+- [ ] 176-01-PLAN.md — Remove label backend (commissie_label taxonomy), all label API methods, Settings/Labels page, BulkLabelsModal
+- [ ] 176-02-PLAN.md — Remove label UI from PeopleList, TeamsList, CommissiesList, and PersonDetail
 
 #### Phase 177: Documentation Updates
 **Goal**: Update documentation to reflect simplified data model
