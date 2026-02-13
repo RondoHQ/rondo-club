@@ -110,8 +110,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 177-01-PLAN.md — Update AGENTS.md, bump version to 24.1.0, add changelog entry
-- [ ] 177-02-PLAN.md — Update developer docs site (data-model, REST API, architecture, reminders, iCal, people API)
+- [x] 177-01-PLAN.md — Update AGENTS.md, bump version to 24.1.0, add changelog entry
+- [x] 177-02-PLAN.md — Update developer docs site (data-model, REST API, architecture, reminders, iCal, people API)
 
 ## Progress
 
@@ -122,8 +122,8 @@ Phases execute in numeric order: 175 → 176 → 177
 |-------|-----------|----------------|--------|-----------|
 | 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 176. Frontend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
-| 177. Documentation Updates | v24.1 | 0/2 | Not started | - |
+| 177. Documentation Updates | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-13 — Phase 176 Frontend Cleanup complete*
+*Last updated: 2026-02-13 — Phase 177 Documentation Updates complete*
