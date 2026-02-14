@@ -287,15 +287,17 @@ class Reminders {
 	public function get_upcoming_reminders( $days_ahead = 30 ) {
 		global $wpdb;
 
-		// Query people with birthdate meta
+		// Query people with birthdate meta, excluding former members
 		$people_with_birthdays = $wpdb->get_results(
 			"SELECT p.ID, p.post_title, pm.meta_value as birthdate
 			FROM {$wpdb->posts} p
 			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
 			WHERE p.post_type = 'person'
 			AND p.post_status = 'publish'
 			AND pm.meta_key = 'birthdate'
-			AND pm.meta_value != ''"
+			AND pm.meta_value != ''
+			AND (fm.meta_value IS NULL OR fm.meta_value != '1')"
 		);
 
 		$upcoming = [];
@@ -427,15 +429,17 @@ class Reminders {
 		// This is needed for cron jobs that run without a logged-in user
 		global $wpdb;
 
-		// Query people with birthdate meta
+		// Query people with birthdate meta, excluding former members
 		$people_with_birthdays = $wpdb->get_results(
 			"SELECT p.ID, p.post_title, pm.meta_value as birthdate
 			FROM {$wpdb->posts} p
 			INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
 			WHERE p.post_type = 'person'
 			AND p.post_status = 'publish'
 			AND pm.meta_key = 'birthdate'
-			AND pm.meta_value != ''"
+			AND pm.meta_value != ''
+			AND (fm.meta_value IS NULL OR fm.meta_value != '1')"
 		);
 
 		// Get todos for the user
