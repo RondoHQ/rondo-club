@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.2] - 2026-02-14
+
+### Changed
+- Feedback page filters (type, status, project) changed from segmented button groups to compact dropdown selects
+
 ## [25.1.1] - 2026-02-14
 
 ### Changed
