@@ -486,7 +486,13 @@ process_feedback_item() {
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     log "DEBUG" "Claude binary: $CLAUDE_BIN"
 
-    CLAUDE_OUTPUT=$(echo "$output" | "$CLAUDE_BIN" --print --dangerously-skip-permissions 2>&1)
+    # Write prompt to temp file to avoid pipe/echo issues with large prompts
+    local prompt_file=$(mktemp)
+    printf '%s' "$output" > "$prompt_file"
+    log "DEBUG" "Prompt written to $prompt_file ($(wc -c < "$prompt_file") bytes)"
+
+    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions -p "$(cat "$prompt_file")" 2>&1)
+    rm -f "$prompt_file"
     CLAUDE_EXIT=$?
 
     # Display Claude's output
@@ -605,7 +611,10 @@ Review this file and create a PR if you find confident improvements. If no chang
 
     # Run Claude
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
-    CLAUDE_OUTPUT=$(echo "$prompt" | "$CLAUDE_BIN" --print --dangerously-skip-permissions 2>&1)
+    local prompt_file=$(mktemp)
+    printf '%s' "$prompt" > "$prompt_file"
+    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions -p "$(cat "$prompt_file")" 2>&1)
+    rm -f "$prompt_file"
     CLAUDE_EXIT=$?
 
     echo "$CLAUDE_OUTPUT"
