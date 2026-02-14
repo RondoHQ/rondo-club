@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - "Binnenkort" tab on /vog page showing volunteers whose VOG expires within 30 days
 - `vog_expiring_within_days` filter parameter on filtered people API endpoint
+- Sportlink fields (KNVB ID, Type lid, Leeftijdsgroep, Lid sinds, Datum foto, Datum VOG, Is ouder, Huidig vrijwilliger, Financiële blokkade, FreeScout ID) available as column options on the /people page
 
 ## [25.0.1] - 2026-02-14
 
