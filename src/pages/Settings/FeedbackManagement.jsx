@@ -278,6 +278,9 @@ export default function FeedbackManagement() {
               <thead>
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                    ID
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Type
                   </th>
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
@@ -337,6 +340,9 @@ export default function FeedbackManagement() {
                       key={item.id}
                       className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}
                     >
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">
+                        #{item.id}
+                      </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <TypeBadge type={itemType} />
                       </td>
