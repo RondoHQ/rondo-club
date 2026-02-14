@@ -195,7 +195,7 @@ class Feedback extends Base {
 	 * Check if user can access a feedback post
 	 *
 	 * Permission callback for single-feedback operations.
-	 * Returns true if user is admin OR user owns the feedback post.
+	 * All logged-in users can view all feedback.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
 	 * @return bool True if user can access the feedback, false otherwise.
@@ -213,13 +213,7 @@ class Feedback extends Base {
 			return false;
 		}
 
-		// Admins can access all feedback
-		if ( current_user_can( 'manage_options' ) ) {
-			return true;
-		}
-
-		// Users can only access their own feedback
-		return (int) $feedback->post_author === get_current_user_id();
+		return true;
 	}
 
 	/**
@@ -229,21 +223,13 @@ class Feedback extends Base {
 	 * @return \WP_REST_Response Response containing feedback list with pagination headers.
 	 */
 	public function get_feedback_list( $request ) {
-		$current_user_id = get_current_user_id();
-		$is_admin        = current_user_can( 'manage_options' );
-
-		// Build query args
+		// Build query args — all logged-in users can see all feedback
 		$args = [
 			'post_type'      => 'rondo_feedback',
 			'post_status'    => 'publish',
 			'posts_per_page' => $request->get_param( 'per_page' ),
 			'paged'          => $request->get_param( 'page' ),
 		];
-
-		// Non-admins only see their own feedback
-		if ( ! $is_admin ) {
-			$args['author'] = $current_user_id;
-		}
 
 		// Add meta query filters
 		$meta_query = [];

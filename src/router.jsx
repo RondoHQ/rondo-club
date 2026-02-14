@@ -109,20 +109,6 @@ function FinancieelRoute({ children }) {
   );
 }
 
-function RestrictedRoute({ children }) {
-  // Restricted users (VOG or Fair Play without admin) cannot access
-  const checkAccess = (user) => {
-    const isRestricted = !user?.is_admin && (user?.can_access_vog || user?.can_access_fairplay);
-    return !isRestricted;
-  };
-
-  return (
-    <CapabilityRoute checkAccess={checkAccess}>
-      {children}
-    </CapabilityRoute>
-  );
-}
-
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
 
@@ -233,23 +219,9 @@ const router = createBrowserRouter([
           // Todos routes - accessible to all users (tasks are user-isolated at backend)
           { path: 'todos', element: <TodosList /> },
 
-          // Feedback routes - restricted from VOG/Fair Play users
-          {
-            path: 'feedback',
-            element: (
-              <RestrictedRoute>
-                <FeedbackList />
-              </RestrictedRoute>
-            ),
-          },
-          {
-            path: 'feedback/:id',
-            element: (
-              <RestrictedRoute>
-                <FeedbackDetail />
-              </RestrictedRoute>
-            ),
-          },
+          // Feedback routes - accessible to all users
+          { path: 'feedback', element: <FeedbackList /> },
+          { path: 'feedback/:id', element: <FeedbackDetail /> },
 
           // Settings routes
           { path: 'settings', element: <Settings /> },
