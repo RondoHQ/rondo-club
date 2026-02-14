@@ -655,6 +655,10 @@ merge_and_deploy() {
     log "INFO" "Merging PR #${pr_number} via squash"
     echo -e "${GREEN}Merging PR #${pr_number}...${NC}" >&2
 
+    # Update branch with latest main before merging
+    gh pr update-branch "$pr_number" --repo RondoHQ/rondo-club --rebase 2>/dev/null || \
+        log "WARN" "Could not update PR #${pr_number} branch (may already be up to date)"
+
     if ! gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch; then
         log "ERROR" "Failed to merge PR #${pr_number}"
         echo -e "${RED}Failed to merge PR #${pr_number}${NC}" >&2
