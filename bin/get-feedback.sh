@@ -310,6 +310,47 @@ update_feedback_meta() {
         "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" > /dev/null 2>&1
 }
 
+# Run Claude with a timeout (default 10 minutes)
+# Usage: run_claude <prompt_file> <output_file> [timeout_seconds]
+# Sets CLAUDE_EXIT and CLAUDE_OUTPUT globals
+run_claude() {
+    local prompt_file="$1"
+    local output_file="$2"
+    local timeout_secs="${3:-600}"
+
+    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1 &
+    local claude_pid=$!
+    local elapsed=0
+
+    while kill -0 "$claude_pid" 2>/dev/null; do
+        sleep 10
+        elapsed=$((elapsed + 10))
+        if [ "$elapsed" -ge "$timeout_secs" ]; then
+            log "ERROR" "Claude session timed out after ${timeout_secs}s (PID: $claude_pid) — killing"
+            kill "$claude_pid" 2>/dev/null
+            wait "$claude_pid" 2>/dev/null
+            CLAUDE_EXIT=124
+            CLAUDE_OUTPUT=$(cat "$output_file" 2>/dev/null)
+            rm -f "$prompt_file" "$output_file"
+            return 124
+        fi
+        # Log progress every 2 minutes
+        if [ $((elapsed % 120)) -eq 0 ]; then
+            log "INFO" "Claude session still running (${elapsed}s elapsed, PID: $claude_pid)"
+        fi
+    done
+
+    wait "$claude_pid"
+    CLAUDE_EXIT=$?
+    CLAUDE_OUTPUT=$(cat "$output_file" 2>/dev/null)
+    rm -f "$prompt_file" "$output_file"
+    local duration=$((elapsed))
+    log "INFO" "Claude session finished in ${duration}s (exit: $CLAUDE_EXIT)"
+    return $CLAUDE_EXIT
+}
+
 # Post a comment on a feedback item
 post_feedback_comment() {
     local feedback_id="$1"
@@ -507,17 +548,12 @@ process_feedback_item() {
     log "INFO" "Starting Claude Code session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
     echo -e "${YELLOW}Starting Claude Code session in ${project_dir}...${NC}" >&2
 
-    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
-
-    # Write prompt to temp file, capture output to temp file (avoids subshell/TTY issues)
+    # Write prompt to temp file, run Claude with timeout
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
     printf '%s' "$output" > "$prompt_file"
 
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
-    CLAUDE_EXIT=$?
-    CLAUDE_OUTPUT=$(cat "$output_file")
-    rm -f "$prompt_file" "$output_file"
+    run_claude "$prompt_file" "$output_file" 600
 
     # Display Claude's output
     echo "$CLAUDE_OUTPUT"
@@ -773,19 +809,16 @@ process_pr_reviews() {
         local prompt
         prompt=$(format_review_prompt "$pr_number" "$branch" "$copilot_comments")
 
-        # Run Claude
-        CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+        # Run Claude with timeout
         local prompt_file
         prompt_file=$(mktemp)
         local output_file
         output_file=$(mktemp)
         printf '%s' "$prompt" > "$prompt_file"
 
-        "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
-        local exit_code=$?
-        local output
-        output=$(cat "$output_file")
-        rm -f "$prompt_file" "$output_file"
+        run_claude "$prompt_file" "$output_file" 600
+        local exit_code=$CLAUDE_EXIT
+        local output="$CLAUDE_OUTPUT"
 
         echo "$output"
 
@@ -930,15 +963,12 @@ run_optimization() {
 
 Review this file and create a PR if you find confident improvements. If no changes are needed, just respond with STATUS: NO_CHANGES."
 
-    # Run Claude in the project directory
-    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+    # Run Claude in the project directory with timeout
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
     printf '%s' "$prompt" > "$prompt_file"
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
-    CLAUDE_EXIT=$?
-    CLAUDE_OUTPUT=$(cat "$output_file")
-    rm -f "$prompt_file" "$output_file"
+
+    run_claude "$prompt_file" "$output_file" 300
 
     echo "$CLAUDE_OUTPUT"
 
