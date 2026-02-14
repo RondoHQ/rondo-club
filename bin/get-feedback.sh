@@ -16,6 +16,10 @@
 #   bin/get-feedback.sh --help             # Show help
 #
 
+# Wrap entire script in a block so bash reads the whole file before executing.
+# This prevents corruption if git pull updates this script while it's running.
+{
+
 # Don't use set -e - we want to handle errors ourselves and log them
 
 # Get script directory and project root
@@ -1113,3 +1117,6 @@ while true; do
         break
     fi
 done  # End of main loop
+
+exit
+}
