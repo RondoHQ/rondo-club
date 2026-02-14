@@ -8,6 +8,7 @@ export const feedbackKeys = {
   list: (filters) => [...feedbackKeys.lists(), filters],
   details: () => [...feedbackKeys.all, 'detail'],
   detail: (id) => [...feedbackKeys.details(), id],
+  comments: (id) => [...feedbackKeys.all, 'comments', id],
 };
 
 /**
@@ -84,6 +85,39 @@ export function useDeleteFeedback() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: feedbackKeys.lists() });
       queryClient.invalidateQueries({ queryKey: feedbackKeys.details() });
+    },
+  });
+}
+
+/**
+ * Fetch comments for a feedback item.
+ * @param {number|string} id - Feedback post ID
+ * @returns {Object} TanStack Query result
+ */
+export function useFeedbackComments(id) {
+  return useQuery({
+    queryKey: feedbackKeys.comments(id),
+    queryFn: async () => {
+      const response = await prmApi.getFeedbackComments(id);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+}
+
+/**
+ * Create a comment on a feedback item.
+ * @returns {Object} TanStack Query mutation object with mutate({ id, content })
+ */
+export function useCreateFeedbackComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, content }) => prmApi.createFeedbackComment(id, { content, author_type: 'user' }),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.comments(id) });
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.lists() });
     },
   });
 }

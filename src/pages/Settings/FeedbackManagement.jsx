@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ShieldAlert, Loader2, ArrowUp, ArrowDown, Eye } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Loader2, ArrowUp, ArrowDown, Eye, ExternalLink } from 'lucide-react';
 import { useFeedbackList, useUpdateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
@@ -9,6 +9,7 @@ import { format } from '@/utils/dateFormat';
 const STATUS_OPTIONS = [
   { value: 'new', label: 'Nieuw', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
   { value: 'in_progress', label: 'In behandeling', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
+  { value: 'needs_info', label: 'Info nodig', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
   { value: 'resolved', label: 'Opgelost', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
   { value: 'declined', label: 'Afgewezen', color: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' },
 ];
@@ -266,6 +267,9 @@ export default function FeedbackManagement() {
                     onSort={handleSort}
                   />
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                    PR
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Acties
                   </th>
                 </tr>
@@ -321,6 +325,21 @@ export default function FeedbackManagement() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {item.date ? format(new Date(item.date), 'MMM d, yyyy') : '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {item.meta?.pr_url ? (
+                          <a
+                            href={item.meta.pr_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-electric-cyan hover:text-deep-midnight dark:hover:text-electric-cyan-light"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            PR
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <Link

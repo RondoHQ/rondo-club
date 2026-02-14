@@ -14,9 +14,10 @@ class CommentTypes {
 	/**
 	 * Registered comment types
 	 */
-	const TYPE_NOTE     = 'rondo_note';
-	const TYPE_ACTIVITY = 'rondo_activity';
-	const TYPE_EMAIL    = 'rondo_email';
+	const TYPE_NOTE             = 'rondo_note';
+	const TYPE_ACTIVITY         = 'rondo_activity';
+	const TYPE_EMAIL            = 'rondo_email';
+	const TYPE_FEEDBACK_COMMENT = 'rondo_feedback_comment';
 
 	public function __construct() {
 		// Register REST API routes for notes and activities
@@ -748,7 +749,7 @@ class CommentTypes {
 		// Exclude our custom types from regular comment displays
 		$query->query_vars['type__not_in'] = array_merge(
 			$existing_types,
-			[ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL ]
+			[ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL, self::TYPE_FEEDBACK_COMMENT ]
 		);
 	}
 
