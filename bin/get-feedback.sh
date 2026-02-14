@@ -1072,8 +1072,8 @@ while true; do
             echo -e "${GREEN}No more feedback items. Processed ${local_counter} items.${NC}" >&2
             log "INFO" "Loop completed - processed ${local_counter} items"
 
-            # Run optimization if enabled and no feedback was found
-            if [ "$OPTIMIZE_MODE" = true ]; then
+            # Only optimize when nothing else was worked on
+            if [ "$OPTIMIZE_MODE" = true ] && [ "$local_counter" -eq 0 ]; then
                 run_optimization
             fi
 
