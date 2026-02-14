@@ -2051,6 +2051,9 @@ class Api extends Base {
 		// Get awaiting todos count
 		$awaiting_todos_count = $this->count_awaiting_todos();
 
+		// Get total volunteers count
+		$total_volunteers = $this->count_volunteers();
+
 		// Recently contacted (people with most recent activities)
 		$recently_contacted = $this->get_recently_contacted_people( 5 );
 
@@ -2062,6 +2065,7 @@ class Api extends Base {
 					'total_commissies'     => $total_commissies,
 					'open_todos_count'     => $open_todos_count,
 					'awaiting_todos_count' => $awaiting_todos_count,
+					'total_volunteers'     => $total_volunteers,
 				],
 				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
 				'upcoming_reminders' => $this->limit_reminders_with_all_today( $upcoming_reminders, 5 ),
@@ -2203,6 +2207,43 @@ class Api extends Base {
 			'rondo_awaiting',
 			get_current_user_id()
 		) );
+	}
+
+	/**
+	 * Count current volunteers.
+	 *
+	 * Counts published person posts with huidig-vrijwilliger meta set to true,
+	 * excluding former members.
+	 */
+	private function count_volunteers() {
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'   => 'huidig-vrijwilliger',
+						'value' => '1',
+					],
+					[
+						'relation' => 'OR',
+						[
+							'key'     => 'former_member',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'     => 'former_member',
+							'value'   => '1',
+							'compare' => '!=',
+						],
+					],
+				],
+			]
+		);
+		return $query->found_posts;
 	}
 
 	/**
