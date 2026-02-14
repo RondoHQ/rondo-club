@@ -1169,7 +1169,7 @@ class Api extends Base {
 	 * Default visible columns for People list.
 	 * Name column is always visible and first - not included here.
 	 */
-	private const DEFAULT_LIST_COLUMNS = [ 'team', 'labels', 'modified' ];
+	private const DEFAULT_LIST_COLUMNS = [ 'team', 'modified' ];
 
 	/**
 	 * Core columns (non-custom-field columns).
@@ -1178,7 +1178,6 @@ class Api extends Base {
 		[ 'id' => 'email', 'label' => 'E-mail', 'type' => 'core' ],
 		[ 'id' => 'phone', 'label' => 'Telefoon', 'type' => 'core' ],
 		[ 'id' => 'team', 'label' => 'Team', 'type' => 'core' ],
-		[ 'id' => 'labels', 'label' => 'Labels', 'type' => 'core' ],
 		[ 'id' => 'modified', 'label' => 'Laatst gewijzigd', 'type' => 'core' ],
 	];
 
@@ -1320,10 +1319,16 @@ class Api extends Base {
 
 		// Get available columns for UI rendering
 		$available_columns = $this->get_available_columns_metadata();
+		$valid_column_ids  = $this->get_valid_column_ids();
+
+		// Filter out stale column IDs (e.g. removed features) from stored preferences
+		$visible_columns = array_values( array_intersect( $visible_columns, $valid_column_ids ) );
 
 		// Default column order if not set: use available_columns order (excluding name which is always first)
 		if ( empty( $column_order ) || ! is_array( $column_order ) ) {
 			$column_order = array_column( $available_columns, 'id' );
+		} else {
+			$column_order = array_values( array_intersect( $column_order, $valid_column_ids ) );
 		}
 
 		// Default column widths if not set or empty
@@ -1499,7 +1504,7 @@ class Api extends Base {
 	 */
 	private function get_valid_column_ids(): array {
 		// Core columns
-		$core = [ 'email', 'phone', 'team', 'labels', 'modified' ];
+		$core = [ 'email', 'phone', 'team', 'modified' ];
 
 		// Custom fields from ACF
 		$manager       = new \Rondo\CustomFields\Manager();
