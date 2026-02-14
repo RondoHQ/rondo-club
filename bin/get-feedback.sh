@@ -243,6 +243,12 @@ done
 if [ "$RUN_CLAUDE" = true ]; then
     check_lock
     create_lock
+
+    # Force back to a clean main before doing anything
+    cd "$PROJECT_ROOT"
+    git reset --hard HEAD 2>/dev/null
+    git checkout main 2>/dev/null
+    git pull --ff-only 2>/dev/null
 fi
 
 # Ensure we're on a clean main branch before starting
