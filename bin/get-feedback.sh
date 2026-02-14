@@ -788,12 +788,15 @@ process_pr_reviews() {
             # Reviewed but no inline comments — clean review, merge and deploy
             log "INFO" "PR #${pr_number} — Copilot review clean, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — Copilot review clean, merging and deploying${NC}" >&2
-            merge_and_deploy "$pr_number"
-            resolve_feedback_for_branch "$branch"
+            local merge_action="merge_failed"
+            if merge_and_deploy "$pr_number"; then
+                resolve_feedback_for_branch "$branch"
+                merge_action="merged"
+            fi
             local now
             now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
-                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": "merged"}]' \
+            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" --arg a "$merge_action" \
+                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": $a}]' \
                 "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
             continue
         fi
@@ -837,9 +840,12 @@ process_pr_reviews() {
         elif echo "$output" | grep -qi "SAFE_TO_MERGE:.*yes"; then
             log "INFO" "PR #${pr_number} — safe to merge, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — safe to merge, merging and deploying${NC}" >&2
-            merge_and_deploy "$pr_number"
-            resolve_feedback_for_branch "$branch"
-            action="merged"
+            if merge_and_deploy "$pr_number"; then
+                resolve_feedback_for_branch "$branch"
+                action="merged"
+            else
+                action="merge_failed"
+            fi
         else
             log "INFO" "PR #${pr_number} — not safe to auto-merge, assigning to jdevalk"
             echo -e "${YELLOW}PR #${pr_number} — assigning to jdevalk for review${NC}" >&2
