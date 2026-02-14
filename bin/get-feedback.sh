@@ -486,14 +486,14 @@ process_feedback_item() {
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     log "DEBUG" "Claude binary: $CLAUDE_BIN"
 
-    # Write prompt to temp file to avoid pipe/echo issues with large prompts
+    # Write prompt to temp file and use file redirection to avoid shell expansion issues
     local prompt_file=$(mktemp)
     printf '%s' "$output" > "$prompt_file"
     log "DEBUG" "Prompt written to $prompt_file ($(wc -c < "$prompt_file") bytes)"
 
-    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions -p "$(cat "$prompt_file")" 2>&1)
-    rm -f "$prompt_file"
+    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" 2>&1)
     CLAUDE_EXIT=$?
+    rm -f "$prompt_file"
 
     # Display Claude's output
     echo "$CLAUDE_OUTPUT"
@@ -613,9 +613,9 @@ Review this file and create a PR if you find confident improvements. If no chang
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     local prompt_file=$(mktemp)
     printf '%s' "$prompt" > "$prompt_file"
-    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions -p "$(cat "$prompt_file")" 2>&1)
-    rm -f "$prompt_file"
+    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" 2>&1)
     CLAUDE_EXIT=$?
+    rm -f "$prompt_file"
 
     echo "$CLAUDE_OUTPUT"
 
