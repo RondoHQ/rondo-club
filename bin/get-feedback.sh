@@ -654,6 +654,45 @@ resolve_feedback_for_branch() {
     fi
 }
 
+# Prepare a PR branch for merge by merging main into it and resolving conflicts
+# Uses Claude to resolve any merge conflicts
+prepare_branch_for_merge() {
+    local pr_number="$1"
+    local pr_branch="$2"
+
+    cd "$PROJECT_ROOT"
+    git fetch origin 2>/dev/null
+
+    # Check out the PR branch with latest from origin
+    git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
+    git reset --hard "origin/$pr_branch" 2>/dev/null
+
+    # Merge main into the PR branch — Claude resolves any conflicts
+    if ! git merge origin/main --no-edit 2>/dev/null; then
+        log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
+        local prompt_file=$(mktemp)
+        local output_file=$(mktemp)
+        printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason. After resolving, run npm run build to verify the frontend compiles." > "$prompt_file"
+
+        run_claude "$prompt_file" "$output_file" 300
+
+        if [ $CLAUDE_EXIT -ne 0 ]; then
+            log "ERROR" "Claude failed to resolve merge conflicts on PR #${pr_number}"
+            git merge --abort 2>/dev/null
+            git checkout main 2>/dev/null
+            return 1
+        fi
+    fi
+
+    if ! git push origin "$pr_branch" 2>&1; then
+        log "ERROR" "Failed to push branch $pr_branch for PR #${pr_number}"
+        git checkout main 2>/dev/null
+        return 1
+    fi
+    git checkout main 2>/dev/null
+    return 0
+}
+
 # Merge a PR via squash, pull main, and deploy
 merge_and_deploy() {
     local pr_number="$1"
@@ -666,40 +705,32 @@ merge_and_deploy() {
     pr_branch=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json headRefName -q '.headRefName' 2>/dev/null)
 
     if [ -n "$pr_branch" ]; then
-        # Update main and merge into the PR branch locally
-        cd "$PROJECT_ROOT"
-        git fetch origin main 2>/dev/null
-        git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
-        git pull --ff-only 2>/dev/null
-
-        if ! git merge origin/main --no-edit 2>/dev/null; then
-            # Conflicts — let Claude resolve them
-            log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
-            local prompt_file=$(mktemp)
-            local output_file=$(mktemp)
-            printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason. After resolving, run npm run build to verify the frontend compiles." > "$prompt_file"
-
-            run_claude "$prompt_file" "$output_file" 300
-
-            if [ $CLAUDE_EXIT -ne 0 ]; then
-                log "ERROR" "Claude failed to resolve merge conflicts on PR #${pr_number}"
-                git merge --abort 2>/dev/null
-                git checkout main 2>/dev/null
-                return 1
-            fi
-        fi
-
-        if ! git push origin "$pr_branch" 2>&1; then
-            log "ERROR" "Failed to push branch $pr_branch for PR #${pr_number}"
-            git checkout main 2>/dev/null
+        if ! prepare_branch_for_merge "$pr_number" "$pr_branch"; then
             return 1
         fi
-        git checkout main 2>/dev/null
+
+        # Give GitHub time to process the push and update mergeability
+        sleep 10
     fi
 
+    # Try to merge
     local merge_output
     merge_output=$(gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch 2>&1)
     local merge_exit=$?
+
+    # If merge fails and we have a branch, retry once after re-preparing
+    if [ $merge_exit -ne 0 ] && [ -n "$pr_branch" ]; then
+        log "WARN" "First merge attempt failed for PR #${pr_number}: $merge_output — retrying"
+
+        if ! prepare_branch_for_merge "$pr_number" "$pr_branch"; then
+            return 1
+        fi
+
+        sleep 15
+
+        merge_output=$(gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch 2>&1)
+        merge_exit=$?
+    fi
 
     if [ $merge_exit -ne 0 ]; then
         log "ERROR" "Failed to merge PR #${pr_number}: $merge_output"
