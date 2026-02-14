@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MessageSquare, Bug, Lightbulb, Plus, Clock, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
@@ -59,10 +59,49 @@ const projectColors = {
 export default function FeedbackList() {
   useDocumentTitle('Feedback');
 
-  // Filter state
-  const [typeFilter, setTypeFilter] = useState(''); // '' | 'bug' | 'feature_request'
-  const [statusFilter, setStatusFilter] = useState('open'); // 'open' | '' | 'new' | 'approved' | 'in_progress' | 'in_review' | 'resolved' | 'declined'
-  const [projectFilter, setProjectFilter] = useState(''); // '' | 'rondo-club' | 'rondo-sync' | 'website'
+  // URL-based filter state for persistence across refresh/navigation
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const typeFilter = searchParams.get('type') || '';
+  // Default to 'open' when no status param; 'all' in URL means show everything (empty string for API)
+  const rawStatus = searchParams.get('status');
+  const statusFilter = rawStatus === 'all' ? '' : (rawStatus || 'open');
+  const projectFilter = searchParams.get('project') || '';
+
+  const updateSearchParams = useCallback((updates) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === '' || value === undefined) {
+          next.delete(key);
+        } else {
+          next.set(key, String(value));
+        }
+      });
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const setTypeFilter = useCallback((value) => {
+    updateSearchParams({ type: value });
+  }, [updateSearchParams]);
+
+  const setStatusFilter = useCallback((value) => {
+    if (value === 'open') {
+      // 'open' is the default — remove param to keep URLs clean
+      updateSearchParams({ status: null });
+    } else if (value === '') {
+      // "All" statuses — use 'all' sentinel in URL since empty string would be removed
+      updateSearchParams({ status: 'all' });
+    } else {
+      updateSearchParams({ status: value });
+    }
+  }, [updateSearchParams]);
+
+  const setProjectFilter = useCallback((value) => {
+    updateSearchParams({ project: value });
+  }, [updateSearchParams]);
+
   const [showModal, setShowModal] = useState(false);
   const queryClient = useQueryClient();
 
