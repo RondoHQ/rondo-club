@@ -819,8 +819,8 @@ process_pr_reviews() {
 
     local reviews_processed=0
 
-    # Process each PR
-    echo "$prs" | jq -c '.[]' | while read -r pr; do
+    # Process each PR (use fd 3 so subprocesses don't consume the pipe)
+    while read -r pr <&3; do
         local pr_number
         pr_number=$(echo "$pr" | jq -r '.number')
         local branch
@@ -956,7 +956,7 @@ process_pr_reviews() {
         cd "$PROJECT_ROOT"
         git checkout main 2>/dev/null
         git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
-    done
+    done 3< <(echo "$prs" | jq -c '.[]')
 
     log "INFO" "PR review processing complete (${reviews_processed} reviews processed)"
 }
