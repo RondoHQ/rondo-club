@@ -9,7 +9,7 @@ import {
   CheckSquare,
   Square,
   MessageCircle,
-  Clock,
+  HeartHandshake,
   CalendarClock,
   ChevronLeft,
   ChevronRight,
@@ -30,8 +30,6 @@ import { format, addDays, subDays, isToday } from '@/utils/dateFormat.js';
 import { APP_NAME } from '@/constants/app.js';
 import {
   isTodoOverdue,
-  getAwaitingDays,
-  getAwaitingUrgencyClass,
   getReminderUrgencyClass,
 } from '@/utils/timeline.js';
 import PersonAvatar from '@/components/PersonAvatar.jsx';
@@ -182,49 +180,6 @@ function TodoCard({ todo, onToggle, onView }) {
           {isOverdue && <div className="text-red-600 dark:text-red-300">achterstallig</div>}
         </div>
       )}
-    </button>
-  );
-}
-
-/**
- * Todo card for awaiting response tasks.
- */
-function AwaitingTodoCard({ todo, onToggle, onView }) {
-  const days = getAwaitingDays(todo);
-  const urgencyClass = getAwaitingUrgencyClass(days);
-
-  return (
-    <button
-      type="button"
-      onClick={() => onView(todo)}
-      className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group text-left"
-    >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle(todo);
-        }}
-        className="mt-0.5 mr-3 flex-shrink-0"
-        title="Markeren als voltooid"
-      >
-        <CheckSquare className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-      </button>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{todo.content}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <PersonAvatar
-            thumbnail={todo.person_thumbnail}
-            name={todo.person_name}
-            size="xs"
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{todo.person_name}</span>
-        </div>
-      </div>
-      <div className={`ml-3 text-xs px-2 py-1 rounded-full flex items-center gap-1 ${urgencyClass}`}>
-        <Clock className="w-3 h-3" />
-        {days === 0 ? 'Vandaag' : `${days}d`}
-      </div>
     </button>
   );
 }
@@ -470,7 +425,7 @@ function StatsRow({ stats }) {
       ) : (
         <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
       )}
-      <StatCard title="In afwachting" value={stats?.awaiting_todos_count || 0} icon={Clock} href="/todos?status=awaiting" />
+      <StatCard title="Vrijwilligers" value={stats?.total_volunteers || 0} icon={HeartHandshake} href="/people?vrijwilliger=1" />
     </div>
   );
 }
@@ -478,7 +433,6 @@ function StatsRow({ stats }) {
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
   const { data: openTodos } = useTodos('open');
-  const { data: awaitingTodos } = useTodos('awaiting');
   const { data: dashboardSettings } = useDashboardSettings();
   const updateDashboardSettings = useUpdateDashboardSettings();
   const queryClient = useQueryClient();
@@ -597,7 +551,6 @@ export default function Dashboard() {
 
   // Limit todos for dashboard display
   const dashboardTodos = openTodos?.slice(0, 5) || [];
-  const dashboardAwaitingTodos = awaitingTodos?.slice(0, 5) || [];
 
   // Meeting card header actions
   const meetingsHeaderActions = (
@@ -656,27 +609,6 @@ export default function Dashboard() {
         {dashboardTodos.length > 0 &&
           dashboardTodos.map((todo) => (
             <TodoCard
-              key={todo.id}
-              todo={todo}
-              onToggle={todoCompletion.handleToggleTodo}
-              onView={todoCompletion.handleViewTodo}
-            />
-          ))}
-      </DashboardCard>
-    ),
-
-    awaiting: () => (
-      <DashboardCard
-        key="awaiting"
-        title="Openstaand"
-        icon={Clock}
-        count={awaitingTodos?.length}
-        linkTo="/todos?status=awaiting"
-        emptyMessage="Geen openstaande reacties"
-      >
-        {dashboardAwaitingTodos.length > 0 &&
-          dashboardAwaitingTodos.map((todo) => (
-            <AwaitingTodoCard
               key={todo.id}
               todo={todo}
               onToggle={todoCompletion.handleToggleTodo}

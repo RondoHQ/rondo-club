@@ -18,7 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show feedback ID in feedback list and admin feedback management table
 
 ### Changed
+- Replace "In afwachting" stats card on dashboard with "Vrijwilligers" count card
 - Dashboard birthday card now shows all of today's birthdays even when there are more than 5
+
+### Removed
+- Remove "Openstaand" (awaiting todos) dashboard card from customizable cards
 
 ## [25.0.1] - 2026-02-14
 
