@@ -99,9 +99,13 @@ export function useCurrentSeason() {
  */
 export function useDisciplineCasesCount() {
   const { data: currentSeason, isLoading: isLoadingSeason } = useCurrentSeason();
+
+  // Wait until the season query has settled (loaded or errored), then fetch cases.
+  // If no current season is configured, fetch all cases (seizoen: null).
+  const seasonResolved = !isLoadingSeason;
   const { data: cases, isLoading: isLoadingCases } = useDisciplineCases({
     seizoen: currentSeason?.id || null,
-    enabled: !!currentSeason?.id,
+    enabled: seasonResolved,
   });
 
   return {
