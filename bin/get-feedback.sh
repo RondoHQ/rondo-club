@@ -1190,5 +1190,6 @@ while true; do
     fi
 done  # End of main loop
 
+log "INFO" "=== Script finished (PID: $$) ==="
 exit
 }
