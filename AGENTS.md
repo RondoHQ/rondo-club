@@ -22,7 +22,7 @@ npm run lint     # ESLint check (max-warnings: 0)
 npm run preview  # Preview production build
 ```
 
-**Important:** Always run `npm run build` after making changes to the frontend to ensure production assets are updated.
+**Important:** The deploy script (`bin/deploy.sh`) runs `npm run build` automatically before syncing. You do not need to build separately before deploying. However, when creating PRs, run `npm run build` to verify the frontend compiles before committing.
 
 ## Development Setup
 
