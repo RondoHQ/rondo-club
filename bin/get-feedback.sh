@@ -323,13 +323,14 @@ update_feedback_meta() {
 }
 
 # Run Claude with a timeout (default 10 minutes)
-# Usage: run_claude <prompt_file> <output_file> [timeout_seconds] [model]
+# Usage: run_claude <prompt_file> <output_file> [timeout_seconds] [model] [extra_flags]
 # Sets CLAUDE_EXIT and CLAUDE_OUTPUT globals
 run_claude() {
     local prompt_file="$1"
     local output_file="$2"
     local timeout_secs="${3:-600}"
     local model="${4:-}"
+    local extra_flags="${5:-}"
 
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
 
@@ -339,7 +340,13 @@ run_claude() {
         log "INFO" "Using model: $model"
     fi
 
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions "${model_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
+    local extra_args=()
+    if [ -n "$extra_flags" ]; then
+        read -ra extra_args <<< "$extra_flags"
+        log "INFO" "Extra flags: $extra_flags"
+    fi
+
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions "${model_args[@]}" "${extra_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
     local claude_pid=$!
     local elapsed=0
 
@@ -571,13 +578,43 @@ process_feedback_item() {
     log "INFO" "Starting planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
     echo -e "${YELLOW}Phase 1/2: Planning with Sonnet...${NC}" >&2
 
+    # Load codebase map if available
+    local codebase_map=""
+    local codebase_map_file="$PROJECT_ROOT/.claude/codebase-map.md"
+    if [ -f "$codebase_map_file" ]; then
+        codebase_map=$(cat "$codebase_map_file")
+        log "INFO" "Loaded codebase map ($(wc -l < "$codebase_map_file") lines)"
+    fi
+
     local plan_prompt="${output}
 
 ---
+"
 
+    # Inject codebase map if available
+    if [ -n "$codebase_map" ]; then
+        plan_prompt+="
+## Codebase Reference
+
+${codebase_map}
+
+---
+"
+    fi
+
+    plan_prompt+="
 ## YOUR TASK: Create an Implementation Plan
 
-You are in PLANNING MODE. Do NOT make any code changes, do NOT create branches, do NOT commit anything.
+You are in PLANNING MODE. Do NOT make any code changes, do NOT create branches, do NOT commit anything."
+
+    # Add exploration guidance when codebase map is available
+    if [ -n "$codebase_map" ]; then
+        plan_prompt+="
+
+A codebase map is provided above — use it to identify relevant files instead of exploring the codebase. Only read files you need to understand for this specific change."
+    fi
+
+    plan_prompt+="
 
 Instead, analyze the feedback and the codebase to produce a detailed implementation plan. Your plan should include:
 
@@ -601,7 +638,7 @@ STATUS: DECLINED"
     local output_file=$(mktemp)
     printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600 "sonnet"
+    run_claude "$prompt_file" "$output_file" 600 "sonnet" "--effort low"
 
     local plan_output="$CLAUDE_OUTPUT"
     local plan_exit=$CLAUDE_EXIT
