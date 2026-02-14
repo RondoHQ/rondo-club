@@ -1579,7 +1579,7 @@ while true; do
     fi
 
     # Fetch feedback
-    local filter_desc="status=$STATUS"
+    filter_desc="status=$STATUS"
     [ -n "$TYPE" ] && filter_desc="${filter_desc}, type=$TYPE"
     log "INFO" "Fetching feedback from API ($filter_desc)"
     echo -e "${YELLOW}Fetching feedback from Rondo Club...${NC}" >&2
