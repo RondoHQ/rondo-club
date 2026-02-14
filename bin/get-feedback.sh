@@ -295,7 +295,9 @@ update_feedback_meta() {
     local pr_url="$2"
     local branch="$3"
 
-    log "INFO" "Updating feedback #${feedback_id} meta: pr_url=${pr_url}, branch=${branch}"
+    local meta_desc="pr_url=${pr_url}"
+    [ -n "$branch" ] && meta_desc="${meta_desc}, branch=${branch}"
+    log "INFO" "Updating feedback #${feedback_id} meta: ${meta_desc}"
 
     local json_data="{}"
     [ -n "$pr_url" ] && json_data=$(echo "$json_data" | jq --arg url "$pr_url" '. + {pr_url: $url}')
