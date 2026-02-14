@@ -672,7 +672,7 @@ prepare_branch_for_merge() {
         log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
         local prompt_file=$(mktemp)
         local output_file=$(mktemp)
-        printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason. After resolving, run npm run build to verify the frontend compiles." > "$prompt_file"
+        printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason." > "$prompt_file"
 
         run_claude "$prompt_file" "$output_file" 300
 
