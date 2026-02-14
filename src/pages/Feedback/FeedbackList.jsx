@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Bug, Lightbulb, Plus, Clock } from 'lucide-react';
+import { MessageSquare, Bug, Lightbulb, Plus, Clock, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -61,7 +61,8 @@ export default function FeedbackList() {
 
   // Filter state
   const [typeFilter, setTypeFilter] = useState(''); // '' | 'bug' | 'feature_request'
-  const [statusFilter, setStatusFilter] = useState('open'); // 'open' | '' | 'new' | 'approved' | 'in_progress' | 'resolved' | 'declined'
+  const [statusFilter, setStatusFilter] = useState('open'); // 'open' | '' | 'new' | 'approved' | 'in_progress' | 'in_review' | 'resolved' | 'declined'
+  const [projectFilter, setProjectFilter] = useState(''); // '' | 'rondo-club' | 'rondo-sync' | 'website'
   const [showModal, setShowModal] = useState(false);
   const queryClient = useQueryClient();
 
@@ -69,6 +70,7 @@ export default function FeedbackList() {
   const { data: feedback, isLoading, error } = useFeedbackList({
     type: typeFilter || undefined,
     status: statusFilter || undefined,
+    project: projectFilter || undefined,
   });
   const createFeedback = useCreateFeedback();
 
@@ -207,6 +209,17 @@ export default function FeedbackList() {
             In Progress
           </button>
           <button
+            onClick={() => setStatusFilter('in_review')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-1 ${
+              statusFilter === 'in_review'
+                ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <Search className="w-3.5 h-3.5" />
+            In Review
+          </button>
+          <button
             onClick={() => setStatusFilter('resolved')}
             className={`px-3 py-1 text-sm rounded-md transition-colors ${
               statusFilter === 'resolved'
@@ -216,6 +229,33 @@ export default function FeedbackList() {
           >
             Resolved
           </button>
+        </div>
+
+        {/* Project filter */}
+        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
+          <button
+            onClick={() => setProjectFilter('')}
+            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+              projectFilter === ''
+                ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            All Projects
+          </button>
+          {Object.entries(projectLabels).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setProjectFilter(key)}
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                projectFilter === key
+                  ? `${projectColors[key]}`
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 

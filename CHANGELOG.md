@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.0] - 2026-02-14
+
+### Added
+- "In Review" status filter on Feedback page
+- Project filter on Feedback page (Rondo Club, Rondo Sync, Website)
+
 ## [25.0.1] - 2026-02-14
 
 ### Fixed
