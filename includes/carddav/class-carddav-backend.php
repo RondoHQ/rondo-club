@@ -98,14 +98,18 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	}
 
 	/**
-	 * Log a change made outside of CardDAV (via web UI or REST API)
+	 * Log a change for sync tracking
+	 *
+	 * Used both for changes made via CardDAV and changes made externally
+	 * (web UI, REST API) that need to be synced to CardDAV clients.
 	 *
 	 * @param int $user_id User/address book ID
 	 * @param int $person_id Person post ID
 	 * @param string $type Change type (added, modified, deleted)
 	 * @param string|null $uri Optional URI for deleted cards
+	 * @param string $source Source of the change (carddav, external)
 	 */
-	public static function log_external_change( $user_id, $person_id, $type, $uri = null ) {
+	public static function log_external_change( $user_id, $person_id, $type, $uri = null, $source = 'external' ) {
 		$changes = get_option( self::CHANGE_LOG_OPTION, [] );
 
 		if ( ! isset( $changes[ $user_id ] ) ) {
@@ -127,7 +131,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		$tokens[ $user_id ] = time();
 		update_option( self::SYNC_TOKEN_OPTION, $tokens );
 
-		error_log( "CardDAV: Logged external change - user {$user_id}, person {$person_id}, type: {$type}" );
+		error_log( "CardDAV: Logged {$source} change - user {$user_id}, person {$person_id}, type: {$type}" );
 	}
 
 	/**
@@ -359,7 +363,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			return null;
 		}
 
-		$this->updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name );
+		$this->updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name, true );
 
 		// Store the client's URI for future lookups
 		update_post_meta( $post_id, '_carddav_uri', $cardUri );
@@ -674,7 +678,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 */
 	private function logChange( $addressBookId, $personId, $type, $uri = null ) {
 		$stored_uri = $uri ?: $this->getUriForPerson( $personId );
-		self::log_external_change( $addressBookId, $personId, $type, $stored_uri );
+		self::log_external_change( $addressBookId, $personId, $type, $stored_uri, 'carddav' );
 	}
 
 	/**
@@ -797,20 +801,28 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	/**
 	 * Update ACF fields from parsed vCard data
 	 *
+	 * On create, only writes non-empty optional fields to avoid unnecessary DB writes
+	 * (VCard::parse() initializes all fields with empty defaults).
+	 * On update, writes all fields including empty ones to allow clearing values.
+	 *
 	 * @param int $post_id Person post ID
 	 * @param array $parsed Parsed vCard data
 	 * @param string $first_name First name
 	 * @param string $infix Name infix
 	 * @param string $last_name Last name
+	 * @param bool $is_create Whether this is a new card
 	 */
-	private function updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name ) {
+	private function updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name, $is_create = false ) {
 		update_field( 'first_name', $first_name, $post_id );
-		update_field( 'infix', $infix, $post_id );
 		update_field( 'last_name', $last_name, $post_id );
+
+		if ( ! $is_create || ! empty( $infix ) ) {
+			update_field( 'infix', $infix, $post_id );
+		}
 
 		$optional_fields = [ 'nickname', 'gender', 'pronouns', 'contact_info', 'addresses' ];
 		foreach ( $optional_fields as $field ) {
-			if ( isset( $parsed[ $field ] ) ) {
+			if ( $is_create ? ! empty( $parsed[ $field ] ) : isset( $parsed[ $field ] ) ) {
 				update_field( $field, $parsed[ $field ], $post_id );
 			}
 		}
