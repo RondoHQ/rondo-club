@@ -808,7 +808,7 @@ process_pr_reviews() {
 
     # Get open PRs
     local prs
-    prs=$(gh pr list --repo RondoHQ/rondo-club --json number,headRefName,title --state open 2>/dev/null)
+    prs=$(gh pr list --repo RondoHQ/rondo-club --json number,headRefName,title,createdAt --state open 2>/dev/null | jq 'sort_by(.createdAt)')
     if [ $? -ne 0 ] || [ -z "$prs" ]; then
         log "WARN" "Failed to list PRs from GitHub"
         return 0
