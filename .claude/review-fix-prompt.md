@@ -38,19 +38,35 @@ You have been given a PR branch with inline review comments to evaluate and addr
 
 ## Status Output
 
-End your response with EXACTLY ONE of these:
+End your response with EXACTLY ONE of these blocks:
 
 ### If you made fixes:
 ```
 STATUS: FIXED
+SAFE_TO_MERGE: yes/no
 SUMMARY: Brief description of what was fixed and what was skipped
 ```
 
 ### If no comments were worth addressing:
 ```
 STATUS: NO_CHANGES
+SAFE_TO_MERGE: yes/no
 SUMMARY: Brief explanation of why each comment was skipped
 ```
+
+## SAFE_TO_MERGE Criteria
+
+Set `SAFE_TO_MERGE: yes` when ALL of these are true:
+- Changes are small and focused (few files, few lines changed)
+- No behavioral changes beyond what was explicitly requested in the original feedback
+- Code follows existing patterns in the codebase
+- Build passes (`npm run build` succeeds)
+
+Set `SAFE_TO_MERGE: no` when ANY of these are true:
+- Changes touch many files or are architecturally significant
+- You're unsure about the correctness of a fix
+- The build fails or you couldn't verify it
+- Changes affect security, authentication, or data integrity
 
 ## Context
 
