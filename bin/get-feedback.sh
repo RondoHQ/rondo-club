@@ -243,6 +243,12 @@ done
 if [ "$RUN_CLAUDE" = true ]; then
     check_lock
     create_lock
+
+    # Force back to a clean main before doing anything
+    cd "$PROJECT_ROOT"
+    git reset --hard HEAD 2>/dev/null
+    git checkout main 2>/dev/null
+    git pull --ff-only 2>/dev/null
 fi
 
 # Ensure we're on a clean main branch before starting
@@ -655,6 +661,38 @@ merge_and_deploy() {
     log "INFO" "Merging PR #${pr_number} via squash"
     echo -e "${GREEN}Merging PR #${pr_number}...${NC}" >&2
 
+    # Get the branch name for this PR
+    local pr_branch
+    pr_branch=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json headRefName -q '.headRefName' 2>/dev/null)
+
+    if [ -n "$pr_branch" ]; then
+        # Update main and merge into the PR branch locally
+        cd "$PROJECT_ROOT"
+        git fetch origin main 2>/dev/null
+        git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
+        git pull --ff-only 2>/dev/null
+
+        if ! git merge origin/main --no-edit 2>/dev/null; then
+            # Conflicts — let Claude resolve them
+            log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
+            local prompt_file=$(mktemp)
+            local output_file=$(mktemp)
+            printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason. After resolving, run npm run build to verify the frontend compiles." > "$prompt_file"
+
+            run_claude "$prompt_file" "$output_file" 300
+
+            if [ $CLAUDE_EXIT -ne 0 ]; then
+                log "ERROR" "Claude failed to resolve merge conflicts on PR #${pr_number}"
+                git merge --abort 2>/dev/null
+                git checkout main 2>/dev/null
+                return 1
+            fi
+        fi
+
+        git push origin "$pr_branch" 2>/dev/null
+        git checkout main 2>/dev/null
+    fi
+
     if ! gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch; then
         log "ERROR" "Failed to merge PR #${pr_number}"
         echo -e "${RED}Failed to merge PR #${pr_number}${NC}" >&2
@@ -784,12 +822,15 @@ process_pr_reviews() {
             # Reviewed but no inline comments — clean review, merge and deploy
             log "INFO" "PR #${pr_number} — Copilot review clean, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — Copilot review clean, merging and deploying${NC}" >&2
-            merge_and_deploy "$pr_number"
-            resolve_feedback_for_branch "$branch"
+            local merge_action="merge_failed"
+            if merge_and_deploy "$pr_number"; then
+                resolve_feedback_for_branch "$branch"
+                merge_action="merged"
+            fi
             local now
             now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
-                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": "merged"}]' \
+            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" --arg a "$merge_action" \
+                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": $a}]' \
                 "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
             continue
         fi
@@ -833,9 +874,12 @@ process_pr_reviews() {
         elif echo "$output" | grep -qi "SAFE_TO_MERGE:.*yes"; then
             log "INFO" "PR #${pr_number} — safe to merge, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — safe to merge, merging and deploying${NC}" >&2
-            merge_and_deploy "$pr_number"
-            resolve_feedback_for_branch "$branch"
-            action="merged"
+            if merge_and_deploy "$pr_number"; then
+                resolve_feedback_for_branch "$branch"
+                action="merged"
+            else
+                action="merge_failed"
+            fi
         else
             log "INFO" "PR #${pr_number} — not safe to auto-merge, assigning to jdevalk"
             echo -e "${YELLOW}PR #${pr_number} — assigning to jdevalk for review${NC}" >&2
@@ -992,10 +1036,12 @@ Review this file and create a PR if you find confident improvements. If no chang
     local tracker_key="${target_project}:${target_file}"
     local file_commit=$(cd "$target_dir" && git log -1 --format=%H -- "$target_file" 2>/dev/null)
     if [ "$created_pr" = true ]; then
+        log "INFO" "Optimization created PR for: \"${target_project}:${target_file}\""
         jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
             '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     else
+        log "INFO" "No optimizations found for: \"${target_project}:${target_file}\""
         jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
             '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
@@ -1150,5 +1196,6 @@ while true; do
     fi
 done  # End of main loop
 
+log "INFO" "=== Script finished (PID: $$) ==="
 exit
 }
