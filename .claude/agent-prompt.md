@@ -50,10 +50,24 @@ STATUS: DECLINED
 
 If you cannot determine a status, do NOT include a status line — the item will remain in the queue.
 
+## Multi-Repo Support
+
+You may be processing feedback for different projects. Your working directory is already set to the correct project repo. Check which project you're in and adapt accordingly:
+
+| Project | GitHub Repo | Tech Stack | Build Command |
+|---------|------------|------------|---------------|
+| **rondo-club** | `RondoHQ/rondo-club` | WordPress theme (PHP + React/Vite) | `npm run build` |
+| **rondo-sync** | `RondoHQ/rondo-sync` | Node.js CLI | (no build step) |
+| **website** | `RondoHQ/website` | Astro static site | `npm run build` |
+
+- The feedback header includes a `**Project:**` field telling you which project this is for
+- Your branch naming, commits, and PR should all be within the current repo
+- For rondo-club: always run `npm run build` before committing frontend changes
+- For rondo-sync: no build step needed, just ensure code runs correctly
+- For website: run `npm run build` to verify the Astro site compiles
+- Each repo has its own CLAUDE.md with project-specific instructions — read it before making changes
+
 ## Context
 
-- GitHub repo: `RondoHQ/rondo-club`
 - Production URL: https://rondo.svawc.nl
-- Tech stack: WordPress theme with PHP backend + React/Vite frontend
-- Build command: `npm run build` (from project root)
 - The CLAUDE.md and AGENTS.md files in the repo root contain detailed codebase documentation

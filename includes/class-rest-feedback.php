@@ -131,12 +131,23 @@ class Feedback extends Base {
 	 *
 	 * @return array Query parameter definitions.
 	 */
+	/**
+	 * Allowed project values.
+	 */
+	private const ALLOWED_PROJECTS = [ 'rondo-club', 'rondo-sync', 'website' ];
+
 	private function get_list_args() {
 		return [
 			'type'     => [
 				'default'           => '',
 				'validate_callback' => function ( $param ) {
 					return empty( $param ) || in_array( $param, [ 'bug', 'feature_request' ], true );
+				},
+			],
+			'project'  => [
+				'default'           => '',
+				'validate_callback' => function ( $param ) {
+					return empty( $param ) || in_array( $param, self::ALLOWED_PROJECTS, true );
 				},
 			],
 			'status'   => [
@@ -273,6 +284,15 @@ class Feedback extends Base {
 			];
 		}
 
+		$project = $request->get_param( 'project' );
+		if ( ! empty( $project ) ) {
+			$meta_query[] = [
+				'key'     => '_feedback_project',
+				'value'   => $project,
+				'compare' => '=',
+			];
+		}
+
 		if ( ! empty( $meta_query ) ) {
 			$args['meta_query'] = $meta_query;
 		}
@@ -360,6 +380,14 @@ class Feedback extends Base {
 
 		// Save ACF fields
 		update_field( 'feedback_type', $feedback_type, $post_id );
+
+		// Save project (post meta, defaults to rondo-club)
+		$project = $request->get_param( 'project' );
+		if ( ! empty( $project ) && in_array( $project, self::ALLOWED_PROJECTS, true ) ) {
+			update_post_meta( $post_id, '_feedback_project', $project );
+		} else {
+			update_post_meta( $post_id, '_feedback_project', 'rondo-club' );
+		}
 
 		// Determine default status: admins get 'approved', regular users get 'new'
 		$default_status = current_user_can( 'manage_options' ) ? 'approved' : 'new';
@@ -581,6 +609,20 @@ class Feedback extends Base {
 			update_field( 'attachments', $attachment_ids, $feedback_id );
 		}
 
+		// Project meta
+		$project = $request->get_param( 'project' );
+		if ( $project !== null ) {
+			if ( in_array( $project, self::ALLOWED_PROJECTS, true ) ) {
+				update_post_meta( $feedback_id, '_feedback_project', $project );
+			} else {
+				return new \WP_Error(
+					'rest_invalid_param',
+					__( 'Invalid project.', 'rondo' ),
+					[ 'status' => 400, 'params' => [ 'project' => 'Must be "rondo-club", "rondo-sync", or "website"' ] ]
+				);
+			}
+		}
+
 		// Agent meta fields (pr_url, agent_branch)
 		$pr_url = $request->get_param( 'pr_url' );
 		if ( $pr_url !== null ) {
@@ -787,6 +829,7 @@ class Feedback extends Base {
 				'expected_behavior'  => $this->sanitize_text( get_field( 'expected_behavior', $post->ID ) ?: '' ),
 				'actual_behavior'    => $this->sanitize_text( get_field( 'actual_behavior', $post->ID ) ?: '' ),
 				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
+				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
 				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
 				'attachments'        => $attachments,

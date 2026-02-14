@@ -40,6 +40,20 @@ const typeLabels = {
   feature_request: 'Feature Request',
 };
 
+// Project display labels
+const projectLabels = {
+  'rondo-club': 'Rondo Club',
+  'rondo-sync': 'Rondo Sync',
+  'website': 'Website',
+};
+
+// Project badge colors
+const projectColors = {
+  'rondo-club': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  'rondo-sync': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
+  'website': 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+};
+
 export default function FeedbackList() {
   useDocumentTitle('Feedback');
 
@@ -235,6 +249,12 @@ export default function FeedbackList() {
                     )}
                     {typeLabels[item.meta.feedback_type]}
                   </span>
+                  {/* Project badge (only show for non-default) */}
+                  {item.meta.project && item.meta.project !== 'rondo-club' && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${projectColors[item.meta.project] || ''}`}>
+                      {projectLabels[item.meta.project] || item.meta.project}
+                    </span>
+                  )}
                   {/* Status badge */}
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[item.meta.status]}`}>
                     {statusLabels[item.meta.status]}
