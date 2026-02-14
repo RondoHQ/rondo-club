@@ -305,14 +305,26 @@ class CustomFields extends WP_REST_Controller {
 		if ( 'person' === $post_type ) {
 			$sportlink_fields = \Rondo\REST\Api::get_sportlink_fields();
 			foreach ( $sportlink_fields as $field ) {
-				$metadata[] = array(
+				$entry = array(
 					'key'            => $field['id'],
 					'name'           => $field['id'],
 					'label'          => $field['label'],
 					'type'           => $field['type'],
 					'instructions'   => '',
 					'editable_in_ui' => false,
+					'source'         => 'sportlink',
 				);
+
+				// Include localized on/off labels for true_false fields.
+				if ( 'true_false' === $field['type'] ) {
+					$acf_field = acf_get_field( $field['id'] );
+					if ( $acf_field ) {
+						$entry['ui_on_text']  = $acf_field['ui_on_text'] ?? '';
+						$entry['ui_off_text'] = $acf_field['ui_off_text'] ?? '';
+					}
+				}
+
+				$metadata[] = $entry;
 			}
 		}
 
