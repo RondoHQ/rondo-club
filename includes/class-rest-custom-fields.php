@@ -301,6 +301,21 @@ class CustomFields extends WP_REST_Controller {
 			$fields
 		);
 
+		// Add Sportlink fields for person post type (read-only, synced from external system).
+		if ( 'person' === $post_type ) {
+			$sportlink_fields = \Rondo\REST\Api::get_sportlink_fields();
+			foreach ( $sportlink_fields as $field ) {
+				$metadata[] = array(
+					'key'            => $field['id'],
+					'name'           => $field['id'],
+					'label'          => $field['label'],
+					'type'           => $field['type'],
+					'instructions'   => '',
+					'editable_in_ui' => false,
+				);
+			}
+		}
+
 		return rest_ensure_response( $metadata );
 	}
 
