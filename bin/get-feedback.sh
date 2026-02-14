@@ -832,20 +832,28 @@ run_optimization() {
     echo -e "${YELLOW}No feedback items. Running code optimization...${NC}" >&2
 
     local tracker="$PROJECT_ROOT/logs/optimization-tracker.json"
-    local daily_limit=10
+    local daily_run_limit=25
+    local daily_pr_limit=10
 
     # Initialize tracker if needed
     if [ ! -f "$tracker" ]; then
-        echo '{"reviewed_files": {}, "last_run": null, "daily_runs": {}}' > "$tracker"
+        echo '{"reviewed_files": {}, "last_run": null, "daily_runs": {}, "daily_prs": {}}' > "$tracker"
     fi
 
-    # Check daily limit
+    # Check daily limits
     local today=$(date +%Y-%m-%d)
-    local today_count=$(jq -r --arg d "$today" '.daily_runs[$d] // 0' "$tracker")
+    local today_runs=$(jq -r --arg d "$today" '.daily_runs[$d] // 0' "$tracker")
+    local today_prs=$(jq -r --arg d "$today" '.daily_prs[$d] // 0' "$tracker")
 
-    if [ "$today_count" -ge "$daily_limit" ]; then
-        log "INFO" "Daily optimization limit reached ($today_count/$daily_limit) — skipping"
-        echo -e "${GREEN}Daily optimization limit reached ($today_count/$daily_limit). Skipping.${NC}" >&2
+    if [ "$today_runs" -ge "$daily_run_limit" ]; then
+        log "INFO" "Daily optimization run limit reached ($today_runs/$daily_run_limit) — skipping"
+        echo -e "${GREEN}Daily optimization run limit reached ($today_runs/$daily_run_limit). Skipping.${NC}" >&2
+        return 0
+    fi
+
+    if [ "$today_prs" -ge "$daily_pr_limit" ]; then
+        log "INFO" "Daily optimization PR limit reached ($today_prs/$daily_pr_limit) — skipping"
+        echo -e "${GREEN}Daily optimization PR limit reached ($today_prs/$daily_pr_limit). Skipping.${NC}" >&2
         return 0
     fi
 
@@ -934,9 +942,11 @@ Review this file and create a PR if you find confident improvements. If no chang
 
     echo "$CLAUDE_OUTPUT"
 
-    # Request Copilot review if a PR was created
+    # Request Copilot review if a PR was created and increment PR counter
+    local created_pr=false
     local opt_pr_url=$(echo "$CLAUDE_OUTPUT" | grep -oE 'https://github.com/[^ ]*pull/[0-9]+' | head -1)
     if [ -n "$opt_pr_url" ]; then
+        created_pr=true
         local opt_pr_number=$(echo "$opt_pr_url" | grep -oE '[0-9]+$')
         if [ -n "$opt_pr_number" ]; then
             log "INFO" "Requesting Copilot review for optimization PR #${opt_pr_number}"
@@ -944,12 +954,18 @@ Review this file and create a PR if you find confident improvements. If no chang
         fi
     fi
 
-    # Mark file as reviewed and increment daily counter
+    # Mark file as reviewed and increment daily counters
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local tracker_key="${target_project}:${target_file}"
-    jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
-        '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
-        "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+    if [ "$created_pr" = true ]; then
+        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
+            "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+    else
+        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
+            "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+    fi
 
     # Return to main in project dir, then back to rondo-club
     cd "$target_dir"
