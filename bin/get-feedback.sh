@@ -8,7 +8,7 @@
 #   bin/get-feedback.sh                    # Get oldest approved feedback item
 #   bin/get-feedback.sh --run              # Fetch and process with Claude Code
 #   bin/get-feedback.sh --loop             # Process all items then optionally optimize
-#   bin/get-feedback.sh --loop --optimize  # Process all items, then optimize idle files
+#   bin/get-feedback.sh --loop --optimize  # Process all items, review PRs, then optimize
 #   bin/get-feedback.sh --status=new       # Filter by status
 #   bin/get-feedback.sh --type=bug         # Filter by type (bug/feature_request)
 #   bin/get-feedback.sh --id=123           # Get specific feedback item
@@ -586,6 +586,185 @@ OPTIMIZATION_PROJECTS=(
     "website:$(dirname "$PROJECT_ROOT")/website"
 )
 
+# Format review comments into a prompt for Claude
+format_review_prompt() {
+    local pr_number="$1"
+    local branch="$2"
+    local copilot_comments="$3"
+
+    local prompt="# PR Review Fix: PR #${pr_number}
+
+**Branch:** \`${branch}\`
+
+You are on the \`${branch}\` branch. Below are Copilot's inline review comments on this PR.
+Evaluate each comment and fix what's worth fixing.
+
+## Copilot Review Comments
+
+"
+
+    # Format each comment: file, line, body
+    prompt+=$(echo "$copilot_comments" | jq -r '.[] | "### \(.path) (line \(.line // .original_line // "N/A"))\n\(.body)\n"')
+
+    # Append review-fix agent prompt
+    local review_prompt_file="$PROJECT_ROOT/.claude/review-fix-prompt.md"
+    if [ -f "$review_prompt_file" ]; then
+        prompt+="
+---
+
+$(cat "$review_prompt_file")"
+    fi
+
+    echo "$prompt"
+}
+
+# Process open PRs that have unhandled Copilot review feedback
+process_pr_reviews() {
+    log "INFO" "Checking open PRs for Copilot review feedback"
+    echo -e "${YELLOW}Checking open PRs for Copilot review feedback...${NC}" >&2
+
+    local tracker="$PROJECT_ROOT/logs/pr-reviews-tracker.json"
+
+    # Initialize tracker if needed
+    if [ ! -f "$tracker" ]; then
+        echo '{"processed_reviews": []}' > "$tracker"
+    fi
+
+    # Get open PRs
+    local prs
+    prs=$(gh pr list --repo RondoHQ/rondo-club --json number,headRefName --state open 2>/dev/null)
+    if [ $? -ne 0 ] || [ -z "$prs" ]; then
+        log "WARN" "Failed to list PRs from GitHub"
+        return 0
+    fi
+
+    local pr_count
+    pr_count=$(echo "$prs" | jq 'length')
+
+    if [ "$pr_count" = "0" ] || [ "$pr_count" = "null" ]; then
+        log "INFO" "No open PRs to review"
+        echo -e "${GREEN}No open PRs to review.${NC}" >&2
+        return 0
+    fi
+
+    local reviews_processed=0
+
+    # Process each PR
+    echo "$prs" | jq -c '.[]' | while read -r pr; do
+        local pr_number
+        pr_number=$(echo "$pr" | jq -r '.number')
+        local branch
+        branch=$(echo "$pr" | jq -r '.headRefName')
+
+        # Only process feedback/* and optimize/* branches
+        if [[ "$branch" != feedback/* ]] && [[ "$branch" != optimize/* ]]; then
+            continue
+        fi
+
+        # Check for Copilot reviews
+        local reviews
+        reviews=$(gh api "repos/RondoHQ/rondo-club/pulls/${pr_number}/reviews" 2>/dev/null)
+        if [ $? -ne 0 ] || [ -z "$reviews" ]; then
+            continue
+        fi
+
+        local copilot_review
+        copilot_review=$(echo "$reviews" | jq -r '[.[] | select(.user.login == "copilot-pull-request-reviewer[bot]")] | sort_by(.submitted_at) | last')
+
+        if [ "$copilot_review" = "null" ] || [ -z "$copilot_review" ]; then
+            continue
+        fi
+
+        local review_id
+        review_id=$(echo "$copilot_review" | jq -r '.id')
+
+        # Check if already processed
+        if jq -e --argjson id "$review_id" '.processed_reviews[] | select(.review_id == $id)' "$tracker" > /dev/null 2>&1; then
+            log "DEBUG" "Review $review_id on PR #$pr_number already processed"
+            continue
+        fi
+
+        # Fetch inline comments from Copilot
+        local comments
+        comments=$(gh api "repos/RondoHQ/rondo-club/pulls/${pr_number}/comments" 2>/dev/null)
+        if [ $? -ne 0 ] || [ -z "$comments" ]; then
+            comments="[]"
+        fi
+
+        local copilot_comments
+        copilot_comments=$(echo "$comments" | jq '[.[] | select(.user.login == "Copilot")]')
+        local comment_count
+        comment_count=$(echo "$copilot_comments" | jq 'length')
+
+        if [ "$comment_count" = "0" ]; then
+            # Reviewed but no inline comments — mark as processed
+            log "INFO" "PR #${pr_number} has Copilot review but no inline comments — marking processed"
+            local now
+            now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
+                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t}]' \
+                "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+            continue
+        fi
+
+        log "INFO" "PR #${pr_number} has ${comment_count} Copilot review comments — processing"
+        echo -e "${GREEN}PR #${pr_number} has ${comment_count} Copilot review comments — processing${NC}" >&2
+
+        # Ensure clean main, then checkout PR branch
+        if ! ensure_clean_main; then
+            log "ERROR" "Cannot process PR #${pr_number} — working directory not clean"
+            continue
+        fi
+
+        git fetch origin "$branch" 2>/dev/null
+        git checkout "$branch" 2>/dev/null || git checkout -b "$branch" "origin/$branch" 2>/dev/null
+        git pull --ff-only 2>/dev/null
+
+        # Format prompt with review comments + review-fix instructions
+        local prompt
+        prompt=$(format_review_prompt "$pr_number" "$branch" "$copilot_comments")
+
+        # Run Claude
+        CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+        local prompt_file
+        prompt_file=$(mktemp)
+        local output_file
+        output_file=$(mktemp)
+        printf '%s' "$prompt" > "$prompt_file"
+        log "DEBUG" "Review prompt written to $prompt_file ($(wc -c < "$prompt_file") bytes)"
+
+        "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
+        local exit_code=$?
+        local output
+        output=$(cat "$output_file")
+        rm -f "$prompt_file" "$output_file"
+
+        echo "$output"
+
+        if [ $exit_code -ne 0 ]; then
+            log "ERROR" "Claude session failed for PR #${pr_number} review (exit code: $exit_code)"
+        else
+            log "INFO" "Claude session completed for PR #${pr_number} review"
+        fi
+
+        # Mark review as processed in tracker
+        local now
+        now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
+            '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t}]' \
+            "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+
+        reviews_processed=$((reviews_processed + 1))
+
+        # Return to main and clean up
+        cd "$PROJECT_ROOT"
+        git checkout main 2>/dev/null
+        git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
+    done
+
+    log "INFO" "PR review processing complete (${reviews_processed} reviews processed)"
+}
+
 # Run optimization mode (when no feedback items are pending)
 run_optimization() {
     log "INFO" "No feedback items — entering optimization mode"
@@ -781,6 +960,9 @@ while true; do
             echo -e "${GREEN}No more feedback items. Processed ${local_counter} items.${NC}" >&2
             log "INFO" "Loop completed - processed ${local_counter} items"
 
+            # Process any open PRs with Copilot review feedback
+            process_pr_reviews
+
             # Run optimization if enabled and no feedback was found
             if [ "$OPTIMIZE_MODE" = true ]; then
                 run_optimization
@@ -790,6 +972,11 @@ while true; do
             break
         else
             echo -e "${GREEN}No feedback items found matching your criteria.${NC}" >&2
+
+            # Process any open PRs with Copilot review feedback
+            if [ "$RUN_CLAUDE" = true ]; then
+                process_pr_reviews
+            fi
 
             # Run optimization if enabled
             if [ "$OPTIMIZE_MODE" = true ] && [ "$RUN_CLAUDE" = true ]; then
