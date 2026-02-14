@@ -486,14 +486,16 @@ process_feedback_item() {
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     log "DEBUG" "Claude binary: $CLAUDE_BIN"
 
-    # Write prompt to temp file and use file redirection to avoid shell expansion issues
+    # Write prompt to temp file, capture output to temp file (avoids subshell/TTY issues)
     local prompt_file=$(mktemp)
+    local output_file=$(mktemp)
     printf '%s' "$output" > "$prompt_file"
     log "DEBUG" "Prompt written to $prompt_file ($(wc -c < "$prompt_file") bytes)"
 
-    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" 2>&1)
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
     CLAUDE_EXIT=$?
-    rm -f "$prompt_file"
+    CLAUDE_OUTPUT=$(cat "$output_file")
+    rm -f "$prompt_file" "$output_file"
 
     # Display Claude's output
     echo "$CLAUDE_OUTPUT"
