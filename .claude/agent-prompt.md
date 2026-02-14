@@ -12,7 +12,7 @@ You have been given a feedback item to address. Follow these rules strictly.
 5. **Commit** your changes with a clear message referencing the feedback ID
 6. **Push** the branch to origin
 7. **Create a PR** via `gh pr create` with:
-   - Title referencing the feedback (e.g., "fix: resolve feedback #123 - title")
+   - Title MUST include the feedback ID, format: `type: description (#ID)` (e.g., `fix: resolve login issue (#123)`)
    - Body describing what was changed and why
 8. **Output your status** (see below)
 
