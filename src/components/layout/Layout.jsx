@@ -42,7 +42,7 @@ const navigation = [
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
-  { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresUnrestricted: true },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
 ];
 
@@ -58,7 +58,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessVOG = currentUser?.can_access_vog ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
-  const isRestricted = (canAccessVOG || canAccessFairplay) && !isAdmin;
 
   // Map navigation items to their counts
   const getCounts = (name) => {
@@ -96,7 +95,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
         {navigation
           .filter(item => {
             if (isAdmin) return true;
-            if (item.requiresUnrestricted && isRestricted) return false;
             if (item.requiresFairplay && !canAccessFairplay) return false;
             if (item.requiresVOG && !canAccessVOG) return false;
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
