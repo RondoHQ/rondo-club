@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.0] - 2026-02-14
+
+### Changed
+- Dashboard birthday card now shows all of today's birthdays even when there are more than 5
+
 ## [25.0.1] - 2026-02-14
 
 ### Fixed
