@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [25.1.0] - 2026-02-14
 
+### Added
+- "In Review" status filter on Feedback page
+- Project filter on Feedback page (Rondo Club, Rondo Sync, Website)
+- "Binnenkort" tab on /vog page showing volunteers whose VOG expires within 30 days
+- `vog_expiring_within_days` filter parameter on filtered people API endpoint
+- Sportlink fields (KNVB ID, Type lid, Leeftijdsgroep, Lid sinds, Datum foto, Datum VOG, Is ouder, Huidig vrijwilliger, Financiële blokkade, FreeScout ID) available as column options on the /people page
+- Show feedback ID in feedback list and admin feedback management table
+
 ### Changed
 - Dashboard birthday card now shows all of today's birthdays even when there are more than 5
 

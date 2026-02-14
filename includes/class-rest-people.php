@@ -314,6 +314,14 @@ class People extends Base {
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
+					'vog_expiring_within_days' => [
+						'description'       => 'Filter for VOG expiring within N days (valid but expiring soon)',
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $value ) {
+							return $value >= 1 && $value <= 365;
+						},
+					],
 					'vog_justis_status'    => [
 						'description'       => 'Filter by VOG Justis status (submitted, not_submitted, empty=all)',
 						'type'              => 'string',
@@ -954,8 +962,9 @@ class People extends Base {
 		$type_lid             = $request->get_param( 'type_lid' );
 		$foto_missing         = $request->get_param( 'foto_missing' );
 		$vog_missing          = $request->get_param( 'vog_missing' );
-		$vog_older_than_years = $request->get_param( 'vog_older_than_years' );
-		$vog_email_status     = $request->get_param( 'vog_email_status' );
+		$vog_older_than_years    = $request->get_param( 'vog_older_than_years' );
+		$vog_expiring_within_days = $request->get_param( 'vog_expiring_within_days' );
+		$vog_email_status        = $request->get_param( 'vog_email_status' );
 		$vog_type             = $request->get_param( 'vog_type' );
 		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
 		$vog_justis_status    = $request->get_param( 'vog_justis_status' );
@@ -1111,6 +1120,17 @@ class People extends Base {
 			$cutoff_date      = gmdate( 'Y-m-d', strtotime( "-{$vog_older_than_years} years" ) );
 			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value <= %s)";
 			$prepare_values[] = $cutoff_date;
+		} elseif ( $vog_expiring_within_days !== null ) {
+			// Find people whose VOG is still valid but will expire within N days.
+			// VOG validity = 3 years. Expiry = datum-vog + 3 years.
+			// We want: today < expiry <= today + N days
+			// Which means: today - 3 years < datum-vog <= today + N days - 3 years
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+			$expired_date     = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
+			$expiring_date    = gmdate( 'Y-m-d', strtotime( "+{$vog_expiring_within_days} days -3 years" ) );
+			$where_clauses[]  = "(dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value > %s AND dv.meta_value <= %s)";
+			$prepare_values[] = $expired_date;
+			$prepare_values[] = $expiring_date;
 		}
 
 		// VOG email status filter (sent/not_sent based on vog_email_sent_date meta field)

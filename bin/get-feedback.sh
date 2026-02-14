@@ -8,7 +8,7 @@
 #   bin/get-feedback.sh                    # Get oldest approved feedback item
 #   bin/get-feedback.sh --run              # Fetch and process with Claude Code
 #   bin/get-feedback.sh --loop             # Process all items then optionally optimize
-#   bin/get-feedback.sh --loop --optimize  # Process all items, review PRs, then optimize
+#   bin/get-feedback.sh --loop --optimize  # Process all items, review PRs, fix PHP errors, then optimize
 #   bin/get-feedback.sh --status=new       # Filter by status
 #   bin/get-feedback.sh --type=bug         # Filter by type (bug/feature_request)
 #   bin/get-feedback.sh --id=123           # Get specific feedback item
@@ -80,7 +80,7 @@ cleanup() {
         # Always return to main and clean up branches
         cd "$PROJECT_ROOT" 2>/dev/null
         git checkout main 2>/dev/null
-        git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
+        git branch --merged main | grep -E '^\s+(feedback|optimize|fix)/' | xargs -r git branch -d 2>/dev/null
 
         rm -f "$LOCK_FILE"
     fi
@@ -168,6 +168,7 @@ OUTPUT_FORMAT="claude"
 RUN_CLAUDE=false
 LOOP_MODE=false
 OPTIMIZE_MODE=false
+PHP_ERRORS_MODE=true
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -201,6 +202,10 @@ while [[ $# -gt 0 ]]; do
             OPTIMIZE_MODE=true
             shift
             ;;
+        --no-php-errors)
+            PHP_ERRORS_MODE=false
+            shift
+            ;;
         --json)
             OUTPUT_FORMAT="json"
             shift
@@ -216,7 +221,8 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --run              Pipe output directly to Claude Code"
             echo "  --loop             Process all feedback items one by one (implies --run)"
-            echo "  --optimize         When no feedback items, review code for optimization PRs"
+            echo "  --optimize         When no feedback items, fix PHP errors and review code for optimization PRs"
+            echo "  --no-php-errors    Skip PHP error checking from production debug.log"
             echo "  --status=STATUS    Filter by status (default: approved)"
             echo "  --type=TYPE        Filter by type: bug, feature_request"
             echo "  --id=ID            Get specific feedback item by ID"
@@ -243,6 +249,12 @@ done
 if [ "$RUN_CLAUDE" = true ]; then
     check_lock
     create_lock
+
+    # Force back to a clean main before doing anything
+    cd "$PROJECT_ROOT"
+    git reset --hard HEAD 2>/dev/null
+    git checkout main 2>/dev/null
+    git pull --ff-only 2>/dev/null
 fi
 
 # Ensure we're on a clean main branch before starting
@@ -308,6 +320,49 @@ update_feedback_meta() {
         -H "Content-Type: application/json" \
         -d "$json_data" \
         "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" > /dev/null 2>&1
+}
+
+# Run Claude with a timeout (default 10 minutes)
+# Usage: run_claude <prompt_file> <output_file> [timeout_seconds]
+# Sets CLAUDE_EXIT and CLAUDE_OUTPUT globals
+run_claude() {
+    local prompt_file="$1"
+    local output_file="$2"
+    local timeout_secs="${3:-600}"
+
+    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1 &
+    local claude_pid=$!
+    local elapsed=0
+
+    while kill -0 "$claude_pid" 2>/dev/null; do
+        sleep 10
+        elapsed=$((elapsed + 10))
+        if [ "$elapsed" -ge "$timeout_secs" ]; then
+            log "ERROR" "Claude session timed out after ${timeout_secs}s (PID: $claude_pid) — killing"
+            kill "$claude_pid" 2>/dev/null
+            wait "$claude_pid" 2>/dev/null
+            git reset --hard HEAD 2>/dev/null
+            git checkout main 2>/dev/null
+            CLAUDE_EXIT=124
+            CLAUDE_OUTPUT=$(cat "$output_file" 2>/dev/null)
+            rm -f "$prompt_file" "$output_file"
+            return 124
+        fi
+        # Log progress every 2 minutes
+        if [ $((elapsed % 120)) -eq 0 ]; then
+            log "INFO" "Claude session still running (${elapsed}s elapsed, PID: $claude_pid)"
+        fi
+    done
+
+    wait "$claude_pid"
+    CLAUDE_EXIT=$?
+    CLAUDE_OUTPUT=$(cat "$output_file" 2>/dev/null)
+    rm -f "$prompt_file" "$output_file"
+    local duration=$((elapsed))
+    log "INFO" "Claude session finished in ${duration}s (exit: $CLAUDE_EXIT)"
+    return $CLAUDE_EXIT
 }
 
 # Post a comment on a feedback item
@@ -507,17 +562,12 @@ process_feedback_item() {
     log "INFO" "Starting Claude Code session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
     echo -e "${YELLOW}Starting Claude Code session in ${project_dir}...${NC}" >&2
 
-    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
-
-    # Write prompt to temp file, capture output to temp file (avoids subshell/TTY issues)
+    # Write prompt to temp file, run Claude with timeout
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
     printf '%s' "$output" > "$prompt_file"
 
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
-    CLAUDE_EXIT=$?
-    CLAUDE_OUTPUT=$(cat "$output_file")
-    rm -f "$prompt_file" "$output_file"
+    run_claude "$prompt_file" "$output_file" 600
 
     # Display Claude's output
     echo "$CLAUDE_OUTPUT"
@@ -581,7 +631,7 @@ process_feedback_item() {
     # Return to main and clean up in project dir
     cd "$project_dir"
     git checkout main 2>/dev/null
-    git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
+    git branch --merged main | grep -E '^\s+(feedback|optimize|fix)/' | xargs -r git branch -d 2>/dev/null
 
     # Return to rondo-club root
     cd "$PROJECT_ROOT"
@@ -610,6 +660,45 @@ resolve_feedback_for_branch() {
     fi
 }
 
+# Prepare a PR branch for merge by merging main into it and resolving conflicts
+# Uses Claude to resolve any merge conflicts
+prepare_branch_for_merge() {
+    local pr_number="$1"
+    local pr_branch="$2"
+
+    cd "$PROJECT_ROOT"
+    git fetch origin 2>/dev/null
+
+    # Check out the PR branch with latest from origin
+    git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
+    git reset --hard "origin/$pr_branch" 2>/dev/null
+
+    # Merge main into the PR branch — Claude resolves any conflicts
+    if ! git merge origin/main --no-edit 2>/dev/null; then
+        log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
+        local prompt_file=$(mktemp)
+        local output_file=$(mktemp)
+        printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason." > "$prompt_file"
+
+        run_claude "$prompt_file" "$output_file" 300
+
+        if [ $CLAUDE_EXIT -ne 0 ]; then
+            log "ERROR" "Claude failed to resolve merge conflicts on PR #${pr_number}"
+            git merge --abort 2>/dev/null
+            git checkout main 2>/dev/null
+            return 1
+        fi
+    fi
+
+    if ! git push origin "$pr_branch" 2>&1; then
+        log "ERROR" "Failed to push branch $pr_branch for PR #${pr_number}"
+        git checkout main 2>/dev/null
+        return 1
+    fi
+    git checkout main 2>/dev/null
+    return 0
+}
+
 # Merge a PR via squash, pull main, and deploy
 merge_and_deploy() {
     local pr_number="$1"
@@ -617,9 +706,49 @@ merge_and_deploy() {
     log "INFO" "Merging PR #${pr_number} via squash"
     echo -e "${GREEN}Merging PR #${pr_number}...${NC}" >&2
 
-    if ! gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch; then
-        log "ERROR" "Failed to merge PR #${pr_number}"
-        echo -e "${RED}Failed to merge PR #${pr_number}${NC}" >&2
+    # Get the branch name for this PR
+    local pr_branch
+    pr_branch=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json headRefName -q '.headRefName' 2>/dev/null)
+
+    if [ -n "$pr_branch" ]; then
+        if ! prepare_branch_for_merge "$pr_number" "$pr_branch"; then
+            return 1
+        fi
+
+        # Give GitHub time to process the push and update mergeability
+        sleep 10
+    fi
+
+    # Try to merge
+    local merge_output
+    merge_output=$(gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch 2>&1)
+    local merge_exit=$?
+
+    # If merge fails and we have a branch, retry once after re-preparing
+    if [ $merge_exit -ne 0 ] && [ -n "$pr_branch" ]; then
+        log "WARN" "First merge attempt failed for PR #${pr_number}: $merge_output — retrying"
+
+        if ! prepare_branch_for_merge "$pr_number" "$pr_branch"; then
+            return 1
+        fi
+
+        sleep 15
+
+        merge_output=$(gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch 2>&1)
+        merge_exit=$?
+    fi
+
+    if [ $merge_exit -ne 0 ]; then
+        log "ERROR" "Failed to merge PR #${pr_number}: $merge_output"
+        echo -e "${RED}Failed to merge PR #${pr_number}: $merge_output${NC}" >&2
+        return 1
+    fi
+
+    # Verify PR is actually closed (catch false positives)
+    local pr_state
+    pr_state=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json state -q '.state' 2>/dev/null)
+    if [ "$pr_state" != "MERGED" ]; then
+        log "ERROR" "PR #${pr_number} merge command succeeded but PR state is '$pr_state' — not actually merged"
         return 1
     fi
 
@@ -696,8 +825,8 @@ process_pr_reviews() {
 
     local reviews_processed=0
 
-    # Process each PR
-    echo "$prs" | jq -c '.[]' | while read -r pr; do
+    # Process each PR (use fd 3 so subprocesses don't consume the pipe)
+    while read -r pr <&3; do
         local pr_number
         pr_number=$(echo "$pr" | jq -r '.number')
         local branch
@@ -725,9 +854,18 @@ process_pr_reviews() {
         local review_id
         review_id=$(echo "$copilot_review" | jq -r '.id')
 
-        # Check if already processed
-        if jq -e --argjson id "$review_id" '.processed_reviews[] | select(.review_id == $id)' "$tracker" > /dev/null 2>&1; then
+        # Check if already processed — but only skip if the action was NOT a failure
+        # Since we're iterating open PRs, any "merged" entry here is stale (PR didn't actually merge)
+        local tracked_action
+        tracked_action=$(jq -r --argjson id "$review_id" '[.processed_reviews[] | select(.review_id == $id)] | last | .action // empty' "$tracker")
+        if [ "$tracked_action" = "assigned" ]; then
             continue
+        fi
+        # Remove stale entries for this PR so we get a clean retry
+        if [ -n "$tracked_action" ]; then
+            log "INFO" "PR #${pr_number} still open but tracker shows '${tracked_action}' — retrying"
+            jq --argjson num "$pr_number" '.processed_reviews = [.processed_reviews[] | select(.pr_number != $num)]' \
+                "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
         fi
 
         # Fetch inline comments from Copilot
@@ -746,12 +884,15 @@ process_pr_reviews() {
             # Reviewed but no inline comments — clean review, merge and deploy
             log "INFO" "PR #${pr_number} — Copilot review clean, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — Copilot review clean, merging and deploying${NC}" >&2
-            merge_and_deploy "$pr_number"
-            resolve_feedback_for_branch "$branch"
+            local merge_action="merge_failed"
+            if merge_and_deploy "$pr_number"; then
+                resolve_feedback_for_branch "$branch"
+                merge_action="merged"
+            fi
             local now
             now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
-                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": "merged"}]' \
+            jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" --arg a "$merge_action" \
+                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": $a}]' \
                 "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
             continue
         fi
@@ -773,19 +914,16 @@ process_pr_reviews() {
         local prompt
         prompt=$(format_review_prompt "$pr_number" "$branch" "$copilot_comments")
 
-        # Run Claude
-        CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+        # Run Claude with timeout
         local prompt_file
         prompt_file=$(mktemp)
         local output_file
         output_file=$(mktemp)
         printf '%s' "$prompt" > "$prompt_file"
 
-        "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
-        local exit_code=$?
-        local output
-        output=$(cat "$output_file")
-        rm -f "$prompt_file" "$output_file"
+        run_claude "$prompt_file" "$output_file" 600
+        local exit_code=$CLAUDE_EXIT
+        local output="$CLAUDE_OUTPUT"
 
         echo "$output"
 
@@ -798,9 +936,12 @@ process_pr_reviews() {
         elif echo "$output" | grep -qi "SAFE_TO_MERGE:.*yes"; then
             log "INFO" "PR #${pr_number} — safe to merge, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — safe to merge, merging and deploying${NC}" >&2
-            merge_and_deploy "$pr_number"
-            resolve_feedback_for_branch "$branch"
-            action="merged"
+            if merge_and_deploy "$pr_number"; then
+                resolve_feedback_for_branch "$branch"
+                action="merged"
+            else
+                action="merge_failed"
+            fi
         else
             log "INFO" "PR #${pr_number} — not safe to auto-merge, assigning to jdevalk"
             echo -e "${YELLOW}PR #${pr_number} — assigning to jdevalk for review${NC}" >&2
@@ -820,8 +961,8 @@ process_pr_reviews() {
         # Return to main and clean up
         cd "$PROJECT_ROOT"
         git checkout main 2>/dev/null
-        git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
-    done
+        git branch --merged main | grep -E '^\s+(feedback|optimize|fix)/' | xargs -r git branch -d 2>/dev/null
+    done 3< <(echo "$prs" | jq -c '.[]')
 
     log "INFO" "PR review processing complete (${reviews_processed} reviews processed)"
 }
@@ -888,7 +1029,9 @@ run_optimization() {
             [ -z "$file" ] && continue
             local relative_file="${file#$proj_dir/}"
             local tracker_key="${proj_name}:${relative_file}"
-            if ! jq -e --arg f "$tracker_key" '.reviewed_files[$f]' "$tracker" > /dev/null 2>&1; then
+            local last_commit=$(cd "$proj_dir" && git log -1 --format=%H -- "$relative_file" 2>/dev/null)
+            local reviewed_commit=$(jq -r --arg f "$tracker_key" '.reviewed_files[$f] // empty' "$tracker")
+            if [ "$last_commit" != "$reviewed_commit" ]; then
                 target_file="$relative_file"
                 target_project="$proj_name"
                 target_dir="$proj_dir"
@@ -898,9 +1041,8 @@ run_optimization() {
     done
 
     if [ -z "$target_file" ]; then
-        log "INFO" "All files across all projects have been reviewed — resetting tracker"
-        jq '.reviewed_files = {}' "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
-        echo -e "${GREEN}All files reviewed. Tracker reset for next cycle.${NC}" >&2
+        log "INFO" "All files across all projects have been reviewed — optimization cycle complete"
+        echo -e "${GREEN}All files reviewed. Optimization cycle complete.${NC}" >&2
         return 0
     fi
 
@@ -930,15 +1072,12 @@ run_optimization() {
 
 Review this file and create a PR if you find confident improvements. If no changes are needed, just respond with STATUS: NO_CHANGES."
 
-    # Run Claude in the project directory
-    CLAUDE_BIN="${CLAUDE_PATH:-claude}"
+    # Run Claude in the project directory with timeout
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
     printf '%s' "$prompt" > "$prompt_file"
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
-    CLAUDE_EXIT=$?
-    CLAUDE_OUTPUT=$(cat "$output_file")
-    rm -f "$prompt_file" "$output_file"
+
+    run_claude "$prompt_file" "$output_file" 300
 
     echo "$CLAUDE_OUTPUT"
 
@@ -954,26 +1093,277 @@ Review this file and create a PR if you find confident improvements. If no chang
         fi
     fi
 
-    # Mark file as reviewed and increment daily counters
+    # Mark file as reviewed with its current commit hash
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local tracker_key="${target_project}:${target_file}"
+    local file_commit=$(cd "$target_dir" && git log -1 --format=%H -- "$target_file" 2>/dev/null)
     if [ "$created_pr" = true ]; then
-        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
-            '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
+        log "INFO" "Optimization created PR for: \"${target_project}:${target_file}\""
+        jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     else
-        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
-            '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
+        log "INFO" "No optimizations found for: \"${target_project}:${target_file}\""
+        jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     fi
 
     # Return to main in project dir, then back to rondo-club
     cd "$target_dir"
     git checkout main 2>/dev/null
-    git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
+    git branch --merged main | grep -E '^\s+(feedback|optimize|fix)/' | xargs -r git branch -d 2>/dev/null
     cd "$PROJECT_ROOT"
 
     log "INFO" "Optimization run complete for: \"${target_project}:${target_file}\""
+}
+
+# Process PHP errors from production debug.log
+process_php_errors() {
+    log "INFO" "Checking production debug.log for PHP errors"
+    echo -e "${YELLOW}Checking production debug.log for PHP errors...${NC}" >&2
+
+    local tracker="$PROJECT_ROOT/logs/php-errors-tracker.json"
+    local daily_limit=5
+    local max_attempts=2
+
+    # Initialize tracker if needed
+    if [ ! -f "$tracker" ]; then
+        echo '{"attempted_errors": {}, "last_run": null, "daily_runs": {}}' > "$tracker"
+    fi
+
+    # Check daily limit
+    local today=$(date +%Y-%m-%d)
+    local today_runs=$(jq -r --arg d "$today" '.daily_runs[$d] // 0' "$tracker")
+
+    if [ "$today_runs" -ge "$daily_limit" ]; then
+        log "INFO" "Daily PHP error fix limit reached ($today_runs/$daily_limit) — skipping"
+        echo -e "${GREEN}Daily PHP error fix limit reached ($today_runs/$daily_limit). Skipping.${NC}" >&2
+        return 0
+    fi
+
+    # Validate SSH variables
+    if [ -z "$DEPLOY_SSH_HOST" ] || [ -z "$DEPLOY_SSH_USER" ]; then
+        log "WARN" "SSH credentials not configured — skipping PHP error check"
+        return 0
+    fi
+
+    local ssh_port="${DEPLOY_SSH_PORT:-18765}"
+    local remote_debug_log="${DEPLOY_REMOTE_WP_PATH}/wp-content/debug.log"
+
+    # Check if debug.log exists on server
+    if ! ssh -p "$ssh_port" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "test -f $remote_debug_log" 2>/dev/null; then
+        log "INFO" "No debug.log found on production server"
+        echo -e "${GREEN}No debug.log on production — no errors to fix.${NC}" >&2
+        return 0
+    fi
+
+    # Fetch debug.log via SSH pipe (no temp file on server)
+    local raw_log
+    raw_log=$(ssh -p "$ssh_port" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cat $remote_debug_log" 2>/dev/null)
+    if [ $? -ne 0 ] || [ -z "$raw_log" ]; then
+        log "WARN" "Failed to fetch debug.log or log is empty"
+        return 0
+    fi
+
+    # Calculate cutoff time (2 hours ago)
+    local cutoff_time
+    cutoff_time=$(date -v-2H +%s 2>/dev/null || date -d '2 hours ago' +%s)
+
+    # Filter for rondo-club theme errors, recent only
+    # WordPress debug.log format: [DD-Mon-YYYY HH:MM:SS UTC] PHP Type: message in /path on line N
+    local errors_raw
+    errors_raw=$(echo "$raw_log" | grep -E "themes/rondo-club" | grep -E "PHP (Fatal error|Parse error|Warning|Notice|Deprecated)" || true)
+
+    if [ -z "$errors_raw" ]; then
+        log "INFO" "No rondo-club PHP errors in debug.log"
+        echo -e "${GREEN}No PHP errors for rondo-club theme.${NC}" >&2
+        return 0
+    fi
+
+    # Filter to recent errors and deduplicate by signature (file:line:type)
+    local new_errors=""
+    local new_error_count=0
+    local seen_sigs=""
+
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+
+        # Check if recent (within last 2 hours)
+        local is_recent=false
+        if [[ $line =~ \[([0-9]{2})-([A-Za-z]{3})-([0-9]{4})\ ([0-9]{2}):([0-9]{2}):([0-9]{2})\ UTC\] ]]; then
+            local day="${BASH_REMATCH[1]}"
+            local month="${BASH_REMATCH[2]}"
+            local year="${BASH_REMATCH[3]}"
+            local hour="${BASH_REMATCH[4]}"
+            local min="${BASH_REMATCH[5]}"
+            local sec="${BASH_REMATCH[6]}"
+            local log_epoch
+            log_epoch=$(date -j -f "%d-%b-%Y %H:%M:%S" "$day-$month-$year $hour:$min:$sec" +%s 2>/dev/null)
+            if [ -z "$log_epoch" ]; then
+                log_epoch=$(date -d "$day $month $year $hour:$min:$sec UTC" +%s 2>/dev/null)
+            fi
+            if [ -n "$log_epoch" ] && [ "$log_epoch" -ge "$cutoff_time" ]; then
+                is_recent=true
+            fi
+        fi
+
+        [ "$is_recent" = false ] && continue
+
+        # Extract signature components
+        if [[ $line =~ PHP\ (Fatal\ error|Parse\ error|Warning|Notice|Deprecated):\ (.+)\ in\ (.+)\ on\ line\ ([0-9]+) ]]; then
+            local error_type="${BASH_REMATCH[1]}"
+            local message="${BASH_REMATCH[2]}"
+            local file="${BASH_REMATCH[3]}"
+            local line_num="${BASH_REMATCH[4]}"
+
+            # Extract relative path from theme root
+            local relative_file="${file##*themes/rondo-club/}"
+            local signature="${relative_file}:${line_num}:${error_type}"
+
+            # Skip if already seen in this batch
+            if echo "$seen_sigs" | grep -qF "$signature" 2>/dev/null; then
+                continue
+            fi
+            seen_sigs="${seen_sigs}${signature}\n"
+
+            # Check tracker: skip if already attempted too many times
+            local attempts=$(jq -r --arg s "$signature" '.attempted_errors[$s].attempts // 0' "$tracker")
+            if [ "$attempts" -ge "$max_attempts" ]; then
+                log "INFO" "Skipping already-attempted error ($attempts tries): $signature"
+                continue
+            fi
+
+            # Skip if there's an open PR for this error
+            local tracked_action=$(jq -r --arg s "$signature" '.attempted_errors[$s].action // empty' "$tracker")
+            if [ "$tracked_action" = "pr_created" ]; then
+                local tracked_pr=$(jq -r --arg s "$signature" '.attempted_errors[$s].pr_number // empty' "$tracker")
+                if [ -n "$tracked_pr" ]; then
+                    local pr_state
+                    pr_state=$(gh pr view "$tracked_pr" --repo RondoHQ/rondo-club --json state -q '.state' 2>/dev/null)
+                    if [ "$pr_state" = "OPEN" ]; then
+                        log "INFO" "Skipping error with open PR #${tracked_pr}: $signature"
+                        continue
+                    fi
+                fi
+            fi
+
+            # Convert server path to local path for display
+            local local_file="${file/*themes\/rondo-club/$PROJECT_ROOT}"
+
+            new_errors="${new_errors}
+### ${error_type}: ${relative_file}:${line_num}
+- **File:** \`${relative_file}\`
+- **Line:** ${line_num}
+- **Type:** ${error_type}
+- **Message:** ${message}
+"
+            new_error_count=$((new_error_count + 1))
+
+            # Store signature for tracker update later
+            # We use a temp file to collect signatures being attempted
+            echo "$signature" >> "/tmp/rondo-php-error-sigs-$$"
+        fi
+    done <<< "$errors_raw"
+
+    if [ "$new_error_count" -eq 0 ]; then
+        log "INFO" "No new PHP errors to fix (all previously attempted or no recent errors)"
+        echo -e "${GREEN}No new PHP errors to fix.${NC}" >&2
+        rm -f "/tmp/rondo-php-error-sigs-$$"
+        return 0
+    fi
+
+    log "INFO" "Found $new_error_count new PHP errors to fix"
+    echo -e "${YELLOW}Found $new_error_count new PHP error(s) to fix${NC}" >&2
+
+    # Ensure clean main
+    cd "$PROJECT_ROOT"
+    if ! ensure_clean_main; then
+        rm -f "/tmp/rondo-php-error-sigs-$$"
+        return 1
+    fi
+
+    # Build the full prompt with errors and agent instructions
+    local php_error_prompt_file="$PROJECT_ROOT/.claude/php-error-prompt.md"
+    local prompt=""
+    if [ -f "$php_error_prompt_file" ]; then
+        prompt=$(cat "$php_error_prompt_file")
+    else
+        prompt="Fix the following PHP errors from the production debug.log."
+    fi
+
+    prompt="${prompt}
+
+## Errors Found (${new_error_count} unique)
+${new_errors}"
+
+    # Run Claude with timeout
+    local prompt_file=$(mktemp)
+    local output_file=$(mktemp)
+    printf '%s' "$prompt" > "$prompt_file"
+
+    run_claude "$prompt_file" "$output_file" 600
+
+    echo "$CLAUDE_OUTPUT"
+
+    # Update tracker for all attempted signatures
+    local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local action="no_fix"
+    local pr_number=""
+
+    # Check if a PR was created
+    local php_pr_url=$(echo "$CLAUDE_OUTPUT" | grep -oE 'https://github.com/[^ ]*pull/[0-9]+' | head -1)
+    if [ -n "$php_pr_url" ]; then
+        action="pr_created"
+        pr_number=$(echo "$php_pr_url" | grep -oE '[0-9]+$')
+        log "INFO" "PHP error fix PR created: $php_pr_url"
+
+        # Request Copilot review
+        if [ -n "$pr_number" ]; then
+            log "INFO" "Requesting Copilot review for PHP error fix PR #${pr_number}"
+            gh copilot-review "$pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
+        fi
+    elif echo "$CLAUDE_OUTPUT" | grep -qi "STATUS:.*NO_CHANGES"; then
+        action="no_fix"
+        log "INFO" "No PHP errors needed fixing (false positives or already resolved)"
+    fi
+
+    # Update tracker for each attempted signature
+    if [ -f "/tmp/rondo-php-error-sigs-$$" ]; then
+        while IFS= read -r sig; do
+            [ -z "$sig" ] && continue
+            local prev_attempts=$(jq -r --arg s "$sig" '.attempted_errors[$s].attempts // 0' "$tracker")
+            local first_seen=$(jq -r --arg s "$sig" '.attempted_errors[$s].first_seen // empty' "$tracker")
+            [ -z "$first_seen" ] && first_seen="$now"
+
+            local update_json
+            if [ -n "$pr_number" ]; then
+                update_json=$(jq -n --arg fs "$first_seen" --arg ls "$now" --argjson a "$((prev_attempts + 1))" \
+                    --arg la "$now" --arg act "$action" --argjson pr "$pr_number" \
+                    '{first_seen: $fs, last_seen: $ls, attempts: $a, last_attempt: $la, action: $act, pr_number: $pr}')
+            else
+                update_json=$(jq -n --arg fs "$first_seen" --arg ls "$now" --argjson a "$((prev_attempts + 1))" \
+                    --arg la "$now" --arg act "$action" \
+                    '{first_seen: $fs, last_seen: $ls, attempts: $a, last_attempt: $la, action: $act}')
+            fi
+
+            jq --arg s "$sig" --argjson v "$update_json" '.attempted_errors[$s] = $v' \
+                "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+        done < "/tmp/rondo-php-error-sigs-$$"
+        rm -f "/tmp/rondo-php-error-sigs-$$"
+    fi
+
+    # Update daily run count and last_run
+    jq --arg t "$now" --arg d "$today" \
+        '.last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
+        "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+
+    # Return to main and clean up
+    cd "$PROJECT_ROOT"
+    git checkout main 2>/dev/null
+    git branch --merged main | grep -E '^\s+(feedback|optimize|fix)/' | xargs -r git branch -d 2>/dev/null
+
+    log "INFO" "PHP error processing complete"
 }
 
 # Loop mode: process items until none left
@@ -991,6 +1381,9 @@ while true; do
         echo "" >&2
         echo -e "${GREEN}=== Processing item #${LOOP_COUNTER} ===${NC}" >&2
         log "INFO" "Loop iteration #${LOOP_COUNTER}"
+
+        # Prioritize finishing in-review items before starting new ones
+        process_pr_reviews
     fi
 
     # Build API URL - fetch 1 item, oldest first
@@ -1039,11 +1432,11 @@ while true; do
             echo -e "${GREEN}No more feedback items. Processed ${local_counter} items.${NC}" >&2
             log "INFO" "Loop completed - processed ${local_counter} items"
 
-            # Process any open PRs with Copilot review feedback
-            process_pr_reviews
-
-            # Run optimization if enabled and no feedback was found
-            if [ "$OPTIMIZE_MODE" = true ]; then
+            # Only run PHP errors and optimize when nothing else was worked on
+            if [ "$OPTIMIZE_MODE" = true ] && [ "$local_counter" -eq 0 ]; then
+                if [ "$PHP_ERRORS_MODE" = true ]; then
+                    process_php_errors
+                fi
                 run_optimization
             fi
 
@@ -1057,8 +1450,11 @@ while true; do
                 process_pr_reviews
             fi
 
-            # Run optimization if enabled
+            # Fix PHP errors and run optimization if enabled
             if [ "$OPTIMIZE_MODE" = true ] && [ "$RUN_CLAUDE" = true ]; then
+                if [ "$PHP_ERRORS_MODE" = true ]; then
+                    process_php_errors
+                fi
                 run_optimization
             fi
 
@@ -1116,5 +1512,6 @@ while true; do
     fi
 done  # End of main loop
 
+log "INFO" "=== Script finished (PID: $$) ==="
 exit
 }

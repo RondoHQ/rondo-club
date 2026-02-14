@@ -77,7 +77,7 @@ function AccessDenied() {
 function SortableHeader({ field, label, currentField, currentOrder, onSort }) {
   const isActive = currentField === field;
   return (
-    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
       <button
         onClick={() => onSort(field)}
         className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
@@ -277,10 +277,13 @@ export default function FeedbackManagement() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                    ID
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Type
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Project
                   </th>
                   <SortableHeader
@@ -290,7 +293,7 @@ export default function FeedbackManagement() {
                     currentOrder={sortOrder}
                     onSort={handleSort}
                   />
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Auteur
                   </th>
                   <SortableHeader
@@ -314,10 +317,10 @@ export default function FeedbackManagement() {
                     currentOrder={sortOrder}
                     onSort={handleSort}
                   />
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     PR
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Acties
                   </th>
                 </tr>
@@ -337,6 +340,9 @@ export default function FeedbackManagement() {
                       key={item.id}
                       className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}
                     >
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-mono">
+                        #{item.id}
+                      </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <TypeBadge type={itemType} />
                       </td>
