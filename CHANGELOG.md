@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.0.2] - 2026-02-14
+
+### Added
+- Show feedback ID in feedback list and admin feedback management table
+
 ## [25.0.1] - 2026-02-14
 
 ### Fixed
