@@ -242,11 +242,10 @@ export default function FeedbackList() {
                   </span>
                 </div>
                 <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                  <span className="text-gray-400 dark:text-gray-500 mr-1.5">#{item.id}</span>
                   {item.title}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {format(new Date(item.date), 'MMM d, yyyy')}
+                  #{item.id} - {format(new Date(item.date), 'd MMM yyyy')}
                 </p>
               </div>
             </Link>
