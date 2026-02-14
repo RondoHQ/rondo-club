@@ -16,6 +16,7 @@ export default function FeedbackModal({
       title: '',
       content: '',
       feedback_type: 'bug',
+      project: 'rondo-club',
       steps_to_reproduce: '',
       expected_behavior: '',
       actual_behavior: '',
@@ -38,6 +39,7 @@ export default function FeedbackModal({
         title: '',
         content: '',
         feedback_type: 'bug',
+        project: 'rondo-club',
         steps_to_reproduce: '',
         expected_behavior: '',
         actual_behavior: '',
@@ -102,6 +104,7 @@ export default function FeedbackModal({
       title: data.title,
       content: data.content,
       feedback_type: data.feedback_type,
+      project: data.project,
       attachments: attachments.map(a => a.id),
     };
 
@@ -144,24 +147,9 @@ export default function FeedbackModal({
         {/* Form */}
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Title */}
-            <div>
-              <label className="label">Titel *</label>
-              <input
-                {...register('title', { required: 'Titel is verplicht' })}
-                className="input"
-                placeholder="Korte samenvatting van je feedback"
-                disabled={isLoading}
-                autoFocus
-              />
-              {errors.title && (
-                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.title.message}</p>
-              )}
-            </div>
-
             {/* Type */}
             <div>
-              <label className="label">Type *</label>{/* Type is same in Dutch */}
+              <label className="label">Type *</label>
               <div className="flex gap-4">
                 <label className="flex items-center cursor-pointer">
                   <input
@@ -170,6 +158,7 @@ export default function FeedbackModal({
                     value="bug"
                     className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
                     disabled={isLoading}
+                    autoFocus
                   />
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Bugmelding</span>
                 </label>
@@ -184,6 +173,57 @@ export default function FeedbackModal({
                   <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Functieverzoek</span>
                 </label>
               </div>
+            </div>
+
+            {/* Project */}
+            <div>
+              <label className="label">Project *</label>
+              <div className="flex gap-4">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    {...register('project')}
+                    type="radio"
+                    value="rondo-club"
+                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
+                    disabled={isLoading}
+                  />
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Rondo Club</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    {...register('project')}
+                    type="radio"
+                    value="rondo-sync"
+                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
+                    disabled={isLoading}
+                  />
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Rondo Sync</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    {...register('project')}
+                    type="radio"
+                    value="website"
+                    className="w-4 h-4 text-electric-cyan border-gray-300 dark:border-gray-600 focus:ring-electric-cyan dark:bg-gray-700"
+                    disabled={isLoading}
+                  />
+                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Website</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="label">Titel *</label>
+              <input
+                {...register('title', { required: 'Titel is verplicht' })}
+                className="input"
+                placeholder="Korte samenvatting van je feedback"
+                disabled={isLoading}
+              />
+              {errors.title && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.title.message}</p>
+              )}
             </div>
 
             {/* Description */}

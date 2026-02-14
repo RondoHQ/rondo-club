@@ -244,13 +244,12 @@ if [ "$RUN_CLAUDE" = true ]; then
 fi
 
 # Ensure we're on a clean main branch before starting
+# Works in the current directory (caller should cd first)
 ensure_clean_main() {
-    cd "$PROJECT_ROOT"
-
     # Check for dirty working directory
     if [ -n "$(git status --porcelain)" ]; then
-        log "ERROR" "Working directory is dirty, aborting"
-        echo -e "${RED}Error: Working directory is dirty. Commit or stash changes first.${NC}" >&2
+        log "ERROR" "Working directory is dirty in $(pwd), aborting"
+        echo -e "${RED}Error: Working directory is dirty in $(pwd). Commit or stash changes first.${NC}" >&2
         return 1
     fi
 
@@ -367,6 +366,7 @@ format_feedback_for_claude() {
     local feedback_type=$(echo "$json" | jq -r '.meta.feedback_type')
     local id=$(echo "$json" | jq -r '.id')
     local title=$(echo "$json" | jq -r '.title')
+    local project=$(echo "$json" | jq -r '.meta.project // "rondo-club"')
 
     if [ "$feedback_type" = "bug" ]; then
         echo "# Bug Report #${id}: ${title}"
@@ -375,7 +375,7 @@ format_feedback_for_claude() {
     fi
 
     echo ""
-    echo "**Status:** $(echo "$json" | jq -r '.meta.status') | **Priority:** $(echo "$json" | jq -r '.meta.priority') | **Submitted:** $(echo "$json" | jq -r '.date')"
+    echo "**Status:** $(echo "$json" | jq -r '.meta.status') | **Priority:** $(echo "$json" | jq -r '.meta.priority') | **Project:** ${project} | **Submitted:** $(echo "$json" | jq -r '.date')"
     echo "**By:** $(echo "$json" | jq -r '.author.name')"
     echo ""
 
@@ -456,20 +456,37 @@ process_feedback_item() {
     local feedback_json="$1"
     local is_single="$2"
 
-    # Get feedback ID and title
+    # Get feedback ID, title, and project
     if [ "$is_single" = "true" ]; then
         CURRENT_FEEDBACK_ID=$(echo "$feedback_json" | jq -r '.id')
     else
         CURRENT_FEEDBACK_ID=$(echo "$feedback_json" | jq -r '.[0].id')
     fi
     local title=$(echo "$feedback_json" | jq -r "if type == \"array\" then .[0].title else .title end")
+    local project=$(echo "$feedback_json" | jq -r "if type == \"array\" then .[0].meta.project else .meta.project end // \"rondo-club\"")
     ORIGINAL_STATUS="approved"
 
-    log "INFO" "Processing feedback #${CURRENT_FEEDBACK_ID}: ${title}"
-    echo -e "${GREEN}Processing feedback #${CURRENT_FEEDBACK_ID}: ${title}${NC}" >&2
+    # Resolve project directory
+    local project_dir
+    case "$project" in
+        rondo-sync) project_dir="$(dirname "$PROJECT_ROOT")/rondo-sync" ;;
+        website)    project_dir="$(dirname "$PROJECT_ROOT")/website" ;;
+        *)          project_dir="$PROJECT_ROOT" ;;
+    esac
 
-    # Ensure clean main
+    if [ ! -d "$project_dir" ]; then
+        log "ERROR" "Project directory not found: $project_dir"
+        echo -e "${RED}Error: Project directory not found: $project_dir${NC}" >&2
+        return 1
+    fi
+
+    log "INFO" "Processing feedback #${CURRENT_FEEDBACK_ID}: ${title} (project: ${project}, dir: ${project_dir})"
+    echo -e "${GREEN}Processing feedback #${CURRENT_FEEDBACK_ID}: ${title} (${project})${NC}" >&2
+
+    # Ensure clean main in the project directory
+    cd "$project_dir"
     if ! ensure_clean_main; then
+        cd "$PROJECT_ROOT"
         return 1
     fi
 
@@ -479,9 +496,10 @@ process_feedback_item() {
     # Format the prompt
     local output=$(format_feedback_for_claude "$feedback_json" "$is_single")
 
-    # Run Claude
-    log "INFO" "Starting Claude Code session for feedback #${CURRENT_FEEDBACK_ID}"
-    echo -e "${YELLOW}Starting Claude Code session...${NC}" >&2
+    # Run Claude in the project directory
+    cd "$project_dir"
+    log "INFO" "Starting Claude Code session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
+    echo -e "${YELLOW}Starting Claude Code session in ${project_dir}...${NC}" >&2
 
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     log "DEBUG" "Claude binary: $CLAUDE_BIN"
@@ -505,7 +523,8 @@ process_feedback_item() {
         echo -e "${RED}Claude session failed (exit code: $CLAUDE_EXIT)${NC}" >&2
         # Reset status back since we failed
         update_feedback_status "$CURRENT_FEEDBACK_ID" "$ORIGINAL_STATUS"
-        cd "$PROJECT_ROOT" && git checkout main 2>/dev/null
+        cd "$project_dir" && git checkout main 2>/dev/null
+        cd "$PROJECT_ROOT"
         CURRENT_FEEDBACK_ID=""
         return 1
     fi
@@ -548,14 +567,24 @@ process_feedback_item() {
             ;;
     esac
 
-    # Return to main and clean up
-    cd "$PROJECT_ROOT"
+    # Return to main and clean up in project dir
+    cd "$project_dir"
     git checkout main 2>/dev/null
     git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
+
+    # Return to rondo-club root
+    cd "$PROJECT_ROOT"
 
     CURRENT_FEEDBACK_ID=""
     ORIGINAL_STATUS=""
 }
+
+# Map of projects to directories and file patterns
+OPTIMIZATION_PROJECTS=(
+    "rondo-club:$PROJECT_ROOT"
+    "rondo-sync:$(dirname "$PROJECT_ROOT")/rondo-sync"
+    "website:$(dirname "$PROJECT_ROOT")/website"
+)
 
 # Run optimization mode (when no feedback items are pending)
 run_optimization() {
@@ -567,7 +596,7 @@ run_optimization() {
 
     # Initialize tracker if needed
     if [ ! -f "$tracker" ]; then
-        echo '{"reviewed_files": [], "last_run": null, "daily_runs": {}}' > "$tracker"
+        echo '{"reviewed_files": {}, "last_run": null, "daily_runs": {}}' > "$tracker"
     fi
 
     # Check daily limit
@@ -580,35 +609,60 @@ run_optimization() {
         return 0
     fi
 
-    # Build file queue: PHP includes first, then React files
-    local all_files=""
-    all_files+=$(find "$PROJECT_ROOT/includes" -name "*.php" -type f 2>/dev/null | sort)
-    all_files+=$'\n'
-    all_files+=$(find "$PROJECT_ROOT/src" -name "*.jsx" -name "*.js" -type f 2>/dev/null | sort)
-
-    # Find the first file not yet reviewed
+    # Find the first unreviewd file across all projects
     local target_file=""
-    while IFS= read -r file; do
-        [ -z "$file" ] && continue
-        local relative_file="${file#$PROJECT_ROOT/}"
-        if ! jq -e --arg f "$relative_file" '.reviewed_files | index($f)' "$tracker" > /dev/null 2>&1; then
-            target_file="$relative_file"
-            break
-        fi
-    done <<< "$all_files"
+    local target_project=""
+    local target_dir=""
+
+    for project_entry in "${OPTIMIZATION_PROJECTS[@]}"; do
+        local proj_name="${project_entry%%:*}"
+        local proj_dir="${project_entry#*:}"
+
+        [ ! -d "$proj_dir" ] && continue
+
+        # Build file list for this project
+        local proj_files=""
+        case "$proj_name" in
+            rondo-club)
+                proj_files=$(find "$proj_dir/includes" -name "*.php" -type f 2>/dev/null | sort)
+                proj_files+=$'\n'
+                proj_files+=$(find "$proj_dir/src" \( -name "*.jsx" -o -name "*.js" \) -type f 2>/dev/null | sort)
+                ;;
+            rondo-sync)
+                proj_files=$(find "$proj_dir/src" -name "*.js" -type f 2>/dev/null | sort)
+                ;;
+            website)
+                proj_files=$(find "$proj_dir/src" \( -name "*.astro" -o -name "*.ts" -o -name "*.tsx" \) -type f 2>/dev/null | sort)
+                ;;
+        esac
+
+        while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            local relative_file="${file#$proj_dir/}"
+            local tracker_key="${proj_name}:${relative_file}"
+            if ! jq -e --arg f "$tracker_key" '.reviewed_files[$f]' "$tracker" > /dev/null 2>&1; then
+                target_file="$relative_file"
+                target_project="$proj_name"
+                target_dir="$proj_dir"
+                break 2
+            fi
+        done <<< "$proj_files"
+    done
 
     if [ -z "$target_file" ]; then
-        log "INFO" "All files have been reviewed — resetting tracker"
-        echo '{"reviewed_files": [], "last_run": null}' > "$tracker"
+        log "INFO" "All files across all projects have been reviewed — resetting tracker"
+        jq '.reviewed_files = {}' "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
         echo -e "${GREEN}All files reviewed. Tracker reset for next cycle.${NC}" >&2
         return 0
     fi
 
-    log "INFO" "Optimization target: $target_file"
-    echo -e "${YELLOW}Reviewing: ${target_file}${NC}" >&2
+    log "INFO" "Optimization target: ${target_project}:${target_file}"
+    echo -e "${YELLOW}Reviewing: ${target_project}/${target_file}${NC}" >&2
 
-    # Ensure clean main
+    # Ensure clean main in target project
+    cd "$target_dir"
     if ! ensure_clean_main; then
+        cd "$PROJECT_ROOT"
         return 1
     fi
 
@@ -624,11 +678,11 @@ run_optimization() {
     prompt="${prompt}
 
 ## Target File
-\`${target_file}\`
+\`${target_file}\` (project: ${target_project})
 
 Review this file and create a PR if you find confident improvements. If no changes are needed, just respond with STATUS: NO_CHANGES."
 
-    # Run Claude
+    # Run Claude in the project directory
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
@@ -652,16 +706,18 @@ Review this file and create a PR if you find confident improvements. If no chang
 
     # Mark file as reviewed and increment daily counter
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    jq --arg f "$target_file" --arg t "$now" --arg d "$today" \
-        '.reviewed_files += [$f] | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
+    local tracker_key="${target_project}:${target_file}"
+    jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
+        '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
         "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
 
-    # Return to main
-    cd "$PROJECT_ROOT"
+    # Return to main in project dir, then back to rondo-club
+    cd "$target_dir"
     git checkout main 2>/dev/null
     git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
+    cd "$PROJECT_ROOT"
 
-    log "INFO" "Optimization run complete for: $target_file"
+    log "INFO" "Optimization run complete for: ${target_project}:${target_file}"
 }
 
 # Loop mode: process items until none left

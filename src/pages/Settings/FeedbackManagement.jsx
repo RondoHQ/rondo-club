@@ -22,11 +22,24 @@ const PRIORITY_OPTIONS = [
   { value: 'critical', label: 'Kritiek', color: 'text-red-600 dark:text-red-400' },
 ];
 
+// Project options with badge colors
+const PROJECT_OPTIONS = [
+  { value: 'rondo-club', label: 'Rondo Club', className: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200' },
+  { value: 'rondo-sync', label: 'Rondo Sync', className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' },
+  { value: 'website', label: 'Website', className: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' },
+];
+
 // Type filter options
 const TYPE_OPTIONS = [
   { value: '', label: 'Alle types' },
   { value: 'bug', label: 'Bugs' },
   { value: 'feature_request', label: 'Functies' },
+];
+
+// Project filter options
+const PROJECT_FILTER_OPTIONS = [
+  { value: '', label: 'Alle projecten' },
+  ...PROJECT_OPTIONS,
 ];
 
 // Status filter options (includes "all" option)
@@ -90,6 +103,17 @@ function TypeBadge({ type }) {
   );
 }
 
+// Project badge component
+function ProjectBadge({ project }) {
+  const config = PROJECT_OPTIONS.find((p) => p.value === project) || { label: project || 'Rondo Club', className: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' };
+
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.className}`}>
+      {config.label}
+    </span>
+  );
+}
+
 export default function FeedbackManagement() {
   useDocumentTitle('Feedbackbeheer - Instellingen');
   const config = window.rondoConfig || {};
@@ -99,6 +123,7 @@ export default function FeedbackManagement() {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState('desc');
 
@@ -107,6 +132,7 @@ export default function FeedbackManagement() {
     type: typeFilter || undefined,
     status: statusFilter || undefined,
     priority: priorityFilter || undefined,
+    project: projectFilter || undefined,
     orderby: sortField,
     order: sortOrder,
     per_page: 100,
@@ -218,6 +244,24 @@ export default function FeedbackManagement() {
               ))}
             </select>
           </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="projectFilter" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Project:
+            </label>
+            <select
+              id="projectFilter"
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+              className="input-field w-auto min-w-[140px]"
+            >
+              {PROJECT_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -234,6 +278,9 @@ export default function FeedbackManagement() {
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Type
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
+                    Project
                   </th>
                   <SortableHeader
                     field="title"
@@ -276,8 +323,13 @@ export default function FeedbackManagement() {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {feedback.map((item, index) => {
-                  const statusOption = STATUS_OPTIONS.find((s) => s.value === item.status) || STATUS_OPTIONS[0];
-                  const priorityOption = PRIORITY_OPTIONS.find((p) => p.value === item.priority) || PRIORITY_OPTIONS[0];
+                  const itemStatus = item.meta?.status || item.status || 'new';
+                  const itemPriority = item.meta?.priority || item.priority || 'medium';
+                  const itemType = item.meta?.feedback_type || item.type || '';
+                  const itemProject = item.meta?.project || 'rondo-club';
+                  const itemAuthor = item.author?.name || item.author_name || 'Onbekend';
+                  const statusOption = STATUS_OPTIONS.find((s) => s.value === itemStatus) || STATUS_OPTIONS[0];
+                  const priorityOption = PRIORITY_OPTIONS.find((p) => p.value === itemPriority) || PRIORITY_OPTIONS[0];
 
                   return (
                     <tr
@@ -285,7 +337,10 @@ export default function FeedbackManagement() {
                       className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/50'}
                     >
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <TypeBadge type={item.type} />
+                        <TypeBadge type={itemType} />
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <ProjectBadge project={itemProject} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100 max-w-xs truncate">
@@ -294,12 +349,12 @@ export default function FeedbackManagement() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {item.author_name || 'Onbekend'}
+                          {itemAuthor}
                         </span>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <select
-                          value={item.status}
+                          value={itemStatus}
                           onChange={(e) => handleStatusChange(item.id, e.target.value)}
                           className={`text-xs font-medium px-2 py-1 rounded border-0 cursor-pointer ${statusOption.color}`}
                         >
@@ -312,7 +367,7 @@ export default function FeedbackManagement() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <select
-                          value={item.priority}
+                          value={itemPriority}
                           onChange={(e) => handlePriorityChange(item.id, e.target.value)}
                           className={`text-xs font-medium px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 cursor-pointer ${priorityOption.color}`}
                         >
