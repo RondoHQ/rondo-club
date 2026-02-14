@@ -346,7 +346,7 @@ run_claude() {
         log "INFO" "Extra flags: $extra_flags"
     fi
 
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions "${model_args[@]}" "${extra_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions --fast "${model_args[@]}" "${extra_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
     local claude_pid=$!
     local elapsed=0
 
@@ -618,26 +618,29 @@ A codebase map is provided above — use it to identify relevant files instead o
 
 ### Step 1: Decide if you have enough information
 
-**Before planning anything**, check if the feedback is clear enough to act on. Ask for clarification (STATUS: NEEDS_INFO) when ANY of these apply:
+**Before planning anything**, check if the feedback is clear enough to act on. Most feedback IS clear enough — prefer action over asking questions.
 
-- The description is vague or could mean multiple things
-- You cannot identify which specific page, component, or feature is affected
-- The desired behavior is not clearly described
-- For bugs: no steps to reproduce, or the expected vs actual behavior is unclear
-- For features: the scope is ambiguous or could be interpreted in very different ways
-- You would need to make significant assumptions about what the user wants
-- The change would affect user-visible behavior and you are unsure what the user expects
+Only ask for clarification (STATUS: NEEDS_INFO) when you TRULY cannot proceed:
+- The description is so vague you cannot identify what to change at all
+- There are multiple contradictory interpretations and picking wrong would cause harm
+- The requested feature requires design decisions that only the user can make (e.g., specific business rules, pricing, permissions)
 
-**Err on the side of asking.** A quick clarifying question saves hours of wrong implementation. Most feedback from end users needs at least one follow-up question.
+**Do NOT ask about:**
+- Edge cases you can handle with reasonable defaults
+- Migration of old data — pick the simplest safe approach (usually: remove/ignore)
+- Implementation details you can decide yourself
+- Things that are obvious from the codebase
 
-If clarification is needed, output ONLY this (no plan):
+**Err on the side of acting.** Make reasonable choices, document them in your PR description, and let the reviewer adjust if needed.
+
+If clarification is truly needed, output ONLY this (no plan):
 STATUS: NEEDS_INFO
 QUESTION: Your specific question — be concrete about what you need to know
 
 If the feedback should be declined (out of scope, not feasible, already works as designed), output ONLY:
 STATUS: DECLINED
 
-### Step 2: Create the plan (only if the feedback is clear)
+### Step 2: Create the plan
 
 If and only if you are confident you understand exactly what needs to change, produce a plan:
 

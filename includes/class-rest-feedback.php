@@ -703,17 +703,30 @@ class Feedback extends Base {
 			$author_type = 'user';
 		}
 
-		$comment_id = wp_insert_comment(
-			[
-				'comment_post_ID'  => $feedback_id,
-				'comment_content'  => $content,
-				'comment_type'     => 'rondo_feedback_comment',
-				'user_id'          => get_current_user_id(),
-				'comment_approved' => 1,
-			]
-		);
+		$user_id      = get_current_user_id();
+		$comment_data = [
+			'comment_post_ID'  => $feedback_id,
+			'comment_content'  => $content,
+			'comment_type'     => 'rondo_feedback_comment',
+			'user_id'          => $user_id,
+			'comment_approved' => 1,
+		];
+
+		// Fill in author fields from user data to satisfy WordPress validation.
+		if ( $user_id ) {
+			$user = get_userdata( $user_id );
+			if ( $user ) {
+				$comment_data['comment_author']       = $user->display_name;
+				$comment_data['comment_author_email'] = $user->user_email;
+			}
+		}
+
+		$comment_id = wp_insert_comment( $comment_data );
 
 		if ( ! $comment_id ) {
+			global $wpdb;
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'Rondo: Failed to insert feedback comment. DB error: ' . $wpdb->last_error . ' | Data: ' . wp_json_encode( $comment_data ) );
 			return new \WP_Error(
 				'rest_cannot_create',
 				__( 'Failed to create comment.', 'rondo' ),
