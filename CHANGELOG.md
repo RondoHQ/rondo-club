@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.3] - 2026-02-14
+
+### Fixed
+- Primary buttons unreadable in dark mode — now use electric-cyan background with dark text for proper contrast
+
 ## [25.1.2] - 2026-02-14
 
 ### Changed

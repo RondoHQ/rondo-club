@@ -160,7 +160,7 @@
 
 .btn-primary {
   @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
-  @apply bg-brand-gradient text-white hover:shadow-lg hover:shadow-cyan-500/50 focus:ring-electric-cyan dark:bg-deep-midnight dark:text-electric-cyan dark:border dark:border-electric-cyan dark:hover:bg-gray-700 dark:hover:text-electric-cyan-light dark:hover:border-electric-cyan-light;
+  @apply bg-brand-gradient text-white hover:shadow-lg hover:shadow-cyan-500/50 focus:ring-electric-cyan dark:bg-electric-cyan dark:text-gray-900 dark:hover:bg-electric-cyan-light dark:hover:text-gray-900;
 }
 
 .btn-secondary {
