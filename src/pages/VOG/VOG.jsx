@@ -1,10 +1,12 @@
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import TabButton from '@/components/TabButton';
 import VOGList from './VOGList';
+import VOGUpcoming from './VOGUpcoming';
 import VOGSettings from './VOGSettings';
 
 const TABS = [
   { id: 'overzicht', label: 'Overzicht' },
+  { id: 'binnenkort', label: 'Binnenkort' },
   { id: 'instellingen', label: 'Instellingen', adminOnly: true },
 ];
 
@@ -39,6 +41,7 @@ export default function VOG() {
 
       {/* Tab content */}
       {activeTab === 'overzicht' && <VOGList />}
+      {activeTab === 'binnenkort' && <VOGUpcoming />}
       {activeTab === 'instellingen' && isAdmin && <VOGSettings />}
     </div>
   );
