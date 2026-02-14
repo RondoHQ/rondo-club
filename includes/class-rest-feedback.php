@@ -153,7 +153,7 @@ class Feedback extends Base {
 			'status'   => [
 				'default'           => '',
 				'validate_callback' => function ( $param ) {
-					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'resolved', 'declined', 'needs_info', 'open' ], true );
+					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info', 'open' ], true );
 				},
 			],
 			'priority' => [
@@ -260,7 +260,7 @@ class Feedback extends Base {
 		$status = $request->get_param( 'status' );
 		if ( ! empty( $status ) ) {
 			if ( $status === 'open' ) {
-				// "open" is a pseudo-status that matches new, approved, and in_progress
+				// "open" is a pseudo-status that matches everything except resolved and declined
 				$meta_query[] = [
 					'key'     => 'status',
 					'value'   => [ 'resolved', 'declined' ],
@@ -518,11 +518,11 @@ class Feedback extends Base {
 			);
 		}
 
-		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'resolved', 'declined', 'needs_info' ], true ) ) {
+		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "resolved", "declined", or "needs_info"' ] ]
+				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "in_review", "resolved", "declined", or "needs_info"' ] ]
 			);
 		}
 

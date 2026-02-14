@@ -434,7 +434,9 @@ parse_claude_response() {
     local response="$1"
 
     # Extract status
-    if echo "$response" | grep -qi "STATUS:.*RESOLVED"; then
+    if echo "$response" | grep -qi "STATUS:.*IN_REVIEW"; then
+        PARSED_STATUS="in_review"
+    elif echo "$response" | grep -qi "STATUS:.*RESOLVED"; then
         PARSED_STATUS="resolved"
     elif echo "$response" | grep -qi "STATUS:.*NEEDS_INFO"; then
         PARSED_STATUS="needs_info"
@@ -535,17 +537,24 @@ process_feedback_item() {
     parse_claude_response "$CLAUDE_OUTPUT"
 
     case "$PARSED_STATUS" in
-        resolved)
-            update_feedback_status "$CURRENT_FEEDBACK_ID" "resolved"
+        in_review)
+            update_feedback_status "$CURRENT_FEEDBACK_ID" "in_review"
             if [ -n "$PARSED_PR_URL" ]; then
                 update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""
-                log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} resolved with PR: ${PARSED_PR_URL}"
+                log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} in review with PR: ${PARSED_PR_URL}"
                 # Request Copilot code review
                 local pr_number=$(echo "$PARSED_PR_URL" | grep -oE '[0-9]+$')
                 if [ -n "$pr_number" ]; then
                     log "INFO" "Requesting Copilot review for PR #${pr_number}"
                     gh copilot-review "$pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
                 fi
+            fi
+            ;;
+        resolved)
+            update_feedback_status "$CURRENT_FEEDBACK_ID" "resolved"
+            if [ -n "$PARSED_PR_URL" ]; then
+                update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""
+                log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} resolved with PR: ${PARSED_PR_URL}"
             fi
             ;;
         needs_info)
@@ -585,6 +594,19 @@ OPTIMIZATION_PROJECTS=(
     "rondo-sync:$(dirname "$PROJECT_ROOT")/rondo-sync"
     "website:$(dirname "$PROJECT_ROOT")/website"
 )
+
+# Resolve the feedback item associated with a PR branch (feedback/<id>-slug)
+resolve_feedback_for_branch() {
+    local branch="$1"
+    local feedback_id
+
+    # Extract feedback ID from branch name (feedback/1234-some-slug → 1234)
+    feedback_id=$(echo "$branch" | sed -n 's|^feedback/\([0-9]*\).*|\1|p')
+    if [ -n "$feedback_id" ]; then
+        log "INFO" "Resolving feedback #${feedback_id} after PR merge"
+        update_feedback_status "$feedback_id" "resolved"
+    fi
+}
 
 # Merge a PR via squash, pull main, and deploy
 merge_and_deploy() {
@@ -724,6 +746,7 @@ process_pr_reviews() {
             log "INFO" "PR #${pr_number} — Copilot review clean, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — Copilot review clean, merging and deploying${NC}" >&2
             merge_and_deploy "$pr_number"
+            resolve_feedback_for_branch "$branch"
             local now
             now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
@@ -776,6 +799,7 @@ process_pr_reviews() {
             log "INFO" "PR #${pr_number} — safe to merge, merging and deploying"
             echo -e "${GREEN}PR #${pr_number} — safe to merge, merging and deploying${NC}" >&2
             merge_and_deploy "$pr_number"
+            resolve_feedback_for_branch "$branch"
             action="merged"
         else
             log "INFO" "PR #${pr_number} — not safe to auto-merge, assigning to jdevalk"

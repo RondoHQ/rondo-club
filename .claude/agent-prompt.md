@@ -31,9 +31,9 @@ You have been given a feedback item to address. Follow these rules strictly.
 
 End your response with EXACTLY ONE of these status blocks:
 
-### If you resolved the issue (created a PR):
+### If you created a PR for the issue:
 ```
-STATUS: RESOLVED
+STATUS: IN_REVIEW
 PR_URL: https://github.com/RondoHQ/rondo-club/pull/XXX
 ```
 

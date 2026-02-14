@@ -8,6 +8,8 @@ const statusOptions = [
   { value: 'new', label: 'Nieuw' },
   { value: 'approved', label: 'Goedgekeurd' },
   { value: 'in_progress', label: 'In behandeling' },
+  { value: 'in_review', label: 'In review' },
+  { value: 'needs_info', label: 'Info nodig' },
   { value: 'resolved', label: 'Opgelost' },
   { value: 'declined', label: 'Afgewezen' },
 ];
