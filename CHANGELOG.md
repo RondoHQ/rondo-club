@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sportlink fields (KNVB ID, Type lid, Leeftijdsgroep, Lid sinds, Datum foto, Datum VOG, Is ouder, Huidig vrijwilliger, Financiële blokkade, FreeScout ID) available as column options on the /people page
 - Show feedback ID in feedback list and admin feedback management table
 
+### Changed
+- Dashboard birthday card now shows all of today's birthdays even when there are more than 5
+
 ## [25.0.1] - 2026-02-14
 
 ### Fixed

@@ -2064,10 +2064,34 @@ class Api extends Base {
 					'awaiting_todos_count' => $awaiting_todos_count,
 				],
 				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
-				'upcoming_reminders' => array_slice( $upcoming_reminders, 0, 5 ),
+				'upcoming_reminders' => $this->limit_reminders_with_all_today( $upcoming_reminders, 5 ),
 				'recently_contacted' => $recently_contacted,
 			]
 		);
+	}
+
+	/**
+	 * Limit reminders to $limit items, but always include all of today's reminders.
+	 *
+	 * Reminders are already sorted by next_occurrence (today first). If there are
+	 * more than $limit birthdays today, all of them are returned. Otherwise, the
+	 * list is padded with future reminders up to $limit.
+	 *
+	 * @param array $reminders Sorted array of reminder items with 'days_until' key.
+	 * @param int   $limit     Default maximum number of reminders to return.
+	 * @return array
+	 */
+	private function limit_reminders_with_all_today( array $reminders, int $limit ): array {
+		$today_count = 0;
+		foreach ( $reminders as $reminder ) {
+			if ( 0 === $reminder['days_until'] ) {
+				$today_count++;
+			} else {
+				break; // Reminders are sorted by date, so no more today entries after this.
+			}
+		}
+
+		return array_slice( $reminders, 0, max( $limit, $today_count ) );
 	}
 
 	/**
