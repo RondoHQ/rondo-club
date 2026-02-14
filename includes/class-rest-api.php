@@ -1182,6 +1182,32 @@ class Api extends Base {
 	];
 
 	/**
+	 * Sportlink fields (ACF fields from the person field group synced from Sportlink).
+	 * These are not user-created custom fields, so they must be explicitly listed here.
+	 */
+	private const SPORTLINK_FIELDS = [
+		[ 'id' => 'knvb-id', 'label' => 'KNVB ID', 'type' => 'text' ],
+		[ 'id' => 'type-lid', 'label' => 'Type lid', 'type' => 'text' ],
+		[ 'id' => 'leeftijdsgroep', 'label' => 'Leeftijdsgroep', 'type' => 'text' ],
+		[ 'id' => 'lid-sinds', 'label' => 'Lid sinds', 'type' => 'date' ],
+		[ 'id' => 'datum-foto', 'label' => 'Datum foto', 'type' => 'date' ],
+		[ 'id' => 'datum-vog', 'label' => 'Datum VOG', 'type' => 'date' ],
+		[ 'id' => 'isparent', 'label' => 'Is ouder', 'type' => 'true_false' ],
+		[ 'id' => 'huidig-vrijwilliger', 'label' => 'Huidig vrijwilliger', 'type' => 'true_false' ],
+		[ 'id' => 'financiele-blokkade', 'label' => 'Financiële blokkade', 'type' => 'true_false' ],
+		[ 'id' => 'freescout-id', 'label' => 'FreeScout ID', 'type' => 'number' ],
+	];
+
+	/**
+	 * Get Sportlink field definitions for use by other classes.
+	 *
+	 * @return array Sportlink field definitions.
+	 */
+	public static function get_sportlink_fields(): array {
+		return self::SPORTLINK_FIELDS;
+	}
+
+	/**
 	 * Valid dashboard card IDs
 	 */
 	private const VALID_DASHBOARD_CARDS = [
@@ -1516,6 +1542,16 @@ class Api extends Base {
 
 		// Core columns (always available, order matters for UI)
 		$columns = array_merge( $columns, self::CORE_LIST_COLUMNS );
+
+		// Sportlink fields (read-only, synced from external system)
+		foreach ( self::SPORTLINK_FIELDS as $field ) {
+			$columns[] = [
+				'id'     => $field['id'],
+				'label'  => $field['label'],
+				'type'   => $field['type'],
+				'custom' => true,
+			];
+		}
 
 		// Custom fields from ACF
 		$manager       = new \Rondo\CustomFields\Manager();

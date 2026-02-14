@@ -329,7 +329,7 @@ class Reminders {
 
 			$upcoming[] = [
 				'id'              => $person->ID,
-				'title'           => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ) . ' - Verjaardag',
+				'title'           => html_entity_decode( $person->post_title, ENT_QUOTES, 'UTF-8' ),
 				'date_value'      => $person->birthdate,
 				'next_occurrence' => $next_occurrence->format( 'Y-m-d' ),
 				'days_until'      => (int) $today->diff( $next_occurrence )->days,
