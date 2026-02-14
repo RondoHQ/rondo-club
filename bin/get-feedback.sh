@@ -616,23 +616,38 @@ A codebase map is provided above — use it to identify relevant files instead o
 
     plan_prompt+="
 
-Instead, analyze the feedback and the codebase to produce a detailed implementation plan. Your plan should include:
+### Step 1: Decide if you have enough information
 
-1. **Assessment** — Can this be resolved? If not, explain why and output STATUS: NEEDS_INFO or STATUS: DECLINED
-2. **Files to modify** — List every file that needs changes, with the specific changes needed
-3. **New files** (if any) — What new files need to be created and what they should contain
-4. **Implementation steps** — Numbered step-by-step instructions specific enough for another developer to follow
-5. **Testing** — How to verify the changes work (build commands, what to check)
-6. **PR details** — Suggested branch name, PR title, and PR description
+**Before planning anything**, check if the feedback is clear enough to act on. Ask for clarification (STATUS: NEEDS_INFO) when ANY of these apply:
 
-Be specific about code changes — include function names, class names, and describe the logic. Do NOT include actual code blocks, just describe what needs to change.
+- The description is vague or could mean multiple things
+- You cannot identify which specific page, component, or feature is affected
+- The desired behavior is not clearly described
+- For bugs: no steps to reproduce, or the expected vs actual behavior is unclear
+- For features: the scope is ambiguous or could be interpreted in very different ways
+- You would need to make significant assumptions about what the user wants
+- The change would affect user-visible behavior and you are unsure what the user expects
 
-If this feedback needs more information from the user, skip the plan and output:
+**Err on the side of asking.** A quick clarifying question saves hours of wrong implementation. Most feedback from end users needs at least one follow-up question.
+
+If clarification is needed, output ONLY this (no plan):
 STATUS: NEEDS_INFO
-QUESTION: Your specific question
+QUESTION: Your specific question — be concrete about what you need to know
 
-If this feedback should be declined, skip the plan and output:
-STATUS: DECLINED"
+If the feedback should be declined (out of scope, not feasible, already works as designed), output ONLY:
+STATUS: DECLINED
+
+### Step 2: Create the plan (only if the feedback is clear)
+
+If and only if you are confident you understand exactly what needs to change, produce a plan:
+
+1. **Files to modify** — List every file that needs changes, with the specific changes needed
+2. **New files** (if any) — What new files need to be created and what they should contain
+3. **Implementation steps** — Numbered step-by-step instructions specific enough for another developer to follow
+4. **Testing** — How to verify the changes work (build commands, what to check)
+5. **PR details** — Suggested branch name, PR title, and PR description
+
+Be specific about code changes — include function names, class names, and describe the logic. Do NOT include actual code blocks, just describe what needs to change."
 
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
