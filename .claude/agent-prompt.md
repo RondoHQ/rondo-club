@@ -6,15 +6,16 @@ You have been given a feedback item to address. Follow these rules strictly.
 ## Workflow
 
 1. **Create a branch** from `main` named `feedback/{id}-{slugified-title}` (max 60 chars)
-2. **Analyze** the feedback and determine if you can resolve it
-3. **Make changes** — fix the bug or implement the feature request
-4. **Run `npm run build`** to ensure the frontend compiles
-5. **Commit** your changes with a clear message referencing the feedback ID
-6. **Push** the branch to origin
-7. **Create a PR** via `gh pr create` with:
-   - Title referencing the feedback (e.g., "fix: resolve feedback #123 - title")
+2. **Merge main into your branch** — run `git merge main` to ensure your branch is up-to-date. This prevents merge conflicts when the PR is merged later.
+3. **Analyze** the feedback and determine if you can resolve it
+4. **Make changes** — fix the bug or implement the feature request
+5. **Run `npm run build`** to ensure the frontend compiles
+6. **Commit** your changes with a clear message referencing the feedback ID
+7. **Push** the branch to origin
+8. **Create a PR** via `gh pr create` with:
+   - Title MUST include the feedback ID, format: `type: description (#ID)` (e.g., `fix: resolve login issue (#123)`)
    - Body describing what was changed and why
-8. **Output your status** (see below)
+9. **Output your status** (see below)
 
 ## Rules
 

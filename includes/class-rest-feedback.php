@@ -737,11 +737,11 @@ class Feedback extends Base {
 
 		update_comment_meta( $comment_id, '_author_type', $author_type );
 
-		// When a user replies to needs_info feedback, auto-transition to approved
+		// When a user replies to needs_info feedback, require re-approval
 		if ( $author_type === 'user' ) {
 			$current_status = get_field( 'status', $feedback_id );
 			if ( $current_status === 'needs_info' ) {
-				update_field( 'status', 'approved', $feedback_id );
+				update_field( 'status', 'new', $feedback_id );
 			}
 		}
 
