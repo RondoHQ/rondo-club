@@ -808,7 +808,7 @@ process_pr_reviews() {
 
     # Get open PRs
     local prs
-    prs=$(gh pr list --repo RondoHQ/rondo-club --json number,headRefName --state open 2>/dev/null)
+    prs=$(gh pr list --repo RondoHQ/rondo-club --json number,headRefName,title --state open 2>/dev/null)
     if [ $? -ne 0 ] || [ -z "$prs" ]; then
         log "WARN" "Failed to list PRs from GitHub"
         return 0
@@ -831,9 +831,11 @@ process_pr_reviews() {
         pr_number=$(echo "$pr" | jq -r '.number')
         local branch
         branch=$(echo "$pr" | jq -r '.headRefName')
+        local pr_title
+        pr_title=$(echo "$pr" | jq -r '.title')
 
         # Only process feedback/* and optimize/* branches
-        if [[ "$branch" != feedback/* ]] && [[ "$branch" != optimize/* ]]; then
+        if [[ "$branch" != feedback/* ]] && [[ "$branch" != optimize/* ]] && [[ "$branch" != fix/* ]]; then
             continue
         fi
 
@@ -882,8 +884,8 @@ process_pr_reviews() {
 
         if [ "$comment_count" = "0" ]; then
             # Reviewed but no inline comments — clean review, merge and deploy
-            log "INFO" "PR #${pr_number} — Copilot review clean, merging and deploying"
-            echo -e "${GREEN}PR #${pr_number} — Copilot review clean, merging and deploying${NC}" >&2
+            log "INFO" "PR #${pr_number} (${pr_title}) — Copilot review clean, merging and deploying"
+            echo -e "${GREEN}PR #${pr_number} (${pr_title}) — Copilot review clean, merging and deploying${NC}" >&2
             local merge_action="merge_failed"
             if merge_and_deploy "$pr_number"; then
                 resolve_feedback_for_branch "$branch"
@@ -897,8 +899,8 @@ process_pr_reviews() {
             continue
         fi
 
-        log "INFO" "PR #${pr_number} has ${comment_count} Copilot review comments — processing"
-        echo -e "${GREEN}PR #${pr_number} has ${comment_count} Copilot review comments — processing${NC}" >&2
+        log "INFO" "PR #${pr_number} (${pr_title}) has ${comment_count} Copilot review comments — processing"
+        echo -e "${GREEN}PR #${pr_number} (${pr_title}) has ${comment_count} Copilot review comments — processing${NC}" >&2
 
         # Ensure clean main, then checkout PR branch
         if ! ensure_clean_main; then
@@ -934,8 +936,8 @@ process_pr_reviews() {
             gh pr edit "$pr_number" --repo RondoHQ/rondo-club --add-assignee jdevalk 2>/dev/null
             action="assigned"
         elif echo "$output" | grep -qi "SAFE_TO_MERGE:.*yes"; then
-            log "INFO" "PR #${pr_number} — safe to merge, merging and deploying"
-            echo -e "${GREEN}PR #${pr_number} — safe to merge, merging and deploying${NC}" >&2
+            log "INFO" "PR #${pr_number} (${pr_title}) — safe to merge, merging and deploying"
+            echo -e "${GREEN}PR #${pr_number} (${pr_title}) — safe to merge, merging and deploying${NC}" >&2
             if merge_and_deploy "$pr_number"; then
                 resolve_feedback_for_branch "$branch"
                 action="merged"
@@ -943,8 +945,8 @@ process_pr_reviews() {
                 action="merge_failed"
             fi
         else
-            log "INFO" "PR #${pr_number} — not safe to auto-merge, assigning to jdevalk"
-            echo -e "${YELLOW}PR #${pr_number} — assigning to jdevalk for review${NC}" >&2
+            log "INFO" "PR #${pr_number} (${pr_title}) — not safe to auto-merge, assigning to jdevalk"
+            echo -e "${YELLOW}PR #${pr_number} (${pr_title}) — assigning to jdevalk for review${NC}" >&2
             gh pr edit "$pr_number" --repo RondoHQ/rondo-club --add-assignee jdevalk 2>/dev/null
             action="assigned"
         fi
