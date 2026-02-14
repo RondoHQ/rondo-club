@@ -567,9 +567,9 @@ process_feedback_item() {
     # Run Claude in the project directory
     cd "$project_dir"
 
-    # --- Phase 1: Planning with Opus ---
-    log "INFO" "Starting Opus planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
-    echo -e "${YELLOW}Phase 1/2: Planning with Opus...${NC}" >&2
+    # --- Phase 1: Planning with Sonnet ---
+    log "INFO" "Starting planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
+    echo -e "${YELLOW}Phase 1/2: Planning with Sonnet...${NC}" >&2
 
     local plan_prompt="${output}
 
@@ -601,13 +601,13 @@ STATUS: DECLINED"
     local output_file=$(mktemp)
     printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600 "opus"
+    run_claude "$prompt_file" "$output_file" 600 "sonnet"
 
     local plan_output="$CLAUDE_OUTPUT"
     local plan_exit=$CLAUDE_EXIT
 
     if [ $plan_exit -ne 0 ]; then
-        log "ERROR" "Opus planning session failed (exit code: $plan_exit)"
+        log "ERROR" "Planning session failed (exit code: $plan_exit)"
         echo -e "${RED}Planning session failed (exit code: $plan_exit)${NC}" >&2
         update_feedback_status "$CURRENT_FEEDBACK_ID" "$ORIGINAL_STATUS"
         cd "$project_dir" && git checkout main 2>/dev/null
@@ -616,7 +616,7 @@ STATUS: DECLINED"
         return 1
     fi
 
-    log "INFO" "Opus planning session completed"
+    log "INFO" "Planning session completed"
 
     # Check if the plan indicates NEEDS_INFO or DECLINED — skip implementation
     if echo "$plan_output" | grep -qi "STATUS:.*NEEDS_INFO\|STATUS:.*DECLINED"; then
