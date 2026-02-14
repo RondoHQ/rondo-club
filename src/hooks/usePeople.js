@@ -130,6 +130,7 @@ export function useFilteredPeople(filters = {}, options = {}) {
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
+    vog_expiring_within_days: filters.vogExpiringWithinDays || null,
     vog_email_status: filters.vogEmailStatus || null,
     vog_type: filters.vogType || null,
     leeftijdsgroep: filters.leeftijdsgroep || null,

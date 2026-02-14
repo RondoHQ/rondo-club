@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.0] - 2026-02-14
+
+### Added
+- "Binnenkort" tab on /vog page showing volunteers whose VOG expires within 30 days
+- `vog_expiring_within_days` filter parameter on filtered people API endpoint
+
 ## [25.0.1] - 2026-02-14
 
 ### Fixed
