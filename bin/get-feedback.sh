@@ -1021,6 +1021,9 @@ while true; do
         echo "" >&2
         echo -e "${GREEN}=== Processing item #${LOOP_COUNTER} ===${NC}" >&2
         log "INFO" "Loop iteration #${LOOP_COUNTER}"
+
+        # Prioritize finishing in-review items before starting new ones
+        process_pr_reviews
     fi
 
     # Build API URL - fetch 1 item, oldest first
@@ -1068,9 +1071,6 @@ while true; do
             local_counter=$((LOOP_COUNTER - 1))
             echo -e "${GREEN}No more feedback items. Processed ${local_counter} items.${NC}" >&2
             log "INFO" "Loop completed - processed ${local_counter} items"
-
-            # Process any open PRs with Copilot review feedback
-            process_pr_reviews
 
             # Run optimization if enabled and no feedback was found
             if [ "$OPTIMIZE_MODE" = true ]; then
