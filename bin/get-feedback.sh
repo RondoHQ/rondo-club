@@ -586,6 +586,29 @@ OPTIMIZATION_PROJECTS=(
     "website:$(dirname "$PROJECT_ROOT")/website"
 )
 
+# Merge a PR via squash, pull main, and deploy
+merge_and_deploy() {
+    local pr_number="$1"
+
+    log "INFO" "Merging PR #${pr_number} via squash"
+    echo -e "${GREEN}Merging PR #${pr_number}...${NC}" >&2
+
+    if ! gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch; then
+        log "ERROR" "Failed to merge PR #${pr_number}"
+        echo -e "${RED}Failed to merge PR #${pr_number}${NC}" >&2
+        return 1
+    fi
+
+    log "INFO" "PR #${pr_number} merged — pulling main and deploying"
+    cd "$PROJECT_ROOT"
+    git checkout main 2>/dev/null
+    git pull --ff-only 2>/dev/null
+    bin/deploy.sh
+
+    log "INFO" "Deploy complete after merging PR #${pr_number}"
+    echo -e "${GREEN}Deploy complete after merging PR #${pr_number}${NC}" >&2
+}
+
 # Format review comments into a prompt for Claude
 format_review_prompt() {
     local pr_number="$1"
@@ -697,12 +720,14 @@ process_pr_reviews() {
         comment_count=$(echo "$copilot_comments" | jq 'length')
 
         if [ "$comment_count" = "0" ]; then
-            # Reviewed but no inline comments — mark as processed
-            log "INFO" "PR #${pr_number} has Copilot review but no inline comments — marking processed"
+            # Reviewed but no inline comments — clean review, merge and deploy
+            log "INFO" "PR #${pr_number} — Copilot review clean, merging and deploying"
+            echo -e "${GREEN}PR #${pr_number} — Copilot review clean, merging and deploying${NC}" >&2
+            merge_and_deploy "$pr_number"
             local now
             now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
-                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t}]' \
+                '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": "merged"}]' \
                 "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
             continue
         fi
@@ -741,17 +766,29 @@ process_pr_reviews() {
 
         echo "$output"
 
+        local action="processed"
         if [ $exit_code -ne 0 ]; then
-            log "ERROR" "Claude session failed for PR #${pr_number} review (exit code: $exit_code)"
+            log "ERROR" "Claude session failed for PR #${pr_number} review (exit code: $exit_code) — assigning to jdevalk"
+            echo -e "${YELLOW}PR #${pr_number} — Claude failed, assigning to jdevalk${NC}" >&2
+            gh pr edit "$pr_number" --repo RondoHQ/rondo-club --add-assignee jdevalk 2>/dev/null
+            action="assigned"
+        elif echo "$output" | grep -qi "SAFE_TO_MERGE:.*yes"; then
+            log "INFO" "PR #${pr_number} — safe to merge, merging and deploying"
+            echo -e "${GREEN}PR #${pr_number} — safe to merge, merging and deploying${NC}" >&2
+            merge_and_deploy "$pr_number"
+            action="merged"
         else
-            log "INFO" "Claude session completed for PR #${pr_number} review"
+            log "INFO" "PR #${pr_number} — not safe to auto-merge, assigning to jdevalk"
+            echo -e "${YELLOW}PR #${pr_number} — assigning to jdevalk for review${NC}" >&2
+            gh pr edit "$pr_number" --repo RondoHQ/rondo-club --add-assignee jdevalk 2>/dev/null
+            action="assigned"
         fi
 
         # Mark review as processed in tracker
         local now
         now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" \
-            '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t}]' \
+        jq --argjson num "$pr_number" --argjson rid "$review_id" --arg t "$now" --arg a "$action" \
+            '.processed_reviews += [{"pr_number": $num, "review_id": $rid, "processed_at": $t, "action": $a}]' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
 
         reviews_processed=$((reviews_processed + 1))
