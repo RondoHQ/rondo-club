@@ -111,15 +111,20 @@ echo "Target: $DEPLOY_SSH_USER@$DEPLOY_SSH_HOST"
 echo "Theme path: $DEPLOY_REMOTE_THEME_PATH"
 echo ""
 
-# Step 1: Sync dist folder with --delete to remove old build artifacts
-echo -e "${YELLOW}Step 1: Syncing dist/ folder...${NC}"
+# Step 1: Build frontend assets
+echo -e "${YELLOW}Step 1: Building frontend assets...${NC}"
+cd "$PROJECT_ROOT"
+npm run build
+
+# Step 2: Sync dist folder with --delete to remove old build artifacts
+echo -e "${YELLOW}Step 2: Syncing dist/ folder...${NC}"
 rsync -avz --delete \
     -e "ssh -p $DEPLOY_SSH_PORT" \
     "$PROJECT_ROOT/dist/" \
     "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/dist/"
 
-# Step 2: Sync remaining theme files
-echo -e "${YELLOW}Step 2: Syncing theme files...${NC}"
+# Step 3: Sync remaining theme files
+echo -e "${YELLOW}Step 3: Syncing theme files...${NC}"
 if [ "$INCLUDE_NODE_MODULES" = true ]; then
     echo "(Including node_modules)"
     rsync -avz \
@@ -138,14 +143,14 @@ else
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
 fi
 
-# Step 3: Regenerate composer autoloader (for new PHP classes)
-echo -e "${YELLOW}Step 3: Regenerating composer autoloader...${NC}"
+# Step 4: Regenerate composer autoloader (for new PHP classes)
+echo -e "${YELLOW}Step 4: Regenerating composer autoloader...${NC}"
 $SSH_CMD "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
     "cd $DEPLOY_REMOTE_THEME_PATH && composer dump-autoload -o --quiet"
 
-# Step 4: Clear caches
+# Step 5: Clear caches
 if [ "$SKIP_CACHE_CLEAR" = false ]; then
-    echo -e "${YELLOW}Step 4: Clearing caches...${NC}"
+    echo -e "${YELLOW}Step 5: Clearing caches...${NC}"
     $SSH_CMD "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
         "cd $DEPLOY_REMOTE_WP_PATH && wp cache flush && wp sg purge"
 fi
