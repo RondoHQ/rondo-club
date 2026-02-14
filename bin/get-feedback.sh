@@ -1555,6 +1555,8 @@ if [ "$LOOP_MODE" = true ]; then
     log "INFO" "Starting loop mode - will process all feedback items"
     echo -e "${GREEN}Loop mode enabled - processing all feedback items${NC}" >&2
     LOOP_COUNTER=0
+    FAILED_ITEMS=""        # Space-separated list of IDs that failed (for retry tracking)
+    MAX_ITEM_FAILURES=2    # Skip item after this many failures
 fi
 
 # Main loop - runs once normally, loops when LOOP_MODE=true
@@ -1657,6 +1659,19 @@ while true; do
     log "INFO" "Retrieved feedback #${DISPLAY_ID}: \"${DISPLAY_TITLE}\""
     echo -e "${GREEN}Retrieved feedback #${DISPLAY_ID}${NC}" >&2
 
+    # In loop mode, skip items that have failed too many times
+    if [ "$LOOP_MODE" = true ]; then
+        fail_count=$(echo "$FAILED_ITEMS" | tr ' ' '\n' | grep -c "^${DISPLAY_ID}$" 2>/dev/null || echo 0)
+        if [ "$fail_count" -ge "$MAX_ITEM_FAILURES" ]; then
+            log "WARN" "Feedback #${DISPLAY_ID} failed ${fail_count} times — setting to needs_info"
+            echo -e "${RED}Feedback #${DISPLAY_ID} failed ${fail_count} times — skipping${NC}" >&2
+            update_feedback_status "$DISPLAY_ID" "needs_info"
+            post_feedback_comment "$DISPLAY_ID" "Automated processing failed after ${fail_count} attempts. Please review manually or re-approve to retry." "agent"
+            sleep 2
+            continue
+        fi
+    fi
+
     # Output based on format
     if [ "$OUTPUT_FORMAT" = "json" ]; then
         echo "$BODY" | jq .
@@ -1666,10 +1681,17 @@ while true; do
 
     # Either output to stdout or run Claude
     if [ "$RUN_CLAUDE" = true ]; then
+        process_exit=0
         if [ -n "$FEEDBACK_ID" ]; then
-            process_feedback_item "$BODY" "true"
+            process_feedback_item "$BODY" "true" || process_exit=$?
         else
-            process_feedback_item "$BODY" "false"
+            process_feedback_item "$BODY" "false" || process_exit=$?
+        fi
+
+        # Track failures for retry limiting in loop mode
+        if [ "$process_exit" -ne 0 ] && [ "$LOOP_MODE" = true ]; then
+            FAILED_ITEMS="$FAILED_ITEMS $DISPLAY_ID"
+            log "WARN" "Feedback #${DISPLAY_ID} processing failed (will retry up to $MAX_ITEM_FAILURES times)"
         fi
 
         log "INFO" "=== Feedback item processing finished ==="
