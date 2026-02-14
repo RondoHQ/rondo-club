@@ -169,14 +169,16 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
     },
   });
 
-  // Filter out fields based on label prefixes
-  const fieldDefs = excludeLabelPrefixes.length > 0
-    ? allFieldDefs.filter(field =>
-        !excludeLabelPrefixes.some(prefix =>
-          field.label?.toLowerCase().startsWith(prefix.toLowerCase())
-        )
-      )
-    : allFieldDefs;
+  // Filter out fields based on source (e.g. sportlink) and label prefixes
+  const fieldDefs = allFieldDefs.filter(field => {
+    if (field.source === 'sportlink') return false;
+    if (excludeLabelPrefixes.length > 0) {
+      return !excludeLabelPrefixes.some(prefix =>
+        field.label?.toLowerCase().startsWith(prefix.toLowerCase())
+      );
+    }
+    return true;
+  });
 
   // Render a value for display based on field type
   const renderFieldValue = (field, value) => {

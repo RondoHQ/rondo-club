@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.0] - 2026-02-14
+
+### Added
+- Sportlink fields (KNVB ID, Type lid, Leeftijdsgroep, Lid sinds, Datum foto, Datum VOG, Is ouder, Huidig vrijwilliger, Financiële blokkade, FreeScout ID) available as column options on the /people page
+
 ## [25.0.1] - 2026-02-14
 
 ### Fixed
