@@ -17,7 +17,7 @@ class CommentTypes {
 	const TYPE_NOTE             = 'rondo_note';
 	const TYPE_ACTIVITY         = 'rondo_activity';
 	const TYPE_EMAIL            = 'rondo_email';
-	const TYPE_FEEDBACK_COMMENT = 'rondo_feedback_comment';
+	const TYPE_FEEDBACK_COMMENT = 'rondo_fb_comment';
 
 	public function __construct() {
 		// Register REST API routes for notes and activities

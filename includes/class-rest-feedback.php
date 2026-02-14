@@ -668,7 +668,7 @@ class Feedback extends Base {
 		$comments = get_comments(
 			[
 				'post_id' => $feedback_id,
-				'type'    => 'rondo_feedback_comment',
+				'type'    => 'rondo_fb_comment',
 				'status'  => 'approve',
 				'orderby' => 'comment_date',
 				'order'   => 'ASC',
@@ -707,7 +707,7 @@ class Feedback extends Base {
 		$comment_data = [
 			'comment_post_ID'  => $feedback_id,
 			'comment_content'  => $content,
-			'comment_type'     => 'rondo_feedback_comment',
+			'comment_type'     => 'rondo_fb_comment',
 			'user_id'          => $user_id,
 			'comment_approved' => 1,
 		];
