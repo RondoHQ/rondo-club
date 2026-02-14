@@ -22,11 +22,11 @@ import { DEFAULT_DASHBOARD_CARDS } from '@/hooks/useDashboard';
 // Card definitions with labels and descriptions
 const CARD_DEFINITIONS = {
   'stats': { label: 'Statistieken', description: 'Aantallen van leden, teams en evenementen' },
-  'reminders': { label: 'Komende herinneringen', description: 'Aankomende belangrijke datums' },
+  'reminders': { label: 'Verjaardagen', description: 'Aankomende verjaardagen' },
   'todos': { label: 'Open taken', description: 'Taken om af te ronden' },
   'awaiting': { label: 'Openstaand', description: 'Wachten op reacties' },
   'meetings': { label: 'Afspraken vandaag', description: 'Agenda-items voor vandaag' },
-  'recent-contacted': { label: 'Recent gecontacteerd', description: 'Contacten met recente activiteit' },
+  'recent-contacted': { label: 'Recent berichten', description: 'Contacten met recente activiteit' },
   'recent-edited': { label: 'Recent bewerkt', description: 'Recent gewijzigde leden' },
 };
 

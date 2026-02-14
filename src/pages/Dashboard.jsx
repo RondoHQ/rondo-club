@@ -634,10 +634,10 @@ export default function Dashboard() {
     reminders: () => (
       <DashboardCard
         key="reminders"
-        title="Komende herinneringen"
+        title="Verjaardagen"
         icon={Calendar}
         count={upcoming_reminders?.length}
-        emptyMessage="Geen komende herinneringen"
+        emptyMessage="Geen komende verjaardagen"
       >
         {upcoming_reminders?.length > 0 &&
           upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)}
@@ -716,7 +716,7 @@ export default function Dashboard() {
     'recent-contacted': () => (
       <DashboardCard
         key="recent-contacted"
-        title="Recent gecontacteerd"
+        title="Recent berichten"
         icon={MessageCircle}
         emptyMessage="Nog geen recente activiteiten"
       >
