@@ -2,6 +2,9 @@
 
 This file provides guidance to Agents when working with code in this repository.
 
+## Claude specific
+Prefer Read over `cat`, Grep over `grep/rg` in Bash, and Glob over `find` in Bash. Use Bash only for: running tests, executing build commands, git operations, and multi-step shell scripts. 
+
 ## Project Overview
 
 **Rondo Club** is a React-powered WordPress theme for sports team management. This theme provides a modern, single-page application interface for managing people, teams, and club operations.
