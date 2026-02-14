@@ -3,11 +3,12 @@ import { useFilteredPeople } from '@/hooks/usePeople';
 /**
  * Hook for getting VOG-related counts for the navigation badge.
  *
- * Returns two counts based on Justis submission status:
+ * Returns counts based on Justis submission status and upcoming expirations:
  * - notSubmittedToJustis: Volunteers who need VOG and have NOT been submitted to Justis yet
  * - submittedToJustis: Volunteers who need VOG and HAVE been submitted to Justis (waiting for VOG)
+ * - expiringSoon: Volunteers whose VOG will expire within 30 days
  *
- * @returns {Object} { notSubmittedToJustis, submittedToJustis, isLoading }
+ * @returns {Object} { notSubmittedToJustis, submittedToJustis, expiringSoon, isLoading }
  */
 export function useVOGCount() {
   // Count: needs VOG and NOT yet submitted to Justis
@@ -40,9 +41,23 @@ export function useVOGCount() {
     }
   );
 
+  // Count: VOG expiring within the next 30 days
+  const { data: expiringData, isLoading: isLoadingExpiring } = useFilteredPeople(
+    {
+      page: 1,
+      perPage: 1,
+      huidigeVrijwilliger: '1',
+      vogExpiringWithinDays: 30,
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+    }
+  );
+
   return {
     notSubmittedToJustis: notSubmittedData?.total || 0,
     submittedToJustis: submittedData?.total || 0,
-    isLoading: isLoadingNotSubmitted || isLoadingSubmitted,
+    expiringSoon: expiringData?.total || 0,
+    isLoading: isLoadingNotSubmitted || isLoadingSubmitted || isLoadingExpiring,
   };
 }
