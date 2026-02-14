@@ -484,7 +484,7 @@ process_feedback_item() {
         return 1
     fi
 
-    log "INFO" "Processing feedback #${CURRENT_FEEDBACK_ID}: ${title} (project: ${project}, dir: ${project_dir})"
+    log "INFO" "Processing feedback #${CURRENT_FEEDBACK_ID}: \"${title}\" (project: ${project})"
     echo -e "${GREEN}Processing feedback #${CURRENT_FEEDBACK_ID}: ${title} (${project})${NC}" >&2
 
     # Ensure clean main in the project directory
@@ -561,7 +561,7 @@ process_feedback_item() {
             update_feedback_status "$CURRENT_FEEDBACK_ID" "needs_info"
             if [ -n "$PARSED_QUESTION" ]; then
                 post_feedback_comment "$CURRENT_FEEDBACK_ID" "$PARSED_QUESTION" "agent"
-                log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} needs info: ${PARSED_QUESTION}"
+                log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} needs info: \"${PARSED_QUESTION}\""
             fi
             ;;
         declined)
@@ -902,7 +902,7 @@ run_optimization() {
         return 0
     fi
 
-    log "INFO" "Optimization target: ${target_project}:${target_file}"
+    log "INFO" "Optimization target: \"${target_project}:${target_file}\""
     echo -e "${YELLOW}Reviewing: ${target_project}/${target_file}${NC}" >&2
 
     # Ensure clean main in target project
@@ -971,7 +971,7 @@ Review this file and create a PR if you find confident improvements. If no chang
     git branch --merged main | grep -E '^\s+(feedback|optimize)/' | xargs -r git branch -d 2>/dev/null
     cd "$PROJECT_ROOT"
 
-    log "INFO" "Optimization run complete for: ${target_project}:${target_file}"
+    log "INFO" "Optimization run complete for: \"${target_project}:${target_file}\""
 }
 
 # Loop mode: process items until none left
@@ -1070,7 +1070,7 @@ while true; do
         DISPLAY_ID=$(echo "$BODY" | jq -r '.[0].id')
     fi
     DISPLAY_TITLE=$(echo "$BODY" | jq -r 'if type == "array" then .[0].title else .title end')
-    log "INFO" "Retrieved feedback #${DISPLAY_ID}: ${DISPLAY_TITLE}"
+    log "INFO" "Retrieved feedback #${DISPLAY_ID}: \"${DISPLAY_TITLE}\""
     echo -e "${GREEN}Retrieved feedback #${DISPLAY_ID}${NC}" >&2
 
     # Output based on format
