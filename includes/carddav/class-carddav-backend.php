@@ -42,11 +42,9 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Track when persons are created or updated via web UI
 		add_action( 'save_post_person', [ __CLASS__, 'on_person_saved' ], 10, 3 );
 
-		// Track when persons are trashed via web UI
-		add_action( 'wp_trash_post', [ __CLASS__, 'on_person_trashed' ] );
-
-		// Track when persons are permanently deleted
-		add_action( 'before_delete_post', [ __CLASS__, 'on_person_deleted' ] );
+		// Track when persons are trashed or permanently deleted via web UI
+		add_action( 'wp_trash_post', [ __CLASS__, 'on_person_removed' ] );
+		add_action( 'before_delete_post', [ __CLASS__, 'on_person_removed' ] );
 	}
 
 	/**
@@ -79,34 +77,11 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	}
 
 	/**
-	 * Handle person trashed via web UI
+	 * Handle person trashed or permanently deleted via web UI
 	 *
 	 * @param int $post_id Post ID
 	 */
-	public static function on_person_trashed( $post_id ) {
-		// Skip if this change came from CardDAV
-		if ( self::$skip_hooks ) {
-			return;
-		}
-
-		$post = get_post( $post_id );
-		if ( ! $post || $post->post_type !== 'person' ) {
-			return;
-		}
-
-		$user_id = (int) $post->post_author;
-		$uri     = get_post_meta( $post_id, '_carddav_uri', true ) ?: $post_id . '.vcf';
-
-		self::log_external_change( $user_id, $post_id, 'deleted', $uri );
-	}
-
-	/**
-	 * Handle person permanently deleted
-	 *
-	 * @param int $post_id Post ID
-	 */
-	public static function on_person_deleted( $post_id ) {
-		// Skip if this change came from CardDAV
+	public static function on_person_removed( $post_id ) {
 		if ( self::$skip_hooks ) {
 			return;
 		}
@@ -182,27 +157,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			return [];
 		}
 
-		// Get count of contacts for this user
 		wp_set_current_user( $user->ID );
-		$contact_count   = wp_count_posts( 'person' );
-		$published_count = isset( $contact_count->publish ) ? $contact_count->publish : 0;
-
-		// Get user's own contacts count
-		$own_contacts = get_posts(
-			[
-				'post_type'      => 'person',
-				'posts_per_page' => -1,
-				'post_status'    => 'publish',
-				'author'         => $user->ID,
-				'fields'         => 'ids',
-			]
-		);
-		$own_count    = count( $own_contacts );
 
 		$ctag       = $this->getCtag( $user->ID );
 		$sync_token = $this->getCurrentSyncToken( $user->ID );
 
-		error_log( "CardDAV: Returning address book for user ID {$user->ID} - {$own_count} contacts, ctag: {$ctag}, sync-token: {$sync_token}" );
+		error_log( "CardDAV: Returning address book for user ID {$user->ID}, ctag: {$ctag}, sync-token: {$sync_token}" );
 
 		// Each user has one address book containing their contacts
 		return [
@@ -382,17 +342,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Set current user
 		wp_set_current_user( $addressBookId );
 
-		// Determine name fields
-		$first_name = $parsed['first_name'] ?: '';
-		$infix      = $parsed['infix'] ?? '';
-		$last_name  = $parsed['last_name'] ?: '';
-
-		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
-			// Try to split full name
-			$name_parts = explode( ' ', $parsed['full_name'], 2 );
-			$first_name = $name_parts[0];
-			$last_name  = $name_parts[1] ?? '';
-		}
+		list( $first_name, $infix, $last_name ) = $this->parseNameFields( $parsed );
 
 		// Create the person post
 		$post_id = wp_insert_post(
@@ -400,7 +350,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				'post_type'   => 'person',
 				'post_status' => 'publish',
 				'post_author' => $addressBookId,
-				'post_title'  => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown',
+				'post_title'  => $this->buildPostTitle( $first_name, $infix, $last_name ),
 			]
 		);
 
@@ -409,32 +359,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			return null;
 		}
 
-		// Update ACF fields
-		update_field( 'first_name', $first_name, $post_id );
-		if ( ! empty( $infix ) ) {
-			update_field( 'infix', $infix, $post_id );
-		}
-		update_field( 'last_name', $last_name, $post_id );
-
-		if ( ! empty( $parsed['nickname'] ) ) {
-			update_field( 'nickname', $parsed['nickname'], $post_id );
-		}
-
-		if ( ! empty( $parsed['gender'] ) ) {
-			update_field( 'gender', $parsed['gender'], $post_id );
-		}
-
-		if ( ! empty( $parsed['pronouns'] ) ) {
-			update_field( 'pronouns', $parsed['pronouns'], $post_id );
-		}
-
-		if ( ! empty( $parsed['contact_info'] ) ) {
-			update_field( 'contact_info', $parsed['contact_info'], $post_id );
-		}
-
-		if ( ! empty( $parsed['addresses'] ) ) {
-			update_field( 'addresses', $parsed['addresses'], $post_id );
-		}
+		$this->updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name );
 
 		// Store the client's URI for future lookups
 		update_post_meta( $post_id, '_carddav_uri', $cardUri );
@@ -512,49 +437,17 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Parse the vCard data
 		$parsed = \Rondo\Export\VCard::parse( $cardData );
 
-		// Update name fields
-		$first_name = $parsed['first_name'] ?: '';
-		$infix      = $parsed['infix'] ?? '';
-		$last_name  = $parsed['last_name'] ?: '';
-
-		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
-			$name_parts = explode( ' ', $parsed['full_name'], 2 );
-			$first_name = $name_parts[0];
-			$last_name  = $name_parts[1] ?? '';
-		}
+		list( $first_name, $infix, $last_name ) = $this->parseNameFields( $parsed );
 
 		// Update the post
 		wp_update_post(
 			[
 				'ID'         => $person_id,
-				'post_title' => implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown',
+				'post_title' => $this->buildPostTitle( $first_name, $infix, $last_name ),
 			]
 		);
 
-		// Update ACF fields
-		update_field( 'first_name', $first_name, $person_id );
-		update_field( 'infix', $infix, $person_id );
-		update_field( 'last_name', $last_name, $person_id );
-
-		if ( isset( $parsed['nickname'] ) ) {
-			update_field( 'nickname', $parsed['nickname'], $person_id );
-		}
-
-		if ( isset( $parsed['gender'] ) ) {
-			update_field( 'gender', $parsed['gender'], $person_id );
-		}
-
-		if ( isset( $parsed['pronouns'] ) ) {
-			update_field( 'pronouns', $parsed['pronouns'], $person_id );
-		}
-
-		if ( isset( $parsed['contact_info'] ) ) {
-			update_field( 'contact_info', $parsed['contact_info'], $person_id );
-		}
-
-		if ( isset( $parsed['addresses'] ) ) {
-			update_field( 'addresses', $parsed['addresses'], $person_id );
-		}
+		$this->updatePersonFields( $person_id, $parsed, $first_name, $infix, $last_name );
 
 		// Import new notes as timeline notes
 		// Note: We only add new notes, we don't sync/delete existing notes
@@ -758,18 +651,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	}
 
 	/**
-	 * Update sync token for an address book
-	 *
-	 * @param int $addressBookId Address book/user ID
-	 * @return void
-	 */
-	private function updateSyncToken( $addressBookId ) {
-		$tokens                            = get_option( self::SYNC_TOKEN_OPTION, [] );
-		$tokens[ (string) $addressBookId ] = time();
-		update_option( self::SYNC_TOKEN_OPTION, $tokens );
-	}
-
-	/**
 	 * Parse sync token to get timestamp
 	 *
 	 * @param string $syncToken Sync token
@@ -788,26 +669,12 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @param int $addressBookId Address book/user ID
 	 * @param int $personId Person ID
 	 * @param string $type Change type (added, modified, deleted)
+	 * @param string|null $uri Optional URI for deleted cards
 	 * @return void
 	 */
 	private function logChange( $addressBookId, $personId, $type, $uri = null ) {
-		$changes = get_option( self::CHANGE_LOG_OPTION, [] );
-
-		if ( ! isset( $changes[ $addressBookId ] ) ) {
-			$changes[ $addressBookId ] = [];
-		}
-
-		// Store the URI for deleted cards (since the post won't exist later)
 		$stored_uri = $uri ?: $this->getUriForPerson( $personId );
-
-		$changes[ $addressBookId ][ $personId ] = [
-			'type'      => $type,
-			'timestamp' => time(),
-			'uri'       => $stored_uri,
-		];
-
-		update_option( self::CHANGE_LOG_OPTION, $changes );
-		$this->updateSyncToken( $addressBookId );
+		self::log_external_change( $addressBookId, $personId, $type, $stored_uri );
 	}
 
 	/**
@@ -853,12 +720,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	/**
 	 * Get person ID from card URI
 	 *
-	 * @param string $cardUri Card URI (e.g., '123.vcf')
-	 * @return int|null Person ID or null
-	 */
-	/**
-	 * Get person ID from card URI
-	 *
 	 * Supports both numeric URIs (123.vcf) and custom client URIs (stored in meta)
 	 *
 	 * @param string $cardUri Card URI
@@ -899,6 +760,60 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	private function getUriForPerson( $person_id ) {
 		$stored_uri = get_post_meta( $person_id, '_carddav_uri', true );
 		return $stored_uri ?: $person_id . '.vcf';
+	}
+
+	/**
+	 * Extract name fields from parsed vCard data
+	 *
+	 * @param array $parsed Parsed vCard data
+	 * @return array [ first_name, infix, last_name ]
+	 */
+	private function parseNameFields( $parsed ) {
+		$first_name = $parsed['first_name'] ?: '';
+		$infix      = $parsed['infix'] ?? '';
+		$last_name  = $parsed['last_name'] ?: '';
+
+		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
+			$name_parts = explode( ' ', $parsed['full_name'], 2 );
+			$first_name = $name_parts[0];
+			$last_name  = $name_parts[1] ?? '';
+		}
+
+		return [ $first_name, $infix, $last_name ];
+	}
+
+	/**
+	 * Build post title from name parts
+	 *
+	 * @param string $first_name First name
+	 * @param string $infix Name infix
+	 * @param string $last_name Last name
+	 * @return string Post title
+	 */
+	private function buildPostTitle( $first_name, $infix, $last_name ) {
+		return implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) ) ?: 'Unknown';
+	}
+
+	/**
+	 * Update ACF fields from parsed vCard data
+	 *
+	 * @param int $post_id Person post ID
+	 * @param array $parsed Parsed vCard data
+	 * @param string $first_name First name
+	 * @param string $infix Name infix
+	 * @param string $last_name Last name
+	 */
+	private function updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name ) {
+		update_field( 'first_name', $first_name, $post_id );
+		update_field( 'infix', $infix, $post_id );
+		update_field( 'last_name', $last_name, $post_id );
+
+		$optional_fields = [ 'nickname', 'gender', 'pronouns', 'contact_info', 'addresses' ];
+		foreach ( $optional_fields as $field ) {
+			if ( isset( $parsed[ $field ] ) ) {
+				update_field( $field, $parsed[ $field ], $post_id );
+			}
+		}
 	}
 
 	/**
