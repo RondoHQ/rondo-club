@@ -262,6 +262,8 @@ export const prmApi = {
   createFeedback: (data) => api.post('/rondo/v1/feedback', data),
   updateFeedback: (id, data) => api.put(`/rondo/v1/feedback/${id}`, data),
   deleteFeedback: (id) => api.delete(`/rondo/v1/feedback/${id}`),
+  getFeedbackComments: (id) => api.get(`/rondo/v1/feedback/${id}/comments`),
+  createFeedbackComment: (id, data) => api.post(`/rondo/v1/feedback/${id}/comments`, data),
 
   // VOG Settings (admin only)
   getVOGSettings: () => api.get('/rondo/v1/vog/settings'),

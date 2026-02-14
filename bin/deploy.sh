@@ -29,10 +29,22 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Source .env file (using source for proper variable expansion)
+# Save any pre-set deploy overrides (from wrapper scripts like deploy-demo.sh)
+_SAVE_SSH_USER="${DEPLOY_SSH_USER:-}"
+_SAVE_REMOTE_WP_PATH="${DEPLOY_REMOTE_WP_PATH:-}"
+_SAVE_REMOTE_THEME_PATH="${DEPLOY_REMOTE_THEME_PATH:-}"
+_SAVE_PRODUCTION_URL="${DEPLOY_PRODUCTION_URL:-}"
+
+# Source .env file
 set -a
 source "$ENV_FILE"
 set +a
+
+# Restore any pre-set overrides
+[ -n "$_SAVE_SSH_USER" ] && DEPLOY_SSH_USER="$_SAVE_SSH_USER"
+[ -n "$_SAVE_REMOTE_WP_PATH" ] && DEPLOY_REMOTE_WP_PATH="$_SAVE_REMOTE_WP_PATH"
+[ -n "$_SAVE_REMOTE_THEME_PATH" ] && DEPLOY_REMOTE_THEME_PATH="$_SAVE_REMOTE_THEME_PATH"
+[ -n "$_SAVE_PRODUCTION_URL" ] && DEPLOY_PRODUCTION_URL="$_SAVE_PRODUCTION_URL"
 
 # Validate required variables
 required_vars=(

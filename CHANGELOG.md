@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.0.0] - 2026-02-14
+
+### Added
+- Autonomous feedback agent with PR workflow (`bin/get-feedback.sh`)
+- Agent creates GitHub PRs instead of deploying directly
+- `needs_info` feedback status for agent follow-up questions
+- Feedback comments system (`rondo_feedback_comment` comment type)
+- REST endpoints: `GET/POST /rondo/v1/feedback/{id}/comments`
+- Agent-to-user conversation thread on FeedbackDetail page
+- Reply form on `needs_info` feedback (auto-transitions to `approved` on reply)
+- `pr_url` and `agent_branch` meta fields on feedback REST API
+- PR link display on FeedbackDetail and FeedbackManagement pages
+- "Waiting for your response" banner on `needs_info` feedback
+- Idle-mode code optimization (`--optimize` flag)
+- Optimization file tracker (`logs/optimization-tracker.json`)
+- Agent prompt at `.claude/agent-prompt.md`
+- Optimization prompt at `.claude/optimize-prompt.md`
+- launchd plist template for Mac Mini scheduling
+- Developer docs for feedback agent system
+
+### Changed
+- `get-feedback.sh` rewritten with PR workflow, branch management, and crash recovery
+- Feedback status set to `in_progress` before Claude runs (prevents re-pickup)
+- Crash cleanup resets feedback status and returns to main branch
+- Branch cleanup after each run (merged `feedback/*` and `optimize/*` branches)
+
 ## [24.1.0] - 2026-02-13
 
 ### Removed

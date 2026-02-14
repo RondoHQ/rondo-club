@@ -49,6 +49,38 @@ class Feedback extends Base {
 			]
 		);
 
+		// Feedback comments (conversation thread)
+		register_rest_route(
+			'rondo/v1',
+			'/feedback/(?P<id>\d+)/comments',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_feedback_comments' ],
+					'permission_callback' => [ $this, 'check_feedback_access' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'create_feedback_comment' ],
+					'permission_callback' => [ $this, 'check_feedback_access' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
 		// Single feedback operations
 		register_rest_route(
 			'rondo/v1',
@@ -110,7 +142,7 @@ class Feedback extends Base {
 			'status'   => [
 				'default'           => '',
 				'validate_callback' => function ( $param ) {
-					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'resolved', 'declined', 'open' ], true );
+					return empty( $param ) || in_array( $param, [ 'new', 'approved', 'in_progress', 'resolved', 'declined', 'needs_info', 'open' ], true );
 				},
 			],
 			'priority' => [
@@ -458,11 +490,11 @@ class Feedback extends Base {
 			);
 		}
 
-		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'resolved', 'declined' ], true ) ) {
+		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'resolved', 'declined', 'needs_info' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "resolved", or "declined"' ] ]
+				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "resolved", "declined", or "needs_info"' ] ]
 			);
 		}
 
@@ -549,6 +581,17 @@ class Feedback extends Base {
 			update_field( 'attachments', $attachment_ids, $feedback_id );
 		}
 
+		// Agent meta fields (pr_url, agent_branch)
+		$pr_url = $request->get_param( 'pr_url' );
+		if ( $pr_url !== null ) {
+			update_post_meta( $feedback_id, '_feedback_pr_url', esc_url_raw( $pr_url ) );
+		}
+
+		$agent_branch = $request->get_param( 'agent_branch' );
+		if ( $agent_branch !== null ) {
+			update_post_meta( $feedback_id, '_feedback_agent_branch', sanitize_text_field( $agent_branch ) );
+		}
+
 		// Return formatted updated feedback
 		$feedback = get_post( $feedback_id );
 		return rest_ensure_response( $this->format_feedback( $feedback ) );
@@ -583,6 +626,105 @@ class Feedback extends Base {
 		}
 
 		return rest_ensure_response( [ 'deleted' => true, 'id' => $feedback_id ] );
+	}
+
+	/**
+	 * Get comments for a feedback item
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response containing feedback comments.
+	 */
+	public function get_feedback_comments( $request ) {
+		$feedback_id = (int) $request->get_param( 'id' );
+
+		$comments = get_comments(
+			[
+				'post_id' => $feedback_id,
+				'type'    => 'rondo_feedback_comment',
+				'status'  => 'approve',
+				'orderby' => 'comment_date',
+				'order'   => 'ASC',
+			]
+		);
+
+		$formatted = array_map( [ $this, 'format_feedback_comment' ], $comments );
+
+		return rest_ensure_response( $formatted );
+	}
+
+	/**
+	 * Create a comment on a feedback item
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing created comment or error.
+	 */
+	public function create_feedback_comment( $request ) {
+		$feedback_id = (int) $request->get_param( 'id' );
+		$content     = wp_kses_post( $request->get_param( 'content' ) );
+		$author_type = sanitize_text_field( $request->get_param( 'author_type' ) ?: 'user' );
+
+		if ( empty( $content ) ) {
+			return new \WP_Error(
+				'rest_missing_param',
+				__( 'Comment content is required.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! in_array( $author_type, [ 'user', 'agent' ], true ) ) {
+			$author_type = 'user';
+		}
+
+		$comment_id = wp_insert_comment(
+			[
+				'comment_post_ID'  => $feedback_id,
+				'comment_content'  => $content,
+				'comment_type'     => 'rondo_feedback_comment',
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 1,
+			]
+		);
+
+		if ( ! $comment_id ) {
+			return new \WP_Error(
+				'rest_cannot_create',
+				__( 'Failed to create comment.', 'rondo' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		update_comment_meta( $comment_id, '_author_type', $author_type );
+
+		// When a user replies to needs_info feedback, auto-transition to approved
+		if ( $author_type === 'user' ) {
+			$current_status = get_field( 'status', $feedback_id );
+			if ( $current_status === 'needs_info' ) {
+				update_field( 'status', 'approved', $feedback_id );
+			}
+		}
+
+		$comment = get_comment( $comment_id );
+
+		return rest_ensure_response( $this->format_feedback_comment( $comment ) );
+	}
+
+	/**
+	 * Format a feedback comment for REST response
+	 *
+	 * @param \WP_Comment $comment The comment object.
+	 * @return array Formatted comment data.
+	 */
+	private function format_feedback_comment( $comment ) {
+		$author_type = get_comment_meta( $comment->comment_ID, '_author_type', true ) ?: 'user';
+
+		return [
+			'id'          => (int) $comment->comment_ID,
+			'content'     => $comment->comment_content,
+			'author_id'   => (int) $comment->user_id,
+			'author_name' => get_the_author_meta( 'display_name', $comment->user_id ),
+			'author_type' => $author_type,
+			'created'     => $comment->comment_date,
+		];
 	}
 
 	/**
@@ -645,6 +787,8 @@ class Feedback extends Base {
 				'expected_behavior'  => $this->sanitize_text( get_field( 'expected_behavior', $post->ID ) ?: '' ),
 				'actual_behavior'    => $this->sanitize_text( get_field( 'actual_behavior', $post->ID ) ?: '' ),
 				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
+				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
+				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
 				'attachments'        => $attachments,
 			],
 		];

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Paperclip, Pencil } from 'lucide-react';
-import { useFeedback, useUpdateFeedback } from '@/hooks/useFeedback';
+import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Paperclip, Pencil, ExternalLink, MessageCircle, Bot, Send } from 'lucide-react';
+import { useFeedback, useUpdateFeedback, useFeedbackComments, useCreateFeedbackComment } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import FeedbackEditModal from '@/components/FeedbackEditModal';
@@ -13,6 +13,7 @@ const statusColors = {
   in_progress: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   resolved: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   declined: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400',
+  needs_info: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
 // Type badge colors
@@ -28,6 +29,7 @@ const statusLabels = {
   in_progress: 'In Progress',
   resolved: 'Resolved',
   declined: 'Declined',
+  needs_info: 'Needs Info',
 };
 
 // Type display labels
@@ -39,8 +41,11 @@ const typeLabels = {
 export default function FeedbackDetail() {
   const { id } = useParams();
   const { data: feedback, isLoading, error } = useFeedback(id);
+  const { data: comments = [] } = useFeedbackComments(id);
   const updateFeedback = useUpdateFeedback();
+  const createComment = useCreateFeedbackComment();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [replyText, setReplyText] = useState('');
   useDocumentTitle(feedback?.title || 'Feedback');
 
   const handleEditSubmit = (data) => {
@@ -50,6 +55,17 @@ export default function FeedbackDetail() {
         onSuccess: () => {
           setIsEditModalOpen(false);
         },
+      }
+    );
+  };
+
+  const handleReply = (e) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    createComment.mutate(
+      { id, content: replyText.trim() },
+      {
+        onSuccess: () => setReplyText(''),
       }
     );
   };
@@ -97,6 +113,19 @@ export default function FeedbackDetail() {
         Back to feedback
       </Link>
 
+      {/* Needs Info banner */}
+      {feedback.meta.status === 'needs_info' && (
+        <div className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-4">
+          <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
+            <MessageCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="font-medium">Waiting for your response</p>
+          </div>
+          <p className="text-sm text-orange-600 dark:text-orange-400/80 mt-1 ml-7">
+            The agent needs more information to continue. Reply below to resume processing.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="card p-6">
         <div className="flex items-start gap-4">
@@ -132,6 +161,26 @@ export default function FeedbackDetail() {
           </button>
         </div>
       </div>
+
+      {/* PR Link */}
+      {feedback.meta.pr_url && (
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <ExternalLink className="w-5 h-5 text-electric-cyan" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Pull Request</h3>
+              <a
+                href={feedback.meta.pr_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-electric-cyan hover:underline text-sm"
+              >
+                {feedback.meta.pr_url}
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Description */}
       <div className="card p-6">
@@ -266,6 +315,74 @@ export default function FeedbackDetail() {
               </a>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Conversation Thread */}
+      {(comments.length > 0 || feedback.meta.status === 'needs_info') && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <MessageCircle className="w-5 h-5" />
+            Conversation
+          </h2>
+
+          {/* Comments list */}
+          {comments.length > 0 && (
+            <div className="space-y-4 mb-6">
+              {comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className={`flex gap-3 ${comment.author_type === 'agent' ? '' : ''}`}
+                >
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    comment.author_type === 'agent'
+                      ? 'bg-electric-cyan/10 text-electric-cyan'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                  }`}>
+                    {comment.author_type === 'agent' ? (
+                      <Bot className="w-4 h-4" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {comment.author_type === 'agent' ? 'Agent' : comment.author_name}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {format(new Date(comment.created), 'MMM d, yyyy \'at\' h:mm a')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Reply form (shown when needs_info) */}
+          {feedback.meta.status === 'needs_info' && (
+            <form onSubmit={handleReply} className="flex gap-3">
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your reply..."
+                className="input-field flex-1"
+              />
+              <button
+                type="submit"
+                disabled={!replyText.trim() || createComment.isPending}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Send className="w-4 h-4" />
+                Reply
+              </button>
+            </form>
+          )}
         </div>
       )}
 

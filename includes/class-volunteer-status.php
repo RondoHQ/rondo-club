@@ -72,7 +72,7 @@ class VolunteerStatus {
 	 *
 	 * @var string
 	 */
-	private const VOLUNTEER_FIELD_KEY = 'field_custom_person_huidig-vrijwilliger';
+	private const VOLUNTEER_FIELD_KEY = 'field_huidig_vrijwilliger';
 
 	/**
 	 * Get the configured player roles from options, with defaults as fallback.
