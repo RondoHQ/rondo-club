@@ -323,16 +323,23 @@ update_feedback_meta() {
 }
 
 # Run Claude with a timeout (default 10 minutes)
-# Usage: run_claude <prompt_file> <output_file> [timeout_seconds]
+# Usage: run_claude <prompt_file> <output_file> [timeout_seconds] [model]
 # Sets CLAUDE_EXIT and CLAUDE_OUTPUT globals
 run_claude() {
     local prompt_file="$1"
     local output_file="$2"
     local timeout_secs="${3:-600}"
+    local model="${4:-}"
 
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
 
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1 &
+    local model_args=()
+    if [ -n "$model" ]; then
+        model_args=(--model "$model")
+        log "INFO" "Using model: $model"
+    fi
+
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions "${model_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
     local claude_pid=$!
     local elapsed=0
 
@@ -559,23 +566,103 @@ process_feedback_item() {
 
     # Run Claude in the project directory
     cd "$project_dir"
-    log "INFO" "Starting Claude Code session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
-    echo -e "${YELLOW}Starting Claude Code session in ${project_dir}...${NC}" >&2
 
-    # Write prompt to temp file, run Claude with timeout
+    # --- Phase 1: Planning with Opus ---
+    log "INFO" "Starting Opus planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
+    echo -e "${YELLOW}Phase 1/2: Planning with Opus...${NC}" >&2
+
+    local plan_prompt="${output}
+
+---
+
+## YOUR TASK: Create an Implementation Plan
+
+You are in PLANNING MODE. Do NOT make any code changes, do NOT create branches, do NOT commit anything.
+
+Instead, analyze the feedback and the codebase to produce a detailed implementation plan. Your plan should include:
+
+1. **Assessment** — Can this be resolved? If not, explain why and output STATUS: NEEDS_INFO or STATUS: DECLINED
+2. **Files to modify** — List every file that needs changes, with the specific changes needed
+3. **New files** (if any) — What new files need to be created and what they should contain
+4. **Implementation steps** — Numbered step-by-step instructions specific enough for another developer to follow
+5. **Testing** — How to verify the changes work (build commands, what to check)
+6. **PR details** — Suggested branch name, PR title, and PR description
+
+Be specific about code changes — include function names, class names, and describe the logic. Do NOT include actual code blocks, just describe what needs to change.
+
+If this feedback needs more information from the user, skip the plan and output:
+STATUS: NEEDS_INFO
+QUESTION: Your specific question
+
+If this feedback should be declined, skip the plan and output:
+STATUS: DECLINED"
+
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
-    printf '%s' "$output" > "$prompt_file"
+    printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600
+    run_claude "$prompt_file" "$output_file" 300 "opus"
 
-    # Display Claude's output
-    echo "$CLAUDE_OUTPUT"
+    local plan_output="$CLAUDE_OUTPUT"
+    local plan_exit=$CLAUDE_EXIT
+
+    if [ $plan_exit -ne 0 ]; then
+        log "ERROR" "Opus planning session failed (exit code: $plan_exit)"
+        echo -e "${RED}Planning session failed (exit code: $plan_exit)${NC}" >&2
+        update_feedback_status "$CURRENT_FEEDBACK_ID" "$ORIGINAL_STATUS"
+        cd "$project_dir" && git checkout main 2>/dev/null
+        cd "$PROJECT_ROOT"
+        CURRENT_FEEDBACK_ID=""
+        return 1
+    fi
+
+    log "INFO" "Opus planning session completed"
+
+    # Check if the plan indicates NEEDS_INFO or DECLINED — skip implementation
+    if echo "$plan_output" | grep -qi "STATUS:.*NEEDS_INFO\|STATUS:.*DECLINED"; then
+        log "INFO" "Planning phase returned early status — skipping implementation"
+        echo "$plan_output"
+        CLAUDE_OUTPUT="$plan_output"
+        CLAUDE_EXIT=0
+    else
+        # --- Phase 2: Implementation with Sonnet ---
+        log "INFO" "Starting Sonnet implementation session for feedback #${CURRENT_FEEDBACK_ID}"
+        echo -e "${YELLOW}Phase 2/2: Implementing with Sonnet...${NC}" >&2
+
+        local impl_prompt="${output}
+
+---
+
+## Implementation Plan (from planning phase)
+
+${plan_output}
+
+---
+
+## YOUR TASK: Execute the Plan
+
+Follow the implementation plan above. The plan was created by a senior engineer who analyzed the feedback and codebase. Execute it step by step:
+
+1. Create the branch as specified in the plan
+2. Make all the code changes described
+3. Run \`npm run build\` to verify (for rondo-club)
+4. Commit and push
+5. Create the PR as described in the plan
+6. Output your status (STATUS: IN_REVIEW with PR_URL, or STATUS: NEEDS_INFO/DECLINED if you hit a blocker)"
+
+        prompt_file=$(mktemp)
+        output_file=$(mktemp)
+        printf '%s' "$impl_prompt" > "$prompt_file"
+
+        run_claude "$prompt_file" "$output_file" 600 "sonnet"
+
+        # Display Claude's output
+        echo "$CLAUDE_OUTPUT"
+    fi
 
     if [ $CLAUDE_EXIT -ne 0 ]; then
         log "ERROR" "Claude session failed (exit code: $CLAUDE_EXIT)"
         echo -e "${RED}Claude session failed (exit code: $CLAUDE_EXIT)${NC}" >&2
-        # Reset status back since we failed
         update_feedback_status "$CURRENT_FEEDBACK_ID" "$ORIGINAL_STATUS"
         cd "$project_dir" && git checkout main 2>/dev/null
         cd "$PROJECT_ROOT"
@@ -680,7 +767,7 @@ prepare_branch_for_merge() {
         local output_file=$(mktemp)
         printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason." > "$prompt_file"
 
-        run_claude "$prompt_file" "$output_file" 300
+        run_claude "$prompt_file" "$output_file" 300 "sonnet"
 
         if [ $CLAUDE_EXIT -ne 0 ]; then
             log "ERROR" "Claude failed to resolve merge conflicts on PR #${pr_number}"
@@ -923,7 +1010,7 @@ process_pr_reviews() {
         output_file=$(mktemp)
         printf '%s' "$prompt" > "$prompt_file"
 
-        run_claude "$prompt_file" "$output_file" 600
+        run_claude "$prompt_file" "$output_file" 600 "sonnet"
         local exit_code=$CLAUDE_EXIT
         local output="$CLAUDE_OUTPUT"
 
@@ -1079,7 +1166,7 @@ Review this file and create a PR if you find confident improvements. If no chang
     local output_file=$(mktemp)
     printf '%s' "$prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 300
+    run_claude "$prompt_file" "$output_file" 300 "sonnet"
 
     echo "$CLAUDE_OUTPUT"
 
@@ -1304,7 +1391,7 @@ ${new_errors}"
     local output_file=$(mktemp)
     printf '%s' "$prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600
+    run_claude "$prompt_file" "$output_file" 600 "sonnet"
 
     echo "$CLAUDE_OUTPUT"
 
