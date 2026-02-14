@@ -27,6 +27,7 @@ You have been given a feedback item to address. Follow these rules strictly.
 - Keep changes minimal and focused
 - Follow existing code patterns and conventions
 - Always run `npm run build` before committing frontend changes
+- Remove or disable any debug logging (`error_log()`, `console.log()`, `var_dump()`, etc.) that is not actively needed — do not leave debug statements in production code
 
 ## Status Output
 

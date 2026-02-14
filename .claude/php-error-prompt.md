@@ -1,6 +1,6 @@
-# PHP Error Fix from Production Debug Log
+# PHP Error Fix from Production Error Log
 
-You are fixing PHP errors found in the production `debug.log` for the Rondo Club WordPress theme.
+You are fixing PHP errors found in the production `php_errorlog` for the Rondo Club WordPress theme.
 
 ## Rules
 
@@ -9,17 +9,18 @@ You are fixing PHP errors found in the production `debug.log` for the Rondo Club
 3. Fix the **root cause**, not just the symptom
 4. Do NOT change unrelated code, add features, or refactor beyond the fix
 5. If an error is a false positive or already resolved in the current code, skip it
+6. Remove or disable any debug logging (`error_log()`, `console.log()`, `var_dump()`, etc.) that is not actively needed — do not leave debug statements in production code
 
 ## Errors to Fix
 
-The errors below were extracted from the production server's `debug.log` within the last 2 hours. Each entry shows the error type, file, line number, and message.
+The errors below were extracted from the production server's `php_errorlog` within the last 2 hours. Each entry shows the error type, file, line number, and message.
 
 ## If you find fixable errors:
 
 1. Create a branch named `fix/php-errors-{YYYYMMDD-HHMMSS}` (use current date/time)
 2. Fix all errors that have a clear root cause
 3. Run `npm run build` if you modified any frontend files (`.jsx`, `.js`, `.css`)
-4. Commit with message: `fix: resolve PHP errors from production debug.log`
+4. Commit with message: `fix: resolve PHP errors from production php_errorlog`
 5. Push and create a PR via `gh pr create` with error details in the description
 6. End your response with:
 ```
