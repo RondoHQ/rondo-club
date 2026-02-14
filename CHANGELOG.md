@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.1.0] - 2026-02-14
+
+### Changed
+- Replace "In afwachting" stats card on dashboard with "Vrijwilligers" count card
+
+### Removed
+- Remove "Openstaand" (awaiting todos) dashboard card from customizable cards
+
 ## [25.0.0] - 2026-02-14
 
 ### Added
