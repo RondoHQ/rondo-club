@@ -24,12 +24,12 @@ class AccessControl {
 
 		// Filter REST API queries
 		add_filter( 'rest_person_query', [ $this, 'filter_rest_query' ], 10, 2 );
-		add_filter( 'rest_company_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_team_query', [ $this, 'filter_rest_query' ], 10, 2 );
 		add_filter( 'rest_rondo_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
 
 		// Filter REST API single item access
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_company', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_team', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 	}
 
@@ -77,22 +77,8 @@ class AccessControl {
 			return false;
 		}
 
-		// Check capabilities
-		$has_vog      = user_can( $user_id, 'vog' );
-		$has_fairplay = user_can( $user_id, 'fairplay' );
-
-		// Regular users (no special capabilities) see everything
-		if ( ! $has_vog && ! $has_fairplay ) {
-			return false;
-		}
-
-		// Fair Play users see all members
-		if ( $has_fairplay ) {
-			return false;
-		}
-
-		// VOG-only users see only volunteers
-		return true;
+		// VOG-only users (has VOG capability but not Fair Play) see only volunteers
+		return user_can( $user_id, 'vog' ) && ! user_can( $user_id, 'fairplay' );
 	}
 
 	/**
