@@ -134,7 +134,6 @@ set -a
 source "$ENV_FILE"
 set +a
 
-log "DEBUG" "After source .env - HOME=$HOME, HOMEBREW_PATH=$HOMEBREW_PATH, USER_HOME=$USER_HOME"
 
 # Add HOMEBREW_PATH to PATH if set (needed for cron/launchd which don't have full PATH)
 if [ -n "$HOMEBREW_PATH" ]; then
@@ -146,7 +145,6 @@ if [ -n "$USER_HOME" ]; then
     export HOME="$USER_HOME"
 fi
 
-log "DEBUG" "After env setup - HOME=$HOME, PATH=${PATH:0:80}..."
 
 # Validate required variables
 if [ -z "$RONDO_API_URL" ] || [ -z "$RONDO_API_USER" ] || [ -z "$RONDO_API_PASSWORD" ]; then
@@ -508,13 +506,11 @@ process_feedback_item() {
     echo -e "${YELLOW}Starting Claude Code session in ${project_dir}...${NC}" >&2
 
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
-    log "DEBUG" "Claude binary: $CLAUDE_BIN"
 
     # Write prompt to temp file, capture output to temp file (avoids subshell/TTY issues)
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
     printf '%s' "$output" > "$prompt_file"
-    log "DEBUG" "Prompt written to $prompt_file ($(wc -c < "$prompt_file") bytes)"
 
     "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
     CLAUDE_EXIT=$?
@@ -729,7 +725,6 @@ process_pr_reviews() {
 
         # Check if already processed
         if jq -e --argjson id "$review_id" '.processed_reviews[] | select(.review_id == $id)' "$tracker" > /dev/null 2>&1; then
-            log "DEBUG" "Review $review_id on PR #$pr_number already processed"
             continue
         fi
 
@@ -783,7 +778,6 @@ process_pr_reviews() {
         local output_file
         output_file=$(mktemp)
         printf '%s' "$prompt" > "$prompt_file"
-        log "DEBUG" "Review prompt written to $prompt_file ($(wc -c < "$prompt_file") bytes)"
 
         "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
         local exit_code=$?
