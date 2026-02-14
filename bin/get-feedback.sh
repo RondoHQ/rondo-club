@@ -1030,10 +1030,12 @@ Review this file and create a PR if you find confident improvements. If no chang
     local tracker_key="${target_project}:${target_file}"
     local file_commit=$(cd "$target_dir" && git log -1 --format=%H -- "$target_file" 2>/dev/null)
     if [ "$created_pr" = true ]; then
+        log "INFO" "Optimization created PR for: \"${target_project}:${target_file}\""
         jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
             '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     else
+        log "INFO" "No optimizations found for: \"${target_project}:${target_file}\""
         jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
             '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
