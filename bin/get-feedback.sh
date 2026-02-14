@@ -960,7 +960,7 @@ resolve_merged_feedback_prs() {
             local status
             status=$(curl -sf \
                 -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
-                "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" 2>/dev/null | jq -r '.status // empty')
+                "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" 2>/dev/null | jq -r '.meta.status // empty')
             if [ "$status" = "in_review" ]; then
                 log "INFO" "PR #${pr_number} (${repo}#${pr_number}, ${branch}) was merged externally — resolving feedback #${feedback_id}"
                 update_feedback_status "$feedback_id" "resolved"
