@@ -935,30 +935,34 @@ $(cat "$review_prompt_file")"
 
 # Resolve feedback items whose PRs were merged outside the script (e.g. manually)
 resolve_merged_feedback_prs() {
-    local merged_prs
-    merged_prs=$(gh pr list --repo RondoHQ/rondo-club --json number,headRefName --state merged --search "head:feedback/" --limit 50 2>/dev/null)
-    if [ $? -ne 0 ] || [ -z "$merged_prs" ] || [ "$merged_prs" = "[]" ]; then
-        return 0
-    fi
+    local repos="RondoHQ/rondo-club RondoHQ/rondo-sync RondoHQ/website"
 
-    echo "$merged_prs" | jq -c '.[]' | while read -r pr; do
-        local branch
-        branch=$(echo "$pr" | jq -r '.headRefName')
-        local pr_number
-        pr_number=$(echo "$pr" | jq -r '.number')
-        local feedback_id
-        feedback_id=$(echo "$branch" | sed -n 's|^feedback/\([0-9]*\).*|\1|p')
-        [ -z "$feedback_id" ] && continue
-
-        # Check if still in_review on the WordPress side
-        local status
-        status=$(curl -sf \
-            -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
-            "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" 2>/dev/null | jq -r '.status // empty')
-        if [ "$status" = "in_review" ]; then
-            log "INFO" "PR #${pr_number} (${branch}) was merged externally — resolving feedback #${feedback_id}"
-            update_feedback_status "$feedback_id" "resolved"
+    for repo in $repos; do
+        local merged_prs
+        merged_prs=$(gh pr list --repo "$repo" --json number,headRefName --state merged --search "head:feedback/" --limit 50 2>/dev/null)
+        if [ $? -ne 0 ] || [ -z "$merged_prs" ] || [ "$merged_prs" = "[]" ]; then
+            continue
         fi
+
+        echo "$merged_prs" | jq -c '.[]' | while read -r pr; do
+            local branch
+            branch=$(echo "$pr" | jq -r '.headRefName')
+            local pr_number
+            pr_number=$(echo "$pr" | jq -r '.number')
+            local feedback_id
+            feedback_id=$(echo "$branch" | sed -n 's|^feedback/\([0-9]*\).*|\1|p')
+            [ -z "$feedback_id" ] && continue
+
+            # Check if still in_review on the WordPress side
+            local status
+            status=$(curl -sf \
+                -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
+                "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" 2>/dev/null | jq -r '.status // empty')
+            if [ "$status" = "in_review" ]; then
+                log "INFO" "PR #${pr_number} (${repo}#${pr_number}, ${branch}) was merged externally — resolving feedback #${feedback_id}"
+                update_feedback_status "$feedback_id" "resolved"
+            fi
+        done
     done
 }
 
