@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Remove "Openstaand" (awaiting todos) dashboard card from customizable cards
 
+## [25.0.1] - 2026-02-14
+
+### Fixed
+- Exclude former members (oud-leden) from "Komende herinneringen" on dashboard and in email digests
+
 ## [25.0.0] - 2026-02-14
 
 ### Added
