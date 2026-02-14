@@ -416,6 +416,7 @@ function StatsRow({ stats }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard title="Totaal leden" value={stats?.total_people || 0} icon={Users} href="/people" />
+      <StatCard title="Vrijwilligers" value={stats?.total_volunteers || 0} icon={HeartHandshake} href="/people?vrijwilliger=1" />
       <StatCard title="Teams" value={stats?.total_teams || 0} icon={Building2} href="/teams" />
       {canAccessVOG && (
         <VOGStatCard />
@@ -425,7 +426,6 @@ function StatsRow({ stats }) {
       ) : (
         <StatCard title="Open taken" value={stats?.open_todos_count || 0} icon={CheckSquare} href="/todos" />
       )}
-      <StatCard title="Vrijwilligers" value={stats?.total_volunteers || 0} icon={HeartHandshake} href="/people?vrijwilliger=1" />
     </div>
   );
 }
