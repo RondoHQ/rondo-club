@@ -35,82 +35,6 @@ class AutoTitle {
 		// Inject title into REST API requests for person creation (runs very early)
 		add_filter( 'rest_pre_dispatch', [ $this, 'inject_title_for_person_creation' ], 10, 3 );
 
-		// Debug logging for REST API person requests
-		add_filter( 'rest_pre_dispatch', [ $this, 'debug_log_person_request' ], 1, 3 );
-		add_filter( 'rest_request_after_callbacks', [ $this, 'debug_log_person_response' ], 999, 3 );
-
-		// Make title not required in REST API schema (backup)
-		add_filter( 'rest_person_item_schema', [ $this, 'make_title_optional_in_schema' ] );
-
-		// Set temporary title for REST API person creation
-		add_filter( 'rest_pre_insert_person', [ $this, 'set_temporary_title_rest' ], 5, 2 );
-	}
-
-	/**
-	 * Debug log incoming REST API requests for person endpoint
-	 *
-	 * @param mixed           $result  Response to replace the requested version with.
-	 * @param WP_REST_Server  $server  Server instance.
-	 * @param WP_REST_Request $request Request used to generate the response.
-	 * @return mixed Unchanged result.
-	 */
-	public function debug_log_person_request( $result, $server, $request ) {
-		$route = $request->get_route();
-		if ( strpos( $route, '/wp/v2/people' ) !== 0 ) {
-			return $result;
-		}
-
-		$log_data = [
-			'time'        => gmdate( 'Y-m-d H:i:s' ),
-			'route'       => $route,
-			'method'      => $request->get_method(),
-			'params'      => $request->get_params(),
-			'headers'     => $request->get_headers(),
-			'user_id'     => get_current_user_id(),
-			'auth_header' => isset( $_SERVER['HTTP_AUTHORIZATION'] ) ? 'present' : 'missing',
-		];
-
-		error_log( 'RONDO REST DEBUG [REQUEST]: ' . wp_json_encode( $log_data ) );
-
-		return $result;
-	}
-
-	/**
-	 * Debug log REST API responses for person endpoint
-	 *
-	 * @param WP_REST_Response|WP_Error $response Result to send to the client.
-	 * @param array                     $handler  Route handler used for the request.
-	 * @param WP_REST_Request           $request  Request used to generate the response.
-	 * @return WP_REST_Response|WP_Error Unchanged response.
-	 */
-	public function debug_log_person_response( $response, $handler, $request ) {
-		$route = $request->get_route();
-		if ( strpos( $route, '/wp/v2/people' ) !== 0 ) {
-			return $response;
-		}
-
-		if ( is_wp_error( $response ) ) {
-			$log_data = [
-				'time'    => gmdate( 'Y-m-d H:i:s' ),
-				'route'   => $route,
-				'method'  => $request->get_method(),
-				'error'   => true,
-				'code'    => $response->get_error_code(),
-				'message' => $response->get_error_message(),
-				'data'    => $response->get_error_data(),
-			];
-		} else {
-			$log_data = [
-				'time'   => gmdate( 'Y-m-d H:i:s' ),
-				'route'  => $route,
-				'method' => $request->get_method(),
-				'status' => $response->get_status(),
-			];
-		}
-
-		error_log( 'RONDO REST DEBUG [RESPONSE]: ' . wp_json_encode( $log_data ) );
-
-		return $response;
 	}
 
 	/**
@@ -144,48 +68,6 @@ class AutoTitle {
 	}
 
 	/**
-	 * Make title field optional in REST API schema for person post type
-	 *
-	 * By default, WordPress marks 'title' as required if the post type supports it.
-	 * Since we auto-generate titles from ACF fields, we need to allow creation without title.
-	 *
-	 * @param array $schema The REST API schema for person post type.
-	 * @return array Modified schema with title not required.
-	 */
-	public function make_title_optional_in_schema( $schema ) {
-		if ( isset( $schema['properties']['title']['required'] ) ) {
-			$schema['properties']['title']['required'] = false;
-		}
-
-		// Also remove 'title' from the top-level 'required' array if present
-		if ( isset( $schema['required'] ) && is_array( $schema['required'] ) ) {
-			$schema['required'] = array_values( array_diff( $schema['required'], [ 'title' ] ) );
-		}
-
-		return $schema;
-	}
-
-	/**
-	 * Set temporary title for person during REST API creation
-	 *
-	 * WordPress requires a title when creating posts via REST API.
-	 * This filter runs before validation to set a temporary title,
-	 * which will be replaced by auto_generate_person_title() after ACF fields are saved.
-	 *
-	 * @param stdClass        $prepared_post The prepared post data.
-	 * @param WP_REST_Request $request       The request object.
-	 * @return stdClass The prepared post with temporary title.
-	 */
-	public function set_temporary_title_rest( $prepared_post, $request ) {
-		// Only set temporary title if no title was provided
-		if ( empty( $prepared_post->post_title ) ) {
-			$prepared_post->post_title = __( 'New Person', 'rondo' );
-		}
-
-		return $prepared_post;
-	}
-
-	/**
 	 * Auto-generate Person post title from first_name + last_name
 	 */
 	public function auto_generate_person_title( $post_id ) {
@@ -199,26 +81,10 @@ class AutoTitle {
 			return;
 		}
 
-		$first_name = get_field( 'first_name', $post_id ) ?: '';
-		$infix      = get_field( 'infix', $post_id ) ?: '';
-		$last_name  = get_field( 'last_name', $post_id ) ?: '';
-
-		$full_name = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
-
-		if ( empty( $full_name ) ) {
-			$full_name = __( 'Unnamed Person', 'rondo' );
-		}
-
 		// Unhook to prevent infinite loop
 		remove_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
 
-		wp_update_post(
-			[
-				'ID'         => $post_id,
-				'post_title' => $full_name,
-				'post_name'  => sanitize_title( $full_name . '-' . $post_id ),
-			]
-		);
+		$this->update_person_title( $post_id );
 
 		// Re-hook
 		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
@@ -227,20 +93,24 @@ class AutoTitle {
 	/**
 	 * Auto-generate Person post title from REST API request
 	 *
-	 * Called via rest_after_insert_person hook when a person is created/updated via REST API.
-	 * ACF fields are already saved at this point, so we can read them and generate the title.
-	 *
 	 * @param WP_Post         $post    Inserted or updated post object.
 	 * @param WP_REST_Request $request Request object.
 	 */
 	public function auto_generate_person_title_rest( $post, $request ) {
-		$post_id = $post->ID;
+		$this->update_person_title( $post->ID );
+	}
 
-		$first_name = get_field( 'first_name', $post_id ) ?: '';
-		$infix      = get_field( 'infix', $post_id ) ?: '';
-		$last_name  = get_field( 'last_name', $post_id ) ?: '';
-
-		$full_name = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
+	/**
+	 * Build and save the person title from ACF name fields.
+	 *
+	 * @param int $post_id Person post ID.
+	 */
+	private function update_person_title( int $post_id ): void {
+		$full_name = implode( ' ', array_filter( [
+			get_field( 'first_name', $post_id ) ?: '',
+			get_field( 'infix', $post_id ) ?: '',
+			get_field( 'last_name', $post_id ) ?: '',
+		] ) );
 
 		if ( empty( $full_name ) ) {
 			$full_name = __( 'Unnamed Person', 'rondo' );
