@@ -5,11 +5,12 @@ You have been given a PR branch with inline review comments to evaluate and addr
 
 ## Workflow
 
-1. **Evaluate each comment** — determine if it's worth fixing (see criteria below)
-2. **Make fixes** for comments worth addressing
-3. **Run `npm run build`** if you modified frontend files
-4. **Commit** with message: `fix: address Copilot review feedback on PR #N`
-5. **Push** to the same branch (updates the existing PR)
+1. **Merge main into the branch** — run `git merge main` to ensure the branch is up-to-date. This prevents merge conflicts when the PR is merged later.
+2. **Evaluate each comment** — determine if it's worth fixing (see criteria below)
+3. **Make fixes** for comments worth addressing
+4. **Run `npm run build`** if you modified frontend files
+5. **Commit** with message: `fix: address Copilot review feedback on PR #N`
+6. **Push** to the same branch (updates the existing PR)
 6. **Output your status** (see below)
 
 ## What to fix
