@@ -689,13 +689,29 @@ merge_and_deploy() {
             fi
         fi
 
-        git push origin "$pr_branch" 2>/dev/null
+        if ! git push origin "$pr_branch" 2>&1; then
+            log "ERROR" "Failed to push branch $pr_branch for PR #${pr_number}"
+            git checkout main 2>/dev/null
+            return 1
+        fi
         git checkout main 2>/dev/null
     fi
 
-    if ! gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch; then
-        log "ERROR" "Failed to merge PR #${pr_number}"
-        echo -e "${RED}Failed to merge PR #${pr_number}${NC}" >&2
+    local merge_output
+    merge_output=$(gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch 2>&1)
+    local merge_exit=$?
+
+    if [ $merge_exit -ne 0 ]; then
+        log "ERROR" "Failed to merge PR #${pr_number}: $merge_output"
+        echo -e "${RED}Failed to merge PR #${pr_number}: $merge_output${NC}" >&2
+        return 1
+    fi
+
+    # Verify PR is actually closed (catch false positives)
+    local pr_state
+    pr_state=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json state -q '.state' 2>/dev/null)
+    if [ "$pr_state" != "MERGED" ]; then
+        log "ERROR" "PR #${pr_number} merge command succeeded but PR state is '$pr_state' — not actually merged"
         return 1
     fi
 
@@ -801,9 +817,18 @@ process_pr_reviews() {
         local review_id
         review_id=$(echo "$copilot_review" | jq -r '.id')
 
-        # Check if already processed
-        if jq -e --argjson id "$review_id" '.processed_reviews[] | select(.review_id == $id)' "$tracker" > /dev/null 2>&1; then
+        # Check if already processed — but only skip if the action was NOT a failure
+        # Since we're iterating open PRs, any "merged" entry here is stale (PR didn't actually merge)
+        local tracked_action
+        tracked_action=$(jq -r --argjson id "$review_id" '[.processed_reviews[] | select(.review_id == $id)] | last | .action // empty' "$tracker")
+        if [ "$tracked_action" = "assigned" ]; then
             continue
+        fi
+        # Remove stale entries for this PR so we get a clean retry
+        if [ -n "$tracked_action" ]; then
+            log "INFO" "PR #${pr_number} still open but tracker shows '${tracked_action}' — retrying"
+            jq --argjson num "$pr_number" '.processed_reviews = [.processed_reviews[] | select(.pr_number != $num)]' \
+                "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
         fi
 
         # Fetch inline comments from Copilot
