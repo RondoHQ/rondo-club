@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { MessageSquare, Bug, Lightbulb, Plus, Clock, Search } from 'lucide-react';
+import { MessageSquare, Bug, Lightbulb, Plus, Filter } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -157,147 +157,45 @@ export default function FeedbackList() {
       </div>
 
       {/* Filter controls */}
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Type filter */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
-            <button
-              onClick={() => setTypeFilter('')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                typeFilter === ''
-                  ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              All Types
-            </button>
-            <button
-              onClick={() => setTypeFilter('bug')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-1 ${
-                typeFilter === 'bug'
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Bug className="w-3.5 h-3.5" />
-              Bugs
-            </button>
-            <button
-              onClick={() => setTypeFilter('feature_request')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-1 ${
-                typeFilter === 'feature_request'
-                  ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Lightbulb className="w-3.5 h-3.5" />
-              Features
-            </button>
-          </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Filter className="w-4 h-4 text-gray-400" />
 
-          {/* Status filter */}
-          <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5">
-            <button
-              onClick={() => setStatusFilter('open')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === 'open'
-                  ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              All Open
-            </button>
-            <button
-              onClick={() => setStatusFilter('')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === ''
-                  ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setStatusFilter('new')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === 'new'
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              New
-            </button>
-            <button
-              onClick={() => setStatusFilter('approved')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === 'approved'
-                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              Approved
-            </button>
-            <button
-              onClick={() => setStatusFilter('in_progress')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-1 ${
-                statusFilter === 'in_progress'
-                  ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              In Progress
-            </button>
-            <button
-              onClick={() => setStatusFilter('in_review')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors flex items-center gap-1 ${
-                statusFilter === 'in_review'
-                  ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              <Search className="w-3.5 h-3.5" />
-              In Review
-            </button>
-            <button
-              onClick={() => setStatusFilter('resolved')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === 'resolved'
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              Resolved
-            </button>
-          </div>
-        </div>
-
-        {/* Project filter (separate row) */}
-        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 p-0.5 w-fit">
-          <button
-            onClick={() => setProjectFilter('')}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              projectFilter === ''
-                ? 'bg-cyan-100 dark:bg-deep-midnight text-bright-cobalt dark:text-electric-cyan-light'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
-          >
-            All Projects
-          </button>
-          {Object.entries(projectLabels).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setProjectFilter(key)}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                projectFilter === key
-                  ? `${projectColors[key]}`
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
-            >
-              {label}
-            </button>
+        {/* Type filter */}
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+        >
+          <option value="">All Types</option>
+          {Object.entries(typeLabels).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
           ))}
-        </div>
+        </select>
+
+        {/* Status filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+        >
+          <option value="open">All Open</option>
+          <option value="">All</option>
+          {Object.entries(statusLabels).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
+
+        {/* Project filter */}
+        <select
+          value={projectFilter}
+          onChange={(e) => setProjectFilter(e.target.value)}
+          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+        >
+          <option value="">All Projects</option>
+          {Object.entries(projectLabels).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Feedback list */}
