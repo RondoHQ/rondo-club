@@ -557,10 +557,21 @@ run_optimization() {
     echo -e "${YELLOW}No feedback items. Running code optimization...${NC}" >&2
 
     local tracker="$PROJECT_ROOT/logs/optimization-tracker.json"
+    local daily_limit=10
 
     # Initialize tracker if needed
     if [ ! -f "$tracker" ]; then
-        echo '{"reviewed_files": [], "last_run": null}' > "$tracker"
+        echo '{"reviewed_files": [], "last_run": null, "daily_runs": {}}' > "$tracker"
+    fi
+
+    # Check daily limit
+    local today=$(date +%Y-%m-%d)
+    local today_count=$(jq -r --arg d "$today" '.daily_runs[$d] // 0' "$tracker")
+
+    if [ "$today_count" -ge "$daily_limit" ]; then
+        log "INFO" "Daily optimization limit reached ($today_count/$daily_limit) — skipping"
+        echo -e "${GREEN}Daily optimization limit reached ($today_count/$daily_limit). Skipping.${NC}" >&2
+        return 0
     fi
 
     # Build file queue: PHP includes first, then React files
@@ -614,17 +625,19 @@ Review this file and create a PR if you find confident improvements. If no chang
     # Run Claude
     CLAUDE_BIN="${CLAUDE_PATH:-claude}"
     local prompt_file=$(mktemp)
+    local output_file=$(mktemp)
     printf '%s' "$prompt" > "$prompt_file"
-    CLAUDE_OUTPUT=$("$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" 2>&1)
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions < "$prompt_file" > "$output_file" 2>&1
     CLAUDE_EXIT=$?
-    rm -f "$prompt_file"
+    CLAUDE_OUTPUT=$(cat "$output_file")
+    rm -f "$prompt_file" "$output_file"
 
     echo "$CLAUDE_OUTPUT"
 
-    # Mark file as reviewed regardless of outcome
+    # Mark file as reviewed and increment daily counter
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    jq --arg f "$target_file" --arg t "$now" \
-        '.reviewed_files += [$f] | .last_run = $t' \
+    jq --arg f "$target_file" --arg t "$now" --arg d "$today" \
+        '.reviewed_files += [$f] | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
         "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
 
     # Return to main
