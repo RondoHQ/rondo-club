@@ -331,6 +331,8 @@ run_claude() {
             log "ERROR" "Claude session timed out after ${timeout_secs}s (PID: $claude_pid) — killing"
             kill "$claude_pid" 2>/dev/null
             wait "$claude_pid" 2>/dev/null
+            git reset --hard HEAD 2>/dev/null
+            git checkout main 2>/dev/null
             CLAUDE_EXIT=124
             CLAUDE_OUTPUT=$(cat "$output_file" 2>/dev/null)
             rm -f "$prompt_file" "$output_file"
