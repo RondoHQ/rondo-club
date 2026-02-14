@@ -52,27 +52,17 @@ class AuthBackend extends AbstractBasic {
 			return false;
 		}
 
-		// Log password details for debugging
-		$password_length  = strlen( $password );
-		$password_preview = substr( $password, 0, 4 ) . '...' . substr( $password, -4 );
-		error_log( "CardDAV Auth: Checking user {$username}, password length: {$password_length}, preview: {$password_preview}, found " . count( $app_passwords ) . ' app password(s)' );
+		// WordPress 6.8+ uses wp_verify_fast_hash for application passwords
+		// It handles both $generic$ (BLAKE2b) and legacy $P$ (phpass) hashes
+		$use_fast_hash = function_exists( 'wp_verify_fast_hash' );
 
-		// Check each application password using wp_verify_fast_hash (WordPress 6.8+)
 		foreach ( $app_passwords as $app_password ) {
-			$hash_prefix = substr( $app_password['password'], 0, 10 );
-
-			// WordPress 6.8+ uses wp_verify_fast_hash for application passwords
-			// It handles both $generic$ (BLAKE2b) and legacy $P$ (phpass) hashes
-			if ( function_exists( 'wp_verify_fast_hash' ) ) {
-				$result = wp_verify_fast_hash( $password, $app_password['password'] );
-				if ( $result ) {
+			if ( $use_fast_hash ) {
+				if ( wp_verify_fast_hash( $password, $app_password['password'] ) ) {
 					return $this->authenticate_user( $user, $app_password );
 				}
-			} else {
-				// Fallback for WordPress < 6.8
-				if ( wp_check_password( $password, $app_password['password'], $user->ID ) ) {
-					return $this->authenticate_user( $user, $app_password );
-				}
+			} elseif ( wp_check_password( $password, $app_password['password'], $user->ID ) ) {
+				return $this->authenticate_user( $user, $app_password );
 			}
 		}
 
