@@ -222,7 +222,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --run              Pipe output directly to Claude Code"
             echo "  --loop             Process all feedback items one by one (implies --run)"
             echo "  --optimize         When no feedback items, fix PHP errors and review code for optimization PRs"
-            echo "  --no-php-errors    Skip PHP error checking from production debug.log"
+            echo "  --no-php-errors    Skip PHP error checking from production php_errorlog"
             echo "  --status=STATUS    Filter by status (default: approved)"
             echo "  --type=TYPE        Filter by type: bug, feature_request"
             echo "  --id=ID            Get specific feedback item by ID"
@@ -1207,10 +1207,10 @@ Review this file and create a PR if you find confident improvements. If no chang
     log "INFO" "Optimization run complete for: \"${target_project}:${target_file}\""
 }
 
-# Process PHP errors from production debug.log
+# Process PHP errors from production php_errorlog
 process_php_errors() {
-    log "INFO" "Checking production debug.log for PHP errors"
-    echo -e "${YELLOW}Checking production debug.log for PHP errors...${NC}" >&2
+    log "INFO" "Checking production php_errorlog for PHP errors"
+    echo -e "${YELLOW}Checking production php_errorlog for PHP errors...${NC}" >&2
 
     local tracker="$PROJECT_ROOT/logs/php-errors-tracker.json"
     local daily_limit=5
@@ -1238,20 +1238,20 @@ process_php_errors() {
     fi
 
     local ssh_port="${DEPLOY_SSH_PORT:-18765}"
-    local remote_debug_log="${DEPLOY_REMOTE_WP_PATH}/wp-content/debug.log"
+    local remote_debug_log="${DEPLOY_REMOTE_WP_PATH}/php_errorlog"
 
-    # Check if debug.log exists on server
+    # Check if php_errorlog exists on server
     if ! ssh -p "$ssh_port" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "test -f $remote_debug_log" 2>/dev/null; then
-        log "INFO" "No debug.log found on production server"
-        echo -e "${GREEN}No debug.log on production — no errors to fix.${NC}" >&2
+        log "INFO" "No php_errorlog found on production server"
+        echo -e "${GREEN}No php_errorlog on production — no errors to fix.${NC}" >&2
         return 0
     fi
 
-    # Fetch debug.log via SSH pipe (no temp file on server)
+    # Fetch php_errorlog via SSH pipe (no temp file on server)
     local raw_log
     raw_log=$(ssh -p "$ssh_port" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "cat $remote_debug_log" 2>/dev/null)
     if [ $? -ne 0 ] || [ -z "$raw_log" ]; then
-        log "WARN" "Failed to fetch debug.log or log is empty"
+        log "WARN" "Failed to fetch php_errorlog or log is empty"
         return 0
     fi
 
@@ -1260,12 +1260,12 @@ process_php_errors() {
     cutoff_time=$(date -v-2H +%s 2>/dev/null || date -d '2 hours ago' +%s)
 
     # Filter for rondo-club theme errors, recent only
-    # WordPress debug.log format: [DD-Mon-YYYY HH:MM:SS UTC] PHP Type: message in /path on line N
+    # WordPress php_errorlog format: [DD-Mon-YYYY HH:MM:SS UTC] PHP Type: message in /path on line N
     local errors_raw
     errors_raw=$(echo "$raw_log" | grep -E "themes/rondo-club" | grep -E "PHP (Fatal error|Parse error|Warning|Notice|Deprecated)" || true)
 
     if [ -z "$errors_raw" ]; then
-        log "INFO" "No rondo-club PHP errors in debug.log"
+        log "INFO" "No rondo-club PHP errors in php_errorlog"
         echo -e "${GREEN}No PHP errors for rondo-club theme.${NC}" >&2
         return 0
     fi
@@ -1378,7 +1378,7 @@ process_php_errors() {
     if [ -f "$php_error_prompt_file" ]; then
         prompt=$(cat "$php_error_prompt_file")
     else
-        prompt="Fix the following PHP errors from the production debug.log."
+        prompt="Fix the following PHP errors from the production php_errorlog."
     fi
 
     prompt="${prompt}
