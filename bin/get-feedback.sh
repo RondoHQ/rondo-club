@@ -655,9 +655,37 @@ merge_and_deploy() {
     log "INFO" "Merging PR #${pr_number} via squash"
     echo -e "${GREEN}Merging PR #${pr_number}...${NC}" >&2
 
-    # Update branch with latest main before merging
-    gh pr update-branch "$pr_number" --repo RondoHQ/rondo-club --rebase 2>/dev/null || \
-        log "WARN" "Could not update PR #${pr_number} branch (may already be up to date)"
+    # Get the branch name for this PR
+    local pr_branch
+    pr_branch=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json headRefName -q '.headRefName' 2>/dev/null)
+
+    if [ -n "$pr_branch" ]; then
+        # Update main and merge into the PR branch locally
+        cd "$PROJECT_ROOT"
+        git fetch origin main 2>/dev/null
+        git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
+        git pull --ff-only 2>/dev/null
+
+        if ! git merge origin/main --no-edit 2>/dev/null; then
+            # Conflicts — let Claude resolve them
+            log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
+            local prompt_file=$(mktemp)
+            local output_file=$(mktemp)
+            printf '%s' "There are git merge conflicts in this repository. Run git status to see the conflicted files, resolve all conflicts, then stage and commit the merge. Keep the intent of both the branch changes and main. Do not discard either side without good reason. After resolving, run npm run build to verify the frontend compiles." > "$prompt_file"
+
+            run_claude "$prompt_file" "$output_file" 300
+
+            if [ $CLAUDE_EXIT -ne 0 ]; then
+                log "ERROR" "Claude failed to resolve merge conflicts on PR #${pr_number}"
+                git merge --abort 2>/dev/null
+                git checkout main 2>/dev/null
+                return 1
+            fi
+        fi
+
+        git push origin "$pr_branch" 2>/dev/null
+        git checkout main 2>/dev/null
+    fi
 
     if ! gh pr merge "$pr_number" --repo RondoHQ/rondo-club --squash --delete-branch; then
         log "ERROR" "Failed to merge PR #${pr_number}"
@@ -1002,10 +1030,12 @@ Review this file and create a PR if you find confident improvements. If no chang
     local tracker_key="${target_project}:${target_file}"
     local file_commit=$(cd "$target_dir" && git log -1 --format=%H -- "$target_file" 2>/dev/null)
     if [ "$created_pr" = true ]; then
+        log "INFO" "Optimization created PR for: \"${target_project}:${target_file}\""
         jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
             '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     else
+        log "INFO" "No optimizations found for: \"${target_project}:${target_file}\""
         jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
             '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
@@ -1160,5 +1190,6 @@ while true; do
     fi
 done  # End of main loop
 
+log "INFO" "=== Script finished (PID: $$) ==="
 exit
 }
