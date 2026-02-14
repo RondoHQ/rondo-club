@@ -521,6 +521,12 @@ process_feedback_item() {
             if [ -n "$PARSED_PR_URL" ]; then
                 update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""
                 log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} resolved with PR: ${PARSED_PR_URL}"
+                # Request Copilot code review
+                local pr_number=$(echo "$PARSED_PR_URL" | grep -oE '[0-9]+$')
+                if [ -n "$pr_number" ]; then
+                    log "INFO" "Requesting Copilot review for PR #${pr_number}"
+                    gh copilot-review "$pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
+                fi
             fi
             ;;
         needs_info)
@@ -633,6 +639,16 @@ Review this file and create a PR if you find confident improvements. If no chang
     rm -f "$prompt_file" "$output_file"
 
     echo "$CLAUDE_OUTPUT"
+
+    # Request Copilot review if a PR was created
+    local opt_pr_url=$(echo "$CLAUDE_OUTPUT" | grep -oE 'https://github.com/[^ ]*pull/[0-9]+' | head -1)
+    if [ -n "$opt_pr_url" ]; then
+        local opt_pr_number=$(echo "$opt_pr_url" | grep -oE '[0-9]+$')
+        if [ -n "$opt_pr_number" ]; then
+            log "INFO" "Requesting Copilot review for optimization PR #${opt_pr_number}"
+            gh copilot-review "$opt_pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${opt_pr_number}"
+        fi
+    fi
 
     # Mark file as reviewed and increment daily counter
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
