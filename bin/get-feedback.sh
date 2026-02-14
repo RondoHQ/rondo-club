@@ -931,9 +931,8 @@ run_optimization() {
     done
 
     if [ -z "$target_file" ]; then
-        log "INFO" "All files across all projects have been reviewed — resetting tracker"
-        jq '.reviewed_files = {}' "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
-        echo -e "${GREEN}All files reviewed. Tracker reset for next cycle.${NC}" >&2
+        log "INFO" "All files across all projects have been reviewed — optimization cycle complete"
+        echo -e "${GREEN}All files reviewed. Optimization cycle complete.${NC}" >&2
         return 0
     fi
 
