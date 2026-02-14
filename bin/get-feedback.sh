@@ -921,7 +921,9 @@ run_optimization() {
             [ -z "$file" ] && continue
             local relative_file="${file#$proj_dir/}"
             local tracker_key="${proj_name}:${relative_file}"
-            if ! jq -e --arg f "$tracker_key" '.reviewed_files[$f]' "$tracker" > /dev/null 2>&1; then
+            local last_commit=$(cd "$proj_dir" && git log -1 --format=%H -- "$relative_file" 2>/dev/null)
+            local reviewed_commit=$(jq -r --arg f "$tracker_key" '.reviewed_files[$f] // empty' "$tracker")
+            if [ "$last_commit" != "$reviewed_commit" ]; then
                 target_file="$relative_file"
                 target_project="$proj_name"
                 target_dir="$proj_dir"
@@ -983,16 +985,17 @@ Review this file and create a PR if you find confident improvements. If no chang
         fi
     fi
 
-    # Mark file as reviewed and increment daily counters
+    # Mark file as reviewed with its current commit hash
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local tracker_key="${target_project}:${target_file}"
+    local file_commit=$(cd "$target_dir" && git log -1 --format=%H -- "$target_file" 2>/dev/null)
     if [ "$created_pr" = true ]; then
-        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
-            '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
+        jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     else
-        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
-            '.reviewed_files[$f] = true | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
+        jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     fi
 
