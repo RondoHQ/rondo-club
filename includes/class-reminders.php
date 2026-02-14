@@ -297,7 +297,7 @@ class Reminders {
 			AND p.post_status = 'publish'
 			AND pm.meta_key = 'birthdate'
 			AND pm.meta_value != ''
-			AND (fm.meta_value IS NULL OR fm.meta_value != '1')"
+			AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')"
 		);
 
 		$upcoming = [];
@@ -439,7 +439,7 @@ class Reminders {
 			AND p.post_status = 'publish'
 			AND pm.meta_key = 'birthdate'
 			AND pm.meta_value != ''
-			AND (fm.meta_value IS NULL OR fm.meta_value != '1')"
+			AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')"
 		);
 
 		// Get todos for the user
