@@ -8,7 +8,7 @@ This file provides guidance to Agents when working with code in this repository.
 
 **Tech Stack:**
 - Backend: WordPress 6.0+, PHP 8.0+, ACF Pro (required)
-- Frontend: React 18, React Router 6, TanStack Query, Tailwind CSS 3.4
+- Frontend: React 18, React Router 6, TanStack Query, Tailwind CSS v4
 - Build: Vite 5.0
 
 ## Development Commands
@@ -36,22 +36,20 @@ npm run preview  # Preview production build
 
 Entry point: `functions.php`
 
-**Initialization flow:**
+**Initialization flow (`rondo_init()`):**
 - Checks for ACF Pro dependency
-- Loads 8 classes from `includes/` on `after_setup_theme` and `plugins_loaded`
-- Registers activation/deactivation hooks for rewrites and cron via theme activation hooks
+- Loads classes from `includes/` conditionally on `after_setup_theme` and `plugins_loaded`
+- Core classes (PostTypes, Taxonomies, AccessControl, UserRoles, DemoProtection) load on every request
+- REST API classes load only for REST requests; Reminders only for admin/cron
+- iCal and CardDAV requests get early returns after loading only their specific classes
+- ~50 class files in `includes/`, organized by function
 
-**Key classes:**
-- `Rondo\Core\PostTypes` - Registers Person, Team, Commissie, and other CPTs
-- `Rondo\Core\Taxonomies` - Registers relationship types and seizoen taxonomy
-- `Rondo\Core\AutoTitle` - Auto-generates post titles
-- `Rondo\Core\AccessControl` - Row-level user data filtering at query and REST levels
-- `Rondo\Core\UserRoles` - Registers custom "Rondo User" role with minimal permissions
-- `Rondo\REST\Api` - Custom `/rondo/v1/` endpoints (dashboard, search, timeline, reminders)
-- `Rondo\Collaboration\CommentTypes` - Notes and Activities system using comments
-- `Rondo\Core\Reminders` - Daily digest reminder system with email notifications
-- `Rondo\Notifications\Channel` - Abstract base class for notification channels
-- `Rondo\Notifications\EmailChannel` - Email notification implementation
+**Key class groups:**
+- **Core:** PostTypes, Taxonomies, AccessControl, UserRoles, AutoTitle, VolunteerStatus
+- **REST controllers:** Api (dashboard/search/timeline), People, Teams, Commissies, Todos, Feedback, Calendar, GoogleContacts, GoogleSheets, CustomFields, ImportExport
+- **Collaboration:** CommentTypes (notes/activities), Mentions, MentionNotifications
+- **Integrations:** CalendarSync, GoogleContactsSync, GoogleContactsExport, GoogleOAuth, CardDAVServer, ICalFeed
+- **Other:** Reminders, MembershipFees, FeeCacheInvalidator, VogEmail, DemoProtection, ClubConfig
 
 **ACF field groups** are stored as JSON in `acf-json/` for version control.
 
@@ -60,15 +58,15 @@ Entry point: `functions.php`
 Entry point: `src/main.jsx`
 
 **React app structure:**
-- `App.jsx` - Routing with ProtectedRoute wrapper
+- `router.jsx` - Route definitions with lazy-loaded pages and ProtectedRoute
+- `App.jsx` - Root layout wrapper (version check, theme, offline banner)
 - `api/client.js` - Axios client with WordPress nonce injection
-- `hooks/` - Custom hooks (useAuth, usePeople, useDashboard)
-- `pages/` - Route components for People, Teams, Commissies, Settings
+- `hooks/` - Custom hooks (useAuth, usePeople, useDashboard, etc.)
+- `pages/` - Route components (People, Teams, Commissies, Feedback, VOG, Contributie, Settings, etc.)
 
 **State management:**
 - TanStack Query for server state/caching
 - WordPress config via window globals (`wpApiSettings`)
-- Zustand available for client state
 
 **API client uses two namespaces:**
 - `/wp/v2/` - Standard WordPress REST (people, teams, commissies)
@@ -81,6 +79,8 @@ Entry point: `src/main.jsx`
 - `team` - Teams with logo, industry, contact info (post type slug remains `team` for backward compatibility)
 - `commissie` - Committees with staff members and team structure
 - `rondo_todo` - Task/todo items linked to people
+- `rondo_feedback` - User feedback items with agent processing workflow
+- `calendar_event` - Calendar events
 - `discipline_case` - Discipline/incident tracking
 
 **Taxonomies:**
@@ -104,18 +104,22 @@ Entry point: `src/main.jsx`
 ## Key Files
 
 **Backend (PHP):**
-- `functions.php` - Main theme initialization, asset loading, SPA routing setup
-- `includes/class-rest-api.php` - Custom API endpoints
+- `functions.php` - Theme initialization, asset loading, SPA routing, class loading
+- `includes/class-post-types.php` - All CPT registrations
+- `includes/class-rest-api.php` - Core custom endpoints (dashboard, search, timeline)
+- `includes/class-rest-people.php` - Person CRUD endpoints
+- `includes/class-rest-feedback.php` - Feedback endpoints with comment support
 - `includes/class-access-control.php` - Permission logic
-- `includes/class-post-types.php` - Custom post type registration
-- `includes/class-taxonomies.php` - Taxonomy registration
+- `includes/class-membership-fees.php` - Per-season fee category system
 
 **Frontend (React):**
 - `src/main.jsx` - React app entry point
-- `src/App.jsx` - Main routing
-- `src/api/client.js` - API request configuration
+- `src/router.jsx` - Route definitions with lazy loading
+- `src/App.jsx` - Root layout (version check, theme, offline/install prompts)
+- `src/api/client.js` - Axios client with nonce injection
 - `src/hooks/` - Custom React hooks
 - `src/pages/` - Route components
+- `src/components/layout/Layout.jsx` - Sidebar navigation, capability-based menu filtering
 - `vite.config.js` - Build configuration
 
 ## Git Workflow
@@ -128,9 +132,9 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 **Adding REST endpoints:** Extend `Rondo\REST\Api` class in `includes/class-rest-api.php`
 
-**Adding React pages:** Create component in `src/pages/`, add route in `src/App.jsx`
+**Adding React pages:** Create component in `src/pages/`, add route in `src/router.jsx`
 
-**Adding PHP classes:** Create new class file in `includes/`, load it in `functions.php` via `stadion_init()`
+**Adding PHP classes:** Create new class file in `includes/`, load it in `functions.php` via `rondo_init()`
 
 ## Required rules for every change
 

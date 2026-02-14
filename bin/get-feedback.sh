@@ -1170,15 +1170,19 @@ Review this file and create a PR if you find confident improvements. If no chang
 
     echo "$CLAUDE_OUTPUT"
 
-    # Request Copilot review if a PR was created and increment PR counter
+    # Request Copilot review if a PR was created (skip for private repos)
     local created_pr=false
     local opt_pr_url=$(echo "$CLAUDE_OUTPUT" | grep -oE 'https://github.com/[^ ]*pull/[0-9]+' | head -1)
     if [ -n "$opt_pr_url" ]; then
         created_pr=true
-        local opt_pr_number=$(echo "$opt_pr_url" | grep -oE '[0-9]+$')
-        if [ -n "$opt_pr_number" ]; then
-            log "INFO" "Requesting Copilot review for optimization PR #${opt_pr_number}"
-            gh copilot-review "$opt_pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${opt_pr_number}"
+        if [ "$target_project" != "website" ]; then
+            local opt_pr_number=$(echo "$opt_pr_url" | grep -oE '[0-9]+$')
+            if [ -n "$opt_pr_number" ]; then
+                log "INFO" "Requesting Copilot review for optimization PR #${opt_pr_number}"
+                gh copilot-review "$opt_pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${opt_pr_number}"
+            fi
+        else
+            log "INFO" "Skipping Copilot review for private repo: ${target_project}"
         fi
     fi
 
