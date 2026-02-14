@@ -666,14 +666,16 @@ merge_and_deploy() {
     pr_branch=$(gh pr view "$pr_number" --repo RondoHQ/rondo-club --json headRefName -q '.headRefName' 2>/dev/null)
 
     if [ -n "$pr_branch" ]; then
-        # Update main and merge into the PR branch locally
+        # Fetch everything so we have latest main AND the PR branch
         cd "$PROJECT_ROOT"
-        git fetch origin main 2>/dev/null
-        git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
-        git pull --ff-only 2>/dev/null
+        git fetch origin 2>/dev/null
 
+        # Check out the PR branch with latest from origin
+        git checkout "$pr_branch" 2>/dev/null || git checkout -b "$pr_branch" "origin/$pr_branch" 2>/dev/null
+        git reset --hard "origin/$pr_branch" 2>/dev/null
+
+        # Merge main into the PR branch — Claude resolves any conflicts
         if ! git merge origin/main --no-edit 2>/dev/null; then
-            # Conflicts — let Claude resolve them
             log "INFO" "Merge conflicts on PR #${pr_number} branch — running Claude to resolve"
             local prompt_file=$(mktemp)
             local output_file=$(mktemp)
@@ -695,6 +697,9 @@ merge_and_deploy() {
             return 1
         fi
         git checkout main 2>/dev/null
+
+        # Give GitHub a moment to process the push and update mergeability
+        sleep 5
     fi
 
     local merge_output
