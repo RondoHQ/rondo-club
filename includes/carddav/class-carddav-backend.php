@@ -116,7 +116,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			$changes[ $user_id ] = [];
 		}
 
-		$stored_uri = $uri ?: $person_id . '.vcf';
+		$stored_uri = $uri ?: ( get_post_meta( $person_id, '_carddav_uri', true ) ?: $person_id . '.vcf' );
 
 		$changes[ $user_id ][ $person_id ] = [
 			'type'      => $type,
