@@ -346,7 +346,7 @@ run_claude() {
         log "INFO" "Extra flags: $extra_flags"
     fi
 
-    "$CLAUDE_BIN" --print --dangerously-skip-permissions --fast "${model_args[@]}" "${extra_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
+    "$CLAUDE_BIN" --print --dangerously-skip-permissions "${model_args[@]}" "${extra_args[@]}" < "$prompt_file" > "$output_file" 2>&1 &
     local claude_pid=$!
     local elapsed=0
 
