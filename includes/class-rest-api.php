@@ -1169,7 +1169,7 @@ class Api extends Base {
 	 * Default visible columns for People list.
 	 * Name column is always visible and first - not included here.
 	 */
-	private const DEFAULT_LIST_COLUMNS = [ 'team', 'labels', 'modified' ];
+	private const DEFAULT_LIST_COLUMNS = [ 'team', 'modified' ];
 
 	/**
 	 * Core columns (non-custom-field columns).
@@ -1178,7 +1178,6 @@ class Api extends Base {
 		[ 'id' => 'email', 'label' => 'E-mail', 'type' => 'core' ],
 		[ 'id' => 'phone', 'label' => 'Telefoon', 'type' => 'core' ],
 		[ 'id' => 'team', 'label' => 'Team', 'type' => 'core' ],
-		[ 'id' => 'labels', 'label' => 'Labels', 'type' => 'core' ],
 		[ 'id' => 'modified', 'label' => 'Laatst gewijzigd', 'type' => 'core' ],
 	];
 
@@ -1346,10 +1345,25 @@ class Api extends Base {
 
 		// Get available columns for UI rendering
 		$available_columns = $this->get_available_columns_metadata();
+		$valid_column_ids  = array_column( $available_columns, 'id' );
+
+		// Filter out stale column IDs (e.g. removed features) from stored preferences
+		$visible_columns = array_values( array_intersect( $visible_columns, $valid_column_ids ) );
+
+		// If all previously selected columns are now invalid, fall back to defaults
+		if ( empty( $visible_columns ) ) {
+			$visible_columns = self::DEFAULT_LIST_COLUMNS;
+			delete_user_meta( $user_id, 'rondo_people_list_preferences' );
+		}
 
 		// Default column order if not set: use available_columns order (excluding name which is always first)
 		if ( empty( $column_order ) || ! is_array( $column_order ) ) {
 			$column_order = array_column( $available_columns, 'id' );
+		} else {
+			$column_order = array_values( array_intersect( $column_order, $valid_column_ids ) );
+			if ( empty( $column_order ) ) {
+				$column_order = array_column( $available_columns, 'id' );
+			}
 		}
 
 		// Default column widths if not set or empty
@@ -1395,8 +1409,8 @@ class Api extends Base {
 			);
 		}
 
-		$valid_columns     = $this->get_valid_column_ids();
 		$available_columns = $this->get_available_columns_metadata();
+		$valid_columns     = array_column( $available_columns, 'id' );
 
 		// Handle visible_columns update
 		$visible_columns = $request->get_param( 'visible_columns' );
@@ -1516,26 +1530,6 @@ class Api extends Base {
 				'available_columns' => $available_columns,
 			]
 		);
-	}
-
-	/**
-	 * Get valid column IDs (core + active custom fields)
-	 *
-	 * @return array Column IDs
-	 */
-	private function get_valid_column_ids(): array {
-		// Core columns
-		$core = [ 'email', 'phone', 'team', 'labels', 'modified' ];
-
-		// Sportlink fields
-		$sportlink = array_column( self::SPORTLINK_FIELDS, 'id' );
-
-		// Custom fields from ACF
-		$manager       = new \Rondo\CustomFields\Manager();
-		$custom_fields = $manager->get_fields( 'person', false ); // active only
-		$custom_names  = array_column( $custom_fields, 'name' );
-
-		return array_merge( $core, $sportlink, $custom_names );
 	}
 
 	/**
