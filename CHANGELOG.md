@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Reorder dashboard stats widgets: Totaal leden, Vrijwilligers, Teams, VOG Status, Tuchtzaken
 
+### Fixed
+- Feedback page filters (status, type, project) now persist in the URL, surviving page refresh and back navigation
+
 ## [25.1.0] - 2026-02-14
 
 ### Added
