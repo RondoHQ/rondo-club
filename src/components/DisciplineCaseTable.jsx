@@ -1,6 +1,6 @@
 import { useState, useMemo, Fragment, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Loader2 } from 'lucide-react';
 import PersonAvatar from '@/components/PersonAvatar';
 import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
@@ -64,22 +64,81 @@ function formatAcfDate(dateStr) {
  * @param {boolean} props.showPersonColumn - Whether to show Person column (false on person tab)
  * @param {Map} props.personMap - Map of person ID to person data (for list view)
  * @param {boolean} props.isLoading - Loading state
+ * @param {Set|Array} props.invoicedCaseIds - IDs of cases already on an invoice
+ * @param {Set} props.selectedCaseIds - Currently selected case IDs (controlled)
+ * @param {Function} props.onSelectionChange - Callback when selection changes
+ * @param {Function} props.onCreateInvoice - Callback for "Maak factuur" button
+ * @param {boolean} props.isCreatingInvoice - Loading state for create button
+ * @param {boolean} props.canCreateInvoice - Whether to show invoice selection UI
  */
 export default function DisciplineCaseTable({
   cases,
   showPersonColumn = true,
   personMap = new Map(),
   isLoading = false,
+  invoicedCaseIds = new Set(),
+  selectedCaseIds = new Set(),
+  onSelectionChange = () => {},
+  onCreateInvoice = () => {},
+  isCreatingInvoice = false,
+  canCreateInvoice = false,
 }) {
   const [expandedId, setExpandedId] = useState(null);
   const [sortField, setSortField] = useState('match_date');
   const [sortOrder, setSortOrder] = useState('desc');
+
+  // Convert invoicedCaseIds to Set if it's an array
+  const invoicedSet = useMemo(() => {
+    return invoicedCaseIds instanceof Set ? invoicedCaseIds : new Set(invoicedCaseIds);
+  }, [invoicedCaseIds]);
 
   // Handle sort column click
   const handleSort = useCallback((field, order) => {
     setSortField(field);
     setSortOrder(order);
   }, []);
+
+  // Get uninvoiced case IDs
+  const uninvoicedCaseIds = useMemo(() => {
+    if (!cases || !canCreateInvoice) return [];
+    return cases.filter(dc => !invoicedSet.has(dc.id)).map(dc => dc.id);
+  }, [cases, invoicedSet, canCreateInvoice]);
+
+  // Calculate total for selected cases
+  const selectedTotal = useMemo(() => {
+    if (!cases || selectedCaseIds.size === 0) return 0;
+    return cases
+      .filter(dc => selectedCaseIds.has(dc.id))
+      .reduce((sum, dc) => sum + (parseFloat(dc.acf?.administrative_fee) || 0), 0);
+  }, [cases, selectedCaseIds]);
+
+  // Handle checkbox toggle
+  const handleToggleCase = useCallback((caseId, isInvoiced) => {
+    if (isInvoiced) return; // Can't select already-invoiced cases
+
+    const newSelected = new Set(selectedCaseIds);
+    if (newSelected.has(caseId)) {
+      newSelected.delete(caseId);
+    } else {
+      newSelected.add(caseId);
+    }
+    onSelectionChange(newSelected);
+  }, [selectedCaseIds, onSelectionChange]);
+
+  // Handle select/deselect all
+  const handleToggleAll = useCallback(() => {
+    if (selectedCaseIds.size === uninvoicedCaseIds.length && uninvoicedCaseIds.length > 0) {
+      // All selected - deselect all
+      onSelectionChange(new Set());
+    } else {
+      // Select all uninvoiced
+      onSelectionChange(new Set(uninvoicedCaseIds));
+    }
+  }, [selectedCaseIds, uninvoicedCaseIds, onSelectionChange]);
+
+  // Determine if select-all checkbox should be checked or indeterminate
+  const isAllSelected = selectedCaseIds.size > 0 && selectedCaseIds.size === uninvoicedCaseIds.length;
+  const isIndeterminate = selectedCaseIds.size > 0 && selectedCaseIds.size < uninvoicedCaseIds.length;
 
   // Sort cases by selected field
   const sortedCases = useMemo(() => {
@@ -152,9 +211,47 @@ export default function DisciplineCaseTable({
 
   return (
     <div className="overflow-x-auto">
+      {/* Selection toolbar */}
+      {canCreateInvoice && selectedCaseIds.size > 0 && (
+        <div className="bg-electric-cyan text-white rounded-lg px-4 py-3 mb-3 flex items-center justify-between">
+          <div className="text-sm font-medium">
+            {selectedCaseIds.size} tuchtzaken geselecteerd — Totaal: {formatCurrency(selectedTotal, 2)}
+          </div>
+          <button
+            onClick={onCreateInvoice}
+            disabled={isCreatingInvoice}
+            className="btn-secondary bg-deep-midnight hover:bg-obsidian text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+          >
+            {isCreatingInvoice ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Bezig...</span>
+              </>
+            ) : (
+              <span>Maak factuur</span>
+            )}
+          </button>
+        </div>
+      )}
+
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
+            {canCreateInvoice && (
+              <th scope="col" className="px-4 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isIndeterminate;
+                  }}
+                  onChange={handleToggleAll}
+                  disabled={uninvoicedCaseIds.length === 0}
+                  className="w-4 h-4 text-electric-cyan border-gray-300 rounded focus:ring-electric-cyan disabled:opacity-50 cursor-pointer"
+                  title={uninvoicedCaseIds.length > 0 ? "Alles selecteren/deselecteren" : "Geen ongeïnvoiceerde tuchtzaken"}
+                />
+              </th>
+            )}
             {showPersonColumn && (
               <SortableHeader
                 label="Persoon"
@@ -213,15 +310,33 @@ export default function DisciplineCaseTable({
             const isExpanded = expandedId === dc.id;
             const person = personMap.get(dc.acf?.person);
             const acf = dc.acf || {};
+            const isInvoiced = invoicedSet.has(dc.id);
+            const isSelected = selectedCaseIds.has(dc.id);
 
             return (
               <Fragment key={dc.id}>
                 <tr
                   className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
                     index % 2 === 1 ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                  }`}
+                  } ${isInvoiced ? 'opacity-60' : ''}`}
                   onClick={() => toggleExpand(dc.id)}
                 >
+                  {canCreateInvoice && (
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      {isInvoiced ? (
+                        <div className="flex items-center justify-center" title="Al gefactureerd">
+                          <FileText className="w-4 h-4 text-gray-400" />
+                        </div>
+                      ) : (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleCase(dc.id, isInvoiced)}
+                          className="w-4 h-4 text-electric-cyan border-gray-300 rounded focus:ring-electric-cyan cursor-pointer"
+                        />
+                      )}
+                    </td>
+                  )}
                   {showPersonColumn && (
                     <td className="px-4 py-3 whitespace-nowrap">
                       {person ? (
@@ -289,7 +404,14 @@ export default function DisciplineCaseTable({
                 </tr>
                 {isExpanded && (
                   <tr className="bg-gray-50 dark:bg-gray-700/50">
-                    <td colSpan={showPersonColumn ? 7 : 6} className="px-4 py-4">
+                    <td
+                      colSpan={
+                        (canCreateInvoice ? 1 : 0) +
+                        (showPersonColumn ? 1 : 0) +
+                        6 // Wedstrijd, Sanctie, Kaart, Doorbelast, Boete, expand arrow
+                      }
+                      className="px-4 py-4"
+                    >
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-1">
