@@ -18,7 +18,9 @@ import {
   User,
   FileCheck,
   Coins,
-  Gavel
+  Gavel,
+  Wallet,
+  Receipt
 } from 'lucide-react';
 
 // Logo URL from theme directory
@@ -39,11 +41,14 @@ import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
-  { name: 'Contributie', href: '/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
+  { name: 'Financien', type: 'section', icon: Wallet, requiresFinancieel: true },
+  { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
+  { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true, disabled: true },
+  { name: 'Instellingen', href: '/financien/instellingen', icon: Settings, indent: true, requiresFinancieel: true, adminOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
@@ -99,6 +104,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
         {navigation
           .filter(item => {
             if (isAdmin) return true;
+            if (item.adminOnly && !isAdmin) return false;
             if (item.requiresFairplay && !canAccessFairplay) return false;
             if (item.requiresVOG && !canAccessVOG) return false;
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
@@ -106,9 +112,39 @@ function Sidebar({ mobile = false, onClose, stats }) {
           })
           .map((item) => {
             const count = getCounts(item.name);
+
+            // Render section header
+            if (item.type === 'section') {
+              return (
+                <div
+                  key={item.name}
+                  className="flex items-center px-3 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-gray-500"
+                >
+                  <item.icon className="w-4 h-4 mr-2" />
+                  {item.name}
+                </div>
+              );
+            }
+
+            // Render disabled item (grayed out, not clickable)
+            if (item.disabled) {
+              return (
+                <div
+                  key={item.href || item.name}
+                  className={`flex items-center py-2 text-sm font-medium rounded-lg opacity-50 cursor-default pointer-events-none ${
+                    item.indent ? 'pl-8 pr-3' : 'px-3'
+                  } text-gray-700 dark:text-gray-200`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </div>
+              );
+            }
+
+            // Render regular navigation link
             return (
               <NavLink
-                key={item.name}
+                key={item.href || item.name}
                 to={item.href}
                 onClick={mobile ? onClose : undefined}
                 className={({ isActive }) =>
@@ -474,6 +510,9 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'Leden';
+    if (path.startsWith('/financien/contributie')) return 'Contributie';
+    if (path.startsWith('/financien/instellingen')) return 'Financien Instellingen';
+    if (path.startsWith('/financien/facturen')) return 'Facturen';
     if (path.startsWith('/contributie')) return 'Contributie';
     if (path.startsWith('/vog')) return 'VOG';
     if (path.startsWith('/teams')) return 'Teams';

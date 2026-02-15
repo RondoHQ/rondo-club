@@ -24,6 +24,7 @@ const Settings = lazy(() => import('@/pages/Settings/Settings'));
 const VOG = lazy(() => import('@/pages/VOG/VOG'));
 const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
 const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
+const FinanceSettings = lazy(() => import('@/pages/Finance/FinanceSettings'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));
@@ -180,9 +181,9 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Contributie routes - requires financieel capability
+          // Finance routes - requires financieel capability
           {
-            path: 'contributie',
+            path: 'financien/contributie',
             element: (
               <FinancieelRoute>
                 <Contributie />
@@ -190,13 +191,25 @@ const router = createBrowserRouter([
             ),
           },
           {
-            path: 'contributie/:tab',
+            path: 'financien/contributie/:tab',
             element: (
               <FinancieelRoute>
                 <Contributie />
               </FinancieelRoute>
             ),
           },
+          {
+            path: 'financien/instellingen',
+            element: (
+              <FinancieelRoute>
+                <FinanceSettings />
+              </FinancieelRoute>
+            ),
+          },
+
+          // Old contributie routes - redirect to new location
+          { path: 'contributie', element: <Navigate to="/financien/contributie" replace /> },
+          { path: 'contributie/:tab', element: <Navigate to="/financien/contributie" replace /> },
 
           // Discipline Cases route - requires fairplay capability
           {
