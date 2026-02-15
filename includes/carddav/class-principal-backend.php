@@ -18,6 +18,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class PrincipalBackend extends AbstractBackend {
 
 	/**
+	 * Cached list of authorized roles
+	 *
+	 * @var array|null
+	 */
+	private $authorized_roles = null;
+
+	/**
 	 * Get list of principals for a prefix
 	 *
 	 * @param string $prefixPath Principal prefix (e.g., 'principals')
@@ -33,7 +40,7 @@ class PrincipalBackend extends AbstractBackend {
 		// Get all users who can use the CRM
 		$users = get_users(
 			[
-				'role__in' => array_merge( [ 'administrator' ], \Rondo\Core\UserRoles::get_role_slugs() ),
+				'role__in' => $this->getAuthorizedRoles(),
 			]
 		);
 
@@ -65,7 +72,7 @@ class PrincipalBackend extends AbstractBackend {
 		}
 
 		// Verify user has appropriate role
-		if ( ! user_can( $user, 'manage_options' ) && ! \Rondo\Core\UserRoles::has_rondo_role( $user ) ) {
+		if ( ! $this->isAuthorizedUser( $user ) ) {
 			return null;
 		}
 
@@ -103,7 +110,7 @@ class PrincipalBackend extends AbstractBackend {
 		$displayName = $searchProperties['{DAV:}displayname'] ?? null;
 
 		$args = [
-			'role__in' => array_merge( [ 'administrator' ], \Rondo\Core\UserRoles::get_role_slugs() ),
+			'role__in' => $this->getAuthorizedRoles(),
 		];
 
 		if ( $email ) {
@@ -137,12 +144,10 @@ class PrincipalBackend extends AbstractBackend {
 			$email = substr( $uri, 7 );
 			$user  = get_user_by( 'email', $email );
 
-			if ( $user && ( user_can( $user, 'manage_options' ) || \Rondo\Core\UserRoles::has_rondo_role( $user ) ) ) {
+			if ( $user && $this->isAuthorizedUser( $user ) ) {
 				return $principalPrefix . '/' . $user->user_login;
 			}
 		}
-
-		return null;
 	}
 
 	/**
@@ -188,5 +193,31 @@ class PrincipalBackend extends AbstractBackend {
 			'{DAV:}displayname'                     => $user->display_name,
 			'{http://sabredav.org/ns}email-address' => $user->user_email,
 		];
+	}
+
+	/**
+	 * Get list of authorized WordPress roles
+	 *
+	 * @return array Role slugs that can access CardDAV
+	 */
+	private function getAuthorizedRoles() {
+		if ( $this->authorized_roles === null ) {
+			$this->authorized_roles = array_merge(
+				[ 'administrator' ],
+				\Rondo\Core\UserRoles::get_role_slugs()
+			);
+		}
+
+		return $this->authorized_roles;
+	}
+
+	/**
+	 * Check if user has authorization to access CardDAV
+	 *
+	 * @param \WP_User $user WordPress user
+	 * @return bool True if user is authorized
+	 */
+	private function isAuthorizedUser( \WP_User $user ) {
+		return user_can( $user, 'manage_options' ) || \Rondo\Core\UserRoles::has_rondo_role( $user );
 	}
 }
