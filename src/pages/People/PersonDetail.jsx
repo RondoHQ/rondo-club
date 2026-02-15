@@ -11,6 +11,7 @@ import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
+import { useInvoicedCaseIds, useCreateInvoice } from '@/hooks/useInvoices';
 import NoteModal from '@/components/Timeline/NoteModal';
 import QuickActivityModal from '@/components/Timeline/QuickActivityModal';
 import TodoModal from '@/components/Timeline/TodoModal';
@@ -70,6 +71,7 @@ export default function PersonDetail() {
   const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
 
   // Fetch discipline cases for this person (fairplay users only)
   const { data: disciplineCases, isLoading: isDisciplineCasesLoading } = usePersonDisciplineCases(id, {
@@ -78,6 +80,13 @@ export default function PersonDetail() {
 
   // Check if person has any discipline cases (for hiding empty tab)
   const hasDisciplineCases = disciplineCases && disciplineCases.length > 0;
+
+  // Fetch invoiced discipline case IDs (financieel users only)
+  const { data: invoicedCaseIds = [], isLoading: isInvoicedLoading } = useInvoicedCaseIds(id, {
+    enabled: canAccessFairplay && canAccessFinancieel,
+  });
+  const createInvoice = useCreateInvoice();
+  const [selectedCaseIds, setSelectedCaseIds] = useState(new Set());
 
   const [activeTab, setActiveTab] = useState('profile');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -472,6 +481,29 @@ export default function PersonDetail() {
     await deleteActivity.mutateAsync({ activityId, personId: id });
   };
 
+  // Handle creating invoice from selected discipline cases
+  const handleCreateInvoice = async () => {
+    if (selectedCaseIds.size === 0) return;
+
+    const lineItems = disciplineCases
+      .filter(dc => selectedCaseIds.has(dc.id))
+      .map(dc => ({
+        discipline_case_id: dc.id,
+        description: dc.acf?.match_description || dc.acf?.sanction_description || '',
+        amount: parseFloat(dc.acf?.administrative_fee) || 0,
+      }));
+
+    try {
+      await createInvoice.mutateAsync({
+        person_id: parseInt(id),
+        line_items: lineItems,
+      });
+      setSelectedCaseIds(new Set());
+    } catch {
+      alert('Factuur kon niet worden aangemaakt. Probeer het opnieuw.');
+    }
+  };
+
   // Handle deleting a todo
   const handleDeleteTodo = async (todoId) => {
     if (!window.confirm('Weet je zeker dat je deze taak wilt verwijderen?')) {
@@ -819,6 +851,13 @@ export default function PersonDetail() {
       setActiveTab('profile');
     }
   }, [activeTab, isDisciplineCasesLoading, hasDisciplineCases, canAccessFairplay]);
+
+  // Reset selected case IDs when switching away from discipline tab
+  useEffect(() => {
+    if (activeTab !== 'discipline') {
+      setSelectedCaseIds(new Set());
+    }
+  }, [activeTab]);
 
   if (isLoading) {
     return (
@@ -1536,6 +1575,12 @@ export default function PersonDetail() {
               showPersonColumn={false}
               personMap={new Map()}
               isLoading={isDisciplineCasesLoading}
+              invoicedCaseIds={new Set(invoicedCaseIds)}
+              selectedCaseIds={selectedCaseIds}
+              onSelectionChange={setSelectedCaseIds}
+              onCreateInvoice={handleCreateInvoice}
+              isCreatingInvoice={createInvoice.isPending}
+              canCreateInvoice={canAccessFairplay && canAccessFinancieel}
             />
           </div>
         )}
