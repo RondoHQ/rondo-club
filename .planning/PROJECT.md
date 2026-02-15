@@ -427,7 +427,20 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-(No active milestone — ready for next milestone)
+## Current Milestone: v26.0 Discipline Case Invoicing
+
+**Goal:** Enable the club to invoice members for discipline case fees with PDF generation, Rabobank payment links, and email delivery — tracked through a full invoice lifecycle.
+
+**Target features:**
+- Finance navigation section (Financiën) grouping Contributie, Facturen, and Instellingen
+- Invoice CPT with lifecycle tracking (Draft → Sent → Paid / Overdue)
+- Select discipline cases on member profile to create invoices
+- PDF invoice generation with club branding, member details, and case breakdown
+- Rabobank betaalverzoek API integration for payment links
+- Email delivery via wp_mail with configurable template
+- Finance settings (club invoice details, bank account, payment terms, email template, API credentials)
+- Invoice numbering: 2026T001 format (calendar year + T + sequential)
+- Unified Facturen page for all invoice types (discipline now, membership fees later)
 
 ### Out of Scope
 
