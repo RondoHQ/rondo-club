@@ -33,16 +33,9 @@ class Sync {
 	 * Constructor
 	 */
 	public function __construct() {
-		// Register custom cron schedule
 		add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
-
-		// Register cron callback
 		add_action( self::CRON_HOOK, [ $this, 'run_background_sync' ] );
-
-		// Schedule cron on theme activation
 		add_action( 'after_switch_theme', [ $this, 'schedule_sync' ] );
-
-		// Unschedule cron on theme deactivation
 		add_action( 'switch_theme', [ $this, 'unschedule_sync' ] );
 	}
 
@@ -87,29 +80,19 @@ class Sync {
 	 * Uses round-robin through all users with calendar connections.
 	 */
 	public function run_background_sync() {
-		// Get all users with calendar connections
 		$users = $this->get_users_with_connections();
 
 		if ( empty( $users ) ) {
 			return;
 		}
 
-		// Get last processed user index (for round-robin)
 		$last_index = (int) get_transient( self::USER_INDEX_TRANSIENT );
-
-		// Calculate next user index
 		$next_index = ( $last_index + 1 ) % count( $users );
+		$user_id    = $users[ $next_index ];
 
-		// Get the user to sync this run
-		$user_id = $users[ $next_index ];
-
-		// Update transient for next run
 		set_transient( self::USER_INDEX_TRANSIENT, $next_index, HOUR_IN_SECONDS );
 
-		// Sync this user's connections
 		$this->sync_user_connections( $user_id );
-
-		// Auto-log past meetings for all users (rate limited to 10 events per run)
 		$this->auto_log_past_meetings();
 	}
 
@@ -119,16 +102,23 @@ class Sync {
 	 * @return array User IDs
 	 */
 	private function get_users_with_connections() {
+		return $this->get_user_ids_with_sync_enabled_connections();
+	}
+
+	/**
+	 * Query database for user IDs with sync-enabled calendar connections
+	 *
+	 * @return array User IDs with at least one sync-enabled connection.
+	 */
+	private function get_user_ids_with_sync_enabled_connections() {
 		global $wpdb;
 
-		// Query users who have _rondo_calendar_connections user meta
 		$user_ids = $wpdb->get_col(
 			"SELECT DISTINCT user_id
              FROM {$wpdb->usermeta}
              WHERE meta_key = '_rondo_calendar_connections'"
 		);
 
-		// Filter to users who have at least one sync-enabled connection
 		$filtered_users = [];
 
 		foreach ( $user_ids as $user_id ) {
@@ -137,7 +127,7 @@ class Sync {
 			foreach ( $connections as $connection ) {
 				if ( ! empty( $connection['sync_enabled'] ) ) {
 					$filtered_users[] = (int) $user_id;
-					break; // Only need one enabled connection
+					break;
 				}
 			}
 		}
@@ -154,7 +144,6 @@ class Sync {
 		$connections = \RONDO_Calendar_Connections::get_user_connections( $user_id );
 
 		foreach ( $connections as $connection ) {
-			// Skip disabled connections
 			if ( empty( $connection['sync_enabled'] ) ) {
 				continue;
 			}
@@ -166,66 +155,11 @@ class Sync {
 				continue;
 			}
 
-			// Check if sync is due based on frequency setting
 			if ( ! $this->is_sync_due( $connection ) ) {
 				continue;
 			}
 
-			try {
-				// Add user_id to connection for token refresh (Google provider)
-				$connection['user_id'] = $user_id;
-
-				// Route to appropriate provider
-				if ( $provider === 'caldav' ) {
-					$result = \RONDO_CalDAV_Provider::sync( $user_id, $connection );
-				} elseif ( $provider === 'google' ) {
-					$result = \RONDO_Google_Calendar_Provider::sync( $user_id, $connection );
-				} else {
-					continue; // Unknown provider
-				}
-
-				// Update last_sync timestamp and clear error
-				\RONDO_Calendar_Connections::update_connection(
-					$user_id,
-					$connection_id,
-					[
-						'last_sync'  => current_time( 'c' ),
-						'last_error' => null,
-					]
-				);
-
-				error_log(
-					sprintf(
-						'RONDO_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated, %d deleted) [freq: %d min]',
-						$connection_id,
-						$user_id,
-						$result['total'] ?? 0,
-						$result['created'] ?? 0,
-						$result['updated'] ?? 0,
-						$result['deleted'] ?? 0,
-						$connection['sync_frequency'] ?? 15
-					)
-				);
-
-			} catch ( Exception $e ) {
-				// Update last_error but don't stop other connections
-				\RONDO_Calendar_Connections::update_connection(
-					$user_id,
-					$connection_id,
-					[
-						'last_error' => $e->getMessage(),
-					]
-				);
-
-				error_log(
-					sprintf(
-						'RONDO_Calendar_Sync: Error syncing connection %s for user %d: %s',
-						$connection_id,
-						$user_id,
-						$e->getMessage()
-					)
-				);
-			}
+			$this->sync_single_connection( $user_id, $connection );
 		}
 	}
 
@@ -238,25 +172,98 @@ class Sync {
 	private function is_sync_due( array $connection ): bool {
 		$last_sync = $connection['last_sync'] ?? null;
 
-		// No last sync - always due
 		if ( empty( $last_sync ) ) {
 			return true;
 		}
 
-		// Get sync frequency (default 15 minutes)
-		$frequency_minutes = isset( $connection['sync_frequency'] ) ? absint( $connection['sync_frequency'] ) : 15;
+		$frequency_minutes = absint( $connection['sync_frequency'] ?? 15 );
 
-		// Parse last_sync timestamp
 		$last_sync_time = strtotime( $last_sync );
 		if ( $last_sync_time === false ) {
-			return true; // Invalid timestamp, sync now
+			return true;
 		}
 
-		// Calculate if enough time has passed
 		$seconds_since_sync = time() - $last_sync_time;
 		$required_seconds   = $frequency_minutes * 60;
 
 		return $seconds_since_sync >= $required_seconds;
+	}
+
+	/**
+	 * Sync a single calendar connection
+	 *
+	 * @param int   $user_id    User ID.
+	 * @param array $connection Connection data.
+	 */
+	private function sync_single_connection( $user_id, array $connection ) {
+		$connection_id         = $connection['id'];
+		$connection['user_id'] = $user_id;
+
+		try {
+			$result = $this->sync_connection_with_provider( $user_id, $connection );
+
+			\RONDO_Calendar_Connections::update_connection(
+				$user_id,
+				$connection_id,
+				[
+					'last_sync'  => current_time( 'c' ),
+					'last_error' => null,
+				]
+			);
+
+			error_log(
+				sprintf(
+					'RONDO_Calendar_Sync: Synced connection %s for user %d - %d events (%d created, %d updated, %d deleted) [freq: %d min]',
+					$connection_id,
+					$user_id,
+					$result['total'] ?? 0,
+					$result['created'] ?? 0,
+					$result['updated'] ?? 0,
+					$result['deleted'] ?? 0,
+					$connection['sync_frequency'] ?? 15
+				)
+			);
+
+		} catch ( Exception $e ) {
+			\RONDO_Calendar_Connections::update_connection(
+				$user_id,
+				$connection_id,
+				[
+					'last_error' => $e->getMessage(),
+				]
+			);
+
+			error_log(
+				sprintf(
+					'RONDO_Calendar_Sync: Error syncing connection %s for user %d: %s',
+					$connection_id,
+					$user_id,
+					$e->getMessage()
+				)
+			);
+		}
+	}
+
+	/**
+	 * Route connection sync to appropriate provider
+	 *
+	 * @param int   $user_id    User ID.
+	 * @param array $connection Connection data with 'provider' key.
+	 * @return array Sync result with created/updated/deleted/total counts.
+	 * @throws Exception If provider is unknown or sync fails.
+	 */
+	private function sync_connection_with_provider( $user_id, array $connection ) {
+		$provider = $connection['provider'] ?? '';
+
+		if ( $provider === 'caldav' ) {
+			return \RONDO_CalDAV_Provider::sync( $user_id, $connection );
+		}
+
+		if ( $provider === 'google' ) {
+			return \RONDO_Google_Calendar_Provider::sync( $user_id, $connection );
+		}
+
+		throw new \Exception( 'Unknown calendar provider: ' . $provider );
 	}
 
 	/**
@@ -503,24 +510,8 @@ class Sync {
 	public static function get_sync_status() {
 		$next_scheduled = wp_next_scheduled( self::CRON_HOOK );
 
-		// Get users with connections
-		global $wpdb;
-		$user_ids = $wpdb->get_col(
-			"SELECT DISTINCT user_id
-             FROM {$wpdb->usermeta}
-             WHERE meta_key = '_rondo_calendar_connections'"
-		);
-
-		$total_users = 0;
-		foreach ( $user_ids as $user_id ) {
-			$connections = \RONDO_Calendar_Connections::get_user_connections( (int) $user_id );
-			foreach ( $connections as $connection ) {
-				if ( ! empty( $connection['sync_enabled'] ) ) {
-					++$total_users;
-					break;
-				}
-			}
-		}
+		$instance    = new self();
+		$total_users = count( $instance->get_user_ids_with_sync_enabled_connections() );
 
 		$current_index = (int) get_transient( self::USER_INDEX_TRANSIENT );
 
@@ -559,19 +550,11 @@ class Sync {
 					continue;
 				}
 
-				$connection_id = $connection['id'] ?? '';
-				$provider      = $connection['provider'] ?? '';
+				$connection_id         = $connection['id'] ?? '';
+				$connection['user_id'] = $user_id;
 
 				try {
-					$connection['user_id'] = $user_id;
-
-					if ( $provider === 'caldav' ) {
-						$result = \RONDO_CalDAV_Provider::sync( $user_id, $connection );
-					} elseif ( $provider === 'google' ) {
-						$result = \RONDO_Google_Calendar_Provider::sync( $user_id, $connection );
-					} else {
-						continue;
-					}
+					$result = $instance->sync_connection_with_provider( $user_id, $connection );
 
 					\RONDO_Calendar_Connections::update_connection(
 						$user_id,
@@ -611,7 +594,6 @@ class Sync {
 			$results[] = $user_results;
 		}
 
-		// Also run auto-log after full sync
 		$instance->auto_log_past_meetings();
 
 		return $results;
