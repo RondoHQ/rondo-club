@@ -1690,7 +1690,8 @@ while true; do
 
     # In loop mode, skip items that have failed too many times
     if [ "$LOOP_MODE" = true ]; then
-        fail_count=$(echo "$FAILED_ITEMS" | tr ' ' '\n' | grep -c "^${DISPLAY_ID}$" 2>/dev/null || echo 0)
+        fail_count=$(echo "$FAILED_ITEMS" | tr ' ' '\n' | grep -c "^${DISPLAY_ID}$" 2>/dev/null)
+        [ -z "$fail_count" ] && fail_count=0
         if [ "$fail_count" -ge "$MAX_ITEM_FAILURES" ]; then
             log "WARN" "Feedback #${DISPLAY_ID} failed ${fail_count} times — setting to needs_info"
             echo -e "${RED}Feedback #${DISPLAY_ID} failed ${fail_count} times — skipping${NC}" >&2
