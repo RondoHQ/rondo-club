@@ -456,13 +456,13 @@ export default function CommissiesList() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-48 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="search"
               placeholder="Commissies zoeken..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pl-9"
+              className="input pr-9"
             />
           </div>
 
