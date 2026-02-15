@@ -420,7 +420,7 @@ class Reminders {
 	 * @return array Digest data with today, tomorrow, rest_of_week, and todos keys
 	 */
 	public function get_weekly_digest( $user_id ) {
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 		$today          = new \DateTime( 'today', wp_timezone() );
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 		$end_of_week    = ( clone $today )->modify( '+7 days' );
@@ -531,7 +531,7 @@ class Reminders {
 	 * @return array Todos grouped by today, tomorrow, rest_of_week
 	 */
 	private function get_user_todos_for_digest( $user_id, $today, $end_of_week ) {
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 		$tomorrow       = ( clone $today )->modify( '+1 day' );
 
 		$todos = [
@@ -727,7 +727,7 @@ class Reminders {
 		$all_reminders = $this->get_upcoming_reminders( $days_ahead );
 
 		// Filter to only include reminders for people this user can access
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 		$user_reminders = [];
 
 		foreach ( $all_reminders as $reminder ) {

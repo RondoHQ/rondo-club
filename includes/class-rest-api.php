@@ -2289,11 +2289,8 @@ class Api extends Base {
 	private function get_recently_contacted_people( $limit = 5 ) {
 		global $wpdb;
 
-		$user_id        = get_current_user_id();
-		$access_control = new \RONDO_Access_Control();
-
 		// Check if user has access (all approved users see all data)
-		if ( ! $access_control->is_user_approved( $user_id ) ) {
+		if ( ! is_user_logged_in() ) {
 			return [];
 		}
 

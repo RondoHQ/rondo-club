@@ -127,7 +127,7 @@ class Teams extends Base {
 		$user_id    = get_current_user_id();
 
 		// Check if user can access this team
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 		if ( ! current_user_can( 'manage_options' ) && ! $access_control->user_can_access_post( $team_id, $user_id ) ) {
 			return new \WP_Error(
 				'rest_forbidden',

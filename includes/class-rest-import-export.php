@@ -62,13 +62,7 @@ class ImportExport extends Base {
 	 * Export all contacts as vCard
 	 */
 	public function export_vcard( $request ) {
-		$user_id        = get_current_user_id();
-		$access_control = new \RONDO_Access_Control();
-
-		// Check if user is approved (all approved users see all data)
-		if ( ! $access_control->is_user_approved( $user_id ) ) {
-			return new \WP_Error( 'not_approved', __( 'Your account is pending approval.', 'rondo' ), [ 'status' => 403 ] );
-		}
+		// Permission already checked by route's permission_callback => 'is_user_logged_in'
 
 		// Get all people (access control applied via WP_Query filters)
 		$people = get_posts(
@@ -150,13 +144,7 @@ class ImportExport extends Base {
 	 * Export all contacts as Google Contacts CSV
 	 */
 	public function export_google_csv( $request ) {
-		$user_id        = get_current_user_id();
-		$access_control = new \RONDO_Access_Control();
-
-		// Check if user is approved (all approved users see all data)
-		if ( ! $access_control->is_user_approved( $user_id ) ) {
-			return new \WP_Error( 'not_approved', __( 'Your account is pending approval.', 'rondo' ), [ 'status' => 403 ] );
-		}
+		// Permission already checked by route's permission_callback => 'is_user_logged_in'
 
 		// Get all people (access control applied via WP_Query filters)
 		$people = get_posts(
