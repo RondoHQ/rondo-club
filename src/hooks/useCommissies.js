@@ -21,7 +21,6 @@ export function useCreateCommissie({ onSuccess } = {}) {
         acf: {
           website: data.website,
           industry: data.industry,
-          investors: data.investors || [],
         },
       };
 
