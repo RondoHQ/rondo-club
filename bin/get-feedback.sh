@@ -656,7 +656,7 @@ Be specific about code changes — include function names, class names, and desc
     local output_file=$(mktemp)
     printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600 "opus"
+    run_claude "$prompt_file" "$output_file" 600 "sonnet"
 
     local plan_output="$CLAUDE_OUTPUT"
     local plan_exit=$CLAUDE_EXIT
