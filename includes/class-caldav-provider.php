@@ -37,11 +37,12 @@ class CalDAVProvider {
 
 	/**
 	 * HTTP error messages for common status codes
+	 * Keys are error codes, values are already-translated message keys
 	 */
 	private const HTTP_ERROR_MESSAGES = [
-		'401'          => 'Authentication failed. Check username and password. For iCloud, use an app-specific password.',
-		'Unauthorized' => 'Authentication failed. Check username and password. For iCloud, use an app-specific password.',
-		'404'          => 'Calendar URL not found. Please verify the CalDAV server address.',
+		'401'          => 'auth_failed',
+		'Unauthorized' => 'auth_failed',
+		'404'          => 'not_found',
 	];
 
 	/**
@@ -85,15 +86,21 @@ class CalDAVProvider {
 				'calendars' => $calendars,
 			];
 
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$error_message = $e->getMessage();
 
 			// Check for common HTTP error codes and provide user-friendly messages
-			foreach ( self::HTTP_ERROR_MESSAGES as $error_code => $friendly_message ) {
+			foreach ( self::HTTP_ERROR_MESSAGES as $error_code => $message_key ) {
 				if ( strpos( $error_message, $error_code ) !== false ) {
+					$friendly_message = match ( $message_key ) {
+						'auth_failed' => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'rondo' ),
+						'not_found'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'rondo' ),
+						default       => __( 'Connection failed', 'rondo' ),
+					};
+
 					return [
 						'success' => false,
-						'error'   => __( $friendly_message, 'rondo' ),
+						'error'   => $friendly_message,
 					];
 				}
 			}
@@ -124,7 +131,7 @@ class CalDAVProvider {
 
 			// Also check if we can access the calendar home
 			return true; // Assume support if we got a response
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			// If OPTIONS fails, try to proceed anyway (some servers don't support it)
 			return true;
 		}
@@ -170,7 +177,7 @@ class CalDAVProvider {
 			}
 
 			return self::parse_calendar_response( $response['body'], $url );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			error_log( 'RONDO_CalDAV_Provider: Failed to discover calendars: ' . $e->getMessage() );
 			return [];
 		}
@@ -187,7 +194,7 @@ class CalDAVProvider {
 		$calendars = [];
 
 		try {
-			$xml = new SimpleXMLElement( $xml_body );
+			$xml = new \SimpleXMLElement( $xml_body );
 			self::register_caldav_namespaces( $xml );
 
 			// Find all responses
@@ -235,7 +242,7 @@ class CalDAVProvider {
 					'color' => $color,
 				];
 			}
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			error_log( 'RONDO_CalDAV_Provider: Failed to parse calendar response: ' . $e->getMessage() );
 		}
 
@@ -806,7 +813,7 @@ class CalDAVProvider {
 			}
 
 			return current_time( 'mysql' );
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			return current_time( 'mysql' );
 		}
 	}
@@ -890,14 +897,22 @@ class CalDAVProvider {
 	/**
 	 * Get regex patterns for detecting meeting URLs
 	 *
+	 * Patterns are derived from MEETING_DOMAINS to keep a single source of truth
+	 * for supported meeting providers.
+	 *
 	 * @return array Array of regex patterns
 	 */
 	private static function get_meeting_url_patterns(): array {
-		return [
-			'/https:\/\/[\w.-]*zoom\.us\/j\/[\w\d\-\?=&]+/i',
-			'/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[\w\d\-\%\/\?=&]+/i',
-			'/https:\/\/meet\.google\.com\/[\w\-]+/i',
-			'/https:\/\/[\w.-]*webex\.com\/[\w\d\-\/\?=&]+/i',
-		];
+		$patterns = [];
+
+		foreach ( self::MEETING_DOMAINS as $domain ) {
+			$escaped_domain = preg_quote( $domain, '/' );
+
+			// Match https URLs with optional subdomain, the meeting domain, and any
+			// trailing path/query up to whitespace or a quote character.
+			$patterns[] = '/https:\/\/[\w\.-]*' . $escaped_domain . '\/[^\s"]*/i';
+		}
+
+		return $patterns;
 	}
 }
