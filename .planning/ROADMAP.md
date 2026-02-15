@@ -122,10 +122,11 @@ Plans:
   2. User can select one or more uninvoiced cases and click "Maak factuur" button
   3. Invoice created in Draft status with selected cases as line items and sum of Boete fields as total
   4. Invoice visible in member's profile after creation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 180-01: TBD
+- [x] 180-01-PLAN.md — Backend invoiced-cases endpoint + Tuchtzaken tab selection UI with invoice creation
+- [x] 180-02-PLAN.md — Invoice display on member profile sidebar
 
 #### Phase 181: PDF Generation
 **Goal**: Draft invoices can be converted to PDF documents with club branding, member details, case breakdown, and payment instructions.
@@ -198,7 +199,7 @@ Plans:
 | 177. Documentation Updates | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 178. Finance Navigation & Settings Backend | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 179. Invoice Data Model & REST API | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 180. Invoice Creation Flow | v26.0 | 0/TBD | Not started | - |
+| 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 181. PDF Generation | v26.0 | 0/TBD | Not started | - |
 | 182. Rabobank Payment Integration | v26.0 | 0/TBD | Not started | - |
 | 183. Email Delivery | v26.0 | 0/TBD | Not started | - |
@@ -206,4 +207,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-15 — Phase 179 completed (2/2 plans)*
+*Last updated: 2026-02-15 — Phase 180 completed (2/2 plans)*

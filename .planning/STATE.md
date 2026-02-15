@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** Phase 180 - Invoice Creation Flow
+**Current focus:** Phase 181 - PDF Generation
 
 ## Current Position
 
-Phase: 180 of 184 (Invoice Creation Flow)
+Phase: 181 of 184 (PDF Generation)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-02-15 — Phase 179 verified and completed (10/10 must-haves)
+Last activity: 2026-02-15 — Phase 180 verified and completed (9/9 must-haves)
 
 Progress: [░░░░░░░░░░] 0% (0/TBD plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 193 plans across v1.0-v26.0
+- Total plans completed: 195 plans across v1.0-v26.0
 - Recent milestones:
   - v24.1: 6 plans, 1 day (2026-02-13)
   - v24.0: 13 plans, 2 days (2026-02-11 → 2026-02-12)
@@ -30,6 +30,10 @@ Progress: [░░░░░░░░░░] 0% (0/TBD plans complete)
 **Phase 179 Progress:**
 - Plan 179-01: 114s, 2 tasks, 3 files (2026-02-15)
 - Plan 179-02: 179s, 2 tasks, 3 files (2026-02-15)
+
+**Phase 180 Progress:**
+- Plan 180-01: 375s, 2 tasks, 5 files (2026-02-15)
+- Plan 180-02: 137s, 2 tasks, 2 files (2026-02-15)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -50,6 +54,11 @@ Recent decisions for v26.0:
 - Disabled navigation items show grayed out with disabled property (178-01)
 - Conditional credential submission preserves existing values when fields empty (178-02)
 - IBAN auto-formatting on blur for consistent storage (178-02)
+- Invoiced cases show FileText icon with 60% opacity instead of checkbox (180-01)
+- Selection state managed via Set for O(1) lookup performance (180-01)
+- Both fairplay AND financieel capabilities required to create invoices (180-01)
+- Invoice display uses Dutch status labels: Concept/Verstuurd/Betaald/Verlopen (180-02)
+- Invoice section hidden when no invoices exist (no empty state UI) (180-02)
 
 ### Pending Todos
 
@@ -64,11 +73,11 @@ Recent decisions for v26.0:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 179 verified (10/10 must-haves passed), roadmap updated
+Stopped at: Phase 180 verified (9/9 must-haves passed), roadmap updated
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 180` to plan Invoice Creation Flow
+**Next action:** Run `/gsd:plan-phase 181` to plan PDF Generation
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-15 after phase 179 verification passed*
+*Last updated: 2026-02-15 after phase 180 verification passed*
