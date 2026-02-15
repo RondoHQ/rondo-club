@@ -58,10 +58,11 @@ class AuthBackend extends AbstractBasic {
 		$use_fast_hash = function_exists( 'wp_verify_fast_hash' );
 
 		foreach ( $app_passwords as $app_password ) {
-			// wp_verify_fast_hash uses 2 params, wp_check_password uses 3
-			$is_valid = $use_fast_hash
-				? wp_verify_fast_hash( $password, $app_password['password'] )
-				: wp_check_password( $password, $app_password['password'], $user->ID );
+			if ( $use_fast_hash ) {
+				$is_valid = wp_verify_fast_hash( $password, $app_password['password'] );
+			} else {
+				$is_valid = wp_check_password( $password, $app_password['password'], $user->ID );
+			}
 
 			if ( $is_valid ) {
 				return $this->authenticate_user( $user, $app_password );
