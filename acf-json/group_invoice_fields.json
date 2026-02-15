@@ -1,0 +1,210 @@
+{
+    "key": "group_invoice_fields",
+    "title": "Factuur Details",
+    "fields": [
+        {
+            "key": "field_invoice_number",
+            "label": "Factuurnummer",
+            "name": "invoice_number",
+            "type": "text",
+            "instructions": "Wordt automatisch gegenereerd",
+            "required": 1,
+            "readonly": 1,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_person",
+            "label": "Persoon",
+            "name": "person",
+            "type": "post_object",
+            "instructions": "Persoon aan wie de factuur is gericht",
+            "required": 1,
+            "post_type": ["person"],
+            "multiple": 0,
+            "return_format": "id",
+            "allow_null": 0,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_status",
+            "label": "Status",
+            "name": "status",
+            "type": "select",
+            "instructions": "Huidige status van de factuur",
+            "required": 1,
+            "choices": {
+                "draft": "Concept",
+                "sent": "Verstuurd",
+                "paid": "Betaald",
+                "overdue": "Verlopen"
+            },
+            "default_value": "draft",
+            "allow_null": 0,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_line_items",
+            "label": "Regelitems",
+            "name": "line_items",
+            "type": "repeater",
+            "instructions": "Factuurregels met gekoppelde tuchtzaken",
+            "required": 0,
+            "layout": "table",
+            "button_label": "Voeg regel toe",
+            "sub_fields": [
+                {
+                    "key": "field_invoice_line_discipline_case",
+                    "label": "Tuchtzaak",
+                    "name": "discipline_case",
+                    "type": "post_object",
+                    "instructions": "",
+                    "required": 1,
+                    "post_type": ["discipline_case"],
+                    "multiple": 0,
+                    "return_format": "id",
+                    "allow_null": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    }
+                },
+                {
+                    "key": "field_invoice_line_description",
+                    "label": "Omschrijving",
+                    "name": "description",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    }
+                },
+                {
+                    "key": "field_invoice_line_amount",
+                    "label": "Bedrag",
+                    "name": "amount",
+                    "type": "number",
+                    "instructions": "",
+                    "required": 1,
+                    "min": 0,
+                    "step": 0.01,
+                    "prepend": "\u20ac",
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    }
+                }
+            ]
+        },
+        {
+            "key": "field_invoice_total_amount",
+            "label": "Totaalbedrag",
+            "name": "total_amount",
+            "type": "number",
+            "instructions": "Totaal van alle regelitems",
+            "required": 1,
+            "min": 0,
+            "step": 0.01,
+            "prepend": "\u20ac",
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_payment_link",
+            "label": "Betaallink",
+            "name": "payment_link",
+            "type": "url",
+            "instructions": "URL naar Rabobank betaalverzoek",
+            "required": 0,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_pdf_path",
+            "label": "PDF pad",
+            "name": "pdf_path",
+            "type": "text",
+            "instructions": "Relatief pad naar gegenereerde PDF (intern gebruik)",
+            "required": 0,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_sent_date",
+            "label": "Verzenddatum",
+            "name": "sent_date",
+            "type": "date_picker",
+            "instructions": "Datum waarop de factuur is verstuurd",
+            "required": 0,
+            "display_format": "d-m-Y",
+            "return_format": "Ymd",
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_invoice_due_date",
+            "label": "Vervaldatum",
+            "name": "due_date",
+            "type": "date_picker",
+            "instructions": "Datum waarop de betaling vervalt",
+            "required": 0,
+            "display_format": "d-m-Y",
+            "return_format": "Ymd",
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "rondo_invoice"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": [
+        "excerpt",
+        "discussion",
+        "comments",
+        "slug"
+    ],
+    "active": true,
+    "show_in_rest": 1
+}
