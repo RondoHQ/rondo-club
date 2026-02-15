@@ -422,13 +422,6 @@ class Feedback extends Base {
 			}
 		}
 
-		// Attachments (array of media IDs)
-		$attachments = $request->get_param( 'attachments' );
-		if ( ! empty( $attachments ) && is_array( $attachments ) ) {
-			$attachment_ids = array_map( 'absint', $attachments );
-			update_field( 'attachments', $attachment_ids, $post_id );
-		}
-
 		// Return formatted feedback
 		$post = get_post( $post_id );
 		return rest_ensure_response( $this->format_feedback( $post ) );
@@ -586,13 +579,6 @@ class Feedback extends Base {
 		$use_case = $request->get_param( 'use_case' );
 		if ( $use_case !== null ) {
 			update_field( 'use_case', sanitize_textarea_field( $use_case ), $feedback_id );
-		}
-
-		// Attachments
-		$attachments = $request->get_param( 'attachments' );
-		if ( $attachments !== null && is_array( $attachments ) ) {
-			$attachment_ids = array_map( 'absint', $attachments );
-			update_field( 'attachments', $attachment_ids, $feedback_id );
 		}
 
 		// Project meta
@@ -777,35 +763,6 @@ class Feedback extends Base {
 	private function format_feedback( $post ) {
 		$author = get_user_by( 'id', $post->post_author );
 
-		// Get attachments and format them
-		$attachments_raw = get_field( 'attachments', $post->ID ) ?: [];
-		$attachments     = [];
-
-		if ( is_array( $attachments_raw ) ) {
-			foreach ( $attachments_raw as $attachment ) {
-				if ( is_array( $attachment ) && isset( $attachment['ID'] ) ) {
-					// ACF returns array format
-					$attachments[] = [
-						'id'        => $attachment['ID'],
-						'url'       => $this->sanitize_url( $attachment['url'] ?? '' ),
-						'thumbnail' => $this->sanitize_url( $attachment['sizes']['thumbnail'] ?? $attachment['url'] ?? '' ),
-						'title'     => $this->sanitize_text( $attachment['title'] ?? '' ),
-					];
-				} elseif ( is_numeric( $attachment ) ) {
-					// Just an ID
-					$att_post = get_post( $attachment );
-					if ( $att_post ) {
-						$attachments[] = [
-							'id'        => $attachment,
-							'url'       => $this->sanitize_url( wp_get_attachment_url( $attachment ) ),
-							'thumbnail' => $this->sanitize_url( wp_get_attachment_image_url( $attachment, 'thumbnail' ) ?: wp_get_attachment_url( $attachment ) ),
-							'title'     => $this->sanitize_text( $att_post->post_title ),
-						];
-					}
-				}
-			}
-		}
-
 		return [
 			'id'       => $post->ID,
 			'title'    => $this->sanitize_text( $post->post_title ),
@@ -831,7 +788,6 @@ class Feedback extends Base {
 				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
 				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
-				'attachments'        => $attachments,
 			],
 		];
 	}
