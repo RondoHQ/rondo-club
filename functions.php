@@ -42,6 +42,7 @@ use Rondo\REST\Calendar as RESTCalendar;
 use Rondo\REST\GoogleContacts as RESTGoogleContacts;
 use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
+use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\Calendar\Connections;
 use Rondo\Calendar\Matcher;
 use Rondo\Calendar\Sync;
@@ -69,6 +70,7 @@ use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
+use Rondo\Finance\InvoiceNumbering;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
@@ -366,6 +368,7 @@ function rondo_init() {
 		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
+		new RESTInvoices();
 	}
 
 	// Reminders - only for admin or cron
