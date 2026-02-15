@@ -288,6 +288,12 @@ export const prmApi = {
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),
 
+  // Invoice endpoints
+  getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
+  getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
+  createInvoice: (data) => api.post('/rondo/v1/invoices', data),
+  updateInvoiceStatus: (id, status) => api.post(`/rondo/v1/invoices/${id}/status`, { status }),
+
   // Membership fees
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),
   getFeeSummary: (params = {}) => api.get('/rondo/v1/fees/summary', { params }),
