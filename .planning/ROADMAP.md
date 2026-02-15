@@ -75,7 +75,7 @@
 
 </details>
 
-### 🚧 v26.0 Discipline Case Invoicing (In Progress)
+### v26.0 Discipline Case Invoicing (In Progress)
 
 **Milestone Goal:** Enable the club to invoice members for discipline case fees with PDF generation, Rabobank payment links, and email delivery — tracked through a full invoice lifecycle.
 
@@ -84,17 +84,18 @@
 **Depends on**: Phase 177 (v24.1 complete)
 **Requirements**: NAV-01, NAV-02, SET-01, SET-02, SET-03, SET-04, SET-05, SET-06
 **Success Criteria** (what must be TRUE):
-  1. Financiën section appears in sidebar with Contributie, Facturen (disabled), and Instellingen sub-items
+  1. Financien section appears in sidebar with Contributie, Facturen (disabled), and Instellingen sub-items
   2. Contributie page accessible from new location, old navigation entry removed
-  3. Finance settings page loads with empty form fields at Financiën > Instellingen
+  3. Finance settings page loads with empty form fields at Financien > Instellingen
   4. Admin can save club invoice details (name, address, contact email) and see them persist
   5. Admin can configure bank account (IBAN), payment term days, and payment clause text
   6. Admin can edit email template with variable placeholders and see documentation
   7. Admin can enter Rabobank API credentials (client ID, secret) with sandbox/production toggle
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 178-01: TBD
+- [ ] 178-01-PLAN.md — Navigation restructuring + backend FinanceConfig class + REST API
+- [ ] 178-02-PLAN.md — Finance Settings page UI with all form sections
 
 #### Phase 179: Invoice Data Model & REST API
 **Goal**: Invoice CPT exists with ACF fields for lifecycle tracking, automatic invoice numbering, and REST API endpoints for CRUD operations.
@@ -175,7 +176,7 @@ Plans:
 **Depends on**: Phase 183
 **Requirements**: MGMT-01, MGMT-02, MGMT-03, MGMT-04, MGMT-05, MGMT-06
 **Success Criteria** (what must be TRUE):
-  1. Facturen page accessible from Financiën section showing all invoices
+  1. Facturen page accessible from Financien section showing all invoices
   2. Invoice list displays columns: number, member name, amount, status, date sent (sortable)
   3. Clicking invoice row opens detail view with full invoice info, PDF download button, and status actions
   4. User can send draft invoice (generates PDF, creates payment link, sends email, transitions to Sent)
@@ -194,7 +195,7 @@ Plans:
 | 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 176. Frontend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 177. Documentation Updates | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
-| 178. Finance Navigation & Settings Backend | v26.0 | 0/TBD | Not started | - |
+| 178. Finance Navigation & Settings Backend | v26.0 | 0/2 | Not started | - |
 | 179. Invoice Data Model & REST API | v26.0 | 0/TBD | Not started | - |
 | 180. Invoice Creation Flow | v26.0 | 0/TBD | Not started | - |
 | 181. PDF Generation | v26.0 | 0/TBD | Not started | - |
@@ -204,4 +205,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-15 — v26.0 Discipline Case Invoicing roadmap created*
+*Last updated: 2026-02-15 — Phase 178 planned (2 plans)*
