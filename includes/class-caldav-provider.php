@@ -26,6 +26,25 @@ use Sabre\VObject\Reader;
 class CalDAVProvider {
 
 	/**
+	 * Known meeting URL domains
+	 */
+	private const MEETING_DOMAINS = [
+		'zoom.us',
+		'teams.microsoft.com',
+		'meet.google.com',
+		'webex.com',
+	];
+
+	/**
+	 * HTTP error messages for common status codes
+	 */
+	private const HTTP_ERROR_MESSAGES = [
+		'401'          => 'Authentication failed. Check username and password. For iCloud, use an app-specific password.',
+		'Unauthorized' => 'Authentication failed. Check username and password. For iCloud, use an app-specific password.',
+		'404'          => 'Calendar URL not found. Please verify the CalDAV server address.',
+	];
+
+	/**
 	 * Test CalDAV connection credentials
 	 *
 	 * Validates that the provided credentials work by checking for CalDAV support
@@ -39,13 +58,7 @@ class CalDAVProvider {
 	public static function test_connection( string $url, string $username, string $password ): array {
 		try {
 			// Create DAV client with basic auth
-			$client = new Client(
-				[
-					'baseUri'  => $url,
-					'userName' => $username,
-					'password' => $password,
-				]
-			);
+			$client = self::create_dav_client( $url, $username, $password );
 
 			// Check for CalDAV support via OPTIONS request
 			$supported = self::check_caldav_support( $client, $url );
@@ -75,19 +88,14 @@ class CalDAVProvider {
 		} catch ( Exception $e ) {
 			$error_message = $e->getMessage();
 
-			// Provide user-friendly error messages for common issues
-			if ( strpos( $error_message, '401' ) !== false || strpos( $error_message, 'Unauthorized' ) !== false ) {
-				return [
-					'success' => false,
-					'error'   => __( 'Authentication failed. Check username and password. For iCloud, use an app-specific password.', 'rondo' ),
-				];
-			}
-
-			if ( strpos( $error_message, '404' ) !== false ) {
-				return [
-					'success' => false,
-					'error'   => __( 'Calendar URL not found. Please verify the CalDAV server address.', 'rondo' ),
-				];
+			// Check for common HTTP error codes and provide user-friendly messages
+			foreach ( self::HTTP_ERROR_MESSAGES as $error_code => $friendly_message ) {
+				if ( strpos( $error_message, $error_code ) !== false ) {
+					return [
+						'success' => false,
+						'error'   => __( $friendly_message, 'rondo' ),
+					];
+				}
 			}
 
 			return [
@@ -133,13 +141,7 @@ class CalDAVProvider {
 	 * @return array Array of ['id' => href, 'name' => displayname, 'color' => calendar-color]
 	 */
 	public static function discover_calendars( string $url, string $username, string $password ): array {
-		$client = new Client(
-			[
-				'baseUri'  => $url,
-				'userName' => $username,
-				'password' => $password,
-			]
-		);
+		$client = self::create_dav_client( $url, $username, $password );
 
 		// Build PROPFIND request to find calendar collections
 		$body = '<?xml version="1.0" encoding="UTF-8"?>
@@ -163,7 +165,7 @@ class CalDAVProvider {
 				]
 			);
 
-			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
+			if ( ! self::is_http_success( $response['statusCode'] ) ) {
 				return [];
 			}
 
@@ -186,9 +188,7 @@ class CalDAVProvider {
 
 		try {
 			$xml = new SimpleXMLElement( $xml_body );
-			$xml->registerXPathNamespace( 'd', 'DAV:' );
-			$xml->registerXPathNamespace( 'c', 'urn:ietf:params:xml:ns:caldav' );
-			$xml->registerXPathNamespace( 'ic', 'http://apple.com/ns/ical/' );
+			self::register_caldav_namespaces( $xml );
 
 			// Find all responses
 			$responses = $xml->xpath( '//d:response' );
@@ -199,7 +199,6 @@ class CalDAVProvider {
 				if ( empty( $href_elements ) ) {
 					continue;
 				}
-				$href = (string) $href_elements[0];
 
 				// Check if this is a calendar resource
 				$resourcetype = $response->xpath( 'd:propstat/d:prop/d:resourcetype/c:calendar' );
@@ -211,9 +210,15 @@ class CalDAVProvider {
 					}
 				}
 
+				$href = (string) $href_elements[0];
+
 				// Get display name
 				$displayname_elements = $response->xpath( 'd:propstat/d:prop/d:displayname' );
-				$displayname          = ! empty( $displayname_elements ) ? (string) $displayname_elements[0] : basename( $href );
+				if ( ! empty( $displayname_elements ) ) {
+					$displayname = (string) $displayname_elements[0];
+				} else {
+					$displayname = basename( $href );
+				}
 
 				// Get calendar color (Apple extension)
 				$color_elements = $response->xpath( 'd:propstat/d:prop/ic:calendar-color' );
@@ -305,13 +310,7 @@ class CalDAVProvider {
 			}
 		}
 
-		$client = new Client(
-			[
-				'baseUri'  => $calendar_url,
-				'userName' => $username,
-				'password' => $password,
-			]
-		);
+		$client = self::create_dav_client( $calendar_url, $username, $password );
 
 		// Calculate date range
 		$sync_from_days = isset( $connection['sync_from_days'] ) ? absint( $connection['sync_from_days'] ) : 90;
@@ -354,7 +353,7 @@ class CalDAVProvider {
 				]
 			);
 
-			if ( $response['statusCode'] < 200 || $response['statusCode'] >= 300 ) {
+			if ( ! self::is_http_success( $response['statusCode'] ) ) {
 				throw new \Exception( sprintf( __( 'CalDAV server returned error: %d', 'rondo' ), $response['statusCode'] ) );
 			}
 
@@ -492,8 +491,7 @@ class CalDAVProvider {
 
 		try {
 			$xml = new \SimpleXMLElement( $xml_body );
-			$xml->registerXPathNamespace( 'd', 'DAV:' );
-			$xml->registerXPathNamespace( 'c', 'urn:ietf:params:xml:ns:caldav' );
+			self::register_caldav_namespaces( $xml );
 
 			// Find all responses
 			$responses = $xml->xpath( '//d:response' );
@@ -609,13 +607,8 @@ class CalDAVProvider {
 		// Get organizer email
 		$organizer_email = '';
 		if ( isset( $vevent->ORGANIZER ) ) {
-			$organizer = (string) $vevent->ORGANIZER;
-			// Strip mailto: prefix
-			if ( strpos( $organizer, 'mailto:' ) === 0 ) {
-				$organizer_email = substr( $organizer, 7 );
-			} else {
-				$organizer_email = $organizer;
-			}
+			$organizer       = (string) $vevent->ORGANIZER;
+			$organizer_email = self::strip_mailto_prefix( $organizer );
 		}
 
 		// Build post data
@@ -628,11 +621,11 @@ class CalDAVProvider {
 			'post_date'    => $start_time,
 		];
 
-		$action = 'updated';
 		if ( $existing_id ) {
 			$post_data['ID'] = $existing_id;
 			wp_update_post( $post_data );
 			$post_id = $existing_id;
+			$action  = 'updated';
 		} else {
 			$post_id = wp_insert_post( $post_data );
 			$action  = 'created';
@@ -689,12 +682,7 @@ class CalDAVProvider {
 		}
 
 		foreach ( $vevent->ATTENDEE as $attendee ) {
-			$email = (string) $attendee;
-
-			// Strip mailto: prefix
-			if ( strpos( $email, 'mailto:' ) === 0 ) {
-				$email = substr( $email, 7 );
-			}
+			$email = self::strip_mailto_prefix( (string) $attendee );
 
 			if ( empty( $email ) ) {
 				continue;
@@ -762,24 +750,12 @@ class CalDAVProvider {
 		$location       = isset( $vevent->LOCATION ) ? (string) $vevent->LOCATION : '';
 		$text_to_search = $description . ' ' . $location;
 
-		// Zoom URL pattern
-		if ( preg_match( '/https:\/\/[\w.-]*zoom\.us\/j\/[\w\d\-\?=&]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
-		}
-
-		// Microsoft Teams URL pattern
-		if ( preg_match( '/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[\w\d\-\%\/\?=&]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
-		}
-
-		// Google Meet URL pattern
-		if ( preg_match( '/https:\/\/meet\.google\.com\/[\w\-]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
-		}
-
-		// Webex URL pattern
-		if ( preg_match( '/https:\/\/[\w.-]*webex\.com\/[\w\d\-\/\?=&]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
+		// Try each meeting URL pattern
+		$patterns = self::get_meeting_url_patterns();
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match( $pattern, $text_to_search, $matches ) ) {
+				return $matches[0];
+			}
 		}
 
 		return '';
@@ -792,14 +768,7 @@ class CalDAVProvider {
 	 * @return bool True if it's a meeting URL
 	 */
 	private static function is_meeting_url( string $url ): bool {
-		$meeting_domains = [
-			'zoom.us',
-			'teams.microsoft.com',
-			'meet.google.com',
-			'webex.com',
-		];
-
-		foreach ( $meeting_domains as $domain ) {
+		foreach ( self::MEETING_DOMAINS as $domain ) {
 			if ( strpos( $url, $domain ) !== false ) {
 				return true;
 			}
@@ -863,5 +832,72 @@ class CalDAVProvider {
 		// Also check if the value looks like a date-only value (8 characters)
 		$value = (string) $dtstart;
 		return strlen( $value ) === 8 && ctype_digit( $value );
+	}
+
+	/**
+	 * Create a Sabre DAV client with standard configuration
+	 *
+	 * @param string $url      Base URL for the DAV server
+	 * @param string $username Username for authentication
+	 * @param string $password Password for authentication
+	 * @return Client Configured DAV client instance
+	 */
+	private static function create_dav_client( string $url, string $username, string $password ): Client {
+		return new Client(
+			[
+				'baseUri'  => $url,
+				'userName' => $username,
+				'password' => $password,
+			]
+		);
+	}
+
+	/**
+	 * Register CalDAV namespaces on a SimpleXMLElement
+	 *
+	 * @param \SimpleXMLElement $xml XML element to register namespaces on
+	 * @return void
+	 */
+	private static function register_caldav_namespaces( \SimpleXMLElement $xml ): void {
+		$xml->registerXPathNamespace( 'd', 'DAV:' );
+		$xml->registerXPathNamespace( 'c', 'urn:ietf:params:xml:ns:caldav' );
+		$xml->registerXPathNamespace( 'ic', 'http://apple.com/ns/ical/' );
+	}
+
+	/**
+	 * Strip mailto: prefix from email address
+	 *
+	 * @param string $address Email address potentially with mailto: prefix
+	 * @return string Email address without mailto: prefix
+	 */
+	private static function strip_mailto_prefix( string $address ): string {
+		if ( strpos( $address, 'mailto:' ) === 0 ) {
+			return substr( $address, 7 );
+		}
+		return $address;
+	}
+
+	/**
+	 * Check if HTTP status code indicates success
+	 *
+	 * @param int $status_code HTTP status code
+	 * @return bool True if status code is in the 2xx range
+	 */
+	private static function is_http_success( int $status_code ): bool {
+		return $status_code >= 200 && $status_code < 300;
+	}
+
+	/**
+	 * Get regex patterns for detecting meeting URLs
+	 *
+	 * @return array Array of regex patterns
+	 */
+	private static function get_meeting_url_patterns(): array {
+		return [
+			'/https:\/\/[\w.-]*zoom\.us\/j\/[\w\d\-\?=&]+/i',
+			'/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[\w\d\-\%\/\?=&]+/i',
+			'/https:\/\/meet\.google\.com\/[\w\-]+/i',
+			'/https:\/\/[\w.-]*webex\.com\/[\w\d\-\/\?=&]+/i',
+		];
 	}
 }
