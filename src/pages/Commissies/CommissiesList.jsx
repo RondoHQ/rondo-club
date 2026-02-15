@@ -64,21 +64,6 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
           )}
         </button>
       </td>
-      <td className="w-10 px-2 py-3">
-        <Link to={`/commissies/${commissie.id}`} className="flex items-center justify-center">
-          {commissie._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-            <img
-              src={commissie._embedded['wp:featuredmedia'][0].source_url}
-              alt=""
-              className="w-8 h-8 rounded-lg"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-            </div>
-          )}
-        </Link>
-      </td>
       <td className="px-4 py-3 whitespace-nowrap" onDoubleClick={() => !isEditing && onStartEdit(commissie.id)}>
         {isEditing ? (
           <input
@@ -196,7 +181,6 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
                 )}
               </button>
             </th>
-            <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
@@ -321,7 +305,7 @@ export default function CommissiesList() {
   const { data: commissies, isLoading, error } = useQuery({
     queryKey: ['commissies', search],
     queryFn: async () => {
-      const response = await wpApi.getCommissies({ search, per_page: 100, _embed: true });
+      const response = await wpApi.getCommissies({ search, per_page: 100 });
       return response.data;
     },
   });
