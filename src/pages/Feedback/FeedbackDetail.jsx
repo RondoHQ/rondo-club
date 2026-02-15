@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Paperclip, Pencil, ExternalLink, MessageCircle, Bot, Send } from 'lucide-react';
+import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Pencil, ExternalLink, MessageCircle, Bot, Send } from 'lucide-react';
 import { useFeedback, useUpdateFeedback, useFeedbackComments, useCreateFeedbackComment } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
@@ -301,40 +301,6 @@ export default function FeedbackDetail() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Attachments */}
-      {feedback.meta.attachments && feedback.meta.attachments.length > 0 && (
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Paperclip className="w-5 h-5" />
-            Attachments
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {feedback.meta.attachments.map((attachment, index) => (
-              <a
-                key={attachment.id || index}
-                href={attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block"
-              >
-                <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group-hover:border-electric-cyan transition-colors">
-                  <img
-                    src={attachment.thumbnail || attachment.url}
-                    alt={attachment.title || `Attachment ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {attachment.title && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                    {attachment.title}
-                  </p>
-                )}
-              </a>
-            ))}
           </div>
         </div>
       )}

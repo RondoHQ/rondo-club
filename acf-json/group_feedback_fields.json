@@ -155,19 +155,6 @@
                     }
                 ]
             ]
-        },
-        {
-            "key": "field_feedback_attachments",
-            "label": "Attachments",
-            "name": "attachments",
-            "type": "gallery",
-            "instructions": "Screenshots or other files related to this feedback",
-            "required": 0,
-            "return_format": "array",
-            "preview_size": "medium",
-            "library": "all",
-            "min": 0,
-            "max": 50
         }
     ],
     "location": [
