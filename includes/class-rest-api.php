@@ -2254,6 +2254,7 @@ class Api extends Base {
 	 * Count open feedback items.
 	 *
 	 * Counts published feedback posts with status NOT IN ('resolved', 'declined').
+	 * Also includes posts without a status field (which default to 'new').
 	 */
 	private function count_open_feedback() {
 		$query = new \WP_Query(
@@ -2263,10 +2264,15 @@ class Api extends Base {
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
 				'meta_query'     => [
+					'relation' => 'OR',
 					[
 						'key'     => 'status',
 						'value'   => [ 'resolved', 'declined' ],
 						'compare' => 'NOT IN',
+					],
+					[
+						'key'     => 'status',
+						'compare' => 'NOT EXISTS',
 					],
 				],
 			]
