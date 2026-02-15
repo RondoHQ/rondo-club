@@ -585,9 +585,9 @@ process_feedback_item() {
     # Run Claude in the project directory
     cd "$project_dir"
 
-    # --- Phase 1: Planning with Opus ---
+    # --- Phase 1: Planning with Sonnet ---
     log "INFO" "Starting planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
-    echo -e "${YELLOW}Phase 1/2: Planning with Opus...${NC}" >&2
+    echo -e "${YELLOW}Phase 1/2: Planning with Sonnet...${NC}" >&2
 
     # Load codebase map if available
     local codebase_map=""
@@ -667,7 +667,7 @@ Be specific about code changes — include function names, class names, and desc
     local output_file=$(mktemp)
     printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600 "opus"
+    run_claude "$prompt_file" "$output_file" 600 "sonnet"
 
     local plan_output="$CLAUDE_OUTPUT"
     local plan_exit=$CLAUDE_EXIT
@@ -1286,9 +1286,9 @@ run_optimization() {
         return 1
     fi
 
-    # --- Phase 1: Planning with Opus ---
-    log "INFO" "Optimization Phase 1: Planning with Opus for ${target_project}:${target_file}"
-    echo -e "${YELLOW}Phase 1/2: Planning optimization with Opus...${NC}" >&2
+    # --- Phase 1: Planning with Sonnet ---
+    log "INFO" "Optimization Phase 1: Planning with Sonnet for ${target_project}:${target_file}"
+    echo -e "${YELLOW}Phase 1/2: Planning optimization with Sonnet...${NC}" >&2
 
     local optimize_prompt_file="$PROJECT_ROOT/.claude/optimize-prompt.md"
     local base_prompt=""
@@ -1325,7 +1325,7 @@ Be specific about the changes — include function names, line references, and d
     local output_file=$(mktemp)
     printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 300 "opus"
+    run_claude "$prompt_file" "$output_file" 300 "sonnet"
 
     local plan_output="$CLAUDE_OUTPUT"
     local plan_exit=$CLAUDE_EXIT
