@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [25.2.0] - 2026-02-15
+
+### Removed
+- Former members card from Commissie detail page
+- Sponsors/investors functionality from Commissie detail page and edit modal
+
 ## [25.1.3] - 2026-02-14
 
 ### Fixed
