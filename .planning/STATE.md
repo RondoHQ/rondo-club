@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 180 of 184 (Invoice Creation Flow)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-15 — Completed 180-01-PLAN.md (invoice selection and creation UI)
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-02-15 — Completed 180-02-PLAN.md (invoice profile display)
 
-Progress: [█████░░░░░] 50% (1/2 plans complete)
+Progress: [██████████] 100% (2/2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 193 plans across v1.0-v26.0
+- Total plans completed: 194 plans across v1.0-v26.0
 - Recent milestones:
   - v24.1: 6 plans, 1 day (2026-02-13)
   - v24.0: 13 plans, 2 days (2026-02-11 → 2026-02-12)
@@ -33,6 +33,7 @@ Progress: [█████░░░░░] 50% (1/2 plans complete)
 
 **Phase 180 Progress:**
 - Plan 180-01: 375s, 2 tasks, 5 files (2026-02-15)
+- Plan 180-02: 137s, 2 tasks, 2 files (2026-02-15)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -56,6 +57,8 @@ Recent decisions for v26.0:
 - Invoiced cases show FileText icon with 60% opacity instead of checkbox (180-01)
 - Selection state managed via Set for O(1) lookup performance (180-01)
 - Both fairplay AND financieel capabilities required to create invoices (180-01)
+- Invoice display uses Dutch status labels: Concept/Verstuurd/Betaald/Verlopen (180-02)
+- Invoice section hidden when no invoices exist (no empty state UI) (180-02)
 
 ### Pending Todos
 
@@ -70,11 +73,11 @@ Recent decisions for v26.0:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 180-01-PLAN.md (invoice selection and creation UI)
+Stopped at: Completed 180-02-PLAN.md (invoice profile display)
 Resume file: None
 
-**Next action:** Execute 180-02-PLAN.md (invoice detail view and workflow)
+**Next action:** Phase 180 complete - ready for next phase
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-15 after completing plan 180-01*
+*Last updated: 2026-02-15 after completing plan 180-02*
