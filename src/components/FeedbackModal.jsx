@@ -8,6 +8,7 @@ export default function FeedbackModal({
   onClose,
   onSubmit,
   isLoading,
+  urlContext,
 }) {
   const isOnline = useOnlineStatus();
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
@@ -20,7 +21,6 @@ export default function FeedbackModal({
       expected_behavior: '',
       actual_behavior: '',
       use_case: '',
-      include_system_info: false,
     },
   });
 
@@ -38,7 +38,6 @@ export default function FeedbackModal({
         expected_behavior: '',
         actual_behavior: '',
         use_case: '',
-        include_system_info: false,
       });
     }
   }, [isOpen, reset]);
@@ -61,12 +60,10 @@ export default function FeedbackModal({
       submitData.use_case = data.use_case;
     }
 
-    // Capture system info if opted in
-    if (data.include_system_info) {
-      submitData.browser_info = navigator.userAgent;
-      submitData.app_version = window.rondoConfig?.version || 'unknown';
-      submitData.url_context = window.location.href;
-    }
+    // Always attach system info
+    submitData.browser_info = navigator.userAgent;
+    submitData.app_version = window.rondoConfig?.version || 'unknown';
+    submitData.url_context = urlContext || window.location.href;
 
     onSubmit(submitData);
   };
@@ -235,19 +232,7 @@ export default function FeedbackModal({
               </div>
             )}
 
-            {/* System info checkbox */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="include_system_info"
-                {...register('include_system_info')}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan dark:bg-gray-700"
-                disabled={isLoading}
-              />
-              <label htmlFor="include_system_info" className="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                Systeeminformatie meesturen (browser, app-versie, huidige URL)
-              </label>
-            </div>
+
           </div>
 
           {/* Footer */}
