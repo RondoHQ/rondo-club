@@ -110,8 +110,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 179-01-PLAN.md — Invoice CPT registration, statuses, ACF fields, and numbering service
-- [ ] 179-02-PLAN.md — Invoice REST API controller, overdue detection, and API client methods
+- [x] 179-01-PLAN.md — Invoice CPT registration, statuses, ACF fields, and numbering service
+- [x] 179-02-PLAN.md — Invoice REST API controller, overdue detection, and API client methods
 
 #### Phase 180: Invoice Creation Flow
 **Goal**: User can select uninvoiced discipline cases on member's Tuchtzaken tab and create a draft invoice that sums case fees.
@@ -197,7 +197,7 @@ Plans:
 | 176. Frontend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 177. Documentation Updates | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 178. Finance Navigation & Settings Backend | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 179. Invoice Data Model & REST API | v26.0 | 0/TBD | Not started | - |
+| 179. Invoice Data Model & REST API | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 180. Invoice Creation Flow | v26.0 | 0/TBD | Not started | - |
 | 181. PDF Generation | v26.0 | 0/TBD | Not started | - |
 | 182. Rabobank Payment Integration | v26.0 | 0/TBD | Not started | - |
@@ -206,4 +206,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-15 — Phase 178 completed (2/2 plans)*
+*Last updated: 2026-02-15 — Phase 179 completed (2/2 plans)*
