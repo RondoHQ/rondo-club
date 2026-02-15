@@ -21,6 +21,25 @@ export function useInvoicedCaseIds(personId, options = {}) {
 }
 
 /**
+ * Get invoices for a specific person
+ * @param {number} personId - Person ID
+ * @param {object} options - TanStack Query options
+ * @returns {object} Query result with array of invoice objects
+ */
+export function usePersonInvoices(personId, options = {}) {
+  return useQuery({
+    queryKey: ['invoices', 'person', personId],
+    queryFn: async () => {
+      const response = await prmApi.getInvoices({ person_id: personId });
+      return response.data;
+    },
+    enabled: !!personId && (options.enabled ?? true),
+    staleTime: 30000, // 30 seconds
+    ...options,
+  });
+}
+
+/**
  * Create a new invoice
  * @returns {object} Mutation object for creating invoices
  */
@@ -33,9 +52,10 @@ export function useCreateInvoice() {
       return response.data;
     },
     onSuccess: () => {
-      // Invalidate both invoiced case IDs and invoices list
+      // Invalidate invoiced case IDs, all invoices, and person-specific invoices
       queryClient.invalidateQueries({ queryKey: ['invoiced-case-ids'] });
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
     },
   });
 }
