@@ -1003,7 +1003,8 @@ class People extends Base {
 		$offset = ( $page - 1 ) * $per_page;
 
 		// Check if VOG-only user (should only see volunteers)
-		$volunteers_only = $access_control->should_filter_volunteers_only();
+		$current_user_id = get_current_user_id();
+		$volunteers_only = user_can( $current_user_id, 'vog' ) && ! user_can( $current_user_id, 'fairplay' );
 
 		// Build query components
 		$select_fields  = 'p.ID, p.post_modified, p.post_author';
