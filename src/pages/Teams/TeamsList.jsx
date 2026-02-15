@@ -498,7 +498,7 @@ export default function TeamsList() {
               placeholder="Teams zoeken..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pr-9"
+              className="input pl-3 pr-9"
             />
           </div>
 
