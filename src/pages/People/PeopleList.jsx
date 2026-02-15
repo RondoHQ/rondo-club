@@ -56,6 +56,17 @@ const COLUMN_SORT_FIELDS = {
   last_name: 'last_name',
   team: 'organization',
   modified: 'modified',
+  // Sportlink field mappings
+  'knvb-id': 'custom_knvb-id',
+  'type-lid': 'custom_type-lid',
+  'leeftijdsgroep': 'custom_leeftijdsgroep',
+  'lid-sinds': 'custom_lid-sinds',
+  'datum-foto': 'custom_datum-foto',
+  'datum-vog': 'custom_datum-vog',
+  'isparent': 'custom_isparent',
+  'huidig-vrijwilliger': 'custom_huidig-vrijwilliger',
+  'financiele-blokkade': 'custom_financiele-blokkade',
+  'freescout-id': 'custom_freescout-id',
 };
 
 function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidths, customFieldsMap, isSelected, onToggleSelection, isOdd }) {
