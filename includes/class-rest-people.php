@@ -904,7 +904,22 @@ class People extends Base {
 	 */
 	public function validate_orderby_param( $param ) {
 		// Check built-in fields first.
-		$built_in_fields = [ 'first_name', 'last_name', 'modified', 'custom_datum-vog' ];
+		$built_in_fields = [
+			'first_name',
+			'last_name',
+			'modified',
+			// Sportlink fields (ACF fields, not from Manager)
+			'custom_knvb-id',
+			'custom_type-lid',
+			'custom_leeftijdsgroep',
+			'custom_lid-sinds',
+			'custom_datum-foto',
+			'custom_datum-vog',
+			'custom_isparent',
+			'custom_huidig-vrijwilliger',
+			'custom_financiele-blokkade',
+			'custom_freescout-id',
+		];
 		if ( in_array( $param, $built_in_fields, true ) ) {
 			return true;
 		}
@@ -1190,6 +1205,66 @@ class People extends Base {
 				// ACF date field - not a custom field from Manager, so handle explicitly
 				$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = 'datum-vog'";
 				$order_clause   = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
+				break;
+			case 'custom_lid-sinds':
+			case 'custom_datum-foto':
+				// ACF date fields (not from Manager)
+				$field_name     = substr( $orderby, 7 ); // Remove 'custom_' prefix
+				$join_clauses[] = $wpdb->prepare(
+					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
+					$field_name
+				);
+				$order_clause   = "ORDER BY STR_TO_DATE(cf.meta_value, '%%Y-%%m-%%d') $order, fn.meta_value ASC";
+				break;
+			case 'custom_isparent':
+			case 'custom_huidig-vrijwilliger':
+			case 'custom_financiele-blokkade':
+				// Boolean ACF fields
+				$field_name     = substr( $orderby, 7 );
+				$join_clauses[] = $wpdb->prepare(
+					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
+					$field_name
+				);
+				$order_clause   = "ORDER BY CAST(COALESCE(cf.meta_value, '0') AS UNSIGNED) $order, fn.meta_value ASC";
+				break;
+			case 'custom_freescout-id':
+				// Numeric ACF field
+				$field_name     = substr( $orderby, 7 );
+				$join_clauses[] = $wpdb->prepare(
+					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
+					$field_name
+				);
+				$order_clause   = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
+				break;
+			case 'custom_knvb-id':
+			case 'custom_type-lid':
+				// Text ACF fields
+				$field_name     = substr( $orderby, 7 );
+				$join_clauses[] = $wpdb->prepare(
+					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
+					$field_name
+				);
+				$order_clause   = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
+				break;
+			case 'custom_leeftijdsgroep':
+				// ACF field with custom age group sorting logic
+				$field_name     = substr( $orderby, 7 );
+				$join_clauses[] = $wpdb->prepare(
+					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
+					$field_name
+				);
+				// Custom sort for leeftijdsgroep: Onder 6 < Onder 7 < ... < Onder 19 < Senioren
+				$order_clause   = "ORDER BY
+					CASE
+						WHEN cf.meta_value LIKE 'Onder %' THEN CAST(SUBSTRING(cf.meta_value, 7) AS UNSIGNED)
+						WHEN cf.meta_value LIKE 'Senioren%' THEN 99
+						ELSE 100
+					END $order,
+					CASE
+						WHEN cf.meta_value LIKE '%Meiden%' OR cf.meta_value LIKE '%Vrouwen%' THEN 1
+						ELSE 0
+					END $order,
+					fn.meta_value ASC";
 				break;
 			default:
 				// Check if this is a custom field (starts with 'custom_')
