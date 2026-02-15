@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -20,7 +20,7 @@ export default function TeamDetail() {
   const { data: team, isLoading, error } = useQuery({
     queryKey: ['team', id],
     queryFn: async () => {
-      const response = await wpApi.getTeam(id);
+      const response = await wpApi.getTeam(id, { _embed: true });
       return response.data;
     },
   });

@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -19,7 +19,7 @@ export default function CommissieDetail() {
   const { data: commissie, isLoading, error } = useQuery({
     queryKey: ['commissie', id],
     queryFn: async () => {
-      const response = await wpApi.getCommissie(id);
+      const response = await wpApi.getCommissie(id, { _embed: true });
       return response.data;
     },
   });
