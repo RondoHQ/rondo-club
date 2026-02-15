@@ -36,6 +36,23 @@ class Connections {
 	}
 
 	/**
+	 * Find the array index of a connection by ID
+	 *
+	 * @param array  $connections   Array of connections
+	 * @param string $connection_id Connection ID to find
+	 * @return int|null Array index if found, null otherwise
+	 */
+	private static function find_connection_index( array $connections, string $connection_id ): ?int {
+		foreach ( $connections as $index => $connection ) {
+			if ( isset( $connection['id'] ) && $connection['id'] === $connection_id ) {
+				return $index;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Get a single connection by ID
 	 *
 	 * @param int    $user_id       WordPress user ID
@@ -44,14 +61,9 @@ class Connections {
 	 */
 	public static function get_connection( int $user_id, string $connection_id ): ?array {
 		$connections = self::get_user_connections( $user_id );
+		$index       = self::find_connection_index( $connections, $connection_id );
 
-		foreach ( $connections as $connection ) {
-			if ( isset( $connection['id'] ) && $connection['id'] === $connection_id ) {
-				return $connection;
-			}
-		}
-
-		return null;
+		return $index !== null ? $connections[ $index ] : null;
 	}
 
 	/**
@@ -105,21 +117,15 @@ class Connections {
 	 */
 	public static function update_connection( int $user_id, string $connection_id, array $updates ): bool {
 		$connections = self::get_user_connections( $user_id );
-		$found       = false;
+		$index       = self::find_connection_index( $connections, $connection_id );
 
-		foreach ( $connections as $index => $connection ) {
-			if ( isset( $connection['id'] ) && $connection['id'] === $connection_id ) {
-				// Merge updates into existing connection, preserving id
-				$updates['id']         = $connection_id;
-				$connections[ $index ] = array_merge( $connection, $updates );
-				$found                 = true;
-				break;
-			}
-		}
-
-		if ( ! $found ) {
+		if ( $index === null ) {
 			return false;
 		}
+
+		// Merge updates into existing connection, preserving id
+		$updates['id']         = $connection_id;
+		$connections[ $index ] = array_merge( $connections[ $index ], $updates );
 
 		update_user_meta( $user_id, self::META_KEY, $connections );
 
@@ -158,19 +164,13 @@ class Connections {
 	 */
 	public static function delete_connection( int $user_id, string $connection_id ): bool {
 		$connections = self::get_user_connections( $user_id );
-		$found       = false;
+		$index       = self::find_connection_index( $connections, $connection_id );
 
-		foreach ( $connections as $index => $connection ) {
-			if ( isset( $connection['id'] ) && $connection['id'] === $connection_id ) {
-				unset( $connections[ $index ] );
-				$found = true;
-				break;
-			}
-		}
-
-		if ( ! $found ) {
+		if ( $index === null ) {
 			return false;
 		}
+
+		unset( $connections[ $index ] );
 
 		// Re-index array to avoid gaps
 		$connections = array_values( $connections );
