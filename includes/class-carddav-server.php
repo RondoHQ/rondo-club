@@ -86,12 +86,8 @@ class Server {
 			return;
 		}
 
-		$method = $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN';
-		error_log( "CardDAV Server: {$method} request to {$request_uri}" );
-
 		// Check if Composer autoloader is available
 		if ( ! class_exists( 'Sabre\DAV\Server' ) ) {
-			error_log( 'CardDAV Server: Sabre\DAV\Server not available' );
 			http_response_code( 500 );
 			echo 'CardDAV server not available. Please run composer install.';
 			exit;
@@ -125,49 +121,6 @@ class Server {
 			$server->addPlugin( new \Sabre\DAVACL\Plugin() );
 			$server->addPlugin( new \Sabre\DAV\Sync\Plugin() );
 			$server->addPlugin( new \Sabre\CardDAV\VCFExportPlugin() );
-
-			// Add event listener to log requests and responses
-			$server->on(
-				'beforeMethod:*',
-				function ( $request ) {
-					$method = $request->getMethod();
-					$uri    = $request->getPath();
-					$depth  = $request->getHeader( 'Depth' ) ?? 'not set';
-					error_log( "CardDAV Request: {$method} {$uri} (Depth: {$depth})" );
-
-					// Log request body for PROPFIND/REPORT
-					if ( in_array( $method, [ 'PROPFIND', 'REPORT' ] ) ) {
-						$body = $request->getBodyAsString();
-						if ( $body ) {
-							error_log( 'CardDAV Request body: ' . substr( $body, 0, 1000 ) );
-						}
-						// Reset body stream for actual processing
-						$request->setBody( $body );
-					}
-				}
-			);
-
-			$server->on(
-				'afterMethod:*',
-				function ( $request, $response ) {
-					$status = $response->getStatus();
-					$uri    = $request->getPath();
-					$method = $request->getMethod();
-					error_log( "CardDAV Response: {$method} {$uri} -> HTTP {$status}" );
-
-					// Log full response body for PROPFIND to see sync-token support
-					if ( $method === 'PROPFIND' && $status >= 200 && $status < 300 ) {
-						$body = $response->getBodyAsString();
-						// Log in chunks if too large
-						if ( strlen( $body ) > 2000 ) {
-							error_log( 'CardDAV Response body part 1: ' . substr( $body, 0, 2000 ) );
-							error_log( 'CardDAV Response body part 2: ' . substr( $body, 2000, 2000 ) );
-						} else {
-							error_log( 'CardDAV Response body: ' . $body );
-						}
-					}
-				}
-			);
 
 			// Run the server
 			$server->exec();
