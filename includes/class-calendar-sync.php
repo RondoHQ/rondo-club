@@ -196,7 +196,7 @@ class Sync {
 	 * @param array $connection Connection data.
 	 */
 	private function sync_single_connection( $user_id, array $connection ) {
-		$connection_id         = $connection['id'];
+		$connection_id         = $connection['id'] ?? '';
 		$connection['user_id'] = $user_id;
 
 		try {
@@ -224,7 +224,7 @@ class Sync {
 				)
 			);
 
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			\RONDO_Calendar_Connections::update_connection(
 				$user_id,
 				$connection_id,
@@ -574,7 +574,7 @@ class Sync {
 						'total'   => $result['total'] ?? 0,
 					];
 
-				} catch ( Exception $e ) {
+				} catch ( \Exception $e ) {
 					\RONDO_Calendar_Connections::update_connection(
 						$user_id,
 						$connection_id,
