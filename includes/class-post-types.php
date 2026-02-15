@@ -27,6 +27,8 @@ class PostTypes {
 		$this->register_calendar_event_post_type();
 		$this->register_feedback_post_type();
 		$this->register_discipline_case_post_type();
+		$this->register_invoice_statuses();
+		$this->register_invoice_post_type();
 	}
 
 	/**
@@ -378,5 +380,104 @@ class PostTypes {
 		];
 
 		register_post_type( 'discipline_case', $args );
+	}
+
+	/**
+	 * Register custom post statuses for invoices
+	 *
+	 * Invoices use a lifecycle state flow: Draft → Sent → Paid/Overdue
+	 * Using post_status for cleaner queries and native WordPress status handling.
+	 */
+	private function register_invoice_statuses() {
+		register_post_status(
+			'rondo_draft',
+			[
+				'label'                     => _x( 'Concept', 'Invoice status', 'rondo' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Concept <span class="count">(%s)</span>', 'Concept <span class="count">(%s)</span>', 'rondo' ),
+			]
+		);
+
+		register_post_status(
+			'rondo_sent',
+			[
+				'label'                     => _x( 'Verstuurd', 'Invoice status', 'rondo' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Verstuurd <span class="count">(%s)</span>', 'Verstuurd <span class="count">(%s)</span>', 'rondo' ),
+			]
+		);
+
+		register_post_status(
+			'rondo_paid',
+			[
+				'label'                     => _x( 'Betaald', 'Invoice status', 'rondo' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Betaald <span class="count">(%s)</span>', 'Betaald <span class="count">(%s)</span>', 'rondo' ),
+			]
+		);
+
+		register_post_status(
+			'rondo_overdue',
+			[
+				'label'                     => _x( 'Verlopen', 'Invoice status', 'rondo' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				'label_count'               => _n_noop( 'Verlopen <span class="count">(%s)</span>', 'Verlopen <span class="count">(%s)</span>', 'rondo' ),
+			]
+		);
+	}
+
+	/**
+	 * Register Invoice CPT
+	 *
+	 * Invoices track financial charges to members for discipline cases or other fees.
+	 * Each invoice is linked to a person and contains line items with associated discipline cases.
+	 */
+	private function register_invoice_post_type() {
+		$labels = [
+			'name'               => _x( 'Facturen', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Factuur', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Facturen', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Factuur', 'rondo' ),
+			'edit_item'          => __( 'Edit Factuur', 'rondo' ),
+			'new_item'           => __( 'New Factuur', 'rondo' ),
+			'view_item'          => __( 'View Factuur', 'rondo' ),
+			'search_items'       => __( 'Search Facturen', 'rondo' ),
+			'not_found'          => __( 'No facturen found', 'rondo' ),
+			'not_found_in_trash' => __( 'No facturen found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Facturen', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'invoices',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 10,
+			'menu_icon'          => 'dashicons-media-text',
+			'supports'           => [ 'title', 'author' ],
+		];
+
+		register_post_type( 'rondo_invoice', $args );
 	}
 }
