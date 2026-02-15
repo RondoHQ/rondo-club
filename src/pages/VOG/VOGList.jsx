@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, FileSpreadsheet } from 'lucide-react';
 import { useFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
@@ -9,6 +9,7 @@ import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import { format } from '@/utils/dateFormat';
 import { formatPhoneForTel } from '@/utils/formatters';
+import SortableHeader from '@/components/SortableHeader';
 
 // Helper function to get first contact value by type
 function getFirstContactByType(person, type) {
@@ -55,42 +56,6 @@ function VOGEmailIndicator({ person }) {
     >
       <Mail className="w-4 h-4" />
     </span>
-  );
-}
-
-// Sortable header component
-function SortableHeader({ label, columnId, sortField, sortOrder, onSort, sortable = true }) {
-  if (!sortable) {
-    return (
-      <th
-        scope="col"
-        className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800"
-      >
-        {label}
-      </th>
-    );
-  }
-
-  const isActive = sortField === columnId;
-  const nextOrder = isActive && sortOrder === 'asc' ? 'desc' : 'asc';
-
-  return (
-    <th
-      scope="col"
-      className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-      onClick={() => onSort(columnId, nextOrder)}
-    >
-      <div className="flex items-center gap-1">
-        {label}
-        {isActive && (
-          sortOrder === 'asc' ? (
-            <ArrowUp className="w-3 h-3" />
-          ) : (
-            <ArrowDown className="w-3 h-3" />
-          )
-        )}
-      </div>
-    </th>
   );
 }
 

@@ -1,30 +1,10 @@
 import { useState, useMemo, Fragment, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import PersonAvatar from '@/components/PersonAvatar';
 import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
-
-/**
- * Sortable table header component
- */
-function SortableHeader({ label, columnId, sortField, sortOrder, onSort, className = '' }) {
-  const isActive = sortField === columnId;
-  const SortIcon = sortOrder === 'asc' ? ArrowUp : ArrowDown;
-
-  return (
-    <th
-      scope="col"
-      className={`px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 ${className}`}
-      onClick={() => onSort(columnId)}
-    >
-      <div className={`flex items-center gap-1 ${className.includes('text-right') ? 'justify-end' : className.includes('text-center') ? 'justify-center' : ''}`}>
-        {label}
-        {isActive && <SortIcon className="w-3 h-3" />}
-      </div>
-    </th>
-  );
-}
+import SortableHeader from '@/components/SortableHeader';
 
 /**
  * Parse ACF date format to Date object
@@ -96,14 +76,10 @@ export default function DisciplineCaseTable({
   const [sortOrder, setSortOrder] = useState('desc');
 
   // Handle sort column click
-  const handleSort = useCallback((field) => {
-    if (sortField === field) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  }, [sortField]);
+  const handleSort = useCallback((field, order) => {
+    setSortField(field);
+    setSortOrder(order);
+  }, []);
 
   // Sort cases by selected field
   const sortedCases = useMemo(() => {

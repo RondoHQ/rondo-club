@@ -1,12 +1,13 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, Check, Pencil } from 'lucide-react';
+import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getCommissieName } from '@/utils/formatters';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
+import SortableHeader from '@/components/SortableHeader';
 
 function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
   // Local state for edited field values (includes name, website, and custom fields)
@@ -140,29 +141,6 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
   );
 }
 
-// Sortable header component for clickable column headers
-function SortableHeader({ field, label, currentSortField, currentSortOrder, onSort }) {
-  const isActive = currentSortField === field;
-
-  return (
-    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
-      <button
-        onClick={() => onSort(field)}
-        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer uppercase"
-      >
-        {label}
-        {isActive && (
-          currentSortOrder === 'asc' ? (
-            <ArrowUp className="w-3 h-3" />
-          ) : (
-            <ArrowDown className="w-3 h-3" />
-          )
-        )}
-      </button>
-    </th>
-  );
-}
-
 function OrganizationListView({ commissies, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
   return (
     <div className="card !overflow-x-auto max-h-[calc(100vh-12rem)] !overflow-y-auto">
@@ -184,15 +162,15 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
                 )}
               </button>
             </th>
-            <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="member_count" label="Leden" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="name" label="Naam" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="member_count" label="Leden" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
-                field={`custom_${field.name}`}
+                columnId={`custom_${field.name}`}
                 label={field.label}
-                currentSortField={sortField}
-                currentSortOrder={sortOrder}
+                sortField={sortField}
+                sortOrder={sortOrder}
                 onSort={onSort}
               />
             ))}
@@ -635,13 +613,9 @@ export default function CommissiesList() {
           isSomeSelected={isSomeSelected}
           sortField={sortField}
           sortOrder={sortOrder}
-          onSort={(field) => {
-            if (field === sortField) {
-              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-            } else {
-              setSortField(field);
-              setSortOrder('asc');
-            }
+          onSort={(field, order) => {
+            setSortField(field);
+            setSortOrder(order);
           }}
           onSaveRow={handleSaveRow}
           isUpdating={updateRowMutation.isPending}
