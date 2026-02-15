@@ -27,6 +27,7 @@ export default function FeedbackEditModal({
   onSubmit,
   isLoading,
   feedback, // The feedback item to edit
+  isAdmin = false, // Whether the current user is an admin
 }) {
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
   const feedbackType = watch('feedback_type');
@@ -56,9 +57,13 @@ export default function FeedbackEditModal({
       content: data.content,
       feedback_type: data.feedback_type,
       project: data.project,
-      status: data.status,
-      priority: data.priority,
     };
+
+    // Only include status and priority if user is admin
+    if (isAdmin) {
+      submitData.status = data.status;
+      submitData.priority = data.priority;
+    }
 
     // Add type-specific fields
     if (data.feedback_type === 'bug') {
@@ -171,33 +176,35 @@ export default function FeedbackEditModal({
               )}
             </div>
 
-            {/* Status and Priority row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">Status</label>
-                <select
-                  {...register('status')}
-                  className="input"
-                  disabled={isLoading}
-                >
-                  {statusOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+            {/* Status and Priority row - Admin only */}
+            {isAdmin && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Status</label>
+                  <select
+                    {...register('status')}
+                    className="input"
+                    disabled={isLoading}
+                  >
+                    {statusOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Prioriteit</label>
+                  <select
+                    {...register('priority')}
+                    className="input"
+                    disabled={isLoading}
+                  >
+                    {priorityOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="label">Prioriteit</label>
-                <select
-                  {...register('priority')}
-                  className="input"
-                  disabled={isLoading}
-                >
-                  {priorityOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            )}
 
             {/* Description */}
             <div>
