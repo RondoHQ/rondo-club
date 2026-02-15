@@ -94,8 +94,8 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 178-01-PLAN.md — Navigation restructuring + backend FinanceConfig class + REST API
-- [ ] 178-02-PLAN.md — Finance Settings page UI with all form sections
+- [x] 178-01-PLAN.md — Navigation restructuring + backend FinanceConfig class + REST API
+- [x] 178-02-PLAN.md — Finance Settings page UI with all form sections
 
 #### Phase 179: Invoice Data Model & REST API
 **Goal**: Invoice CPT exists with ACF fields for lifecycle tracking, automatic invoice numbering, and REST API endpoints for CRUD operations.
@@ -195,7 +195,7 @@ Plans:
 | 175. Backend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 176. Frontend Cleanup | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
 | 177. Documentation Updates | v24.1 | 2/2 | ✓ Complete | 2026-02-13 |
-| 178. Finance Navigation & Settings Backend | v26.0 | 0/2 | Not started | - |
+| 178. Finance Navigation & Settings Backend | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 179. Invoice Data Model & REST API | v26.0 | 0/TBD | Not started | - |
 | 180. Invoice Creation Flow | v26.0 | 0/TBD | Not started | - |
 | 181. PDF Generation | v26.0 | 0/TBD | Not started | - |
@@ -205,4 +205,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-15 — Phase 178 planned (2 plans)*
+*Last updated: 2026-02-15 — Phase 178 completed (2/2 plans)*
