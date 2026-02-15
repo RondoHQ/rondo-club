@@ -107,10 +107,11 @@ Plans:
   3. New invoices auto-generate invoice numbers in format 2026T001 (calendar year + T + sequential)
   4. Invoice REST API endpoints exist: list (/rondo/v1/invoices), get single, create, update status
   5. Overdue status auto-applies when sent invoice passes due date (via backend logic)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 179-01: TBD
+- [ ] 179-01-PLAN.md — Invoice CPT registration, statuses, ACF fields, and numbering service
+- [ ] 179-02-PLAN.md — Invoice REST API controller, overdue detection, and API client methods
 
 #### Phase 180: Invoice Creation Flow
 **Goal**: User can select uninvoiced discipline cases on member's Tuchtzaken tab and create a draft invoice that sums case fees.
