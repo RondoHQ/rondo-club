@@ -54,7 +54,7 @@ export default function DashboardCard({
       </div>
       <div
         ref={contentRef}
-        className="divide-y divide-gray-100 dark:divide-gray-700 h-[32vh] overflow-y-auto"
+        className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[50vh] lg:h-[32vh] overflow-y-auto"
       >
         {hasContent ? (
           children

@@ -312,7 +312,7 @@ function DashboardSkeleton() {
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
               <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse" />
             </div>
-            <div className="h-[32vh] overflow-y-auto">
+            <div className="max-h-[50vh] lg:h-[32vh] overflow-y-auto">
               {[...Array(3)].map((_, j) => (
                 <div key={j} className="p-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
                   <div className="animate-pulse flex items-center">
