@@ -301,6 +301,18 @@ update_feedback_status() {
     fi
 }
 
+# Update feedback agent plan
+update_feedback_plan() {
+    local feedback_id="$1"
+    local plan="$2"
+    local json_data=$(jq -n --arg p "$plan" '{agent_plan: $p}')
+    curl -s -X PUT \
+        -u "${RONDO_API_USER}:${RONDO_API_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -d "$json_data" \
+        "${RONDO_API_URL}/wp-json/rondo/v1/feedback/${feedback_id}" > /dev/null 2>&1
+}
+
 # Update feedback meta (pr_url, agent_branch)
 update_feedback_meta() {
     local feedback_id="$1"
@@ -585,47 +597,63 @@ process_feedback_item() {
     # Run Claude in the project directory
     cd "$project_dir"
 
-    # --- Phase 1: Planning with Sonnet ---
-    log "INFO" "Starting planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
-    echo -e "${YELLOW}Phase 1/2: Planning with Sonnet...${NC}" >&2
-
-    # Load codebase map if available
-    local codebase_map=""
-    local codebase_map_file="$PROJECT_ROOT/.claude/codebase-map.md"
-    if [ -f "$codebase_map_file" ]; then
-        codebase_map=$(cat "$codebase_map_file")
-        log "INFO" "Loaded codebase map ($(wc -l < "$codebase_map_file") lines)"
+    # Check for an existing plan from a previous run
+    local existing_plan=""
+    if [ "$is_single" = "true" ]; then
+        existing_plan=$(echo "$feedback_json" | jq -r '.meta.agent_plan // empty')
+    else
+        existing_plan=$(echo "$feedback_json" | jq -r '.[0].meta.agent_plan // empty')
     fi
 
-    local plan_prompt="${output}
+    local plan_output=""
+
+    if [ -n "$existing_plan" ]; then
+        # --- Reuse existing plan ---
+        log "INFO" "Found existing plan for feedback #${CURRENT_FEEDBACK_ID} — skipping planning phase"
+        echo -e "${GREEN}Reusing stored plan for feedback #${CURRENT_FEEDBACK_ID} — skipping Phase 1${NC}" >&2
+        plan_output="$existing_plan"
+    else
+        # --- Phase 1: Planning with Sonnet ---
+        log "INFO" "Starting planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
+        echo -e "${YELLOW}Phase 1/2: Planning with Sonnet...${NC}" >&2
+
+        # Load codebase map if available
+        local codebase_map=""
+        local codebase_map_file="$PROJECT_ROOT/.claude/codebase-map.md"
+        if [ -f "$codebase_map_file" ]; then
+            codebase_map=$(cat "$codebase_map_file")
+            log "INFO" "Loaded codebase map ($(wc -l < "$codebase_map_file") lines)"
+        fi
+
+        local plan_prompt="${output}
 
 ---
 "
 
-    # Inject codebase map if available
-    if [ -n "$codebase_map" ]; then
-        plan_prompt+="
+        # Inject codebase map if available
+        if [ -n "$codebase_map" ]; then
+            plan_prompt+="
 ## Codebase Reference
 
 ${codebase_map}
 
 ---
 "
-    fi
+        fi
 
-    plan_prompt+="
+        plan_prompt+="
 ## YOUR TASK: Create an Implementation Plan
 
 You are in PLANNING MODE. Do NOT make any code changes, do NOT create branches, do NOT commit anything."
 
-    # Add exploration guidance when codebase map is available
-    if [ -n "$codebase_map" ]; then
-        plan_prompt+="
+        # Add exploration guidance when codebase map is available
+        if [ -n "$codebase_map" ]; then
+            plan_prompt+="
 
 A codebase map is provided above — use it to identify relevant files instead of exploring the codebase. Only read files you need to understand for this specific change."
-    fi
+        fi
 
-    plan_prompt+="
+        plan_prompt+="
 
 ### Step 1: Decide if you have enough information
 
@@ -663,26 +691,31 @@ If and only if you are confident you understand exactly what needs to change, pr
 
 Be specific about code changes — include function names, class names, and describe the logic. Do NOT include actual code blocks, just describe what needs to change."
 
-    local prompt_file=$(mktemp)
-    local output_file=$(mktemp)
-    printf '%s' "$plan_prompt" > "$prompt_file"
+        local prompt_file=$(mktemp)
+        local output_file=$(mktemp)
+        printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600 "sonnet"
+        run_claude "$prompt_file" "$output_file" 600 "sonnet"
 
-    local plan_output="$CLAUDE_OUTPUT"
-    local plan_exit=$CLAUDE_EXIT
+        plan_output="$CLAUDE_OUTPUT"
+        local plan_exit=$CLAUDE_EXIT
 
-    if [ $plan_exit -ne 0 ]; then
-        log "ERROR" "Planning session failed (exit code: $plan_exit)"
-        echo -e "${RED}Planning session failed (exit code: $plan_exit)${NC}" >&2
-        update_feedback_status "$CURRENT_FEEDBACK_ID" "$ORIGINAL_STATUS"
-        cd "$project_dir" && git checkout main 2>/dev/null
-        cd "$PROJECT_ROOT"
-        CURRENT_FEEDBACK_ID=""
-        return 1
+        if [ $plan_exit -ne 0 ]; then
+            log "ERROR" "Planning session failed (exit code: $plan_exit)"
+            echo -e "${RED}Planning session failed (exit code: $plan_exit)${NC}" >&2
+            update_feedback_status "$CURRENT_FEEDBACK_ID" "$ORIGINAL_STATUS"
+            cd "$project_dir" && git checkout main 2>/dev/null
+            cd "$PROJECT_ROOT"
+            CURRENT_FEEDBACK_ID=""
+            return 1
+        fi
+
+        log "INFO" "Planning session completed"
+
+        # Store the plan for reuse on retry
+        update_feedback_plan "$CURRENT_FEEDBACK_ID" "$plan_output"
+        log "INFO" "Stored plan for feedback #${CURRENT_FEEDBACK_ID}"
     fi
-
-    log "INFO" "Planning session completed"
 
     # Check if the plan indicates NEEDS_INFO or DECLINED — skip implementation
     if echo "$plan_output" | grep -qi "STATUS:.*NEEDS_INFO\|STATUS:.*DECLINED"; then
@@ -744,6 +777,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
     case "$PARSED_STATUS" in
         in_review)
             update_feedback_status "$CURRENT_FEEDBACK_ID" "in_review"
+            update_feedback_plan "$CURRENT_FEEDBACK_ID" ""
             if [ -n "$PARSED_PR_URL" ]; then
                 update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""
                 log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} in review with PR: ${PARSED_PR_URL}"
@@ -757,6 +791,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
             ;;
         resolved)
             update_feedback_status "$CURRENT_FEEDBACK_ID" "resolved"
+            update_feedback_plan "$CURRENT_FEEDBACK_ID" ""
             if [ -n "$PARSED_PR_URL" ]; then
                 update_feedback_meta "$CURRENT_FEEDBACK_ID" "$PARSED_PR_URL" ""
                 log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} resolved with PR: ${PARSED_PR_URL}"
@@ -771,6 +806,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
             ;;
         declined)
             update_feedback_status "$CURRENT_FEEDBACK_ID" "declined"
+            update_feedback_plan "$CURRENT_FEEDBACK_ID" ""
             log "INFO" "Feedback #${CURRENT_FEEDBACK_ID} declined"
             ;;
         *)
