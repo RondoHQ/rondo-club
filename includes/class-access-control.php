@@ -93,7 +93,9 @@ class AccessControl {
 	 * @return bool Whether the user can access the post.
 	 */
 	public function user_can_access_post( $post_id, $user_id = null ) {
-		if ( ! is_user_logged_in() ) {
+		$user_id = $this->get_user_id( $user_id );
+
+		if ( ! $user_id ) {
 			return false;
 		}
 
@@ -157,9 +159,9 @@ class AccessControl {
 	 *
 	 * Logged-in users see all posts. Not logged-in users see nothing.
 	 *
-	 * @param array           $args    WP_Query arguments.
-	 * @param WP_REST_Request $request REST request object.
-	 * @param string          $post_type Post type being queried.
+	 * @param array            $args      WP_Query arguments.
+	 * @param \WP_REST_Request $request   REST request object.
+	 * @param string           $post_type Post type being queried.
 	 * @return array Modified query arguments.
 	 */
 	public function filter_rest_query( $args, $request, $post_type ) {
