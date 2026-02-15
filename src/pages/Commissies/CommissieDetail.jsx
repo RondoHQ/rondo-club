@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Camera, Share2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, TrendingUp, User, Share2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -14,8 +14,6 @@ export default function CommissieDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef(null);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   
   const { data: commissie, isLoading, error } = useQuery({
@@ -141,43 +139,6 @@ export default function CommissieDetail() {
     }
   }, [commissie, navigate]);
   
-  
-  // Handle logo upload
-  const handleLogoUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size must be less than 5MB');
-      return;
-    }
-
-    setIsUploadingLogo(true);
-
-    try {
-      await prmApi.uploadCommissieLogo(id, file);
-
-      // Invalidate queries to refresh commissie data
-      queryClient.invalidateQueries({ queryKey: ['commissie', id] });
-      queryClient.invalidateQueries({ queryKey: ['commissies'] });
-    } catch {
-      alert('Failed to upload logo. Please try again.');
-    } finally {
-      setIsUploadingLogo(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -221,39 +182,7 @@ export default function CommissieDetail() {
       
       {/* Commissie header */}
       <div className="card p-6">
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            {commissie._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-              <img 
-                src={commissie._embedded['wp:featuredmedia'][0].source_url}
-                alt={getCommissieName(commissie)}
-                className="w-24 h-24 rounded-lg object-contain"
-              />
-            ) : (
-              <div className="w-24 h-24 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center border border-gray-200 dark:border-gray-600">
-                <Building2 className="w-12 h-12 text-gray-400" />
-              </div>
-            )}
-            {/* Upload overlay */}
-            <div 
-              className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploadingLogo ? (
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              ) : (
-                <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-              disabled={isUploadingLogo}
-            />
-          </div>
+        <div>
           <div>
             {/* Parent commissie link */}
             {parentCommissie && (

@@ -76,21 +76,6 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
           )}
         </button>
       </td>
-      <td className="w-10 px-2 py-3">
-        <Link to={`/teams/${team.id}`} className="flex items-center justify-center">
-          {team._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-            <img
-              src={team._embedded['wp:featuredmedia'][0].source_url}
-              alt=""
-              className="w-8 h-8 rounded-lg"
-            />
-          ) : (
-            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-            </div>
-          )}
-        </Link>
-      </td>
       <td className="px-4 py-3 whitespace-nowrap" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
         {isEditing ? (
           <input
@@ -214,7 +199,6 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
                 )}
               </button>
             </th>
-            <th scope="col" className="w-10 px-2 bg-gray-50 dark:bg-gray-800"></th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="speeldag" label="Speeldag" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="gender" label="Gender" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
@@ -339,7 +323,7 @@ export default function TeamsList() {
   const { data: teams, isLoading, error } = useQuery({
     queryKey: ['teams', search],
     queryFn: async () => {
-      const response = await wpApi.getTeams({ search, per_page: 100, _embed: true });
+      const response = await wpApi.getTeams({ search, per_page: 100 });
       return response.data;
     },
   });
