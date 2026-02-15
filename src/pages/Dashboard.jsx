@@ -51,14 +51,14 @@ const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal.js
 function StatCard({ title, value, icon: Icon, href }) {
   return (
     <Link to={href} className="card p-4 hover:shadow-md dark:hover:shadow-gray-900/50 transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          <p className="mt-1 text-2xl font-semibold dark:text-gray-50">{value}</p>
-        </div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
         <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
           <Icon className="w-5 h-5 text-electric-cyan dark:text-electric-cyan" />
         </div>
+      </div>
+      <div className="text-center">
+        <p className="text-2xl font-semibold dark:text-gray-50">{value}</p>
       </div>
     </Link>
   );
