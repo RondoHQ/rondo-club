@@ -256,30 +256,33 @@ class AccessControl {
 			return $response;
 		}
 
-		// Query all people who have this commissie in their work_history
-		$member_count = 0;
-		$people_query = new \WP_Query(
-			[
-				'post_type'      => 'person',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'AND',
-					[
-						'key'     => 'work_history',
-						'value'   => '"commissie";i:' . $post->ID,
-						'compare' => 'LIKE',
-					],
-					[
-						'key'     => 'is_former_member',
-						'value'   => '0',
-						'compare' => '=',
-					],
-				],
-			]
+		global $wpdb;
+
+		// Count all people who have this commissie in their work_history and are not marked as former members.
+		// ACF repeaters store data as work_history_0_team, work_history_1_team, etc.
+		$commissie_id = (int) $post->ID;
+		$meta_key_like = $wpdb->esc_like( 'work_history_' ) . '%' . $wpdb->esc_like( '_team' );
+
+		$sql = $wpdb->prepare(
+			"
+			SELECT COUNT( DISTINCT p.ID )
+			FROM {$wpdb->posts} AS p
+			INNER JOIN {$wpdb->postmeta} AS m_team
+				ON m_team.post_id = p.ID
+			LEFT JOIN {$wpdb->postmeta} AS m_former
+				ON m_former.post_id = p.ID
+				AND m_former.meta_key = 'former_member'
+			WHERE p.post_type = 'person'
+				AND p.post_status = 'publish'
+				AND m_team.meta_key LIKE %s
+				AND m_team.meta_value = %s
+				AND ( m_former.meta_value IS NULL OR m_former.meta_value = '0' )
+			",
+			$meta_key_like,
+			(string) $commissie_id
 		);
 
-		$member_count = $people_query->found_posts;
+		$member_count = (int) $wpdb->get_var( $sql );
 
 		// Add member_count to the response data
 		$data                    = $response->get_data();
@@ -308,55 +311,42 @@ class AccessControl {
 			return $response;
 		}
 
-		// Query all people who have this team in their work_history
-		$people_query = new \WP_Query(
-			[
-				'post_type'      => 'person',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'AND',
-					[
-						'key'     => 'work_history',
-						'value'   => '"team";i:' . $post->ID,
-						'compare' => 'LIKE',
-					],
-					[
-						'key'     => 'is_former_member',
-						'value'   => '0',
-						'compare' => '=',
-					],
-				],
-			]
+		global $wpdb;
+
+		// Count all people who have this team in their work_history and are not marked as former members.
+		// ACF repeaters store data as work_history_0_team, work_history_1_team, etc.
+		$team_id = (int) $post->ID;
+		$meta_key_like = $wpdb->esc_like( 'work_history_' ) . '%' . $wpdb->esc_like( '_team' );
+
+		$sql = $wpdb->prepare(
+			"
+			SELECT COUNT( DISTINCT p.ID )
+			FROM {$wpdb->posts} AS p
+			INNER JOIN {$wpdb->postmeta} AS m_team
+				ON m_team.post_id = p.ID
+			LEFT JOIN {$wpdb->postmeta} AS m_former
+				ON m_former.post_id = p.ID
+				AND m_former.meta_key = 'former_member'
+			WHERE p.post_type = 'person'
+				AND p.post_status = 'publish'
+				AND m_team.meta_key LIKE %s
+				AND m_team.meta_value = %s
+				AND ( m_former.meta_value IS NULL OR m_former.meta_value = '0' )
+			",
+			$meta_key_like,
+			(string) $team_id
 		);
 
+		$member_count = (int) $wpdb->get_var( $sql );
+
+		// For now, treat all members the same since work_history schema doesn't include a role field.
+		// If player/staff distinction is needed, add a role field to the ACF repeater.
 		$player_count = 0;
 		$staff_count  = 0;
 
-		// Count players vs staff by checking the role field in work_history
-		if ( $people_query->have_posts() ) {
-			foreach ( $people_query->posts as $person_id ) {
-				$work_history = get_field( 'work_history', $person_id );
-				if ( ! is_array( $work_history ) ) {
-					continue;
-				}
-
-				// Find entries for this team
-				foreach ( $work_history as $entry ) {
-					if ( isset( $entry['team'] ) && (int) $entry['team'] === $post->ID ) {
-						$role = isset( $entry['role'] ) ? $entry['role'] : '';
-						if ( $role === 'player' ) {
-							++$player_count;
-						} elseif ( $role === 'staff' ) {
-							++$staff_count;
-						}
-					}
-				}
-			}
-		}
-
 		// Add counts to the response data
 		$data                   = $response->get_data();
+		$data['member_count']   = $member_count;
 		$data['player_count']   = $player_count;
 		$data['staff_count']    = $staff_count;
 		$response->set_data( $data );
