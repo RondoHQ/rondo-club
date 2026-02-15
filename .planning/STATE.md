@@ -2,16 +2,17 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-13)
+See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** Planning next milestone
+**Current focus:** v26.0 Discipline Case Invoicing
 
 ## Current Position
 
-Phase: No active phase
-Status: v24.1 shipped, ready for next milestone
-Last activity: 2026-02-13 — v24.1 Dead Feature Removal shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-15 — Milestone v26.0 started
 
 ## Performance Metrics
 
@@ -46,11 +47,11 @@ Decisions are logged in PROJECT.md Key Decisions table (658 entries).
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: v24.1 milestone completed and archived
+Last session: 2026-02-15
+Stopped at: v26.0 milestone requirements definition
 Resume file: None
 
-**Next action:** `/gsd:new-milestone` to start planning next milestone
+**Next action:** Define requirements and create roadmap
 
 ---
-*State updated: 2026-02-13 after v24.1 Dead Feature Removal milestone completion*
+*State updated: 2026-02-15 after v26.0 milestone started*
