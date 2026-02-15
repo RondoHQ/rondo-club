@@ -55,11 +55,11 @@ class AuthBackend extends AbstractBasic {
 		// WordPress 6.8+ uses wp_verify_fast_hash for application passwords
 		// It handles both $generic$ (BLAKE2b) and legacy $P$ (phpass) hashes
 		// Fall back to wp_check_password for older versions
-		$verify_fn = function_exists( 'wp_verify_fast_hash' ) ? 'wp_verify_fast_hash' : 'wp_check_password';
+		$use_fast_hash = function_exists( 'wp_verify_fast_hash' );
 
 		foreach ( $app_passwords as $app_password ) {
 			// wp_verify_fast_hash uses 2 params, wp_check_password uses 3
-			$is_valid = function_exists( 'wp_verify_fast_hash' )
+			$is_valid = $use_fast_hash
 				? wp_verify_fast_hash( $password, $app_password['password'] )
 				: wp_check_password( $password, $app_password['password'], $user->ID );
 
