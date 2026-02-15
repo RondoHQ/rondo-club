@@ -656,6 +656,18 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 */
 	private function generateEtagFromId( $person_id ) {
 		$modified = get_post_modified_time( 'Y-m-d H:i:s', true, $person_id );
+
+		// Fallback handling in case get_post_modified_time() returns false
+		if ( false === $modified ) {
+			$person = get_post( $person_id );
+			if ( $person && isset( $person->post_modified_gmt ) ) {
+				$modified = $person->post_modified_gmt;
+			} else {
+				// As a last resort, use an empty string to keep the ETag deterministic
+				$modified = '';
+			}
+		}
+
 		return '"' . md5( $person_id . $modified ) . '"';
 	}
 
@@ -749,9 +761,9 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return array [ first_name, infix, last_name ]
 	 */
 	private function parseNameFields( $parsed ) {
-		$first_name = $parsed['first_name'] ?? '';
-		$infix      = $parsed['infix'] ?? '';
-		$last_name  = $parsed['last_name'] ?? '';
+		$first_name = $parsed['first_name'] ?: '';
+		$infix      = $parsed['infix'] ?: '';
+		$last_name  = $parsed['last_name'] ?: '';
 
 		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
 			$name_parts = explode( ' ', $parsed['full_name'], 2 );
