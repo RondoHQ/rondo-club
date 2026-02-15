@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 180 of 184 (Invoice Creation Flow)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-15 — Phase 179 verified and completed (10/10 must-haves)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-15 — Completed 180-01-PLAN.md (invoice selection and creation UI)
 
-Progress: [░░░░░░░░░░] 0% (0/TBD plans complete)
+Progress: [█████░░░░░] 50% (1/2 plans complete)
 
 ## Performance Metrics
 
@@ -30,6 +30,9 @@ Progress: [░░░░░░░░░░] 0% (0/TBD plans complete)
 **Phase 179 Progress:**
 - Plan 179-01: 114s, 2 tasks, 3 files (2026-02-15)
 - Plan 179-02: 179s, 2 tasks, 3 files (2026-02-15)
+
+**Phase 180 Progress:**
+- Plan 180-01: 375s, 2 tasks, 5 files (2026-02-15)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -50,6 +53,9 @@ Recent decisions for v26.0:
 - Disabled navigation items show grayed out with disabled property (178-01)
 - Conditional credential submission preserves existing values when fields empty (178-02)
 - IBAN auto-formatting on blur for consistent storage (178-02)
+- Invoiced cases show FileText icon with 60% opacity instead of checkbox (180-01)
+- Selection state managed via Set for O(1) lookup performance (180-01)
+- Both fairplay AND financieel capabilities required to create invoices (180-01)
 
 ### Pending Todos
 
@@ -64,11 +70,11 @@ Recent decisions for v26.0:
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Phase 179 verified (10/10 must-haves passed), roadmap updated
+Stopped at: Completed 180-01-PLAN.md (invoice selection and creation UI)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 180` to plan Invoice Creation Flow
+**Next action:** Execute 180-02-PLAN.md (invoice detail view and workflow)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-15 after phase 179 verification passed*
+*Last updated: 2026-02-15 after completing plan 180-01*
