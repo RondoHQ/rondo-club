@@ -239,7 +239,7 @@ export default function CommissiesList() {
   // Mutation for updating row custom fields
   // ACF fields that require array type (repeaters, multi-select post_object, etc.)
   // These cannot be null - must be empty array [] when empty
-  const arrayTypeAcfFields = ['contact_info', 'investors'];
+  const arrayTypeAcfFields = ['contact_info'];
 
   const updateRowMutation = useMutation({
     mutationFn: async ({ commissieId, editedFields, existingAcf }) => {

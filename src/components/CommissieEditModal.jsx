@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, ChevronDown, Building2, Search, User, TrendingUp } from 'lucide-react';
+import { X, ChevronDown, Building2, Search } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { wpApi, prmApi } from '@/api/client';
+import { wpApi } from '@/api/client';
 import { getCommissieName, decodeHtml } from '@/utils/formatters';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
@@ -21,16 +21,9 @@ export default function CommissieEditModal({
   const [parentSearchQuery, setParentSearchQuery] = useState('');
   const [selectedParentId, setSelectedParentId] = useState('');
 
-  // State for investors dropdown
-  const [isInvestorsDropdownOpen, setIsInvestorsDropdownOpen] = useState(false);
-  const [investorsSearchQuery, setInvestorsSearchQuery] = useState('');
-  const [debouncedInvestorsQuery, setDebouncedInvestorsQuery] = useState('');
-  const [selectedInvestors, setSelectedInvestors] = useState([]);
-
   const parentDropdownRef = useRef(null);
-  const investorsDropdownRef = useRef(null);
 
-  // Fetch all commissies for parent selection and investors
+  // Fetch all commissies for parent selection
   const { data: allCommissies = [], isLoading: isLoadingCommissies } = useQuery({
     queryKey: ['commissies', 'all'],
     queryFn: async () => {
@@ -38,34 +31,6 @@ export default function CommissieEditModal({
       return response.data;
     },
     enabled: isOpen,
-  });
-
-  // Fetch all people for investors (used for loading existing investors)
-  const { data: allPeople = [], isLoading: isLoadingPeople } = useQuery({
-    queryKey: ['people', 'all'],
-    queryFn: async () => {
-      const response = await wpApi.getPeople({ per_page: 100, _embed: true });
-      return response.data;
-    },
-    enabled: isOpen,
-  });
-
-  // Debounce investor search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedInvestorsQuery(investorsSearchQuery.trim());
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [investorsSearchQuery]);
-
-  // Server-side search for investors when query length >= 2
-  const { data: searchResults, isLoading: isSearching } = useQuery({
-    queryKey: ['investor-search', debouncedInvestorsQuery],
-    queryFn: async () => {
-      const response = await prmApi.search(debouncedInvestorsQuery);
-      return response.data;
-    },
-    enabled: isOpen && debouncedInvestorsQuery.length >= 2,
   });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -104,75 +69,11 @@ export default function CommissieEditModal({
     [allCommissies, selectedParentId]
   );
 
-  // Combined list of people and commissies for investor selection (excluding self)
-  const availableInvestors = useMemo(() => {
-    const query = investorsSearchQuery.toLowerCase().trim();
-    let combined = [];
-
-    // Use server-side search results when available (query length >= 2)
-    if (query.length >= 2 && searchResults) {
-      // Map search results to common format
-      const people = (searchResults.people || []).map(p => ({
-        id: p.id,
-        type: 'person',
-        name: p.name || '',
-        thumbnail: p.thumbnail,
-      }));
-
-      const commissies = (searchResults.commissies || [])
-        .filter(c => !isEditing || c.id !== commissie?.id)
-        .map(c => ({
-          id: c.id,
-          type: 'commissie',
-          name: c.name || '',
-          thumbnail: c.thumbnail,
-        }));
-
-      combined = [...people, ...commissies];
-    } else if (query.length < 2) {
-      // For short queries or no query, use client-side data (first 100 of each)
-      const people = allPeople.map(p => ({
-        id: p.id,
-        type: 'person',
-        name: decodeHtml(p.title?.rendered || ''),
-        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-      }));
-
-      const commissies = allCommissies
-        .filter(c => !isEditing || c.id !== commissie?.id)
-        .map(c => ({
-          id: c.id,
-          type: 'commissie',
-          name: getCommissieName(c),
-          thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-        }));
-
-      combined = [...people, ...commissies];
-
-      // Filter client-side for short queries (1 character)
-      if (query.length === 1) {
-        combined = combined.filter(item =>
-          item.name?.toLowerCase().includes(query)
-        );
-      }
-    }
-
-    // Filter out already selected investors
-    const selectedKeys = selectedInvestors.map(inv => `${inv.type}-${inv.id}`);
-    combined = combined.filter(item => !selectedKeys.includes(`${item.type}-${item.id}`));
-
-    // Sort alphabetically
-    return combined.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-  }, [allPeople, allCommissies, investorsSearchQuery, searchResults, selectedInvestors, commissie, isEditing]);
-
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      // Reset dropdowns
       setIsParentDropdownOpen(false);
-      setIsInvestorsDropdownOpen(false);
       setParentSearchQuery('');
-      setInvestorsSearchQuery('');
 
       if (commissie) {
         // Editing - populate with existing data
@@ -180,9 +81,7 @@ export default function CommissieEditModal({
           title: decodeHtml(commissie.title?.rendered || ''),
           website: commissie.acf?.website || '',
         });
-        // Set parent commissie if exists
         setSelectedParentId(commissie.parent ? String(commissie.parent) : '');
-        // Investors will be loaded via separate effect
       } else {
         // Creating - reset to defaults
         reset({
@@ -190,63 +89,9 @@ export default function CommissieEditModal({
           website: '',
         });
         setSelectedParentId('');
-        setSelectedInvestors([]);
       }
     }
   }, [isOpen, commissie, reset]);
-
-  // Fetch existing investors directly by their IDs (not limited to first 100)
-  // Include IDs in query key to ensure refetch when investors change
-  const investorIds = commissie?.acf?.investors || [];
-  const investorIdsKey = investorIds.join(',');
-  const { data: existingInvestors = [], isSuccess: investorsLoaded } = useQuery({
-    queryKey: ['commissie-investors-edit', commissie?.id, investorIdsKey],
-    queryFn: async ({ queryKey }) => {
-      // Extract IDs from query key to avoid closure issues
-      const idsString = queryKey[2];
-      const ids = idsString ? idsString.split(',').map(Number) : [];
-      if (!ids.length) return [];
-
-      // Fetch people and commissies by specific IDs
-      const [peopleRes, commissiesRes] = await Promise.all([
-        wpApi.getPeople({ per_page: 100, include: idsString, _embed: true }),
-        wpApi.getCommissies({ per_page: 100, include: idsString, _embed: true }),
-      ]);
-
-      const people = (peopleRes.data || []).map(p => ({
-        id: p.id,
-        type: 'person',
-        name: decodeHtml(p.title?.rendered || ''),
-        thumbnail: p._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-      }));
-
-      const commissies = (commissiesRes.data || []).map(c => ({
-        id: c.id,
-        type: 'commissie',
-        name: getCommissieName(c),
-        thumbnail: c._embedded?.['wp:featuredmedia']?.[0]?.source_url,
-      }));
-
-      // Combine and sort by original order
-      const all = [...people, ...commissies];
-      return ids.map(iid => all.find(i => i.id === iid)).filter(Boolean);
-    },
-    enabled: isOpen && !!commissie?.id && investorIds.length > 0,
-    staleTime: 0, // Always refetch when modal opens
-  });
-
-  // Load existing investors when fetched, or reset when creating new
-  useEffect(() => {
-    if (isOpen && commissie && investorsLoaded) {
-      setSelectedInvestors(existingInvestors);
-    } else if (isOpen && commissie && investorIds.length === 0) {
-      // Commissie has no investors
-      setSelectedInvestors([]);
-    } else if (isOpen && !commissie) {
-      // Creating new commissie
-      setSelectedInvestors([]);
-    }
-  }, [isOpen, commissie, investorsLoaded, existingInvestors, investorIds.length]);
 
   // Close parent dropdown when clicking outside
   useEffect(() => {
@@ -262,27 +107,12 @@ export default function CommissieEditModal({
     }
   }, [isParentDropdownOpen]);
 
-  // Close investors dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (investorsDropdownRef.current && !investorsDropdownRef.current.contains(event.target)) {
-        setIsInvestorsDropdownOpen(false);
-      }
-    };
-
-    if (isInvestorsDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isInvestorsDropdownOpen]);
-
   if (!isOpen) return null;
 
   const handleFormSubmit = (data) => {
     onSubmit({
       ...data,
       parentId: selectedParentId ? parseInt(selectedParentId) : 0,
-      investors: selectedInvestors.map(inv => inv.id),
     });
   };
 
@@ -437,135 +267,6 @@ export default function CommissieEditModal({
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Selecteer als dit een subcommissie is
-              </p>
-            </div>
-
-            {/* Investors selection */}
-            <div>
-              <label className="label flex items-center">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Sponsoren
-              </label>
-
-              {/* Selected investors */}
-              {selectedInvestors.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {selectedInvestors.map((investor) => (
-                    <div
-                      key={`${investor.type}-${investor.id}`}
-                      className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 rounded-full pl-1 pr-2 py-1"
-                    >
-                      {investor.thumbnail ? (
-                        <img
-                          src={investor.thumbnail}
-                          alt={investor.name}
-                          className={`w-5 h-5 object-cover ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}
-                        />
-                      ) : (
-                        <div className={`w-5 h-5 bg-gray-300 dark:bg-gray-600 flex items-center justify-center ${investor.type === 'person' ? 'rounded-full' : 'rounded'}`}>
-                          {investor.type === 'person' ? (
-                            <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-                          ) : (
-                            <Building2 className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-                          )}
-                        </div>
-                      )}
-                      <span className="text-sm text-gray-700 dark:text-gray-200">{investor.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedInvestors(prev =>
-                          prev.filter(inv => !(inv.id === investor.id && inv.type === investor.type))
-                        )}
-                        className="ml-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        disabled={isLoading}
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="relative" ref={investorsDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsInvestorsDropdownOpen(!isInvestorsDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
-                  disabled={isLoadingCommissies || isLoadingPeople || isLoading}
-                >
-                  <span className="text-gray-400 dark:text-gray-500">Sponsor toevoegen...</span>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isInvestorsDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isInvestorsDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                    {/* Search input */}
-                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          value={investorsSearchQuery}
-                          onChange={(e) => setInvestorsSearchQuery(e.target.value)}
-                          placeholder="Leden en commissies zoeken..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-
-                    <div className="overflow-y-auto max-h-48">
-                      {(isLoadingCommissies || isLoadingPeople || isSearching) ? (
-                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          {isSearching ? 'Zoeken...' : 'Laden...'}
-                        </div>
-                      ) : availableInvestors.length > 0 ? (
-                        availableInvestors.map((item) => (
-                          <button
-                            key={`${item.type}-${item.id}`}
-                            type="button"
-                            onClick={() => {
-                              setSelectedInvestors(prev => [...prev, item]);
-                              setInvestorsSearchQuery('');
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            {item.thumbnail ? (
-                              <img
-                                src={item.thumbnail}
-                                alt={item.name}
-                                className={`w-6 h-6 object-cover ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}
-                              />
-                            ) : (
-                              <div className={`w-6 h-6 bg-gray-200 dark:bg-gray-600 flex items-center justify-center ${item.type === 'person' ? 'rounded-full' : 'rounded'}`}>
-                                {item.type === 'person' ? (
-                                  <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                ) : (
-                                  <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                                )}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <span className="text-sm text-gray-900 dark:text-gray-50 truncate block">{item.name}</span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {item.type === 'person' ? 'Lid' : 'Commissie'}
-                              </span>
-                            </div>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          {investorsSearchQuery.length >= 2
-                            ? 'Geen resultaten gevonden'
-                            : 'Geen leden of commissies beschikbaar'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Selecteer leden of commissies die deze commissie sponsoren
               </p>
             </div>
           </div>
