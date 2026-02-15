@@ -65,6 +65,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Leden': return stats?.total_people || null;
       case 'Teams': return stats?.total_teams || null;
       case 'Commissies': return stats?.total_commissies || null;
+      case 'Feedback': return stats?.open_feedback_count || null;
       case 'VOG': {
         // Show two counts: not submitted to Justis | total needing VOG
         const totaal = notSubmittedToJustis + submittedToJustis;

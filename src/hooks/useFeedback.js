@@ -53,6 +53,7 @@ export function useCreateFeedback() {
     mutationFn: (data) => prmApi.createFeedback(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: feedbackKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -69,6 +70,7 @@ export function useUpdateFeedback() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: feedbackKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: feedbackKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
@@ -85,6 +87,7 @@ export function useDeleteFeedback() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: feedbackKeys.lists() });
       queryClient.invalidateQueries({ queryKey: feedbackKeys.details() });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }

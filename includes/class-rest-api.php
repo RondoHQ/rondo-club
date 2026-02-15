@@ -2054,6 +2054,9 @@ class Api extends Base {
 		// Get total volunteers count
 		$total_volunteers = $this->count_volunteers();
 
+		// Get open feedback count
+		$open_feedback_count = $this->count_open_feedback();
+
 		// Recently contacted (people with most recent activities)
 		$recently_contacted = $this->get_recently_contacted_people( 5 );
 
@@ -2066,6 +2069,7 @@ class Api extends Base {
 					'open_todos_count'     => $open_todos_count,
 					'awaiting_todos_count' => $awaiting_todos_count,
 					'total_volunteers'     => $total_volunteers,
+					'open_feedback_count'  => $open_feedback_count,
 				],
 				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
 				'upcoming_reminders' => $this->limit_reminders_with_all_today( $upcoming_reminders, 5 ),
@@ -2239,6 +2243,36 @@ class Api extends Base {
 							'value'   => '1',
 							'compare' => '!=',
 						],
+					],
+				],
+			]
+		);
+		return $query->found_posts;
+	}
+
+	/**
+	 * Count open feedback items.
+	 *
+	 * Counts published feedback posts with status NOT IN ('resolved', 'declined').
+	 * Also includes posts without a status field (which default to 'new').
+	 */
+	private function count_open_feedback() {
+		$query = new \WP_Query(
+			[
+				'post_type'      => 'rondo_feedback',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					'relation' => 'OR',
+					[
+						'key'     => 'status',
+						'value'   => [ 'resolved', 'declined' ],
+						'compare' => 'NOT IN',
+					],
+					[
+						'key'     => 'status',
+						'compare' => 'NOT EXISTS',
 					],
 				],
 			]
