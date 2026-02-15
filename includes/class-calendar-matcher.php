@@ -25,6 +25,29 @@ class Matcher {
 	const CACHE_EXPIRATION = DAY_IN_SECONDS;
 
 	/**
+	 * Execute a callback within a user context, restoring the original user afterward
+	 *
+	 * @param int      $user_id  WordPress user ID to switch to
+	 * @param callable $callback Callback to execute
+	 * @return mixed Return value from callback
+	 */
+	private static function with_user_context( int $user_id, callable $callback ) {
+		$original_user = get_current_user_id();
+
+		if ( $original_user !== $user_id ) {
+			wp_set_current_user( $user_id );
+		}
+
+		try {
+			return $callback();
+		} finally {
+			if ( $original_user !== $user_id ) {
+				wp_set_current_user( $original_user );
+			}
+		}
+	}
+
+	/**
 	 * Match attendees from a calendar event to CRM people
 	 *
 	 * @param int   $user_id   WordPress user ID (owner of contacts)
@@ -36,29 +59,23 @@ class Matcher {
 			return [];
 		}
 
-		// Set user context to bypass access control in cron/CLI contexts
-		$original_user = get_current_user_id();
-		if ( $original_user !== $user_id ) {
-			wp_set_current_user( $user_id );
-		}
+		return self::with_user_context(
+			$user_id,
+			function () use ( $user_id, $attendees ) {
+				// Build email lookup cache
+				$lookup  = self::get_email_lookup( $user_id );
+				$matches = [];
 
-		// Build email lookup cache
-		$lookup  = self::get_email_lookup( $user_id );
-		$matches = [];
+				foreach ( $attendees as $attendee ) {
+					$match = self::match_single( $user_id, $attendee, $lookup );
+					if ( $match !== null ) {
+						$matches[] = $match;
+					}
+				}
 
-		foreach ( $attendees as $attendee ) {
-			$match = self::match_single( $user_id, $attendee, $lookup );
-			if ( $match !== null ) {
-				$matches[] = $match;
+				return $matches;
 			}
-		}
-
-		// Restore original user context
-		if ( $original_user !== $user_id ) {
-			wp_set_current_user( $original_user );
-		}
-
-		return $matches;
+		);
 	}
 
 	/**
@@ -69,25 +86,16 @@ class Matcher {
 	 * @param bool $force   Force rebuild even if cache exists
 	 * @return array Email->person_id lookup map
 	 */
-	public static function get_email_lookup( int $user_id, bool $force = false ): array {
+	private static function get_email_lookup( int $user_id, bool $force = false ): array {
 		$cache_key = self::CACHE_PREFIX . $user_id;
 
 		// Check cache first
-		if ( ! $force ) {
-			$cached = get_transient( $cache_key );
-			if ( $cached !== false ) {
-				return $cached;
-			}
+		if ( ! $force && ( $cached = get_transient( $cache_key ) ) !== false ) {
+			return $cached;
 		}
 
 		// Build lookup from user's people
 		$lookup = [];
-
-		// Set user context to bypass access control in cron/CLI contexts
-		$original_user = get_current_user_id();
-		if ( $original_user !== $user_id ) {
-			wp_set_current_user( $user_id );
-		}
 
 		$people = get_posts(
 			[
@@ -127,11 +135,6 @@ class Matcher {
 			}
 		}
 
-		// Restore original user context
-		if ( $original_user !== $user_id ) {
-			wp_set_current_user( $original_user );
-		}
-
 		// Cache the lookup
 		set_transient( $cache_key, $lookup, self::CACHE_EXPIRATION );
 
@@ -157,62 +160,56 @@ class Matcher {
 	 * @return int Number of events re-matched
 	 */
 	public static function rematch_events_for_user( int $user_id ): int {
-		// Set user context to bypass access control in cron/CLI contexts
-		$original_user = get_current_user_id();
-		if ( $original_user !== $user_id ) {
-			wp_set_current_user( $user_id );
-		}
-
-		$events = get_posts(
-			[
-				'post_type'      => 'calendar_event',
-				'author'         => $user_id,
-				'posts_per_page' => -1,
-				'post_status'    => [ 'publish', 'future' ],
-				'meta_query'     => [
+		return self::with_user_context(
+			$user_id,
+			function () use ( $user_id ) {
+				$events = get_posts(
 					[
-						'key'     => '_attendees',
-						'compare' => '!=',
-						'value'   => '',
-					],
-				],
-			]
+						'post_type'      => 'calendar_event',
+						'author'         => $user_id,
+						'posts_per_page' => -1,
+						'post_status'    => [ 'publish', 'future' ],
+						'meta_query'     => [
+							[
+								'key'     => '_attendees',
+								'compare' => '!=',
+								'value'   => '',
+							],
+						],
+					]
+				);
+
+				$count = 0;
+
+				foreach ( $events as $event ) {
+					$attendees_json = get_post_meta( $event->ID, '_attendees', true );
+
+					if ( empty( $attendees_json ) ) {
+						continue;
+					}
+
+					$attendees = json_decode( $attendees_json, true );
+
+					if ( ! is_array( $attendees ) || empty( $attendees ) ) {
+						continue;
+					}
+
+					// Re-match attendees against updated contact list
+					$matches = self::match_attendees( $user_id, $attendees );
+
+					// Update matched people meta
+					update_post_meta( $event->ID, '_matched_people', wp_json_encode( $matches ) );
+
+					++$count;
+				}
+
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( "RONDO_Calendar_Matcher: Re-matched {$count} calendar events for user {$user_id}" );
+				}
+
+				return $count;
+			}
 		);
-
-		$count = 0;
-
-		foreach ( $events as $event ) {
-			$attendees_json = get_post_meta( $event->ID, '_attendees', true );
-
-			if ( empty( $attendees_json ) ) {
-				continue;
-			}
-
-			$attendees = json_decode( $attendees_json, true );
-
-			if ( ! is_array( $attendees ) || empty( $attendees ) ) {
-				continue;
-			}
-
-			// Re-match attendees against updated contact list
-			$matches = self::match_attendees( $user_id, $attendees );
-
-			// Update matched people meta
-			update_post_meta( $event->ID, '_matched_people', wp_json_encode( $matches ) );
-
-			++$count;
-		}
-
-		// Restore original user context
-		if ( $original_user !== $user_id ) {
-			wp_set_current_user( $original_user );
-		}
-
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( "RONDO_Calendar_Matcher: Re-matched {$count} calendar events for user {$user_id}" );
-		}
-
-		return $count;
 	}
 
 	/**
