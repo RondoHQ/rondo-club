@@ -361,6 +361,10 @@ run_claude() {
             git checkout main 2>/dev/null
             CLAUDE_EXIT=124
             CLAUDE_OUTPUT=$(cat "$output_file" 2>/dev/null)
+            if [ -n "$CLAUDE_OUTPUT" ]; then
+                local timeout_snippet=$(echo "$CLAUDE_OUTPUT" | tail -20)
+                log "ERROR" "Claude output at timeout: $timeout_snippet"
+            fi
             rm -f "$prompt_file" "$output_file"
             return 124
         fi
@@ -376,6 +380,13 @@ run_claude() {
     rm -f "$prompt_file" "$output_file"
     local duration=$((elapsed))
     log "INFO" "Claude session finished in ${duration}s (exit: $CLAUDE_EXIT)"
+
+    # Log Claude's error output when it fails (helps diagnose auth/credit/config issues)
+    if [ $CLAUDE_EXIT -ne 0 ] && [ -n "$CLAUDE_OUTPUT" ]; then
+        local error_snippet=$(echo "$CLAUDE_OUTPUT" | head -20)
+        log "ERROR" "Claude output on failure: $error_snippet"
+    fi
+
     return $CLAUDE_EXIT
 }
 
