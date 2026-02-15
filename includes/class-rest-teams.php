@@ -20,6 +20,7 @@ class Teams extends Base {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_filter( 'rest_prepare_team', [ $this, 'add_member_count_to_response' ], 10, 3 );
 	}
 
 	/**
@@ -355,6 +356,112 @@ class Teams extends Base {
 				'full_url'      => get_the_post_thumbnail_url( $team_id, 'full' ),
 			]
 		);
+	}
+
+	/**
+	 * Sportlink player position job titles.
+	 * These come from the Players API endpoint (UnionTeamPlayers/ClubTeamPlayers).
+	 * Everything else is considered staff (from NonPlayers endpoint).
+	 */
+	private const PLAYER_POSITIONS = [
+		'Teamspeler',
+		'Keeper',
+		'Verdediger',
+		'Middenvelder',
+		'Aanvaller',
+	];
+
+	/**
+	 * Get current member counts for all teams and commissies in a single query.
+	 *
+	 * Uses ACF repeater meta key patterns (work_history_X_team) and joins
+	 * with corresponding end_date and job_title entries to determine current
+	 * membership and player/staff classification.
+	 * Results are cached in a static variable for the duration of the request.
+	 *
+	 * @return array<int, array{total: int, players: int, staff: int}> Map of entity_id => counts.
+	 */
+	public static function get_all_member_counts() {
+		static $counts = null;
+
+		if ( $counts !== null ) {
+			return $counts;
+		}
+
+		global $wpdb;
+
+		$today = current_time( 'Y-m-d' );
+		$like  = $wpdb->esc_like( 'work_history_' ) . '%' . $wpdb->esc_like( '_team' );
+
+		// Build IN clause for player positions.
+		$position_placeholders = implode( ', ', array_fill( 0, count( self::PLAYER_POSITIONS ), '%s' ) );
+
+		// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m_team.meta_value AS entity_id,
+					COUNT(DISTINCT p.ID) AS total_count,
+					COUNT(DISTINCT CASE WHEN m_title.meta_value IN ({$position_placeholders}) THEN p.ID END) AS player_count
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} m_team ON m_team.post_id = p.ID
+				LEFT JOIN {$wpdb->postmeta} m_end ON m_end.post_id = p.ID
+					AND m_end.meta_key = CONCAT(
+						'work_history_',
+						REPLACE(REPLACE(m_team.meta_key, 'work_history_', ''), '_team', ''),
+						'_end_date'
+					)
+				LEFT JOIN {$wpdb->postmeta} m_title ON m_title.post_id = p.ID
+					AND m_title.meta_key = CONCAT(
+						'work_history_',
+						REPLACE(REPLACE(m_team.meta_key, 'work_history_', ''), '_team', ''),
+						'_job_title'
+					)
+				LEFT JOIN {$wpdb->postmeta} m_former ON m_former.post_id = p.ID
+					AND m_former.meta_key = 'former_member'
+				WHERE p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND m_team.meta_key LIKE %s
+					AND (m_former.meta_value IS NULL OR m_former.meta_value = '0' OR m_former.meta_value = '')
+					AND (m_end.meta_value IS NULL OR m_end.meta_value = '' OR m_end.meta_value >= %s)
+				GROUP BY m_team.meta_value",
+				...array_merge( self::PLAYER_POSITIONS, [ $like, $today ] )
+			)
+		);
+
+		$counts = [];
+		foreach ( $results as $row ) {
+			$total   = (int) $row->total_count;
+			$players = (int) $row->player_count;
+
+			$counts[ (int) $row->entity_id ] = [
+				'total'   => $total,
+				'players' => $players,
+				'staff'   => $total - $players,
+			];
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Add player_count and staff_count fields to team REST API responses.
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with player/staff counts.
+	 */
+	public function add_member_count_to_response( $response, $post, $request ) {
+		$counts = self::get_all_member_counts();
+		$data   = $response->get_data();
+		$entry  = $counts[ $post->ID ] ?? [ 'total' => 0, 'players' => 0, 'staff' => 0 ];
+
+		$data['player_count'] = $entry['players'];
+		$data['staff_count']  = $entry['staff'];
+
+		$response->set_data( $data );
+
+		return $response;
 	}
 
 	/**

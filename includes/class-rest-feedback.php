@@ -606,6 +606,11 @@ class Feedback extends Base {
 			update_post_meta( $feedback_id, '_feedback_agent_branch', sanitize_text_field( $agent_branch ) );
 		}
 
+		$agent_plan = $request->get_param( 'agent_plan' );
+		if ( $agent_plan !== null ) {
+			update_post_meta( $feedback_id, '_feedback_agent_plan', wp_kses_post( $agent_plan ) );
+		}
+
 		// Return formatted updated feedback
 		$feedback = get_post( $feedback_id );
 		return rest_ensure_response( $this->format_feedback( $feedback ) );
@@ -788,6 +793,7 @@ class Feedback extends Base {
 				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
 				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
+				'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',
 			],
 		];
 	}

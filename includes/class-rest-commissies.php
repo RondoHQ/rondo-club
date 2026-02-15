@@ -20,6 +20,7 @@ class Commissies extends Base {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_filter( 'rest_prepare_commissie', [ $this, 'add_member_count_to_response' ], 10, 3 );
 	}
 
 	/**
@@ -209,6 +210,26 @@ class Commissies extends Base {
 				'former'  => $former,
 			]
 		);
+	}
+
+	/**
+	 * Add member_count field to commissie REST API responses.
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with member_count.
+	 */
+	public function add_member_count_to_response( $response, $post, $request ) {
+		$counts = Teams::get_all_member_counts();
+		$data   = $response->get_data();
+		$entry  = $counts[ $post->ID ] ?? [ 'total' => 0 ];
+
+		$data['member_count'] = $entry['total'];
+
+		$response->set_data( $data );
+
+		return $response;
 	}
 
 	/**

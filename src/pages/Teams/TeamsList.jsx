@@ -93,6 +93,12 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
           </Link>
         )}
       </td>
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
+        {team.player_count ?? 0}
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
+        {team.staff_count ?? 0}
+      </td>
       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
         {getSpeeldag(team.acf?.activiteit)}
       </td>
@@ -200,6 +206,8 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
               </button>
             </th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="player_count" label="Spelers" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="staff_count" label="Staf" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="speeldag" label="Speeldag" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             <SortableHeader field="gender" label="Gender" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
@@ -428,6 +436,14 @@ export default function TeamsList() {
       } else if (sortField === 'gender') {
         valueA = getGenderLabel(a.acf?.gender).toLowerCase();
         valueB = getGenderLabel(b.acf?.gender).toLowerCase();
+      } else if (sortField === 'player_count') {
+        valueA = a.player_count ?? 0;
+        valueB = b.player_count ?? 0;
+        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+      } else if (sortField === 'staff_count') {
+        valueA = a.staff_count ?? 0;
+        valueB = b.staff_count ?? 0;
+        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
       } else if (sortField.startsWith('custom_')) {
         // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
