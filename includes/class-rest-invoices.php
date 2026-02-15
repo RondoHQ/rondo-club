@@ -29,6 +29,28 @@ class Invoices extends Base {
 	 * Register REST API routes
 	 */
 	public function register_routes() {
+		// Get invoiced discipline case IDs for a person
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/invoiced-cases',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_invoiced_case_ids' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'person_id' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+							'sanitize_callback' => 'absint',
+						],
+					],
+				],
+			]
+		);
+
 		// List invoices
 		register_rest_route(
 			'rondo/v1',
@@ -112,6 +134,51 @@ class Invoices extends Base {
 	 */
 	public function check_financieel_permission() {
 		return current_user_can( 'financieel' );
+	}
+
+	/**
+	 * Get discipline case IDs that already have invoices for a person
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response containing array of discipline case IDs.
+	 */
+	public function get_invoiced_case_ids( $request ) {
+		$person_id = (int) $request->get_param( 'person_id' );
+
+		// Query all invoices for this person (all non-trash statuses)
+		$args = [
+			'post_type'      => 'rondo_invoice',
+			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+			'posts_per_page' => -1,
+			'meta_query'     => [
+				[
+					'key'     => 'person',
+					'value'   => $person_id,
+					'compare' => '=',
+				],
+			],
+		];
+
+		$query    = new \WP_Query( $args );
+		$case_ids = [];
+
+		// Extract discipline case IDs from line items
+		foreach ( $query->posts as $invoice ) {
+			$line_items = get_field( 'line_items', $invoice->ID );
+
+			if ( $line_items && is_array( $line_items ) ) {
+				foreach ( $line_items as $item ) {
+					if ( ! empty( $item['discipline_case'] ) ) {
+						$case_ids[] = (int) $item['discipline_case'];
+					}
+				}
+			}
+		}
+
+		// Return unique case IDs
+		$case_ids = array_values( array_unique( $case_ids ) );
+
+		return rest_ensure_response( [ 'case_ids' => $case_ids ] );
 	}
 
 	/**
