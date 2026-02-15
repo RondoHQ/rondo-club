@@ -40,7 +40,7 @@ class PrincipalBackend extends AbstractBackend {
 		// Get all users who can use the CRM
 		$users = get_users(
 			[
-				'role__in' => $this->get_authorized_roles(),
+				'role__in' => $this->getAuthorizedRoles(),
 			]
 		);
 
@@ -72,7 +72,7 @@ class PrincipalBackend extends AbstractBackend {
 		}
 
 		// Verify user has appropriate role
-		if ( ! $this->is_authorized_user( $user ) ) {
+		if ( ! $this->isAuthorizedUser( $user ) ) {
 			return null;
 		}
 
@@ -110,7 +110,7 @@ class PrincipalBackend extends AbstractBackend {
 		$displayName = $searchProperties['{DAV:}displayname'] ?? null;
 
 		$args = [
-			'role__in' => $this->get_authorized_roles(),
+			'role__in' => $this->getAuthorizedRoles(),
 		];
 
 		if ( $email ) {
@@ -144,7 +144,7 @@ class PrincipalBackend extends AbstractBackend {
 			$email = substr( $uri, 7 );
 			$user  = get_user_by( 'email', $email );
 
-			if ( $user && $this->is_authorized_user( $user ) ) {
+			if ( $user && $this->isAuthorizedUser( $user ) ) {
 				return $principalPrefix . '/' . $user->user_login;
 			}
 		}
@@ -200,7 +200,7 @@ class PrincipalBackend extends AbstractBackend {
 	 *
 	 * @return array Role slugs that can access CardDAV
 	 */
-	private function get_authorized_roles() {
+	private function getAuthorizedRoles() {
 		if ( $this->authorized_roles === null ) {
 			$this->authorized_roles = array_merge(
 				[ 'administrator' ],
@@ -217,7 +217,7 @@ class PrincipalBackend extends AbstractBackend {
 	 * @param \WP_User $user WordPress user
 	 * @return bool True if user is authorized
 	 */
-	private function is_authorized_user( \WP_User $user ) {
+	private function isAuthorizedUser( \WP_User $user ) {
 		return user_can( $user, 'manage_options' ) || \Rondo\Core\UserRoles::has_rondo_role( $user );
 	}
 }
