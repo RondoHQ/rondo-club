@@ -1202,8 +1202,19 @@ class People extends Base {
 				break;
 			case 'custom_datum-vog':
 				// ACF date field - not a custom field from Manager, so handle explicitly
-				$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = 'datum-vog'";
-				$order_clause   = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
+				// Check if 'dv' alias already exists from VOG filtering (lines 1114-1149)
+				// to avoid duplicate JOINs on the same table
+				$has_dv_join = false;
+				foreach ( $join_clauses as $join ) {
+					if ( strpos( $join, ' dv ON ' ) !== false && strpos( $join, "meta_key = 'datum-vog'" ) !== false ) {
+						$has_dv_join = true;
+						break;
+					}
+				}
+				if ( ! $has_dv_join ) {
+					$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
+				}
+				$order_clause   = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
 			case 'custom_lid-sinds':
 			case 'custom_datum-foto':
