@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Bug, Lightbulb, Clock, User, Monitor, Link as LinkIcon, Pencil, ExternalLink, MessageCircle, Bot, Send } from 'lucide-react';
 import { useFeedback, useUpdateFeedback, useFeedbackComments, useCreateFeedbackComment } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { format } from '@/utils/dateFormat';
 import FeedbackEditModal from '@/components/FeedbackEditModal';
 
@@ -58,11 +59,14 @@ export default function FeedbackDetail() {
   const { id } = useParams();
   const { data: feedback, isLoading, error } = useFeedback(id);
   const { data: comments = [] } = useFeedbackComments(id);
+  const { data: currentUser } = useCurrentUser();
   const updateFeedback = useUpdateFeedback();
   const createComment = useCreateFeedbackComment();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
   useDocumentTitle(feedback?.title || 'Feedback');
+
+  const isAdmin = currentUser?.is_admin ?? false;
 
   const handleEditSubmit = (data) => {
     updateFeedback.mutate(
@@ -414,6 +418,7 @@ export default function FeedbackDetail() {
         onSubmit={handleEditSubmit}
         isLoading={updateFeedback.isPending}
         feedback={feedback}
+        isAdmin={isAdmin}
       />
     </div>
   );
