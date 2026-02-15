@@ -57,9 +57,13 @@ export default function FeedbackEditModal({
       content: data.content,
       feedback_type: data.feedback_type,
       project: data.project,
-      status: data.status,
-      priority: data.priority,
     };
+
+    // Only include status and priority if user is admin
+    if (isAdmin) {
+      submitData.status = data.status;
+      submitData.priority = data.priority;
+    }
 
     // Add type-specific fields
     if (data.feedback_type === 'bug') {
