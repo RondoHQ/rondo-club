@@ -71,13 +71,7 @@ class AutoTitle {
 	 * Auto-generate Person post title from first_name + last_name
 	 */
 	public function auto_generate_person_title( $post_id ) {
-		// Skip if not a person post type
-		if ( get_post_type( $post_id ) !== 'person' ) {
-			return;
-		}
-
-		// Skip autosaves and revisions
-		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+		if ( ! $this->is_valid_person_save( $post_id ) ) {
 			return;
 		}
 
@@ -101,15 +95,33 @@ class AutoTitle {
 	}
 
 	/**
+	 * Validate that this is a legitimate person post save operation
+	 *
+	 * @param int $post_id Post ID to validate.
+	 * @return bool True if valid person save, false otherwise.
+	 */
+	private function is_valid_person_save( int $post_id ): bool {
+		if ( get_post_type( $post_id ) !== 'person' ) {
+			return false;
+		}
+
+		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Build and save the person title from ACF name fields.
 	 *
 	 * @param int $post_id Person post ID.
 	 */
 	private function update_person_title( int $post_id ): void {
 		$full_name = implode( ' ', array_filter( [
-			get_field( 'first_name', $post_id ) ?: '',
-			get_field( 'infix', $post_id ) ?: '',
-			get_field( 'last_name', $post_id ) ?: '',
+			get_field( 'first_name', $post_id ),
+			get_field( 'infix', $post_id ),
+			get_field( 'last_name', $post_id ),
 		] ) );
 
 		if ( empty( $full_name ) ) {
@@ -170,13 +182,7 @@ class AutoTitle {
 	 * @param int $post_id Post ID being saved
 	 */
 	public function trigger_calendar_rematch( $post_id ) {
-		// Skip if not a person post type
-		if ( get_post_type( $post_id ) !== 'person' ) {
-			return;
-		}
-
-		// Skip autosaves and revisions
-		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
+		if ( ! $this->is_valid_person_save( $post_id ) ) {
 			return;
 		}
 
