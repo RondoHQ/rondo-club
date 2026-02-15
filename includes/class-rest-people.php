@@ -989,8 +989,7 @@ class People extends Base {
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
-		$access_control = new \Rondo\Core\AccessControl();
-		if ( ! $access_control->is_user_approved() ) {
+		if ( ! is_user_logged_in() ) {
 			return rest_ensure_response(
 				[
 					'people'      => [],
@@ -1443,8 +1442,7 @@ class People extends Base {
 		global $wpdb;
 
 		// Double-check access control (permission_callback should have caught this)
-		$access_control = new \Rondo\Core\AccessControl();
-		if ( ! $access_control->is_user_approved() ) {
+		if ( ! is_user_logged_in() ) {
 			return rest_ensure_response(
 				[
 					'total'        => 0,

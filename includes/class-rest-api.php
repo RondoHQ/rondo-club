@@ -2290,10 +2290,10 @@ class Api extends Base {
 		global $wpdb;
 
 		$user_id        = get_current_user_id();
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 
 		// Check if user has access (all approved users see all data)
-		if ( ! $access_control->is_user_approved( $user_id ) ) {
+		if ( ! is_user_logged_in() ) {
 			return [];
 		}
 

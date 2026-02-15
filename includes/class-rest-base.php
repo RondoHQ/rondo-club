@@ -65,13 +65,8 @@ abstract class Base {
 			return false;
 		}
 
-		// Check authentication first
-		if ( ! $this->check_user_approved() ) {
-			return false;
-		}
-
 		$person_id      = $request->get_param( 'person_id' );
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 
 		return $access_control->user_can_access_post( $person_id );
 	}
@@ -87,11 +82,6 @@ abstract class Base {
 	 */
 	public function check_person_edit_permission( $request ) {
 		if ( ! is_user_logged_in() ) {
-			return false;
-		}
-
-		// Check authentication first
-		if ( ! $this->check_user_approved() ) {
 			return false;
 		}
 
@@ -117,11 +107,6 @@ abstract class Base {
 	 */
 	public function check_company_edit_permission( $request ) {
 		if ( ! is_user_logged_in() ) {
-			return false;
-		}
-
-		// Check authentication first
-		if ( ! $this->check_user_approved() ) {
 			return false;
 		}
 

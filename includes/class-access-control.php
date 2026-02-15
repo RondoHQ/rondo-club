@@ -23,9 +23,9 @@ class AccessControl {
 		add_action( 'pre_get_posts', [ $this, 'filter_queries' ] );
 
 		// Filter REST API queries
-		add_filter( 'rest_person_query', [ $this, 'filter_rest_query' ], 10, 2 );
-		add_filter( 'rest_team_query', [ $this, 'filter_rest_query' ], 10, 2 );
-		add_filter( 'rest_rondo_todo_query', [ $this, 'filter_rest_query' ], 10, 2 );
+		add_filter( 'rest_person_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'person' ), 10, 2 );
+		add_filter( 'rest_team_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'team' ), 10, 2 );
+		add_filter( 'rest_rondo_todo_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_todo' ), 10, 2 );
 
 		// Filter REST API single item access
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
@@ -33,26 +33,6 @@ class AccessControl {
 		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 	}
 
-	/**
-	 * Check if a user is logged in and can access data
-	 *
-	 * All logged-in users can access data.
-	 *
-	 * @param int|null $user_id User ID (optional, defaults to current user).
-	 * @return bool Whether the user can access data.
-	 */
-	public function is_user_approved( $user_id = null ) {
-		if ( $user_id === null ) {
-			$user_id = get_current_user_id();
-		}
-
-		if ( ! $user_id ) {
-			return false;
-		}
-
-		// All logged-in users can access data
-		return true;
-	}
 
 	/**
 	 * Check if user should only see volunteers (VOG-only users)
@@ -91,7 +71,7 @@ class AccessControl {
 	 * @return bool Whether the user can access the post.
 	 */
 	public function user_can_access_post( $post_id, $user_id = null ) {
-		if ( ! $this->is_user_approved( $user_id ) ) {
+		if ( ! is_user_logged_in() ) {
 			return false;
 		}
 
@@ -114,32 +94,6 @@ class AccessControl {
 		return true;
 	}
 
-	/**
-	 * Get user's permission level for a post
-	 *
-	 * @param int      $post_id Post ID.
-	 * @param int|null $user_id User ID (optional, defaults to current user).
-	 * @return string|false 'owner' if user is the author, 'editor' otherwise, or false if no access.
-	 */
-	public function get_user_permission( $post_id, $user_id = null ) {
-		if ( $user_id === null ) {
-			$user_id = get_current_user_id();
-		}
-
-		if ( ! $this->user_can_access_post( $post_id, $user_id ) ) {
-			return false;
-		}
-
-		$post = get_post( $post_id );
-
-		// Owner - user created this post
-		if ( (int) $post->post_author === (int) $user_id ) {
-			return 'owner';
-		}
-
-		// All other approved users are editors
-		return 'editor';
-	}
 
 	/**
 	 * Filter WP_Query for access control
@@ -160,7 +114,7 @@ class AccessControl {
 		}
 
 		// Check if user is logged in
-		if ( ! $this->is_user_approved() ) {
+		if ( ! is_user_logged_in() ) {
 			// Not logged in - show nothing
 			$query->set( 'post__in', [ 0 ] );
 			return;
@@ -187,18 +141,21 @@ class AccessControl {
 	 * Filter REST API queries
 	 *
 	 * Logged-in users see all posts. Not logged-in users see nothing.
+	 *
+	 * @param array           $args    WP_Query arguments.
+	 * @param WP_REST_Request $request REST request object.
+	 * @param string          $post_type Post type being queried.
+	 * @return array Modified query arguments.
 	 */
-	public function filter_rest_query( $args, $request ) {
-		if ( ! $this->is_user_approved() ) {
+	public function filter_rest_query( $args, $request, $post_type ) {
+		if ( ! is_user_logged_in() ) {
 			// Not logged in - show nothing
 			$args['post__in'] = [ 0 ];
 			return $args;
 		}
 
 		// User isolation for tasks - users only see their own tasks
-		// Check if this is a rondo_todo query by examining current filter
-		$current_filter = current_filter();
-		if ( $current_filter === 'rest_rondo_todo_query' ) {
+		if ( $post_type === 'rondo_todo' ) {
 			$args['author'] = get_current_user_id();
 		}
 
@@ -209,10 +166,8 @@ class AccessControl {
 	 * Filter REST API single item access
 	 */
 	public function filter_rest_single_access( $response, $post, $request ) {
-		$user_id = get_current_user_id();
-
 		// Check if user is logged in
-		if ( ! $this->is_user_approved( $user_id ) ) {
+		if ( ! is_user_logged_in() ) {
 			return new \WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this resource.', 'rondo' ),
