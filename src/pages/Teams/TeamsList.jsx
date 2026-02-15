@@ -169,7 +169,7 @@ function SortableHeader({ field, label, currentSortField, currentSortOrder, onSo
     <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
       <button
         onClick={() => onSort(field)}
-        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer uppercase"
       >
         {label}
         {isActive && (
