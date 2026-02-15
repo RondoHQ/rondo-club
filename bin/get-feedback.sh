@@ -585,9 +585,9 @@ process_feedback_item() {
     # Run Claude in the project directory
     cd "$project_dir"
 
-    # --- Phase 1: Planning with Sonnet ---
+    # --- Phase 1: Planning with Opus ---
     log "INFO" "Starting planning session for feedback #${CURRENT_FEEDBACK_ID} in ${project_dir}"
-    echo -e "${YELLOW}Phase 1/2: Planning with Sonnet...${NC}" >&2
+    echo -e "${YELLOW}Phase 1/2: Planning with Opus...${NC}" >&2
 
     # Load codebase map if available
     local codebase_map=""
@@ -667,7 +667,7 @@ Be specific about code changes — include function names, class names, and desc
     local output_file=$(mktemp)
     printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 600 "sonnet"
+    run_claude "$prompt_file" "$output_file" 600 "opus"
 
     local plan_output="$CLAUDE_OUTPUT"
     local plan_exit=$CLAUDE_EXIT
@@ -692,7 +692,7 @@ Be specific about code changes — include function names, class names, and desc
         CLAUDE_EXIT=0
     else
         # --- Phase 2: Implementation with Sonnet ---
-        log "INFO" "Starting Sonnet implementation session for feedback #${CURRENT_FEEDBACK_ID}"
+        log "INFO" "Starting implementation session for feedback #${CURRENT_FEEDBACK_ID}"
         echo -e "${YELLOW}Phase 2/2: Implementing with Sonnet...${NC}" >&2
 
         local impl_prompt="${output}
@@ -751,7 +751,7 @@ Follow the implementation plan above. The plan was created by a senior engineer 
                 local pr_number=$(echo "$PARSED_PR_URL" | grep -oE '[0-9]+$')
                 if [ -n "$pr_number" ]; then
                     log "INFO" "Requesting Copilot review for PR #${pr_number}"
-                    gh copilot-review "$pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
+                    gh api -X POST "repos/RondoHQ/rondo-club/pulls/${pr_number}/requested_reviewers" --input - <<< '{"reviewers":["copilot-pull-request-reviewer[bot]"]}' > /dev/null 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
                 fi
             fi
             ;;
@@ -911,8 +911,43 @@ merge_and_deploy() {
     git pull --ff-only 2>/dev/null
     bin/deploy.sh
 
+    # Resolve any pr-pending optimization tracker entries now that main has the merged commits
+    resolve_pending_optimizations
+
     log "INFO" "Deploy complete after merging PR #${pr_number}"
     echo -e "${GREEN}Deploy complete after merging PR #${pr_number}${NC}" >&2
+}
+
+# Update optimization tracker: replace pr-pending entries with actual commit hashes from main
+resolve_pending_optimizations() {
+    local tracker="$PROJECT_ROOT/logs/optimization-tracker.json"
+    [ ! -f "$tracker" ] && return 0
+
+    local pending_keys
+    pending_keys=$(jq -r '.reviewed_files | to_entries[] | select(.value == "pr-pending") | .key' "$tracker" 2>/dev/null)
+    [ -z "$pending_keys" ] && return 0
+
+    while IFS= read -r tracker_key; do
+        [ -z "$tracker_key" ] && continue
+        local proj_name="${tracker_key%%:*}"
+        local relative_file="${tracker_key#*:}"
+
+        local proj_dir
+        case "$proj_name" in
+            rondo-club) proj_dir="$PROJECT_ROOT" ;;
+            rondo-sync) proj_dir="$(dirname "$PROJECT_ROOT")/rondo-sync" ;;
+            website)    proj_dir="$(dirname "$PROJECT_ROOT")/website" ;;
+            *) continue ;;
+        esac
+
+        local current_commit
+        current_commit=$(cd "$proj_dir" && git log -1 --format=%H -- "$relative_file" 2>/dev/null)
+        if [ -n "$current_commit" ]; then
+            jq --arg f "$tracker_key" --arg c "$current_commit" '.reviewed_files[$f] = $c' \
+                "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
+            log "INFO" "Resolved pr-pending for ${tracker_key} → ${current_commit:0:12}"
+        fi
+    done <<< "$pending_keys"
 }
 
 # Format review comments into a prompt for Claude
@@ -1222,6 +1257,10 @@ run_optimization() {
             local tracker_key="${proj_name}:${relative_file}"
             local last_commit=$(cd "$proj_dir" && git log -1 --format=%H -- "$relative_file" 2>/dev/null)
             local reviewed_commit=$(jq -r --arg f "$tracker_key" '.reviewed_files[$f] // empty' "$tracker")
+            # Skip files already reviewed (matching commit) or with a pending optimization PR
+            if [ "$reviewed_commit" = "pr-pending" ]; then
+                continue
+            fi
             if [ "$last_commit" != "$reviewed_commit" ]; then
                 target_file="$relative_file"
                 target_project="$proj_name"
@@ -1247,30 +1286,97 @@ run_optimization() {
         return 1
     fi
 
-    # Build optimization prompt
+    # --- Phase 1: Planning with Opus ---
+    log "INFO" "Optimization Phase 1: Planning with Opus for ${target_project}:${target_file}"
+    echo -e "${YELLOW}Phase 1/2: Planning optimization with Opus...${NC}" >&2
+
     local optimize_prompt_file="$PROJECT_ROOT/.claude/optimize-prompt.md"
-    local prompt=""
+    local base_prompt=""
     if [ -f "$optimize_prompt_file" ]; then
-        prompt=$(cat "$optimize_prompt_file")
+        base_prompt=$(cat "$optimize_prompt_file")
     else
-        prompt="Review the following file for simplification and optimization opportunities."
+        base_prompt="Review the following file for simplification and optimization opportunities."
     fi
 
-    prompt="${prompt}
+    local plan_prompt="${base_prompt}
 
 ## Target File
 \`${target_file}\` (project: ${target_project})
 
-Review this file and create a PR if you find confident improvements. If no changes are needed, just respond with STATUS: NO_CHANGES."
+## YOUR TASK: Create an Optimization Plan
 
-    # Run Claude in the project directory with timeout
+You are in PLANNING MODE. Do NOT make any code changes, do NOT create branches, do NOT commit anything.
+
+Read the target file and analyze it for optimization opportunities following the rules above.
+
+If no improvements are needed, respond with just: STATUS: NO_CHANGES
+
+If you find improvements, produce a plan:
+
+1. **Current issues** — What specific problems did you find (dead code, DRY violations, unnecessary complexity, performance issues)?
+2. **Proposed changes** — Describe each change precisely: what to remove, simplify, or restructure
+3. **Files affected** — List every file that needs changes (usually just the target file, but include others if DRY improvements span files)
+4. **Testing** — How to verify nothing broke (build commands, what to check)
+5. **PR details** — Suggested branch name (\`optimize/{module-name}\`), commit message, and PR description
+
+Be specific about the changes — include function names, line references, and describe the logic. Do NOT include actual code blocks."
+
     local prompt_file=$(mktemp)
     local output_file=$(mktemp)
-    printf '%s' "$prompt" > "$prompt_file"
+    printf '%s' "$plan_prompt" > "$prompt_file"
 
-    run_claude "$prompt_file" "$output_file" 300 "sonnet"
+    run_claude "$prompt_file" "$output_file" 300 "opus"
 
-    echo "$CLAUDE_OUTPUT"
+    local plan_output="$CLAUDE_OUTPUT"
+    local plan_exit=$CLAUDE_EXIT
+
+    if [ $plan_exit -ne 0 ]; then
+        log "ERROR" "Optimization planning session failed (exit: $plan_exit) — file NOT marked as reviewed"
+        cd "$target_dir"
+        git checkout main 2>/dev/null
+        cd "$PROJECT_ROOT"
+        return 1
+    fi
+
+    # Check if planning found nothing to optimize
+    if echo "$plan_output" | grep -qi "STATUS:.*NO_CHANGES"; then
+        log "INFO" "Optimization planning found no changes needed for ${target_project}:${target_file}"
+        echo "$plan_output"
+        CLAUDE_OUTPUT="$plan_output"
+        CLAUDE_EXIT=0
+    else
+        # --- Phase 2: Implementation with Sonnet ---
+        log "INFO" "Optimization Phase 2: Implementing with Sonnet for ${target_project}:${target_file}"
+        echo -e "${YELLOW}Phase 2/2: Implementing optimization with Sonnet...${NC}" >&2
+
+        local impl_prompt="${base_prompt}
+
+## Target File
+\`${target_file}\` (project: ${target_project})
+
+## Optimization Plan (from planning phase)
+
+${plan_output}
+
+## YOUR TASK: Execute the Optimization Plan
+
+Follow the optimization plan above. The plan was created by a senior engineer who analyzed the file. Execute it step by step:
+
+1. Create the branch as specified in the plan
+2. Make all the code changes described
+3. Run \`npm run build\` if you modified frontend files
+4. Commit and push
+5. Create the PR as described in the plan
+6. End your response with STATUS: RESOLVED and PR_URL, or STATUS: NO_CHANGES if the plan turned out to be unnecessary"
+
+        prompt_file=$(mktemp)
+        output_file=$(mktemp)
+        printf '%s' "$impl_prompt" > "$prompt_file"
+
+        run_claude "$prompt_file" "$output_file" 300 "sonnet"
+
+        echo "$CLAUDE_OUTPUT"
+    fi
 
     # If Claude failed, don't mark the file as reviewed — it wasn't actually reviewed
     if [ $CLAUDE_EXIT -ne 0 ]; then
@@ -1288,23 +1394,28 @@ Review this file and create a PR if you find confident improvements. If no chang
         created_pr=true
         if [ "$target_project" != "website" ]; then
             local opt_pr_number=$(echo "$opt_pr_url" | grep -oE '[0-9]+$')
-            if [ -n "$opt_pr_number" ]; then
-                log "INFO" "Requesting Copilot review for optimization PR #${opt_pr_number}"
-                gh copilot-review "$opt_pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${opt_pr_number}"
+            local opt_repo=$(echo "$opt_pr_url" | grep -oE 'github.com/[^/]+/[^/]+' | sed 's|github.com/||')
+            if [ -n "$opt_pr_number" ] && [ -n "$opt_repo" ]; then
+                log "INFO" "Requesting Copilot review for optimization PR #${opt_pr_number} (${opt_repo})"
+                gh api -X POST "repos/${opt_repo}/pulls/${opt_pr_number}/requested_reviewers" --input - <<< '{"reviewers":["copilot-pull-request-reviewer[bot]"]}' > /dev/null 2>&1 || log "WARN" "Copilot review request failed for PR #${opt_pr_number}"
             fi
         else
             log "INFO" "Skipping Copilot review for private repo: ${target_project}"
         fi
     fi
 
-    # Mark file as reviewed with its current commit hash
+    # Mark file as reviewed — use commit hash from main (after returning to main)
+    cd "$target_dir"
+    git checkout main 2>/dev/null
+    git pull --ff-only 2>/dev/null
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local tracker_key="${target_project}:${target_file}"
-    local file_commit=$(cd "$target_dir" && git log -1 --format=%H -- "$target_file" 2>/dev/null)
+    local file_commit=$(git log -1 --format=%H -- "$target_file" 2>/dev/null)
     if [ "$created_pr" = true ]; then
         log "INFO" "Optimization created PR for: \"${target_project}:${target_file}\""
-        jq --arg f "$tracker_key" --arg c "$file_commit" --arg t "$now" --arg d "$today" \
-            '.reviewed_files[$f] = $c | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
+        # Mark as pr-pending so the file is skipped until the PR is merged and changes the commit hash
+        jq --arg f "$tracker_key" --arg t "$now" --arg d "$today" \
+            '.reviewed_files[$f] = "pr-pending" | .last_run = $t | .daily_runs[$d] = ((.daily_runs[$d] // 0) + 1) | .daily_prs[$d] = ((.daily_prs[$d] // 0) + 1)' \
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     else
         log "INFO" "No optimizations found for: \"${target_project}:${target_file}\""
@@ -1313,9 +1424,7 @@ Review this file and create a PR if you find confident improvements. If no chang
             "$tracker" > "${tracker}.tmp" && mv "${tracker}.tmp" "$tracker"
     fi
 
-    # Return to main in project dir, then back to rondo-club
-    cd "$target_dir"
-    git checkout main 2>/dev/null
+    # Clean up merged branches and return to rondo-club root
     git branch --merged main | grep -E '^\s+(feedback|optimize|fix)/' | xargs -r git branch -d 2>/dev/null
     cd "$PROJECT_ROOT"
 
@@ -1534,7 +1643,7 @@ ${new_errors}"
         # Request Copilot review
         if [ -n "$pr_number" ]; then
             log "INFO" "Requesting Copilot review for PHP error fix PR #${pr_number}"
-            gh copilot-review "$pr_number" 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
+            gh api -X POST "repos/RondoHQ/rondo-club/pulls/${pr_number}/requested_reviewers" --input - <<< '{"reviewers":["copilot-pull-request-reviewer[bot]"]}' > /dev/null 2>&1 || log "WARN" "Copilot review request failed for PR #${pr_number}"
         fi
     elif echo "$CLAUDE_OUTPUT" | grep -qi "STATUS:.*NO_CHANGES"; then
         action="no_fix"
