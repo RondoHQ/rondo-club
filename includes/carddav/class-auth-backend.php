@@ -37,7 +37,6 @@ class AuthBackend extends AbstractBasic {
 		$user = get_user_by( 'login', $username );
 
 		if ( ! $user ) {
-			error_log( 'CardDAV Auth Failed: User not found - ' . $username );
 			return false;
 		}
 
@@ -48,7 +47,6 @@ class AuthBackend extends AbstractBasic {
 		$app_passwords = \WP_Application_Passwords::get_user_application_passwords( $user->ID );
 
 		if ( empty( $app_passwords ) ) {
-			error_log( 'CardDAV Auth Failed for user: ' . $username . ' - No application passwords found' );
 			return false;
 		}
 
@@ -69,7 +67,6 @@ class AuthBackend extends AbstractBasic {
 			}
 		}
 
-		error_log( 'CardDAV Auth Failed for user: ' . $username . ' - Invalid application password (tried ' . count( $app_passwords ) . ' passwords)' );
 		return false;
 	}
 
@@ -90,7 +87,6 @@ class AuthBackend extends AbstractBasic {
 		// Record the usage
 		\WP_Application_Passwords::record_application_password_usage( $user->ID, $app_password['uuid'] );
 
-		error_log( 'CardDAV Auth: Success for user ' . $user->user_login . ' with app password "' . $app_password['name'] . '"' );
 		return true;
 	}
 

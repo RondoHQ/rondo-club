@@ -130,8 +130,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		$tokens             = get_option( self::SYNC_TOKEN_OPTION, [] );
 		$tokens[ $user_id ] = time();
 		update_option( self::SYNC_TOKEN_OPTION, $tokens );
-
-		error_log( "CardDAV: Logged {$source} change - user {$user_id}, person {$person_id}, type: {$type}" );
 	}
 
 	/**
@@ -150,14 +148,11 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return array Array of address books
 	 */
 	public function getAddressBooksForUser( $principalUri ) {
-		error_log( "CardDAV: getAddressBooksForUser called for principal: {$principalUri}" );
-
 		$parts    = explode( '/', $principalUri );
 		$username = end( $parts );
 		$user     = get_user_by( 'login', $username );
 
 		if ( ! $user ) {
-			error_log( "CardDAV: getAddressBooksForUser - user not found for: {$username}" );
 			return [];
 		}
 
@@ -165,8 +160,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		$ctag       = $this->getCtag( $user->ID );
 		$sync_token = $this->getCurrentSyncToken( $user->ID );
-
-		error_log( "CardDAV: Returning address book for user ID {$user->ID}, ctag: {$ctag}, sync-token: {$sync_token}" );
 
 		// Each user has one address book containing their contacts
 		return [
@@ -222,8 +215,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return array Array of card data
 	 */
 	public function getCards( $addressBookId ) {
-		error_log( "CardDAV: getCards called for address book (user) ID: {$addressBookId}" );
-
 		$cards = [];
 
 		// Set current user for access control
@@ -252,8 +243,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			];
 		}
 
-		error_log( 'CardDAV: getCards returning ' . count( $cards ) . ' cards' );
-
 		return $cards;
 	}
 
@@ -266,8 +255,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 */
 	public function getCard( $addressBookId, $cardUri ) {
 		$person_id = $this->getPersonIdFromUri( $cardUri );
-
-		error_log( "CardDAV: getCard called for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ( $person_id ?: 'null' ) );
 
 		if ( ! $person_id ) {
 			return null;
@@ -329,8 +316,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return string|null ETag of the new card
 	 */
 	public function createCard( $addressBookId, $cardUri, $cardData ) {
-		error_log( "CardDAV: Creating new card for user {$addressBookId}, URI: {$cardUri}" );
-
 		// Skip WordPress hooks to avoid double-logging
 		self::set_skip_hooks( true );
 
@@ -338,7 +323,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		$parsed = \Rondo\Export\VCard::parse( $cardData );
 
 		if ( empty( $parsed['first_name'] ) && empty( $parsed['last_name'] ) && empty( $parsed['full_name'] ) ) {
-			error_log( 'CardDAV: Create failed - no name found in vCard data' );
 			self::set_skip_hooks( false );
 			return null;
 		}
@@ -391,8 +375,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Log the change for sync
 		$this->logChange( $addressBookId, $post_id, 'added' );
 
-		error_log( "CardDAV: Created new person ID {$post_id} - {$first_name} {$last_name} (URI: {$cardUri})" );
-
 		// Re-enable WordPress hooks
 		self::set_skip_hooks( false );
 
@@ -412,10 +394,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	public function updateCard( $addressBookId, $cardUri, $cardData ) {
 		$person_id = $this->getPersonIdFromUri( $cardUri );
 
-		error_log( "CardDAV: Updating card for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ( $person_id ?: 'null' ) );
-
 		if ( ! $person_id ) {
-			error_log( 'CardDAV: Update failed - could not parse person ID from URI' );
 			return null;
 		}
 
@@ -489,8 +468,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Log the change for sync
 		$this->logChange( $addressBookId, $person_id, 'modified' );
 
-		error_log( "CardDAV: Updated person ID {$person_id} - {$first_name} {$last_name}" );
-
 		// Re-enable WordPress hooks
 		self::set_skip_hooks( false );
 
@@ -509,10 +486,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	public function deleteCard( $addressBookId, $cardUri ) {
 		$person_id = $this->getPersonIdFromUri( $cardUri );
 
-		error_log( "CardDAV: Deleting card for user {$addressBookId}, URI: {$cardUri}, Person ID: " . ( $person_id ?: 'null' ) );
-
 		if ( ! $person_id ) {
-			error_log( 'CardDAV: Delete failed - could not parse person ID from URI' );
 			return false;
 		}
 
@@ -541,12 +515,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		// Delete the post (move to trash)
 		$result = wp_trash_post( $person_id );
 
-		if ( $result !== false ) {
-			error_log( "CardDAV: Deleted (trashed) person ID {$person_id}" );
-		} else {
-			error_log( "CardDAV: Delete failed for person ID {$person_id}" );
-		}
-
 		// Re-enable WordPress hooks
 		self::set_skip_hooks( false );
 
@@ -565,8 +533,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return array Changes since the token
 	 */
 	public function getChangesForAddressBook( $addressBookId, $syncToken, $syncLevel, $limit = null ) {
-		error_log( "CardDAV: getChangesForAddressBook called for user {$addressBookId}, syncToken: " . ( $syncToken ?: 'none' ) );
-
 		$result = [
 			'syncToken' => $this->getCurrentSyncToken( $addressBookId ),
 			'added'     => [],
@@ -576,7 +542,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 
 		// If no sync token provided, return all contacts as added
 		if ( empty( $syncToken ) ) {
-			error_log( 'CardDAV: No sync token - returning all contacts as added (initial sync)' );
 			wp_set_current_user( $addressBookId );
 
 			$persons = get_posts(
@@ -592,7 +557,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				$result['added'][] = $this->getUriForPerson( $person->ID );
 			}
 
-			error_log( 'CardDAV: Initial sync returning ' . count( $result['added'] ) . ' contacts' );
 			return $result;
 		}
 
@@ -629,8 +593,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 				++$count;
 			}
 		}
-
-		error_log( 'CardDAV: getChangesForAddressBook returning - added: ' . count( $result['added'] ) . ', modified: ' . count( $result['modified'] ) . ', deleted: ' . count( $result['deleted'] ) );
 
 		return $result;
 	}
@@ -873,7 +835,6 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			}
 
 			set_post_thumbnail( $person_id, $attachment_id );
-			error_log( "CardDAV: Imported photo for person {$person_id}, attachment ID: {$attachment_id}" );
 		}
 	}
 
