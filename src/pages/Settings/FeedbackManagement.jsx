@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ShieldAlert, Loader2, ArrowUp, ArrowDown, Eye, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, Loader2, Eye, ExternalLink } from 'lucide-react';
 import { useFeedbackList, useUpdateFeedback } from '@/hooks/useFeedback';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import SortableHeader from '@/components/SortableHeader';
 
 // Status options with badge colors
 const STATUS_OPTIONS = [
@@ -70,22 +71,6 @@ function AccessDenied() {
         </Link>
       </div>
     </div>
-  );
-}
-
-// Sortable header component
-function SortableHeader({ field, label, currentField, currentOrder, onSort }) {
-  const isActive = currentField === field;
-  return (
-    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
-      <button
-        onClick={() => onSort(field)}
-        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
-      >
-        {label}
-        {isActive && (currentOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
-      </button>
-    </th>
   );
 }
 
@@ -157,13 +142,9 @@ export default function FeedbackManagement() {
   };
 
   // Sort handler
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('desc');
-    }
+  const handleSort = (field, order) => {
+    setSortField(field);
+    setSortOrder(order);
   };
 
   // Loading state
@@ -287,35 +268,39 @@ export default function FeedbackManagement() {
                     Project
                   </th>
                   <SortableHeader
-                    field="title"
+                    columnId="title"
                     label="Titel"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
                     onSort={handleSort}
+                    defaultOrder="desc"
                   />
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     Auteur
                   </th>
                   <SortableHeader
-                    field="status"
+                    columnId="status"
                     label="Status"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
                     onSort={handleSort}
+                    defaultOrder="desc"
                   />
                   <SortableHeader
-                    field="priority"
+                    columnId="priority"
                     label="Prioriteit"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
                     onSort={handleSort}
+                    defaultOrder="desc"
                   />
                   <SortableHeader
-                    field="date"
+                    columnId="date"
                     label="Datum"
-                    currentField={sortField}
-                    currentOrder={sortOrder}
+                    sortField={sortField}
+                    sortOrder={sortOrder}
                     onSort={handleSort}
+                    defaultOrder="desc"
                   />
                   <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                     PR

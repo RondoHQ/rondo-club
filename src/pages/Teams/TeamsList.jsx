@@ -1,12 +1,13 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, ArrowUp, ArrowDown, Check, Pencil } from 'lucide-react';
+import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { getTeamName } from '@/utils/formatters';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
+import SortableHeader from '@/components/SortableHeader';
 
 function getSpeeldag(activiteit) {
   if (!activiteit) return '';
@@ -161,29 +162,6 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
   );
 }
 
-// Sortable header component for clickable column headers
-function SortableHeader({ field, label, currentSortField, currentSortOrder, onSort }) {
-  const isActive = currentSortField === field;
-
-  return (
-    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
-      <button
-        onClick={() => onSort(field)}
-        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer uppercase"
-      >
-        {label}
-        {isActive && (
-          currentSortOrder === 'asc' ? (
-            <ArrowUp className="w-3 h-3" />
-          ) : (
-            <ArrowDown className="w-3 h-3" />
-          )
-        )}
-      </button>
-    </th>
-  );
-}
-
 function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
   return (
     <div className="card !overflow-x-auto max-h-[calc(100vh-12rem)] !overflow-y-auto">
@@ -205,18 +183,18 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
                 )}
               </button>
             </th>
-            <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="player_count" label="Spelers" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="staff_count" label="Staf" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="speeldag" label="Speeldag" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader field="gender" label="Gender" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="name" label="Naam" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="player_count" label="Spelers" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="staff_count" label="Staf" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="speeldag" label="Speeldag" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader columnId="gender" label="Gender" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
-                field={`custom_${field.name}`}
+                columnId={`custom_${field.name}`}
                 label={field.label}
-                currentSortField={sortField}
-                currentSortOrder={sortOrder}
+                sortField={sortField}
+                sortOrder={sortOrder}
                 onSort={onSort}
               />
             ))}
@@ -731,13 +709,9 @@ export default function TeamsList() {
           isSomeSelected={isSomeSelected}
           sortField={sortField}
           sortOrder={sortOrder}
-          onSort={(field) => {
-            if (field === sortField) {
-              setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-            } else {
-              setSortField(field);
-              setSortOrder('asc');
-            }
+          onSort={(field, order) => {
+            setSortField(field);
+            setSortOrder(order);
           }}
           onSaveRow={handleSaveRow}
           isUpdating={updateRowMutation.isPending}

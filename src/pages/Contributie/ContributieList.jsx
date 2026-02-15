@@ -1,33 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, RefreshCw, Coins, FileSpreadsheet, Filter } from 'lucide-react';
+import { RefreshCw, Coins, FileSpreadsheet, Filter } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
 import SeasonSelector from './SeasonSelector';
-
-
-// Sortable header component
-function SortableHeader({ label, columnId, sortField, sortOrder, onSort, className = '' }) {
-  const isActive = sortField === columnId;
-  const nextOrder = isActive && sortOrder === 'asc' ? 'desc' : 'asc';
-  const SortIcon = sortOrder === 'asc' ? ArrowUp : ArrowDown;
-
-  return (
-    <th
-      scope="col"
-      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${className}`}
-      onClick={() => onSort(columnId, nextOrder)}
-    >
-      <div className="flex items-center gap-1">
-        {label}
-        {isActive && <SortIcon className="w-3 h-3" />}
-      </div>
-    </th>
-  );
-}
+import SortableHeader from '@/components/SortableHeader';
 
 // Fee row component
 function FeeRow({ member, isOdd, isForecast, categories }) {
