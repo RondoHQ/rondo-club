@@ -33,6 +33,15 @@ class AccessControl {
 		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 	}
 
+	/**
+	 * Get user ID, defaulting to current user if not provided
+	 *
+	 * @param int|null $user_id User ID (optional).
+	 * @return int User ID.
+	 */
+	private function get_user_id( $user_id = null ) {
+		return $user_id ?? get_current_user_id();
+	}
 
 	/**
 	 * Check if user should only see volunteers (VOG-only users)
@@ -41,12 +50,10 @@ class AccessControl {
 	 * see people who are current volunteers (huidig-vrijwilliger=1).
 	 *
 	 * @param int|null $user_id User ID (optional, defaults to current user).
-	 * @return bool Whether the user should only see volunteers.
+	 * @return bool Whether the user is a VOG-only user.
 	 */
-	public function should_filter_volunteers_only( $user_id = null ) {
-		if ( $user_id === null ) {
-			$user_id = get_current_user_id();
-		}
+	private function is_vog_only_user( $user_id = null ) {
+		$user_id = $this->get_user_id( $user_id );
 
 		if ( ! $user_id ) {
 			return false;
@@ -59,6 +66,21 @@ class AccessControl {
 
 		// VOG-only users (has VOG capability but not Fair Play) see only volunteers
 		return user_can( $user_id, 'vog' ) && ! user_can( $user_id, 'fairplay' );
+	}
+
+	/**
+	 * Apply VOG filter to query (limit to current volunteers only)
+	 *
+	 * @param \WP_Query $query Query object to modify.
+	 */
+	private function apply_vog_filter( $query ) {
+		$meta_query   = $query->get( 'meta_query' ) ?: [];
+		$meta_query[] = [
+			'key'     => 'huidig-vrijwilliger',
+			'value'   => '1',
+			'compare' => '=',
+		];
+		$query->set( 'meta_query', $meta_query );
 	}
 
 	/**
@@ -94,7 +116,6 @@ class AccessControl {
 		return true;
 	}
 
-
 	/**
 	 * Filter WP_Query for access control
 	 *
@@ -126,14 +147,8 @@ class AccessControl {
 		}
 
 		// VOG-only users see only volunteers for person post type
-		if ( $post_type === 'person' && $this->should_filter_volunteers_only() ) {
-			$meta_query   = $query->get( 'meta_query' ) ?: [];
-			$meta_query[] = [
-				'key'     => 'huidig-vrijwilliger',
-				'value'   => '1',
-				'compare' => '=',
-			];
-			$query->set( 'meta_query', $meta_query );
+		if ( $post_type === 'person' && $this->is_vog_only_user() ) {
+			$this->apply_vog_filter( $query );
 		}
 	}
 
