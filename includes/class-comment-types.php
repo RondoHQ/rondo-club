@@ -249,7 +249,7 @@ class CommentTypes {
 		}
 
 		$person_id      = $request->get_param( 'person_id' );
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 
 		return $access_control->user_can_access_post( $person_id );
 	}

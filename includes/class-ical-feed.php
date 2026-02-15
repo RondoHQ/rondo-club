@@ -245,7 +245,7 @@ class ICalFeed {
 		);
 
 		$dates = [];
-		$access_control = new \RONDO_Access_Control();
+		$access_control = new \Rondo\Core\AccessControl();
 
 		foreach ( $people_with_birthdays as $person ) {
 			// Check if user has access to this person
