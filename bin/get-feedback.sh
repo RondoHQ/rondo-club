@@ -1272,6 +1272,15 @@ Review this file and create a PR if you find confident improvements. If no chang
 
     echo "$CLAUDE_OUTPUT"
 
+    # If Claude failed, don't mark the file as reviewed — it wasn't actually reviewed
+    if [ $CLAUDE_EXIT -ne 0 ]; then
+        log "ERROR" "Optimization Claude session failed (exit: $CLAUDE_EXIT) — file NOT marked as reviewed"
+        cd "$target_dir"
+        git checkout main 2>/dev/null
+        cd "$PROJECT_ROOT"
+        return 1
+    fi
+
     # Request Copilot review if a PR was created (skip for private repos)
     local created_pr=false
     local opt_pr_url=$(echo "$CLAUDE_OUTPUT" | grep -oE 'https://github.com/[^ ]*pull/[0-9]+' | head -1)
@@ -1500,6 +1509,15 @@ ${new_errors}"
     run_claude "$prompt_file" "$output_file" 600 "sonnet"
 
     echo "$CLAUDE_OUTPUT"
+
+    # If Claude failed, don't count attempts — it wasn't actually processed
+    if [ $CLAUDE_EXIT -ne 0 ]; then
+        log "ERROR" "PHP error fix Claude session failed (exit: $CLAUDE_EXIT) — errors NOT counted as attempted"
+        rm -f "/tmp/rondo-php-error-sigs-$$"
+        cd "$PROJECT_ROOT"
+        git checkout main 2>/dev/null
+        return 1
+    fi
 
     # Update tracker for all attempted signatures
     local now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
