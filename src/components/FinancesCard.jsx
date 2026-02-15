@@ -1,10 +1,34 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Coins, AlertTriangle, Users, Calendar, Gavel } from 'lucide-react';
+import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
+import { usePersonInvoices } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
+
+/**
+ * Status badge component for invoices
+ */
+function StatusBadge({ status }) {
+  const styles = {
+    draft: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+    sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  const labels = {
+    draft: 'Concept',
+    sent: 'Verstuurd',
+    paid: 'Betaald',
+    overdue: 'Verlopen',
+  };
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[status] || styles.draft}`}>
+      {labels[status] || status}
+    </span>
+  );
+}
 
 /**
  * Finances card showing membership fee details for a person
@@ -20,6 +44,11 @@ export default function FinancesCard({ personId }) {
   // Fetch discipline cases (only if user has fairplay access)
   const { data: disciplineCases } = usePersonDisciplineCases(personId, {
     enabled: canAccessFairplay,
+  });
+
+  // Fetch invoices for this person (only if user has financieel access)
+  const { data: invoices = [] } = usePersonInvoices(personId, {
+    enabled: Boolean(currentUser?.can_access_financieel),
   });
 
   // Calculate discipline fee totals
@@ -202,6 +231,27 @@ export default function FinancesCard({ personId }) {
             <span className="text-sm text-amber-600 dark:text-amber-400">
               {formatCurrency(disciplineTotals.notDoorbelast, 2)}
             </span>
+          </div>
+        )}
+
+        {/* Invoices */}
+        {invoices.length > 0 && (
+          <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-1.5 mb-2">
+              <FileText className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Facturen</span>
+            </div>
+            <div className="space-y-1.5">
+              {invoices.map(invoice => (
+                <div key={invoice.id} className="flex justify-between items-center text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-600 dark:text-gray-400">{invoice.invoice_number}</span>
+                    <StatusBadge status={invoice.status} />
+                  </div>
+                  <span className="font-medium">{formatCurrency(invoice.total_amount, 2)}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
