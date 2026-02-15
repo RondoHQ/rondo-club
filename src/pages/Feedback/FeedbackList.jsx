@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { MessageSquare, Bug, Lightbulb, Plus, Filter } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
@@ -58,6 +58,7 @@ const projectColors = {
 
 export default function FeedbackList() {
   useDocumentTitle('Feedback');
+  const location = useLocation();
 
   // URL-based filter state for persistence across refresh/navigation
   const [searchParams, setSearchParams] = useSearchParams();
@@ -259,6 +260,7 @@ export default function FeedbackList() {
         onClose={() => setShowModal(false)}
         onSubmit={handleSubmit}
         isLoading={createFeedback.isPending}
+        urlContext={location.pathname}
       />
       </div>
     </PullToRefreshWrapper>

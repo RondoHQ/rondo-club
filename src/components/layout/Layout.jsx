@@ -14,6 +14,7 @@ import {
   Command,
   UsersRound,
   MessageSquare,
+  MessageSquarePlus,
   User,
   FileCheck,
   Coins,
@@ -27,6 +28,8 @@ import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { APP_NAME } from '@/constants/app';
+import FeedbackModal from '@/components/FeedbackModal';
+import { useCreateFeedback } from '@/hooks/useFeedback';
 
 // Get site name from WordPress config or fall back to APP_NAME
 const getSiteName = () => window.rondoConfig?.siteName || APP_NAME;
@@ -460,7 +463,7 @@ function SearchModal({ isOpen, onClose }) {
   );
 }
 
-function Header({ onMenuClick, onOpenSearch }) {
+function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -520,6 +523,16 @@ function Header({ onMenuClick, onOpenSearch }) {
       {/* Spacer */}
       <div className="flex-1" />
 
+      {/* Feedback button */}
+      <button
+        onClick={onOpenFeedback}
+        className="p-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors dark:text-gray-400 dark:hover:bg-gray-700"
+        aria-label="Feedback verzenden"
+        title="Feedback verzenden"
+      >
+        <MessageSquarePlus className="w-5 h-5" />
+      </button>
+
       {/* Search button */}
       <button
         onClick={onOpenSearch}
@@ -556,9 +569,11 @@ function DemoBanner() {
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const mainRef = useRef(null);
   const location = useLocation();
   const isDemo = window.rondoConfig?.isDemo;
+  const createFeedback = useCreateFeedback();
 
   // Fetch dashboard stats for navigation counts
   const { data: dashboardData } = useDashboard();
@@ -620,6 +635,7 @@ export default function Layout({ children }) {
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           onOpenSearch={() => setShowSearchModal(true)}
+          onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
         <main ref={mainRef} tabIndex={-1} className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none">
@@ -631,6 +647,18 @@ export default function Layout({ children }) {
       <SearchModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
+      />
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        onSubmit={async (data) => {
+          await createFeedback.mutateAsync(data);
+          setShowFeedbackModal(false);
+        }}
+        isLoading={createFeedback.isPending}
+        urlContext={location.pathname}
       />
       </div>
     </>
