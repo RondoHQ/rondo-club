@@ -88,47 +88,56 @@ Requirements for discipline case invoicing. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | — | Pending |
-| NAV-02 | — | Pending |
-| INV-01 | — | Pending |
-| INV-02 | — | Pending |
-| INV-03 | — | Pending |
-| INV-04 | — | Pending |
-| INV-05 | — | Pending |
-| CREATE-01 | — | Pending |
-| CREATE-02 | — | Pending |
-| CREATE-03 | — | Pending |
-| PDF-01 | — | Pending |
-| PDF-02 | — | Pending |
-| PDF-03 | — | Pending |
-| PDF-04 | — | Pending |
-| PDF-05 | — | Pending |
-| PAY-01 | — | Pending |
-| PAY-02 | — | Pending |
-| PAY-03 | — | Pending |
-| PAY-04 | — | Pending |
-| PAY-05 | — | Pending |
-| EMAIL-01 | — | Pending |
-| EMAIL-02 | — | Pending |
-| EMAIL-03 | — | Pending |
-| SET-01 | — | Pending |
-| SET-02 | — | Pending |
-| SET-03 | — | Pending |
-| SET-04 | — | Pending |
-| SET-05 | — | Pending |
-| SET-06 | — | Pending |
-| MGMT-01 | — | Pending |
-| MGMT-02 | — | Pending |
-| MGMT-03 | — | Pending |
-| MGMT-04 | — | Pending |
-| MGMT-05 | — | Pending |
-| MGMT-06 | — | Pending |
+| NAV-01 | Phase 178 | Pending |
+| NAV-02 | Phase 178 | Pending |
+| SET-01 | Phase 178 | Pending |
+| SET-02 | Phase 178 | Pending |
+| SET-03 | Phase 178 | Pending |
+| SET-04 | Phase 178 | Pending |
+| SET-05 | Phase 178 | Pending |
+| SET-06 | Phase 178 | Pending |
+| INV-01 | Phase 179 | Pending |
+| INV-02 | Phase 179 | Pending |
+| INV-03 | Phase 179 | Pending |
+| INV-04 | Phase 179 | Pending |
+| INV-05 | Phase 179 | Pending |
+| CREATE-01 | Phase 180 | Pending |
+| CREATE-02 | Phase 180 | Pending |
+| CREATE-03 | Phase 180 | Pending |
+| PDF-01 | Phase 181 | Pending |
+| PDF-02 | Phase 181 | Pending |
+| PDF-03 | Phase 181 | Pending |
+| PDF-04 | Phase 181 | Pending |
+| PDF-05 | Phase 181 | Pending |
+| PAY-01 | Phase 182 | Pending |
+| PAY-02 | Phase 182 | Pending |
+| PAY-03 | Phase 182 | Pending |
+| PAY-04 | Phase 182 | Pending |
+| PAY-05 | Phase 182 | Pending |
+| EMAIL-01 | Phase 183 | Pending |
+| EMAIL-02 | Phase 183 | Pending |
+| EMAIL-03 | Phase 183 | Pending |
+| MGMT-01 | Phase 184 | Pending |
+| MGMT-02 | Phase 184 | Pending |
+| MGMT-03 | Phase 184 | Pending |
+| MGMT-04 | Phase 184 | Pending |
+| MGMT-05 | Phase 184 | Pending |
+| MGMT-06 | Phase 184 | Pending |
 
 **Coverage:**
 - v26.0 requirements: 35 total
-- Mapped to phases: 0
-- Unmapped: 35 ⚠️
+- Mapped to phases: 35 (100% ✓)
+- Unmapped: 0
+
+**Phase Distribution:**
+- Phase 178 (Finance Navigation & Settings Backend): 8 requirements
+- Phase 179 (Invoice Data Model & REST API): 5 requirements
+- Phase 180 (Invoice Creation Flow): 3 requirements
+- Phase 181 (PDF Generation): 5 requirements
+- Phase 182 (Rabobank Payment Integration): 5 requirements
+- Phase 183 (Email Delivery): 3 requirements
+- Phase 184 (Invoice Management UI): 6 requirements
 
 ---
 *Requirements defined: 2026-02-15*
-*Last updated: 2026-02-15 after initial definition*
+*Last updated: 2026-02-15 after roadmap creation — 100% coverage validated*
