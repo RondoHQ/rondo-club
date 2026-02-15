@@ -31,6 +31,11 @@ class AccessControl {
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_team', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
+
+		// Add member counts to REST API responses
+		add_filter( 'rest_prepare_commissie', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_commissie', [ $this, 'add_member_counts' ], 10, 3 );
+		add_filter( 'rest_prepare_team', [ $this, 'add_team_member_counts' ], 10, 3 );
 	}
 
 	/**
@@ -228,6 +233,133 @@ class AccessControl {
 				[ 'status' => 404 ]
 			);
 		}
+
+		return $response;
+	}
+
+	/**
+	 * Add member counts to commissie REST API responses
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with member_count field.
+	 */
+	public function add_member_counts( $response, $post, $request ) {
+		// Only process commissie post type
+		if ( $post->post_type !== 'commissie' ) {
+			return $response;
+		}
+
+		// Return early if response is an error
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		// Query all people who have this commissie in their work_history
+		$member_count = 0;
+		$people_query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'     => 'work_history',
+						'value'   => '"commissie";i:' . $post->ID,
+						'compare' => 'LIKE',
+					],
+					[
+						'key'     => 'is_former_member',
+						'value'   => '0',
+						'compare' => '=',
+					],
+				],
+			]
+		);
+
+		$member_count = $people_query->found_posts;
+
+		// Add member_count to the response data
+		$data                    = $response->get_data();
+		$data['member_count']    = $member_count;
+		$response->set_data( $data );
+
+		return $response;
+	}
+
+	/**
+	 * Add player and staff counts to team REST API responses
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with player_count and staff_count fields.
+	 */
+	public function add_team_member_counts( $response, $post, $request ) {
+		// Only process team post type
+		if ( $post->post_type !== 'team' ) {
+			return $response;
+		}
+
+		// Return early if response is an error
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		// Query all people who have this team in their work_history
+		$people_query = new \WP_Query(
+			[
+				'post_type'      => 'person',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'     => 'work_history',
+						'value'   => '"team";i:' . $post->ID,
+						'compare' => 'LIKE',
+					],
+					[
+						'key'     => 'is_former_member',
+						'value'   => '0',
+						'compare' => '=',
+					],
+				],
+			]
+		);
+
+		$player_count = 0;
+		$staff_count  = 0;
+
+		// Count players vs staff by checking the role field in work_history
+		if ( $people_query->have_posts() ) {
+			foreach ( $people_query->posts as $person_id ) {
+				$work_history = get_field( 'work_history', $person_id );
+				if ( ! is_array( $work_history ) ) {
+					continue;
+				}
+
+				// Find entries for this team
+				foreach ( $work_history as $entry ) {
+					if ( isset( $entry['team'] ) && (int) $entry['team'] === $post->ID ) {
+						$role = isset( $entry['role'] ) ? $entry['role'] : '';
+						if ( $role === 'player' ) {
+							++$player_count;
+						} elseif ( $role === 'staff' ) {
+							++$staff_count;
+						}
+					}
+				}
+			}
+		}
+
+		// Add counts to the response data
+		$data                   = $response->get_data();
+		$data['player_count']   = $player_count;
+		$data['staff_count']    = $staff_count;
+		$response->set_data( $data );
 
 		return $response;
 	}

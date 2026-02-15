@@ -81,6 +81,9 @@ function OrganizationListRow({ commissie, listViewFields, isSelected, onToggleSe
           </Link>
         )}
       </td>
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+        {commissie.member_count || 0}
+      </td>
       {listViewFields.map(field => (
         <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(commissie.id)}>
           {isEditing ? (
@@ -182,6 +185,7 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
               </button>
             </th>
             <SortableHeader field="name" label="Naam" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
+            <SortableHeader field="member_count" label="Leden" currentSortField={sortField} currentSortOrder={sortOrder} onSort={onSort} />
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
@@ -392,6 +396,10 @@ export default function CommissiesList() {
       if (sortField === 'name') {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
+      } else if (sortField === 'member_count') {
+        valueA = parseFloat(a.member_count) || 0;
+        valueB = parseFloat(b.member_count) || 0;
+        return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
       } else if (sortField.startsWith('custom_')) {
         // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
