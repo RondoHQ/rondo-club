@@ -86,7 +86,7 @@ class Matcher {
 	 * @param bool $force   Force rebuild even if cache exists
 	 * @return array Email->person_id lookup map
 	 */
-	public static function get_email_lookup( int $user_id, bool $force = false ): array {
+	private static function get_email_lookup( int $user_id, bool $force = false ): array {
 		$cache_key = self::CACHE_PREFIX . $user_id;
 
 		// Check cache first
