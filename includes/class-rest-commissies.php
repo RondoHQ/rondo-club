@@ -223,8 +223,9 @@ class Commissies extends Base {
 	public function add_member_count_to_response( $response, $post, $request ) {
 		$counts = Teams::get_all_member_counts();
 		$data   = $response->get_data();
+		$entry  = $counts[ $post->ID ] ?? [ 'total' => 0 ];
 
-		$data['member_count'] = $counts[ $post->ID ] ?? 0;
+		$data['member_count'] = $entry['total'];
 
 		$response->set_data( $data );
 
