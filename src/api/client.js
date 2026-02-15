@@ -284,6 +284,10 @@ export const prmApi = {
   getClubConfig: () => api.get('/rondo/v1/config'),
   updateClubConfig: (data) => api.post('/rondo/v1/config', data),
 
+  // Finance settings (admin only)
+  getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
+  updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),
+
   // Membership fees
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),
   getFeeSummary: (params = {}) => api.get('/rondo/v1/fees/summary', { params }),

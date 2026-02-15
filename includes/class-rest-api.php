@@ -724,6 +724,36 @@ class Api extends Base {
 			]
 		);
 
+		// Finance settings (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/finance/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_finance_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_finance_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'org_name'              => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'org_address'           => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
+						'contact_email'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
+						'iban'                  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'payment_term_days'     => [ 'required' => false, 'type' => 'integer' ],
+						'payment_clause'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
+						'email_template'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
+						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+					],
+				],
+			]
+		);
+
 		// Volunteer role classification - available roles (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -3115,6 +3145,32 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $club_config->get_all_settings() );
+	}
+
+	/**
+	 * Get finance configuration settings
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with finance configuration settings.
+	 */
+	public function get_finance_settings( $request ) {
+		$finance_config = new \Rondo\Config\FinanceConfig();
+		return rest_ensure_response( $finance_config->get_all_settings() );
+	}
+
+	/**
+	 * Update finance configuration settings
+	 *
+	 * Supports partial updates - only provided fields will be updated.
+	 * Rabobank credentials are encrypted at rest using sodium.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Response with updated finance configuration settings.
+	 */
+	public function update_finance_settings( $request ) {
+		$finance_config = new \Rondo\Config\FinanceConfig();
+		$finance_config->update_settings( $request->get_params() );
+		return rest_ensure_response( $finance_config->get_all_settings() );
 	}
 
 	/**

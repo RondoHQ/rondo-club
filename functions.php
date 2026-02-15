@@ -68,6 +68,7 @@ use Rondo\VOG\VOGEmail;
 use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
+use Rondo\Config\FinanceConfig;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
