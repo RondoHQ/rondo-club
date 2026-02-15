@@ -20,6 +20,7 @@ class Teams extends Base {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_filter( 'rest_prepare_team', [ $this, 'add_member_count_to_response' ], 10, 3 );
 	}
 
 	/**
@@ -355,6 +356,78 @@ class Teams extends Base {
 				'full_url'      => get_the_post_thumbnail_url( $team_id, 'full' ),
 			]
 		);
+	}
+
+	/**
+	 * Get current member counts for all teams and commissies in a single query.
+	 *
+	 * Uses ACF repeater meta key patterns (work_history_X_team) and joins
+	 * with corresponding end_date entries to determine current membership.
+	 * Results are cached in a static variable for the duration of the request.
+	 *
+	 * @return array<int, int> Map of entity_id => member_count.
+	 */
+	public static function get_all_member_counts() {
+		static $counts = null;
+
+		if ( $counts !== null ) {
+			return $counts;
+		}
+
+		global $wpdb;
+
+		$today = current_time( 'Y-m-d' );
+		$like  = $wpdb->esc_like( 'work_history_' ) . '%' . $wpdb->esc_like( '_team' );
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT m_team.meta_value AS entity_id, COUNT(DISTINCT p.ID) AS member_count
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} m_team ON m_team.post_id = p.ID
+				LEFT JOIN {$wpdb->postmeta} m_end ON m_end.post_id = p.ID
+					AND m_end.meta_key = CONCAT(
+						'work_history_',
+						REPLACE(REPLACE(m_team.meta_key, 'work_history_', ''), '_team', ''),
+						'_end_date'
+					)
+				LEFT JOIN {$wpdb->postmeta} m_former ON m_former.post_id = p.ID
+					AND m_former.meta_key = 'former_member'
+				WHERE p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND m_team.meta_key LIKE %s
+					AND (m_former.meta_value IS NULL OR m_former.meta_value = '0' OR m_former.meta_value = '')
+					AND (m_end.meta_value IS NULL OR m_end.meta_value = '' OR m_end.meta_value >= %s)
+				GROUP BY m_team.meta_value",
+				$like,
+				$today
+			)
+		);
+
+		$counts = [];
+		foreach ( $results as $row ) {
+			$counts[ (int) $row->entity_id ] = (int) $row->member_count;
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Add member_count field to team REST API responses.
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with member_count.
+	 */
+	public function add_member_count_to_response( $response, $post, $request ) {
+		$counts = self::get_all_member_counts();
+		$data   = $response->get_data();
+
+		$data['member_count'] = $counts[ $post->ID ] ?? 0;
+
+		$response->set_data( $data );
+
+		return $response;
 	}
 
 	/**
