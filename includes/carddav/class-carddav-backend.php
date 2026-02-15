@@ -142,6 +142,23 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	}
 
 	/**
+	 * Execute a callback with WordPress hooks disabled
+	 *
+	 * Ensures hooks are always re-enabled even if exceptions occur
+	 *
+	 * @param callable $callback Function to execute
+	 * @return mixed Return value from callback
+	 */
+	private function withHooksDisabled( $callback ) {
+		self::set_skip_hooks( true );
+		try {
+			return $callback();
+		} finally {
+			self::set_skip_hooks( false );
+		}
+	}
+
+	/**
 	 * Get address books for a principal
 	 *
 	 * @param string $principalUri Principal URI (e.g., 'principals/username')
@@ -254,23 +271,9 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return array|null Card data or null if not found
 	 */
 	public function getCard( $addressBookId, $cardUri ) {
-		$person_id = $this->getPersonIdFromUri( $cardUri );
+		$person = $this->getVerifiedPerson( $addressBookId, $cardUri, true );
 
-		if ( ! $person_id ) {
-			return null;
-		}
-
-		// Set current user for access control
-		wp_set_current_user( $addressBookId );
-
-		$person = get_post( $person_id );
-
-		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
-			return null;
-		}
-
-		// Verify ownership
-		if ( (int) $person->post_author !== (int) $addressBookId ) {
+		if ( ! $person ) {
 			return null;
 		}
 
@@ -316,71 +319,66 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return string|null ETag of the new card
 	 */
 	public function createCard( $addressBookId, $cardUri, $cardData ) {
-		// Skip WordPress hooks to avoid double-logging
-		self::set_skip_hooks( true );
+		return $this->withHooksDisabled(
+			function () use ( $addressBookId, $cardUri, $cardData ) {
+				// Parse the vCard data
+				$parsed = \Rondo\Export\VCard::parse( $cardData );
 
-		// Parse the vCard data
-		$parsed = \Rondo\Export\VCard::parse( $cardData );
+				if ( empty( $parsed['first_name'] ) && empty( $parsed['last_name'] ) && empty( $parsed['full_name'] ) ) {
+					return null;
+				}
 
-		if ( empty( $parsed['first_name'] ) && empty( $parsed['last_name'] ) && empty( $parsed['full_name'] ) ) {
-			self::set_skip_hooks( false );
-			return null;
-		}
+				// Set current user
+				wp_set_current_user( $addressBookId );
 
-		// Set current user
-		wp_set_current_user( $addressBookId );
+				list( $first_name, $infix, $last_name ) = $this->parseNameFields( $parsed );
 
-		list( $first_name, $infix, $last_name ) = $this->parseNameFields( $parsed );
-
-		// Create the person post
-		$post_id = wp_insert_post(
-			[
-				'post_type'   => 'person',
-				'post_status' => 'publish',
-				'post_author' => $addressBookId,
-				'post_title'  => $this->buildPostTitle( $first_name, $infix, $last_name ),
-			]
-		);
-
-		if ( is_wp_error( $post_id ) || ! $post_id ) {
-			self::set_skip_hooks( false );
-			return null;
-		}
-
-		$this->updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name, true );
-
-		// Store the client's URI for future lookups
-		update_post_meta( $post_id, '_carddav_uri', $cardUri );
-
-		// Import notes as timeline notes
-		if ( ! empty( $parsed['notes'] ) ) {
-			foreach ( $parsed['notes'] as $note_content ) {
-				wp_insert_comment(
+				// Create the person post
+				$post_id = wp_insert_post(
 					[
-						'comment_post_ID'  => $post_id,
-						'comment_content'  => wp_kses_post( $note_content ),
-						'comment_type'     => \RONDO_Comment_Types::TYPE_NOTE,
-						'user_id'          => $addressBookId,
-						'comment_approved' => 1,
+						'post_type'   => 'person',
+						'post_status' => 'publish',
+						'post_author' => $addressBookId,
+						'post_title'  => $this->buildPostTitle( $first_name, $infix, $last_name ),
 					]
 				);
+
+				if ( is_wp_error( $post_id ) || ! $post_id ) {
+					return null;
+				}
+
+				$this->updatePersonFields( $post_id, $parsed, $first_name, $infix, $last_name, true );
+
+				// Store the client's URI for future lookups
+				update_post_meta( $post_id, '_carddav_uri', $cardUri );
+
+				// Import notes as timeline notes
+				if ( ! empty( $parsed['notes'] ) ) {
+					foreach ( $parsed['notes'] as $note_content ) {
+						wp_insert_comment(
+							[
+								'comment_post_ID'  => $post_id,
+								'comment_content'  => wp_kses_post( $note_content ),
+								'comment_type'     => \RONDO_Comment_Types::TYPE_NOTE,
+								'user_id'          => $addressBookId,
+								'comment_approved' => 1,
+							]
+						);
+					}
+				}
+
+				// Import photo (base64 or URL)
+				if ( ! empty( $parsed['photo_base64'] ) || ! empty( $parsed['photo_url'] ) ) {
+					$this->importPhoto( $post_id, $parsed, $first_name, $last_name );
+				}
+
+				// Log the change for sync
+				$this->logChange( $addressBookId, $post_id, 'added' );
+
+				// Generate etag from known values without re-fetching post
+				return $this->generateEtagFromId( $post_id );
 			}
-		}
-
-		// Import photo (base64 or URL)
-		if ( ! empty( $parsed['photo_base64'] ) || ! empty( $parsed['photo_url'] ) ) {
-			$this->importPhoto( $post_id, $parsed, $first_name, $last_name );
-		}
-
-		// Log the change for sync
-		$this->logChange( $addressBookId, $post_id, 'added' );
-
-		// Re-enable WordPress hooks
-		self::set_skip_hooks( false );
-
-		// Return the etag
-		$person = get_post( $post_id );
-		return $this->generateEtag( $person );
+		);
 	}
 
 	/**
@@ -392,88 +390,71 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return string|null ETag of the updated card
 	 */
 	public function updateCard( $addressBookId, $cardUri, $cardData ) {
-		$person_id = $this->getPersonIdFromUri( $cardUri );
+		$person = $this->getVerifiedPerson( $addressBookId, $cardUri, false );
 
-		if ( ! $person_id ) {
+		if ( ! $person ) {
 			return null;
 		}
 
-		// Skip WordPress hooks to avoid double-logging
-		self::set_skip_hooks( true );
+		$person_id = $person->ID;
 
-		// Set current user
-		wp_set_current_user( $addressBookId );
+		return $this->withHooksDisabled(
+			function () use ( $addressBookId, $cardUri, $cardData, $person_id ) {
+				// Parse the vCard data
+				$parsed = \Rondo\Export\VCard::parse( $cardData );
 
-		$person = get_post( $person_id );
+				list( $first_name, $infix, $last_name ) = $this->parseNameFields( $parsed );
 
-		if ( ! $person || $person->post_type !== 'person' ) {
-			self::set_skip_hooks( false );
-			return null;
-		}
-
-		// Verify ownership
-		if ( (int) $person->post_author !== (int) $addressBookId ) {
-			self::set_skip_hooks( false );
-			return null;
-		}
-
-		// Parse the vCard data
-		$parsed = \Rondo\Export\VCard::parse( $cardData );
-
-		list( $first_name, $infix, $last_name ) = $this->parseNameFields( $parsed );
-
-		// Update the post
-		wp_update_post(
-			[
-				'ID'         => $person_id,
-				'post_title' => $this->buildPostTitle( $first_name, $infix, $last_name ),
-			]
-		);
-
-		$this->updatePersonFields( $person_id, $parsed, $first_name, $infix, $last_name );
-
-		// Import new notes as timeline notes
-		// Note: We only add new notes, we don't sync/delete existing notes
-		if ( ! empty( $parsed['notes'] ) ) {
-			foreach ( $parsed['notes'] as $note_content ) {
-				// Check if this exact note already exists to avoid duplicates
-				$existing = get_comments(
+				// Update the post
+				wp_update_post(
 					[
-						'post_id' => $person_id,
-						'type'    => \RONDO_Comment_Types::TYPE_NOTE,
-						'search'  => $note_content,
-						'number'  => 1,
+						'ID'         => $person_id,
+						'post_title' => $this->buildPostTitle( $first_name, $infix, $last_name ),
 					]
 				);
 
-				if ( empty( $existing ) ) {
-					wp_insert_comment(
-						[
-							'comment_post_ID'  => $person_id,
-							'comment_content'  => wp_kses_post( $note_content ),
-							'comment_type'     => \RONDO_Comment_Types::TYPE_NOTE,
-							'user_id'          => $addressBookId,
-							'comment_approved' => 1,
-						]
-					);
+				$this->updatePersonFields( $person_id, $parsed, $first_name, $infix, $last_name );
+
+				// Import new notes as timeline notes
+				// Note: We only add new notes, we don't sync/delete existing notes
+				if ( ! empty( $parsed['notes'] ) ) {
+					foreach ( $parsed['notes'] as $note_content ) {
+						// Check if this exact note already exists to avoid duplicates
+						$existing = get_comments(
+							[
+								'post_id' => $person_id,
+								'type'    => \RONDO_Comment_Types::TYPE_NOTE,
+								'search'  => $note_content,
+								'number'  => 1,
+							]
+						);
+
+						if ( empty( $existing ) ) {
+							wp_insert_comment(
+								[
+									'comment_post_ID'  => $person_id,
+									'comment_content'  => wp_kses_post( $note_content ),
+									'comment_type'     => \RONDO_Comment_Types::TYPE_NOTE,
+									'user_id'          => $addressBookId,
+									'comment_approved' => 1,
+								]
+							);
+						}
+					}
 				}
+
+				// Import/update photo (base64 or URL)
+				if ( ! empty( $parsed['photo_base64'] ) || ! empty( $parsed['photo_url'] ) ) {
+					$this->importPhoto( $person_id, $parsed, $first_name, $last_name );
+				}
+
+				// Log the change for sync
+				$this->logChange( $addressBookId, $person_id, 'modified' );
+
+				// Generate etag from known values without re-fetching post
+				return $this->generateEtagFromId( $person_id );
 			}
-		}
-
-		// Import/update photo (base64 or URL)
-		if ( ! empty( $parsed['photo_base64'] ) || ! empty( $parsed['photo_url'] ) ) {
-			$this->importPhoto( $person_id, $parsed, $first_name, $last_name );
-		}
-
-		// Log the change for sync
-		$this->logChange( $addressBookId, $person_id, 'modified' );
-
-		// Re-enable WordPress hooks
-		self::set_skip_hooks( false );
-
-		// Return new etag
-		$person = get_post( $person_id );
-		return $this->generateEtag( $person );
+		);
 	}
 
 	/**
@@ -484,41 +465,25 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 * @return bool True if deleted
 	 */
 	public function deleteCard( $addressBookId, $cardUri ) {
-		$person_id = $this->getPersonIdFromUri( $cardUri );
+		$person = $this->getVerifiedPerson( $addressBookId, $cardUri, false );
 
-		if ( ! $person_id ) {
+		if ( ! $person ) {
 			return false;
 		}
 
-		// Skip WordPress hooks to avoid double-logging
-		self::set_skip_hooks( true );
+		$person_id = $person->ID;
 
-		// Set current user
-		wp_set_current_user( $addressBookId );
+		return $this->withHooksDisabled(
+			function () use ( $addressBookId, $cardUri, $person_id ) {
+				// Log the change before deletion (store URI since post will be gone)
+				$this->logChange( $addressBookId, $person_id, 'deleted', $cardUri );
 
-		$person = get_post( $person_id );
+				// Delete the post (move to trash)
+				$result = wp_trash_post( $person_id );
 
-		if ( ! $person || $person->post_type !== 'person' ) {
-			self::set_skip_hooks( false );
-			return false;
-		}
-
-		// Verify ownership
-		if ( (int) $person->post_author !== (int) $addressBookId ) {
-			self::set_skip_hooks( false );
-			return false;
-		}
-
-		// Log the change before deletion (store URI since post will be gone)
-		$this->logChange( $addressBookId, $person_id, 'deleted', $cardUri );
-
-		// Delete the post (move to trash)
-		$result = wp_trash_post( $person_id );
-
-		// Re-enable WordPress hooks
-		self::set_skip_hooks( false );
-
-		return $result !== false;
+				return $result !== false;
+			}
+		);
 	}
 
 	/**
@@ -684,6 +649,67 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	}
 
 	/**
+	 * Generate ETag for a person from ID (optimized for CRUD operations)
+	 *
+	 * @param int $person_id Person ID
+	 * @return string ETag
+	 */
+	private function generateEtagFromId( $person_id ) {
+		$modified = get_post_modified_time( 'Y-m-d H:i:s', true, $person_id );
+
+		// Fallback handling in case get_post_modified_time() returns false
+		if ( false === $modified ) {
+			$person = get_post( $person_id );
+			if ( $person && isset( $person->post_modified_gmt ) ) {
+				$modified = $person->post_modified_gmt;
+			} else {
+				// As a last resort, use an empty string to keep the ETag deterministic
+				$modified = '';
+			}
+		}
+
+		return '"' . md5( $person_id . $modified ) . '"';
+	}
+
+	/**
+	 * Get and verify a person post
+	 *
+	 * Sets current user, retrieves post, and verifies type, status, and ownership
+	 *
+	 * @param int $addressBookId Address book/user ID
+	 * @param string $cardUri Card URI
+	 * @param bool $require_publish Whether to require 'publish' status
+	 * @return \WP_Post|null Verified person post or null if verification fails
+	 */
+	private function getVerifiedPerson( $addressBookId, $cardUri, $require_publish = true ) {
+		$person_id = $this->getPersonIdFromUri( $cardUri );
+
+		if ( ! $person_id ) {
+			return null;
+		}
+
+		// Set current user for access control
+		wp_set_current_user( $addressBookId );
+
+		$person = get_post( $person_id );
+
+		if ( ! $person || $person->post_type !== 'person' ) {
+			return null;
+		}
+
+		if ( $require_publish && $person->post_status !== 'publish' ) {
+			return null;
+		}
+
+		// Verify ownership
+		if ( (int) $person->post_author !== (int) $addressBookId ) {
+			return null;
+		}
+
+		return $person;
+	}
+
+	/**
 	 * Get person ID from card URI
 	 *
 	 * Supports both numeric URIs (123.vcf) and custom client URIs (stored in meta)
@@ -736,7 +762,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	 */
 	private function parseNameFields( $parsed ) {
 		$first_name = $parsed['first_name'] ?: '';
-		$infix      = $parsed['infix'] ?? '';
+		$infix      = $parsed['infix'] ?: '';
 		$last_name  = $parsed['last_name'] ?: '';
 
 		if ( empty( $first_name ) && empty( $last_name ) && ! empty( $parsed['full_name'] ) ) {
@@ -839,6 +865,23 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 	}
 
 	/**
+	 * Generate photo filename from person data
+	 *
+	 * @param int $person_id Person ID
+	 * @param string $first_name First name
+	 * @param string $last_name Last name
+	 * @param string $extension File extension (without dot)
+	 * @return string Filename with extension
+	 */
+	private function generatePhotoFilename( $person_id, $first_name, $last_name, $extension ) {
+		$filename = sanitize_title( strtolower( trim( $first_name . ' ' . $last_name ) ) );
+		if ( empty( $filename ) ) {
+			$filename = 'photo-' . $person_id;
+		}
+		return $filename . '.' . $extension;
+	}
+
+	/**
 	 * Save base64 encoded photo as attachment
 	 *
 	 * @param string $base64_data Base64 encoded image data
@@ -865,11 +908,7 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 		}
 
 		// Create filename
-		$filename = sanitize_title( strtolower( trim( $first_name . ' ' . $last_name ) ) );
-		if ( empty( $filename ) ) {
-			$filename = 'photo-' . $person_id;
-		}
-		$filename .= '.' . $extension;
+		$filename = $this->generatePhotoFilename( $person_id, $first_name, $last_name, $extension );
 
 		// Save to temp file
 		$upload_dir = wp_upload_dir();
@@ -919,20 +958,17 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			return null;
 		}
 
-		// Determine filename
-		$filename = sanitize_title( strtolower( trim( $first_name . ' ' . $last_name ) ) );
-		if ( empty( $filename ) ) {
-			$filename = 'photo-' . $person_id;
-		}
-
 		// Get extension from URL
 		$path = parse_url( $url, PHP_URL_PATH );
 		$ext  = pathinfo( $path, PATHINFO_EXTENSION );
 		if ( in_array( strtolower( $ext ), [ 'jpg', 'jpeg', 'png', 'gif', 'webp' ] ) ) {
-			$filename .= '.' . strtolower( $ext );
+			$extension = strtolower( $ext );
 		} else {
-			$filename .= '.jpg';
+			$extension = 'jpg';
 		}
+
+		// Generate filename
+		$filename = $this->generatePhotoFilename( $person_id, $first_name, $last_name, $extension );
 
 		$file_array = [
 			'name'     => $filename,
