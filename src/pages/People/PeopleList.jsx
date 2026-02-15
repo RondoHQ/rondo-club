@@ -975,7 +975,7 @@ export default function PeopleList() {
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
         {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-row flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative" ref={filterRef}>
             <button
