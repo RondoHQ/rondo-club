@@ -259,16 +259,32 @@ class InvoicePdfGenerator {
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
 				$description = '';
-				$sanction = '';
+				$card_type = '';
+				$suspension = '';
 
 				// Get discipline case details if linked
 				if ( ! empty( $item['discipline_case'] ) ) {
 					$case_id = $item['discipline_case'];
 					$match_desc = get_field( 'match_description', $case_id );
 					$sanction_desc = get_field( 'sanction_description', $case_id );
+					$charge_codes = get_field( 'charge_codes', $case_id );
+					$charge_description = get_field( 'charge_description', $case_id );
 
 					$description = $match_desc ?: ( $item['description'] ?? '' );
-					$sanction = $sanction_desc ?: '';
+
+					// Determine card type based on charge_codes
+					if ( ! empty( $charge_codes ) && ! empty( $charge_description ) ) {
+						if ( substr( $charge_codes, -2 ) === '-1' ) {
+							$card_type = 'Gele kaart: ' . $charge_description;
+						} else {
+							$card_type = 'Rode kaart: ' . $charge_description;
+						}
+					}
+
+					// Check if suspension applies
+					if ( $sanction_desc === 'uitsluiting' ) {
+						$suspension = 'Ja';
+					}
 				} else {
 					$description = $item['description'] ?? '';
 				}
@@ -278,7 +294,8 @@ class InvoicePdfGenerator {
 
 				$line_items_html .= '<tr>';
 				$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
-				$line_items_html .= '<td>' . esc_html( $sanction ) . '</td>';
+				$line_items_html .= '<td>' . esc_html( $card_type ) . '</td>';
+				$line_items_html .= '<td>' . esc_html( $suspension ) . '</td>';
 				$line_items_html .= '<td style="text-align: right;">' . $formatted_amount . '</td>';
 				$line_items_html .= '</tr>';
 			}
@@ -439,15 +456,16 @@ table.line-items .total-row td {
 <table class="line-items">
 	<thead>
 		<tr>
-			<th style="width: 50%;">Omschrijving</th>
-			<th style="width: 30%;">Sanctie</th>
-			<th style="width: 20%; text-align: right;">Bedrag</th>
+			<th style="width: 45%;">Omschrijving</th>
+			<th style="width: 25%;">Kaart</th>
+			<th style="width: 15%;">Schorsing</th>
+			<th style="width: 15%; text-align: right;">Bedrag</th>
 		</tr>
 	</thead>
 	<tbody>
 		' . $line_items_html . '
 		<tr class="total-row">
-			<td colspan="2" style="text-align: right;">Totaal</td>
+			<td colspan="3" style="text-align: right;">Totaal</td>
 			<td style="text-align: right;">' . $formatted_total . '</td>
 		</tr>
 	</tbody>
