@@ -709,6 +709,16 @@ class Invoices extends Base {
 		$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
 		update_field( 'due_date', $due_date, $invoice_id );
 
+		// Mark linked discipline cases as charged via Rondo
+		$line_items = get_field( 'line_items', $invoice_id );
+		if ( $line_items && is_array( $line_items ) ) {
+			foreach ( $line_items as $item ) {
+				if ( ! empty( $item['discipline_case'] ) ) {
+					update_field( 'is_charged', 'rondo', (int) $item['discipline_case'] );
+				}
+			}
+		}
+
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );

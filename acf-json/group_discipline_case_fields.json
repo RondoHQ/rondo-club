@@ -147,13 +147,18 @@
         },
         {
             "key": "field_discipline_is_charged",
-            "label": "Is doorbelast",
+            "label": "Doorbelast",
             "name": "is_charged",
-            "type": "true_false",
-            "instructions": "Zijn de kosten doorbelast aan de persoon?",
-            "message": "Kosten zijn doorbelast",
-            "default_value": 0,
-            "ui": 1,
+            "type": "select",
+            "instructions": "Bron van doorbelasting (Sportlink of Rondo)",
+            "choices": {
+                "": "Nee",
+                "sportlink": "Ja, Sportlink",
+                "rondo": "Ja, Rondo"
+            },
+            "default_value": "",
+            "allow_null": 0,
+            "return_format": "value",
             "wrapper": {
                 "width": "50",
                 "class": "",
