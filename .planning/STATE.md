@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 185 of 185 (Invoice PDF Club Branding)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 — Phase 185 verified (5/5 must-haves), all v26.0 phases complete
+Last activity: 2026-02-16 - Completed quick task 65: Add BCC email for invoice sending
 
 Progress: [██████████] 100% (1/1 plans complete)
 
@@ -111,6 +111,12 @@ None — phase 185 was the final planned enhancement.
 **Pre-existing Code Quality Issues:**
 - 140 lint problems (113 errors, 27 warnings) in JSX files
 - Should be addressed in a future cleanup milestone
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 65 | Add BCC email for invoice sending | 2026-02-16 | 6af9f77 | [65-add-bcc-email-for-invoice-sending](./quick/65-add-bcc-email-for-invoice-sending/) |
 
 ## Session Continuity
 
