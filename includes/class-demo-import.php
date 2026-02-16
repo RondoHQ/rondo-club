@@ -58,6 +58,13 @@ class DemoImport {
 	private $export_year;
 
 	/**
+	 * Comment meta handlers cache
+	 *
+	 * @var array
+	 */
+	private $comment_meta_handlers;
+
+	/**
 	 * Import year
 	 *
 	 * @var int
@@ -107,22 +114,12 @@ class DemoImport {
 		$total_posts = 0;
 
 		foreach ( $post_types as $post_type ) {
-			// Special handling for rondo_todo which has custom statuses
-			if ( "rondo_todo" === $post_type ) {
-				$posts = get_posts( [
-					"post_type"      => $post_type,
-					"numberposts"    => -1,
-					"post_status"    => [ "rondo_open", "rondo_awaiting", "rondo_completed", "any" ],
-					"fields"         => "ids",
-				] );
-			} else {
-				$posts = get_posts( [
-					"post_type"      => $post_type,
-					"numberposts"    => -1,
-					"post_status"    => "any",
-					"fields"         => "ids",
-				] );
-			}
+			$posts = get_posts( [
+				"post_type"      => $post_type,
+				"numberposts"    => -1,
+				"post_status"    => "any",
+				"fields"         => "ids",
+			] );
 
 			foreach ( $posts as $post_id ) {
 				wp_delete_post( $post_id, true ); // force delete, bypass trash
@@ -308,10 +305,7 @@ class DemoImport {
 	 * @return int|null WordPress ID or null if not found.
 	 */
 	private function resolve_ref( $ref ) {
-		if ( isset( $this->ref_map[ $ref ] ) ) {
-			return $this->ref_map[ $ref ];
-		}
-		return null;
+		return $this->ref_map[ $ref ] ?? null;
 	}
 
 	/**
@@ -410,25 +404,10 @@ class DemoImport {
 			$slug = $rel_type['slug'];
 			$ref  = $rel_type['_ref'];
 
-			// Insert term (or get existing)
-			$term = wp_insert_term( $name, 'relationship_type', [ 'slug' => $slug ] );
+			$term_id = $this->insert_or_get_term( $name, $slug, 'relationship_type' );
 
-			if ( is_wp_error( $term ) ) {
-				// Term might already exist
-				if ( 'term_exists' === $term->get_error_code() ) {
-					$existing = get_term_by( 'slug', $slug, 'relationship_type' );
-					if ( $existing ) {
-						$term_id = $existing->term_id;
-					} else {
-						WP_CLI::warning( sprintf( 'Failed to get existing relationship_type: %s', $slug ) );
-						continue;
-					}
-				} else {
-					WP_CLI::warning( sprintf( 'Failed to create relationship_type "%s": %s', $name, $term->get_error_message() ) );
-					continue;
-				}
-			} else {
-				$term_id = $term['term_id'];
+			if ( ! $term_id ) {
+				continue;
 			}
 
 			// Store ref mapping
@@ -462,25 +441,10 @@ class DemoImport {
 			$slug = $this->shift_season_slug( $seizoen['slug'] );
 			$is_current = $seizoen['is_current'] ?? false;
 
-			// Insert term (or get existing)
-			$term = wp_insert_term( $name, 'seizoen', [ 'slug' => $slug ] );
+			$term_id = $this->insert_or_get_term( $name, $slug, 'seizoen' );
 
-			if ( is_wp_error( $term ) ) {
-				// Term might already exist
-				if ( 'term_exists' === $term->get_error_code() ) {
-					$existing = get_term_by( 'slug', $slug, 'seizoen' );
-					if ( $existing ) {
-						$term_id = $existing->term_id;
-					} else {
-						WP_CLI::warning( sprintf( 'Failed to get existing seizoen: %s', $slug ) );
-						continue;
-					}
-				} else {
-					WP_CLI::warning( sprintf( 'Failed to create seizoen "%s": %s', $name, $term->get_error_message() ) );
-					continue;
-				}
-			} else {
-				$term_id = $term['term_id'];
+			if ( ! $term_id ) {
+				continue;
 			}
 
 			// Set is_current_season term meta
@@ -493,90 +457,108 @@ class DemoImport {
 	}
 
 	/**
+	 * Insert or get an existing term
+	 *
+	 * @param string $name Term name.
+	 * @param string $slug Term slug.
+	 * @param string $taxonomy Taxonomy name.
+	 * @return int|null Term ID or null on failure.
+	 */
+	private function insert_or_get_term( $name, $slug, $taxonomy ) {
+		$term = wp_insert_term( $name, $taxonomy, [ 'slug' => $slug ] );
+
+		if ( is_wp_error( $term ) ) {
+			if ( 'term_exists' === $term->get_error_code() ) {
+				// Prefer the existing term ID provided by wp_insert_term() error data.
+				$error_data = $term->get_error_data();
+
+				if ( is_array( $error_data ) && isset( $error_data['term_id'] ) ) {
+					return (int) $error_data['term_id'];
+				} elseif ( is_numeric( $error_data ) ) {
+					return (int) $error_data;
+				}
+
+				// Fallback: try to look up by slug if error data did not yield an ID.
+				$existing = get_term_by( 'slug', $slug, $taxonomy );
+				if ( $existing ) {
+					return $existing->term_id;
+				}
+				WP_CLI::warning( sprintf( 'Failed to get existing %s: %s', $taxonomy, $slug ) );
+				return null;
+			}
+			WP_CLI::warning( sprintf( 'Failed to create %s "%s": %s', $taxonomy, $name, $term->get_error_message() ) );
+			return null;
+		}
+
+		return $term['term_id'];
+	}
+
+	/**
+	 * Resolve team relationships (work_history or werkfuncties)
+	 *
+	 * @param array $rows Array of relationship rows.
+	 * @return array Array of resolved relationships.
+	 */
+	private function resolve_team_relationships( $rows ) {
+		$resolved = [];
+
+		foreach ( $rows as $row ) {
+			$team_ref = $row['team'] ?? null;
+			$resolved_team_id = $team_ref ? $this->resolve_ref( $team_ref ) : null;
+
+			$resolved[] = [
+				'team'        => $resolved_team_id,
+				'entity_type' => $row['entity_type'] ?? '',
+				'job_title'   => $row['job_title'] ?? '',
+				'description' => $row['description'] ?? null,
+				'start_date'  => $this->shift_date( $row['start_date'] ?? null ),
+				'end_date'    => $this->shift_date( $row['end_date'] ?? null ),
+				'is_current'  => $row['is_current'] ?? false,
+			];
+		}
+
+		return $resolved;
+	}
+
+	/**
 	 * Import teams
 	 */
 	private function import_teams() {
-		$teams = $this->fixture['teams'] ?? [];
-		$total = count( $teams );
-
-		// Pass 1: Create all team posts
-		foreach ( $teams as $team ) {
-			$ref     = $team['_ref'];
-			$title   = $team['title'];
-			$content = $team['content'] ?? '';
-			$status  = $team['status'];
-
-			$post_id = wp_insert_post( [
-				'post_type'    => 'team',
-				'post_title'   => $title,
-				'post_content' => $content,
-				'post_status'  => $status,
-			], true );
-
-			if ( is_wp_error( $post_id ) ) {
-				WP_CLI::warning( sprintf( 'Failed to create team "%s": %s', $title, $post_id->get_error_message() ) );
-				continue;
-			}
-
-			// Store ref mapping
-			$this->ref_map[ $ref ] = $post_id;
-
-			// Set ACF fields
-			$acf = $team['acf'] ?? [];
-
-			if ( isset( $acf['website'] ) ) {
-				update_field( 'website', $acf['website'], $post_id );
-			}
-
-			if ( isset( $acf['contact_info'] ) ) {
-				update_field( 'contact_info', $acf['contact_info'], $post_id );
-			}
-		}
-
-		// Pass 2: Resolve parent references
-		foreach ( $teams as $team ) {
-			$ref = $team['_ref'];
-			$parent_ref = $team['parent'] ?? null;
-
-			if ( $parent_ref ) {
-				$post_id = $this->resolve_ref( $ref );
-				$parent_id = $this->resolve_ref( $parent_ref );
-
-				if ( $post_id && $parent_id ) {
-					wp_update_post( [
-						'ID'          => $post_id,
-						'post_parent' => $parent_id,
-					] );
-				}
-			}
-		}
-
-		WP_CLI::log( sprintf( '  Imported %d teams', $total ) );
+		$this->import_entity( $this->fixture['teams'] ?? [], 'team' );
 	}
 
 	/**
 	 * Import commissies
 	 */
 	private function import_commissies() {
-		$commissies = $this->fixture['commissies'] ?? [];
-		$total = count( $commissies );
+		$this->import_entity( $this->fixture['commissies'] ?? [], 'commissie' );
+	}
 
-		// Pass 1: Create all commissie posts
-		foreach ( $commissies as $commissie ) {
-			$ref     = $commissie['_ref'];
-			$title   = $commissie['title'];
-			$content = $commissie['content'] ?? '';
-			$status  = $commissie['status'];
+	/**
+	 * Import entities with two-pass pattern (teams or commissies)
+	 *
+	 * @param array  $entities Array of entity data.
+	 * @param string $post_type Post type to create.
+	 */
+	private function import_entity( $entities, $post_type ) {
+		$total = count( $entities );
+
+		// Pass 1: Create all entity posts
+		foreach ( $entities as $entity ) {
+			$ref     = $entity['_ref'];
+			$title   = $entity['title'];
+			$content = $entity['content'] ?? '';
+			$status  = $entity['status'];
 
 			$post_id = wp_insert_post( [
-				'post_type'    => 'commissie',
+				'post_type'    => $post_type,
 				'post_title'   => $title,
 				'post_content' => $content,
 				'post_status'  => $status,
 			], true );
 
 			if ( is_wp_error( $post_id ) ) {
-				WP_CLI::warning( sprintf( 'Failed to create commissie "%s": %s', $title, $post_id->get_error_message() ) );
+				WP_CLI::warning( sprintf( 'Failed to create %s "%s": %s', $post_type, $title, $post_id->get_error_message() ) );
 				continue;
 			}
 
@@ -584,7 +566,7 @@ class DemoImport {
 			$this->ref_map[ $ref ] = $post_id;
 
 			// Set ACF fields
-			$acf = $commissie['acf'] ?? [];
+			$acf = $entity['acf'] ?? [];
 
 			if ( isset( $acf['website'] ) ) {
 				update_field( 'website', $acf['website'], $post_id );
@@ -596,9 +578,9 @@ class DemoImport {
 		}
 
 		// Pass 2: Resolve parent references
-		foreach ( $commissies as $commissie ) {
-			$ref = $commissie['_ref'];
-			$parent_ref = $commissie['parent'] ?? null;
+		foreach ( $entities as $entity ) {
+			$ref = $entity['_ref'];
+			$parent_ref = $entity['parent'] ?? null;
 
 			if ( $parent_ref ) {
 				$post_id = $this->resolve_ref( $ref );
@@ -613,7 +595,7 @@ class DemoImport {
 			}
 		}
 
-		WP_CLI::log( sprintf( '  Imported %d commissies', $total ) );
+		WP_CLI::log( sprintf( '  Imported %d %ss', $total, $post_type ) );
 	}
 
 	/**
@@ -733,49 +715,15 @@ class DemoImport {
 			$acf = $person['acf'] ?? [];
 
 			// Resolve work_history refs
-			$work_history = $acf['work_history'] ?? [];
-			$resolved_work_history = [];
-
-			foreach ( $work_history as $row ) {
-				$team_ref = $row['team'] ?? null;
-				$resolved_team_id = $team_ref ? $this->resolve_ref( $team_ref ) : null;
-
-				$resolved_work_history[] = [
-					'team'        => $resolved_team_id,
-					'entity_type' => $row['entity_type'] ?? '',
-					'job_title'   => $row['job_title'] ?? '',
-					'description' => $row['description'] ?? null,
-					'start_date'  => $this->shift_date( $row['start_date'] ?? null ),
-					'end_date'    => $this->shift_date( $row['end_date'] ?? null ),
-					'is_current'  => $row['is_current'] ?? false,
-				];
-			}
-
-			if ( ! empty( $resolved_work_history ) ) {
-				update_field( 'work_history', $resolved_work_history, $post_id );
+			$work_history = $this->resolve_team_relationships( $acf['work_history'] ?? [] );
+			if ( ! empty( $work_history ) ) {
+				update_field( 'work_history', $work_history, $post_id );
 			}
 
 			// Resolve werkfuncties refs
-			$werkfuncties = $acf['werkfuncties'] ?? [];
-			$resolved_werkfuncties = [];
-
-			foreach ( $werkfuncties as $row ) {
-				$team_ref = $row['team'] ?? null;
-				$resolved_team_id = $team_ref ? $this->resolve_ref( $team_ref ) : null;
-
-				$resolved_werkfuncties[] = [
-					'team'        => $resolved_team_id,
-					'entity_type' => $row['entity_type'] ?? '',
-					'job_title'   => $row['job_title'] ?? '',
-					'description' => $row['description'] ?? null,
-					'start_date'  => $this->shift_date( $row['start_date'] ?? null ),
-					'end_date'    => $this->shift_date( $row['end_date'] ?? null ),
-					'is_current'  => $row['is_current'] ?? false,
-				];
-			}
-
-			if ( ! empty( $resolved_werkfuncties ) ) {
-				update_field( 'werkfuncties', $resolved_werkfuncties, $post_id );
+			$werkfuncties = $this->resolve_team_relationships( $acf['werkfuncties'] ?? [] );
+			if ( ! empty( $werkfuncties ) ) {
+				update_field( 'werkfuncties', $werkfuncties, $post_id );
 			}
 
 			// Resolve relationships refs
@@ -925,11 +873,7 @@ class DemoImport {
 	private function import_comments() {
 		$comments = $this->fixture['comments'] ?? [];
 		$total = count( $comments );
-		$counts = [
-			'rondo_note'     => 0,
-			'rondo_activity' => 0,
-			'rondo_email'    => 0,
-		];
+		$counts = [];
 
 		foreach ( $comments as $comment ) {
 			$type       = $comment['type'];
@@ -964,15 +908,39 @@ class DemoImport {
 
 			// Set comment meta based on type
 			$meta = $comment['meta'] ?? [];
+			$this->set_comment_meta( $comment_id, $type, $meta );
 
-			switch ( $type ) {
-				case 'rondo_note':
+			$counts[ $type ] = ( $counts[ $type ] ?? 0 ) + 1;
+		}
+
+		WP_CLI::log(
+			sprintf(
+				'  Imported %d comments (%d notes, %d activities, %d emails)',
+				$total,
+				$counts['rondo_note'] ?? 0,
+				$counts['rondo_activity'] ?? 0,
+				$counts['rondo_email'] ?? 0
+			)
+		);
+	}
+
+	/**
+	 * Set comment meta based on comment type
+	 *
+	 * @param int    $comment_id Comment ID.
+	 * @param string $type Comment type.
+	 * @param array  $meta Meta data to set.
+	 */
+	private function set_comment_meta( $comment_id, $type, $meta ) {
+		// Initialize handlers once and cache for reuse
+		if ( ! isset( $this->comment_meta_handlers ) ) {
+			$this->comment_meta_handlers = [
+				'rondo_note' => function( $comment_id, $meta ) {
 					if ( isset( $meta['_note_visibility'] ) ) {
 						update_comment_meta( $comment_id, '_note_visibility', $meta['_note_visibility'] );
 					}
-					break;
-
-				case 'rondo_activity':
+				},
+				'rondo_activity' => function( $comment_id, $meta ) {
 					if ( isset( $meta['activity_type'] ) ) {
 						update_comment_meta( $comment_id, 'activity_type', $meta['activity_type'] );
 					}
@@ -997,36 +965,21 @@ class DemoImport {
 					if ( ! empty( $resolved_participants ) ) {
 						update_comment_meta( $comment_id, 'participants', $resolved_participants );
 					}
-					break;
-
-				case 'rondo_email':
-					if ( isset( $meta['email_template_type'] ) ) {
-						update_comment_meta( $comment_id, 'email_template_type', $meta['email_template_type'] );
+				},
+				'rondo_email' => function( $comment_id, $meta ) {
+					$email_meta_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
+					foreach ( $email_meta_fields as $field ) {
+						if ( isset( $meta[ $field ] ) ) {
+							update_comment_meta( $comment_id, $field, $meta[ $field ] );
+						}
 					}
-					if ( isset( $meta['email_recipient'] ) ) {
-						update_comment_meta( $comment_id, 'email_recipient', $meta['email_recipient'] );
-					}
-					if ( isset( $meta['email_subject'] ) ) {
-						update_comment_meta( $comment_id, 'email_subject', $meta['email_subject'] );
-					}
-					if ( isset( $meta['email_content_snapshot'] ) ) {
-						update_comment_meta( $comment_id, 'email_content_snapshot', $meta['email_content_snapshot'] );
-					}
-					break;
-			}
-
-			$counts[ $type ]++;
+				},
+			];
 		}
 
-		WP_CLI::log(
-			sprintf(
-				'  Imported %d comments (%d notes, %d activities, %d emails)',
-				$total,
-				$counts['rondo_note'],
-				$counts['rondo_activity'],
-				$counts['rondo_email']
-			)
-		);
+		if ( isset( $this->comment_meta_handlers[ $type ] ) ) {
+			$this->comment_meta_handlers[ $type ]( $comment_id, $meta );
+		}
 	}
 
 	/**
