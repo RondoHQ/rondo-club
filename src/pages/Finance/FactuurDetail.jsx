@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, Receipt, User, Calendar, CreditCard, ExternalLink } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice } from '@/hooks/useInvoices';
+import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink } from 'lucide-react';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf } from '@/hooks/useInvoices';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parse } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
@@ -40,6 +40,7 @@ export default function FactuurDetail() {
   const sendInvoice = useSendInvoice();
   const updateInvoiceStatus = useUpdateInvoiceStatus();
   const resendInvoice = useResendInvoice();
+  const generatePdf = useGenerateInvoicePdf();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -103,7 +104,17 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending;
+  const handleGeneratePdf = async () => {
+    setErrorMessage('');
+    try {
+      await generatePdf.mutateAsync(id);
+      setSuccessMessage('PDF succesvol gegenereerd!');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het genereren van de PDF.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending;
 
   if (isLoading) {
     return (
@@ -347,14 +358,29 @@ export default function FactuurDetail() {
                 )}
                 Verstuur factuur
               </button>
-              <button
-                onClick={handleDownloadPdf}
-                disabled={!invoice.pdf_path || isPending}
-                className="btn-secondary flex items-center gap-2"
-              >
-                <Download className="w-4 h-4" />
-                {invoice.pdf_path ? 'Download PDF' : 'Geen PDF beschikbaar'}
-              </button>
+              {invoice.pdf_path ? (
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={isPending}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </button>
+              ) : (
+                <button
+                  onClick={handleGeneratePdf}
+                  disabled={isPending}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  {generatePdf.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
+                  Genereer PDF
+                </button>
+              )}
             </>
           )}
 
