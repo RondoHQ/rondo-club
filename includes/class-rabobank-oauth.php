@@ -98,12 +98,12 @@ class RabobankOAuth {
 	private function set_environment_urls() {
 		if ( $this->environment === 'production' ) {
 			$this->base_url       = 'https://api.rabobank.nl';
-			$this->authorize_url  = 'https://oauth.rabobank.nl/openapi/oauth2/authorize';
-			$this->token_url      = 'https://api.rabobank.nl/openapi/oauth2/token';
+			$this->authorize_url  = 'https://oauth.rabobank.nl/openapi/oauth2-premium/authorize';
+			$this->token_url      = 'https://api.rabobank.nl/openapi/oauth2-premium/token';
 		} else {
 			$this->base_url       = 'https://api-sandbox.rabobank.nl';
-			$this->authorize_url  = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2/authorize';
-			$this->token_url      = 'https://api-sandbox.rabobank.nl/openapi/sandbox/oauth2/token';
+			$this->authorize_url  = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/authorize';
+			$this->token_url      = 'https://api-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/token';
 		}
 	}
 
