@@ -415,7 +415,7 @@ class RabobankPayment {
 		update_field( 'payment_link', $payment_link, $invoice_id );
 
 		// Store payment request ID for QR code retrieval
-		$payment_request_id = $data['paymentRequestId'] ?? $data['id'] ?? null;
+		$payment_request_id = $data['paymentRequestId'] ?? $data['assignedId'] ?? $data['id'] ?? null;
 		if ( ! empty( $payment_request_id ) ) {
 			update_post_meta( $invoice_id, '_payment_request_id', $payment_request_id );
 
