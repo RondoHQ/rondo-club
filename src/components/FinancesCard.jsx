@@ -243,13 +243,17 @@ export default function FinancesCard({ personId }) {
             </div>
             <div className="space-y-1.5">
               {invoices.map(invoice => (
-                <div key={invoice.id} className="flex justify-between items-center text-sm">
+                <Link
+                  key={invoice.id}
+                  to={`/financien/facturen/${invoice.id}`}
+                  className="flex justify-between items-center text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-1 -mx-1 transition-colors"
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-gray-600 dark:text-gray-400">{invoice.invoice_number}</span>
                     <StatusBadge status={invoice.status} />
                   </div>
                   <span className="font-medium">{formatCurrency(invoice.total_amount, 2)}</span>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
