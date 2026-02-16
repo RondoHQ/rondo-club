@@ -99,11 +99,11 @@ class RabobankOAuth {
 		if ( $this->environment === 'production' ) {
 			$this->base_url       = 'https://api.rabobank.nl';
 			$this->authorize_url  = 'https://oauth.rabobank.nl/openapi/oauth2-premium/authorize';
-			$this->token_url      = 'https://api.rabobank.nl/openapi/oauth2-premium/token';
+			$this->token_url      = 'https://oauth.rabobank.nl/openapi/oauth2-premium/token';
 		} else {
 			$this->base_url       = 'https://api-sandbox.rabobank.nl';
 			$this->authorize_url  = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/authorize';
-			$this->token_url      = 'https://api-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/token';
+			$this->token_url      = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/token';
 		}
 	}
 
@@ -301,9 +301,8 @@ class RabobankOAuth {
 
 		// Build token request (Rabobank requires Basic Auth header for client credentials)
 		$body = [
-			'grant_type'   => 'authorization_code',
-			'code'         => $code,
-			'redirect_uri' => rest_url( 'rondo/v1/rabobank/callback' ),
+			'grant_type' => 'authorization_code',
+			'code'       => $code,
 		];
 
 		$response = wp_remote_post(
