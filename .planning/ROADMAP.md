@@ -139,10 +139,10 @@ Plans:
   4. PDF lists each discipline case with match description, sanction, and fee amount
   5. PDF shows invoice number, invoice date, due date, total amount, bank account (IBAN), and payment clause
   6. Generated PDF stored in WordPress uploads directory and path saved to invoice
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 181-01: TBD
+- [ ] 181-01-PLAN.md -- Install mPDF, create InvoicePdfGenerator class, add REST endpoints for PDF generation and download
 
 #### Phase 182: Rabobank Payment Integration
 **Goal**: Invoices can generate Rabobank betaalverzoek payment links via OAuth API integration.
@@ -200,7 +200,7 @@ Plans:
 | 178. Finance Navigation & Settings Backend | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 179. Invoice Data Model & REST API | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 181. PDF Generation | v26.0 | 0/TBD | Not started | - |
+| 181. PDF Generation | v26.0 | 0/1 | Planned | - |
 | 182. Rabobank Payment Integration | v26.0 | 0/TBD | Not started | - |
 | 183. Email Delivery | v26.0 | 0/TBD | Not started | - |
 | 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
