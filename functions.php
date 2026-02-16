@@ -73,6 +73,7 @@ use Rondo\Config\FinanceConfig;
 use Rondo\Finance\InvoiceNumbering;
 use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Finance\RabobankOAuth;
+use Rondo\Finance\RabobankPayment;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
@@ -372,6 +373,7 @@ function rondo_init() {
 		new RESTFeedback();
 		new RESTInvoices();
 		new RabobankOAuth();
+		new RabobankPayment();
 	}
 
 	// Reminders - only for admin or cron
