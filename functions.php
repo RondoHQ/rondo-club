@@ -72,6 +72,7 @@ use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
 use Rondo\Finance\InvoiceNumbering;
 use Rondo\Finance\InvoicePdfGenerator;
+use Rondo\Finance\RabobankOAuth;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
@@ -370,6 +371,7 @@ function rondo_init() {
 		new RESTCustomFields();
 		new RESTFeedback();
 		new RESTInvoices();
+		new RabobankOAuth();
 	}
 
 	// Reminders - only for admin or cron
