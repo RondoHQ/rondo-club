@@ -85,6 +85,7 @@ export function useCreatePaymentLink() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
     },
   });
 }
