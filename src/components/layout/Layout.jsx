@@ -621,6 +621,15 @@ export default function Layout({ children }) {
   // Update document title based on route
   useRouteTitle();
 
+  // Focus main element on initial mount for immediate scrolling
+  useEffect(() => {
+    // Focus immediately on mount to enable mouse wheel scrolling without clicking
+    const timer = setTimeout(() => {
+      mainRef.current?.focus();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array - runs only on mount
+
   // Focus main element on route change for keyboard scrolling
   useEffect(() => {
     // Small delay to ensure content is rendered
@@ -677,7 +686,18 @@ export default function Layout({ children }) {
           onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
-        <main ref={mainRef} tabIndex={-1} className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none">
+        <main
+          ref={mainRef}
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none"
+          onClick={(e) => {
+            // Restore focus when clicking in the main content area (if not already focused)
+            // This ensures mouse wheel scrolling works after modals or other interactions
+            if (document.activeElement !== mainRef.current) {
+              mainRef.current?.focus();
+            }
+          }}
+        >
           {children}
         </main>
       </div>
