@@ -304,7 +304,7 @@ class InvoicePdfGenerator {
 		// Build logo HTML
 		$logo_html = '';
 		if ( $logo_path ) {
-			$logo_html = '<img src="' . $logo_path . '" style="height: 50px; margin-right: 15px; vertical-align: middle;" />';
+			$logo_html = '<img src="' . $logo_path . '" style="height: 70px;" />';
 		}
 
 		// Build HTML
@@ -324,8 +324,13 @@ body {
 	border-bottom: 2px solid ' . esc_attr( $accent_color ) . ';
 	padding-bottom: 15px;
 }
-.header-content {
-	display: inline-block;
+.header table {
+	width: 100%;
+	border: none;
+}
+.header td {
+	border: none;
+	padding: 0;
 	vertical-align: middle;
 }
 .header .org-name {
@@ -418,12 +423,14 @@ table.line-items .total-row td {
 <body>
 
 <div class="header">
-	' . $logo_html . '
-	<div class="header-content">
-		<div class="org-name">' . esc_html( $org_name ) . '</div>
-		<div class="org-details">' . nl2br( esc_html( $org_address ) ) . '</div>
-		<div class="org-details">' . esc_html( $contact_email ) . '</div>
-	</div>
+	<table><tr>
+		<td>
+			<div class="org-name">' . esc_html( $org_name ) . '</div>
+			<div class="org-details">' . nl2br( esc_html( $org_address ) ) . '</div>
+			<div class="org-details">' . esc_html( $contact_email ) . '</div>
+		</td>
+		' . ( $logo_html ? '<td style="text-align: right; width: 100px;">' . $logo_html . '</td>' : '' ) . '
+	</tr></table>
 </div>
 
 <h1>FACTUUR</h1>
