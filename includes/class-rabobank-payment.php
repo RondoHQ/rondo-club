@@ -317,7 +317,7 @@ class RabobankPayment {
 		$body_json  = wp_json_encode( $request_body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$request_id = wp_generate_uuid4();
 		$date       = gmdate( 'D, d M Y H:i:s' ) . ' GMT';
-		$digest     = 'SHA-256=' . base64_encode( hash( 'sha256', $body_json, true ) );
+		$digest     = 'SHA-512=' . base64_encode( hash( 'sha512', $body_json, true ) );
 
 		error_log( 'Rabobank request body: ' . $body_json );
 		error_log( 'Rabobank digest: ' . $digest );
