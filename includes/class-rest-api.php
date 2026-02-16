@@ -3117,8 +3117,7 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with club configuration settings.
 	 */
 	public function get_club_config( $request ) {
-		$club_config = new \Rondo\Config\ClubConfig();
-		return rest_ensure_response( $club_config->get_all_settings() );
+		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
 	}
 
 	/**
@@ -3130,21 +3129,19 @@ class Api extends Base {
 	 * @return \WP_REST_Response Response with updated club configuration settings.
 	 */
 	public function update_club_config( $request ) {
-		$club_config = new \Rondo\Config\ClubConfig();
-
 		// Update club_name if provided
 		$club_name = $request->get_param( 'club_name' );
 		if ( $club_name !== null ) {
-			$club_config->update_club_name( $club_name );
+			\Rondo\Config\ClubConfig::update_club_name( $club_name );
 		}
 
 		// Update freescout_url if provided
 		$freescout_url = $request->get_param( 'freescout_url' );
 		if ( $freescout_url !== null ) {
-			$club_config->update_freescout_url( $freescout_url );
+			\Rondo\Config\ClubConfig::update_freescout_url( $freescout_url );
 		}
 
-		return rest_ensure_response( $club_config->get_all_settings() );
+		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
 	}
 
 	/**
