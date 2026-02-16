@@ -29,6 +29,13 @@ class RabobankPayment {
 	private $oauth;
 
 	/**
+	 * Whether to inject mTLS cert on next request
+	 *
+	 * @var bool
+	 */
+	private $inject_mtls = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @param RabobankOAuth|null $oauth Optional OAuth handler instance
@@ -38,6 +45,31 @@ class RabobankPayment {
 
 		// Register REST routes
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+
+		// Add mTLS certificate to Rabobank API requests
+		add_action( 'http_api_curl', [ $this, 'add_mtls_cert' ], 10, 3 );
+	}
+
+	/**
+	 * Inject mTLS client certificate into cURL handle for Rabobank requests
+	 *
+	 * @param resource $handle  cURL handle
+	 * @param array    $parsed  Parsed request args
+	 * @param string   $url     Request URL
+	 */
+	public function add_mtls_cert( $handle, $parsed, $url ) {
+		if ( ! $this->inject_mtls ) {
+			return;
+		}
+
+		$cert_dir = get_stylesheet_directory() . '/certs';
+		$cert     = $cert_dir . '/sandbox-cert.pem';
+		$key      = $cert_dir . '/sandbox-key.pem';
+
+		if ( file_exists( $cert ) && file_exists( $key ) ) {
+			curl_setopt( $handle, CURLOPT_SSLCERT, $cert );
+			curl_setopt( $handle, CURLOPT_SSLKEY, $key );
+		}
 	}
 
 	/**
@@ -186,7 +218,8 @@ class RabobankPayment {
 		$api_path = $this->get_api_path();
 		$api_url  = $this->oauth->get_base_url() . $api_path;
 
-		// Make API request
+		// Make API request (enable mTLS for this request)
+		$this->inject_mtls = true;
 		$response = wp_remote_post(
 			$api_url,
 			[
@@ -199,6 +232,7 @@ class RabobankPayment {
 				'timeout' => 30,
 			]
 		);
+		$this->inject_mtls = false;
 
 		if ( is_wp_error( $response ) ) {
 			error_log( 'Rabobank payment request error: ' . $response->get_error_message() );
