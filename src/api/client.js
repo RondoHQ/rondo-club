@@ -294,6 +294,8 @@ export const prmApi = {
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),
   updateInvoiceStatus: (id, status) => api.post(`/rondo/v1/invoices/${id}/status`, { status }),
   getInvoicedCaseIds: (personId) => api.get('/rondo/v1/invoices/invoiced-cases', { params: { person_id: personId } }),
+  generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
+  getInvoicePdfUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/pdf`,
 
   // Membership fees
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),
