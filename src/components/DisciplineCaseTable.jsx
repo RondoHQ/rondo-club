@@ -60,7 +60,7 @@ function formatAcfDate(dateStr) {
 /**
  * Reusable table for discipline cases
  * @param {Object} props
- * @param {Array} props.cases - Array of discipline case objects
+ * @param {Array} props.cases - Array of discipline case objects (may be pre-filtered by parent)
  * @param {boolean} props.showPersonColumn - Whether to show Person column (false on person tab)
  * @param {Map} props.personMap - Map of person ID to person data (for list view)
  * @param {boolean} props.isLoading - Loading state
