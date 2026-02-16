@@ -278,7 +278,7 @@ class RabobankPayment {
 
 		// Use sandbox test IBAN when in sandbox mode, real IBAN in production
 		if ( $this->oauth->get_environment() === 'sandbox' ) {
-			$iban = 'NL82RABO1108003001';
+			$iban = 'NL19RABO0123456790';
 		} else {
 			$iban = $finance_config->get_iban();
 
