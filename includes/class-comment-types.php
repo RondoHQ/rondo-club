@@ -316,26 +316,17 @@ class CommentTypes {
 	 */
 	public function create_note( $request ) {
 		$person_id = $request->get_param( 'person_id' );
-		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
-		$content    = wp_kses_post( $request->get_param( 'content' ) );
+		$content   = wp_kses_post( $request->get_param( 'content' ) );
 		$visibility = $this->sanitize_visibility( $request->get_param( 'visibility' ) );
 
 		if ( empty( $content ) ) {
 			return new \WP_Error( 'empty_content', __( 'Note content is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$comment_id = wp_insert_comment(
-			[
-				'comment_post_ID'  => $person_id,
-				'comment_content'  => $content,
-				'comment_type'     => self::TYPE_NOTE,
-				'user_id'          => get_current_user_id(),
-				'comment_approved' => 1,
-			]
-		);
+		$comment_id = $this->insert_comment( $person_id, $content, self::TYPE_NOTE );
 
-		if ( ! $comment_id ) {
-			return new \WP_Error( 'create_failed', __( 'Failed to create note.', 'rondo' ), [ 'status' => 500 ] );
+		if ( is_wp_error( $comment_id ) ) {
+			return $comment_id;
 		}
 
 		// Save visibility meta
@@ -357,20 +348,13 @@ class CommentTypes {
 	 */
 	public function update_note( $request ) {
 		$comment_id = $request->get_param( 'id' );
-		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
 		$content    = wp_kses_post( $request->get_param( 'content' ) );
 		$visibility = $request->get_param( 'visibility' );
 
-		$result = wp_update_comment(
-			[
-				'comment_ID'      => $comment_id,
-				'comment_content' => $content,
-			]
-		);
+		$result = $this->update_comment_content( $comment_id, $content );
 
-		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
-		if ( false === $result || is_wp_error( $result ) ) {
-			return new \WP_Error( 'update_failed', __( 'Failed to update note.', 'rondo' ), [ 'status' => 500 ] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
 		// Update visibility if provided.
@@ -430,8 +414,7 @@ class CommentTypes {
 	 */
 	public function create_activity( $request ) {
 		$person_id = $request->get_param( 'person_id' );
-		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
-		$content       = wp_kses_post( $request->get_param( 'content' ) );
+		$content   = wp_kses_post( $request->get_param( 'content' ) );
 		$activity_type = sanitize_text_field( $request->get_param( 'activity_type' ) );
 		$activity_date = sanitize_text_field( $request->get_param( 'activity_date' ) );
 		$activity_time = sanitize_text_field( $request->get_param( 'activity_time' ) );
@@ -441,18 +424,10 @@ class CommentTypes {
 			return new \WP_Error( 'empty_content', __( 'Activity description is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$comment_id = wp_insert_comment(
-			[
-				'comment_post_ID'  => $person_id,
-				'comment_content'  => $content,
-				'comment_type'     => self::TYPE_ACTIVITY,
-				'user_id'          => get_current_user_id(),
-				'comment_approved' => 1,
-			]
-		);
+		$comment_id = $this->insert_comment( $person_id, $content, self::TYPE_ACTIVITY );
 
-		if ( ! $comment_id ) {
-			return new \WP_Error( 'create_failed', __( 'Failed to create activity.', 'rondo' ), [ 'status' => 500 ] );
+		if ( is_wp_error( $comment_id ) ) {
+			return $comment_id;
 		}
 
 		// Save meta
@@ -476,23 +451,16 @@ class CommentTypes {
 	 */
 	public function update_activity( $request ) {
 		$comment_id = $request->get_param( 'id' );
-		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
-		$content       = wp_kses_post( $request->get_param( 'content' ) );
+		$content    = wp_kses_post( $request->get_param( 'content' ) );
 		$activity_type = sanitize_text_field( $request->get_param( 'activity_type' ) );
 		$activity_date = sanitize_text_field( $request->get_param( 'activity_date' ) );
 		$activity_time = sanitize_text_field( $request->get_param( 'activity_time' ) );
 		$participants  = $request->get_param( 'participants' );
 
-		$result = wp_update_comment(
-			[
-				'comment_ID'      => $comment_id,
-				'comment_content' => $content,
-			]
-		);
+		$result = $this->update_comment_content( $comment_id, $content );
 
-		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
-		if ( false === $result || is_wp_error( $result ) ) {
-			return new \WP_Error( 'update_failed', __( 'Failed to update activity.', 'rondo' ), [ 'status' => 500 ] );
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 
 		// Update meta.
@@ -539,7 +507,7 @@ class CommentTypes {
 
 		// Also fetch todos from the rondo_todo CPT
 		// Access control is automatic via RONDO_Access_Control hooks on WP_Query
-		// Use LIKE query since ACF stores serialized arrays for related_persons
+		// @todo: LIKE query on serialized ACF data is inefficient. Consider custom meta table or relationship taxonomy.
 		$todos = get_posts(
 			[
 				'post_type'      => 'rondo_todo',
@@ -556,11 +524,8 @@ class CommentTypes {
 		);
 
 		foreach ( $todos as $todo ) {
-			// Get all related persons for this todo
+			// Get all related persons for this todo (ACF returns array or false)
 			$related_person_ids = get_field( 'related_persons', $todo->ID ) ?: [];
-			if ( ! is_array( $related_person_ids ) ) {
-				$related_person_ids = $related_person_ids ? [ $related_person_ids ] : [];
-			}
 
 			// Build persons array with details
 			$persons = [];
@@ -592,12 +557,7 @@ class CommentTypes {
 		}
 
 		// Sort timeline by created date descending
-		usort(
-			$timeline,
-			function ( $a, $b ) {
-				return strtotime( $b['created'] ) - strtotime( $a['created'] );
-			}
-		);
+		usort( $timeline, fn( $a, $b ) => strtotime( $b['created'] ) <=> strtotime( $a['created'] ) );
 
 		return rest_ensure_response( $timeline );
 	}
@@ -623,9 +583,11 @@ class CommentTypes {
 	 */
 	private function format_comment( $comment, $type ) {
 		// Process content for activities and notes
-		$content = ( 'activity' === $type || 'note' === $type )
-			? $this->process_content_for_display( $comment->comment_content )
-			: $comment->comment_content;
+		if ( 'activity' === $type || 'note' === $type ) {
+			$content = $this->process_content_for_display( $comment->comment_content );
+		} else {
+			$content = $comment->comment_content;
+		}
 
 		$data = [
 			'id'        => (int) $comment->comment_ID,
@@ -635,30 +597,22 @@ class CommentTypes {
 			'author_id' => (int) $comment->user_id,
 			'author'    => get_the_author_meta( 'display_name', $comment->user_id ),
 			'created'   => $comment->comment_date,
-			'modified'  => $comment->comment_date, // Comments don't track modified date
 		];
 
-		// Add activity-specific meta.
+		// Add type-specific meta fields
 		if ( 'activity' === $type ) {
-			$data['activity_type'] = get_comment_meta( $comment->comment_ID, 'activity_type', true );
-			$data['activity_date'] = get_comment_meta( $comment->comment_ID, 'activity_date', true );
-			$data['activity_time'] = get_comment_meta( $comment->comment_ID, 'activity_time', true );
-			$data['participants']  = get_comment_meta( $comment->comment_ID, 'participants', true ) ?: [];
-		}
-
-		// Add note-specific meta (visibility).
-		if ( 'note' === $type ) {
+			$meta_fields = [ 'activity_type', 'activity_date', 'activity_time', 'participants' ];
+			foreach ( $meta_fields as $field ) {
+				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true ) ?: ( 'participants' === $field ? [] : '' );
+			}
+		} elseif ( 'note' === $type ) {
 			$visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
-			// Default to 'private' for backward compatibility with existing notes
 			$data['visibility'] = $visibility ?: 'private';
-		}
-
-		// Add email-specific meta.
-		if ( 'email' === $type ) {
-			$data['email_template_type']   = get_comment_meta( $comment->comment_ID, 'email_template_type', true );
-			$data['email_recipient']       = get_comment_meta( $comment->comment_ID, 'email_recipient', true );
-			$data['email_subject']         = get_comment_meta( $comment->comment_ID, 'email_subject', true );
-			$data['email_content_snapshot'] = get_comment_meta( $comment->comment_ID, 'email_content_snapshot', true );
+		} elseif ( 'email' === $type ) {
+			$email_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
+			foreach ( $email_fields as $field ) {
+				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true );
+			}
 		}
 
 		return $data;
@@ -717,27 +671,16 @@ class CommentTypes {
 	}
 
 	/**
-	 * Update or clear comment meta based on provided values.
-	 *
-	 * - If a value is null, the meta key is left unchanged.
-	 * - If a value is an empty string, the meta key is deleted (cleared).
-	 * - For any other value, the meta key is updated to that value.
+	 * Update comment meta based on provided values.
 	 *
 	 * @param int   $comment_id The comment ID.
-	 * @param array $meta_map   Associative array of meta_key => value pairs.
+	 * @param array $meta_map   Associative array of meta_key => value pairs. Null values are skipped.
 	 */
 	private function update_meta_if_provided( $comment_id, $meta_map ) {
 		foreach ( $meta_map as $key => $value ) {
-			if ( null === $value ) {
-				continue;
+			if ( null !== $value ) {
+				update_comment_meta( $comment_id, $key, $value );
 			}
-
-			if ( '' === $value ) {
-				delete_comment_meta( $comment_id, $key );
-				continue;
-			}
-
-			update_comment_meta( $comment_id, $key, $value );
 		}
 	}
 
@@ -761,21 +704,14 @@ class CommentTypes {
 	 * Exclude custom comment types from regular comment queries
 	 */
 	public function exclude_from_regular_queries( $query ) {
-		// Only modify frontend queries and queries without explicit type
-		// Check for 'type', 'type__in', and 'type__not_in' to avoid affecting our own queries
-		if ( is_admin() ||
-			! empty( $query->query_vars['type'] ) ||
-			! empty( $query->query_vars['type__in'] ) ) {
+		// Only modify frontend queries without explicit type parameters
+		if ( is_admin() || ! empty( $query->query_vars['type'] ) || ! empty( $query->query_vars['type__in'] ) ) {
 			return;
 		}
 
-		// Ensure type__not_in is an array
 		$existing_types = $query->query_vars['type__not_in'] ?? [];
-		if ( ! is_array( $existing_types ) ) {
-			$existing_types = [];
-		}
+		$existing_types = is_array( $existing_types ) ? $existing_types : [];
 
-		// Exclude our custom types from regular comment displays
 		$query->query_vars['type__not_in'] = array_merge(
 			$existing_types,
 			[ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL, self::TYPE_FEEDBACK_COMMENT ]
@@ -790,25 +726,70 @@ class CommentTypes {
 	 * @return int|WP_Error Comment ID on success, WP_Error on failure.
 	 */
 	public function create_email_log( $person_id, $data ) {
+		$comment_id = $this->insert_comment( $person_id, $data['subject'], self::TYPE_EMAIL );
+
+		if ( is_wp_error( $comment_id ) ) {
+			return $comment_id;
+		}
+
+		$this->update_meta_if_provided(
+			$comment_id,
+			[
+				'email_template_type'   => $data['template_type'],
+				'email_recipient'       => $data['recipient'],
+				'email_subject'         => $data['subject'],
+				'email_content_snapshot' => $data['content'],
+			]
+		);
+
+		return $comment_id;
+	}
+
+	/**
+	 * Insert a comment (helper to reduce duplication)
+	 *
+	 * @param int    $person_id Person post ID.
+	 * @param string $content   Comment content.
+	 * @param string $type      Comment type constant.
+	 * @return int|WP_Error Comment ID on success, WP_Error on failure.
+	 */
+	private function insert_comment( $person_id, $content, $type ) {
 		$comment_id = wp_insert_comment(
 			[
 				'comment_post_ID'  => $person_id,
-				'comment_content'  => $data['subject'], // Summary for display
-				'comment_type'     => self::TYPE_EMAIL,
+				'comment_content'  => $content,
+				'comment_type'     => $type,
 				'user_id'          => get_current_user_id(),
 				'comment_approved' => 1,
 			]
 		);
 
 		if ( ! $comment_id ) {
-			return new \WP_Error( 'create_failed', 'Failed to log email.' );
+			return new \WP_Error( 'create_failed', __( 'Failed to create comment.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
-		update_comment_meta( $comment_id, 'email_template_type', $data['template_type'] );
-		update_comment_meta( $comment_id, 'email_recipient', $data['recipient'] );
-		update_comment_meta( $comment_id, 'email_subject', $data['subject'] );
-		update_comment_meta( $comment_id, 'email_content_snapshot', $data['content'] );
-
 		return $comment_id;
+	}
+
+	/**
+	 * Update comment content (helper to reduce duplication)
+	 *
+	 * @param int    $comment_id Comment ID.
+	 * @param string $content    New content.
+	 * @return true|WP_Error True on success, WP_Error on failure.
+	 */
+	private function update_comment_content( $comment_id, $content ) {
+		$result = wp_update_comment(
+			[
+				'comment_ID'      => $comment_id,
+				'comment_content' => $content,
+			]
+		);
+
+		if ( false === $result || is_wp_error( $result ) ) {
+			return new \WP_Error( 'update_failed', __( 'Failed to update comment.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
+		return true;
 	}
 }
