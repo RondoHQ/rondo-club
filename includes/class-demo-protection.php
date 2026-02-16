@@ -36,9 +36,7 @@ class DemoProtection {
 	 * @return bool
 	 */
 	private function is_demo_user( $user_id = null ) {
-		if ( $user_id === null ) {
-			$user_id = get_current_user_id();
-		}
+		$user_id = $user_id ?? get_current_user_id();
 
 		if ( ! $user_id ) {
 			return false;
@@ -77,11 +75,11 @@ class DemoProtection {
 			return $data;
 		}
 
-		$user = get_userdata( $user_id );
-
-		if ( ! $user || 'demo' !== $user->user_login ) {
+		if ( ! $this->is_demo_user( $user_id ) ) {
 			return $data;
 		}
+
+		$user = get_userdata( $user_id );
 
 		// Preserve existing password hash — blocks all password changes.
 		$data['user_pass'] = $user->user_pass;
