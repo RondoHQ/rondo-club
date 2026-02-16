@@ -153,100 +153,11 @@ class DemoExport {
 	 * Queries all post IDs and assigns sequential reference numbers.
 	 */
 	private function build_ref_maps() {
-		// People
-		$people_ids = get_posts(
-			[
-				'post_type'      => 'person',
-				'numberposts'    => -1,
-				'post_status'    => 'any',
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			]
-		);
-
-		foreach ( $people_ids as $index => $post_id ) {
-			$this->ref_maps['person'][ $post_id ] = 'person:' . ( $index + 1 );
-		}
-
-		// Teams
-		$teams_ids = get_posts(
-			[
-				'post_type'      => 'team',
-				'numberposts'    => -1,
-				'post_status'    => [ 'publish', 'draft', 'private' ],
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			]
-		);
-
-		foreach ( $teams_ids as $index => $post_id ) {
-			$this->ref_maps['team'][ $post_id ] = 'team:' . ( $index + 1 );
-		}
-
-		// Commissies
-		$commissies_ids = get_posts(
-			[
-				'post_type'      => 'commissie',
-				'numberposts'    => -1,
-				'post_status'    => [ 'publish', 'draft', 'private' ],
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			]
-		);
-
-		foreach ( $commissies_ids as $index => $post_id ) {
-			$this->ref_maps['commissie'][ $post_id ] = 'commissie:' . ( $index + 1 );
-		}
-
-		// Discipline cases
-		$discipline_cases_ids = get_posts(
-			[
-				'post_type'      => 'discipline_case',
-				'numberposts'    => -1,
-				'post_status'    => 'any',
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			]
-		);
-
-		foreach ( $discipline_cases_ids as $index => $post_id ) {
-			$this->ref_maps['discipline_case'][ $post_id ] = 'discipline_case:' . ( $index + 1 );
-		}
-
-		// Todos
-		$todos_ids = get_posts(
-			[
-				'post_type'      => 'rondo_todo',
-				'numberposts'    => -1,
-				'post_status'    => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ],
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-			]
-		);
-
-		foreach ( $todos_ids as $index => $post_id ) {
-			$this->ref_maps['todo'][ $post_id ] = 'todo:' . ( $index + 1 );
-		}
+		$this->build_ref_map_for_type( 'person', 'any' );
+		$this->build_ref_map_for_type( 'team', [ 'publish', 'draft', 'private' ] );
+		$this->build_ref_map_for_type( 'commissie', [ 'publish', 'draft', 'private' ] );
+		$this->build_ref_map_for_type( 'discipline_case', 'any' );
+		$this->build_ref_map_for_type( 'rondo_todo', [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ], 'todo' );
 
 		WP_CLI::log(
 			sprintf(
@@ -258,6 +169,35 @@ class DemoExport {
 				count( $this->ref_maps['todo'] )
 			)
 		);
+	}
+
+	/**
+	 * Build reference map for a single post type
+	 *
+	 * @param string       $post_type Post type slug.
+	 * @param string|array $post_statuses Post status(es) to query.
+	 * @param string|null  $ref_key Optional ref map key (defaults to post_type).
+	 */
+	private function build_ref_map_for_type( $post_type, $post_statuses, $ref_key = null ) {
+		$ref_key = $ref_key ?? $post_type;
+
+		$post_ids = get_posts(
+			[
+				'post_type'      => $post_type,
+				'numberposts'    => -1,
+				'post_status'    => $post_statuses,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			]
+		);
+
+		foreach ( $post_ids as $index => $post_id ) {
+			$this->ref_maps[ $ref_key ][ $post_id ] = $ref_key . ':' . ( $index + 1 );
+		}
 	}
 
 	/**
@@ -380,7 +320,7 @@ class DemoExport {
 					'huidig-vrijwilliger' => $this->normalize_value( get_field( 'huidig-vrijwilliger', $post->ID ) ),
 					'financiele-blokkade' => (bool) get_field( 'financiele-blokkade', $post->ID ),
 					'relatiecode'       => $this->normalize_value( get_field( 'relatiecode', $post->ID ) ),
-					'werkfuncties'      => $this->export_werkfuncties( $post->ID ),
+					'werkfuncties'      => get_field( 'werkfuncties', $post->ID ),
 					'freescout-id'      => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
 					'factuur-adres'     => $this->normalize_value( get_field( 'factuur-adres', $post->ID ) ),
 					'factuur-email'     => $this->normalize_value( get_field( 'factuur-email', $post->ID ) ),
@@ -517,45 +457,6 @@ class DemoExport {
 		return $exported;
 	}
 
-	/**
-	 * Export werkfuncties repeater field (Sportlink-synced)
-	 *
-	 * @param int $post_id Post ID.
-	 * @return array Array of werkfunctie objects.
-	 */
-	private function export_werkfuncties( $post_id ) {
-		$werkfuncties = get_field( 'werkfuncties', $post_id );
-
-		if ( ! $werkfuncties || ! is_array( $werkfuncties ) ) {
-			return [];
-		}
-
-		$exported = [];
-
-		foreach ( $werkfuncties as $row ) {
-			$team_id     = $row['team'] ?? null;
-			$team_ref    = null;
-			$entity_type = null;
-
-			if ( $team_id ) {
-				$post_type   = get_post_type( $team_id );
-				$entity_type = $post_type;
-				$team_ref    = $this->get_ref( $team_id, $post_type );
-			}
-
-			$exported[] = [
-				'team'        => $team_ref,
-				'entity_type' => $entity_type,
-				'job_title'   => $row['job_title'] ?? '',
-				'description' => $this->normalize_value( $row['description'] ?? '' ),
-				'start_date'  => $this->normalize_value( $row['start_date'] ?? '' ),
-				'end_date'    => $this->normalize_value( $row['end_date'] ?? '' ),
-				'is_current'  => (bool) ( $row['is_current'] ?? false ),
-			];
-		}
-
-		return $exported;
-	}
 
 	/**
 	 * Export person post_meta (non-ACF fields)
@@ -570,7 +471,8 @@ class DemoExport {
 			'vog_reminder_sent_date'   => $this->normalize_value( get_post_meta( $post_id, 'vog_reminder_sent_date', true ) ),
 		];
 
-		// Scan for dynamic meta keys (nikki, fee snapshots/forecasts)
+		// Scan for dynamic meta keys (nikki, fee snapshots/forecasts).
+		// We fetch all meta to discover keys with dynamic season IDs that can't be queried individually.
 		$all_meta = get_post_meta( $post_id );
 
 		foreach ( $all_meta as $meta_key => $meta_values ) {
@@ -648,39 +550,7 @@ class DemoExport {
 		foreach ( $contact_info as $row ) {
 			$contact_type  = $row['contact_type'] ?? '';
 			$contact_label = $row['contact_label'] ?? '';
-			$contact_value = $row['contact_value'] ?? '';
-
-			// Replace based on contact type.
-			switch ( $contact_type ) {
-				case 'email':
-					// First email gets identity email, additional emails get variants.
-					if ( 0 === $email_count ) {
-						$contact_value = $identity['email'];
-					} else {
-						// Generate variant (add number).
-						$contact_value = str_replace( '@', $email_count . '@', $identity['email'] );
-					}
-					$email_count++;
-					break;
-
-				case 'phone':
-				case 'mobile':
-					// Generate fake phone.
-					$contact_value = $this->anonymizer->generate_phone();
-					break;
-
-				case 'website':
-				case 'linkedin':
-				case 'twitter':
-				case 'bluesky':
-				case 'threads':
-				case 'instagram':
-				case 'facebook':
-				case 'other':
-					// Strip social media and other links.
-					$contact_value = null;
-					break;
-			}
+			$contact_value = $this->anonymize_contact_value( $contact_type, $identity, $email_count );
 
 			$anonymized[] = [
 				'contact_type'  => $contact_type,
@@ -690,6 +560,48 @@ class DemoExport {
 		}
 
 		return $anonymized;
+	}
+
+	/**
+	 * Anonymize a single contact value based on type
+	 *
+	 * @param string $contact_type Contact type.
+	 * @param array  $identity Generated identity.
+	 * @param int    &$email_count Email counter (passed by reference).
+	 * @return string|null Anonymized contact value.
+	 */
+	private function anonymize_contact_value( $contact_type, $identity, &$email_count ) {
+		// Normalize case for known types
+		$normalized_type = strtolower( $contact_type );
+
+		switch ( $normalized_type ) {
+			case 'email':
+				if ( 0 === $email_count ) {
+					$email_count++;
+					return $identity['email'];
+				} else {
+					return str_replace( '@', $email_count++ . '@', $identity['email'] );
+				}
+
+			case 'phone':
+			case 'mobile':
+				return $this->anonymizer->generate_phone();
+
+			case 'website':
+			case 'linkedin':
+			case 'twitter':
+			case 'bluesky':
+			case 'threads':
+			case 'instagram':
+			case 'facebook':
+			case 'other':
+			case 'calendar':
+				return null;
+
+			default:
+				// For unknown contact types, preserve type but null the value
+				return null;
+		}
 	}
 
 	/**
@@ -736,62 +648,66 @@ class DemoExport {
 		}
 
 		foreach ( $post_meta as $meta_key => $value ) {
-			// Nikki total fields.
 			if ( preg_match( '/^_nikki_(\d+)_total$/', $meta_key ) ) {
-				$rand = mt_rand( 1, 100 );
-				if ( $rand <= 70 ) {
-					// 70% chance: 100-300.
-					$post_meta[ $meta_key ] = (string) mt_rand( 100, 300 );
-				} elseif ( $rand <= 90 ) {
-					// 20% chance: 50-100.
-					$post_meta[ $meta_key ] = (string) mt_rand( 50, 100 );
-				} else {
-					// 10% chance: 0.
-					$post_meta[ $meta_key ] = '0';
-				}
-			}
-
-			// Nikki saldo fields.
-			if ( preg_match( '/^_nikki_(\d+)_saldo$/', $meta_key ) ) {
-				$rand = mt_rand( 1, 100 );
-				if ( $rand <= 80 ) {
-					// 80% chance: 0 (most people pay).
-					$post_meta[ $meta_key ] = '0';
-				} elseif ( $rand <= 95 ) {
-					// 15% chance: positive amount (owes money).
-					$post_meta[ $meta_key ] = (string) mt_rand( 10, 100 );
-				} else {
-					// 5% chance: negative amount (overpaid).
-					$post_meta[ $meta_key ] = (string) ( -1 * mt_rand( 10, 50 ) );
-				}
-			}
-
-			// Fee snapshot fields.
-			if ( preg_match( '/^_fee_snapshot_/', $meta_key ) ) {
-				$fake_snapshot = [
-					'category'          => 'demo',
-					'base_amount'       => mt_rand( 50, 300 ),
-					'pro_rata_factor'   => 1.0,
-					'family_discount'   => 0,
-					'final_amount'      => mt_rand( 50, 300 ),
-				];
-				$post_meta[ $meta_key ] = serialize( $fake_snapshot );
-			}
-
-			// Fee forecast fields.
-			if ( preg_match( '/^_fee_forecast_/', $meta_key ) ) {
-				$fake_forecast = [
-					'category'          => 'demo',
-					'base_amount'       => mt_rand( 50, 300 ),
-					'pro_rata_factor'   => 1.0,
-					'family_discount'   => 0,
-					'final_amount'      => mt_rand( 50, 300 ),
-				];
-				$post_meta[ $meta_key ] = serialize( $fake_forecast );
+				$post_meta[ $meta_key ] = $this->random_nikki_total();
+			} elseif ( preg_match( '/^_nikki_(\d+)_saldo$/', $meta_key ) ) {
+				$post_meta[ $meta_key ] = $this->random_nikki_saldo();
+			} elseif ( preg_match( '/^_fee_snapshot_/', $meta_key ) ) {
+				$post_meta[ $meta_key ] = $this->random_fee_data();
+			} elseif ( preg_match( '/^_fee_forecast_/', $meta_key ) ) {
+				$post_meta[ $meta_key ] = $this->random_fee_data();
 			}
 		}
 
 		return $post_meta;
+	}
+
+	/**
+	 * Generate random nikki total value
+	 *
+	 * @return string Random total as string.
+	 */
+	private function random_nikki_total() {
+		$rand = mt_rand( 1, 100 );
+		if ( $rand <= 70 ) {
+			return (string) mt_rand( 100, 300 );
+		} elseif ( $rand <= 90 ) {
+			return (string) mt_rand( 50, 100 );
+		} else {
+			return '0';
+		}
+	}
+
+	/**
+	 * Generate random nikki saldo value
+	 *
+	 * @return string Random saldo as string.
+	 */
+	private function random_nikki_saldo() {
+		$rand = mt_rand( 1, 100 );
+		if ( $rand <= 80 ) {
+			return '0';
+		} elseif ( $rand <= 95 ) {
+			return (string) mt_rand( 10, 100 );
+		} else {
+			return (string) ( -1 * mt_rand( 10, 50 ) );
+		}
+	}
+
+	/**
+	 * Generate random fee data (snapshot or forecast)
+	 *
+	 * @return string Serialized fee data.
+	 */
+	private function random_fee_data() {
+		$fake_data = [
+			'category'          => 'demo',
+			'base_amount'       => mt_rand( 50, 300 ),
+			'pro_rata_factor'   => 1.0,
+			'family_discount'   => 0,
+			'final_amount'      => mt_rand( 50, 300 ),
+		];
+		return serialize( $fake_data );
 	}
 
 	/**
@@ -1023,23 +939,6 @@ class DemoExport {
 		return $commissies;
 	}
 
-	/**
-	 * Resolve post ID from ACF field value
-	 *
-	 * ACF can return either a post object or just an ID depending on return format.
-	 *
-	 * @param mixed $field_value ACF field value.
-	 * @return int|null Post ID or null if invalid.
-	 */
-	private function resolve_post_id( $field_value ) {
-		if ( is_object( $field_value ) && isset( $field_value->ID ) ) {
-			return (int) $field_value->ID;
-		}
-		if ( is_numeric( $field_value ) ) {
-			return (int) $field_value;
-		}
-		return null;
-	}
 
 	/**
 	 * Export discipline cases
@@ -1062,8 +961,13 @@ class DemoExport {
 		foreach ( $posts as $post ) {
 			// Get person reference
 			$person_field = get_field( 'person', $post->ID );
-			$person_id    = $this->resolve_post_id( $person_field );
-			$person_ref   = $person_id ? $this->get_ref( $person_id, 'person' ) : null;
+			$person_id    = null;
+			if ( is_object( $person_field ) && isset( $person_field->ID ) ) {
+				$person_id = (int) $person_field->ID;
+			} elseif ( is_numeric( $person_field ) ) {
+				$person_id = (int) $person_field;
+			}
+			$person_ref = $person_id ? $this->get_ref( $person_id, 'person' ) : null;
 
 			// Get seizoen (taxonomy term)
 			$seizoen      = null;
@@ -1128,7 +1032,13 @@ class DemoExport {
 
 			if ( is_array( $related_persons_field ) ) {
 				foreach ( $related_persons_field as $person_field ) {
-					$person_id = $this->resolve_post_id( $person_field );
+					$person_id = null;
+					if ( is_object( $person_field ) && isset( $person_field->ID ) ) {
+						$person_id = (int) $person_field->ID;
+					} elseif ( is_numeric( $person_field ) ) {
+						$person_id = (int) $person_field;
+					}
+
 					if ( $person_id ) {
 						$person_ref = $this->get_ref( $person_id, 'person' );
 						if ( $person_ref ) {
