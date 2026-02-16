@@ -270,7 +270,7 @@ export default function FactuurDetail() {
                 <img
                   src={prmApi.getInvoiceQrUrl(id)}
                   alt="Betaal QR code"
-                  className="w-32 h-32 rounded border border-gray-200 dark:border-gray-700"
+                  className="max-w-48 rounded border border-gray-200 dark:border-gray-700"
                 />
               </div>
             )}
