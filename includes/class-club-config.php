@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Club Configuration service class
+ * Club Configuration static utility class
  */
 class ClubConfig {
 
@@ -43,7 +43,7 @@ class ClubConfig {
 	 *
 	 * @return string The club name (empty string if not configured)
 	 */
-	public function get_club_name(): string {
+	public static function get_club_name(): string {
 		return get_option( self::OPTION_CLUB_NAME, self::DEFAULTS['club_name'] );
 	}
 
@@ -52,7 +52,7 @@ class ClubConfig {
 	 *
 	 * @return string The FreeScout URL (empty string if not configured)
 	 */
-	public function get_freescout_url(): string {
+	public static function get_freescout_url(): string {
 		return get_option( self::OPTION_FREESCOUT_URL, self::DEFAULTS['freescout_url'] );
 	}
 
@@ -61,10 +61,10 @@ class ClubConfig {
 	 *
 	 * @return array<string, string> Array of all configuration settings
 	 */
-	public function get_all_settings(): array {
+	public static function get_all_settings(): array {
 		return [
-			'club_name'     => $this->get_club_name(),
-			'freescout_url' => $this->get_freescout_url(),
+			'club_name'     => self::get_club_name(),
+			'freescout_url' => self::get_freescout_url(),
 		];
 	}
 
@@ -74,7 +74,7 @@ class ClubConfig {
 	 * @param string $name The club name to set.
 	 * @return bool True on success, false on failure
 	 */
-	public function update_club_name( string $name ): bool {
+	public static function update_club_name( string $name ): bool {
 		$sanitized = sanitize_text_field( $name );
 		return update_option( self::OPTION_CLUB_NAME, $sanitized );
 	}
@@ -85,7 +85,7 @@ class ClubConfig {
 	 * @param string $url The FreeScout URL to set.
 	 * @return bool True on success, false on failure
 	 */
-	public function update_freescout_url( string $url ): bool {
+	public static function update_freescout_url( string $url ): bool {
 		$sanitized = esc_url_raw( $url );
 		return update_option( self::OPTION_FREESCOUT_URL, $sanitized );
 	}

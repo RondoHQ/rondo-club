@@ -527,10 +527,9 @@ function rondo_theme_document_title_parts( $title ) {
 	}
 
 	// Set a default title - React will update it when routes change
-	$club_config       = new \Rondo\Config\ClubConfig();
-	$club_name         = $club_config->get_club_name();
-	$title['title']    = ! empty( $club_name ) ? $club_name : 'Rondo Club';
-	$title['site']     = '';
+	$club_name      = \Rondo\Config\ClubConfig::get_club_name();
+	$title['title'] = ! empty( $club_name ) ? $club_name : 'Rondo Club';
+	$title['site']  = '';
 
 	return $title;
 }
@@ -628,8 +627,7 @@ function rondo_get_js_config() {
 	$linked_person_id = $user_id ? (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) : null;
 
 	// Club configuration
-	$club_config   = new \Rondo\Config\ClubConfig();
-	$club_settings = $club_config->get_all_settings();
+	$club_settings = \Rondo\Config\ClubConfig::get_all_settings();
 
 	return [
 		'apiUrl'              => rest_url(),
@@ -1008,9 +1006,7 @@ function rondo_login_styles() {
 	$site_name = get_bloginfo( 'name' );
 
 	// Get club name for display
-	$club_config = new \Rondo\Config\ClubConfig();
-	$settings    = $club_config->get_all_settings();
-	$club_name   = $settings['club_name'];
+	$club_name = \Rondo\Config\ClubConfig::get_club_name();
 
 	// Fixed brand color (electric-cyan from Phase 162)
 	$brand_color = '#0891b2';
