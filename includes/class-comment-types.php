@@ -717,16 +717,27 @@ class CommentTypes {
 	}
 
 	/**
-	 * Update comment meta if value is provided (not null/empty)
+	 * Update or clear comment meta based on provided values.
+	 *
+	 * - If a value is null, the meta key is left unchanged.
+	 * - If a value is an empty string, the meta key is deleted (cleared).
+	 * - For any other value, the meta key is updated to that value.
 	 *
 	 * @param int   $comment_id The comment ID.
 	 * @param array $meta_map   Associative array of meta_key => value pairs.
 	 */
 	private function update_meta_if_provided( $comment_id, $meta_map ) {
 		foreach ( $meta_map as $key => $value ) {
-			if ( null !== $value && '' !== $value ) {
-				update_comment_meta( $comment_id, $key, $value );
+			if ( null === $value ) {
+				continue;
 			}
+
+			if ( '' === $value ) {
+				delete_comment_meta( $comment_id, $key );
+				continue;
+			}
+
+			update_comment_meta( $comment_id, $key, $value );
 		}
 	}
 
