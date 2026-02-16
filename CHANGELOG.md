@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.1.0] - 2026-02-16
+
+### Added
+- Club branding settings: logo upload and accent color in Finance Settings
+- Invoice PDFs now use club's own logo and accent color instead of Rondo branding
+
 ## [26.0.0] - 2026-02-16
 
 ### Added
