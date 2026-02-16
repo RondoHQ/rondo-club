@@ -929,10 +929,10 @@ export default function PersonDetail() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-        <Link to="/people" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+        <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
           <ArrowLeft className="w-4 h-4 md:mr-2" />
-          <span className="hidden md:inline">Terug naar leden</span>
-        </Link>
+          <span className="hidden md:inline">Terug</span>
+        </button>
         <div className="flex gap-2">
           {config.isAdmin && acf['knvb-id'] && (
             <button
