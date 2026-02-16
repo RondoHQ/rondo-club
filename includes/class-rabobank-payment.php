@@ -296,8 +296,21 @@ class RabobankPayment {
 			$due_date = date( 'Y-m-d', strtotime( $due_date ) );
 		}
 
+		// Get finance config for IBAN and credentials
+		$finance_config = new \Rondo\Config\FinanceConfig();
+		$iban = $finance_config->get_iban();
+
+		if ( empty( $iban ) ) {
+			return new \WP_Error(
+				'missing_iban',
+				__( 'IBAN niet geconfigureerd. Stel deze in via Financiën > Instellingen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
 		// Build request body
 		$request_body = [
+			'iban'             => $iban,
 			'amount' => [
 				'value'    => number_format( (float) $total_amount, 2, '.', '' ),
 				'currency' => 'EUR',
@@ -308,7 +321,6 @@ class RabobankPayment {
 		];
 
 		// Get credentials for client ID
-		$finance_config = new \Rondo\Config\FinanceConfig();
 		$credentials = $finance_config->get_rabobank_credentials();
 
 		if ( ! $credentials || empty( $credentials['client_id'] ) ) {
@@ -354,8 +366,9 @@ class RabobankPayment {
 
 		// Handle error responses
 		if ( $status_code < 200 || $status_code >= 300 ) {
-			$error_message = $data['error_description'] ?? $data['message'] ?? $data['error'] ?? 'Payment request creation failed';
+			$error_message = $data['error_description'] ?? $data['message'] ?? $data['moreInformation'] ?? $data['error'] ?? 'Payment request creation failed';
 			error_log( sprintf( 'Rabobank payment request failed (HTTP %d): %s', $status_code, $error_message ) );
+			error_log( 'Rabobank request URL: ' . $api_url );
 			error_log( 'Response body: ' . $body );
 
 			return new \WP_Error(
@@ -401,9 +414,9 @@ class RabobankPayment {
 		$environment = $this->oauth->get_environment();
 
 		if ( $environment === 'production' ) {
-			return '/openapi/payment-request/payment-requests';
+			return '/openapi/payments/payment-requests';
 		}
 
-		return '/openapi/sandbox/payment-request/payment-requests';
+		return '/openapi/sandbox/payments/payment-requests';
 	}
 }
