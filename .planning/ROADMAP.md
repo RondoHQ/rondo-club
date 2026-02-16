@@ -206,6 +206,16 @@ Plans:
 | 182. Rabobank Payment Integration | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
 | 183. Email Delivery | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 184. Invoice Management UI | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
+| 185. Invoice PDF Club Branding | v26.0 | 0/1 | Planned | - |
+
+### Phase 185: Invoice PDF Club Branding
+
+**Goal:** Invoice PDF uses the club's own logo and colors instead of Rondo branding — headings and accent colors come from club settings.
+**Depends on:** Phase 184
+**Plans:** 1 plan
+
+Plans:
+- [ ] 185-01-PLAN.md — Backend branding settings + PDF generator integration + frontend logo upload and color picker UI
 
 ---
 *Roadmap created: 2026-02-09*
