@@ -23,6 +23,7 @@ class CommentTypes {
 	 * Comment type to string mapping
 	 */
 	private const TYPE_MAP = [
+		self::TYPE_NOTE     => 'note',
 		self::TYPE_ACTIVITY => 'activity',
 		self::TYPE_EMAIL    => 'email',
 	];
