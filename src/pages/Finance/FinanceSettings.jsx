@@ -3,6 +3,14 @@ import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, C
 import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
 import api, { prmApi } from '@/api/client';
+import TabButton from '@/components/TabButton';
+
+const TABS = [
+  { id: 'organization', label: 'Organisatie' },
+  { id: 'payment', label: 'Betaling' },
+  { id: 'email', label: 'E-mail' },
+  { id: 'rabobank', label: 'Rabobank' },
+];
 
 /**
  * Certificate display section for Rabobank mTLS
@@ -137,6 +145,7 @@ export default function FinanceSettings() {
     rabobank_client_secret: '',
   });
 
+  const [activeTab, setActiveTab] = useState('organization');
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
@@ -297,8 +306,20 @@ export default function FinanceSettings() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
+        {TABS.map(tab => (
+          <TabButton
+            key={tab.id}
+            label={tab.label}
+            isActive={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+          />
+        ))}
+      </div>
+
       {/* Section 1: Organization Details */}
-      <div className="card p-6">
+      {activeTab === 'organization' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Organisatiegegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -422,10 +443,10 @@ export default function FinanceSettings() {
             </p>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Section 2: Payment Details */}
-      <div className="card p-6">
+      {activeTab === 'payment' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Betaalgegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -475,10 +496,10 @@ export default function FinanceSettings() {
             />
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Section 3: Email Template */}
-      <div className="card p-6">
+      {activeTab === 'email' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">E-mailsjabloon</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -512,10 +533,10 @@ export default function FinanceSettings() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Section 4: Rabobank Integration */}
-      <div className="card p-6">
+      {activeTab === 'rabobank' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rabobank Koppeling</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -698,7 +719,7 @@ export default function FinanceSettings() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Error message */}
       {saveError && (
