@@ -642,16 +642,7 @@ export default function Layout({ children }) {
   // Update document title based on route
   useRouteTitle();
 
-  // Focus main element on initial mount for immediate scrolling
-  useEffect(() => {
-    // Focus immediately on mount to enable mouse wheel scrolling without clicking
-    const timer = setTimeout(() => {
-      mainRef.current?.focus();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []); // Empty dependency array - runs only on mount
-
-  // Focus main element on route change for keyboard scrolling
+  // Focus main element on mount and route change for keyboard scrolling
   useEffect(() => {
     // Small delay to ensure content is rendered
     const timer = setTimeout(() => {
