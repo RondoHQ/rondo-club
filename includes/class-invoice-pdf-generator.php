@@ -457,9 +457,9 @@ table.line-items .total-row td {
 	<thead>
 		<tr>
 			<th style="width: 45%;">Omschrijving</th>
-			<th style="width: 25%;">Kaart</th>
-			<th style="width: 15%;">Schorsing</th>
-			<th style="width: 15%; text-align: right;">Bedrag</th>
+			<th style="width: 15%;">Kaart</th>
+			<th style="width: 20%;">Schorsing</th>
+			<th style="width: 20%; text-align: right;">Bedrag</th>
 		</tr>
 	</thead>
 	<tbody>
