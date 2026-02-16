@@ -9,6 +9,10 @@
 namespace Rondo\REST;
 
 use Rondo\Finance\InvoiceNumbering;
+use Rondo\Finance\InvoicePdfGenerator;
+use Rondo\Finance\InvoiceEmailSender;
+use Rondo\Finance\RabobankOAuth;
+use Rondo\Finance\RabobankPayment;
 use Rondo\Config\FinanceConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -112,6 +116,106 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'update_invoice_status' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Generate PDF for invoice
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/generate-pdf',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'generate_pdf' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Download invoice PDF
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/pdf',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'download_pdf' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Send invoice via email
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/send',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'send_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Resend invoice via email
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/resend',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'resend_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Download invoice QR code
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/qr',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'download_qr' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
 						'id' => [
@@ -402,6 +506,267 @@ class Invoices extends Base {
 	}
 
 	/**
+	 * Generate PDF for an invoice
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function generate_pdf( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Generate PDF
+		$result = InvoicePdfGenerator::generate( $invoice_id );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		// Return updated invoice detail (now includes pdf_path)
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Download invoice PDF
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return void Serves PDF file directly, exits script.
+	 */
+	public function download_pdf( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$pdf_path = get_field( 'pdf_path', $invoice_id );
+		if ( empty( $pdf_path ) ) {
+			return new \WP_Error(
+				'rest_no_pdf',
+				__( 'No PDF generated for this invoice.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$upload_dir = wp_upload_dir();
+		$full_path  = $upload_dir['basedir'] . '/' . $pdf_path;
+
+		if ( ! file_exists( $full_path ) ) {
+			return new \WP_Error(
+				'rest_file_not_found',
+				__( 'PDF file not found on disk.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Get invoice number for filename
+		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$filename = 'factuur-' . $invoice_number . '.pdf';
+
+		// Serve PDF file directly
+		header( 'Content-Type: application/pdf' );
+		header( 'Content-Disposition: inline; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . filesize( $full_path ) );
+		readfile( $full_path );
+		exit;
+	}
+
+	/**
+	 * Download invoice QR code
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return void|\WP_Error Serves QR PNG file directly, exits script.
+	 */
+	public function download_qr( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$qr_path = get_field( 'qr_code_path', $invoice_id );
+		if ( empty( $qr_path ) ) {
+			return new \WP_Error(
+				'rest_no_qr',
+				__( 'No QR code available for this invoice.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$upload_dir = wp_upload_dir();
+		$full_path  = $upload_dir['basedir'] . '/' . $qr_path;
+
+		if ( ! file_exists( $full_path ) ) {
+			return new \WP_Error(
+				'rest_file_not_found',
+				__( 'QR code file not found on disk.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$filename       = 'qr-' . $invoice_number . '.png';
+
+		header( 'Content-Type: image/png' );
+		header( 'Content-Disposition: inline; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . filesize( $full_path ) );
+		readfile( $full_path );
+		exit;
+	}
+
+	/**
+	 * Send invoice via email
+	 *
+	 * Orchestrates the full send flow: PDF generation, payment link creation,
+	 * email delivery, and status transition to Sent.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function send_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Check invoice is in draft status
+		if ( $invoice->post_status !== 'rondo_draft' ) {
+			return new \WP_Error(
+				'invoice_not_draft',
+				__( 'Alleen conceptfacturen kunnen worden verstuurd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF
+		$oauth = new RabobankOAuth();
+		if ( $oauth->is_connected() ) {
+			$payment = new RabobankPayment( $oauth );
+			$payment_result = $payment->create_payment_request( $invoice_id );
+			// Log error but continue - payment link is non-blocking
+			if ( is_wp_error( $payment_result ) ) {
+				error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+			}
+		}
+
+		// Always (re)generate PDF so QR code and payment link are included
+		$pdf_result = InvoicePdfGenerator::generate( $invoice_id );
+		if ( is_wp_error( $pdf_result ) ) {
+			return $pdf_result;
+		}
+
+		// Send email via InvoiceEmailSender
+		$email_result = InvoiceEmailSender::send( $invoice_id );
+		if ( is_wp_error( $email_result ) ) {
+			return $email_result;
+		}
+
+		// Transition status to Sent
+		wp_update_post(
+			[
+				'ID'          => $invoice_id,
+				'post_status' => 'rondo_sent',
+			]
+		);
+
+		// Update ACF status field
+		update_field( 'status', 'sent', $invoice_id );
+
+		// Set sent_date
+		$sent_date = current_time( 'Ymd' );
+		update_field( 'sent_date', $sent_date, $invoice_id );
+
+		// Calculate and set due_date
+		$config = new FinanceConfig();
+		$payment_term_days = $config->get_payment_term_days();
+		$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
+		update_field( 'due_date', $due_date, $invoice_id );
+
+		// Mark linked discipline cases as charged via Rondo
+		$line_items = get_field( 'line_items', $invoice_id );
+		if ( $line_items && is_array( $line_items ) ) {
+			foreach ( $line_items as $item ) {
+				if ( ! empty( $item['discipline_case'] ) ) {
+					update_field( 'is_charged', 'rondo', (int) $item['discipline_case'] );
+				}
+			}
+		}
+
+		// Return updated invoice detail
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Resend invoice email
+	 *
+	 * Allows re-sending the invoice email for sent or overdue invoices.
+	 * Uses the existing InvoiceEmailSender service to send the email again.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function resend_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Check invoice status is sent or overdue
+		if ( ! in_array( $invoice->post_status, [ 'rondo_sent', 'rondo_overdue' ], true ) ) {
+			return new \WP_Error(
+				'invoice_not_sent',
+				__( 'Alleen verstuurde of verlopen facturen kunnen opnieuw worden verstuurd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Send email via InvoiceEmailSender
+		$email_result = InvoiceEmailSender::send( $invoice_id );
+		if ( is_wp_error( $email_result ) ) {
+			return $email_result;
+		}
+
+		// Return updated invoice detail
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
 	 * Check for overdue invoices and update their status
 	 *
 	 * Runs on every list request to keep invoice statuses current.
@@ -501,8 +866,9 @@ class Invoices extends Base {
 			}
 		}
 
-		$invoice['line_items'] = $formatted_items;
-		$invoice['pdf_path']   = get_field( 'pdf_path', $post->ID ) ?: null;
+		$invoice['line_items']    = $formatted_items;
+		$invoice['pdf_path']      = get_field( 'pdf_path', $post->ID ) ?: null;
+		$invoice['qr_code_path']  = get_field( 'qr_code_path', $post->ID ) ?: null;
 
 		return $invoice;
 	}

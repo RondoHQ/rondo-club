@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Users,
@@ -47,7 +47,7 @@ const navigation = [
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Financien', type: 'section', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
-  { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true, disabled: true },
+  { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Instellingen', href: '/financien/instellingen', icon: Settings, indent: true, requiresFinancieel: true, adminOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
@@ -505,6 +505,21 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
   const [searchParams] = useSearchParams();
   const filteredCount = searchParams.get('filteredCount');
 
+  // Detect platform for keyboard shortcut display
+  const isMac = useMemo(() => {
+    if (typeof navigator === 'undefined') {
+      return false;
+    }
+
+    const platform =
+      navigator.userAgentData?.platform ||
+      navigator.platform ||
+      navigator.userAgent ||
+      '';
+
+    return typeof platform === 'string' && platform.toLowerCase().includes('mac');
+  }, []);
+
   // Get page title from location
   const getPageTitle = () => {
     const path = location.pathname;
@@ -577,12 +592,18 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
         onClick={onOpenSearch}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-400"
         aria-label="Zoeken"
-        title="Zoeken (Cmd+K)"
+        title={`Zoeken (${isMac ? 'Cmd' : 'Ctrl'}+K)`}
       >
         <Search className="w-4 h-4" />
         <span className="hidden sm:inline text-sm">Zoek...</span>
         <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">
-          <Command className="w-3 h-3" />K
+          {isMac ? (
+            <>
+              <Command className="w-3 h-3" />K
+            </>
+          ) : (
+            'Ctrl+K'
+          )}
         </kbd>
       </button>
       
@@ -621,7 +642,7 @@ export default function Layout({ children }) {
   // Update document title based on route
   useRouteTitle();
 
-  // Focus main element on route change for keyboard scrolling
+  // Focus main element on mount and route change for keyboard scrolling
   useEffect(() => {
     // Small delay to ensure content is rendered
     const timer = setTimeout(() => {
@@ -677,7 +698,18 @@ export default function Layout({ children }) {
           onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
-        <main ref={mainRef} tabIndex={-1} className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none">
+        <main
+          ref={mainRef}
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none"
+          onClick={(e) => {
+            // Restore focus when clicking in the main content area (if not already focused)
+            // This ensures mouse wheel scrolling works after modals or other interactions
+            if (document.activeElement !== mainRef.current) {
+              mainRef.current?.focus();
+            }
+          }}
+        >
           {children}
         </main>
       </div>

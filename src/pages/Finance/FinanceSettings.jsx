@@ -1,25 +1,151 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { useFinanceSettings, useUpdateFinanceSettings } from '@/hooks/useFinanceSettings';
+import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
+import api, { prmApi } from '@/api/client';
+import TabButton from '@/components/TabButton';
+
+const TABS = [
+  { id: 'organization', label: 'Organisatie' },
+  { id: 'payment', label: 'Betaling' },
+  { id: 'email', label: 'E-mail' },
+  { id: 'rabobank', label: 'Rabobank' },
+];
+
+/**
+ * Certificate display section for Rabobank mTLS
+ */
+function CertificateSection() {
+  const [certificate, setCertificate] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const loadCertificate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await prmApi.getRabobankCertificate();
+      setCertificate(response.data.certificate);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Kon certificaat niet laden.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(certificate);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = certificate;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        mTLS Certificaat
+      </h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        Dit certificaat moet je toevoegen in het{' '}
+        <a href="https://developer.rabobank.nl" target="_blank" rel="noopener noreferrer" className="text-electric-cyan hover:underline">
+          Rabobank Developer Portal
+        </a>
+        {' '}onder je app &rarr; Configurations &rarr; MTLS.
+      </p>
+
+      {!certificate && !loading && (
+        <button
+          type="button"
+          onClick={loadCertificate}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Certificaat tonen
+        </button>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Certificaat laden...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {certificate && (
+        <div className="space-y-2">
+          <div className="relative">
+            <pre className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
+              {certificate}
+            </pre>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-green-500" />
+                  Gekopieerd
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  Kopieer
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function FinanceSettings() {
   const { data: settings, isLoading, error } = useFinanceSettings();
   const updateMutation = useUpdateFinanceSettings();
+  const { data: rabobankStatus, isLoading: rabobankLoading } = useRabobankStatus();
+  const disconnectMutation = useDisconnectRabobank();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Form state
   const [formData, setFormData] = useState({
     org_name: '',
     org_address: '',
-    org_email: '',
+    contact_email: '',
     iban: '',
     payment_term_days: 14,
     payment_clause: '',
     email_template: '',
+    club_logo_id: 0,
+    club_logo_url: '',
+    accent_color: '',
+    bcc_email: '',
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
     rabobank_client_secret: '',
   });
 
+  const [activeTab, setActiveTab] = useState('organization');
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
@@ -29,11 +155,15 @@ export default function FinanceSettings() {
       setFormData({
         org_name: settings.org_name || '',
         org_address: settings.org_address || '',
-        org_email: settings.org_email || '',
+        contact_email: settings.contact_email || '',
         iban: settings.iban || '',
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
         email_template: settings.email_template || '',
+        club_logo_id: settings.club_logo_id || 0,
+        club_logo_url: settings.club_logo_url || '',
+        accent_color: settings.accent_color || '',
+        bcc_email: settings.bcc_email || '',
         rabobank_environment: settings.rabobank_environment || 'sandbox',
         // Don't populate credentials from API for security
         rabobank_client_id: '',
@@ -42,10 +172,65 @@ export default function FinanceSettings() {
     }
   }, [settings]);
 
+  // Handle OAuth callback notification
+  useEffect(() => {
+    const rabobankParam = searchParams.get('rabobank');
+    if (rabobankParam === 'connected') {
+      // Show success banner, clear param
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+      searchParams.delete('rabobank');
+      setSearchParams(searchParams, { replace: true });
+    } else if (rabobankParam === 'error') {
+      const errorMessage = searchParams.get('message') || 'Rabobank koppeling mislukt. Probeer het opnieuw.';
+      setSaveError(errorMessage);
+      searchParams.delete('rabobank');
+      searchParams.delete('message');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   // Format IBAN on blur
   const handleIbanBlur = () => {
     const formatted = formData.iban.toUpperCase().replace(/\s+/g, '');
     setFormData(prev => ({ ...prev, iban: formatted }));
+  };
+
+  // Handle logo upload
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await api.post('/wp/v2/media', uploadFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        club_logo_id: response.data.id,
+        club_logo_url: response.data.source_url,
+      }));
+    } catch (err) {
+      setSaveError(err.response?.data?.message || 'Fout bij uploaden logo');
+    }
+  };
+
+  // Remove logo
+  const handleLogoRemove = () => {
+    setFormData(prev => ({
+      ...prev,
+      club_logo_id: 0,
+      club_logo_url: '',
+    }));
+  };
+
+  // Reset accent color to default
+  const handleResetAccentColor = () => {
+    setFormData(prev => ({ ...prev, accent_color: '' }));
   };
 
   // Handle form submission
@@ -59,11 +244,14 @@ export default function FinanceSettings() {
       const payload = {
         org_name: formData.org_name,
         org_address: formData.org_address,
-        org_email: formData.org_email,
+        contact_email: formData.contact_email,
         iban: formData.iban,
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
         email_template: formData.email_template,
+        club_logo_id: formData.club_logo_id,
+        accent_color: formData.accent_color,
+        bcc_email: formData.bcc_email,
         rabobank_environment: formData.rabobank_environment,
       };
 
@@ -118,8 +306,20 @@ export default function FinanceSettings() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
+        {TABS.map(tab => (
+          <TabButton
+            key={tab.id}
+            label={tab.label}
+            isActive={activeTab === tab.id}
+            onClick={() => setActiveTab(tab.id)}
+          />
+        ))}
+      </div>
+
       {/* Section 1: Organization Details */}
-      <div className="card p-6">
+      {activeTab === 'organization' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Organisatiegegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -154,23 +354,99 @@ export default function FinanceSettings() {
             />
           </div>
           <div>
-            <label htmlFor="org_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               E-mailadres
             </label>
             <input
               type="email"
-              id="org_email"
-              value={formData.org_email}
-              onChange={(e) => setFormData(prev => ({ ...prev, org_email: e.target.value }))}
+              id="contact_email"
+              value={formData.contact_email}
+              onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
               placeholder="financien@vereniging.nl"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
             />
           </div>
+          <div>
+            <label htmlFor="bcc_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              BCC E-mailadres
+            </label>
+            <input
+              type="email"
+              id="bcc_email"
+              value={formData.bcc_email}
+              onChange={(e) => setFormData(prev => ({ ...prev, bcc_email: e.target.value }))}
+              placeholder="penningmeester@vereniging.nl"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Alle factuurmails worden ook naar dit adres gestuurd (bv. voor de boekhouding of penningmeester)
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Clublogo
+            </label>
+            {formData.club_logo_url ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={formData.club_logo_url}
+                  alt="Club logo"
+                  className="max-h-[60px] object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={handleLogoRemove}
+                  className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  Verwijderen
+                </button>
+              </div>
+            ) : null}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Logo wordt getoond op facturen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Accentkleur
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={formData.accent_color || '#0891b2'}
+                onChange={(e) => setFormData(prev => ({ ...prev, accent_color: e.target.value }))}
+                className="h-10 w-20 cursor-pointer border border-gray-300 dark:border-gray-600 rounded-lg"
+              />
+              <input
+                type="text"
+                value={formData.accent_color || '#0891b2'}
+                onChange={(e) => setFormData(prev => ({ ...prev, accent_color: e.target.value }))}
+                placeholder="#0891b2"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleResetAccentColor}
+                className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap"
+              >
+                Reset naar standaard
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Deze kleur wordt gebruikt voor koppen en lijnen op facturen. Standaard: #0891b2 (electric cyan).
+            </p>
+          </div>
         </div>
-      </div>
+      </div>}
 
       {/* Section 2: Payment Details */}
-      <div className="card p-6">
+      {activeTab === 'payment' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Betaalgegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -220,10 +496,10 @@ export default function FinanceSettings() {
             />
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Section 3: Email Template */}
-      <div className="card p-6">
+      {activeTab === 'email' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">E-mailsjabloon</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -257,91 +533,193 @@ export default function FinanceSettings() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Section 4: Rabobank Integration */}
-      <div className="card p-6">
+      {activeTab === 'rabobank' && <div className="card p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rabobank Koppeling</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             API-gegevens voor het aanmaken van betaalverzoeken via Rabobank.
           </p>
         </div>
-        <div className="space-y-4">
+
+        <div className="space-y-6">
+          {/* Part A: Connection Status & Action */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Omgeving
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rabobank_environment"
-                  value="sandbox"
-                  checked={formData.rabobank_environment === 'sandbox'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
-                  className="text-electric-cyan focus:ring-electric-cyan"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Sandbox (test)</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rabobank_environment"
-                  value="production"
-                  checked={formData.rabobank_environment === 'production'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
-                  className="text-electric-cyan focus:ring-electric-cyan"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Productie</span>
-              </label>
-            </div>
-            {formData.rabobank_environment === 'production' && (
-              <div className="mt-2 flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  Let op: productieomgeving gebruikt echte betalingen
-                </p>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Koppeling Status</h3>
+
+            {rabobankLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Status wordt geladen...</span>
+              </div>
+            ) : rabobankStatus?.connected ? (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <Link2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="font-medium text-green-900 dark:text-green-100">Gekoppeld</span>
+                        </div>
+                        <span className="text-sm text-green-700 dark:text-green-300">
+                          ({rabobankStatus.environment === 'sandbox' ? 'Sandbox' : 'Productie'})
+                        </span>
+                      </div>
+                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                        Rabobank betaalverzoeken kunnen worden aangemaakt
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm('Weet je zeker dat je Rabobank wilt ontkoppelen?')) {
+                        try {
+                          await disconnectMutation.mutateAsync();
+                          setShowSuccess(true);
+                          setTimeout(() => setShowSuccess(false), 3000);
+                        } catch (err) {
+                          setSaveError(err.response?.data?.message || 'Fout bij ontkoppelen');
+                        }
+                      }
+                    }}
+                    disabled={disconnectMutation.isPending}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {disconnectMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Unlink className="w-4 h-4" />
+                    )}
+                    Ontkoppelen
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <span className="font-medium text-yellow-900 dark:text-yellow-100">Niet gekoppeld</span>
+                      </div>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                        Koppel Rabobank om betaalverzoeken te kunnen versturen
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const response = await prmApi.getRabobankAuthorizeUrl();
+                        window.location.href = response.data.authorize_url;
+                      } catch (err) {
+                        setSaveError(err.response?.data?.message || 'Fout bij ophalen autorisatie URL');
+                      }
+                    }}
+                    disabled={!settings?.rabobank_has_credentials}
+                    title={!settings?.rabobank_has_credentials ? 'Sla eerst je Client ID en Client Secret op' : ''}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Koppelen met Rabobank
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {settings?.rabobank_has_credentials && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-              <p className="text-sm text-green-700 dark:text-green-300">
-                Opgeslagen credentials gevonden. Laat velden leeg om huidige waarden te behouden.
-              </p>
-            </div>
-          )}
+          {/* Part B: mTLS Certificate */}
+          <CertificateSection />
 
-          <div>
-            <label htmlFor="rabobank_client_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Client ID
-            </label>
-            <input
-              type="text"
-              id="rabobank_client_id"
-              value={formData.rabobank_client_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_id: e.target.value }))}
-              placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client ID'}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label htmlFor="rabobank_client_secret" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Client Secret
-            </label>
-            <input
-              type="password"
-              id="rabobank_client_secret"
-              value={formData.rabobank_client_secret}
-              onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_secret: e.target.value }))}
-              placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client Secret'}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-            />
+          {/* Part C: Credentials Form */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">API Credentials</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Omgeving
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="rabobank_environment"
+                      value="sandbox"
+                      checked={formData.rabobank_environment === 'sandbox'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
+                      className="text-electric-cyan focus:ring-electric-cyan"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Sandbox (test)</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="rabobank_environment"
+                      value="production"
+                      checked={formData.rabobank_environment === 'production'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
+                      className="text-electric-cyan focus:ring-electric-cyan"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Productie</span>
+                  </label>
+                </div>
+                {formData.rabobank_environment === 'production' && (
+                  <div className="mt-2 flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                    <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      Let op: productieomgeving gebruikt echte betalingen
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {settings?.rabobank_has_credentials && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    Opgeslagen credentials gevonden. Laat velden leeg om huidige waarden te behouden.
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="rabobank_client_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client ID
+                </label>
+                <input
+                  type="text"
+                  id="rabobank_client_id"
+                  value={formData.rabobank_client_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_id: e.target.value }))}
+                  placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client ID'}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="rabobank_client_secret" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client Secret
+                </label>
+                <input
+                  type="password"
+                  id="rabobank_client_secret"
+                  value={formData.rabobank_client_secret}
+                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_secret: e.target.value }))}
+                  placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client Secret'}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Error message */}
       {saveError && (

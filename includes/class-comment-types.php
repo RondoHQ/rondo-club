@@ -52,7 +52,7 @@ class CommentTypes {
 	 */
 	public function register_comment_meta() {
 		// Activity-specific meta
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'activity_type',
 			[
@@ -63,7 +63,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'activity_date',
 			[
@@ -74,7 +74,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'activity_time',
 			[
@@ -85,7 +85,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'participants',
 			[
@@ -102,7 +102,7 @@ class CommentTypes {
 		);
 
 		// Email-specific meta
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'email_template_type',
 			[
@@ -113,7 +113,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'email_recipient',
 			[
@@ -124,7 +124,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'email_subject',
 			[
@@ -135,7 +135,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'email_content_snapshot',
 			[
@@ -147,7 +147,7 @@ class CommentTypes {
 		);
 
 		// Note visibility meta
-		register_comment_meta(
+		\register_meta(
 			'comment',
 			'_note_visibility',
 			[
@@ -316,6 +316,7 @@ class CommentTypes {
 	 */
 	public function create_note( $request ) {
 		$person_id = $request->get_param( 'person_id' );
+		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
 		$content   = wp_kses_post( $request->get_param( 'content' ) );
 		$visibility = $this->sanitize_visibility( $request->get_param( 'visibility' ) );
 
@@ -463,6 +464,11 @@ class CommentTypes {
 			return $result;
 		}
 
+		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
+		if ( false === $result || is_wp_error( $result ) ) {
+			return new \WP_Error( 'update_failed', __( 'Failed to update activity.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
 		// Update meta.
 		$this->update_meta_if_provided(
 			$comment_id,
@@ -583,11 +589,9 @@ class CommentTypes {
 	 */
 	private function format_comment( $comment, $type ) {
 		// Process content for activities and notes
-		if ( 'activity' === $type || 'note' === $type ) {
-			$content = $this->process_content_for_display( $comment->comment_content );
-		} else {
-			$content = $comment->comment_content;
-		}
+		$content = ( 'activity' === $type || 'note' === $type )
+			? $this->process_content_for_display( $comment->comment_content )
+			: $comment->comment_content;
 
 		$data = [
 			'id'        => (int) $comment->comment_ID,
@@ -671,16 +675,27 @@ class CommentTypes {
 	}
 
 	/**
-	 * Update comment meta based on provided values.
+	 * Update or clear comment meta based on provided values.
+	 *
+	 * - If a value is null, the meta key is left unchanged.
+	 * - If a value is an empty string, the meta key is deleted (cleared).
+	 * - For any other value, the meta key is updated to that value.
 	 *
 	 * @param int   $comment_id The comment ID.
-	 * @param array $meta_map   Associative array of meta_key => value pairs. Null values are skipped.
+	 * @param array $meta_map   Associative array of meta_key => value pairs.
 	 */
 	private function update_meta_if_provided( $comment_id, $meta_map ) {
 		foreach ( $meta_map as $key => $value ) {
-			if ( null !== $value ) {
-				update_comment_meta( $comment_id, $key, $value );
+			if ( null === $value ) {
+				continue;
 			}
+
+			if ( '' === $value ) {
+				delete_comment_meta( $comment_id, $key );
+				continue;
+			}
+
+			update_comment_meta( $comment_id, $key, $value );
 		}
 	}
 

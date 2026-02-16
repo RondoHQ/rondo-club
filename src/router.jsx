@@ -25,6 +25,8 @@ const VOG = lazy(() => import('@/pages/VOG/VOG'));
 const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
 const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
 const FinanceSettings = lazy(() => import('@/pages/Finance/FinanceSettings'));
+const Facturen = lazy(() => import('@/pages/Finance/Facturen'));
+const FactuurDetail = lazy(() => import('@/pages/Finance/FactuurDetail'));
 const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));
@@ -203,6 +205,22 @@ const router = createBrowserRouter([
             element: (
               <FinancieelRoute>
                 <FinanceSettings />
+              </FinancieelRoute>
+            ),
+          },
+          {
+            path: 'financien/facturen',
+            element: (
+              <FinancieelRoute>
+                <Facturen />
+              </FinancieelRoute>
+            ),
+          },
+          {
+            path: 'financien/facturen/:id',
+            element: (
+              <FinancieelRoute>
+                <FactuurDetail />
               </FinancieelRoute>
             ),
           },

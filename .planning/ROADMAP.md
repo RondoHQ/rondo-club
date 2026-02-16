@@ -8,7 +8,7 @@
 - ✅ **v23.0 Former Members** — Phases 166-169 (shipped 2026-02-09) — [Archive](milestones/v23.0-ROADMAP.md)
 - ✅ **v24.0 Demo Data** — Phases 170-174 (shipped 2026-02-12) — [Archive](milestones/v24.0-ROADMAP.md)
 - ✅ **v24.1 Dead Feature Removal** — Phases 175-177 (shipped 2026-02-13) — [Archive](milestones/v24.1-ROADMAP.md)
-- 🚧 **v26.0 Discipline Case Invoicing** — Phases 178-184 (in progress)
+- 🚧 **v26.0 Discipline Case Invoicing** — Phases 178-185 (in progress)
 
 ## Phases
 
@@ -139,10 +139,10 @@ Plans:
   4. PDF lists each discipline case with match description, sanction, and fee amount
   5. PDF shows invoice number, invoice date, due date, total amount, bank account (IBAN), and payment clause
   6. Generated PDF stored in WordPress uploads directory and path saved to invoice
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 181-01: TBD
+- [x] 181-01-PLAN.md -- Install mPDF, create InvoicePdfGenerator class, add REST endpoints for PDF generation and download
 
 #### Phase 182: Rabobank Payment Integration
 **Goal**: Invoices can generate Rabobank betaalverzoek payment links via OAuth API integration.
@@ -154,10 +154,11 @@ Plans:
   3. Payment link from API response stored on invoice record
   4. API credentials retrieved securely from finance settings (sodium encryption pattern)
   5. Sandbox/production environment toggle works correctly
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 182-01: TBD
+- [x] 182-01-PLAN.md -- RabobankOAuth class (OAuth 2.0 flow, token management) + RabobankPayment service (payment request creation)
+- [x] 182-02-PLAN.md -- Frontend: Rabobank connection status UI, connect/disconnect buttons, API client methods
 
 #### Phase 183: Email Delivery
 **Goal**: Draft invoices can be sent via email with PDF attachment, payment link, and configurable template text.
@@ -168,10 +169,10 @@ Plans:
   2. Email body uses configured template with variable replacement: {naam}, {betaallink}, {factuur_nummer}, {tuchtzaken_lijst}, {totaal_bedrag}
   3. Invoice PDF attached to email as file
   4. Sending invoice transitions status from Draft to Sent and sets sent_date and due_date
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 183-01: TBD
+- [x] 183-01-PLAN.md -- InvoiceEmailSender service class, send invoice REST endpoint, and frontend API method
 
 #### Phase 184: Invoice Management UI
 **Goal**: Facturen page exists with invoice list, detail view, and status management actions.
@@ -185,10 +186,11 @@ Plans:
   5. User can mark sent invoice as Paid manually (transitions status to Paid)
   6. User can resend invoice email for sent invoices
   7. Invoice history appears on member's profile page showing linked invoices
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 184-01: TBD
+- [x] 184-01-PLAN.md — Backend resend endpoint, frontend hooks, routes, and navigation enable
+- [x] 184-02-PLAN.md — Facturen list page, detail page with actions, FinancesCard links, version bump
 
 ## Progress
 
@@ -200,11 +202,21 @@ Plans:
 | 178. Finance Navigation & Settings Backend | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 179. Invoice Data Model & REST API | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 181. PDF Generation | v26.0 | 0/TBD | Not started | - |
-| 182. Rabobank Payment Integration | v26.0 | 0/TBD | Not started | - |
-| 183. Email Delivery | v26.0 | 0/TBD | Not started | - |
-| 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
+| 181. PDF Generation | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
+| 182. Rabobank Payment Integration | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
+| 183. Email Delivery | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
+| 184. Invoice Management UI | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
+| 185. Invoice PDF Club Branding | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
+
+### Phase 185: Invoice PDF Club Branding
+
+**Goal:** Invoice PDF uses the club's own logo and colors instead of Rondo branding — headings and accent colors come from club settings.
+**Depends on:** Phase 184
+**Plans:** 1 plan
+
+Plans:
+- [x] 185-01-PLAN.md — Backend branding settings + PDF generator integration + frontend logo upload and color picker UI
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-15 — Phase 180 completed (2/2 plans)*
+*Last updated: 2026-02-16 — Phase 185 completed (1/1 plan)*

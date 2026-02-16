@@ -288,12 +288,26 @@ export const prmApi = {
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),
 
+  // Rabobank OAuth
+  getRabobankStatus: () => api.get('/rondo/v1/rabobank/status'),
+  getRabobankAuthorizeUrl: () => api.get('/rondo/v1/rabobank/authorize'),
+  disconnectRabobank: () => api.post('/rondo/v1/rabobank/disconnect'),
+
+  // Rabobank Payment
+  createPaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/payment-link`),
+  getRabobankCertificate: () => api.get('/rondo/v1/rabobank/certificate'),
+
   // Invoice endpoints
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),
   updateInvoiceStatus: (id, status) => api.post(`/rondo/v1/invoices/${id}/status`, { status }),
   getInvoicedCaseIds: (personId) => api.get('/rondo/v1/invoices/invoiced-cases', { params: { person_id: personId } }),
+  generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
+  sendInvoice: (id) => api.post(`/rondo/v1/invoices/${id}/send`),
+  resendInvoice: (id) => api.post(`/rondo/v1/invoices/${id}/resend`),
+  getInvoicePdfUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/pdf?_wpnonce=${window.rondoConfig?.nonce || ''}`,
+  getInvoiceQrUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/qr?_wpnonce=${window.rondoConfig?.nonce || ''}`,
 
   // Membership fees
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),

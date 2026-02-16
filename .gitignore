@@ -33,5 +33,8 @@ coverage/
 tests/.env
 tests/_output/
 
+# Certificates (mTLS)
+certs/
+
 # Misc
 *.tgz
