@@ -630,8 +630,6 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const mainRef = useRef(null);
-  const location = useLocation();
   const isDemo = window.rondoConfig?.isDemo;
   const createFeedback = useCreateFeedback();
 
@@ -641,15 +639,6 @@ export default function Layout({ children }) {
 
   // Update document title based on route
   useRouteTitle();
-
-  // Focus main element on mount and route change for keyboard scrolling
-  useEffect(() => {
-    // Small delay to ensure content is rendered
-    const timer = setTimeout(() => {
-      mainRef.current?.focus();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [location.pathname]);
 
   // Handle Cmd+K keyboard shortcut
   useEffect(() => {
@@ -698,18 +687,7 @@ export default function Layout({ children }) {
           onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
-        <main
-          ref={mainRef}
-          tabIndex={-1}
-          className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none"
-          onClick={(e) => {
-            // Restore focus when clicking in the main content area (if not already focused)
-            // This ensures mouse wheel scrolling works after modals or other interactions
-            if (document.activeElement !== mainRef.current) {
-              mainRef.current?.focus();
-            }
-          }}
-        >
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none]">
           {children}
         </main>
       </div>
