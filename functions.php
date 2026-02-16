@@ -72,6 +72,7 @@ use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
 use Rondo\Finance\InvoiceNumbering;
 use Rondo\Finance\InvoicePdfGenerator;
+use Rondo\Finance\InvoiceEmailSender;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Demo\DemoExport;
