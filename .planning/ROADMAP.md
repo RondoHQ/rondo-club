@@ -157,8 +157,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 182-01-PLAN.md -- RabobankOAuth class (OAuth 2.0 flow, token management) + RabobankPayment service (payment request creation)
-- [ ] 182-02-PLAN.md -- Frontend: Rabobank connection status UI, connect/disconnect buttons, API client methods
+- [x] 182-01-PLAN.md -- RabobankOAuth class (OAuth 2.0 flow, token management) + RabobankPayment service (payment request creation)
+- [x] 182-02-PLAN.md -- Frontend: Rabobank connection status UI, connect/disconnect buttons, API client methods
 
 #### Phase 183: Email Delivery
 **Goal**: Draft invoices can be sent via email with PDF attachment, payment link, and configurable template text.
@@ -202,10 +202,10 @@ Plans:
 | 179. Invoice Data Model & REST API | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 181. PDF Generation | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
-| 182. Rabobank Payment Integration | v26.0 | 0/TBD | Not started | - |
+| 182. Rabobank Payment Integration | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
 | 183. Email Delivery | v26.0 | 0/TBD | Not started | - |
 | 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-16 — Phase 181 completed (1/1 plans)*
+*Last updated: 2026-02-16 — Phase 182 completed (2/2 plans)*
