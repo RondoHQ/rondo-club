@@ -305,7 +305,7 @@ export const prmApi = {
   generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
   sendInvoice: (id) => api.post(`/rondo/v1/invoices/${id}/send`),
   resendInvoice: (id) => api.post(`/rondo/v1/invoices/${id}/resend`),
-  getInvoicePdfUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/pdf`,
+  getInvoicePdfUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/pdf?_wpnonce=${window.wpApiSettings?.nonce || ''}`,
 
   // Membership fees
   getFeeList: (params = {}) => api.get('/rondo/v1/fees', { params }),
