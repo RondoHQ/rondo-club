@@ -148,6 +148,12 @@ class InvoiceEmailSender {
 			'From: ' . $org_name . ' <' . $contact_email . '>',
 		];
 
+		// Add BCC if configured
+		$bcc_email = $config->get_bcc_email();
+		if ( ! empty( $bcc_email ) ) {
+			$headers[] = 'Bcc: ' . $bcc_email;
+		}
+
 		// Build attachments
 		$attachments = [];
 		$upload_dir  = wp_upload_dir();
