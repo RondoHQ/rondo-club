@@ -154,10 +154,11 @@ Plans:
   3. Payment link from API response stored on invoice record
   4. API credentials retrieved securely from finance settings (sodium encryption pattern)
   5. Sandbox/production environment toggle works correctly
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 182-01: TBD
+- [ ] 182-01-PLAN.md -- RabobankOAuth class (OAuth 2.0 flow, token management) + RabobankPayment service (payment request creation)
+- [ ] 182-02-PLAN.md -- Frontend: Rabobank connection status UI, connect/disconnect buttons, API client methods
 
 #### Phase 183: Email Delivery
 **Goal**: Draft invoices can be sent via email with PDF attachment, payment link, and configurable template text.
