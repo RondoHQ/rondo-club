@@ -929,7 +929,17 @@ export default function PersonDetail() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+        <button
+          onClick={() => {
+            if (window.history.state && window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/people');
+            }
+          }}
+          aria-label="Terug"
+          className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+        >
           <ArrowLeft className="w-4 h-4 md:mr-2" />
           <span className="hidden md:inline">Terug</span>
         </button>
