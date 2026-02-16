@@ -10,7 +10,7 @@ export default function FinanceSettings() {
   const [formData, setFormData] = useState({
     org_name: '',
     org_address: '',
-    org_email: '',
+    contact_email: '',
     iban: '',
     payment_term_days: 14,
     payment_clause: '',
@@ -29,7 +29,7 @@ export default function FinanceSettings() {
       setFormData({
         org_name: settings.org_name || '',
         org_address: settings.org_address || '',
-        org_email: settings.org_email || '',
+        contact_email: settings.contact_email || '',
         iban: settings.iban || '',
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
@@ -59,7 +59,7 @@ export default function FinanceSettings() {
       const payload = {
         org_name: formData.org_name,
         org_address: formData.org_address,
-        org_email: formData.org_email,
+        contact_email: formData.contact_email,
         iban: formData.iban,
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
@@ -154,14 +154,14 @@ export default function FinanceSettings() {
             />
           </div>
           <div>
-            <label htmlFor="org_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               E-mailadres
             </label>
             <input
               type="email"
-              id="org_email"
-              value={formData.org_email}
-              onChange={(e) => setFormData(prev => ({ ...prev, org_email: e.target.value }))}
+              id="contact_email"
+              value={formData.contact_email}
+              onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
               placeholder="financien@vereniging.nl"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
             />
