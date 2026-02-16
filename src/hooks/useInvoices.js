@@ -139,6 +139,24 @@ export function useUpdateInvoiceStatus() {
 }
 
 /**
+ * Generate PDF for an invoice
+ * @returns {object} Mutation object for generating invoice PDFs
+ */
+export function useGenerateInvoicePdf() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await prmApi.generateInvoicePdf(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+    },
+  });
+}
+
+/**
  * Resend invoice email
  * @returns {object} Mutation object for resending invoices
  */
