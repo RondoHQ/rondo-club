@@ -52,7 +52,7 @@ class CommentTypes {
 	 */
 	public function register_comment_meta() {
 		// Activity-specific meta
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'activity_type',
 			[
@@ -63,7 +63,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'activity_date',
 			[
@@ -74,7 +74,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'activity_time',
 			[
@@ -85,7 +85,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'participants',
 			[
@@ -102,7 +102,7 @@ class CommentTypes {
 		);
 
 		// Email-specific meta
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'email_template_type',
 			[
@@ -113,7 +113,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'email_recipient',
 			[
@@ -124,7 +124,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'email_subject',
 			[
@@ -135,7 +135,7 @@ class CommentTypes {
 			]
 		);
 
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'email_content_snapshot',
 			[
@@ -147,7 +147,7 @@ class CommentTypes {
 		);
 
 		// Note visibility meta
-		register_comment_meta(
+		\register_comment_meta(
 			'comment',
 			'_note_visibility',
 			[
