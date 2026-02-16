@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 185 of 185 (Invoice PDF Club Branding)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 - Completed quick task 72: Add tab navigation to Finance Settings
+Last activity: 2026-02-16 - Completed quick task 73: Set doorbelast to Rondo when invoice sent
 
 Progress: [██████████] 100% (1/1 plans complete)
 
@@ -124,11 +124,12 @@ None — phase 185 was the final planned enhancement.
 | 70 | Fix invoice PDF column widths | 2026-02-16 | 4836a3d | [70-fix-invoice-pdf-column-widths-for-kaart-](./quick/70-fix-invoice-pdf-column-widths-for-kaart-/) |
 | 71 | Move club logo to right side of invoice header | 2026-02-16 | d69396f | [71-move-club-logo-to-right-side-of-invoice-](./quick/71-move-club-logo-to-right-side-of-invoice-/) |
 | 72 | Add tab navigation to Finance Settings | 2026-02-16 | d31e152 | [72-finance-settings-tabs](./quick/72-finance-settings-tabs/) |
+| 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick task 72: Add tab navigation to Finance Settings
+Stopped at: Completed quick task 73: Set doorbelast to Rondo when invoice sent
 Resume file: None
 
 **Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
