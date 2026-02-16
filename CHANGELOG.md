@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.0.0] - 2026-02-16
+
+### Added
+- Discipline case invoicing system with full invoice lifecycle management
+- Finance settings page for club details, bank account, payment terms, and email template
+- Invoice creation from discipline cases with automatic numbering (format: 2026T001)
+- PDF invoice generation using mPDF with club branding and payment details
+- Rabobank betaalverzoek payment link integration via OAuth 2.0
+- Email delivery with configurable template and PDF attachment
+- Facturen page with sortable invoice list and status filters
+- Invoice detail view with send, mark paid, resend, and PDF download actions
+- Invoice history on member profile page with links to detail view
+- Finance section in sidebar navigation with Contributie, Facturen, and Instellingen
+
 ## [25.2.0] - 2026-02-15
 
 ### Removed
