@@ -320,7 +320,7 @@ class DemoExport {
 					'huidig-vrijwilliger' => $this->normalize_value( get_field( 'huidig-vrijwilliger', $post->ID ) ),
 					'financiele-blokkade' => (bool) get_field( 'financiele-blokkade', $post->ID ),
 					'relatiecode'       => $this->normalize_value( get_field( 'relatiecode', $post->ID ) ),
-					'werkfuncties'      => $this->export_work_history( $post->ID ),
+					'werkfuncties'      => get_field( 'werkfuncties', $post->ID ),
 					'freescout-id'      => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
 					'factuur-adres'     => $this->normalize_value( get_field( 'factuur-adres', $post->ID ) ),
 					'factuur-email'     => $this->normalize_value( get_field( 'factuur-email', $post->ID ) ),
@@ -571,7 +571,10 @@ class DemoExport {
 	 * @return string|null Anonymized contact value.
 	 */
 	private function anonymize_contact_value( $contact_type, $identity, &$email_count ) {
-		switch ( $contact_type ) {
+		// Normalize case for known types
+		$normalized_type = strtolower( $contact_type );
+
+		switch ( $normalized_type ) {
 			case 'email':
 				if ( 0 === $email_count ) {
 					$email_count++;
@@ -592,9 +595,11 @@ class DemoExport {
 			case 'instagram':
 			case 'facebook':
 			case 'other':
+			case 'calendar':
 				return null;
 
 			default:
+				// For unknown contact types, preserve type but null the value
 				return null;
 		}
 	}
