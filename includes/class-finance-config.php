@@ -34,6 +34,7 @@ class FinanceConfig {
 	const OPTION_RABOBANK_CREDENTIALS  = 'rondo_finance_rabobank_credentials';
 	const OPTION_CLUB_LOGO_ID          = 'rondo_finance_club_logo_id';
 	const OPTION_ACCENT_COLOR          = 'rondo_finance_accent_color';
+	const OPTION_BCC_EMAIL             = 'rondo_finance_bcc_email';
 
 	/**
 	 * Default configuration values
@@ -49,6 +50,7 @@ class FinanceConfig {
 		'payment_clause'     => '',
 		'club_logo_id'       => 0,
 		'accent_color'       => '',
+		'bcc_email'          => '',
 		'email_template'     => "Beste {naam},
 
 Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.
@@ -145,6 +147,15 @@ Met vriendelijke groet,
 	}
 
 	/**
+	 * Get BCC email for invoice sending
+	 *
+	 * @return string The BCC email address (empty string if not configured)
+	 */
+	public function get_bcc_email(): string {
+		return get_option( self::OPTION_BCC_EMAIL, self::DEFAULTS['bcc_email'] );
+	}
+
+	/**
 	 * Get Rabobank credentials (decrypted, internal use only)
 	 *
 	 * @return array|null Array with client_id, client_secret, environment or null if not configured
@@ -189,6 +200,7 @@ Met vriendelijke groet,
 			'club_logo_id'          => $club_logo_id,
 			'club_logo_url'         => $club_logo_url,
 			'accent_color'          => $this->get_accent_color(),
+			'bcc_email'             => $this->get_bcc_email(),
 			'rabobank_has_credentials' => $rabobank_creds !== null,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
 		];
@@ -220,6 +232,8 @@ Met vriendelijke groet,
 				return $this->get_club_logo_id();
 			case 'accent_color':
 				return $this->get_accent_color();
+			case 'bcc_email':
+				return $this->get_bcc_email();
 			default:
 				return null;
 		}
@@ -282,6 +296,10 @@ Met vriendelijke groet,
 				$color = '';
 			}
 			$success = update_option( self::OPTION_ACCENT_COLOR, $color ) && $success;
+		}
+
+		if ( isset( $data['bcc_email'] ) ) {
+			$success = update_option( self::OPTION_BCC_EMAIL, sanitize_email( $data['bcc_email'] ) ) && $success;
 		}
 
 		// Handle Rabobank credentials with encryption
