@@ -125,15 +125,16 @@ None — phase 185 was the final planned enhancement.
 | 71 | Move club logo to right side of invoice header | 2026-02-16 | d69396f | [71-move-club-logo-to-right-side-of-invoice-](./quick/71-move-club-logo-to-right-side-of-invoice-/) |
 | 72 | Add tab navigation to Finance Settings | 2026-02-16 | d31e152 | [72-finance-settings-tabs](./quick/72-finance-settings-tabs/) |
 | 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
+| 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick task 73: Set doorbelast to Rondo when invoice sent
+Stopped at: Completed quick task 74: Filter Tuchtzaken page by Doorbelast and Sanctie
 Resume file: None
 
 **Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-16 after completing quick task 67*
+*Last updated: 2026-02-16 after completing quick task 74*
