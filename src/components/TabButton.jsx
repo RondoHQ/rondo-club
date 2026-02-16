@@ -19,6 +19,7 @@
 export default function TabButton({ label, isActive, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
         isActive
