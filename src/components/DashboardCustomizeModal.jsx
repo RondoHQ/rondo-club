@@ -47,6 +47,12 @@ function SortableCard({ id, isVisible, onToggleVisibility }) {
 
   const card = CARD_DEFINITIONS[id];
 
+  // Defensive check: if card definition is missing, skip rendering
+  if (!card) {
+    console.warn(`Card definition missing for ID: ${id}`);
+    return null;
+  }
+
   return (
     <div
       ref={setNodeRef}
