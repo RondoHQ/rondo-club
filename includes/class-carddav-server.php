@@ -28,7 +28,6 @@ class Server {
 		// Handle .well-known early (before WordPress routing kicks in)
 		add_action( 'init', [ $this, 'handle_well_known' ], 1 );
 		add_action( 'template_redirect', [ $this, 'handle_request' ], 0 );
-		add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
 	}
 
 	/**
@@ -54,9 +53,7 @@ class Server {
 	 * Handle .well-known/carddav redirect for auto-discovery
 	 */
 	public function handle_well_known() {
-		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
-
-		if ( strpos( $request_uri, '/.well-known/carddav' ) === 0 ) {
+		if ( $this->is_well_known_request() ) {
 			// Return 301 redirect to the CardDAV root
 			header( 'Location: ' . home_url( self::BASE_URI ), true, 301 );
 			exit;
@@ -64,73 +61,104 @@ class Server {
 	}
 
 	/**
-	 * Add query vars
-	 *
-	 * @param array $vars Query vars
-	 * @return array Modified query vars
-	 */
-	public function add_query_vars( $vars ) {
-		$vars[] = 'carddav_request';
-		$vars[] = 'well_known_carddav';
-		return $vars;
-	}
-
-	/**
 	 * Handle CardDAV requests
 	 */
 	public function handle_request() {
-		// Check if this is a CardDAV request
-		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
-
-		if ( strpos( $request_uri, '/carddav' ) !== 0 ) {
+		if ( ! $this->is_carddav_request() ) {
 			return;
 		}
 
-		// Check if Composer autoloader is available
 		if ( ! class_exists( 'Sabre\DAV\Server' ) ) {
-			http_response_code( 500 );
-			echo 'CardDAV server not available. Please run composer install.';
-			exit;
+			$this->send_error( 500, 'CardDAV server not available. Please run composer install.' );
 		}
 
-		// Include backend classes
-		require_once \RONDO_PLUGIN_DIR . '/carddav/class-auth-backend.php';
-		require_once \RONDO_PLUGIN_DIR . '/carddav/class-principal-backend.php';
-		require_once \RONDO_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
+		$this->load_backends();
 
 		try {
-			// Create backends
-			$authBackend      = new \Rondo\CardDAV\AuthBackend();
-			$principalBackend = new \Rondo\CardDAV\PrincipalBackend();
-			$carddavBackend   = new \Rondo\CardDAV\CardDAVBackend();
-
-			// Create directory tree
-			$tree = [
-				new \Sabre\DAVACL\PrincipalCollection( $principalBackend ),
-				new \Sabre\CardDAV\AddressBookRoot( $principalBackend, $carddavBackend ),
-			];
-
-			// Create server
-			$server = new \Sabre\DAV\Server( $tree );
-			$server->setBaseUri( self::BASE_URI );
-
-			// Add plugins
-			$server->addPlugin( new \Sabre\DAV\Auth\Plugin( $authBackend, 'Rondo' ) );
-			$server->addPlugin( new \Sabre\DAV\Browser\Plugin() );
-			$server->addPlugin( new \Sabre\CardDAV\Plugin() );
-			$server->addPlugin( new \Sabre\DAVACL\Plugin() );
-			$server->addPlugin( new \Sabre\DAV\Sync\Plugin() );
-			$server->addPlugin( new \Sabre\CardDAV\VCFExportPlugin() );
-
-			// Run the server
+			$server = $this->initialize_server();
 			$server->exec();
 		} catch ( \Exception $e ) {
 			error_log( 'CardDAV Server Exception: ' . $e->getMessage() );
 			error_log( 'CardDAV Server Stack trace: ' . $e->getTraceAsString() );
-			http_response_code( 500 );
-			echo 'CardDAV server error: ' . $e->getMessage();
+			$this->send_error( 500, 'CardDAV server error: ' . $e->getMessage() );
 		}
+
 		exit;
+	}
+
+	/**
+	 * Check if current request is for .well-known/carddav
+	 *
+	 * @return bool
+	 */
+	private function is_well_known_request() {
+		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
+		$path        = parse_url( $request_uri, PHP_URL_PATH );
+		return $path && strpos( $path, '/.well-known/carddav' ) === 0;
+	}
+
+	/**
+	 * Check if current request is for CardDAV endpoint
+	 *
+	 * @return bool
+	 */
+	private function is_carddav_request() {
+		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
+		$path        = parse_url( $request_uri, PHP_URL_PATH );
+		return $path && strpos( $path, '/carddav' ) === 0;
+	}
+
+	/**
+	 * Send HTTP error response and exit
+	 *
+	 * @param int    $code    HTTP status code
+	 * @param string $message Error message
+	 */
+	private function send_error( $code, $message ) {
+		http_response_code( $code );
+		echo esc_html( $message );
+		exit;
+	}
+
+	/**
+	 * Load CardDAV backend classes
+	 */
+	private function load_backends() {
+		require_once \RONDO_PLUGIN_DIR . '/carddav/class-auth-backend.php';
+		require_once \RONDO_PLUGIN_DIR . '/carddav/class-principal-backend.php';
+		require_once \RONDO_PLUGIN_DIR . '/carddav/class-carddav-backend.php';
+	}
+
+	/**
+	 * Initialize and configure Sabre DAV server
+	 *
+	 * @return \Sabre\DAV\Server
+	 */
+	private function initialize_server() {
+		// Create backends
+		$authBackend      = new \Rondo\CardDAV\AuthBackend();
+		$principalBackend = new \Rondo\CardDAV\PrincipalBackend();
+		$carddavBackend   = new \Rondo\CardDAV\CardDAVBackend();
+
+		// Create directory tree
+		$tree = [
+			new \Sabre\DAVACL\PrincipalCollection( $principalBackend ),
+			new \Sabre\CardDAV\AddressBookRoot( $principalBackend, $carddavBackend ),
+		];
+
+		// Create server
+		$server = new \Sabre\DAV\Server( $tree );
+		$server->setBaseUri( self::BASE_URI );
+
+		// Add plugins
+		$server->addPlugin( new \Sabre\DAV\Auth\Plugin( $authBackend, 'Rondo' ) );
+		$server->addPlugin( new \Sabre\DAV\Browser\Plugin() );
+		$server->addPlugin( new \Sabre\CardDAV\Plugin() );
+		$server->addPlugin( new \Sabre\DAVACL\Plugin() );
+		$server->addPlugin( new \Sabre\DAV\Sync\Plugin() );
+		$server->addPlugin( new \Sabre\CardDAV\VCFExportPlugin() );
+
+		return $server;
 	}
 
 	/**
