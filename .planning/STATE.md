@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 185 of 185 (Invoice PDF Club Branding)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 - Completed quick task 71: Move club logo to right side of invoice header
+Last activity: 2026-02-16 - Completed quick task 72: Add tab navigation to Finance Settings
 
 Progress: [██████████] 100% (1/1 plans complete)
 
@@ -123,11 +123,12 @@ None — phase 185 was the final planned enhancement.
 | 69 | Invoice PDF colored Geel/Rood card type | 2026-02-16 | 5503ea8 | [69-invoice-pdf-show-geel-rood-colored-text-](./quick/69-invoice-pdf-show-geel-rood-colored-text-/) |
 | 70 | Fix invoice PDF column widths | 2026-02-16 | 4836a3d | [70-fix-invoice-pdf-column-widths-for-kaart-](./quick/70-fix-invoice-pdf-column-widths-for-kaart-/) |
 | 71 | Move club logo to right side of invoice header | 2026-02-16 | d69396f | [71-move-club-logo-to-right-side-of-invoice-](./quick/71-move-club-logo-to-right-side-of-invoice-/) |
+| 72 | Add tab navigation to Finance Settings | 2026-02-16 | d31e152 | [72-finance-settings-tabs](./quick/72-finance-settings-tabs/) |
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick task 71: Move club logo to right side of invoice header
+Stopped at: Completed quick task 72: Add tab navigation to Finance Settings
 Resume file: None
 
 **Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
