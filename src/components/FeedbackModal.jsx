@@ -120,7 +120,7 @@ export default function FeedbackModal({
             </div>
 
             {/* Project */}
-            {isAdmin && (
+            {isAdmin ? (
               <div>
                 <label className="label">Project *</label>
                 <div className="flex gap-4">
@@ -156,6 +156,8 @@ export default function FeedbackModal({
                   </label>
                 </div>
               </div>
+            ) : (
+              <input type="hidden" {...register('project')} value="rondo-club" />
             )}
 
             {/* Title */}
