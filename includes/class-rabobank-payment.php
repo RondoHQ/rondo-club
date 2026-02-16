@@ -313,6 +313,7 @@ class RabobankPayment {
 			'currency'    => 'EUR',
 			'amountCents' => $amount_cents,
 			'description' => $description,
+			'numPayers'   => 1,
 		];
 
 		// Build API endpoint URL
