@@ -414,6 +414,18 @@ class RabobankPayment {
 		// Store payment link on invoice
 		update_field( 'payment_link', $payment_link, $invoice_id );
 
+		// Store payment request ID for QR code retrieval
+		$payment_request_id = $data['paymentRequestId'] ?? $data['id'] ?? null;
+		if ( ! empty( $payment_request_id ) ) {
+			update_post_meta( $invoice_id, '_payment_request_id', $payment_request_id );
+
+			// Download QR code (non-blocking)
+			$qr_result = $this->download_qr_code( $invoice_id );
+			if ( is_wp_error( $qr_result ) ) {
+				error_log( 'QR code download failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
+			}
+		}
+
 		return $payment_link;
 	}
 
@@ -441,5 +453,125 @@ class RabobankPayment {
 		}
 
 		return '/openapi/sandbox/payments/payment-requests';
+	}
+
+	/**
+	 * Download QR code PNG for a payment request
+	 *
+	 * Fetches the QR code image from the Rabobank API and stores it in
+	 * wp-content/uploads/invoices/ alongside the invoice PDF.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return string|\WP_Error Relative path to QR code on success, WP_Error on failure.
+	 */
+	public function download_qr_code( $invoice_id ) {
+		$payment_request_id = get_post_meta( $invoice_id, '_payment_request_id', true );
+
+		if ( empty( $payment_request_id ) ) {
+			return new \WP_Error(
+				'no_payment_request_id',
+				__( 'Geen payment request ID gevonden.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Get access token and credentials
+		$access_token = $this->oauth->get_access_token();
+		if ( ! $access_token ) {
+			return new \WP_Error(
+				'rabobank_not_connected',
+				__( 'Rabobank is niet gekoppeld.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$finance_config = new \Rondo\Config\FinanceConfig();
+		$credentials    = $finance_config->get_rabobank_credentials();
+
+		if ( ! $credentials || empty( $credentials['client_id'] ) ) {
+			return new \WP_Error(
+				'rabobank_not_configured',
+				__( 'Rabobank credentials niet geconfigureerd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Build QR code API URL
+		$api_path = $this->get_api_path() . '/' . $payment_request_id . '/qr-codes';
+		$api_url  = $this->oauth->get_base_url() . $api_path;
+
+		$request_id = wp_generate_uuid4();
+
+		$headers = [
+			'Authorization'   => 'Bearer ' . $access_token,
+			'X-IBM-Client-Id' => $credentials['client_id'],
+			'x-request-id'    => $request_id,
+			'Accept'          => 'image/png',
+		];
+
+		// Make API request with mTLS
+		$this->inject_mtls = true;
+		$response = wp_remote_get(
+			$api_url,
+			[
+				'headers' => $headers,
+				'timeout' => 30,
+			]
+		);
+		$this->inject_mtls = false;
+
+		if ( is_wp_error( $response ) ) {
+			return new \WP_Error(
+				'qr_api_failed',
+				sprintf( __( 'QR code ophalen mislukt: %s', 'rondo' ), $response->get_error_message() ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		if ( $status_code < 200 || $status_code >= 300 ) {
+			$body = wp_remote_retrieve_body( $response );
+			error_log( sprintf( 'Rabobank QR code request failed (HTTP %d): %s', $status_code, $body ) );
+			return new \WP_Error(
+				'qr_request_failed',
+				sprintf( __( 'QR code ophalen mislukt (HTTP %d).', 'rondo' ), $status_code ),
+				[ 'status' => 502 ]
+			);
+		}
+
+		// Save PNG to uploads/invoices/
+		$png_data = wp_remote_retrieve_body( $response );
+		if ( empty( $png_data ) ) {
+			return new \WP_Error(
+				'qr_empty_response',
+				__( 'Leeg QR code antwoord van API.', 'rondo' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		$upload_dir   = wp_upload_dir();
+		$invoices_dir = $upload_dir['basedir'] . '/invoices';
+		if ( ! file_exists( $invoices_dir ) ) {
+			wp_mkdir_p( $invoices_dir );
+		}
+
+		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$filename       = 'qr-' . $invoice_number . '.png';
+		$full_path      = $invoices_dir . '/' . $filename;
+		$relative_path  = 'invoices/' . $filename;
+
+		$written = file_put_contents( $full_path, $png_data );
+		if ( false === $written ) {
+			return new \WP_Error(
+				'qr_save_failed',
+				__( 'Kon QR code niet opslaan.', 'rondo' ),
+				[ 'status' => 500 ]
+			);
+		}
+
+		// Store path on invoice
+		update_field( 'qr_code_path', $relative_path, $invoice_id );
+
+		return $relative_path;
 	}
 }

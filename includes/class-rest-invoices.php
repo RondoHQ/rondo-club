@@ -207,6 +207,26 @@ class Invoices extends Base {
 				],
 			]
 		);
+
+		// Download invoice QR code
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/qr',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'download_qr' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -567,6 +587,54 @@ class Invoices extends Base {
 	}
 
 	/**
+	 * Download invoice QR code
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return void|\WP_Error Serves QR PNG file directly, exits script.
+	 */
+	public function download_qr( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$qr_path = get_field( 'qr_code_path', $invoice_id );
+		if ( empty( $qr_path ) ) {
+			return new \WP_Error(
+				'rest_no_qr',
+				__( 'No QR code available for this invoice.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$upload_dir = wp_upload_dir();
+		$full_path  = $upload_dir['basedir'] . '/' . $qr_path;
+
+		if ( ! file_exists( $full_path ) ) {
+			return new \WP_Error(
+				'rest_file_not_found',
+				__( 'QR code file not found on disk.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$filename       = 'qr-' . $invoice_number . '.png';
+
+		header( 'Content-Type: image/png' );
+		header( 'Content-Disposition: inline; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . filesize( $full_path ) );
+		readfile( $full_path );
+		exit;
+	}
+
+	/**
 	 * Send invoice via email
 	 *
 	 * Orchestrates the full send flow: PDF generation, payment link creation,
@@ -597,16 +665,7 @@ class Invoices extends Base {
 			);
 		}
 
-		// Generate PDF if not already generated
-		$pdf_path = get_field( 'pdf_path', $invoice_id );
-		if ( empty( $pdf_path ) ) {
-			$pdf_result = InvoicePdfGenerator::generate( $invoice_id );
-			if ( is_wp_error( $pdf_result ) ) {
-				return $pdf_result;
-			}
-		}
-
-		// Create payment link if Rabobank is connected
+		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF
 		$oauth = new RabobankOAuth();
 		if ( $oauth->is_connected() ) {
 			$payment = new RabobankPayment( $oauth );
@@ -615,6 +674,12 @@ class Invoices extends Base {
 			if ( is_wp_error( $payment_result ) ) {
 				error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
 			}
+		}
+
+		// Always (re)generate PDF so QR code and payment link are included
+		$pdf_result = InvoicePdfGenerator::generate( $invoice_id );
+		if ( is_wp_error( $pdf_result ) ) {
+			return $pdf_result;
 		}
 
 		// Send email via InvoiceEmailSender
@@ -791,8 +856,9 @@ class Invoices extends Base {
 			}
 		}
 
-		$invoice['line_items'] = $formatted_items;
-		$invoice['pdf_path']   = get_field( 'pdf_path', $post->ID ) ?: null;
+		$invoice['line_items']    = $formatted_items;
+		$invoice['pdf_path']      = get_field( 'pdf_path', $post->ID ) ?: null;
+		$invoice['qr_code_path']  = get_field( 'qr_code_path', $post->ID ) ?: null;
 
 		return $invoice;
 	}

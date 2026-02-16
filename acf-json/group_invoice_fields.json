@@ -155,6 +155,19 @@
             }
         },
         {
+            "key": "field_invoice_qr_code_path",
+            "label": "QR code pad",
+            "name": "qr_code_path",
+            "type": "text",
+            "instructions": "Relatief pad naar QR code PNG (intern gebruik)",
+            "required": 0,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
             "key": "field_invoice_sent_date",
             "label": "Verzenddatum",
             "name": "sent_date",

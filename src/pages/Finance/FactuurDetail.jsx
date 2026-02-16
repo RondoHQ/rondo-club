@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink, QrCode } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf } from '@/hooks/useInvoices';
 import { useCreatePaymentLink } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -259,6 +259,19 @@ export default function FactuurDetail() {
                   <ExternalLink className="w-3 h-3" />
                   Open betaallink
                 </a>
+              </div>
+            )}
+            {invoice.qr_code_path && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
+                  <QrCode className="w-3.5 h-3.5" />
+                  QR Code
+                </h3>
+                <img
+                  src={prmApi.getInvoiceQrUrl(id)}
+                  alt="Betaal QR code"
+                  className="w-32 h-32 rounded border border-gray-200 dark:border-gray-700"
+                />
               </div>
             )}
           </div>
