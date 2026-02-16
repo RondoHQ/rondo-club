@@ -480,11 +480,9 @@ table.line-items .total-row td {
 			' . ( ! empty( $payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
-		<td style="border: none; text-align: right; vertical-align: top; width: 180px; padding: 0;">
-			<div style="text-align: center;">
-				<img src="' . $qr_code_path . '" style="width: 170px;" />
-				<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
-			</div>
+		<td style="border: none; text-align: center; vertical-align: top; width: 180px; padding: 0;">
+			<img src="' . $qr_code_path . '" style="width: 170px;" />
+			<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
 		</td>' : '' ) . '
 	</tr></table>
 </div>
