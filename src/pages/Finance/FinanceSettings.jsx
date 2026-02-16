@@ -131,6 +131,7 @@ export default function FinanceSettings() {
     club_logo_id: 0,
     club_logo_url: '',
     accent_color: '',
+    bcc_email: '',
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
     rabobank_client_secret: '',
@@ -153,6 +154,7 @@ export default function FinanceSettings() {
         club_logo_id: settings.club_logo_id || 0,
         club_logo_url: settings.club_logo_url || '',
         accent_color: settings.accent_color || '',
+        bcc_email: settings.bcc_email || '',
         rabobank_environment: settings.rabobank_environment || 'sandbox',
         // Don't populate credentials from API for security
         rabobank_client_id: '',
@@ -240,6 +242,7 @@ export default function FinanceSettings() {
         email_template: formData.email_template,
         club_logo_id: formData.club_logo_id,
         accent_color: formData.accent_color,
+        bcc_email: formData.bcc_email,
         rabobank_environment: formData.rabobank_environment,
       };
 
@@ -341,6 +344,22 @@ export default function FinanceSettings() {
               placeholder="financien@vereniging.nl"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
             />
+          </div>
+          <div>
+            <label htmlFor="bcc_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              BCC E-mailadres
+            </label>
+            <input
+              type="email"
+              id="bcc_email"
+              value={formData.bcc_email}
+              onChange={(e) => setFormData(prev => ({ ...prev, bcc_email: e.target.value }))}
+              placeholder="penningmeester@vereniging.nl"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Alle factuurmails worden ook naar dit adres gestuurd (bv. voor de boekhouding of penningmeester)
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
