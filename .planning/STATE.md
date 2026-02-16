@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 185 of 185 (Invoice PDF Club Branding)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 - Completed quick task 66: Add regenerate invoice button
+Last activity: 2026-02-16 - Completed quick task 67: Invoice PDF - Card type and suspension columns
 
 Progress: [██████████] 100% (1/1 plans complete)
 
@@ -118,15 +118,16 @@ None — phase 185 was the final planned enhancement.
 |---|-------------|------|--------|-----------|
 | 65 | Add BCC email for invoice sending | 2026-02-16 | 6af9f77 | [65-add-bcc-email-for-invoice-sending](./quick/65-add-bcc-email-for-invoice-sending/) |
 | 66 | Add regenerate invoice button | 2026-02-16 | 34ed6bc | [66-add-regenerate-invoice-button](./quick/66-add-regenerate-invoice-button/) |
+| 67 | Invoice PDF - Card type and suspension columns | 2026-02-16 | adb1910 | [67-invoice-columns-card-type-instead-of-san](./quick/67-invoice-columns-card-type-instead-of-san/) |
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick task 66: Add regenerate invoice button
+Stopped at: Completed quick task 67: Invoice PDF - Card type and suspension columns
 Resume file: None
 
 **Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-16 after completing quick task 66*
+*Last updated: 2026-02-16 after completing quick task 67*
