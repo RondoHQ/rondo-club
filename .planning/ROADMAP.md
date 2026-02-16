@@ -169,10 +169,10 @@ Plans:
   2. Email body uses configured template with variable replacement: {naam}, {betaallink}, {factuur_nummer}, {tuchtzaken_lijst}, {totaal_bedrag}
   3. Invoice PDF attached to email as file
   4. Sending invoice transitions status from Draft to Sent and sets sent_date and due_date
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 183-01: TBD
+- [ ] 183-01-PLAN.md -- InvoiceEmailSender service class, send invoice REST endpoint, and frontend API method
 
 #### Phase 184: Invoice Management UI
 **Goal**: Facturen page exists with invoice list, detail view, and status management actions.
@@ -203,7 +203,7 @@ Plans:
 | 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 181. PDF Generation | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 182. Rabobank Payment Integration | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
-| 183. Email Delivery | v26.0 | 0/TBD | Not started | - |
+| 183. Email Delivery | v26.0 | 0/1 | Not started | - |
 | 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
 
 ---
