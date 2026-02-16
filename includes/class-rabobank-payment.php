@@ -275,14 +275,20 @@ class RabobankPayment {
 
 		// Get finance config for IBAN and credentials
 		$finance_config = new \Rondo\Config\FinanceConfig();
-		$iban = $finance_config->get_iban();
 
-		if ( empty( $iban ) ) {
-			return new \WP_Error(
-				'missing_iban',
-				__( 'IBAN niet geconfigureerd. Stel deze in via Financiën > Instellingen.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
+		// Use sandbox test IBAN when in sandbox mode, real IBAN in production
+		if ( $this->oauth->get_environment() === 'sandbox' ) {
+			$iban = 'NL82RABO1108003001';
+		} else {
+			$iban = $finance_config->get_iban();
+
+			if ( empty( $iban ) ) {
+				return new \WP_Error(
+					'missing_iban',
+					__( 'IBAN niet geconfigureerd. Stel deze in via Financiën > Instellingen.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
 		}
 
 		$credentials = $finance_config->get_rabobank_credentials();
