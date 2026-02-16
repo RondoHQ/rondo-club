@@ -148,14 +148,24 @@ class InvoiceEmailSender {
 			'From: ' . $org_name . ' <' . $contact_email . '>',
 		];
 
-		// Build PDF attachment path if PDF exists
+		// Build attachments
 		$attachments = [];
-		if ( ! empty( $pdf_path ) ) {
-			$upload_dir = wp_upload_dir();
-			$full_path = $upload_dir['basedir'] . '/' . $pdf_path;
+		$upload_dir  = wp_upload_dir();
 
+		// Attach PDF if exists
+		if ( ! empty( $pdf_path ) ) {
+			$full_path = $upload_dir['basedir'] . '/' . $pdf_path;
 			if ( file_exists( $full_path ) ) {
 				$attachments[] = $full_path;
+			}
+		}
+
+		// Attach QR code if exists
+		$qr_code_path = get_field( 'qr_code_path', $invoice_id );
+		if ( ! empty( $qr_code_path ) ) {
+			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
+			if ( file_exists( $qr_full_path ) ) {
+				$attachments[] = $qr_full_path;
 			}
 		}
 

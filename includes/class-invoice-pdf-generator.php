@@ -112,6 +112,17 @@ class InvoicePdfGenerator {
 		$logo_path = get_template_directory() . '/public/icons/rondo-logo.png';
 		$logo_exists = file_exists( $logo_path );
 
+		// Get QR code path if available
+		$qr_code_path    = get_field( 'qr_code_path', $invoice_id );
+		$qr_code_abspath = null;
+		if ( ! empty( $qr_code_path ) ) {
+			$upload_dir      = wp_upload_dir();
+			$qr_full_path    = $upload_dir['basedir'] . '/' . $qr_code_path;
+			if ( file_exists( $qr_full_path ) ) {
+				$qr_code_abspath = $qr_full_path;
+			}
+		}
+
 		// Build HTML template
 		$html = self::build_html(
 			$invoice_number,
@@ -128,7 +139,8 @@ class InvoicePdfGenerator {
 			$contact_email,
 			$iban,
 			$payment_clause,
-			$logo_exists ? $logo_path : null
+			$logo_exists ? $logo_path : null,
+			$qr_code_abspath
 		);
 
 		// Generate PDF with mPDF
@@ -192,6 +204,7 @@ class InvoicePdfGenerator {
 	 * @param string      $iban           Bank IBAN.
 	 * @param string      $payment_clause Payment clause text.
 	 * @param string|null $logo_path      Path to logo file (null if not exists).
+	 * @param string|null $qr_code_path   Absolute path to QR code PNG (null if not exists).
 	 * @return string HTML content.
 	 */
 	private static function build_html(
@@ -209,7 +222,8 @@ class InvoicePdfGenerator {
 		$contact_email,
 		$iban,
 		$payment_clause,
-		$logo_path
+		$logo_path,
+		$qr_code_path = null
 	) {
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
@@ -426,9 +440,20 @@ table.line-items .total-row td {
 
 <div class="payment-section">
 	<h2>Betaalgegevens</h2>
-	<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>
-	<div>t.n.v. ' . esc_html( $org_name ) . '</div>
-	' . ( ! empty( $payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $payment_clause ) ) . '</div>' : '' ) . '
+	<table style="width: 100%; border: none;"><tr>
+		<td style="border: none; vertical-align: top; padding: 0;">
+			<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>
+			<div>t.n.v. ' . esc_html( $org_name ) . '</div>
+			' . ( ! empty( $payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $payment_clause ) ) . '</div>' : '' ) . '
+		</td>'
+		. ( $qr_code_path ? '
+		<td style="border: none; text-align: right; vertical-align: top; width: 140px; padding: 0;">
+			<div style="text-align: center;">
+				<img src="' . $qr_code_path . '" style="width: 120px; height: 120px;" />
+				<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
+			</div>
+		</td>' : '' ) . '
+	</tr></table>
 </div>
 
 </body>
