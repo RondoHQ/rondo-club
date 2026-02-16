@@ -187,6 +187,26 @@ class Invoices extends Base {
 				],
 			]
 		);
+
+		// Resend invoice via email
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/resend',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'resend_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -623,6 +643,48 @@ class Invoices extends Base {
 		$payment_term_days = $config->get_payment_term_days();
 		$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
 		update_field( 'due_date', $due_date, $invoice_id );
+
+		// Return updated invoice detail
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Resend invoice email
+	 *
+	 * Allows re-sending the invoice email for sent or overdue invoices.
+	 * Uses the existing InvoiceEmailSender service to send the email again.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function resend_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Check invoice status is sent or overdue
+		if ( ! in_array( $invoice->post_status, [ 'rondo_sent', 'rondo_overdue' ], true ) ) {
+			return new \WP_Error(
+				'invoice_not_sent',
+				__( 'Alleen verstuurde of verlopen facturen kunnen opnieuw worden verstuurd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Send email via InvoiceEmailSender
+		$email_result = InvoiceEmailSender::send( $invoice_id );
+		if ( is_wp_error( $email_result ) ) {
+			return $email_result;
+		}
 
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
