@@ -81,6 +81,13 @@ class DemoAnonymizer {
 	);
 
 	/**
+	 * Total weight of infixes (pre-computed)
+	 *
+	 * @var int
+	 */
+	private const INFIX_TOTAL_WEIGHT = 100;
+
+	/**
 	 * Dutch last names
 	 *
 	 * @var array
@@ -197,7 +204,7 @@ class DemoAnonymizer {
 	 */
 	public function generate_first_name( string $gender ): string {
 		$names = $gender === 'male' ? self::$male_first_names : self::$female_first_names;
-		return $names[ mt_rand( 0, count( $names ) - 1 ) ];
+		return $this->random_array_element( $names );
 	}
 
 	/**
@@ -212,13 +219,12 @@ class DemoAnonymizer {
 		}
 
 		// Weighted selection.
-		$total_weight = array_sum( self::$infixes );
-		$random       = mt_rand( 1, $total_weight );
-		$current      = 0;
+		$random            = mt_rand( 1, self::INFIX_TOTAL_WEIGHT );
+		$cumulative_weight = 0;
 
 		foreach ( self::$infixes as $infix => $weight ) {
-			$current += $weight;
-			if ( $random <= $current ) {
+			$cumulative_weight += $weight;
+			if ( $random <= $cumulative_weight ) {
 				return $infix;
 			}
 		}
@@ -232,7 +238,7 @@ class DemoAnonymizer {
 	 * @return string Last name.
 	 */
 	public function generate_last_name(): string {
-		return self::$last_names[ mt_rand( 0, count( self::$last_names ) - 1 ) ];
+		return $this->random_array_element( self::$last_names );
 	}
 
 	/**
@@ -243,14 +249,10 @@ class DemoAnonymizer {
 	public function generate_phone(): string {
 		// 70% mobile, 30% landline.
 		if ( mt_rand( 1, 100 ) <= 70 ) {
-			// Mobile: 06-XXXXXXXX.
-			return '06-' . str_pad( (string) mt_rand( 10000000, 99999999 ), 8, '0', STR_PAD_LEFT );
-		} else {
-			// Landline: 0XX-XXXXXXX (area codes 010-088).
-			$area_code = str_pad( (string) mt_rand( 10, 88 ), 2, '0', STR_PAD_LEFT );
-			$number    = str_pad( (string) mt_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
-			return "0{$area_code}-{$number}";
+			return $this->generate_mobile_phone();
 		}
+
+		return $this->generate_landline_phone();
 	}
 
 	/**
@@ -267,28 +269,30 @@ class DemoAnonymizer {
 		$last  = $this->normalize_for_email( $last_name );
 
 		// Pick email format.
-		$format = mt_rand( 1, 4 );
-		switch ( $format ) {
+		$email_format_variant = mt_rand( 1, 4 );
+		switch ( $email_format_variant ) {
 			case 1:
-				$local = "{$first}.{$last}";
+				$email_local_part = "{$first}.{$last}";
 				break;
 			case 2:
-				$local = substr( $first, 0, 1 ) . ".{$last}";
+				$email_local_part = substr( $first, 0, 1 ) . ".{$last}";
 				break;
 			case 3:
-				$local = "{$first}{$last}";
+				$email_local_part = "{$first}{$last}";
 				break;
 			case 4:
-				$local = substr( $first, 0, 1 ) . $last;
+				$email_local_part = substr( $first, 0, 1 ) . $last;
 				break;
 			default:
-				$local = "{$first}.{$last}";
+				// Fallback to safe default format.
+				$email_local_part = "{$first}.{$last}";
+				break;
 		}
 
 		// Pick domain.
-		$domain = self::$email_domains[ mt_rand( 0, count( self::$email_domains ) - 1 ) ];
+		$domain = $this->random_array_element( self::$email_domains );
 
-		return strtolower( $local ) . '@' . $domain;
+		return strtolower( $email_local_part ) . '@' . $domain;
 	}
 
 	/**
@@ -297,10 +301,10 @@ class DemoAnonymizer {
 	 * @return array Address with keys: street, house_number, postal_code, city.
 	 */
 	public function generate_address(): array {
-		$street       = self::$streets[ mt_rand( 0, count( self::$streets ) - 1 ) ];
+		$street       = $this->random_array_element( self::$streets );
 		$house_number = (string) mt_rand( 1, 250 );
 		$postal_code  = mt_rand( 1000, 9999 ) . ' ' . chr( mt_rand( 65, 90 ) ) . chr( mt_rand( 65, 90 ) );
-		$city         = self::$cities[ mt_rand( 0, count( self::$cities ) - 1 ) ];
+		$city         = $this->random_array_element( self::$cities );
 
 		return array(
 			'street'       => $street,
@@ -336,5 +340,38 @@ class DemoAnonymizer {
 		$string = preg_replace( '/[^a-z0-9]/', '', $string );
 
 		return $string;
+	}
+
+	/**
+	 * Get random element from array
+	 *
+	 * @param array $array Array to select from.
+	 * @return mixed Random element, or null if array is empty.
+	 */
+	private function random_array_element( array $array ) {
+		if ( empty( $array ) ) {
+			return null;
+		}
+		return $array[ mt_rand( 0, count( $array ) - 1 ) ];
+	}
+
+	/**
+	 * Generate mobile phone number
+	 *
+	 * @return string Mobile phone number (06-XXXXXXXX).
+	 */
+	private function generate_mobile_phone(): string {
+		return '06-' . str_pad( (string) mt_rand( 10000000, 99999999 ), 8, '0', STR_PAD_LEFT );
+	}
+
+	/**
+	 * Generate landline phone number
+	 *
+	 * @return string Landline phone number (0XX-XXXXXXX).
+	 */
+	private function generate_landline_phone(): string {
+		$area_code = str_pad( (string) mt_rand( 10, 88 ), 2, '0', STR_PAD_LEFT );
+		$number    = str_pad( (string) mt_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
+		return "0{$area_code}-{$number}";
 	}
 }
