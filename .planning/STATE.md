@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 185 of 185 (Invoice PDF Club Branding)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 - Completed quick task 73: Set doorbelast to Rondo when invoice sent
+Last activity: 2026-02-16 - Completed quick task 74: Filter Tuchtzaken page by Doorbelast and Sanctie columns
 
 Progress: [██████████] 100% (1/1 plans complete)
 
