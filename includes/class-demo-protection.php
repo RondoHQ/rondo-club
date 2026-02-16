@@ -36,9 +36,7 @@ class DemoProtection {
 	 * @return bool
 	 */
 	private function is_demo_user( $user_id = null ) {
-		if ( $user_id === null ) {
-			$user_id = get_current_user_id();
-		}
+		$user_id = $user_id ?? get_current_user_id();
 
 		if ( ! $user_id ) {
 			return false;
@@ -78,8 +76,7 @@ class DemoProtection {
 		}
 
 		$user = get_userdata( $user_id );
-
-		if ( ! $user || 'demo' !== $user->user_login ) {
+		if ( ! $user || $user->user_login !== 'demo' ) {
 			return $data;
 		}
 
