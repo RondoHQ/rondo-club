@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf } from '@/hooks/useInvoices';
+import { useCreatePaymentLink } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parse } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
@@ -41,6 +42,7 @@ export default function FactuurDetail() {
   const updateInvoiceStatus = useUpdateInvoiceStatus();
   const resendInvoice = useResendInvoice();
   const generatePdf = useGenerateInvoicePdf();
+  const createPaymentLink = useCreatePaymentLink();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -114,7 +116,17 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending;
+  const handleCreatePaymentLink = async () => {
+    setErrorMessage('');
+    try {
+      await createPaymentLink.mutateAsync(id);
+      setSuccessMessage('Betaallink succesvol aangemaakt!');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het aanmaken van de betaallink.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending;
 
   if (isLoading) {
     return (
@@ -420,6 +432,22 @@ export default function FactuurDetail() {
                 Download PDF
               </button>
             </>
+          )}
+
+          {/* Payment link button (for any unpaid invoice without a link) */}
+          {invoice.status !== 'paid' && !invoice.payment_link && (
+            <button
+              onClick={handleCreatePaymentLink}
+              disabled={isPending}
+              className="btn-secondary flex items-center gap-2"
+            >
+              {createPaymentLink.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+              ) : (
+                <CreditCard className="w-4 h-4" />
+              )}
+              Betaallink aanmaken
+            </button>
           )}
 
           {/* Paid status actions */}
