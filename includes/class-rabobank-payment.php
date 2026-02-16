@@ -222,7 +222,7 @@ class RabobankPayment {
 			return new \WP_Error(
 				'payment_request_failed',
 				sprintf( __( 'Betaalverzoek aanmaken mislukt: %s', 'rondo' ), $error_message ),
-				[ 'status' => $status_code ]
+				[ 'status' => 502 ] // Always return 502 for upstream Rabobank errors (never pass through 401/403)
 			);
 		}
 
