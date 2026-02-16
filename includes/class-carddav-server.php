@@ -92,8 +92,9 @@ class Server {
 	 * @return bool
 	 */
 	private function is_well_known_request() {
-		$request_uri = $_SERVER['REQUEST_URI'] ?? false;
-		return $request_uri && strpos( $request_uri, '/.well-known/carddav' ) === 0;
+		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
+		$path        = parse_url( $request_uri, PHP_URL_PATH );
+		return $path && strpos( $path, '/.well-known/carddav' ) === 0;
 	}
 
 	/**
@@ -102,8 +103,9 @@ class Server {
 	 * @return bool
 	 */
 	private function is_carddav_request() {
-		$request_uri = $_SERVER['REQUEST_URI'] ?? false;
-		return $request_uri && strpos( $request_uri, '/carddav' ) === 0;
+		$request_uri = $_SERVER['REQUEST_URI'] ?? '';
+		$path        = parse_url( $request_uri, PHP_URL_PATH );
+		return $path && strpos( $path, '/carddav' ) === 0;
 	}
 
 	/**
@@ -114,7 +116,7 @@ class Server {
 	 */
 	private function send_error( $code, $message ) {
 		http_response_code( $code );
-		echo $message;
+		echo esc_html( $message );
 		exit;
 	}
 
