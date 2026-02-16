@@ -642,7 +642,7 @@ export default function Layout({ children }) {
   // Update document title based on route
   useRouteTitle();
 
-  // Focus main element on route change for keyboard scrolling
+  // Focus main element on mount and route change for keyboard scrolling
   useEffect(() => {
     // Small delay to ensure content is rendered
     const timer = setTimeout(() => {
@@ -698,7 +698,18 @@ export default function Layout({ children }) {
           onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
-        <main ref={mainRef} tabIndex={-1} className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none">
+        <main
+          ref={mainRef}
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none] focus:outline-none"
+          onClick={(e) => {
+            // Restore focus when clicking in the main content area (if not already focused)
+            // This ensures mouse wheel scrolling works after modals or other interactions
+            if (document.activeElement !== mainRef.current) {
+              mainRef.current?.focus();
+            }
+          }}
+        >
           {children}
         </main>
       </div>
