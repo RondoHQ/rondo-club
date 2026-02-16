@@ -35,3 +35,56 @@ export function useUpdateFinanceSettings() {
     },
   });
 }
+
+/**
+ * Hook for fetching Rabobank connection status
+ *
+ * @returns {Object} Query result with data, isLoading, error
+ */
+export function useRabobankStatus() {
+  return useQuery({
+    queryKey: ['rabobank-status'],
+    queryFn: async () => {
+      const response = await prmApi.getRabobankStatus();
+      return response.data;
+    },
+  });
+}
+
+/**
+ * Hook for disconnecting Rabobank integration
+ *
+ * @returns {Object} Mutation object with mutate function
+ */
+export function useDisconnectRabobank() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await prmApi.disconnectRabobank();
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rabobank-status'] });
+    },
+  });
+}
+
+/**
+ * Hook for creating payment links
+ *
+ * @returns {Object} Mutation object with mutate function
+ */
+export function useCreatePaymentLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (invoiceId) => {
+      const response = await prmApi.createPaymentLink(invoiceId);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
+}

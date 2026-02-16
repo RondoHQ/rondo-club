@@ -288,6 +288,14 @@ export const prmApi = {
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),
 
+  // Rabobank OAuth
+  getRabobankStatus: () => api.get('/rondo/v1/rabobank/status'),
+  getRabobankAuthorizeUrl: () => api.get('/rondo/v1/rabobank/authorize'),
+  disconnectRabobank: () => api.post('/rondo/v1/rabobank/disconnect'),
+
+  // Rabobank Payment
+  createPaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/payment-link`),
+
   // Invoice endpoints
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
