@@ -507,7 +507,17 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
 
   // Detect platform for keyboard shortcut display
   const isMac = useMemo(() => {
-    return navigator.platform.toLowerCase().includes('mac');
+    if (typeof navigator === 'undefined') {
+      return false;
+    }
+
+    const platform =
+      navigator.userAgentData?.platform ||
+      navigator.platform ||
+      navigator.userAgent ||
+      '';
+
+    return typeof platform === 'string' && platform.toLowerCase().includes('mac');
   }, []);
 
   // Get page title from location
@@ -592,7 +602,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
               <Command className="w-3 h-3" />K
             </>
           ) : (
-            'Ctrl K'
+            'Ctrl+K'
           )}
         </kbd>
       </button>
