@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Users,
@@ -505,6 +505,21 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
   const [searchParams] = useSearchParams();
   const filteredCount = searchParams.get('filteredCount');
 
+  // Detect platform for keyboard shortcut display
+  const isMac = useMemo(() => {
+    if (typeof navigator === 'undefined') {
+      return false;
+    }
+
+    const platform =
+      navigator.userAgentData?.platform ||
+      navigator.platform ||
+      navigator.userAgent ||
+      '';
+
+    return typeof platform === 'string' && platform.toLowerCase().includes('mac');
+  }, []);
+
   // Get page title from location
   const getPageTitle = () => {
     const path = location.pathname;
@@ -577,12 +592,18 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
         onClick={onOpenSearch}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-400"
         aria-label="Zoeken"
-        title="Zoeken (Cmd+K)"
+        title={`Zoeken (${isMac ? 'Cmd' : 'Ctrl'}+K)`}
       >
         <Search className="w-4 h-4" />
         <span className="hidden sm:inline text-sm">Zoek...</span>
         <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">
-          <Command className="w-3 h-3" />K
+          {isMac ? (
+            <>
+              <Command className="w-3 h-3" />K
+            </>
+          ) : (
+            'Ctrl+K'
+          )}
         </kbd>
       </button>
       
