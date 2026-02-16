@@ -447,9 +447,9 @@ table.line-items .total-row td {
 			' . ( ! empty( $payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
-		<td style="border: none; text-align: right; vertical-align: top; width: 140px; padding: 0;">
+		<td style="border: none; text-align: right; vertical-align: top; width: 180px; padding: 0;">
 			<div style="text-align: center;">
-				<img src="' . $qr_code_path . '" style="width: 120px; height: 120px;" />
+				<img src="' . $qr_code_path . '" style="width: 170px;" />
 				<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
 			</div>
 		</td>' : '' ) . '
