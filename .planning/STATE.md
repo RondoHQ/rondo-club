@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 ## Current Position
 
 Phase: 184 of 184 (Invoice Management UI)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-02-16 — Completed plan 184-01 (Invoice Management Infrastructure)
+Plan: 2 of 2 in current phase
+Status: Complete
+Last activity: 2026-02-16 — Completed plan 184-02 (Invoice Management UI)
 
-Progress: [█████░░░░░] 50% (1/2 plans complete)
+Progress: [██████████] 100% (2/2 plans complete)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [█████░░░░░] 50% (1/2 plans complete)
 
 **Phase 184 Progress:**
 - Plan 184-01: 162s, 2 tasks, 7 files (2026-02-16)
+- Plan 184-02: 232s, 2 tasks, 6 files (2026-02-16)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -87,6 +88,9 @@ Recent decisions for v26.0:
 - [Phase 184-01]: Resend endpoint only allows sent/overdue invoices (400 error for others)
 - [Phase 184-01]: useResendInvoice only invalidates ['invoice'] query (targeted performance)
 - [Phase 184-01]: Placeholder page components created for build compilation (full UI in Plan 02)
+- [Phase 184-02]: Client-side sorting for Facturen list (small datasets, instant feedback)
+- [Phase 184-02]: Success messages auto-hide after 3s using setTimeout (FeedbackDetail pattern)
+- [Phase 184-02]: Status-driven button rendering for invoice actions (draft/sent/paid each different)
 
 ### Pending Todos
 
@@ -101,11 +105,11 @@ Recent decisions for v26.0:
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed plan 184-01 (Invoice Management Infrastructure)
+Stopped at: Completed phase 184 (Invoice Management UI) — all plans complete
 Resume file: None
 
-**Next action:** Execute plan 184-02 to build Facturen UI pages
+**Next action:** Phase 184 complete. Invoice management system ready for deployment and UAT.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-16 after completing plan 184-01*
+*Last updated: 2026-02-16 after completing plan 184-02*
