@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { useFinanceSettings, useUpdateFinanceSettings } from '@/hooks/useFinanceSettings';
+import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
+import { prmApi } from '@/api/client';
 
 export default function FinanceSettings() {
   const { data: settings, isLoading, error } = useFinanceSettings();
   const updateMutation = useUpdateFinanceSettings();
+  const { data: rabobankStatus, isLoading: rabobankLoading } = useRabobankStatus();
+  const disconnectMutation = useDisconnectRabobank();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -41,6 +46,24 @@ export default function FinanceSettings() {
       });
     }
   }, [settings]);
+
+  // Handle OAuth callback notification
+  useEffect(() => {
+    const rabobankParam = searchParams.get('rabobank');
+    if (rabobankParam === 'connected') {
+      // Show success banner, clear param
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+      searchParams.delete('rabobank');
+      setSearchParams(searchParams, { replace: true });
+    } else if (rabobankParam === 'error') {
+      const errorMessage = searchParams.get('message') || 'Rabobank koppeling mislukt. Probeer het opnieuw.';
+      setSaveError(errorMessage);
+      searchParams.delete('rabobank');
+      searchParams.delete('message');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Format IBAN on blur
   const handleIbanBlur = () => {
@@ -267,78 +290,177 @@ export default function FinanceSettings() {
             API-gegevens voor het aanmaken van betaalverzoeken via Rabobank.
           </p>
         </div>
-        <div className="space-y-4">
+
+        <div className="space-y-6">
+          {/* Part A: Connection Status & Action */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Omgeving
-            </label>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rabobank_environment"
-                  value="sandbox"
-                  checked={formData.rabobank_environment === 'sandbox'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
-                  className="text-electric-cyan focus:ring-electric-cyan"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Sandbox (test)</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="rabobank_environment"
-                  value="production"
-                  checked={formData.rabobank_environment === 'production'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
-                  className="text-electric-cyan focus:ring-electric-cyan"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Productie</span>
-              </label>
-            </div>
-            {formData.rabobank_environment === 'production' && (
-              <div className="mt-2 flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  Let op: productieomgeving gebruikt echte betalingen
-                </p>
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Koppeling Status</h3>
+
+            {rabobankLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Status wordt geladen...</span>
+              </div>
+            ) : rabobankStatus?.connected ? (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <Link2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          <span className="font-medium text-green-900 dark:text-green-100">Gekoppeld</span>
+                        </div>
+                        <span className="text-sm text-green-700 dark:text-green-300">
+                          ({rabobankStatus.environment === 'sandbox' ? 'Sandbox' : 'Productie'})
+                        </span>
+                      </div>
+                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                        Rabobank betaalverzoeken kunnen worden aangemaakt
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm('Weet je zeker dat je Rabobank wilt ontkoppelen?')) {
+                        try {
+                          await disconnectMutation.mutateAsync();
+                          setShowSuccess(true);
+                          setTimeout(() => setShowSuccess(false), 3000);
+                        } catch (err) {
+                          setSaveError(err.response?.data?.message || 'Fout bij ontkoppelen');
+                        }
+                      }
+                    }}
+                    disabled={disconnectMutation.isPending}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {disconnectMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Unlink className="w-4 h-4" />
+                    )}
+                    Ontkoppelen
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                        <span className="font-medium text-yellow-900 dark:text-yellow-100">Niet gekoppeld</span>
+                      </div>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                        Koppel Rabobank om betaalverzoeken te kunnen versturen
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const response = await prmApi.getRabobankAuthorizeUrl();
+                        window.location.href = response.data.authorize_url;
+                      } catch (err) {
+                        setSaveError(err.response?.data?.message || 'Fout bij ophalen autorisatie URL');
+                      }
+                    }}
+                    disabled={!settings?.rabobank_has_credentials}
+                    title={!settings?.rabobank_has_credentials ? 'Sla eerst je Client ID en Client Secret op' : ''}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Koppelen met Rabobank
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {settings?.rabobank_has_credentials && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-              <p className="text-sm text-green-700 dark:text-green-300">
-                Opgeslagen credentials gevonden. Laat velden leeg om huidige waarden te behouden.
-              </p>
-            </div>
-          )}
+          {/* Part B: Credentials Form */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">API Credentials</h3>
 
-          <div>
-            <label htmlFor="rabobank_client_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Client ID
-            </label>
-            <input
-              type="text"
-              id="rabobank_client_id"
-              value={formData.rabobank_client_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_id: e.target.value }))}
-              placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client ID'}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label htmlFor="rabobank_client_secret" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Client Secret
-            </label>
-            <input
-              type="password"
-              id="rabobank_client_secret"
-              value={formData.rabobank_client_secret}
-              onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_secret: e.target.value }))}
-              placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client Secret'}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-            />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Omgeving
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="rabobank_environment"
+                      value="sandbox"
+                      checked={formData.rabobank_environment === 'sandbox'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
+                      className="text-electric-cyan focus:ring-electric-cyan"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Sandbox (test)</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="rabobank_environment"
+                      value="production"
+                      checked={formData.rabobank_environment === 'production'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, rabobank_environment: e.target.value }))}
+                      className="text-electric-cyan focus:ring-electric-cyan"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Productie</span>
+                  </label>
+                </div>
+                {formData.rabobank_environment === 'production' && (
+                  <div className="mt-2 flex items-start gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                    <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      Let op: productieomgeving gebruikt echte betalingen
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {settings?.rabobank_has_credentials && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    Opgeslagen credentials gevonden. Laat velden leeg om huidige waarden te behouden.
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="rabobank_client_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client ID
+                </label>
+                <input
+                  type="text"
+                  id="rabobank_client_id"
+                  value={formData.rabobank_client_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_id: e.target.value }))}
+                  placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client ID'}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label htmlFor="rabobank_client_secret" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Client Secret
+                </label>
+                <input
+                  type="password"
+                  id="rabobank_client_secret"
+                  value={formData.rabobank_client_secret}
+                  onChange={(e) => setFormData(prev => ({ ...prev, rabobank_client_secret: e.target.value }))}
+                  placeholder={settings?.rabobank_has_credentials ? '••••••••' : 'Rabobank Client Secret'}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
