@@ -314,10 +314,13 @@ class RabobankPayment {
 		$api_url  = $this->oauth->get_base_url() . $api_path;
 
 		// Build request body JSON and signing headers
-		$body_json  = wp_json_encode( $request_body );
+		$body_json  = wp_json_encode( $request_body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$request_id = wp_generate_uuid4();
 		$date       = gmdate( 'D, d M Y H:i:s' ) . ' GMT';
 		$digest     = 'SHA-256=' . base64_encode( hash( 'sha256', $body_json, true ) );
+
+		error_log( 'Rabobank request body: ' . $body_json );
+		error_log( 'Rabobank digest: ' . $digest );
 
 		// Build signature string and sign with private key
 		$cert_dir  = get_stylesheet_directory() . '/certs';
