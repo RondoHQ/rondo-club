@@ -256,12 +256,17 @@ class RabobankOAuth {
 			return null;
 		}
 
+		// Use a random state token stored in a transient (not wp_nonce, which is user-specific
+		// and fails verification in the REST callback where cookie auth may not be available).
+		$state = bin2hex( random_bytes( 16 ) );
+		set_transient( 'rabobank_oauth_state_' . $state, '1', 600 ); // 10 minutes
+
 		$params = [
 			'response_type' => 'code',
 			'client_id'     => $credentials['client_id'],
 			'scope'         => self::SCOPE,
 			'redirect_uri'  => rest_url( 'rondo/v1/rabobank/callback' ),
-			'state'         => wp_create_nonce( 'rabobank_oauth' ),
+			'state'         => $state,
 		];
 
 		return $this->authorize_url . '?' . http_build_query( $params );
@@ -275,13 +280,15 @@ class RabobankOAuth {
 	 * @return bool|\WP_Error True on success, WP_Error on failure
 	 */
 	public function handle_callback( $code, $state ) {
-		// Verify state nonce
-		if ( ! wp_verify_nonce( $state, 'rabobank_oauth' ) ) {
+		// Verify state token from transient (one-time use)
+		$transient_key = 'rabobank_oauth_state_' . $state;
+		if ( ! get_transient( $transient_key ) ) {
 			return new \WP_Error(
 				'invalid_state',
 				__( 'Ongeldige state parameter.', 'rondo' )
 			);
 		}
+		delete_transient( $transient_key );
 
 		$credentials = $this->config->get_rabobank_credentials();
 
