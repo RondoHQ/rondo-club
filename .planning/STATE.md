@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** Phase 184 - Invoice Management UI
+**Current focus:** Phase 185 - Invoice PDF Club Branding
 
 ## Current Position
 
-Phase: 184 of 184 (Invoice Management UI)
-Plan: 2 of 2 in current phase
+Phase: 185 of 185 (Invoice PDF Club Branding)
+Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 — Phase 184 verified (7/7 must-haves), all phases complete
+Last activity: 2026-02-16 — Completed 185-01 (club logo upload + accent color)
 
-Progress: [██████████] 100% (2/2 plans complete)
+Progress: [██████████] 100% (1/1 plans complete)
 
 ## Performance Metrics
 
@@ -48,6 +48,9 @@ Progress: [██████████] 100% (2/2 plans complete)
 **Phase 184 Progress:**
 - Plan 184-01: 162s, 2 tasks, 7 files (2026-02-16)
 - Plan 184-02: 232s, 2 tasks, 6 files (2026-02-16)
+
+**Phase 185 Progress:**
+- Plan 185-01: 336s, 2 tasks, 6 files (2026-02-16)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -91,6 +94,13 @@ Recent decisions for v26.0:
 - [Phase 184-02]: Client-side sorting for Facturen list (small datasets, instant feedback)
 - [Phase 184-02]: Success messages auto-hide after 3s using setTimeout (FeedbackDetail pattern)
 - [Phase 184-02]: Status-driven button rendering for invoice actions (draft/sent/paid each different)
+- [Phase 185-01]: Logo storage via WordPress media library (reuse existing infrastructure)
+- [Phase 185-01]: Accent color stored as hex string with sanitize_hex_color() validation
+- [Phase 185-01]: PDF fallback to Rondo branding ensures PDFs always render
+
+### Roadmap Evolution
+
+None — phase 185 was the final planned enhancement.
 
 ### Pending Todos
 
@@ -105,11 +115,11 @@ Recent decisions for v26.0:
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Phase 184 verified (7/7), ROADMAP updated, v26.0 milestone complete
+Stopped at: Completed phase 185-01 (club branding for invoice PDFs), v26.1
 Resume file: None
 
-**Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
+**Next action:** Phase 185 complete — system ready for production use
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-16 after phase 184 verification passed*
+*Last updated: 2026-02-16 after completing phase 185-01*
