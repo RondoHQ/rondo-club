@@ -283,6 +283,10 @@ class DemoAnonymizer {
 			case 4:
 				$email_local_part = substr( $first, 0, 1 ) . $last;
 				break;
+			default:
+				// Fallback to safe default format.
+				$email_local_part = "{$first}.{$last}";
+				break;
 		}
 
 		// Pick domain.
@@ -342,9 +346,12 @@ class DemoAnonymizer {
 	 * Get random element from array
 	 *
 	 * @param array $array Array to select from.
-	 * @return mixed Random element.
+	 * @return mixed Random element, or null if array is empty.
 	 */
 	private function random_array_element( array $array ) {
+		if ( empty( $array ) ) {
+			return null;
+		}
 		return $array[ mt_rand( 0, count( $array ) - 1 ) ];
 	}
 
