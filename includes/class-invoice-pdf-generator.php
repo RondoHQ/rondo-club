@@ -108,9 +108,21 @@ class InvoicePdfGenerator {
 		$iban           = $finance_config->get_iban();
 		$payment_clause = $finance_config->get_payment_clause();
 
-		// Get club logo
-		$logo_path = get_template_directory() . '/public/icons/rondo-logo.png';
-		$logo_exists = file_exists( $logo_path );
+		// Get accent color with fallback
+		$accent_color = $finance_config->get_accent_color();
+		if ( empty( $accent_color ) ) {
+			$accent_color = '#0891b2';
+		}
+
+		// Get club logo with fallback to Rondo logo
+		$club_logo_id = $finance_config->get_club_logo_id();
+		if ( $club_logo_id > 0 ) {
+			$logo_path = get_attached_file( $club_logo_id );
+			$logo_exists = $logo_path && file_exists( $logo_path );
+		} else {
+			$logo_path = get_template_directory() . '/public/icons/rondo-logo.png';
+			$logo_exists = file_exists( $logo_path );
+		}
 
 		// Get QR code path if available
 		$qr_code_path    = get_field( 'qr_code_path', $invoice_id );
@@ -140,7 +152,8 @@ class InvoicePdfGenerator {
 			$iban,
 			$payment_clause,
 			$logo_exists ? $logo_path : null,
-			$qr_code_abspath
+			$qr_code_abspath,
+			$accent_color
 		);
 
 		// Generate PDF with mPDF
@@ -205,6 +218,7 @@ class InvoicePdfGenerator {
 	 * @param string      $payment_clause Payment clause text.
 	 * @param string|null $logo_path      Path to logo file (null if not exists).
 	 * @param string|null $qr_code_path   Absolute path to QR code PNG (null if not exists).
+	 * @param string      $accent_color   Accent color hex code (e.g., '#0891b2').
 	 * @return string HTML content.
 	 */
 	private static function build_html(
@@ -223,7 +237,8 @@ class InvoicePdfGenerator {
 		$iban,
 		$payment_clause,
 		$logo_path,
-		$qr_code_path = null
+		$qr_code_path = null,
+		$accent_color = '#0891b2'
 	) {
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
@@ -289,7 +304,7 @@ body {
 }
 .header {
 	margin-bottom: 30px;
-	border-bottom: 2px solid #0891b2;
+	border-bottom: 2px solid ' . esc_attr( $accent_color ) . ';
 	padding-bottom: 15px;
 }
 .header-content {
@@ -299,7 +314,7 @@ body {
 .header .org-name {
 	font-weight: bold;
 	font-size: 14pt;
-	color: #0891b2;
+	color: ' . esc_attr( $accent_color ) . ';
 }
 .header .org-details {
 	font-size: 9pt;
@@ -308,7 +323,7 @@ body {
 h1 {
 	font-size: 24pt;
 	font-weight: bold;
-	color: #0891b2;
+	color: ' . esc_attr( $accent_color ) . ';
 	margin: 20px 0;
 }
 .invoice-meta {
@@ -368,7 +383,7 @@ table.line-items .total-row td {
 	font-size: 12pt;
 	font-weight: bold;
 	margin: 0 0 15px 0;
-	color: #0891b2;
+	color: ' . esc_attr( $accent_color ) . ';
 }
 .payment-section .iban {
 	font-size: 12pt;

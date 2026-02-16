@@ -32,6 +32,8 @@ class FinanceConfig {
 	const OPTION_PAYMENT_CLAUSE        = 'rondo_finance_payment_clause';
 	const OPTION_EMAIL_TEMPLATE        = 'rondo_finance_email_template';
 	const OPTION_RABOBANK_CREDENTIALS  = 'rondo_finance_rabobank_credentials';
+	const OPTION_CLUB_LOGO_ID          = 'rondo_finance_club_logo_id';
+	const OPTION_ACCENT_COLOR          = 'rondo_finance_accent_color';
 
 	/**
 	 * Default configuration values
@@ -45,6 +47,8 @@ class FinanceConfig {
 		'iban'               => '',
 		'payment_term_days'  => 14,
 		'payment_clause'     => '',
+		'club_logo_id'       => 0,
+		'accent_color'       => '',
 		'email_template'     => "Beste {naam},
 
 Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.
@@ -123,6 +127,24 @@ Met vriendelijke groet,
 	}
 
 	/**
+	 * Get club logo ID
+	 *
+	 * @return int The club logo attachment ID (0 if not configured)
+	 */
+	public function get_club_logo_id(): int {
+		return (int) get_option( self::OPTION_CLUB_LOGO_ID, self::DEFAULTS['club_logo_id'] );
+	}
+
+	/**
+	 * Get accent color
+	 *
+	 * @return string The accent color hex code (empty string if not configured, defaults to #0891b2)
+	 */
+	public function get_accent_color(): string {
+		return get_option( self::OPTION_ACCENT_COLOR, self::DEFAULTS['accent_color'] );
+	}
+
+	/**
 	 * Get Rabobank credentials (decrypted, internal use only)
 	 *
 	 * @return array|null Array with client_id, client_secret, environment or null if not configured
@@ -147,6 +169,14 @@ Met vriendelijke groet,
 	 */
 	public function get_all_settings(): array {
 		$rabobank_creds = $this->get_rabobank_credentials();
+		$club_logo_id   = $this->get_club_logo_id();
+		$club_logo_url  = '';
+		if ( $club_logo_id > 0 ) {
+			$url = wp_get_attachment_url( $club_logo_id );
+			if ( $url ) {
+				$club_logo_url = $url;
+			}
+		}
 
 		return [
 			'org_name'              => $this->get_org_name(),
@@ -156,6 +186,9 @@ Met vriendelijke groet,
 			'payment_term_days'     => $this->get_payment_term_days(),
 			'payment_clause'        => $this->get_payment_clause(),
 			'email_template'        => $this->get_email_template(),
+			'club_logo_id'          => $club_logo_id,
+			'club_logo_url'         => $club_logo_url,
+			'accent_color'          => $this->get_accent_color(),
 			'rabobank_has_credentials' => $rabobank_creds !== null,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
 		];
@@ -183,6 +216,10 @@ Met vriendelijke groet,
 				return $this->get_payment_clause();
 			case 'email_template':
 				return $this->get_email_template();
+			case 'club_logo_id':
+				return $this->get_club_logo_id();
+			case 'accent_color':
+				return $this->get_accent_color();
 			default:
 				return null;
 		}
@@ -227,6 +264,24 @@ Met vriendelijke groet,
 
 		if ( isset( $data['email_template'] ) ) {
 			$success = update_option( self::OPTION_EMAIL_TEMPLATE, sanitize_textarea_field( $data['email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['club_logo_id'] ) ) {
+			$logo_id = absint( $data['club_logo_id'] );
+			$success = update_option( self::OPTION_CLUB_LOGO_ID, $logo_id ) && $success;
+		}
+
+		if ( isset( $data['accent_color'] ) ) {
+			$color = sanitize_hex_color( $data['accent_color'] );
+			// Allow empty string to reset to default
+			if ( $color === null && $data['accent_color'] !== '' ) {
+				// Invalid hex color provided
+				$color = '';
+			} elseif ( $color === null ) {
+				// Empty string provided, store it
+				$color = '';
+			}
+			$success = update_option( self::OPTION_ACCENT_COLOR, $color ) && $success;
 		}
 
 		// Handle Rabobank credentials with encryption
