@@ -63,8 +63,8 @@ class ClubConfig {
 	 */
 	public static function get_all_settings(): array {
 		return [
-			'club_name'     => get_option( self::OPTION_CLUB_NAME, self::DEFAULTS['club_name'] ),
-			'freescout_url' => get_option( self::OPTION_FREESCOUT_URL, self::DEFAULTS['freescout_url'] ),
+			'club_name'     => self::get_club_name(),
+			'freescout_url' => self::get_freescout_url(),
 		];
 	}
 
