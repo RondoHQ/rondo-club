@@ -295,6 +295,7 @@ export const prmApi = {
 
   // Rabobank Payment
   createPaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/payment-link`),
+  getRabobankCertificate: () => api.get('/rondo/v1/rabobank/certificate'),
 
   // Invoice endpoints
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
