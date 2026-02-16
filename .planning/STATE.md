@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: 185 of 185 (Invoice PDF Club Branding)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-16 - Completed quick task 70: Fix invoice PDF column widths
+Last activity: 2026-02-16 - Completed quick task 71: Move club logo to right side of invoice header
 
 Progress: [██████████] 100% (1/1 plans complete)
 
@@ -122,11 +122,12 @@ None — phase 185 was the final planned enhancement.
 | 68 | Center QR code scan text in invoice PDF | 2026-02-16 | 12cc679 | [68-center-qr-code-scan-text-in-invoice-pdf](./quick/68-center-qr-code-scan-text-in-invoice-pdf/) |
 | 69 | Invoice PDF colored Geel/Rood card type | 2026-02-16 | 5503ea8 | [69-invoice-pdf-show-geel-rood-colored-text-](./quick/69-invoice-pdf-show-geel-rood-colored-text-/) |
 | 70 | Fix invoice PDF column widths | 2026-02-16 | 4836a3d | [70-fix-invoice-pdf-column-widths-for-kaart-](./quick/70-fix-invoice-pdf-column-widths-for-kaart-/) |
+| 71 | Move club logo to right side of invoice header | 2026-02-16 | d69396f | [71-move-club-logo-to-right-side-of-invoice-](./quick/71-move-club-logo-to-right-side-of-invoice-/) |
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed quick task 70: Fix invoice PDF column widths
+Stopped at: Completed quick task 71: Move club logo to right side of invoice header
 Resume file: None
 
 **Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
