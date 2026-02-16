@@ -143,7 +143,7 @@ class RabobankPayment {
 	}
 
 	/**
-	 * Generate a self-signed mTLS certificate
+	 * Generate a self-signed mTLS leaf certificate
 	 *
 	 * @return true|\WP_Error
 	 */
@@ -157,40 +157,45 @@ class RabobankPayment {
 		$cert_path = $cert_dir . '/sandbox-cert.pem';
 		$key_path  = $cert_dir . '/sandbox-key.pem';
 
-		// Generate using PHP OpenSSL
-		$config = [
-			'private_key_bits' => 4096,
-			'private_key_type' => OPENSSL_KEYTYPE_RSA,
-		];
-
-		$private_key = openssl_pkey_new( $config );
-		if ( ! $private_key ) {
-			return new \WP_Error( 'openssl_error', __( 'Kon privésleutel niet genereren.', 'rondo' ), [ 'status' => 500 ] );
-		}
+		// Write a temporary OpenSSL config with leaf cert extensions (CA:FALSE)
+		$openssl_conf = $cert_dir . '/openssl-tmp.cnf';
+		$conf_content = "[req]\n"
+			. "distinguished_name = req_dn\n"
+			. "x509_extensions = v3_leaf\n"
+			. "[req_dn]\n"
+			. "[v3_leaf]\n"
+			. "basicConstraints = critical,CA:FALSE\n"
+			. "keyUsage = digitalSignature\n";
+		file_put_contents( $openssl_conf, $conf_content );
 
 		$site_name = sanitize_title( get_bloginfo( 'name' ) ) ?: 'rondo';
-		$dn        = [
-			'commonName'   => $site_name . '-mtls',
-			'organizationName' => get_bloginfo( 'name' ) ?: 'Rondo',
-			'countryName'  => 'NL',
-		];
+		$subject   = "/CN={$site_name}-mtls/O=" . ( get_bloginfo( 'name' ) ?: 'Rondo' ) . '/C=NL';
 
-		$csr = openssl_csr_new( $dn, $private_key, $config );
-		if ( ! $csr ) {
-			return new \WP_Error( 'openssl_error', __( 'Kon CSR niet genereren.', 'rondo' ), [ 'status' => 500 ] );
-		}
+		// Use openssl command to generate a proper leaf certificate
+		$cmd = sprintf(
+			'openssl req -x509 -newkey rsa:4096 -keyout %s -out %s -days 365 -nodes -subj %s -config %s 2>&1',
+			escapeshellarg( $key_path ),
+			escapeshellarg( $cert_path ),
+			escapeshellarg( $subject ),
+			escapeshellarg( $openssl_conf )
+		);
 
-		$cert = openssl_csr_sign( $csr, null, $private_key, 365 );
-		if ( ! $cert ) {
+		$output  = [];
+		$retcode = 0;
+		exec( $cmd, $output, $retcode );
+
+		// Clean up temp config
+		unlink( $openssl_conf );
+
+		if ( $retcode !== 0 ) {
+			error_log( 'Certificate generation failed: ' . implode( "\n", $output ) );
 			return new \WP_Error( 'openssl_error', __( 'Kon certificaat niet genereren.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
-		// Export to files
-		openssl_x509_export_to_file( $cert, $cert_path );
-		openssl_pkey_export_to_file( $private_key, $key_path );
-
 		// Restrict key file permissions
-		chmod( $key_path, 0600 );
+		if ( file_exists( $key_path ) ) {
+			chmod( $key_path, 0600 );
+		}
 
 		return true;
 	}
