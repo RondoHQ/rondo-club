@@ -19,6 +19,23 @@ class CommentTypes {
 	const TYPE_EMAIL            = 'rondo_email';
 	const TYPE_FEEDBACK_COMMENT = 'rondo_fb_comment';
 
+	/**
+	 * Comment type to string mapping
+	 */
+	private const TYPE_MAP = [
+		self::TYPE_ACTIVITY => 'activity',
+		self::TYPE_EMAIL    => 'email',
+	];
+
+	/**
+	 * Post status to frontend status mapping
+	 */
+	private const STATUS_MAP = [
+		'rondo_open'      => 'open',
+		'rondo_awaiting'  => 'awaiting',
+		'rondo_completed' => 'completed',
+	];
+
 	public function __construct() {
 		// Register REST API routes for notes and activities
 		add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
@@ -34,11 +51,6 @@ class CommentTypes {
 	 * Register comment meta fields
 	 */
 	public function register_comment_meta() {
-		// Check if register_comment_meta function exists (WordPress 4.4.0+)
-		if ( ! function_exists( 'register_comment_meta' ) ) {
-			return;
-		}
-
 		// Activity-specific meta
 		register_comment_meta(
 			'comment',
@@ -222,7 +234,7 @@ class CommentTypes {
 				],
 				[
 					'methods'             => \WP_REST_Server::DELETABLE,
-					'callback'            => [ $this, 'delete_activity' ],
+					'callback'            => [ $this, 'delete_note' ],
 					'permission_callback' => [ $this, 'check_comment_access' ],
 				],
 			]
@@ -306,12 +318,7 @@ class CommentTypes {
 		$person_id = $request->get_param( 'person_id' );
 		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
 		$content    = wp_kses_post( $request->get_param( 'content' ) );
-		$visibility = sanitize_text_field( $request->get_param( 'visibility' ) );
-
-		// Default to private if not specified or invalid
-		if ( ! in_array( $visibility, [ 'private', 'shared' ], true ) ) {
-			$visibility = 'private';
-		}
+		$visibility = $this->sanitize_visibility( $request->get_param( 'visibility' ) );
 
 		if ( empty( $content ) ) {
 			return new \WP_Error( 'empty_content', __( 'Note content is required.', 'rondo' ), [ 'status' => 400 ] );
@@ -368,10 +375,7 @@ class CommentTypes {
 
 		// Update visibility if provided.
 		if ( null !== $visibility ) {
-			$visibility = sanitize_text_field( $visibility );
-			if ( in_array( $visibility, [ 'private', 'shared' ], true ) ) {
-				update_comment_meta( $comment_id, '_note_visibility', $visibility );
-			}
+			update_comment_meta( $comment_id, '_note_visibility', $this->sanitize_visibility( $visibility ) );
 		}
 
 		// Update @mentions (check for new mentions to notify)
@@ -452,18 +456,15 @@ class CommentTypes {
 		}
 
 		// Save meta
-		if ( $activity_type ) {
-			update_comment_meta( $comment_id, 'activity_type', $activity_type );
-		}
-		if ( $activity_date ) {
-			update_comment_meta( $comment_id, 'activity_date', $activity_date );
-		}
-		if ( $activity_time ) {
-			update_comment_meta( $comment_id, 'activity_time', $activity_time );
-		}
-		if ( ! empty( $participants ) ) {
-			update_comment_meta( $comment_id, 'participants', array_map( 'intval', $participants ) );
-		}
+		$this->update_meta_if_provided(
+			$comment_id,
+			[
+				'activity_type' => $activity_type,
+				'activity_date' => $activity_date,
+				'activity_time' => $activity_time,
+				'participants'  => ! empty( $participants ) ? array_map( 'intval', $participants ) : null,
+			]
+		);
 
 		$comment = get_comment( $comment_id );
 
@@ -489,30 +490,25 @@ class CommentTypes {
 			]
 		);
 
+		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
+		if ( false === $result || is_wp_error( $result ) ) {
+			return new \WP_Error( 'update_failed', __( 'Failed to update activity.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
 		// Update meta.
-		if ( null !== $activity_type ) {
-			update_comment_meta( $comment_id, 'activity_type', $activity_type );
-		}
-		if ( null !== $activity_date ) {
-			update_comment_meta( $comment_id, 'activity_date', $activity_date );
-		}
-		if ( null !== $activity_time ) {
-			update_comment_meta( $comment_id, 'activity_time', $activity_time );
-		}
-		if ( null !== $participants ) {
-			update_comment_meta( $comment_id, 'participants', array_map( 'intval', $participants ) );
-		}
+		$this->update_meta_if_provided(
+			$comment_id,
+			[
+				'activity_type' => $activity_type,
+				'activity_date' => $activity_date,
+				'activity_time' => $activity_time,
+				'participants'  => null !== $participants ? array_map( 'intval', $participants ) : null,
+			]
+		);
 
 		$comment = get_comment( $comment_id );
 
 		return rest_ensure_response( $this->format_comment( $comment, 'activity' ) );
-	}
-
-	/**
-	 * Delete an activity
-	 */
-	public function delete_activity( $request ) {
-		return $this->delete_note( $request ); // Same logic
 	}
 
 	/**
@@ -534,23 +530,10 @@ class CommentTypes {
 
 		$timeline = [];
 
-		foreach ( $comments as $comment ) {
-			$type = 'note';
-			if ( self::TYPE_ACTIVITY === $comment->comment_type ) {
-				$type = 'activity';
-			} elseif ( self::TYPE_EMAIL === $comment->comment_type ) {
-				$type = 'email';
-			}
-
-			// Apply visibility filtering for notes.
-			if ( 'note' === $type && $current_user_id !== (int) $comment->user_id ) {
-				$visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
-				// Skip private notes from other users (default to private for backward compatibility).
-				if ( empty( $visibility ) || 'private' === $visibility ) {
-					continue;
-				}
-			}
-
+		// Filter notes by visibility and format all comments
+		$filtered_comments = $this->filter_notes_by_visibility( $comments );
+		foreach ( $filtered_comments as $comment ) {
+			$type       = self::TYPE_MAP[ $comment->comment_type ] ?? 'note';
 			$timeline[] = $this->format_comment( $comment, $type );
 		}
 
@@ -571,13 +554,6 @@ class CommentTypes {
 				],
 			]
 		);
-
-		// Map post status to frontend status values
-		$status_map = [
-			'rondo_open'      => 'open',
-			'rondo_awaiting'  => 'awaiting',
-			'rondo_completed' => 'completed',
-		];
 
 		foreach ( $todos as $todo ) {
 			// Get all related persons for this todo
@@ -608,7 +584,7 @@ class CommentTypes {
 				// New multi-person format
 				'persons'        => $persons,
 				'notes'          => get_field( 'notes', $todo->ID ) ?: null,
-				'status'         => $status_map[ $todo->post_status ] ?? 'open',
+				'status'         => self::STATUS_MAP[ $todo->post_status ] ?? 'open',
 				'is_completed'   => 'rondo_completed' === $todo->post_status,
 				'due_date'       => get_field( 'due_date', $todo->ID ) ?: null,
 				'awaiting_since' => get_field( 'awaiting_since', $todo->ID ) ?: null,
@@ -646,15 +622,10 @@ class CommentTypes {
 	 * @return array Formatted comment data.
 	 */
 	private function format_comment( $comment, $type ) {
-		// Make URLs in content clickable for activities and notes.
-		$content = $comment->comment_content;
-		if ( 'activity' === $type || 'note' === $type ) {
-			// Render @mentions as styled spans before URL processing
-			$content = \RONDO_Mentions::render_mentions( $content );
-			$content = make_clickable( $content );
-			// Add target="_blank" and rel="noopener noreferrer" to links for security
-			$content = str_replace( '<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content );
-		}
+		// Process content for activities and notes
+		$content = ( 'activity' === $type || 'note' === $type )
+			? $this->process_content_for_display( $comment->comment_content )
+			: $comment->comment_content;
 
 		$data = [
 			'id'        => (int) $comment->comment_ID,
@@ -699,6 +670,7 @@ class CommentTypes {
 	 * - Author always sees their own notes
 	 * - Shared notes are visible to anyone who can see the contact
 	 * - Private notes are only visible to the author
+	 * - Activities and emails are not filtered (always visible)
 	 *
 	 * @param array $comments Array of comment objects
 	 * @return array Filtered array of comments
@@ -709,6 +681,11 @@ class CommentTypes {
 		return array_filter(
 			$comments,
 			function ( $comment ) use ( $current_user_id ) {
+				// Only filter notes, not activities or emails
+				if ( self::TYPE_NOTE !== $comment->comment_type ) {
+					return true;
+				}
+
 				// Author always sees their own notes
 				if ( (int) $comment->user_id === $current_user_id ) {
 					return true;
@@ -726,6 +703,58 @@ class CommentTypes {
 				return 'shared' === $visibility;
 			}
 		);
+	}
+
+	/**
+	 * Sanitize note visibility value
+	 *
+	 * @param mixed $visibility The visibility value to sanitize.
+	 * @return string 'private' or 'shared', defaults to 'private' if invalid.
+	 */
+	private function sanitize_visibility( $visibility ) {
+		$visibility = sanitize_text_field( $visibility );
+		return in_array( $visibility, [ 'private', 'shared' ], true ) ? $visibility : 'private';
+	}
+
+	/**
+	 * Update or clear comment meta based on provided values.
+	 *
+	 * - If a value is null, the meta key is left unchanged.
+	 * - If a value is an empty string, the meta key is deleted (cleared).
+	 * - For any other value, the meta key is updated to that value.
+	 *
+	 * @param int   $comment_id The comment ID.
+	 * @param array $meta_map   Associative array of meta_key => value pairs.
+	 */
+	private function update_meta_if_provided( $comment_id, $meta_map ) {
+		foreach ( $meta_map as $key => $value ) {
+			if ( null === $value ) {
+				continue;
+			}
+
+			if ( '' === $value ) {
+				delete_comment_meta( $comment_id, $key );
+				continue;
+			}
+
+			update_comment_meta( $comment_id, $key, $value );
+		}
+	}
+
+	/**
+	 * Process content for display in timeline
+	 *
+	 * Renders @mentions, makes URLs clickable, and adds security attributes to links.
+	 *
+	 * @param string $content The raw content.
+	 * @return string Processed content.
+	 */
+	private function process_content_for_display( $content ) {
+		// Render @mentions as styled spans before URL processing
+		$content = \RONDO_Mentions::render_mentions( $content );
+		$content = make_clickable( $content );
+		// Add target="_blank" and rel="noopener noreferrer" to links for security
+		return str_replace( '<a href=', '<a target="_blank" rel="noopener noreferrer" href=', $content );
 	}
 
 	/**
