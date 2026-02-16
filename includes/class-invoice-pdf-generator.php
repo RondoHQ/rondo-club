@@ -273,11 +273,11 @@ class InvoicePdfGenerator {
 					$description = $match_desc ?: ( $item['description'] ?? '' );
 
 					// Determine card type based on charge_codes
-					if ( ! empty( $charge_codes ) && ! empty( $charge_description ) ) {
+					if ( ! empty( $charge_codes ) ) {
 						if ( substr( $charge_codes, -2 ) === '-1' ) {
-							$card_type = 'Gele kaart: ' . $charge_description;
+							$card_type = '<span style="color: #ca8a04;">Geel</span>';
 						} else {
-							$card_type = 'Rode kaart: ' . $charge_description;
+							$card_type = '<span style="color: #dc2626;">Rood</span>';
 						}
 					}
 
@@ -294,7 +294,7 @@ class InvoicePdfGenerator {
 
 				$line_items_html .= '<tr>';
 				$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
-				$line_items_html .= '<td>' . esc_html( $card_type ) . '</td>';
+				$line_items_html .= '<td>' . $card_type . '</td>';
 				$line_items_html .= '<td>' . esc_html( $suspension ) . '</td>';
 				$line_items_html .= '<td style="text-align: right;">' . $formatted_amount . '</td>';
 				$line_items_html .= '</tr>';
