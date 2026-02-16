@@ -93,6 +93,106 @@ class RabobankPayment {
 				],
 			]
 		);
+
+		// Get mTLS certificate for Rabobank Developer Portal
+		register_rest_route(
+			'rondo/v1',
+			'/rabobank/certificate',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_certificate_endpoint' ],
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			]
+		);
+	}
+
+	/**
+	 * REST endpoint: Get or generate mTLS certificate
+	 *
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_certificate_endpoint() {
+		$cert_dir = get_stylesheet_directory() . '/certs';
+		$cert     = $cert_dir . '/sandbox-cert.pem';
+		$key      = $cert_dir . '/sandbox-key.pem';
+
+		// Generate if not exists
+		if ( ! file_exists( $cert ) || ! file_exists( $key ) ) {
+			$generated = $this->generate_certificate();
+			if ( is_wp_error( $generated ) ) {
+				return $generated;
+			}
+		}
+
+		if ( ! file_exists( $cert ) ) {
+			return new \WP_Error(
+				'cert_not_found',
+				__( 'Certificaat niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$cert_content = file_get_contents( $cert );
+
+		return rest_ensure_response( [
+			'certificate' => $cert_content,
+			'has_key'     => file_exists( $key ),
+		] );
+	}
+
+	/**
+	 * Generate a self-signed mTLS certificate
+	 *
+	 * @return true|\WP_Error
+	 */
+	private function generate_certificate() {
+		$cert_dir = get_stylesheet_directory() . '/certs';
+
+		if ( ! is_dir( $cert_dir ) ) {
+			wp_mkdir_p( $cert_dir );
+		}
+
+		$cert_path = $cert_dir . '/sandbox-cert.pem';
+		$key_path  = $cert_dir . '/sandbox-key.pem';
+
+		// Generate using PHP OpenSSL
+		$config = [
+			'private_key_bits' => 4096,
+			'private_key_type' => OPENSSL_KEYTYPE_RSA,
+		];
+
+		$private_key = openssl_pkey_new( $config );
+		if ( ! $private_key ) {
+			return new \WP_Error( 'openssl_error', __( 'Kon privésleutel niet genereren.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
+		$site_name = sanitize_title( get_bloginfo( 'name' ) ) ?: 'rondo';
+		$dn        = [
+			'commonName'   => $site_name . '-mtls',
+			'organizationName' => get_bloginfo( 'name' ) ?: 'Rondo',
+			'countryName'  => 'NL',
+		];
+
+		$csr = openssl_csr_new( $dn, $private_key, $config );
+		if ( ! $csr ) {
+			return new \WP_Error( 'openssl_error', __( 'Kon CSR niet genereren.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
+		$cert = openssl_csr_sign( $csr, null, $private_key, 365 );
+		if ( ! $cert ) {
+			return new \WP_Error( 'openssl_error', __( 'Kon certificaat niet genereren.', 'rondo' ), [ 'status' => 500 ] );
+		}
+
+		// Export to files
+		openssl_x509_export_to_file( $cert, $cert_path );
+		openssl_pkey_export_to_file( $private_key, $key_path );
+
+		// Restrict key file permissions
+		chmod( $key_path, 0600 );
+
+		return true;
 	}
 
 	/**

@@ -1,8 +1,116 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
 import { prmApi } from '@/api/client';
+
+/**
+ * Certificate display section for Rabobank mTLS
+ */
+function CertificateSection() {
+  const [certificate, setCertificate] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const loadCertificate = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await prmApi.getRabobankCertificate();
+      setCertificate(response.data.certificate);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Kon certificaat niet laden.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(certificate);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = certificate;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        mTLS Certificaat
+      </h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+        Dit certificaat moet je toevoegen in het{' '}
+        <a href="https://developer.rabobank.nl" target="_blank" rel="noopener noreferrer" className="text-electric-cyan hover:underline">
+          Rabobank Developer Portal
+        </a>
+        {' '}onder je app &rarr; Configurations &rarr; MTLS.
+      </p>
+
+      {!certificate && !loading && (
+        <button
+          type="button"
+          onClick={loadCertificate}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Certificaat tonen
+        </button>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Certificaat laden...</span>
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {certificate && (
+        <div className="space-y-2">
+          <div className="relative">
+            <pre className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
+              {certificate}
+            </pre>
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-green-500" />
+                  Gekopieerd
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  Kopieer
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function FinanceSettings() {
   const { data: settings, isLoading, error } = useFinanceSettings();
@@ -383,7 +491,10 @@ export default function FinanceSettings() {
             )}
           </div>
 
-          {/* Part B: Credentials Form */}
+          {/* Part B: mTLS Certificate */}
+          <CertificateSection />
+
+          {/* Part C: Credentials Form */}
           <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">API Credentials</h3>
 
