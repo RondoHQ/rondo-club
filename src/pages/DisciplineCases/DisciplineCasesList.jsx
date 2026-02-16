@@ -21,6 +21,10 @@ export default function DisciplineCasesList() {
   const [selectedSeasonId, setSelectedSeasonId] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
 
+  // Client-side filter state
+  const [doorbelastFilter, setDoorbelastFilter] = useState('');
+  const [sanctieFilter, setSanctieFilter] = useState('');
+
   // Set default season when currentSeason loads
   useEffect(() => {
     if (currentSeason && !hasInitialized) {
@@ -94,6 +98,29 @@ export default function DisciplineCasesList() {
     return map;
   }, [personsData]);
 
+  // Apply client-side filters
+  const filteredCases = useMemo(() => {
+    if (!cases) return [];
+    return cases.filter(dc => {
+      const acf = dc.acf || {};
+
+      // Doorbelast filter
+      if (doorbelastFilter !== '') {
+        if (doorbelastFilter === 'none' && acf.is_charged) return false;
+        if (doorbelastFilter === 'sportlink' && acf.is_charged !== 'sportlink') return false;
+        if (doorbelastFilter === 'rondo' && acf.is_charged !== 'rondo') return false;
+      }
+
+      // Sanctie filter (case-insensitive)
+      if (sanctieFilter.trim() !== '') {
+        const sanctionText = (acf.sanction_description || '').toLowerCase();
+        if (!sanctionText.includes(sanctieFilter.toLowerCase().trim())) return false;
+      }
+
+      return true;
+    });
+  }, [cases, doorbelastFilter, sanctieFilter]);
+
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['discipline-cases'] });
     await queryClient.invalidateQueries({ queryKey: ['seasons'] });
@@ -121,9 +148,11 @@ export default function DisciplineCasesList() {
             </p>
           </div>
 
-          {/* Season Filter */}
-          <div className="flex items-center gap-2">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
+
+            {/* Season Filter */}
             <select
               value={selectedSeasonId ?? ''}
               onChange={handleSeasonChange}
@@ -136,6 +165,27 @@ export default function DisciplineCasesList() {
                 </option>
               ))}
             </select>
+
+            {/* Doorbelast Filter */}
+            <select
+              value={doorbelastFilter}
+              onChange={(e) => setDoorbelastFilter(e.target.value)}
+              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+            >
+              <option value="">Alle doorbelast</option>
+              <option value="none">Nee</option>
+              <option value="sportlink">Ja, Sportlink</option>
+              <option value="rondo">Ja, Rondo</option>
+            </select>
+
+            {/* Sanctie Filter */}
+            <input
+              type="text"
+              value={sanctieFilter}
+              onChange={(e) => setSanctieFilter(e.target.value)}
+              placeholder="Zoek op sanctie..."
+              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan w-48"
+            />
           </div>
         </div>
 
@@ -151,7 +201,7 @@ export default function DisciplineCasesList() {
         {/* Table */}
         <div className="card">
           <DisciplineCaseTable
-            cases={cases}
+            cases={filteredCases}
             showPersonColumn={true}
             personMap={personMap}
             isLoading={isLoading}
@@ -159,7 +209,7 @@ export default function DisciplineCasesList() {
         </div>
 
         {/* Empty state for filtered view */}
-        {!isLoading && !casesError && cases?.length === 0 && selectedSeasonId && (
+        {!isLoading && !casesError && filteredCases?.length === 0 && (
           <div className="card p-12 text-center">
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-gray-100 rounded-full dark:bg-gray-700">
@@ -167,10 +217,12 @@ export default function DisciplineCasesList() {
               </div>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2 dark:text-gray-100">
-              Geen tuchtzaken in dit seizoen
+              Geen tuchtzaken gevonden
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Selecteer een ander seizoen of bekijk alle seizoenen.
+              {selectedSeasonId || doorbelastFilter || sanctieFilter
+                ? 'Pas de filters aan om meer resultaten te zien.'
+                : 'Er zijn momenteel geen tuchtzaken.'}
             </p>
           </div>
         )}
