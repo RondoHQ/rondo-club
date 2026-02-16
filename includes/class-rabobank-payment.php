@@ -272,29 +272,6 @@ class RabobankPayment {
 		$invoice_number = get_field( 'invoice_number', $invoice_id );
 		$total_amount   = get_field( 'total_amount', $invoice_id );
 		$person_id      = get_field( 'person', $invoice_id );
-		$due_date       = get_field( 'due_date', $invoice_id );
-
-		// Get person name
-		$person = get_post( $person_id );
-		if ( ! $person || $person->post_type !== 'person' ) {
-			return new \WP_Error(
-				'invalid_person',
-				__( 'Ongeldige persoon gekoppeld aan factuur.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
-		$counterparty_name = $person->post_title;
-
-		// Format due date
-		if ( empty( $due_date ) ) {
-			// Calculate from payment term if not set
-			$finance_config = new \Rondo\Config\FinanceConfig();
-			$payment_term_days = $finance_config->get_payment_term_days();
-			$due_date = date( 'Y-m-d', strtotime( "+{$payment_term_days} days" ) );
-		} else {
-			// Convert ACF date format (Ymd) to API format (Y-m-d)
-			$due_date = date( 'Y-m-d', strtotime( $due_date ) );
-		}
 
 		// Get finance config for IBAN and credentials
 		$finance_config = new \Rondo\Config\FinanceConfig();
@@ -308,19 +285,6 @@ class RabobankPayment {
 			);
 		}
 
-		// Build request body
-		$request_body = [
-			'iban'             => $iban,
-			'amount' => [
-				'value'    => number_format( (float) $total_amount, 2, '.', '' ),
-				'currency' => 'EUR',
-			],
-			'counterpartyName' => $counterparty_name,
-			'description'      => 'Factuur ' . $invoice_number,
-			'expiryDate'       => $due_date,
-		];
-
-		// Get credentials for client ID
 		$credentials = $finance_config->get_rabobank_credentials();
 
 		if ( ! $credentials || empty( $credentials['client_id'] ) ) {
@@ -331,21 +295,71 @@ class RabobankPayment {
 			);
 		}
 
+		// Convert amount to cents (API uses amountCents as integer)
+		$amount_cents = (int) round( (float) $total_amount * 100 );
+
+		// Truncate description to 35 chars (SWIFT character limit)
+		$description = mb_substr( 'Factuur ' . $invoice_number, 0, 35 );
+
+		// Build request body per Rabobank Payment Request API spec
+		$request_body = [
+			'iban'        => $iban,
+			'currency'    => 'EUR',
+			'amountCents' => $amount_cents,
+			'description' => $description,
+		];
+
 		// Build API endpoint URL
 		$api_path = $this->get_api_path();
 		$api_url  = $this->oauth->get_base_url() . $api_path;
+
+		// Build request body JSON and signing headers
+		$body_json  = wp_json_encode( $request_body );
+		$request_id = wp_generate_uuid4();
+		$date       = gmdate( 'D, d M Y H:i:s' ) . ' GMT';
+		$digest     = 'SHA-256=' . base64_encode( hash( 'sha256', $body_json, true ) );
+
+		// Build signature string and sign with private key
+		$cert_dir  = get_stylesheet_directory() . '/certs';
+		$key_path  = $cert_dir . '/sandbox-key.pem';
+		$cert_path = $cert_dir . '/sandbox-cert.pem';
+
+		$signing_string = "date: {$date}\ndigest: {$digest}\nx-request-id: {$request_id}";
+		$signature      = '';
+
+		if ( file_exists( $key_path ) ) {
+			$private_key = openssl_pkey_get_private( file_get_contents( $key_path ) );
+			if ( $private_key ) {
+				openssl_sign( $signing_string, $raw_sig, $private_key, OPENSSL_ALGO_SHA256 );
+				$signature = base64_encode( $raw_sig );
+			}
+		}
+
+		$cert_content = file_exists( $cert_path ) ? file_get_contents( $cert_path ) : '';
+
+		// Build headers per Rabobank API spec
+		$headers = [
+			'Authorization'         => 'Bearer ' . $access_token,
+			'Content-Type'          => 'application/json',
+			'X-IBM-Client-Id'       => $credentials['client_id'],
+			'x-request-id'          => $request_id,
+			'date'                  => $date,
+			'digest'                => $digest,
+			'signature'             => sprintf(
+				'keyId="%s",algorithm="rsa-sha256",headers="date digest x-request-id",signature="%s"',
+				$credentials['client_id'],
+				$signature
+			),
+			'signature-certificate' => $this->format_cert_for_header( $cert_content ),
+		];
 
 		// Make API request (enable mTLS for this request)
 		$this->inject_mtls = true;
 		$response = wp_remote_post(
 			$api_url,
 			[
-				'headers' => [
-					'Authorization'    => 'Bearer ' . $access_token,
-					'Content-Type'     => 'application/json',
-					'X-IBM-Client-Id'  => $credentials['client_id'],
-				],
-				'body'    => wp_json_encode( $request_body ),
+				'headers' => $headers,
+				'body'    => $body_json,
 				'timeout' => 30,
 			]
 		);
@@ -410,6 +424,17 @@ class RabobankPayment {
 	 *
 	 * @return string API path prefix
 	 */
+	/**
+	 * Format PEM certificate for use in HTTP header (single line, no markers)
+	 *
+	 * @param string $pem_content Full PEM certificate content
+	 * @return string Certificate as single-line base64
+	 */
+	private function format_cert_for_header( $pem_content ) {
+		$cert = str_replace( [ '-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n" ], '', $pem_content );
+		return trim( $cert );
+	}
+
 	private function get_api_path() {
 		$environment = $this->oauth->get_environment();
 
