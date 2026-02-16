@@ -117,15 +117,16 @@ None — phase 185 was the final planned enhancement.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 65 | Add BCC email for invoice sending | 2026-02-16 | 6af9f77 | [65-add-bcc-email-for-invoice-sending](./quick/65-add-bcc-email-for-invoice-sending/) |
+| 66 | Add regenerate invoice button | 2026-02-16 | 34ed6bc | [66-add-regenerate-invoice-button](./quick/66-add-regenerate-invoice-button/) |
 
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Phase 185 verified (5/5), ROADMAP updated, all v26.0 phases complete
+Stopped at: Completed quick task 66: Add regenerate invoice button
 Resume file: None
 
 **Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-16 after completing phase 185-01*
+*Last updated: 2026-02-16 after completing quick task 66*
