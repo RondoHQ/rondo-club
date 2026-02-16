@@ -30,7 +30,7 @@ class RabobankOAuth {
 	/**
 	 * OAuth scope required for payment requests
 	 */
-	const SCOPE = 'payment-request';
+	const SCOPE = 'prs.paymentrequest.read-write';
 
 	/**
 	 * Token refresh buffer in seconds (refresh 5 minutes before expiry)
