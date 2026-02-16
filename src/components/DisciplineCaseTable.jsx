@@ -386,7 +386,7 @@ export default function DisciplineCaseTable({
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-sm text-gray-900 dark:text-gray-100">
-                      {acf.is_charged ? 'Ja' : 'Nee'}
+                      {acf.is_charged === 'sportlink' ? 'Ja, Sportlink' : acf.is_charged === 'rondo' ? 'Ja, Rondo' : acf.is_charged ? 'Ja' : 'Nee'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -454,7 +454,7 @@ export default function DisciplineCaseTable({
                             Verwerkingsdatum: {formatAcfDate(acf.processing_date)}
                           </p>
                           <p className="text-gray-600 dark:text-gray-400">
-                            Doorbelast: {acf.is_charged ? 'Ja' : 'Nee'}
+                            Doorbelast: {acf.is_charged === 'sportlink' ? 'Ja, Sportlink' : acf.is_charged === 'rondo' ? 'Ja, Rondo' : acf.is_charged ? 'Ja' : 'Nee'}
                           </p>
                         </div>
                       </div>
