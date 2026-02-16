@@ -400,16 +400,7 @@ class RabobankPayment {
 		}
 
 		// Extract payment link from response
-		// The API may return 'paymentLink' or nested in 'links.paymentUrl'
-		$payment_link = null;
-
-		if ( ! empty( $data['paymentLink'] ) ) {
-			$payment_link = $data['paymentLink'];
-		} elseif ( ! empty( $data['links']['paymentUrl'] ) ) {
-			$payment_link = $data['links']['paymentUrl'];
-		} elseif ( ! empty( $data['links']['payment'] ) ) {
-			$payment_link = $data['links']['payment'];
-		}
+		$payment_link = $data['paymentPageUrl'] ?? $data['paymentLink'] ?? null;
 
 		if ( empty( $payment_link ) ) {
 			error_log( 'Rabobank payment request response missing payment link: ' . $body );
