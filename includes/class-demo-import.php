@@ -58,6 +58,13 @@ class DemoImport {
 	private $export_year;
 
 	/**
+	 * Comment meta handlers cache
+	 *
+	 * @var array
+	 */
+	private $comment_meta_handlers;
+
+	/**
 	 * Import year
 	 *
 	 * @var int
@@ -462,6 +469,16 @@ class DemoImport {
 
 		if ( is_wp_error( $term ) ) {
 			if ( 'term_exists' === $term->get_error_code() ) {
+				// Prefer the existing term ID provided by wp_insert_term() error data.
+				$error_data = $term->get_error_data();
+
+				if ( is_array( $error_data ) && isset( $error_data['term_id'] ) ) {
+					return (int) $error_data['term_id'];
+				} elseif ( is_numeric( $error_data ) ) {
+					return (int) $error_data;
+				}
+
+				// Fallback: try to look up by slug if error data did not yield an ID.
 				$existing = get_term_by( 'slug', $slug, $taxonomy );
 				if ( $existing ) {
 					return $existing->term_id;
@@ -915,50 +932,53 @@ class DemoImport {
 	 * @param array  $meta Meta data to set.
 	 */
 	private function set_comment_meta( $comment_id, $type, $meta ) {
-		$meta_handlers = [
-			'rondo_note' => function( $comment_id, $meta ) {
-				if ( isset( $meta['_note_visibility'] ) ) {
-					update_comment_meta( $comment_id, '_note_visibility', $meta['_note_visibility'] );
-				}
-			},
-			'rondo_activity' => function( $comment_id, $meta ) {
-				if ( isset( $meta['activity_type'] ) ) {
-					update_comment_meta( $comment_id, 'activity_type', $meta['activity_type'] );
-				}
-				if ( isset( $meta['activity_date'] ) ) {
-					update_comment_meta( $comment_id, 'activity_date', $this->shift_date( $meta['activity_date'] ) );
-				}
-				if ( isset( $meta['activity_time'] ) ) {
-					update_comment_meta( $comment_id, 'activity_time', $meta['activity_time'] );
-				}
-
-				// Resolve participants refs
-				$participants_refs = $meta['participants'] ?? [];
-				$resolved_participants = [];
-
-				foreach ( $participants_refs as $participant_ref ) {
-					$participant_id = $this->resolve_ref( $participant_ref );
-					if ( $participant_id ) {
-						$resolved_participants[] = $participant_id;
+		// Initialize handlers once and cache for reuse
+		if ( ! isset( $this->comment_meta_handlers ) ) {
+			$this->comment_meta_handlers = [
+				'rondo_note' => function( $comment_id, $meta ) {
+					if ( isset( $meta['_note_visibility'] ) ) {
+						update_comment_meta( $comment_id, '_note_visibility', $meta['_note_visibility'] );
 					}
-				}
-
-				if ( ! empty( $resolved_participants ) ) {
-					update_comment_meta( $comment_id, 'participants', $resolved_participants );
-				}
-			},
-			'rondo_email' => function( $comment_id, $meta ) {
-				$email_meta_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
-				foreach ( $email_meta_fields as $field ) {
-					if ( isset( $meta[ $field ] ) ) {
-						update_comment_meta( $comment_id, $field, $meta[ $field ] );
+				},
+				'rondo_activity' => function( $comment_id, $meta ) {
+					if ( isset( $meta['activity_type'] ) ) {
+						update_comment_meta( $comment_id, 'activity_type', $meta['activity_type'] );
 					}
-				}
-			},
-		];
+					if ( isset( $meta['activity_date'] ) ) {
+						update_comment_meta( $comment_id, 'activity_date', $this->shift_date( $meta['activity_date'] ) );
+					}
+					if ( isset( $meta['activity_time'] ) ) {
+						update_comment_meta( $comment_id, 'activity_time', $meta['activity_time'] );
+					}
 
-		if ( isset( $meta_handlers[ $type ] ) ) {
-			$meta_handlers[ $type ]( $comment_id, $meta );
+					// Resolve participants refs
+					$participants_refs = $meta['participants'] ?? [];
+					$resolved_participants = [];
+
+					foreach ( $participants_refs as $participant_ref ) {
+						$participant_id = $this->resolve_ref( $participant_ref );
+						if ( $participant_id ) {
+							$resolved_participants[] = $participant_id;
+						}
+					}
+
+					if ( ! empty( $resolved_participants ) ) {
+						update_comment_meta( $comment_id, 'participants', $resolved_participants );
+					}
+				},
+				'rondo_email' => function( $comment_id, $meta ) {
+					$email_meta_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
+					foreach ( $email_meta_fields as $field ) {
+						if ( isset( $meta[ $field ] ) ) {
+							update_comment_meta( $comment_id, $field, $meta[ $field ] );
+						}
+					}
+				},
+			];
+		}
+
+		if ( isset( $this->comment_meta_handlers[ $type ] ) ) {
+			$this->comment_meta_handlers[ $type ]( $comment_id, $meta );
 		}
 	}
 
