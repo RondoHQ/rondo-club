@@ -186,10 +186,11 @@ Plans:
   5. User can mark sent invoice as Paid manually (transitions status to Paid)
   6. User can resend invoice email for sent invoices
   7. Invoice history appears on member's profile page showing linked invoices
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 184-01: TBD
+- [ ] 184-01-PLAN.md — Backend resend endpoint, frontend hooks, routes, and navigation enable
+- [ ] 184-02-PLAN.md — Facturen list page, detail page with actions, FinancesCard links, version bump
 
 ## Progress
 
@@ -204,7 +205,7 @@ Plans:
 | 181. PDF Generation | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 182. Rabobank Payment Integration | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
 | 183. Email Delivery | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
-| 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
+| 184. Invoice Management UI | v26.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
