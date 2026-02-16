@@ -116,6 +116,19 @@ export default function FactuurDetail() {
     }
   };
 
+  const handleRegeneratePdf = async () => {
+    if (!window.confirm('Weet je zeker dat je de PDF opnieuw wilt genereren? Dit overschrijft de bestaande PDF.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await generatePdf.mutateAsync(id);
+      setSuccessMessage('PDF opnieuw gegenereerd!');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het opnieuw genereren van de PDF.');
+    }
+  };
+
   const handleCreatePaymentLink = async () => {
     setErrorMessage('');
     try {
@@ -406,6 +419,20 @@ export default function FactuurDetail() {
                   Genereer PDF
                 </button>
               )}
+              {invoice.pdf_path && (
+                <button
+                  onClick={handleRegeneratePdf}
+                  disabled={isPending}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  {generatePdf.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  PDF opnieuw genereren
+                </button>
+              )}
             </>
           )}
 
@@ -444,6 +471,20 @@ export default function FactuurDetail() {
                 <Download className="w-4 h-4" />
                 Download PDF
               </button>
+              {invoice.pdf_path && (
+                <button
+                  onClick={handleRegeneratePdf}
+                  disabled={isPending}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  {generatePdf.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  PDF opnieuw genereren
+                </button>
+              )}
             </>
           )}
 
@@ -465,14 +506,30 @@ export default function FactuurDetail() {
 
           {/* Paid status actions */}
           {invoice.status === 'paid' && (
-            <button
-              onClick={handleDownloadPdf}
-              disabled={!invoice.pdf_path || isPending}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download PDF
-            </button>
+            <>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={!invoice.pdf_path || isPending}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </button>
+              {invoice.pdf_path && (
+                <button
+                  onClick={handleRegeneratePdf}
+                  disabled={isPending}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  {generatePdf.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  PDF opnieuw genereren
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
