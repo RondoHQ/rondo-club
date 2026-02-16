@@ -319,9 +319,6 @@ class RabobankPayment {
 		$date       = gmdate( 'D, d M Y H:i:s' ) . ' GMT';
 		$digest     = 'sha-256=' . base64_encode( hash( 'sha256', $body_json, true ) );
 
-		error_log( 'Rabobank request body: ' . $body_json );
-		error_log( 'Rabobank digest: ' . $digest );
-
 		// Build signature string and sign with private key
 		$cert_dir  = get_stylesheet_directory() . '/certs';
 		$key_path  = $cert_dir . '/sandbox-key.pem';
@@ -383,7 +380,7 @@ class RabobankPayment {
 
 		// Handle error responses
 		if ( $status_code < 200 || $status_code >= 300 ) {
-			$error_message = $data['error_description'] ?? $data['message'] ?? $data['moreInformation'] ?? $data['error'] ?? 'Payment request creation failed';
+			$error_message = $data['errorMessage'] ?? $data['error_description'] ?? $data['message'] ?? $data['moreInformation'] ?? $data['error'] ?? 'Payment request creation failed';
 			error_log( sprintf( 'Rabobank payment request failed (HTTP %d): %s', $status_code, $error_message ) );
 			error_log( 'Rabobank request URL: ' . $api_url );
 			error_log( 'Response body: ' . $body );
