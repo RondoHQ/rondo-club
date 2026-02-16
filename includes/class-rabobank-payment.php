@@ -317,7 +317,7 @@ class RabobankPayment {
 		$body_json  = wp_json_encode( $request_body, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$request_id = wp_generate_uuid4();
 		$date       = gmdate( 'D, d M Y H:i:s' ) . ' GMT';
-		$digest     = 'sha-512=' . base64_encode( hash( 'sha512', $body_json, true ) );
+		$digest     = 'sha-256=' . base64_encode( hash( 'sha256', $body_json, true ) );
 
 		error_log( 'Rabobank request body: ' . $body_json );
 		error_log( 'Rabobank digest: ' . $digest );
@@ -333,7 +333,7 @@ class RabobankPayment {
 		if ( file_exists( $key_path ) ) {
 			$private_key = openssl_pkey_get_private( file_get_contents( $key_path ) );
 			if ( $private_key ) {
-				openssl_sign( $signing_string, $raw_sig, $private_key, OPENSSL_ALGO_SHA512 );
+				openssl_sign( $signing_string, $raw_sig, $private_key, OPENSSL_ALGO_SHA256 );
 				$signature = base64_encode( $raw_sig );
 			}
 		}
@@ -349,7 +349,7 @@ class RabobankPayment {
 			'date'                  => $date,
 			'digest'                => $digest,
 			'signature'             => sprintf(
-				'keyId="%s",algorithm="rsa-sha512",headers="date digest x-request-id",signature="%s"',
+				'keyId="%s",algorithm="rsa-sha256",headers="date digest x-request-id",signature="%s"',
 				$credentials['client_id'],
 				$signature
 			),
