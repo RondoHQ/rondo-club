@@ -9,6 +9,7 @@
 namespace Rondo\REST;
 
 use Rondo\Finance\InvoiceNumbering;
+use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Config\FinanceConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -112,6 +113,46 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'update_invoice_status' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Generate PDF for invoice
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/generate-pdf',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'generate_pdf' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
+		// Download invoice PDF
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/pdf',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'download_pdf' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
 						'id' => [
@@ -399,6 +440,87 @@ class Invoices extends Base {
 		// Return updated invoice
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Generate PDF for an invoice
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function generate_pdf( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Generate PDF
+		$result = InvoicePdfGenerator::generate( $invoice_id );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		// Return updated invoice detail (now includes pdf_path)
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Download invoice PDF
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return void Serves PDF file directly, exits script.
+	 */
+	public function download_pdf( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$pdf_path = get_field( 'pdf_path', $invoice_id );
+		if ( empty( $pdf_path ) ) {
+			return new \WP_Error(
+				'rest_no_pdf',
+				__( 'No PDF generated for this invoice.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		$upload_dir = wp_upload_dir();
+		$full_path  = $upload_dir['basedir'] . '/' . $pdf_path;
+
+		if ( ! file_exists( $full_path ) ) {
+			return new \WP_Error(
+				'rest_file_not_found',
+				__( 'PDF file not found on disk.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Get invoice number for filename
+		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$filename = 'factuur-' . $invoice_number . '.pdf';
+
+		// Serve PDF file directly
+		header( 'Content-Type: application/pdf' );
+		header( 'Content-Disposition: inline; filename="' . $filename . '"' );
+		header( 'Content-Length: ' . filesize( $full_path ) );
+		readfile( $full_path );
+		exit;
 	}
 
 	/**

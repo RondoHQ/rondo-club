@@ -71,6 +71,7 @@ use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
 use Rondo\Finance\InvoiceNumbering;
+use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
