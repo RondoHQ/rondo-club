@@ -6,6 +6,7 @@
     "require": {
         "php": ">=8.0",
         "google/apiclient": "^2.15",
+        "mpdf/mpdf": "^8.2",
         "sabre/dav": "^4.6"
     },
     "autoload": {
