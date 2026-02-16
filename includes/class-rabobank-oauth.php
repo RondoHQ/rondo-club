@@ -299,20 +299,19 @@ class RabobankOAuth {
 			);
 		}
 
-		// Build token request
+		// Build token request (Rabobank requires Basic Auth header for client credentials)
 		$body = [
 			'grant_type'   => 'authorization_code',
 			'code'         => $code,
 			'redirect_uri' => rest_url( 'rondo/v1/rabobank/callback' ),
-			'client_id'    => $credentials['client_id'],
-			'client_secret' => $credentials['client_secret'],
 		];
 
 		$response = wp_remote_post(
 			$this->token_url,
 			[
 				'headers' => [
-					'Content-Type' => 'application/x-www-form-urlencoded',
+					'Content-Type'  => 'application/x-www-form-urlencoded',
+					'Authorization' => 'Basic ' . base64_encode( $credentials['client_id'] . ':' . $credentials['client_secret'] ),
 				],
 				'body'    => http_build_query( $body ),
 				'timeout' => 30,
@@ -330,7 +329,9 @@ class RabobankOAuth {
 
 		if ( $status_code !== 200 ) {
 			$error_message = $data['error_description'] ?? $data['error'] ?? 'Token exchange failed';
-			error_log( 'Rabobank token exchange failed: ' . $error_message );
+			error_log( 'Rabobank token exchange failed (HTTP ' . $status_code . '): ' . $error_message );
+			error_log( 'Rabobank token exchange response body: ' . wp_remote_retrieve_body( $response ) );
+			error_log( 'Rabobank token exchange URL: ' . $this->token_url );
 			return new \WP_Error(
 				'token_exchange_failed',
 				sprintf( __( 'Token exchange mislukt: %s', 'rondo' ), $error_message )
@@ -395,19 +396,18 @@ class RabobankOAuth {
 			return false;
 		}
 
-		// Build refresh request
+		// Build refresh request (Rabobank requires Basic Auth header for client credentials)
 		$body = [
 			'grant_type'    => 'refresh_token',
 			'refresh_token' => $tokens['refresh_token'],
-			'client_id'     => $credentials['client_id'],
-			'client_secret' => $credentials['client_secret'],
 		];
 
 		$response = wp_remote_post(
 			$this->token_url,
 			[
 				'headers' => [
-					'Content-Type' => 'application/x-www-form-urlencoded',
+					'Content-Type'  => 'application/x-www-form-urlencoded',
+					'Authorization' => 'Basic ' . base64_encode( $credentials['client_id'] . ':' . $credentials['client_secret'] ),
 				],
 				'body'    => http_build_query( $body ),
 				'timeout' => 30,
