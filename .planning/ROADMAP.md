@@ -172,7 +172,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 183-01-PLAN.md -- InvoiceEmailSender service class, send invoice REST endpoint, and frontend API method
+- [x] 183-01-PLAN.md -- InvoiceEmailSender service class, send invoice REST endpoint, and frontend API method
 
 #### Phase 184: Invoice Management UI
 **Goal**: Facturen page exists with invoice list, detail view, and status management actions.
@@ -203,9 +203,9 @@ Plans:
 | 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 181. PDF Generation | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 182. Rabobank Payment Integration | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
-| 183. Email Delivery | v26.0 | 0/1 | Not started | - |
+| 183. Email Delivery | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-16 — Phase 182 completed (2/2 plans)*
+*Last updated: 2026-02-16 — Phase 183 completed (1/1 plans)*
