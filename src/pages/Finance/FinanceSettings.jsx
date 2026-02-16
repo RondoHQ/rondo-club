@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
-import { prmApi } from '@/api/client';
+import api, { prmApi } from '@/api/client';
 
 /**
  * Certificate display section for Rabobank mTLS
@@ -128,6 +128,9 @@ export default function FinanceSettings() {
     payment_term_days: 14,
     payment_clause: '',
     email_template: '',
+    club_logo_id: 0,
+    club_logo_url: '',
+    accent_color: '',
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
     rabobank_client_secret: '',
@@ -147,6 +150,9 @@ export default function FinanceSettings() {
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
         email_template: settings.email_template || '',
+        club_logo_id: settings.club_logo_id || 0,
+        club_logo_url: settings.club_logo_url || '',
+        accent_color: settings.accent_color || '',
         rabobank_environment: settings.rabobank_environment || 'sandbox',
         // Don't populate credentials from API for security
         rabobank_client_id: '',
@@ -179,6 +185,43 @@ export default function FinanceSettings() {
     setFormData(prev => ({ ...prev, iban: formatted }));
   };
 
+  // Handle logo upload
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await api.post('/wp/v2/media', uploadFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        club_logo_id: response.data.id,
+        club_logo_url: response.data.source_url,
+      }));
+    } catch (err) {
+      setSaveError(err.response?.data?.message || 'Fout bij uploaden logo');
+    }
+  };
+
+  // Remove logo
+  const handleLogoRemove = () => {
+    setFormData(prev => ({
+      ...prev,
+      club_logo_id: 0,
+      club_logo_url: '',
+    }));
+  };
+
+  // Reset accent color to default
+  const handleResetAccentColor = () => {
+    setFormData(prev => ({ ...prev, accent_color: '' }));
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -195,6 +238,8 @@ export default function FinanceSettings() {
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
         email_template: formData.email_template,
+        club_logo_id: formData.club_logo_id,
+        accent_color: formData.accent_color,
         rabobank_environment: formData.rabobank_environment,
       };
 
@@ -296,6 +341,66 @@ export default function FinanceSettings() {
               placeholder="financien@vereniging.nl"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Clublogo
+            </label>
+            {formData.club_logo_url ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={formData.club_logo_url}
+                  alt="Club logo"
+                  className="max-h-[60px] object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={handleLogoRemove}
+                  className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  Verwijderen
+                </button>
+              </div>
+            ) : null}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Logo wordt getoond op facturen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Accentkleur
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="color"
+                value={formData.accent_color || '#0891b2'}
+                onChange={(e) => setFormData(prev => ({ ...prev, accent_color: e.target.value }))}
+                className="h-10 w-20 cursor-pointer border border-gray-300 dark:border-gray-600 rounded-lg"
+              />
+              <input
+                type="text"
+                value={formData.accent_color || '#0891b2'}
+                onChange={(e) => setFormData(prev => ({ ...prev, accent_color: e.target.value }))}
+                placeholder="#0891b2"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleResetAccentColor}
+                className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap"
+              >
+                Reset naar standaard
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Deze kleur wordt gebruikt voor koppen en lijnen op facturen. Standaard: #0891b2 (electric cyan).
+            </p>
           </div>
         </div>
       </div>
