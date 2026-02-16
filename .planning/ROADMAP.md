@@ -142,7 +142,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 181-01-PLAN.md -- Install mPDF, create InvoicePdfGenerator class, add REST endpoints for PDF generation and download
+- [x] 181-01-PLAN.md -- Install mPDF, create InvoicePdfGenerator class, add REST endpoints for PDF generation and download
 
 #### Phase 182: Rabobank Payment Integration
 **Goal**: Invoices can generate Rabobank betaalverzoek payment links via OAuth API integration.
@@ -200,11 +200,11 @@ Plans:
 | 178. Finance Navigation & Settings Backend | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 179. Invoice Data Model & REST API | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
 | 180. Invoice Creation Flow | v26.0 | 2/2 | ✓ Complete | 2026-02-15 |
-| 181. PDF Generation | v26.0 | 0/1 | Planned | - |
+| 181. PDF Generation | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 182. Rabobank Payment Integration | v26.0 | 0/TBD | Not started | - |
 | 183. Email Delivery | v26.0 | 0/TBD | Not started | - |
 | 184. Invoice Management UI | v26.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-15 — Phase 180 completed (2/2 plans)*
+*Last updated: 2026-02-16 — Phase 181 completed (1/1 plans)*
