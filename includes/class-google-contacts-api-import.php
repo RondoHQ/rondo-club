@@ -350,19 +350,10 @@ class GoogleContactsAPI {
 			// Create new person
 			$names      = $person->getNames() ?: [];
 			$name       = $names[0] ?? null;
-			$first_name = $name ? $name->getGivenName() : '';
-			$infix      = $name ? ( $name->getMiddleName() ?: '' ) : '';
-			$last_name  = $name ? $name->getFamilyName() : '';
-
-			// Fallback to display name if given/family empty
-			if ( empty( $first_name ) && empty( $last_name ) && $name ) {
-				$display_name = $name->getDisplayName();
-				if ( $display_name ) {
-					$name_parts = explode( ' ', trim( $display_name ), 2 );
-					$first_name = $name_parts[0] ?? '';
-					$last_name  = $name_parts[1] ?? '';
-				}
-			}
+			$parsed     = $this->parse_google_name( $name );
+			$first_name = $parsed['first_name'];
+			$infix      = $parsed['infix'];
+			$last_name  = $parsed['last_name'];
 
 			$post_id = wp_insert_post(
 				[
@@ -505,28 +496,16 @@ class GoogleContactsAPI {
 		$existing_infix = get_field( 'infix', $post_id );
 		$existing_last  = get_field( 'last_name', $post_id );
 
-		$given_name  = $name->getGivenName();
-		$middle_name = $name->getMiddleName() ?: '';
-		$family_name = $name->getFamilyName();
+		$parsed = $this->parse_google_name( $name );
 
-		// Fallback to display name if given/family empty
-		if ( empty( $given_name ) && empty( $family_name ) ) {
-			$display_name = $name->getDisplayName();
-			if ( $display_name ) {
-				$name_parts  = explode( ' ', trim( $display_name ), 2 );
-				$given_name  = $name_parts[0] ?? '';
-				$family_name = $name_parts[1] ?? '';
-			}
+		if ( empty( $existing_first ) && $parsed['first_name'] ) {
+			update_field( 'first_name', $parsed['first_name'], $post_id );
 		}
-
-		if ( empty( $existing_first ) && $given_name ) {
-			update_field( 'first_name', $given_name, $post_id );
+		if ( empty( $existing_infix ) && $parsed['infix'] ) {
+			update_field( 'infix', $parsed['infix'], $post_id );
 		}
-		if ( empty( $existing_infix ) && $middle_name ) {
-			update_field( 'infix', $middle_name, $post_id );
-		}
-		if ( empty( $existing_last ) && $family_name ) {
-			update_field( 'last_name', $family_name, $post_id );
+		if ( empty( $existing_last ) && $parsed['last_name'] ) {
+			update_field( 'last_name', $parsed['last_name'], $post_id );
 		}
 	}
 
@@ -689,7 +668,7 @@ class GoogleContactsAPI {
 			$end_date   = $this->format_google_date( $org->getEndDate() );
 
 			$existing[] = [
-				'team'    => $team_id,
+				'team'       => $team_id,
 				'job_title'  => $org->getTitle() ?? '',
 				'is_current' => (bool) $org->getCurrent(),
 				'start_date' => $start_date,
@@ -697,7 +676,7 @@ class GoogleContactsAPI {
 			];
 
 			$existing_team_ids[ $team_id ] = true;
-			$added                               = true;
+			$added                         = true;
 		}
 
 		if ( $added ) {
@@ -1101,16 +1080,16 @@ class GoogleContactsAPI {
 	private function detect_url_type( string $url ): string {
 		$url_lower = strtolower( $url );
 
-		if ( strpos( $url_lower, 'linkedin.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'linkedin.com' ) ) {
 			return 'linkedin';
 		}
-		if ( strpos( $url_lower, 'twitter.com' ) !== false || strpos( $url_lower, 'x.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'twitter.com' ) || str_contains( $url_lower, 'x.com' ) ) {
 			return 'twitter';
 		}
-		if ( strpos( $url_lower, 'facebook.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'facebook.com' ) ) {
 			return 'facebook';
 		}
-		if ( strpos( $url_lower, 'instagram.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'instagram.com' ) ) {
 			return 'instagram';
 		}
 
@@ -1135,6 +1114,35 @@ class GoogleContactsAPI {
 			$date->getMonth() ?: 1,
 			$date->getDay() ?: 1
 		);
+	}
+
+	/**
+	 * Parse a Google Name object into first_name, infix, and last_name
+	 *
+	 * Falls back to splitting displayName if givenName and familyName are both empty.
+	 *
+	 * @param object|null $name Google Name object.
+	 * @return array Array with keys: first_name, infix, last_name.
+	 */
+	private function parse_google_name( ?object $name ): array {
+		if ( ! $name ) {
+			return [ 'first_name' => '', 'infix' => '', 'last_name' => '' ];
+		}
+
+		$first_name = $name->getGivenName() ?: '';
+		$infix      = $name->getMiddleName() ?: '';
+		$last_name  = $name->getFamilyName() ?: '';
+
+		if ( empty( $first_name ) && empty( $last_name ) ) {
+			$display_name = $name->getDisplayName();
+			if ( $display_name ) {
+				$parts      = explode( ' ', trim( $display_name ), 2 );
+				$first_name = $parts[0] ?? '';
+				$last_name  = $parts[1] ?? '';
+			}
+		}
+
+		return [ 'first_name' => $first_name, 'infix' => $infix, 'last_name' => $last_name ];
 	}
 
 	/**
