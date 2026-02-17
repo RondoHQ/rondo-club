@@ -141,3 +141,107 @@ Requirements for discipline case invoicing. Each maps to roadmap phases.
 ---
 *Requirements defined: 2026-02-15*
 *Last updated: 2026-02-15 after roadmap creation — 100% coverage validated*
+
+## v27.0 Requirements
+
+### Configuration (CONF)
+
+- [ ] **CONF-01**: Admin can save a Mollie API key (test or live) in Finance Settings
+- [ ] **CONF-02**: System automatically derives test/live mode from API key prefix (`test_` vs `live_`)
+- [ ] **CONF-03**: Admin can select the default payment provider (Rabobank or Mollie) in Finance Settings
+- [ ] **CONF-04**: Default payment provider persists and is returned by the Finance Settings REST endpoint
+- [ ] **CONF-05**: Mollie API key is stored encrypted at rest using the existing `CredentialEncryption` pattern
+
+### Payment Link Creation (PYMT)
+
+- [ ] **PYMT-01**: `MolliePayment::create_payment_link()` creates a Mollie payment via the Payments API (`$mollie->payments->create()`)
+- [ ] **PYMT-02**: Generated Mollie checkout URL is stored in the invoice's ACF `payment_link` field (enabling email delivery via existing `InvoiceEmailSender`)
+- [ ] **PYMT-03**: Mollie payment ID (`tr_xxx`) is stored in `_mollie_payment_id` post meta for webhook lookup
+- [ ] **PYMT-04**: Payment link is reused — if `_mollie_payment_id` already exists on the invoice, no new payment is created
+
+### Webhook & Status Updates (WHKT)
+
+- [ ] **WHKT-01**: Public REST endpoint exists at `POST /rondo/v1/mollie/webhook` (no WordPress authentication required)
+- [ ] **WHKT-02**: Webhook handler re-fetches payment status from Mollie API using the received ID (never trusts POST body alone)
+- [ ] **WHKT-03**: When payment status is `paid`, handler transitions the invoice to the `rondo_paid` post status
+- [ ] **WHKT-04**: Webhook handler is idempotent — processing the same event twice has no side effects
+- [ ] **WHKT-05**: Webhook handler always returns HTTP 200, including on errors (errors logged internally)
+
+### Provider Routing (WIRE)
+
+- [ ] **WIRE-01**: When Mollie is the active provider, `RestInvoices::send_invoice()` uses `MolliePayment` to generate the payment link
+- [ ] **WIRE-02**: When Rabobank is the active provider, `RestInvoices::send_invoice()` behavior is completely unchanged from v26.0
+
+### Settings UI (UI)
+
+- [ ] **UI-01**: Finance Settings Mollie section includes an API key input field
+- [ ] **UI-02**: Finance Settings includes a payment provider selector (Rabobank / Mollie)
+- [ ] **UI-03**: Finance Settings shows a test/live mode badge derived from the stored key prefix
+- [ ] **UI-04**: Full Mollie API key is never exposed in REST responses (`mollie_has_api_key` bool + `mollie_environment` string only)
+
+## v28.0+ Requirements (Deferred)
+
+### Membership Fee Payments
+
+- **FEES-01**: Admin can bulk-send Mollie payment requests to members for membership fees
+- **FEES-02**: Members can choose to pay in 4 or 10 installments at first payment
+- **FEES-03**: Installment plans use Mollie Subscriptions API (member chooses at first payment)
+- **FEES-04**: Per-season setting controls whether Nikki or Mollie handles fee collection
+
+### Advanced Invoice Features
+
+- **ADV-01**: Admin can initiate Mollie refunds from the invoice detail page
+- **ADV-02**: Payment status polling fallback for webhooks that were not delivered
+- **ADV-03**: iDEAL-only payment method restriction at code level
+
+## v27.0 Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Mollie OAuth (multi-merchant) | Single-club app — API key auth is sufficient and simpler |
+| Payment Links API | Designed for reusable links; Payments API is correct for per-invoice payments |
+| iDEAL enforcement in code | Mollie Dashboard controls enabled payment methods; no code needed for Dutch accounts |
+| Refunds UI | Admin handles refunds in Mollie Dashboard; discipline case appeals are infrequent |
+| HMAC webhook verification | Standard Mollie webhooks don't send HMAC; security provided by API re-fetch |
+| Membership fee integration | Deferred to v28.0 — separate scope |
+
+## v27.0 Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CONF-01 | Phase 186 | Pending |
+| CONF-02 | Phase 186 | Pending |
+| CONF-03 | Phase 186 | Pending |
+| CONF-04 | Phase 186 | Pending |
+| CONF-05 | Phase 186 | Pending |
+| PYMT-01 | Phase 187 | Pending |
+| PYMT-02 | Phase 187 | Pending |
+| PYMT-03 | Phase 187 | Pending |
+| PYMT-04 | Phase 187 | Pending |
+| WHKT-01 | Phase 188 | Pending |
+| WHKT-02 | Phase 188 | Pending |
+| WHKT-03 | Phase 188 | Pending |
+| WHKT-04 | Phase 188 | Pending |
+| WHKT-05 | Phase 188 | Pending |
+| WIRE-01 | Phase 189 | Pending |
+| WIRE-02 | Phase 189 | Pending |
+| UI-01 | Phase 190 | Pending |
+| UI-02 | Phase 190 | Pending |
+| UI-03 | Phase 190 | Pending |
+| UI-04 | Phase 190 | Pending |
+
+**Coverage:**
+- v27.0 requirements: 20 total
+- Mapped to phases: 20 (100% ✓)
+- Unmapped: 0
+
+**Phase Distribution:**
+- Phase 186 (SDK + FinanceConfig + MollieClient): 5 requirements
+- Phase 187 (MolliePayment — Payment Link Creation): 4 requirements
+- Phase 188 (MollieWebhook — Automatic Status Update): 5 requirements
+- Phase 189 (RestInvoices — Provider Routing): 2 requirements
+- Phase 190 (Finance Settings UI): 4 requirements
+
+---
+*v27.0 requirements defined: 2026-02-17*
+*Last updated: 2026-02-17 after initial definition*

@@ -1,147 +1,202 @@
-# Feature Landscape
+# Feature Research
 
-**Domain:** React SPA Design System Refresh (Brand-Aligned)
-**Researched:** 2026-02-09
+**Domain:** Mollie Payment Integration for Discipline Case Invoices
+**Researched:** 2026-02-17
+**Confidence:** HIGH (Mollie PHP client v3.9.0, official docs verified)
 
-## Table Stakes
+## Context
 
-Features users expect in modern design system refreshes. Missing any = incomplete migration, users notice inconsistency.
+This research covers only NEW features needed for Mollie integration. The following are already built and out of scope:
+- Discipline case invoice CPT with lifecycle (draft/sent/paid/overdue)
+- Invoice PDF generation (mPDF)
+- Email delivery via wp_mail
+- Rabobank betaalverzoek payment links in invoice emails
+- Finance Settings page with Rabobank credentials section
+- Facturen list page with status-driven actions
+
+The existing `RabobankPayment` class and `FinanceConfig` class serve as the integration pattern to follow.
+
+---
+
+## Feature Landscape
+
+### Table Stakes (Users Expect These)
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Fixed brand color palette | Users expect consistent brand identity across web properties; dynamic user colors undermine brand recognition | Low | Replaces existing dynamic accent color picker. Must update all `accent-*` references to fixed gradient colors |
-| Gradient buttons (primary/secondary/ghost) | Modern UI convention 2026; signals visual hierarchy and interactivity | Low | Three variants expected: filled gradient (CTA), outlined (secondary), glass (tertiary) |
-| Card gradient top border | Established pattern for visual accent without overwhelming content; signals category/status | Low | 3px top border with gradient, consistent across all card components |
-| Consistent focus ring styling | WCAG 2.4.7 requirement; users expect visible focus indicators | Low | Must update all inputs/buttons to use new brand gradient colors in focus rings |
-| Typography consistency | Users notice font mismatches immediately; undermines brand trust | Low | Apply Montserrat to headings throughout (currently using Inter for all text) |
-| Responsive gradient behavior | Gradients must work across mobile/tablet/desktop without banding or performance issues | Medium | Test gradient rendering on different screen densities and devices |
-| Dark/light mode parity | If keeping dark mode, both modes must have equivalent visual weight and polish | Medium | Decision point: remove dark mode entirely OR adapt gradients/glass for dark mode |
+| Mollie API key storage (test + live) | Standard Mollie integration pattern; admins configure once, the key determines mode | LOW | Store test_/live_ key in `FinanceConfig`. Encrypt at rest using existing `CredentialEncryption` class. No OAuth dance needed — Mollie uses simple API key auth. |
+| Default payment provider selector | Admin must choose between Rabobank and Mollie per club setup; one club won't use both simultaneously | LOW | Single dropdown in Finance Settings: "Rabobank" or "Mollie". Store in `FinanceConfig`. Invoice send flow reads this setting to pick the provider. |
+| Mollie payment link creation | Core feature: generate a Mollie checkout URL for an invoice that the member opens to pay | LOW | Use `mollie/mollie-api-php` v3.9.0 Composer package. Call `/v2/payment-links` API. Include invoice amount, description ("Factuur {number}"), and webhook URL. Returns a `_links.paymentLink.href` URL. |
+| iDEAL as primary payment method | iDEAL is used by ~70% of Dutch online consumers; B2C Dutch sports club context makes this non-negotiable | LOW | Mollie payment links show all enabled methods on the Mollie Dashboard by default — iDEAL is enabled by default for NL accounts. No method restriction needed for MVP. |
+| Webhook endpoint for payment status | Mollie POSTs to a URL when payment status changes; without this, invoices never auto-update to Betaald | MEDIUM | Register a public (no nonce) WordPress REST endpoint at `rondo/v1/mollie/webhook`. Receives `id` param (payment link ID or payment ID), fetches current status from Mollie API, updates invoice `payment_status` to `paid`. Return HTTP 200. |
+| Test mode / live mode switch | Admins must test integration without real money; Mollie's API key prefix (`test_` vs `live_`) determines mode | LOW | Prefix detection is automatic in the Mollie PHP client via `setToken()`. Display current mode in Finance Settings UI (derived from key prefix). No separate toggle needed — the key IS the mode. |
 
-## Differentiators
-
-Features that set this design refresh apart. Not expected, but make the app feel premium and on-brand.
+### Differentiators (Competitive Advantage)
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Glass morphism header | Creates modern, layered visual depth; signals premium product quality | Medium | backdrop-filter: blur(12px), rgba background with 10-40% opacity, requires colorful content underneath to "pop" |
-| Gradient text in headings | Reinforces brand identity in every page; creates visual cohesion with rondo.club website | Low | Use bg-clip-text with gradient, ensure fallback color for accessibility |
-| Animated gradient borders | Creates micro-delight; signals active/interactive state | High | CSS @property with conic-gradient animation. Skip for MVP—complexity vs impact ratio poor |
-| PWA theme-color gradient | Browser chrome matches app gradient on mobile; seamless branded experience | Low | Update meta theme-color to electric-cyan, maintain existing dynamic favicon color logic |
-| Hover gradient shifts | Button gradients subtly shift on hover; reinforces interactivity | Medium | Use gradient angle rotation or stop position shift, ensure 60fps performance |
-| Input gradient focus ring | Focus indicators use brand gradient instead of solid color | Medium | Box-shadow with gradient requires workaround (pseudo-element or multiple shadows), accessibility concerns if contrast insufficient |
+| Automatic invoice status update via webhook | Members pay, invoice auto-moves to Betaald without admin action; closes the payment loop | MEDIUM | Webhook handler looks up invoice by `_mollie_payment_link_id` stored on the post. On `paid` status from Mollie API, calls `update_field('invoice_status', 'paid', $invoice_id)`. This is the key improvement over Rabobank (which has no webhook). |
+| Payment link stored and reusable | Admin can resend invoice email with existing link; Mollie links don't expire by default | LOW | Store `_links.id` and `_links.paymentLink.href` in post meta. Reuse if already created (don't re-create for each email send). Same pattern as existing Rabobank `payment_link` ACF field. |
+| Multi-method checkout (iDEAL + card) | Dutch clubs with international players or older members without iDEAL benefit from card option | LOW | Mollie shows all enabled methods automatically. No extra code — it's a Mollie Dashboard configuration. Note: card payments cost more (~1.2% + €0.25 vs flat iDEAL fee). |
 
-## Anti-Features
+### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to explicitly NOT build or migrate.
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| iDEAL-only enforcement via API | "We only want iDEAL for cost control" | Requires passing `method: ideal` on every payment link; breaks if customer has no NL bank account; Mollie charges same flat fee for iDEAL regardless | Leave method open in API. Admin controls which methods are active in Mollie Dashboard. Cost control is a Mollie Dashboard concern, not code. |
+| Mollie refund initiation from Rondo | "Auto-refund when case is overturned" | Adds significant complexity; requires storing payment ID separately from link ID; refund UI needs careful access control; edge cases multiply | Out of scope. If needed, admin handles refunds in Mollie Dashboard. Rondo marks invoice as manually resolved. |
+| Polling for payment status (no webhook) | "Simpler than setting up webhook URL" | Polling requires cron job, adds API calls, has delay; Mollie webhook has 26-hour retry window and is the correct integration pattern | Use webhook. Register the endpoint during plugin init. The URL is predictable: `{site_url}/wp-json/rondo/v1/mollie/webhook`. |
+| Storing Mollie customer profiles | "Pre-fill payment method for repeat payers" | Members pay invoices rarely (discipline cases); one-time payment links don't need customer profiles; over-engineering for the use case | Use stateless payment links. No customer storage needed. |
+| Both Rabobank and Mollie active simultaneously | "Maximum flexibility" | Confusing for admin; email template `{betaallink}` only holds one link; split attention in settings UI | One active provider at a time, configured in Finance Settings. Provider abstraction class handles routing to correct implementation. |
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Dynamic user color picker | Undermines brand consistency; maintenance burden for multi-color support across 40+ pages | Remove Settings > Appearance > Accent Color section entirely. Hardcode electric-cyan/bright-cobalt gradient |
-| Dark mode (if removing) | If removing: reduces maintenance surface, simplifies gradient/glass implementation, forces single polished experience | Remove dark mode toggle, remove all dark:* Tailwind classes, remove useTheme colorScheme logic, simplify CSS variables |
-| Gradient backgrounds on large surfaces | Causes visual fatigue, accessibility issues (text contrast), poor for data-dense interfaces | Use gradients only for accents: buttons, borders, headings. Keep cards/modals solid white/gray |
-| Glass morphism on interactive elements | NN/g best practice: never apply transparency to buttons, toggles, navigation—reduces perceivability | Apply glass only to header, avoid on buttons, forms, CTAs |
-| Per-component gradient customization | Creates inconsistency, maintenance nightmare, contradicts design system purpose | Define 2-3 gradient presets in Tailwind config, apply uniformly |
-| Animated gradient on scroll | Performance killer on mobile; distracting in data-heavy app | Static gradients only, reserve animation for explicit hover/focus states |
+---
 
 ## Feature Dependencies
 
 ```
-Fixed Brand Palette
-  ├─> Gradient Buttons (depends on defined gradient stops)
-  ├─> Card Top Border (depends on gradient definition)
-  ├─> Focus Ring Styling (depends on brand colors)
-  └─> PWA theme-color (depends on primary brand color)
+Mollie API Key Storage (FinanceConfig)
+    └──required by──> Mollie Payment Link Creation
+    └──required by──> Webhook Status Update (needs API key to verify payment)
 
-Typography Update
-  └─> Gradient Text in Headings (must be applied to Montserrat headings)
+Default Payment Provider Selector (FinanceConfig)
+    └──required by──> Invoice Send Flow (determines which provider to call)
 
-Glass Morphism Header
-  └─> Requires gradient background or colorful content layer underneath
+Mollie Payment Link Creation
+    └──stores──> payment_link (ACF field, already exists) + _mollie_payment_link_id (post meta, new)
+    └──enables──> Webhook Status Update (needs stored ID to match webhook to invoice)
 
-Remove Dynamic Color Picker (if doing)
-  ├─> Simplifies CSS variables (no runtime injection)
-  ├─> Simplifies useTheme.js (remove accentColor state)
-  └─> Enables deletion of ~200 lines of color generation logic
-
-Remove Dark Mode (if doing)
-  ├─> Simplifies all component styling (no dark:* variants)
-  ├─> Simplifies CSS variables (~50% reduction)
-  ├─> Simplifies useTheme.js (remove colorScheme state)
-  └─> Enables deletion of ~150 lines of dark mode logic
+Webhook Endpoint
+    └──required by──> Automatic Invoice Status Update
+    └──depends on──> Mollie API Key (to call back and verify payment status)
+    └──depends on──> _mollie_payment_link_id stored on invoice post
 ```
 
-## MVP Recommendation
+### Dependency Notes
 
-Prioritize (Phase 1 - Core Brand Identity):
-1. **Fixed brand color palette** - Foundation for everything else
-2. **Gradient buttons (primary + secondary)** - Most visible interactive elements, high impact
-3. **Card gradient top border** - Low effort, high visual impact across dashboard
-4. **Typography (Montserrat headings)** - Brand alignment, low risk
-5. **Remove dynamic color picker** - Simplifies implementation, reduces maintenance
+- **Mollie API key storage required before everything else:** The key is used both to create payment links and to verify webhook payloads by fetching the payment from Mollie's API.
+- **Payment link creation stores the Mollie ID:** Mollie's webhook only sends an `id` param. The webhook handler looks up which invoice has `_mollie_payment_link_id = {id}` to find the correct post to update.
+- **Provider selector is independent of Mollie-specific code:** It routes the existing invoice send flow to either `RabobankPayment` or a new `MolliePayment` class. Both implement the same `create_payment_request($invoice_id)` interface.
 
-Defer (Phase 2 - Polish):
-- Glass morphism header (requires testing backdrop-filter performance)
-- Gradient text in headings (works better after typography is consistent)
-- Hover gradient shifts (nice-to-have, non-critical)
-- Input gradient focus rings (accessibility validation needed)
+---
 
-Defer (Future - If Requested):
-- Animated gradient borders (high complexity, low ROI)
-- Dark mode removal decision (requires user research, impacts existing users)
+## MVP Definition
 
-## Complexity Assessment by Feature Type
+### Launch With (v1)
 
-| Feature Type | Typical Implementation | Risk Level |
-|--------------|----------------------|------------|
-| Color Palette Swap | Update CSS variables, search/replace color references | Low - mechanical change |
-| Gradient Buttons | Add Tailwind gradient utilities, update button component classes | Low - additive change |
-| Glass Morphism | backdrop-filter CSS, test browser support (97% as of 2026), performance test on mobile | Medium - requires testing |
-| Typography | Update Tailwind config, add Google Fonts, replace font-sans with font-heading selectively | Low - well-documented pattern |
-| Remove Dynamic Features | Delete code, update tests, migration guide for existing users | Medium - breaking change management |
-| Gradient Focus Rings | box-shadow gradients require workaround, contrast validation for WCAG | Medium - accessibility concerns |
+- [ ] **Mollie API key storage** — Finance Settings: single API key field (test_ or live_). Encrypt at rest. Display derived mode (Test/Live). Required for all other features.
+- [ ] **Default payment provider selector** — Finance Settings: dropdown (Rabobank / Mollie). Required to route invoice send to correct provider.
+- [ ] **`MolliePayment` class** — Mirrors `RabobankPayment` interface. Calls Mollie Payment Links API. Stores payment link URL in ACF `payment_link` field. Stores Mollie payment link ID in `_mollie_payment_link_id` post meta. Uses `mollie/mollie-api-php` Composer package.
+- [ ] **Webhook endpoint** — Public REST endpoint at `rondo/v1/mollie/webhook`. Receives Mollie `id` POST param. Fetches payment status from Mollie API. On `paid`: updates invoice status to `paid` via `update_field`. Returns 200.
+- [ ] **Finance Settings UI update** — Add Mollie section alongside existing Rabobank section. Show current mode derived from key prefix.
 
-## Migration Considerations
+### Add After Validation (v1.x)
 
-### Breaking Changes for Users
+- [ ] **Webhook failure logging** — Log when Mollie webhooks arrive for unknown invoice IDs. Useful for debugging missed payments. Add when first webhook issues reported.
+- [ ] **Payment link expiry** — Allow admin to set expiry date on Mollie payment links (API supports optional `expiresAt`). Add if club requests time-limited invoices.
 
-| Change | User Impact | Mitigation |
-|--------|-------------|------------|
-| Remove dynamic color picker | Users lose personalization, existing saved preferences ignored | Document in changelog, provide rationale (brand consistency) |
-| Remove dark mode | Users in dark environments lose preferred mode | HIGH IMPACT - requires user research before committing. If removing, provide "coming soon" timeline for reintroduced dark mode with new design |
-| Fixed gradient colors | Existing accent-* usage may have incorrect contrast ratios with new colors | Audit all text-on-accent uses, ensure WCAG AA compliance |
+### Future Consideration (v2+)
 
-### Backward Compatibility Strategy
+- [ ] **Payment method restriction to iDEAL** — Only if club has cost concerns about card fees and wants enforcement at API level rather than Dashboard.
+- [ ] **Mollie refund from Rondo** — Only if discipline case appeals become frequent enough to warrant UI-driven refunds.
 
-1. **CSS Variables as Abstraction Layer**: Keep `--color-accent-*` variables, update values to gradient-compatible colors. This minimizes component changes.
-2. **Graceful Degradation**: Use `@supports (backdrop-filter: blur(12px))` for glass morphism, provide solid background fallback.
-3. **Progressive Enhancement**: Apply gradient buttons first, then layer in hover effects, then glass morphism. Each layer independently valuable.
+---
+
+## Feature Prioritization Matrix
+
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Mollie API key storage | HIGH | LOW | P1 |
+| Default provider selector | HIGH | LOW | P1 |
+| MolliePayment class (link creation) | HIGH | LOW | P1 |
+| Webhook endpoint + status update | HIGH | MEDIUM | P1 |
+| Finance Settings UI (Mollie section) | HIGH | LOW | P1 |
+| Webhook failure logging | MEDIUM | LOW | P2 |
+| Payment link expiry option | LOW | LOW | P2 |
+| iDEAL-only enforcement | LOW | LOW | P3 |
+| Mollie refund UI | LOW | HIGH | P3 |
+
+**Priority key:**
+- P1: Must have for launch — this is a complete feature, not a partial
+- P2: Add when first practical need arises
+- P3: Future, only if explicitly requested
+
+---
+
+## Implementation Notes for Roadmap
+
+### Mollie PHP Client
+
+Use `mollie/mollie-api-php` v3.9.0 (released 2026-02-09, requires PHP >= 7.4). Install via Composer:
+
+```bash
+composer require mollie/mollie-api-php
+```
+
+Client initialization — key prefix determines mode automatically:
+
+```php
+$mollie = new \Mollie\Api\MollieApiClient();
+$mollie->setToken( $api_key ); // test_... or live_... prefix auto-detected
+```
+
+### Payment Link Creation (Core API Call)
+
+```php
+$payment_link = $mollie->paymentLinks->create([
+    'amount'      => [ 'currency' => 'EUR', 'value' => '25.00' ], // string, 2 decimal places
+    'description' => 'Factuur ' . $invoice_number,                 // max 255 chars
+    'webhookUrl'  => rest_url( 'rondo/v1/mollie/webhook' ),
+    'redirectUrl' => admin_url( 'admin.php?page=facturen' ),       // where member lands after payment
+]);
+
+$payment_url = $payment_link->_links->paymentLink->href;
+$mollie_id   = $payment_link->id;
+```
+
+Amount MUST be a string with exactly 2 decimal places. Use `number_format($amount, 2, '.', '')`.
+
+### Webhook Handler Pattern
+
+Mollie sends POST with body `id=pl_xxxxx` (or `id=tr_xxxxx` for payments). The handler must:
+
+1. Extract `id` from `$_POST['id']` (or request body)
+2. Fetch the resource from Mollie API to get verified status
+3. Find the invoice with matching `_mollie_payment_link_id`
+4. Update status if paid
+5. Return HTTP 200
+
+The webhook URL must be HTTPS and publicly accessible (no WordPress auth). Register with `'permission_callback' => '__return_true'`. Mollie retries 10 times over 26 hours if 200 not received.
+
+### Test vs Live Mode
+
+The API key prefix IS the mode. No separate toggle needed:
+- `test_dHar...` = test mode, test checkout UI, no real money
+- `live_xyz...` = live mode, real payments
+
+Display in UI: extract prefix from stored key and show badge ("Test" or "Live"). Never expose the full key in API responses — show only the prefix and last 4 characters.
+
+### Dutch Payment Context
+
+For Dutch B2C (sports club members):
+- **iDEAL**: Primary method, ~70% of Dutch online transactions. Flat fee (~€0.29/transaction). Enabled by default on all Dutch Mollie accounts.
+- **Credit/debit card**: Secondary. 1.2% + €0.25. Useful for edge cases. Auto-enabled by Mollie if merchant applies.
+- **Bancontact, SOFORT**: Irrelevant for this use case (Belgian/German methods).
+- **iDEAL 2.0**: iDEAL migrated to iDEAL 2.0 by March 2025. Mollie handles this transparently — no code changes needed for existing iDEAL integrations.
+
+No method restriction needed in code. Leave payment method selection to Mollie checkout UI.
+
+---
 
 ## Sources
 
-### Glassmorphism & Modern UI (2026)
-- [Dark Glassmorphism: The Aesthetic That Will Define UI in 2026](https://medium.com/@developer_89726/dark-glassmorphism-the-aesthetic-that-will-define-ui-in-2026-93aa4153088f)
-- [12 Glassmorphism UI Features, Best Practices, and Examples](https://uxpilot.ai/blogs/glassmorphism-ui)
-- [How to create a glassmorphism effect in React](https://blog.logrocket.com/how-to-create-glassmorphism-effect-react/)
-- [Glassmorphism: Definition and Best Practices - NN/G](https://www.nngroup.com/articles/glassmorphism/)
+- [Mollie Payment Links API](https://docs.mollie.com/docs/payment-links) — Official docs (verified)
+- [Mollie Create Payment Link Reference](https://docs.mollie.com/reference/create-payment-link) — Official API reference (verified)
+- [Mollie Webhooks](https://docs.mollie.com/reference/webhooks) — Retry policy, payload format (verified)
+- [Mollie PHP Client v3.9.0](https://github.com/mollie/mollie-api-php) — Composer package, setToken() API (verified)
+- [Mollie Testing](https://docs.mollie.com/reference/testing) — Test mode, magic amounts (verified)
+- [iDEAL on Mollie](https://docs.mollie.com/docs/ideal) — Dutch payment context (verified)
+- [iDEAL 2.0 Migration](https://www.mollie.com/growth/ideal-2-0) — Migration timeline, Mollie handles transparently (MEDIUM confidence)
 
-### Tailwind CSS Gradient Patterns
-- [Tailwind CSS Gradient | Pagedone](https://pagedone.io/docs/gradient)
-- [How to create gradient borders with tailwindcss](https://dev.to/tailus/how-to-create-gradient-borders-with-tailwindcss-4gk2)
-- [A guide to adding gradients with Tailwind CSS](https://blog.logrocket.com/guide-adding-gradients-tailwind-css/)
-- [Create a Gradient Border With TailwindCSS and React](https://hackernoon.com/create-a-gradient-border-blog-postcard-using-tailwind-css-and-nextjs-a-how-to-guide)
-
-### Focus Rings & Accessibility
-- [Ring Color - Tailwind CSS](https://tailwindcss.com/docs/ring-color)
-- [Tailwind CSS Outline vs Ring: Key Differences](https://www.codegenes.net/blog/what-s-the-difference-between-outline-and-ring-in-tailwind/)
-- [Applying Global Focus Styles in Tailwind CSS](https://github.com/tailwindlabs/tailwindcss/discussions/13338)
-
-### Design System Migration Best Practices
-- [Design System Updates in Strapi 5](https://docs.strapi.io/cms/migration/v4-to-v5/breaking-changes/design-system)
-- [How do you handle design system updates and changes without breaking existing components?](https://www.linkedin.com/advice/0/how-do-you-handle-design-system-updates-changes)
-- [Tips and tricks for Design System migrations](https://medium.com/@nonisnilukshi/tips-and-tricks-for-design-system-migrations-5beafb8e58c5)
-- [Visual Breaking Change in Design Systems](https://medium.com/eightshapes-llc/visual-breaking-change-in-design-systems-1e9109fac9c4)
-
-### Brand Color Systems
-- [UI Color Palette 2026: Best Practices](https://www.interaction-design.org/literature/article/ui-color-palette)
-- [Create Consistent Color Palettes for Design Systems](https://hybridheroes.de/blog/consistent-ui-color-palettes/)
-- [Creating A Design System: Building a Color Palette](https://www.uxpin.com/create-design-system-guide/build-color-palette-for-design-system)
+---
+*Feature research for: Mollie payment integration — Rondo Club discipline invoice payment links*
+*Researched: 2026-02-17*

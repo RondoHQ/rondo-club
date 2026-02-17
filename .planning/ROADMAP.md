@@ -8,7 +8,8 @@
 - ✅ **v23.0 Former Members** — Phases 166-169 (shipped 2026-02-09) — [Archive](milestones/v23.0-ROADMAP.md)
 - ✅ **v24.0 Demo Data** — Phases 170-174 (shipped 2026-02-12) — [Archive](milestones/v24.0-ROADMAP.md)
 - ✅ **v24.1 Dead Feature Removal** — Phases 175-177 (shipped 2026-02-13) — [Archive](milestones/v24.1-ROADMAP.md)
-- 🚧 **v26.0 Discipline Case Invoicing** — Phases 178-185 (in progress)
+- ✅ **v26.0 Discipline Case Invoicing** — Phases 178-185 (shipped 2026-02-16) — [Archive](milestones/v26.0-ROADMAP.md)
+- 🚧 **v27.0 Mollie** — Phases 186-190 (in progress)
 
 ## Phases
 
@@ -75,7 +76,7 @@
 
 </details>
 
-### v26.0 Discipline Case Invoicing (In Progress)
+### v26.0 Discipline Case Invoicing (SHIPPED 2026-02-16)
 
 **Milestone Goal:** Enable the club to invoice members for discipline case fees with PDF generation, Rabobank payment links, and email delivery — tracked through a full invoice lifecycle.
 
@@ -192,6 +193,96 @@ Plans:
 - [x] 184-01-PLAN.md — Backend resend endpoint, frontend hooks, routes, and navigation enable
 - [x] 184-02-PLAN.md — Facturen list page, detail page with actions, FinancesCard links, version bump
 
+#### Phase 185: Invoice PDF Club Branding
+**Goal:** Invoice PDF uses the club's own logo and colors instead of Rondo branding — headings and accent colors come from club settings.
+**Depends on:** Phase 184
+**Plans:** 1 plan
+
+Plans:
+- [x] 185-01-PLAN.md — Backend branding settings + PDF generator integration + frontend logo upload and color picker UI
+
+### v27.0 Mollie (In Progress)
+
+**Milestone Goal:** Add Mollie as a second payment provider for discipline case invoices alongside Rabobank — with encrypted API key storage, automatic provider selection, payment link generation, and webhook-driven invoice status updates.
+
+#### Phase 186: SDK Installation + FinanceConfig + MollieClient
+**Goal**: Mollie PHP SDK installed via Composer, API key and provider settings persisted in `FinanceConfig`, and a shared `MollieClient` wrapper ready for use by both payment and webhook classes.
+**Depends on**: Phase 185
+**Requirements**: CONF-01, CONF-02, CONF-03, CONF-04, CONF-05
+**Success Criteria** (what must be TRUE):
+  1. `mollie/mollie-api-php ^3.9` installed via Composer and autoloaded — `composer install` runs without errors
+  2. `FinanceConfig::get_mollie_api_key()`, `update_mollie_api_key()`, `get_active_payment_provider()`, `update_active_payment_provider()` methods exist and store data correctly
+  3. Mollie API key stored encrypted using existing `CredentialEncryption` pattern (sodium)
+  4. `FinanceConfig::get_all_settings()` returns `mollie_has_api_key` (bool) and `mollie_environment` (`test`/`live`) — never the raw key
+  5. `MollieClient::get_client()` returns a configured `MollieApiClient` instance using the stored key
+  6. No user-visible changes on the site — this phase is backend-only
+**Plans**: 1 plan
+
+Plans:
+- [ ] 186-01-PLAN.md — Composer install, FinanceConfig Mollie methods, MollieClient class
+
+#### Phase 187: MolliePayment — Payment Link Creation
+**Goal**: `MolliePayment` class creates a Mollie payment via the Payments API, stores the checkout URL in the invoice's ACF `payment_link` field, and stores the Mollie payment ID for later webhook lookup.
+**Depends on**: Phase 186
+**Requirements**: PYMT-01, PYMT-02, PYMT-03, PYMT-04
+**Success Criteria** (what must be TRUE):
+  1. `MolliePayment::create_payment_link($invoice_id)` creates a Mollie payment using `$mollie->payments->create()` (Payments API, not Payment Links API)
+  2. Amount formatted as string with exactly 2 decimal places (e.g., `"12.50"`) — no floating point formatting errors
+  3. Invoice `payment_link` ACF field updated with the Mollie checkout URL (`_links->checkout->href`)
+  4. `_mollie_payment_id` post meta stored on the invoice (e.g., `tr_xxx`) for webhook lookup
+  5. If `_mollie_payment_id` already exists on the invoice, `create_payment_link()` reuses the existing checkout URL without creating a new Mollie payment
+  6. `webhookUrl` is omitted when site URL contains `localhost` or `.local` (local dev safety)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 187-01-PLAN.md — MolliePayment class + functions.php registration
+
+#### Phase 188: MollieWebhook — Automatic Status Update
+**Goal**: A dedicated public REST endpoint receives Mollie webhook events and idempotently transitions the matching invoice to `rondo_paid` when payment is confirmed.
+**Depends on**: Phase 187
+**Requirements**: WHKT-01, WHKT-02, WHKT-03, WHKT-04, WHKT-05
+**Success Criteria** (what must be TRUE):
+  1. `POST /wp-json/rondo/v1/mollie/webhook` endpoint exists and returns 200 without WordPress authentication (verify with `curl -X POST <url> -d "id=test"`)
+  2. Handler extracts payment ID from POST body, re-fetches payment from Mollie API via `MollieClient`
+  3. Handler looks up invoice by `_mollie_payment_id` meta using `WP_Query`
+  4. When payment status is `paid`, invoice post status transitions to `rondo_paid` and `payment_status` ACF field updates to `paid`
+  5. Handler is idempotent — sending the same webhook payload twice does not double-update or cause errors
+  6. Any error (unknown payment ID, invoice not found, API failure) is logged but handler still returns HTTP 200
+**Plans**: 1 plan
+
+Plans:
+- [ ] 188-01-PLAN.md — MollieWebhook class + REST endpoint registration
+
+#### Phase 189: RestInvoices — Provider Routing
+**Goal**: `RestInvoices::send_invoice()` routes to Mollie or Rabobank based on the configured active provider — existing Rabobank path is completely unchanged.
+**Depends on**: Phase 188
+**Requirements**: WIRE-01, WIRE-02
+**Success Criteria** (what must be TRUE):
+  1. `RestInvoices::send_invoice()` reads `FinanceConfig::get_active_payment_provider()` and branches to `MolliePayment::create_payment_link()` when Mollie is selected
+  2. When Rabobank is the active provider, invoice sending behavior is byte-for-byte identical to v26.0
+  3. Default provider is `rabobank` — if `active_payment_provider` option is not set, Rabobank path executes
+  4. Existing Rabobank classes (`RabobankPayment`, `RabobankOAuth`) are not modified
+**Plans**: 1 plan
+
+Plans:
+- [ ] 189-01-PLAN.md — Provider branching in RestInvoices::send_invoice()
+
+#### Phase 190: Finance Settings UI — Mollie Configuration
+**Goal**: Finance Settings page includes Mollie API key input, payment provider selector, and test/live mode badge — using existing settings REST endpoint.
+**Depends on**: Phase 189
+**Requirements**: UI-01, UI-02, UI-03, UI-04
+**Success Criteria** (what must be TRUE):
+  1. Finance Settings Mollie section shows API key input (masked, save button)
+  2. Payment provider selector (Rabobank / Mollie) visible and saves correctly
+  3. Test/Live mode badge derived from key prefix displayed in settings
+  4. Full API key never returned by REST endpoint — only `mollie_has_api_key` bool and `mollie_environment` string
+  5. Version bumped to 27.0.0 in `style.css` and `package.json`
+  6. CHANGELOG.md updated with v27.0 Mollie additions
+**Plans**: 1 plan
+
+Plans:
+- [ ] 190-01-PLAN.md — Finance Settings Mollie section UI + version bump + changelog
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -207,16 +298,12 @@ Plans:
 | 183. Email Delivery | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 184. Invoice Management UI | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
 | 185. Invoice PDF Club Branding | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
-
-### Phase 185: Invoice PDF Club Branding
-
-**Goal:** Invoice PDF uses the club's own logo and colors instead of Rondo branding — headings and accent colors come from club settings.
-**Depends on:** Phase 184
-**Plans:** 1 plan
-
-Plans:
-- [x] 185-01-PLAN.md — Backend branding settings + PDF generator integration + frontend logo upload and color picker UI
+| 186. SDK + FinanceConfig + MollieClient | v27.0 | 0/1 | Pending | — |
+| 187. MolliePayment — Payment Link Creation | v27.0 | 0/1 | Pending | — |
+| 188. MollieWebhook — Automatic Status Update | v27.0 | 0/1 | Pending | — |
+| 189. RestInvoices — Provider Routing | v27.0 | 0/1 | Pending | — |
+| 190. Finance Settings UI | v27.0 | 0/1 | Pending | — |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-16 — Phase 185 completed (1/1 plan)*
+*Last updated: 2026-02-17 — v27.0 Mollie phases 186-190 added*
