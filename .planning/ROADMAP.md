@@ -219,7 +219,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 186-01-PLAN.md — Composer install, FinanceConfig Mollie methods, MollieClient class
+- [x] 186-01-PLAN.md — Composer install, FinanceConfig Mollie methods, MollieClient class
 
 #### Phase 187: MolliePayment — Payment Link Creation
 **Goal**: `MolliePayment` class creates a Mollie payment via the Payments API, stores the checkout URL in the invoice's ACF `payment_link` field, and stores the Mollie payment ID for later webhook lookup.
@@ -235,7 +235,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 187-01-PLAN.md — MolliePayment class + functions.php registration
+- [x] 187-01-PLAN.md — MolliePayment class + functions.php registration
 
 #### Phase 188: MollieWebhook — Automatic Status Update
 **Goal**: A dedicated public REST endpoint receives Mollie webhook events and idempotently transitions the matching invoice to `rondo_paid` when payment is confirmed.
@@ -251,7 +251,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 188-01-PLAN.md — MollieWebhook class + REST endpoint registration
+- [x] 188-01-PLAN.md — MollieWebhook class + REST endpoint registration
 
 #### Phase 189: RestInvoices — Provider Routing
 **Goal**: `RestInvoices::send_invoice()` routes to Mollie or Rabobank based on the configured active provider — existing Rabobank path is completely unchanged.
@@ -298,12 +298,12 @@ Plans:
 | 183. Email Delivery | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
 | 184. Invoice Management UI | v26.0 | 2/2 | ✓ Complete | 2026-02-16 |
 | 185. Invoice PDF Club Branding | v26.0 | 1/1 | ✓ Complete | 2026-02-16 |
-| 186. SDK + FinanceConfig + MollieClient | v27.0 | 0/1 | Pending | — |
-| 187. MolliePayment — Payment Link Creation | v27.0 | 0/1 | Pending | — |
-| 188. MollieWebhook — Automatic Status Update | v27.0 | 0/1 | Pending | — |
+| 186. SDK + FinanceConfig + MollieClient | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
+| 187. MolliePayment — Payment Link Creation | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
+| 188. MollieWebhook — Automatic Status Update | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
 | 189. RestInvoices — Provider Routing | v27.0 | 0/1 | Pending | — |
 | 190. Finance Settings UI | v27.0 | 0/1 | Pending | — |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-17 — v27.0 Mollie phases 186-190 added*
+*Last updated: 2026-02-17 — Phase 188 complete*
