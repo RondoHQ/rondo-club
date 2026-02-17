@@ -34,4 +34,5 @@ return array(
     'a57d1c9a1f9c33081f1c52e67daa67d5' => $vendorDir . '/lucatume/wp-browser/src/version-4-aliases.php',
     '6d9bcbcfc3471fe954843f7612a82033' => $vendorDir . '/lucatume/wp-browser/src/deprecated-functions.php',
     '69610b630baef85b456acbc18b25866c' => $vendorDir . '/lucatume/wp-browser/src/functions.php',
+    'db356362850385d08a5381de2638b5fd' => $vendorDir . '/mpdf/mpdf/src/functions.php',
 );

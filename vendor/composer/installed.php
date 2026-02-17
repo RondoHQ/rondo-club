@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
-        'name' => 'jdevalk/caelis',
+        'name' => 'rondohq/rondo-club',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '4b2289f950ae73619c2487f3593a93fc319f4295',
+        'reference' => 'fbe35e91a8e2aaeaf69ebf8edd0106595e0522c9',
         'type' => 'wordpress-theme',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -124,6 +124,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'composer/ca-bundle' => array(
+            'pretty_version' => '1.5.10',
+            'version' => '1.5.10.0',
+            'reference' => '961a5e4056dd2e4a2eedcac7576075947c28bf63',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/./ca-bundle',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'dealerdirect/phpcodesniffer-composer-installer' => array(
             'pretty_version' => 'v1.2.0',
             'version' => '1.2.0.0',
@@ -220,15 +229,6 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'jdevalk/caelis' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => '4b2289f950ae73619c2487f3593a93fc319f4295',
-            'type' => 'wordpress-theme',
-            'install_path' => __DIR__ . '/../../',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
         'lucatume/wp-browser' => array(
             'pretty_version' => '4.5.10',
             'version' => '4.5.10.0',
@@ -237,6 +237,15 @@
             'install_path' => __DIR__ . '/../lucatume/wp-browser',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'mollie/mollie-api-php' => array(
+            'pretty_version' => 'v3.9.0',
+            'version' => '3.9.0.0',
+            'reference' => 'e3c09fa114f5e2c3f6761830752d7450bf1c2546',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mollie/mollie-api-php',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'monolog/monolog' => array(
             'pretty_version' => '3.10.0',
@@ -247,6 +256,33 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'mpdf/mpdf' => array(
+            'pretty_version' => 'v8.2.7',
+            'version' => '8.2.7.0',
+            'reference' => 'b59670a09498689c33ce639bac8f5ba26721dab3',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mpdf/mpdf',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'mpdf/psr-http-message-shim' => array(
+            'pretty_version' => 'v2.0.1',
+            'version' => '2.0.1.0',
+            'reference' => 'f25a0153d645e234f9db42e5433b16d9b113920f',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mpdf/psr-http-message-shim',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'mpdf/psr-log-aware-trait' => array(
+            'pretty_version' => 'v3.0.0',
+            'version' => '3.0.0.0',
+            'reference' => 'a633da6065e946cc491e1c962850344bb0bf3e78',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../mpdf/psr-log-aware-trait',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'myclabs/deep-copy' => array(
             'pretty_version' => '1.13.4',
             'version' => '1.13.4.0',
@@ -254,7 +290,7 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../myclabs/deep-copy',
             'aliases' => array(),
-            'dev_requirement' => true,
+            'dev_requirement' => false,
         ),
         'nikic/php-parser' => array(
             'pretty_version' => 'v5.7.0',
@@ -264,6 +300,15 @@
             'install_path' => __DIR__ . '/../nikic/php-parser',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'nyholm/psr7' => array(
+            'pretty_version' => '1.8.2',
+            'version' => '1.8.2.0',
+            'reference' => 'a71f2b11690f4b24d099d6b16690a90ae14fc6f3',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../nyholm/psr7',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'paragonie/constant_time_encoding' => array(
             'pretty_version' => 'v3.1.3',
@@ -300,6 +345,12 @@
             'install_path' => __DIR__ . '/../phar-io/version',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'php-http/message-factory-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.0',
+            ),
         ),
         'php-webdriver/webdriver' => array(
             'pretty_version' => '1.16.0',
@@ -512,6 +563,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'rondohq/rondo-club' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => 'fbe35e91a8e2aaeaf69ebf8edd0106595e0522c9',
+            'type' => 'wordpress-theme',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'sabre/dav' => array(
             'pretty_version' => '4.7.0',
             'version' => '4.7.0.0',
@@ -700,6 +760,15 @@
             'install_path' => __DIR__ . '/../sebastian/version',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'setasign/fpdi' => array(
+            'pretty_version' => 'v2.6.4',
+            'version' => '2.6.4.0',
+            'reference' => '4b53852fde2734ec6a07e458a085db627c60eada',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../setasign/fpdi',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'squizlabs/php_codesniffer' => array(
             'pretty_version' => '3.13.5',
