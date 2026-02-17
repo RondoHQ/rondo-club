@@ -5,16 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** Phase 185 - Invoice PDF Club Branding
+**Current focus:** v27.0 Mollie — Defining requirements
 
 ## Current Position
 
-Phase: 185 of 185 (Invoice PDF Club Branding)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-02-16 - Completed quick task 74: Filter Tuchtzaken page by Doorbelast and Sanctie columns
-
-Progress: [██████████] 100% (1/1 plans complete)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v27.0 started
 
 ## Performance Metrics
 
@@ -133,8 +131,8 @@ Last session: 2026-02-16
 Stopped at: Completed quick task 74: Filter Tuchtzaken page by Doorbelast and Sanctie
 Resume file: None
 
-**Next action:** Run `/gsd:complete-milestone` to archive v26.0 and prepare for next version
+**Next action:** Run `/gsd:plan-phase 186` to start planning the first phase
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-16 after completing quick task 74*
+*Last updated: 2026-02-17 after starting milestone v27.0 Mollie*
