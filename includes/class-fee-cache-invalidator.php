@@ -64,26 +64,39 @@ class FeeCacheInvalidator {
 	}
 
 	/**
-	 * Invalidate fee cache for a person when relevant field changes
+	 * Resolve a post ID from an int or ACF object, returning null if not a person post.
 	 *
-	 * @param mixed $value   The new field value.
-	 * @param int   $post_id The post ID.
-	 * @param array $field   The ACF field array.
-	 * @return mixed The unmodified value (filter passthrough).
+	 * @param mixed $post_id Raw post ID (int or ACF object with ->ID).
+	 * @return int|null Resolved integer post ID, or null if not a person post.
 	 */
-	public function invalidate_person_cache( $value, $post_id, $field ) {
-		// Handle object post IDs (can be passed by ACF)
+	private function resolve_person_post_id( $post_id ): ?int {
 		if ( is_object( $post_id ) && isset( $post_id->ID ) ) {
 			$post_id = $post_id->ID;
 		}
 
-		// Validate post type
 		if ( get_post_type( $post_id ) !== 'person' ) {
+			return null;
+		}
+
+		return (int) $post_id;
+	}
+
+	/**
+	 * Invalidate fee cache for a person when relevant field changes
+	 *
+	 * @param mixed $value   The new field value.
+	 * @param mixed $post_id The post ID.
+	 * @param array $field   The ACF field array.
+	 * @return mixed The unmodified value (filter passthrough).
+	 */
+	public function invalidate_person_cache( $value, $post_id, $field ) {
+		$post_id = $this->resolve_person_post_id( $post_id );
+
+		if ( $post_id === null ) {
 			return $value;
 		}
 
-		// Clear fee cache for current season
-		$this->fees->clear_fee_cache( (int) $post_id );
+		$this->fees->clear_fee_cache( $post_id );
 
 		return $value;
 	}
@@ -95,22 +108,16 @@ class FeeCacheInvalidator {
 	 * family members at the same address. Must invalidate all siblings.
 	 *
 	 * @param mixed $value   The new field value.
-	 * @param int   $post_id The post ID.
+	 * @param mixed $post_id The post ID.
 	 * @param array $field   The ACF field array.
 	 * @return mixed The unmodified value (filter passthrough).
 	 */
 	public function invalidate_family_cache( $value, $post_id, $field ) {
-		// Handle object post IDs
-		if ( is_object( $post_id ) && isset( $post_id->ID ) ) {
-			$post_id = $post_id->ID;
-		}
+		$post_id = $this->resolve_person_post_id( $post_id );
 
-		// Validate post type
-		if ( get_post_type( $post_id ) !== 'person' ) {
+		if ( $post_id === null ) {
 			return $value;
 		}
-
-		$post_id = (int) $post_id;
 
 		// Clear this person's cache first
 		$this->fees->clear_fee_cache( $post_id );
@@ -118,34 +125,31 @@ class FeeCacheInvalidator {
 		// Get family key BEFORE the address update (using current saved value)
 		$old_family_key = $this->fees->get_family_key( $post_id );
 
-		// If person was in a family, invalidate all family members at old address
-		if ( $old_family_key !== null ) {
-			$this->invalidate_family_by_key( $old_family_key, $post_id );
-		}
-
 		// Clear family discount meta for this person (will be recalculated on next cache miss)
 		delete_post_meta( $post_id, '_family_discount_rate' );
 		delete_post_meta( $post_id, '_family_discount_position' );
 
-		// Recalculate positions for old family (after address change, new family is lazy)
+		// If person was in a family, invalidate all members and recalculate positions in one pass
 		if ( $old_family_key !== null ) {
-			$this->recalculate_family_positions_by_key( $old_family_key );
+			$this->invalidate_and_recalculate_family( $old_family_key, $post_id );
 		}
 
 		return $value;
 	}
 
 	/**
-	 * Invalidate all family members' caches by family key
+	 * Invalidate all family members' caches and recalculate positions for a given family key
+	 *
+	 * Combines invalidation and position recalculation into a single pass over family groups
+	 * to avoid calling build_family_groups() twice per address change.
 	 *
 	 * @param string $family_key The family key (postal code + house number).
-	 * @param int    $exclude_id Person ID to exclude (already invalidated).
+	 * @param int    $exclude_id Person ID to exclude from invalidation (already invalidated).
 	 */
-	private function invalidate_family_by_key( string $family_key, int $exclude_id ): void {
-		$groups   = $this->fees->build_family_groups();
-		$families = $groups['families'];
+	private function invalidate_and_recalculate_family( string $family_key, int $exclude_id ): void {
+		$families = $this->fees->build_family_groups()['families'];
 
-		if ( ! isset( $families[ $family_key ] ) ) {
+		if ( empty( $families[ $family_key ] ) ) {
 			return;
 		}
 
@@ -156,22 +160,7 @@ class FeeCacheInvalidator {
 				delete_post_meta( $member_id, '_family_discount_position' );
 			}
 		}
-	}
 
-	/**
-	 * Recalculate family discount positions for all persons at a given family key
-	 *
-	 * @param string $family_key The family key (postal code + house number).
-	 */
-	private function recalculate_family_positions_by_key( string $family_key ): void {
-		$groups   = $this->fees->build_family_groups();
-		$families = $groups['families'];
-
-		if ( ! isset( $families[ $family_key ] ) || empty( $families[ $family_key ] ) ) {
-			return;
-		}
-
-		// Use the first member to trigger recalculation for the whole family
 		$first_member = (int) $families[ $family_key ][0];
 		$this->fees->recalculate_family_positions_for_person( $first_member );
 	}
