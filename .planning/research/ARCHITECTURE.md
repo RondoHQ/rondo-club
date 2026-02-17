@@ -1,634 +1,488 @@
-# Architecture Integration: Rondo Brand Design
+# Architecture Research: Mollie Integration
 
-**Project:** Rondo Club Design Refresh
-**Researched:** 2026-02-09
-**Confidence:** HIGH
+**Domain:** Payment provider integration into existing WordPress invoice system
+**Researched:** 2026-02-17
+**Confidence:** HIGH (existing codebase is authoritative; Mollie from official SDK docs)
 
-## Executive Summary
+## Standard Architecture
 
-The new brand design from STYLE.md requires replacing the current dynamic theming system with fixed brand colors and new visual patterns. The integration involves three architectural layers:
-
-1. **Design Token Layer** — Replace dynamic accent colors with fixed Tailwind tokens
-2. **Component Layer** — Update 69 JSX components to use new brand classes
-3. **Configuration Layer** — Remove WordPress theme customization system
-
-The current architecture uses a sophisticated theming system with CSS variables, dynamic color generation, dark mode support, and user-selectable accent colors. The new design removes this flexibility in favor of a consistent, light-only brand identity.
-
-**Critical architectural decision:** Tailwind CSS v3.4 (current) vs v4.0 (STYLE.md uses). Recommend staying on v3.4 for stability and use compatible syntax.
-
-## Current Architecture Analysis
-
-### Layer 1: Color Token System
-
-**Current implementation:**
+### System Overview
 
 ```
-tailwind.config.js
-├── accent-* scale (50-900) mapped to CSS variables
-├── club static colors (#006935 green scale)
-└── darkMode: 'class' enabled
-
-src/index.css
-├── :root CSS variables (--color-accent-*)
-├── [data-accent="X"] variants for 8 colors
-└── .dark variants inverting scale for dark mode
+┌─────────────────────────────────────────────────────────────────┐
+│                    REST Layer (rondo/v1)                         │
+├─────────────────────────────────────────────────────────────────┤
+│  RestInvoices            RabobankOAuth        MollieWebhook     │
+│  (MODIFIED)              (unchanged)           (NEW — public)   │
+│       │                                             │           │
+│       ↓                                    Mollie POST id=tr_   │
+│  get_active_provider()                              │           │
+│       │                                             ↓           │
+│  ┌────┴──────────────────────────┐        fetch payment status  │
+│  │  'rabobank'  │  'mollie'      │        update invoice status  │
+│  └────┬──────────────────────────┘                             │
+│       │               │                                        │
+├───────↓───────────────↓────────────────────────────────────────┤
+│                   Finance Layer                                  │
+│                                                                 │
+│   RabobankPayment        MolliePayment (NEW)                   │
+│   (unchanged)             create_payment_link( $invoice_id )   │
+│                               ↓                                │
+│                           MollieClient (NEW)                   │
+│                               ↓                                │
+│                           mollie/mollie-api-php SDK            │
+│                               ↓                                │
+│                           Mollie API (api.mollie.com)          │
+├─────────────────────────────────────────────────────────────────┤
+│                   Config Layer                                   │
+│                                                                 │
+│   FinanceConfig (MODIFIED — Mollie key storage, active provider)│
+│   CredentialEncryption (unchanged)                              │
+├─────────────────────────────────────────────────────────────────┤
+│                   Storage (WordPress Options)                    │
+│                                                                 │
+│   rondo_finance_mollie_api_key        (encrypted, existing enc) │
+│   rondo_finance_active_payment_provider  ('rabobank'|'mollie')  │
+│   rondo_rabobank_oauth_tokens         (unchanged)               │
+│   rondo_finance_rabobank_credentials  (unchanged)               │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Dynamic behavior:**
-- `useTheme.js` (385 lines) injects CSS variables at runtime
-- WordPress option `rondo_accent_color` provides base hex
-- Color scale generated via `lightenHex()` and `darkenHex()` functions
-- Supports system/light/dark color schemes with localStorage persistence
+### Component Responsibilities
 
-**Usage scope:**
-- 549 references to `accent-*` classes across codebase
-- 1,877 `dark:*` class usages
-- Color used in: buttons, links, focus rings, avatars, badges, active states
+| Component | Status | Responsibility | Communicates With |
+|-----------|--------|----------------|-------------------|
+| `RestInvoices` | MODIFIED | Orchestrates invoice send: provider selection, PDF, email | `FinanceConfig`, `MolliePayment`, `RabobankPayment` |
+| `FinanceConfig` | MODIFIED | Config storage/retrieval: adds Mollie key + active provider | `CredentialEncryption`, WordPress Options |
+| `MollieClient` | NEW | SDK initialisation with API key; lazy wrapper | `FinanceConfig`, `mollie/mollie-api-php` |
+| `MolliePayment` | NEW | Creates Mollie payment; stores checkout URL + payment ID on invoice | `MollieClient`, WordPress post meta, ACF |
+| `MollieWebhook` | NEW | Public REST endpoint; fetches payment status; marks invoice paid | `MollieClient`, WordPress post meta |
+| `RabobankOAuth` | Unchanged | OAuth token management | WordPress Options |
+| `RabobankPayment` | Unchanged | Rabobank betaalverzoek creation | `RabobankOAuth` |
+| `CredentialEncryption` | Unchanged | Sodium encrypt/decrypt for stored secrets | AUTH_KEY |
 
-### Layer 2: WordPress Configuration
+---
 
-**Backend storage:**
+## Recommended Project Structure
+
+```
+includes/
+├── class-finance-config.php          # MODIFIED: + Mollie methods + active_provider
+├── class-mollie-client.php           # NEW: SDK wrapper
+├── class-mollie-payment.php          # NEW: payment link creation service
+├── class-mollie-webhook.php          # NEW: webhook REST endpoint
+├── class-rabobank-oauth.php          # unchanged
+├── class-rabobank-payment.php        # unchanged
+├── class-rest-invoices.php           # MODIFIED: provider branching in send_invoice()
+└── class-credential-encryption.php  # unchanged
+
+composer.json                         # MODIFIED: + mollie/mollie-api-php ^3.0
+functions.php                         # MODIFIED: instantiate MolliePayment + MollieWebhook
+```
+
+### Structure Rationale
+
+- **class-mollie-client.php:** SDK setup is isolated. Both `MolliePayment` and `MollieWebhook` instantiate `MollieClient` directly — no singleton needed at this scale. Keeps Composer dependency encapsulated.
+- **class-mollie-webhook.php:** Separate from `RestInvoices` because the webhook is public (`permission_callback: '__return_true'`). Mixing public and authenticated routes in one controller creates a confusion surface and breaks the existing pattern (Rabobank OAuth has its own class).
+- **class-mollie-payment.php:** Mirrors `RabobankPayment` exactly in contract: one public method `create_payment_link( $invoice_id )` returning `string|WP_Error`. `RestInvoices` calls either without knowing internals.
+
+---
+
+## Architectural Patterns
+
+### Pattern 1: Provider Branching in RestInvoices::send_invoice()
+
+**What:** Simple conditional on the stored provider setting. No PHP interface or polymorphism.
+
+**When to use:** Two providers with fundamentally different auth setup (Rabobank = OAuth; Mollie = API key). A shared interface would impose artificial symmetry and complicate both implementations.
+
+**Trade-offs:** Branching is explicit and readable. Adding a third provider later requires touching this one if-block — acceptable at this scale.
 
 ```php
-class-club-config.php
-├── get_accent_color() → #006935 default
-├── WordPress Options API storage
-└── Exposed to React via window.rondoConfig
+// In RestInvoices::send_invoice()
+$config   = new FinanceConfig();
+$provider = $config->get_active_payment_provider(); // 'rabobank' | 'mollie'
+
+if ( $provider === 'mollie' ) {
+    $mollie         = new MolliePayment();
+    $payment_result = $mollie->create_payment_link( $invoice_id );
+} elseif ( $provider === 'rabobank' ) {
+    $oauth = new RabobankOAuth();
+    if ( $oauth->is_connected() ) {
+        $payment        = new RabobankPayment( $oauth );
+        $payment_result = $payment->create_payment_request( $invoice_id );
+    }
+}
+
+// Existing pattern: log error but continue (payment link is non-blocking)
+if ( isset( $payment_result ) && is_wp_error( $payment_result ) ) {
+    error_log( 'Payment link failed: ' . $payment_result->get_error_message() );
+}
 ```
 
-**Frontend consumption:**
+### Pattern 2: MollieClient as Thin SDK Wrapper
 
-```javascript
-functions.php
-├── Localizes rondoConfig to React
-│   ├── accentColor: ClubConfig::get_accent_color()
-│   └── siteName: ClubConfig::get_club_name()
-└── Settings page includes color picker (react-colorful)
+**What:** One class owns `new MollieApiClient()` and `setApiKey()`. Both `MolliePayment` and `MollieWebhook` construct `new MollieClient()` and call `->get()`.
+
+**When to use:** Always for external SDK clients. Keeps the Composer dependency contained and API key injection in one place.
+
+**Trade-offs:** Not a singleton — each instantiation reads from `FinanceConfig` and creates a new SDK client. Acceptable: these are short-lived per-request objects.
+
+```php
+namespace Rondo\Finance;
+
+use Mollie\Api\MollieApiClient;
+use Rondo\Config\FinanceConfig;
+
+class MollieClient {
+
+    private MollieApiClient $client;
+
+    public function __construct() {
+        $config  = new FinanceConfig();
+        $api_key = $config->get_mollie_api_key();
+
+        $this->client = new MollieApiClient();
+        $this->client->setApiKey( $api_key );
+    }
+
+    public function get(): MollieApiClient {
+        return $this->client;
+    }
+}
 ```
 
-### Layer 3: PWA Integration
+### Pattern 3: MolliePayment Uses Payments API (Not Payment Links API)
 
-**Dynamic theme integration:**
-- Favicon SVG color changes per accent selection
-- Meta theme-color tags for light/dark modes
-- PWA manifest theme_color (currently green #006935)
+**What:** Use `$mollie->payments->create()` (Payments API). Store `_links->checkout->href` as the payment URL. Store `$payment->id` as `_mollie_payment_id` post meta for webhook lookup.
 
-## New Brand Design Requirements
+**When to use:** For invoice-specific, one-time payments. The Payments API supports `webhookUrl` natively, enabling automatic status updates.
 
-### Color Palette (from STYLE.md)
+**Trade-offs:** Mollie also has a Payment Links API (`$mollie->paymentLinks->create()`), which produces reusable non-expiring links — designed for recurring/shared use cases, not per-invoice payments. The Payments API is the correct tool here.
 
-**Brand tokens to add:**
+```php
+public function create_payment_link( int $invoice_id ): string|\WP_Error {
+    $invoice = get_post( $invoice_id );
+    if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+        return new \WP_Error( 'invalid_invoice', __( 'Ongeldige factuur.', 'rondo' ), [ 'status' => 404 ] );
+    }
 
-| Token | Hex | Replaces |
-|-------|-----|----------|
-| `electric-cyan` | `#0891B2` | Primary actions, links, focus rings (was accent-600) |
-| `electric-cyan-light` | `#22D3EE` | Gradients, decorative elements (was accent-400) |
-| `bright-cobalt` | `#2563EB` | Gradient endpoints, secondary actions (new) |
-| `deep-midnight` | `#1E3A8A` | Dark accents (new) |
-| `obsidian` | `#0F172A` | Footer/darkest elements (was gray-900) |
+    try {
+        $mollie_client = new MollieClient();
+        $client        = $mollie_client->get();
 
-**Keep slate scale:** Current slate-50 through slate-900 matches STYLE.md requirements.
+        $total_amount   = (float) get_field( 'total_amount', $invoice_id );
+        $invoice_number = get_field( 'invoice_number', $invoice_id );
 
-**Remove:**
-- All accent-* CSS variable mapping
-- Dark mode variants
-- Multi-color accent system (club, orange, teal, indigo, emerald, violet, pink, fuchsia, rose)
+        $payment = $client->payments->create( [
+            'amount'      => [
+                'currency' => 'EUR',
+                'value'    => number_format( $total_amount, 2, '.', '' ),
+            ],
+            'description' => mb_substr( 'Factuur ' . $invoice_number, 0, 255 ),
+            'redirectUrl' => home_url( '/financien/' ),
+            'webhookUrl'  => rest_url( 'rondo/v1/mollie/webhook' ),
+            'metadata'    => [ 'invoice_id' => $invoice_id ],
+        ] );
 
-### Component Patterns
+        $payment_link = $payment->_links->checkout->href;
 
-**Button variants (NEW):**
+        // Store on invoice — same field as Rabobank (provider-agnostic field)
+        update_field( 'payment_link', $payment_link, $invoice_id );
+        // Store Mollie payment ID for webhook lookup
+        update_post_meta( $invoice_id, '_mollie_payment_id', $payment->id );
 
-```css
-.btn-primary (gradient)
-  bg: linear-gradient(135deg, #0891B2, #2563EB)
-  text: white
-  hover: translateY(-2px) + colored shadow
+        return $payment_link;
 
-.btn-secondary (solid)
-  bg: #2563EB (bright-cobalt)
-  text: white
-  same hover lift
-
-.btn-glass (transparent)
-  bg: transparent
-  border: #E2E8F0 (slate-200)
-  hover: subtle darken
+    } catch ( \Mollie\Api\Exceptions\ApiException $e ) {
+        error_log( 'Mollie API error for invoice ' . $invoice_id . ': ' . $e->getMessage() );
+        return new \WP_Error(
+            'mollie_api_error',
+            sprintf( __( 'Mollie API fout: %s', 'rondo' ), $e->getMessage() ),
+            [ 'status' => 502 ]
+        );
+    }
+}
 ```
 
-**Current button variants to replace:**
+### Pattern 4: MollieWebhook — Public Endpoint in Dedicated Class
 
-```css
-.btn-primary (current)
-  bg: accent-600 / dark:gray-700 with accent border
+**What:** Separate class `MollieWebhook` in `Rondo\Finance` namespace. Registers `POST /rondo/v1/mollie/webhook` with `permission_callback: '__return_true'`. Fetches payment via API (the API call is the security verification), updates invoice on `isPaid()`.
 
-.btn-secondary (current)
-  bg: white / dark:gray-800
+**When to use:** Always for public provider callbacks. Keeps permission model clean and separate from authenticated invoice endpoints.
 
-.btn-danger (keep, update colors)
-  bg: red-600 / dark:red-500
+**Trade-offs:** Mollie retries webhooks up to 10 times over 26 hours. Webhook must be idempotent (updating an already-paid invoice to paid is a no-op). Must always return HTTP 200 to prevent infinite retries on unresolvable errors.
+
+```php
+namespace Rondo\Finance;
+
+class MollieWebhook {
+
+    public function __construct() {
+        add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+    }
+
+    public function register_routes() {
+        register_rest_route(
+            'rondo/v1',
+            '/mollie/webhook',
+            [
+                'methods'             => \WP_REST_Server::CREATABLE,
+                'callback'            => [ $this, 'handle_webhook' ],
+                'permission_callback' => '__return_true', // Mollie servers post here — no WP auth
+            ]
+        );
+    }
+
+    public function handle_webhook( \WP_REST_Request $request ) {
+        $payment_id = $request->get_param( 'id' );
+
+        if ( empty( $payment_id ) ) {
+            return new \WP_REST_Response( null, 200 );
+        }
+
+        try {
+            $mollie_client = new MollieClient();
+            $payment       = $mollie_client->get()->payments->get( $payment_id );
+
+            if ( $payment->isPaid() ) {
+                $invoice_id = $this->get_invoice_id_by_payment_id( $payment_id );
+                if ( $invoice_id ) {
+                    $invoice = get_post( $invoice_id );
+                    // Idempotent: only update if not already paid
+                    if ( $invoice && $invoice->post_status !== 'rondo_paid' ) {
+                        wp_update_post( [ 'ID' => $invoice_id, 'post_status' => 'rondo_paid' ] );
+                        update_field( 'status', 'paid', $invoice_id );
+                    }
+                }
+            }
+        } catch ( \Exception $e ) {
+            error_log( 'Mollie webhook error for payment ' . $payment_id . ': ' . $e->getMessage() );
+            // Still return 200 — code errors should not trigger Mollie retries
+        }
+
+        return new \WP_REST_Response( null, 200 );
+    }
+
+    private function get_invoice_id_by_payment_id( string $payment_id ): int {
+        $posts = get_posts( [
+            'post_type'      => 'rondo_invoice',
+            'meta_key'       => '_mollie_payment_id',
+            'meta_value'     => $payment_id,
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+        ] );
+        return (int) ( $posts[0] ?? 0 );
+    }
+}
 ```
 
-**Card patterns (NEW):**
+---
 
-```css
-.card
-  bg: #F8FAFC (slate-50)
-  border: 1px solid #E2E8F0 (slate-200)
-  + 3px gradient top border (pseudo-element)
-  shadow: 0 4px 16px rgba(0,0,0,0.06)
-  rounded: 1rem
-  hover: darker bg + stronger shadow
+## Data Flow
+
+### Invoice Send Flow (Mollie Path)
+
+```
+POST /rondo/v1/invoices/{id}/send
+    ↓
+RestInvoices::send_invoice()
+    ↓
+FinanceConfig::get_active_payment_provider() → 'mollie'
+    ↓
+MolliePayment::create_payment_link( $invoice_id )
+    ↓
+MollieClient → MollieApiClient::setApiKey( $key )
+    ↓
+POST https://api.mollie.com/v2/payments (JSON)
+    ↓
+$payment->_links->checkout->href  → update_field('payment_link', ..., $invoice_id)
+$payment->id                       → update_post_meta($invoice_id, '_mollie_payment_id', ...)
+    ↓
+InvoicePdfGenerator::generate()   (embeds payment_link in PDF — unchanged)
+    ↓
+InvoiceEmailSender::send()        (includes payment_link in email — unchanged)
+    ↓
+invoice status → rondo_sent
 ```
 
-**Current card pattern:**
+### Webhook Flow (Payment Confirmed by Payer)
 
-```css
-.card
-  bg: white / dark:gray-800
-  border: gray-200 / dark:gray-700
-  rounded-lg (0.5rem)
-  shadow-sm
+```
+Payer completes payment on Mollie checkout page
+    ↓
+Mollie servers POST id=tr_xxx
+    ↓
+POST /wp-json/rondo/v1/mollie/webhook  (public, no WP auth)
+    ↓
+MollieWebhook::handle_webhook()
+    ↓
+MollieClient::get()->payments->get('tr_xxx')
+    (authenticated API call — this IS the security check; Mollie doesn't sign webhooks)
+    ↓
+$payment->isPaid() → true
+    ↓
+get_invoice_id_by_payment_id('tr_xxx') via WP_Query on _mollie_payment_id meta
+    ↓
+invoice already rondo_paid? → no-op (idempotency)
+invoice is rondo_sent/rondo_overdue? → wp_update_post + update_field → rondo_paid
+    ↓
+HTTP 200 → Mollie stops retrying
 ```
 
-**Glass panels (NEW):**
-- Same as cards but no gradient top border
-- Used for header (rgba(255,255,255,0.85) + blur(10px))
+### Credential Storage Flow
 
-### Visual Effects (NEW)
+```
+Finance Settings UI: user enters Mollie API key
+    ↓
+PUT /rondo/v1/settings (existing endpoint)
+    body: { mollie_api_key: 'test_...' }
+    ↓
+FinanceConfig::update_settings( $data )
+    ↓
+FinanceConfig::update_mollie_api_key( $api_key )
+    ↓
+CredentialEncryption::encrypt( ['api_key' => $api_key] )
+    ↓
+update_option( 'rondo_finance_mollie_api_key', $encrypted )
+```
 
-1. **Gradient text** — h3 elements get cyan-to-cobalt gradient
-2. **Decorative blobs** — radial gradients with blur(80px), opacity 0.4
-3. **Hover lifts** — buttons/cards translate -2px with shadow
-4. **Focus rings** — 3px cyan glow on inputs
+---
+
+## Build Order
+
+The dependencies flow strictly top-to-bottom: config before client, client before payment service, payment service before webhook, both before RestInvoices branching, everything before UI.
+
+### Phase 1: SDK + FinanceConfig + MollieClient
+
+**Depends on:** Nothing. No REST routes registered. Safe to deploy.
+
+- Add `composer require mollie/mollie-api-php ^3.0`
+- `FinanceConfig`: add `OPTION_MOLLIE_API_KEY`, `OPTION_ACTIVE_PAYMENT_PROVIDER` constants
+- `FinanceConfig`: add `get_mollie_api_key()`, `update_mollie_api_key()`, `get_active_payment_provider()`, `update_active_payment_provider()`
+- `FinanceConfig::update_settings()`: handle `mollie_api_key` key in bulk update
+- `FinanceConfig::get_all_settings()`: expose `mollie_has_api_key` (bool), `mollie_environment` (derived from key prefix: `test_` vs `live_`)
+- Create `includes/class-mollie-client.php`
+
+### Phase 2: MolliePayment — Payment Link Creation
+
+**Depends on:** Phase 1 (MollieClient, FinanceConfig Mollie methods).
+
+- Create `includes/class-mollie-payment.php` with `create_payment_link( $invoice_id ): string|WP_Error`
+- Register instantiation in `functions.php` (REST-only block, alongside Rabobank classes)
+- Manually testable: call the method directly, check ACF `payment_link` field and `_mollie_payment_id` meta
+
+### Phase 3: MollieWebhook — Automatic Status Update
+
+**Depends on:** Phase 2 (`_mollie_payment_id` meta stored by `MolliePayment`).
+
+- Create `includes/class-mollie-webhook.php`
+- Register instantiation in `functions.php` (REST-only block)
+- Test with: `curl -X POST https://rondo.svawc.nl/wp-json/rondo/v1/mollie/webhook -d "id=tr_REAL_TEST_ID"`
+
+### Phase 4: RestInvoices — Provider Branching
+
+**Depends on:** Phases 1+2 (FinanceConfig `get_active_payment_provider()`, `MolliePayment` class).
+
+- Modify `RestInvoices::send_invoice()`: read provider, branch to `MolliePayment` or `RabobankPayment`
+- Default provider is `'rabobank'` — existing behaviour is unchanged until Mollie is explicitly configured
+- This is the only modification to existing working code; do it last to minimise risk window
+
+### Phase 5: Finance Settings UI — Mollie Configuration
+
+**Depends on:** Phase 1+4 (settings endpoint, provider selection stored).
+
+- Add Mollie API key input to Finance Settings React component
+- Add payment provider selector (Rabobank / Mollie radio or select)
+- Show Mollie status: key set / not set, environment (test / live, derived from prefix)
+- Calls existing settings REST endpoint — no new backend endpoints needed
+
+---
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Registering Webhook Inside RestInvoices
+
+**What people do:** Add `POST /rondo/v1/mollie/webhook` route inside `RestInvoices::register_routes()`.
+
+**Why wrong:** `RestInvoices` applies `check_financieel_permission()` to routes. The Mollie webhook is called by Mollie's servers — no WordPress authentication. Mixing public and authenticated routes in one controller makes the permission model fragile and breaks the existing Rabobank pattern (where `RabobankOAuth` owns its own routes).
+
+**Do instead:** Dedicated `MollieWebhook` class. Instantiated in `functions.php` alongside `RabobankOAuth` and `RabobankPayment`.
+
+### Anti-Pattern 2: Using Payment Links API Instead of Payments API
+
+**What people do:** `$mollie->paymentLinks->create()` because the name sounds like "payment link".
+
+**Why wrong:** Mollie's Payment Links API creates reusable, non-expiring links for generic payments (e.g., "donate to our club"). It has different webhook semantics than the Payments API. For invoice-specific one-time payments, the Payments API (`$mollie->payments->create()`) is the correct tool: it returns `_links->checkout->href`, supports `webhookUrl` natively, and generates a unique `tr_xxx` ID that the webhook uses to look up the invoice.
+
+**Do instead:** Always `$mollie->payments->create()`. The checkout URL is in `_links->checkout->href`.
+
+### Anti-Pattern 3: Storing Mollie API Key in Plain Text
+
+**What people do:** `update_option( 'rondo_mollie_api_key', $api_key )`.
+
+**Why wrong:** Inconsistent with the established credential storage pattern. The Rabobank credentials are sodium-encrypted. The Mollie API key is equally sensitive.
+
+**Do instead:** `CredentialEncryption::encrypt( ['api_key' => $api_key] )` then `update_option(...)`. Same flow as `FinanceConfig::update_rabobank_credentials()`.
+
+### Anti-Pattern 4: Trusting Webhook Payload for Payment Status
+
+**What people do:** Read a `status` field from the webhook POST body and act on it.
+
+**Why wrong:** Mollie webhooks POST only the payment `id` — there is no status in the payload. More importantly, Mollie's security model requires a subsequent authenticated API call to retrieve the actual status. This fetch-after-webhook pattern is the verification step — without it, any attacker could POST a fake `id` and mark invoices paid.
+
+**Do instead:** Always `$mollie->payments->get( $payment_id )` inside the webhook. The SDK call uses your API key, making the response authoritative.
+
+### Anti-Pattern 5: Returning Non-200 for Unresolvable Errors
+
+**What people do:** Return 400 when the invoice can't be found, or 500 on a code error.
+
+**Why wrong:** Mollie retries any non-200 response up to 10 times over ~26 hours. For unresolvable errors (invoice deleted, data mismatch), retries will never succeed and waste Mollie's retry budget.
+
+**Do instead:** Catch all exceptions, log them, return 200 regardless. Only genuine transient errors (temporary DB unavailability) justify retries — and those are handled by PHP exceptions bubbling up, which you should catch and still return 200 after logging.
+
+---
 
 ## Integration Points
 
-### Point 1: Tailwind Configuration
+### External Services
 
-**File:** `tailwind.config.js`
+| Service | Integration Pattern | Auth | Notes |
+|---------|---------------------|------|-------|
+| Mollie API (api.mollie.com) | SDK `payments->create()` | API key in `Authorization: Bearer` header | Key prefix reveals env: `test_` vs `live_` |
+| Mollie webhook inbound | `POST /rondo/v1/mollie/webhook` | None (public) — API fetch is the verification | Must return 200 always, idempotent |
 
-**Changes:**
+### Internal Boundaries
 
-```javascript
-// REMOVE
-darkMode: 'class',
-colors: {
-  accent: { 50-900 mapped to CSS variables },
-  club: { ... },
-  primary: { ... }  // unused yellow scale
-}
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `RestInvoices` → `MolliePayment` | Direct `new MolliePayment()` | Same pattern as Rabobank |
+| `RestInvoices` → `RabobankPayment` | Direct `new RabobankPayment($oauth)` | Unchanged |
+| `MolliePayment` → `MollieClient` | Direct `new MollieClient()` | Client reads FinanceConfig internally |
+| `MollieWebhook` → `MollieClient` | Direct `new MollieClient()` | Same client class, separate instantiation |
+| `MollieClient` → SDK | `new MollieApiClient()` from Composer autoload | No global state |
+| `FinanceConfig` → `CredentialEncryption` | `CredentialEncryption::encrypt/decrypt()` | Unchanged static calls |
 
-// ADD
-colors: {
-  'electric-cyan': '#0891B2',
-  'electric-cyan-light': '#22D3EE',
-  'bright-cobalt': '#2563EB',
-  'deep-midnight': '#1E3A8A',
-  'obsidian': '#0F172A',
-  // slate scale already exists in Tailwind defaults
-}
+---
 
-// ADD gradient utilities
-backgroundImage: {
-  'brand-gradient': 'linear-gradient(135deg, #0891B2 0%, #2563EB 100%)',
-  'brand-gradient-light': 'linear-gradient(135deg, #06B6D4 0%, #1D4ED8 100%)',
-}
-```
+## Scaling Considerations
 
-**Note:** Tailwind v3.4 syntax (not v4.0 @theme as in STYLE.md).
+Not applicable. This is a single-club management tool; scale is irrelevant to the architecture decisions here.
 
-### Point 2: Base Styles
+**One practical concern:** Mollie retries webhooks up to 10 times over 26 hours. The webhook handler must be idempotent. Updating an invoice from `rondo_paid` to `rondo_paid` must be a no-op (checking `post_status !== 'rondo_paid'` before updating achieves this).
 
-**File:** `src/index.css`
+---
 
-**Remove (lines 117-355):**
-- All `:root` CSS variable definitions
-- All `[data-accent="X"]` variants
-- All `.dark` color scale inversions
+## Sources
 
-**Update:**
+- Existing codebase: `class-rabobank-oauth.php`, `class-rabobank-payment.php`, `class-rest-invoices.php`, `class-finance-config.php`, `class-credential-encryption.php` — HIGH confidence, authoritative
+- [Mollie Webhooks documentation](https://docs.mollie.com/reference/webhooks) — HIGH confidence, official docs, accessed 2026-02-17
+- [Mollie Create Payment API reference](https://docs.mollie.com/reference/create-payment) — HIGH confidence, official docs
+- [Mollie PHP SDK webhook recipe](https://github.com/mollie/mollie-api-php/blob/master/docs/recipes/payments/handle-webhook.md) — HIGH confidence, official SDK
+- [mollie/mollie-api-php on Packagist](https://packagist.org/packages/mollie/mollie-api-php) — v3.9.0 (released 2026-02-09), PHP >=7.4 — HIGH confidence
+- [Mollie Payment Links API](https://docs.mollie.com/reference/payment-links-api) — MEDIUM confidence, used to confirm Payments API is the correct choice for per-invoice use
 
-```css
-@layer base {
-  body {
-    @apply bg-slate-50 text-slate-800;  // was gray-50/gray-900
-    /* Remove: dark:bg-gray-900 dark:text-gray-100 */
-  }
-
-  /* Keep iOS safe area utilities */
-  /* Keep transition support */
-  /* Remove: @media (prefers-reduced-motion) transitions */
-}
-
-/* Update timeline content styles */
-.timeline-content a {
-  @apply text-electric-cyan hover:text-bright-cobalt underline;
-  /* Remove: dark:text-accent-400 dark:hover:text-accent-300 */
-}
-```
-
-**Add new component classes:**
-
-```css
-@layer components {
-  .btn-primary {
-    @apply btn bg-brand-gradient text-white hover:shadow-lg;
-    transition: all 200ms ease;
-  }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(8, 145, 178, 0.3);
-  }
-
-  .btn-secondary {
-    @apply btn bg-bright-cobalt text-white hover:shadow-lg;
-  }
-
-  .btn-glass {
-    @apply btn bg-transparent border border-slate-200 hover:bg-slate-50;
-  }
-
-  .card {
-    @apply bg-slate-50 rounded-2xl border border-slate-200 relative;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-  }
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(135deg, #0891B2, #2563EB);
-    border-radius: 1rem 1rem 0 0;
-  }
-
-  .gradient-text {
-    background: linear-gradient(135deg, #06B6D4, #1D4ED8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-}
-```
-
-### Point 3: Remove Theme Hook
-
-**File:** `src/hooks/useTheme.js`
-
-**Action:** DELETE entire file (385 lines)
-
-**Justification:** No longer need dynamic color injection, dark mode toggle, or accent color switching.
-
-**Dependent code to update:**
-- Settings page theme controls
-- Any component importing `useTheme`
-
-### Point 4: WordPress Configuration Cleanup
-
-**Files:**
-- `includes/class-club-config.php`
-- `functions.php`
-
-**Changes:**
-
-```php
-// class-club-config.php
-// REMOVE: get_accent_color() method
-// REMOVE: OPTION_ACCENT_COLOR constant
-// KEEP: get_club_name() for site branding
-
-// functions.php (localize script)
-wp_localize_script('rondo-main', 'rondoConfig', [
-  'siteName' => $club_config->get_club_name(),
-  // REMOVE: 'accentColor' => $club_config->get_accent_color(),
-]);
-```
-
-### Point 5: Settings Page Updates
-
-**File:** Search for Settings page with color picker
-
-**Remove:**
-- Color scheme selector (light/dark/system)
-- Accent color picker (react-colorful)
-- Any UI for theme customization
-
-**Keep:**
-- Club name input (still needed)
-
-### Point 6: Component Updates
-
-**Scope:** 69 JSX files with component patterns
-
-**Update strategy:**
-
-1. **Find/replace patterns:**
-
-```javascript
-// Buttons
-"bg-accent-600" → "bg-electric-cyan"
-"hover:bg-accent-700" → "hover:bg-bright-cobalt"
-"text-accent-600" → "text-electric-cyan"
-"focus:ring-accent-500" → "focus:ring-electric-cyan"
-
-// Remove all dark: variants
-"dark:bg-gray-800" → remove
-"dark:text-gray-100" → remove
-// (1,877 occurrences)
-
-// Cards
-"bg-white" → "bg-slate-50" (for cards)
-"border-gray-200" → "border-slate-200"
-
-// Links
-"text-accent-600 hover:text-accent-700" → "text-electric-cyan hover:text-bright-cobalt"
-```
-
-2. **Manual component updates:**
-
-**DashboardCard.jsx:**
-- Add gradient top border to card
-- Remove dark mode header bg
-- Update icon colors to electric-cyan
-
-**Layout.jsx (Sidebar):**
-- Update logo color to electric-cyan
-- Remove dark mode classes
-- Update active nav state to use electric-cyan
-
-**All modal components:**
-- Remove dark:bg-gray-800 overlays
-- Update to light slate backgrounds
-- Remove dark mode contrast fixes
-
-### Point 7: PWA Manifest & Favicon
-
-**Files:**
-- `public/manifest.json` (if exists)
-- Favicon generation in `useTheme.js` (being deleted)
-
-**Static replacements:**
-
-```json
-// manifest.json
-{
-  "theme_color": "#0891B2",  // electric-cyan
-  "background_color": "#F8FAFC"  // slate-50
-}
-```
-
-**Favicon:** Use static SVG with electric-cyan fill (no dynamic generation).
-
-## Component Dependencies & Build Order
-
-### Phase 1: Foundation (No Dependencies)
-**Must complete first — breaks existing system**
-
-1. **Update Tailwind config** — Add brand tokens, remove accent/club scales
-2. **Update index.css** — Remove CSS variables, add new component classes
-3. **Delete useTheme.js** — Remove dynamic theming hook
-4. **Update WordPress config** — Remove accent color backend
-
-**Verification:** Build succeeds, no runtime errors (UI will be broken but app runs)
-
-### Phase 2: Core Components (Depends on Phase 1)
-**Foundation of UI system**
-
-5. **Button classes** — Update all btn-primary/secondary/danger usages
-6. **Card component** — DashboardCard.jsx with gradient top border
-7. **Layout system** — Sidebar, Header, main containers
-
-**Verification:** Navigation, cards, buttons render correctly
-
-### Phase 3: Feature Components (Depends on Phase 2)
-**Can be done in parallel after Phase 2**
-
-8. **Modals** (14 components) — Remove dark mode, update backgrounds
-9. **Forms** — Input styles, focus rings, labels
-10. **Lists** — People list, team list, todo list styling
-11. **Timeline** — Activity cards, note cards, todo items
-12. **Dashboard widgets** — Stats cards, reminder cards, meeting cards
-
-**Verification:** All features render correctly, no visual regressions
-
-### Phase 4: Polish & Cleanup (Depends on Phase 3)
-**Final pass**
-
-13. **Settings page** — Remove theme controls
-14. **PWA assets** — Update manifest, favicon
-15. **Remove dead code** — Search for remaining accent-* references
-16. **Dark mode cleanup** — Remove all dark: classes (find/replace)
-
-**Verification:** No console errors, no unused CSS, Lighthouse scores maintained
-
-## Data Flow Changes
-
-### Before (Dynamic Theming)
-
-```
-WordPress Options (rondo_accent_color: #006935)
-  ↓
-ClubConfig::get_accent_color()
-  ↓
-functions.php localizes → window.rondoConfig.accentColor
-  ↓
-useTheme.js reads → injects CSS variables to :root
-  ↓
-Tailwind classes (accent-600) → var(--color-accent-600)
-  ↓
-Rendered color in UI
-```
-
-**User can customize:** Accent color, light/dark mode preference
-
-### After (Static Branding)
-
-```
-Tailwind config (electric-cyan: #0891B2)
-  ↓
-Tailwind classes (bg-electric-cyan) → #0891B2
-  ↓
-Rendered color in UI
-```
-
-**User can customize:** Nothing (consistent brand identity)
-
-## Breaking Changes
-
-### For Users
-
-1. **No theme customization** — Cannot change accent color
-2. **No dark mode** — Light theme only
-3. **Different visual style** — Gradients, rounder cards, cyan/blue palette
-
-### For Developers
-
-1. **accent-* classes removed** — Must use electric-cyan, bright-cobalt
-2. **dark: classes non-functional** — Remove all dark mode variants
-3. **useTheme hook removed** — Any component using it will break
-4. **Card structure changed** — New gradient top border via ::before
-
-## Risk Assessment
-
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Breaking all 69 components simultaneously | HIGH | Phase 1 breaks build; must complete Phases 1-2 in single session |
-| Missing dark: class cleanup causes confusion | MEDIUM | Use grep to find all 1,877 instances, automated find/replace |
-| Gradient performance on low-end devices | LOW | CSS gradients are hardware-accelerated |
-| Users expect dark mode | MEDIUM | Document removal in changelog, no technical risk |
-| Tailwind v3 vs v4 syntax mismatch | LOW | STYLE.md uses v4 @theme, we use v3 extend.colors |
-
-## New Components Needed
-
-### 1. GradientText Component
-
-```jsx
-// src/components/GradientText.jsx
-export default function GradientText({ children, className = '' }) {
-  return (
-    <span className={`gradient-text ${className}`}>
-      {children}
-    </span>
-  );
-}
-```
-
-**Usage:** Wrap section headings for brand gradient effect.
-
-### 2. DecorativeBlob Component (Optional)
-
-```jsx
-// src/components/DecorativeBlob.jsx
-export default function DecorativeBlob({ position = 'top-right' }) {
-  const positionClasses = {
-    'top-right': 'top-0 right-0',
-    'bottom-left': 'bottom-0 left-0',
-  };
-
-  return (
-    <div
-      className={`absolute ${positionClasses[position]} w-96 h-96 -z-10 pointer-events-none`}
-      style={{
-        background: 'radial-gradient(circle, rgba(34, 211, 238, 0.4), transparent 70%)',
-        filter: 'blur(80px)',
-      }}
-    />
-  );
-}
-```
-
-**Usage:** Add to dashboard background for visual interest (per STYLE.md).
-
-### 3. GlassPanel Component
-
-```jsx
-// src/components/GlassPanel.jsx
-export default function GlassPanel({ children, className = '' }) {
-  return (
-    <div
-      className={`bg-white/85 backdrop-blur-md border border-slate-200 rounded-2xl p-6 ${className}`}
-      style={{
-        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-```
-
-**Usage:** Header, special containers (per STYLE.md glass morphism pattern).
-
-## Modified Components
-
-### High-Impact (Structure Changes)
-
-| Component | Change Type | Complexity |
-|-----------|-------------|------------|
-| `DashboardCard.jsx` | Add ::before gradient border, remove dark mode | MEDIUM |
-| `Layout.jsx` | Update sidebar, header, remove useTheme import | HIGH |
-| `index.css` | Complete rewrite of component layer | HIGH |
-| `tailwind.config.js` | Remove accent system, add brand tokens | MEDIUM |
-
-### Medium-Impact (Class Updates Only)
-
-| Component Type | Count | Change Type |
-|----------------|-------|-------------|
-| Modals | 14 | Remove dark:*, update backgrounds |
-| Form components | 8 | Update focus rings, borders |
-| List views | 5 | Update hover states, borders |
-| Cards | 12 | Update to slate-50 backgrounds |
-
-### Low-Impact (Minor Color Changes)
-
-| Component Type | Count | Change Type |
-|----------------|-------|-------------|
-| Buttons | ~50 usages | Update btn-primary classes |
-| Links | ~100 usages | accent-600 → electric-cyan |
-| Icons | ~200 usages | Update text colors |
-
-## Testing Strategy
-
-### Visual Regression Checkpoints
-
-1. **After Phase 1:** App runs, no console errors (UI broken expected)
-2. **After Phase 2:** Core layout renders, buttons clickable, cards visible
-3. **After Phase 3:** All features functional, forms submittable
-4. **After Phase 4:** No dark mode remnants, clean build
-
-### Manual Test Scenarios
-
-- [ ] Dashboard loads with gradient cards
-- [ ] Navigation highlights active page with cyan
-- [ ] Buttons show gradient and lift on hover
-- [ ] Modals open with light backgrounds
-- [ ] Forms show cyan focus rings
-- [ ] All pages accessible and functional
-- [ ] PWA installs with correct theme color
-- [ ] No console warnings about missing CSS variables
-
-## Performance Considerations
-
-### Before (Dynamic Theming)
-
-- 385 lines of useTheme.js executed on every mount
-- Runtime CSS variable injection
-- Dark mode media query listener
-- localStorage reads/writes for preferences
-
-### After (Static Branding)
-
-- Zero runtime theme logic
-- Static Tailwind classes compiled to CSS
-- No JavaScript color calculations
-- Smaller bundle (remove useTheme, react-colorful)
-
-**Estimated bundle savings:** ~30KB (useTheme + react-colorful)
-
-## Rollback Strategy
-
-If design refresh causes issues:
-
-1. **Git revert** to before Phase 1
-2. **Backup tailwind.config.js** before changes
-3. **Keep useTheme.js** in a backup file for one release cycle
-4. **Document breaking changes** in CHANGELOG.md
-
-**Point of no return:** After deploying Phase 1-2, rolling back requires full rebuild.
-
-## Open Questions for Validation
-
-1. **Typography:** STYLE.md uses Montserrat for headings — need to add web font?
-2. **Gradient performance:** Acceptable on mobile devices with many cards?
-3. **Accessibility:** Cyan/blue palette meets WCAG AA contrast ratios?
-4. **User feedback:** How to communicate dark mode removal to users?
-5. **Settings page:** What remains after removing theme controls?
-
-## References
-
-- **STYLE.md:** `/Users/joostdevalk/Code/rondo/STYLE.md`
-- **Current Tailwind config:** `/Users/joostdevalk/Code/rondo/rondo-club/tailwind.config.js`
-- **Current theme hook:** `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useTheme.js`
-- **Current base styles:** `/Users/joostdevalk/Code/rondo/rondo-club/src/index.css`
-- **Club config backend:** `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-club-config.php`
+---
+*Architecture research for: Mollie payment provider integration — Rondo Club invoice system*
+*Researched: 2026-02-17*

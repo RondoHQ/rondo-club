@@ -1,340 +1,189 @@
 # Project Research Summary
 
-**Project:** Rondo Club Design Refresh
-**Domain:** React SPA design system refresh (brand alignment, Tailwind migration, dynamic theming removal)
-**Researched:** 2026-02-09
+**Project:** v27.0 Mollie Payment Integration
+**Domain:** Payment provider integration — adding Mollie alongside Rabobank for discipline case invoices
+**Researched:** 2026-02-17
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This project migrates Rondo Club from a sophisticated dynamic theming system (user-selected accent colors, dark mode, CSS variables) to a fixed brand identity using Tailwind CSS v4's new architecture. The migration involves three core changes: upgrading Tailwind CSS v3.4 to v4 (new CSS-first configuration model), replacing 549 accent-* color references with fixed cyan/cobalt brand gradients, and removing 1,877 dark mode classes to focus on a single polished light experience.
+Adding Mollie as a second payment provider to the existing Rondo Club invoice system is a well-scoped, low-risk feature addition. The existing codebase already has all the architectural patterns needed: encrypted credential storage (`CredentialEncryption`), a finance config layer (`FinanceConfig`), a separate payment class (`RabobankPayment`), and REST-based invoice management (`RestInvoices`). Mollie integration requires adding 3 new PHP classes, modifying 3 existing ones, and installing one Composer package. The total surface area is small and the patterns are established.
 
-The recommended approach follows a four-phase structure: Foundation (Tailwind v4 migration + CSS variable cleanup), Core Components (buttons, cards, layout), Feature Components (modals, forms, lists), and Polish (glass morphism, typography, PWA assets). This order minimizes risk by establishing the stable base (design tokens) before modifying visual elements. The architecture requires no backend changes beyond removing theme customization logic from WordPress settings.
+The recommended approach is: install `mollie/mollie-api-php ^3.9` via Composer, mirror the `RabobankPayment` pattern into a new `MolliePayment` class using the Payments API (not the Payment Links API), add a dedicated `MollieWebhook` class with a public REST endpoint, and update `FinanceConfig` and `RestInvoices` for provider routing. The key differentiator over the existing Rabobank integration is automatic payment status updates via webhook — when a member pays, the invoice transitions to `rondo_paid` without admin intervention, because Mollie retries webhook delivery for up to 26 hours.
 
-Key risks include incomplete dark mode class removal causing visual inconsistencies, breaking CSS variable references when removing the accent system, and mobile performance degradation from glass morphism backdrop-filter effects. These are mitigated through automated detection (ESLint rules), two-phase color migration (replace usages before deleting definitions), and strict blur limits (max 10px on mobile) with fallback backgrounds.
+The primary risks are webhook-specific and all preventable with explicit code patterns: the Mollie webhook must be publicly accessible (no WordPress nonce), payment status must always be re-fetched from the Mollie API (never trusted from the POST body alone), the handler must always return HTTP 200, and the handler must be idempotent to avoid retry storms. There are no architectural unknowns — this is a standard Mollie integration into an existing invoice system following established in-codebase patterns.
 
 ## Key Findings
 
 ### Recommended Stack
 
-**Core technology: Tailwind CSS v4 with Vite integration**
-
-The migration requires Tailwind CSS v4, which fundamentally changes from JavaScript configuration (tailwind.config.js) to a CSS-first model using @theme directives in index.css. This is not an optional upgrade—the design refresh depends on v4's native gradient utilities and simplified color system. The v4 architecture removes PostCSS/autoprefixer dependencies (replaced by Lightning CSS internally) and uses a new Vite plugin for integration.
+The only new dependency is `mollie/mollie-api-php ^3.9` (released 2026-02-09, PHP >= 7.4), which pulls in `nyholm/psr7 ^1.8` as its sole new transitive dependency. All other PSR HTTP dependencies (`psr/http-client`, `psr/http-factory`, `psr/http-message`) are already installed via `google/apiclient`. No Guzzle conflicts are expected because Mollie v3+ removed Guzzle as a production dependency. The existing `CredentialEncryption` class handles Mollie API key storage without changes — same sodium-encrypt pattern as Rabobank credentials.
 
 **Core technologies:**
-- **Tailwind CSS v4.1.0**: Core framework with 100x faster builds, native gradient support (bg-linear-to-*, bg-radial), native backdrop-blur utilities, CSS variables for colors
-- **@tailwindcss/vite v4.1.0**: Required Vite plugin for v4 integration (replaces PostCSS approach)
-- **@fontsource/montserrat v5.2.8**: Self-hosted typography (weights 600 + 700 for headings), GDPR-friendly, subset loading for performance
-- **Remove**: postcss, autoprefixer (no longer needed in v4)
+- `mollie/mollie-api-php ^3.9`: Official Mollie PHP SDK — the only correct option; v3 uses the modern `payments->create()` pattern; do not use v2's deprecated fluent API
+- `nyholm/psr7 ^1.8`: New transitive dependency pulled in automatically; no conflicts with existing packages
+- `CredentialEncryption` (existing): Reuse for Mollie API key storage — no new crypto code needed
+- WordPress Options API (existing): Store `rondo_finance_mollie_api_key` (encrypted) and `rondo_finance_active_payment_provider`
 
-**Critical version requirements:**
-- Minimum browser support: Safari 16.4+, Chrome 111+, Firefox 128+ (acceptable for internal sports club tool)
-- Tailwind v4 is BREAKING: tailwind.config.js must be deleted, configuration moves to CSS @theme blocks
-
-**Font loading strategy:**
-- Fontsource over Google Fonts CDN (privacy, no external requests, subset control)
-- Load only 2 weights: 600 (Semi-Bold) for h2/h3, 700 (Bold) for h1/buttons
-- Import in src/main.jsx, define --font-heading in @theme
-- ~120KB bundle size increase (mitigated by code splitting)
+**What NOT to use:**
+- `mollie/oauth2-mollie-php` — only for multi-merchant SaaS; single-club API key auth is sufficient here
+- Payment Links API (`$mollie->paymentLinks->create()`) — designed for reusable/shared links; use the Payments API for per-invoice one-time payments
+- Custom HMAC webhook verification — Mollie does not send HMAC signatures on standard webhooks; security is provided by re-fetching payment state via authenticated SDK call
 
 ### Expected Features
 
 **Must have (table stakes):**
-- **Fixed brand color palette** — Replaces dynamic accent color picker; users expect consistent brand identity
-- **Gradient buttons (primary/secondary/ghost)** — Modern UI convention 2026; three variants expected for visual hierarchy
-- **Card gradient top border** — 3px gradient border signals visual accent without overwhelming content
-- **Consistent focus ring styling** — WCAG 2.4.7 requirement; must update all inputs/buttons to use brand gradient colors
-- **Typography consistency** — Apply Montserrat to headings throughout (replacing Inter); users notice font mismatches immediately
-- **Responsive gradient behavior** — Gradients must work across mobile/tablet/desktop without banding
+- Mollie API key storage — encrypted in WordPress options via `CredentialEncryption`; key prefix (`test_` vs `live_`) determines mode automatically, no separate toggle needed
+- Default payment provider selector — single dropdown (Rabobank / Mollie) in Finance Settings; stored in `FinanceConfig`; default remains `rabobank` so existing behavior is unchanged until Mollie is explicitly configured
+- Mollie payment link creation — `MolliePayment::create_payment_link()` using Payments API; checkout URL stored in shared ACF `payment_link` field; Mollie payment ID stored in `_mollie_payment_id` post meta for webhook lookup
+- Webhook endpoint for automatic payment status update — public REST endpoint at `rondo/v1/mollie/webhook`; re-fetches payment status via SDK; transitions invoice to `rondo_paid`; idempotent
+- Finance Settings UI update — Mollie API key field, provider selector dropdown, derived mode display (Test / Live badge)
 
-**Should have (competitive differentiators):**
-- **Glass morphism header** — backdrop-blur(12px) + rgba background creates modern layered depth
-- **Gradient text in headings** — bg-clip-text with gradient reinforces brand identity
-- **PWA theme-color gradient** — Browser chrome matches app gradient on mobile
-- **Hover gradient shifts** — Button gradients subtly shift on hover to reinforce interactivity
+**Should have (competitive advantage):**
+- Automatic invoice status update via webhook — closes the payment loop without admin action; key improvement over Rabobank which has no webhook
+- Payment link reuse — store link on invoice and reuse if already created; do not re-create on each email send
+- Test/live mode indicator — visible badge in Finance Settings derived from key prefix; never expose full API key in REST responses
 
-**Explicitly exclude (anti-features):**
-- **Dynamic user color picker** — Undermines brand consistency; must remove Settings > Appearance > Accent Color section
-- **Dark mode** — Reduces maintenance surface, simplifies gradient/glass implementation; remove toggle + all dark:* classes
-- **Gradient backgrounds on large surfaces** — Causes visual fatigue; use gradients only for accents (buttons, borders, headings)
-- **Glass morphism on interactive elements** — NN/g best practice: never apply transparency to buttons (reduces perceivability)
-- **Animated gradient borders** — High complexity, low ROI; defer to future if requested
+**Defer to v2+:**
+- iDEAL-only method restriction — Mollie Dashboard controls enabled methods; code-level enforcement adds complexity without practical benefit for a Dutch sports club context
+- Mollie refund initiation from Rondo — admin handles refunds in Mollie Dashboard; discipline case appeals are infrequent enough that UI-driven refunds are not warranted
 
 ### Architecture Approach
 
-The design refresh replaces three architectural layers: Design Token Layer (dynamic accent colors → fixed Tailwind tokens), Component Layer (update 69 JSX components to use new brand classes), and Configuration Layer (remove WordPress theme customization system). The current architecture uses 385 lines of useTheme.js for runtime CSS variable injection, supports 8 selectable accent colors via [data-accent="X"] variants, and implements sophisticated dark mode with localStorage persistence. The new architecture eliminates all runtime theme logic in favor of static Tailwind classes, resulting in ~30KB bundle savings (remove useTheme + react-colorful).
+The integration follows strict provider abstraction: `RestInvoices::send_invoice()` reads the active provider from `FinanceConfig` and branches to either `MolliePayment` or `RabobankPayment`. Both implement the same one-method contract (`create_payment_link($invoice_id): string|WP_Error`). A dedicated `MollieClient` class wraps SDK initialization so both `MolliePayment` and `MollieWebhook` can share API access without a singleton. The webhook lives in its own class (`MollieWebhook`) with a public permission callback, cleanly separated from the authenticated `RestInvoices` routes — following the existing pattern where `RabobankOAuth` has its own class.
 
 **Major components:**
-1. **Foundation Layer** — Tailwind v4 config migration (delete tailwind.config.js, create @theme blocks in index.css), remove CSS variable system (lines 117-355 in index.css), delete useTheme.js hook
-2. **Color System Migration** — Replace 549 accent-* references with electric-cyan/bright-cobalt, define 5 brand tokens (electric-cyan #0891B2, bright-cobalt #2563EB, deep-midnight #1E3A8A, obsidian #0F172A, keep slate scale)
-3. **Component Updates** — Update buttons (bg-brand-gradient with hover lift), cards (3px gradient top border via ::before), modals (remove dark mode backgrounds), forms (cyan focus rings)
-4. **Backend Cleanup** — Remove ClubConfig::get_accent_color() method, remove rondoConfig.accentColor localization, delete color picker from Settings page
-
-**Critical architectural decision:**
-Stay on Tailwind v3.4 OR upgrade to v4? STACK.md recommends v4 for native gradients and backdrop-blur. ARCHITECTURE.md notes syntax mismatch but recommends v3.4 for stability. **Resolution: Upgrade to v4** — gradient utilities and simplified color system are essential for the design refresh, and v4 architecture aligns better with removing dynamic theming.
+1. `FinanceConfig` (modified) — adds Mollie API key methods + active provider setting; option keys `rondo_finance_mollie_api_key` and `rondo_finance_active_payment_provider`
+2. `MollieClient` (new) — thin SDK wrapper; reads encrypted key from `FinanceConfig`; both `MolliePayment` and `MollieWebhook` instantiate this
+3. `MolliePayment` (new) — creates Mollie payment via Payments API; stores checkout URL in ACF `payment_link` field + Mollie payment ID in `_mollie_payment_id` post meta
+4. `MollieWebhook` (new) — public REST endpoint (`'permission_callback' => '__return_true'`); re-fetches payment via SDK; idempotently marks invoice paid; always returns 200
+5. `RestInvoices` (modified) — provider branching in `send_invoice()`; default remains `'rabobank'` — existing Rabobank path untouched
+6. Finance Settings React UI (modified) — Mollie key field, provider selector, mode badge derived from key prefix
 
 ### Critical Pitfalls
 
-1. **Incomplete Dark Mode Class Removal (1,877 instances)** — Missing even 5% creates broken layouts with invisible text on white backgrounds. Prevention: Automated ESLint rule that fails build if dark: classes detected, systematic file-by-file checklist, visual regression screenshots.
+1. **WordPress nonce blocks Mollie webhooks** — Register webhook with `'permission_callback' => '__return_true'`. If the endpoint requires a WordPress nonce or user session, Mollie receives 403, retries 10 times over 26 hours, and gives up — invoice never auto-updates to paid. Security is provided instead by the mandatory API re-fetch (see pitfall 2).
 
-2. **CSS Variable References Break When Accent System Removed (339 instances)** — Removing CSS variables without replacing ALL accent-* references causes components to lose color styling. Prevention: Two-phase migration (replace usages first, remove definitions second), grep verification after replacement, test production build locally before deploy.
+2. **Trusting the POST body without re-fetching from Mollie API** — Mollie's webhook POST body contains only `id=tr_xxx`. Always call `$mollie->payments->get($payment_id)` inside the handler before acting. Skipping this lets any attacker POST a fake payment ID to fraudulently mark invoices paid. The API re-fetch is the security verification step.
 
-3. **Tailwind v3→v4 Migration Breaks Custom Color Configuration** — Build completely fails if v4 installed without migrating config from tailwind.config.js to @theme directive. Prevention: Use official migration tool (npx @tailwindcss/upgrade@next), migrate config in dedicated phase BEFORE design changes, test build succeeds before component updates.
+3. **Shared `payment_link` ACF field overwritten by both providers** — The existing system uses `get_field('payment_link', $invoice_id)` for Rabobank links. Mollie must store its payment ID in a separate `_mollie_payment_id` post meta field. Using `payment_link` as the "active sent link" for both providers is fine; mixing the payment IDs used for webhook lookup in a shared field is not.
 
-4. **Gradient Text WebKit-Prefix Breaks in Firefox/Safari** — Requires -webkit-background-clip: text and proper fallbacks, or text becomes invisible. Prevention: Always include vendor prefix, add color fallback before gradient, use @supports feature detection, test on Firefox/Safari/Chrome/Edge.
+4. **Non-200 webhook responses trigger Mollie retry storm** — Wrap the entire webhook handler in try/catch. Log errors internally. Always return HTTP 200 regardless of errors. Returning 4xx or 5xx (even for legitimate issues like an invoice not found) causes Mollie to retry up to 10 times over 26 hours.
 
-5. **Glass Morphism Backdrop-Filter Destroys Mobile Performance** — Forces GPU compositing causing lag/frame drops on mobile. Prevention: Limit blur to 10px max (5px on mobile via media query), apply only to header (not cards/lists), provide solid fallback background, test on actual low-end Android device.
+5. **Webhook URL rejected by Mollie at payment creation time** — Mollie validates `webhookUrl` when the payment is created, not at delivery time. On local dev (`localhost`, `.local` TLD), omit `webhookUrl` entirely — Mollie skips delivery gracefully. On production, `rest_url('rondo/v1/mollie/webhook')` produces the correct HTTPS URL automatically.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+The dependency chain is strict and drives the phase order: config before client, client before payment service, payment service before webhook (webhook needs the payment ID stored by `MolliePayment` to look up the invoice), both payment service and webhook before `RestInvoices` branching, everything before UI. The architecture research defines a 5-phase build order that maps directly to this dependency graph.
 
-### Phase 1: Foundation - Tailwind v4 Migration
-**Rationale:** Must establish stable base before any visual changes. Tailwind v4 architecture is fundamentally different (CSS-first config, no tailwind.config.js), so migration must complete first to avoid conflicts. This phase breaks the existing system but app should still run (with broken styling).
+### Phase 1: SDK Installation + FinanceConfig + MollieClient
 
-**Delivers:**
-- Tailwind v4 installed with @tailwindcss/vite plugin
-- tailwind.config.js deleted, @theme blocks in index.css
-- PostCSS/autoprefixer removed
-- Brand color tokens defined (electric-cyan, bright-cobalt, etc.)
-- Build succeeds (UI broken expected)
+**Rationale:** Everything depends on the API key being stored and the SDK being initialized. This phase is safe to deploy in isolation — no REST routes are registered, no user-visible changes occur. It also validates the Composer installation before any integration code is written.
 
-**Addresses:**
-- Tailwind v4 architecture (STACK.md)
-- Foundation for gradient utilities and backdrop-blur (FEATURES.md)
+**Delivers:** `composer require mollie/mollie-api-php ^3.9` installed and deployed; `FinanceConfig` extended with `get_mollie_api_key()`, `update_mollie_api_key()`, `get_active_payment_provider()`, `update_active_payment_provider()`; `class-mollie-client.php` created in `includes/`.
 
-**Avoids:**
-- Pitfall #3 (config migration breaks build)
-- Establishes automated validation for Pitfall #1 (dark mode cleanup)
+**Addresses:** Mollie API key storage (table stakes); test/live mode derivation from key prefix; encrypted credential storage following existing `CredentialEncryption` pattern.
 
-**Research needed:** Standard Tailwind migration patterns (skip research-phase)
+**Avoids:** Composer Guzzle conflicts (Pitfall 7) — verify `composer install` succeeds and `composer why-not` shows no conflicts before writing any integration code.
 
----
+### Phase 2: MolliePayment — Payment Link Creation
 
-### Phase 2: Color System Migration
-**Rationale:** Replace dynamic accent system with fixed brand colors. Must use two-phase approach: first replace all 549 accent-* usages with new brand colors, then remove CSS variable definitions. This order prevents breaking references.
+**Rationale:** Core feature. Depends on Phase 1 (`MollieClient` + `FinanceConfig` Mollie methods). Independently testable by calling the method directly and checking the ACF `payment_link` field and `_mollie_payment_id` post meta on a test invoice.
 
-**Delivers:**
-- All accent-* classes replaced with electric-cyan/bright-cobalt
-- CSS variable system removed from index.css (lines 117-355)
-- [data-accent="X"] variants deleted
-- useTheme.js hook deleted (385 lines)
-- WordPress ClubConfig accent color methods removed
-- Production build validation (no purged classes)
+**Delivers:** `class-mollie-payment.php` with `create_payment_link($invoice_id): string|WP_Error`; uses `$mollie->payments->create()` (Payments API, not Payment Links API); stores checkout URL in ACF `payment_link` field; stores Mollie payment ID in `_mollie_payment_id` post meta; `functions.php` updated to instantiate in REST-only block.
 
-**Uses:**
-- Brand color tokens from Phase 1 (electric-cyan #0891B2, bright-cobalt #2563EB)
-- Gradient utilities from Tailwind v4 (bg-linear-to-r from-cyan-500 to-blue-600)
+**Addresses:** Mollie payment link creation (table stakes); payment link reuse (store and check `_mollie_payment_id` before creating a new one).
 
-**Implements:**
-- Design Token Layer replacement (ARCHITECTURE.md)
-- Fixed brand palette (FEATURES.md table stakes)
+**Avoids:** Payment Links API anti-pattern (Pitfall 9) — use `$mollie->payments->create()`, not `$mollie->paymentLinks->create()`; amount format error (Pitfall 8) — always `number_format($amount, 2, '.', '')`; shared field overwrite (Pitfall 3) — Mollie payment ID in provider-specific `_mollie_payment_id` meta; webhook URL validation (Pitfall 5) — omit `webhookUrl` when site URL contains `localhost` or `.local`.
 
-**Avoids:**
-- Pitfall #2 (CSS variable references break)
-- Pitfall #8 (production CSS purging)
-- Pitfall #9 (transition effects break)
+### Phase 3: MollieWebhook — Automatic Status Update
 
-**Research needed:** None (mechanical find/replace work)
+**Rationale:** Depends on Phase 2 because the webhook handler looks up invoices by `_mollie_payment_id`, which only exists after `MolliePayment` has stored it. This is the key differentiator over Rabobank — automatic payment confirmation. Keep in a dedicated class separate from `RestInvoices`.
 
----
+**Delivers:** `class-mollie-webhook.php` registering `POST /rondo/v1/mollie/webhook` with `'permission_callback' => '__return_true'`; handler re-fetches payment via `MollieClient`; idempotently updates invoice to `rondo_paid` via `wp_update_post` + `update_field`; always returns 200; wrapped in try/catch with error logging.
 
-### Phase 3: Core Component Updates
-**Rationale:** Update buttons, cards, and layout system after color foundation is stable. These are the most visible UI elements with highest impact. Component updates depend on Phase 2's brand colors being in place.
+**Addresses:** Webhook endpoint for automatic payment status update (table stakes); idempotent processing (prevents double-email on Mollie retries).
 
-**Delivers:**
-- Button variants (btn-primary with gradient, btn-secondary solid, btn-glass transparent)
-- Card component with 3px gradient top border (::before pseudo-element)
-- Hover states with translateY(-2px) lift and colored shadows
-- Layout components (Sidebar, Header) with brand colors
-- Focus ring updates (cyan glow on all inputs)
+**Avoids:** WordPress nonce blocking webhooks (Pitfall 1) — public endpoint with comment explaining intentional security model; trusting POST body (Pitfall 2) — mandatory `$mollie->payments->get($payment_id)` re-fetch; duplicate processing (Pitfall 6) — `post_status !== 'rondo_paid'` guard before writing; retry storm (Pitfall 10) — always return 200 inside try/catch.
 
-**Uses:**
-- bg-brand-gradient utility from Phase 1
-- Brand colors from Phase 2
-- Native backdrop-blur for glass effects (STACK.md)
+### Phase 4: RestInvoices — Provider Branching
 
-**Implements:**
-- Component Layer updates (ARCHITECTURE.md)
-- Gradient buttons, card borders, focus rings (FEATURES.md table stakes)
+**Rationale:** This is the only modification to currently working code. Deferred to Phase 4 to minimize the risk window — by the time this runs, `MolliePayment` is fully tested and functional. The default remains `'rabobank'`, so existing behavior is completely unchanged until a Mollie API key is configured.
 
-**Avoids:**
-- Breaking dependencies by updating components before color system ready
+**Delivers:** Modified `RestInvoices::send_invoice()` that reads `FinanceConfig::get_active_payment_provider()` and routes to `MolliePayment` or `RabobankPayment`; existing Rabobank code path is untouched; `functions.php` instantiation updated.
 
-**Research needed:** None (standard component styling patterns)
+**Avoids:** Regression in Rabobank path — only a new `if ($provider === 'mollie')` branch is added around existing Rabobank code; no Rabobank classes are modified.
 
----
+### Phase 5: Finance Settings UI — Mollie Configuration
 
-### Phase 4: Feature Components & Dark Mode Cleanup
-**Rationale:** Update remaining components (modals, forms, lists, timeline) and complete dark mode removal. Can be done in parallel after Phase 3. This is the largest scope but lowest risk since core UI is stable.
+**Rationale:** Admin-facing configuration. Depends on all backend phases being stable. Uses the existing settings REST endpoint — no new backend endpoints needed. Can be the final phase because the backend is fully functional before the UI exposes it to admins.
 
-**Delivers:**
-- All 14 modals updated (remove dark mode backgrounds, update to slate-50)
-- All form components with cyan focus rings
-- Lists (People, Teams, Dates) with updated styling
-- Timeline activity/note cards updated
-- All 1,877 dark:* classes removed (automated find/replace with validation)
-- ESLint rule enforcing no dark: classes
+**Delivers:** Mollie API key input in Finance Settings React component; payment provider selector (Rabobank / Mollie); mode badge (Test / Live, derived from key prefix in API response); key display shows only prefix + last 4 characters, never full key.
 
-**Addresses:**
-- Feature Components layer (ARCHITECTURE.md)
-- Remove dark mode anti-feature (FEATURES.md)
+**Addresses:** Finance Settings UI update (table stakes); test/live mode indicator (should-have).
 
-**Avoids:**
-- Pitfall #1 (incomplete dark mode cleanup via automation)
-- Pitfall #7 (missing PHP backend dark mode cleanup)
-
-**Research needed:** None (component styling work)
-
----
-
-### Phase 5: Typography & Font Loading
-**Rationale:** Add Montserrat font and apply to headings throughout the app. Separate phase to avoid font loading issues interfering with component styling work. Includes font loading optimization to prevent FOUT/FOIT.
-
-**Delivers:**
-- @fontsource/montserrat installed (weights 600 + 700)
-- Fonts imported in src/main.jsx with font-display: swap
-- --font-heading defined in @theme
-- All h1/h2/h3 elements use Montserrat
-- Preload tags for critical font files
-- Subset loading for performance
-
-**Uses:**
-- Fontsource self-hosted fonts (STACK.md)
-- Typography update (FEATURES.md table stakes)
-
-**Avoids:**
-- Pitfall #6 (FOUT/FOIT without optimization)
-
-**Research needed:** None (standard font loading patterns)
-
----
-
-### Phase 6: Visual Polish & Glass Morphism
-**Rationale:** Add glass morphism header and gradient text after core UI is stable. Separate phase because these effects require careful performance testing and browser compatibility validation.
-
-**Delivers:**
-- Glass morphism header (backdrop-blur(10px) + rgba(255,255,255,0.85))
-- Gradient text component for section headings
-- Mobile-specific blur reduction (5px on mobile via media query)
-- Fallback backgrounds for unsupported browsers (@supports)
-- Performance validation on low-end Android device
-
-**Addresses:**
-- Glass morphism header, gradient text (FEATURES.md differentiators)
-- GlassPanel and GradientText components (ARCHITECTURE.md)
-
-**Avoids:**
-- Pitfall #5 (mobile performance from backdrop-filter)
-- Pitfall #4 (gradient text browser compatibility)
-
-**Research needed:** Mobile performance testing (standard patterns)
-
----
-
-### Phase 7: Backend & PWA Cleanup
-**Rationale:** Final cleanup phase for backend code, PWA assets, and dead code removal. Completes the migration by removing all traces of old theming system.
-
-**Delivers:**
-- Settings page theme controls removed (color picker, dark mode toggle)
-- PWA manifest.json updated (theme_color: #0891B2)
-- Static favicon with electric-cyan fill (remove dynamic generation)
-- Database cleanup (remove dark mode user preferences from user meta)
-- Dead code removal (remaining accent-* references)
-- Build-time validation (no unused CSS)
-
-**Addresses:**
-- Configuration Layer cleanup (ARCHITECTURE.md)
-- PWA theme-color (FEATURES.md)
-
-**Avoids:**
-- Pitfall #7 (missing PHP backend cleanup)
-
-**Research needed:** None (cleanup work)
-
----
+**Avoids:** Test/live key cross-contamination (Pitfall 4) — visible mode indicator in UI makes active mode impossible to miss; key exposure — `FinanceConfig::get_all_settings()` returns `mollie_has_api_key` (bool) and `mollie_environment` (string), never the raw key.
 
 ### Phase Ordering Rationale
 
-**Phase 1 must complete first:** Tailwind v4 architecture is incompatible with v3 config. Migration tool must run before any design changes to avoid merge conflicts.
-
-**Phase 2 depends on Phase 1:** Brand color tokens must be defined in @theme before replacing accent-* references. Two-phase approach (replace usages → remove definitions) prevents breaking references.
-
-**Phase 3 depends on Phase 2:** Buttons and cards need brand colors to be stable. Gradient utilities from v4 required for button backgrounds.
-
-**Phases 4-7 can be parallelized after Phase 3:** Feature components, typography, glass morphism, and backend cleanup are independent once core UI is updated.
-
-**Why this grouping:** Architecture research (ARCHITECTURE.md) identifies three layers (tokens, components, config). Phase structure maps directly to these layers with additional phases for specialized work (typography, visual effects). Pitfalls research guides phase boundaries—each phase has clear mitigation strategies for its associated risks.
+- Config → Client → Payment Service → Webhook → `RestInvoices` branching reflects strict dependencies: each component requires the previous to be deployed and functional before it can be implemented and tested
+- `RestInvoices` modification is deferred to Phase 4 (not Phase 2) to keep the existing Rabobank path completely isolated from Mollie work until the Mollie classes are proven functional
+- UI (Phase 5) is last because the React component needs stable API responses from all backend phases to build against
+- Each phase produces an independently deployable, testable artifact with a clear verification step
 
 ### Research Flags
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Tailwind v4 Migration):** Official upgrade tool + well-documented migration guide
-- **Phase 2 (Color System):** Mechanical find/replace with clear mapping
-- **Phase 3 (Core Components):** Standard component styling patterns
-- **Phase 4 (Feature Components):** Standard component styling patterns
-- **Phase 5 (Typography):** Standard font loading patterns (Fontsource + preload)
-- **Phase 7 (Backend Cleanup):** Standard cleanup work
+**Phases with standard, well-documented patterns (no additional research needed):**
+- **Phase 1:** Composer installation and WordPress options storage — fully documented; mirrors existing Rabobank/`CredentialEncryption` pattern exactly
+- **Phase 4:** Provider branching in `RestInvoices` — simple conditional; no new patterns; no risk to Rabobank path
+- **Phase 5:** Finance Settings UI — mirrors existing Rabobank UI section in the same settings page; no new patterns
 
-**Phases needing validation during execution:**
-- **Phase 6 (Glass Morphism):** Requires mobile performance testing on actual low-end Android device (not research, just validation)
+**Phases that need attention during implementation (not research — execution care):**
+- **Phase 2:** Verify `mollie/mollie-api-php` v3.9 installed SDK method signatures against the code patterns in ARCHITECTURE.md before finalizing `MolliePayment` — the API changed significantly from v2 to v3 and the SDK installed via Composer is authoritative
+- **Phase 3:** After implementation, verify the webhook endpoint returns 200 unauthenticated via `curl -X POST https://rondo.svawc.nl/wp-json/rondo/v1/mollie/webhook -d "id=test"` before considering this phase complete; also test idempotency by sending the same payload twice
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official Tailwind v4 docs + migration guide + Fontsource npm package; browser support requirements clearly documented |
-| Features | HIGH | NN/g glassmorphism guidelines + design system migration best practices; clear consensus on table stakes vs differentiators |
-| Architecture | HIGH | Detailed analysis of existing codebase (tailwind.config.js, index.css, useTheme.js); clear understanding of component dependencies |
-| Pitfalls | HIGH | 1,877 dark mode classes + 549 accent references counted via grep; performance concerns validated via MDN + community sources |
+| Stack | HIGH | Official Mollie SDK on Packagist verified; PSR dependency versions checked against existing `vendor/composer/installed.php`; Guzzle conflict risk assessed and found negligible for v3+ |
+| Features | HIGH | Mollie Payments API and Payment Links API officially documented and compared; iDEAL 2.0 migration confirmed as handled transparently by Mollie |
+| Architecture | HIGH | Existing codebase is authoritative for patterns; Mollie webhook security model from official SDK docs and Mollie documentation; component boundaries mirror established Rabobank patterns |
+| Pitfalls | HIGH (critical webhook/security pitfalls) / MEDIUM (two-provider field coexistence) | Webhook auth, security model, and retry behavior from official Mollie docs; two-provider field storage patterns inferred from codebase analysis and general payment orchestration patterns |
 
 **Overall confidence:** HIGH
 
-All four research areas have verified sources (official documentation, established codebase analysis, quantified scope). The main architectural decision (v3 vs v4) has clear rationale supported by STACK.md requirements. Pitfall prevention strategies are concrete and actionable.
-
 ### Gaps to Address
 
-**Gap 1: Exact gradient color stops for brand gradient**
-- STYLE.md defines electric-cyan (#0891B2) and bright-cobalt (#2563EB) as endpoints
-- Need to validate gradient angle (135deg vs 90deg) and intermediate stops if needed
-- Resolution: Use 135deg per STYLE.md, no intermediate stops (two-color gradient sufficient)
+- **`_mollie_payment_id` naming consistency:** STACK.md and ARCHITECTURE.md use `_mollie_payment_id` (correct for Payments API) while FEATURES.md mentions `_mollie_payment_link_id` (appropriate for Payment Links API). The architecture decision to use the Payments API resolves this: use `_mollie_payment_id` consistently throughout. Confirm during Phase 2 implementation before writing any meta.
 
-**Gap 2: Typography weight usage beyond headings**
-- Montserrat defined for h1/h2/h3, but what about buttons, labels, nav items?
-- Resolution: Phase 5 should document which elements get Montserrat vs system-ui
+- **Invoice CPT `rondo_paid` post status:** ARCHITECTURE.md uses `rondo_paid` as the target post status in webhook code samples. Verify this matches the actual registered post status name in `class-post-types.php` during Phase 3 before the webhook handler is finalized.
 
-**Gap 3: Contrast ratio validation for cyan/blue palette**
-- New brand colors must meet WCAG AA (4.5:1 for text, 3:1 for UI elements)
-- Resolution: Phase 2 must include contrast validation for all text-on-accent uses
-
-**Gap 4: Settings page content after removing theme controls**
-- What remains in Settings page after removing color picker, dark mode toggle?
-- Resolution: Phase 7 must audit Settings page; keep club name input, remove Appearance section entirely
-
-**Gap 5: User communication strategy for breaking changes**
-- Users lose dark mode and color customization without warning
-- Resolution: Phase 7 must update CHANGELOG.md with rationale (brand consistency, performance, maintenance)
+- **`redirectUrl` destination:** ARCHITECTURE.md suggests `home_url('/financien/')` as the redirect URL after payment completion. Verify the correct React router path is accessible to members (not admin-only) before Phase 2 deployment. Consider redirecting to the invoice detail view instead.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- **Tailwind CSS v4 Official Docs** — Migration guide, @theme directive, gradient utilities, backdrop-blur, browser support requirements
-- **@tailwindcss/vite npm package** — Vite plugin integration for v4
-- **@fontsource/montserrat npm package** — Self-hosted font specifications, weight availability
-- **MDN Web Docs** — background-clip browser support, backdrop-filter performance, vendor prefixes
-- **Tailwind CSS Documentation** — Dark mode config, color system, safelist, content configuration
+- [Packagist: mollie/mollie-api-php](https://packagist.org/packages/mollie/mollie-api-php) — v3.9.0, PHP >= 7.4, dependency versions
+- [GitHub: mollie/mollie-api-php composer.json](https://github.com/mollie/mollie-api-php/blob/master/composer.json) — exact transitive dependencies
+- [Mollie Docs: Webhooks](https://docs.mollie.com/reference/webhooks) — POST body format (`id` only), no HMAC, 15s timeout, 10 retries over 26h
+- [Mollie Docs: Create Payment](https://docs.mollie.com/reference/create-payment) — Payments API, `_links->checkout->href`, `webhookUrl` parameter, amount format
+- [Mollie PHP SDK: webhook recipe](https://github.com/mollie/mollie-api-php/blob/master/docs/recipes/payments/handle-webhook.md) — idempotency pattern, always return 200
+- [Mollie Docs: Webhooks Best Practices](https://docs.mollie.com/reference/webhooks-best-practices) — HTTPS requirement, re-fetch verification
+- [WordPress REST API Authentication](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/) — nonce auth requires logged-in user; not suitable for external webhooks
+- Existing codebase: `class-rabobank-oauth.php`, `class-rabobank-payment.php`, `class-rest-invoices.php`, `class-finance-config.php`, `class-credential-encryption.php` — authoritative for integration patterns
 
 ### Secondary (MEDIUM confidence)
-- **Dev.to Tailwind v4 Migration Guides** — Community migration experiences, real-world pitfalls
-- **NN/g Glassmorphism Guidelines** — Best practices for backdrop-filter on interactive elements
-- **LogRocket Gradient Guides** — Tailwind gradient implementation patterns
-- **Google Fonts Knowledge Base** — FOUT/FOIT optimization strategies
+- [Mollie Docs: Payment Links API](https://docs.mollie.com/reference/payment-links-api) — used to confirm Payments API is the correct choice for per-invoice use
+- [Mollie Docs: Next-Gen Webhooks](https://docs.mollie.com/reference/webhooks-new) — HMAC-SHA256 `X-Mollie-Signature` header option (not required for standard webhooks)
+- [iDEAL 2.0 Migration](https://www.mollie.com/growth/ideal-2-0) — confirmed Mollie handles transparently, no code changes needed
+- [Mollie GitHub Issue: Webhook URL display bug](https://github.com/mollie/laravel-mollie/issues/177) — Payment Links API webhook display quirk (not relevant if using Payments API)
+- [Mollie WooCommerce Wiki: Guzzle conflicts](https://github.com/mollie/WooCommerce/wiki/Composer-Guzzle-conflicts) — Guzzle removed from Mollie SDK v3+; confirms v3 is conflict-safe
 
 ### Tertiary (LOW confidence)
-- **Design system migration best practices** — General web search results aggregated for guidance
-- **Mobile performance for backdrop-filter** — Medium articles + community discussions (requires validation on actual devices)
+- Mollie Magento2 webhook communication patterns — architectural guidance from Magento integration, not directly verified for WordPress custom themes
+- Multiple payment provider field conflict patterns — inferred from codebase analysis and general payment orchestration patterns rather than Mollie-specific documentation
 
 ---
-
-*Research completed: 2026-02-09*
+*Research completed: 2026-02-17*
 *Ready for roadmap: yes*

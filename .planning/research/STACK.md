@@ -1,337 +1,166 @@
-# Technology Stack: Design Refresh
+# Stack Research: Mollie Payment Integration
 
-**Project:** Rondo Club Design Refresh
-**Researched:** 2026-02-09
+**Domain:** Payment provider integration (WordPress PHP theme)
+**Researched:** 2026-02-17
 **Confidence:** HIGH
 
-## Executive Summary
+## Recommended Stack
 
-The design refresh requires migrating from Tailwind CSS v3.4 to v4, which represents a fundamental architectural shift. Tailwind v4 uses a new CSS-first configuration model, a Vite plugin architecture, and eliminates PostCSS/autoprefixer dependencies. Font loading should use the self-hosted Fontsource approach for optimal performance. Glass morphism and gradients are native Tailwind v4 features requiring no additional libraries.
+### Core Technologies
 
-## Changes Required
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `mollie/mollie-api-php` | `^3.9` | Official Mollie PHP SDK — creates payment links, fetches payment status | Only official PHP SDK; v3 is the current major version with a modern request-object API (`$mollie->send(new CreatePaymentLinkRequest(...))`) replacing the v2 fluent API; released 2026-02-09 |
+| `nyholm/psr7` | `^1.8` | PSR-7 HTTP message implementation required by Mollie SDK | Mollie SDK's only new transitive dependency not already in `vendor/`; pulled in automatically by `composer require mollie/mollie-api-php` |
 
-### 1. Tailwind CSS v4 Migration
+**Existing stack components already in place (no additions needed):**
 
-**Current:** Tailwind CSS v3.4.0 with PostCSS/autoprefixer
-**New:** Tailwind CSS v4.x with @tailwindcss/vite plugin
+| Technology | Status | Notes |
+|------------|--------|-------|
+| `psr/http-client ^1.0` | Already installed | Pulled in by `google/apiclient`; Mollie SDK requires same version |
+| `psr/http-factory ^1.1` | Already installed | Same |
+| `psr/http-message ^1.1\|^2.0` | Already installed | Same |
+| `guzzlehttp/guzzle 7.10.0` | Already installed | Mollie SDK uses Guzzle only as `require-dev`; production uses nyholm/psr7 internally |
+| Sodium encryption (`CredentialEncryption`) | Already implemented | Use the existing pattern from `RabobankOAuth` for storing the Mollie API key |
+| WordPress Options API | Already used | Store Mollie API key as encrypted option (same as Rabobank credentials) |
+| `wp_remote_post` / REST API | Already used | **Do not use** for Mollie — use the SDK's `$mollie->send()` instead |
 
-| Package | Action | Version | Why |
-|---------|--------|---------|-----|
-| `tailwindcss` | Update | `^4.1.0` | Core framework with new Rust-based engine (100x faster builds) |
-| `@tailwindcss/vite` | Add | `^4.1.0` | Required for Vite integration in v4 |
-| `@tailwindcss/typography` | Keep | `^0.5.19` | Typography plugin compatible with v4 |
-| `postcss` | Remove | - | No longer needed; v4 uses Lightning CSS internally |
-| `autoprefixer` | Remove | - | Built into v4 via Lightning CSS |
+### Supporting Libraries
 
-**Configuration changes:**
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| None beyond Mollie SDK | — | — | The Mollie SDK is self-contained; no additional webhook verification library is needed |
 
-| File | v3.4 Approach | v4 Approach |
-|------|---------------|-------------|
-| `tailwind.config.js` | JavaScript configuration file | **DELETED** - CSS-first config |
-| `vite.config.js` | Not used for Tailwind | **REQUIRED** - Add `@tailwindcss/vite` plugin |
-| `src/index.css` | `@tailwind base/components/utilities` | `@import "tailwindcss"` |
+### Development Tools
 
-**Breaking changes:**
-- Dark mode: `darkMode: 'class'` → CSS-based theming with `@theme` directive
-- Color system: Static colors → CSS variables (already using this pattern!)
-- Content paths: Moved to CSS `@source` directive
-- Custom plugins: Must be rewritten for v4 architecture
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| Mollie test API key (`test_...`) | Sandbox testing without real payments | Set in wp-options; toggle between test/live with environment flag like existing `RabobankOAuth::get_environment()` pattern |
 
-**Browser support:**
-- **Minimum:** Safari 16.4+, Chrome 111+, Firefox 128+
-- **Impact:** Modern CSS features like `@property`, `color-mix()`, CSS nesting
-- **Decision:** Acceptable for sports club internal tool (not public-facing)
+## Installation
 
-**Why v4 over v3.4:**
-- 100x faster incremental builds (44ms → 5ms)
-- Native gradient support with `bg-linear-to-*`, `bg-radial`, `bg-conic`
-- Native backdrop-blur utilities (no config needed)
-- CSS variables for colors (matches existing pattern)
-- Better tree-shaking and smaller production bundles
-
-**Migration effort:** Medium
-- Automated migration tool available (`@tailwindcss/upgrade`)
-- Must rewrite `tailwind.config.js` → CSS `@theme` blocks
-- Must update dark mode implementation (remove `class` strategy)
-- Must audit custom CSS using `@layer` directives
-
-### 2. Font Loading
-
-**Current:** Inter via system fonts (`font-sans: ['Inter', 'system-ui', 'sans-serif']`)
-**New:** Montserrat (headings) + system-ui (body) via Fontsource
-
-| Package | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| `@fontsource/montserrat` | `^5.2.8` | Self-hosted Montserrat font | No Google Fonts network requests, GDPR-friendly, subset loading for performance |
-
-**Why Fontsource over alternatives:**
-
-| Approach | Pros | Cons | Verdict |
-|----------|------|------|---------|
-| **Fontsource** | Self-hosted, subset loading, Vite integration, no external requests | Adds ~100KB to bundle (minimized with subsets) | ✅ **Recommended** |
-| Google Fonts CDN | Zero bundle size, global CDN caching | Privacy concerns, network dependency, FOUT risk | ❌ Avoid |
-| Manual @font-face | Full control | Manual updates, no subset tooling | ❌ More work |
-
-**Implementation:**
-```javascript
-// In src/main.jsx
-import '@fontsource/montserrat/600.css';  // Semi-Bold for headings
-import '@fontsource/montserrat/700.css';  // Bold for headings
-
-// In Tailwind CSS config (CSS-first in v4)
-@theme {
-  --font-heading: Montserrat, system-ui, sans-serif;
-  --font-body: system-ui, sans-serif;
-}
+```bash
+# From rondo-club/ directory
+composer require mollie/mollie-api-php:^3.9
 ```
 
-**Weight selection:**
-- 600 (Semi-Bold): Primary headings (h2, h3)
-- 700 (Bold): Page titles (h1), buttons with gradient
-- Body text: system-ui (no additional font needed)
+This will pull in `nyholm/psr7:^1.8` as a new transitive dependency. All other PSR dependencies are already satisfied by existing `google/apiclient` requirements. Run `composer install` on the server after deploying the updated `composer.json` and `composer.lock`.
 
-**Performance impact:**
-- ~60KB per weight (gzipped)
-- Total: ~120KB additional bundle size
-- Mitigated by: Vite code splitting, browser caching
+## Alternatives Considered
 
-### 3. Gradient Support
-
-**Current:** Custom CSS gradient classes (if any)
-**New:** Native Tailwind v4 gradient utilities
-
-**No additional packages required.** Tailwind v4 includes expanded gradient APIs.
-
-**Built-in utilities:**
-- `bg-linear-to-r` / `bg-linear-to-br` - Linear gradients with direction
-- `bg-linear-[45deg]` - Custom angle support
-- `bg-radial` - Radial gradients from center
-- `bg-conic` - Conic gradients (sweep effect)
-- `from-cyan-500`, `via-blue-600`, `to-indigo-800` - Color stops
-
-**Color interpolation:**
-- Default: `oklab` color space (better than RGB)
-- Smoother color transitions, no muddy mid-tones
-
-**Brand gradient (cyan → cobalt):**
-```css
-/* Tailwind v4 classes */
-bg-linear-to-r from-cyan-500 to-blue-600
-```
-
-**Why native over libraries:**
-- Zero dependencies
-- Tree-shakeable (unused gradients removed)
-- JIT compilation (only used gradients in CSS)
-- Responsive variants (`hover:`, `md:` work out of the box)
-
-### 4. Glass Morphism Support
-
-**Current:** None
-**New:** Native Tailwind v4 backdrop utilities
-
-**No additional packages required.** Tailwind v4 includes backdrop-filter utilities.
-
-**Built-in utilities:**
-- `backdrop-blur-sm` / `backdrop-blur-md` / `backdrop-blur-lg` - Gaussian blur
-- `backdrop-blur-[12px]` - Custom blur values
-- `bg-white/30` - Background with opacity (30% white)
-- `border border-white/20` - Semi-transparent borders
-
-**Glass morphism pattern:**
-```css
-/* Header example */
-backdrop-blur-md bg-white/80 border-b border-white/20 shadow-lg
-```
-
-**Browser support:**
-- Safari: Full support (16.4+)
-- Chrome: Full support (111+)
-- Firefox: Full support (128+)
-- **No fallback needed** for minimum browser requirements
-
-**Why native over libraries:**
-- Zero dependencies
-- Works with existing Tailwind utilities (hover, responsive, dark mode)
-- Better performance (CSS-native, GPU-accelerated)
-- No JavaScript runtime cost
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| `mollie/mollie-api-php` (official SDK) | Raw `wp_remote_post` calls to Mollie REST API | Never — the SDK handles authentication headers, response hydration, error handling, and PSR HTTP adapters correctly |
+| `mollie/mollie-api-php` v3 | v2 (`^2.x`) | Never for new code — v2 uses deprecated fluent API (`$mollie->payments->create()`); v3 uses modern request objects and is actively maintained |
+| `nyholm/psr7` (via SDK) | `guzzlehttp/psr7` (already installed) | Mollie SDK hard-requires `nyholm/psr7` specifically; cannot substitute `guzzlehttp/psr7` |
 
 ## What NOT to Add
 
-| Package | Why Avoid |
-|---------|-----------|
-| `tailwindcss-glassmorphism` | Unnecessary; v4 has native backdrop-blur |
-| `tailwind-gradient-mask-image` | Overkill; native gradients sufficient |
-| `@google-fonts/montserrat` | Deprecated; Fontsource is maintained |
-| `postcss-import` | v4 handles imports natively |
-| `tailwindcss-animate` | Not needed for this milestone; add later if animations required |
-| CSS-in-JS libraries | Conflicts with Tailwind utility-first approach |
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `mollie/oauth2-mollie-php` | Only needed for Mollie Connect (OAuth flows for multi-merchant SaaS); discipline-case invoicing uses a single club API key, not OAuth | Simple API key stored encrypted in wp-options |
+| `mollie/laravel-mollie` | Laravel-only package; will not work in WordPress | `mollie/mollie-api-php` directly |
+| Custom HMAC webhook signature verification | Mollie does NOT send HMAC signatures — webhook body only contains `id=tr_xxx`; verification is done by fetching payment state from the API using that ID with authenticated SDK call | Fetch payment via `$mollie->send(new GetPaymentRequest($id))` after receiving webhook |
+| Custom HTTP client wrapping `wp_remote_post` | Bypasses SDK's PSR HTTP adapter layer; creates maintenance burden | Use `$mollie->send()` from the SDK directly |
 
-## Installation Steps
+## Stack Patterns: Mollie-Specific
 
-### Phase 1: Remove Legacy Dependencies
-```bash
-npm uninstall postcss autoprefixer
+**Webhook security model (verified against official Mollie docs):**
+
+Mollie does NOT use HMAC signatures on webhook POSTs. The webhook body contains only `id=tr_xxx`. Security works by:
+1. Receiving the `id` from `$_POST['id']` at the webhook endpoint
+2. Fetching the actual payment state from Mollie API using the SDK (authenticated call)
+3. Never trusting the webhook body alone — always re-fetch
+
+This means the webhook handler in WordPress must be a public REST endpoint (no `permission_callback` auth check), but must validate the fetched payment belongs to an invoice the system created.
+
+**WordPress REST endpoint for webhooks:**
+
+Register a public endpoint in the Mollie payment class:
+```php
+register_rest_route('rondo/v1', '/mollie/webhook', [
+    'methods'             => \WP_REST_Server::CREATABLE,
+    'callback'            => [$this, 'handle_webhook'],
+    'permission_callback' => '__return_true', // Public — Mollie has no auth header
+]);
 ```
 
-### Phase 2: Install Tailwind v4
-```bash
-npm install -D tailwindcss@^4.1.0 @tailwindcss/vite@^4.1.0
+The endpoint must return HTTP 200 within 15 seconds. Mollie retries up to 10 times over 26 hours if it receives a non-200 response.
+
+**SDK initialization pattern (follow RabobankOAuth storage pattern):**
+
+```php
+use Mollie\Api\MollieApiClient;
+
+$mollie = new MollieApiClient();
+$mollie->setApiKey($this->get_api_key()); // decrypt from wp-options via CredentialEncryption
 ```
 
-### Phase 3: Install Fonts
-```bash
-npm install @fontsource/montserrat@^5.2.8
+**Creating a payment link (v3 SDK pattern):**
+
+```php
+use Mollie\Api\Http\Requests\CreatePaymentLinkRequest;
+use Mollie\Api\Http\Data\Money;
+
+$payment_link = $mollie->send(new CreatePaymentLinkRequest(
+    description: 'Factuur ' . $invoice_number,
+    amount: new Money('EUR', number_format($total_amount, 2, '.', '')),
+    redirectUrl: get_site_url() . '/mollie/betaald/',
+    webhookUrl: rest_url('rondo/v1/mollie/webhook'),
+));
+
+$checkout_url = $payment_link->getCheckoutUrl();
 ```
 
-### Phase 4: Configuration Changes
+**Handling webhook to update invoice status:**
 
-**vite.config.js:**
-```javascript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';  // NEW
+```php
+use Mollie\Api\Http\Requests\GetPaymentRequest;
 
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),  // NEW - Add before React plugin
-    // ... other plugins
-  ],
-  // ... rest of config
-});
-```
+public function handle_webhook(\WP_REST_Request $request): \WP_REST_Response {
+    $payment_id = $request->get_param('id');
+    if (empty($payment_id)) {
+        return rest_ensure_response(['status' => 'ok']); // Always 200
+    }
 
-**src/index.css:**
-```css
-/* BEFORE (v3.4) */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+    $payment = $mollie->send(new GetPaymentRequest($payment_id));
 
-/* AFTER (v4) */
-@import "tailwindcss";
+    if ($payment->isPaid()) {
+        // Update invoice status: 'paid' + store payment_id
+        wp_update_post(['ID' => $invoice_id, 'post_status' => 'paid']);
+        update_post_meta($invoice_id, '_mollie_payment_id', $payment_id);
+    }
 
-/* Define brand colors with @theme */
-@theme {
-  --color-electric-cyan: #0891B2;
-  --color-bright-cobalt: #2563EB;
-  --color-deep-midnight: #1E3A8A;
-  --color-obsidian: #0F172A;
-
-  --font-heading: Montserrat, system-ui, sans-serif;
-  --font-body: system-ui, sans-serif;
+    return rest_ensure_response(['status' => 'ok']); // Always return 200
 }
-
-/* Content paths with @source */
-@source "src/**/*.{js,jsx}";
 ```
 
-**DELETE:** `tailwind.config.js` (no longer used in v4)
+**Linking payment link ID to invoice:**
 
-## Integration Points
+Store the Mollie payment link ID on the invoice post meta (`_mollie_payment_link_id`) so the webhook handler can look up the invoice by the payment's associated payment link.
 
-### With Existing Dynamic Accent System
-**Challenge:** Current system uses CSS variables (`--color-accent-*`) injected by ClubConfig.
-**Solution:** Replace with static brand colors in v4. Remove dynamic accent feature.
+## Version Compatibility
 
-| Current | New |
-|---------|-----|
-| `accent-600` (dynamic) | `cyan-600` / `blue-600` (static brand colors) |
-| `[data-accent="..."]` selectors | Remove; single brand gradient only |
-| Dark mode accent variants | Remove; light-only design |
+| Package | Version | Compatible With | Notes |
+|---------|---------|-----------------|-------|
+| `mollie/mollie-api-php` | `^3.9` | PHP `^8.0` | Satisfies existing `composer.json` PHP requirement |
+| `mollie/mollie-api-php` | `^3.9` | `psr/http-client ^1.0` | Already installed via google/apiclient |
+| `mollie/mollie-api-php` | `^3.9` | `psr/http-message ^1.1\|^2.0` | Already installed |
+| `nyholm/psr7` | `^1.8` | `psr/http-factory ^1.1` | New package; no conflicts expected with guzzlehttp/psr7 |
+| `guzzlehttp/guzzle` | `7.10.0` (existing) | `mollie/mollie-api-php ^3.9` | Mollie v3 uses Guzzle only in `require-dev`; production adapter is `nyholm/psr7` based |
 
-### With Existing Dark Mode
-**Challenge:** Current `darkMode: 'class'` config uses `.dark` class toggling.
-**Solution:** Remove dark mode entirely. Design is light-only.
-
-| Current | Action |
-|---------|--------|
-| `dark:bg-gray-900` classes | Remove all `dark:*` variants |
-| Dark mode toggle UI | Remove from Settings page |
-| CSS variables for dark colors | Remove from `index.css` |
-
-### With Build Process
-**No changes required.** Vite plugin integrates seamlessly with existing build.
-
-| Build Command | Status |
-|---------------|--------|
-| `npm run dev` | ✅ HMR works with @tailwindcss/vite |
-| `npm run build` | ✅ Production builds unchanged |
-| `npm run preview` | ✅ Preview unchanged |
-
-### With WordPress Theme
-**No changes required.** Theme still loads from `dist/` manifest.
-
-| Asset | Status |
-|-------|--------|
-| `dist/assets/*.css` | ✅ Generated by Vite |
-| `dist/assets/*.js` | ✅ Generated by Vite |
-| `.vite/manifest.json` | ✅ Read by PHP `functions.php` |
-
-## Validation Checklist
-
-### Tailwind v4 Migration
-- [ ] `tailwindcss@^4.1.0` installed
-- [ ] `@tailwindcss/vite@^4.1.0` installed
-- [ ] `postcss` and `autoprefixer` removed
-- [ ] `vite.config.js` updated with `@tailwindcss/vite` plugin
-- [ ] `tailwind.config.js` deleted
-- [ ] `src/index.css` uses `@import "tailwindcss"`
-- [ ] `@theme` blocks define brand colors
-- [ ] `@source` directive specifies content paths
-- [ ] `npm run dev` starts without errors
-- [ ] `npm run build` completes successfully
-
-### Font Loading
-- [ ] `@fontsource/montserrat@^5.2.8` installed
-- [ ] Import 600 and 700 weights in `src/main.jsx`
-- [ ] `--font-heading` defined in `@theme`
-- [ ] Montserrat renders in headings
-- [ ] system-ui renders in body text
-
-### Gradients
-- [ ] `bg-linear-to-r from-cyan-500 to-blue-600` works
-- [ ] Gradient buttons render correctly
-- [ ] Gradient headings render correctly
-
-### Glass Morphism
-- [ ] `backdrop-blur-md` works in header
-- [ ] `bg-white/80` semi-transparency works
-- [ ] No visual regressions on Safari/Chrome/Firefox
-
-## Risk Assessment
-
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Breaking changes in v4 | High | Use automated migration tool, thorough testing |
-| Dark mode removal causes user confusion | Medium | Clear communication, remove toggle cleanly |
-| Browser support excludes older devices | Low | Internal tool for club admins (modern devices expected) |
-| Bundle size increase from fonts | Low | Only 2 weights (~120KB), browser caching effective |
-| Color system conflicts | Medium | Audit all `accent-*` usage, replace with brand colors |
+**Potential conflict to verify:** Both `guzzlehttp/psr7` and `nyholm/psr7` implement `psr/http-message`. Composer resolves this via virtual packages (`psr/http-message-implementation`). This is standard practice and will not conflict.
 
 ## Sources
 
-**Tailwind CSS v4:**
-- [Tailwind CSS v4.0 Announcement](https://tailwindcss.com/blog/tailwindcss-v4)
-- [Upgrade Guide - Tailwind CSS](https://tailwindcss.com/docs/upgrade-guide)
-- [Complete Migration Guide - Dev Genius](https://blog.devgenius.io/the-ultimate-guide-to-migrating-from-tailwind-css-3-to-tailwind-css-4-214f8eddc4b9)
-- [Vite + React Setup Guide - DEV Community](https://dev.to/lord_potato_c8a8c0086ffb5/tailwind-css-v4-vite-react-setup-the-clean-way-338j)
-- [Browser Support Requirements](https://tailwindcss.com/docs/compatibility)
-- [@tailwindcss/vite - npm](https://www.npmjs.com/package/@tailwindcss/vite)
+- [Packagist: mollie/mollie-api-php](https://packagist.org/packages/mollie/mollie-api-php) — latest version v3.9.0, PHP requirements (HIGH confidence)
+- [GitHub: mollie/mollie-api-php composer.json](https://github.com/mollie/mollie-api-php/blob/master/composer.json) — exact dependency versions (HIGH confidence)
+- [GitHub: mollie/mollie-api-php src/Http/Requests](https://github.com/mollie/mollie-api-php/tree/master/src/Http/Requests) — `CreatePaymentLinkRequest.php` exists with constructor signature (HIGH confidence)
+- [GitHub: mollie/mollie-api-php webhook recipe](https://github.com/mollie/mollie-api-php/blob/master/docs/recipes/payments/handle-webhook.md) — webhook handling pattern (HIGH confidence)
+- [Mollie Docs: Webhooks](https://docs.mollie.com/reference/webhooks) — no HMAC, POST body is `id=tr_xxx` only, 15s timeout, 10 retries over 26h (HIGH confidence)
+- [Mollie Docs: Create Payment Link](https://docs.mollie.com/reference/create-payment-link) — `webhookUrl` parameter, response includes checkout URL (HIGH confidence)
+- Existing codebase: `composer.json`, `vendor/composer/installed.php` — confirmed existing PSR deps and guzzle versions (HIGH confidence)
 
-**Gradients:**
-- [Tailwind CSS v4 Gradients Made Simple - Indie Hackers](https://www.indiehackers.com/post/tailwind-css-v4-gradients-made-simple-0ef34ff370)
-- [Text Gradients in Tailwind v4 - Kyle Goggin](https://www.kylegoggin.com/blog/text-gradients-in-tailwind-v4/)
-
-**Glass Morphism:**
-- [Creating Glassmorphism Effects - Epic Web Dev](https://www.epicweb.dev/tips/creating-glassmorphism-effects-with-tailwind-css)
-- [Glassmorphism with Tailwind CSS - FlyOnUI](https://flyonui.com/blog/glassmorphism-with-tailwind-css/)
-- [Backdrop Blur - Tailwind CSS](https://tailwindcss.com/docs/backdrop-blur)
-
-**Fonts:**
-- [@fontsource/montserrat - npm](https://www.npmjs.com/package/@fontsource/montserrat)
-- [Fontsource Montserrat](https://fontsource.org/fonts/montserrat)
-
-**Architecture:**
-- [PostCSS autoprefixer discussion - GitHub](https://github.com/tailwindlabs/tailwindcss/discussions/15518)
+---
+*Stack research for: Mollie payment links + webhook integration in WordPress PHP 8.0+ theme*
+*Researched: 2026-02-17*
