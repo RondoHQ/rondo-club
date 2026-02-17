@@ -35,6 +35,8 @@ class FinanceConfig {
 	const OPTION_CLUB_LOGO_ID          = 'rondo_finance_club_logo_id';
 	const OPTION_ACCENT_COLOR          = 'rondo_finance_accent_color';
 	const OPTION_BCC_EMAIL             = 'rondo_finance_bcc_email';
+	const OPTION_MOLLIE_API_KEY        = 'rondo_finance_mollie_api_key';
+	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
 
 	/**
 	 * Default configuration values
@@ -189,6 +191,8 @@ Met vriendelijke groet,
 			}
 		}
 
+		$mollie_api_key = $this->get_mollie_api_key();
+
 		return [
 			'org_name'              => $this->get_org_name(),
 			'org_address'           => $this->get_org_address(),
@@ -203,6 +207,9 @@ Met vriendelijke groet,
 			'bcc_email'             => $this->get_bcc_email(),
 			'rabobank_has_credentials' => $rabobank_creds !== null,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
+			'mollie_has_api_key'    => ! empty( $mollie_api_key ),
+			'mollie_environment'    => $this->derive_mollie_environment( $mollie_api_key ),
+			'active_payment_provider' => $this->get_active_payment_provider(),
 		];
 	}
 
@@ -311,6 +318,20 @@ Met vriendelijke groet,
 			}
 		}
 
+		// Handle Mollie API key with encryption
+		if ( isset( $data['mollie_api_key'] ) ) {
+			$success = $this->update_mollie_api_key(
+				sanitize_text_field( $data['mollie_api_key'] )
+			) && $success;
+		}
+
+		// Handle active payment provider
+		if ( isset( $data['active_payment_provider'] ) ) {
+			$success = $this->update_active_payment_provider(
+				sanitize_text_field( $data['active_payment_provider'] )
+			) && $success;
+		}
+
 		return $success;
 	}
 
@@ -331,6 +352,80 @@ Met vriendelijke groet,
 
 		$encrypted = CredentialEncryption::encrypt( $credentials );
 		return update_option( self::OPTION_RABOBANK_CREDENTIALS, $encrypted );
+	}
+
+	/**
+	 * Get Mollie API key (decrypted, internal use only)
+	 *
+	 * @return string Decrypted API key, or empty string if not configured
+	 */
+	public function get_mollie_api_key(): string {
+		$encrypted = get_option( self::OPTION_MOLLIE_API_KEY, '' );
+
+		if ( empty( $encrypted ) ) {
+			return '';
+		}
+
+		$data = CredentialEncryption::decrypt( $encrypted );
+
+		return $data['api_key'] ?? '';
+	}
+
+	/**
+	 * Update Mollie API key (encrypts and stores)
+	 *
+	 * Passing an empty string removes the stored key.
+	 *
+	 * @param string $api_key Mollie API key (live_ or test_ prefix)
+	 * @return bool True on success
+	 */
+	public function update_mollie_api_key( string $api_key ): bool {
+		if ( empty( $api_key ) ) {
+			return (bool) delete_option( self::OPTION_MOLLIE_API_KEY );
+		}
+
+		$encrypted = CredentialEncryption::encrypt( [ 'api_key' => $api_key ] );
+
+		return update_option( self::OPTION_MOLLIE_API_KEY, $encrypted );
+	}
+
+	/**
+	 * Get active payment provider
+	 *
+	 * @return string Active payment provider slug ('rabobank' or 'mollie'). Defaults to 'rabobank'.
+	 */
+	public function get_active_payment_provider(): string {
+		return get_option( self::OPTION_ACTIVE_PAYMENT_PROVIDER, 'rabobank' );
+	}
+
+	/**
+	 * Update active payment provider
+	 *
+	 * @param string $provider Payment provider slug ('rabobank' or 'mollie')
+	 * @return bool True on success, false for invalid provider
+	 */
+	public function update_active_payment_provider( string $provider ): bool {
+		$allowed = [ 'rabobank', 'mollie' ];
+
+		if ( ! in_array( $provider, $allowed, true ) ) {
+			return false;
+		}
+
+		return update_option( self::OPTION_ACTIVE_PAYMENT_PROVIDER, $provider );
+	}
+
+	/**
+	 * Derive Mollie environment from API key prefix
+	 *
+	 * @param string $api_key Mollie API key
+	 * @return string 'live', 'test', or '' if no key is set
+	 */
+	private function derive_mollie_environment( string $api_key ): string {
+		if ( empty( $api_key ) ) {
+			return '';
+		}
+
+		return str_starts_with( $api_key, 'live_' ) ? 'live' : 'test';
 	}
 
 }
