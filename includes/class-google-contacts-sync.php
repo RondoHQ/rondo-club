@@ -268,7 +268,7 @@ class GoogleContactsSync {
 	private function perform_sync( int $user_id ): array {
 		$connection = GoogleContactsConnection::get_connection( $user_id );
 		if ( ! $connection ) {
-			throw new \Exception( 'No connection found for user' );
+			throw new \Exception( sprintf( __( 'No Google Contacts connection found for user %d', 'rondo' ), $user_id ) );
 		}
 
 		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
