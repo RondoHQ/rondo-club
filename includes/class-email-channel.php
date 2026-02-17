@@ -50,29 +50,15 @@ class EmailChannel extends Channel {
 			return false;
 		}
 
-		// Check what content we have
-		$has_dates = ! empty( $digest_data['today'] ) ||
-					! empty( $digest_data['tomorrow'] ) ||
-					! empty( $digest_data['rest_of_week'] );
-
-		$has_todos = isset( $digest_data['todos'] ) && (
-					! empty( $digest_data['todos']['today'] ) ||
-					! empty( $digest_data['todos']['tomorrow'] ) ||
-					! empty( $digest_data['todos']['rest_of_week'] ) );
-
-		$has_mentions           = ! empty( $digest_data['mentions'] );
-		$has_workspace_activity = ! empty( $digest_data['workspace_activity'] );
-		$has_collab             = $has_mentions || $has_workspace_activity;
-
-		// Don't send if there's no content at all
-		if ( ! $has_dates && ! $has_todos && ! $has_collab ) {
+		if ( ! $this->has_content( $digest_data ) ) {
 			return false;
 		}
+
+		$has_collab = ! empty( $digest_data['mentions'] ) || ! empty( $digest_data['workspace_activity'] );
 
 		$site_name       = get_bloginfo( 'name' );
 		$today_formatted = date_i18n( get_option( 'date_format' ) );
 
-		// Update subject line to indicate collaborative activity
 		$subject = $has_collab
 			? sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'rondo' ), $site_name, $today_formatted )
 			: sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'rondo' ), $site_name, $today_formatted );
@@ -98,10 +84,10 @@ class EmailChannel extends Channel {
 	 * Format email message body as HTML
 	 */
 	private function format_email_message( $user, $digest_data ) {
-		$site_url        = home_url();
-		$today_formatted = date_i18n( get_option( 'date_format' ) );
+		$site_url    = home_url();
+		$date_format = get_option( 'date_format' );
 
-		$todos = isset( $digest_data['todos'] ) ? $digest_data['todos'] : [
+		$todos = $digest_data['todos'] ?? [
 			'today'        => [],
 			'tomorrow'     => [],
 			'rest_of_week' => [],
@@ -114,158 +100,34 @@ class EmailChannel extends Channel {
 		);
 
 		// Today section
-		if ( ! empty( $digest_data['today'] ) || ! empty( $todos['today'] ) ) {
-			$html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">Today</h3>';
-
-			// Dates
-			foreach ( $digest_data['today'] as $date ) {
-				$date_formatted = date_i18n(
-					get_option( 'date_format' ),
-					strtotime( $date['next_occurrence'] )
-				);
-
-				// Check if person name is in title
-				$person_in_title = $this->find_person_in_title( $date['title'], $date['related_people'] );
-				if ( $person_in_title ) {
-					// Replace name in title with link
-					$title_with_link = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
-					$html           .= sprintf(
-						'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-						$title_with_link,
-						esc_html( $date_formatted )
-					);
-				} else {
-					// Show title normally and add people links below
-					$html        .= sprintf(
-						'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-						esc_html( $date['title'] ),
-						esc_html( $date_formatted )
-					);
-					$people_links = $this->format_people_links( $date['related_people'], $site_url );
-					if ( ! empty( $people_links ) ) {
-						$html .= sprintf( '<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links );
-					}
-				}
-			}
-
-			// Todos
-			foreach ( $todos['today'] as $todo ) {
-				$overdue_text = ! empty( $todo['is_overdue'] ) ? ' <span style="color: #dc2626;">(overdue)</span>' : '';
-				$person_link  = sprintf(
-					'<a href="%s">%s</a>',
-					esc_url( $site_url . '/people/' . $todo['person_id'] ),
-					esc_html( $todo['person_name'] )
-				);
-				$html        .= sprintf(
-					'<p style="margin: 5px 0;">☐ %s%s<br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
-					esc_html( $todo['content'] ),
-					$overdue_text,
-					$person_link
-				);
-			}
-		}
+		$html .= $this->render_digest_section(
+			'Today',
+			$digest_data['today'] ?? [],
+			$todos['today'],
+			$site_url,
+			$date_format,
+			true
+		);
 
 		// Tomorrow section
-		if ( ! empty( $digest_data['tomorrow'] ) || ! empty( $todos['tomorrow'] ) ) {
-			$html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">Tomorrow</h3>';
-
-			// Dates
-			foreach ( $digest_data['tomorrow'] as $date ) {
-				$date_formatted = date_i18n(
-					get_option( 'date_format' ),
-					strtotime( $date['next_occurrence'] )
-				);
-
-				// Check if person name is in title
-				$person_in_title = $this->find_person_in_title( $date['title'], $date['related_people'] );
-				if ( $person_in_title ) {
-					// Replace name in title with link
-					$title_with_link = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
-					$html           .= sprintf(
-						'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-						$title_with_link,
-						esc_html( $date_formatted )
-					);
-				} else {
-					// Show title normally and add people links below
-					$html        .= sprintf(
-						'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-						esc_html( $date['title'] ),
-						esc_html( $date_formatted )
-					);
-					$people_links = $this->format_people_links( $date['related_people'], $site_url );
-					if ( ! empty( $people_links ) ) {
-						$html .= sprintf( '<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links );
-					}
-				}
-			}
-
-			// Todos
-			foreach ( $todos['tomorrow'] as $todo ) {
-				$person_link = sprintf(
-					'<a href="%s">%s</a>',
-					esc_url( $site_url . '/people/' . $todo['person_id'] ),
-					esc_html( $todo['person_name'] )
-				);
-				$html       .= sprintf(
-					'<p style="margin: 5px 0;">☐ %s<br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
-					esc_html( $todo['content'] ),
-					$person_link
-				);
-			}
-		}
+		$html .= $this->render_digest_section(
+			'Tomorrow',
+			$digest_data['tomorrow'] ?? [],
+			$todos['tomorrow'],
+			$site_url,
+			$date_format,
+			true
+		);
 
 		// Rest of week section
-		if ( ! empty( $digest_data['rest_of_week'] ) || ! empty( $todos['rest_of_week'] ) ) {
-			$html .= '<h3 style="margin-top: 20px; margin-bottom: 10px;">This week</h3>';
-
-			// Dates
-			foreach ( $digest_data['rest_of_week'] as $date ) {
-				$date_formatted = date_i18n(
-					get_option( 'date_format' ),
-					strtotime( $date['next_occurrence'] )
-				);
-
-				// Check if person name is in title
-				$person_in_title = $this->find_person_in_title( $date['title'], $date['related_people'] );
-				if ( $person_in_title ) {
-					// Replace name in title with link
-					$title_with_link = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
-					$html           .= sprintf(
-						'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-						$title_with_link,
-						esc_html( $date_formatted )
-					);
-				} else {
-					// Show title normally and add people links below
-					$html        .= sprintf(
-						'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
-						esc_html( $date['title'] ),
-						esc_html( $date_formatted )
-					);
-					$people_links = $this->format_people_links( $date['related_people'], $site_url );
-					if ( ! empty( $people_links ) ) {
-						$html .= sprintf( '<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links );
-					}
-				}
-			}
-
-			// Todos
-			foreach ( $todos['rest_of_week'] as $todo ) {
-				$due_date_formatted = date_i18n( get_option( 'date_format' ), strtotime( $todo['due_date'] ) );
-				$person_link        = sprintf(
-					'<a href="%s">%s</a>',
-					esc_url( $site_url . '/people/' . $todo['person_id'] ),
-					esc_html( $todo['person_name'] )
-				);
-				$html              .= sprintf(
-					'<p style="margin: 5px 0;">☐ %s <span style="color: #666;">(%s)</span><br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
-					esc_html( $todo['content'] ),
-					esc_html( $due_date_formatted ),
-					$person_link
-				);
-			}
-		}
+		$html .= $this->render_digest_section(
+			'This week',
+			$digest_data['rest_of_week'] ?? [],
+			$todos['rest_of_week'],
+			$site_url,
+			$date_format,
+			false
+		);
 
 		// Mentions section
 		if ( ! empty( $digest_data['mentions'] ) ) {
@@ -301,6 +163,110 @@ class EmailChannel extends Channel {
 		);
 
 		$html .= '</body></html>';
+
+		return $html;
+	}
+
+	/**
+	 * Check if digest data has any content worth sending
+	 */
+	private function has_content( $digest_data ) {
+		$has_dates = ! empty( $digest_data['today'] ) ||
+					! empty( $digest_data['tomorrow'] ) ||
+					! empty( $digest_data['rest_of_week'] );
+
+		$has_todos = isset( $digest_data['todos'] ) && (
+					! empty( $digest_data['todos']['today'] ) ||
+					! empty( $digest_data['todos']['tomorrow'] ) ||
+					! empty( $digest_data['todos']['rest_of_week'] ) );
+
+		$has_collab = ! empty( $digest_data['mentions'] ) || ! empty( $digest_data['workspace_activity'] );
+
+		return $has_dates || $has_todos || $has_collab;
+	}
+
+	/**
+	 * Render a digest section (Today/Tomorrow/This week)
+	 */
+	private function render_digest_section( $section_title, $dates, $todos, $site_url, $date_format, $check_overdue ) {
+		if ( empty( $dates ) && empty( $todos ) ) {
+			return '';
+		}
+
+		$html  = sprintf( '<h3 style="margin-top: 20px; margin-bottom: 10px;">%s</h3>', esc_html( $section_title ) );
+		$html .= $this->render_date_items( $dates, $site_url, $date_format );
+		$html .= $this->render_todo_items( $todos, $site_url, $date_format, $check_overdue );
+
+		return $html;
+	}
+
+	/**
+	 * Render date items
+	 */
+	private function render_date_items( $dates, $site_url, $date_format ) {
+		$html = '';
+
+		foreach ( $dates as $date ) {
+			$date_formatted = date_i18n(
+				$date_format,
+				strtotime( $date['next_occurrence'] )
+			);
+
+			$person_in_title = $this->find_person_in_title( $date['title'], $date['related_people'] );
+			if ( $person_in_title ) {
+				$title_with_link = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
+				$html           .= sprintf(
+					'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+					$title_with_link,
+					esc_html( $date_formatted )
+				);
+			} else {
+				$html        .= sprintf(
+					'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+					esc_html( $date['title'] ),
+					esc_html( $date_formatted )
+				);
+				$people_links = $this->format_people_links( $date['related_people'], $site_url );
+				if ( ! empty( $people_links ) ) {
+					$html .= sprintf( '<p style="margin: 5px 0; margin-left: 20px;">%s</p>', $people_links );
+				}
+			}
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Render todo items
+	 */
+	private function render_todo_items( $todos, $site_url, $date_format, $check_overdue ) {
+		$html = '';
+
+		foreach ( $todos as $todo ) {
+			$person_link = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( $site_url . '/people/' . $todo['person_id'] ),
+				esc_html( $todo['person_name'] )
+			);
+
+			if ( $check_overdue ) {
+				$overdue_text = ! empty( $todo['is_overdue'] ) ? ' <span style="color: #dc2626;">(overdue)</span>' : '';
+				$html        .= sprintf(
+					'<p style="margin: 5px 0;">☐ %s%s<br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
+					esc_html( $todo['content'] ),
+					$overdue_text,
+					$person_link
+				);
+			} else {
+				$due_date_formatted = date_i18n( $date_format, strtotime( $todo['due_date'] ) );
+				$html              .= sprintf(
+					'<p style="margin: 5px 0;">☐ %s <span style="color: #666;">(%s)</span><br><span style="font-size: 0.9em; color: #666; margin-left: 20px;">→ %s</span></p>',
+					esc_html( $todo['content'] ),
+					esc_html( $due_date_formatted ),
+					$person_link
+				);
+			}
+		}
 
 		return $html;
 	}
