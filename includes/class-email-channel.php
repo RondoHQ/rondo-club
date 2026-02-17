@@ -116,7 +116,7 @@ class EmailChannel extends Channel {
 			$todos['tomorrow'],
 			$site_url,
 			$date_format,
-			true
+			false
 		);
 
 		// Rest of week section
@@ -214,10 +214,21 @@ class EmailChannel extends Channel {
 
 			$person_in_title = $this->find_person_in_title( $date['title'], $date['related_people'] );
 			if ( $person_in_title ) {
-				$title_with_link = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
-				$html           .= sprintf(
-					'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+				$title_with_link      = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
+				$safe_title_with_link = wp_kses(
 					$title_with_link,
+					array(
+						'a' => array(
+							'href'   => true,
+							'title'  => true,
+							'target' => true,
+							'rel'    => true,
+						),
+					)
+				);
+				$html                .= sprintf(
+					'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',
+					$safe_title_with_link,
 					esc_html( $date_formatted )
 				);
 			} else {
