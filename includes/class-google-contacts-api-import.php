@@ -33,7 +33,7 @@ class GoogleContactsAPI {
 		'contacts_skipped'  => 0,
 		'contacts_no_email' => 0,
 		'contacts_unlinked' => 0,
-		'teams_created' => 0,
+		'teams_created'     => 0,
 		'dates_created'     => 0,
 		'photos_imported'   => 0,
 		'errors'            => [],
@@ -350,19 +350,10 @@ class GoogleContactsAPI {
 			// Create new person
 			$names      = $person->getNames() ?: [];
 			$name       = $names[0] ?? null;
-			$first_name = $name ? $name->getGivenName() : '';
-			$infix      = $name ? ( $name->getMiddleName() ?: '' ) : '';
-			$last_name  = $name ? $name->getFamilyName() : '';
-
-			// Fallback to display name if given/family empty
-			if ( empty( $first_name ) && empty( $last_name ) && $name ) {
-				$display_name = $name->getDisplayName();
-				if ( $display_name ) {
-					$name_parts = explode( ' ', trim( $display_name ), 2 );
-					$first_name = $name_parts[0] ?? '';
-					$last_name  = $name_parts[1] ?? '';
-				}
-			}
+			$parsed     = $this->parse_google_name( $name );
+			$first_name = $parsed['first_name'];
+			$infix      = $parsed['infix'];
+			$last_name  = $parsed['last_name'];
 
 			$post_id = wp_insert_post(
 				[
@@ -390,7 +381,7 @@ class GoogleContactsAPI {
 		$this->import_work_history( $post_id, $person );
 
 		$full_name = get_the_title( $post_id );
-		$this->import_birthday( $post_id, $person, $full_name );
+		$this->import_birthday( $post_id, $person );
 		$this->import_photo( $post_id, $person, $full_name );
 	}
 
@@ -415,20 +406,8 @@ class GoogleContactsAPI {
 	 */
 	private function get_primary_email( object $person ): ?string {
 		$emails = $person->getEmailAddresses() ?: [];
-		if ( empty( $emails ) ) {
-			return null;
-		}
-
-		// Find primary email
-		foreach ( $emails as $email ) {
-			$metadata = $email->getMetadata();
-			if ( $metadata && $metadata->getPrimary() ) {
-				return strtolower( $email->getValue() );
-			}
-		}
-
-		// Fallback to first email
-		return strtolower( $emails[0]->getValue() );
+		$email  = $this->find_primary_item( $emails );
+		return $email ? strtolower( $email->getValue() ) : null;
 	}
 
 	/**
@@ -517,28 +496,16 @@ class GoogleContactsAPI {
 		$existing_infix = get_field( 'infix', $post_id );
 		$existing_last  = get_field( 'last_name', $post_id );
 
-		$given_name  = $name->getGivenName();
-		$middle_name = $name->getMiddleName() ?: '';
-		$family_name = $name->getFamilyName();
+		$parsed = $this->parse_google_name( $name );
 
-		// Fallback to display name if given/family empty
-		if ( empty( $given_name ) && empty( $family_name ) ) {
-			$display_name = $name->getDisplayName();
-			if ( $display_name ) {
-				$name_parts  = explode( ' ', trim( $display_name ), 2 );
-				$given_name  = $name_parts[0] ?? '';
-				$family_name = $name_parts[1] ?? '';
-			}
+		if ( empty( $existing_first ) && $parsed['first_name'] ) {
+			update_field( 'first_name', $parsed['first_name'], $post_id );
 		}
-
-		if ( empty( $existing_first ) && $given_name ) {
-			update_field( 'first_name', $given_name, $post_id );
+		if ( empty( $existing_infix ) && $parsed['infix'] ) {
+			update_field( 'infix', $parsed['infix'], $post_id );
 		}
-		if ( empty( $existing_infix ) && $middle_name ) {
-			update_field( 'infix', $middle_name, $post_id );
-		}
-		if ( empty( $existing_last ) && $family_name ) {
-			update_field( 'last_name', $family_name, $post_id );
+		if ( empty( $existing_last ) && $parsed['last_name'] ) {
+			update_field( 'last_name', $parsed['last_name'], $post_id );
 		}
 	}
 
@@ -697,31 +664,11 @@ class GoogleContactsAPI {
 			}
 
 			// Parse dates
-			$start_date = '';
-			$end_date   = '';
-			$start      = $org->getStartDate();
-			$end        = $org->getEndDate();
-
-			if ( $start && $start->getYear() ) {
-				$start_date = sprintf(
-					'%04d-%02d-%02d',
-					$start->getYear(),
-					$start->getMonth() ?: 1,
-					$start->getDay() ?: 1
-				);
-			}
-
-			if ( $end && $end->getYear() ) {
-				$end_date = sprintf(
-					'%04d-%02d-%02d',
-					$end->getYear(),
-					$end->getMonth() ?: 1,
-					$end->getDay() ?: 1
-				);
-			}
+			$start_date = $this->format_google_date( $org->getStartDate() );
+			$end_date   = $this->format_google_date( $org->getEndDate() );
 
 			$existing[] = [
-				'team'    => $team_id,
+				'team'       => $team_id,
 				'job_title'  => $org->getTitle() ?? '',
 				'is_current' => (bool) $org->getCurrent(),
 				'start_date' => $start_date,
@@ -729,7 +676,7 @@ class GoogleContactsAPI {
 			];
 
 			$existing_team_ids[ $team_id ] = true;
-			$added                               = true;
+			$added                         = true;
 		}
 
 		if ( $added ) {
@@ -743,11 +690,10 @@ class GoogleContactsAPI {
 	 * Stores birthdate in the person's ACF birthdate field.
 	 * Skip if year is unknown (0 or not provided) since we only store full dates.
 	 *
-	 * @param int    $post_id   Post ID.
-	 * @param object $person    Google Person object.
-	 * @param string $full_name Person's full name (unused, kept for backward compatibility).
+	 * @param int    $post_id Post ID.
+	 * @param object $person  Google Person object.
 	 */
-	private function import_birthday( int $post_id, object $person, string $full_name ): void {
+	private function import_birthday( int $post_id, object $person ): void {
 		$birthdays = $person->getBirthdays() ?: [];
 		if ( empty( $birthdays ) ) {
 			return;
@@ -795,21 +741,9 @@ class GoogleContactsAPI {
 		}
 
 		$photos = $person->getPhotos() ?: [];
-		if ( empty( $photos ) ) {
-			return;
-		}
-
-		// Find primary photo or use first
-		$photo = null;
-		foreach ( $photos as $p ) {
-			$metadata = $p->getMetadata();
-			if ( $metadata && $metadata->getPrimary() ) {
-				$photo = $p;
-				break;
-			}
-		}
+		$photo  = $this->find_primary_item( $photos );
 		if ( ! $photo ) {
-			$photo = $photos[0];
+			return;
 		}
 
 		// Skip default/placeholder photos
@@ -935,20 +869,20 @@ class GoogleContactsAPI {
 			'organization' => '',
 		];
 
-		// Get primary email from contact_info repeater (first email type entry).
+		// Get primary email and phone from contact_info repeater in a single pass.
 		$contact_info = get_field( 'contact_info', $post_id ) ?: [];
 		foreach ( $contact_info as $info ) {
-			if ( 'email' === ( $info['contact_type'] ?? '' ) && ! empty( $info['contact_value'] ) ) {
-				$snapshot['email'] = strtolower( $info['contact_value'] );
-				break;
+			$type  = $info['contact_type'] ?? '';
+			$value = $info['contact_value'] ?? '';
+			if ( empty( $value ) ) {
+				continue;
 			}
-		}
-
-		// Get primary phone from contact_info repeater (first phone/mobile type entry).
-		foreach ( $contact_info as $info ) {
-			$type = $info['contact_type'] ?? '';
-			if ( in_array( $type, [ 'phone', 'mobile' ], true ) && ! empty( $info['contact_value'] ) ) {
-				$snapshot['phone'] = $info['contact_value'];
+			if ( empty( $snapshot['email'] ) && 'email' === $type ) {
+				$snapshot['email'] = strtolower( $value );
+			} elseif ( empty( $snapshot['phone'] ) && in_array( $type, [ 'phone', 'mobile' ], true ) ) {
+				$snapshot['phone'] = $value;
+			}
+			if ( ! empty( $snapshot['email'] ) && ! empty( $snapshot['phone'] ) ) {
 				break;
 			}
 		}
@@ -1061,28 +995,16 @@ class GoogleContactsAPI {
 
 		// Primary email.
 		$emails = $google_person->getEmailAddresses() ?: [];
-		foreach ( $emails as $email ) {
-			$metadata = $email->getMetadata();
-			if ( $metadata && $metadata->getPrimary() ) {
-				$values['email'] = strtolower( $email->getValue() );
-				break;
-			}
-		}
-		if ( empty( $values['email'] ) && ! empty( $emails ) ) {
-			$values['email'] = strtolower( $emails[0]->getValue() );
+		$email  = $this->find_primary_item( $emails );
+		if ( $email ) {
+			$values['email'] = strtolower( $email->getValue() );
 		}
 
 		// Primary phone.
 		$phones = $google_person->getPhoneNumbers() ?: [];
-		foreach ( $phones as $phone ) {
-			$metadata = $phone->getMetadata();
-			if ( $metadata && $metadata->getPrimary() ) {
-				$values['phone'] = $phone->getCanonicalForm() ?: $phone->getValue();
-				break;
-			}
-		}
-		if ( empty( $values['phone'] ) && ! empty( $phones ) ) {
-			$values['phone'] = $phones[0]->getCanonicalForm() ?: $phones[0]->getValue();
+		$phone  = $this->find_primary_item( $phones );
+		if ( $phone ) {
+			$values['phone'] = $phone->getCanonicalForm() ?: $phone->getValue();
 		}
 
 		// Organization (first one).
@@ -1158,20 +1080,88 @@ class GoogleContactsAPI {
 	private function detect_url_type( string $url ): string {
 		$url_lower = strtolower( $url );
 
-		if ( strpos( $url_lower, 'linkedin.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'linkedin.com' ) ) {
 			return 'linkedin';
 		}
-		if ( strpos( $url_lower, 'twitter.com' ) !== false || strpos( $url_lower, 'x.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'twitter.com' ) || str_contains( $url_lower, 'x.com' ) ) {
 			return 'twitter';
 		}
-		if ( strpos( $url_lower, 'facebook.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'facebook.com' ) ) {
 			return 'facebook';
 		}
-		if ( strpos( $url_lower, 'instagram.com' ) !== false ) {
+		if ( str_contains( $url_lower, 'instagram.com' ) ) {
 			return 'instagram';
 		}
 
 		return 'website';
+	}
+
+	/**
+	 * Format a Google Date object as a YYYY-MM-DD string
+	 *
+	 * Returns an empty string if the date is null or has no year.
+	 *
+	 * @param object|null $date Google Date object.
+	 * @return string Formatted date or empty string.
+	 */
+	private function format_google_date( ?object $date ): string {
+		if ( ! $date || ! $date->getYear() ) {
+			return '';
+		}
+		return sprintf(
+			'%04d-%02d-%02d',
+			$date->getYear(),
+			$date->getMonth() ?: 1,
+			$date->getDay() ?: 1
+		);
+	}
+
+	/**
+	 * Parse a Google Name object into first_name, infix, and last_name
+	 *
+	 * Falls back to splitting displayName if givenName and familyName are both empty.
+	 *
+	 * @param object|null $name Google Name object.
+	 * @return array Array with keys: first_name, infix, last_name.
+	 */
+	private function parse_google_name( ?object $name ): array {
+		if ( ! $name ) {
+			return [ 'first_name' => '', 'infix' => '', 'last_name' => '' ];
+		}
+
+		$first_name = $name->getGivenName() ?: '';
+		$infix      = $name->getMiddleName() ?: '';
+		$last_name  = $name->getFamilyName() ?: '';
+
+		if ( empty( $first_name ) && empty( $last_name ) ) {
+			$display_name = $name->getDisplayName();
+			if ( $display_name ) {
+				$parts      = explode( ' ', trim( $display_name ), 2 );
+				$first_name = $parts[0] ?? '';
+				$last_name  = $parts[1] ?? '';
+			}
+		}
+
+		return [ 'first_name' => $first_name, 'infix' => $infix, 'last_name' => $last_name ];
+	}
+
+	/**
+	 * Find the primary item from a list, or return the first item
+	 *
+	 * @param array $items Array of Google API objects with getMetadata()->getPrimary().
+	 * @return mixed|null The primary item, first item, or null if empty.
+	 */
+	private function find_primary_item( array $items ) {
+		if ( empty( $items ) ) {
+			return null;
+		}
+		foreach ( $items as $item ) {
+			$metadata = $item->getMetadata();
+			if ( $metadata && $metadata->getPrimary() ) {
+				return $item;
+			}
+		}
+		return $items[0];
 	}
 
 	/**
