@@ -68,7 +68,6 @@ class GoogleProvider {
 		try {
 			return self::do_sync( $user_id, $connection );
 		} finally {
-			// Always release lock when done
 			delete_transient( $lock_key );
 		}
 	}
@@ -84,13 +83,11 @@ class GoogleProvider {
 	 * @throws \Exception On API errors
 	 */
 	private static function do_sync( int $user_id, array $connection ): array {
-		// Get valid access token
 		$access_token = \RONDO_Google_OAuth::get_access_token( $connection );
 		if ( ! $access_token ) {
 			throw new \Exception( 'Authentication required. Please reconnect your Google Calendar.' );
 		}
 
-		// Create Google Calendar service
 		$service = self::get_service( $connection );
 		if ( ! $service ) {
 			throw new \Exception( 'Failed to initialize Google Calendar service.' );
@@ -106,7 +103,6 @@ class GoogleProvider {
 		$end_date = new \DateTime();
 		$end_date->modify( "+{$sync_to_days} days" );
 
-		// Get all calendars to sync (handles both old and new format)
 		$calendar_ids = self::get_calendar_ids( $connection );
 
 		// Build calendar name mapping for display
@@ -121,12 +117,10 @@ class GoogleProvider {
 			error_log( 'RONDO_Google_Calendar_Provider: Failed to fetch calendar names: ' . $e->getMessage() );
 		}
 
-		// Aggregate results across all calendars
 		$total_created = 0;
 		$total_updated = 0;
 		$total_count   = 0;
 
-		// Sync each calendar
 		foreach ( $calendar_ids as $calendar_id ) {
 			$calendar_name = $calendar_names[ $calendar_id ] ?? '';
 			$result        = self::sync_single_calendar(
@@ -202,7 +196,6 @@ class GoogleProvider {
 						continue;
 					}
 
-					// Track this event UID as seen
 					$seen_event_uids[] = $event->getId();
 
 					try {
@@ -215,7 +208,6 @@ class GoogleProvider {
 							++$updated;
 						}
 					} catch ( \Exception $e ) {
-						// Log error but continue with other events
 						error_log( 'RONDO_Google_Calendar_Provider: Failed to upsert event ' . $event->getId() . ': ' . $e->getMessage() );
 					}
 				}
@@ -403,7 +395,6 @@ class GoogleProvider {
 		$organizer       = $event->getOrganizer();
 		$organizer_email = $organizer ? $organizer->getEmail() : '';
 
-		// Build post data
 		$post_data = [
 			'post_type'    => 'calendar_event',
 			'post_title'   => html_entity_decode( sanitize_text_field( $event->getSummary() ?: '(No title)' ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ),
@@ -427,7 +418,6 @@ class GoogleProvider {
 			throw new \Exception( 'Failed to save event: ' . $post_id->get_error_message() );
 		}
 
-		// Update post meta
 		update_post_meta( $post_id, '_connection_id', $connection_id );
 		update_post_meta( $post_id, '_event_uid', $event_uid );
 		update_post_meta( $post_id, '_calendar_id', $calendar_id );
@@ -442,7 +432,6 @@ class GoogleProvider {
 		update_post_meta( $post_id, '_raw_data', wp_json_encode( $event->toSimpleObject() ) );
 		update_post_meta( $post_id, '_html_link', esc_url_raw( $event->getHtmlLink() ?? '' ) );
 
-		// Run contact matching
 		$matches = \RONDO_Calendar_Matcher::match_attendees( $user_id, $attendees );
 		update_post_meta( $post_id, '_matched_people', wp_json_encode( $matches ) );
 
@@ -513,19 +502,15 @@ class GoogleProvider {
 		// Parse description and location for Zoom/Teams URLs
 		$text_to_search = ( $event->getDescription() ?: '' ) . ' ' . ( $event->getLocation() ?: '' );
 
-		// Zoom URL pattern
-		if ( preg_match( '/https:\/\/[\w.-]*zoom\.us\/j\/[\w\d\-\?=&]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
-		}
-
-		// Microsoft Teams URL pattern
-		if ( preg_match( '/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[\w\d\-\%\/\?=&]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
-		}
-
-		// Webex URL pattern
-		if ( preg_match( '/https:\/\/[\w.-]*webex\.com\/[\w\d\-\/\?=&]+/i', $text_to_search, $matches ) ) {
-			return $matches[0];
+		$patterns = [
+			'/https:\/\/[\w.-]*zoom\.us\/j\/[\w\d\-\?=&]+/i',
+			'/https:\/\/teams\.microsoft\.com\/l\/meetup-join\/[\w\d\-\%\/\?=&]+/i',
+			'/https:\/\/[\w.-]*webex\.com\/[\w\d\-\/\?=&]+/i',
+		];
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match( $pattern, $text_to_search, $matches ) ) {
+				return $matches[0];
+			}
 		}
 
 		return '';
@@ -584,19 +569,11 @@ class GoogleProvider {
 	 */
 	public static function list_calendars( array $connection ): array {
 		try {
-			// Get valid access token
-			$access_token = \RONDO_Google_OAuth::get_access_token( $connection );
-			if ( ! $access_token ) {
-				return [];
-			}
-
-			// Create Google Calendar service
 			$service = self::get_service( $connection );
 			if ( ! $service ) {
 				return [];
 			}
 
-			// Fetch calendar list
 			$calendar_list = $service->calendarList->listCalendarList();
 			$calendars     = [];
 
