@@ -76,6 +76,7 @@ use Rondo\Finance\InvoiceEmailSender;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
+use Rondo\Finance\MollieWebhook;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
@@ -376,6 +377,7 @@ function rondo_init() {
 		new RESTInvoices();
 		new RabobankOAuth();
 		new RabobankPayment();
+		new MollieWebhook();
 	}
 
 	// Reminders - only for admin or cron
