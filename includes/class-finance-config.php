@@ -286,15 +286,7 @@ Met vriendelijke groet,
 		}
 
 		if ( isset( $data['accent_color'] ) ) {
-			$color = sanitize_hex_color( $data['accent_color'] );
-			// Allow empty string to reset to default
-			if ( $color === null && $data['accent_color'] !== '' ) {
-				// Invalid hex color provided
-				$color = '';
-			} elseif ( $color === null ) {
-				// Empty string provided, store it
-				$color = '';
-			}
+			$color = sanitize_hex_color( $data['accent_color'] ) ?? '';
 			$success = update_option( self::OPTION_ACCENT_COLOR, $color ) && $success;
 		}
 
@@ -341,75 +333,4 @@ Met vriendelijke groet,
 		return update_option( self::OPTION_RABOBANK_CREDENTIALS, $encrypted );
 	}
 
-	/**
-	 * Update organization name
-	 *
-	 * @param string $name The organization name
-	 * @return bool True on success
-	 */
-	public function update_org_name( string $name ): bool {
-		return update_option( self::OPTION_ORG_NAME, sanitize_text_field( $name ) );
-	}
-
-	/**
-	 * Update organization address
-	 *
-	 * @param string $address The organization address
-	 * @return bool True on success
-	 */
-	public function update_org_address( string $address ): bool {
-		return update_option( self::OPTION_ORG_ADDRESS, sanitize_textarea_field( $address ) );
-	}
-
-	/**
-	 * Update contact email
-	 *
-	 * @param string $email The contact email
-	 * @return bool True on success
-	 */
-	public function update_contact_email( string $email ): bool {
-		return update_option( self::OPTION_CONTACT_EMAIL, sanitize_email( $email ) );
-	}
-
-	/**
-	 * Update IBAN
-	 *
-	 * @param string $iban The IBAN
-	 * @return bool True on success
-	 */
-	public function update_iban( string $iban ): bool {
-		$iban = strtoupper( str_replace( ' ', '', sanitize_text_field( $iban ) ) );
-		return update_option( self::OPTION_IBAN, $iban );
-	}
-
-	/**
-	 * Update payment term in days
-	 *
-	 * @param int $days Payment term in days (minimum 1)
-	 * @return bool True on success
-	 */
-	public function update_payment_term_days( int $days ): bool {
-		$days = max( 1, absint( $days ) );
-		return update_option( self::OPTION_PAYMENT_TERM_DAYS, $days );
-	}
-
-	/**
-	 * Update payment clause
-	 *
-	 * @param string $clause The payment clause text
-	 * @return bool True on success
-	 */
-	public function update_payment_clause( string $clause ): bool {
-		return update_option( self::OPTION_PAYMENT_CLAUSE, sanitize_textarea_field( $clause ) );
-	}
-
-	/**
-	 * Update email template
-	 *
-	 * @param string $template The email template
-	 * @return bool True on success
-	 */
-	public function update_email_template( string $template ): bool {
-		return update_option( self::OPTION_EMAIL_TEMPLATE, sanitize_textarea_field( $template ) );
-	}
 }
