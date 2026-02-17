@@ -196,27 +196,9 @@ class GoogleContactsExport {
 	 */
 	private function delete_google_contact( string $resource_name, int $user_id ): bool {
 		try {
-			// Create service for this user.
-			$credentials = GoogleContactsConnection::get_decrypted_credentials( $user_id );
-			if ( ! $credentials ) {
-				return false;
-			}
-
-			$client = GoogleOAuth::get_contacts_client( false, false );
+			$client = $this->build_authenticated_client( $user_id );
 			if ( ! $client ) {
 				return false;
-			}
-
-			$client->setAccessToken( $credentials );
-
-			// Refresh token if expired.
-			if ( $client->isAccessTokenExpired() ) {
-				$refresh_token = $client->getRefreshToken();
-				if ( ! $refresh_token ) {
-					return false;
-				}
-				$client->fetchAccessTokenWithRefreshToken( $refresh_token );
-				GoogleContactsConnection::update_credentials( $user_id, $client->getAccessToken() );
 			}
 
 			$service = new PeopleService( $client );
@@ -321,30 +303,48 @@ class GoogleContactsExport {
 			return $this->service;
 		}
 
-		$credentials = GoogleContactsConnection::get_decrypted_credentials( $this->user_id );
-		if ( ! $credentials ) {
-			throw new \Exception( 'No Google Contacts credentials found' );
-		}
-
-		$client = GoogleOAuth::get_contacts_client( false, false );
+		$client = $this->build_authenticated_client( $this->user_id );
 		if ( ! $client ) {
-			throw new \Exception( 'Google OAuth is not configured' );
-		}
-
-		$client->setAccessToken( $credentials );
-
-		// Refresh token if expired.
-		if ( $client->isAccessTokenExpired() ) {
-			$refresh_token = $client->getRefreshToken();
-			if ( ! $refresh_token ) {
-				throw new \Exception( 'Access token expired and no refresh token available' );
-			}
-			$client->fetchAccessTokenWithRefreshToken( $refresh_token );
-			GoogleContactsConnection::update_credentials( $this->user_id, $client->getAccessToken() );
+			throw new \Exception( 'No Google Contacts credentials found or OAuth is not configured' );
 		}
 
 		$this->service = new PeopleService( $client );
 		return $this->service;
+	}
+
+	/**
+	 * Build an authenticated Google API client for a given user
+	 *
+	 * Fetches credentials, sets the access token, and refreshes if expired.
+	 * Returns null on any auth failure instead of throwing, so callers
+	 * can decide whether to throw or return false.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return \Google\Client|null Authenticated client, or null on failure.
+	 */
+	private function build_authenticated_client( int $user_id ): ?\Google\Client {
+		$credentials = GoogleContactsConnection::get_decrypted_credentials( $user_id );
+		if ( ! $credentials ) {
+			return null;
+		}
+
+		$client = GoogleOAuth::get_contacts_client( false, false );
+		if ( ! $client ) {
+			return null;
+		}
+
+		$client->setAccessToken( $credentials );
+
+		if ( $client->isAccessTokenExpired() ) {
+			$refresh_token = $client->getRefreshToken();
+			if ( ! $refresh_token ) {
+				return null;
+			}
+			$client->fetchAccessTokenWithRefreshToken( $refresh_token );
+			GoogleContactsConnection::update_credentials( $user_id, $client->getAccessToken() );
+		}
+
+		return $client;
 	}
 
 	/**
@@ -782,19 +782,7 @@ class GoogleContactsExport {
 			$url = new Url();
 			$url->setValue( $value );
 
-			// Set type based on contact_type.
-			switch ( $contact_type ) {
-				case 'linkedin':
-					$url->setType( 'profile' );
-					break;
-				case 'twitter':
-				case 'facebook':
-				case 'instagram':
-					$url->setType( 'profile' );
-					break;
-				default:
-					$url->setType( 'homePage' );
-			}
+			$url->setType( $contact_type === 'website' ? 'homePage' : 'profile' );
 
 			$urls[] = $url;
 		}
@@ -1000,10 +988,7 @@ class GoogleContactsExport {
 	private function parse_google_error( \Google\Service\Exception $e ): string {
 		$errors = $e->getErrors();
 		if ( ! empty( $errors ) ) {
-			$messages = [];
-			foreach ( $errors as $error ) {
-				$messages[] = $error['message'] ?? $error['reason'] ?? 'Unknown error';
-			}
+			$messages = array_map( fn( $err ) => $err['message'] ?? $err['reason'] ?? 'Unknown error', $errors );
 			return implode( '; ', $messages );
 		}
 
@@ -1054,8 +1039,7 @@ class GoogleContactsExport {
 		];
 
 		// Verify user has readwrite access.
-		$connection = GoogleContactsConnection::get_connection( $this->user_id );
-		if ( ! $connection || ( $connection['access_mode'] ?? '' ) !== 'readwrite' ) {
+		if ( ! $this->has_write_access() ) {
 			$stats['errors'][] = __( 'Google Contacts is not connected with read-write access.', 'rondo' );
 			return $stats;
 		}
@@ -1067,18 +1051,7 @@ class GoogleContactsExport {
 			'author'         => $this->user_id,
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
-			'meta_query'     => [
-				'relation' => 'OR',
-				[
-					'key'     => '_google_contact_id',
-					'compare' => 'NOT EXISTS',
-				],
-				[
-					'key'     => '_google_contact_id',
-					'value'   => '',
-					'compare' => '=',
-				],
-			],
+			'meta_query'     => $this->get_unlinked_meta_query(),
 		];
 
 		$query    = new \WP_Query( $args );
@@ -1146,21 +1119,30 @@ class GoogleContactsExport {
 			'author'         => $this->user_id,
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
-			'meta_query'     => [
-				'relation' => 'OR',
-				[
-					'key'     => '_google_contact_id',
-					'compare' => 'NOT EXISTS',
-				],
-				[
-					'key'     => '_google_contact_id',
-					'value'   => '',
-					'compare' => '=',
-				],
-			],
+			'meta_query'     => $this->get_unlinked_meta_query(),
 		];
 
 		$query = new \WP_Query( $args );
 		return $query->found_posts;
+	}
+
+	/**
+	 * Get meta_query args for contacts not linked to Google
+	 *
+	 * @return array WP_Query meta_query array.
+	 */
+	private function get_unlinked_meta_query(): array {
+		return [
+			'relation' => 'OR',
+			[
+				'key'     => '_google_contact_id',
+				'compare' => 'NOT EXISTS',
+			],
+			[
+				'key'     => '_google_contact_id',
+				'value'   => '',
+				'compare' => '=',
+			],
+		];
 	}
 }
