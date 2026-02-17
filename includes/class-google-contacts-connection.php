@@ -40,6 +40,11 @@ class GoogleContactsConnection {
 	const PENDING_IMPORT_KEY = '_rondo_google_contacts_pending_import';
 
 	/**
+	 * Default sync frequency in minutes (hourly)
+	 */
+	const DEFAULT_FREQUENCY = 60;
+
+	/**
 	 * Get the Google Contacts connection for a user
 	 *
 	 * @param int $user_id WordPress user ID.
@@ -47,12 +52,7 @@ class GoogleContactsConnection {
 	 */
 	public static function get_connection( int $user_id ): ?array {
 		$connection = get_user_meta( $user_id, self::META_KEY, true );
-
-		if ( ! is_array( $connection ) ) {
-			return null;
-		}
-
-		return $connection;
+		return is_array( $connection ) ? $connection : null;
 	}
 
 	/**
@@ -64,12 +64,7 @@ class GoogleContactsConnection {
 	 * @param array $connection Connection data to save.
 	 */
 	public static function save_connection( int $user_id, array $connection ): void {
-		// Encrypt credentials if provided as array (not already encrypted string)
-		if ( ! empty( $connection['credentials'] ) && is_array( $connection['credentials'] ) ) {
-			$connection['credentials'] = CredentialEncryption::encrypt( $connection['credentials'] );
-		}
-
-		update_user_meta( $user_id, self::META_KEY, $connection );
+		update_user_meta( $user_id, self::META_KEY, self::maybe_encrypt_credentials( $connection ) );
 	}
 
 	/**
@@ -128,13 +123,7 @@ class GoogleContactsConnection {
 			return false;
 		}
 
-		// Handle credential encryption if credentials being updated
-		if ( ! empty( $updates['credentials'] ) && is_array( $updates['credentials'] ) ) {
-			$updates['credentials'] = CredentialEncryption::encrypt( $updates['credentials'] );
-		}
-
-		// Merge updates into existing connection
-		$connection = array_merge( $connection, $updates );
+		$connection = array_merge( $connection, self::maybe_encrypt_credentials( $updates ) );
 
 		update_user_meta( $user_id, self::META_KEY, $connection );
 
@@ -185,15 +174,6 @@ class GoogleContactsConnection {
 	}
 
 	/**
-	 * Get the default sync frequency in minutes
-	 *
-	 * @return int Default frequency (60 = hourly)
-	 */
-	public static function get_default_frequency(): int {
-		return 60;
-	}
-
-	/**
 	 * Get available sync frequency options
 	 *
 	 * @return array Associative array of minutes => label
@@ -216,7 +196,7 @@ class GoogleContactsConnection {
 	public static function get_sync_frequency( int $user_id ): int {
 		$connection = self::get_connection( $user_id );
 		if ( ! $connection || ! isset( $connection['sync_frequency'] ) ) {
-			return self::get_default_frequency();
+			return self::DEFAULT_FREQUENCY;
 		}
 		return (int) $connection['sync_frequency'];
 	}
@@ -236,13 +216,16 @@ class GoogleContactsConnection {
 		}
 
 		$history = $connection['sync_history'] ?? [];
-
-		// Prepend new entry
 		array_unshift( $history, $entry );
+		$connection['sync_history'] = array_slice( $history, 0, 10 );
 
-		// Keep only last 10
-		$history = array_slice( $history, 0, 10 );
+		update_user_meta( $user_id, self::META_KEY, $connection );
+	}
 
-		self::update_connection( $user_id, [ 'sync_history' => $history ] );
+	private static function maybe_encrypt_credentials( array $data ): array {
+		if ( ! empty( $data['credentials'] ) && is_array( $data['credentials'] ) ) {
+			$data['credentials'] = CredentialEncryption::encrypt( $data['credentials'] );
+		}
+		return $data;
 	}
 }

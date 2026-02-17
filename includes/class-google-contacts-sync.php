@@ -33,11 +33,6 @@ class GoogleContactsSync {
 	const USER_INDEX_TRANSIENT = 'rondo_contacts_sync_last_user_index';
 
 	/**
-	 * Default sync frequency in minutes
-	 */
-	const DEFAULT_FREQUENCY = 60;
-
-	/**
 	 * Constructor
 	 */
 	public function __construct() {
@@ -173,10 +168,10 @@ class GoogleContactsSync {
 			return true;
 		}
 
-		// Get sync frequency (default 60 minutes / hourly)
+		// Get sync frequency (default hourly)
 		$frequency_minutes = isset( $connection['sync_frequency'] )
 			? absint( $connection['sync_frequency'] )
-			: self::DEFAULT_FREQUENCY;
+			: GoogleContactsConnection::DEFAULT_FREQUENCY;
 
 		// Parse last_sync timestamp
 		$last_sync_time = strtotime( $last_sync );

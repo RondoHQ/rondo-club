@@ -1412,7 +1412,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			// Sync status
 			WP_CLI::log( 'Sync Status:' );
 			WP_CLI::log( sprintf( '  Last Sync: %s', $connection['last_sync'] ?? 'Never' ) );
-			WP_CLI::log( sprintf( '  Sync Frequency: %d minutes', $connection['sync_frequency'] ?? GoogleContactsConnection::get_default_frequency() ) );
+			WP_CLI::log( sprintf( '  Sync Frequency: %d minutes', $connection['sync_frequency'] ?? GoogleContactsConnection::DEFAULT_FREQUENCY ) );
 
 			if ( ! empty( $connection['last_error'] ) ) {
 				WP_CLI::log( sprintf( '  Last Error: %s', $connection['last_error'] ) );
