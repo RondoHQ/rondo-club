@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie — Executing (Phase 187)
+**Current focus:** v27.0 Mollie — Executing (Phase 188)
 
 ## Current Position
 
-Phase: Phase 187 — MolliePayment Payment Link Creation
+Phase: Phase 188 — MollieWebhook Automatic Status Update
 Plan: 01 complete
 Status: In progress
-Last activity: 2026-02-17 — Completed 187-01 (MolliePayment service class)
+Last activity: 2026-02-17 — Completed 188-01 (MollieWebhook handler class)
 
 ## Performance Metrics
 
@@ -103,6 +103,9 @@ Recent decisions for v26.0:
 - [Phase 187-01]: Idempotency checks both _mollie_payment_id AND payment_link — handles partial write failures
 - [Phase 187-01]: webhookUrl omitted for localhost/.local environments — Phase 188 webhook not yet deployed
 - [Phase 187-01]: use import added proactively in Phase 187; no instantiation in rondo_init()
+- [Phase 188]: MollieWebhook uses __return_true permission callback — Mollie has no WordPress auth
+- [Phase 188]: Handler always returns HTTP 200 to prevent Mollie retry storms
+- [Phase 188]: isPaid() over status string — isPaid() checks paidAt for reliability
 
 ### Roadmap Evolution
 
@@ -134,14 +137,15 @@ None — phase 185 was the final planned enhancement.
 | 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
+| Phase 188 P01 | 900 | 2 tasks | 2 files |
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 187-01-PLAN.md (MolliePayment service class)
+Stopped at: Completed 188-01-PLAN.md (MollieWebhook webhook handler)
 Resume file: None
 
-**Next action:** Execute next phase (Phase 188 or 189)
+**Next action:** Deploy to production (SSH was blocked during execution), then execute Phase 189
 
 ---
 *State created: 2026-02-15*
