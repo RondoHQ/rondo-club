@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie — Defining requirements
+**Current focus:** v27.0 Mollie — Executing (Phase 186)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-17 — Milestone v27.0 started
+Phase: Phase 186 — SDK Installation + FinanceConfig + MollieClient
+Plan: 01 complete
+Status: In progress
+Last activity: 2026-02-17 — Completed 186-01 (SDK + FinanceConfig + MollieClient)
 
 ## Performance Metrics
 
@@ -95,6 +95,10 @@ Recent decisions for v26.0:
 - [Phase 185-01]: Logo storage via WordPress media library (reuse existing infrastructure)
 - [Phase 185-01]: Accent color stored as hex string with sanitize_hex_color() validation
 - [Phase 185-01]: PDF fallback to Rondo branding ensures PDFs always render
+- [Phase 186]: Sodium encryption for Mollie API key (same pattern as Rabobank credentials)
+- [Phase 186]: MollieClient is not a singleton — reads fresh key from FinanceConfig on each instantiation
+- [Phase 186]: Active payment provider defaults to 'rabobank' — no behavioral change for existing sites
+- [Phase 186]: Boolean mollie_has_api_key in get_all_settings() — raw key never exposed via REST
 
 ### Roadmap Evolution
 
@@ -124,14 +128,15 @@ None — phase 185 was the final planned enhancement.
 | 72 | Add tab navigation to Finance Settings | 2026-02-16 | d31e152 | [72-finance-settings-tabs](./quick/72-finance-settings-tabs/) |
 | 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
 | 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
+| Phase 186 P01 | 164 | 2 tasks | 9 files |
 
 ## Session Continuity
 
-Last session: 2026-02-16
-Stopped at: Completed quick task 74: Filter Tuchtzaken page by Doorbelast and Sanctie
+Last session: 2026-02-17
+Stopped at: Completed 186-01-PLAN.md (SDK + FinanceConfig + MollieClient)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 186` to start planning the first phase
+**Next action:** Execute Phase 186 Plan 02 (if exists) or next phase
 
 ---
 *State created: 2026-02-15*
