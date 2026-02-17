@@ -218,7 +218,7 @@ class GoogleContacts extends Base {
 			'last_error'         => $connection['last_error'] ?? null,
 			'has_pending_import' => GoogleContactsConnection::has_pending_import( $user_id ),
 			'connected_at'       => $connection['connected_at'] ?? null,
-			'sync_frequency'     => $connection['sync_frequency'] ?? GoogleContactsConnection::get_default_frequency(),
+			'sync_frequency'     => $connection['sync_frequency'] ?? GoogleContactsConnection::DEFAULT_FREQUENCY,
 			'sync_in_progress'   => false, // Future: track async imports
 			'sync_history'       => $connection['sync_history'] ?? [],
 		];
