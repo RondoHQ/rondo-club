@@ -214,7 +214,7 @@ Plans:
   2. `FinanceConfig::get_mollie_api_key()`, `update_mollie_api_key()`, `get_active_payment_provider()`, `update_active_payment_provider()` methods exist and store data correctly
   3. Mollie API key stored encrypted using existing `CredentialEncryption` pattern (sodium)
   4. `FinanceConfig::get_all_settings()` returns `mollie_has_api_key` (bool) and `mollie_environment` (`test`/`live`) — never the raw key
-  5. `MollieClient::get_client()` returns a configured `MollieApiClient` instance using the stored key
+  5. `MollieClient::get()` returns a configured `MollieApiClient` instance using the stored key
   6. No user-visible changes on the site — this phase is backend-only
 **Plans**: 1 plan
 
