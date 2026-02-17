@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie — Executing (Phase 186)
+**Current focus:** v27.0 Mollie — Executing (Phase 187)
 
 ## Current Position
 
-Phase: Phase 186 — SDK Installation + FinanceConfig + MollieClient
+Phase: Phase 187 — MolliePayment Payment Link Creation
 Plan: 01 complete
 Status: In progress
-Last activity: 2026-02-17 — Completed 186-01 (SDK + FinanceConfig + MollieClient)
+Last activity: 2026-02-17 — Completed 187-01 (MolliePayment service class)
 
 ## Performance Metrics
 
@@ -99,6 +99,10 @@ Recent decisions for v26.0:
 - [Phase 186]: MollieClient is not a singleton — reads fresh key from FinanceConfig on each instantiation
 - [Phase 186]: Active payment provider defaults to 'rabobank' — no behavioral change for existing sites
 - [Phase 186]: Boolean mollie_has_api_key in get_all_settings() — raw key never exposed via REST
+- [Phase 187-01]: MolliePayment is a pure service class — no REST routes, no constructor hooks, called directly by Phase 189
+- [Phase 187-01]: Idempotency checks both _mollie_payment_id AND payment_link — handles partial write failures
+- [Phase 187-01]: webhookUrl omitted for localhost/.local environments — Phase 188 webhook not yet deployed
+- [Phase 187-01]: use import added proactively in Phase 187; no instantiation in rondo_init()
 
 ### Roadmap Evolution
 
@@ -129,14 +133,15 @@ None — phase 185 was the final planned enhancement.
 | 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
 | 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
+| Phase 187 P01 | 90 | 2 tasks | 2 files |
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 186-01-PLAN.md (SDK + FinanceConfig + MollieClient)
+Stopped at: Completed 187-01-PLAN.md (MolliePayment service class)
 Resume file: None
 
-**Next action:** Execute Phase 186 Plan 02 (if exists) or next phase
+**Next action:** Execute next phase (Phase 188 or 189)
 
 ---
 *State created: 2026-02-15*
