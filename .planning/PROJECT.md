@@ -427,20 +427,17 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-## Current Milestone: v26.0 Discipline Case Invoicing
+## Current Milestone: v27.0 Mollie
 
-**Goal:** Enable the club to invoice members for discipline case fees with PDF generation, Rabobank payment links, and email delivery — tracked through a full invoice lifecycle.
+**Goal:** Add Mollie as a configurable payment provider for discipline case invoices, running alongside Rabobank, with webhook-based payment status tracking.
 
 **Target features:**
-- Finance navigation section (Financiën) grouping Contributie, Facturen, and Instellingen
-- Invoice CPT with lifecycle tracking (Draft → Sent → Paid / Overdue)
-- Select discipline cases on member profile to create invoices
-- PDF invoice generation with club branding, member details, and case breakdown
-- Rabobank betaalverzoek API integration for payment links
-- Email delivery via wp_mail with configurable template
-- Finance settings (club invoice details, bank account, payment terms, email template, API credentials)
-- Invoice numbering: 2026T001 format (calendar year + T + sequential)
-- Unified Facturen page for all invoice types (discipline now, membership fees later)
+- Mollie API credentials in Finance Settings (test/live API key, mode toggle)
+- Default payment provider selector in Finance Settings (Rabobank or Mollie)
+- Invoice sending uses configured provider to generate payment link
+- Mollie payment link included in invoice email when Mollie is selected
+- Mollie webhook endpoint for payment status callbacks
+- Automatic invoice status update to Betaald when Mollie confirms payment
 
 ### Out of Scope
 
@@ -672,4 +669,4 @@ Club administrators can manage their members, teams, and club operations through
 | Generic style.css description | "React-powered club management theme" instead of listing specific features | ✓ Good |
 
 ---
-*Last updated: 2026-02-13 after v24.1 Dead Feature Removal milestone*
+*Last updated: 2026-02-17 after v27.0 Mollie milestone start*
