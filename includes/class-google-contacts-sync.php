@@ -95,26 +95,18 @@ class GoogleContactsSync {
 	 * Uses round-robin through all users with Google Contacts connections.
 	 */
 	public function run_background_sync() {
-		// Get all users with Google Contacts connections
 		$users = $this->get_users_with_connections();
 
 		if ( empty( $users ) ) {
 			return;
 		}
 
-		// Get last processed user index (for round-robin)
 		$last_index = (int) get_transient( self::USER_INDEX_TRANSIENT );
-
-		// Calculate next user index
 		$next_index = ( $last_index + 1 ) % count( $users );
+		$user_id    = $users[ $next_index ];
 
-		// Get the user to sync this run
-		$user_id = $users[ $next_index ];
-
-		// Update transient for next run
 		set_transient( self::USER_INDEX_TRANSIENT, $next_index, HOUR_IN_SECONDS );
 
-		// Sync this user's contacts
 		$this->sync_user( $user_id );
 	}
 
@@ -123,10 +115,9 @@ class GoogleContactsSync {
 	 *
 	 * @return array User IDs with active connections.
 	 */
-	public function get_users_with_connections() {
+	private function get_users_with_connections() {
 		global $wpdb;
 
-		// Query users who have _rondo_google_contacts_connection user meta
 		$user_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT user_id
@@ -136,7 +127,6 @@ class GoogleContactsSync {
 			)
 		);
 
-		// Filter to users who actually have credentials (are connected)
 		$connected_users = [];
 
 		foreach ( $user_ids as $user_id ) {
@@ -168,18 +158,15 @@ class GoogleContactsSync {
 			return true;
 		}
 
-		// Get sync frequency (default hourly)
 		$frequency_minutes = isset( $connection['sync_frequency'] )
 			? absint( $connection['sync_frequency'] )
 			: GoogleContactsConnection::DEFAULT_FREQUENCY;
 
-		// Parse last_sync timestamp
 		$last_sync_time = strtotime( $last_sync );
 		if ( $last_sync_time === false ) {
 			return true; // Invalid timestamp, sync now
 		}
 
-		// Calculate if enough time has passed
 		$seconds_since_sync = time() - $last_sync_time;
 		$required_seconds   = $frequency_minutes * 60;
 
@@ -195,63 +182,20 @@ class GoogleContactsSync {
 	 * @return array|null Sync results with pull_stats and push_stats, or null if skipped.
 	 */
 	public function sync_user( int $user_id ): ?array {
-		// Check if sync is due based on frequency setting
 		if ( ! $this->is_sync_due( $user_id ) ) {
 			return null;
 		}
 
-		// Check if user is actually connected
 		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
 			return null;
 		}
 
-		// Verify user has readwrite access for bidirectional sync
-		$connection = GoogleContactsConnection::get_connection( $user_id );
-		if ( ! $connection ) {
-			return null;
-		}
-
-		// Start timing for history entry
 		$start_time = microtime( true );
 
-		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
-
-		$results = [
-			'pull_stats' => null,
-			'push_stats' => null,
-			'errors'     => [],
-		];
-
 		try {
-			// PULL PHASE: Google -> Rondo
-			$importer             = new GoogleContactsAPI( $user_id );
-			$results['pull_stats'] = $importer->import_delta();
+			$results = $this->perform_sync( $user_id );
 
-			// PUSH PHASE: Rondo -> Google (only if readwrite access)
-			if ( $has_write_access ) {
-				$results['push_stats'] = $this->push_changed_contacts( $user_id );
-			}
-
-			// Update connection with sync results
-			$contact_count = 0;
-			if ( $results['pull_stats'] ) {
-				$contact_count += $results['pull_stats']['contacts_imported'] ?? 0;
-				$contact_count += $results['pull_stats']['contacts_updated'] ?? 0;
-			}
-
-			GoogleContactsConnection::update_connection(
-				$user_id,
-				[
-					'last_sync'     => current_time( 'c' ),
-					'last_error'    => null,
-					'contact_count' => $contact_count,
-				]
-			);
-
-			// Log success
-			$pull_count = $results['pull_stats']
-				? ( ( $results['pull_stats']['contacts_imported'] ?? 0 ) + ( $results['pull_stats']['contacts_updated'] ?? 0 ) )
-				: 0;
+			$pull_count = ( $results['pull_stats']['contacts_imported'] ?? 0 ) + ( $results['pull_stats']['contacts_updated'] ?? 0 );
 			$push_count = $results['push_stats']['pushed'] ?? 0;
 			$unlinked   = $results['pull_stats']['contacts_unlinked'] ?? 0;
 
@@ -265,14 +209,11 @@ class GoogleContactsSync {
 				)
 			);
 
-			// Calculate duration and record sync history
-			$end_time = microtime( true );
-			$this->record_sync_history( $user_id, $results, $start_time, $end_time );
+			$this->record_sync_history( $user_id, $results, $start_time, microtime( true ) );
 
 			return $results;
 
 		} catch ( \Exception $e ) {
-			// Update last_error but continue processing
 			GoogleContactsConnection::update_connection(
 				$user_id,
 				[
@@ -302,49 +243,67 @@ class GoogleContactsSync {
 	 * @throws \Exception On sync failure.
 	 */
 	public function sync_user_manual( int $user_id ): array {
-		// Check if user is connected.
 		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
 			throw new \Exception( __( 'Google Contacts is not connected.', 'rondo' ) );
 		}
 
-		// Start timing for history entry
 		$start_time = microtime( true );
+		$results    = $this->perform_sync( $user_id );
 
-		$connection       = GoogleContactsConnection::get_connection( $user_id );
-		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
+		$this->record_sync_history( $user_id, $results, $start_time, microtime( true ) );
 
-		// Pull changes from Google.
-		$importer   = new GoogleContactsAPI( $user_id );
-		$pull_stats = $importer->import_delta();
+		return [
+			'pull' => $results['pull_stats'],
+			'push' => $results['push_stats'],
+		];
+	}
 
-		// Push changes to Google (only for readwrite connections).
-		$push_stats = null;
-		if ( $has_write_access ) {
-			$push_stats = $this->push_changed_contacts( $user_id );
+	/**
+	 * Core sync sequence: pull from Google, optionally push local changes, update connection
+	 *
+	 * @param int $user_id User ID to sync.
+	 * @return array Sync results with pull_stats, push_stats, and errors.
+	 * @throws \Exception If connection is missing or sync fails.
+	 */
+	private function perform_sync( int $user_id ): array {
+		$connection = GoogleContactsConnection::get_connection( $user_id );
+		if ( ! $connection ) {
+			throw new \Exception( sprintf( __( 'No Google Contacts connection found for user %d', 'rondo' ), $user_id ) );
 		}
 
-		// Update last sync.
+		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
+
+		$results = [
+			'pull_stats' => null,
+			'push_stats' => null,
+			'errors'     => [],
+		];
+
+		// PULL PHASE: Google -> Rondo
+		$importer             = new GoogleContactsAPI( $user_id );
+		$results['pull_stats'] = $importer->import_delta();
+
+		// PUSH PHASE: Rondo -> Google (only if readwrite access)
+		if ( $has_write_access ) {
+			$results['push_stats'] = $this->push_changed_contacts( $user_id );
+		}
+
+		$contact_count = 0;
+		if ( $results['pull_stats'] ) {
+			$contact_count += $results['pull_stats']['contacts_imported'] ?? 0;
+			$contact_count += $results['pull_stats']['contacts_updated'] ?? 0;
+		}
+
 		GoogleContactsConnection::update_connection(
 			$user_id,
 			[
-				'last_sync'  => current_time( 'c' ),
-				'last_error' => null,
+				'last_sync'     => current_time( 'c' ),
+				'last_error'    => null,
+				'contact_count' => $contact_count,
 			]
 		);
 
-		// Record sync history
-		$end_time = microtime( true );
-		$results  = [
-			'pull_stats' => $pull_stats,
-			'push_stats' => $push_stats,
-			'errors'     => [],
-		];
-		$this->record_sync_history( $user_id, $results, $start_time, $end_time );
-
-		return [
-			'pull' => $pull_stats,
-			'push' => $push_stats,
-		];
+		return $results;
 	}
 
 	/**
@@ -467,20 +426,25 @@ class GoogleContactsSync {
 			'organization' => '',
 		];
 
-		// Get primary email from contact_info repeater.
-		$contact_info = get_field( 'contact_info', $post_id ) ?: [];
-		foreach ( $contact_info as $info ) {
-			if ( 'email' === ( $info['contact_type'] ?? '' ) && ! empty( $info['contact_value'] ) ) {
-				$snapshot['email'] = strtolower( $info['contact_value'] );
-				break;
-			}
-		}
+		$contact_info  = get_field( 'contact_info', $post_id ) ?: [];
+		$found_email   = false;
+		$found_phone   = false;
 
-		// Get primary phone from contact_info repeater.
 		foreach ( $contact_info as $info ) {
-			$type = $info['contact_type'] ?? '';
-			if ( in_array( $type, [ 'phone', 'mobile' ], true ) && ! empty( $info['contact_value'] ) ) {
-				$snapshot['phone'] = $info['contact_value'];
+			$type  = $info['contact_type'] ?? '';
+			$value = $info['contact_value'] ?? '';
+
+			if ( ! $found_email && 'email' === $type && ! empty( $value ) ) {
+				$snapshot['email'] = strtolower( $value );
+				$found_email       = true;
+			}
+
+			if ( ! $found_phone && in_array( $type, [ 'phone', 'mobile' ], true ) && ! empty( $value ) ) {
+				$snapshot['phone'] = $value;
+				$found_phone       = true;
+			}
+
+			if ( $found_email && $found_phone ) {
 				break;
 			}
 		}
@@ -489,13 +453,13 @@ class GoogleContactsSync {
 		$work_history = get_field( 'work_history', $post_id ) ?: [];
 		foreach ( $work_history as $job ) {
 			if ( ! empty( $job['is_current'] ) && ! empty( $job['team'] ) ) {
-				$team_id             = is_object( $job['team'] ) ? $job['team']->ID : (int) $job['team'];
+				$team_id                  = is_object( $job['team'] ) ? $job['team']->ID : (int) $job['team'];
 				$snapshot['organization'] = get_the_title( $team_id );
 				break;
 			}
 		}
 		if ( empty( $snapshot['organization'] ) && ! empty( $work_history[0]['team'] ) ) {
-			$team_id             = is_object( $work_history[0]['team'] ) ? $work_history[0]['team']->ID : (int) $work_history[0]['team'];
+			$team_id                  = is_object( $work_history[0]['team'] ) ? $work_history[0]['team']->ID : (int) $work_history[0]['team'];
 			$snapshot['organization'] = get_the_title( $team_id );
 		}
 
@@ -511,7 +475,6 @@ class GoogleContactsSync {
 	public static function get_sync_status() {
 		$next_scheduled = wp_next_scheduled( self::CRON_HOOK );
 
-		// Get users with connections
 		$instance    = new self();
 		$total_users = count( $instance->get_users_with_connections() );
 
@@ -546,8 +509,7 @@ class GoogleContactsSync {
 			];
 
 			try {
-				// Force sync by temporarily ignoring frequency check
-				$sync_results = $instance->force_sync_user( $user_id );
+				$sync_results = $instance->perform_sync( $user_id );
 
 				$user_results['status']     = 'success';
 				$user_results['pull_stats'] = $sync_results['pull_stats'] ?? null;
@@ -567,60 +529,6 @@ class GoogleContactsSync {
 
 			$results[] = $user_results;
 		}
-
-		return $results;
-	}
-
-	/**
-	 * Force sync a single user, ignoring frequency check
-	 *
-	 * @param int $user_id User ID to sync.
-	 * @return array Sync results with pull_stats and push_stats.
-	 * @throws \Exception On sync errors.
-	 */
-	private function force_sync_user( int $user_id ): array {
-		// Check if user is actually connected
-		if ( ! GoogleContactsConnection::is_connected( $user_id ) ) {
-			throw new \Exception( 'User is not connected to Google Contacts' );
-		}
-
-		// Verify user has readwrite access for bidirectional sync
-		$connection = GoogleContactsConnection::get_connection( $user_id );
-		if ( ! $connection ) {
-			throw new \Exception( 'No connection found for user' );
-		}
-
-		$has_write_access = ( $connection['access_mode'] ?? '' ) === 'readwrite';
-
-		$results = [
-			'pull_stats' => null,
-			'push_stats' => null,
-		];
-
-		// PULL PHASE: Google -> Rondo
-		$importer             = new GoogleContactsAPI( $user_id );
-		$results['pull_stats'] = $importer->import_delta();
-
-		// PUSH PHASE: Rondo -> Google (only if readwrite access)
-		if ( $has_write_access ) {
-			$results['push_stats'] = $this->push_changed_contacts( $user_id );
-		}
-
-		// Update connection with sync results
-		$contact_count = 0;
-		if ( $results['pull_stats'] ) {
-			$contact_count += $results['pull_stats']['contacts_imported'] ?? 0;
-			$contact_count += $results['pull_stats']['contacts_updated'] ?? 0;
-		}
-
-		GoogleContactsConnection::update_connection(
-			$user_id,
-			[
-				'last_sync'     => current_time( 'c' ),
-				'last_error'    => null,
-				'contact_count' => $contact_count,
-			]
-		);
 
 		return $results;
 	}
