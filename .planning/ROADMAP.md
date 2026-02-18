@@ -281,7 +281,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 190-01-PLAN.md — Finance Settings Mollie section UI + version bump + changelog
+- [x] 190-01-PLAN.md — Finance Settings Mollie section UI + version bump + changelog
 
 ## Progress
 
@@ -302,8 +302,8 @@ Plans:
 | 187. MolliePayment — Payment Link Creation | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
 | 188. MollieWebhook — Automatic Status Update | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
 | 189. RestInvoices — Provider Routing | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
-| 190. Finance Settings UI | v27.0 | 0/1 | Pending | — |
+| 190. Finance Settings UI | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-18 — Phase 189 complete*
+*Last updated: 2026-02-18 — Phase 190 complete*
