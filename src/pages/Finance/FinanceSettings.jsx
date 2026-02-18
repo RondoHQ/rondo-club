@@ -593,7 +593,8 @@ export default function FinanceSettings() {
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
             <p className="font-semibold mb-2">Beschikbare variabelen:</p>
             <div className="space-y-1 font-mono">
-              <div><code>{'{naam}'}</code> - Naam van het lid</div>
+              <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
+              <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
               <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
               <div><code>{'{tuchtzaken_lijst}'}</code> - Overzicht van tuchtzaken</div>
               <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
