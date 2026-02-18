@@ -13,6 +13,7 @@ use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Finance\InvoiceEmailSender;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
+use Rondo\Finance\MolliePayment;
 use Rondo\Config\FinanceConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
