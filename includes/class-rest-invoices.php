@@ -903,7 +903,8 @@ class Invoices extends Base {
 	 * @return bool True if the active provider is in test/sandbox mode.
 	 */
 	private function is_test_mode_active(): bool {
-		$settings = FinanceConfig::get_all_settings();
+		$config   = new FinanceConfig();
+		$settings = $config->get_all_settings();
 		$provider = $settings['active_payment_provider'] ?? '';
 
 		if ( 'mollie' === $provider ) {
