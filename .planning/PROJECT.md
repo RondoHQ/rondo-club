@@ -447,7 +447,21 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-(No active milestone — planning next)
+## Current Milestone: v28.0 Membership Fee Invoicing
+
+**Goal:** Enable clubs to invoice members for seasonal fees through Rondo Club with Mollie payments, replacing external billing systems like Nikki.
+
+**Target features:**
+- Per-season billing method toggle (Nikki vs Rondo invoicing)
+- Bulk concept invoice creation from Contributie data with preview/test workflow
+- Public token-secured landing page for payment plan selection
+- Payment plans: full, 3 installments (Sep/Nov/Feb), 8 installments (Sep + Oct-Apr monthly)
+- Configurable per-installment administration fee for multi-payment plans
+- Automatic installment emails on the 25th with fresh Mollie payment links
+- Overdue payment reminders (2 weeks, then 3 weeks with BCC to treasurer)
+- Configurable email templates for invoices, installments, and reminders
+- Facturen page filters for overdue, payment status, invoice type
+- Finance capability for non-admin users to manage invoicing
 
 ### Out of Scope
 
@@ -455,7 +469,7 @@ Club administrators can manage their members, teams, and club operations through
 - Real-time updates (WebSockets) — future enhancement
 - Mollie OAuth (multi-merchant) — single-club app, API key auth sufficient
 - Mollie refunds UI — admin uses Mollie Dashboard for infrequent refunds
-- Membership fee invoicing via Mollie — deferred to v28.0+
+- Membership fee invoicing via subscription/recurring payments — single payments per installment sufficient
 - iDEAL enforcement in code — Mollie Dashboard controls payment methods
 - Public-facing feedback portal — internal use only
 
@@ -694,4 +708,4 @@ Club administrators can manage their members, teams, and club operations through
 | Pre-commit lint enforcement (husky + lint-staged) | Zero-tolerance for new lint errors in commits | ✓ Good |
 
 ---
-*Last updated: 2026-02-18 after v27.0 Mollie milestone*
+*Last updated: 2026-02-18 after starting v28.0 Membership Fee Invoicing milestone*

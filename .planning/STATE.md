@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie milestone completed. Planning next milestone.
+**Current focus:** v28.0 Membership Fee Invoicing
 
 ## Current Position
 
-Phase: None — between milestones
-Plan: N/A
-Status: v27.0 Mollie SHIPPED (v27.1.2)
-Last activity: 2026-02-18 — v27.0 milestone archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-18 — Milestone v28.0 started
 
 ## Performance Metrics
 
@@ -46,11 +46,11 @@ None — ESLint cleanup completed and pre-commit enforcement active.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: v27.0 Mollie milestone archived
+Stopped at: Defining v28.0 requirements
 Resume file: None
 
-**Next action:** `/gsd:new-milestone` for next version
+**Next action:** Complete requirements and roadmap for v28.0
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — v27.0 Mollie milestone archived*
+*Last updated: 2026-02-18 — Milestone v28.0 started*
