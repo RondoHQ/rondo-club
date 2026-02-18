@@ -265,7 +265,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 189-01-PLAN.md — Provider branching in RestInvoices::send_invoice()
+- [x] 189-01-PLAN.md — Provider branching in RestInvoices::send_invoice()
 
 #### Phase 190: Finance Settings UI — Mollie Configuration
 **Goal**: Finance Settings page includes Mollie API key input, payment provider selector, and test/live mode badge — using existing settings REST endpoint.
@@ -301,9 +301,9 @@ Plans:
 | 186. SDK + FinanceConfig + MollieClient | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
 | 187. MolliePayment — Payment Link Creation | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
 | 188. MollieWebhook — Automatic Status Update | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
-| 189. RestInvoices — Provider Routing | v27.0 | 0/1 | Pending | — |
+| 189. RestInvoices — Provider Routing | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
 | 190. Finance Settings UI | v27.0 | 0/1 | Pending | — |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-17 — Phase 188 complete*
+*Last updated: 2026-02-18 — Phase 189 complete*
