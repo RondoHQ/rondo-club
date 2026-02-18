@@ -2,8 +2,9 @@
 /**
  * Invoice Email Sender Service
  *
- * Handles sending invoices via email with configurable template and PDF attachment.
- * Uses WordPress wp_mail() function with finance configuration settings.
+ * Handles sending invoices via HTML email with configurable template, PDF attachment,
+ * and inline CID-embedded QR code. Uses WordPress wp_mail() function with finance
+ * configuration settings.
  *
  * @package Rondo\Finance
  */
@@ -22,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class InvoiceEmailSender {
 
 	/**
-	 * Send invoice email with PDF attachment
+	 * Send invoice email with PDF attachment and inline QR code
 	 *
 	 * @param int   $invoice_id The invoice post ID.
 	 * @param array $options    Optional. Associative array of options:
@@ -95,34 +96,54 @@ class InvoiceEmailSender {
 		$template = $config->get_email_template();
 		$org_name = $config->get_org_name();
 
-		// Build discipline cases list for email
+		// Build discipline cases list as HTML
 		$tuchtzaken_lijst = '';
 		if ( $line_items && is_array( $line_items ) ) {
+			$list_items = [];
 			foreach ( $line_items as $item ) {
 				if ( ! empty( $item['discipline_case'] ) ) {
 					$case_id = $item['discipline_case'];
-					$match_desc = get_field( 'match_description', $case_id );
-					$sanction_desc = get_field( 'sanction_description', $case_id );
+					$match_desc = esc_html( get_field( 'match_description', $case_id ) );
+					$sanction_desc = esc_html( get_field( 'sanction_description', $case_id ) );
 					$amount = (float) ( $item['amount'] ?? 0 );
-					$formatted_amount = '€ ' . number_format( $amount, 2, ',', '.' );
+					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
 
-					$tuchtzaken_lijst .= '- ' . $match_desc . ': ' . $sanction_desc . ' — ' . $formatted_amount . "\n";
+					$list_items[] = '<li>' . $match_desc . ': ' . $sanction_desc . ' &mdash; ' . $formatted_amount . '</li>';
 				} elseif ( ! empty( $item['description'] ) ) {
 					// Fallback to description if no discipline case linked
 					$amount = (float) ( $item['amount'] ?? 0 );
-					$formatted_amount = '€ ' . number_format( $amount, 2, ',', '.' );
-					$tuchtzaken_lijst .= '- ' . $item['description'] . ' — ' . $formatted_amount . "\n";
+					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
+					$list_items[] = '<li>' . esc_html( $item['description'] ) . ' &mdash; ' . $formatted_amount . '</li>';
 				}
+			}
+			if ( ! empty( $list_items ) ) {
+				$tuchtzaken_lijst = '<ul style="margin:0;padding-left:20px;">' . implode( '', $list_items ) . '</ul>';
 			}
 		}
 
 		// Format total amount in Dutch currency format
-		$formatted_total = '€ ' . number_format( $total_amount, 2, ',', '.' );
+		$formatted_total = '&euro; ' . number_format( $total_amount, 2, ',', '.' );
 
-		// Format payment link or fallback text
+		// Format payment link as HTML anchor or fallback text
 		$betaallink_text = ! empty( $payment_link )
-			? $payment_link
+			? '<a href="' . esc_url( $payment_link ) . '" style="color:#0891b2;text-decoration:underline;">' . esc_html( $payment_link ) . '</a>'
 			: 'Neem contact op voor betaalinformatie.';
+
+		// Build inline QR code HTML via CID embedding
+		$qr_code_html = '';
+		$qr_cid       = '';
+		$qr_data      = '';
+		$upload_dir    = wp_upload_dir();
+		$qr_code_path  = get_field( 'qr_code_path', $invoice_id );
+
+		if ( ! empty( $qr_code_path ) ) {
+			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
+			if ( file_exists( $qr_full_path ) ) {
+				$qr_data = file_get_contents( $qr_full_path );
+				$qr_cid  = 'qr-' . sanitize_file_name( $invoice_number ) . '@rondo';
+				$qr_code_html = '<img src="cid:' . $qr_cid . '" alt="QR Code betaallink" width="200" style="display:block;" />';
+			}
+		}
 
 		// Replace template variables
 		$email_body = str_replace(
@@ -132,15 +153,17 @@ class InvoiceEmailSender {
 				'{tuchtzaken_lijst}',
 				'{totaal_bedrag}',
 				'{betaallink}',
+				'{qr_code}',
 				'{organisatie_naam}',
 			],
 			[
-				$person_name,
-				$invoice_number,
-				trim( $tuchtzaken_lijst ),
+				esc_html( $person_name ),
+				esc_html( $invoice_number ),
+				$tuchtzaken_lijst,
 				$formatted_total,
 				$betaallink_text,
-				$org_name,
+				$qr_code_html,
+				esc_html( $org_name ),
 			],
 			$template
 		);
@@ -153,9 +176,10 @@ class InvoiceEmailSender {
 			$subject = '[TEST] ' . $subject;
 		}
 
-		// Build headers with From address
+		// Build headers with From address and HTML content type
 		$contact_email = $config->get_contact_email();
 		$headers = [
+			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . $org_name . ' <' . $contact_email . '>',
 		];
 
@@ -167,9 +191,8 @@ class InvoiceEmailSender {
 			}
 		}
 
-		// Build attachments
+		// Build attachments (PDF only — QR code is embedded inline)
 		$attachments = [];
-		$upload_dir  = wp_upload_dir();
 
 		// Attach PDF if exists
 		if ( ! empty( $pdf_path ) ) {
@@ -179,17 +202,22 @@ class InvoiceEmailSender {
 			}
 		}
 
-		// Attach QR code if exists
-		$qr_code_path = get_field( 'qr_code_path', $invoice_id );
-		if ( ! empty( $qr_code_path ) ) {
-			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
-			if ( file_exists( $qr_full_path ) ) {
-				$attachments[] = $qr_full_path;
-			}
+		// Add inline QR code via phpmailer_init hook (CID embedding)
+		$phpmailer_hook = null;
+		if ( ! empty( $qr_data ) && ! empty( $qr_cid ) ) {
+			$phpmailer_hook = function ( $phpmailer ) use ( $qr_data, $qr_cid ) {
+				$phpmailer->addStringEmbeddedImage( $qr_data, $qr_cid, 'qr-code.png', 'base64', 'image/png' );
+			};
+			add_action( 'phpmailer_init', $phpmailer_hook );
 		}
 
 		// Send email via wp_mail
 		$result = wp_mail( $recipient_email, $subject, $email_body, $headers, $attachments );
+
+		// Remove the phpmailer_init hook to avoid affecting other emails
+		if ( $phpmailer_hook ) {
+			remove_action( 'phpmailer_init', $phpmailer_hook );
+		}
 
 		if ( ! $result ) {
 			return new \WP_Error(

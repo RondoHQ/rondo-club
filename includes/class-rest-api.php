@@ -745,7 +745,7 @@ class Api extends Base {
 						'iban'                  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'payment_term_days'     => [ 'required' => false, 'type' => 'integer' ],
 						'payment_clause'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
-						'email_template'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
+						'email_template'        => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
