@@ -189,6 +189,7 @@ class InvoiceEmailSender {
 		$email_body = str_replace(
 			[
 				'{naam}',
+				'{voornaam}',
 				'{factuur_nummer}',
 				'{tuchtzaken_lijst}',
 				'{totaal_bedrag}',
@@ -198,6 +199,7 @@ class InvoiceEmailSender {
 			],
 			[
 				esc_html( $person_name ),
+				esc_html( $first_name ),
 				esc_html( $invoice_number ),
 				$tuchtzaken_lijst,
 				$formatted_total,
