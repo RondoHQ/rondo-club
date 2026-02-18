@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie — COMPLETE. Phase 190 shipped v27.0.0.
+**Current focus:** v27.1 Administratiekosten — Phase 191 complete.
 
 ## Current Position
 
-Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
+Phase: Phase 191 — Administratiekosten
 Plan: 01 complete
-Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 83: Delete draft invoices with number reuse
+Status: Complete — Phase 191 Administratiekosten SHIPPED (v27.1.2)
+Last activity: 2026-02-18 — Completed 191-01: Configurable administration fee for discipline invoices
 
 ## Performance Metrics
 
@@ -49,6 +49,9 @@ Last activity: 2026-02-18 — Completed quick task 83: Delete draft invoices wit
 
 **Phase 185 Progress:**
 - Plan 185-01: 336s, 2 tasks, 6 files (2026-02-16)
+
+**Phase 191 Progress:**
+- Plan 191-01: 240s, 2 tasks, 7 files (2026-02-18)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -123,10 +126,14 @@ Recent decisions for v26.0:
 - [Quick 81]: sanction_description 'uitsluiting' (case-insensitive) appends ' en schorsing'
 - [Quick 81]: Non-discipline fallback rows use colspan=3 for description in email table
 - [Quick 83]: Draft-only guard on delete endpoint; force delete (skip trash) frees invoice number for reuse
+- [Phase 191]: admin_fee injected server-side in create_invoice() — backend is single source of truth, prevents tampering
+- [Phase 191]: Hardcoded 'Administratiekosten' description — configurable label adds complexity without clear benefit
+- [Phase 191]: Gate injection on admin_fee > 0 — no zero-value line items on invoices
+- [Phase 191]: total_amount update_field moved to after admin fee injection so total always includes the fee
 
 ### Roadmap Evolution
 
-None — phase 185 was the final planned enhancement.
+- Phase 191 added: Administratiekosten
 
 ### Pending Todos
 
@@ -170,11 +177,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Quick task 83 complete — Delete draft invoices with number reuse
+Stopped at: Completed 191-01-PLAN.md — Administratiekosten (configurable admin fee for invoices)
 Resume file: None
 
 **Next action:** None pending
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 83: Delete draft invoices with number reuse*
+*Last updated: 2026-02-18 — Phase 191-01: Administratiekosten complete (v27.1.2)*
