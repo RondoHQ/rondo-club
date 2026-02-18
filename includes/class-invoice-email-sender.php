@@ -24,10 +24,13 @@ class InvoiceEmailSender {
 	/**
 	 * Send invoice email with PDF attachment
 	 *
-	 * @param int $invoice_id The invoice post ID.
+	 * @param int   $invoice_id The invoice post ID.
+	 * @param array $options    Optional. Associative array of options:
+	 *                          - override_email (string) Send to this address instead of the person's email.
+	 *                          - skip_bcc (bool)         When true, omit the BCC header.
 	 * @return true|\WP_Error True on success, WP_Error on failure.
 	 */
-	public static function send( int $invoice_id ) {
+	public static function send( int $invoice_id, array $options = [] ) {
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
 		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
@@ -83,6 +86,9 @@ class InvoiceEmailSender {
 				[ 'status' => 400 ]
 			);
 		}
+
+		// In test mode, redirect email to override address
+		$recipient_email = $options['override_email'] ?? $person_email;
 
 		// Get finance configuration
 		$config = new FinanceConfig();
@@ -142,16 +148,23 @@ class InvoiceEmailSender {
 		// Build email subject
 		$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
 
+		// In test mode, prefix subject to make test emails clearly identifiable
+		if ( ! empty( $options['override_email'] ) || ! empty( $options['skip_bcc'] ) ) {
+			$subject = '[TEST] ' . $subject;
+		}
+
 		// Build headers with From address
 		$contact_email = $config->get_contact_email();
 		$headers = [
 			'From: ' . $org_name . ' <' . $contact_email . '>',
 		];
 
-		// Add BCC if configured
-		$bcc_email = $config->get_bcc_email();
-		if ( ! empty( $bcc_email ) ) {
-			$headers[] = 'Bcc: ' . $bcc_email;
+		// Add BCC if configured and not suppressed (e.g. in test mode)
+		if ( empty( $options['skip_bcc'] ) ) {
+			$bcc_email = $config->get_bcc_email();
+			if ( ! empty( $bcc_email ) ) {
+				$headers[] = 'Bcc: ' . $bcc_email;
+			}
 		}
 
 		// Build attachments
@@ -176,7 +189,7 @@ class InvoiceEmailSender {
 		}
 
 		// Send email via wp_mail
-		$result = wp_mail( $person_email, $subject, $email_body, $headers, $attachments );
+		$result = wp_mail( $recipient_email, $subject, $email_body, $headers, $attachments );
 
 		if ( ! $result ) {
 			return new \WP_Error(
