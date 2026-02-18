@@ -667,13 +667,24 @@ class Invoices extends Base {
 		}
 
 		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF
-		$oauth = new RabobankOAuth();
-		if ( $oauth->is_connected() ) {
-			$payment = new RabobankPayment( $oauth );
-			$payment_result = $payment->create_payment_request( $invoice_id );
-			// Log error but continue - payment link is non-blocking
+		$finance_config  = new FinanceConfig();
+		$active_provider = $finance_config->get_active_payment_provider();
+
+		if ( 'mollie' === $active_provider ) {
+			$mollie_payment = new MolliePayment();
+			$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 			if ( is_wp_error( $payment_result ) ) {
-				error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+				error_log( 'Mollie payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+			}
+		} else {
+			$oauth = new RabobankOAuth();
+			if ( $oauth->is_connected() ) {
+				$payment        = new RabobankPayment( $oauth );
+				$payment_result = $payment->create_payment_request( $invoice_id );
+				// Log error but continue - payment link is non-blocking
+				if ( is_wp_error( $payment_result ) ) {
+					error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+				}
 			}
 		}
 
