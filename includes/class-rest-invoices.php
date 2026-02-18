@@ -209,6 +209,26 @@ class Invoices extends Base {
 			]
 		);
 
+		// Regenerate payment link for invoice
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/regenerate-payment-link',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'regenerate_payment_link' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
 		// Download invoice QR code
 		register_rest_route(
 			'rondo/v1',
@@ -774,6 +794,72 @@ class Invoices extends Base {
 		}
 
 		// Return updated invoice detail
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Regenerate payment link for an invoice
+	 *
+	 * Clears the existing payment link and creates a new one for any unpaid invoice.
+	 * For Mollie, clears the stored payment ID to bypass idempotency.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function regenerate_payment_link( \WP_REST_Request $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Only unpaid invoices can have payment links regenerated
+		$status = get_field( 'status', $invoice_id );
+		if ( $status === 'paid' ) {
+			return new \WP_Error(
+				'invoice_paid',
+				__( 'Betaalde facturen kunnen geen nieuwe betaallink krijgen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$finance_config  = new FinanceConfig();
+		$active_provider = $finance_config->get_active_payment_provider();
+
+		if ( 'mollie' === $active_provider ) {
+			// Clear Mollie payment ID to bypass idempotency and force a new payment link
+			delete_post_meta( $invoice_id, '_mollie_payment_id' );
+			update_field( 'payment_link', '', $invoice_id );
+
+			$mollie_payment = new MolliePayment();
+			$result         = $mollie_payment->create_payment_link( $invoice_id );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		} else {
+			$oauth = new RabobankOAuth();
+			if ( ! $oauth->is_connected() ) {
+				return new \WP_Error(
+					'rabobank_not_connected',
+					__( 'Rabobank is niet gekoppeld.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+			$payment = new RabobankPayment( $oauth );
+			$result  = $payment->create_payment_request( $invoice_id );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+		}
+
+		// Return updated invoice
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
 	}
