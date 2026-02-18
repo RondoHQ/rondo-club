@@ -146,6 +146,7 @@ export default function FinanceSettings() {
     rabobank_client_secret: '',
     active_payment_provider: 'rabobank',
     mollie_api_key: '',
+    mollie_redirect_url: '',
   });
 
   const [activeTab, setActiveTab] = useState('organization');
@@ -174,6 +175,7 @@ export default function FinanceSettings() {
         active_payment_provider: settings.active_payment_provider || 'rabobank',
         // Do NOT add mollie_api_key — key is never returned by API
         mollie_api_key: '',
+        mollie_redirect_url: settings.mollie_redirect_url || '',
       });
     }
   }, [settings]);
@@ -272,6 +274,7 @@ export default function FinanceSettings() {
       if (formData.mollie_api_key.trim()) {
         payload.mollie_api_key = formData.mollie_api_key;
       }
+      payload.mollie_redirect_url = formData.mollie_redirect_url;
 
       await updateMutation.mutateAsync(payload);
 
@@ -811,6 +814,23 @@ export default function FinanceSettings() {
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Gebruik een <code>live_</code> sleutel voor productie of <code>test_</code> voor sandbox. De omgeving wordt automatisch afgeleid.
+            </p>
+          </div>
+
+          <div>
+            <label htmlFor="mollie_redirect_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Redirect URL na betaling
+            </label>
+            <input
+              type="url"
+              id="mollie_redirect_url"
+              value={formData.mollie_redirect_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, mollie_redirect_url: e.target.value }))}
+              placeholder="https://www.svawc.nl/bedankt"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              De pagina waar de betaler naartoe wordt gestuurd na de betaling. Laat leeg om naar de homepagina te verwijzen.
             </p>
           </div>
         </div>

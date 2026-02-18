@@ -750,6 +750,7 @@ class Api extends Base {
 						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'mollie_api_key'          => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'mollie_redirect_url'     => [ 'required' => false, 'sanitize_callback' => 'esc_url_raw' ],
 						'active_payment_provider' => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
