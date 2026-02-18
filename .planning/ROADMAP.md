@@ -107,7 +107,7 @@
 
 **Milestone Goal:** Enable clubs to invoice members for seasonal membership fees with Mollie payment plans — full payment, 3 installments, or 8 installments — replacing external billing systems like Nikki. Members select their plan on a public landing page, pay via Mollie, and receive automated installment emails and overdue reminders.
 
-- [ ] **Phase 192: Data Model Foundation** (1 plan) — Invoice type field, billing toggle, installment meta schema, admin fee config
+- [x] **Phase 192: Data Model Foundation** (1/1 plan) — completed 2026-02-18
 - [ ] **Phase 193: Public Payment Landing Page** — Token-secured member payment page at /betaling/{token}, plan selection, Mollie redirect
 - [ ] **Phase 194: Payment Plan Manager + Webhook Extension** — Installment state machine, reverse-lookup webhook pattern, all-paid invoice transition
 - [ ] **Phase 195: Installment Scheduler + Email System** — Daily cron sweeper, monthly installment emails, overdue reminders, email templates
@@ -237,7 +237,7 @@ Plans:
 | 175-177 | v24.1 | 6/6 | ✓ Complete | 2026-02-13 |
 | 178-185 | v26.0 | 13/13 | ✓ Complete | 2026-02-16 |
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
-| 192 | v28.0 | 0/1 | Not started | - |
+| 192 | v28.0 | 1/1 | ✓ Complete | 2026-02-18 |
 | 193 | v28.0 | 0/TBD | Not started | - |
 | 194 | v28.0 | 0/TBD | Not started | - |
 | 195 | v28.0 | 0/TBD | Not started | - |
@@ -246,4 +246,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-18 — v28.0 Membership Fee Invoicing roadmap added (phases 192-197)*
+*Last updated: 2026-02-18 — Phase 192 complete*
