@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.2.0] - 2026-02-18
+
+### Added
+- Public payment landing page at /betaling/{token} for membership fee invoices
+- Members can view invoice details and select payment plan (full, 3 or 8 installments) without logging in
+- Mollie payment creation for installment payments with per-installment admin fee
+- Mobile-friendly standalone HTML page with touch-friendly buttons (48px min-height)
+
 ## [27.1.2] - 2026-02-18
 
 ### Added
