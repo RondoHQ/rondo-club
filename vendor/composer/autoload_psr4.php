@@ -10,6 +10,8 @@ return array(
     'phpseclib3\\' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'lucatume\\WPBrowser\\Opis\\Closure\\' => array($vendorDir . '/lucatume/wp-browser/includes/opis/closure/src'),
     'lucatume\\WPBrowser\\' => array($vendorDir . '/lucatume/wp-browser/src', $vendorDir . '/lucatume/wp-browser/src/Deprecated'),
+    'chillerlan\\Settings\\' => array($vendorDir . '/chillerlan/php-settings-container/src'),
+    'chillerlan\\QRCode\\' => array($vendorDir . '/chillerlan/php-qrcode/src'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Symfony\\Polyfill\\Mbstring\\' => array($vendorDir . '/symfony/polyfill-mbstring'),
     'Symfony\\Polyfill\\Intl\\Normalizer\\' => array($vendorDir . '/symfony/polyfill-intl-normalizer'),

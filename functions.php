@@ -77,6 +77,7 @@ use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
 use Rondo\Finance\MollieWebhook;
+use Rondo\Finance\QrCodeGenerator;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
