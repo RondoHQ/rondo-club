@@ -18,7 +18,7 @@ export default function CompleteTodoModal({ isOpen, onClose, todo, onAwaiting, o
 
         <div className="p-4">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            "{todo.content}"
+            &quot;{todo.content}&quot;
           </p>
 
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">

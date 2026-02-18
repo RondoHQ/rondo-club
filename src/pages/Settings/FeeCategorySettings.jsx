@@ -666,7 +666,6 @@ export default function FeeCategorySettings() {
       setTimeout(() => setSuccessMessage(''), 3000);
     },
     onError: (error) => {
-      const errorData = error.response?.data?.data;
       const errorMessage = error.response?.data?.message || error.message || 'Er is een fout opgetreden';
       setSaveErrors([{ field: 'general', message: errorMessage }]);
       setSaveWarnings([]);

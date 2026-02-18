@@ -649,7 +649,7 @@ export default function PeopleList() {
   });
 
   // Extract data from response
-  const people = data?.people || [];
+  const people = useMemo(() => data?.people || [], [data]);
   const totalPeople = data?.total || 0;
   const totalPages = data?.total_pages || 0;
 
@@ -906,7 +906,7 @@ export default function PeopleList() {
       setSortField(field);
       setSortOrder('asc');
     }
-  }, [sortField, sortOrder]);
+  }, [sortField, sortOrder, setSortField, setSortOrder]);
 
   // Handle export to Google Sheets
   const handleExportToSheets = async () => {

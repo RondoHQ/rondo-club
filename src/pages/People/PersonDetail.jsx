@@ -82,7 +82,7 @@ export default function PersonDetail() {
   const hasDisciplineCases = disciplineCases && disciplineCases.length > 0;
 
   // Fetch invoiced discipline case IDs (financieel users only)
-  const { data: invoicedCaseIds = [], isLoading: isInvoicedLoading } = useInvoicedCaseIds(id, {
+  const { data: invoicedCaseIds = [] } = useInvoicedCaseIds(id, {
     enabled: canAccessFairplay && canAccessFinancieel,
   });
   const createInvoice = useCreateInvoice();
@@ -1058,7 +1058,7 @@ export default function PersonDetail() {
               </p>
             )}
             {acf.nickname && (
-              <p className="text-gray-500 dark:text-gray-400">"{acf.nickname}"</p>
+              <p className="text-gray-500 dark:text-gray-400">&quot;{acf.nickname}&quot;</p>
             )}
             {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade'] || acf['lid-tot']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">

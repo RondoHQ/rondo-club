@@ -54,7 +54,7 @@ export default function DeleteFieldDialog({
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Delete Field</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">"{field.label}"</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">&quot;{field.label}&quot;</p>
               </div>
             </div>
             <button

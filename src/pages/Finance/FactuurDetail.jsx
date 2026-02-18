@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

@@ -459,8 +459,8 @@ function RelationshipInput({ value = [], onChange, postTypes = ['person', 'team'
 export default function CustomFieldsEditModal({
   isOpen,
   onClose,
-  postType,
-  postId,
+  postType, // eslint-disable-line no-unused-vars
+  postId, // eslint-disable-line no-unused-vars
   fieldDefs,
   currentValues,
   onSubmit,

@@ -1,8 +1,6 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
-import DomErrorBoundary from './components/DomErrorBoundary';
 import router from './router';
 import '@fontsource/montserrat/600.css';  // Semi-bold for headings
 import '@fontsource/montserrat/700.css';  // Bold for headings

@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { X, Phone, Mail, Users, Coffee, Utensils, FileText, Circle, MessageCircle, Video } from 'lucide-react';
+import { X, Phone, Mail, Users, Coffee, Utensils, FileText, MessageCircle, Video } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import { isRichTextEmpty } from '@/utils/richTextUtils';
 
@@ -127,9 +127,6 @@ export default function QuickActivityModal({ isOpen, onClose, onSubmit, isLoadin
       return '';
     }
   };
-
-  const selectedType = ACTIVITY_TYPES.find(t => t.id === activityType) || ACTIVITY_TYPES[0];
-  const SelectedIcon = selectedType.icon;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

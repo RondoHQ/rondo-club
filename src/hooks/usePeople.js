@@ -52,7 +52,8 @@ export function usePeople(params = {}, options = {}) {
       let page = 1;
       const perPage = 100;
 
-      while (true) {
+      let hasMore = true;
+      while (hasMore) {
         const response = await wpApi.getPeople({
           per_page: perPage,
           page,
@@ -65,12 +66,14 @@ export function usePeople(params = {}, options = {}) {
 
         // If we got fewer results than per_page, we're on the last page
         if (people.length < perPage) {
+          hasMore = false;
           break;
         }
 
         // Also check x-wp-totalpages header as a safety check
         const totalPages = parseInt(response.headers['x-wp-totalpages'] || response.headers['X-WP-TotalPages'] || '0', 10);
         if (totalPages > 0 && page >= totalPages) {
+          hasMore = false;
           break;
         }
 
@@ -416,7 +419,7 @@ export function useDeleteNote() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ noteId, personId }) => prmApi.deleteNote(noteId),
+    mutationFn: ({ noteId }) => prmApi.deleteNote(noteId),
     onSuccess: (_, { personId }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
     },
@@ -440,7 +443,7 @@ export function useUpdateActivity() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ activityId, data, personId }) => prmApi.updateActivity(activityId, data),
+    mutationFn: ({ activityId, data }) => prmApi.updateActivity(activityId, data),
     onSuccess: (_, { personId }) => {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
@@ -453,7 +456,7 @@ export function useDeleteActivity() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ activityId, personId }) => prmApi.deleteActivity(activityId),
+    mutationFn: ({ activityId }) => prmApi.deleteActivity(activityId),
     onSuccess: (_, { personId }) => {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
@@ -481,7 +484,7 @@ export function useUpdateTodo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ todoId, data, personId }) => prmApi.updateTodo(todoId, data),
+    mutationFn: ({ todoId, data }) => prmApi.updateTodo(todoId, data),
     onSuccess: (_, { personId }) => {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });
@@ -497,7 +500,7 @@ export function useDeleteTodo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ todoId, personId }) => prmApi.deleteTodo(todoId),
+    mutationFn: ({ todoId }) => prmApi.deleteTodo(todoId),
     onSuccess: (_, { personId }) => {
       if (personId) {
         queryClient.invalidateQueries({ queryKey: peopleKeys.timeline(personId) });

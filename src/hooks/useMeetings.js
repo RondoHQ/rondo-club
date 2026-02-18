@@ -71,7 +71,7 @@ export function useLogMeetingAsActivity() {
 
   return useMutation({
     mutationFn: (eventId) => prmApi.logMeetingAsActivity(eventId),
-    onSuccess: (data, eventId) => {
+    onSuccess: () => {
       // Invalidate all person-meetings queries since we don't know which people were affected
       queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
       // Invalidate timeline queries - activities were created

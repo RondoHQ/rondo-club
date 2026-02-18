@@ -56,10 +56,10 @@ export default function TeamDetail() {
   });
   
   // Get investor details from embedded data (already included in team response)
-  const investorIds = team?.acf?.investors || [];
+  const investorIds = useMemo(() => team?.acf?.investors || [], [team?.acf?.investors]);
 
   // Extract featured_media IDs from embedded posts for thumbnail fetching
-  const embeddedPosts = team?._embedded?.['acf:post'] || [];
+  const embeddedPosts = useMemo(() => team?._embedded?.['acf:post'] || [], [team?._embedded]);
   const mediaIds = useMemo(() => {
     return embeddedPosts
       .filter(p => investorIds.includes(p.id) && p.featured_media)

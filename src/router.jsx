@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { Suspense } from 'react';
 import { createBrowserRouter, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -10,27 +11,15 @@ import App from './App';
 // Direct import for Dashboard (no lazy loading)
 import Dashboard from '@/pages/Dashboard';
 
-// Lazy-loaded page components
-const PeopleList = lazy(() => import('@/pages/People/PeopleList'));
-const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
-const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
-const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
-const CommissiesList = lazy(() => import('@/pages/Commissies/CommissiesList'));
-const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDetail'));
-const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
-const FeedbackList = lazy(() => import('@/pages/Feedback/FeedbackList'));
-const FeedbackDetail = lazy(() => import('@/pages/Feedback/FeedbackDetail'));
-const Settings = lazy(() => import('@/pages/Settings/Settings'));
-const VOG = lazy(() => import('@/pages/VOG/VOG'));
-const Contributie = lazy(() => import('@/pages/Contributie/Contributie'));
-const DisciplineCasesList = lazy(() => import('@/pages/DisciplineCases/DisciplineCasesList'));
-const FinanceSettings = lazy(() => import('@/pages/Finance/FinanceSettings'));
-const Facturen = lazy(() => import('@/pages/Finance/Facturen'));
-const FactuurDetail = lazy(() => import('@/pages/Finance/FactuurDetail'));
-const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
-const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
-const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));
-const Login = lazy(() => import('@/pages/Login'));
+// Lazy-loaded page components (separate file for fast refresh compatibility)
+import {
+  PeopleList, PersonDetail, TeamsList, TeamDetail,
+  CommissiesList, CommissieDetail, TodosList,
+  FeedbackList, FeedbackDetail, Settings, VOG,
+  Contributie, DisciplineCasesList, FinanceSettings,
+  Facturen, FactuurDetail, RelationshipTypes,
+  CustomFields, FeedbackManagement, Login,
+} from './lazyPages';
 
 // Page loader for Suspense fallback
 function PageLoader() {

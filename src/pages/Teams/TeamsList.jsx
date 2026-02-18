@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -235,7 +235,6 @@ export default function TeamsList() {
   const [editingRowId, setEditingRowId] = useState(null);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
-  const navigate = useNavigate();
 
   const queryClient = useQueryClient();
 
