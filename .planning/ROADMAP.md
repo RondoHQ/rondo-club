@@ -303,6 +303,7 @@ Plans:
 | 188. MollieWebhook — Automatic Status Update | v27.0 | 1/1 | ✓ Complete | 2026-02-17 |
 | 189. RestInvoices — Provider Routing | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
 | 190. Finance Settings UI | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
+| 191. Administratiekosten | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
 
 ### Phase 191: Administratiekosten
 
@@ -311,8 +312,8 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 191-01-PLAN.md — FinanceConfig admin_fee setting, REST API arg, server-side injection in create_invoice(), and Finance Settings UI field
+- [x] 191-01-PLAN.md — FinanceConfig admin_fee setting, REST API arg, server-side injection in create_invoice(), and Finance Settings UI field
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-18 — Phase 191 planned*
+*Last updated: 2026-02-18 — Phase 191 complete*
