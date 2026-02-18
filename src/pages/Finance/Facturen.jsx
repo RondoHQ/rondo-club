@@ -4,7 +4,7 @@ import { Receipt, Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format, parse } from '@/utils/dateFormat';
+import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
@@ -101,8 +101,8 @@ export default function Facturen() {
           bVal = b.status || '';
           break;
         case 'sent_date':
-          aVal = a.sent_date ? parse(a.sent_date, 'yyyyMMdd', new Date()).getTime() : 0;
-          bVal = b.sent_date ? parse(b.sent_date, 'yyyyMMdd', new Date()).getTime() : 0;
+          aVal = a.sent_date ? parseYmd(a.sent_date).getTime() : 0;
+          bVal = b.sent_date ? parseYmd(b.sent_date).getTime() : 0;
           break;
         case 'created':
           aVal = new Date(a.created).getTime();
@@ -263,7 +263,7 @@ export default function Facturen() {
                     </td>
                     <td className="hidden sm:table-cell px-4 py-3 text-gray-600 dark:text-gray-400 text-sm">
                       {invoice.sent_date ? (
-                        format(parse(invoice.sent_date, 'yyyyMMdd', new Date()), 'd MMM yyyy')
+                        format(parseYmd(invoice.sent_date), 'd MMM yyyy')
                       ) : (
                         '-'
                       )}

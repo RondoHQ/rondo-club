@@ -530,13 +530,13 @@ class Invoices extends Base {
 		// If transitioning to "sent", set sent_date and calculate due_date
 		if ( $status === 'sent' ) {
 			$sent_date = current_time( 'Ymd' );
-			update_field( 'sent_date', $sent_date, $invoice_id );
+			update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
 
 			// Calculate due date
 			$finance_config   = new FinanceConfig();
 			$payment_term_days = $finance_config->get_payment_term_days();
 			$due_date         = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
-			update_field( 'due_date', $due_date, $invoice_id );
+			update_field( 'field_invoice_due_date', $due_date, $invoice_id );
 		}
 
 		// Return updated invoice
@@ -767,13 +767,13 @@ class Invoices extends Base {
 
 		// Set sent_date
 		$sent_date = current_time( 'Ymd' );
-		update_field( 'sent_date', $sent_date, $invoice_id );
+		update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
 
 		// Calculate and set due_date
 		$config = new FinanceConfig();
 		$payment_term_days = $config->get_payment_term_days();
 		$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
-		update_field( 'due_date', $due_date, $invoice_id );
+		update_field( 'field_invoice_due_date', $due_date, $invoice_id );
 
 		// Mark linked discipline cases as charged via Rondo
 		$line_items = get_field( 'line_items', $invoice_id );
@@ -1024,7 +1024,7 @@ class Invoices extends Base {
 		$today = current_time( 'Ymd' );
 
 		foreach ( $query->posts as $invoice ) {
-			$due_date = get_field( 'due_date', $invoice->ID );
+			$due_date = get_post_meta( $invoice->ID, 'due_date', true );
 
 			if ( $due_date && $due_date < $today ) {
 				// Update to overdue status
@@ -1053,8 +1053,8 @@ class Invoices extends Base {
 			'total_amount'   => (float) get_field( 'total_amount', $post->ID ),
 			'status'         => get_field( 'status', $post->ID ),
 			'post_status'    => $post->post_status,
-			'sent_date'      => get_field( 'sent_date', $post->ID ) ?: null,
-			'due_date'       => get_field( 'due_date', $post->ID ) ?: null,
+			'sent_date'      => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
+			'due_date'       => get_post_meta( $post->ID, 'due_date', true ) ?: null,
 			'payment_link'   => get_field( 'payment_link', $post->ID ) ?: null,
 			'created'        => $post->post_date,
 		];

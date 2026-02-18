@@ -4,7 +4,7 @@ import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, U
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format, parse } from '@/utils/dateFormat';
+import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import { prmApi } from '@/api/client';
 
@@ -285,7 +285,7 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Verstuurd</h3>
                 <p className="text-gray-700 dark:text-gray-300">
-                  {format(parse(invoice.sent_date, 'yyyyMMdd', new Date()), 'd MMM yyyy')}
+                  {format(parseYmd(invoice.sent_date), 'd MMM yyyy')}
                 </p>
               </div>
             )}
@@ -293,7 +293,7 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervaldatum</h3>
                 <p className="text-gray-700 dark:text-gray-300">
-                  {format(parse(invoice.due_date, 'yyyyMMdd', new Date()), 'd MMM yyyy')}
+                  {format(parseYmd(invoice.due_date), 'd MMM yyyy')}
                 </p>
               </div>
             )}

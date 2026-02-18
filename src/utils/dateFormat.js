@@ -80,6 +80,19 @@ export function formatRelative(date, baseDate, options = {}) {
 }
 
 /**
+ * Parse a Ymd date string (e.g. '20260218') into a Date object.
+ * Also handles Y-m-d format (e.g. '2026-02-18') for robustness.
+ *
+ * @param {string} dateStr - Date string in Ymd or Y-m-d format.
+ * @returns {Date} Parsed date object.
+ */
+export function parseYmd(dateStr) {
+  if (!dateStr) return new Date(NaN);
+  if (dateStr.includes('-')) return parse(dateStr, 'yyyy-MM-dd', new Date());
+  return parse(dateStr, 'yyyyMMdd', new Date());
+}
+
+/**
  * Re-export non-locale functions for convenience
  * These functions don't require locale configuration
  */
