@@ -1,166 +1,305 @@
-# Stack Research: Mollie Payment Integration
+# Stack Research: Membership Fee Invoicing with Payment Plans
 
-**Domain:** Payment provider integration (WordPress PHP theme)
-**Researched:** 2026-02-17
+**Domain:** Payment plan selection, public token-secured landing pages, installment scheduling (WordPress PHP 8.0+ theme)
+**Researched:** 2026-02-18
 **Confidence:** HIGH
 
-## Recommended Stack
+---
+
+## What This Research Covers
+
+This is a **subsequent milestone** on an existing codebase. The existing stack (WordPress, PHP 8.0+, React 18, Mollie SDK v3.9, mPDF, wp_mail, WP-Cron) is already in place and working. This document covers only what is **new or changed** for membership fee invoicing with payment plans.
+
+---
+
+## New Capabilities Required
+
+| Capability | New? | Notes |
+|-----------|------|-------|
+| Public token-secured landing page | YES | App is 100% behind WP login today |
+| Payment plan selection UI (1x / 3x / 8x) | YES | No payment plan concept exists yet |
+| Mollie Subscriptions API (recurring) | YES | Only one-time payments used so far |
+| Customer creation in Mollie | YES | No Mollie customer objects exist yet |
+| Installment tracking in WordPress | YES | New post type or post_meta structure needed |
+| Automatic follow-up emails via WP-Cron | YES | Pattern exists (Reminders class), needs installment variant |
+| Overdue escalation reminders | YES | New cron hook and logic |
+
+---
+
+## Recommended Stack Additions
 
 ### Core Technologies
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| `mollie/mollie-api-php` | `^3.9` | Official Mollie PHP SDK — creates payment links, fetches payment status | Only official PHP SDK; v3 is the current major version with a modern request-object API (`$mollie->send(new CreatePaymentLinkRequest(...))`) replacing the v2 fluent API; released 2026-02-09 |
-| `nyholm/psr7` | `^1.8` | PSR-7 HTTP message implementation required by Mollie SDK | Mollie SDK's only new transitive dependency not already in `vendor/`; pulled in automatically by `composer require mollie/mollie-api-php` |
-
-**Existing stack components already in place (no additions needed):**
-
-| Technology | Status | Notes |
-|------------|--------|-------|
-| `psr/http-client ^1.0` | Already installed | Pulled in by `google/apiclient`; Mollie SDK requires same version |
-| `psr/http-factory ^1.1` | Already installed | Same |
-| `psr/http-message ^1.1\|^2.0` | Already installed | Same |
-| `guzzlehttp/guzzle 7.10.0` | Already installed | Mollie SDK uses Guzzle only as `require-dev`; production uses nyholm/psr7 internally |
-| Sodium encryption (`CredentialEncryption`) | Already implemented | Use the existing pattern from `RabobankOAuth` for storing the Mollie API key |
-| WordPress Options API | Already used | Store Mollie API key as encrypted option (same as Rabobank credentials) |
-| `wp_remote_post` / REST API | Already used | **Do not use** for Mollie — use the SDK's `$mollie->send()` instead |
+| Mollie Subscriptions API (via existing SDK) | `^3.9` (already installed) | Automatic recurring installment charges after mandate established | `CreateSubscriptionRequest` with `times` parameter limits total charges — no new dependency needed. Verified: class exists in `vendor/mollie/mollie-api-php/src/Http/Requests/CreateSubscriptionRequest.php` |
+| Mollie Customers API (via existing SDK) | `^3.9` (already installed) | Create Mollie customer records required for subscriptions | `CreateCustomerRequest` verified in vendor. Customer ID must be stored on the WP person post (post_meta `_mollie_customer_id`). Required prerequisite for mandate flow |
+| WordPress Rewrite API + `template_redirect` | Core WordPress | Public landing page URL (`/contributie/{token}/`) without WP login | Established pattern in codebase — iCal feed and CardDAV use identical approach. No new libraries. |
+| WordPress `query_vars` + PHP template | Core WordPress | Serve payment plan landing page HTML from PHP template file in theme | `template_include` or `template_redirect` + `include` — same pattern as `rondo_theme_template_redirect()` in functions.php |
+| `bin2hex(random_bytes(32))` | PHP 8.0+ built-in | Secure token generation for payment landing page links | Already used in `ICalFeed::generate_token()`. 64-character hex token, stored as post_meta on the invoice/fee record |
+| WP-Cron (`wp_schedule_single_event`) | Core WordPress | Send installment due reminders and overdue escalation emails | Already used for fee recalculation and async exports. Single-event scheduling is appropriate for per-invoice due-date reminders |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| None beyond Mollie SDK | — | — | The Mollie SDK is self-contained; no additional webhook verification library is needed |
+| None new required | — | — | All needed libraries are already installed |
 
-### Development Tools
-
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Mollie test API key (`test_...`) | Sandbox testing without real payments | Set in wp-options; toggle between test/live with environment flag like existing `RabobankOAuth::get_environment()` pattern |
-
-## Installation
-
-```bash
-# From rondo-club/ directory
-composer require mollie/mollie-api-php:^3.9
-```
-
-This will pull in `nyholm/psr7:^1.8` as a new transitive dependency. All other PSR dependencies are already satisfied by existing `google/apiclient` requirements. Run `composer install` on the server after deploying the updated `composer.json` and `composer.lock`.
-
-## Alternatives Considered
-
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| `mollie/mollie-api-php` (official SDK) | Raw `wp_remote_post` calls to Mollie REST API | Never — the SDK handles authentication headers, response hydration, error handling, and PSR HTTP adapters correctly |
-| `mollie/mollie-api-php` v3 | v2 (`^2.x`) | Never for new code — v2 uses deprecated fluent API (`$mollie->payments->create()`); v3 uses modern request objects and is actively maintained |
-| `nyholm/psr7` (via SDK) | `guzzlehttp/psr7` (already installed) | Mollie SDK hard-requires `nyholm/psr7` specifically; cannot substitute `guzzlehttp/psr7` |
+---
 
 ## What NOT to Add
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `mollie/oauth2-mollie-php` | Only needed for Mollie Connect (OAuth flows for multi-merchant SaaS); discipline-case invoicing uses a single club API key, not OAuth | Simple API key stored encrypted in wp-options |
-| `mollie/laravel-mollie` | Laravel-only package; will not work in WordPress | `mollie/mollie-api-php` directly |
-| Custom HMAC webhook signature verification | Mollie does NOT send HMAC signatures — webhook body only contains `id=tr_xxx`; verification is done by fetching payment state from the API using that ID with authenticated SDK call | Fetch payment via `$mollie->send(new GetPaymentRequest($id))` after receiving webhook |
-| Custom HTTP client wrapping `wp_remote_post` | Bypasses SDK's PSR HTTP adapter layer; creates maintenance burden | Use `$mollie->send()` from the SDK directly |
+| `woocommerce/action-scheduler` | Packagist package is typed `wordpress-plugin`, not `wordpress-theme`; adds significant complexity and DB tables; overkill for dozens of scheduled installment emails | `wp_schedule_single_event()` with named hooks, already established in `FeeCacheInvalidator` and `GoogleContactsExport` |
+| Mollie OAuth / Connect | Only needed for multi-merchant SaaS; this is a single-club deployment | Existing `FinanceConfig::get_mollie_api_key()` API key flow |
+| Custom payment gateway libraries | The Mollie SDK already handles all payment operations | `mollie/mollie-api-php` already installed |
+| React SPA for landing page | The landing page must be publicly accessible without WP login, nonce, or JS app bootstrap; a React SPA requires auth context and nonce injection via `wpApiSettings` | PHP template file served via `template_redirect` — simpler, faster, no auth dependency |
+| JWT tokens for landing page | Stateless tokens make revocation impossible; club needs to be able to invalidate a payment link | Random token stored as post_meta (same as iCal) — can be invalidated by deleting/overwriting meta |
 
-## Stack Patterns: Mollie-Specific
+---
 
-**Webhook security model (verified against official Mollie docs):**
+## Architecture: Mollie Payment Plan Flow
 
-Mollie does NOT use HMAC signatures on webhook POSTs. The webhook body contains only `id=tr_xxx`. Security works by:
-1. Receiving the `id` from `$_POST['id']` at the webhook endpoint
-2. Fetching the actual payment state from Mollie API using the SDK (authenticated call)
-3. Never trusting the webhook body alone — always re-fetch
+The recurring installment flow requires a **two-step Mollie interaction** that does not exist in the current codebase:
 
-This means the webhook handler in WordPress must be a public REST endpoint (no `permission_callback` auth check), but must validate the fetched payment belongs to an invoice the system created.
+### Step 1: First Payment (establishes mandate)
 
-**WordPress REST endpoint for webhooks:**
+The member visits the public landing page, selects "3 installments" or "8 installments", and completes the **first payment** through Mollie. This payment:
 
-Register a public endpoint in the Mollie payment class:
+1. Creates (or reuses) a Mollie customer for the person (`CreateCustomerRequest`)
+2. Creates a customer payment with `sequenceType: 'first'` (`CreateCustomerPaymentRequest`)
+3. The member completes the payment — Mollie creates a **mandate** automatically
+4. Mollie webhook fires → system records installment 1 as paid
+
+**SDK class (verified in vendor):**
 ```php
-register_rest_route('rondo/v1', '/mollie/webhook', [
-    'methods'             => \WP_REST_Server::CREATABLE,
-    'callback'            => [$this, 'handle_webhook'],
-    'permission_callback' => '__return_true', // Public — Mollie has no auth header
-]);
-```
-
-The endpoint must return HTTP 200 within 15 seconds. Mollie retries up to 10 times over 26 hours if it receives a non-200 response.
-
-**SDK initialization pattern (follow RabobankOAuth storage pattern):**
-
-```php
-use Mollie\Api\MollieApiClient;
-
-$mollie = new MollieApiClient();
-$mollie->setApiKey($this->get_api_key()); // decrypt from wp-options via CredentialEncryption
-```
-
-**Creating a payment link (v3 SDK pattern):**
-
-```php
-use Mollie\Api\Http\Requests\CreatePaymentLinkRequest;
+use Mollie\Api\Http\Requests\CreateCustomerRequest;
+use Mollie\Api\Http\Requests\CreateCustomerPaymentRequest;
 use Mollie\Api\Http\Data\Money;
 
-$payment_link = $mollie->send(new CreatePaymentLinkRequest(
-    description: 'Factuur ' . $invoice_number,
-    amount: new Money('EUR', number_format($total_amount, 2, '.', '')),
-    redirectUrl: get_site_url() . '/mollie/betaald/',
-    webhookUrl: rest_url('rondo/v1/mollie/webhook'),
+// Create customer (once per person, store cst_xxx as post_meta)
+$customer = $mollie->send(new CreateCustomerRequest(
+    name: $person_name,
+    email: $person_email,
+    metadata: ['person_id' => $person_id]
 ));
+update_post_meta($person_id, '_mollie_customer_id', $customer->id);
 
-$checkout_url = $payment_link->getCheckoutUrl();
+// Create first payment to establish mandate
+$payment = $mollie->send(new CreateCustomerPaymentRequest(
+    customerId: $customer->id,
+    description: 'Contributie 2025-2026 — termijn 1',
+    amount: new Money('EUR', '45.00'),
+    redirectUrl: home_url('/contributie/' . $token . '/bedankt/'),
+    webhookUrl: rest_url('rondo/v1/mollie/webhook'),
+    sequenceType: 'first',
+    metadata: ['invoice_id' => $invoice_id, 'installment' => 1]
+));
 ```
 
-**Handling webhook to update invoice status:**
+### Step 2: Subscription (charges remaining installments automatically)
+
+After the mandate is confirmed (via webhook), create a Mollie subscription for the remaining installments:
+
+**SDK class (verified in vendor, all params confirmed):**
+```php
+use Mollie\Api\Http\Requests\CreateSubscriptionRequest;
+use Mollie\Api\Http\Data\Money;
+
+// times: remaining installments (2 for "3x", 7 for "8x")
+// interval: '1 month' (monthly installments)
+// startDate: first day of next month
+$subscription = $mollie->send(new CreateSubscriptionRequest(
+    customerId: $customer_id,
+    amount: new Money('EUR', '45.00'),
+    interval: '1 month',
+    description: 'Contributie 2025-2026',
+    times: 2,           // null = endless; set to remaining count
+    startDate: new \DateTime('first day of next month'),
+    webhookUrl: rest_url('rondo/v1/mollie/webhook'),
+    metadata: ['invoice_id' => $invoice_id]
+));
+update_post_meta($invoice_id, '_mollie_subscription_id', $subscription->id);
+```
+
+### Full-Payment Flow (1x — no subscription)
+
+The existing `MolliePayment::create_payment_link()` flow (one-time payment link) is reused as-is. No `sequenceType` is set, no customer required.
+
+---
+
+## Architecture: Public Landing Page
+
+The public landing page at `/contributie/{token}/` follows the **identical pattern** to `ICalFeed`:
 
 ```php
-use Mollie\Api\Http\Requests\GetPaymentRequest;
+// In a new PublicPaymentLanding class:
 
-public function handle_webhook(\WP_REST_Request $request): \WP_REST_Response {
-    $payment_id = $request->get_param('id');
-    if (empty($payment_id)) {
-        return rest_ensure_response(['status' => 'ok']); // Always 200
+public function register_rewrite_rules(): void {
+    add_rewrite_rule(
+        '^contributie/([a-f0-9]{64})/?$',
+        'index.php?rondo_payment_token=$matches[1]',
+        'top'
+    );
+    add_rewrite_rule(
+        '^contributie/([a-f0-9]{64})/bedankt/?$',
+        'index.php?rondo_payment_token=$matches[1]&rondo_payment_step=bedankt',
+        'top'
+    );
+}
+
+public function add_query_vars(array $vars): array {
+    $vars[] = 'rondo_payment_token';
+    $vars[] = 'rondo_payment_step';
+    return $vars;
+}
+
+public function handle_request(): void {
+    $token = get_query_var('rondo_payment_token');
+    if (empty($token)) {
+        return;
     }
 
-    $payment = $mollie->send(new GetPaymentRequest($payment_id));
-
-    if ($payment->isPaid()) {
-        // Update invoice status: 'paid' + store payment_id
-        wp_update_post(['ID' => $invoice_id, 'post_status' => 'paid']);
-        update_post_meta($invoice_id, '_mollie_payment_id', $payment_id);
+    // Look up invoice by token stored in post_meta
+    $invoice = $this->find_invoice_by_token($token);
+    if (!$invoice) {
+        status_header(404);
+        include get_template_directory() . '/templates/404.php';
+        exit;
     }
 
-    return rest_ensure_response(['status' => 'ok']); // Always return 200
+    // Serve standalone PHP template (no WP login, no React app)
+    include get_template_directory() . '/templates/payment-landing.php';
+    exit;
 }
 ```
 
-**Linking payment link ID to invoice:**
+**Token generation** (follow existing `ICalFeed` pattern exactly):
+```php
+$token = bin2hex(random_bytes(32)); // 64-char hex
+update_post_meta($invoice_id, '_payment_landing_token', $token);
+```
 
-Store the Mollie payment link ID on the invoice post meta (`_mollie_payment_link_id`) so the webhook handler can look up the invoice by the payment's associated payment link.
+**Important:** `rondo_theme_template_redirect()` in `functions.php` currently intercepts 404s and serves the React SPA. The public landing page handler must run at **priority 0** (before priority 1) to return before the SPA handler takes over.
+
+---
+
+## Architecture: Installment Scheduling with WP-Cron
+
+For the **full-payment** and **3-installment** manual reminder flows (not Mollie subscription), use WP-Cron single events:
+
+```php
+// Schedule reminder 7 days before installment due date
+wp_schedule_single_event(
+    strtotime($due_date . ' -7 days'),
+    'rondo_installment_reminder',
+    [$invoice_id, $installment_number]
+);
+
+// Schedule overdue escalation 7 days after due date
+wp_schedule_single_event(
+    strtotime($due_date . ' +7 days'),
+    'rondo_installment_overdue',
+    [$invoice_id, $installment_number]
+);
+```
+
+**Hook naming follows existing pattern** (`rondo_user_reminder`, `rondo_async_calendar_rematch`, etc.).
+
+**Important caveat:** WP-Cron fires only on page visits. The production server should have a real server cron triggering `wp-cron.php` every 5 minutes for reliability. This is a deployment concern, not a code change.
+
+---
+
+## Mollie Subscription Limitations & Design Decision
+
+### The Mollie Subscriptions approach requires SEPA Direct Debit
+
+When a Dutch member pays the "first" payment via **iDEAL**, Mollie creates a SEPA Direct Debit mandate (not a new iDEAL mandate). Subsequent subscription charges go via SEPA Direct Debit automatically.
+
+**This requires SEPA Direct Debit to be activated on the Mollie account.** This is an account-level business requirement, not a code issue.
+
+### Alternative: Manual installment tracking
+
+If SEPA Direct Debit is not available or desired, installments can be **fully manual**:
+- Each installment generates a separate Mollie payment link (same as existing flow)
+- Scheduled via WP-Cron — send email with payment link at each installment due date
+- Member clicks link, pays via iDEAL each time (no mandate required)
+- More member friction but simpler technically and no SEPA activation needed
+
+**Recommendation:** Build both. Use Mollie Subscriptions for the automatic flow (member opts in), manual payment links as fallback or for members who prefer to pay each installment manually. The system should store `payment_plan_type` (`automatic` vs `manual`) on the installment plan record.
+
+---
+
+## Data Storage Pattern
+
+No new database tables. Follow Rule 0:
+
+| Data | Storage |
+|------|---------|
+| Installment plan (plan type, total, installments, season) | New CPT `rondo_payment_plan` OR post_meta on `rondo_invoice` |
+| Individual installment records | Post_meta array on the plan, or separate CPT `rondo_installment` |
+| Mollie customer ID per person | Post_meta `_mollie_customer_id` on `person` post |
+| Mollie subscription ID per plan | Post_meta `_mollie_subscription_id` on payment plan |
+| Public landing page token | Post_meta `_payment_landing_token` on `rondo_invoice` |
+| Installment payment status | Post_meta `_installment_{n}_status` and `_installment_{n}_paid_at` |
+
+**Recommendation:** Use a new `rondo_payment_plan` CPT (not sub-posts) so WP_Query can find all plans for a member across seasons.
+
+---
+
+## Alternatives Considered
+
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| Mollie Subscriptions API for automatic installments | Manual payment links per installment | When SEPA Direct Debit is not activated on Mollie account; or when member prefers to pay each installment manually |
+| WP-Cron for reminder emails | Action Scheduler | Only worth it if scheduling thousands of concurrent jobs; overkill for a sports club with ~200 members |
+| PHP template for public landing page | React SPA with public route | React SPA requires WP nonce and `wpApiSettings` bootstrap; not suitable for unauthenticated pages |
+| Rewrite rules + `query_vars` + `template_redirect` | WordPress Page with custom template | Custom page approach requires creating a DB record; rewrite rules are code-only, version-controlled |
+| Token stored in post_meta | Signed JWT URL | JWT cannot be revoked without a blocklist; post_meta token can be deleted to invalidate link immediately |
+
+---
+
+## Installation
+
+No new PHP packages required. All capabilities use:
+- `mollie/mollie-api-php:^3.9` — already installed
+- WordPress core functions — built-in
+- PHP 8.0+ built-ins — already required
+
+```bash
+# Nothing to install — existing dependencies cover all new capabilities
+# After adding new classes, run composer dump-autoload if not using classmap
+composer dump-autoload --optimize
+```
+
+---
 
 ## Version Compatibility
 
-| Package | Version | Compatible With | Notes |
-|---------|---------|-----------------|-------|
-| `mollie/mollie-api-php` | `^3.9` | PHP `^8.0` | Satisfies existing `composer.json` PHP requirement |
-| `mollie/mollie-api-php` | `^3.9` | `psr/http-client ^1.0` | Already installed via google/apiclient |
-| `mollie/mollie-api-php` | `^3.9` | `psr/http-message ^1.1\|^2.0` | Already installed |
-| `nyholm/psr7` | `^1.8` | `psr/http-factory ^1.1` | New package; no conflicts expected with guzzlehttp/psr7 |
-| `guzzlehttp/guzzle` | `7.10.0` (existing) | `mollie/mollie-api-php ^3.9` | Mollie v3 uses Guzzle only in `require-dev`; production adapter is `nyholm/psr7` based |
+| Component | Version | Status | Notes |
+|-----------|---------|--------|-------|
+| `CreateSubscriptionRequest` | mollie-api-php ^3.9 | Verified in vendor | `times` parameter exists; `startDate` accepts `DateTimeInterface` |
+| `CreateCustomerRequest` | mollie-api-php ^3.9 | Verified in vendor | `name`, `email`, `locale`, `metadata` params |
+| `CreateCustomerPaymentRequest` | mollie-api-php ^3.9 | Verified in vendor | `sequenceType` is a nullable string parameter |
+| WordPress Rewrite API | WP 6.0+ | Verified (existing usage) | Must flush rewrite rules on theme activation |
+| `bin2hex(random_bytes(32))` | PHP 8.0+ | Verified (existing usage in ICalFeed) | 64-char hex token |
 
-**Potential conflict to verify:** Both `guzzlehttp/psr7` and `nyholm/psr7` implement `psr/http-message`. Composer resolves this via virtual packages (`psr/http-message-implementation`). This is standard practice and will not conflict.
+---
 
 ## Sources
 
-- [Packagist: mollie/mollie-api-php](https://packagist.org/packages/mollie/mollie-api-php) — latest version v3.9.0, PHP requirements (HIGH confidence)
-- [GitHub: mollie/mollie-api-php composer.json](https://github.com/mollie/mollie-api-php/blob/master/composer.json) — exact dependency versions (HIGH confidence)
-- [GitHub: mollie/mollie-api-php src/Http/Requests](https://github.com/mollie/mollie-api-php/tree/master/src/Http/Requests) — `CreatePaymentLinkRequest.php` exists with constructor signature (HIGH confidence)
-- [GitHub: mollie/mollie-api-php webhook recipe](https://github.com/mollie/mollie-api-php/blob/master/docs/recipes/payments/handle-webhook.md) — webhook handling pattern (HIGH confidence)
-- [Mollie Docs: Webhooks](https://docs.mollie.com/reference/webhooks) — no HMAC, POST body is `id=tr_xxx` only, 15s timeout, 10 retries over 26h (HIGH confidence)
-- [Mollie Docs: Create Payment Link](https://docs.mollie.com/reference/create-payment-link) — `webhookUrl` parameter, response includes checkout URL (HIGH confidence)
-- Existing codebase: `composer.json`, `vendor/composer/installed.php` — confirmed existing PSR deps and guzzle versions (HIGH confidence)
+- Codebase: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateSubscriptionRequest.php` — `times` param, `startDate` type, `customerId` route param (HIGH confidence — read directly)
+- Codebase: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateCustomerPaymentRequest.php` — `sequenceType` nullable string param (HIGH confidence — read directly)
+- Codebase: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateCustomerRequest.php` — constructor params (HIGH confidence — read directly)
+- Codebase: `includes/class-ical-feed.php` — token generation and rewrite rules pattern to replicate (HIGH confidence — read directly)
+- Codebase: `includes/class-fee-cache-invalidator.php` — `wp_schedule_single_event` pattern (HIGH confidence — read directly)
+- [Mollie Docs: Recurring Payments](https://docs.mollie.com/docs/recurring-payments) — iDEAL creates SEPA Direct Debit mandate; SEPA activation required; flow diagram (HIGH confidence — official docs)
+- [Mollie Docs: Create Subscription](https://docs.mollie.com/reference/create-subscription) — `times` parameter limits total charges; `startDate` format YYYY-MM-DD; interval format (HIGH confidence — official docs)
+- [Packagist: woocommerce/action-scheduler 3.9.3](https://packagist.org/packages/woocommerce/action-scheduler) — `wordpress-plugin` type, not suitable for theme distribution (HIGH confidence — official package metadata)
+- [WordPress Developer Docs: add_rewrite_rule](https://developer.wordpress.org/reference/functions/add_rewrite_rule/) — rewrite rule registration pattern (HIGH confidence — official docs)
 
 ---
-*Stack research for: Mollie payment links + webhook integration in WordPress PHP 8.0+ theme*
-*Researched: 2026-02-17*
+
+*Stack research for: Membership fee invoicing with payment plans, public landing pages, installment scheduling*
+*Researched: 2026-02-18*
