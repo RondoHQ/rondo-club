@@ -159,7 +159,7 @@ export default function AddressEditModal({
   const isEditing = !!address;
   const isOnline = useOnlineStatus();
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, control } = useForm({
     defaultValues: {
       address_label: '',
       street: '',

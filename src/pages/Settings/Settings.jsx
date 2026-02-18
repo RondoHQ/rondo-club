@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Calendar, RefreshCw, Trash2, Edit2, ExternalLink, AlertCircle, Check, X, Users, Search, Link as LinkIcon, Loader2, CheckCircle, Key, Copy, Database } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { format, formatDistanceToNow } from '@/utils/dateFormat';
+import { formatDistanceToNow } from '@/utils/dateFormat';
 import { APP_NAME } from '@/constants/app';
 import apiClient from '@/api/client';
 import { prmApi } from '@/api/client';
-import { useTheme, COLOR_SCHEMES } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
@@ -218,6 +218,7 @@ export default function Settings() {
     if (googleContactsStatus?.has_pending_import && !googleContactsImporting && !googleContactsImportResult) {
       handleImportGoogleContacts();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleContactsStatus?.has_pending_import]);
 
   // Fetch volunteer role settings on mount (admin only)
@@ -1063,15 +1064,11 @@ function CalendarsTab() {
   };
 
   const handleCalDAVSave = async (data) => {
-    try {
-      await prmApi.createCalendarConnection(data);
-      setShowAddModal(null);
-      setSuccessMessage('CalDAV-agenda succesvol verbonden!');
-      fetchConnections();
-      setTimeout(() => setSuccessMessage(''), 5000);
-    } catch (err) {
-      throw err; // Let CalDAVModal handle the fout
-    }
+    await prmApi.createCalendarConnection(data);
+    setShowAddModal(null);
+    setSuccessMessage('CalDAV-agenda succesvol verbonden!');
+    fetchConnections();
+    setTimeout(() => setSuccessMessage(''), 5000);
   };
 
   const copyIcalUrl = async () => {
@@ -1150,7 +1147,7 @@ function CalendarsTab() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-brand-gradient mb-4">Agendakoppelingen</h2>
         <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Koppel je agenda's om automatisch afspraken te synchroniseren en contacten te vinden.
+          Koppel je agenda&apos;s om automatisch afspraken te synchroniseren en contacten te vinden.
         </p>
 
         {loading ? (
@@ -1340,7 +1337,7 @@ function CalendarsTab() {
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Houd deze URL privé. Iedereen met toegang kan je belangrijke datums zien. Als je denkt dat de URL is uitgelekt, klik dan op "URL opnieuw genereren" voor een nieuwe.
+              Houd deze URL privé. Iedereen met toegang kan je belangrijke datums zien. Als je denkt dat de URL is uitgelekt, klik dan op &quot;URL opnieuw genereren&quot; voor een nieuwe.
             </p>
           </div>
         )}
@@ -1454,7 +1451,7 @@ function CalDAVModal({ onSave, onClose }) {
         </div>
 
         <div className="p-4 space-y-4">
-          {fout && (
+          {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
               {error}
             </div>
@@ -1518,7 +1515,7 @@ function CalDAVModal({ onSave, onClose }) {
             {testing ? 'Testen...' : tested ? 'Opnieuw testen' : 'Verbinding testen'}
           </button>
 
-          {tested && agendas.length > 0 && (
+          {tested && calendars.length > 0 && (
             <div>
               <label className="label mb-1">Selecteer agenda</label>
               <select
@@ -1535,9 +1532,9 @@ function CalDAVModal({ onSave, onClose }) {
             </div>
           )}
 
-          {tested && agendas.length === 0 && (
+          {tested && calendars.length === 0 && (
             <p className="text-sm text-yellow-600 dark:text-yellow-400">
-              Geen agenda's gevonden. Controleer je inloggegevens en server-URL.
+              Geen agenda&apos;s gevonden. Controleer je inloggegevens en server-URL.
             </p>
           )}
         </div>
@@ -1613,6 +1610,7 @@ function EditConnectionModal({ connection, onSave, onClose }) {
       }
     };
     fetchCalendars();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connection.id]);
 
   const handleTestCalDAV = async () => {

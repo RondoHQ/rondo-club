@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Upload, FileCode, AlertCircle } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { wpApi, prmApi } from '@/api/client';
+import { wpApi } from '@/api/client';
 import api from '@/api/client';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
@@ -118,7 +118,7 @@ export default function PersonEditModal({
         });
       }
     }
-  }, [isOpen, person, prefillData, reset]);
+  }, [isOpen, person, prefillData, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle vCard drag and drop
   const handleDrag = useCallback((e) => {
@@ -136,11 +136,11 @@ export default function PersonEditModal({
     e.stopPropagation();
     setDragActive(false);
     setVcardError(null);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleVcardFile(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   
   const handleVcardFile = (file) => {
     const ext = file.name.split('.').pop().toLowerCase();

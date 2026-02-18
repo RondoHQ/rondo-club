@@ -20,7 +20,7 @@ const CONTACT_TYPES = [
 
 export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, contactInfo = [] }) {
   const isOnline = useOnlineStatus();
-  const { register, control, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, reset } = useForm({
     defaultValues: {
       contacts: contactInfo.length > 0 
         ? contactInfo.map(c => ({

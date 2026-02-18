@@ -223,6 +223,4 @@ export default function RichTextEditor({
   );
 }
 
-// Re-export utilities for backward compatibility
-export { isRichTextEmpty, stripHtmlTags } from '@/utils/richTextUtils';
 

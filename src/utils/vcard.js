@@ -131,14 +131,15 @@ export function generateVCard(person, options = {}) {
       const label = contact.contact_label ? escapeVCardValue(contact.contact_label) : '';
       
       switch (contact.contact_type) {
-        case 'email':
+        case 'email': {
           // EMAIL;TYPE=INTERNET,WORK:email@example.com
           const emailType = label ? `EMAIL;TYPE=INTERNET,${label.toUpperCase()}` : 'EMAIL;TYPE=INTERNET';
           lines.push(`${emailType}:${value}`);
           break;
-          
+        }
+
         case 'phone':
-        case 'mobile':
+        case 'mobile': {
           // TEL;TYPE=CELL,VOICE:+1234567890
           const phoneType = contact.contact_type === 'mobile' ? 'CELL' : 'VOICE';
           const phoneLabel = label ? `TEL;TYPE=${phoneType},${label.toUpperCase()}` : `TEL;TYPE=${phoneType}`;
@@ -147,12 +148,13 @@ export function generateVCard(person, options = {}) {
             lines.push(`${phoneLabel}:${formattedPhone}`);
           }
           break;
-          
+        }
+
         case 'website':
         case 'linkedin':
         case 'twitter':
         case 'instagram':
-        case 'facebook':
+        case 'facebook': {
           // URL;TYPE=WORK:https://example.com
           let url = contact.contact_value;
           if (!url.match(/^https?:\/\//i)) {
@@ -162,6 +164,7 @@ export function generateVCard(person, options = {}) {
           const urlLabel = label ? `URL;TYPE=${urlType},${label.toUpperCase()}` : `URL;TYPE=${urlType}`;
           lines.push(`${urlLabel}:${escapeVCardValue(url)}`);
           break;
+        }
       }
     });
   }

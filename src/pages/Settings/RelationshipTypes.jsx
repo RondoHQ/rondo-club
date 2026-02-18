@@ -6,7 +6,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Link } from 'react-router-dom';
 
 // Searchable Relationship Type Selector Component
-function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes, currentTypeId = null }) {
+function SearchableRelationshipTypeSelector({ value, onChange, relationshipTypes }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef(null);
@@ -150,24 +150,6 @@ export default function RelationshipTypes() {
   const queryClient = useQueryClient();
   const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
-
-  // Check if user is admin
-  if (!isAdmin) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="card p-8 text-center">
-          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
-          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Je hebt geen toestemming om relatietypes te beheren. Deze functie is alleen beschikbaar voor beheerders.
-          </p>
-          <Link to="/settings" className="btn-primary">
-            Terug naar Instellingen
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   // Fetch relationship types
   const { data: relationshipTypes = [], isLoading } = useQuery({
@@ -327,6 +309,24 @@ export default function RelationshipTypes() {
     deleteMutation.mutate(id);
   };
 
+  // Check if user is admin (after all hooks)
+  if (!isAdmin) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="card p-8 text-center">
+          <ShieldAlert className="w-16 h-16 mx-auto text-amber-500 dark:text-amber-400 mb-4" />
+          <h1 className="text-2xl font-bold dark:text-gray-50 mb-2">Toegang geweigerd</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Je hebt geen toestemming om relatietypes te beheren. Deze functie is alleen beschikbaar voor beheerders.
+          </p>
+          <Link to="/settings" className="btn-primary">
+            Terug naar Instellingen
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -379,8 +379,8 @@ export default function RelationshipTypes() {
                   relationshipTypes={relationshipTypes}
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Selecteer het omgekeerde relatietype. Als dit bijvoorbeeld "Ouder" is, selecteer dan "Kind".
-                  Als dit "Partner" of "Kennis" is, selecteer dan hetzelfde type (bijv. "Partner" → "Partner").
+                  Selecteer het omgekeerde relatietype. Als dit bijvoorbeeld &quot;Ouder&quot; is, selecteer dan &quot;Kind&quot;.
+                  Als dit &quot;Partner&quot; of &quot;Kennis&quot; is, selecteer dan hetzelfde type (bijv. &quot;Partner&quot; → &quot;Partner&quot;).
                 </p>
               </div>
               <div className="flex gap-2">
@@ -454,8 +454,8 @@ export default function RelationshipTypes() {
                           currentTypeId={type.id}
                         />
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Selecteer het omgekeerde relatietype. Als dit bijvoorbeeld "Ouder" is, selecteer dan "Kind".
-                          Als dit "Partner" of "Kennis" is, selecteer dan hetzelfde type (bijv. "Partner" → "Partner").
+                          Selecteer het omgekeerde relatietype. Als dit bijvoorbeeld &quot;Ouder&quot; is, selecteer dan &quot;Kind&quot;.
+                          Als dit &quot;Partner&quot; of &quot;Kennis&quot; is, selecteer dan hetzelfde type (bijv. &quot;Partner&quot; → &quot;Partner&quot;).
                         </p>
                       </div>
                       <div className="flex gap-2">

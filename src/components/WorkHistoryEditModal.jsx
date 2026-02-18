@@ -65,7 +65,7 @@ export default function WorkHistoryEditModal({
 
   const isEntitiesLoading = isTeamsLoading || isCommissiesLoading;
 
-  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, control } = useForm({
     defaultValues: {
       entity: null, // format: "type:id" e.g., "team:123" or "commissie:456"
       job_title: '',
@@ -75,8 +75,6 @@ export default function WorkHistoryEditModal({
       is_current: false,
     },
   });
-
-  const isCurrent = watch('is_current');
 
   // Reset form when modal opens
   useEffect(() => {

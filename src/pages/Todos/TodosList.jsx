@@ -294,7 +294,7 @@ export default function TodosList() {
             <p className="text-gray-500 dark:text-gray-400">{getEmptyMessage()}</p>
             {statusFilter === 'open' && (
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                Maak taken aan vanaf een ledenpagina of klik op "Taak toevoegen"
+                Maak taken aan vanaf een ledenpagina of klik op &quot;Taak toevoegen&quot;
               </p>
             )}
           </div>

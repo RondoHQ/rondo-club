@@ -684,7 +684,7 @@ export default function FieldFormPanel({
                 className={`${inputClass} ${errors.choices ? 'border-red-500 dark:border-red-400' : ''}`}
               />
               <p className={hintClass}>
-                Gebruik "waarde : label" formaat of alleen "label" (waarde wordt gelijk aan label)
+                Gebruik &quot;waarde : label&quot; formaat of alleen &quot;label&quot; (waarde wordt gelijk aan label)
               </p>
               {errors.choices && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.choices}</p>
@@ -741,7 +741,7 @@ export default function FieldFormPanel({
                 className={`${inputClass} ${errors.choices ? 'border-red-500 dark:border-red-400' : ''}`}
               />
               <p className={hintClass}>
-                Gebruik "waarde : label" formaat of alleen "label" (waarde wordt gelijk aan label)
+                Gebruik &quot;waarde : label&quot; formaat of alleen &quot;label&quot; (waarde wordt gelijk aan label)
               </p>
               {errors.choices && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.choices}</p>

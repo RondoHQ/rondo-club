@@ -34,7 +34,6 @@ export default function TimelineView({
   onEdit,
   onDelete,
   onToggleTodo,
-  personId,
   allPeople = [],
 }) {
   // State for tracking expanded email entries

@@ -474,7 +474,7 @@ function SearchModal({ isOpen, onClose }) {
               </div>
             ) : (
               <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                <p className="text-sm">Geen resultaten gevonden voor "{searchQuery}"</p>
+                <p className="text-sm">Geen resultaten gevonden voor &quot;{searchQuery}&quot;</p>
               </div>
             )}
           </div>

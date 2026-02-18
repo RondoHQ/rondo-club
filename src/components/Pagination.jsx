@@ -75,7 +75,7 @@ export default function Pagination({ currentPage, totalPages, totalItems, itemsP
 
         {/* Page numbers */}
         <div className="flex items-center gap-1">
-          {pageNumbers.map((page, index) => {
+          {pageNumbers.map((page) => {
             if (typeof page === 'string') {
               // Ellipsis
               return (
