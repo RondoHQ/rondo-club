@@ -77,6 +77,7 @@ use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
 use Rondo\Finance\MollieWebhook;
+use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\QrCodeGenerator;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
@@ -403,6 +404,9 @@ function rondo_init() {
 	if ( ! rondo_is_carddav_request() ) {
 		new CardDAVServer();
 	}
+
+	// Public payment page - register rewrite rules and template_redirect handler
+	new PublicPaymentPage();
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
 	// This must run on all requests, not just CardDAV requests
@@ -872,6 +876,10 @@ function rondo_theme_activation() {
 	// Initialize CardDAV server rewrite rules
 	$carddav = new CardDAVServer();
 	$carddav->register_rewrite_rules();
+
+	// Register public payment page rewrite rules
+	$payment_page = new PublicPaymentPage();
+	$payment_page->register_rewrite_rules();
 }
 add_action( 'after_switch_theme', 'rondo_theme_activation' );
 
