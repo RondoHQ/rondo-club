@@ -54,18 +54,7 @@ class FinanceConfig {
 		'club_logo_id'       => 0,
 		'accent_color'       => '',
 		'bcc_email'          => '',
-		'email_template'     => "Beste {naam},
-
-Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.
-
-{tuchtzaken_lijst}
-
-Het totaalbedrag is {totaal_bedrag}.
-
-U kunt betalen via de volgende link: {betaallink}
-
-Met vriendelijke groet,
-{organisatie_naam}",
+		'email_template'     => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 	];
 
 	/**
@@ -286,7 +275,7 @@ Met vriendelijke groet,
 		}
 
 		if ( isset( $data['email_template'] ) ) {
-			$success = update_option( self::OPTION_EMAIL_TEMPLATE, sanitize_textarea_field( $data['email_template'] ) ) && $success;
+			$success = update_option( self::OPTION_EMAIL_TEMPLATE, wp_kses_post( $data['email_template'] ) ) && $success;
 		}
 
 		if ( isset( $data['club_logo_id'] ) ) {
