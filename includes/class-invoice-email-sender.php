@@ -96,28 +96,71 @@ class InvoiceEmailSender {
 		$template = $config->get_email_template();
 		$org_name = $config->get_org_name();
 
-		// Build discipline cases list as HTML
+		// Build discipline cases list as HTML table
 		$tuchtzaken_lijst = '';
 		if ( $line_items && is_array( $line_items ) ) {
-			$list_items = [];
+			$table_rows = [];
+			$row_index  = 0;
 			foreach ( $line_items as $item ) {
+				$row_bg = ( $row_index % 2 === 1 ) ? ' background-color:#f9fafb;' : '';
+				$td_style = 'padding:8px 12px;border-bottom:1px solid #e5e7eb;';
+
 				if ( ! empty( $item['discipline_case'] ) ) {
-					$case_id = $item['discipline_case'];
-					$match_desc = esc_html( get_field( 'match_description', $case_id ) );
-					$sanction_desc = esc_html( get_field( 'sanction_description', $case_id ) );
-					$amount = (float) ( $item['amount'] ?? 0 );
+					$case_id    = $item['discipline_case'];
+					$match_date = get_field( 'match_date', $case_id );
+					$match_desc = esc_html( get_field( 'match_description', $case_id ) ?: '-' );
+					$amount     = (float) ( $item['amount'] ?? 0 );
 					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
 
-					$list_items[] = '<li>' . $match_desc . ': ' . $sanction_desc . ' &mdash; ' . $formatted_amount . '</li>';
+					// Format date from Ymd to d-m-Y
+					$formatted_date = '-';
+					if ( ! empty( $match_date ) ) {
+						$timestamp = strtotime( $match_date );
+						if ( $timestamp !== false ) {
+							$formatted_date = date( 'd-m-Y', $timestamp );
+						}
+					}
+
+					// Derive card type from charge_codes field
+					$charge_codes = get_field( 'charge_codes', $case_id );
+					$card_text    = '-';
+					if ( ! empty( $charge_codes ) ) {
+						$card_text = str_ends_with( $charge_codes, '-1' ) ? 'Geel' : 'Rood';
+						// Append schorsing for uitsluiting sanctions
+						$sanction_desc = get_field( 'sanction_description', $case_id );
+						if ( ! empty( $sanction_desc ) && strcasecmp( $sanction_desc, 'uitsluiting' ) === 0 ) {
+							$card_text .= ' en schorsing';
+						}
+					}
+
+					$table_rows[] = '<tr style="' . $row_bg . '">'
+						. '<td style="' . $td_style . '">' . esc_html( $formatted_date ) . '</td>'
+						. '<td style="' . $td_style . '">' . $match_desc . '</td>'
+						. '<td style="' . $td_style . '">' . esc_html( $card_text ) . '</td>'
+						. '<td style="' . $td_style . 'text-align:right;">' . $formatted_amount . '</td>'
+						. '</tr>';
 				} elseif ( ! empty( $item['description'] ) ) {
-					// Fallback to description if no discipline case linked
+					// Fallback row for non-discipline items: description spans first 3 columns
 					$amount = (float) ( $item['amount'] ?? 0 );
 					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
-					$list_items[] = '<li>' . esc_html( $item['description'] ) . ' &mdash; ' . $formatted_amount . '</li>';
+					$table_rows[] = '<tr style="' . $row_bg . '">'
+						. '<td colspan="3" style="' . $td_style . '">' . esc_html( $item['description'] ) . '</td>'
+						. '<td style="' . $td_style . 'text-align:right;">' . $formatted_amount . '</td>'
+						. '</tr>';
 				}
+				$row_index++;
 			}
-			if ( ! empty( $list_items ) ) {
-				$tuchtzaken_lijst = '<ul style="margin:0;padding-left:20px;">' . implode( '', $list_items ) . '</ul>';
+			if ( ! empty( $table_rows ) ) {
+				$th_style = 'padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;';
+				$tuchtzaken_lijst = '<table style="width:100%;border-collapse:collapse;font-size:14px;">'
+					. '<thead><tr style="background-color:#f3f4f6;">'
+					. '<th style="' . $th_style . '">Datum</th>'
+					. '<th style="' . $th_style . '">Wedstrijd</th>'
+					. '<th style="' . $th_style . '">Kaart</th>'
+					. '<th style="' . $th_style . 'text-align:right;">Bedrag</th>'
+					. '</tr></thead>'
+					. '<tbody>' . implode( '', $table_rows ) . '</tbody>'
+					. '</table>';
 			}
 		}
 
