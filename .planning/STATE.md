@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 75: Add button to regenerate payment links
+Last activity: 2026-02-18 — Completed quick task 76: Reset payment state interface for test mode
 
 ## Performance Metrics
 
@@ -141,6 +141,7 @@ None — phase 185 was the final planned enhancement.
 | 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
 | 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
 | 75 | Add button to regenerate payment links | 2026-02-18 | 2deebd8e | [75-add-button-to-regenerate-payment-links](./quick/75-add-button-to-regenerate-payment-links/) |
+| 76 | Reset payment state interface for test mode | 2026-02-18 | 449ae276 | [76-reset-payment-state-interface-for-test-m](./quick/76-reset-payment-state-interface-for-test-m/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -150,11 +151,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Quick task 75 complete — regenerate payment link button deployed
+Stopped at: Quick task 76 complete — reset payment state interface deployed
 Resume file: None
 
 **Next action:** None pending
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 75: regenerate payment links*
+*Last updated: 2026-02-18 — Quick task 76: reset payment state interface for test mode*
