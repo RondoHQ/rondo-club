@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 81: Invoice UI tweaks and improved tuchtzaken email table
+Last activity: 2026-02-18 — Completed quick task 82: Reset invoice also resets discipline cases doorbelast
 
 ## Performance Metrics
 
@@ -158,6 +158,7 @@ None — phase 185 was the final planned enhancement.
 | 79 | HTML invoice email with inline QR code | 2026-02-18 | 7265c656 | [79-html-invoice-email-with-inline-qr-code-r](./quick/79-html-invoice-email-with-inline-qr-code-r/) |
 | 80 | Reset button deletes PDF and resets dates | 2026-02-18 | a5b685ae | [80-reset-button-deletes-pdf-and-resets-pdf-](./quick/80-reset-button-deletes-pdf-and-resets-pdf-/) |
 | 81 | Invoice UI tweaks and improved tuchtzaken email table | 2026-02-18 | 13e3d383 | [81-invoice-ui-tweaks-and-improved-tuchtzake](./quick/81-invoice-ui-tweaks-and-improved-tuchtzake/) |
+| 82 | Reset invoice also resets discipline cases doorbelast | 2026-02-18 | 942b3054 | [82-reset-invoice-also-resets-discipline-cas](./quick/82-reset-invoice-also-resets-discipline-cas/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
