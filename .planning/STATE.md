@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie — Phase 189 complete, Phase 190 next
+**Current focus:** v27.0 Mollie — COMPLETE. Phase 190 shipped v27.0.0.
 
 ## Current Position
 
-Phase: Phase 189 — RestInvoices Provider Routing
+Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
-Status: Complete (verified 4/4 must-haves)
-Last activity: 2026-02-18 — Phase 189 complete, provider routing verified
+Status: Complete — v27.0 Mollie milestone SHIPPED
+Last activity: 2026-02-18 — Phase 190 complete, v27.0.0 deployed
 
 ## Performance Metrics
 
@@ -108,6 +108,9 @@ Recent decisions for v26.0:
 - [Phase 188]: isPaid() over status string — isPaid() checks paidAt for reliability
 - [Phase 189-01]: Mollie matched explicitly, Rabobank is else branch — any unknown provider routes to Rabobank for backward compatibility
 - [Phase 189-01]: $finance_config (provider lookup) separate from $config (payment term days) — no variable collision
+- [Phase 190-01]: Mollie API key never populated from API response — security boundary, only active_payment_provider loaded from settings
+- [Phase 190-01]: mollie_api_key conditionally included in payload only when non-empty (preserves existing encrypted key)
+- [Phase 190-01]: club_logo_id, accent_color, bcc_email REST args registered (they were used but not registered)
 
 ### Roadmap Evolution
 
@@ -141,15 +144,16 @@ None — phase 185 was the final planned enhancement.
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
 | Phase 189 P01 | 66 | 2 tasks | 1 file |
+| Phase 190 P01 | 187 | 2 tasks | 5 files |
 
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 189 complete (verified)
+Stopped at: Phase 190 complete — v27.0 Mollie milestone SHIPPED (v27.0.0)
 Resume file: None
 
-**Next action:** Plan and execute Phase 190 (Finance Settings UI — Mollie Configuration)
+**Next action:** Deploy to production and verify Mollie configuration UI
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 189 complete and verified*
+*Last updated: 2026-02-18 — Phase 190 complete, v27.0.0 shipped*
