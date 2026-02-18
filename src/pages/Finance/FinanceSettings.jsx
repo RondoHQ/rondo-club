@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
 import api, { prmApi } from '@/api/client';
 import TabButton from '@/components/TabButton';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const TABS = [
   { id: 'organization', label: 'Organisatie' },
@@ -547,22 +548,21 @@ export default function FinanceSettings() {
       {/* Section 3: Email Template */}
       {activeTab === 'email' && <div className="card p-6">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">E-mailsjabloon</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor boetes</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Sjabloon voor de e-mail waarmee facturen worden verstuurd.
           </p>
         </div>
         <div className="space-y-4">
           <div>
-            <label htmlFor="email_template" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               E-mailtekst
             </label>
-            <textarea
-              id="email_template"
+            <RichTextEditor
               value={formData.email_template}
-              onChange={(e) => setFormData(prev => ({ ...prev, email_template: e.target.value }))}
-              rows={8}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
+              onChange={(html) => setFormData(prev => ({ ...prev, email_template: html }))}
+              placeholder="Schrijf hier het e-mailsjabloon..."
+              minHeight="200px"
             />
           </div>
 
@@ -575,9 +575,13 @@ export default function FinanceSettings() {
               <div><code>{'{tuchtzaken_lijst}'}</code> - Overzicht van tuchtzaken</div>
               <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
               <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+              <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
               <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
             </div>
           </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
+          </p>
         </div>
       </div>}
 
