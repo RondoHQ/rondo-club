@@ -2655,6 +2655,89 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Invoice WP-CLI commands
+	 */
+	class RONDO_Invoices_CLI_Command {
+
+		/**
+		 * Backfill invoice_type field for existing invoices.
+		 *
+		 * Sets invoice_type to 'discipline' for all existing rondo_invoice posts
+		 * that don't have the field set. This ensures existing invoices are queryable
+		 * by type for the Facturen list filters (Phase 197).
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Show what would be updated without making changes.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm invoices backfill_invoice_type
+		 *     wp prm invoices backfill_invoice_type --dry-run
+		 *
+		 * @when after_wp_load
+		 */
+		public function backfill_invoice_type( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+
+			if ( $dry_run ) {
+				\WP_CLI::log( 'Dry run mode - no changes will be made.' );
+			}
+
+			// Query all rondo_invoice posts (any status)
+			$invoices = get_posts( [
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+			] );
+
+			$total   = count( $invoices );
+			$updated = 0;
+			$skipped = 0;
+
+			\WP_CLI::log( sprintf( 'Found %d invoice(s).', $total ) );
+
+			if ( $total === 0 ) {
+				\WP_CLI::success( 'No invoices to process.' );
+				return;
+			}
+
+			$progress = \WP_CLI\Utils\make_progress_bar( 'Backfilling invoice_type', $total );
+
+			foreach ( $invoices as $invoice_id ) {
+				$current = get_field( 'invoice_type', $invoice_id );
+
+				// Skip if already set
+				if ( ! empty( $current ) ) {
+					$skipped++;
+					$progress->tick();
+					continue;
+				}
+
+				if ( ! $dry_run ) {
+					update_field( 'invoice_type', 'discipline', $invoice_id );
+				}
+
+				$updated++;
+				$progress->tick();
+			}
+
+			$progress->finish();
+
+			\WP_CLI::success( sprintf(
+				'Done. Updated: %d, Skipped (already set): %d, Total: %d%s',
+				$updated,
+				$skipped,
+				$total,
+				$dry_run ? ' (dry run)' : ''
+			) );
+		}
+	}
+
+	/**
 	 * Register WP-CLI commands
 	 */
 	WP_CLI::add_command( 'prm people', 'RONDO_People_CLI_Command' );
@@ -2669,4 +2752,5 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm relationships', 'RONDO_Relationships_CLI_Command' );
 	WP_CLI::add_command( 'rondo tasks', 'RONDO_Tasks_CLI_Command' );
 	WP_CLI::add_command( 'rondo demo', 'RONDO_Demo_CLI_Command' );
+	WP_CLI::add_command( 'prm invoices', 'RONDO_Invoices_CLI_Command' );
 }
