@@ -2,56 +2,28 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-15)
+See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.1 Administratiekosten — Phase 191 complete.
+**Current focus:** v27.0 Mollie milestone completed. Planning next milestone.
 
 ## Current Position
 
-Phase: Phase 191 — Administratiekosten
-Plan: 01 complete
-Status: Complete — Phase 191 Administratiekosten SHIPPED (v27.1.2)
-Last activity: 2026-02-18 — Completed 191-01: Configurable administration fee for discipline invoices
+Phase: None — between milestones
+Plan: N/A
+Status: v27.0 Mollie SHIPPED (v27.1.2)
+Last activity: 2026-02-18 — v27.0 milestone archived
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 199 plans across v1.0-v26.0
+- Total plans completed: 205 plans across v1.0-v27.0
 - Recent milestones:
+  - v27.0: 6 plans, 2 days (2026-02-17 → 2026-02-18)
+  - v26.0: 13 plans, 2 days (2026-02-15 → 2026-02-16)
   - v24.1: 6 plans, 1 day (2026-02-13)
   - v24.0: 13 plans, 2 days (2026-02-11 → 2026-02-12)
   - v23.0: 4 plans, 1 day (2026-02-09)
-  - v22.0: 7 plans, 1 day (2026-02-09)
-  - v21.0: 12 plans, 2 days (2026-02-08 → 2026-02-09)
-
-**Phase 179 Progress:**
-- Plan 179-01: 114s, 2 tasks, 3 files (2026-02-15)
-- Plan 179-02: 179s, 2 tasks, 3 files (2026-02-15)
-
-**Phase 180 Progress:**
-- Plan 180-01: 375s, 2 tasks, 5 files (2026-02-15)
-- Plan 180-02: 137s, 2 tasks, 2 files (2026-02-15)
-
-**Phase 181 Progress:**
-- Plan 181-01: 201s, 2 tasks, 5 files (2026-02-16)
-
-**Phase 182 Progress:**
-- Plan 182-01: 195s, 2 tasks, 2 files (2026-02-16)
-- Plan 182-02: 180s, 2 tasks, 3 files (2026-02-16)
-
-**Phase 183 Progress:**
-- Plan 183-01: 172s, 2 tasks, 3 files (2026-02-16)
-
-**Phase 184 Progress:**
-- Plan 184-01: 162s, 2 tasks, 7 files (2026-02-16)
-- Plan 184-02: 232s, 2 tasks, 6 files (2026-02-16)
-
-**Phase 185 Progress:**
-- Plan 185-01: 336s, 2 tasks, 6 files (2026-02-16)
-
-**Phase 191 Progress:**
-- Plan 191-01: 240s, 2 tasks, 7 files (2026-02-18)
 
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
@@ -61,79 +33,7 @@ Last activity: 2026-02-18 — Completed 191-01: Configurable administration fee 
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table (658 entries).
-
-Recent decisions for v26.0:
-- Invoice system follows existing patterns (CPT, ACF, REST API)
-- mPDF library for PDF generation (HTML/CSS workflow, ~15-20MB)
-- Rabobank betaalverzoek OAuth API for payment links
-- Sodium encryption for API credentials (existing pattern)
-- Navigation section headers use type='section' property (178-01)
-- Disabled navigation items show grayed out with disabled property (178-01)
-- Conditional credential submission preserves existing values when fields empty (178-02)
-- IBAN auto-formatting on blur for consistent storage (178-02)
-- Invoiced cases show FileText icon with 60% opacity instead of checkbox (180-01)
-- Selection state managed via Set for O(1) lookup performance (180-01)
-- Both fairplay AND financieel capabilities required to create invoices (180-01)
-- Invoice display uses Dutch status labels: Concept/Verstuurd/Betaald/Verlopen (180-02)
-- Invoice section hidden when no invoices exist (no empty state UI) (180-02)
-- [Phase 181]: mPDF library for PDF generation (HTML/CSS workflow)
-- [Phase 181]: Store PDFs in wp-content/uploads/invoices/ (WordPress convention)
-- [Phase 182-01]: OAuth 2.0 Premium with browser redirect callback (Rabobank requirement)
-- [Phase 182-01]: 5-minute token refresh buffer (prevent mid-operation expiry)
-- [Phase 182-01]: Separate RabobankOAuth and RabobankPayment classes (SRP)
-- [Phase 182-02]: Connection status card above credentials form (user needs to see state first)
-- [Phase 182-02]: Disable connect button when no credentials saved (prevent OAuth failure)
-- [Phase 182-02]: URL parameter cleanup after OAuth callback (prevent re-display on refresh)
-- [Phase 183-01]: wp_mail for email delivery (WordPress native, supports HTML and attachments)
-- [Phase 183-01]: Template variable replacement using str_replace (6 variables)
-- [Phase 183-01]: Payment link creation is non-blocking (logs error if fails, email still sent)
-- [Phase 183-01]: Only draft invoices can be sent (400 error prevents re-sending)
-- [Phase 184-01]: Resend endpoint only allows sent/overdue invoices (400 error for others)
-- [Phase 184-01]: useResendInvoice only invalidates ['invoice'] query (targeted performance)
-- [Phase 184-01]: Placeholder page components created for build compilation (full UI in Plan 02)
-- [Phase 184-02]: Client-side sorting for Facturen list (small datasets, instant feedback)
-- [Phase 184-02]: Success messages auto-hide after 3s using setTimeout (FeedbackDetail pattern)
-- [Phase 184-02]: Status-driven button rendering for invoice actions (draft/sent/paid each different)
-- [Phase 185-01]: Logo storage via WordPress media library (reuse existing infrastructure)
-- [Phase 185-01]: Accent color stored as hex string with sanitize_hex_color() validation
-- [Phase 185-01]: PDF fallback to Rondo branding ensures PDFs always render
-- [Phase 186]: Sodium encryption for Mollie API key (same pattern as Rabobank credentials)
-- [Phase 186]: MollieClient is not a singleton — reads fresh key from FinanceConfig on each instantiation
-- [Phase 186]: Active payment provider defaults to 'rabobank' — no behavioral change for existing sites
-- [Phase 186]: Boolean mollie_has_api_key in get_all_settings() — raw key never exposed via REST
-- [Phase 187-01]: MolliePayment is a pure service class — no REST routes, no constructor hooks, called directly by Phase 189
-- [Phase 187-01]: Idempotency checks both _mollie_payment_id AND payment_link — handles partial write failures
-- [Phase 187-01]: webhookUrl omitted for localhost/.local environments — Phase 188 webhook not yet deployed
-- [Phase 187-01]: use import added proactively in Phase 187; no instantiation in rondo_init()
-- [Phase 188]: MollieWebhook uses __return_true permission callback — Mollie has no WordPress auth
-- [Phase 188]: Handler always returns HTTP 200 to prevent Mollie retry storms
-- [Phase 188]: isPaid() over status string — isPaid() checks paidAt for reliability
-- [Phase 189-01]: Mollie matched explicitly, Rabobank is else branch — any unknown provider routes to Rabobank for backward compatibility
-- [Phase 189-01]: $finance_config (provider lookup) separate from $config (payment term days) — no variable collision
-- [Phase 190-01]: Mollie API key never populated from API response — security boundary, only active_payment_provider loaded from settings
-- [Phase 190-01]: mollie_api_key conditionally included in payload only when non-empty (preserves existing encrypted key)
-- [Phase 190-01]: club_logo_id, accent_color, bcc_email REST args registered (they were used but not registered)
-- [Quick 77]: chillerlan/php-qrcode v5 with returnResource=true for GdImage to enable logo overlay
-- [Quick 77]: ECC level H (30%) for QR codes with logo overlay to preserve readability
-- [Quick 77]: clear_qr_code() removed from Mollie send/regenerate — QR now generated, not cleared
-- [Quick 79]: CID embedding via phpmailer_init hook (add before wp_mail, remove after)
-- [Quick 79]: wp_kses_post for HTML email template sanitization (REST API and FinanceConfig)
-- [Quick 79]: esc_html on dynamic template variable values to prevent XSS in HTML emails
-- [Quick 80]: clear_pdf() follows clear_qr_code() pattern for file cleanup consistency
-- [Quick 80]: Both ACF field and post meta cleared for sent_date/due_date to cover all read paths
-- [Quick 81]: charge_codes ending in -1 maps to Geel, otherwise Rood in email table
-- [Quick 81]: sanction_description 'uitsluiting' (case-insensitive) appends ' en schorsing'
-- [Quick 81]: Non-discipline fallback rows use colspan=3 for description in email table
-- [Quick 83]: Draft-only guard on delete endpoint; force delete (skip trash) frees invoice number for reuse
-- [Phase 191]: admin_fee injected server-side in create_invoice() — backend is single source of truth, prevents tampering
-- [Phase 191]: Hardcoded 'Administratiekosten' description — configurable label adds complexity without clear benefit
-- [Phase 191]: Gate injection on admin_fee > 0 — no zero-value line items on invoices
-- [Phase 191]: total_amount update_field moved to after admin fee injection so total always includes the fee
-
-### Roadmap Evolution
-
-- Phase 191 added: Administratiekosten
+Decisions are logged in PROJECT.md Key Decisions table (673+ entries).
 
 ### Pending Todos
 
@@ -141,48 +41,16 @@ Recent decisions for v26.0:
 
 ### Blockers/Concerns
 
-**Pre-existing Code Quality Issues:**
-- 140 lint problems (113 errors, 27 warnings) in JSX files
-- Should be addressed in a future cleanup milestone
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 65 | Add BCC email for invoice sending | 2026-02-16 | 6af9f77 | [65-add-bcc-email-for-invoice-sending](./quick/65-add-bcc-email-for-invoice-sending/) |
-| 66 | Add regenerate invoice button | 2026-02-16 | 34ed6bc | [66-add-regenerate-invoice-button](./quick/66-add-regenerate-invoice-button/) |
-| 67 | Invoice PDF - Card type and suspension columns | 2026-02-16 | adb1910 | [67-invoice-columns-card-type-instead-of-san](./quick/67-invoice-columns-card-type-instead-of-san/) |
-| 68 | Center QR code scan text in invoice PDF | 2026-02-16 | 12cc679 | [68-center-qr-code-scan-text-in-invoice-pdf](./quick/68-center-qr-code-scan-text-in-invoice-pdf/) |
-| 69 | Invoice PDF colored Geel/Rood card type | 2026-02-16 | 5503ea8 | [69-invoice-pdf-show-geel-rood-colored-text-](./quick/69-invoice-pdf-show-geel-rood-colored-text-/) |
-| 70 | Fix invoice PDF column widths | 2026-02-16 | 4836a3d | [70-fix-invoice-pdf-column-widths-for-kaart-](./quick/70-fix-invoice-pdf-column-widths-for-kaart-/) |
-| 71 | Move club logo to right side of invoice header | 2026-02-16 | d69396f | [71-move-club-logo-to-right-side-of-invoice-](./quick/71-move-club-logo-to-right-side-of-invoice-/) |
-| 72 | Add tab navigation to Finance Settings | 2026-02-16 | d31e152 | [72-finance-settings-tabs](./quick/72-finance-settings-tabs/) |
-| 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
-| 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
-| 75 | Add button to regenerate payment links | 2026-02-18 | 2deebd8e | [75-add-button-to-regenerate-payment-links](./quick/75-add-button-to-regenerate-payment-links/) |
-| 76 | Reset payment state interface for test mode | 2026-02-18 | 449ae276 | [76-reset-payment-state-interface-for-test-m](./quick/76-reset-payment-state-interface-for-test-m/) |
-| 77 | Generate branded QR codes for Mollie payment links | 2026-02-18 | e2547b83 | [77-generate-branded-qr-codes-for-payment-li](./quick/77-generate-branded-qr-codes-for-payment-li/) |
-| 78 | Test mode: send invoice to current user | 2026-02-18 | 2884f1a7 | [78-test-mode-send-invoice-to-current-user-w](./quick/78-test-mode-send-invoice-to-current-user-w/) |
-| 79 | HTML invoice email with inline QR code | 2026-02-18 | 7265c656 | [79-html-invoice-email-with-inline-qr-code-r](./quick/79-html-invoice-email-with-inline-qr-code-r/) |
-| 80 | Reset button deletes PDF and resets dates | 2026-02-18 | a5b685ae | [80-reset-button-deletes-pdf-and-resets-pdf-](./quick/80-reset-button-deletes-pdf-and-resets-pdf-/) |
-| 81 | Invoice UI tweaks and improved tuchtzaken email table | 2026-02-18 | 13e3d383 | [81-invoice-ui-tweaks-and-improved-tuchtzake](./quick/81-invoice-ui-tweaks-and-improved-tuchtzake/) |
-| 82 | Reset invoice also resets discipline cases doorbelast | 2026-02-18 | 942b3054 | [82-reset-invoice-also-resets-discipline-cas](./quick/82-reset-invoice-also-resets-discipline-cas/) |
-| 83 | Delete draft invoices with number reuse | 2026-02-18 | 7c69c269 | [83-delete-draft-invoices-with-number-reuse](./quick/83-delete-draft-invoices-with-number-reuse/) |
-| 84 | Add {voornaam} email variable and update {naam} description | 2026-02-18 | 8e520cc2 | [84-add-voornaam-email-variable-and-update-n](./quick/84-add-voornaam-email-variable-and-update-n/) |
-| Phase 186 P01 | 164 | 2 tasks | 9 files |
-| Phase 187 P01 | 90 | 2 tasks | 2 files |
-| Phase 188 P01 | 900 | 2 tasks | 2 files |
-| Phase 189 P01 | 66 | 2 tasks | 1 file |
-| Phase 190 P01 | 187 | 2 tasks | 5 files |
+None — ESLint cleanup completed and pre-commit enforcement active.
 
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed quick-84 — Add {voornaam} email variable and update {naam} description
+Stopped at: v27.0 Mollie milestone archived
 Resume file: None
 
-**Next action:** None pending
+**Next action:** `/gsd:new-milestone` for next version
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 191-01: Administratiekosten complete (v27.1.2)*
+*Last updated: 2026-02-18 — v27.0 Mollie milestone archived*

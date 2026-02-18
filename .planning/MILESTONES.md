@@ -961,6 +961,68 @@
 
 **Git range:** `7977a95a` → `2e687520` (22 commits)
 
+**What's next:** v26.0 Discipline Case Invoicing
+
+---
+
+
+## v26.0 Discipline Case Invoicing (Shipped: 2026-02-16)
+
+**Delivered:** Complete discipline case invoicing system — from case selection through PDF generation, Rabobank payment link creation, configurable email delivery, and full invoice lifecycle management with branded PDFs.
+
+**Phases completed:** 178-185 (8 phases, 13 plans)
+
+**Key accomplishments:**
+
+- Finance navigation section with Contributie, Facturen, and Instellingen, plus FinanceConfig backend with REST API
+- Invoice CPT with auto-numbering (2026T001 format), ACF fields, lifecycle statuses (Concept/Verstuurd/Betaald/Verlopen)
+- Case selection UI on member Tuchtzaken tab with checkbox multi-select and "Maak factuur" button
+- mPDF-generated invoice PDFs with club branding (logo, accent color), member details, case breakdown, and payment instructions
+- Rabobank OAuth 2.0 Premium integration for betaalverzoek payment links with sodium-encrypted credentials
+- Email delivery via wp_mail with configurable template, variable replacement, and PDF attachment
+- Facturen list page with sortable columns, detail view with send/resend/mark-paid actions, and member profile integration
+- 10 quick tasks: BCC email, regenerate button, PDF improvements, Finance Settings tabs, tuchtzaken filters
+
+**Stats:**
+
+- 92 files changed
+- +15,231 / -694 lines changed
+- 8 phases, 13 plans
+- 2 days (2026-02-15 → 2026-02-16)
+
+**Git range:** `a82c0c29` → `5694ebc9` (127 commits)
+
+**What's next:** v27.0 Mollie
+
+---
+
+
+## v27.0 Mollie (Shipped: 2026-02-18)
+
+**Delivered:** Added Mollie as a second payment provider for discipline case invoices alongside Rabobank — with encrypted API key storage, automatic provider selection, payment link generation, webhook-driven invoice status updates, configurable administration fees, and comprehensive invoice UX improvements.
+
+**Phases completed:** 186-191 (6 phases, 6 plans)
+
+**Key accomplishments:**
+
+- Mollie PHP SDK v3.9 with encrypted API key storage in FinanceConfig and shared MollieClient wrapper
+- MolliePayment service for idempotent payment link creation via Mollie Payments API
+- Public webhook endpoint for automatic invoice-to-paid transitions when Mollie confirms payment
+- Provider routing in send_invoice() — Mollie or Rabobank based on configured active provider
+- Finance Settings UI with Mollie API key input, test/live badge, and payment provider selector
+- Configurable administration fee auto-injected as Administratiekosten line item on invoice creation
+- 10 quick tasks: payment link regeneration, test mode, branded QR codes, HTML email with inline QR, invoice reset/delete, {voornaam} email variable
+- ESLint cleanup (132 errors → 0) and pre-commit lint enforcement via husky + lint-staged
+
+**Stats:**
+
+- 119 files changed
+- +14,211 / -1,817 lines changed
+- 6 phases, 6 plans, 94 commits
+- 2 days (2026-02-17 → 2026-02-18)
+
+**Git range:** `44ae45f9` → `1b03ef3c`
+
 **What's next:** To be determined
 
 ---

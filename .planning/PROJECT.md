@@ -425,57 +425,68 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ AGENTS.md updated to reflect simplified data model — v24.1
 - ✓ Developer documentation updated — v24.1
 
+**v26.0 Discipline Case Invoicing (shipped 2026-02-16):**
+- ✓ Invoice CPT (rondo_invoice) with auto-numbering (2026T001), ACF fields, lifecycle statuses — v26.0
+- ✓ Finance section in sidebar with Contributie, Facturen, and Instellingen — v26.0
+- ✓ FinanceConfig class for club invoice details, bank account, payment terms, email template — v26.0
+- ✓ Case selection on Tuchtzaken tab with invoice creation summing Boete fees — v26.0
+- ✓ mPDF invoice PDF generation with club branding, case breakdown, payment instructions — v26.0
+- ✓ Rabobank OAuth 2.0 Premium betaalverzoek integration for payment links — v26.0
+- ✓ Email delivery via wp_mail with configurable template, variable replacement, PDF attachment — v26.0
+- ✓ Facturen list page, detail view with send/resend/mark-paid actions — v26.0
+- ✓ Invoice PDF club branding (custom logo, accent color) — v26.0
+
+**v27.0 Mollie (shipped 2026-02-18):**
+- ✓ Mollie PHP SDK v3.9 with encrypted API key storage (sodium) — v27.0
+- ✓ MolliePayment service for idempotent payment link creation via Payments API — v27.0
+- ✓ Public webhook endpoint for automatic invoice-to-paid transitions — v27.0
+- ✓ Provider routing: Mollie or Rabobank based on configured active provider — v27.0
+- ✓ Finance Settings UI with Mollie API key input, test/live badge, provider selector — v27.0
+- ✓ Configurable administration fee auto-injected on invoice creation — v27.0
+- ✓ ESLint cleanup (132 errors → 0) and pre-commit lint enforcement (husky + lint-staged) — v27.0
+
 ### Active
 
-## Current Milestone: v27.0 Mollie
-
-**Goal:** Add Mollie as a configurable payment provider for discipline case invoices, running alongside Rabobank, with webhook-based payment status tracking.
-
-**Target features:**
-- Mollie API credentials in Finance Settings (test/live API key, mode toggle)
-- Default payment provider selector in Finance Settings (Rabobank or Mollie)
-- Invoice sending uses configured provider to generate payment link
-- Mollie payment link included in invoice email when Mollie is selected
-- Mollie webhook endpoint for payment status callbacks
-- Automatic invoice status update to Betaald when Mollie confirms payment
+(No active milestone — planning next)
 
 ### Out of Scope
 
 - Mobile app — future consideration
 - Real-time updates (WebSockets) — future enhancement
-- Real-time Google sync (webhook-based) — will use polling/cron like Calendar
-- Multiple Google accounts simultaneously — future enhancement
-- Team/team sync to Google Contact groups — contacts only
-- Two-way relationship sync — Google doesn't have relationship concepts
-- Contact group/label sync — future enhancement after core sync works
+- Mollie OAuth (multi-merchant) — single-club app, API key auth sufficient
+- Mollie refunds UI — admin uses Mollie Dashboard for infrequent refunds
+- Membership fee invoicing via Mollie — deferred to v28.0+
+- iDEAL enforcement in code — Mollie Dashboard controls payment methods
 - Public-facing feedback portal — internal use only
-- Voting/upvoting system — can be added later
-- Email notifications on feedback status change — deferred to future version
-- Integration with external issue trackers (GitHub, Jira) — API access sufficient
 
 ## Context
 
-**Codebase State (post v24.1):**
+**Codebase State (post v27.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 24.1.0 — simplified data model: 2 main CPTs (person, team), 3 supporting CPTs (rondo_todo, discipline_case, calendar_event), 2 taxonomies (relationship_type, seizoen)
-- All label taxonomies (person_label, team_label, commissie_label) and important_date/date_type residuals removed
+- Version 27.1.2 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Complete invoicing system: discipline case invoice creation, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery, webhook status updates
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced
+- ESLint clean (0 errors/warnings), pre-commit lint enforcement via husky + lint-staged
 - Demo site at demo.rondo.club with anonymized fixture data
 - Developer docs at developer.rondo.club
-- 140 pre-existing lint warnings/errors in JSX (not blocking)
 
-**Key Existing Files:**
-- `includes/class-rest-base.php` — Base REST class with shared utilities
-- `includes/class-access-control.php` — Row-level user data filtering
-- `includes/class-post-types.php` — CPT registration
-- `includes/class-taxonomies.php` — Taxonomy registration (relationship_type, seizoen only)
+**Key Finance Files:**
+- `includes/class-finance-config.php` — FinanceConfig with settings, Rabobank/Mollie credentials
+- `includes/class-rest-invoices.php` — Invoice CRUD + send/resend/mark-paid endpoints
+- `includes/class-invoice-pdf-generator.php` — mPDF invoice generation
+- `includes/class-invoice-email-sender.php` — Email delivery with template variables
+- `includes/class-mollie-payment.php` — Mollie Payments API integration
+- `includes/class-mollie-webhook.php` — Webhook endpoint for payment status
+- `includes/class-rabobank-oauth.php` — Rabobank OAuth 2.0
+- `includes/class-rabobank-payment.php` — Rabobank betaalverzoek API
 
 ## Constraints
 
-- **Backward Compatibility**: Existing single-user functionality must continue working. Default visibility = private preserves current behavior.
+- **Backward Compatibility**: Existing functionality must continue working. Rabobank remains default provider.
 - **WordPress Primitives**: Use CPT, taxonomies, user meta, post meta — no custom tables.
 - **No Breaking Changes**: All existing REST API endpoints must continue working.
 - **Progressive Disclosure**: Keep UI simple by default, reveal complexity only when needed.
+- **Lint Clean**: Zero ESLint errors/warnings enforced via pre-commit hook.
 
 ## Key Decisions
 
@@ -667,6 +678,20 @@ Club administrators can manage their members, teams, and club operations through
 | Bump cleanup option to v2 for commissie_label | Re-run cleanup on existing installs that already ran v1 without commissie_label | ✓ Good |
 | Remove 'labels' from default visible columns | Prevents errors in list preferences that reference removed feature | ✓ Good |
 | Generic style.css description | "React-powered club management theme" instead of listing specific features | ✓ Good |
+| Invoice system follows CPT/ACF/REST patterns | Consistency with existing architecture | ✓ Good |
+| mPDF for PDF generation | HTML/CSS workflow, familiar for web developers | ✓ Good |
+| Rabobank OAuth 2.0 Premium with browser redirect | Required by Rabobank API specification | ✓ Good |
+| Sodium encryption for all API credentials | Consistent security pattern across Rabobank and Mollie | ✓ Good |
+| Invoice numbering format 2026T001 | Calendar year prefix + sequential, human-readable | ✓ Good |
+| Dutch status labels (Concept/Verstuurd/Betaald/Verlopen) | Consistent with Dutch-language UI | ✓ Good |
+| wp_mail for email with template variables | WordPress native, supports HTML and attachments | ✓ Good |
+| Non-blocking payment link creation | Email still sends if payment link fails | ✓ Good |
+| Mollie Payments API (not Payment Links API) | Per-invoice payments, proper lifecycle tracking | ✓ Good |
+| MollieClient as non-singleton | Fresh key read on each instantiation, simpler lifecycle | ✓ Good |
+| Webhook always returns HTTP 200 | Prevents Mollie retry storms on errors | ✓ Good |
+| Rabobank as default/else branch | Backward compatibility, unknown providers route to Rabobank | ✓ Good |
+| Admin fee injected server-side | Backend is single source of truth, prevents client tampering | ✓ Good |
+| Pre-commit lint enforcement (husky + lint-staged) | Zero-tolerance for new lint errors in commits | ✓ Good |
 
 ---
-*Last updated: 2026-02-17 after v27.0 Mollie milestone start*
+*Last updated: 2026-02-18 after v27.0 Mollie milestone*
