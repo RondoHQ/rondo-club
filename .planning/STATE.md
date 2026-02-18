@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 80: Reset button deletes PDF and resets dates
+Last activity: 2026-02-18 — Completed quick task 81: Invoice UI tweaks and improved tuchtzaken email table
 
 ## Performance Metrics
 
@@ -119,6 +119,9 @@ Recent decisions for v26.0:
 - [Quick 79]: esc_html on dynamic template variable values to prevent XSS in HTML emails
 - [Quick 80]: clear_pdf() follows clear_qr_code() pattern for file cleanup consistency
 - [Quick 80]: Both ACF field and post meta cleared for sent_date/due_date to cover all read paths
+- [Quick 81]: charge_codes ending in -1 maps to Geel, otherwise Rood in email table
+- [Quick 81]: sanction_description 'uitsluiting' (case-insensitive) appends ' en schorsing'
+- [Quick 81]: Non-discipline fallback rows use colspan=3 for description in email table
 
 ### Roadmap Evolution
 
@@ -154,6 +157,7 @@ None — phase 185 was the final planned enhancement.
 | 78 | Test mode: send invoice to current user | 2026-02-18 | 2884f1a7 | [78-test-mode-send-invoice-to-current-user-w](./quick/78-test-mode-send-invoice-to-current-user-w/) |
 | 79 | HTML invoice email with inline QR code | 2026-02-18 | 7265c656 | [79-html-invoice-email-with-inline-qr-code-r](./quick/79-html-invoice-email-with-inline-qr-code-r/) |
 | 80 | Reset button deletes PDF and resets dates | 2026-02-18 | a5b685ae | [80-reset-button-deletes-pdf-and-resets-pdf-](./quick/80-reset-button-deletes-pdf-and-resets-pdf-/) |
+| 81 | Invoice UI tweaks and improved tuchtzaken email table | 2026-02-18 | 13e3d383 | [81-invoice-ui-tweaks-and-improved-tuchtzake](./quick/81-invoice-ui-tweaks-and-improved-tuchtzake/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -163,11 +167,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Quick task 80 complete — Reset button deletes PDF and resets dates
+Stopped at: Quick task 81 complete — Invoice UI tweaks and improved tuchtzaken email table
 Resume file: None
 
 **Next action:** None pending
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 80: Reset button deletes PDF and resets dates*
+*Last updated: 2026-02-18 — Quick task 81: Invoice UI tweaks and improved tuchtzaken email table*
