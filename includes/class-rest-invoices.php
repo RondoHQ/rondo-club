@@ -1006,6 +1006,16 @@ class Invoices extends Base {
 		);
 		update_field( 'status', 'draft', $invoice_id );
 
+		// Reset discipline cases doorbelast back to "Nee"
+		$line_items = get_field( 'line_items', $invoice_id );
+		if ( $line_items && is_array( $line_items ) ) {
+			foreach ( $line_items as $item ) {
+				if ( ! empty( $item['discipline_case'] ) ) {
+					update_field( 'is_charged', '', (int) $item['discipline_case'] );
+				}
+			}
+		}
+
 		// Return updated invoice
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
