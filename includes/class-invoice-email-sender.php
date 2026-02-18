@@ -3,7 +3,7 @@
  * Invoice Email Sender Service
  *
  * Handles sending invoices via HTML email with configurable template, PDF attachment,
- * and inline CID-embedded QR code. Uses WordPress wp_mail() function with finance
+ * and inline QR code image. Uses WordPress wp_mail() function with finance
  * configuration settings.
  *
  * @package Rondo\Finance
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class InvoiceEmailSender {
 
 	/**
-	 * Send invoice email with PDF attachment and inline QR code
+	 * Send invoice email with PDF attachment and QR code image
 	 *
 	 * @param int   $invoice_id The invoice post ID.
 	 * @param array $options    Optional. Associative array of options:
@@ -129,19 +129,16 @@ class InvoiceEmailSender {
 			? '<a href="' . esc_url( $payment_link ) . '" style="color:#0891b2;text-decoration:underline;">' . esc_html( $payment_link ) . '</a>'
 			: 'Neem contact op voor betaalinformatie.';
 
-		// Build inline QR code HTML via CID embedding
+		// Build inline QR code HTML via public URL (CID images are blocked by most email clients)
 		$qr_code_html = '';
-		$qr_cid       = '';
-		$qr_data      = '';
 		$upload_dir    = wp_upload_dir();
 		$qr_code_path  = get_field( 'qr_code_path', $invoice_id );
 
 		if ( ! empty( $qr_code_path ) ) {
 			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
 			if ( file_exists( $qr_full_path ) ) {
-				$qr_data = file_get_contents( $qr_full_path );
-				$qr_cid  = 'qr-' . sanitize_file_name( $invoice_number ) . '@rondo';
-				$qr_code_html = '<img src="cid:' . $qr_cid . '" alt="QR Code betaallink" width="200" style="display:block;" />';
+				$qr_url = $upload_dir['baseurl'] . '/' . $qr_code_path;
+				$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
 			}
 		}
 
@@ -202,22 +199,8 @@ class InvoiceEmailSender {
 			}
 		}
 
-		// Add inline QR code via phpmailer_init hook (CID embedding)
-		$phpmailer_hook = null;
-		if ( ! empty( $qr_data ) && ! empty( $qr_cid ) ) {
-			$phpmailer_hook = function ( $phpmailer ) use ( $qr_data, $qr_cid ) {
-				$phpmailer->addStringEmbeddedImage( $qr_data, $qr_cid, 'qr-code.png', 'base64', 'image/png' );
-			};
-			add_action( 'phpmailer_init', $phpmailer_hook );
-		}
-
 		// Send email via wp_mail
 		$result = wp_mail( $recipient_email, $subject, $email_body, $headers, $attachments );
-
-		// Remove the phpmailer_init hook to avoid affecting other emails
-		if ( $phpmailer_hook ) {
-			remove_action( 'phpmailer_init', $phpmailer_hook );
-		}
 
 		if ( ! $result ) {
 			return new \WP_Error(
