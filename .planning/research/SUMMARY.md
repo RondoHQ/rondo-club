@@ -1,189 +1,198 @@
 # Project Research Summary
 
-**Project:** v27.0 Mollie Payment Integration
-**Domain:** Payment provider integration — adding Mollie alongside Rabobank for discipline case invoices
-**Researched:** 2026-02-17
+**Project:** Membership Fee Invoicing with Payment Plans
+**Domain:** WordPress invoice system extension — installment billing, public payment landing pages, scheduled reminders
+**Researched:** 2026-02-18
 **Confidence:** HIGH
 
 ## Executive Summary
 
-Adding Mollie as a second payment provider to the existing Rondo Club invoice system is a well-scoped, low-risk feature addition. The existing codebase already has all the architectural patterns needed: encrypted credential storage (`CredentialEncryption`), a finance config layer (`FinanceConfig`), a separate payment class (`RabobankPayment`), and REST-based invoice management (`RestInvoices`). Mollie integration requires adding 3 new PHP classes, modifying 3 existing ones, and installing one Composer package. The total surface area is small and the patterns are established.
+This milestone extends Rondo Club's existing discipline case invoice system to support membership fee invoicing with installment payment plans. The existing stack (WordPress, PHP 8.0+, React 18, Mollie SDK v3.9, mPDF, WP-Cron) requires no new dependencies — all needed capabilities are already installed and verified in vendor. The core challenge is a set of fundamentally new concepts layered onto the existing `rondo_invoice` CPT: payment plans with per-installment tracking, bulk creation across 500 members, the first unauthenticated public-facing page in the app, and a scheduled monthly reminder system. Research across 5 Dutch football clubs confirms that three fixed payment plans (full, 3-term, 8-term) cover the full range of Dutch club billing norms, and that a token-secured member self-service page replaces the ClubCollect workflow clubs currently use.
 
-The recommended approach is: install `mollie/mollie-api-php ^3.9` via Composer, mirror the `RabobankPayment` pattern into a new `MolliePayment` class using the Payments API (not the Payment Links API), add a dedicated `MollieWebhook` class with a public REST endpoint, and update `FinanceConfig` and `RestInvoices` for provider routing. The key differentiator over the existing Rabobank integration is automatic payment status updates via webhook — when a member pays, the invoice transitions to `rondo_paid` without admin intervention, because Mollie retries webhook delivery for up to 26 hours.
+The recommended approach follows established patterns from the existing codebase throughout: rewrite rules plus `template_redirect` for the public page (same pattern as the iCal feed), `bin2hex(random_bytes(32))` 64-char hex tokens (same as iCal), a single daily WP-Cron sweeper (same as Reminders class), and flat numbered post meta for installment storage (avoids ACF repeater query limitations). The key architectural decision is discriminating invoice types via `_invoice_type` post meta on the existing `rondo_invoice` CPT rather than creating a separate CPT, which avoids duplicating the entire invoice, PDF, email, and Mollie infrastructure. Installments are stored as flat post meta keys (`_installment_1_status`, `_installment_2_due_date`, etc.) with a reverse-lookup key (`_mollie_pid_{payment_id} = installment_number`) that enables O(1) webhook payment matching without WP_Query wildcard limitations.
 
-The primary risks are webhook-specific and all preventable with explicit code patterns: the Mollie webhook must be publicly accessible (no WordPress nonce), payment status must always be re-fetched from the Mollie API (never trusted from the POST body alone), the handler must always return HTTP 200, and the handler must be idempotent to avoid retry storms. There are no architectural unknowns — this is a standard Mollie integration into an existing invoice system following established in-codebase patterns.
+The primary risk is a cluster of interconnected pitfalls around the Mollie webhook: the existing 1:1 invoice-to-payment assumption breaks the moment installment payments arrive, and a naive implementation silently marks invoices paid after the first installment. This must be resolved at the data model phase using the reverse-lookup meta pattern before any installment or webhook code is written. A secondary risk cluster involves bulk operations: WP-Cron unreliability for scheduled emails, HTTP timeout on 500-invoice synchronous requests, and SMTP rate limits on SiteGround shared hosting. All are mitigated by batching (50 invoices per cron execution, 50 emails per batch) and a single daily cron sweeper rather than per-invoice scheduled events.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The only new dependency is `mollie/mollie-api-php ^3.9` (released 2026-02-09, PHP >= 7.4), which pulls in `nyholm/psr7 ^1.8` as its sole new transitive dependency. All other PSR HTTP dependencies (`psr/http-client`, `psr/http-factory`, `psr/http-message`) are already installed via `google/apiclient`. No Guzzle conflicts are expected because Mollie v3+ removed Guzzle as a production dependency. The existing `CredentialEncryption` class handles Mollie API key storage without changes — same sodium-encrypt pattern as Rabobank credentials.
+No new dependencies are required. The Mollie SDK v3.9 already installed includes `CreateCustomerRequest`, `CreateCustomerPaymentRequest`, and `CreateSubscriptionRequest` (all verified by reading source files in `vendor/mollie/mollie-api-php/src/Http/Requests/`). WordPress core functions cover all other needs: rewrite rules for public pages, `wp_schedule_single_event` for cron, and post meta for installment storage.
 
-**Core technologies:**
-- `mollie/mollie-api-php ^3.9`: Official Mollie PHP SDK — the only correct option; v3 uses the modern `payments->create()` pattern; do not use v2's deprecated fluent API
-- `nyholm/psr7 ^1.8`: New transitive dependency pulled in automatically; no conflicts with existing packages
-- `CredentialEncryption` (existing): Reuse for Mollie API key storage — no new crypto code needed
-- WordPress Options API (existing): Store `rondo_finance_mollie_api_key` (encrypted) and `rondo_finance_active_payment_provider`
+Important: Mollie Subscriptions (fully automatic recurring charges via SEPA Direct Debit) are available in the SDK but require SEPA Direct Debit activated on the Mollie account — a business prerequisite. The recommended primary flow is manual payment links per installment (separate Mollie payment per installment, sent by email on the 25th), which requires no mandate setup and keeps members in control of each payment. This matches what Dutch clubs using ClubCollect actually do.
 
-**What NOT to use:**
-- `mollie/oauth2-mollie-php` — only for multi-merchant SaaS; single-club API key auth is sufficient here
-- Payment Links API (`$mollie->paymentLinks->create()`) — designed for reusable/shared links; use the Payments API for per-invoice one-time payments
-- Custom HMAC webhook verification — Mollie does not send HMAC signatures on standard webhooks; security is provided by re-fetching payment state via authenticated SDK call
+**Core technologies (all existing):**
+- `mollie/mollie-api-php ^3.9` — per-installment Mollie payment link creation — verified in vendor
+- WordPress Rewrite API + `template_redirect` — public landing page — identical pattern to existing iCal feed
+- `bin2hex(random_bytes(32))` — 64-char secure token generation — identical pattern to existing iCal tokens
+- `wp_schedule_single_event()` — installment reminder cron — identical pattern to existing Reminders and FeeCacheInvalidator
+- Flat numbered post meta — installment storage — directly queryable, cascade-deletes with parent invoice, no ACF overhead
 
 ### Expected Features
 
+Research across 5 Dutch football clubs (HZVV, AMVJ, Be Quick '28, SV Orion, DFS) confirms these as standard expectations. The feature dependency chain is strict: invoice type field must exist before bulk creation; bulk creation must exist before the token landing page; the token landing page must exist before plan selection; plan selection must exist before installment scheduling.
+
 **Must have (table stakes):**
-- Mollie API key storage — encrypted in WordPress options via `CredentialEncryption`; key prefix (`test_` vs `live_`) determines mode automatically, no separate toggle needed
-- Default payment provider selector — single dropdown (Rabobank / Mollie) in Finance Settings; stored in `FinanceConfig`; default remains `rabobank` so existing behavior is unchanged until Mollie is explicitly configured
-- Mollie payment link creation — `MolliePayment::create_payment_link()` using Payments API; checkout URL stored in shared ACF `payment_link` field; Mollie payment ID stored in `_mollie_payment_id` post meta for webhook lookup
-- Webhook endpoint for automatic payment status update — public REST endpoint at `rondo/v1/mollie/webhook`; re-fetches payment status via SDK; transitions invoice to `rondo_paid`; idempotent
-- Finance Settings UI update — Mollie API key field, provider selector dropdown, derived mode display (Test / Live badge)
+- Per-season billing method toggle (Nikki vs Rondo) — prevents retroactive billing conflicts when transitioning mid-contract
+- `invoice_type` field on `rondo_invoice` CPT + backfill of existing invoices as `discipline`
+- Bulk concept invoice creation from fee calculations — idempotent, async via WP-Cron batch, returns job ID
+- Public token-secured landing page at `/betaling/{token}` — mobile-first, no WP login, serves PHP template
+- Three fixed payment plans: Volledig (1x in Sep), 3 Termijnen (Sep 50% / Nov 25% / Feb 25%), 8 Termijnen (Sep + monthly Oct–Apr on 25th)
+- Per-installment administration fee — configurable in Finance Settings, shown on landing page before member confirms
+- Automatic installment emails on the 25th via daily cron sweeper + individual Mollie payment link per installment
+- Overdue reminders: 14-day resend, 21-day resend with BCC to treasurer
+- Facturen page filters: invoice type, payment plan type, overdue installments
 
-**Should have (competitive advantage):**
-- Automatic invoice status update via webhook — closes the payment loop without admin action; key improvement over Rabobank which has no webhook
-- Payment link reuse — store link on invoice and reuse if already created; do not re-create on each email send
-- Test/live mode indicator — visible badge in Finance Settings derived from key prefix; never expose full API key in REST responses
+**Should have (differentiators):**
+- Member self-selects payment plan on token page — no back-and-forth with treasurer; replaces ClubCollect
+- Mollie webhook auto-marks individual installments paid — real-time treasurer visibility without manual reconciliation
+- Treasurer BCC on second overdue reminder — passive visibility without active monitoring
 
-**Defer to v2+:**
-- iDEAL-only method restriction — Mollie Dashboard controls enabled methods; code-level enforcement adds complexity without practical benefit for a Dutch sports club context
-- Mollie refund initiation from Rondo — admin handles refunds in Mollie Dashboard; discipline case appeals are infrequent enough that UI-driven refunds are not warranted
+**Defer (v2+):**
+- Treasurer cash flow projection dashboard — useful once plan selection data exists in production
+- Batch-send rate limiting queue system — manual resend is acceptable for MVP
+- Nikki reconciliation import — Rondo billing replaces Nikki; import is low priority
+
+**Anti-features (explicitly excluded from this milestone):**
+- Mollie Recurring Subscriptions as primary flow — SEPA activation required; unfamiliar member UX for mandate; keep as opt-in variant only
+- Configurable installment schedules — Dutch club norms are standardized; generic configuration multiplies complexity for no benefit
+- Member portal / login for payment history — token page is sufficient; members are not tech-savvy (stated project constraint)
+- Automatic KNVB player registration blocking — Rondo has no Sportlink integration; enforcement is symbolic
 
 ### Architecture Approach
 
-The integration follows strict provider abstraction: `RestInvoices::send_invoice()` reads the active provider from `FinanceConfig` and branches to either `MolliePayment` or `RabobankPayment`. Both implement the same one-method contract (`create_payment_link($invoice_id): string|WP_Error`). A dedicated `MollieClient` class wraps SDK initialization so both `MolliePayment` and `MollieWebhook` can share API access without a singleton. The webhook lives in its own class (`MollieWebhook`) with a public permission callback, cleanly separated from the authenticated `RestInvoices` routes — following the existing pattern where `RabobankOAuth` has its own class.
+The system extends five existing components (RestInvoices, MollieWebhook, MolliePayment, InvoiceEmailSender, FinanceConfig) and adds six new components (PaymentPlanManager, InstallmentScheduler, MembershipInvoiceBulkCreator, RestMembershipInvoices, RestInvoiceInstallments, PaymentLandingPage). Installments are stored as flat numbered post meta on the parent invoice — not a separate CPT and not an ACF repeater. This enables direct meta queries by the scheduler while preserving cascade deletion behavior. The public landing page is PHP-rendered, not React, because the React SPA requires `wpApiSettings` (WP nonce) injected by WordPress, which is not present for unauthenticated users.
 
 **Major components:**
-1. `FinanceConfig` (modified) — adds Mollie API key methods + active provider setting; option keys `rondo_finance_mollie_api_key` and `rondo_finance_active_payment_provider`
-2. `MollieClient` (new) — thin SDK wrapper; reads encrypted key from `FinanceConfig`; both `MolliePayment` and `MollieWebhook` instantiate this
-3. `MolliePayment` (new) — creates Mollie payment via Payments API; stores checkout URL in ACF `payment_link` field + Mollie payment ID in `_mollie_payment_id` post meta
-4. `MollieWebhook` (new) — public REST endpoint (`'permission_callback' => '__return_true'`); re-fetches payment via SDK; idempotently marks invoice paid; always returns 200
-5. `RestInvoices` (modified) — provider branching in `send_invoice()`; default remains `'rabobank'` — existing Rabobank path untouched
-6. Finance Settings React UI (modified) — Mollie key field, provider selector, mode badge derived from key prefix
+1. `PaymentLandingPage` — Public PHP template served at `/betaling/{token}` via `template_redirect` priority 0, intercepting before the SPA catch-all at priority 1
+2. `PaymentPlanManager` — Creates, reads, and transitions installment post meta; provides `all_installments_paid()` for webhook use
+3. `InstallmentScheduler` — Daily WP-Cron sweeper that queries invoices with `_has_payment_plan = '1'`, sends due installments, escalates overdue, BCCs treasurer on second reminder
+4. `MembershipInvoiceBulkCreator` — Processes 50 members per cron execution from WP transient queue, tracks progress, enables frontend polling
+5. `MollieWebhook` (modified) — Extended with reverse-lookup pattern: when creating each installment payment, stores `_mollie_pid_{payment_id} = installment_number` on invoice; webhook looks up this key directly; only transitions invoice to `rondo_paid` when all installments are paid
+6. `RestMembershipInvoices` — Bulk create endpoint (returns job ID immediately) + status polling endpoint
 
 ### Critical Pitfalls
 
-1. **WordPress nonce blocks Mollie webhooks** — Register webhook with `'permission_callback' => '__return_true'`. If the endpoint requires a WordPress nonce or user session, Mollie receives 403, retries 10 times over 26 hours, and gives up — invoice never auto-updates to paid. Security is provided instead by the mandatory API re-fetch (see pitfall 2).
+1. **Webhook lookup breaks on multi-payment invoices** — The existing webhook finds invoices by `_mollie_payment_id` (singular). This fails for installments 2+. Use the reverse-lookup pattern: when creating each installment payment, store `_mollie_pid_{payment_id} = installment_number` on the invoice. Webhook looks up this key directly. Address in data model phase before writing any installment or webhook code.
 
-2. **Trusting the POST body without re-fetching from Mollie API** — Mollie's webhook POST body contains only `id=tr_xxx`. Always call `$mollie->payments->get($payment_id)` inside the handler before acting. Skipping this lets any attacker POST a fake payment ID to fraudulently mark invoices paid. The API re-fetch is the security verification step.
+2. **Webhook marks entire invoice paid after first installment** — The existing binary transition (sent → paid) fires on any confirmed payment. For installment plans, only transition to `rondo_paid` when `PaymentPlanManager::all_installments_paid()` returns true. If some installments remain, keep the invoice in `rondo_sent`. Address in the same webhook extension phase as pitfall 1.
 
-3. **Shared `payment_link` ACF field overwritten by both providers** — The existing system uses `get_field('payment_link', $invoice_id)` for Rabobank links. Mollie must store its payment ID in a separate `_mollie_payment_id` post meta field. Using `payment_link` as the "active sent link" for both providers is fine; mixing the payment IDs used for webhook lookup in a shared field is not.
+3. **Public landing page intercepted by SPA catch-all** — `rondo_theme_template_redirect()` serves `index.php` for all 404s, including `/betaling/TOKEN`. The member clicks the email link and sees the Rondo login screen. Register `PaymentLandingPage` at `template_redirect` priority 0, before the SPA at priority 1. Test in incognito browser immediately after creating the route.
 
-4. **Non-200 webhook responses trigger Mollie retry storm** — Wrap the entire webhook handler in try/catch. Log errors internally. Always return HTTP 200 regardless of errors. Returning 4xx or 5xx (even for legitimate issues like an invoice not found) causes Mollie to retry up to 10 times over 26 hours.
+4. **Bulk creation HTTP timeout at 500 members** — Each `wp_insert_post()` triggers multiple hooks (AutoTitle, FeeCacheInvalidator, Google Contacts export). 500 in a single request exhausts the 30-60s PHP limit. Return job ID immediately; process in batches of 50 via `wp_schedule_single_event`.
 
-5. **Webhook URL rejected by Mollie at payment creation time** — Mollie validates `webhookUrl` when the payment is created, not at delivery time. On local dev (`localhost`, `.local` TLD), omit `webhookUrl` entirely — Mollie skips delivery gracefully. On production, `rest_url('rondo/v1/mollie/webhook')` produces the correct HTTPS URL automatically.
+5. **WP-Cron installment reminders never fire** — WP-Cron is visitor-triggered and SiteGround caching can serve pages without loading WordPress. Set up a real server cron via SiteGround's cron panel before the first installment reminder is due. Use a single daily sweeper hook, not per-invoice scheduled events (which bloat wp_options and slow page loads).
 
 ## Implications for Roadmap
 
-The dependency chain is strict and drives the phase order: config before client, client before payment service, payment service before webhook (webhook needs the payment ID stored by `MolliePayment` to look up the invoice), both payment service and webhook before `RestInvoices` branching, everything before UI. The architecture research defines a 5-phase build order that maps directly to this dependency graph.
+The dependency chain is strict. Each phase must be deployable and testable independently. Phase order follows the dependency graph from FEATURES.md and the build order defined in ARCHITECTURE.md.
 
-### Phase 1: SDK Installation + FinanceConfig + MollieClient
+### Phase 1: Data Model Foundation
 
-**Rationale:** Everything depends on the API key being stored and the SDK being initialized. This phase is safe to deploy in isolation — no REST routes are registered, no user-visible changes occur. It also validates the Composer installation before any integration code is written.
+**Rationale:** Everything else depends on the ability to distinguish membership from discipline invoices and on having a defined installment payment ID storage strategy. The webhook lookup pattern (reverse-lookup meta) must be decided before any installment payment IDs are stored. Invoice number race condition must be fixed before bulk creation runs.
+**Delivers:** `invoice_type` ACF field added to `rondo_invoice` (select: discipline/membership, default: discipline), backfill migration for existing discipline invoices, defined installment post meta schema, option-based atomic invoice number counter replacing scan-and-increment
+**Addresses:** invoice type filter (FEATURES.md), invoice email template type-awareness
+**Avoids:** Invoice number race condition under bulk creation (PITFALL #7), wrong email template for membership invoices (PITFALL #11), webhook lookup strategy not decided before code written (PITFALL #1)
 
-**Delivers:** `composer require mollie/mollie-api-php ^3.9` installed and deployed; `FinanceConfig` extended with `get_mollie_api_key()`, `update_mollie_api_key()`, `get_active_payment_provider()`, `update_active_payment_provider()`; `class-mollie-client.php` created in `includes/`.
+### Phase 2: Public Payment Landing Page
 
-**Addresses:** Mollie API key storage (table stakes); test/live mode derivation from key prefix; encrypted credential storage following existing `CredentialEncryption` pattern.
+**Rationale:** Lowest-risk new feature (read-only, no mutations). Must be proven in production before any invoice email includes the link. If the landing page fails, all downstream member UX breaks. Builds the public page infrastructure that installment emails will link to.
+**Delivers:** `PaymentLandingPage` class, token generation (`bin2hex(random_bytes(32))`) on invoice send for membership invoices, `/betaling/{token}` rewrite rule, PHP template (mobile-first, no React, no WP auth), 404 and "already paid" states, template_redirect priority 0 registration
+**Addresses:** Public token-secured landing page (FEATURES.md table stakes)
+**Avoids:** SPA catch-all intercept (PITFALL #3), token brute force (PITFALL #4 — 64-char hex from day 1), public page performance (PITFALL #9 — use `get_post_meta()` not `get_field()`)
 
-**Avoids:** Composer Guzzle conflicts (Pitfall 7) — verify `composer install` succeeds and `composer why-not` shows no conflicts before writing any integration code.
+### Phase 3: Payment Plan Manager + Webhook Extension
 
-### Phase 2: MolliePayment — Payment Link Creation
+**Rationale:** Core business logic of installment tracking and fixed plan schedules. Must be built before the scheduler (which reads installment state) and before the bulk creation UI (which creates invoices with payment plan flags). Webhook extension must happen in the same phase as plan manager — both depend on the same reverse-lookup meta pattern.
+**Delivers:** `PaymentPlanManager` class, three fixed plan schedules with Dutch-standard dates (Sep/Nov/Feb and Sep–Apr 25th), installment state machine (pending → sent → paid | overdue | cancelled), extended `MollieWebhook` with reverse-lookup pattern, correct all-installments-paid invoice transition, "cancel remaining installments" action
+**Addresses:** Payment plan selection + installment schedule storage (FEATURES.md), Mollie webhook auto-marks installments paid (FEATURES.md differentiator)
+**Avoids:** Webhook marks invoice paid on first installment (PITFALL #2), multi-payment webhook lookup failure (PITFALL #1), missing cancelled/defaulted state (PITFALL #12), Mollie payment expiry unhandled (PITFALL #8)
 
-**Rationale:** Core feature. Depends on Phase 1 (`MollieClient` + `FinanceConfig` Mollie methods). Independently testable by calling the method directly and checking the ACF `payment_link` field and `_mollie_payment_id` post meta on a test invoice.
+### Phase 4: Installment Scheduler + Email System
 
-**Delivers:** `class-mollie-payment.php` with `create_payment_link($invoice_id): string|WP_Error`; uses `$mollie->payments->create()` (Payments API, not Payment Links API); stores checkout URL in ACF `payment_link` field; stores Mollie payment ID in `_mollie_payment_id` post meta; `functions.php` updated to instantiate in REST-only block.
+**Rationale:** Automation layer, only buildable after the payment plan data model exists. Real server cron must be verified and configured before this phase ships — it is a deployment prerequisite, not a code change.
+**Delivers:** `InstallmentScheduler` daily cron sweeper, monthly installment emails with per-installment Mollie payment links, 14-day and 21-day overdue reminders with treasurer BCC, type-aware `InvoiceEmailSender` (no Datum/Wedstrijd/Kaart columns for membership invoices), per-installment admin fee configuration in Finance Settings
+**Addresses:** Automatic installment emails, overdue reminders with BCC, per-installment admin fee (FEATURES.md table stakes)
+**Avoids:** WP-Cron unreliability (PITFALL #6 — real server cron must be set up in SiteGround panel), SMTP rate limits (PITFALL #10 — batch emails in groups of 50), Mollie payment expiry unhandled (PITFALL #8 — generate payment link at send time, not at invoice creation), wrong email template (PITFALL #11 — invoice type awareness in email sender)
 
-**Addresses:** Mollie payment link creation (table stakes); payment link reuse (store and check `_mollie_payment_id` before creating a new one).
+### Phase 5: Bulk Invoice Creation
 
-**Avoids:** Payment Links API anti-pattern (Pitfall 9) — use `$mollie->payments->create()`, not `$mollie->paymentLinks->create()`; amount format error (Pitfall 8) — always `number_format($amount, 2, '.', '')`; shared field overwrite (Pitfall 3) — Mollie payment ID in provider-specific `_mollie_payment_id` meta; webhook URL validation (Pitfall 5) — omit `webhookUrl` when site URL contains `localhost` or `.local`.
+**Rationale:** Most operationally complex phase. Depends on all previous phases so newly created invoices immediately have correct type, plan metadata, and token. Async architecture must be designed before implementation — synchronous creation is not viable at 500-member scale.
+**Delivers:** `MembershipInvoiceBulkCreator` (batches of 50 per cron execution), `RestMembershipInvoices` bulk create endpoint (returns job ID immediately) + status polling endpoint, WP-Cron batch processing with transient progress tracking, React progress UI with polling, per-season billing method toggle in Finance Settings, idempotency (skip existing membership invoices for same person and season)
+**Addresses:** Per-season billing method toggle, bulk concept invoice creation (FEATURES.md table stakes)
+**Avoids:** Bulk creation HTTP timeout (PITFALL #5), invoice number race condition (PITFALL #7), Google Contacts export hook explosion during batch (PITFALL #5), SMTP rate limit on bulk send (PITFALL #10)
 
-### Phase 3: MollieWebhook — Automatic Status Update
+### Phase 6: Frontend Updates (Facturen + Contributie)
 
-**Rationale:** Depends on Phase 2 because the webhook handler looks up invoices by `_mollie_payment_id`, which only exists after `MolliePayment` has stored it. This is the key differentiator over Rabobank — automatic payment confirmation. Keep in a dedicated class separate from `RestInvoices`.
-
-**Delivers:** `class-mollie-webhook.php` registering `POST /rondo/v1/mollie/webhook` with `'permission_callback' => '__return_true'`; handler re-fetches payment via `MollieClient`; idempotently updates invoice to `rondo_paid` via `wp_update_post` + `update_field`; always returns 200; wrapped in try/catch with error logging.
-
-**Addresses:** Webhook endpoint for automatic payment status update (table stakes); idempotent processing (prevents double-email on Mollie retries).
-
-**Avoids:** WordPress nonce blocking webhooks (Pitfall 1) — public endpoint with comment explaining intentional security model; trusting POST body (Pitfall 2) — mandatory `$mollie->payments->get($payment_id)` re-fetch; duplicate processing (Pitfall 6) — `post_status !== 'rondo_paid'` guard before writing; retry storm (Pitfall 10) — always return 200 inside try/catch.
-
-### Phase 4: RestInvoices — Provider Branching
-
-**Rationale:** This is the only modification to currently working code. Deferred to Phase 4 to minimize the risk window — by the time this runs, `MolliePayment` is fully tested and functional. The default remains `'rabobank'`, so existing behavior is completely unchanged until a Mollie API key is configured.
-
-**Delivers:** Modified `RestInvoices::send_invoice()` that reads `FinanceConfig::get_active_payment_provider()` and routes to `MolliePayment` or `RabobankPayment`; existing Rabobank code path is untouched; `functions.php` instantiation updated.
-
-**Avoids:** Regression in Rabobank path — only a new `if ($provider === 'mollie')` branch is added around existing Rabobank code; no Rabobank classes are modified.
-
-### Phase 5: Finance Settings UI — Mollie Configuration
-
-**Rationale:** Admin-facing configuration. Depends on all backend phases being stable. Uses the existing settings REST endpoint — no new backend endpoints needed. Can be the final phase because the backend is fully functional before the UI exposes it to admins.
-
-**Delivers:** Mollie API key input in Finance Settings React component; payment provider selector (Rabobank / Mollie); mode badge (Test / Live, derived from key prefix in API response); key display shows only prefix + last 4 characters, never full key.
-
-**Addresses:** Finance Settings UI update (table stakes); test/live mode indicator (should-have).
-
-**Avoids:** Test/live key cross-contamination (Pitfall 4) — visible mode indicator in UI makes active mode impossible to miss; key exposure — `FinanceConfig::get_all_settings()` returns `mollie_has_api_key` (bool) and `mollie_environment` (string), never the raw key.
+**Rationale:** UI layer on top of completed API. Only buildable once REST endpoints return invoice type and installment data. Brings all treasurer-facing features to completion and verifies Finance capability gating.
+**Delivers:** Facturen page filters (invoice type, payment plan, overdue installments), FactuurDetail installment timeline section with per-installment status, Contributie list "Factureer" bulk action button triggering bulk create flow, Finance capability verification for `rondo_bestuur` role and `financieel` capability
+**Addresses:** All Facturen filters (FEATURES.md table stakes), Finance capability for non-admin users, invoice type visible on member's person page (FEATURES.md differentiator)
+**Avoids:** Treasurer unable to filter membership from discipline invoices, role/capability gaps in route guards
 
 ### Phase Ordering Rationale
 
-- Config → Client → Payment Service → Webhook → `RestInvoices` branching reflects strict dependencies: each component requires the previous to be deployed and functional before it can be implemented and tested
-- `RestInvoices` modification is deferred to Phase 4 (not Phase 2) to keep the existing Rabobank path completely isolated from Mollie work until the Mollie classes are proven functional
-- UI (Phase 5) is last because the React component needs stable API responses from all backend phases to build against
-- Each phase produces an independently deployable, testable artifact with a clear verification step
+- **Data model first** — `_invoice_type` and installment post meta schema (including reverse-lookup strategy) are prerequisites for every other phase. The webhook lookup pattern must be decided before any installment payment IDs are stored.
+- **Public landing page second** — Must be tested in incognito before any invoice email includes the link. A broken landing page on invoice send day cannot be patched mid-send.
+- **Webhook extension with plan manager** — Both depend on the reverse-lookup meta pattern and must be built together to enable end-to-end testing.
+- **Scheduler after plan manager** — The scheduler reads installment state created by `PaymentPlanManager`; building it first would require mocking that state.
+- **Bulk creation after all invoice logic is settled** — It creates invoices using the existing create flow; any change to invoice creation after bulk creation is built requires retesting the entire batch path.
+- **Frontend last** — The React components are thin layers on stable API responses; building them before the API is complete causes churn.
 
 ### Research Flags
 
-**Phases with standard, well-documented patterns (no additional research needed):**
-- **Phase 1:** Composer installation and WordPress options storage — fully documented; mirrors existing Rabobank/`CredentialEncryption` pattern exactly
-- **Phase 4:** Provider branching in `RestInvoices` — simple conditional; no new patterns; no risk to Rabobank path
-- **Phase 5:** Finance Settings UI — mirrors existing Rabobank UI section in the same settings page; no new patterns
+Phases likely needing deeper research during planning:
+- **Phase 4 (Installment Scheduler):** Real server cron setup on SiteGround requires verification of actual cron panel access and PHP execution time limits for cron contexts. PITFALLS.md rates this MEDIUM confidence. Verify before finalizing batch size and reminder timing logic.
+- **Phase 5 (Bulk Creation):** SiteGround PHP memory limits for WP-Cron execution contexts are LOW confidence in research. Batch size of 50 per cron run is conservative — verify actual limits on the account before committing to the number.
 
-**Phases that need attention during implementation (not research — execution care):**
-- **Phase 2:** Verify `mollie/mollie-api-php` v3.9 installed SDK method signatures against the code patterns in ARCHITECTURE.md before finalizing `MolliePayment` — the API changed significantly from v2 to v3 and the SDK installed via Composer is authoritative
-- **Phase 3:** After implementation, verify the webhook endpoint returns 200 unauthenticated via `curl -X POST https://rondo.svawc.nl/wp-json/rondo/v1/mollie/webhook -d "id=test"` before considering this phase complete; also test idempotency by sending the same payload twice
+Phases with standard patterns (skip research-phase):
+- **Phase 1 (Data Model):** ACF JSON field additions are established and well-documented in this codebase; option-based invoice counter is standard WordPress.
+- **Phase 2 (Public Page):** Identical pattern to existing iCal feed (`class-ical-feed.php`) — no unknowns.
+- **Phase 3 (Plan Manager + Webhook):** Mollie API calls and post meta patterns are verified in vendor source. Reverse-lookup meta pattern is a known WordPress pattern.
+- **Phase 6 (Frontend):** React + TanStack Query patterns are established; Facturen filter pattern already exists in the codebase.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official Mollie SDK on Packagist verified; PSR dependency versions checked against existing `vendor/composer/installed.php`; Guzzle conflict risk assessed and found negligible for v3+ |
-| Features | HIGH | Mollie Payments API and Payment Links API officially documented and compared; iDEAL 2.0 migration confirmed as handled transparently by Mollie |
-| Architecture | HIGH | Existing codebase is authoritative for patterns; Mollie webhook security model from official SDK docs and Mollie documentation; component boundaries mirror established Rabobank patterns |
-| Pitfalls | HIGH (critical webhook/security pitfalls) / MEDIUM (two-provider field coexistence) | Webhook auth, security model, and retry behavior from official Mollie docs; two-provider field storage patterns inferred from codebase analysis and general payment orchestration patterns |
+| Stack | HIGH | All Mollie SDK classes verified by reading vendor source; all codebase patterns verified by reading existing class files; no new dependencies required |
+| Features | HIGH | Verified against 5 Dutch football club websites; Mollie payment link docs confirmed; codebase feature audit complete; fixed plan schedules match Dutch club norms |
+| Architecture | HIGH | All existing classes read directly from codebase; component boundaries and data flows verified against real implementations; reverse-lookup meta pattern resolves WP_Query wildcard limitation |
+| Pitfalls | HIGH (Mollie webhook, SPA routing, token security) / MEDIUM (bulk creation batch sizes, SiteGround-specific memory limits) | Webhook behavior from official Mollie docs and codebase; SPA routing from direct functions.php reading; batch sizing from SiteGround community docs |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **`_mollie_payment_id` naming consistency:** STACK.md and ARCHITECTURE.md use `_mollie_payment_id` (correct for Payments API) while FEATURES.md mentions `_mollie_payment_link_id` (appropriate for Payment Links API). The architecture decision to use the Payments API resolves this: use `_mollie_payment_id` consistently throughout. Confirm during Phase 2 implementation before writing any meta.
-
-- **Invoice CPT `rondo_paid` post status:** ARCHITECTURE.md uses `rondo_paid` as the target post status in webhook code samples. Verify this matches the actual registered post status name in `class-post-types.php` during Phase 3 before the webhook handler is finalized.
-
-- **`redirectUrl` destination:** ARCHITECTURE.md suggests `home_url('/financien/')` as the redirect URL after payment completion. Verify the correct React router path is accessible to members (not admin-only) before Phase 2 deployment. Consider redirecting to the invoice detail view instead.
+- **Mollie SEPA activation status:** The automatic subscription flow requires SEPA Direct Debit enabled on the Mollie account. Verify with the treasurer before planning the automatic subscription variant. The manual payment link flow works without it and is the recommended primary approach.
+- **SiteGround system cron access:** PITFALLS.md recommends disabling WP-Cron's visitor trigger and using real server cron. Verify SiteGround cron panel access and PHP execution limits for cron jobs before finalizing batch sizes in Phase 5. This is a deployment concern, not a code change.
+- **Existing `rondo_daily_cron` hook:** FEATURES.md references an existing `rondo_daily_cron` hook in `class-reminders.php`. Verify whether this hook already exists before creating a new daily hook in `InstallmentScheduler`. If it exists, register `InstallmentScheduler` on it rather than creating a duplicate.
+- **Installment plan dates for non-2025-2026 seasons:** The three fixed plan schedules use hardcoded Dutch season dates (Sep 25, Nov 25, Feb 25 for Plan B; Sep–Apr 25th for Plan C). Verify how dates should be calculated for other seasons before implementing `PaymentPlanManager::calculate_due_date()`.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Packagist: mollie/mollie-api-php](https://packagist.org/packages/mollie/mollie-api-php) — v3.9.0, PHP >= 7.4, dependency versions
-- [GitHub: mollie/mollie-api-php composer.json](https://github.com/mollie/mollie-api-php/blob/master/composer.json) — exact transitive dependencies
-- [Mollie Docs: Webhooks](https://docs.mollie.com/reference/webhooks) — POST body format (`id` only), no HMAC, 15s timeout, 10 retries over 26h
-- [Mollie Docs: Create Payment](https://docs.mollie.com/reference/create-payment) — Payments API, `_links->checkout->href`, `webhookUrl` parameter, amount format
-- [Mollie PHP SDK: webhook recipe](https://github.com/mollie/mollie-api-php/blob/master/docs/recipes/payments/handle-webhook.md) — idempotency pattern, always return 200
-- [Mollie Docs: Webhooks Best Practices](https://docs.mollie.com/reference/webhooks-best-practices) — HTTPS requirement, re-fetch verification
-- [WordPress REST API Authentication](https://developer.wordpress.org/rest-api/using-the-rest-api/authentication/) — nonce auth requires logged-in user; not suitable for external webhooks
-- Existing codebase: `class-rabobank-oauth.php`, `class-rabobank-payment.php`, `class-rest-invoices.php`, `class-finance-config.php`, `class-credential-encryption.php` — authoritative for integration patterns
+- Codebase direct inspection: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateSubscriptionRequest.php`, `CreateCustomerRequest.php`, `CreateCustomerPaymentRequest.php`
+- Codebase direct inspection: `includes/class-ical-feed.php`, `includes/class-fee-cache-invalidator.php`, `includes/class-mollie-webhook.php`, `includes/class-mollie-payment.php`, `includes/class-rest-invoices.php`, `includes/class-reminders.php`, `includes/class-finance-config.php`, `includes/class-membership-fees.php`
+- Codebase direct inspection: `functions.php` (template_redirect catch-all confirmed), `acf-json/group_invoice_fields.json`
+- [Mollie Recurring Payments docs](https://docs.mollie.com/docs/recurring-payments) — iDEAL creates SEPA Direct Debit mandate; SEPA activation required as account prerequisite
+- [Mollie Create Subscription](https://docs.mollie.com/reference/create-subscription) — `times` parameter limits total charges; `startDate` format verified
+- [Mollie Webhooks Reference](https://docs.mollie.com/reference/webhooks) — 10 retries over 26h, re-fetch required, 15s timeout, always return 200
+- [Mollie Handling Payment Status](https://docs.mollie.com/docs/handling-payment-status) — `expired` status handling
+- [WordPress Developer Docs: add_rewrite_rule](https://developer.wordpress.org/reference/functions/add_rewrite_rule/)
+- [WordPress WP_Cron documentation](https://developer.wordpress.org/plugins/cron/) — visitor-triggered, unreliable on cached sites
+- Dutch club research: HZVV (4 terms, 2 reminders within 2 weeks), AMVJ (3 terms via ClubCollect, admin fee for incasso), Be Quick '28 (10 monthly terms, 10% fee max €19), SV Orion (1-4 terms, €3/installment admin fee)
 
 ### Secondary (MEDIUM confidence)
-- [Mollie Docs: Payment Links API](https://docs.mollie.com/reference/payment-links-api) — used to confirm Payments API is the correct choice for per-invoice use
-- [Mollie Docs: Next-Gen Webhooks](https://docs.mollie.com/reference/webhooks-new) — HMAC-SHA256 `X-Mollie-Signature` header option (not required for standard webhooks)
-- [iDEAL 2.0 Migration](https://www.mollie.com/growth/ideal-2-0) — confirmed Mollie handles transparently, no code changes needed
-- [Mollie GitHub Issue: Webhook URL display bug](https://github.com/mollie/laravel-mollie/issues/177) — Payment Links API webhook display quirk (not relevant if using Payments API)
-- [Mollie WooCommerce Wiki: Guzzle conflicts](https://github.com/mollie/WooCommerce/wiki/Composer-Guzzle-conflicts) — Guzzle removed from Mollie SDK v3+; confirms v3 is conflict-safe
+- [WP-Cron Missed Events — WP Crontrol](https://wp-crontrol.com/help/missed-cron-events/) — visitor-trigger reliability issues; solution: system cron
+- [WP Mail SMTP Rate Limiting](https://wpmailsmtp.com/introducing-wp-mail-smtp-4-0-optimized-email-sending-rate-limiting/) — email rate limiting per host; batching required for bulk sends
+- [Packagist: woocommerce/action-scheduler](https://packagist.org/packages/woocommerce/action-scheduler) — `wordpress-plugin` type, not suitable for theme; confirms WP-Cron is correct approach
+- [Mollie Payment Expiry Times](https://wordpress.org/support/topic/mollie-payments-expire-too-soon/) — 15-min iDEAL, 12-day bank transfer confirmed
+- [Duplicate Invoice Numbers — WordPress.org](https://wordpress.org/support/topic/duplicate-invoice-numbers-1/) — race conditions in scan-and-increment patterns
 
-### Tertiary (LOW confidence)
-- Mollie Magento2 webhook communication patterns — architectural guidance from Magento integration, not directly verified for WordPress custom themes
-- Multiple payment provider field conflict patterns — inferred from codebase analysis and general payment orchestration patterns rather than Mollie-specific documentation
+### Tertiary (LOW confidence — validate during implementation)
+- SiteGround PHP memory limits for WP-Cron execution contexts — verify on actual account before finalizing batch sizes
+- Token hashing recommendations for stored payment tokens — `hash('sha256', $token)` is standard; PHP docs are authoritative
 
 ---
-*Research completed: 2026-02-17*
+*Research completed: 2026-02-18*
 *Ready for roadmap: yes*

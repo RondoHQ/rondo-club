@@ -1,20 +1,22 @@
 # Feature Research
 
-**Domain:** Mollie Payment Integration for Discipline Case Invoices
-**Researched:** 2026-02-17
-**Confidence:** HIGH (Mollie PHP client v3.9.0, official docs verified)
+**Domain:** Membership Fee Invoicing with Payment Plans — Dutch Sports Club
+**Researched:** 2026-02-18
+**Confidence:** HIGH (domain verified via Dutch club research + existing codebase analysis)
 
 ## Context
 
-This research covers only NEW features needed for Mollie integration. The following are already built and out of scope:
-- Discipline case invoice CPT with lifecycle (draft/sent/paid/overdue)
-- Invoice PDF generation (mPDF)
-- Email delivery via wp_mail
-- Rabobank betaalverzoek payment links in invoice emails
-- Finance Settings page with Rabobank credentials section
-- Facturen list page with status-driven actions
+This research covers only NEW features needed for membership fee invoicing with payment plans. The following are already built and out of scope:
+- Discipline case invoice CPT (rondo_invoice) with lifecycle statuses (rondo_draft/rondo_sent/rondo_paid/rondo_overdue)
+- Invoice numbering (2026T001 format), PDF generation, email delivery
+- Mollie payment link creation, webhook handler, idempotent reuse of payment links
+- Finance Settings with Mollie API key, payment provider selector, email template
+- Facturen list page with status filter and sortable columns
+- FactuurDetail page with send/resend/mark-paid actions
+- Membership fee calculation: categories, family discounts, pro-rata
+- Contributie list page showing calculated fees
 
-The existing `RabobankPayment` class and `FinanceConfig` class serve as the integration pattern to follow.
+The existing invoice CPT has `invoice_type` not yet set — currently all invoices are discipline case invoices. The new milestone introduces membership fee invoices as a second type.
 
 ---
 
@@ -24,80 +26,116 @@ The existing `RabobankPayment` class and `FinanceConfig` class serve as the inte
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Mollie API key storage (test + live) | Standard Mollie integration pattern; admins configure once, the key determines mode | LOW | Store test_/live_ key in `FinanceConfig`. Encrypt at rest using existing `CredentialEncryption` class. No OAuth dance needed — Mollie uses simple API key auth. |
-| Default payment provider selector | Admin must choose between Rabobank and Mollie per club setup; one club won't use both simultaneously | LOW | Single dropdown in Finance Settings: "Rabobank" or "Mollie". Store in `FinanceConfig`. Invoice send flow reads this setting to pick the provider. |
-| Mollie payment link creation | Core feature: generate a Mollie checkout URL for an invoice that the member opens to pay | LOW | Use `mollie/mollie-api-php` v3.9.0 Composer package. Call `/v2/payment-links` API. Include invoice amount, description ("Factuur {number}"), and webhook URL. Returns a `_links.paymentLink.href` URL. |
-| iDEAL as primary payment method | iDEAL is used by ~70% of Dutch online consumers; B2C Dutch sports club context makes this non-negotiable | LOW | Mollie payment links show all enabled methods on the Mollie Dashboard by default — iDEAL is enabled by default for NL accounts. No method restriction needed for MVP. |
-| Webhook endpoint for payment status | Mollie POSTs to a URL when payment status changes; without this, invoices never auto-update to Betaald | MEDIUM | Register a public (no nonce) WordPress REST endpoint at `rondo/v1/mollie/webhook`. Receives `id` param (payment link ID or payment ID), fetches current status from Mollie API, updates invoice `payment_status` to `paid`. Return HTTP 200. |
-| Test mode / live mode switch | Admins must test integration without real money; Mollie's API key prefix (`test_` vs `live_`) determines mode | LOW | Prefix detection is automatic in the Mollie PHP client via `setToken()`. Display current mode in Finance Settings UI (derived from key prefix). No separate toggle needed — the key IS the mode. |
+| Per-season billing method toggle (Nikki vs Rondo) | Club has existing Nikki contract; transition must be controlled per-season, not a global switch that breaks ongoing billing | LOW | Store `billing_method` per season key in WordPress options. Values: `nikki` (default, existing behaviour) or `rondo`. The Contributie page already has a season selector; add a billing method display/toggle there. Only one season at a time can use Rondo billing. |
+| Bulk concept invoice creation from fee calculations | Treasurer needs to move from "calculated fees" to "invoices ready to send" in one step — sending 500 individual invoices one-by-one is not a workflow | MEDIUM | New REST endpoint: `POST /rondo/v1/membership-fees/create-invoices`. Takes season, billing method check. Reads all fee calculations for season. Creates one `rondo_invoice` per member with `invoice_type = membership`. Idempotent: skips members who already have a membership invoice for that season. Returns count of created vs skipped. |
+| Invoice type field on rondo_invoice CPT | Facturen list now shows both discipline and membership invoices; treasurer must be able to filter by type | LOW | Add `invoice_type` ACF field (or post meta) to `rondo_invoice`. Values: `discipline` (existing) or `membership` (new). Backfill existing invoices as `discipline` in migration. Add filter to Facturen page. |
+| Public token-secured landing page for payment plan selection | Members are not tech-savvy; they receive an email with a link and must be able to choose their payment plan without logging in | MEDIUM | New public WordPress template (no auth) served at `/betaalplan/{token}`. Token is a signed URL-safe hash (stored as post meta on invoice). Page shows: member name, total amount, three plan options with prices broken down, submit button. No member account required. Token expires after season end (July 1). |
+| Payment plan selection (full, 3-term, 8-term) | Dutch football clubs universally offer installment options (research confirmed: AMVJ: 3 terms, HZVV: 4 terms, SV Orion: 1-4 terms). Members paying €200-500 upfront expect spreading options | MEDIUM | Three fixed plans, not configurable per invoice: (1) Volledig: total in September, no admin fee; (2) 3 termijnen: Sep 25 (50%), Nov 25 (25%), Feb 25 (25%); (3) 8 termijnen: Sep 25 (first installment), then Oct-Apr on the 25th monthly. Each plan stores chosen plan type + installment schedule as post meta on the invoice. |
+| Per-installment administration fee for multi-payment plans | Every Dutch club charges extra for installments. Be Quick '28 charges 10%, SV Orion charges €3/installment. Members expect it; absence creates confusion about true cost | LOW | Configurable in Finance Settings: admin fee per installment (e.g., €2.50). Added to each installment amount. For 3-term plan: 2 extra admin fees (Sep installment included in base). For 8-term plan: 7 extra admin fees. Show breakdown on landing page before member confirms choice. |
+| Automatic installment emails on the 25th with Mollie payment links | Each installment needs its own payment link so the member pays exactly that amount. Manual email sending per installment at scale (500 members × 8 months) is not viable | HIGH | WordPress cron runs daily. On the 25th of each month, query all invoices where: billing_plan is 3-term or 8-term, next installment is due this month, installment not yet sent. For each: generate individual Mollie payment link for installment amount, send email to member. Store sent_date and payment_link_id per installment in post meta array. |
+| Overdue installment follow-up reminders | Members miss payments. Treasurer needs automatic escalation without having to track 500+ installment due dates manually | MEDIUM | Two-stage reminder on existing cron: 14 days after installment due date if unpaid → send member reminder email with payment link; 21 days after due date if still unpaid → resend with BCC to treasurer. Treasurer gets visibility on persistent non-payers without daily manual checking. |
+| Facturen page filter by invoice type | Treasurer must separate "Facturen van Nikki" from "Facturen van Rondo" from "Boetes" | LOW | Add `type` filter to Facturen list page (`membership` vs `discipline`). Use URL search params (existing pattern in codebase). REST API already filters by `person_id` and `status`; extend to support `invoice_type`. |
+| Facturen page filter by payment plan | Treasurer needs to see "who has 8-term plans?" to understand cash flow timing and identify installment-tracking load | LOW | Add `payment_plan` filter to Facturen list page (`full`, `3term`, `8term`). Stored on invoice, queryable via meta_query. |
+| Facturen page filter by overdue installments | Treasurer needs a single view of "who owes money right now?" — one action, not manual scanning | LOW | Add `overdue_installments` filter: returns membership invoices where at least one installment is past due and not paid. This is different from the invoice-level `overdue` status which applies to the whole invoice. |
+| Finance capability for non-admin users | Treasurer is not the WordPress admin. They need access to Contributie and Facturen pages without full admin rights | LOW | The `financieel` capability and `rondo_bestuur` role already exist in `UserRoles::ROLES`. The gap is in the sidebar navigation and route guards: Finance menu items currently check `financieel` capability, which is correct. Verify ProtectedRoute in router.jsx enforces `financieel` and the Finance Settings page reads from the correct capability. This may be partially or fully done — verify in code before treating as new work. |
 
 ### Differentiators (Competitive Advantage)
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Automatic invoice status update via webhook | Members pay, invoice auto-moves to Betaald without admin action; closes the payment loop | MEDIUM | Webhook handler looks up invoice by `_mollie_payment_link_id` stored on the post. On `paid` status from Mollie API, calls `update_field('invoice_status', 'paid', $invoice_id)`. This is the key improvement over Rabobank (which has no webhook). |
-| Payment link stored and reusable | Admin can resend invoice email with existing link; Mollie links don't expire by default | LOW | Store `_links.id` and `_links.paymentLink.href` in post meta. Reuse if already created (don't re-create for each email send). Same pattern as existing Rabobank `payment_link` ACF field. |
-| Multi-method checkout (iDEAL + card) | Dutch clubs with international players or older members without iDEAL benefit from card option | LOW | Mollie shows all enabled methods automatically. No extra code — it's a Mollie Dashboard configuration. Note: card payments cost more (~1.2% + €0.25 vs flat iDEAL fee). |
+| Member self-selects payment plan via token link | Member chooses their plan independently — no back-and-forth with treasurer, no paper forms, no WhatsApp messages. Standard Dutch billing portals (ClubCollect) work this way. | MEDIUM | Token page renders three cards: Volledig / 3 Termijnen / 8 Termijnen. Each card shows total cost including admin fees. Member clicks their choice, plan is stored, confirmation email sent. Token is one-time-use (invalidated after plan selection). This replaces ClubCollect for this club. |
+| Mollie webhook auto-marks installments paid | When a member pays their installment, the invoice updates automatically — treasurer has real-time visibility without manual reconciliation. Existing discipline case invoices already use this webhook pattern. | LOW | Extend existing Mollie webhook handler (`class-mollie-webhook.php`) to distinguish installment payments from single invoice payments. Each installment has its own `_mollie_payment_id`. On webhook: find invoice by payment_id, identify which installment, mark that installment as paid, update aggregate invoice status. |
+| Treasurer BCC on second reminder | Treasurer stays informed about persistent non-payers without actively checking the system. This is how Dutch clubs handle it (HZVV research: "2 reminders within 2 weeks, then player registration blocked"). The BCC is the digital equivalent of "flagging for follow-up". | LOW | The second reminder email (21 days overdue) is CC'd to a configurable treasurer email address stored in Finance Settings. Treasurer sees context: member name, amount, which installment, how long overdue. |
+| Invoice type visible on member's person page | When treasurer views a member's record in Rondo Club, they see outstanding invoices inline — both membership and discipline. No separate navigation needed to check payment status. | LOW | The Person page likely shows invoices via the existing `useInvoices({ person_id })` hook. With `invoice_type` added, show separate sections: "Contributie" vs "Boetes". This leverages existing data — minimal new code. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| iDEAL-only enforcement via API | "We only want iDEAL for cost control" | Requires passing `method: ideal` on every payment link; breaks if customer has no NL bank account; Mollie charges same flat fee for iDEAL regardless | Leave method open in API. Admin controls which methods are active in Mollie Dashboard. Cost control is a Mollie Dashboard concern, not code. |
-| Mollie refund initiation from Rondo | "Auto-refund when case is overturned" | Adds significant complexity; requires storing payment ID separately from link ID; refund UI needs careful access control; edge cases multiply | Out of scope. If needed, admin handles refunds in Mollie Dashboard. Rondo marks invoice as manually resolved. |
-| Polling for payment status (no webhook) | "Simpler than setting up webhook URL" | Polling requires cron job, adds API calls, has delay; Mollie webhook has 26-hour retry window and is the correct integration pattern | Use webhook. Register the endpoint during plugin init. The URL is predictable: `{site_url}/wp-json/rondo/v1/mollie/webhook`. |
-| Storing Mollie customer profiles | "Pre-fill payment method for repeat payers" | Members pay invoices rarely (discipline cases); one-time payment links don't need customer profiles; over-engineering for the use case | Use stateless payment links. No customer storage needed. |
-| Both Rabobank and Mollie active simultaneously | "Maximum flexibility" | Confusing for admin; email template `{betaallink}` only holds one link; split attention in settings UI | One active provider at a time, configured in Finance Settings. Provider abstraction class handles routing to correct implementation. |
+| Mollie Recurring Subscriptions (mandates/SEPA direct debit) | "Auto-charge members on the 25th without them doing anything" | Mollie Recurring requires: (1) first payment with `sequenceType: first` to create SEPA mandate, (2) subsequent charges via `sequenceType: recurring`, (3) member must complete iDEAL first payment for mandate creation — not a familiar flow for club members. SEPA direct debit can fail silently (bounced debits), requires SEPA creditor ID, and puts club in the position of initiating debits rather than members paying voluntarily. For 500 members, mandate collection is a project unto itself. | Use separate Mollie payment links per installment. Member gets email on 25th, clicks link, pays iDEAL. Simple, familiar, no mandate required. Slight friction per installment is acceptable for annual membership payments. |
+| Configurable installment schedules (admin defines arbitrary dates) | "What if we want 4 terms in Jan/Mar/May/Jul?" | Every variation multiplies UI complexity: admin must configure dates, members must understand a non-standard schedule, reminder cron logic branches per schedule. Dutch club norms are already standardized (Sep/Nov/Feb or monthly from Sep). | Hard-code the 3 plans (full, 3-term, 8-term) with fixed Dutch season dates. If the club needs something different in the future, add a new plan type then. Don't build generic schedule configuration upfront. |
+| Member portal / member account for payment history | "Members should log in and see all their invoices" | Members are not tech-savvy (stated project constraint). Building a portal requires: member auth flow, password management, session handling, a separate UI context. Over-engineering for annual membership payments. | Token-secured one-time landing page is sufficient. After plan selection, member receives email confirmation with summary. If they need to check payment status, they contact the treasurer. |
+| Automatic player registration blocking on non-payment | "KNVB-style enforcement: block member if they don't pay" | Rondo Club does not integrate with KNVB's registration system (Sportlink). Any "blocking" would be symbolic only. Creating enforcement mechanisms in the app without real enforcement capability is misleading and adds complexity. | Treasurer gets BCC on second reminder. They handle enforcement through existing club processes (phone call, KNVB Sportlink admin). |
+| Per-member custom payment arrangement | "Some members can't afford the standard plans, let us set custom dates" | Rare edge case. Custom dates require: special installment schedule storage, separate cron handling, UI for admin to define per-member schedules. Maintenance cost vs actual use is poor. | Treasurer handles genuine hardship cases outside the system (direct bank transfer, manual mark-paid). The existing "mark as paid" on FactuurDetail already covers this. |
+| Automatic PDF invoice per installment | "Each installment should have its own PDF" | Members don't need a PDF for each installment — they just need to pay the amount in the email. Generating 8 PDFs per member × 500 members = 4,000 PDFs per season. Storage, generation time, and email attachment size create problems. | One PDF for the full-season invoice (generated at invoice creation). Each installment email shows the amount due inline in the email body with a Mollie payment link. |
+| Bulk-send all membership invoices immediately | "Send everyone at once with one button" | Sending 500 emails simultaneously will hit server rate limits and WordPress mail queue. Members receive an email and immediately need to make a plan decision — simultaneous sends cause confusion (multiple emails arriving in same minute, members calling each other, loads of plan selections at same time straining the system). | Send in batches of 50 with 1-second delay between batches (standard wp_mail bulk pattern). Or: send per-category in multiple sessions. The "bulk create concepts" step is separate from the "bulk send" step, giving treasurer control over timing. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Mollie API Key Storage (FinanceConfig)
-    └──required by──> Mollie Payment Link Creation
-    └──required by──> Webhook Status Update (needs API key to verify payment)
+Per-Season Billing Method Toggle
+    └──required by──> Bulk Concept Invoice Creation (must know if Rondo billing is active for season)
+    └──required by──> Contributie Page (shows billing method indicator)
 
-Default Payment Provider Selector (FinanceConfig)
-    └──required by──> Invoice Send Flow (determines which provider to call)
+invoice_type field on rondo_invoice
+    └──required by──> Facturen Type Filter
+    └──required by──> Installment Tracking (only membership invoices have installments)
+    └──required by──> Bulk Concept Invoice Creation (marks new invoices as membership type)
 
-Mollie Payment Link Creation
-    └──stores──> payment_link (ACF field, already exists) + _mollie_payment_link_id (post meta, new)
-    └──enables──> Webhook Status Update (needs stored ID to match webhook to invoice)
+Bulk Concept Invoice Creation
+    └──required by──> Public Token Landing Page (tokens attach to invoice records)
+    └──required by──> Payment Plan Selection (plan stored on invoice)
+    └──required by──> All installment emails (installments derived from invoice + plan)
 
-Webhook Endpoint
-    └──required by──> Automatic Invoice Status Update
-    └──depends on──> Mollie API Key (to call back and verify payment status)
-    └──depends on──> _mollie_payment_link_id stored on invoice post
+Public Token Landing Page
+    └──required by──> Payment Plan Selection (member picks plan on this page)
+
+Payment Plan Selection (member chooses plan)
+    └──stores──> payment_plan + installment_schedule on invoice
+    └──required by──> Automatic Installment Emails (cron reads schedule to know when to send)
+    └──required by──> Overdue Reminder Cron (compares schedule to today's date)
+
+Per-Installment Admin Fee Configuration (Finance Settings)
+    └──required by──> Payment Plan Selection Landing Page (must show correct totals)
+    └──required by──> Automatic Installment Emails (installment amounts include fee)
+
+Automatic Installment Emails (cron, 25th of month)
+    └──requires──> Mollie Payment Link per installment (existing MolliePayment class, extended)
+    └──enables──> Overdue Reminder Cron (no point reminding if emails never sent)
+
+Mollie Webhook (existing)
+    └──extended by──> Installment-level paid status update (new logic in existing handler)
+
+Finance Capability for Non-Admin Users
+    └──independent──> All Finance features (prerequisite but separate concern)
 ```
 
 ### Dependency Notes
 
-- **Mollie API key storage required before everything else:** The key is used both to create payment links and to verify webhook payloads by fetching the payment from Mollie's API.
-- **Payment link creation stores the Mollie ID:** Mollie's webhook only sends an `id` param. The webhook handler looks up which invoice has `_mollie_payment_link_id = {id}` to find the correct post to update.
-- **Provider selector is independent of Mollie-specific code:** It routes the existing invoice send flow to either `RabobankPayment` or a new `MolliePayment` class. Both implement the same `create_payment_request($invoice_id)` interface.
+- **Billing method toggle must be per-season:** If it were global, switching to Rondo billing would retroactively affect past seasons where Nikki invoiced. Season-keyed option prevents this.
+- **invoice_type is a prerequisite for everything:** Without distinguishing membership from discipline invoices, the Facturen page becomes unmanageable and installment logic cannot target the right invoices.
+- **Bulk creation is separate from bulk send:** Treasurer creates all concepts first, reviews them (correct amounts, correct members), then sends. This prevents mass-sending wrong amounts. This is how the existing discipline invoice flow works — concepts exist before sending.
+- **Token landing page is the linchpin of the member UX:** If this is hard to use, everything downstream breaks (members phone the treasurer, plans don't get selected, cron emails go to unplanned members). Simplicity here is non-negotiable.
+- **Mollie payment links per installment, not one link for the whole invoice:** A single payment link for the full amount cannot support partial payments in Mollie's model. Each installment needs its own link for its specific amount.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1 — the milestone)
 
-- [ ] **Mollie API key storage** — Finance Settings: single API key field (test_ or live_). Encrypt at rest. Display derived mode (Test/Live). Required for all other features.
-- [ ] **Default payment provider selector** — Finance Settings: dropdown (Rabobank / Mollie). Required to route invoice send to correct provider.
-- [ ] **`MolliePayment` class** — Mirrors `RabobankPayment` interface. Calls Mollie Payment Links API. Stores payment link URL in ACF `payment_link` field. Stores Mollie payment link ID in `_mollie_payment_link_id` post meta. Uses `mollie/mollie-api-php` Composer package.
-- [ ] **Webhook endpoint** — Public REST endpoint at `rondo/v1/mollie/webhook`. Receives Mollie `id` POST param. Fetches payment status from Mollie API. On `paid`: updates invoice status to `paid` via `update_field`. Returns 200.
-- [ ] **Finance Settings UI update** — Add Mollie section alongside existing Rabobank section. Show current mode derived from key prefix.
+- [ ] **Per-season billing method toggle** — Required to activate Rondo invoicing without breaking Nikki's ongoing billing. Store in Finance Settings or Contributie Settings, season-keyed.
+- [ ] **invoice_type field on rondo_invoice** — Prerequisite for all membership invoice features. Backfill existing invoices as `discipline`.
+- [ ] **Bulk concept invoice creation endpoint** — `POST /rondo/v1/membership-fees/create-invoices`. Idempotent. Creates membership invoices from fee calculations for a season.
+- [ ] **Public token-secured landing page** — `/betaalplan/{token}`. Shows member name, total, three plan options with admin fees included. Mobile-optimized for non-tech-savvy members.
+- [ ] **Payment plan selection + installment schedule storage** — Member picks plan, schedule stored as structured post meta on invoice. Confirmation email sent to member.
+- [ ] **Per-installment administration fee in Finance Settings** — Single configurable amount (e.g., €2.50/installment). Shown on landing page. Added to installment emails.
+- [ ] **Automatic installment email cron (25th monthly)** — Runs on `rondo_daily_cron`. Checks installments due this month, generates Mollie payment link per installment, sends email. Marks installment as "sent" in meta.
+- [ ] **Overdue reminders (14 days and 21 days)** — On same daily cron. 14-day reminder re-sends payment link. 21-day reminder re-sends with BCC to treasurer email (configurable in Finance Settings).
+- [ ] **Facturen filters: type + payment plan + overdue installments** — Three additional filter dropdowns on Facturen page. URL search param pattern (existing codebase convention).
+- [ ] **Finance capability verification** — Confirm `rondo_bestuur` role and `financieel` capability correctly gate all Finance pages and endpoints. Fix gaps if any.
 
 ### Add After Validation (v1.x)
 
-- [ ] **Webhook failure logging** — Log when Mollie webhooks arrive for unknown invoice IDs. Useful for debugging missed payments. Add when first webhook issues reported.
-- [ ] **Payment link expiry** — Allow admin to set expiry date on Mollie payment links (API supports optional `expiresAt`). Add if club requests time-limited invoices.
+- [ ] **Mollie webhook: installment-level paid marking** — Extends existing webhook. When member pays an installment, that specific installment is marked paid. Invoice aggregate status updates. Add once the basic email-and-pay flow is validated.
+- [ ] **Treasurer dashboard: cash flow projection** — Show expected income per month based on selected payment plans. Useful for treasurer planning. Add once plan selection data exists in production.
 
 ### Future Consideration (v2+)
 
-- [ ] **Payment method restriction to iDEAL** — Only if club has cost concerns about card fees and wants enforcement at API level rather than Dashboard.
-- [ ] **Mollie refund from Rondo** — Only if discipline case appeals become frequent enough to warrant UI-driven refunds.
+- [ ] **Batch sending with rate limiting** — Currently a concern for 500 members. Add a queue system if email failures occur in production.
+- [ ] **Nikki reconciliation import** — If club continues using Nikki for some seasons, an import to mark invoices paid from Nikki's export. Low priority — Rondo billing replaces Nikki.
 
 ---
 
@@ -105,98 +143,137 @@ Webhook Endpoint
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Mollie API key storage | HIGH | LOW | P1 |
-| Default provider selector | HIGH | LOW | P1 |
-| MolliePayment class (link creation) | HIGH | LOW | P1 |
-| Webhook endpoint + status update | HIGH | MEDIUM | P1 |
-| Finance Settings UI (Mollie section) | HIGH | LOW | P1 |
-| Webhook failure logging | MEDIUM | LOW | P2 |
-| Payment link expiry option | LOW | LOW | P2 |
-| iDEAL-only enforcement | LOW | LOW | P3 |
-| Mollie refund UI | LOW | HIGH | P3 |
+| Per-season billing method toggle | HIGH | LOW | P1 |
+| invoice_type field + backfill | HIGH | LOW | P1 |
+| Bulk concept invoice creation | HIGH | MEDIUM | P1 |
+| Public token landing page | HIGH | MEDIUM | P1 |
+| Payment plan selection (3 fixed plans) | HIGH | MEDIUM | P1 |
+| Per-installment admin fee (Finance Settings) | HIGH | LOW | P1 |
+| Automatic installment emails (cron) | HIGH | HIGH | P1 |
+| Overdue reminders (14d + 21d + BCC) | HIGH | MEDIUM | P1 |
+| Facturen filter: invoice type | MEDIUM | LOW | P1 |
+| Facturen filter: payment plan | MEDIUM | LOW | P1 |
+| Facturen filter: overdue installments | MEDIUM | LOW | P1 |
+| Finance capability verification | HIGH | LOW | P1 |
+| Mollie webhook: installment-level update | MEDIUM | MEDIUM | P2 |
+| Treasurer cash flow projection | MEDIUM | MEDIUM | P2 |
+| Batch send rate limiting | LOW | MEDIUM | P3 |
 
 **Priority key:**
-- P1: Must have for launch — this is a complete feature, not a partial
-- P2: Add when first practical need arises
-- P3: Future, only if explicitly requested
+- P1: Must have for this milestone — required for the feature to work end-to-end
+- P2: Add once core flow validated in production
+- P3: Future, only if explicitly needed
 
 ---
 
 ## Implementation Notes for Roadmap
 
-### Mollie PHP Client
+### Data Model: Installment Schedule on Invoice
 
-Use `mollie/mollie-api-php` v3.9.0 (released 2026-02-09, requires PHP >= 7.4). Install via Composer:
+The installment schedule should be stored as a structured array in post meta on `rondo_invoice`, not as separate post type. For 500 members × 8 installments = 4,000 records — this is post meta territory, not a new CPT.
 
-```bash
-composer require mollie/mollie-api-php
-```
-
-Client initialization — key prefix determines mode automatically:
+Suggested post meta structure:
 
 ```php
-$mollie = new \Mollie\Api\MollieApiClient();
-$mollie->setToken( $api_key ); // test_... or live_... prefix auto-detected
+// Stored as: get_post_meta($invoice_id, '_installment_plan', true)
+[
+    'plan_type'   => 'monthly_8',  // 'full', 'quarterly_3', 'monthly_8'
+    'installments' => [
+        [
+            'due_date'       => '2025-09-25',
+            'amount'         => 53.50,           // includes admin fee
+            'admin_fee'      => 2.50,
+            'status'         => 'paid',           // 'pending', 'sent', 'paid', 'overdue'
+            'sent_at'        => '2025-09-25 09:03:22',
+            'paid_at'        => '2025-09-26 14:22:11',
+            'mollie_payment_id' => 'tr_abc123',
+            'payment_link'   => 'https://paymentlink.mollie.com/...',
+        ],
+        // ... remaining installments
+    ],
+    'admin_fee_per_installment' => 2.50,  // Snapshot of setting at time of plan selection
+    'selected_at' => '2025-08-20 10:15:00',
+    'selection_token' => 'abc123...',     // Invalidated after selection
+    'selection_token_expires' => '2026-07-01',  // Season end date
+]
 ```
 
-### Payment Link Creation (Core API Call)
+### Token Security Pattern
+
+Token must be unforgeable and tied to a specific invoice. Use `wp_hash()` with a per-invoice salt:
 
 ```php
-$payment_link = $mollie->paymentLinks->create([
-    'amount'      => [ 'currency' => 'EUR', 'value' => '25.00' ], // string, 2 decimal places
-    'description' => 'Factuur ' . $invoice_number,                 // max 255 chars
-    'webhookUrl'  => rest_url( 'rondo/v1/mollie/webhook' ),
-    'redirectUrl' => admin_url( 'admin.php?page=facturen' ),       // where member lands after payment
-]);
-
-$payment_url = $payment_link->_links->paymentLink->href;
-$mollie_id   = $payment_link->id;
+$token = wp_hash( $invoice_id . '_' . get_post_meta($invoice_id, '_token_salt', true) );
 ```
 
-Amount MUST be a string with exactly 2 decimal places. Use `number_format($amount, 2, '.', '')`.
+Store token on invoice post meta. Verify on landing page: compute expected token, compare with URL token. If mismatch → show error. If invoice already has a plan selected → show confirmation (idempotent). Tokens do not need to be single-use for the landing page display (member can reload the page), but plan selection should be idempotent (selecting same plan twice is fine, selecting different plan after already selected should warn or be locked).
 
-### Webhook Handler Pattern
+### Cron Pattern: Daily check, not monthly schedule
 
-Mollie sends POST with body `id=pl_xxxxx` (or `id=tr_xxxxx` for payments). The handler must:
+`wp_schedule_event` with a custom monthly interval is unreliable (WP cron requires a page visit to trigger). Use existing `rondo_daily_cron` (or create one if not already present). On each run, check: is today the 25th? If yes, process installments due this month. Is today 14 or 21 days past any installment's due date? If yes, process reminders.
 
-1. Extract `id` from `$_POST['id']` (or request body)
-2. Fetch the resource from Mollie API to get verified status
-3. Find the invoice with matching `_mollie_payment_link_id`
-4. Update status if paid
-5. Return HTTP 200
+This is the same pattern used by `class-reminders.php` in this codebase.
 
-The webhook URL must be HTTPS and publicly accessible (no WordPress auth). Register with `'permission_callback' => '__return_true'`. Mollie retries 10 times over 26 hours if 200 not received.
+### Bulk Invoice Creation: Idempotency
 
-### Test vs Live Mode
+On re-run, the bulk creation endpoint must not create duplicate invoices. Check for existing `rondo_invoice` posts where:
+- `invoice_type = membership`
+- `person = {person_id}`
+- `season = {season_key}`
 
-The API key prefix IS the mode. No separate toggle needed:
-- `test_dHar...` = test mode, test checkout UI, no real money
-- `live_xyz...` = live mode, real payments
+If exists: skip (return as "skipped" count). This allows safe re-run if the process was interrupted.
 
-Display in UI: extract prefix from stored key and show badge ("Test" or "Live"). Never expose the full key in API responses — show only the prefix and last 4 characters.
+### Payment Plan Fixed Schedules (2025-2026 Season)
 
-### Dutch Payment Context
+**Plan A: Volledig (1 payment)**
+- Sep 25, 2025: 100% of fee
 
-For Dutch B2C (sports club members):
-- **iDEAL**: Primary method, ~70% of Dutch online transactions. Flat fee (~€0.29/transaction). Enabled by default on all Dutch Mollie accounts.
-- **Credit/debit card**: Secondary. 1.2% + €0.25. Useful for edge cases. Auto-enabled by Mollie if merchant applies.
-- **Bancontact, SOFORT**: Irrelevant for this use case (Belgian/German methods).
-- **iDEAL 2.0**: iDEAL migrated to iDEAL 2.0 by March 2025. Mollie handles this transparently — no code changes needed for existing iDEAL integrations.
+**Plan B: 3 Termijnen (3 payments)**
+- Sep 25, 2025: 50% + admin fee
+- Nov 25, 2025: 25% + admin fee
+- Feb 25, 2026: 25%
 
-No method restriction needed in code. Leave payment method selection to Mollie checkout UI.
+**Plan C: 8 Termijnen (8 payments)**
+- Sep 25, 2025: base amount divided by 8
+- Oct 25, 2025 through Apr 25, 2026: remaining 7 equal amounts + admin fee each
+
+The percentages for Plan B (50/25/25 split) match the most common Dutch club pattern seen in research (AMVJ uses 3 terms; proportion reflects that September is the full season start, so first installment is largest).
+
+For Plan C, equal amounts per installment is simpler than front-loading — members can budget the same amount each month.
+
+### Landing Page: Mobile-First
+
+Dutch football parents (the primary payer for youth members) will open the email on their phone. The landing page must work on mobile without any scrolling to find the submit button. Three plan cards should stack vertically, each showing: plan name, dates, amounts per installment, total cost. The "Kies dit plan" button must be prominent. No form fields. No login. One tap to select.
+
+---
+
+## Ecosystem Context: Dutch Club Billing Patterns
+
+Research across 5 Dutch football clubs (AMVJ, HZVV, Be Quick '28, SV Orion, DFS) reveals:
+
+| Pattern | Clubs Using It | Rondo Approach |
+|---------|---------------|----------------|
+| 1 lump sum payment | All clubs | Plan A: Volledig |
+| 3 term payments | AMVJ, several others | Plan B: 3 Termijnen |
+| 4 term payments | HZVV | Close enough to Plan B — not adding a 4th plan |
+| Monthly (up to 8-10 payments) | Be Quick '28 (10), SV Orion (4) | Plan C: 8 Termijnen (Sep + 7 months) |
+| Via ClubCollect | Most clubs | Rondo builds equivalent token-based flow |
+| Admin fee per installment | All clubs (€1-€3/installment or 10% cap) | Configurable in Finance Settings |
+| Payment reminders: 2 rounds | HZVV: 2 within 2 weeks | Rondo: 14 days, 21 days with BCC |
+| Member portal | ClubCollect provides one | Not building one — token page is sufficient |
 
 ---
 
 ## Sources
 
-- [Mollie Payment Links API](https://docs.mollie.com/docs/payment-links) — Official docs (verified)
-- [Mollie Create Payment Link Reference](https://docs.mollie.com/reference/create-payment-link) — Official API reference (verified)
-- [Mollie Webhooks](https://docs.mollie.com/reference/webhooks) — Retry policy, payload format (verified)
-- [Mollie PHP Client v3.9.0](https://github.com/mollie/mollie-api-php) — Composer package, setToken() API (verified)
-- [Mollie Testing](https://docs.mollie.com/reference/testing) — Test mode, magic amounts (verified)
-- [iDEAL on Mollie](https://docs.mollie.com/docs/ideal) — Dutch payment context (verified)
-- [iDEAL 2.0 Migration](https://www.mollie.com/growth/ideal-2-0) — Migration timeline, Mollie handles transparently (MEDIUM confidence)
+- HZVV Contributie page (contributie 4 terms: Sep/Nov/Feb/May, 2 reminders within 2 weeks): https://hzvv.nl/vereniging/contributie/
+- AMVJ Voetbal contributie (3 monthly installments via ClubCollect, admin fee for incasso): https://amvjvoetbal.nl/club/contributie
+- Be Quick '28 (10 monthly installments, 10% admin fee max €19): https://www.bequick28.nl/club/lidmaatschap/contributie/
+- SV Orion (1-4 installments, €3/installment admin fee, €5 failed payment fee): https://www.sv-orion.nl/info/lidmaatschap/contributie
+- SportMember: Treasurer role and automated reminders: https://www.sportmember.com/en/clubmanagement/treasurer-role-in-sports-club-2025
+- Mollie Payment Links API (no expiry by default, webhook optional but recommended): https://docs.mollie.com/reference/create-payment-link
+- Mollie Recurring Payments (mandate required, SEPA direct debit, first payment creates mandate): https://docs.mollie.com/docs/recurring-payments
 
 ---
-*Feature research for: Mollie payment integration — Rondo Club discipline invoice payment links*
-*Researched: 2026-02-17*
+*Feature research for: Membership fee invoicing with payment plans — Rondo Club Dutch sports club*
+*Researched: 2026-02-18*
