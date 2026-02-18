@@ -466,12 +466,6 @@ class Invoices extends Base {
 			);
 		}
 
-		// Set ACF fields
-		update_field( 'invoice_number', $invoice_number, $post_id );
-		update_field( 'person', $person_id, $post_id );
-		update_field( 'status', 'draft', $post_id );
-		update_field( 'total_amount', $total_amount, $post_id );
-
 		// Set line items repeater
 		$rows = [];
 		foreach ( $line_items as $item ) {
@@ -481,6 +475,24 @@ class Invoices extends Base {
 				'amount'          => (float) ( $item['amount'] ?? 0 ),
 			];
 		}
+
+		// Inject administration fee if configured
+		$finance_config = new FinanceConfig();
+		$admin_fee      = $finance_config->get_admin_fee();
+		if ( $admin_fee > 0 ) {
+			$rows[]        = [
+				'discipline_case' => null,
+				'description'     => 'Administratiekosten',
+				'amount'          => $admin_fee,
+			];
+			$total_amount += $admin_fee;
+		}
+
+		// Set ACF fields (total_amount after admin fee injection so it's included)
+		update_field( 'invoice_number', $invoice_number, $post_id );
+		update_field( 'person', $person_id, $post_id );
+		update_field( 'status', 'draft', $post_id );
+		update_field( 'total_amount', $total_amount, $post_id );
 		update_field( 'line_items', $rows, $post_id );
 
 		// Return the created invoice
