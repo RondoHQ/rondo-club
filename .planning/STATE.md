@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 192 of 197 (Data Model Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-18 — v28.0 roadmap created (phases 192-197, 33 requirements mapped)
+Plan: 1 of 1 in current phase
+Status: Phase 192 complete — ready for Phase 193
+Last activity: 2026-02-18 — Phase 192-01 complete: invoice_type field, installment admin fee config, billing method toggle, WP-CLI backfill
 
-Progress: [░░░░░░░░░░] 0% (v28.0)
+Progress: [█░░░░░░░░░] 17% (v28.0, 1/6 phases)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 205 plans across v1.0-v27.0
+- Total plans completed: 206 plans across v1.0-v28.0 (in progress)
 - Recent milestones:
   - v27.0: 6 plans, 2 days (2026-02-17 → 2026-02-18)
   - v26.0: 13 plans, 2 days (2026-02-15 → 2026-02-16)
@@ -30,6 +30,10 @@ Progress: [░░░░░░░░░░] 0% (v28.0)
 **Recent Trend:**
 - Last 5 milestones averaged 1-2 days each
 - Velocity: Stable
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 192 | 01 | 3min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -45,6 +49,11 @@ Key decisions for v28.0 (from research):
 - Single daily cron sweeper for scheduler — not per-invoice scheduled events
 - 50 invoices per cron batch for bulk creation — avoids PHP timeout at 500+ members
 
+Phase 192-01 decisions:
+- `invoice_type` ACF field has `allow_null=1` and `required=0` so existing invoices pass validation before backfill
+- Installment admin fee is separate option from discipline invoice admin fee (different constants, different purposes)
+- Billing method stored per-season via WordPress options (`rondo_billing_method_{season}`)
+
 ### Pending Todos
 
 1 todo(s) in `.planning/todos/pending/`
@@ -57,11 +66,11 @@ Key decisions for v28.0 (from research):
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Roadmap created for v28.0 — 6 phases (192-197), 33/33 requirements mapped
+Stopped at: Completed 192-01-PLAN.md — data model foundation deployed to production
 Resume file: None
 
-**Next action:** Plan Phase 192 — Data Model Foundation
+**Next action:** Plan Phase 193 — Membership Invoice Creation
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — v28.0 roadmap created, ready to plan phase 192*
+*Last updated: 2026-02-18 — Phase 192-01 complete, ready for Phase 193*
