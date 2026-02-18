@@ -192,3 +192,21 @@ export function useRegeneratePaymentLink() {
     },
   });
 }
+
+/**
+ * Reset payment state for a test-mode invoice
+ * @returns {object} Mutation object
+ */
+export function useResetPaymentState() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await prmApi.resetPaymentState(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+    },
+  });
+}

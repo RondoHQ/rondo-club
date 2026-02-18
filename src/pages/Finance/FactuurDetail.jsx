@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink, QrCode } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink } from '@/hooks/useInvoices';
-import { useCreatePaymentLink } from '@/hooks/useFinanceSettings';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState } from '@/hooks/useInvoices';
+import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parse } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
@@ -44,8 +44,18 @@ export default function FactuurDetail() {
   const generatePdf = useGenerateInvoicePdf();
   const createPaymentLink = useCreatePaymentLink();
   const regeneratePaymentLink = useRegeneratePaymentLink();
+  const resetPaymentState = useResetPaymentState();
+  const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  const isTestMode = (() => {
+    if (!financeSettings) return false;
+    const provider = financeSettings.active_payment_provider;
+    if (provider === 'mollie') return financeSettings.mollie_environment === 'test';
+    if (provider === 'rabobank') return financeSettings.rabobank_environment === 'sandbox';
+    return false;
+  })();
 
   useDocumentTitle(invoice?.invoice_number || 'Factuur');
 
@@ -153,7 +163,20 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending;
+  const handleResetPaymentState = async () => {
+    if (!window.confirm('Weet je zeker dat je de betaalstatus wilt resetten? Dit wist de betaallink en betaalstatus (alleen in testmodus).')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await resetPaymentState.mutateAsync(id);
+      setSuccessMessage('Betaalstatus gereset!');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het resetten van de betaalstatus.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending;
 
   if (isLoading) {
     return (
@@ -560,6 +583,22 @@ export default function FactuurDetail() {
                 </button>
               )}
             </>
+          )}
+
+          {/* Reset payment state button (test mode only) */}
+          {isTestMode && (invoice.payment_link || invoice.qr_code_path || invoice.status === 'paid') && (
+            <button
+              onClick={handleResetPaymentState}
+              disabled={isPending}
+              className="btn-secondary flex items-center gap-2 border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            >
+              {resetPaymentState.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 dark:border-orange-400"></div>
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Reset betaalstatus (test)
+            </button>
           )}
         </div>
       </div>
