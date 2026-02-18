@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 82: Reset invoice also resets discipline cases doorbelast
+Last activity: 2026-02-18 — Completed quick task 83: Delete draft invoices with number reuse
 
 ## Performance Metrics
 
@@ -122,6 +122,7 @@ Recent decisions for v26.0:
 - [Quick 81]: charge_codes ending in -1 maps to Geel, otherwise Rood in email table
 - [Quick 81]: sanction_description 'uitsluiting' (case-insensitive) appends ' en schorsing'
 - [Quick 81]: Non-discipline fallback rows use colspan=3 for description in email table
+- [Quick 83]: Draft-only guard on delete endpoint; force delete (skip trash) frees invoice number for reuse
 
 ### Roadmap Evolution
 
@@ -159,6 +160,7 @@ None — phase 185 was the final planned enhancement.
 | 80 | Reset button deletes PDF and resets dates | 2026-02-18 | a5b685ae | [80-reset-button-deletes-pdf-and-resets-pdf-](./quick/80-reset-button-deletes-pdf-and-resets-pdf-/) |
 | 81 | Invoice UI tweaks and improved tuchtzaken email table | 2026-02-18 | 13e3d383 | [81-invoice-ui-tweaks-and-improved-tuchtzake](./quick/81-invoice-ui-tweaks-and-improved-tuchtzake/) |
 | 82 | Reset invoice also resets discipline cases doorbelast | 2026-02-18 | 942b3054 | [82-reset-invoice-also-resets-discipline-cas](./quick/82-reset-invoice-also-resets-discipline-cas/) |
+| 83 | Delete draft invoices with number reuse | 2026-02-18 | 7c69c269 | [83-delete-draft-invoices-with-number-reuse](./quick/83-delete-draft-invoices-with-number-reuse/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -168,11 +170,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Quick task 81 complete — Invoice UI tweaks and improved tuchtzaken email table
+Stopped at: Quick task 83 complete — Delete draft invoices with number reuse
 Resume file: None
 
 **Next action:** None pending
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 81: Invoice UI tweaks and improved tuchtzaken email table*
+*Last updated: 2026-02-18 — Quick task 83: Delete draft invoices with number reuse*
