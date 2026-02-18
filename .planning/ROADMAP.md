@@ -304,6 +304,15 @@ Plans:
 | 189. RestInvoices — Provider Routing | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
 | 190. Finance Settings UI | v27.0 | 1/1 | ✓ Complete | 2026-02-18 |
 
+### Phase 191: Administratiekosten
+
+**Goal:** Add a configurable administration fee for discipline-based invoices, included as a separate line item on the invoice and reflected in the PDF, email, and total amount.
+**Depends on:** Phase 190
+**Plans:** 1 plan
+
+Plans:
+- [ ] 191-01-PLAN.md — FinanceConfig admin_fee setting, REST API arg, server-side injection in create_invoice(), and Finance Settings UI field
+
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-18 — Phase 190 complete*
+*Last updated: 2026-02-18 — Phase 191 planned*
