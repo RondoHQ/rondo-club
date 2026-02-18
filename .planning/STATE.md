@@ -111,6 +111,9 @@ Recent decisions for v26.0:
 - [Phase 190-01]: Mollie API key never populated from API response — security boundary, only active_payment_provider loaded from settings
 - [Phase 190-01]: mollie_api_key conditionally included in payload only when non-empty (preserves existing encrypted key)
 - [Phase 190-01]: club_logo_id, accent_color, bcc_email REST args registered (they were used but not registered)
+- [Quick 77]: chillerlan/php-qrcode v5 with returnResource=true for GdImage to enable logo overlay
+- [Quick 77]: ECC level H (30%) for QR codes with logo overlay to preserve readability
+- [Quick 77]: clear_qr_code() removed from Mollie send/regenerate — QR now generated, not cleared
 
 ### Roadmap Evolution
 
@@ -142,6 +145,7 @@ None — phase 185 was the final planned enhancement.
 | 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
 | 75 | Add button to regenerate payment links | 2026-02-18 | 2deebd8e | [75-add-button-to-regenerate-payment-links](./quick/75-add-button-to-regenerate-payment-links/) |
 | 76 | Reset payment state interface for test mode | 2026-02-18 | 449ae276 | [76-reset-payment-state-interface-for-test-m](./quick/76-reset-payment-state-interface-for-test-m/) |
+| 77 | Generate branded QR codes for Mollie payment links | 2026-02-18 | e2547b83 | [77-generate-branded-qr-codes-for-payment-li](./quick/77-generate-branded-qr-codes-for-payment-li/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -151,11 +155,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Quick task 76 complete — reset payment state interface deployed
+Stopped at: Quick task 77 complete — branded QR codes for Mollie payment links
 Resume file: None
 
 **Next action:** None pending
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 76: reset payment state interface for test mode*
+*Last updated: 2026-02-18 — Quick task 77: generate branded QR codes for Mollie payment links*
