@@ -168,6 +168,7 @@ Recent decisions for v26.0:
 | 81 | Invoice UI tweaks and improved tuchtzaken email table | 2026-02-18 | 13e3d383 | [81-invoice-ui-tweaks-and-improved-tuchtzake](./quick/81-invoice-ui-tweaks-and-improved-tuchtzake/) |
 | 82 | Reset invoice also resets discipline cases doorbelast | 2026-02-18 | 942b3054 | [82-reset-invoice-also-resets-discipline-cas](./quick/82-reset-invoice-also-resets-discipline-cas/) |
 | 83 | Delete draft invoices with number reuse | 2026-02-18 | 7c69c269 | [83-delete-draft-invoices-with-number-reuse](./quick/83-delete-draft-invoices-with-number-reuse/) |
+| 84 | Add {voornaam} email variable and update {naam} description | 2026-02-18 | 8e520cc2 | [84-add-voornaam-email-variable-and-update-n](./quick/84-add-voornaam-email-variable-and-update-n/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -177,7 +178,7 @@ Recent decisions for v26.0:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 191-01-PLAN.md — Administratiekosten (configurable admin fee for invoices)
+Stopped at: Completed quick-84 — Add {voornaam} email variable and update {naam} description
 Resume file: None
 
 **Next action:** None pending
