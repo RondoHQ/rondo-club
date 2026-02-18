@@ -38,6 +38,7 @@ class FinanceConfig {
 	const OPTION_MOLLIE_API_KEY        = 'rondo_finance_mollie_api_key';
 	const OPTION_MOLLIE_REDIRECT_URL   = 'rondo_finance_mollie_redirect_url';
 	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
+	const OPTION_ADMIN_FEE               = 'rondo_finance_admin_fee';
 
 	/**
 	 * Default configuration values
@@ -54,6 +55,7 @@ class FinanceConfig {
 		'club_logo_id'       => 0,
 		'accent_color'       => '',
 		'bcc_email'          => '',
+		'admin_fee'          => 0.00,
 		'email_template'     => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 	];
 
@@ -148,6 +150,15 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get administration fee per invoice
+	 *
+	 * @return float Administration fee amount (0.00 if not configured)
+	 */
+	public function get_admin_fee(): float {
+		return (float) get_option( self::OPTION_ADMIN_FEE, self::DEFAULTS['admin_fee'] );
+	}
+
+	/**
 	 * Get Rabobank credentials (decrypted, internal use only)
 	 *
 	 * @return array|null Array with client_id, client_secret, environment or null if not configured
@@ -195,6 +206,7 @@ class FinanceConfig {
 			'club_logo_url'         => $club_logo_url,
 			'accent_color'          => $this->get_accent_color(),
 			'bcc_email'             => $this->get_bcc_email(),
+			'admin_fee'             => $this->get_admin_fee(),
 			'rabobank_has_credentials' => $rabobank_creds !== null,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
 			'mollie_has_api_key'    => ! empty( $mollie_api_key ),
@@ -232,6 +244,8 @@ class FinanceConfig {
 				return $this->get_accent_color();
 			case 'bcc_email':
 				return $this->get_bcc_email();
+			case 'admin_fee':
+				return $this->get_admin_fee();
 			default:
 				return null;
 		}
@@ -290,6 +304,11 @@ class FinanceConfig {
 
 		if ( isset( $data['bcc_email'] ) ) {
 			$success = update_option( self::OPTION_BCC_EMAIL, sanitize_email( $data['bcc_email'] ) ) && $success;
+		}
+
+		if ( isset( $data['admin_fee'] ) ) {
+			$fee     = max( 0.0, (float) $data['admin_fee'] );
+			$success = update_option( self::OPTION_ADMIN_FEE, $fee ) && $success;
 		}
 
 		// Handle Rabobank credentials with encryption

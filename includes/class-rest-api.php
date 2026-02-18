@@ -761,6 +761,7 @@ class Api extends Base {
 						'club_logo_id'  => [ 'required' => false, 'type' => 'integer' ],
 						'accent_color'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'bcc_email'     => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
+						'admin_fee'     => [ 'required' => false, 'type' => 'number' ],
 					],
 				],
 			]
