@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.0.0] - 2026-02-18
+
+### Added
+- Mollie payment provider integration for discipline case invoices
+- Mollie API key storage with sodium encryption (key never exposed via REST API)
+- Mollie payment link creation via Payments API with automatic checkout URL storage
+- Mollie webhook endpoint for automatic invoice status updates on payment confirmation
+- Payment provider routing: invoices route to Mollie or Rabobank based on configured provider
+- Finance Settings: Mollie tab with masked API key input and test/live environment badge
+- Finance Settings: payment provider selector (Rabobank / Mollie) in Betaling tab
+
 ## [26.1.0] - 2026-02-16
 
 ### Added
