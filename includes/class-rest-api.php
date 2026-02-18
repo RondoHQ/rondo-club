@@ -749,6 +749,17 @@ class Api extends Base {
 						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'mollie_api_key'          => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'active_payment_provider' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => function( $param ) {
+								return in_array( $param, [ 'rabobank', 'mollie' ], true );
+							},
+						],
+						'club_logo_id'  => [ 'required' => false, 'type' => 'integer' ],
+						'accent_color'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'bcc_email'     => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
 					],
 				],
 			]

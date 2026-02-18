@@ -10,6 +10,7 @@ const TABS = [
   { id: 'payment', label: 'Betaling' },
   { id: 'email', label: 'E-mail' },
   { id: 'rabobank', label: 'Rabobank' },
+  { id: 'mollie', label: 'Mollie' },
 ];
 
 /**
@@ -143,6 +144,8 @@ export default function FinanceSettings() {
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
     rabobank_client_secret: '',
+    active_payment_provider: 'rabobank',
+    mollie_api_key: '',
   });
 
   const [activeTab, setActiveTab] = useState('organization');
@@ -168,6 +171,9 @@ export default function FinanceSettings() {
         // Don't populate credentials from API for security
         rabobank_client_id: '',
         rabobank_client_secret: '',
+        active_payment_provider: settings.active_payment_provider || 'rabobank',
+        // Do NOT add mollie_api_key — key is never returned by API
+        mollie_api_key: '',
       });
     }
   }, [settings]);
@@ -253,6 +259,7 @@ export default function FinanceSettings() {
         accent_color: formData.accent_color,
         bcc_email: formData.bcc_email,
         rabobank_environment: formData.rabobank_environment,
+        active_payment_provider: formData.active_payment_provider,
       };
 
       // Only include credentials if user entered new values
@@ -261,6 +268,9 @@ export default function FinanceSettings() {
       }
       if (formData.rabobank_client_secret.trim()) {
         payload.rabobank_client_secret = formData.rabobank_client_secret;
+      }
+      if (formData.mollie_api_key.trim()) {
+        payload.mollie_api_key = formData.mollie_api_key;
       }
 
       await updateMutation.mutateAsync(payload);
@@ -274,6 +284,7 @@ export default function FinanceSettings() {
         ...prev,
         rabobank_client_id: '',
         rabobank_client_secret: '',
+        mollie_api_key: '',
       }));
     } catch (err) {
       setSaveError(err.response?.data?.message || 'Er is een fout opgetreden bij het opslaan.');
@@ -494,6 +505,38 @@ export default function FinanceSettings() {
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Betalingsprovider
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="active_payment_provider"
+                  value="rabobank"
+                  checked={formData.active_payment_provider === 'rabobank'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, active_payment_provider: e.target.value }))}
+                  className="text-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Rabobank</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="active_payment_provider"
+                  value="mollie"
+                  checked={formData.active_payment_provider === 'mollie'}
+                  onChange={(e) => setFormData(prev => ({ ...prev, active_payment_provider: e.target.value }))}
+                  className="text-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Mollie</span>
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Kies welke provider wordt gebruikt voor betaallinks bij het versturen van facturen.
+            </p>
           </div>
         </div>
       </div>}
@@ -717,6 +760,58 @@ export default function FinanceSettings() {
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </div>}
+
+      {/* Section 5: Mollie Integration */}
+      {activeTab === 'mollie' && <div className="card p-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Mollie Koppeling</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            API-sleutel voor betalingen via Mollie.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {settings?.mollie_has_api_key && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Omgeving:</span>
+              {settings.mollie_environment === 'live' ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                  Live
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                  Test
+                </span>
+              )}
+            </div>
+          )}
+
+          {settings?.mollie_has_api_key && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                API-sleutel opgeslagen. Laat het veld leeg om de huidige waarde te behouden.
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="mollie_api_key" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              API-sleutel
+            </label>
+            <input
+              type="password"
+              id="mollie_api_key"
+              value={formData.mollie_api_key}
+              onChange={(e) => setFormData(prev => ({ ...prev, mollie_api_key: e.target.value }))}
+              placeholder={settings?.mollie_has_api_key ? '••••••••' : 'live_... of test_...'}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Gebruik een <code>live_</code> sleutel voor productie of <code>test_</code> voor sandbox. De omgeving wordt automatisch afgeleid.
+            </p>
           </div>
         </div>
       </div>}
