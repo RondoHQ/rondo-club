@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink, QrCode } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf } from '@/hooks/useInvoices';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink } from '@/hooks/useInvoices';
 import { useCreatePaymentLink } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parse } from '@/utils/dateFormat';
@@ -43,6 +43,7 @@ export default function FactuurDetail() {
   const resendInvoice = useResendInvoice();
   const generatePdf = useGenerateInvoicePdf();
   const createPaymentLink = useCreatePaymentLink();
+  const regeneratePaymentLink = useRegeneratePaymentLink();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -139,7 +140,20 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending;
+  const handleRegeneratePaymentLink = async () => {
+    if (!window.confirm('Weet je zeker dat je een nieuwe betaallink wilt aanmaken? De bestaande link wordt vervangen.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await regeneratePaymentLink.mutateAsync(id);
+      setSuccessMessage('Betaallink opnieuw aangemaakt!');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het opnieuw aanmaken van de betaallink.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending;
 
   if (isLoading) {
     return (
@@ -501,6 +515,22 @@ export default function FactuurDetail() {
                 <CreditCard className="w-4 h-4" />
               )}
               Betaallink aanmaken
+            </button>
+          )}
+
+          {/* Regenerate payment link button (for any unpaid invoice WITH an existing link) */}
+          {invoice.status !== 'paid' && invoice.payment_link && (
+            <button
+              onClick={handleRegeneratePaymentLink}
+              disabled={isPending}
+              className="btn-secondary flex items-center gap-2"
+            >
+              {regeneratePaymentLink.isPending ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+              Betaallink opnieuw aanmaken
             </button>
           )}
 

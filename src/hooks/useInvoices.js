@@ -173,3 +173,22 @@ export function useResendInvoice() {
     },
   });
 }
+
+/**
+ * Regenerate payment link for an invoice
+ * @returns {object} Mutation object for regenerating payment links
+ */
+export function useRegeneratePaymentLink() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await prmApi.regeneratePaymentLink(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+    },
+  });
+}
