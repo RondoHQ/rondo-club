@@ -20,7 +20,7 @@ export default function Contributie() {
 
   // Non-admin navigating to instellingen → redirect to overzicht
   if (activeTab === 'instellingen' && !isAdmin) {
-    return <Navigate to="/contributie/overzicht" replace />;
+    return <Navigate to="/financien/contributie/overzicht" replace />;
   }
 
   const visibleTabs = TABS.filter(t => !t.adminOnly || isAdmin);
@@ -34,7 +34,7 @@ export default function Contributie() {
             key={t.id}
             label={t.label}
             isActive={activeTab === t.id}
-            onClick={() => navigate(`/contributie/${t.id}`)}
+            onClick={() => navigate(`/financien/contributie/${t.id}`)}
           />
         ))}
       </nav>
