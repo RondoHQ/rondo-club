@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.1.0] - 2026-02-18
+
+### Changed
+- Invoice emails now sent as HTML instead of plain text
+- QR code embedded inline in email body via CID (no longer a separate attachment)
+- Payment link rendered as clickable HTML anchor in emails
+- Discipline cases list rendered as HTML unordered list in emails
+- Default email template updated to clean HTML with inline styles
+- Email template editor upgraded from plain textarea to Tiptap rich text editor
+- Email settings header renamed to "Template e-mail voor boetes"
+
+### Added
+- `{qr_code}` template variable for inline QR code image in emails
+- Variable usage help text in email template settings
+
 ## [27.0.0] - 2026-02-18
 
 ### Added
