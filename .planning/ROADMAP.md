@@ -109,7 +109,7 @@
 
 - [x] **Phase 192: Data Model Foundation** (1/1 plan) — completed 2026-02-18
 - [x] **Phase 193: Public Payment Landing Page** (1/1 plan) — completed 2026-02-18
-- [ ] **Phase 194: Payment Plan Manager + Webhook Extension** — Installment state machine, reverse-lookup webhook pattern, all-paid invoice transition
+- [ ] **Phase 194: Payment Plan Manager + Webhook Extension** (1 plan) — Installment state machine, reverse-lookup webhook pattern, all-paid invoice transition
 - [ ] **Phase 195: Installment Scheduler + Email System** — Daily cron sweeper, monthly installment emails, overdue reminders, email templates
 - [ ] **Phase 196: Bulk Invoice Creation** — Async batched creation for all members, billing method toggle, progress tracking
 - [ ] **Phase 197: Frontend Updates** — Facturen filters, installment timeline, Contributie Factureer action, Finance capability gating
@@ -163,10 +163,10 @@ Plans:
   2. An invoice with 3 installments shows status "verstuurd" (not "betaald") after the first and second installments are paid; it transitions to "betaald" only when all three are confirmed by Mollie
   3. A full-payment invoice (no installments) continues to transition to "betaald" on the first Mollie webhook — existing behavior is preserved
   4. The webhook always returns HTTP 200 regardless of lookup errors, preventing Mollie retry storms
-**Plans:** TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 194-01: TBD
+- [ ] 194-01-PLAN.md — InstallmentPaymentService DRY extraction, dual-path MollieWebhook with installment handling + all-paid gating + N+1 payment creation
 
 ---
 
