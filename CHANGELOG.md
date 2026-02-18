@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.1.1] - 2026-02-18
+
+### Changed
+- Reset button in test mode renamed from 'Reset betaalstatus (test)' to 'Reset factuur (test)'
+- Invoice detail header no longer shows duplicate member name (already shown in Lid card)
+- Invoice email tuchtzaken list upgraded from `<ul>` to HTML `<table>` with Datum, Wedstrijd, Kaart, Bedrag columns
+- Kaart column shows Geel/Rood based on charge codes, with ' en schorsing' for uitsluiting sanctions
+
 ## [27.1.0] - 2026-02-18
 
 ### Changed
