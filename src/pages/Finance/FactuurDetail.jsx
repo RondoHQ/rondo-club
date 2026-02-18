@@ -431,7 +431,7 @@ export default function FactuurDetail() {
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                Verstuur factuur
+                {isTestMode ? 'Verstuur factuur (test)' : 'Verstuur factuur'}
               </button>
               {invoice.pdf_path ? (
                 <button
@@ -498,7 +498,7 @@ export default function FactuurDetail() {
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
-                Opnieuw versturen
+                {isTestMode ? 'Opnieuw versturen (test)' : 'Opnieuw versturen'}
               </button>
               <button
                 onClick={handleDownloadPdf}
