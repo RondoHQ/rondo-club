@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 192: Data Model Foundation
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 193: Public Payment Landing Page
 
 ## Current Position
 
-Phase: 192 of 197 (Data Model Foundation)
+Phase: 193 of 197 (Public Payment Landing Page)
 Plan: 1 of 1 in current phase
-Status: Phase 192 complete — ready for Phase 193
-Last activity: 2026-02-18 — Phase 192-01 complete: invoice_type field, installment admin fee config, billing method toggle, WP-CLI backfill
+Status: Phase 193 complete — ready for Phase 194
+Last activity: 2026-02-18 — Phase 193-01 complete: public payment page at /betaling/{token}, Mollie checkout for installments
 
-Progress: [█░░░░░░░░░] 17% (v28.0, 1/6 phases)
+Progress: [██░░░░░░░░] 33% (v28.0, 2/6 phases)
 
 ## Performance Metrics
 
@@ -34,6 +34,7 @@ Progress: [█░░░░░░░░░] 17% (v28.0, 1/6 phases)
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 192 | 01 | 3min | 2 | 4 |
+| 193 | 01 | 5min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -53,6 +54,9 @@ Phase 192-01 decisions:
 - `invoice_type` ACF field has `allow_null=1` and `required=0` so existing invoices pass validation before backfill
 - Installment admin fee is separate option from discipline invoice admin fee (different constants, different purposes)
 - Billing method stored per-season via WordPress options (`rondo_billing_method_{season}`)
+- [Phase 193]: PublicPaymentPage uses template_redirect priority 0 — fires before SPA catch-all at priority 1
+- [Phase 193]: generate_token() sets both _payment_token meta and payment_link ACF field for InvoiceEmailSender {betaallink} variable
+- [Phase 193]: All three plan options shown unconditionally — plan-enable toggles deferred to Phase 196
 
 ### Pending Todos
 
@@ -66,11 +70,11 @@ Phase 192-01 decisions:
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 192-01-PLAN.md — data model foundation deployed to production
+Stopped at: Completed 193-01-PLAN.md — public payment landing page deployed to production
 Resume file: None
 
-**Next action:** Plan Phase 193 — Membership Invoice Creation
+**Next action:** Execute Phase 194 — Mollie Webhook Handler
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 192-01 complete, ready for Phase 193*
+*Last updated: 2026-02-18 — Phase 193-01 complete, ready for Phase 194*
