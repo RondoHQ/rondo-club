@@ -106,6 +106,18 @@ class Invoices extends Base {
 						],
 					],
 				],
+				[
+					'methods'             => \WP_REST_Server::DELETABLE,
+					'callback'            => [ $this, 'delete_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
 			]
 		);
 
@@ -474,6 +486,64 @@ class Invoices extends Base {
 		// Return the created invoice
 		$invoice = get_post( $post_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Delete a draft invoice
+	 *
+	 * Permanently deletes a draft invoice, cleaning up associated files (PDF, QR code),
+	 * clearing payment data, and resetting linked discipline cases so the invoice number
+	 * can be reused by generate_next().
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response confirming deletion or error.
+	 */
+	public function delete_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists and is correct post type
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Guard: only draft invoices can be deleted
+		if ( $invoice->post_status !== 'rondo_draft' ) {
+			return new \WP_Error(
+				'invoice_not_draft',
+				__( 'Alleen conceptfacturen kunnen worden verwijderd.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Clean up PDF file from disk
+		$this->clear_pdf( $invoice_id );
+
+		// Clean up QR code file from disk
+		$this->clear_qr_code( $invoice_id );
+
+		// Clear payment provider data
+		delete_post_meta( $invoice_id, '_mollie_payment_id' );
+		delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+
+		// Reset linked discipline cases (is_charged back to empty)
+		$line_items = get_field( 'line_items', $invoice_id );
+		if ( $line_items && is_array( $line_items ) ) {
+			foreach ( $line_items as $item ) {
+				if ( ! empty( $item['discipline_case'] ) ) {
+					update_field( 'is_charged', '', (int) $item['discipline_case'] );
+				}
+			}
+		}
+
+		// Force delete (skip trash) so the invoice number is freed for generate_next()
+		wp_delete_post( $invoice_id, true );
+
+		return rest_ensure_response( [ 'deleted' => true, 'id' => $invoice_id ] );
 	}
 
 	/**
