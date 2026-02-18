@@ -738,8 +738,18 @@ class Invoices extends Base {
 			return $pdf_result;
 		}
 
+		// Build email options — redirect to current user in test mode
+		$email_options = [];
+		if ( $this->is_test_mode_active() ) {
+			$current_user = wp_get_current_user();
+			if ( ! empty( $current_user->user_email ) ) {
+				$email_options['override_email'] = $current_user->user_email;
+				$email_options['skip_bcc']       = true;
+			}
+		}
+
 		// Send email via InvoiceEmailSender
-		$email_result = InvoiceEmailSender::send( $invoice_id );
+		$email_result = InvoiceEmailSender::send( $invoice_id, $email_options );
 		if ( is_wp_error( $email_result ) ) {
 			return $email_result;
 		}
@@ -811,8 +821,18 @@ class Invoices extends Base {
 			);
 		}
 
+		// Build email options — redirect to current user in test mode
+		$email_options = [];
+		if ( $this->is_test_mode_active() ) {
+			$current_user = wp_get_current_user();
+			if ( ! empty( $current_user->user_email ) ) {
+				$email_options['override_email'] = $current_user->user_email;
+				$email_options['skip_bcc']       = true;
+			}
+		}
+
 		// Send email via InvoiceEmailSender
-		$email_result = InvoiceEmailSender::send( $invoice_id );
+		$email_result = InvoiceEmailSender::send( $invoice_id, $email_options );
 		if ( is_wp_error( $email_result ) ) {
 			return $email_result;
 		}
