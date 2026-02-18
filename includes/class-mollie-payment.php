@@ -72,23 +72,29 @@ class MolliePayment {
 		// 5. Format amount — always use number_format() with 4 args to avoid locale issues.
 		$amount_string = number_format( (float) $total_amount, 2, '.', '' );
 
-		// 6. Build payload
+		// 6. Determine redirect URL — configured URL or fallback to homepage.
+		$redirect_url = $config->get_mollie_redirect_url();
+		if ( empty( $redirect_url ) ) {
+			$redirect_url = home_url( '/' );
+		}
+
+		// 7. Build payload
 		$payload = [
 			'amount'      => [
 				'currency' => 'EUR',
 				'value'    => $amount_string,
 			],
 			'description' => 'Factuur ' . $invoice_number,
-			'redirectUrl' => home_url( '/' ),
+			'redirectUrl' => $redirect_url,
 		];
 
-		// 7. Conditionally add webhookUrl — omit on localhost and .local environments.
+		// 8. Conditionally add webhookUrl — omit on localhost and .local environments.
 		$site_url = get_site_url();
 		if ( false === strpos( $site_url, 'localhost' ) && false === strpos( $site_url, '.local' ) ) {
 			$payload['webhookUrl'] = rest_url( 'rondo/v1/mollie/webhook' );
 		}
 
-		// 8. Call Mollie SDK
+		// 9. Call Mollie SDK
 		try {
 			$mollie_client = new MollieClient();
 			$mollie        = $mollie_client->get();
@@ -102,7 +108,7 @@ class MolliePayment {
 			);
 		}
 
-		// 9. Extract checkout URL
+		// 10. Extract checkout URL
 		$checkout_url = $payment->getCheckoutUrl();
 		if ( empty( $checkout_url ) ) {
 			error_log( 'Mollie payment created but checkout URL is empty for invoice ' . $invoice_id );
@@ -113,11 +119,11 @@ class MolliePayment {
 			);
 		}
 
-		// 10. Store results
+		// 11. Store results
 		update_field( 'payment_link', $checkout_url, $invoice_id );
 		update_post_meta( $invoice_id, '_mollie_payment_id', $payment->id );
 
-		// 11. Return checkout URL
+		// 12. Return checkout URL
 		return $checkout_url;
 	}
 }

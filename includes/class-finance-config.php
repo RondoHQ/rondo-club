@@ -36,6 +36,7 @@ class FinanceConfig {
 	const OPTION_ACCENT_COLOR          = 'rondo_finance_accent_color';
 	const OPTION_BCC_EMAIL             = 'rondo_finance_bcc_email';
 	const OPTION_MOLLIE_API_KEY        = 'rondo_finance_mollie_api_key';
+	const OPTION_MOLLIE_REDIRECT_URL   = 'rondo_finance_mollie_redirect_url';
 	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
 
 	/**
@@ -209,6 +210,7 @@ Met vriendelijke groet,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
 			'mollie_has_api_key'    => ! empty( $mollie_api_key ),
 			'mollie_environment'    => $this->derive_mollie_environment( $mollie_api_key ),
+			'mollie_redirect_url'   => $this->get_mollie_redirect_url(),
 			'active_payment_provider' => $this->get_active_payment_provider(),
 		];
 	}
@@ -318,6 +320,10 @@ Met vriendelijke groet,
 			}
 		}
 
+		if ( isset( $data['mollie_redirect_url'] ) ) {
+			$success = update_option( self::OPTION_MOLLIE_REDIRECT_URL, esc_url_raw( $data['mollie_redirect_url'] ) ) && $success;
+		}
+
 		// Handle Mollie API key with encryption
 		if ( isset( $data['mollie_api_key'] ) ) {
 			$success = $this->update_mollie_api_key(
@@ -387,6 +393,15 @@ Met vriendelijke groet,
 		$encrypted = CredentialEncryption::encrypt( [ 'api_key' => $api_key ] );
 
 		return update_option( self::OPTION_MOLLIE_API_KEY, $encrypted );
+	}
+
+	/**
+	 * Get Mollie redirect URL (where payer lands after payment)
+	 *
+	 * @return string The redirect URL, or empty string if not configured.
+	 */
+	public function get_mollie_redirect_url(): string {
+		return get_option( self::OPTION_MOLLIE_REDIRECT_URL, '' );
 	}
 
 	/**
