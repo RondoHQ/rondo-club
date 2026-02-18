@@ -248,6 +248,24 @@ class Invoices extends Base {
 				],
 			]
 		);
+
+		// Reset payment state (test mode only)
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/reset-payment-state',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'reset_payment_state' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => fn( $p ) => is_numeric( $p ),
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -869,6 +887,87 @@ class Invoices extends Base {
 		$pdf_result = InvoicePdfGenerator::generate( $invoice_id );
 		if ( is_wp_error( $pdf_result ) ) {
 			return $pdf_result;
+		}
+
+		// Return updated invoice
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Check whether the active payment provider is in test/sandbox mode
+	 *
+	 * Used to gate the reset-payment-state endpoint so it is never
+	 * available in production/live environments.
+	 *
+	 * @return bool True if the active provider is in test/sandbox mode.
+	 */
+	private function is_test_mode_active(): bool {
+		$settings = FinanceConfig::get_all_settings();
+		$provider = $settings['active_payment_provider'] ?? '';
+
+		if ( 'mollie' === $provider ) {
+			return ( $settings['mollie_environment'] ?? '' ) === 'test';
+		}
+
+		if ( 'rabobank' === $provider ) {
+			return ( $settings['rabobank_environment'] ?? '' ) === 'sandbox';
+		}
+
+		return false;
+	}
+
+	/**
+	 * Reset payment state for an invoice (test mode only)
+	 *
+	 * Clears all payment-related data (payment link, provider payment IDs,
+	 * QR code) and resets a paid invoice back to sent status.
+	 * Returns 403 when the active payment provider is not in test/sandbox mode.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function reset_payment_state( \WP_REST_Request $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+
+		// Validate invoice exists
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Guard: only available in test/sandbox mode
+		if ( ! $this->is_test_mode_active() ) {
+			return new \WP_Error(
+				'test_mode_required',
+				__( 'Betaalstatus resetten is alleen beschikbaar in testmodus.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		// Clear Mollie payment data
+		delete_post_meta( $invoice_id, '_mollie_payment_id' );
+		update_field( 'payment_link', '', $invoice_id );
+
+		// Clear Rabobank payment data (also clear payment_link — idempotent)
+		delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+
+		// Clear QR code file and field
+		$this->clear_qr_code( $invoice_id );
+
+		// If invoice is currently paid, reset it back to sent
+		if ( $invoice->post_status === 'rondo_paid' ) {
+			wp_update_post(
+				[
+					'ID'          => $invoice_id,
+					'post_status' => 'rondo_sent',
+				]
+			);
+			update_field( 'status', 'sent', $invoice_id );
 		}
 
 		// Return updated invoice
