@@ -960,16 +960,14 @@ class Invoices extends Base {
 		// Clear QR code file and field
 		$this->clear_qr_code( $invoice_id );
 
-		// If invoice is currently paid, reset it back to sent
-		if ( $invoice->post_status === 'rondo_paid' ) {
-			wp_update_post(
-				[
-					'ID'          => $invoice_id,
-					'post_status' => 'rondo_sent',
-				]
-			);
-			update_field( 'status', 'sent', $invoice_id );
-		}
+		// Reset invoice status back to draft (concept)
+		wp_update_post(
+			[
+				'ID'          => $invoice_id,
+				'post_status' => 'rondo_draft',
+			]
+		);
+		update_field( 'status', 'draft', $invoice_id );
 
 		// Return updated invoice
 		$invoice = get_post( $invoice_id );
