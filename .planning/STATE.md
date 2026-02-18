@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-15)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v27.0 Mollie — Executing (Phase 189)
+**Current focus:** v27.0 Mollie — Phase 189 complete, Phase 190 next
 
 ## Current Position
 
 Phase: Phase 189 — RestInvoices Provider Routing
 Plan: 01 complete
-Status: In progress
-Last activity: 2026-02-18 — Completed 189-01 (RestInvoices provider routing)
+Status: Complete (verified 4/4 must-haves)
+Last activity: 2026-02-18 — Phase 189 complete, provider routing verified
 
 ## Performance Metrics
 
@@ -145,11 +145,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 189-01-PLAN.md (RestInvoices provider routing)
+Stopped at: Phase 189 complete (verified)
 Resume file: None
 
-**Next action:** Deploy to production — v27.0 Mollie milestone is fully wired end-to-end
+**Next action:** Plan and execute Phase 190 (Finance Settings UI — Mollie Configuration)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 after completing Phase 189-01 (RestInvoices provider routing)*
+*Last updated: 2026-02-18 — Phase 189 complete and verified*
