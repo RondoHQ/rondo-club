@@ -146,10 +146,10 @@ Plans:
   4. Selecting a multi-installment plan stores the plan choice on the invoice and redirects the member to Mollie for the first installment payment
   5. The page renders correctly on a mobile phone (no horizontal scrolling, touch-friendly buttons)
   6. An invalid or expired token shows a clear Dutch error message rather than a blank page or WordPress 404
-**Plans:** TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 193-01: TBD
+- [ ] 193-01-PLAN.md — PublicPaymentPage class (rewrite rule, GET/POST handler, Mollie payment, mobile CSS) + functions.php wiring + deploy
 
 ---
 
