@@ -709,13 +709,16 @@ class Invoices extends Base {
 		$active_provider = $finance_config->get_active_payment_provider();
 
 		if ( 'mollie' === $active_provider ) {
-			// Clear any existing QR code (Mollie doesn't provide QR codes)
-			$this->clear_qr_code( $invoice_id );
-
 			$mollie_payment = new MolliePayment();
 			$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 			if ( is_wp_error( $payment_result ) ) {
 				error_log( 'Mollie payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+			} elseif ( ! empty( $payment_result ) ) {
+				// Generate branded QR code from payment URL (non-blocking)
+				$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_result, $invoice_id );
+				if ( is_wp_error( $qr_result ) ) {
+					error_log( 'QR code generation failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
+				}
 			}
 		} else {
 			$oauth = new RabobankOAuth();
@@ -859,13 +862,18 @@ class Invoices extends Base {
 			delete_post_meta( $invoice_id, '_mollie_payment_id' );
 			update_field( 'payment_link', '', $invoice_id );
 
-			// Clear any existing QR code (Mollie doesn't provide QR codes)
-			$this->clear_qr_code( $invoice_id );
-
 			$mollie_payment = new MolliePayment();
 			$result         = $mollie_payment->create_payment_link( $invoice_id );
 			if ( is_wp_error( $result ) ) {
 				return $result;
+			}
+
+			// Generate branded QR code from new payment URL (non-blocking)
+			if ( ! empty( $result ) ) {
+				$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $result, $invoice_id );
+				if ( is_wp_error( $qr_result ) ) {
+					error_log( 'QR code generation failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
+				}
 			}
 		} else {
 			$oauth = new RabobankOAuth();
