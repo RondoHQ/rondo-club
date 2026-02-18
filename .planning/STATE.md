@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 78: Test mode send invoice to current user
+Last activity: 2026-02-18 — Completed quick task 79: HTML invoice email with inline QR code
 
 ## Performance Metrics
 
@@ -114,6 +114,9 @@ Recent decisions for v26.0:
 - [Quick 77]: chillerlan/php-qrcode v5 with returnResource=true for GdImage to enable logo overlay
 - [Quick 77]: ECC level H (30%) for QR codes with logo overlay to preserve readability
 - [Quick 77]: clear_qr_code() removed from Mollie send/regenerate — QR now generated, not cleared
+- [Quick 79]: CID embedding via phpmailer_init hook (add before wp_mail, remove after)
+- [Quick 79]: wp_kses_post for HTML email template sanitization (REST API and FinanceConfig)
+- [Quick 79]: esc_html on dynamic template variable values to prevent XSS in HTML emails
 
 ### Roadmap Evolution
 
@@ -147,6 +150,7 @@ None — phase 185 was the final planned enhancement.
 | 76 | Reset payment state interface for test mode | 2026-02-18 | 449ae276 | [76-reset-payment-state-interface-for-test-m](./quick/76-reset-payment-state-interface-for-test-m/) |
 | 77 | Generate branded QR codes for Mollie payment links | 2026-02-18 | e2547b83 | [77-generate-branded-qr-codes-for-payment-li](./quick/77-generate-branded-qr-codes-for-payment-li/) |
 | 78 | Test mode: send invoice to current user | 2026-02-18 | 2884f1a7 | [78-test-mode-send-invoice-to-current-user-w](./quick/78-test-mode-send-invoice-to-current-user-w/) |
+| 79 | HTML invoice email with inline QR code | 2026-02-18 | 7265c656 | [79-html-invoice-email-with-inline-qr-code-r](./quick/79-html-invoice-email-with-inline-qr-code-r/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -156,11 +160,11 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Quick task 78 complete — test mode send invoice to current user
+Stopped at: Quick task 79 complete — HTML invoice email with inline QR code
 Resume file: None
 
 **Next action:** None pending
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Quick task 78: test mode send invoice to current user*
+*Last updated: 2026-02-18 — Quick task 79: HTML invoice email with inline QR code*
