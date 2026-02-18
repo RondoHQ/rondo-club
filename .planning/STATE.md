@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Completed quick task 77: Generate branded QR codes for payment links
+Last activity: 2026-02-18 — Completed quick task 78: Test mode send invoice to current user
 
 ## Performance Metrics
 
