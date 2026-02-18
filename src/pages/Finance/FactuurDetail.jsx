@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink, QrCode } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState } from '@/hooks/useInvoices';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, Calendar, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
@@ -37,6 +37,7 @@ function StatusBadge({ status }) {
 
 export default function FactuurDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: invoice, isLoading, error } = useInvoice(id);
   const sendInvoice = useSendInvoice();
   const updateInvoiceStatus = useUpdateInvoiceStatus();
@@ -45,6 +46,7 @@ export default function FactuurDetail() {
   const createPaymentLink = useCreatePaymentLink();
   const regeneratePaymentLink = useRegeneratePaymentLink();
   const resetPaymentState = useResetPaymentState();
+  const deleteInvoice = useDeleteInvoice();
   const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -176,7 +178,20 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending;
+  const handleDelete = async () => {
+    if (!window.confirm('Weet je zeker dat je deze conceptfactuur wilt verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await deleteInvoice.mutateAsync(id);
+      navigate('/financien/facturen');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het verwijderen van de factuur.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending;
 
   if (isLoading) {
     return (
@@ -461,6 +476,18 @@ export default function FactuurDetail() {
                   PDF opnieuw genereren
                 </button>
               )}
+              <button
+                onClick={handleDelete}
+                disabled={isPending}
+                className="btn-secondary flex items-center gap-2 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                {deleteInvoice.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 dark:border-red-400"></div>
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                Verwijder factuur
+              </button>
             </>
           )}
 

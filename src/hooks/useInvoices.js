@@ -194,6 +194,25 @@ export function useRegeneratePaymentLink() {
 }
 
 /**
+ * Delete a draft invoice
+ * @returns {object} Mutation object for deleting invoices
+ */
+export function useDeleteInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await prmApi.deleteInvoice(id);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoiced-case-ids'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
+    },
+  });
+}
+
+/**
  * Reset payment state for a test-mode invoice
  * @returns {object} Mutation object
  */
