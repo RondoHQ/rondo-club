@@ -164,7 +164,7 @@ export default function FactuurDetail() {
   };
 
   const handleResetPaymentState = async () => {
-    if (!window.confirm('Weet je zeker dat je de betaalstatus wilt resetten? Dit wist de betaallink en betaalstatus (alleen in testmodus).')) {
+    if (!window.confirm('Weet je zeker dat je de betaalstatus wilt resetten? Dit wist de betaallink, factuur-PDF, en betaalstatus (alleen in testmodus).')) {
       return;
     }
     setErrorMessage('');

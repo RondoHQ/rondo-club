@@ -988,6 +988,15 @@ class Invoices extends Base {
 		// Clear QR code file and field
 		$this->clear_qr_code( $invoice_id );
 
+		// Clear PDF file and field
+		$this->clear_pdf( $invoice_id );
+
+		// Clear sending dates
+		update_field( 'sent_date', '', $invoice_id );
+		update_field( 'due_date', '', $invoice_id );
+		delete_post_meta( $invoice_id, 'sent_date' );
+		delete_post_meta( $invoice_id, 'due_date' );
+
 		// Reset invoice status back to draft (concept)
 		wp_update_post(
 			[
@@ -1079,6 +1088,26 @@ class Invoices extends Base {
 				unlink( $full_path );
 			}
 			update_field( 'qr_code_path', '', $invoice_id );
+		}
+	}
+
+	/**
+	 * Clear PDF file and field for an invoice.
+	 *
+	 * Used when resetting an invoice to draft state, so the PDF can be
+	 * regenerated fresh on next send.
+	 *
+	 * @param int $invoice_id The invoice post ID.
+	 */
+	private function clear_pdf( $invoice_id ) {
+		$pdf_path = get_field( 'pdf_path', $invoice_id );
+		if ( ! empty( $pdf_path ) ) {
+			$upload_dir = wp_upload_dir();
+			$full_path  = $upload_dir['basedir'] . '/' . $pdf_path;
+			if ( file_exists( $full_path ) ) {
+				unlink( $full_path );
+			}
+			update_field( 'pdf_path', '', $invoice_id );
 		}
 	}
 
