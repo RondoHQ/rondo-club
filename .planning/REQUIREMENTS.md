@@ -94,45 +94,45 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BILL-01 | TBD | Pending |
-| BILL-02 | TBD | Pending |
-| BILL-03 | TBD | Pending |
-| BILL-04 | TBD | Pending |
-| BILL-05 | TBD | Pending |
-| BILL-06 | TBD | Pending |
-| BILL-07 | TBD | Pending |
-| INV-01 | TBD | Pending |
-| INV-02 | TBD | Pending |
-| INV-03 | TBD | Pending |
-| INV-04 | TBD | Pending |
-| INV-05 | TBD | Pending |
-| PAY-01 | TBD | Pending |
-| PAY-02 | TBD | Pending |
-| PAY-03 | TBD | Pending |
-| PAY-04 | TBD | Pending |
-| PAY-05 | TBD | Pending |
-| PAY-06 | TBD | Pending |
-| PAY-07 | TBD | Pending |
-| PAY-08 | TBD | Pending |
-| INST-01 | TBD | Pending |
-| INST-02 | TBD | Pending |
-| INST-03 | TBD | Pending |
-| INST-04 | TBD | Pending |
-| INST-05 | TBD | Pending |
-| REM-01 | TBD | Pending |
-| REM-02 | TBD | Pending |
-| REM-03 | TBD | Pending |
-| FACT-01 | TBD | Pending |
-| FACT-02 | TBD | Pending |
-| FACT-03 | TBD | Pending |
-| FACT-04 | TBD | Pending |
-| AUTH-01 | TBD | Pending |
+| BILL-01 | Phase 192 | Pending |
+| BILL-02 | Phase 196 | Pending |
+| BILL-03 | Phase 196 | Pending |
+| BILL-04 | Phase 192 | Pending |
+| BILL-05 | Phase 195 | Pending |
+| BILL-06 | Phase 195 | Pending |
+| BILL-07 | Phase 195 | Pending |
+| INV-01 | Phase 196 | Pending |
+| INV-02 | Phase 196 | Pending |
+| INV-03 | Phase 192 | Pending |
+| INV-04 | Phase 196 | Pending |
+| INV-05 | Phase 196 | Pending |
+| PAY-01 | Phase 193 | Pending |
+| PAY-02 | Phase 193 | Pending |
+| PAY-03 | Phase 193 | Pending |
+| PAY-04 | Phase 193 | Pending |
+| PAY-05 | Phase 193 | Pending |
+| PAY-06 | Phase 193 | Pending |
+| PAY-07 | Phase 193 | Pending |
+| PAY-08 | Phase 193 | Pending |
+| INST-01 | Phase 192 | Pending |
+| INST-02 | Phase 194 | Pending |
+| INST-03 | Phase 195 | Pending |
+| INST-04 | Phase 194 | Pending |
+| INST-05 | Phase 197 | Pending |
+| REM-01 | Phase 195 | Pending |
+| REM-02 | Phase 195 | Pending |
+| REM-03 | Phase 195 | Pending |
+| FACT-01 | Phase 197 | Pending |
+| FACT-02 | Phase 197 | Pending |
+| FACT-03 | Phase 197 | Pending |
+| FACT-04 | Phase 197 | Pending |
+| AUTH-01 | Phase 197 | Pending |
 
 **Coverage:**
 - v28.0 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33
+- Mapped to phases: 33
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-18*
-*Last updated: 2026-02-18 after initial definition*
+*Last updated: 2026-02-18 — traceability complete, all 33 requirements mapped to phases 192-197*
