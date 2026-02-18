@@ -673,6 +673,35 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get the billing method for a season.
+	 *
+	 * Determines whether membership fees for the given season are billed
+	 * through the external Nikki system or through Rondo's own invoicing.
+	 *
+	 * @param string|null $season Season key (e.g., "2025-2026"). Defaults to current season.
+	 * @return string 'nikki' or 'rondo'. Defaults to 'nikki' if not set.
+	 */
+	public function get_billing_method( ?string $season = null ): string {
+		$season = $season ?? $this->get_season_key();
+		return get_option( 'rondo_billing_method_' . $season, 'nikki' );
+	}
+
+	/**
+	 * Set the billing method for a season.
+	 *
+	 * @param string      $method 'nikki' or 'rondo'.
+	 * @param string|null $season Season key. Defaults to current season.
+	 * @return bool True on success, false on invalid method.
+	 */
+	public function set_billing_method( string $method, ?string $season = null ): bool {
+		$season = $season ?? $this->get_season_key();
+		if ( ! in_array( $method, [ 'nikki', 'rondo' ], true ) ) {
+			return false;
+		}
+		return update_option( 'rondo_billing_method_' . $season, $method );
+	}
+
+	/**
 	 * Get the next season key (one year ahead of current/specified season)
 	 *
 	 * Takes a season key in "YYYY-YYYY" format and returns the next season.

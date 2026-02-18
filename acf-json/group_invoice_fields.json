@@ -3,6 +3,25 @@
     "title": "Factuur Details",
     "fields": [
         {
+            "key": "field_invoice_type",
+            "label": "Factuurtype",
+            "name": "invoice_type",
+            "type": "select",
+            "instructions": "Type factuur: tuchtzaak of lidmaatschapsbijdrage",
+            "required": 0,
+            "choices": {
+                "discipline": "Tuchtzaak",
+                "membership": "Lidmaatschapsbijdrage"
+            },
+            "default_value": "discipline",
+            "allow_null": 1,
+            "wrapper": {
+                "width": "33",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
             "key": "field_invoice_number",
             "label": "Factuurnummer",
             "name": "invoice_number",

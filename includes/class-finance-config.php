@@ -18,6 +18,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /**
  * Finance Configuration service class
+ *
+ * Installment meta schema (flat numbered post meta on rondo_invoice):
+ *   _installment_count          — Total installments (int)
+ *   _installment_plan           — Plan type: 'full', 'quarterly_3', or 'monthly_8'
+ *   _installment_N_amount       — Installment amount (float)
+ *   _installment_N_admin_fee    — Admin fee portion (float)
+ *   _installment_N_status       — Status: 'pending', 'sent', 'paid', 'overdue'
+ *   _installment_N_due_date     — Due date (Y-m-d)
+ *   _installment_N_sent_at      — DateTime sent (nullable)
+ *   _installment_N_paid_at      — DateTime paid (nullable)
+ *   _installment_N_mollie_payment_id — Mollie payment ID (nullable)
+ *   _installment_N_payment_link — Mollie checkout URL (nullable)
+ *
+ * Reverse-lookup pattern for webhook O(1) matching:
+ *   _mollie_pid_{payment_id} = installment_number (stored on invoice post)
  */
 class FinanceConfig {
 
@@ -39,6 +54,7 @@ class FinanceConfig {
 	const OPTION_MOLLIE_REDIRECT_URL   = 'rondo_finance_mollie_redirect_url';
 	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
 	const OPTION_ADMIN_FEE               = 'rondo_finance_admin_fee';
+	const OPTION_INSTALLMENT_ADMIN_FEE   = 'rondo_finance_installment_admin_fee';
 
 	/**
 	 * Default configuration values
@@ -55,8 +71,9 @@ class FinanceConfig {
 		'club_logo_id'       => 0,
 		'accent_color'       => '',
 		'bcc_email'          => '',
-		'admin_fee'          => 0.00,
-		'email_template'     => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'admin_fee'              => 0.00,
+		'installment_admin_fee'  => 0.00,
+		'email_template'         => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 	];
 
 	/**
@@ -159,6 +176,19 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get per-installment administration fee for membership payment plans
+	 *
+	 * This fee is charged per installment when a member chooses a multi-installment
+	 * payment plan (3 or 8 installments). It is separate from the discipline invoice
+	 * admin fee (OPTION_ADMIN_FEE).
+	 *
+	 * @return float Per-installment administration fee amount (0.00 if not configured)
+	 */
+	public function get_installment_admin_fee(): float {
+		return (float) get_option( self::OPTION_INSTALLMENT_ADMIN_FEE, self::DEFAULTS['installment_admin_fee'] );
+	}
+
+	/**
 	 * Get Rabobank credentials (decrypted, internal use only)
 	 *
 	 * @return array|null Array with client_id, client_secret, environment or null if not configured
@@ -207,6 +237,7 @@ class FinanceConfig {
 			'accent_color'          => $this->get_accent_color(),
 			'bcc_email'             => $this->get_bcc_email(),
 			'admin_fee'             => $this->get_admin_fee(),
+			'installment_admin_fee' => $this->get_installment_admin_fee(),
 			'rabobank_has_credentials' => $rabobank_creds !== null,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
 			'mollie_has_api_key'    => ! empty( $mollie_api_key ),
@@ -246,6 +277,8 @@ class FinanceConfig {
 				return $this->get_bcc_email();
 			case 'admin_fee':
 				return $this->get_admin_fee();
+			case 'installment_admin_fee':
+				return $this->get_installment_admin_fee();
 			default:
 				return null;
 		}
@@ -309,6 +342,11 @@ class FinanceConfig {
 		if ( isset( $data['admin_fee'] ) ) {
 			$fee     = max( 0.0, (float) $data['admin_fee'] );
 			$success = update_option( self::OPTION_ADMIN_FEE, $fee ) && $success;
+		}
+
+		if ( isset( $data['installment_admin_fee'] ) ) {
+			$fee     = max( 0.0, (float) $data['installment_admin_fee'] );
+			$success = update_option( self::OPTION_INSTALLMENT_ADMIN_FEE, $fee ) && $success;
 		}
 
 		// Handle Rabobank credentials with encryption
