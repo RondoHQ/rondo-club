@@ -140,6 +140,7 @@ None — phase 185 was the final planned enhancement.
 | 72 | Add tab navigation to Finance Settings | 2026-02-16 | d31e152 | [72-finance-settings-tabs](./quick/72-finance-settings-tabs/) |
 | 73 | Set doorbelast to Rondo when invoice sent | 2026-02-16 | dd59a57 | [73-set-discipline-case-doorbelast-to-ja-ron](./quick/73-set-discipline-case-doorbelast-to-ja-ron/) |
 | 74 | Filter Tuchtzaken page by Doorbelast and Sanctie | 2026-02-16 | 5694ebc | [74-filter-tuchtzaken-page-by-doorbelast-and](./quick/74-filter-tuchtzaken-page-by-doorbelast-and/) |
+| 75 | Add button to regenerate payment links | 2026-02-18 | 2deebd8e | [75-add-button-to-regenerate-payment-links](./quick/75-add-button-to-regenerate-payment-links/) |
 | Phase 186 P01 | 164 | 2 tasks | 9 files |
 | Phase 187 P01 | 90 | 2 tasks | 2 files |
 | Phase 188 P01 | 900 | 2 tasks | 2 files |
@@ -149,10 +150,10 @@ None — phase 185 was the final planned enhancement.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Phase 190 complete — v27.0 Mollie milestone SHIPPED (v27.0.0)
+Stopped at: Quick task 75 complete — regenerate payment link button deployed
 Resume file: None
 
-**Next action:** Deploy to production and verify Mollie configuration UI
+**Next action:** None pending
 
 ---
 *State created: 2026-02-15*
