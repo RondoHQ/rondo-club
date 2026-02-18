@@ -1,5 +1,5 @@
 ---
-status: investigating
+status: closed
 trigger: "missing-functies-person-757"
 created: 2026-02-12T10:00:00Z
 updated: 2026-02-12T11:00:00Z

@@ -691,6 +691,9 @@ class Invoices extends Base {
 		$active_provider = $finance_config->get_active_payment_provider();
 
 		if ( 'mollie' === $active_provider ) {
+			// Clear any existing QR code (Mollie doesn't provide QR codes)
+			$this->clear_qr_code( $invoice_id );
+
 			$mollie_payment = new MolliePayment();
 			$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 			if ( is_wp_error( $payment_result ) ) {
@@ -838,6 +841,9 @@ class Invoices extends Base {
 			delete_post_meta( $invoice_id, '_mollie_payment_id' );
 			update_field( 'payment_link', '', $invoice_id );
 
+			// Clear any existing QR code (Mollie doesn't provide QR codes)
+			$this->clear_qr_code( $invoice_id );
+
 			$mollie_payment = new MolliePayment();
 			$result         = $mollie_payment->create_payment_link( $invoice_id );
 			if ( is_wp_error( $result ) ) {
@@ -857,6 +863,12 @@ class Invoices extends Base {
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
+		}
+
+		// Regenerate PDF to reflect new payment link and QR code state
+		$pdf_result = InvoicePdfGenerator::generate( $invoice_id );
+		if ( is_wp_error( $pdf_result ) ) {
+			return $pdf_result;
 		}
 
 		// Return updated invoice
@@ -925,6 +937,26 @@ class Invoices extends Base {
 	/**
 	 * Format an invoice for detail response (single view)
 	 *
+	 * Clear QR code file and field for an invoice.
+	 *
+	 * Used when switching to a provider that doesn't support QR codes (e.g. Mollie),
+	 * or when regenerating a payment link to avoid stale QR codes.
+	 *
+	 * @param int $invoice_id The invoice post ID.
+	 */
+	private function clear_qr_code( $invoice_id ) {
+		$qr_path = get_field( 'qr_code_path', $invoice_id );
+		if ( ! empty( $qr_path ) ) {
+			$upload_dir = wp_upload_dir();
+			$full_path  = $upload_dir['basedir'] . '/' . $qr_path;
+			if ( file_exists( $full_path ) ) {
+				unlink( $full_path );
+			}
+			update_field( 'qr_code_path', '', $invoice_id );
+		}
+	}
+
+	/**
 	 * @param \WP_Post $post The invoice post object.
 	 * @return array Formatted invoice data with full details.
 	 */
