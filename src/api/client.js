@@ -293,8 +293,8 @@ export const prmApi = {
   getRabobankAuthorizeUrl: () => api.get('/rondo/v1/rabobank/authorize'),
   disconnectRabobank: () => api.post('/rondo/v1/rabobank/disconnect'),
 
-  // Rabobank Payment
-  createPaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/payment-link`),
+  // Payment
+  createPaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/regenerate-payment-link`),
   regeneratePaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/regenerate-payment-link`),
   resetPaymentState: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/reset-payment-state`),
   getRabobankCertificate: () => api.get('/rondo/v1/rabobank/certificate'),
