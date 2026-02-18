@@ -164,7 +164,7 @@ export default function FactuurDetail() {
   };
 
   const handleResetPaymentState = async () => {
-    if (!window.confirm('Weet je zeker dat je de betaalstatus wilt resetten? Dit wist de betaallink, factuur-PDF, en betaalstatus (alleen in testmodus).')) {
+    if (!window.confirm('Weet je zeker dat je de factuur wilt resetten? Dit wist de betaallink, factuur-PDF, en betaalstatus (alleen in testmodus).')) {
       return;
     }
     setErrorMessage('');
@@ -242,15 +242,6 @@ export default function FactuurDetail() {
             <h1 className="text-2xl font-bold text-brand-gradient mb-2">
               {invoice.invoice_number}
             </h1>
-            {invoice.person?.id && (
-              <Link
-                to={`/people/${invoice.person.id}`}
-                className="text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan flex items-center gap-1"
-              >
-                <User className="w-4 h-4" />
-                {invoice.person.name}
-              </Link>
-            )}
           </div>
           <StatusBadge status={invoice.status} />
         </div>
@@ -597,7 +588,7 @@ export default function FactuurDetail() {
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
-              Reset betaalstatus (test)
+              Reset factuur (test)
             </button>
           )}
         </div>
