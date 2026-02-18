@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-15)
 Phase: Phase 190 — Finance Settings UI (Mollie Configuration)
 Plan: 01 complete
 Status: Complete — v27.0 Mollie milestone SHIPPED
-Last activity: 2026-02-18 — Phase 190 complete, v27.0.0 deployed
+Last activity: 2026-02-18 — Completed quick task 75: Add button to regenerate payment links
 
 ## Performance Metrics
 
@@ -157,4 +157,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 190 complete, v27.0.0 shipped*
+*Last updated: 2026-02-18 — Quick task 75: regenerate payment links*
