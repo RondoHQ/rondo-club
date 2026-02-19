@@ -295,12 +295,24 @@ class MembershipFees {
 	 * Retrieves team IDs from the work_history ACF repeater field where the person
 	 * is currently active (is_current flag or end_date in future/not set).
 	 *
-	 * For fee calculation purposes, excludes teams where the job_title is "Donateur"
-	 * since donateurs are non-playing members and shouldn't affect team-based fees.
+	 * For fee calculation purposes, only includes teams where the person has a
+	 * player role (Teamspeler, positional roles, recreational player). Staff roles
+	 * like Trainer, Teammanager, etc. are excluded to prevent non-players from
+	 * being assigned team-based fee categories.
 	 *
 	 * @param int $person_id The person post ID.
 	 * @return array<int> Array of unique team IDs.
 	 */
+	private const PLAYER_JOB_TITLES = [
+		'teamspeler',
+		'verdediger',
+		'middenvelder',
+		'aanvaller',
+		'keeper',
+		'zondag recranten',
+		'zaterdag recreanten',
+	];
+
 	public function get_current_teams( int $person_id ): array {
 		$work_history = get_field( 'work_history', $person_id ) ?: [];
 		$team_ids     = [];
@@ -317,8 +329,9 @@ class MembershipFees {
 				continue;
 			}
 
-			// Skip donateur roles - they are non-playing members
-			if ( ! empty( $job['job_title'] ) && strcasecmp( trim( $job['job_title'] ), 'Donateur' ) === 0 ) {
+			// Only include player roles — skip staff (trainers, managers, etc.)
+			$job_title = strtolower( trim( $job['job_title'] ?? '' ) );
+			if ( ! in_array( $job_title, self::PLAYER_JOB_TITLES, true ) ) {
 				continue;
 			}
 
@@ -577,11 +590,11 @@ class MembershipFees {
 	 * Determines the correct fee category and amount based on the person's
 	 * age group, team membership, and work functions.
 	 *
-	 * Priority order: Youth > Team matching > Werkfunctie matching > Non-youth age class fallback
+	 * Priority order: Youth age class > Non-youth age class > Team matching > Werkfunctie matching
 	 * - Youth categories: Matched by age class, return immediately (highest priority)
-	 * - Team matching: Config-driven matching via matching_teams arrays
+	 * - Non-youth age class: e.g., senior — takes priority over team/werkfunctie
+	 * - Team matching: Config-driven matching via matching_teams arrays (player roles only)
 	 * - Werkfunctie matching: Config-driven matching via matching_werkfuncties arrays
-	 * - Age class fallback: Non-youth age class match (e.g., senior) as last resort
 	 *
 	 * @param int         $person_id The person post ID.
 	 * @param string|null $season    Optional season key for fee lookup, defaults to current season.
@@ -609,7 +622,17 @@ class MembershipFees {
 			];
 		}
 
-		// Check team matching (config-driven)
+		// Non-youth age class match (e.g., senior) — takes priority over team/werkfunctie
+		if ( $age_class_category !== null ) {
+			return [
+				'category'       => $age_class_category,
+				'base_fee'       => $this->get_fee( $age_class_category, $season ),
+				'leeftijdsgroep' => $leeftijdsgroep,
+				'person_id'      => $person_id,
+			];
+		}
+
+		// Check team matching (config-driven, player roles only)
 		$teams = $this->get_current_teams( $person_id );
 		if ( ! empty( $teams ) ) {
 			$team_matched_category = $this->get_category_by_team_match( $teams, $season );
@@ -635,16 +658,6 @@ class MembershipFees {
 					'person_id'      => $person_id,
 				];
 			}
-		}
-
-		// Fallback: Use non-youth age class match if we had one
-		if ( $age_class_category !== null ) {
-			return [
-				'category'       => $age_class_category,
-				'base_fee'       => $this->get_fee( $age_class_category, $season ),
-				'leeftijdsgroep' => $leeftijdsgroep,
-				'person_id'      => $person_id,
-			];
 		}
 
 		// No valid category found - exclude
