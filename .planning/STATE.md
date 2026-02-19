@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 197: Frontend Bulk Invoice UI (next)
+**Current focus:** v28.0 Membership Fee Invoicing — COMPLETE (phases 192-196 all done, deployed 28.0.0)
 
 ## Current Position
 
-Phase: 196 of 197 (Bulk Invoice Creation) — COMPLETE
-Plan: 1 of 1 in current phase — complete, ready for Phase 197
-Status: Phase 196 complete — BulkInvoiceCreator + installment plan toggles deployed to production
-Last activity: 2026-02-19 — Phase 196-01 complete: BulkInvoiceCreator + installment plan toggles deployed
+Phase: 196 of 196 (Bulk Invoice Creation) — COMPLETE
+Plan: 2 of 2 in current phase — complete, v28.0 shipped
+Status: Phase 196-02 complete — v28.0 frontend deployed to production at https://rondo.svawc.nl/
+Last activity: 2026-02-19 — Phase 196-02 complete: bulk invoice UI, billing toggles, version 28.0.0 deployed
 
-Progress: [██████░░░░] 83% (v28.0, 6/6 phases complete — ready for final frontend phase)
+Progress: [██████████] 100% (v28.0 Membership Fee Invoicing — all phases complete)
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: [██████░░░░] 83% (v28.0, 6/6 phases complete — r
 | 195 | 01 | 5min | 2 | 4 |
 | 195 | 02 | 10min | 2 | 5 |
 | 196 | 01 | 5min | 2 | 5 |
+| 196 | 02 | 6min | 3 | 9 |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Phase 192-01 decisions:
 - [Phase 196]: BulkInvoiceCreator uses WP-Cron chained single-events (50/batch) — avoid PHP timeout for 500+ members
 - [Phase 196]: Installment plan toggles (plan_3, plan_8) stored per-season as WP options, default true — existing deployments unaffected
 - [Phase 196]: person_ids array stripped from REST responses — stored in WP option only for cron batch processor, keeps API payloads small
+- [Phase 196]: showNikkiColumns = billingMethod === 'nikki' && !isForecast — single flag guards all Nikki UI simultaneously
+- [Phase 196]: Maak factuur button uses inline Tailwind classes — btn-primary-sm does not exist in the codebase
 
 ### Pending Todos
 
@@ -86,11 +89,11 @@ Phase 192-01 decisions:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 196-01-PLAN.md — BulkInvoiceCreator + installment plan toggles deployed to production
+Stopped at: Completed 196-02-PLAN.md — v28.0 Membership Fee Invoicing deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 197 — Frontend Bulk Invoice UI
+**Next action:** v28.0 COMPLETE — archive milestone and begin v29.0 planning
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 196 complete (plan 01), ready for Phase 197*
+*Last updated: 2026-02-19 — Phase 196 complete (plan 02), v28.0 shipped*
