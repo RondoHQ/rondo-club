@@ -185,6 +185,12 @@ class PublicPaymentPage {
 		$plan_3_enabled = $membership_fees->get_installment_plan_3_enabled( $season );
 		$plan_8_enabled = $membership_fees->get_installment_plan_8_enabled( $season );
 
+		// Per-invoice override: if installments disabled, hide both plans.
+		if ( get_post_meta( $invoice_id, '_disable_installments', true ) ) {
+			$plan_3_enabled = false;
+			$plan_8_enabled = false;
+		}
+
 		// Calculate per-plan amounts.
 		$amount_3  = round( $total_amount / 3, 2 ) + $admin_fee;
 		$amount_8  = round( $total_amount / 8, 2 ) + $admin_fee;
@@ -467,6 +473,12 @@ class PublicPaymentPage {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
+		}
+
+		// Per-invoice override: reject installment plan if disabled for this invoice.
+		if ( ( 'quarterly_3' === $plan || 'monthly_8' === $plan ) && get_post_meta( $invoice_id, '_disable_installments', true ) ) {
+			$this->render_error( 'Termijnbetaling is niet beschikbaar voor deze factuur.' );
+			exit;
 		}
 
 		// Idempotency check: if installment 1 payment ID already exists, redirect to existing checkout.
