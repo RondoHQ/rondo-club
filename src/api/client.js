@@ -297,6 +297,7 @@ export const prmApi = {
   createPaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/regenerate-payment-link`),
   regeneratePaymentLink: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/regenerate-payment-link`),
   resetPaymentState: (invoiceId) => api.post(`/rondo/v1/invoices/${invoiceId}/reset-payment-state`),
+  toggleInstallments: (invoiceId, disabled) => api.post(`/rondo/v1/invoices/${invoiceId}/toggle-installments`, { disabled }),
   getRabobankCertificate: () => api.get('/rondo/v1/rabobank/certificate'),
 
   // Invoice endpoints

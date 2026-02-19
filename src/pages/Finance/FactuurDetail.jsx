@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice } from '@/hooks/useInvoices';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
@@ -78,6 +78,7 @@ export default function FactuurDetail() {
   const regeneratePaymentLink = useRegeneratePaymentLink();
   const resetPaymentState = useResetPaymentState();
   const deleteInvoice = useDeleteInvoice();
+  const toggleInstallments = useToggleInstallments();
   const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -507,6 +508,20 @@ export default function FactuurDetail() {
           {/* Draft status actions */}
           {invoice.status === 'draft' && (
             <>
+              {invoice.invoice_type === 'membership' && (
+                <div className="w-full mb-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={!!invoice.disable_installments}
+                      disabled={toggleInstallments.isPending}
+                      onChange={(e) => toggleInstallments.mutate({ id: invoice.id, disabled: e.target.checked })}
+                      className="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500"
+                    />
+                    Termijnbetaling uitschakelen
+                  </label>
+                </div>
+              )}
               <button
                 onClick={handleSend}
                 disabled={isPending}
