@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 90: Show club name and logo on betaling page
+Last activity: 2026-02-19 - Completed quick task 91: Remove admin fee note and use accent color on betaling page
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -105,6 +105,7 @@ Phase 192-01 decisions:
 | 88 | Show Doorbelast as n.v.t. when boete is €0 | 2026-02-19 | c9945a37 | [88-show-doorbelast-as-n-v-t-when-boete-is-z](./quick/88-show-doorbelast-as-n-v-t-when-boete-is-z/) |
 | 89 | Add cursor pointer to tabs and buttons | 2026-02-19 | 31c5043f | [89-add-cursor-pointer-to-tabs-and-buttons](./quick/89-add-cursor-pointer-to-tabs-and-buttons/) |
 | 90 | Show club name and logo on betaling page | 2026-02-19 | cff97229 | [90-show-club-name-and-logo-on-betaling-page](./quick/90-show-club-name-and-logo-on-betaling-page/) |
+| 91 | Remove admin fee note and use accent color on betaling page | 2026-02-19 | 46d7bf06 | [91-remove-admin-fee-note-and-use-accent-col](./quick/91-remove-admin-fee-note-and-use-accent-col/) |
 
 ## Session Continuity
 
@@ -116,4 +117,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 90 complete (club name and logo on betaling page)*
+*Last updated: 2026-02-19 — Quick task 91 complete (remove admin fee note, accent color buttons)*
