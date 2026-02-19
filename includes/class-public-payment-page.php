@@ -191,12 +191,23 @@ class PublicPaymentPage {
 			$plan_8_enabled = false;
 		}
 
+		// Calculate available payment dates (23rd of each month through April).
+		$today            = current_time( 'Y-m-d' );
+		$available_dates  = self::get_available_payment_dates( $today, $season );
+		$max_installments = count( $available_dates );
+
+		// Hide plans that don't fit within available dates.
+		$plan_3_visible = $plan_3_enabled && $max_installments >= 3;
+
+		$large_count        = min( 8, $max_installments );
+		$large_plan_visible = $plan_8_enabled && $large_count > 3;
+
 		// Calculate per-plan amounts.
 		$amount_3  = round( $total_amount / 3, 2 ) + $admin_fee;
-		$amount_8  = round( $total_amount / 8, 2 ) + $admin_fee;
+		$total_3   = round( $total_amount / 3, 2 ) * 3 + $admin_fee * 3;
 
-		$total_3 = round( $total_amount / 3, 2 ) * 3 + $admin_fee * 3;
-		$total_8 = round( $total_amount / 8, 2 ) * 8 + $admin_fee * 8;
+		$amount_large = $large_plan_visible ? round( $total_amount / $large_count, 2 ) + $admin_fee : 0;
+		$total_large  = $large_plan_visible ? round( $total_amount / $large_count, 2 ) * $large_count + $admin_fee * $large_count : 0;
 
 		$branding = $this->get_club_branding();
 
@@ -250,7 +261,7 @@ class PublicPaymentPage {
 			</div>
 		</form>
 
-		<?php if ( $plan_3_enabled ) : ?>
+		<?php if ( $plan_3_visible ) : ?>
 		<!-- 3 termijnen -->
 		<form method="POST" class="plan-form">
 			<input type="hidden" name="token" value="<?php echo esc_attr( $token ); ?>">
@@ -271,23 +282,23 @@ class PublicPaymentPage {
 		</form>
 		<?php endif; ?>
 
-		<?php if ( $plan_8_enabled ) : ?>
-		<!-- 8 termijnen -->
+		<?php if ( $large_plan_visible ) : ?>
+		<!-- <?php echo (int) $large_count; ?> termijnen -->
 		<form method="POST" class="plan-form">
 			<input type="hidden" name="token" value="<?php echo esc_attr( $token ); ?>">
 			<input type="hidden" name="plan" value="monthly_8">
 			<div class="plan-option">
-				<div class="plan-title">8 termijnen</div>
-				<div class="plan-amount"><?php echo esc_html( $this->format_currency( $amount_8 ) ); ?> <span class="plan-period">per termijn</span></div>
+				<div class="plan-title"><?php echo (int) $large_count; ?> termijnen</div>
+				<div class="plan-amount"><?php echo esc_html( $this->format_currency( $amount_large ) ); ?> <span class="plan-period">per termijn</span></div>
 				<?php if ( $admin_fee > 0 ) : ?>
 				<div class="plan-detail">
 					Inclusief <?php echo esc_html( $this->format_currency( $admin_fee ) ); ?> administratiekosten per termijn<br>
-					Totaal: <?php echo esc_html( $this->format_currency( $total_8 ) ); ?>
+					Totaal: <?php echo esc_html( $this->format_currency( $total_large ) ); ?>
 				</div>
 				<?php else : ?>
-				<div class="plan-detail">Totaal: <?php echo esc_html( $this->format_currency( $total_8 ) ); ?></div>
+				<div class="plan-detail">Totaal: <?php echo esc_html( $this->format_currency( $total_large ) ); ?></div>
 				<?php endif; ?>
-				<button type="submit" class="btn btn-secondary">Betalen in 8 termijnen</button>
+				<button type="submit" class="btn btn-secondary">Betalen in <?php echo (int) $large_count; ?> termijnen</button>
 			</div>
 		</form>
 		<?php endif; ?>
@@ -496,17 +507,24 @@ class PublicPaymentPage {
 		$config    = new FinanceConfig();
 		$admin_fee = $config->get_installment_admin_fee();
 
+		// Calculate available payment dates for dynamic installment count.
+		$today           = current_time( 'Y-m-d' );
+		$available_dates = self::get_available_payment_dates( $today, $invoice_season );
+
 		// Store plan meta and write installment breakdown for multi-installment plans.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );
 
 		if ( 'full' === $plan ) {
 			update_post_meta( $invoice_id, '_installment_count', 1 );
 		} elseif ( 'quarterly_3' === $plan ) {
+			$due_dates = self::calculate_installment_due_dates( 3, $available_dates, true );
 			update_post_meta( $invoice_id, '_installment_count', 3 );
-			$this->write_installment_meta( $invoice_id, 3, $total, $admin_fee );
-		} else { // monthly_8
-			update_post_meta( $invoice_id, '_installment_count', 8 );
-			$this->write_installment_meta( $invoice_id, 8, $total, $admin_fee );
+			$this->write_installment_meta( $invoice_id, 3, $total, $admin_fee, $due_dates );
+		} else { // monthly_8 — actual count capped at available dates.
+			$actual_count = min( 8, count( $available_dates ) );
+			$due_dates    = self::calculate_installment_due_dates( $actual_count, $available_dates );
+			update_post_meta( $invoice_id, '_installment_count', $actual_count );
+			$this->write_installment_meta( $invoice_id, $actual_count, $total, $admin_fee, $due_dates );
 		}
 
 		// Create Mollie payment for the first installment via shared service.
@@ -530,21 +548,15 @@ class PublicPaymentPage {
 	 * Handles rounding remainder by adjusting the last installment so amounts
 	 * sum exactly to the original total.
 	 *
-	 * @param int   $invoice_id Invoice post ID.
-	 * @param int   $count      Total number of installments (3 or 8).
-	 * @param float $total      Invoice total amount.
-	 * @param float $admin_fee  Per-installment administration fee.
+	 * @param int              $invoice_id Invoice post ID.
+	 * @param int              $count      Total number of installments.
+	 * @param float            $total      Invoice total amount.
+	 * @param float            $admin_fee  Per-installment administration fee.
+	 * @param array<int,string> $due_dates  Map of installment number => Y-m-d due date.
 	 */
-	private function write_installment_meta( int $invoice_id, int $count, float $total, float $admin_fee ) {
+	private function write_installment_meta( int $invoice_id, int $count, float $total, float $admin_fee, array $due_dates ) {
 		$base_amount = round( $total / $count, 2 );
 		$accumulated = 0.0;
-
-		// Derive season from invoice post_date for due date calculation.
-		$fees         = new MembershipFees();
-		$invoice_date = get_post_field( 'post_date', $invoice_id );
-		$season       = $fees->get_season_key( $invoice_date );
-		$plan         = 3 === $count ? 'quarterly_3' : 'monthly_8';
-		$due_dates    = self::calculate_installment_due_dates( $plan, $season );
 
 		for ( $n = 1; $n <= $count; $n++ ) {
 			if ( $n === $count ) {
@@ -566,44 +578,84 @@ class PublicPaymentPage {
 	}
 
 	/**
-	 * Calculate installment due dates for a given plan and season.
+	 * Get all available payment dates (23rd of each month) from a reference date through April.
 	 *
-	 * Returns a map of installment number => Y-m-d date string.
-	 * Season key format is 'YYYY-YYYY' (e.g. '2025-2026').
+	 * Returns Y-m-d strings for each 23rd that is on or after $from_date, up to and
+	 * including April 23rd of the season's end year.
 	 *
-	 * Quarterly (3 installments): Sep 25, Nov 25, Feb 25
-	 * Monthly (8 installments):   Sep 25, Oct 25, Nov 25, Dec 25, Jan 25, Feb 25, Mar 25, Apr 25
-	 *
-	 * @param string $plan   Plan identifier: 'quarterly_3' or 'monthly_8'.
-	 * @param string $season Season key in 'YYYY-YYYY' format.
-	 * @return array<int, string> Map of installment number => Y-m-d due date.
+	 * @param string $from_date Reference date in Y-m-d format (typically today).
+	 * @param string $season    Season key in 'YYYY-YYYY' format.
+	 * @return string[] Array of Y-m-d date strings.
 	 */
-	private static function calculate_installment_due_dates( string $plan, string $season ): array {
-		$start_year = (int) substr( $season, 0, 4 );
-		$end_year   = $start_year + 1;
+	public static function get_available_payment_dates( string $from_date, string $season ): array {
+		$end_year  = (int) substr( $season, 5, 4 );
+		$last_date = sprintf( '%04d-04-23', $end_year );
 
-		if ( 'quarterly_3' === $plan ) {
-			return [
-				1 => $start_year . '-09-25',
-				2 => $start_year . '-11-25',
-				3 => $end_year . '-02-25',
-			];
+		$from_day   = (int) substr( $from_date, 8, 2 );
+		$from_month = (int) substr( $from_date, 5, 2 );
+		$from_year  = (int) substr( $from_date, 0, 4 );
+
+		// Start from 23rd of current month if not yet passed, else next month.
+		if ( $from_day <= 23 ) {
+			$month = $from_month;
+			$year  = $from_year;
+		} else {
+			$month = $from_month + 1;
+			$year  = $from_year;
+			if ( $month > 12 ) {
+				$month = 1;
+				$year++;
+			}
 		}
 
-		if ( 'monthly_8' === $plan ) {
-			return [
-				1 => $start_year . '-09-25',
-				2 => $start_year . '-10-25',
-				3 => $start_year . '-11-25',
-				4 => $start_year . '-12-25',
-				5 => $end_year . '-01-25',
-				6 => $end_year . '-02-25',
-				7 => $end_year . '-03-25',
-				8 => $end_year . '-04-25',
-			];
+		$dates = [];
+		while ( true ) {
+			$date = sprintf( '%04d-%02d-23', $year, $month );
+			if ( $date > $last_date ) {
+				break;
+			}
+			$dates[] = $date;
+			$month++;
+			if ( $month > 12 ) {
+				$month = 1;
+				$year++;
+			}
 		}
 
-		return [];
+		return $dates;
+	}
+
+	/**
+	 * Select due dates for installments from available payment dates.
+	 *
+	 * For 3 installments with more dates available, evenly spaces them across
+	 * the pool (first, middle, last). For other counts, takes sequential dates.
+	 *
+	 * @param int      $count           Number of installments.
+	 * @param string[] $available_dates  Available payment dates (from get_available_payment_dates).
+	 * @param bool     $evenly_spaced   Whether to evenly space across available dates.
+	 * @return array<int, string> Map of installment number (1-based) => Y-m-d due date.
+	 */
+	private static function calculate_installment_due_dates( int $count, array $available_dates, bool $evenly_spaced = false ): array {
+		$total_available = count( $available_dates );
+		if ( 0 === $total_available || $count < 1 ) {
+			return [];
+		}
+
+		$due_dates = [];
+
+		if ( $evenly_spaced && $count < $total_available ) {
+			for ( $i = 0; $i < $count; $i++ ) {
+				$index             = ( 1 === $count ) ? 0 : (int) round( $i * ( $total_available - 1 ) / ( $count - 1 ) );
+				$due_dates[ $i + 1 ] = $available_dates[ $index ];
+			}
+		} else {
+			for ( $i = 0; $i < min( $count, $total_available ); $i++ ) {
+				$due_dates[ $i + 1 ] = $available_dates[ $i ];
+			}
+		}
+
+		return $due_dates;
 	}
 
 	/**

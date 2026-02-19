@@ -39,10 +39,17 @@ const installmentStatusLabels = {
   overdue: 'Verlopen',
 };
 
-const planLabels = {
-  quarterly_3: '3 termijnen',
-  monthly_8: '8 termijnen',
-};
+/**
+ * Get a human-readable label for a payment plan.
+ * Uses actual installment_count when available (dynamic plans may have fewer than 8).
+ */
+function getPlanLabel(plan, installmentCount) {
+  if (!plan || plan === 'full') return 'Volledig';
+  if (installmentCount) return `${installmentCount} termijnen`;
+  if (plan === 'quarterly_3') return '3 termijnen';
+  if (plan === 'monthly_8') return '8 termijnen';
+  return plan;
+}
 
 /**
  * Status badge component
@@ -339,7 +346,7 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalplan</h3>
                 <p className="text-gray-700 dark:text-gray-300">
-                  {planLabels[invoice.installment_plan] || 'Volledig'}
+                  {getPlanLabel(invoice.installment_plan, invoice.installment_count)}
                 </p>
               </div>
             )}
@@ -465,7 +472,7 @@ export default function FactuurDetail() {
       {invoice.installments && invoice.installments.length > 0 && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Termijnen ({planLabels[invoice.installment_plan] || invoice.installment_plan})
+            Termijnen ({getPlanLabel(invoice.installment_plan, invoice.installment_count)})
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full">
