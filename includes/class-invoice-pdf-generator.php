@@ -523,8 +523,7 @@ table.line-items .total-row td {
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
 		<td style="border: none; vertical-align: top; padding: 0;">
-			<p style="margin: 0; line-height: 1.6;">Je ontvangt per e-mail een betaallink waarmee je direct kunt betalen of een betaalplan kunt kiezen.</p>
-			' . ( ! empty( $membership_payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $membership_payment_clause ) ) . '</div>' : '' ) . '
+			' . ( ! empty( $membership_payment_clause ) ? '<p style="margin: 0; line-height: 1.6;">' . nl2br( esc_html( $membership_payment_clause ) ) . '</p>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
 		<td style="border: none; text-align: center; vertical-align: top; width: 180px; padding: 0;">
