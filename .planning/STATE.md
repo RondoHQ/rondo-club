@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 92: Set club logo as favicon on betaling page
+Last activity: 2026-02-19 - Completed quick task 93: Enable sending and disable installments for Rondo-created contributie invoices
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
