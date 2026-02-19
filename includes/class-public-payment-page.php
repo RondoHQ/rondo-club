@@ -181,6 +181,10 @@ class PublicPaymentPage {
 		$config     = new FinanceConfig();
 		$admin_fee  = $config->get_installment_admin_fee();
 
+		// Read installment plan toggles for this season.
+		$plan_3_enabled = $membership_fees->get_installment_plan_3_enabled( $season );
+		$plan_8_enabled = $membership_fees->get_installment_plan_8_enabled( $season );
+
 		// Calculate per-plan amounts.
 		$amount_3  = round( $total_amount / 3, 2 ) + $admin_fee;
 		$amount_8  = round( $total_amount / 8, 2 ) + $admin_fee;
@@ -243,6 +247,7 @@ class PublicPaymentPage {
 			</div>
 		</form>
 
+		<?php if ( $plan_3_enabled ) : ?>
 		<!-- 3 termijnen -->
 		<form method="POST" class="plan-form">
 			<input type="hidden" name="token" value="<?php echo esc_attr( $token ); ?>">
@@ -261,7 +266,9 @@ class PublicPaymentPage {
 				<button type="submit" class="btn btn-secondary">Betalen in 3 termijnen</button>
 			</div>
 		</form>
+		<?php endif; ?>
 
+		<?php if ( $plan_8_enabled ) : ?>
 		<!-- 8 termijnen -->
 		<form method="POST" class="plan-form">
 			<input type="hidden" name="token" value="<?php echo esc_attr( $token ); ?>">
@@ -280,6 +287,7 @@ class PublicPaymentPage {
 				<button type="submit" class="btn btn-secondary">Betalen in 8 termijnen</button>
 			</div>
 		</form>
+		<?php endif; ?>
 
 		<?php if ( $admin_fee > 0 ) : ?>
 		<p class="admin-fee-note">Per termijn wordt <?php echo esc_html( $this->format_currency( $admin_fee ) ); ?> administratiekosten in rekening gebracht.</p>
@@ -410,6 +418,23 @@ class PublicPaymentPage {
 		if ( ! in_array( $plan, $allowed_plans, true ) ) {
 			$this->render_error( 'Ongeldige keuze.' );
 			exit;
+		}
+
+		// Check if selected installment plan is enabled for this season.
+		if ( 'quarterly_3' === $plan || 'monthly_8' === $plan ) {
+			$fees_service = new MembershipFees();
+			$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
+			$invoice_season = $fees_service->get_season_key( $invoice_date );
+
+			if ( 'quarterly_3' === $plan && ! $fees_service->get_installment_plan_3_enabled( $invoice_season ) ) {
+				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
+				exit;
+			}
+
+			if ( 'monthly_8' === $plan && ! $fees_service->get_installment_plan_8_enabled( $invoice_season ) ) {
+				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
+				exit;
+			}
 		}
 
 		// Idempotency check: if installment 1 payment ID already exists, redirect to existing checkout.
