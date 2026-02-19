@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 193: Public Payment Landing Page
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 194: Mollie Webhook Installment Extension
 
 ## Current Position
 
-Phase: 193 of 197 (Public Payment Landing Page)
+Phase: 194 of 197 (Mollie Webhook Installment Extension)
 Plan: 1 of 1 in current phase
-Status: Phase 193 complete — ready for Phase 194
-Last activity: 2026-02-18 — Phase 193-01 complete: public payment page at /betaling/{token}, Mollie checkout for installments
+Status: Phase 194 complete — ready for Phase 195
+Last activity: 2026-02-19 — Phase 194-01 complete: dual-path webhook with installment support, InstallmentPaymentService, deployed v27.3.0
 
-Progress: [██░░░░░░░░] 33% (v28.0, 2/6 phases)
+Progress: [███░░░░░░░] 50% (v28.0, 3/6 phases)
 
 ## Performance Metrics
 
@@ -35,6 +35,7 @@ Progress: [██░░░░░░░░] 33% (v28.0, 2/6 phases)
 |-------|------|----------|-------|-------|
 | 192 | 01 | 3min | 2 | 4 |
 | 193 | 01 | 5min | 2 | 5 |
+| 194 | 01 | 4min | 2 | 6 |
 
 ## Accumulated Context
 
@@ -57,6 +58,9 @@ Phase 192-01 decisions:
 - [Phase 193]: PublicPaymentPage uses template_redirect priority 0 — fires before SPA catch-all at priority 1
 - [Phase 193]: generate_token() sets both _payment_token meta and payment_link ACF field for InvoiceEmailSender {betaallink} variable
 - [Phase 193]: All three plan options shown unconditionally — plan-enable toggles deferred to Phase 196
+- [Phase 194]: InstallmentPaymentService reads amount from _installment_N_amount + _installment_N_admin_fee; falls back to ACF total_amount for full plan
+- [Phase 194]: handle_installment_paid writes betaald before all-paid loop so full plan (count=1) works in one pass
+- [Phase 194]: N+1 creation wrapped in try/catch — never propagates; idempotency guard on empty _installment_{next}_mollie_payment_id
 
 ### Pending Todos
 
@@ -69,12 +73,12 @@ Phase 192-01 decisions:
 
 ## Session Continuity
 
-Last session: 2026-02-18
-Stopped at: Completed 193-01-PLAN.md — public payment landing page deployed to production
+Last session: 2026-02-19
+Stopped at: Completed 194-01-PLAN.md — dual-path Mollie webhook with installment support deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 194 — Mollie Webhook Handler
+**Next action:** Execute Phase 195 — Installment Scheduler
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-18 — Phase 193-01 complete, ready for Phase 194*
+*Last updated: 2026-02-19 — Phase 194-01 complete, ready for Phase 195*
