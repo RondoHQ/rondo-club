@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.3.0] - 2026-02-19
+
+### Added
+- Installment payment service (`InstallmentPaymentService`) for shared Mollie payment creation — extracted from `PublicPaymentPage` (DRY)
+- Dual-path Mollie webhook: installment reverse-lookup (`_mollie_pid_{id}`) runs first; legacy `_mollie_payment_id` lookup preserved as fallback
+- Automatic next-installment payment creation after each installment is confirmed by Mollie webhook
+- All-paid check — invoice transitions to `rondo_paid` only when every installment is confirmed (idempotent)
+
 ## [27.2.0] - 2026-02-18
 
 ### Added
