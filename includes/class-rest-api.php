@@ -3694,6 +3694,19 @@ class Api extends Base {
 			$season = $fees->get_season_key();
 		}
 
+		// Check if person is manually excluded from contributie
+		if ( get_post_meta( $person_id, '_exclude_from_contributie', true ) ) {
+			return rest_ensure_response(
+				[
+					'person_id'  => $person_id,
+					'season'     => $season,
+					'calculable' => false,
+					'reason'     => 'manually_excluded',
+					'message'    => 'Persoon is handmatig uitgesloten van contributie.',
+				]
+			);
+		}
+
 		// Check if person is a former member not in the requested season
 		$is_former = ( get_field( 'former_member', $person_id ) == true );
 		if ( $is_former && ! $fees->is_former_member_in_season( $person_id, $season ) ) {

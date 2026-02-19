@@ -80,6 +80,19 @@ class PostTypes {
 				'sanitize_callback' => 'sanitize_text_field',
 			] );
 		}
+
+		// Register contributie exclusion meta field for REST API access.
+		// Write access is gated by the 'financieel' capability in the auth_callback.
+		register_post_meta( 'person', '_exclude_from_contributie', [
+			'type'              => 'boolean',
+			'single'            => true,
+			'show_in_rest'      => true,
+			'default'           => false,
+			'sanitize_callback' => 'rest_sanitize_boolean',
+			'auth_callback'     => function () {
+				return current_user_can( 'financieel' );
+			},
+		] );
 	}
 
 	/**
