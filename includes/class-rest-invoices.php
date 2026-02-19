@@ -599,7 +599,7 @@ class Invoices extends Base {
 		$this->clear_qr_code( $invoice_id );
 
 		// Clear payment provider data
-		delete_post_meta( $invoice_id, '_mollie_payment_id' );
+		delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 		delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 
 		// Reset linked discipline cases (is_charged back to empty)
@@ -1020,8 +1020,8 @@ class Invoices extends Base {
 		$active_provider = $finance_config->get_active_payment_provider();
 
 		if ( 'mollie' === $active_provider ) {
-			// Clear Mollie payment ID to bypass idempotency and force a new payment link
-			delete_post_meta( $invoice_id, '_mollie_payment_id' );
+			// Clear Mollie payment link ID to bypass idempotency and force a new payment link
+			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			update_field( 'payment_link', '', $invoice_id );
 
 			$mollie_payment = new MolliePayment();
@@ -1121,7 +1121,7 @@ class Invoices extends Base {
 		}
 
 		// Clear Mollie payment data
-		delete_post_meta( $invoice_id, '_mollie_payment_id' );
+		delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 		update_field( 'payment_link', '', $invoice_id );
 
 		// Clear Rabobank payment data (also clear payment_link — idempotent)

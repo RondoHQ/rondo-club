@@ -2,8 +2,8 @@
 /**
  * Mollie Payment Service
  *
- * Creates payment links via the Mollie Payments API.
- * Stores the checkout URL and payment ID on the invoice for idempotent reuse.
+ * Creates payment links via the Mollie Payment Links API.
+ * Stores the checkout URL and payment link ID on the invoice for idempotent reuse.
  *
  * @package Rondo\Finance
  */
@@ -25,10 +25,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MolliePayment {
 
 	/**
-	 * Create a Mollie payment and return the checkout URL.
+	 * Create a Mollie payment link and return the checkout URL.
 	 *
-	 * Idempotent: if `_mollie_payment_id` and `payment_link` are both stored on the
-	 * invoice, the existing URL is returned without a new API call.
+	 * Uses the Mollie Payment Links API (POST /v2/payment-links) which creates a
+	 * persistent link that remains valid until paid or archived — unlike regular
+	 * Mollie payments (POST /v2/payments) which expire in ~15 minutes.
+	 *
+	 * Idempotent: if `_mollie_payment_link_id` and `payment_link` are both stored on
+	 * the invoice, the existing URL is returned without a new API call.
 	 *
 	 * @param int $invoice_id Invoice post ID.
 	 * @return string|\WP_Error Checkout URL on success, WP_Error on failure.
@@ -45,13 +49,13 @@ class MolliePayment {
 		}
 
 		// 2. Idempotency check
-		$existing_payment_id = get_post_meta( $invoice_id, '_mollie_payment_id', true );
-		if ( ! empty( $existing_payment_id ) ) {
+		$existing_link_id = get_post_meta( $invoice_id, '_mollie_payment_link_id', true );
+		if ( ! empty( $existing_link_id ) ) {
 			$existing_url = get_field( 'payment_link', $invoice_id );
 			if ( ! empty( $existing_url ) ) {
 				return $existing_url;
 			}
-			// Payment ID exists but URL is missing — fall through to create a new payment.
+			// Payment link ID exists but URL is missing — fall through to create a new link.
 		}
 
 		// 3. Guard: API key configured
@@ -94,24 +98,24 @@ class MolliePayment {
 			$payload['webhookUrl'] = rest_url( 'rondo/v1/mollie/webhook' );
 		}
 
-		// 9. Call Mollie SDK
+		// 9. Call Mollie Payment Links API — creates a persistent link (no expiry by default).
 		try {
 			$mollie_client = new MollieClient();
 			$mollie        = $mollie_client->get();
-			$payment       = $mollie->payments->create( $payload );
+			$payment_link  = $mollie->paymentLinks->create( $payload );
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie API exception: ' . $e->getMessage() );
 			return new \WP_Error(
 				'mollie_api_error',
-				sprintf( __( 'Mollie betaling aanmaken mislukt: %s', 'rondo' ), $e->getMessage() ),
+				sprintf( __( 'Mollie betaallink aanmaken mislukt: %s', 'rondo' ), $e->getMessage() ),
 				[ 'status' => 502 ]
 			);
 		}
 
 		// 10. Extract checkout URL
-		$checkout_url = $payment->getCheckoutUrl();
+		$checkout_url = $payment_link->getCheckoutUrl();
 		if ( empty( $checkout_url ) ) {
-			error_log( 'Mollie payment created but checkout URL is empty for invoice ' . $invoice_id );
+			error_log( 'Mollie payment link created but checkout URL is empty for invoice ' . $invoice_id );
 			return new \WP_Error(
 				'mollie_no_checkout_url',
 				__( 'Geen checkout URL in Mollie response.', 'rondo' ),
@@ -121,7 +125,7 @@ class MolliePayment {
 
 		// 11. Store results
 		update_field( 'payment_link', $checkout_url, $invoice_id );
-		update_post_meta( $invoice_id, '_mollie_payment_id', $payment->id );
+		update_post_meta( $invoice_id, '_mollie_payment_link_id', $payment_link->id );
 
 		// 12. Return checkout URL
 		return $checkout_url;
