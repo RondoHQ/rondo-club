@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [27.4.0] - 2026-02-19
+
+### Added
+- Installment email scheduler: daily cron sweeper sends installment payment emails on the 25th of each scheduled month
+- Overdue reminder system: automatic reminder emails at 14 and 21 days past due, second reminder BCCs treasurer
+- Configurable email templates for installment payments, first reminder, and second reminder in Finance Settings
+- Installment due dates now stored at plan selection time for sweeper-friendly scheduling
+- InstallmentEmailSender class for installment-specific email composition with fresh Mollie payment links
+
 ## [27.3.0] - 2026-02-19
 
 ### Added
