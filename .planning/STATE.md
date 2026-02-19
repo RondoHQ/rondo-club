@@ -111,15 +111,16 @@ Phase 192-01 decisions:
 | 94 | Use direct Mollie payment link for membership invoices with installments disabled | 2026-02-19 | f7486ab5 | [94-use-direct-mollie-payment-link-for-membe](./quick/94-use-direct-mollie-payment-link-for-membe/) |
 | 95 | Add separate email template for contributie invoices | 2026-02-19 | 9f98284e | [95-add-separate-email-template-for-contribu](./quick/95-add-separate-email-template-for-contribu/) |
 | 96 | Separate invoice numbering for contributie (C prefix) | 2026-02-19 | b2e78ca6 | [96-separate-invoice-numbering-for-contribut](./quick/96-separate-invoice-numbering-for-contribut/) |
+| 97 | Show family discount and pro-rata discount line items on membership invoices | 2026-02-19 | 00bbeed5 | [97-show-family-discount-and-pro-rata-discou](./quick/97-show-family-discount-and-pro-rata-discou/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 96 — separate invoice numbering for contributie invoices (C prefix for membership, T prefix for discipline, independent sequences, updated is_valid() regex)
+Stopped at: Completed quick task 97 — show family discount and pro-rata discount line items on membership invoices (itemized breakdown in PDF and email)
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 96 complete (separate invoice numbering for membership, C prefix)*
+*Last updated: 2026-02-19 — Quick task 97 complete (discount line items on membership invoices: gezinskorting + instapkorting)*
