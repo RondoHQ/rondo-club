@@ -247,7 +247,7 @@ class PublicPaymentPage {
 
 	<!-- Plan selection -->
 	<div class="card">
-		<h2>Kies uw betaalwijze</h2>
+		<h2>Kies je betaalwijze</h2>
 
 		<!-- Volledig betalen -->
 		<form method="POST" class="plan-form">
