@@ -113,15 +113,16 @@ Phase 192-01 decisions:
 | 96 | Separate invoice numbering for contributie (C prefix) | 2026-02-19 | b2e78ca6 | [96-separate-invoice-numbering-for-contribut](./quick/96-separate-invoice-numbering-for-contribut/) |
 | 97 | Show family discount and pro-rata discount line items on membership invoices | 2026-02-19 | 00bbeed5 | [97-show-family-discount-and-pro-rata-discou](./quick/97-show-family-discount-and-pro-rata-discou/) |
 | 98 | Improve membership invoice PDF: category name, remove discipline columns, separate payment section | 2026-02-19 | 46765a91 | [98-improve-membership-invoice-pdf-category-](./quick/98-improve-membership-invoice-pdf-category-/) |
+| 99 | Update contributie invoice line item descriptions: add season and instapkorting explanation | 2026-02-19 | 9307ff7c | [99-update-contributie-invoice-line-descript](./quick/99-update-contributie-invoice-line-descript/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 98 — membership invoice PDF improvements (category label, 2-col layout, separate betaalgegevens)
+Stopped at: Completed quick task 99 — contributie invoice line descriptions (season year + instapkorting explanation)
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 98 complete (membership invoice PDF: category name, no discipline columns, email-based payment section)*
+*Last updated: 2026-02-19 — Quick task 99 complete (invoice line descriptions: season in main fee, explanation in instapkorting)*
