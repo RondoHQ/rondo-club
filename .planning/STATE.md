@@ -109,11 +109,12 @@ Phase 192-01 decisions:
 | 92 | Set club logo as favicon on betaling page | 2026-02-19 | 2852213c | [92-set-club-logo-as-favicon-on-betaling-pag](./quick/92-set-club-logo-as-favicon-on-betaling-pag/) |
 | 93 | Enable sending and disable installments per invoice | 2026-02-19 | bcf41e92 | [93-enable-sending-and-disable-installments-](./quick/93-enable-sending-and-disable-installments-/) |
 | 94 | Use direct Mollie payment link for membership invoices with installments disabled | 2026-02-19 | f7486ab5 | [94-use-direct-mollie-payment-link-for-membe](./quick/94-use-direct-mollie-payment-link-for-membe/) |
+| 95 | Add separate email template for contributie invoices | 2026-02-19 | 9f98284e | [95-add-separate-email-template-for-contribu](./quick/95-add-separate-email-template-for-contribu/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 94 — direct Mollie link for membership invoices with installments disabled (conditional token in BulkInvoiceCreator, token lifecycle in toggle_installments)
+Stopped at: Completed quick task 95 — separate email template for contributie invoices (FinanceConfig option, InvoiceEmailSender override, REST routing by invoice_type, Finance Settings card)
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
