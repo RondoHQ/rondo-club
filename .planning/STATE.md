@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 87: Redirect to invoice page after creating invoice
+Last activity: 2026-02-19 - Completed quick task 88: Show Doorbelast as n.v.t. when boete is zero and exclude from Nee filter
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -114,4 +114,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 87 complete (redirect to invoice page after creation)*
+*Last updated: 2026-02-19 — Quick task 88 complete (Doorbelast n.v.t. for zero-fee cases)*
