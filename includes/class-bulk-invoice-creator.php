@@ -266,11 +266,14 @@ class BulkInvoiceCreator {
 		// Store season meta.
 		update_post_meta( $post_id, '_invoice_season', $season );
 
-		// Generate payment token and set payment_link ACF field.
-		PublicPaymentPage::generate_token( $post_id );
-
 		// Default: disable installments for bulk-created membership invoices.
 		update_post_meta( $post_id, '_disable_installments', '1' );
+
+		// Only generate betaling page token if installments are enabled.
+		// When disabled, send_invoice() creates a direct Mollie link instead.
+		if ( ! get_post_meta( $post_id, '_disable_installments', true ) ) {
+			PublicPaymentPage::generate_token( $post_id );
+		}
 
 		return 'created';
 	}
