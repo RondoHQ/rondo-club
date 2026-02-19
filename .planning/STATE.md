@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 106: Reorder Finance Settings tabs and mark inactive payment provider
+Last activity: 2026-02-19 - Completed quick task 107: Fix Nog te factureren page not updating after Maak factuur
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -121,6 +121,7 @@ Phase 192-01 decisions:
 | 104 | Fix amounts on Person Detail Financieel tab to use two decimals | 2026-02-19 | de41aa73 | [104-fix-amounts-on-person-detail-financieel-](./quick/104-fix-amounts-on-person-detail-financieel-/) |
 | 105 | Rename Administratiekosten to Administratiekosten tuchtzaken | 2026-02-19 | c710ab51 | [105-rename-administratiekosten-to-administra](./quick/105-rename-administratiekosten-to-administra/) |
 | 106 | Reorder Finance Settings tabs and mark inactive payment provider | 2026-02-19 | 3678ea0f | [106-reorder-finance-settings-tabs-and-mark-i](./quick/106-reorder-finance-settings-tabs-and-mark-i/) |
+| 107 | Fix Nog te factureren page not updating after Maak factuur | 2026-02-19 | 9a104640 | [107-fix-nog-te-factureren-page-not-updating-](./quick/107-fix-nog-te-factureren-page-not-updating-/) |
 
 ## Session Continuity
 
