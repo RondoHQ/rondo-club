@@ -114,15 +114,16 @@ Phase 192-01 decisions:
 | 97 | Show family discount and pro-rata discount line items on membership invoices | 2026-02-19 | 00bbeed5 | [97-show-family-discount-and-pro-rata-discou](./quick/97-show-family-discount-and-pro-rata-discou/) |
 | 98 | Improve membership invoice PDF: category name, remove discipline columns, separate payment section | 2026-02-19 | 46765a91 | [98-improve-membership-invoice-pdf-category-](./quick/98-improve-membership-invoice-pdf-category-/) |
 | 99 | Update contributie invoice line item descriptions: add season and instapkorting explanation | 2026-02-19 | 9307ff7c | [99-update-contributie-invoice-line-descript](./quick/99-update-contributie-invoice-line-descript/) |
+| 100 | Add separate betalingsclausule for contributie invoices | 2026-02-19 | 3a560c97 | [100-add-separate-betalingsclausule-for-contr](./quick/100-add-separate-betalingsclausule-for-contr/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 99 — contributie invoice line descriptions (season year + instapkorting explanation)
+Stopped at: Completed quick task 100 — separate betalingsclausule for contributie (membership_payment_clause in PDF + UI)
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 99 complete (invoice line descriptions: season in main fee, explanation in instapkorting)*
+*Last updated: 2026-02-19 — Quick task 100 complete (separate betalingsclausule for contributie: FinanceConfig, REST, PDF, FinanceSettings UI)*
