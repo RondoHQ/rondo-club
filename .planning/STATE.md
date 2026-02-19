@@ -123,15 +123,16 @@ Phase 192-01 decisions:
 | 106 | Reorder Finance Settings tabs and mark inactive payment provider | 2026-02-19 | 3678ea0f | [106-reorder-finance-settings-tabs-and-mark-i](./quick/106-reorder-finance-settings-tabs-and-mark-i/) |
 | 107 | Fix Nog te factureren page not updating after Maak factuur | 2026-02-19 | 9a104640 | [107-fix-nog-te-factureren-page-not-updating-](./quick/107-fix-nog-te-factureren-page-not-updating-/) |
 | 108 | Fix Termijnbetaling uitschakelen default (installments enabled by default for bulk invoices) | 2026-02-19 | f2b55241 | [108-fix-termijnbetaling-uitschakelen-default](./quick/108-fix-termijnbetaling-uitschakelen-default/) |
+| 109 | Replace Financien with Financiën in sidebar and page title display strings | 2026-02-19 | e0afe59e | [109-replace-financien-with-financi-n-everywh](./quick/109-replace-financien-with-financi-n-everywh/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 108 — fix Termijnbetaling uitschakelen default for bulk invoices
+Stopped at: Completed quick task 109 — replace Financien with Financiën in sidebar and page title display strings
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 108 complete (fix forced _disable_installments default in bulk invoice creation)*
+*Last updated: 2026-02-19 — Quick task 109 complete (replace Financien with Financiën in display strings)*
