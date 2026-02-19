@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 — Phase 197-02 complete: installment timeline on invoice detail page, v28.1.0 shipped
+Last activity: 2026-02-19 - Completed quick task 85: Add contributie exclusion option to person detail screen
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -94,6 +94,12 @@ Phase 192-01 decisions:
 ### Blockers/Concerns
 
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 85 | Add contributie exclusion option to person detail screen | 2026-02-19 | 28fabfa3 | [85-add-contributie-exclusion-option-to-pers](./quick/85-add-contributie-exclusion-option-to-pers/) |
 
 ## Session Continuity
 
