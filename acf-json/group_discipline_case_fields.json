@@ -89,6 +89,40 @@
             }
         },
         {
+            "key": "field_discipline_home_team",
+            "label": "Thuisteam",
+            "name": "home_team",
+            "type": "post_object",
+            "instructions": "Thuisteam van de wedstrijd (automatisch gekoppeld via Sportlink)",
+            "required": 0,
+            "post_type": ["team"],
+            "multiple": 0,
+            "return_format": "id",
+            "allow_null": 1,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
+            "key": "field_discipline_away_team",
+            "label": "Uitteam",
+            "name": "away_team",
+            "type": "post_object",
+            "instructions": "Uitteam van de wedstrijd (automatisch gekoppeld via Sportlink)",
+            "required": 0,
+            "post_type": ["team"],
+            "multiple": 0,
+            "return_format": "id",
+            "allow_null": 1,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            }
+        },
+        {
             "key": "field_discipline_charge_codes",
             "label": "Artikelnummer",
             "name": "charge_codes",
