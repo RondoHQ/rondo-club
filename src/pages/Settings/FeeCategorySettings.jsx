@@ -697,6 +697,10 @@ export default function FeeCategorySettings() {
     },
   });
 
+  // Get active season data (must be before useBillingSettings hook)
+  const activeSeason = selectedSeason === 'current' ? data?.current_season : data?.next_season;
+  const activeSeasonKey = activeSeason?.key;
+
   // Fetch billing settings for the active season
   const { data: billingSettings } = useBillingSettings(activeSeasonKey);
 
@@ -731,9 +735,6 @@ export default function FeeCategorySettings() {
     })
   );
 
-  // Get active season data
-  const activeSeason = selectedSeason === 'current' ? data?.current_season : data?.next_season;
-  const activeSeasonKey = activeSeason?.key;
   const categories = activeSeason?.categories || {};
   const activeDiscount = activeSeason?.family_discount || { second_child_percent: 25, third_child_percent: 50 };
 
