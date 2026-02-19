@@ -249,7 +249,7 @@ class BulkInvoiceCreator {
 		// Set ACF fields.
 		update_field( 'invoice_number', $invoice_number, $post_id );
 		update_field( 'person', $person_id, $post_id );
-		update_field( 'status', 'concept', $post_id );
+		update_field( 'status', 'draft', $post_id );
 		update_field( 'invoice_type', 'membership', $post_id );
 		update_field( 'total_amount', $final_fee, $post_id );
 
