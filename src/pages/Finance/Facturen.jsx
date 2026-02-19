@@ -24,6 +24,18 @@ const statusLabels = {
   overdue: 'Verlopen',
 };
 
+// Invoice type display labels
+const typeLabels = {
+  membership: 'Contributie',
+  discipline: 'Tuchtrecht',
+};
+
+// Invoice type badge colors
+const typeColors = {
+  membership: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  discipline: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+};
+
 /**
  * Status badge component for invoices
  */
@@ -38,15 +50,17 @@ function StatusBadge({ status }) {
 export default function Facturen() {
   useDocumentTitle('Facturen');
 
-  // URL-based status filter via useSearchParams
+  // URL-based filters via useSearchParams
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get('status') || '';
+  const typeFilter = searchParams.get('type') || '';
+  const planFilter = searchParams.get('plan') || '';
 
-  const updateStatusFilter = useCallback((value) => {
+  const updateFilter = useCallback((key, value) => {
     if (value === '') {
-      searchParams.delete('status');
+      searchParams.delete(key);
     } else {
-      searchParams.set('status', value);
+      searchParams.set(key, value);
     }
     setSearchParams(searchParams, { replace: true });
   }, [searchParams, setSearchParams]);
@@ -56,9 +70,11 @@ export default function Facturen() {
 
   const queryClient = useQueryClient();
 
-  // Fetch invoices with optional status filter
+  // Fetch invoices with optional filters
   const { data: invoices, isLoading, error } = useInvoices({
     status: statusFilter || undefined,
+    type: typeFilter || undefined,
+    payment_plan: planFilter || undefined,
   });
 
   const handleRefresh = async () => {
@@ -95,6 +111,10 @@ export default function Facturen() {
         case 'total_amount':
           aVal = parseFloat(a.total_amount) || 0;
           bVal = parseFloat(b.total_amount) || 0;
+          break;
+        case 'invoice_type':
+          aVal = a.invoice_type || '';
+          bVal = b.invoice_type || '';
           break;
         case 'status':
           aVal = a.status || '';
@@ -163,7 +183,7 @@ export default function Facturen() {
           {/* Status filter */}
           <select
             value={statusFilter}
-            onChange={(e) => updateStatusFilter(e.target.value)}
+            onChange={(e) => updateFilter('status', e.target.value)}
             className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
           >
             <option value="">Alle statussen</option>
@@ -171,6 +191,29 @@ export default function Facturen() {
             <option value="sent">Verstuurd</option>
             <option value="paid">Betaald</option>
             <option value="overdue">Verlopen</option>
+          </select>
+
+          {/* Type filter */}
+          <select
+            value={typeFilter}
+            onChange={(e) => updateFilter('type', e.target.value)}
+            className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+          >
+            <option value="">Alle types</option>
+            <option value="membership">Contributie</option>
+            <option value="discipline">Tuchtrecht</option>
+          </select>
+
+          {/* Payment plan filter */}
+          <select
+            value={planFilter}
+            onChange={(e) => updateFilter('plan', e.target.value)}
+            className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+          >
+            <option value="">Alle plannen</option>
+            <option value="full">Volledig</option>
+            <option value="quarterly_3">3 termijnen</option>
+            <option value="monthly_8">8 termijnen</option>
           </select>
         </div>
 
@@ -208,6 +251,13 @@ export default function Facturen() {
                   >
                     Bedrag
                     <SortIndicator columnKey="total_amount" />
+                  </th>
+                  <th
+                    className="hidden sm:table-cell px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => handleSort('invoice_type')}
+                  >
+                    Type
+                    <SortIndicator columnKey="invoice_type" />
                   </th>
                   <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -257,6 +307,15 @@ export default function Facturen() {
                     </td>
                     <td className="px-4 py-3 text-gray-900 dark:text-gray-100 font-medium">
                       {formatCurrency(invoice.total_amount, 2)}
+                    </td>
+                    <td className="hidden sm:table-cell px-4 py-3">
+                      {invoice.invoice_type ? (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[invoice.invoice_type] || ''}`}>
+                          {typeLabels[invoice.invoice_type] || invoice.invoice_type}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={invoice.status} />
