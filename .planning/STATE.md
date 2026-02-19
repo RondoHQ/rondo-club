@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 94: Use direct Mollie payment link for membership invoices with installments disabled
+Last activity: 2026-02-19 - Completed quick task 95: Add separate email template for contributie invoices
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -121,4 +121,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 93 complete (per-invoice installments toggle)*
+*Last updated: 2026-02-19 — Quick task 95 complete (separate membership email template)*
