@@ -102,11 +102,12 @@ Phase 192-01 decisions:
 | 85 | Add contributie exclusion option to person detail screen | 2026-02-19 | 28fabfa3 | [85-add-contributie-exclusion-option-to-pers](./quick/85-add-contributie-exclusion-option-to-pers/) |
 | 86 | Add pro-rata and family discount columns to Nog te factureren page | 2026-02-19 | 817c57f2 | [86-add-pro-rata-and-family-discount-columns](./quick/86-add-pro-rata-and-family-discount-columns/) |
 | 87 | Redirect to invoice page after creating invoice | 2026-02-19 | be3d9f86 | [87-redirect-to-invoice-page-after-creating-](./quick/87-redirect-to-invoice-page-after-creating-/) |
+| 88 | Show Doorbelast as n.v.t. when boete is €0 | 2026-02-19 | c9945a37 | [88-show-doorbelast-as-n-v-t-when-boete-is-z](./quick/88-show-doorbelast-as-n-v-t-when-boete-is-z/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 87 — navigate to invoice detail after creation
+Stopped at: Completed quick task 88 — show Doorbelast as n.v.t. for zero-fee uncharged discipline cases
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
