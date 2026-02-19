@@ -112,7 +112,7 @@
 - [x] **Phase 194: Payment Plan Manager + Webhook Extension** (1/1 plan) — completed 2026-02-19
 - [x] **Phase 195: Installment Scheduler + Email System** (2/2 plans) — completed 2026-02-19
 - [x] **Phase 196: Bulk Invoice Creation** (2/2 plans) — completed 2026-02-19
-- [ ] **Phase 197: Frontend Updates** (0/2 plans) — Facturen filters, installment timeline, Finance capability gating
+- [x] **Phase 197: Frontend Updates** (2/2 plans) — completed 2026-02-19
 
 ## Phase Details
 
@@ -245,8 +245,8 @@ Plans:
 | 194 | v28.0 | 1/1 | ✓ Complete | 2026-02-19 |
 | 195 | v28.0 | 2/2 | ✓ Complete | 2026-02-19 |
 | 196 | v28.0 | 2/2 | ✓ Complete | 2026-02-19 |
-| 197 | v28.0 | 0/TBD | Not started | - |
+| 197 | v28.0 | 2/2 | ✓ Complete | 2026-02-19 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-19 — Phase 196 complete*
+*Last updated: 2026-02-19 — Phase 197 complete, v28.0 milestone shipped*
