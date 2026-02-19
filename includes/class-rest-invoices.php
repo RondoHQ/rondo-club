@@ -552,6 +552,7 @@ class Invoices extends Base {
 		update_field( 'invoice_number', $invoice_number, $post_id );
 		update_field( 'person', $person_id, $post_id );
 		update_field( 'status', 'draft', $post_id );
+		update_field( 'invoice_type', 'discipline', $post_id );
 		update_field( 'total_amount', $total_amount, $post_id );
 		update_field( 'line_items', $rows, $post_id );
 
