@@ -262,7 +262,7 @@ class BulkInvoiceCreator {
 		$line_items = [
 			[
 				'discipline_case' => null,
-				'description'     => 'Contributie - ' . $category_label,
+				'description'     => 'Contributie ' . $season . ' - ' . $category_label,
 				'amount'          => $fee_data['base_fee'],
 			],
 		];
@@ -286,7 +286,7 @@ class BulkInvoiceCreator {
 			$prorata_discount_amt = round( $fee_after_discount - $final_fee, 2 );
 			$line_items[] = [
 				'discipline_case' => null,
-				'description'     => 'Instapkorting (' . $prorata_discount_pct . '%)',
+				'description'     => 'Instapkorting (' . $prorata_discount_pct . '%) - omdat je later in het seizoen start',
 				'amount'          => -$prorata_discount_amt,
 			];
 		}
