@@ -852,6 +852,7 @@ class Api extends Base {
 						'payment_term_days'     => [ 'required' => false, 'type' => 'integer' ],
 						'payment_clause'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
 						'email_template'             => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
+						'membership_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'installment_email_template' => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'reminder_1_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'reminder_2_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],

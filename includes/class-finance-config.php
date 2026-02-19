@@ -55,9 +55,10 @@ class FinanceConfig {
 	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
 	const OPTION_ADMIN_FEE               = 'rondo_finance_admin_fee';
 	const OPTION_INSTALLMENT_ADMIN_FEE   = 'rondo_finance_installment_admin_fee';
-	const OPTION_INSTALLMENT_EMAIL_TEMPLATE = 'rondo_finance_installment_email_template';
-	const OPTION_REMINDER_1_EMAIL_TEMPLATE  = 'rondo_finance_reminder_1_email_template';
-	const OPTION_REMINDER_2_EMAIL_TEMPLATE  = 'rondo_finance_reminder_2_email_template';
+	const OPTION_INSTALLMENT_EMAIL_TEMPLATE  = 'rondo_finance_installment_email_template';
+	const OPTION_REMINDER_1_EMAIL_TEMPLATE   = 'rondo_finance_reminder_1_email_template';
+	const OPTION_REMINDER_2_EMAIL_TEMPLATE   = 'rondo_finance_reminder_2_email_template';
+	const OPTION_MEMBERSHIP_EMAIL_TEMPLATE   = 'rondo_finance_membership_email_template';
 
 	/**
 	 * Default configuration values
@@ -80,6 +81,7 @@ class FinanceConfig {
 		'installment_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Hierbij herinneren wij u aan de vervaldatum van termijn {termijn_nummer} van {totaal_termijnen} van uw contributie voor factuur {factuur_nummer}.</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum:</strong> {vervaldatum}</p><p>U kunt betalen via de volgende link:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'reminder_1_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Wij hebben geconstateerd dat termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}) nog niet is voldaan.</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u vriendelijk dit bedrag zo spoedig mogelijk te voldoen via:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'reminder_2_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u dringend dit bedrag direct te voldoen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij de vordering overdragen aan ons bestuur.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'membership_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor uw contributie.</p><p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 	];
 
 	/**
@@ -180,6 +182,18 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get membership (contributie) email template
+	 *
+	 * Sent when a membership invoice is emailed. Uses a clean template without
+	 * discipline/tuchtcommissie references, unlike the discipline invoice template.
+	 *
+	 * @return string The membership email template (default template if not configured)
+	 */
+	public function get_membership_email_template(): string {
+		return get_option( self::OPTION_MEMBERSHIP_EMAIL_TEMPLATE, self::DEFAULTS['membership_email_template'] );
+	}
+
+	/**
 	 * Get club logo ID
 	 *
 	 * @return int The club logo attachment ID (0 if not configured)
@@ -271,7 +285,8 @@ class FinanceConfig {
 			'iban'                  => $this->get_iban(),
 			'payment_term_days'     => $this->get_payment_term_days(),
 			'payment_clause'        => $this->get_payment_clause(),
-			'email_template'        => $this->get_email_template(),
+			'email_template'             => $this->get_email_template(),
+			'membership_email_template'  => $this->get_membership_email_template(),
 			'installment_email_template' => $this->get_installment_email_template(),
 			'reminder_1_email_template'  => $this->get_reminder_1_email_template(),
 			'reminder_2_email_template'  => $this->get_reminder_2_email_template(),
@@ -312,6 +327,8 @@ class FinanceConfig {
 				return $this->get_payment_clause();
 			case 'email_template':
 				return $this->get_email_template();
+			case 'membership_email_template':
+				return $this->get_membership_email_template();
 			case 'installment_email_template':
 				return $this->get_installment_email_template();
 			case 'reminder_1_email_template':
@@ -372,6 +389,10 @@ class FinanceConfig {
 
 		if ( isset( $data['email_template'] ) ) {
 			$success = update_option( self::OPTION_EMAIL_TEMPLATE, wp_kses_post( $data['email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['membership_email_template'] ) ) {
+			$success = update_option( self::OPTION_MEMBERSHIP_EMAIL_TEMPLATE, wp_kses_post( $data['membership_email_template'] ) ) && $success;
 		}
 
 		if ( isset( $data['installment_email_template'] ) ) {
