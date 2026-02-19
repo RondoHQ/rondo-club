@@ -253,14 +253,39 @@ class BulkInvoiceCreator {
 		update_field( 'invoice_type', 'membership', $post_id );
 		update_field( 'total_amount', $final_fee, $post_id );
 
-		// Set line items (single item).
+		// Build line items with discount breakdown.
 		$line_items = [
 			[
 				'discipline_case' => null,
 				'description'     => 'Contributie ' . $season,
-				'amount'          => $final_fee,
+				'amount'          => $fee_data['base_fee'],
 			],
 		];
+
+		// Family discount line (only if applicable).
+		$family_discount_amount = $fee_data['family_discount_amount'] ?? 0;
+		if ( $family_discount_amount > 0 ) {
+			$family_rate_pct = round( ( $fee_data['family_discount_rate'] ?? 0 ) * 100 );
+			$line_items[] = [
+				'discipline_case' => null,
+				'description'     => 'Gezinskorting (' . $family_rate_pct . '%)',
+				'amount'          => -$family_discount_amount,
+			];
+		}
+
+		// Pro-rata discount line (only if applicable).
+		$prorata_percentage = $fee_data['prorata_percentage'] ?? 1.0;
+		if ( $prorata_percentage < 1.0 ) {
+			$prorata_discount_pct = round( ( 1 - $prorata_percentage ) * 100 );
+			$fee_after_discount   = $fee_data['fee_after_discount'] ?? $fee_data['base_fee'];
+			$prorata_discount_amt = round( $fee_after_discount - $final_fee, 2 );
+			$line_items[] = [
+				'discipline_case' => null,
+				'description'     => 'Instapkorting (' . $prorata_discount_pct . '%)',
+				'amount'          => -$prorata_discount_amt,
+			];
+		}
+
 		update_field( 'line_items', $line_items, $post_id );
 
 		// Store season meta.
