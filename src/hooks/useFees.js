@@ -9,6 +9,8 @@ export const feeKeys = {
   list: (params) => [...feeKeys.all, 'list', params],
   summary: (params) => [...feeKeys.all, 'summary', params],
   person: (personId, params) => [...feeKeys.all, 'person', personId, params],
+  bulkJob: ['fees', 'bulk-job'],
+  billingSettings: (season) => ['fees', 'billing-settings', season],
 };
 
 /**
@@ -59,5 +61,41 @@ export function usePersonFee(personId, params = {}) {
       return response.data;
     },
     enabled: !!personId,
+  });
+}
+
+/**
+ * Hook for polling bulk invoice job status.
+ * Automatically refetches every 2 seconds while a job is running.
+ *
+ * @returns {Object} Query result with data (job status), isLoading, error
+ */
+export function useBulkInvoiceJob() {
+  return useQuery({
+    queryKey: feeKeys.bulkJob,
+    queryFn: async () => {
+      const response = await prmApi.getBulkInvoiceJobStatus();
+      return response.data;
+    },
+    refetchInterval: (query) => {
+      return query.state.data?.status === 'running' ? 2000 : false;
+    },
+  });
+}
+
+/**
+ * Hook for fetching billing settings for a season.
+ *
+ * @param {string} season - Season key (e.g. '2025-2026')
+ * @returns {Object} Query result with data, isLoading, error
+ */
+export function useBillingSettings(season) {
+  return useQuery({
+    queryKey: feeKeys.billingSettings(season),
+    queryFn: async () => {
+      const response = await prmApi.getBillingSettings({ season });
+      return response.data;
+    },
+    enabled: !!season,
   });
 }

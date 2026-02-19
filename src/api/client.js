@@ -319,6 +319,15 @@ export const prmApi = {
   recalculateAllFees: (params = {}) => api.post('/rondo/v1/fees/recalculate', params),
   exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data),
 
+  // Bulk invoice creation
+  startBulkInvoiceJob: (data) => api.post('/rondo/v1/fees/bulk-create-invoices', data),
+  getBulkInvoiceJobStatus: () => api.get('/rondo/v1/fees/bulk-invoice-job'),
+  createMembershipInvoice: (data) => api.post('/rondo/v1/fees/create-membership-invoice', data),
+
+  // Billing settings
+  getBillingSettings: (params = {}) => api.get('/rondo/v1/fees/billing-settings', { params }),
+  updateBillingSettings: (data) => api.post('/rondo/v1/fees/billing-settings', data),
+
   // VOG Bulk Operations
   bulkSendVOGEmails: (ids) => api.post('/rondo/v1/vog/bulk-send', { ids }),
   bulkMarkVOGJustis: (ids) => api.post('/rondo/v1/vog/bulk-mark-justis', { ids }),
