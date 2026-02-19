@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 99: Update contributie invoice line descriptions
+Last activity: 2026-02-19 - Completed quick task 100: Add separate betalingsclausule for contributie invoices
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
