@@ -192,21 +192,18 @@ class PublicPaymentPage {
 		$total_3 = round( $total_amount / 3, 2 ) * 3 + $admin_fee * 3;
 		$total_8 = round( $total_amount / 8, 2 ) * 8 + $admin_fee * 8;
 
-		$club_name = get_bloginfo( 'name' );
+		$branding = $this->get_club_branding();
 
 		status_header( 200 );
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling — ' . esc_html( $club_name ) );
+		$this->render_html_header( 'Betaling — ' . esc_html( $branding['name'] ) );
 		?>
 
 <div class="container">
 	<!-- Header -->
-	<div class="card header-card">
-		<div class="club-name"><?php echo esc_html( $club_name ); ?></div>
-		<h1>Contributie betalen</h1>
-	</div>
+	<?php $this->render_header_card( 'Contributie betalen' ); ?>
 
 	<!-- Invoice summary -->
 	<div class="card">
@@ -314,21 +311,18 @@ class PublicPaymentPage {
 		$invoice_date    = get_the_date( 'Y-m-d', $invoice_id );
 		$season          = $membership_fees->get_season_key( $invoice_date );
 
-		$club_name = get_bloginfo( 'name' );
+		$branding = $this->get_club_branding();
 
 		status_header( 200 );
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $club_name ) );
+		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $branding['name'] ) );
 		?>
 
 <div class="container">
 	<!-- Header -->
-	<div class="card header-card">
-		<div class="club-name"><?php echo esc_html( $club_name ); ?></div>
-		<h1>Betaling</h1>
-	</div>
+	<?php $this->render_header_card( 'Betaling' ); ?>
 
 	<!-- Success message -->
 	<div class="card success-card">
@@ -366,6 +360,45 @@ class PublicPaymentPage {
 	}
 
 	/**
+	 * Get club name and logo URL from FinanceConfig.
+	 *
+	 * @return array{name: string, logo_url: string} Club name and logo URL.
+	 */
+	private function get_club_branding(): array {
+		$config   = new FinanceConfig();
+		$name     = $config->get_org_name();
+		$logo_url = '';
+		$logo_id  = $config->get_club_logo_id();
+		if ( $logo_id > 0 ) {
+			$url = wp_get_attachment_url( $logo_id );
+			if ( $url ) {
+				$logo_url = $url;
+			}
+		}
+		return [ 'name' => $name ?: get_bloginfo( 'name' ), 'logo_url' => $logo_url ];
+	}
+
+	/**
+	 * Render the header card with club logo and name.
+	 *
+	 * @param string $heading Page heading text.
+	 */
+	private function render_header_card( string $heading ) {
+		$branding = $this->get_club_branding();
+		?>
+	<div class="card header-card">
+		<div class="club-brand">
+			<?php if ( $branding['logo_url'] ) : ?>
+				<img src="<?php echo esc_url( $branding['logo_url'] ); ?>" alt="" class="club-logo" />
+			<?php endif; ?>
+			<span class="club-name"><?php echo esc_html( $branding['name'] ); ?></span>
+		</div>
+		<h1><?php echo esc_html( $heading ); ?></h1>
+	</div>
+		<?php
+	}
+
+	/**
 	 * Render a Dutch error page and set appropriate HTTP status.
 	 *
 	 * @param string $message Dutch error message to display.
@@ -375,15 +408,12 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$club_name = get_bloginfo( 'name' );
-		$this->render_html_header( 'Fout — ' . esc_html( $club_name ) );
+		$branding = $this->get_club_branding();
+		$this->render_html_header( 'Fout — ' . esc_html( $branding['name'] ) );
 		?>
 
 <div class="container">
-	<div class="card header-card">
-		<div class="club-name"><?php echo esc_html( $club_name ); ?></div>
-		<h1>Betaling</h1>
-	</div>
+	<?php $this->render_header_card( 'Betaling' ); ?>
 	<div class="card error-card">
 		<h2>Betaallink niet gevonden</h2>
 		<p><?php echo esc_html( $message ); ?></p>
@@ -612,13 +642,26 @@ class PublicPaymentPage {
 			padding-bottom: 1.5rem;
 		}
 
+		.club-brand {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
+
+		.club-logo {
+			width: 2rem;
+			height: 2rem;
+			object-fit: contain;
+		}
+
 		.club-name {
 			font-size: 0.875rem;
 			font-weight: 500;
 			color: #64748b;
 			text-transform: uppercase;
 			letter-spacing: 0.05em;
-			margin-bottom: 0.5rem;
 		}
 
 		h1 {
