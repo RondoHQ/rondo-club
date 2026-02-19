@@ -702,6 +702,52 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get whether installment plan 3 (quarterly_3) is enabled for a season.
+	 *
+	 * @param string|null $season Optional season key. Defaults to current season.
+	 * @return bool True if plan is enabled (default: true).
+	 */
+	public function get_installment_plan_3_enabled( ?string $season = null ): bool {
+		$season = $season ?? $this->get_season_key();
+		return (bool) get_option( 'rondo_installment_plan_3_enabled_' . $season, true );
+	}
+
+	/**
+	 * Set whether installment plan 3 (quarterly_3) is enabled for a season.
+	 *
+	 * @param bool        $enabled Whether to enable the plan.
+	 * @param string|null $season  Optional season key. Defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function set_installment_plan_3_enabled( bool $enabled, ?string $season = null ): bool {
+		$season = $season ?? $this->get_season_key();
+		return update_option( 'rondo_installment_plan_3_enabled_' . $season, $enabled );
+	}
+
+	/**
+	 * Get whether installment plan 8 (monthly_8) is enabled for a season.
+	 *
+	 * @param string|null $season Optional season key. Defaults to current season.
+	 * @return bool True if plan is enabled (default: true).
+	 */
+	public function get_installment_plan_8_enabled( ?string $season = null ): bool {
+		$season = $season ?? $this->get_season_key();
+		return (bool) get_option( 'rondo_installment_plan_8_enabled_' . $season, true );
+	}
+
+	/**
+	 * Set whether installment plan 8 (monthly_8) is enabled for a season.
+	 *
+	 * @param bool        $enabled Whether to enable the plan.
+	 * @param string|null $season  Optional season key. Defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function set_installment_plan_8_enabled( bool $enabled, ?string $season = null ): bool {
+		$season = $season ?? $this->get_season_key();
+		return update_option( 'rondo_installment_plan_8_enabled_' . $season, $enabled );
+	}
+
+	/**
 	 * Get the next season key (one year ahead of current/specified season)
 	 *
 	 * Takes a season key in "YYYY-YYYY" format and returns the next season.
