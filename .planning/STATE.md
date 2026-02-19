@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 101: Replace hardcoded membership invoice payment text with setting
+Last activity: 2026-02-19 - Completed quick task 102: Fix invoice status on Nog te factureren page
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -116,15 +116,16 @@ Phase 192-01 decisions:
 | 99 | Update contributie invoice line item descriptions: add season and instapkorting explanation | 2026-02-19 | 9307ff7c | [99-update-contributie-invoice-line-descript](./quick/99-update-contributie-invoice-line-descript/) |
 | 100 | Add separate betalingsclausule for contributie invoices | 2026-02-19 | 3a560c97 | [100-add-separate-betalingsclausule-for-contr](./quick/100-add-separate-betalingsclausule-for-contr/) |
 | 101 | Replace hardcoded membership invoice payment text with betalingsclausule setting | 2026-02-19 | 6cb4e297 | [101-replace-hardcoded-membership-invoice-pay](./quick/101-replace-hardcoded-membership-invoice-pay/) |
+| 102 | Fix invoice status lookup on Nog te factureren page | 2026-02-19 | ab7a1d2a | [102-fix-invoice-status-on-nog-te-factureren](./quick/102-fix-invoice-status-on-nog-te-factureren/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 101 — membership invoice uses betalingsclausule setting instead of hardcoded text
+Stopped at: Completed quick task 102 — fixed invoice status on Nog te factureren page
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 101 complete (membership invoice payment text from settings)*
+*Last updated: 2026-02-19 — Quick task 102 complete (fix invoice status lookup on Nog te factureren)*
