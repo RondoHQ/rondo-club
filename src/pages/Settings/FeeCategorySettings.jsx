@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GripVertical, Edit2, Trash2, Plus, Loader2, AlertCircle, Copy, RefreshCw } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
+import { useBillingSettings } from '@/hooks/useFees';
 import {
   DndContext,
   closestCenter,
@@ -696,6 +697,27 @@ export default function FeeCategorySettings() {
     },
   });
 
+  // Fetch billing settings for the active season
+  const { data: billingSettings } = useBillingSettings(activeSeasonKey);
+
+  // Billing settings mutation
+  const billingMutation = useMutation({
+    mutationFn: async (data) => {
+      const response = await prmApi.updateBillingSettings(data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fees', 'billing-settings', activeSeasonKey] });
+      queryClient.invalidateQueries({ queryKey: ['fees'] });
+      setSuccessMessage('Facturatie-instellingen opgeslagen');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    },
+    onError: (error) => {
+      const errorMessage = error.response?.data?.message || error.message || 'Er is een fout opgetreden';
+      setSaveErrors([{ field: 'general', message: errorMessage }]);
+    },
+  });
+
   // Drag-and-drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -905,6 +927,80 @@ export default function FeeCategorySettings() {
           </p>
         </div>
       )}
+
+      {/* Billing settings section */}
+      <div className="card p-6 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+        <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+          Facturatie-instellingen
+        </h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Bij &lsquo;Rondo facturatie&rsquo; worden facturen vanuit Rondo verstuurd en zijn Nikki-kolommen verborgen.
+        </p>
+
+        <div className="space-y-4">
+          {/* Billing method */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Facturatiemethode
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="billing_method"
+                  value="nikki"
+                  checked={(billingSettings?.billing_method ?? 'nikki') === 'nikki'}
+                  onChange={() => billingMutation.mutate({ season: activeSeasonKey, billing_method: 'nikki' })}
+                  disabled={billingMutation.isPending}
+                  className="border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Nikki (extern)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="billing_method"
+                  value="rondo"
+                  checked={(billingSettings?.billing_method ?? 'nikki') === 'rondo'}
+                  onChange={() => billingMutation.mutate({ season: activeSeasonKey, billing_method: 'rondo' })}
+                  disabled={billingMutation.isPending}
+                  className="border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Rondo facturatie</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Installment plans */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Betalingsplannen
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={billingSettings?.installment_plan_3_enabled ?? true}
+                  onChange={(e) => billingMutation.mutate({ season: activeSeasonKey, installment_plan_3_enabled: e.target.checked })}
+                  disabled={billingMutation.isPending}
+                  className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">3 termijnen beschikbaar</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={billingSettings?.installment_plan_8_enabled ?? true}
+                  onChange={(e) => billingMutation.mutate({ season: activeSeasonKey, installment_plan_8_enabled: e.target.checked })}
+                  disabled={billingMutation.isPending}
+                  className="rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">8 termijnen beschikbaar</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Family discount section */}
       <FamilyDiscountSection
