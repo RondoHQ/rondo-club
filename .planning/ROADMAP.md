@@ -109,7 +109,7 @@
 
 - [x] **Phase 192: Data Model Foundation** (1/1 plan) — completed 2026-02-18
 - [x] **Phase 193: Public Payment Landing Page** (1/1 plan) — completed 2026-02-18
-- [ ] **Phase 194: Payment Plan Manager + Webhook Extension** (1 plan) — Installment state machine, reverse-lookup webhook pattern, all-paid invoice transition
+- [x] **Phase 194: Payment Plan Manager + Webhook Extension** (1/1 plan) — completed 2026-02-19
 - [ ] **Phase 195: Installment Scheduler + Email System** — Daily cron sweeper, monthly installment emails, overdue reminders, email templates
 - [ ] **Phase 196: Bulk Invoice Creation** — Async batched creation for all members, billing method toggle, progress tracking
 - [ ] **Phase 197: Frontend Updates** — Facturen filters, installment timeline, Contributie Factureer action, Finance capability gating
@@ -239,11 +239,11 @@ Plans:
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
 | 192 | v28.0 | 1/1 | ✓ Complete | 2026-02-18 |
 | 193 | v28.0 | 1/1 | ✓ Complete | 2026-02-18 |
-| 194 | v28.0 | 0/TBD | Not started | - |
+| 194 | v28.0 | 1/1 | ✓ Complete | 2026-02-19 |
 | 195 | v28.0 | 0/TBD | Not started | - |
 | 196 | v28.0 | 0/TBD | Not started | - |
 | 197 | v28.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-18 — Phase 193 complete*
+*Last updated: 2026-02-19 — Phase 194 complete*
