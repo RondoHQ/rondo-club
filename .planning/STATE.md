@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 93: Enable sending and disable installments for Rondo-created contributie invoices
+Last activity: 2026-02-19 - Completed quick task 94: Use direct Mollie payment link for membership invoices with installments disabled
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -108,11 +108,12 @@ Phase 192-01 decisions:
 | 91 | Remove admin fee note and use accent color on betaling page | 2026-02-19 | 46d7bf06 | [91-remove-admin-fee-note-and-use-accent-col](./quick/91-remove-admin-fee-note-and-use-accent-col/) |
 | 92 | Set club logo as favicon on betaling page | 2026-02-19 | 2852213c | [92-set-club-logo-as-favicon-on-betaling-pag](./quick/92-set-club-logo-as-favicon-on-betaling-pag/) |
 | 93 | Enable sending and disable installments per invoice | 2026-02-19 | bcf41e92 | [93-enable-sending-and-disable-installments-](./quick/93-enable-sending-and-disable-installments-/) |
+| 94 | Use direct Mollie payment link for membership invoices with installments disabled | 2026-02-19 | f7486ab5 | [94-use-direct-mollie-payment-link-for-membe](./quick/94-use-direct-mollie-payment-link-for-membe/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 93 — per-invoice installments toggle (REST endpoint, BulkInvoiceCreator default, public page enforcement, FactuurDetail UI)
+Stopped at: Completed quick task 94 — direct Mollie link for membership invoices with installments disabled (conditional token in BulkInvoiceCreator, token lifecycle in toggle_installments)
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
