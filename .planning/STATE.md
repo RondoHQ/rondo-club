@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 195: Installment Scheduler & Email System
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 196: Bulk Invoice Creation (next)
 
 ## Current Position
 
-Phase: 195 of 197 (Installment Scheduler & Email System)
-Plan: 1 of 2 in current phase — complete, ready for Plan 02
-Status: Phase 195 Plan 01 complete — installment due dates + three email templates deployed
-Last activity: 2026-02-19 — Phase 195-01 complete: due dates written at plan selection, three email templates in FinanceConfig/REST/React
+Phase: 195 of 197 (Installment Scheduler & Email System) — COMPLETE
+Plan: 2 of 2 in current phase — complete, ready for Phase 196
+Status: Phase 195 complete — daily cron sweeper + email sender deployed to production (v27.4.0)
+Last activity: 2026-02-19 — Phase 195-02 complete: InstallmentScheduler + InstallmentEmailSender deployed, cron registered
 
-Progress: [████░░░░░░] 58% (v28.0, 4/6 phases partial)
+Progress: [█████░░░░░] 67% (v28.0, 5/6 phases complete)
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [████░░░░░░] 58% (v28.0, 4/6 phases partial)
 | 193 | 01 | 5min | 2 | 5 |
 | 194 | 01 | 4min | 2 | 6 |
 | 195 | 01 | 5min | 2 | 4 |
+| 195 | 02 | 10min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Phase 192-01 decisions:
 - [Phase 195-01]: quarterly_3 due dates: Sep 25, Nov 25, Feb 25; monthly_8: Sep 25 through Apr 25
 - [Phase 195-01]: installment_admin_fee REST arg was missing — auto-fixed alongside three new template args
 - [Phase 195-01]: Three email templates (installment, reminder_1, reminder_2) stored as WordPress options via FinanceConfig
+- [Phase 195]: Status written before wp_mail for idempotency — prevents duplicate sends if cron re-runs; failed Mollie create_payment aborts early without writing status so sweeper retries next day
+- [Phase 195]: Reminder 2 checked before reminder 1 in sweeper decision tree — 21-day threshold also satisfies 14-day check; checking reminder 2 first ensures exactly one reminder per overdue period
+- [Phase 195]: Fresh Mollie payment link created per email call — links expire, initial send + both reminders each call InstallmentPaymentService::create_payment independently
 
 ### Pending Todos
 
@@ -73,17 +77,17 @@ Phase 192-01 decisions:
 
 ### Blockers/Concerns
 
-- Phase 195 (Scheduler): Verify SiteGround real server cron access before finalizing — WP-Cron visitor-trigger unreliable on cached hosting
 - Phase 196 (Bulk Creation): Verify SiteGround PHP memory limits for cron execution context before committing to batch size of 50
+- Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 195-01-PLAN.md — installment due dates + three email templates deployed to production
+Stopped at: Completed 195-02-PLAN.md — installment scheduler + email system deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 195 Plan 02 — Daily cron sweeper for installment emails and reminders
+**Next action:** Execute Phase 196 — Bulk Invoice Creation
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 194-01 complete, ready for Phase 195*
+*Last updated: 2026-02-19 — Phase 195 complete (both plans), ready for Phase 196*
