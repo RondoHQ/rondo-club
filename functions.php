@@ -81,6 +81,7 @@ use Rondo\Finance\InstallmentPaymentService;
 use Rondo\Finance\InstallmentEmailSender;
 use Rondo\Finance\InstallmentScheduler;
 use Rondo\Finance\PublicPaymentPage;
+use Rondo\Finance\BulkInvoiceCreator;
 use Rondo\Finance\QrCodeGenerator;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
@@ -407,6 +408,9 @@ function rondo_init() {
 	if ( ! rondo_is_carddav_request() ) {
 		new CardDAVServer();
 	}
+
+	// Bulk invoice creator — registers WP-Cron hook for batch processing
+	new BulkInvoiceCreator();
 
 	// Public payment page - register rewrite rules and template_redirect handler
 	new PublicPaymentPage();
