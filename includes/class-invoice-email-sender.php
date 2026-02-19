@@ -29,6 +29,7 @@ class InvoiceEmailSender {
 	 * @param array $options    Optional. Associative array of options:
 	 *                          - override_email (string) Send to this address instead of the person's email.
 	 *                          - skip_bcc (bool)         When true, omit the BCC header.
+	 *                          - template (string)       Custom email template HTML. Defaults to discipline template from FinanceConfig.
 	 * @return true|\WP_Error True on success, WP_Error on failure.
 	 */
 	public static function send( int $invoice_id, array $options = [] ) {
@@ -93,7 +94,7 @@ class InvoiceEmailSender {
 
 		// Get finance configuration
 		$config = new FinanceConfig();
-		$template = $config->get_email_template();
+		$template = $options['template'] ?? $config->get_email_template();
 		$org_name = $config->get_org_name();
 
 		// Build discipline cases list as HTML table

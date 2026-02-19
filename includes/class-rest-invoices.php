@@ -915,6 +915,12 @@ class Invoices extends Base {
 			}
 		}
 
+		// Select email template based on invoice type
+		$invoice_type = get_field( 'invoice_type', $invoice_id );
+		if ( 'membership' === $invoice_type ) {
+			$email_options['template'] = $finance_config->get_membership_email_template();
+		}
+
 		// Send email via InvoiceEmailSender
 		$email_result = InvoiceEmailSender::send( $invoice_id, $email_options );
 		if ( is_wp_error( $email_result ) ) {
@@ -996,6 +1002,13 @@ class Invoices extends Base {
 				$email_options['override_email'] = $current_user->user_email;
 				$email_options['skip_bcc']       = true;
 			}
+		}
+
+		// Select email template based on invoice type
+		$invoice_type = get_field( 'invoice_type', $invoice_id );
+		if ( 'membership' === $invoice_type ) {
+			$config = new FinanceConfig();
+			$email_options['template'] = $config->get_membership_email_template();
 		}
 
 		// Send email via InvoiceEmailSender
