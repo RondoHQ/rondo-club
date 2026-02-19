@@ -296,14 +296,8 @@ class BulkInvoiceCreator {
 		// Store season meta.
 		update_post_meta( $post_id, '_invoice_season', $season );
 
-		// Default: disable installments for bulk-created membership invoices.
-		update_post_meta( $post_id, '_disable_installments', '1' );
-
-		// Only generate betaling page token if installments are enabled.
-		// When disabled, send_invoice() creates a direct Mollie link instead.
-		if ( ! get_post_meta( $post_id, '_disable_installments', true ) ) {
-			PublicPaymentPage::generate_token( $post_id );
-		}
+		// Generate betaling page token for the public payment page.
+		PublicPaymentPage::generate_token( $post_id );
 
 		return 'created';
 	}
