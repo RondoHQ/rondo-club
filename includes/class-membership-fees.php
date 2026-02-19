@@ -590,11 +590,11 @@ class MembershipFees {
 	 * Determines the correct fee category and amount based on the person's
 	 * age group, team membership, and work functions.
 	 *
-	 * Priority order: Youth age class > Non-youth age class > Team matching > Werkfunctie matching
+	 * Priority order: Youth age class > Team matching > Werkfunctie matching > Non-youth age class
 	 * - Youth categories: Matched by age class, return immediately (highest priority)
-	 * - Non-youth age class: e.g., senior — takes priority over team/werkfunctie
 	 * - Team matching: Config-driven matching via matching_teams arrays (player roles only)
 	 * - Werkfunctie matching: Config-driven matching via matching_werkfuncties arrays
+	 * - Non-youth age class: e.g., senior — fallback when no team/werkfunctie match
 	 *
 	 * @param int         $person_id The person post ID.
 	 * @param string|null $season    Optional season key for fee lookup, defaults to current season.
@@ -614,16 +614,6 @@ class MembershipFees {
 		// Youth categories: Return immediately (priority over everything)
 		$youth_categories = $this->get_youth_category_slugs( $season );
 		if ( $age_class_category && in_array( $age_class_category, $youth_categories, true ) ) {
-			return [
-				'category'       => $age_class_category,
-				'base_fee'       => $this->get_fee( $age_class_category, $season ),
-				'leeftijdsgroep' => $leeftijdsgroep,
-				'person_id'      => $person_id,
-			];
-		}
-
-		// Non-youth age class match (e.g., senior) — takes priority over team/werkfunctie
-		if ( $age_class_category !== null ) {
 			return [
 				'category'       => $age_class_category,
 				'base_fee'       => $this->get_fee( $age_class_category, $season ),
@@ -658,6 +648,16 @@ class MembershipFees {
 					'person_id'      => $person_id,
 				];
 			}
+		}
+
+		// Fallback: Non-youth age class match (e.g., senior)
+		if ( $age_class_category !== null ) {
+			return [
+				'category'       => $age_class_category,
+				'base_fee'       => $this->get_fee( $age_class_category, $season ),
+				'leeftijdsgroep' => $leeftijdsgroep,
+				'person_id'      => $person_id,
+			];
 		}
 
 		// No valid category found - exclude
