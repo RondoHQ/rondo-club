@@ -112,7 +112,7 @@
 - [x] **Phase 194: Payment Plan Manager + Webhook Extension** (1/1 plan) — completed 2026-02-19
 - [x] **Phase 195: Installment Scheduler + Email System** (2/2 plans) — completed 2026-02-19
 - [x] **Phase 196: Bulk Invoice Creation** (2/2 plans) — completed 2026-02-19
-- [ ] **Phase 197: Frontend Updates** — Facturen filters, installment timeline, Contributie Factureer action, Finance capability gating
+- [ ] **Phase 197: Frontend Updates** (0/2 plans) — Facturen filters, installment timeline, Finance capability gating
 
 ## Phase Details
 
@@ -220,10 +220,11 @@ Plans:
   3. Admin can filter the Facturen list to show only invoices with at least one overdue installment
   4. The invoice detail page shows a per-installment timeline: each installment with its due date, amount, status (openstaand / verstuurd / betaald / verlopen), and the date it was paid if applicable
   5. A user with the Finance capability (but not WordPress admin) can access the Facturen list, invoice detail, and Contributie page without being redirected or blocked
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 197-01: TBD
+- [ ] 197-01-PLAN.md — Backend type/payment_plan filters + Facturen page filter dropdowns + type badge column
+- [ ] 197-02-PLAN.md — Installment timeline on FactuurDetail + version 28.1.0 + deploy
 
 ---
 
