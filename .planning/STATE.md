@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — COMPLETE (phases 192-196 all done, deployed 28.0.0)
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 197: Frontend Updates (next)
 
 ## Current Position
 
-Phase: 196 of 196 (Bulk Invoice Creation) — COMPLETE
-Plan: 2 of 2 in current phase — complete, v28.0 shipped
-Status: Phase 196-02 complete — v28.0 frontend deployed to production at https://rondo.svawc.nl/
+Phase: 196 of 197 (Bulk Invoice Creation) — COMPLETE
+Plan: 2 of 2 in current phase — complete, ready for Phase 197
+Status: Phase 196 complete — bulk invoice creation deployed to production (v28.0.0)
 Last activity: 2026-02-19 — Phase 196-02 complete: bulk invoice UI, billing toggles, version 28.0.0 deployed
 
-Progress: [██████████] 100% (v28.0 Membership Fee Invoicing — all phases complete)
+Progress: [████████░░] 83% (v28.0, 6/7 phases complete — Phase 197 remains)
 
 ## Performance Metrics
 
@@ -89,11 +89,11 @@ Phase 192-01 decisions:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 196-02-PLAN.md — v28.0 Membership Fee Invoicing deployed to production
+Stopped at: Completed 196-02-PLAN.md — bulk invoice creation deployed to production
 Resume file: None
 
-**Next action:** v28.0 COMPLETE — archive milestone and begin v29.0 planning
+**Next action:** Plan Phase 197 — Frontend Updates (Facturen filters, installment timeline, Finance capability gating)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 196 complete (plan 02), v28.0 shipped*
+*Last updated: 2026-02-19 — Phase 196 complete (both plans), ready for Phase 197*
