@@ -229,7 +229,7 @@ class BulkInvoiceCreator {
 		}
 
 		// Generate invoice number.
-		$invoice_number = InvoiceNumbering::generate_next();
+		$invoice_number = InvoiceNumbering::generate_next( 'membership' );
 
 		// Create the invoice post.
 		$post_id = wp_insert_post(
