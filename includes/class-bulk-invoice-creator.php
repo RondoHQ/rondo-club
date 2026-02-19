@@ -253,11 +253,16 @@ class BulkInvoiceCreator {
 		update_field( 'invoice_type', 'membership', $post_id );
 		update_field( 'total_amount', $final_fee, $post_id );
 
+		// Look up category label for line item description.
+		$categories     = $fees->get_categories_for_season( $season );
+		$category_slug  = $fee_data['category'] ?? '';
+		$category_label = $categories[ $category_slug ]['label'] ?? $category_slug;
+
 		// Build line items with discount breakdown.
 		$line_items = [
 			[
 				'discipline_case' => null,
-				'description'     => 'Contributie ' . $season,
+				'description'     => 'Contributie - ' . $category_label,
 				'amount'          => $fee_data['base_fee'],
 			],
 		];

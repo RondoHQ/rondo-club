@@ -46,6 +46,8 @@ class InvoicePdfGenerator {
 		$line_items     = get_field( 'line_items', $invoice_id );
 		$sent_date      = get_field( 'sent_date', $invoice_id );
 		$due_date       = get_field( 'due_date', $invoice_id );
+		$invoice_type   = get_field( 'invoice_type', $invoice_id ) ?: 'discipline';
+		$payment_link   = get_field( 'payment_link', $invoice_id );
 
 		// Use current date as invoice date if not sent yet (draft preview)
 		if ( empty( $sent_date ) ) {
@@ -153,7 +155,9 @@ class InvoicePdfGenerator {
 			$payment_clause,
 			$logo_exists ? $logo_path : null,
 			$qr_code_abspath,
-			$accent_color
+			$accent_color,
+			$invoice_type,
+			$payment_link
 		);
 
 		// Generate PDF with mPDF
@@ -219,6 +223,8 @@ class InvoicePdfGenerator {
 	 * @param string|null $logo_path      Path to logo file (null if not exists).
 	 * @param string|null $qr_code_path   Absolute path to QR code PNG (null if not exists).
 	 * @param string      $accent_color   Accent color hex code (e.g., '#0891b2').
+	 * @param string      $invoice_type   Invoice type: 'membership' or 'discipline'.
+	 * @param string      $payment_link   Payment link URL (for membership invoices).
 	 * @return string HTML content.
 	 */
 	private static function build_html(
@@ -238,7 +244,9 @@ class InvoicePdfGenerator {
 		$payment_clause,
 		$logo_path,
 		$qr_code_path = null,
-		$accent_color = '#0891b2'
+		$accent_color = '#0891b2',
+		$invoice_type = 'discipline',
+		$payment_link = ''
 	) {
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
@@ -255,40 +263,10 @@ class InvoicePdfGenerator {
 		}
 
 		// Build line items table rows
+		$is_membership   = ( $invoice_type === 'membership' );
 		$line_items_html = '';
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
-				$description = '';
-				$card_type = '';
-				$suspension = '';
-
-				// Get discipline case details if linked
-				if ( ! empty( $item['discipline_case'] ) ) {
-					$case_id = $item['discipline_case'];
-					$match_desc = get_field( 'match_description', $case_id );
-					$sanction_desc = get_field( 'sanction_description', $case_id );
-					$charge_codes = get_field( 'charge_codes', $case_id );
-					$charge_description = get_field( 'charge_description', $case_id );
-
-					$description = $match_desc ?: ( $item['description'] ?? '' );
-
-					// Determine card type based on charge_codes
-					if ( ! empty( $charge_codes ) ) {
-						if ( substr( $charge_codes, -2 ) === '-1' ) {
-							$card_type = '<span style="color: #ca8a04;">Geel</span>';
-						} else {
-							$card_type = '<span style="color: #dc2626;">Rood</span>';
-						}
-					}
-
-					// Check if suspension applies
-					if ( $sanction_desc === 'uitsluiting' ) {
-						$suspension = 'Ja';
-					}
-				} else {
-					$description = $item['description'] ?? '';
-				}
-
 				$amount = (float) ( $item['amount'] ?? 0 );
 				if ( $amount < 0 ) {
 					$formatted_amount = '- € ' . number_format( abs( $amount ), 2, ',', '.' );
@@ -296,12 +274,49 @@ class InvoicePdfGenerator {
 					$formatted_amount = '€ ' . number_format( $amount, 2, ',', '.' );
 				}
 
-				$line_items_html .= '<tr>';
-				$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
-				$line_items_html .= '<td>' . $card_type . '</td>';
-				$line_items_html .= '<td>' . esc_html( $suspension ) . '</td>';
-				$line_items_html .= '<td style="text-align: right;">' . $formatted_amount . '</td>';
-				$line_items_html .= '</tr>';
+				if ( $is_membership ) {
+					// Membership: 2-column layout (description + amount).
+					$description = $item['description'] ?? '';
+					$line_items_html .= '<tr>';
+					$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
+					$line_items_html .= '<td style="text-align: right;">' . $formatted_amount . '</td>';
+					$line_items_html .= '</tr>';
+				} else {
+					// Discipline: 4-column layout with card type and suspension.
+					$description = '';
+					$card_type   = '';
+					$suspension  = '';
+
+					if ( ! empty( $item['discipline_case'] ) ) {
+						$case_id       = $item['discipline_case'];
+						$match_desc    = get_field( 'match_description', $case_id );
+						$sanction_desc = get_field( 'sanction_description', $case_id );
+						$charge_codes  = get_field( 'charge_codes', $case_id );
+
+						$description = $match_desc ?: ( $item['description'] ?? '' );
+
+						if ( ! empty( $charge_codes ) ) {
+							if ( substr( $charge_codes, -2 ) === '-1' ) {
+								$card_type = '<span style="color: #ca8a04;">Geel</span>';
+							} else {
+								$card_type = '<span style="color: #dc2626;">Rood</span>';
+							}
+						}
+
+						if ( $sanction_desc === 'uitsluiting' ) {
+							$suspension = 'Ja';
+						}
+					} else {
+						$description = $item['description'] ?? '';
+					}
+
+					$line_items_html .= '<tr>';
+					$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
+					$line_items_html .= '<td>' . $card_type . '</td>';
+					$line_items_html .= '<td>' . esc_html( $suspension ) . '</td>';
+					$line_items_html .= '<td style="text-align: right;">' . $formatted_amount . '</td>';
+					$line_items_html .= '</tr>';
+				}
 			}
 		}
 
@@ -448,11 +463,12 @@ table.line-items .total-row td {
 		<tr>
 			<td class="label">Factuurdatum:</td>
 			<td>' . esc_html( $formatted_invoice_date ) . '</td>
-		</tr>
+		</tr>'
+		. ( ! $is_membership ? '
 		<tr>
 			<td class="label">Vervaldatum:</td>
 			<td>' . esc_html( $formatted_due_date ) . '</td>
-		</tr>
+		</tr>' : '' ) . '
 	</table>
 </div>
 
@@ -464,6 +480,22 @@ table.line-items .total-row td {
 	' . ( ! empty( $person_email ) ? '<div>' . esc_html( $person_email ) . '</div>' : '' ) . '
 </div>
 
+' . ( $is_membership ? '
+<table class="line-items">
+	<thead>
+		<tr>
+			<th style="width: 70%;">Omschrijving</th>
+			<th style="width: 30%; text-align: right;">Bedrag</th>
+		</tr>
+	</thead>
+	<tbody>
+		' . $line_items_html . '
+		<tr class="total-row">
+			<td style="text-align: right;">Totaal</td>
+			<td style="text-align: right;">' . $formatted_total . '</td>
+		</tr>
+	</tbody>
+</table>' : '
 <table class="line-items">
 	<thead>
 		<tr>
@@ -480,8 +512,22 @@ table.line-items .total-row td {
 			<td style="text-align: right;">' . $formatted_total . '</td>
 		</tr>
 	</tbody>
-</table>
+</table>' ) . '
 
+' . ( $is_membership ? '
+<div class="payment-section">
+	<h2>Betaalgegevens</h2>
+	<table style="width: 100%; border: none;"><tr>
+		<td style="border: none; vertical-align: top; padding: 0;">
+			<p style="margin: 0; line-height: 1.6;">Je ontvangt per e-mail een betaallink waarmee je direct kunt betalen of een betaalplan kunt kiezen.</p>
+		</td>'
+		. ( $qr_code_path ? '
+		<td style="border: none; text-align: center; vertical-align: top; width: 180px; padding: 0;">
+			<img src="' . $qr_code_path . '" style="width: 170px;" />
+			<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
+		</td>' : '' ) . '
+	</tr></table>
+</div>' : '
 <div class="payment-section">
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
@@ -496,7 +542,7 @@ table.line-items .total-row td {
 			<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
 		</td>' : '' ) . '
 	</tr></table>
-</div>
+</div>' ) . '
 
 </body>
 </html>';
