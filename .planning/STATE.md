@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 196 of 197 (Bulk Invoice Creation) — COMPLETE
-Plan: 2 of 2 in current phase — complete, ready for Phase 197
-Status: Phase 196 complete — bulk invoice creation deployed to production (v28.0.0)
-Last activity: 2026-02-19 — Phase 196-02 complete: bulk invoice UI, billing toggles, version 28.0.0 deployed
+Phase: 197 of 197 (Frontend Updates) — IN PROGRESS
+Plan: 1 of 3 in current phase — 197-01 complete
+Status: Phase 197-01 complete — Facturen type/payment_plan filters deployed to production
+Last activity: 2026-02-19 — Phase 197-01 complete: invoice type and payment plan filter dropdowns, Type badge column
 
 Progress: [████████░░] 83% (v28.0, 6/7 phases complete — Phase 197 remains)
 
@@ -40,6 +40,7 @@ Progress: [████████░░] 83% (v28.0, 6/7 phases complete — P
 | 195 | 02 | 10min | 2 | 5 |
 | 196 | 01 | 5min | 2 | 5 |
 | 196 | 02 | 6min | 3 | 9 |
+| 197 | 01 | 3min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -77,6 +78,10 @@ Phase 192-01 decisions:
 - [Phase 196]: person_ids array stripped from REST responses — stored in WP option only for cron batch processor, keeps API payloads small
 - [Phase 196]: showNikkiColumns = billingMethod === 'nikki' && !isForecast — single flag guards all Nikki UI simultaneously
 - [Phase 196]: Maak factuur button uses inline Tailwind classes — btn-primary-sm does not exist in the codebase
+- [Phase 197-01]: Discipline type filter uses OR clause to include legacy invoices (null/empty invoice_type) — ensures existing invoices visible before backfill
+- [Phase 197-01]: URL param 'plan' maps to API param 'payment_plan' — keeps URL query strings clean
+- [Phase 197-01]: Generic updateFilter(key, value) replaces single-purpose updateStatusFilter — DRY pattern for all filter keys
+- [Phase 197-01]: meta_query initialized as [] before all filter blocks, unset if empty — avoids WP_Query warnings
 
 ### Pending Todos
 
@@ -89,10 +94,10 @@ Phase 192-01 decisions:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 196-02-PLAN.md — bulk invoice creation deployed to production
+Stopped at: Completed 197-01-PLAN.md — Facturen filters deployed to production
 Resume file: None
 
-**Next action:** Plan Phase 197 — Frontend Updates (Facturen filters, installment timeline, Finance capability gating)
+**Next action:** Execute Phase 197-02 — Installment timeline on FactuurDetail page
 
 ---
 *State created: 2026-02-15*
