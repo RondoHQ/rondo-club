@@ -24,6 +24,26 @@ const statusLabels = {
   overdue: 'Verlopen',
 };
 
+// Installment status badge colors
+const installmentStatusColors = {
+  pending: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+  sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  betaald: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
+const installmentStatusLabels = {
+  pending: 'Openstaand',
+  sent: 'Verstuurd',
+  betaald: 'Betaald',
+  overdue: 'Verlopen',
+};
+
+const planLabels = {
+  quarterly_3: '3 termijnen',
+  monthly_8: '8 termijnen',
+};
+
 /**
  * Status badge component
  */
@@ -31,6 +51,17 @@ function StatusBadge({ status }) {
   return (
     <span className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${statusColors[status] || statusColors.draft}`}>
       {statusLabels[status] || status}
+    </span>
+  );
+}
+
+/**
+ * Installment status badge component
+ */
+function InstallmentStatusBadge({ status }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${installmentStatusColors[status] || installmentStatusColors.pending}`}>
+      {installmentStatusLabels[status] || status}
     </span>
   );
 }
@@ -303,6 +334,14 @@ export default function FactuurDetail() {
                 </p>
               </div>
             )}
+            {invoice.installment_plan && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalplan</h3>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {planLabels[invoice.installment_plan] || 'Volledig'}
+                </p>
+              </div>
+            )}
             {invoice.payment_link && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Betaallink</h3>
@@ -420,6 +459,47 @@ export default function FactuurDetail() {
           </table>
         </div>
       </div>
+
+      {/* Installment timeline */}
+      {invoice.installments && invoice.installments.length > 0 && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Termijnen ({planLabels[invoice.installment_plan] || invoice.installment_plan})
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="border-b border-gray-200 dark:border-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Termijn</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Vervaldatum</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-gray-400">Bedrag</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {invoice.installments.map((inst) => (
+                  <tr key={inst.number}>
+                    <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{inst.number}</td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {inst.due_date ? format(parseYmd(inst.due_date), 'd MMM yyyy') : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-900 dark:text-gray-100">
+                      {formatCurrency(inst.amount, 2)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <InstallmentStatusBadge status={inst.status} />
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {inst.paid_at ? format(new Date(inst.paid_at), 'd MMM yyyy') : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Action buttons */}
       <div className="card p-6">

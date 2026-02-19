@@ -1309,6 +1309,30 @@ class Invoices extends Base {
 		$invoice['pdf_path']      = get_field( 'pdf_path', $post->ID ) ?: null;
 		$invoice['qr_code_path']  = get_field( 'qr_code_path', $post->ID ) ?: null;
 
+		// Add installment data for multi-installment invoices
+		$plan  = get_post_meta( $post->ID, '_installment_plan', true ) ?: null;
+		$count = (int) get_post_meta( $post->ID, '_installment_count', true );
+
+		$installments = [];
+		if ( $count >= 1 && $plan && $plan !== 'full' ) {
+			for ( $n = 1; $n <= $count; $n++ ) {
+				$amount    = (float) get_post_meta( $post->ID, '_installment_' . $n . '_amount', true );
+				$admin_fee = (float) get_post_meta( $post->ID, '_installment_' . $n . '_admin_fee', true );
+				$installments[] = [
+					'number'   => $n,
+					'amount'   => $amount + $admin_fee,
+					'status'   => (string) get_post_meta( $post->ID, '_installment_' . $n . '_status', true ) ?: 'pending',
+					'due_date' => (string) get_post_meta( $post->ID, '_installment_' . $n . '_due_date', true ) ?: null,
+					'paid_at'  => (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null,
+					'sent_at'  => (string) get_post_meta( $post->ID, '_installment_' . $n . '_sent_at', true ) ?: null,
+				];
+			}
+		}
+
+		$invoice['installment_plan']  = $plan;
+		$invoice['installment_count'] = $count;
+		$invoice['installments']      = $installments;
+
 		return $invoice;
 	}
 
