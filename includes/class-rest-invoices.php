@@ -290,6 +290,29 @@ class Invoices extends Base {
 				],
 			]
 		);
+
+		// Toggle installments disabled flag
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/toggle-installments',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'toggle_installments' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => fn( $p ) => is_numeric( $p ),
+						],
+						'disabled' => [
+							'required'          => true,
+							'type'              => 'boolean',
+							'sanitize_callback' => 'rest_sanitize_boolean',
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -1066,6 +1089,31 @@ class Invoices extends Base {
 	}
 
 	/**
+	 * Toggle installments disabled flag for a membership invoice.
+	 *
+	 * @param \WP_REST_Request $request REST request.
+	 * @return \WP_REST_Response|\WP_Error Response or error.
+	 */
+	public function toggle_installments( \WP_REST_Request $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+		$invoice    = get_post( $invoice_id );
+
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error( 'not_found', 'Factuur niet gevonden.', [ 'status' => 404 ] );
+		}
+
+		$disabled = (bool) $request->get_param( 'disabled' );
+
+		if ( $disabled ) {
+			update_post_meta( $invoice_id, '_disable_installments', '1' );
+		} else {
+			delete_post_meta( $invoice_id, '_disable_installments' );
+		}
+
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
 	 * Check whether the active payment provider is in test/sandbox mode
 	 *
 	 * Used to gate the reset-payment-state endpoint so it is never
@@ -1330,9 +1378,10 @@ class Invoices extends Base {
 			}
 		}
 
-		$invoice['installment_plan']  = $plan;
-		$invoice['installment_count'] = $count;
-		$invoice['installments']      = $installments;
+		$invoice['installment_plan']    = $plan;
+		$invoice['installment_count']   = $count;
+		$invoice['installments']        = $installments;
+		$invoice['disable_installments'] = (bool) get_post_meta( $post->ID, '_disable_installments', true );
 
 		return $invoice;
 	}
