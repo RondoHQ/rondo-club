@@ -656,7 +656,7 @@ export default function FinanceSettings() {
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor boetes</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Sjabloon voor de e-mail waarmee boete-facturen worden verstuurd.
+                  Template voor de e-mail waarmee boete-facturen worden verstuurd.
                 </p>
               </div>
               <div className="space-y-4">
@@ -667,7 +667,7 @@ export default function FinanceSettings() {
                   <RichTextEditor
                     value={formData.email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, email_template: html }))}
-                    placeholder="Schrijf hier het e-mailsjabloon..."
+                    placeholder="Schrijf hier het e-mail template..."
                     minHeight="200px"
                   />
                 </div>
@@ -697,7 +697,7 @@ export default function FinanceSettings() {
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor contributie</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Sjabloon voor de e-mail waarmee contributiefacturen worden verstuurd.
+                  Template voor de e-mail waarmee contributiefacturen worden verstuurd.
                 </p>
               </div>
               <div className="space-y-4">
@@ -708,7 +708,7 @@ export default function FinanceSettings() {
                   <RichTextEditor
                     value={formData.membership_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, membership_email_template: html }))}
-                    placeholder="Schrijf hier het e-mailsjabloon voor contributie..."
+                    placeholder="Schrijf hier het e-mail template voor contributie..."
                     minHeight="200px"
                   />
                 </div>
@@ -737,7 +737,7 @@ export default function FinanceSettings() {
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template termijnbetaling</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Dit sjabloon wordt verstuurd wanneer een termijn vervalt.
+                  Dit template wordt verstuurd bij elke nieuwe termijnbetaling.
                 </p>
               </div>
               <div className="space-y-4">
@@ -748,7 +748,7 @@ export default function FinanceSettings() {
                   <RichTextEditor
                     value={formData.installment_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, installment_email_template: html }))}
-                    placeholder="Schrijf hier het sjabloon voor termijnbetalingen..."
+                    placeholder="Schrijf hier het template voor termijnbetalingen..."
                     minHeight="200px"
                   />
                 </div>
@@ -779,7 +779,7 @@ export default function FinanceSettings() {
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor herinneringen</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Sjablonen voor herinneringen bij achterstallige termijnen.
+                  Templates voor herinneringen bij achterstallige termijnen.
                 </p>
               </div>
 
@@ -788,12 +788,12 @@ export default function FinanceSettings() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Template eerste herinnering</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    Dit sjabloon wordt verstuurd 14 dagen na de vervaldatum.
+                    Dit template wordt verstuurd 14 dagen na de vervaldatum.
                   </p>
                   <RichTextEditor
                     value={formData.reminder_1_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, reminder_1_email_template: html }))}
-                    placeholder="Schrijf hier het sjabloon voor de eerste herinnering..."
+                    placeholder="Schrijf hier het template voor de eerste herinnering..."
                     minHeight="200px"
                   />
                 </div>
@@ -804,12 +804,12 @@ export default function FinanceSettings() {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Template tweede herinnering</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    Dit sjabloon wordt verstuurd 21 dagen na de vervaldatum. De penningmeester ontvangt een BCC.
+                    Dit template wordt verstuurd 21 dagen na de vervaldatum. De penningmeester ontvangt een BCC.
                   </p>
                   <RichTextEditor
                     value={formData.reminder_2_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, reminder_2_email_template: html }))}
-                    placeholder="Schrijf hier het sjabloon voor de tweede herinnering..."
+                    placeholder="Schrijf hier het template voor de tweede herinnering..."
                     minHeight="200px"
                   />
                 </div>
