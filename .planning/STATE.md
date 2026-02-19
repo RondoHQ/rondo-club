@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 194: Mollie Webhook Installment Extension
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 195: Installment Scheduler & Email System
 
 ## Current Position
 
-Phase: 194 of 197 (Mollie Webhook Installment Extension)
-Plan: 1 of 1 in current phase
-Status: Phase 194 complete — ready for Phase 195
-Last activity: 2026-02-19 — Phase 194-01 complete: dual-path webhook with installment support, InstallmentPaymentService, deployed v27.3.0
+Phase: 195 of 197 (Installment Scheduler & Email System)
+Plan: 1 of 2 in current phase — complete, ready for Plan 02
+Status: Phase 195 Plan 01 complete — installment due dates + three email templates deployed
+Last activity: 2026-02-19 — Phase 195-01 complete: due dates written at plan selection, three email templates in FinanceConfig/REST/React
 
-Progress: [███░░░░░░░] 50% (v28.0, 3/6 phases)
+Progress: [████░░░░░░] 58% (v28.0, 4/6 phases partial)
 
 ## Performance Metrics
 
@@ -36,6 +36,7 @@ Progress: [███░░░░░░░] 50% (v28.0, 3/6 phases)
 | 192 | 01 | 3min | 2 | 4 |
 | 193 | 01 | 5min | 2 | 5 |
 | 194 | 01 | 4min | 2 | 6 |
+| 195 | 01 | 5min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -61,6 +62,10 @@ Phase 192-01 decisions:
 - [Phase 194]: InstallmentPaymentService reads amount from _installment_N_amount + _installment_N_admin_fee; falls back to ACF total_amount for full plan
 - [Phase 194]: handle_installment_paid writes betaald before all-paid loop so full plan (count=1) works in one pass
 - [Phase 194]: N+1 creation wrapped in try/catch — never propagates; idempotency guard on empty _installment_{next}_mollie_payment_id
+- [Phase 195-01]: Due dates hardcoded as 25th of each month (Sep-Apr) — derived from season via MembershipFees::get_season_key(post_date)
+- [Phase 195-01]: quarterly_3 due dates: Sep 25, Nov 25, Feb 25; monthly_8: Sep 25 through Apr 25
+- [Phase 195-01]: installment_admin_fee REST arg was missing — auto-fixed alongside three new template args
+- [Phase 195-01]: Three email templates (installment, reminder_1, reminder_2) stored as WordPress options via FinanceConfig
 
 ### Pending Todos
 
@@ -74,10 +79,10 @@ Phase 192-01 decisions:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 194-01-PLAN.md — dual-path Mollie webhook with installment support deployed to production
+Stopped at: Completed 195-01-PLAN.md — installment due dates + three email templates deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 195 — Installment Scheduler
+**Next action:** Execute Phase 195 Plan 02 — Daily cron sweeper for installment emails and reminders
 
 ---
 *State created: 2026-02-15*
