@@ -6,10 +6,10 @@
  * Format a number as currency in euros
  *
  * @param {number|null|undefined} amount - Amount to format
- * @param {number} decimals - Number of decimal places (default 0)
+ * @param {number} decimals - Number of decimal places (default 2)
  * @returns {string} Formatted currency string or '-' if null/undefined
  */
-export function formatCurrency(amount, decimals = 0) {
+export function formatCurrency(amount, decimals = 2) {
   if (amount === null || amount === undefined) return '-';
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
