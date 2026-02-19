@@ -198,7 +198,7 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling — ' . esc_html( $branding['name'] ) );
+		$this->render_html_header( 'Betaling — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
 		?>
 
 <div class="container">
@@ -286,9 +286,6 @@ class PublicPaymentPage {
 		</form>
 		<?php endif; ?>
 
-		<?php if ( $admin_fee > 0 ) : ?>
-		<p class="admin-fee-note">Per termijn wordt <?php echo esc_html( $this->format_currency( $admin_fee ) ); ?> administratiekosten in rekening gebracht.</p>
-		<?php endif; ?>
 	</div>
 </div>
 
@@ -317,7 +314,7 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $branding['name'] ) );
+		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
 		?>
 
 <div class="container">
@@ -360,22 +357,27 @@ class PublicPaymentPage {
 	}
 
 	/**
-	 * Get club name and logo URL from FinanceConfig.
+	 * Get club name, logo URL, and accent color from FinanceConfig.
 	 *
-	 * @return array{name: string, logo_url: string} Club name and logo URL.
+	 * @return array{name: string, logo_url: string, accent_color: string} Club branding.
 	 */
 	private function get_club_branding(): array {
-		$config   = new FinanceConfig();
-		$name     = $config->get_org_name();
-		$logo_url = '';
-		$logo_id  = $config->get_club_logo_id();
+		$config       = new FinanceConfig();
+		$name         = $config->get_org_name();
+		$accent_color = $config->get_accent_color();
+		$logo_url     = '';
+		$logo_id      = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
 			$url = wp_get_attachment_url( $logo_id );
 			if ( $url ) {
 				$logo_url = $url;
 			}
 		}
-		return [ 'name' => $name ?: get_bloginfo( 'name' ), 'logo_url' => $logo_url ];
+		return [
+			'name'         => $name ?: get_bloginfo( 'name' ),
+			'logo_url'     => $logo_url,
+			'accent_color' => $accent_color ?: '#0891b2',
+		];
 	}
 
 	/**
@@ -409,7 +411,7 @@ class PublicPaymentPage {
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
 		$branding = $this->get_club_branding();
-		$this->render_html_header( 'Fout — ' . esc_html( $branding['name'] ) );
+		$this->render_html_header( 'Fout — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
 		?>
 
 <div class="container">
@@ -598,9 +600,10 @@ class PublicPaymentPage {
 	 * Mobile-first design with 16px input font-size to prevent iOS auto-zoom.
 	 * No external CSS/JS dependencies — fully self-contained.
 	 *
-	 * @param string $title Page title for the <title> tag.
+	 * @param string $title        Page title for the <title> tag.
+	 * @param string $accent_color Hex accent color for primary buttons (default #0891b2).
 	 */
-	private function render_html_header( string $title ) {
+	private function render_html_header( string $title, string $accent_color = '#0891b2' ) {
 		?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -609,6 +612,9 @@ class PublicPaymentPage {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo esc_html( $title ); ?></title>
 	<style>
+		:root {
+			--accent-color: <?php echo esc_attr( $accent_color ); ?>;
+		}
 		* {
 			box-sizing: border-box;
 			margin: 0;
@@ -773,20 +779,13 @@ class PublicPaymentPage {
 		}
 
 		.btn-primary {
-			background: #0891b2;
+			background: var(--accent-color);
 			color: white;
 		}
 
 		.btn-secondary {
 			background: #e2e8f0;
 			color: #1e293b;
-		}
-
-		.admin-fee-note {
-			font-size: 0.8125rem;
-			color: #94a3b8;
-			margin-top: 1rem;
-			text-align: center;
 		}
 
 		.success-card {
