@@ -146,6 +146,7 @@ export default function FinanceSettings() {
     accent_color: '',
     bcc_email: '',
     admin_fee: 0,
+    installment_admin_fee: 0,
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
     rabobank_client_secret: '',
@@ -177,6 +178,7 @@ export default function FinanceSettings() {
         accent_color: settings.accent_color || '',
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
+        installment_admin_fee: settings.installment_admin_fee || 0,
         rabobank_environment: settings.rabobank_environment || 'sandbox',
         // Don't populate credentials from API for security
         rabobank_client_id: '',
@@ -273,6 +275,7 @@ export default function FinanceSettings() {
         accent_color: formData.accent_color,
         bcc_email: formData.bcc_email,
         admin_fee: parseFloat(formData.admin_fee) || 0,
+        installment_admin_fee: parseFloat(formData.installment_admin_fee) || 0,
         rabobank_environment: formData.rabobank_environment,
         active_payment_provider: formData.active_payment_provider,
       };
@@ -527,6 +530,26 @@ export default function FinanceSettings() {
             </div>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Vaste administratiekosten per factuur. Wordt automatisch als aparte regelpost toegevoegd. Gebruik 0 om uit te schakelen.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="installment_admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Administratiekosten termijnbetaling
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm pointer-events-none">&euro;</span>
+              <input
+                type="number"
+                id="installment_admin_fee"
+                value={formData.installment_admin_fee}
+                onChange={(e) => setFormData(prev => ({ ...prev, installment_admin_fee: e.target.value }))}
+                min="0"
+                step="0.01"
+                className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Extra administratiekosten per termijn bij betaling in meerdere termijnen. Gebruik 0 om uit te schakelen.
             </p>
           </div>
           <div>
