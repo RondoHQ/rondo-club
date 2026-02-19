@@ -229,3 +229,21 @@ export function useResetPaymentState() {
     },
   });
 }
+
+/**
+ * Toggle installments disabled flag for a membership invoice
+ * @returns {object} Mutation object
+ */
+export function useToggleInstallments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, disabled }) => {
+      const response = await prmApi.toggleInstallments(id, disabled);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+    },
+  });
+}
