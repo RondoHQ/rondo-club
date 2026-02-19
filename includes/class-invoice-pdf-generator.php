@@ -290,7 +290,11 @@ class InvoicePdfGenerator {
 				}
 
 				$amount = (float) ( $item['amount'] ?? 0 );
-				$formatted_amount = '€ ' . number_format( $amount, 2, ',', '.' );
+				if ( $amount < 0 ) {
+					$formatted_amount = '- € ' . number_format( abs( $amount ), 2, ',', '.' );
+				} else {
+					$formatted_amount = '€ ' . number_format( $amount, 2, ',', '.' );
+				}
 
 				$line_items_html .= '<tr>';
 				$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
