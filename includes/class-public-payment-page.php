@@ -408,9 +408,8 @@ class PublicPaymentPage {
 	<div class="card header-card">
 		<div class="club-brand">
 			<?php if ( $branding['logo_url'] ) : ?>
-				<img src="<?php echo esc_url( $branding['logo_url'] ); ?>" alt="" class="club-logo" />
+				<img src="<?php echo esc_url( $branding['logo_url'] ); ?>" alt="<?php echo esc_attr( $branding['name'] ); ?>" class="club-logo" />
 			<?php endif; ?>
-			<span class="club-name"><?php echo esc_html( $branding['name'] ); ?></span>
 		</div>
 		<h1><?php echo esc_html( $heading ); ?></h1>
 	</div>
@@ -725,17 +724,9 @@ class PublicPaymentPage {
 		}
 
 		.club-logo {
-			width: 2rem;
-			height: 2rem;
+			width: 5rem;
+			height: 5rem;
 			object-fit: contain;
-		}
-
-		.club-name {
-			font-size: 0.875rem;
-			font-weight: 500;
-			color: #64748b;
-			text-transform: uppercase;
-			letter-spacing: 0.05em;
 		}
 
 		h1 {
