@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText, Loader2 } from 'lucide-react';
-import { usePersonFee } from '@/hooks/useFees';
+import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText, Loader2, Ban } from 'lucide-react';
+import { usePersonFee, feeKeys } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
 import { usePersonInvoices } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useUpdatePerson } from '@/hooks/usePeople';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
@@ -62,6 +63,21 @@ export default function FinancesCard({ personId }) {
     },
   });
 
+  // Exclusion toggle — only visible to financieel users (entire card is hidden for others)
+  const updatePerson = useUpdatePerson();
+  const isExcluded = feeData?.reason === 'manually_excluded';
+
+  const handleToggleExclusion = () => {
+    updatePerson.mutate(
+      { id: personId, data: { meta: { _exclude_from_contributie: !isExcluded } } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: feeKeys.person(personId) });
+        },
+      }
+    );
+  };
+
   // Calculate discipline fee totals
   const disciplineTotals = useMemo(() => {
     if (!disciplineCases?.length) {
@@ -99,15 +115,15 @@ export default function FinancesCard({ personId }) {
     );
   }
 
-  // Person not calculable - don't show card
-  if (!feeData?.calculable) {
+  // Person not calculable - don't show card, UNLESS manually excluded (show toggle to re-include)
+  if (!feeData?.calculable && !isExcluded) {
     return null;
   }
 
-  const hasDiscount = feeData.family_discount_rate > 0;
-  const hasProrata = feeData.prorata_percentage < 1.0;
-  const hasNikkiData = feeData.nikki_total !== null;
-  const billingMethod = feeData.billing_method ?? 'nikki';
+  const hasDiscount = feeData?.family_discount_rate > 0;
+  const hasProrata = feeData?.prorata_percentage < 1.0;
+  const hasNikkiData = feeData?.nikki_total !== null;
+  const billingMethod = feeData?.billing_method ?? 'nikki';
   const hasMembershipInvoice = invoices.some(inv => inv.invoice_type === 'membership');
 
   return (
@@ -118,178 +134,206 @@ export default function FinancesCard({ personId }) {
           <Coins className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           <h2 className="font-semibold text-brand-gradient">Financieel</h2>
         </div>
-        <span className="text-xs text-gray-400">{feeData.season}</span>
+        {!isExcluded && <span className="text-xs text-gray-400">{feeData?.season}</span>}
       </div>
 
-      {/* Financial Block Warning */}
-      {feeData.financiele_blokkade && (
-        <div className="flex items-center gap-2 p-2 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
-          <span className="text-sm font-medium text-red-700 dark:text-red-300">
-            Financiele blokkade
-          </span>
+      {/* Excluded state */}
+      {isExcluded ? (
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <Ban className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-500 dark:text-gray-400">Uitgesloten van contributie</span>
+          </div>
+          <button
+            onClick={handleToggleExclusion}
+            disabled={updatePerson.isPending}
+            className="text-xs text-electric-cyan hover:underline disabled:opacity-50"
+          >
+            Opnemen
+          </button>
         </div>
-      )}
-
-      {/* Fee Breakdown */}
-      <div className="space-y-3">
-        {/* Category & Base Fee */}
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {feeData.category_label ?? feeData.category}
-            {feeData.leeftijdsgroep && (
-              <span className="text-xs ml-1 text-gray-400">({feeData.leeftijdsgroep})</span>
-            )}
-          </span>
-          <span className="text-sm font-medium">{formatCurrency(feeData.base_fee)}</span>
-        </div>
-
-        {/* Family Discount */}
-        {hasDiscount && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Users className="w-3.5 h-3.5" />
-              Gezinskorting ({formatPercentage(feeData.family_discount_rate)})
-            </span>
-            <span className="text-sm text-green-600 dark:text-green-400">
-              -{formatCurrency(feeData.family_discount_amount)}
-            </span>
-          </div>
-        )}
-
-        {/* Family Info */}
-        {feeData.family_size > 1 && (
-          <div className="text-xs text-gray-400 dark:text-gray-500 pl-4">
-            Positie {feeData.family_position} van {feeData.family_size}
-            {feeData.family_members?.length > 0 && (
-              <>
-                {' '}in gezin met{' '}
-                {feeData.family_members.map((member, index) => (
-                  <span key={member.id}>
-                    {index > 0 && (index === feeData.family_members.length - 1 ? ' en ' : ', ')}
-                    <Link
-                      to={`/people/${member.id}`}
-                      className="text-electric-cyan dark:text-electric-cyan hover:underline"
-                    >
-                      {member.name}
-                    </Link>
-                  </span>
-                ))}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Pro-rata */}
-        {hasProrata && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
-              Pro-rata ({formatPercentage(feeData.prorata_percentage)})
-            </span>
-            <span className="text-sm text-amber-600 dark:text-amber-400">
-              {formatCurrency(feeData.final_fee)}
-            </span>
-          </div>
-        )}
-
-        {/* Final Fee */}
-        <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contributie</span>
-          <span className="text-base font-bold text-gray-900 dark:text-gray-100">
-            {formatCurrency(feeData.final_fee)}
-          </span>
-        </div>
-
-        {/* Maak factuur button - only for rondo billing, no existing membership invoice, positive fee */}
-        {billingMethod === 'rondo' && !hasMembershipInvoice && feeData.final_fee > 0 && (
-          <div className="pt-2">
-            <button
-              onClick={() => createInvoice.mutate()}
-              disabled={createInvoice.isPending}
-              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-electric-cyan text-white hover:bg-electric-cyan/90 disabled:opacity-50 transition-colors"
-            >
-              {createInvoice.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <FileText className="w-3.5 h-3.5" />
-              )}
-              Maak factuur
-            </button>
-          </div>
-        )}
-
-        {/* Discipline Fees - Doorbelast (only for fairplay users with doorbelast fees) */}
-        {canAccessFairplay && disciplineTotals.doorbelast > 0 && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Gavel className="w-3.5 h-3.5" />
-              Tuchtzaken (doorbelast)
-            </span>
-            <span className="text-sm font-medium">
-              {formatCurrency(disciplineTotals.doorbelast, 2)}
-            </span>
-          </div>
-        )}
-
-        {/* Nikki Data */}
-        {hasNikkiData && (
-          <>
-            <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Nikki totaal</span>
-              <span className="text-sm">{formatCurrency(feeData.nikki_total, 2)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Saldo</span>
-              <span className={
-              feeData.nikki_saldo > 0
-                ? 'text-sm font-medium text-red-600 dark:text-red-400'
-                : 'text-sm font-medium text-green-600 dark:text-green-400'
-            }>
-                {formatCurrency(feeData.nikki_saldo, 2)}
+      ) : (
+        <div className="space-y-3">
+          {/* Financial Block Warning */}
+          {feeData?.financiele_blokkade && (
+            <div className="flex items-center gap-2 p-2 mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+              <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                Financiele blokkade
               </span>
             </div>
-          </>
-        )}
+          )}
 
-        {/* Discipline Fees - Not Doorbelast (only for fairplay users with non-doorbelast fees) */}
-        {canAccessFairplay && disciplineTotals.notDoorbelast > 0 && (
+          {/* Category & Base Fee */}
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {feeData?.category_label ?? feeData?.category}
+              {feeData?.leeftijdsgroep && (
+                <span className="text-xs ml-1 text-gray-400">({feeData.leeftijdsgroep})</span>
+              )}
+            </span>
+            <span className="text-sm font-medium">{formatCurrency(feeData?.base_fee)}</span>
+          </div>
+
+          {/* Family Discount */}
+          {hasDiscount && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Users className="w-3.5 h-3.5" />
+                Gezinskorting ({formatPercentage(feeData.family_discount_rate)})
+              </span>
+              <span className="text-sm text-green-600 dark:text-green-400">
+                -{formatCurrency(feeData.family_discount_amount)}
+              </span>
+            </div>
+          )}
+
+          {/* Family Info */}
+          {feeData?.family_size > 1 && (
+            <div className="text-xs text-gray-400 dark:text-gray-500 pl-4">
+              Positie {feeData.family_position} van {feeData.family_size}
+              {feeData.family_members?.length > 0 && (
+                <>
+                  {' '}in gezin met{' '}
+                  {feeData.family_members.map((member, index) => (
+                    <span key={member.id}>
+                      {index > 0 && (index === feeData.family_members.length - 1 ? ' en ' : ', ')}
+                      <Link
+                        to={`/people/${member.id}`}
+                        className="text-electric-cyan dark:text-electric-cyan hover:underline"
+                      >
+                        {member.name}
+                      </Link>
+                    </span>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Pro-rata */}
+          {hasProrata && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                Pro-rata ({formatPercentage(feeData.prorata_percentage)})
+              </span>
+              <span className="text-sm text-amber-600 dark:text-amber-400">
+                {formatCurrency(feeData.final_fee)}
+              </span>
+            </div>
+          )}
+
+          {/* Final Fee */}
           <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
-            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <Gavel className="w-3.5 h-3.5" />
-              Tuchtzaken (niet doorbelast)
-            </span>
-            <span className="text-sm text-amber-600 dark:text-amber-400">
-              {formatCurrency(disciplineTotals.notDoorbelast, 2)}
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contributie</span>
+            <span className="text-base font-bold text-gray-900 dark:text-gray-100">
+              {formatCurrency(feeData?.final_fee)}
             </span>
           </div>
-        )}
 
-        {/* Invoices */}
-        {invoices.length > 0 && (
-          <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
-            <div className="flex items-center gap-1.5 mb-2">
-              <FileText className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Facturen</span>
+          {/* Maak factuur button - only for rondo billing, no existing membership invoice, positive fee */}
+          {billingMethod === 'rondo' && !hasMembershipInvoice && feeData?.final_fee > 0 && (
+            <div className="pt-2">
+              <button
+                onClick={() => createInvoice.mutate()}
+                disabled={createInvoice.isPending}
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-electric-cyan text-white hover:bg-electric-cyan/90 disabled:opacity-50 transition-colors"
+              >
+                {createInvoice.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FileText className="w-3.5 h-3.5" />
+                )}
+                Maak factuur
+              </button>
             </div>
-            <div className="space-y-1.5">
-              {invoices.map(invoice => (
-                <Link
-                  key={invoice.id}
-                  to={`/financien/facturen/${invoice.id}`}
-                  className="flex justify-between items-center text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-1 -mx-1 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 dark:text-gray-400">{invoice.invoice_number}</span>
-                    <StatusBadge status={invoice.status} />
-                  </div>
-                  <span className="font-medium">{formatCurrency(invoice.total_amount, 2)}</span>
-                </Link>
-              ))}
+          )}
+
+          {/* Discipline Fees - Doorbelast (only for fairplay users with doorbelast fees) */}
+          {canAccessFairplay && disciplineTotals.doorbelast > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Gavel className="w-3.5 h-3.5" />
+                Tuchtzaken (doorbelast)
+              </span>
+              <span className="text-sm font-medium">
+                {formatCurrency(disciplineTotals.doorbelast, 2)}
+              </span>
             </div>
+          )}
+
+          {/* Nikki Data */}
+          {hasNikkiData && (
+            <>
+              <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Nikki totaal</span>
+                <span className="text-sm">{formatCurrency(feeData.nikki_total, 2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Saldo</span>
+                <span className={
+                feeData.nikki_saldo > 0
+                  ? 'text-sm font-medium text-red-600 dark:text-red-400'
+                  : 'text-sm font-medium text-green-600 dark:text-green-400'
+              }>
+                  {formatCurrency(feeData.nikki_saldo, 2)}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Discipline Fees - Not Doorbelast (only for fairplay users with non-doorbelast fees) */}
+          {canAccessFairplay && disciplineTotals.notDoorbelast > 0 && (
+            <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+              <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <Gavel className="w-3.5 h-3.5" />
+                Tuchtzaken (niet doorbelast)
+              </span>
+              <span className="text-sm text-amber-600 dark:text-amber-400">
+                {formatCurrency(disciplineTotals.notDoorbelast, 2)}
+              </span>
+            </div>
+          )}
+
+          {/* Invoices */}
+          {invoices.length > 0 && (
+            <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center gap-1.5 mb-2">
+                <FileText className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Facturen</span>
+              </div>
+              <div className="space-y-1.5">
+                {invoices.map(invoice => (
+                  <Link
+                    key={invoice.id}
+                    to={`/financien/facturen/${invoice.id}`}
+                    className="flex justify-between items-center text-sm hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded px-1 -mx-1 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 dark:text-gray-400">{invoice.invoice_number}</span>
+                      <StatusBadge status={invoice.status} />
+                    </div>
+                    <span className="font-medium">{formatCurrency(invoice.total_amount, 2)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Exclusion toggle — financieel users only (entire card is already hidden for others) */}
+          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <button
+              onClick={handleToggleExclusion}
+              disabled={updatePerson.isPending}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors"
+            >
+              <Ban className="w-3 h-3" />
+              Uitsluiten van contributie
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
