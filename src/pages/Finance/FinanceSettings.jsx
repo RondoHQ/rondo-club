@@ -137,6 +137,7 @@ export default function FinanceSettings() {
     iban: '',
     payment_term_days: 14,
     payment_clause: '',
+    membership_payment_clause: '',
     email_template: '',
     membership_email_template: '',
     installment_email_template: '',
@@ -170,6 +171,7 @@ export default function FinanceSettings() {
         iban: settings.iban || '',
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
+        membership_payment_clause: settings.membership_payment_clause || '',
         email_template: settings.email_template || '',
         membership_email_template: settings.membership_email_template || '',
         installment_email_template: settings.installment_email_template || '',
@@ -269,6 +271,7 @@ export default function FinanceSettings() {
         iban: formData.iban,
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
+        membership_payment_clause: formData.membership_payment_clause,
         email_template: formData.email_template,
         membership_email_template: formData.membership_email_template,
         installment_email_template: formData.installment_email_template,
@@ -557,13 +560,26 @@ export default function FinanceSettings() {
           </div>
           <div>
             <label htmlFor="payment_clause" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Betalingsclausule
+              Betalingsclausule tuchtzaken
             </label>
             <textarea
               id="payment_clause"
               value={formData.payment_clause}
               onChange={(e) => setFormData(prev => ({ ...prev, payment_clause: e.target.value }))}
-              placeholder="Tekst die onderaan de factuur wordt getoond over de betalingsvoorwaarden"
+              placeholder="Tekst die onderaan de tuchtzaakfactuur wordt getoond over de betalingsvoorwaarden"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="membership_payment_clause" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Betalingsclausule contributie
+            </label>
+            <textarea
+              id="membership_payment_clause"
+              value={formData.membership_payment_clause}
+              onChange={(e) => setFormData(prev => ({ ...prev, membership_payment_clause: e.target.value }))}
+              placeholder="Tekst die onderaan de contributiefactuur wordt getoond"
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
             />
