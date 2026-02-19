@@ -530,7 +530,7 @@ export default function FinanceSettings() {
           </div>
           <div>
             <label htmlFor="admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Administratiekosten
+              Administratiekosten tuchtzaken
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm pointer-events-none">&euro;</span>
