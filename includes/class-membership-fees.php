@@ -602,6 +602,11 @@ class MembershipFees {
 	 *         Fee data array or null if person cannot be calculated.
 	 */
 	public function calculate_fee( int $person_id, ?string $season = null ): ?array {
+		// Skip persons manually excluded from contributie
+		if ( get_post_meta( $person_id, '_exclude_from_contributie', true ) ) {
+			return null;
+		}
+
 		// Get leeftijdsgroep from person
 		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
 		$age_class_category = null;

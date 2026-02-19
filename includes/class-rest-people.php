@@ -636,6 +636,11 @@ class People extends Base {
 			}
 		}
 
+		// Expose contributie exclusion flag only to users with financieel capability
+		if ( current_user_can( 'financieel' ) ) {
+			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
+		}
+
 		$response->set_data( $data );
 
 		return $response;
