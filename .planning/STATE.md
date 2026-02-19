@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 107: Fix Nog te factureren page not updating after Maak factuur
+Last activity: 2026-02-19 - Completed quick task 108: Fix Termijnbetaling uitschakelen default to be off instead of on
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
