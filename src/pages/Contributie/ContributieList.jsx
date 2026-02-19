@@ -10,7 +10,7 @@ import SeasonSelector from './SeasonSelector';
 import SortableHeader from '@/components/SortableHeader';
 
 // Fee row component
-function FeeRow({ member, isOdd, isForecast, categories }) {
+function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
   const hasDiscount = member.family_discount_rate > 0;
   const hasProrata = member.prorata_percentage < 1.0;
 
@@ -82,8 +82,8 @@ function FeeRow({ member, isOdd, isForecast, categories }) {
         {formatCurrency(member.final_fee, 2)}
       </td>
 
-      {/* Nikki Total - Only in current season mode */}
-      {!isForecast && (
+      {/* Nikki Total - Only when showNikkiColumns (nikki billing, not forecast) */}
+      {showNikkiColumns && (
         <>
           <td className="px-4 py-3 text-sm text-right">
             {member.nikki_total !== null ? (
@@ -159,12 +159,16 @@ export function ContributieList() {
     setSortOrder(order);
   }, []);
 
-  // Reset sort field if switching to forecast while sorting by nikki columns
+  // Derive billing method from fee data
+  const billingMethod = data?.billing_method ?? 'nikki';
+  const showNikkiColumns = billingMethod === 'nikki' && !isForecast;
+
+  // Reset sort field if switching to forecast or rondo billing while sorting by nikki columns
   useEffect(() => {
-    if (isForecast && (sortField === 'nikki_total' || sortField === 'nikki_saldo')) {
+    if (!showNikkiColumns && (sortField === 'nikki_total' || sortField === 'nikki_saldo')) {
       setSortField('last_name');
     }
-  }, [isForecast, sortField]);
+  }, [showNikkiColumns, sortField]);
 
   // Handle refresh
   const handleRefresh = async () => {
@@ -329,13 +333,13 @@ export function ContributieList() {
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee, 2)}</span>
             </div>
-            {!isForecast && (
+            {showNikkiColumns && (
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 Nog te ontvangen: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.nikkiSaldo, 2)}</span>
               </div>
             )}
-            {/* Filter: Mismatch - Only in current season mode */}
-            {!isForecast && mismatchCount > 0 && (
+            {/* Filter: Mismatch - Only in nikki billing current season mode */}
+            {showNikkiColumns && mismatchCount > 0 && (
               <button
                 onClick={() => {
                   setShowMismatchOnly(!showMismatchOnly);
@@ -350,8 +354,8 @@ export function ContributieList() {
                 <span className="text-xs">Afwijking ({mismatchCount})</span>
               </button>
             )}
-            {/* Filter: No Nikki Data - Only in current season mode */}
-            {!isForecast && noNikkiCount > 0 && (
+            {/* Filter: No Nikki Data - Only in nikki billing current season mode */}
+            {showNikkiColumns && noNikkiCount > 0 && (
               <button
                 onClick={() => {
                   setShowNoNikkiOnly(!showNoNikkiOnly);
@@ -457,7 +461,7 @@ export function ContributieList() {
                   onSort={handleSort}
                   className="text-right"
                 />
-                {!isForecast && (
+                {showNikkiColumns && (
                   <>
                     <SortableHeader
                       label="Nikki"
@@ -485,7 +489,7 @@ export function ContributieList() {
                   key={member.id}
                   member={member}
                   isOdd={index % 2 === 1}
-                  isForecast={isForecast}
+                  showNikkiColumns={showNikkiColumns}
                   categories={data?.categories}
                 />
               ))}
@@ -502,7 +506,7 @@ export function ContributieList() {
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
                   {formatCurrency(totals.finalFee, 2)}
                 </td>
-                {!isForecast && (
+                {showNikkiColumns && (
                   <>
                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
                       {formatCurrency(totals.nikkiTotal, 2)}
