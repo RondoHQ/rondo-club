@@ -3459,7 +3459,7 @@ class Api extends Base {
 				[
 					'post_type'      => 'rondo_invoice',
 					'posts_per_page' => -1,
-					'post_status'    => 'publish',
+					'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
 					'no_found_rows'  => true,
 					'fields'         => 'ids',
 					'meta_query'     => [
@@ -3481,11 +3481,11 @@ class Api extends Base {
 			if ( ! empty( $invoice_query->posts ) ) {
 				update_meta_cache( 'post', $invoice_query->posts );
 				foreach ( $invoice_query->posts as $inv_id ) {
-					$inv_person = get_post_meta( $inv_id, '_invoice_person_id', true );
+					$inv_person = get_post_meta( $inv_id, 'person', true );
 					if ( $inv_person ) {
 						$invoice_map[ (int) $inv_person ] = [
 							'id'     => $inv_id,
-							'status' => get_post_meta( $inv_id, 'invoice_status', true ) ?: 'draft',
+							'status' => get_post_meta( $inv_id, 'status', true ) ?: 'draft',
 						];
 					}
 				}
