@@ -15,6 +15,7 @@ namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
 use Rondo\Fees\MembershipFees;
+use Rondo\Finance\InstallmentPaymentService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -426,24 +427,21 @@ class PublicPaymentPage {
 		$config    = new FinanceConfig();
 		$admin_fee = $config->get_installment_admin_fee();
 
-		// Store plan meta and calculate first installment amount.
+		// Store plan meta and write installment breakdown for multi-installment plans.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );
 
 		if ( 'full' === $plan ) {
 			update_post_meta( $invoice_id, '_installment_count', 1 );
-			$first_amount = $total;
 		} elseif ( 'quarterly_3' === $plan ) {
 			update_post_meta( $invoice_id, '_installment_count', 3 );
 			$this->write_installment_meta( $invoice_id, 3, $total, $admin_fee );
-			$first_amount = round( $total / 3, 2 ) + $admin_fee;
 		} else { // monthly_8
 			update_post_meta( $invoice_id, '_installment_count', 8 );
 			$this->write_installment_meta( $invoice_id, 8, $total, $admin_fee );
-			$first_amount = round( $total / 8, 2 ) + $admin_fee;
 		}
 
-		// Create Mollie payment for the first installment.
-		$checkout_url = $this->create_installment_payment( $invoice_id, $first_amount, 1, $token );
+		// Create Mollie payment for the first installment via shared service.
+		$checkout_url = InstallmentPaymentService::create_payment( $invoice_id, 1 );
 
 		if ( is_wp_error( $checkout_url ) ) {
 			$this->render_error( 'Betaling aanmaken mislukt. Probeer het later opnieuw.' );
@@ -485,77 +483,6 @@ class PublicPaymentPage {
 			update_post_meta( $invoice_id, '_installment_' . $n . '_admin_fee', $admin_fee );
 			update_post_meta( $invoice_id, '_installment_' . $n . '_status', 'pending' );
 		}
-	}
-
-	/**
-	 * Create a Mollie payment for an installment and store results on the invoice.
-	 *
-	 * Stores the Mollie payment ID, checkout URL, and reverse-lookup meta
-	 * (_mollie_pid_{payment_id}) for O(1) webhook lookup.
-	 *
-	 * @param int    $invoice_id          Invoice post ID.
-	 * @param float  $amount              Payment amount (base + admin fee for installments).
-	 * @param int    $installment_number  Which installment (1 for first payment).
-	 * @param string $token               Payment token (used in redirect URL).
-	 * @return string|\WP_Error Mollie checkout URL on success, WP_Error on failure.
-	 */
-	private function create_installment_payment( int $invoice_id, float $amount, int $installment_number, string $token ) {
-		// Guard: Mollie API key must be configured.
-		$config  = new FinanceConfig();
-		$api_key = $config->get_mollie_api_key();
-		if ( empty( $api_key ) ) {
-			return new \WP_Error( 'mollie_not_configured', 'Mollie API-sleutel niet geconfigureerd.' );
-		}
-
-		// Build description based on plan type.
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$plan           = get_post_meta( $invoice_id, '_installment_plan', true );
-		$count          = (int) get_post_meta( $invoice_id, '_installment_count', true );
-
-		if ( 'full' === $plan ) {
-			$description = 'Factuur ' . $invoice_number;
-		} else {
-			$description = 'Termijn ' . $installment_number . '/' . $count . ' - Factuur ' . $invoice_number;
-		}
-
-		// Build Mollie payment payload.
-		$payload = [
-			'amount'      => [
-				'currency' => 'EUR',
-				'value'    => number_format( $amount, 2, '.', '' ),
-			],
-			'description' => $description,
-			'redirectUrl' => home_url( '/betaling/' . $token . '?betaald=1' ),
-			'metadata'    => [
-				'invoice_id'         => $invoice_id,
-				'installment_number' => $installment_number,
-			],
-		];
-
-		// Conditionally add webhookUrl — omit on localhost/.local environments.
-		$site_url = get_site_url();
-		if ( false === strpos( $site_url, 'localhost' ) && false === strpos( $site_url, '.local' ) ) {
-			$payload['webhookUrl'] = rest_url( 'rondo/v1/mollie/webhook' );
-		}
-
-		// Call Mollie SDK.
-		try {
-			$mollie_client = new MollieClient();
-			$mollie        = $mollie_client->get();
-			$payment       = $mollie->payments->create( $payload );
-		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
-			error_log( 'Mollie API exception (installment): ' . $e->getMessage() );
-			return new \WP_Error( 'mollie_api_error', $e->getMessage() );
-		}
-
-		// Store payment results on invoice.
-		update_post_meta( $invoice_id, '_installment_' . $installment_number . '_mollie_payment_id', $payment->id );
-		update_post_meta( $invoice_id, '_installment_' . $installment_number . '_payment_link', $payment->getCheckoutUrl() );
-
-		// Reverse-lookup meta for O(1) webhook matching.
-		update_post_meta( $invoice_id, '_mollie_pid_' . $payment->id, $installment_number );
-
-		return $payment->getCheckoutUrl();
 	}
 
 	/**
