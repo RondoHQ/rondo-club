@@ -138,6 +138,9 @@ export default function FinanceSettings() {
     payment_term_days: 14,
     payment_clause: '',
     email_template: '',
+    installment_email_template: '',
+    reminder_1_email_template: '',
+    reminder_2_email_template: '',
     club_logo_id: 0,
     club_logo_url: '',
     accent_color: '',
@@ -166,6 +169,9 @@ export default function FinanceSettings() {
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
         email_template: settings.email_template || '',
+        installment_email_template: settings.installment_email_template || '',
+        reminder_1_email_template: settings.reminder_1_email_template || '',
+        reminder_2_email_template: settings.reminder_2_email_template || '',
         club_logo_id: settings.club_logo_id || 0,
         club_logo_url: settings.club_logo_url || '',
         accent_color: settings.accent_color || '',
@@ -260,6 +266,9 @@ export default function FinanceSettings() {
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
         email_template: formData.email_template,
+        installment_email_template: formData.installment_email_template,
+        reminder_1_email_template: formData.reminder_1_email_template,
+        reminder_2_email_template: formData.reminder_2_email_template,
         club_logo_id: formData.club_logo_id,
         accent_color: formData.accent_color,
         bcc_email: formData.bcc_email,
@@ -568,38 +577,143 @@ export default function FinanceSettings() {
         </div>
       </div>}
 
-      {/* Section 3: Email Template */}
-      {activeTab === 'email' && <div className="card p-6">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor boetes</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Sjabloon voor de e-mail waarmee facturen worden verstuurd.
-          </p>
+      {/* Section 3: Email Templates */}
+      {activeTab === 'email' && <div className="space-y-6">
+        {/* Discipline invoice email template */}
+        <div className="card p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor boetes</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Sjabloon voor de e-mail waarmee facturen worden verstuurd.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                E-mailtekst
+              </label>
+              <RichTextEditor
+                value={formData.email_template}
+                onChange={(html) => setFormData(prev => ({ ...prev, email_template: html }))}
+                placeholder="Schrijf hier het e-mailsjabloon..."
+                minHeight="200px"
+              />
+            </div>
+
+            {/* Variable documentation */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
+              <p className="font-semibold mb-2">Beschikbare variabelen:</p>
+              <div className="space-y-1 font-mono">
+                <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
+                <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
+                <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
+                <div><code>{'{tuchtzaken_lijst}'}</code> - Overzicht van tuchtzaken</div>
+                <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
+                <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
+                <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
+            </p>
+          </div>
         </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              E-mailtekst
-            </label>
-            <RichTextEditor
-              value={formData.email_template}
-              onChange={(html) => setFormData(prev => ({ ...prev, email_template: html }))}
-              placeholder="Schrijf hier het e-mailsjabloon..."
-              minHeight="200px"
-            />
+
+        {/* Installment payment email template */}
+        <div className="card p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template termijnbetaling</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Dit sjabloon wordt verstuurd wanneer een termijn vervalt.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                E-mailtekst
+              </label>
+              <RichTextEditor
+                value={formData.installment_email_template}
+                onChange={(html) => setFormData(prev => ({ ...prev, installment_email_template: html }))}
+                placeholder="Schrijf hier het sjabloon voor termijnbetalingen..."
+                minHeight="200px"
+              />
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
+              <p className="font-semibold mb-2">Beschikbare variabelen:</p>
+              <div className="space-y-1 font-mono">
+                <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
+                <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
+                <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
+                <div><code>{'{termijn_nummer}'}</code> - Huidig termijnnummer</div>
+                <div><code>{'{totaal_termijnen}'}</code> - Totaal aantal termijnen</div>
+                <div><code>{'{termijn_bedrag}'}</code> - Bedrag van deze termijn</div>
+                <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                <div><code>{'{vervaldatum}'}</code> - Vervaldatum van de termijn</div>
+                <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
+            </p>
+          </div>
+        </div>
+
+        {/* Reminder email templates */}
+        <div className="card p-6">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor herinneringen</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Sjablonen voor herinneringen bij achterstallige termijnen.
+            </p>
           </div>
 
-          {/* Variable documentation */}
+          {/* Reminder 1 */}
+          <div className="space-y-4 mb-8">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Template eerste herinnering</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Dit sjabloon wordt verstuurd 14 dagen na de vervaldatum.
+              </p>
+              <RichTextEditor
+                value={formData.reminder_1_email_template}
+                onChange={(html) => setFormData(prev => ({ ...prev, reminder_1_email_template: html }))}
+                placeholder="Schrijf hier het sjabloon voor de eerste herinnering..."
+                minHeight="200px"
+              />
+            </div>
+          </div>
+
+          {/* Reminder 2 */}
+          <div className="space-y-4 mb-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Template tweede herinnering</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Dit sjabloon wordt verstuurd 21 dagen na de vervaldatum. De penningmeester ontvangt een BCC.
+              </p>
+              <RichTextEditor
+                value={formData.reminder_2_email_template}
+                onChange={(html) => setFormData(prev => ({ ...prev, reminder_2_email_template: html }))}
+                placeholder="Schrijf hier het sjabloon voor de tweede herinnering..."
+                minHeight="200px"
+              />
+            </div>
+          </div>
+
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
             <p className="font-semibold mb-2">Beschikbare variabelen:</p>
             <div className="space-y-1 font-mono">
               <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
               <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
               <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
-              <div><code>{'{tuchtzaken_lijst}'}</code> - Overzicht van tuchtzaken</div>
-              <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
+              <div><code>{'{termijn_nummer}'}</code> - Huidig termijnnummer</div>
+              <div><code>{'{totaal_termijnen}'}</code> - Totaal aantal termijnen</div>
+              <div><code>{'{termijn_bedrag}'}</code> - Bedrag van deze termijn</div>
               <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
-              <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
+              <div><code>{'{vervaldatum}'}</code> - Vervaldatum van de termijn</div>
+              <div><code>{'{dagen_te_laat}'}</code> - Aantal dagen te laat</div>
               <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
             </div>
           </div>
