@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText, Loader2, Ban } from 'lucide-react';
 import { usePersonFee, feeKeys } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
@@ -37,6 +37,7 @@ function StatusBadge({ status }) {
  * Finances card showing membership fee details for a person
  */
 export default function FinancesCard({ personId }) {
+  const navigate = useNavigate();
   const { data: feeData, isLoading } = usePersonFee(personId);
 
   // Fetch current user for fairplay capability check
@@ -57,9 +58,10 @@ export default function FinancesCard({ personId }) {
   // Single-member membership invoice creation
   const queryClient = useQueryClient();
   const createInvoice = useMutation({
-    mutationFn: () => prmApi.createMembershipInvoice({ person_id: personId, season: feeData?.season }),
-    onSuccess: () => {
+    mutationFn: () => prmApi.createMembershipInvoice({ person_id: personId, season: feeData?.season }).then(res => res.data),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['invoices', 'person', personId] });
+      navigate(`/financien/facturen/${data.invoice_id}`);
     },
   });
 
