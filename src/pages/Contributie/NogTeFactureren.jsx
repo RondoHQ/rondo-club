@@ -4,7 +4,7 @@ import { RefreshCw, Coins, FileText, Loader2 } from 'lucide-react';
 import { useFeeList, feeKeys } from '@/hooks/useFees';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
-import { formatCurrency, getCategoryColor } from '@/utils/formatters';
+import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import SeasonSelector from './SeasonSelector';
 import SortableHeader from '@/components/SortableHeader';
@@ -30,10 +30,13 @@ function StatusBadge({ status }) {
 }
 
 function FeeRow({ member, isOdd, categories, isAdmin, onCreateInvoice, isCreating }) {
+  const hasDiscount = member.family_discount_rate > 0;
+  const hasProrata = member.prorata_percentage < 1.0;
+
   return (
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
-    }`}>
+    } ${hasProrata ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
@@ -54,6 +57,27 @@ function FeeRow({ member, isOdd, categories, isAdmin, onCreateInvoice, isCreatin
         <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getCategoryColor(categories?.[member.category]?.sort_order)}`}>
           {categories?.[member.category]?.label ?? member.category}
         </span>
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+        {formatCurrency(member.base_fee, 2)}
+      </td>
+      <td className="px-4 py-3 text-sm text-right">
+        {hasDiscount ? (
+          <span className="text-green-600 dark:text-green-400">
+            -{formatPercentage(member.family_discount_rate)}
+          </span>
+        ) : (
+          <span className="text-gray-400 dark:text-gray-500">-</span>
+        )}
+      </td>
+      <td className="px-4 py-3 text-sm text-right">
+        {hasProrata ? (
+          <span className="text-amber-600 dark:text-amber-400">
+            {formatPercentage(member.prorata_percentage)}
+          </span>
+        ) : (
+          <span className="text-gray-400 dark:text-gray-500">100%</span>
+        )}
       </td>
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
         {formatCurrency(member.final_fee, 2)}
@@ -182,8 +206,11 @@ export function NogTeFactureren() {
       case 'category':
         cmp = (categoryOrder[a.category] ?? 99) - (categoryOrder[b.category] ?? 99);
         break;
+      case 'base_fee':
+      case 'family_discount_rate':
+      case 'prorata_percentage':
       case 'final_fee':
-        cmp = a.final_fee - b.final_fee;
+        cmp = a[sortField] - b[sortField];
         break;
       default:
         cmp = 0;
@@ -191,6 +218,7 @@ export function NogTeFactureren() {
     return sortOrder === 'asc' ? cmp : -cmp;
   });
 
+  const totalBaseFee = sortedMembers.reduce((acc, m) => acc + m.base_fee, 0);
   const totalFee = sortedMembers.reduce((acc, m) => acc + m.final_fee, 0);
   const uninvoicedCount = sortedMembers.filter(m => !m.invoice_id && m.final_fee > 0).length;
 
@@ -299,6 +327,9 @@ export function NogTeFactureren() {
                 <SortableHeader label="Voornaam" columnId="first_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 <SortableHeader label="Achternaam" columnId="last_name" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
                 <SortableHeader label="Categorie" columnId="category" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} />
+                <SortableHeader label="Basis" columnId="base_fee" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
+                <SortableHeader label="Gezin" columnId="family_discount_rate" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
+                <SortableHeader label="Pro-rata" columnId="prorata_percentage" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
                 <SortableHeader label="Bedrag" columnId="final_fee" sortField={sortField} sortOrder={sortOrder} onSort={handleSort} className="text-right" />
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-800">
                   Status
@@ -326,6 +357,10 @@ export function NogTeFactureren() {
                 <td colSpan="3" className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                   Totaal
                 </td>
+                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                  {formatCurrency(totalBaseFee, 2)}
+                </td>
+                <td colSpan="2"></td>
                 <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
                   {formatCurrency(totalFee, 2)}
                 </td>
