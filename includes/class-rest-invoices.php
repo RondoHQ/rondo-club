@@ -79,6 +79,18 @@ class Invoices extends Base {
 							},
 							'sanitize_callback' => 'absint',
 						],
+						'type'      => [
+							'default'           => '',
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || in_array( $param, [ 'membership', 'discipline' ], true );
+							},
+						],
+						'payment_plan' => [
+							'default'           => '',
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || in_array( $param, [ 'full', 'quarterly_3', 'monthly_8' ], true );
+							},
+						],
 					],
 				],
 				[
@@ -362,16 +374,64 @@ class Invoices extends Base {
 			$args['post_status'] = [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ];
 		}
 
+		// Initialize meta_query — filters are composed via AND relation
+		$args['meta_query'] = [];
+
 		// Filter by person if provided
 		$person_id = $request->get_param( 'person_id' );
 		if ( ! empty( $person_id ) ) {
-			$args['meta_query'] = [
-				[
-					'key'     => 'person',
-					'value'   => $person_id,
-					'compare' => '=',
-				],
+			$args['meta_query'][] = [
+				'key'     => 'person',
+				'value'   => $person_id,
+				'compare' => '=',
 			];
+		}
+
+		// Filter by invoice type if provided
+		$type = $request->get_param( 'type' );
+		if ( ! empty( $type ) ) {
+			if ( 'discipline' === $type ) {
+				// Include null/empty invoice_type for legacy discipline invoices
+				$args['meta_query'][] = [
+					'relation' => 'OR',
+					[
+						'key'   => 'invoice_type',
+						'value' => 'discipline',
+					],
+					[
+						'key'     => 'invoice_type',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'   => 'invoice_type',
+						'value' => '',
+					],
+				];
+			} else {
+				$args['meta_query'][] = [
+					'key'   => 'invoice_type',
+					'value' => $type,
+				];
+			}
+		}
+
+		// Filter by payment plan if provided
+		$payment_plan = $request->get_param( 'payment_plan' );
+		if ( ! empty( $payment_plan ) ) {
+			$args['meta_query'][] = [
+				'key'   => '_installment_plan',
+				'value' => $payment_plan,
+			];
+		}
+
+		// Add AND relation when multiple meta_query clauses exist
+		if ( count( $args['meta_query'] ) > 1 ) {
+			$args['meta_query']['relation'] = 'AND';
+		}
+
+		// Remove empty meta_query to avoid WP_Query warnings
+		if ( empty( $args['meta_query'] ) ) {
+			unset( $args['meta_query'] );
 		}
 
 		// Execute query
@@ -1148,16 +1208,18 @@ class Invoices extends Base {
 	 */
 	private function format_invoice( $post ) {
 		return [
-			'id'             => $post->ID,
-			'invoice_number' => get_field( 'invoice_number', $post->ID ),
-			'person'         => $this->get_invoice_person_summary( $post->ID ),
-			'total_amount'   => (float) get_field( 'total_amount', $post->ID ),
-			'status'         => get_field( 'status', $post->ID ),
-			'post_status'    => $post->post_status,
-			'sent_date'      => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
-			'due_date'       => get_post_meta( $post->ID, 'due_date', true ) ?: null,
-			'payment_link'   => get_field( 'payment_link', $post->ID ) ?: null,
-			'created'        => $post->post_date,
+			'id'               => $post->ID,
+			'invoice_number'   => get_field( 'invoice_number', $post->ID ),
+			'person'           => $this->get_invoice_person_summary( $post->ID ),
+			'total_amount'     => (float) get_field( 'total_amount', $post->ID ),
+			'status'           => get_field( 'status', $post->ID ),
+			'post_status'      => $post->post_status,
+			'sent_date'        => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
+			'due_date'         => get_post_meta( $post->ID, 'due_date', true ) ?: null,
+			'payment_link'     => get_field( 'payment_link', $post->ID ) ?: null,
+			'created'          => $post->post_date,
+			'invoice_type'     => get_field( 'invoice_type', $post->ID ) ?: null,
+			'installment_plan' => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
 		];
 	}
 
