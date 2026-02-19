@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [28.1.0] - 2026-02-19
+
+### Added
+- Invoice type filter on Facturen page (Contributie / Tuchtrecht)
+- Payment plan filter on Facturen page (Volledig / 3 termijnen / 8 termijnen)
+- Type badge column in Facturen list showing invoice type at a glance
+- Installment timeline card on invoice detail page showing per-installment progress
+- Installment plan and payment plan fields in invoice API responses
+- Invoice type and installment plan fields in invoice list API response
+
+### Changed
+- Refactored invoice list API meta_query to support composable filters (status + type + payment_plan + person_id)
+
 ## [28.0.0] - 2026-02-19
 
 ### Added
