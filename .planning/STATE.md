@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 91: Remove admin fee note and use accent color on betaling page
+Last activity: 2026-02-19 - Completed quick task 92: Set club logo as favicon on betaling page
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -106,6 +106,7 @@ Phase 192-01 decisions:
 | 89 | Add cursor pointer to tabs and buttons | 2026-02-19 | 31c5043f | [89-add-cursor-pointer-to-tabs-and-buttons](./quick/89-add-cursor-pointer-to-tabs-and-buttons/) |
 | 90 | Show club name and logo on betaling page | 2026-02-19 | cff97229 | [90-show-club-name-and-logo-on-betaling-page](./quick/90-show-club-name-and-logo-on-betaling-page/) |
 | 91 | Remove admin fee note and use accent color on betaling page | 2026-02-19 | 46d7bf06 | [91-remove-admin-fee-note-and-use-accent-col](./quick/91-remove-admin-fee-note-and-use-accent-col/) |
+| 92 | Set club logo as favicon on betaling page | 2026-02-19 | 2852213c | [92-set-club-logo-as-favicon-on-betaling-pag](./quick/92-set-club-logo-as-favicon-on-betaling-pag/) |
 
 ## Session Continuity
 
@@ -117,4 +118,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 91 complete (remove admin fee note, accent color buttons)*
+*Last updated: 2026-02-19 — Quick task 92 complete (club logo as favicon on betaling page)*
