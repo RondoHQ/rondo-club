@@ -59,6 +59,7 @@ class FinanceConfig {
 	const OPTION_REMINDER_1_EMAIL_TEMPLATE   = 'rondo_finance_reminder_1_email_template';
 	const OPTION_REMINDER_2_EMAIL_TEMPLATE   = 'rondo_finance_reminder_2_email_template';
 	const OPTION_MEMBERSHIP_EMAIL_TEMPLATE   = 'rondo_finance_membership_email_template';
+	const OPTION_MEMBERSHIP_PAYMENT_CLAUSE   = 'rondo_finance_membership_payment_clause';
 
 	/**
 	 * Default configuration values
@@ -82,6 +83,7 @@ class FinanceConfig {
 		'reminder_1_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Wij hebben geconstateerd dat termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}) nog niet is voldaan.</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u vriendelijk dit bedrag zo spoedig mogelijk te voldoen via:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'reminder_2_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u dringend dit bedrag direct te voldoen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij de vordering overdragen aan ons bestuur.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'membership_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor uw contributie.</p><p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'membership_payment_clause'  => '',
 	];
 
 	/**
@@ -194,6 +196,17 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get membership (contributie) payment clause text
+	 *
+	 * Shown at the bottom of the membership invoice PDF payment section.
+	 *
+	 * @return string The membership payment clause text (empty string if not configured)
+	 */
+	public function get_membership_payment_clause(): string {
+		return get_option( self::OPTION_MEMBERSHIP_PAYMENT_CLAUSE, self::DEFAULTS['membership_payment_clause'] );
+	}
+
+	/**
 	 * Get club logo ID
 	 *
 	 * @return int The club logo attachment ID (0 if not configured)
@@ -285,6 +298,7 @@ class FinanceConfig {
 			'iban'                  => $this->get_iban(),
 			'payment_term_days'     => $this->get_payment_term_days(),
 			'payment_clause'        => $this->get_payment_clause(),
+			'membership_payment_clause' => $this->get_membership_payment_clause(),
 			'email_template'             => $this->get_email_template(),
 			'membership_email_template'  => $this->get_membership_email_template(),
 			'installment_email_template' => $this->get_installment_email_template(),
@@ -325,6 +339,8 @@ class FinanceConfig {
 				return $this->get_payment_term_days();
 			case 'payment_clause':
 				return $this->get_payment_clause();
+			case 'membership_payment_clause':
+				return $this->get_membership_payment_clause();
 			case 'email_template':
 				return $this->get_email_template();
 			case 'membership_email_template':
@@ -385,6 +401,10 @@ class FinanceConfig {
 
 		if ( isset( $data['payment_clause'] ) ) {
 			$success = update_option( self::OPTION_PAYMENT_CLAUSE, sanitize_textarea_field( $data['payment_clause'] ) ) && $success;
+		}
+
+		if ( isset( $data['membership_payment_clause'] ) ) {
+			$success = update_option( self::OPTION_MEMBERSHIP_PAYMENT_CLAUSE, sanitize_textarea_field( $data['membership_payment_clause'] ) ) && $success;
 		}
 
 		if ( isset( $data['email_template'] ) ) {
