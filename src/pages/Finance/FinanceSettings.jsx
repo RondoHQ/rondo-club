@@ -138,6 +138,7 @@ export default function FinanceSettings() {
     payment_term_days: 14,
     payment_clause: '',
     email_template: '',
+    membership_email_template: '',
     installment_email_template: '',
     reminder_1_email_template: '',
     reminder_2_email_template: '',
@@ -170,6 +171,7 @@ export default function FinanceSettings() {
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
         email_template: settings.email_template || '',
+        membership_email_template: settings.membership_email_template || '',
         installment_email_template: settings.installment_email_template || '',
         reminder_1_email_template: settings.reminder_1_email_template || '',
         reminder_2_email_template: settings.reminder_2_email_template || '',
@@ -268,6 +270,7 @@ export default function FinanceSettings() {
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
         email_template: formData.email_template,
+        membership_email_template: formData.membership_email_template,
         installment_email_template: formData.installment_email_template,
         reminder_1_email_template: formData.reminder_1_email_template,
         reminder_2_email_template: formData.reminder_2_email_template,
@@ -607,7 +610,7 @@ export default function FinanceSettings() {
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor boetes</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Sjabloon voor de e-mail waarmee facturen worden verstuurd.
+              Sjabloon voor de e-mail waarmee boete-facturen worden verstuurd.
             </p>
           </div>
           <div className="space-y-4">
@@ -631,6 +634,45 @@ export default function FinanceSettings() {
                 <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
                 <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                 <div><code>{'{tuchtzaken_lijst}'}</code> - Overzicht van tuchtzaken</div>
+                <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
+                <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
+                <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
+            </p>
+          </div>
+        </div>
+
+        {/* Membership invoice email template */}
+        <div className="card p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Template e-mail voor contributie</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Sjabloon voor de e-mail waarmee contributiefacturen worden verstuurd.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                E-mailtekst
+              </label>
+              <RichTextEditor
+                value={formData.membership_email_template}
+                onChange={(html) => setFormData(prev => ({ ...prev, membership_email_template: html }))}
+                placeholder="Schrijf hier het e-mailsjabloon voor contributie..."
+                minHeight="200px"
+              />
+            </div>
+            {/* Variable documentation */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
+              <p className="font-semibold mb-2">Beschikbare variabelen:</p>
+              <div className="space-y-1 font-mono">
+                <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
+                <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
+                <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                 <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                 <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
                 <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
