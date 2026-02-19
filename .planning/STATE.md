@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 196: Bulk Invoice Creation (next)
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 197: Frontend Bulk Invoice UI (next)
 
 ## Current Position
 
-Phase: 195 of 197 (Installment Scheduler & Email System) — COMPLETE
-Plan: 2 of 2 in current phase — complete, ready for Phase 196
-Status: Phase 195 complete — daily cron sweeper + email sender deployed to production (v27.4.0)
-Last activity: 2026-02-19 — Phase 195-02 complete: InstallmentScheduler + InstallmentEmailSender deployed, cron registered
+Phase: 196 of 197 (Bulk Invoice Creation) — COMPLETE
+Plan: 1 of 1 in current phase — complete, ready for Phase 197
+Status: Phase 196 complete — BulkInvoiceCreator + installment plan toggles deployed to production
+Last activity: 2026-02-19 — Phase 196-01 complete: BulkInvoiceCreator + installment plan toggles deployed
 
-Progress: [█████░░░░░] 67% (v28.0, 5/6 phases complete)
+Progress: [██████░░░░] 83% (v28.0, 6/6 phases complete — ready for final frontend phase)
 
 ## Performance Metrics
 
@@ -38,6 +38,7 @@ Progress: [█████░░░░░] 67% (v28.0, 5/6 phases complete)
 | 194 | 01 | 4min | 2 | 6 |
 | 195 | 01 | 5min | 2 | 4 |
 | 195 | 02 | 10min | 2 | 5 |
+| 196 | 01 | 5min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -70,6 +71,9 @@ Phase 192-01 decisions:
 - [Phase 195]: Status written before wp_mail for idempotency — prevents duplicate sends if cron re-runs; failed Mollie create_payment aborts early without writing status so sweeper retries next day
 - [Phase 195]: Reminder 2 checked before reminder 1 in sweeper decision tree — 21-day threshold also satisfies 14-day check; checking reminder 2 first ensures exactly one reminder per overdue period
 - [Phase 195]: Fresh Mollie payment link created per email call — links expire, initial send + both reminders each call InstallmentPaymentService::create_payment independently
+- [Phase 196]: BulkInvoiceCreator uses WP-Cron chained single-events (50/batch) — avoid PHP timeout for 500+ members
+- [Phase 196]: Installment plan toggles (plan_3, plan_8) stored per-season as WP options, default true — existing deployments unaffected
+- [Phase 196]: person_ids array stripped from REST responses — stored in WP option only for cron batch processor, keeps API payloads small
 
 ### Pending Todos
 
@@ -77,17 +81,16 @@ Phase 192-01 decisions:
 
 ### Blockers/Concerns
 
-- Phase 196 (Bulk Creation): Verify SiteGround PHP memory limits for cron execution context before committing to batch size of 50
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 195-02-PLAN.md — installment scheduler + email system deployed to production
+Stopped at: Completed 196-01-PLAN.md — BulkInvoiceCreator + installment plan toggles deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 196 — Bulk Invoice Creation
+**Next action:** Execute Phase 197 — Frontend Bulk Invoice UI
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Phase 195 complete (both plans), ready for Phase 196*
+*Last updated: 2026-02-19 — Phase 196 complete (plan 01), ready for Phase 197*
