@@ -15,17 +15,24 @@ class InvoiceNumbering {
 
 	/**
 	 * Generate the next invoice number for the current calendar year.
-	 * Format: 2026T001 (YYYY + T + zero-padded 3-digit sequential)
 	 *
-	 * Queries existing rondo_invoice posts for the current year to find the
-	 * highest existing number, then increments by 1.
+	 * Format depends on type:
+	 * - 'discipline' (default): 2026T001 (YYYY + T + zero-padded 3-digit sequential)
+	 * - 'membership': 2026C001 (YYYY + C + zero-padded 3-digit sequential)
 	 *
-	 * @return string The generated invoice number (e.g., "2026T001")
+	 * T and C sequences are independent — each type starts from 001 for the year.
+	 *
+	 * Queries existing rondo_invoice posts for the current year and type prefix to find
+	 * the highest existing number, then increments by 1.
+	 *
+	 * @param string $type Invoice type: 'discipline' (default) or 'membership'.
+	 * @return string The generated invoice number (e.g., "2026T001" or "2026C001").
 	 */
-	public static function generate_next(): string {
+	public static function generate_next( string $type = 'discipline' ): string {
 		// Get current year.
-		$year = gmdate( 'Y' );
-		$prefix = $year . 'T';
+		$year   = gmdate( 'Y' );
+		$letter = ( $type === 'membership' ) ? 'C' : 'T';
+		$prefix = $year . $letter;
 
 		// Query all invoices with numbers starting with this year's prefix.
 		$query = new \WP_Query(
@@ -74,12 +81,12 @@ class InvoiceNumbering {
 	 * Validate invoice number format.
 	 *
 	 * Checks if the provided string matches the expected format:
-	 * 4-digit year + 'T' + at least 3 digits (e.g., "2026T001")
+	 * 4-digit year + 'T' or 'C' + at least 3 digits (e.g., "2026T001" or "2026C001")
 	 *
 	 * @param string $number The invoice number to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public static function is_valid( string $number ): bool {
-		return (bool) preg_match( '/^\d{4}T\d{3,}$/', $number );
+		return (bool) preg_match( '/^\d{4}[TC]\d{3,}$/', $number );
 	}
 }
