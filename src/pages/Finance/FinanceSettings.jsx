@@ -10,10 +10,10 @@ import FeeCategorySettings from '@/pages/Settings/FeeCategorySettings';
 const TABS = [
   { id: 'organization', label: 'Organisatie' },
   { id: 'payment', label: 'Betaling' },
-  { id: 'email', label: 'E-mail' },
-  { id: 'rabobank', label: 'Rabobank' },
-  { id: 'mollie', label: 'Mollie' },
   { id: 'contributie', label: 'Contributie' },
+  { id: 'email', label: 'E-mail' },
+  { id: 'mollie', label: 'Mollie' },
+  { id: 'rabobank', label: 'Rabobank' },
 ];
 
 const EMAIL_SUB_TABS = [
@@ -354,14 +354,22 @@ export default function FinanceSettings() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Tab Navigation */}
       <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
-        {TABS.map(tab => (
-          <TabButton
-            key={tab.id}
-            label={tab.label}
-            isActive={activeTab === tab.id}
-            onClick={() => setActiveTab(tab.id)}
-          />
-        ))}
+        {TABS.map(tab => {
+          let label = tab.label;
+          if (tab.id === 'mollie' && formData.active_payment_provider !== 'mollie') {
+            label += ' (niet in gebruik)';
+          } else if (tab.id === 'rabobank' && formData.active_payment_provider !== 'rabobank') {
+            label += ' (niet in gebruik)';
+          }
+          return (
+            <TabButton
+              key={tab.id}
+              label={label}
+              isActive={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            />
+          );
+        })}
       </div>
 
       {/* Section 1: Organization Details */}
