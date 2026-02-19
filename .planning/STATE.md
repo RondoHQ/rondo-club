@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 Phase: 197 of 197 (Frontend Updates) — COMPLETE
 Plan: 2 of 2 in current phase — 197-02 complete
 Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 95: Add separate email template for contributie invoices
+Last activity: 2026-02-19 - Completed quick task 96: Separate invoice numbering for contributie (C prefix)
 
 Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
@@ -110,15 +110,16 @@ Phase 192-01 decisions:
 | 93 | Enable sending and disable installments per invoice | 2026-02-19 | bcf41e92 | [93-enable-sending-and-disable-installments-](./quick/93-enable-sending-and-disable-installments-/) |
 | 94 | Use direct Mollie payment link for membership invoices with installments disabled | 2026-02-19 | f7486ab5 | [94-use-direct-mollie-payment-link-for-membe](./quick/94-use-direct-mollie-payment-link-for-membe/) |
 | 95 | Add separate email template for contributie invoices | 2026-02-19 | 9f98284e | [95-add-separate-email-template-for-contribu](./quick/95-add-separate-email-template-for-contribu/) |
+| 96 | Separate invoice numbering for contributie (C prefix) | 2026-02-19 | b2e78ca6 | [96-separate-invoice-numbering-for-contribut](./quick/96-separate-invoice-numbering-for-contribut/) |
 
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed quick task 95 — separate email template for contributie invoices (FinanceConfig option, InvoiceEmailSender override, REST routing by invoice_type, Finance Settings card)
+Stopped at: Completed quick task 96 — separate invoice numbering for contributie invoices (C prefix for membership, T prefix for discipline, independent sequences, updated is_valid() regex)
 Resume file: None
 
 **Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 95 complete (separate membership email template)*
+*Last updated: 2026-02-19 — Quick task 96 complete (separate invoice numbering for membership, C prefix)*
