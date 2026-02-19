@@ -135,12 +135,12 @@ export function NogTeFactureren() {
     await queryClient.invalidateQueries({ queryKey: feeKeys.all });
   };
 
-  // Single invoice creation mutation
+  // Single invoice creation mutation — resetQueries clears cache and refetches fresh data
   const createInvoice = useMutation({
     mutationFn: ({ personId, season }) =>
       prmApi.createMembershipInvoice({ person_id: personId, season }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: feeKeys.all });
+      queryClient.resetQueries({ queryKey: feeKeys.all });
     },
   });
 
@@ -180,7 +180,7 @@ export function NogTeFactureren() {
     }
 
     setBulkCreating(false);
-    queryClient.invalidateQueries({ queryKey: feeKeys.all });
+    queryClient.resetQueries({ queryKey: feeKeys.all });
   };
 
   // Filter to members without Nikki data
