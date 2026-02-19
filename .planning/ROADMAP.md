@@ -201,10 +201,11 @@ Plans:
   4. Admin can see a progress indicator (e.g., "47 van 312 facturen aangemaakt") that updates without refreshing the page
   5. If bulk creation is triggered a second time for the same season, already-existing membership invoices for those members are skipped without creating duplicates
   6. Admin can also create a concept membership fee invoice for a single member directly from the Contributie page or their person record
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 196-01: TBD
+- [ ] 196-01-PLAN.md — BulkInvoiceCreator class, REST endpoints (bulk start/progress/single-create), billing method + installment plan toggles, PublicPaymentPage conditionals
+- [ ] 196-02-PLAN.md — Billing settings UI in FeeCategorySettings, Nikki column conditional visibility, bulk creation button + progress polling, version bump + deploy
 
 ---
 
