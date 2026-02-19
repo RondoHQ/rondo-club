@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText } from 'lucide-react';
+import { Coins, AlertTriangle, Users, Calendar, Gavel, FileText, Loader2 } from 'lucide-react';
 import { usePersonFee } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
 import { usePersonInvoices } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
 
 /**
@@ -49,6 +51,15 @@ export default function FinancesCard({ personId }) {
   // Fetch invoices for this person (only if user has financieel access)
   const { data: invoices = [] } = usePersonInvoices(personId, {
     enabled: Boolean(currentUser?.can_access_financieel),
+  });
+
+  // Single-member membership invoice creation
+  const queryClient = useQueryClient();
+  const createInvoice = useMutation({
+    mutationFn: () => prmApi.createMembershipInvoice({ person_id: personId, season: feeData?.season }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person', personId] });
+    },
   });
 
   // Calculate discipline fee totals
@@ -96,6 +107,8 @@ export default function FinancesCard({ personId }) {
   const hasDiscount = feeData.family_discount_rate > 0;
   const hasProrata = feeData.prorata_percentage < 1.0;
   const hasNikkiData = feeData.nikki_total !== null;
+  const billingMethod = feeData.billing_method ?? 'nikki';
+  const hasMembershipInvoice = invoices.some(inv => inv.invoice_type === 'membership');
 
   return (
     <div className="card p-6 mb-4">
@@ -187,6 +200,24 @@ export default function FinancesCard({ personId }) {
             {formatCurrency(feeData.final_fee)}
           </span>
         </div>
+
+        {/* Maak factuur button - only for rondo billing, no existing membership invoice, positive fee */}
+        {billingMethod === 'rondo' && !hasMembershipInvoice && feeData.final_fee > 0 && (
+          <div className="pt-2">
+            <button
+              onClick={() => createInvoice.mutate()}
+              disabled={createInvoice.isPending}
+              className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-electric-cyan text-white hover:bg-electric-cyan/90 disabled:opacity-50 transition-colors"
+            >
+              {createInvoice.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
+              Maak factuur
+            </button>
+          </div>
+        )}
 
         {/* Discipline Fees - Doorbelast (only for fairplay users with doorbelast fees) */}
         {canAccessFairplay && disciplineTotals.doorbelast > 0 && (

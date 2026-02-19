@@ -1,15 +1,35 @@
 import { useState } from 'react';
-import { Coins } from 'lucide-react';
-import { useFeeSummary } from '@/hooks/useFees';
+import { Coins, FileText, Loader2 } from 'lucide-react';
+import { useFeeSummary, useBulkInvoiceJob, feeKeys } from '@/hooks/useFees';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { prmApi } from '@/api/client';
 import { formatCurrency, getCategoryColor } from '@/utils/formatters';
 import SeasonSelector from './SeasonSelector';
 
 export function ContributieOverzicht() {
   const [isForecast, setIsForecast] = useState(false);
+  const queryClient = useQueryClient();
+
+  const config = window.rondoConfig || {};
+  const isAdmin = config.isAdmin || false;
 
   const { data, isLoading, error } = useFeeSummary(
     isForecast ? { forecast: true } : {}
   );
+
+  // Poll bulk invoice job status
+  const { data: jobStatus } = useBulkInvoiceJob();
+
+  // Read billing method from fee summary
+  const billingMethod = data?.billing_method ?? 'nikki';
+
+  // Mutation to start bulk invoice job
+  const startBulkJob = useMutation({
+    mutationFn: () => prmApi.startBulkInvoiceJob({ season: data?.season }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: feeKeys.bulkJob });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -55,14 +75,55 @@ export function ContributieOverzicht() {
   return (
     <div className="space-y-4">
       {/* Season selector and member count */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <SeasonSelector
           season={data?.season}
           isForecast={isForecast}
           onForecastChange={setIsForecast}
           memberCount={data?.total ?? 0}
         />
+        {/* Bulk invoice creation button */}
+        {isAdmin && billingMethod === 'rondo' && !isForecast && (
+          <button
+            onClick={() => startBulkJob.mutate()}
+            disabled={jobStatus?.status === 'running' || startBulkJob.isPending}
+            className="btn-primary inline-flex items-center gap-2"
+          >
+            {(jobStatus?.status === 'running' || startBulkJob.isPending) ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            Maak facturen
+          </button>
+        )}
       </div>
+
+      {/* Bulk job progress */}
+      {jobStatus && jobStatus.status !== 'idle' && !isForecast && (
+        <div className="card p-4">
+          {jobStatus.status === 'running' && (
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-electric-cyan" />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                {jobStatus.created + jobStatus.skipped} van {jobStatus.total} facturen verwerkt
+                ({jobStatus.created} aangemaakt, {jobStatus.skipped} overgeslagen)
+              </span>
+            </div>
+          )}
+          {jobStatus.status === 'done' && (
+            <div className="text-sm text-green-700 dark:text-green-400">
+              Klaar: {jobStatus.created} facturen aangemaakt, {jobStatus.skipped} overgeslagen
+              {jobStatus.errors > 0 && `, ${jobStatus.errors} fouten`}
+            </div>
+          )}
+          {jobStatus.status === 'error' && (
+            <div className="text-sm text-red-600 dark:text-red-400">
+              Er is een fout opgetreden bij het aanmaken van facturen.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Category overview table */}
       {sortedCategories.length === 0 ? (
