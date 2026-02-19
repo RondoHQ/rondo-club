@@ -198,7 +198,7 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
+		$this->render_html_header( 'Betaling — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
 		?>
 
 <div class="container">
@@ -314,7 +314,7 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
+		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
 		?>
 
 <div class="container">
@@ -411,7 +411,7 @@ class PublicPaymentPage {
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
 		$branding = $this->get_club_branding();
-		$this->render_html_header( 'Fout — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
+		$this->render_html_header( 'Fout — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
 		?>
 
 <div class="container">
@@ -602,8 +602,9 @@ class PublicPaymentPage {
 	 *
 	 * @param string $title        Page title for the <title> tag.
 	 * @param string $accent_color Hex accent color for primary buttons (default #0891b2).
+	 * @param string $logo_url     URL to club logo for favicon (optional).
 	 */
-	private function render_html_header( string $title, string $accent_color = '#0891b2' ) {
+	private function render_html_header( string $title, string $accent_color = '#0891b2', string $logo_url = '' ) {
 		?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -611,6 +612,9 @@ class PublicPaymentPage {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo esc_html( $title ); ?></title>
+	<?php if ( $logo_url ) : ?>
+	<link rel="icon" href="<?php echo esc_url( $logo_url ); ?>">
+	<?php endif; ?>
 	<style>
 		:root {
 			--accent-color: <?php echo esc_attr( $accent_color ); ?>;
