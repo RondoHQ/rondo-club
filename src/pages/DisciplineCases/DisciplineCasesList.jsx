@@ -8,6 +8,7 @@ import {
 } from '@/hooks/useDisciplineCases';
 import { wpApi } from '@/api/client';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
+import { isDoorbelastNVT } from '@/utils/disciplineCases';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 
 export default function DisciplineCasesList() {
@@ -106,7 +107,9 @@ export default function DisciplineCasesList() {
 
       // Doorbelast filter
       if (doorbelastFilter !== '') {
-        if (doorbelastFilter === 'none' && acf.is_charged) return false;
+        const isNVT = isDoorbelastNVT(acf);
+        if (doorbelastFilter === 'nvt' && !isNVT) return false;
+        if (doorbelastFilter === 'none' && (acf.is_charged || isNVT)) return false;
         if (doorbelastFilter === 'sportlink' && acf.is_charged !== 'sportlink') return false;
         if (doorbelastFilter === 'rondo' && acf.is_charged !== 'rondo') return false;
       }
@@ -173,6 +176,7 @@ export default function DisciplineCasesList() {
               className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
             >
               <option value="">Alle doorbelast</option>
+              <option value="nvt">n.v.t.</option>
               <option value="none">Nee</option>
               <option value="sportlink">Ja, Sportlink</option>
               <option value="rondo">Ja, Rondo</option>
