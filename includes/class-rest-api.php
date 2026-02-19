@@ -3451,6 +3451,53 @@ class Api extends Base {
 			$results[] = $result;
 		}
 
+		// Look up existing membership invoices for this season (skip for forecast).
+		if ( ! $forecast ) {
+			$invoice_query = new \WP_Query(
+				[
+					'post_type'      => 'rondo_invoice',
+					'posts_per_page' => -1,
+					'post_status'    => 'publish',
+					'no_found_rows'  => true,
+					'fields'         => 'ids',
+					'meta_query'     => [
+						'relation' => 'AND',
+						[
+							'key'   => '_invoice_season',
+							'value' => $season,
+						],
+						[
+							'key'   => 'invoice_type',
+							'value' => 'membership',
+						],
+					],
+				]
+			);
+
+			// Build person_id => { invoice_id, invoice_status } lookup.
+			$invoice_map = [];
+			if ( ! empty( $invoice_query->posts ) ) {
+				update_meta_cache( 'post', $invoice_query->posts );
+				foreach ( $invoice_query->posts as $inv_id ) {
+					$inv_person = get_post_meta( $inv_id, '_invoice_person_id', true );
+					if ( $inv_person ) {
+						$invoice_map[ (int) $inv_person ] = [
+							'id'     => $inv_id,
+							'status' => get_post_meta( $inv_id, 'invoice_status', true ) ?: 'draft',
+						];
+					}
+				}
+			}
+
+			// Enrich results with invoice data.
+			foreach ( $results as &$result ) {
+				$inv = $invoice_map[ $result['id'] ] ?? null;
+				$result['invoice_id']     = $inv ? $inv['id'] : null;
+				$result['invoice_status'] = $inv ? $inv['status'] : null;
+			}
+			unset( $result );
+		}
+
 		// Sort by category priority, then name
 		$category_order = $fees->get_category_sort_order( $season );
 		usort(

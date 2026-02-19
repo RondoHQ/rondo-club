@@ -133,7 +133,6 @@ function EmptyState() {
 export function ContributieList() {
   const [sortField, setSortField] = useState('last_name');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [showNoNikkiOnly, setShowNoNikkiOnly] = useState(false);
   const [showMismatchOnly, setShowMismatchOnly] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isForecast, setIsForecast] = useState(false);
@@ -218,7 +217,6 @@ export function ContributieList() {
 
   // Filter members client-side
   const filteredMembers = (data?.members ?? []).filter(m => {
-    if (showNoNikkiOnly) return m.nikki_total === null;
     if (showMismatchOnly) return m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1;
     return true;
   });
@@ -266,7 +264,6 @@ export function ContributieList() {
 
   // Count members without Nikki data and with mismatch
   const allMembers = data?.members ?? [];
-  const noNikkiCount = allMembers.filter(m => m.nikki_total === null).length;
   const mismatchCount = allMembers.filter(m => m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1).length;
 
   // Calculate totals
@@ -341,10 +338,7 @@ export function ContributieList() {
             {/* Filter: Mismatch - Only in nikki billing current season mode */}
             {showNikkiColumns && mismatchCount > 0 && (
               <button
-                onClick={() => {
-                  setShowMismatchOnly(!showMismatchOnly);
-                  if (!showMismatchOnly) setShowNoNikkiOnly(false);
-                }}
+                onClick={() => setShowMismatchOnly(!showMismatchOnly)}
                 className={`btn-secondary inline-flex items-center gap-1.5 ${
                   showMismatchOnly ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700' : ''
                 }`}
@@ -352,22 +346,6 @@ export function ContributieList() {
               >
                 <Filter className="w-4 h-4" />
                 <span className="text-xs">Afwijking ({mismatchCount})</span>
-              </button>
-            )}
-            {/* Filter: No Nikki Data - Only in nikki billing current season mode */}
-            {showNikkiColumns && noNikkiCount > 0 && (
-              <button
-                onClick={() => {
-                  setShowNoNikkiOnly(!showNoNikkiOnly);
-                  if (!showNoNikkiOnly) setShowMismatchOnly(false);
-                }}
-                className={`btn-secondary inline-flex items-center gap-1.5 ${
-                  showNoNikkiOnly ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700' : ''
-                }`}
-                title={showNoNikkiOnly ? 'Toon alle leden' : 'Toon alleen leden zonder Nikki data'}
-              >
-                <Filter className="w-4 h-4" />
-                <span className="text-xs">Geen Nikki ({noNikkiCount})</span>
               </button>
             )}
             {/* Export Button */}
