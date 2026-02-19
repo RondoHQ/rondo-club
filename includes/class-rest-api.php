@@ -685,6 +685,112 @@ class Api extends Base {
 			]
 		);
 
+		// Billing settings (GET/POST) — admin only
+		register_rest_route(
+			'rondo/v1',
+			'/fees/billing-settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_billing_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'season' => [
+							'default'           => null,
+							'validate_callback' => function ( $param ) {
+								return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+							},
+						],
+					],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_billing_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'season'                      => [
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => function ( $param ) {
+								return preg_match( '/^\d{4}-\d{4}$/', $param );
+							},
+						],
+						'billing_method'              => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => function ( $param ) {
+								return in_array( $param, [ 'nikki', 'rondo' ], true );
+							},
+						],
+						'installment_plan_3_enabled'  => [
+							'required'          => false,
+							'type'              => 'boolean',
+						],
+						'installment_plan_8_enabled'  => [
+							'required'          => false,
+							'type'              => 'boolean',
+						],
+					],
+				],
+			]
+		);
+
+		// Bulk invoice creation — start job (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/fees/bulk-create-invoices',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'start_bulk_invoice_job' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'season' => [
+						'default'           => null,
+						'validate_callback' => function ( $param ) {
+							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+				],
+			]
+		);
+
+		// Bulk invoice job progress (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/fees/bulk-invoice-job',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_bulk_invoice_job_status' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
+		// Single-member invoice creation (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/fees/create-membership-invoice',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'create_single_membership_invoice' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'type'              => 'integer',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param > 0;
+						},
+					],
+					'season'    => [
+						'default'           => null,
+						'validate_callback' => function ( $param ) {
+							return $param === null || preg_match( '/^\d{4}-\d{4}$/', $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Get current season term
 		register_rest_route(
 			'rondo/v1',
@@ -3369,13 +3475,20 @@ class Api extends Base {
 			];
 		}
 
+		$billing_method             = $fees->get_billing_method( $season );
+		$installment_plan_3_enabled = $fees->get_installment_plan_3_enabled( $season );
+		$installment_plan_8_enabled = $fees->get_installment_plan_8_enabled( $season );
+
 		return rest_ensure_response(
 			[
-				'season'     => $season,
-				'forecast'   => (bool) $forecast,
-				'total'      => count( $results ),
-				'members'    => $results,
-				'categories' => $categories_meta,
+				'season'                      => $season,
+				'forecast'                    => (bool) $forecast,
+				'total'                       => count( $results ),
+				'members'                     => $results,
+				'categories'                  => $categories_meta,
+				'billing_method'              => $billing_method,
+				'installment_plan_3_enabled'  => $installment_plan_3_enabled,
+				'installment_plan_8_enabled'  => $installment_plan_8_enabled,
 			]
 		);
 	}
@@ -3541,13 +3654,20 @@ class Api extends Base {
 			];
 		}
 
+		$billing_method             = $fees->get_billing_method( $season );
+		$installment_plan_3_enabled = $fees->get_installment_plan_3_enabled( $season );
+		$installment_plan_8_enabled = $fees->get_installment_plan_8_enabled( $season );
+
 		return rest_ensure_response(
 			[
-				'season'     => $season,
-				'forecast'   => false,
-				'total'      => $total_members,
-				'aggregates' => $aggregates,
-				'categories' => $categories_meta,
+				'season'                      => $season,
+				'forecast'                    => false,
+				'total'                       => $total_members,
+				'aggregates'                  => $aggregates,
+				'categories'                  => $categories_meta,
+				'billing_method'              => $billing_method,
+				'installment_plan_3_enabled'  => $installment_plan_3_enabled,
+				'installment_plan_8_enabled'  => $installment_plan_8_enabled,
 			]
 		);
 	}
@@ -3643,6 +3763,9 @@ class Api extends Base {
 		// Get financiele-blokkade field
 		$financiele_blokkade = get_field( 'financiele-blokkade', $person_id );
 
+		// Get billing method for this season
+		$billing_method = $fees->get_billing_method( $season );
+
 		return rest_ensure_response(
 			[
 				'person_id'              => $person_id,
@@ -3668,6 +3791,7 @@ class Api extends Base {
 				'nikki_saldo'            => $nikki_saldo !== '' ? (float) $nikki_saldo : null,
 				'financiele_blokkade'    => (bool) $financiele_blokkade,
 				'is_former_member'       => $is_former,
+				'billing_method'         => $billing_method,
 			]
 		);
 	}
@@ -3706,6 +3830,188 @@ class Api extends Base {
 					$cleared,
 					$season
 				),
+			]
+		);
+	}
+
+	/**
+	 * Get billing settings for a season.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Billing settings.
+	 */
+	public function get_billing_settings( $request ) {
+		$fees   = new \Rondo\Fees\MembershipFees();
+		$season = $request->get_param( 'season' );
+
+		if ( $season === null ) {
+			$season = $fees->get_season_key();
+		}
+
+		return rest_ensure_response(
+			[
+				'season'                     => $season,
+				'billing_method'             => $fees->get_billing_method( $season ),
+				'installment_plan_3_enabled' => $fees->get_installment_plan_3_enabled( $season ),
+				'installment_plan_8_enabled' => $fees->get_installment_plan_8_enabled( $season ),
+			]
+		);
+	}
+
+	/**
+	 * Update billing settings for a season.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Updated billing settings.
+	 */
+	public function update_billing_settings( $request ) {
+		$fees   = new \Rondo\Fees\MembershipFees();
+		$season = $request->get_param( 'season' );
+
+		$billing_method = $request->get_param( 'billing_method' );
+		if ( $billing_method !== null ) {
+			$fees->set_billing_method( $billing_method, $season );
+		}
+
+		$plan_3_enabled = $request->get_param( 'installment_plan_3_enabled' );
+		if ( $plan_3_enabled !== null ) {
+			$fees->set_installment_plan_3_enabled( (bool) $plan_3_enabled, $season );
+		}
+
+		$plan_8_enabled = $request->get_param( 'installment_plan_8_enabled' );
+		if ( $plan_8_enabled !== null ) {
+			$fees->set_installment_plan_8_enabled( (bool) $plan_8_enabled, $season );
+		}
+
+		return rest_ensure_response(
+			[
+				'season'                     => $season,
+				'billing_method'             => $fees->get_billing_method( $season ),
+				'installment_plan_3_enabled' => $fees->get_installment_plan_3_enabled( $season ),
+				'installment_plan_8_enabled' => $fees->get_installment_plan_8_enabled( $season ),
+			]
+		);
+	}
+
+	/**
+	 * Start a bulk invoice creation job.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Job status or error if already running.
+	 */
+	public function start_bulk_invoice_job( $request ) {
+		$fees   = new \Rondo\Fees\MembershipFees();
+		$season = $request->get_param( 'season' );
+
+		if ( $season === null ) {
+			$season = $fees->get_season_key();
+		}
+
+		$result = \Rondo\Finance\BulkInvoiceCreator::start_job( $season );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Get bulk invoice job status.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Job status.
+	 */
+	public function get_bulk_invoice_job_status( $request ) {
+		return rest_ensure_response( \Rondo\Finance\BulkInvoiceCreator::get_job_status() );
+	}
+
+	/**
+	 * Create a membership invoice for a single person.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Invoice data or error.
+	 */
+	public function create_single_membership_invoice( $request ) {
+		$fees      = new \Rondo\Fees\MembershipFees();
+		$person_id = (int) $request->get_param( 'person_id' );
+		$season    = $request->get_param( 'season' );
+
+		if ( $season === null ) {
+			$season = $fees->get_season_key();
+		}
+
+		// Verify person exists.
+		$person = get_post( $person_id );
+		if ( ! $person || $person->post_type !== 'person' ) {
+			return new \WP_Error( 'not_found', 'Person not found', [ 'status' => 404 ] );
+		}
+
+		// Check fee first to return appropriate error codes.
+		$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
+		if ( $fee_data === null ) {
+			return new \WP_Error(
+				'no_fee',
+				'Geen contributie berekening mogelijk voor deze persoon.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$creator = new \Rondo\Finance\BulkInvoiceCreator();
+		$result  = $creator->create_membership_invoice( $person_id, $season );
+
+		if ( $result === 'error' ) {
+			return new \WP_Error(
+				'invoice_creation_failed',
+				'Factuur aanmaken mislukt.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		if ( $result === 'skipped' ) {
+			return new \WP_Error(
+				'invoice_already_exists',
+				'Er bestaat al een contributie factuur voor dit lid in dit seizoen.',
+				[ 'status' => 409 ]
+			);
+		}
+
+		// Created: find the new invoice.
+		$invoices = get_posts(
+			[
+				'post_type'      => 'rondo_invoice',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'suppress_filters' => true,
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'   => 'person',
+						'value' => $person_id,
+					],
+					[
+						'key'   => '_invoice_season',
+						'value' => $season,
+					],
+					[
+						'key'   => 'invoice_type',
+						'value' => 'membership',
+					],
+				],
+			]
+		);
+
+		$invoice_id = $invoices[0] ?? null;
+
+		return rest_ensure_response(
+			[
+				'created'    => true,
+				'invoice_id' => $invoice_id,
+				'person_id'  => $person_id,
+				'season'     => $season,
 			]
 		);
 	}
