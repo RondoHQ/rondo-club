@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 197: Frontend Updates (next)
+**Current focus:** v28.0 Membership Fee Invoicing — Phase 197: Frontend Updates (COMPLETE)
 
 ## Current Position
 
-Phase: 197 of 197 (Frontend Updates) — IN PROGRESS
-Plan: 1 of 3 in current phase — 197-01 complete
-Status: Phase 197-01 complete — Facturen type/payment_plan filters deployed to production
-Last activity: 2026-02-19 — Phase 197-01 complete: invoice type and payment plan filter dropdowns, Type badge column
+Phase: 197 of 197 (Frontend Updates) — COMPLETE
+Plan: 2 of 2 in current phase — 197-02 complete
+Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
+Last activity: 2026-02-19 — Phase 197-02 complete: installment timeline on invoice detail page, v28.1.0 shipped
 
-Progress: [████████░░] 83% (v28.0, 6/7 phases complete — Phase 197 remains)
+Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: [████████░░] 83% (v28.0, 6/7 phases complete — P
 | 196 | 01 | 5min | 2 | 5 |
 | 196 | 02 | 6min | 3 | 9 |
 | 197 | 01 | 3min | 2 | 2 |
+| 197 | 02 | 3min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Phase 192-01 decisions:
 - [Phase 197-01]: URL param 'plan' maps to API param 'payment_plan' — keeps URL query strings clean
 - [Phase 197-01]: Generic updateFilter(key, value) replaces single-purpose updateStatusFilter — DRY pattern for all filter keys
 - [Phase 197-01]: meta_query initialized as [] before all filter blocks, unset if empty — avoids WP_Query warnings
+- [Phase 197-02]: Installment data added to format_invoice_detail only (not format_invoice list) — list response stays lean, per-installment data only needed on detail page
+- [Phase 197-02]: Loop guard count >= 1 && plan && plan !== 'full' ensures discipline (no plan) and full-plan invoices produce empty installments[]
+- [Phase 197-02]: InstallmentStatusBadge uses smaller padding (py-0.5) vs StatusBadge (py-1) — suits table cell density
 
 ### Pending Todos
 
@@ -94,10 +98,10 @@ Phase 192-01 decisions:
 ## Session Continuity
 
 Last session: 2026-02-19
-Stopped at: Completed 197-01-PLAN.md — Facturen filters deployed to production
+Stopped at: Completed 197-02-PLAN.md — v28.1.0 deployed to production (installment timeline)
 Resume file: None
 
-**Next action:** Execute Phase 197-02 — Installment timeline on FactuurDetail page
+**Next action:** Phase 197 complete — v28.0 milestone shipped
 
 ---
 *State created: 2026-02-15*
