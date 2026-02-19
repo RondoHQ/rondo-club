@@ -11,6 +11,7 @@ namespace Rondo\REST;
 use Rondo\Finance\InvoiceNumbering;
 use Rondo\Finance\InvoicePdfGenerator;
 use Rondo\Finance\InvoiceEmailSender;
+use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
@@ -1106,8 +1107,13 @@ class Invoices extends Base {
 
 		if ( $disabled ) {
 			update_post_meta( $invoice_id, '_disable_installments', '1' );
+			// Clear betaling page token — send_invoice() creates a direct Mollie link instead.
+			delete_post_meta( $invoice_id, '_payment_token' );
+			update_field( 'payment_link', '', $invoice_id );
 		} else {
 			delete_post_meta( $invoice_id, '_disable_installments' );
+			// Generate betaling page token so member can choose a payment plan.
+			PublicPaymentPage::generate_token( $invoice_id );
 		}
 
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
