@@ -5,6 +5,7 @@ import PersonAvatar from '@/components/PersonAvatar';
 import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import SortableHeader from '@/components/SortableHeader';
+import { isDoorbelastNVT } from '@/utils/disciplineCases';
 
 /**
  * Parse ACF date format to Date object
@@ -55,6 +56,19 @@ function formatAcfDate(dateStr) {
   }
 
   return '-';
+}
+
+/**
+ * Returns the display label for the Doorbelast column.
+ * @param {Object} acf - ACF fields of a discipline case
+ * @returns {string}
+ */
+function getDoorbelastLabel(acf) {
+  if (isDoorbelastNVT(acf)) return 'n.v.t.';
+  if (acf.is_charged === 'sportlink') return 'Ja, Sportlink';
+  if (acf.is_charged === 'rondo') return 'Ja, Rondo';
+  if (acf.is_charged) return 'Ja';
+  return 'Nee';
 }
 
 /**
@@ -176,7 +190,9 @@ export default function DisciplineCaseTable({
           break;
         }
         case 'charged':
-          cmp = (acfA.is_charged ? 1 : 0) - (acfB.is_charged ? 1 : 0);
+          // n.v.t. sorts lowest (-1), then Nee (0), then charged (1)
+          cmp = (isDoorbelastNVT(acfA) ? -1 : acfA.is_charged ? 1 : 0) -
+                (isDoorbelastNVT(acfB) ? -1 : acfB.is_charged ? 1 : 0);
           break;
         case 'fee':
           cmp = (parseFloat(acfA.administrative_fee) || 0) - (parseFloat(acfB.administrative_fee) || 0);
@@ -386,7 +402,7 @@ export default function DisciplineCaseTable({
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-sm text-gray-900 dark:text-gray-100">
-                      {acf.is_charged === 'sportlink' ? 'Ja, Sportlink' : acf.is_charged === 'rondo' ? 'Ja, Rondo' : acf.is_charged ? 'Ja' : 'Nee'}
+                      {getDoorbelastLabel(acf)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
@@ -454,7 +470,7 @@ export default function DisciplineCaseTable({
                             Verwerkingsdatum: {formatAcfDate(acf.processing_date)}
                           </p>
                           <p className="text-gray-600 dark:text-gray-400">
-                            Doorbelast: {acf.is_charged === 'sportlink' ? 'Ja, Sportlink' : acf.is_charged === 'rondo' ? 'Ja, Rondo' : acf.is_charged ? 'Ja' : 'Nee'}
+                            Doorbelast: {getDoorbelastLabel(acf)}
                           </p>
                         </div>
                       </div>
