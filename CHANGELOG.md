@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [28.0.0] - 2026-02-19
+
+### Added
+- Bulk membership fee invoice creation via async WP-Cron batching (50 invoices per batch)
+- Single-member membership invoice creation from person detail Financieel card
+- Billing method toggle (Nikki/Rondo) per season in Contributie Instellingen
+- Installment plan 3/8 enable/disable per season in Contributie Instellingen
+- Public payment page respects installment plan toggle settings
+- Progress indicator for bulk invoice creation with automatic 2-second polling
+
+### Changed
+- Nikki columns hidden in ContributieList when billing method is set to Rondo
+
 ## [27.4.0] - 2026-02-19
 
 ### Added
