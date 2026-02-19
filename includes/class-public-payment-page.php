@@ -455,8 +455,8 @@ class PublicPaymentPage {
 	/**
 	 * Write flat numbered post meta for each installment.
 	 *
-	 * Stores _installment_N_amount, _installment_N_admin_fee, and
-	 * _installment_N_status for each installment 1..N.
+	 * Stores _installment_N_amount, _installment_N_admin_fee, _installment_N_status,
+	 * and _installment_N_due_date for each installment 1..N.
 	 *
 	 * Handles rounding remainder by adjusting the last installment so amounts
 	 * sum exactly to the original total.
@@ -470,6 +470,13 @@ class PublicPaymentPage {
 		$base_amount = round( $total / $count, 2 );
 		$accumulated = 0.0;
 
+		// Derive season from invoice post_date for due date calculation.
+		$fees         = new MembershipFees();
+		$invoice_date = get_post_field( 'post_date', $invoice_id );
+		$season       = $fees->get_season_key( $invoice_date );
+		$plan         = 3 === $count ? 'quarterly_3' : 'monthly_8';
+		$due_dates    = self::calculate_installment_due_dates( $plan, $season );
+
 		for ( $n = 1; $n <= $count; $n++ ) {
 			if ( $n === $count ) {
 				// Last installment: use remainder to avoid rounding drift.
@@ -482,7 +489,52 @@ class PublicPaymentPage {
 			update_post_meta( $invoice_id, '_installment_' . $n . '_amount', $amount );
 			update_post_meta( $invoice_id, '_installment_' . $n . '_admin_fee', $admin_fee );
 			update_post_meta( $invoice_id, '_installment_' . $n . '_status', 'pending' );
+
+			if ( isset( $due_dates[ $n ] ) ) {
+				update_post_meta( $invoice_id, '_installment_' . $n . '_due_date', $due_dates[ $n ] );
+			}
 		}
+	}
+
+	/**
+	 * Calculate installment due dates for a given plan and season.
+	 *
+	 * Returns a map of installment number => Y-m-d date string.
+	 * Season key format is 'YYYY-YYYY' (e.g. '2025-2026').
+	 *
+	 * Quarterly (3 installments): Sep 25, Nov 25, Feb 25
+	 * Monthly (8 installments):   Sep 25, Oct 25, Nov 25, Dec 25, Jan 25, Feb 25, Mar 25, Apr 25
+	 *
+	 * @param string $plan   Plan identifier: 'quarterly_3' or 'monthly_8'.
+	 * @param string $season Season key in 'YYYY-YYYY' format.
+	 * @return array<int, string> Map of installment number => Y-m-d due date.
+	 */
+	private static function calculate_installment_due_dates( string $plan, string $season ): array {
+		$start_year = (int) substr( $season, 0, 4 );
+		$end_year   = $start_year + 1;
+
+		if ( 'quarterly_3' === $plan ) {
+			return [
+				1 => $start_year . '-09-25',
+				2 => $start_year . '-11-25',
+				3 => $end_year . '-02-25',
+			];
+		}
+
+		if ( 'monthly_8' === $plan ) {
+			return [
+				1 => $start_year . '-09-25',
+				2 => $start_year . '-10-25',
+				3 => $start_year . '-11-25',
+				4 => $start_year . '-12-25',
+				5 => $end_year . '-01-25',
+				6 => $end_year . '-02-25',
+				7 => $end_year . '-03-25',
+				8 => $end_year . '-04-25',
+			];
+		}
+
+		return [];
 	}
 
 	/**
