@@ -213,7 +213,7 @@ export default function Facturen() {
             <option value="">Alle plannen</option>
             <option value="full">Volledig</option>
             <option value="quarterly_3">3 termijnen</option>
-            <option value="monthly_8">8 termijnen</option>
+            <option value="monthly_8">Meerdere termijnen</option>
           </select>
         </div>
 
