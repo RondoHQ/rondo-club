@@ -109,6 +109,7 @@ class InvoicePdfGenerator {
 		$contact_email  = $finance_config->get_contact_email();
 		$iban           = $finance_config->get_iban();
 		$payment_clause = $finance_config->get_payment_clause();
+		$membership_payment_clause = $finance_config->get_membership_payment_clause();
 
 		// Get accent color with fallback
 		$accent_color = $finance_config->get_accent_color();
@@ -157,7 +158,8 @@ class InvoicePdfGenerator {
 			$qr_code_abspath,
 			$accent_color,
 			$invoice_type,
-			$payment_link
+			$payment_link,
+			$membership_payment_clause
 		);
 
 		// Generate PDF with mPDF
@@ -223,8 +225,9 @@ class InvoicePdfGenerator {
 	 * @param string|null $logo_path      Path to logo file (null if not exists).
 	 * @param string|null $qr_code_path   Absolute path to QR code PNG (null if not exists).
 	 * @param string      $accent_color   Accent color hex code (e.g., '#0891b2').
-	 * @param string      $invoice_type   Invoice type: 'membership' or 'discipline'.
-	 * @param string      $payment_link   Payment link URL (for membership invoices).
+	 * @param string      $invoice_type            Invoice type: 'membership' or 'discipline'.
+	 * @param string      $payment_link            Payment link URL (for membership invoices).
+	 * @param string      $membership_payment_clause Membership payment clause text (shown below membership payment section).
 	 * @return string HTML content.
 	 */
 	private static function build_html(
@@ -246,7 +249,8 @@ class InvoicePdfGenerator {
 		$qr_code_path = null,
 		$accent_color = '#0891b2',
 		$invoice_type = 'discipline',
-		$payment_link = ''
+		$payment_link = '',
+		$membership_payment_clause = ''
 	) {
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
@@ -520,6 +524,7 @@ table.line-items .total-row td {
 	<table style="width: 100%; border: none;"><tr>
 		<td style="border: none; vertical-align: top; padding: 0;">
 			<p style="margin: 0; line-height: 1.6;">Je ontvangt per e-mail een betaallink waarmee je direct kunt betalen of een betaalplan kunt kiezen.</p>
+			' . ( ! empty( $membership_payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $membership_payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
 		<td style="border: none; text-align: center; vertical-align: top; width: 180px; padding: 0;">
