@@ -143,7 +143,11 @@ class InvoiceEmailSender {
 				} elseif ( ! empty( $item['description'] ) ) {
 					// Fallback row for non-discipline items: description spans first 3 columns
 					$amount = (float) ( $item['amount'] ?? 0 );
-					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
+					if ( $amount < 0 ) {
+						$formatted_amount = '- &euro; ' . number_format( abs( $amount ), 2, ',', '.' );
+					} else {
+						$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
+					}
 					$table_rows[] = '<tr style="' . $row_bg . '">'
 						. '<td colspan="3" style="' . $td_style . '">' . esc_html( $item['description'] ) . '</td>'
 						. '<td style="' . $td_style . 'text-align:right;">' . $formatted_amount . '</td>'
