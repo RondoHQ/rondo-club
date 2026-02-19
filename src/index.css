@@ -153,6 +153,11 @@
 }
 
 
+/* Global: buttons and interactive elements show pointer cursor */
+button, [role="tab"], [role="button"], summary {
+  cursor: pointer;
+}
+
 /* Custom component classes */
 .btn {
   @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
