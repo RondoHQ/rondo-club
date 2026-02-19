@@ -78,6 +78,8 @@ use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
 use Rondo\Finance\MollieWebhook;
 use Rondo\Finance\InstallmentPaymentService;
+use Rondo\Finance\InstallmentEmailSender;
+use Rondo\Finance\InstallmentScheduler;
 use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\QrCodeGenerator;
 use Rondo\Demo\DemoExport;
@@ -408,6 +410,9 @@ function rondo_init() {
 
 	// Public payment page - register rewrite rules and template_redirect handler
 	new PublicPaymentPage();
+
+	// Installment scheduler — daily cron sweeper for installment emails and reminders
+	new InstallmentScheduler();
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
 	// This must run on all requests, not just CardDAV requests
