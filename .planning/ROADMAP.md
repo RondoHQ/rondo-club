@@ -181,10 +181,11 @@ Plans:
   3. A member who has still not paid 21 days after the due date receives a second reminder email, and the treasurer receives a BCC copy of that email
   4. Admin can configure separate email templates for the initial invoice, installment follow-up emails, and overdue reminders via Finance Settings
   5. The scheduler uses a single daily WP-Cron sweeper (not per-invoice scheduled events) so the wp_options cron table does not grow unbounded with hundreds of individual scheduled events
-**Plans:** TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 195-01: TBD
+- [ ] 195-01-PLAN.md — Due date calculation in write_installment_meta, three email templates in FinanceConfig + REST + React UI
+- [ ] 195-02-PLAN.md — InstallmentEmailSender class, InstallmentScheduler daily cron sweeper, functions.php wiring, deploy
 
 ---
 
