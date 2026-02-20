@@ -12,7 +12,7 @@
 
 namespace Rondo\REST;
 
-use Rondo\Calendar\GoogleOAuth;
+use Rondo\Sheets\GoogleOAuth;
 use Rondo\Sheets\GoogleSheetsConnection;
 
 if ( ! defined( 'ABSPATH' ) ) {

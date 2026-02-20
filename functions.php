@@ -43,7 +43,7 @@ use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\Calendar\Matcher;
 use Rondo\Calendar\CalDAVProvider;
-use Rondo\Calendar\GoogleOAuth;
+use Rondo\Sheets\GoogleOAuth;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Collaboration\MentionNotifications;
