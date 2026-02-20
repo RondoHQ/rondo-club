@@ -168,33 +168,8 @@ class GoogleOAuth {
 					$new_credentials['refresh_token'] = $credentials['refresh_token'];
 				}
 
-				// Update connection with new credentials
-				if ( ! empty( $connection['id'] ) ) {
-					// Find user_id for this connection
-					// Connection must have a user context for update
-					$user_id = $connection['user_id'] ?? get_current_user_id();
-					if ( $user_id ) {
-						\RONDO_Calendar_Connections::update_credentials(
-							$user_id,
-							$connection['id'],
-							$new_credentials
-						);
-					}
-				}
-
 				return $new_credentials['access_token'];
 			} catch ( Exception $e ) {
-				// Log error but don't auto-delete - let user see error and choose to reconnect
-				if ( ! empty( $connection['id'] ) ) {
-					$user_id = $connection['user_id'] ?? get_current_user_id();
-					if ( $user_id ) {
-						\RONDO_Calendar_Connections::update_connection(
-							$user_id,
-							$connection['id'],
-							[ 'last_error' => $e->getMessage() ]
-						);
-					}
-				}
 				return null;
 			}
 		}
