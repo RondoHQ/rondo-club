@@ -707,6 +707,34 @@ function rondo_theme_remove_admin_bar() {
 add_action( 'after_setup_theme', 'rondo_theme_remove_admin_bar' );
 
 /**
+ * Block non-admin users from accessing wp-admin.
+ *
+ * Redirects users without manage_options capability to the app home page.
+ * Exempts AJAX requests, WP-CLI, and cron to avoid breaking functionality.
+ */
+function rondo_block_wp_admin() {
+	if ( wp_doing_ajax() ) {
+		return;
+	}
+
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		return;
+	}
+
+	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+		return;
+	}
+
+	if ( current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	wp_safe_redirect( home_url( '/' ) );
+	exit;
+}
+add_action( 'admin_init', 'rondo_block_wp_admin' );
+
+/**
  * Redirect WordPress backend URLs to SPA frontend routes
  *
  * Handles URLs like ?post_type=person&p=123 → /people/123
