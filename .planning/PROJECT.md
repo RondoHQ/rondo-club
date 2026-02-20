@@ -476,7 +476,19 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-(No active milestone — use `/gsd:new-milestone` to start next milestone)
+## Current Milestone: v30.0 User Accounts & Profiles
+
+**Goal:** Replace WordPress admin access for non-admin users with in-app user management — provisioning from Sportlink members, Functie-based capability mapping with auto-sync, in-app profile page, and branded welcome emails.
+
+**Target features:**
+- Block non-admin users from WP admin entirely (redirect away from /wp-admin/)
+- In-app profile page with password change form
+- Admin creates WP user accounts from Sportlink member records
+- User avatar in top-right shows linked Sportlink person photo
+- Admin maps Sportlink Functies to Rondo capabilities (financieel, fairplay, club-admin)
+- Auto-sync capabilities from Functies via rondo-sync with per-user manual override
+- Club-admin role for operational settings (VOG, contributie, role management)
+- Branded, template-configurable welcome email with password-set link
 
 ### Out of Scope
 
@@ -757,4 +769,4 @@ Club administrators can manage their members, teams, and club operations through
 | Orphaned Google Sheets code preserved | No user flow broken; cleanup in future milestone | Tech Debt |
 
 ---
-*Last updated: 2026-02-20 after v29.0 Made in Europe milestone*
+*Last updated: 2026-02-20 after v30.0 User Accounts & Profiles milestone started*
