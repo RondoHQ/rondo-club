@@ -9,7 +9,6 @@ import {
   Home,
   LogOut,
   Search,
-  ChevronDown,
   CheckSquare,
   Command,
   UsersRound,
@@ -215,96 +214,6 @@ function Sidebar({ mobile = false, onClose, stats }) {
           Uitloggen
         </a>
       </div>
-    </div>
-  );
-}
-
-function UserMenu() {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  const { data: user, isLoading } = useCurrentUser();
-  
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [isOpen]);
-  
-  if (isLoading || !user) {
-    return (
-      <div className="flex items-center ml-auto">
-        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse dark:bg-gray-700"></div>
-      </div>
-    );
-  }
-  
-  const initials = user.name
-    ?.split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || '?';
-  
-  return (
-    <div className="relative ml-auto" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors dark:hover:bg-gray-700"
-        aria-label="Gebruikersmenu"
-      >
-        {user.avatar_url ? (
-          <img
-            src={user.avatar_url}
-            alt={user.name}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center dark:bg-obsidian">
-            <span className="text-sm font-medium text-bright-cobalt dark:text-electric-cyan-light">{initials}</span>
-          </div>
-        )}
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform dark:text-gray-400 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
-          <div className="py-1">
-            {!window.rondoConfig?.isDemoUser && (
-              <Link
-                to="/profile"
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
-                onClick={() => setIsOpen(false)}
-              >
-                <User className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Profiel</span>
-              </Link>
-            )}
-            {user.is_admin && (
-              <a
-                href={user.admin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
-                onClick={() => setIsOpen(false)}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">WordPress beheer</span>
-              </a>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -643,11 +552,6 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
           )}
         </kbd>
       </button>
-      
-      {/* User menu - right aligned */}
-      <div className="ml-2">
-        <UserMenu />
-      </div>
     </header>
   );
 }
