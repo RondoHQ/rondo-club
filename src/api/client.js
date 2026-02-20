@@ -264,6 +264,7 @@ export const prmApi = {
   syncAllCapabilities: () => api.post('/rondo/v1/capability-sync/all'),
 
   // User provisioning (admin only)
+  getProvisionableUsers: () => api.get('/rondo/v1/users/provisionable'),
   provisionUser: (personId) => api.post(`/rondo/v1/people/${personId}/provision`),
   getProvisioningSettings: () => api.get('/rondo/v1/provisioning/settings'),
   updateProvisioningSettings: (data) => api.post('/rondo/v1/provisioning/settings', data),

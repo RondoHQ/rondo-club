@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database } from 'lucide-react';
+import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import { prmApi } from '@/api/client';
 import { useTheme } from '@/hooks/useTheme';
@@ -31,6 +31,7 @@ const ADMIN_SUBTABS = [
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
   { id: 'welkomstmail', label: 'Welkomstmail' },
+  { id: 'systeem', label: 'Systeem', icon: Wrench },
 ];
 
 export default function Settings() {
@@ -1346,14 +1347,7 @@ function AdminTabWithSubtabs({
 
       {/* Subtab Content */}
       {activeSubtab === 'users' || !activeSubtab ? (
-        <AdminTab
-          handleTriggerReminders={handleTriggerReminders}
-          triggeringReminders={triggeringReminders}
-          reminderMessage={reminderMessage}
-          handleRescheduleCron={handleRescheduleCron}
-          reschedulingCron={reschedulingCron}
-          cronMessage={cronMessage}
-        />
+        <GebruikersTab />
       ) : activeSubtab === 'rollen' ? (
         <RollenTab
           availableRoles={availableRoles}
@@ -1388,12 +1382,196 @@ function AdminTabWithSubtabs({
           saved={welcomeSaved}
           handleSave={handleWelcomeSave}
         />
+      ) : activeSubtab === 'systeem' ? (
+        <AdminTab
+          handleTriggerReminders={handleTriggerReminders}
+          triggeringReminders={triggeringReminders}
+          reminderMessage={reminderMessage}
+          handleRescheduleCron={handleRescheduleCron}
+          reschedulingCron={reschedulingCron}
+          cronMessage={cronMessage}
+        />
       ) : null}
     </div>
   );
 }
 
-// Admin Tab Component
+// Gebruikers Tab Component - User management (active users + invite)
+function GebruikersTab() {
+  const [users, setUsers] = useState([]);
+  const [provisionable, setProvisionable] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [provisioning, setProvisioning] = useState(null);
+  const [provisionMessage, setProvisionMessage] = useState(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [usersRes, provRes] = await Promise.all([
+        prmApi.getUsers(),
+        prmApi.getProvisionableUsers(),
+      ]);
+      setUsers(usersRes.data || []);
+      setProvisionable(provRes.data || []);
+    } catch {
+      // Fetch failed silently
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleProvision = async (personId, personName) => {
+    setProvisioning(personId);
+    setProvisionMessage(null);
+    try {
+      await prmApi.provisionUser(personId);
+      setProvisionMessage({ type: 'success', text: `Account aangemaakt voor ${personName}.` });
+      await fetchData();
+    } catch (error) {
+      setProvisionMessage({
+        type: 'error',
+        text: error.response?.data?.message || `Kan geen account aanmaken voor ${personName}.`,
+      });
+    } finally {
+      setProvisioning(null);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('nl-NL', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Feedback message */}
+      {provisionMessage && (
+        <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
+          provisionMessage.type === 'success'
+            ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+            : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+        }`}>
+          {provisionMessage.type === 'success'
+            ? <Check className="w-4 h-4 shrink-0" />
+            : <AlertCircle className="w-4 h-4 shrink-0" />}
+          {provisionMessage.text}
+        </div>
+      )}
+
+      {/* Active users */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-brand-gradient mb-1">Actieve gebruikers</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          {users.length} {users.length === 1 ? 'gebruiker' : 'gebruikers'} met een account.
+        </p>
+
+        {users.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Geen actieve gebruikers gevonden.</p>
+        ) : (
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                  <tr>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Naam</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">E-mail</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Geregistreerd</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {users.map(user => (
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-2.5 text-sm">
+                        {user.linked_person_id ? (
+                          <Link to={`/people/${user.linked_person_id}`} className="text-electric-cyan hover:underline">
+                            {user.linked_person_name || user.name}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-900 dark:text-gray-100">{user.name}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{user.email}</td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{formatDate(user.registered)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Provisionable people */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-brand-gradient mb-1">Uitnodigen</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          {provisionable.length} {provisionable.length === 1 ? 'persoon' : 'personen'} zonder account maar met een e-mailadres.
+        </p>
+
+        {provisionable.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Alle personen met een e-mailadres hebben al een account.</p>
+        ) : (
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                  <tr>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Naam</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">E-mail</th>
+                    <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Actie</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {provisionable.map(person => (
+                    <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-2.5 text-sm">
+                        <div className="flex items-center gap-2">
+                          <PersonAvatar thumbnail={person.thumbnail} name={person.name} size="sm" />
+                          <Link to={`/people/${person.id}`} className="text-electric-cyan hover:underline">
+                            {person.name}
+                          </Link>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{person.email}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <button
+                          onClick={() => handleProvision(person.id, person.name)}
+                          disabled={provisioning === person.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-white bg-electric-cyan hover:bg-bright-cobalt disabled:opacity-50 transition-colors"
+                        >
+                          {provisioning === person.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-3.5 h-3.5" />
+                          )}
+                          Uitnodigen
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Admin Tab Component (now used as Systeem subtab)
 function AdminTab({
   handleTriggerReminders, triggeringReminders, reminderMessage,
   handleRescheduleCron, reschedulingCron, cronMessage

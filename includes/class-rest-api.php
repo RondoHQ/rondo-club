@@ -415,6 +415,17 @@ class Api extends Base {
 			]
 		);
 
+		// Provisionable users — people with email but no WP account (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/users/provisionable',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_provisionable_users' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
+
 		// User search (for sharing)
 		register_rest_route(
 			'rondo/v1',
@@ -2821,6 +2832,73 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $user_list );
+	}
+
+	/**
+	 * Get people who are eligible for provisioning: have an email, no WP account,
+	 * are published, and are not former members.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response List of provisionable people.
+	 */
+	public function get_provisionable_users( $request ) {
+		$meta_key = \Rondo\Users\UserProvisioning::META_USER_ID;
+
+		$people = get_posts( [
+			'post_type'      => 'person',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'meta_query'     => [
+				[
+					'key'     => $meta_key,
+					'compare' => 'NOT EXISTS',
+				],
+			],
+			'fields'         => 'ids',
+		] );
+
+		$result = [];
+		foreach ( $people as $person_id ) {
+			// Skip former members.
+			if ( get_field( 'former_member', $person_id ) == true ) {
+				continue;
+			}
+
+			// Find email in contact_info ACF repeater.
+			$contact_info = get_field( 'contact_info', $person_id );
+			$email        = null;
+			if ( is_array( $contact_info ) ) {
+				foreach ( $contact_info as $contact ) {
+					if ( isset( $contact['contact_type'] ) && 'email' === $contact['contact_type'] ) {
+						$value = $contact['contact_value'] ?? '';
+						if ( is_email( $value ) ) {
+							$email = $value;
+							break;
+						}
+					}
+				}
+			}
+
+			if ( ! $email ) {
+				continue;
+			}
+
+			$first     = get_field( 'first_name', $person_id ) ?: '';
+			$last      = get_field( 'last_name', $person_id ) ?: '';
+			$thumbnail = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
+
+			$result[] = [
+				'id'        => $person_id,
+				'name'      => trim( $first . ' ' . $last ),
+				'email'     => $email,
+				'thumbnail' => $thumbnail,
+			];
+		}
+
+		// Sort alphabetically by name.
+		usort( $result, fn( $a, $b ) => strcasecmp( $a['name'], $b['name'] ) );
+
+		return rest_ensure_response( $result );
 	}
 
 	/**
