@@ -112,6 +112,7 @@ export const prmApi = {
 
   // Current user
   getCurrentUser: () => api.get('/rondo/v1/user/me'),
+  changePassword: (data) => api.post('/rondo/v1/user/password', data),
   
   // User management (admin only)
   getUsers: () => api.get('/rondo/v1/users'),
