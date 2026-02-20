@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [29.2.0] - 2026-02-20
+
+### Added
+- User provisioning: admin can create WordPress accounts from person records
+- Branded welcome email with 7-day password-set link
+- Bidirectional person-user linking (person stores user ID, user stores person ID)
+- KNVB ID stored on user meta for sync dedup
+- Idempotent provisioning (re-trigger is a safe no-op)
+- AccountCard on person detail showing provisioning status
+- Welkomstmail settings subtab for customizing welcome email template
+- Provisioning REST endpoints (POST provision, GET/POST settings)
+- Enhanced users list with linked person info
+- Enhanced person REST response with linked_user_id and welcome_email_sent_at
+
 ## [29.1.0] - 2026-02-20
 
 ### Added
