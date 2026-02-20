@@ -5,16 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles
+**Current focus:** v30.0 User Accounts & Profiles — Phase 203: WP Admin Blocking
 
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: Not started (defining requirements)
-Status: Defining requirements
-Last activity: 2026-02-20 — Milestone v30.0 started
+Phase: 203 of 208 (WP Admin Blocking)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-02-20 — Roadmap created for v30.0 (phases 203-208)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
 
 ## Performance Metrics
 
@@ -37,14 +38,20 @@ Progress: [░░░░░░░░░░] 0%
 
 Decisions logged in PROJECT.md Key Decisions table (750+ entries).
 
+Recent decisions affecting v30.0:
+- Capability sync (CAPS-04-08) gets its own phase (206) separate from provisioning (205) — sync reconciliation logic is distinct from account creation and crosses repos (rondo-sync step)
+- Phase 208 (Avatar) depends on Phase 205 bidirectional link, not Phase 207 — avatar can ship before profile page if needed
+
 ### Pending Todos
 
-6 todo(s) in `.planning/todos/pending/`
+3 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
 - Orphaned Google Sheets code: 4 dead client.js methods + 5 unreachable REST routes (tech debt from v29.0)
+- v30.0 Phase 205: Verify rondo-sync service account is an administrator WordPress user before provisioning endpoint runs (manage_options required)
+- v30.0 Phase 205: Lettermint from-address must be verified in dashboard before sending welcome emails to real members
 
 ### Quick Tasks Completed
 
@@ -55,11 +62,11 @@ Decisions logged in PROJECT.md Key Decisions table (750+ entries).
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Milestone v30.0 started, defining requirements
+Stopped at: v30.0 roadmap created — 6 phases (203-208), 20/20 requirements mapped
 Resume file: None
 
-**Next action:** Define requirements and create roadmap
+**Next action:** Run `/gsd:plan-phase 203` to plan WP Admin Blocking
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — v30.0 User Accounts & Profiles started*
+*Last updated: 2026-02-20 — v30.0 roadmap created, ready to plan phase 203*

@@ -71,13 +71,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| — | — | — |
+| ACCS-01 | Phase 203 | Pending |
+| ACCS-02 | Phase 203 | Pending |
+| CAPS-01 | Phase 204 | Pending |
+| CAPS-02 | Phase 204 | Pending |
+| CAPS-03 | Phase 204 | Pending |
+| PROV-01 | Phase 205 | Pending |
+| PROV-02 | Phase 205 | Pending |
+| PROV-03 | Phase 205 | Pending |
+| PROV-04 | Phase 205 | Pending |
+| PROV-05 | Phase 205 | Pending |
+| PROV-06 | Phase 205 | Pending |
+| CAPS-04 | Phase 206 | Pending |
+| CAPS-05 | Phase 206 | Pending |
+| CAPS-06 | Phase 206 | Pending |
+| CAPS-07 | Phase 206 | Pending |
+| CAPS-08 | Phase 206 | Pending |
+| PROF-01 | Phase 207 | Pending |
+| PROF-02 | Phase 207 | Pending |
+| PROF-03 | Phase 207 | Pending |
+| PROF-04 | Phase 207 | Pending |
+| AVTR-01 | Phase 208 | Pending |
+| AVTR-02 | Phase 208 | Pending |
 
 **Coverage:**
 - v30.0 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after initial definition*
+*Last updated: 2026-02-20 — traceability complete, all 20 requirements mapped to phases 203-208*
