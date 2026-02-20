@@ -876,7 +876,17 @@ class Invoices extends Base {
 		// so skip direct Mollie/Rabobank payment link creation — it would overwrite the token URL.
 		$invoice_type = get_post_meta( $invoice_id, 'invoice_type', true );
 
-		if ( 'membership' !== $invoice_type ) {
+		if ( 'membership' === $invoice_type ) {
+			// Membership invoices: QR points to /betaling/{token} plan selection page.
+			$payment_url = get_field( 'payment_link', $invoice_id );
+			if ( ! empty( $payment_url ) ) {
+				$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_url, $invoice_id );
+				if ( is_wp_error( $qr_result ) ) {
+					error_log( 'QR code generation failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
+				}
+			}
+		} else {
+			// Discipline/other invoices: create direct Mollie/Rabobank payment link + QR.
 			$finance_config  = new FinanceConfig();
 			$active_provider = $finance_config->get_active_payment_provider();
 
@@ -886,7 +896,6 @@ class Invoices extends Base {
 				if ( is_wp_error( $payment_result ) ) {
 					error_log( 'Mollie payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
 				} elseif ( ! empty( $payment_result ) ) {
-					// Generate branded QR code from payment URL (non-blocking)
 					$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_result, $invoice_id );
 					if ( is_wp_error( $qr_result ) ) {
 						error_log( 'QR code generation failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
@@ -897,7 +906,6 @@ class Invoices extends Base {
 				if ( $oauth->is_connected() ) {
 					$payment        = new RabobankPayment( $oauth );
 					$payment_result = $payment->create_payment_request( $invoice_id );
-					// Log error but continue - payment link is non-blocking
 					if ( is_wp_error( $payment_result ) ) {
 						error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
 					}
