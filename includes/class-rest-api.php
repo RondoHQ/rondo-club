@@ -1018,6 +1018,42 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Capability sync (admin only — called by rondo-sync per member)
+		register_rest_route(
+			'rondo/v1',
+			'/capability-sync',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'sync_user_capabilities' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'knvb_id' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_string( $param ) && ! empty( $param );
+						},
+					],
+					'functies' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_array( $param );
+						},
+					],
+				],
+			]
+		);
+
+		// Capability sync all (admin only — on-demand from Settings)
+		register_rest_route(
+			'rondo/v1',
+			'/capability-sync/all',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'sync_all_capabilities' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
 	}
 
 	/**
@@ -4626,5 +4662,45 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $body );
+	}
+
+	/**
+	 * Sync capabilities for a single user by KNVB ID (admin only).
+	 *
+	 * Called by rondo-sync per member during capability sync pipeline step.
+	 * Returns { status: 'no_user' } with HTTP 200 if no WP user has the given KNVB ID.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Sync result or WP_Error.
+	 */
+	public function sync_user_capabilities( $request ) {
+		$knvb_id  = sanitize_text_field( $request->get_param( 'knvb_id' ) );
+		$functies = array_map( 'sanitize_text_field', (array) $request->get_param( 'functies' ) );
+
+		$sync   = new \Rondo\Users\CapabilitySync();
+		$result = $sync->sync_user_by_knvb_id( $knvb_id, $functies );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Sync capabilities for all provisioned users (admin only).
+	 *
+	 * Body-less endpoint: the server derives functies from each user's linked
+	 * person's work_history ACF field (is_current entries). Used by the
+	 * on-demand "Sync now" button in the Settings Functies tab.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Aggregated sync result.
+	 */
+	public function sync_all_capabilities( $request ) {
+		$sync   = new \Rondo\Users\CapabilitySync();
+		$result = $sync->sync_all();
+
+		return rest_ensure_response( $result );
 	}
 }
