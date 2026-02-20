@@ -120,7 +120,7 @@
 
 **Milestone Goal:** Remove non-European service dependencies (Google sync, Gravatar) and replace wp_mail email delivery with Lettermint for European data sovereignty.
 
-- [ ] **Phase 198: Backend Sync Removal** — Delete Google Contacts and Calendar sync PHP classes and REST endpoints
+- [x] **Phase 198: Backend Sync Removal** — Delete Google Contacts and Calendar sync PHP classes and REST endpoints — completed 2026-02-20
 - [ ] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar
 - [ ] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages
 - [ ] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery
@@ -139,11 +139,11 @@
   3. All REST endpoints for Contacts and Calendar sync return 404 (routes no longer registered)
   4. functions.php no longer loads any Contacts or Calendar sync classes
   5. Codebase builds cleanly (no PHP errors, ESLint clean)
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 198-01-PLAN.md -- Remove Google Contacts sync backend (5 class files, functions.php, WP-CLI cleanup, cron deregistration)
-- [ ] 198-02-PLAN.md -- Remove Calendar sync backend (4 class files, functions.php, WP-CLI cleanup, cron deregistration)
+- [x] 198-01-PLAN.md -- Remove Google Contacts sync backend (5 class files, functions.php, WP-CLI cleanup, cron deregistration) — completed 2026-02-20
+- [x] 198-02-PLAN.md -- Remove Calendar sync backend (4 class files, functions.php, WP-CLI cleanup, cron deregistration) — completed 2026-02-20
 
 ### Phase 199: OAuth + Frontend Cleanup
 
@@ -223,7 +223,7 @@ Plans:
 | 178-185 | v26.0 | 13/13 | ✓ Complete | 2026-02-16 |
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
-| 198 | v29.0 | 0/2 | Not started | - |
+| 198 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 199 | v29.0 | 0/2 | Not started | - |
 | 200 | v29.0 | 0/1 | Not started | - |
 | 201 | v29.0 | 0/1 | Not started | - |
