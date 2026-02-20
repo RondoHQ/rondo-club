@@ -78,11 +78,12 @@ Recent decisions affecting v30.0:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 110 | People with finance rights should be able to see (and change) the Financiën -> Instellingen | 2026-02-20 | a33f152a | [110-people-with-finance-rights-should-be-abl](./quick/110-people-with-finance-rights-should-be-abl/) |
+| 111 | Refactor FunctiesTab mapping UI from CSS grid divs to semantic HTML table | 2026-02-20 | 122829b9 | [111-refactor-functiestab-mapping-ui-to-table](./quick/111-refactor-functiestab-mapping-ui-to-table/) |
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 207-01-PLAN.md — In-app Profile page + POST /user/password endpoint + v29.4.0 deployed
+Stopped at: Completed quick task 111 — FunctiesTab refactored to semantic HTML table
 Resume file: None
 
 **Next action:** Execute Phase 208 (Avatar)
