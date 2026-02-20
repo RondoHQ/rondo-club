@@ -1,305 +1,223 @@
-# Stack Research: Membership Fee Invoicing with Payment Plans
+# Stack Research
 
-**Domain:** Payment plan selection, public token-secured landing pages, installment scheduling (WordPress PHP 8.0+ theme)
-**Researched:** 2026-02-18
+**Domain:** User provisioning, Functie-based capability mapping, in-app profile management, welcome emails, WP admin blocking — additions to existing WordPress theme + React SPA
+**Researched:** 2026-02-20
 **Confidence:** HIGH
 
 ---
 
-## What This Research Covers
+## Summary Verdict
 
-This is a **subsequent milestone** on an existing codebase. The existing stack (WordPress, PHP 8.0+, React 18, Mollie SDK v3.9, mPDF, wp_mail, WP-Cron) is already in place and working. This document covers only what is **new or changed** for membership fee invoicing with payment plans.
-
----
-
-## New Capabilities Required
-
-| Capability | New? | Notes |
-|-----------|------|-------|
-| Public token-secured landing page | YES | App is 100% behind WP login today |
-| Payment plan selection UI (1x / 3x / 8x) | YES | No payment plan concept exists yet |
-| Mollie Subscriptions API (recurring) | YES | Only one-time payments used so far |
-| Customer creation in Mollie | YES | No Mollie customer objects exist yet |
-| Installment tracking in WordPress | YES | New post type or post_meta structure needed |
-| Automatic follow-up emails via WP-Cron | YES | Pattern exists (Reminders class), needs installment variant |
-| Overdue escalation reminders | YES | New cron hook and logic |
+No new npm packages or Composer dependencies are needed. Every required capability is already in the existing stack. This milestone is pure logic work inside existing patterns.
 
 ---
 
-## Recommended Stack Additions
+## Recommended Stack
 
-### Core Technologies
+### Core Technologies (unchanged — already present)
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Mollie Subscriptions API (via existing SDK) | `^3.9` (already installed) | Automatic recurring installment charges after mandate established | `CreateSubscriptionRequest` with `times` parameter limits total charges — no new dependency needed. Verified: class exists in `vendor/mollie/mollie-api-php/src/Http/Requests/CreateSubscriptionRequest.php` |
-| Mollie Customers API (via existing SDK) | `^3.9` (already installed) | Create Mollie customer records required for subscriptions | `CreateCustomerRequest` verified in vendor. Customer ID must be stored on the WP person post (post_meta `_mollie_customer_id`). Required prerequisite for mandate flow |
-| WordPress Rewrite API + `template_redirect` | Core WordPress | Public landing page URL (`/contributie/{token}/`) without WP login | Established pattern in codebase — iCal feed and CardDAV use identical approach. No new libraries. |
-| WordPress `query_vars` + PHP template | Core WordPress | Serve payment plan landing page HTML from PHP template file in theme | `template_include` or `template_redirect` + `include` — same pattern as `rondo_theme_template_redirect()` in functions.php |
-| `bin2hex(random_bytes(32))` | PHP 8.0+ built-in | Secure token generation for payment landing page links | Already used in `ICalFeed::generate_token()`. 64-character hex token, stored as post_meta on the invoice/fee record |
-| WP-Cron (`wp_schedule_single_event`) | Core WordPress | Send installment due reminders and overdue escalation emails | Already used for fee recalculation and async exports. Single-event scheduling is appropriate for per-invoice due-date reminders |
+| Technology | Version | Purpose | Why It Covers This Milestone |
+|------------|---------|---------|------------------------------|
+| WordPress user system | 6.0+ | User storage, role/capability management | `wp_create_user`, `wp_set_password`, `wp_generate_password`, `user_can()`, `add_role`, `add_cap` are all native — no library needed |
+| ACF Pro | current | Complex field storage on person posts | `get_field()` / `update_field()` already used for Sportlink fields including `knvb-id`; user preferences stored via native `update_user_meta` |
+| wp_mail + Lettermint | current | Welcome email delivery | Already used for VOG emails (`VogEmail`), installment emails (`InstallmentEmailSender`), invoice emails (`InvoiceEmailSender`) — exact same pattern applies |
+| React 18 + React Hook Form 7 | as in package.json | In-app profile page | `react-hook-form` already in dependencies; `prmApi` client already handles user endpoints |
+| rondo-sync Node.js CLI | current | Sportlink Functie data delivery to Rondo Club | `download-functions-from-sportlink.js` already downloads `MemberFunctions` (function_description, is_active) and stores to SQLite; pipeline already exists |
 
-### Supporting Libraries
+### Supporting Libraries (unchanged — already present)
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| None new required | — | — | All needed libraries are already installed |
+| TanStack Query 5 | ^5.17.0 | Server state for profile page | Use for `GET /rondo/v1/user/profile` — same as existing notification-channels, dashboard-settings hooks |
+| Lucide React | ^0.309.0 | Profile page icons | Already used everywhere; user/key/shield icons available |
+| Tailwind CSS v4 | ^4.1.18 | Profile page styling | Same CSS-first `@theme` tokens already in use |
+| Axios (via prmApi) | ^1.6.0 | API calls from React | `prmApi` client already injects WP nonce; add profile methods there |
 
 ---
 
-## What NOT to Add
+## What Is Already Built (Do Not Rebuild)
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `woocommerce/action-scheduler` | Packagist package is typed `wordpress-plugin`, not `wordpress-theme`; adds significant complexity and DB tables; overkill for dozens of scheduled installment emails | `wp_schedule_single_event()` with named hooks, already established in `FeeCacheInvalidator` and `GoogleContactsExport` |
-| Mollie OAuth / Connect | Only needed for multi-merchant SaaS; this is a single-club deployment | Existing `FinanceConfig::get_mollie_api_key()` API key flow |
-| Custom payment gateway libraries | The Mollie SDK already handles all payment operations | `mollie/mollie-api-php` already installed |
-| React SPA for landing page | The landing page must be publicly accessible without WP login, nonce, or JS app bootstrap; a React SPA requires auth context and nonce injection via `wpApiSettings` | PHP template file served via `template_redirect` — simpler, faster, no auth dependency |
-| JWT tokens for landing page | Stateless tokens make revocation impossible; club needs to be able to invalidate a payment link | Random token stored as post_meta (same as iCal) — can be invalidated by deleting/overwriting meta |
-
----
-
-## Architecture: Mollie Payment Plan Flow
-
-The recurring installment flow requires a **two-step Mollie interaction** that does not exist in the current codebase:
-
-### Step 1: First Payment (establishes mandate)
-
-The member visits the public landing page, selects "3 installments" or "8 installments", and completes the **first payment** through Mollie. This payment:
-
-1. Creates (or reuses) a Mollie customer for the person (`CreateCustomerRequest`)
-2. Creates a customer payment with `sequenceType: 'first'` (`CreateCustomerPaymentRequest`)
-3. The member completes the payment — Mollie creates a **mandate** automatically
-4. Mollie webhook fires → system records installment 1 as paid
-
-**SDK class (verified in vendor):**
-```php
-use Mollie\Api\Http\Requests\CreateCustomerRequest;
-use Mollie\Api\Http\Requests\CreateCustomerPaymentRequest;
-use Mollie\Api\Http\Data\Money;
-
-// Create customer (once per person, store cst_xxx as post_meta)
-$customer = $mollie->send(new CreateCustomerRequest(
-    name: $person_name,
-    email: $person_email,
-    metadata: ['person_id' => $person_id]
-));
-update_post_meta($person_id, '_mollie_customer_id', $customer->id);
-
-// Create first payment to establish mandate
-$payment = $mollie->send(new CreateCustomerPaymentRequest(
-    customerId: $customer->id,
-    description: 'Contributie 2025-2026 — termijn 1',
-    amount: new Money('EUR', '45.00'),
-    redirectUrl: home_url('/contributie/' . $token . '/bedankt/'),
-    webhookUrl: rest_url('rondo/v1/mollie/webhook'),
-    sequenceType: 'first',
-    metadata: ['invoice_id' => $invoice_id, 'installment' => 1]
-));
-```
-
-### Step 2: Subscription (charges remaining installments automatically)
-
-After the mandate is confirmed (via webhook), create a Mollie subscription for the remaining installments:
-
-**SDK class (verified in vendor, all params confirmed):**
-```php
-use Mollie\Api\Http\Requests\CreateSubscriptionRequest;
-use Mollie\Api\Http\Data\Money;
-
-// times: remaining installments (2 for "3x", 7 for "8x")
-// interval: '1 month' (monthly installments)
-// startDate: first day of next month
-$subscription = $mollie->send(new CreateSubscriptionRequest(
-    customerId: $customer_id,
-    amount: new Money('EUR', '45.00'),
-    interval: '1 month',
-    description: 'Contributie 2025-2026',
-    times: 2,           // null = endless; set to remaining count
-    startDate: new \DateTime('first day of next month'),
-    webhookUrl: rest_url('rondo/v1/mollie/webhook'),
-    metadata: ['invoice_id' => $invoice_id]
-));
-update_post_meta($invoice_id, '_mollie_subscription_id', $subscription->id);
-```
-
-### Full-Payment Flow (1x — no subscription)
-
-The existing `MolliePayment::create_payment_link()` flow (one-time payment link) is reused as-is. No `sequenceType` is set, no customer required.
+| Capability Needed | Existing Mechanism | Location |
+|-------------------|--------------------|----------|
+| Download Sportlink Functies | `runFunctionsDownload()` | rondo-sync: `steps/download-functions-from-sportlink.js` |
+| Store Functies in SQLite | `upsertMemberFunctions()`, `sportlink_member_functions` table (knvb_id, function_description, is_active) | rondo-sync: `lib/rondo-club-db.js` |
+| User role registration | `UserRoles::register_role()`, `UserRoles::ROLES` constant with per-role extra caps | `includes/class-user-roles.php` |
+| User capability checks | `user_can($id, 'fairplay')`, `user_can($id, 'financieel')`, `user_can($id, 'vog')` | Already used in `AccessControl` + REST permission callbacks |
+| User meta storage | `update_user_meta` / `get_user_meta` with `rondo_` prefix | Used for notification channels, dashboard settings, linked person ID |
+| Person → User link | `rondo_linked_person_id` user meta; exposed as `currentUserPersonId` in `window.rondoConfig` | `functions.php` line 620 |
+| Email template with variable substitution | Pattern in `VogEmail`, `InvoiceEmailSender`, `InstallmentEmailSender` using `str_replace()` on stored HTML template | `includes/class-vog-email.php`, etc. |
+| REST endpoint pattern | `register_rest_route` in `Api::register_routes()` | `includes/class-rest-api.php` |
+| Admin-only REST endpoints | `check_admin_permission()` in `Base` | `includes/class-rest-base.php` |
+| Password generation | `wp_generate_password()` | WordPress core |
+| User creation | `wp_create_user()` / `wp_insert_user()` | WordPress core |
+| Admin bar hiding for non-admins | `show_admin_bar(false)` for frontend | `functions.php` line 703 |
+| Existing user list + delete | `GET /rondo/v1/users` and `DELETE /rondo/v1/users/{id}` | `includes/class-rest-api.php` lines 2614–2660 |
 
 ---
 
-## Architecture: Public Landing Page
+## What Needs to Be Added (No New Libraries)
 
-The public landing page at `/contributie/{token}/` follows the **identical pattern** to `ICalFeed`:
+### PHP — Rondo Club
 
-```php
-// In a new PublicPaymentLanding class:
+| New Component | What It Does | Implementation Pattern |
+|---------------|-------------|------------------------|
+| `class-user-provisioner.php` | Creates WP user from Sportlink member data, assigns role, sends welcome email, links to `person` post via `rondo_linked_person_id` | New class in `includes/`, loaded in `functions.php`. Uses `wp_create_user()` + `wp_set_role()` + `update_user_meta()`. Call from new REST endpoint. |
+| `class-functie-capability-mapper.php` | Maps Sportlink `function_description` strings to Rondo capabilities (`club-admin`, `fairplay`, `financieel`, `vog`) | New class in `includes/`. Reads mapping config from Options API (`rondo_functie_capability_map` as JSON). Applied when rondo-sync pushes Functie data via REST. |
+| New `club-admin` capability | Third Rondo custom capability alongside `fairplay` and `financieel` | Add to `UserRoles::ROLES` for `rondo_bestuur` (or new `rondo_club_admin` role), and `add_cap()` on administrator role — same pattern as lines 73–79 of `class-user-roles.php`. |
+| REST: `POST /rondo/v1/users/provision` | Admin-triggered or rondo-sync-triggered user account creation for a given `knvb_id` | Add to `Api::register_routes()`. Permission: `check_admin_permission`. Body: `{knvb_id, email, send_welcome_email}`. |
+| REST: `GET /rondo/v1/user/profile` | Current user's own profile data (display_name, email, linked person name) | Add to `Api::register_routes()`. Permission: `is_user_logged_in`. Pattern mirrors `/user/notification-channels`. |
+| REST: `PATCH /rondo/v1/user/profile` | Current user updates display name, email, and/or password | Permission: `is_user_logged_in`. Uses `wp_update_user()`. Password change requires current password verification. |
+| REST: `PATCH /rondo/v1/users/{id}/capabilities` | Admin sets custom capabilities for a specific user | Permission: `check_admin_permission`. Uses `$user->add_cap()` / `$user->remove_cap()` per capability. |
+| REST: `POST /rondo/v1/users/update-functie-capabilities` | rondo-sync pushes active Functies for a `knvb_id`; server computes capability delta and applies | Called by new rondo-sync step. Maps Functie strings via `FunctieCapabilityMapper`. Finds WP user by `rondo_linked_person_id` → `knvb-id` ACF field. |
+| `class-welcome-email.php` | Sends welcome email with temporary password + login URL | New class in `includes/`. Same pattern as `VogEmail`: Options API for template HTML, `wp_mail()` for delivery, `str_replace()` for `{voornaam}`, `{loginurl}`, `{tijdelijk_wachtwoord}` placeholders. |
+| WP admin block for `rondo_user` roles | Prevent non-admin Rondo users from accessing `/wp-admin/` | One `admin_init` hook in `functions.php`: if `is_admin()` and not `manage_options` and not `wp_doing_ajax()`, redirect to `home_url('/')`. |
 
-public function register_rewrite_rules(): void {
-    add_rewrite_rule(
-        '^contributie/([a-f0-9]{64})/?$',
-        'index.php?rondo_payment_token=$matches[1]',
-        'top'
-    );
-    add_rewrite_rule(
-        '^contributie/([a-f0-9]{64})/bedankt/?$',
-        'index.php?rondo_payment_token=$matches[1]&rondo_payment_step=bedankt',
-        'top'
-    );
-}
+### rondo-sync — Node.js
 
-public function add_query_vars(array $vars): array {
-    $vars[] = 'rondo_payment_token';
-    $vars[] = 'rondo_payment_step';
-    return $vars;
-}
+| What | How |
+|------|-----|
+| Submit active Functies per user to Rondo Club | New step `submit-rondo-club-user-capabilities.js`. After functions download, for each member with `rondo_club_id` and active functions, call `POST /rondo/v1/users/update-functie-capabilities` with `{knvb_id, active_functions: [function_description, ...]}`. |
+| Integrate into `sync-functions.js` pipeline | Add step after existing free-fields-sync step. Same RunTracker pattern. |
 
-public function handle_request(): void {
-    $token = get_query_var('rondo_payment_token');
-    if (empty($token)) {
-        return;
-    }
+### React — Frontend
 
-    // Look up invoice by token stored in post_meta
-    $invoice = $this->find_invoice_by_token($token);
-    if (!$invoice) {
-        status_header(404);
-        include get_template_directory() . '/templates/404.php';
-        exit;
-    }
-
-    // Serve standalone PHP template (no WP login, no React app)
-    include get_template_directory() . '/templates/payment-landing.php';
-    exit;
-}
-```
-
-**Token generation** (follow existing `ICalFeed` pattern exactly):
-```php
-$token = bin2hex(random_bytes(32)); // 64-char hex
-update_post_meta($invoice_id, '_payment_landing_token', $token);
-```
-
-**Important:** `rondo_theme_template_redirect()` in `functions.php` currently intercepts 404s and serves the React SPA. The public landing page handler must run at **priority 0** (before priority 1) to return before the SPA handler takes over.
-
----
-
-## Architecture: Installment Scheduling with WP-Cron
-
-For the **full-payment** and **3-installment** manual reminder flows (not Mollie subscription), use WP-Cron single events:
-
-```php
-// Schedule reminder 7 days before installment due date
-wp_schedule_single_event(
-    strtotime($due_date . ' -7 days'),
-    'rondo_installment_reminder',
-    [$invoice_id, $installment_number]
-);
-
-// Schedule overdue escalation 7 days after due date
-wp_schedule_single_event(
-    strtotime($due_date . ' +7 days'),
-    'rondo_installment_overdue',
-    [$invoice_id, $installment_number]
-);
-```
-
-**Hook naming follows existing pattern** (`rondo_user_reminder`, `rondo_async_calendar_rematch`, etc.).
-
-**Important caveat:** WP-Cron fires only on page visits. The production server should have a real server cron triggering `wp-cron.php` every 5 minutes for reliability. This is a deployment concern, not a code change.
-
----
-
-## Mollie Subscription Limitations & Design Decision
-
-### The Mollie Subscriptions approach requires SEPA Direct Debit
-
-When a Dutch member pays the "first" payment via **iDEAL**, Mollie creates a SEPA Direct Debit mandate (not a new iDEAL mandate). Subsequent subscription charges go via SEPA Direct Debit automatically.
-
-**This requires SEPA Direct Debit to be activated on the Mollie account.** This is an account-level business requirement, not a code issue.
-
-### Alternative: Manual installment tracking
-
-If SEPA Direct Debit is not available or desired, installments can be **fully manual**:
-- Each installment generates a separate Mollie payment link (same as existing flow)
-- Scheduled via WP-Cron — send email with payment link at each installment due date
-- Member clicks link, pays via iDEAL each time (no mandate required)
-- More member friction but simpler technically and no SEPA activation needed
-
-**Recommendation:** Build both. Use Mollie Subscriptions for the automatic flow (member opts in), manual payment links as fallback or for members who prefer to pay each installment manually. The system should store `payment_plan_type` (`automatic` vs `manual`) on the installment plan record.
-
----
-
-## Data Storage Pattern
-
-No new database tables. Follow Rule 0:
-
-| Data | Storage |
-|------|---------|
-| Installment plan (plan type, total, installments, season) | New CPT `rondo_payment_plan` OR post_meta on `rondo_invoice` |
-| Individual installment records | Post_meta array on the plan, or separate CPT `rondo_installment` |
-| Mollie customer ID per person | Post_meta `_mollie_customer_id` on `person` post |
-| Mollie subscription ID per plan | Post_meta `_mollie_subscription_id` on payment plan |
-| Public landing page token | Post_meta `_payment_landing_token` on `rondo_invoice` |
-| Installment payment status | Post_meta `_installment_{n}_status` and `_installment_{n}_paid_at` |
-
-**Recommendation:** Use a new `rondo_payment_plan` CPT (not sub-posts) so WP_Query can find all plans for a member across seasons.
-
----
-
-## Alternatives Considered
-
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Mollie Subscriptions API for automatic installments | Manual payment links per installment | When SEPA Direct Debit is not activated on Mollie account; or when member prefers to pay each installment manually |
-| WP-Cron for reminder emails | Action Scheduler | Only worth it if scheduling thousands of concurrent jobs; overkill for a sports club with ~200 members |
-| PHP template for public landing page | React SPA with public route | React SPA requires WP nonce and `wpApiSettings` bootstrap; not suitable for unauthenticated pages |
-| Rewrite rules + `query_vars` + `template_redirect` | WordPress Page with custom template | Custom page approach requires creating a DB record; rewrite rules are code-only, version-controlled |
-| Token stored in post_meta | Signed JWT URL | JWT cannot be revoked without a blocklist; post_meta token can be deleted to invalidate link immediately |
+| New Component | What It Does | Pattern |
+|---------------|-------------|---------|
+| Profile tab in Settings (`ProfileTab.jsx`) | Display name, email, change password form for current user | Use `react-hook-form` (already installed). `prmApi` calls to `GET/PATCH /rondo/v1/user/profile`. New TABS entry in `Settings.jsx`. |
+| Capabilities column in admin users list | Show active capabilities per user; allow admin to toggle them | Extend existing admin/users subtab. Update `prmApi.getUsers()` — server adds `capabilities` array to response. Toggle calls `PATCH /rondo/v1/users/{id}/capabilities`. |
+| Functie-to-capability mapping config UI | Admin configures which Functie strings map to which capability | New subtab in admin section. Simple key-value list stored via Options API. Fetched from new `GET /rondo/v1/admin/functie-map` endpoint. |
 
 ---
 
 ## Installation
 
-No new PHP packages required. All capabilities use:
-- `mollie/mollie-api-php:^3.9` — already installed
-- WordPress core functions — built-in
-- PHP 8.0+ built-ins — already required
+No new packages needed. All capabilities come from existing dependencies.
 
 ```bash
-# Nothing to install — existing dependencies cover all new capabilities
-# After adding new classes, run composer dump-autoload if not using classmap
-composer dump-autoload --optimize
+# Nothing to install — all required libraries already in package.json and WordPress core
 ```
+
+---
+
+## Alternatives Considered
+
+| Recommended | Alternative | Why Not |
+|-------------|-------------|---------|
+| WordPress native `wp_create_user` + per-user `add_cap()` | External identity provider (Auth0, Keycloak) | Overkill for a club of hundreds; would break the existing WP session + REST nonce auth model |
+| Options API for Functie→capability mapping | ACF field group for mapping | Options API is correct for site-wide config without a post entity; ACF is for entity data |
+| Config-driven string matching for Functie→capability | Hard-coded function descriptions | Config-driven lets admin adjust mappings when Sportlink function names change without a code deploy |
+| `add_cap()` / `remove_cap()` on individual users | Reassigning roles wholesale | Per-user capability grants allow mixing: user can have `fairplay` from their Functie without being `rondo_bestuur`; roles stay semantically clean |
+| `admin_init` redirect hook for WP admin blocking | Must-use plugin | Theme hook is sufficient; consistent with existing `is_admin()` checks already in `functions.php` |
+| `wp/v2/users` for provisioning | Custom `/rondo/v1/users/provision` | WP REST users endpoint requires `edit_users` capability; returns WP default schema; hard to extend with Sportlink context |
+
+---
+
+## What NOT to Use
+
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `wp/v2/users` endpoint for provisioning or capability management | Requires `edit_users` capability; returns WordPress default user schema; not extensible with Sportlink-domain fields | Custom `/rondo/v1/users/` endpoints — already the established pattern in this codebase |
+| New Composer packages for email templating | WordPress wraps PHPMailer via `wp_mail()`; Lettermint handles SMTP | `wp_mail()` with HTML content-type and `str_replace()` — same as `VogEmail` and `InvoiceEmailSender` |
+| JWT or separate OAuth for profile/provisioning endpoints | All existing Rondo REST endpoints use WP session + `X-WP-Nonce`; changing auth model for new endpoints creates inconsistency | WordPress nonce via existing `prmApi` Axios client |
+| Custom DB table for provisioning state | Violates Rule 0 | WordPress user meta with `rondo_` prefix (e.g., `rondo_provisioned_at`, `rondo_welcome_email_sent`) |
+| Redux or Zustand for profile page state | Profile is a simple form; no shared state needed | `react-hook-form` (already installed) + TanStack Query for server sync |
+| Generating a "set your own password" email flow | Adds a round-trip before user can log in; complexity for marginal UX gain | Generate temporary password via `wp_generate_password()`, send in welcome email, user changes it on first login via profile tab |
+
+---
+
+## Stack Patterns by Variant
+
+**If the Functie→capability mapping needs to be club-configurable:**
+- Store as JSON in `rondo_functie_capability_map` Options API key
+- Expose via `GET /rondo/v1/admin/functie-map` (admin only) and `PUT` for updates
+- React renders a simple editable list in the admin subtab
+- Default mapping hardcoded in `FunctieCapabilityMapper` as fallback
+
+**If welcome email must match club branding:**
+- Follow `VogEmail` pattern exactly: `OPTION_TEMPLATE` in Options API, admin edits template HTML
+- Supported placeholders: `{voornaam}`, `{loginurl}`, `{tijdelijk_wachtwoord}`
+- No new library — `str_replace()` on the template string
+
+**If rondo-sync should auto-provision (not just sync capabilities):**
+- Add `--provision` CLI flag to `sync-functions.js` pipeline
+- Gate on explicit opt-in per run to avoid accidental mass user creation
+- `UserProvisioner::provision_from_knvb_id()` checks `get_user_by('email', $email)` before creating
 
 ---
 
 ## Version Compatibility
 
-| Component | Version | Status | Notes |
-|-----------|---------|--------|-------|
-| `CreateSubscriptionRequest` | mollie-api-php ^3.9 | Verified in vendor | `times` parameter exists; `startDate` accepts `DateTimeInterface` |
-| `CreateCustomerRequest` | mollie-api-php ^3.9 | Verified in vendor | `name`, `email`, `locale`, `metadata` params |
-| `CreateCustomerPaymentRequest` | mollie-api-php ^3.9 | Verified in vendor | `sequenceType` is a nullable string parameter |
-| WordPress Rewrite API | WP 6.0+ | Verified (existing usage) | Must flush rewrite rules on theme activation |
-| `bin2hex(random_bytes(32))` | PHP 8.0+ | Verified (existing usage in ICalFeed) | 64-char hex token |
+| Component | Compatible With | Notes |
+|-----------|-----------------|-------|
+| `wp_create_user` / `wp_insert_user` | WordPress 6.0+ | Stable API since WP 2.0; no compatibility concerns |
+| `$user->add_cap()` / `$user->remove_cap()` | WordPress 6.0+ | Stored in `wp_usermeta` as `wp_capabilities` serialized array; persists across role changes |
+| `react-hook-form` ^7.49.0 | React 18.2.0 | Already installed and used; no version conflict |
+| `sportlink_member_functions` SQLite table | rondo-sync current | Already created by `rondo-club-db.js` migration; contains `function_description` and `is_active` columns |
+
+---
+
+## Integration Points
+
+### rondo-sync → Rondo Club (new data flow for capabilities)
+
+```
+sync-functions.js pipeline (existing)
+  step 1: download-functions-from-sportlink.js (existing — downloads MemberFunctions)
+  step 2: submit-rondo-club-commissies.js (existing)
+  step 3: submit-rondo-club-commissie-work-history.js (existing)
+  step 4: sync-free-fields-to-rondo-club.js (existing)
+  step 5: submit-rondo-club-user-capabilities.js (NEW)
+    → for each member with rondo_club_id + active functions:
+      POST /rondo/v1/users/update-functie-capabilities
+        { knvb_id, active_functions: ["Wedstrijdsecretaris", ...] }
+```
+
+### Rondo Club REST → WordPress user system
+
+```
+POST /rondo/v1/users/provision
+  → UserProvisioner::provision()
+    → get_user_by('email', $email)      — skip if already exists
+    → wp_create_user($login, $temp_pass, $email)
+    → wp_set_role($user_id, 'rondo_user')
+    → update_user_meta($user_id, 'rondo_linked_person_id', $person_id)
+    → update_user_meta($user_id, 'rondo_provisioned_at', current_time('mysql'))
+    → WelcomeEmail::send($user_id, $temp_pass)
+
+POST /rondo/v1/users/update-functie-capabilities
+  → look up WP user by knvb_id (query persons by ACF 'knvb-id', get rondo_linked_person_id)
+  → FunctieCapabilityMapper::resolve($active_functions[]) → $desired_capabilities[]
+  → diff current $user->allcaps against desired
+  → $user->add_cap($cap) for each new capability
+  → $user->remove_cap($cap) for each removed capability
+  → return {user_id, added: [], removed: []}
+```
+
+### WP admin blocking (one hook, no library)
+
+```php
+// In functions.php alongside existing is_admin() guards:
+add_action( 'admin_init', function() {
+    if ( ! current_user_can( 'manage_options' ) && ! wp_doing_ajax() ) {
+        wp_redirect( home_url( '/' ) );
+        exit;
+    }
+} );
+```
 
 ---
 
 ## Sources
 
-- Codebase: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateSubscriptionRequest.php` — `times` param, `startDate` type, `customerId` route param (HIGH confidence — read directly)
-- Codebase: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateCustomerPaymentRequest.php` — `sequenceType` nullable string param (HIGH confidence — read directly)
-- Codebase: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateCustomerRequest.php` — constructor params (HIGH confidence — read directly)
-- Codebase: `includes/class-ical-feed.php` — token generation and rewrite rules pattern to replicate (HIGH confidence — read directly)
-- Codebase: `includes/class-fee-cache-invalidator.php` — `wp_schedule_single_event` pattern (HIGH confidence — read directly)
-- [Mollie Docs: Recurring Payments](https://docs.mollie.com/docs/recurring-payments) — iDEAL creates SEPA Direct Debit mandate; SEPA activation required; flow diagram (HIGH confidence — official docs)
-- [Mollie Docs: Create Subscription](https://docs.mollie.com/reference/create-subscription) — `times` parameter limits total charges; `startDate` format YYYY-MM-DD; interval format (HIGH confidence — official docs)
-- [Packagist: woocommerce/action-scheduler 3.9.3](https://packagist.org/packages/woocommerce/action-scheduler) — `wordpress-plugin` type, not suitable for theme distribution (HIGH confidence — official package metadata)
-- [WordPress Developer Docs: add_rewrite_rule](https://developer.wordpress.org/reference/functions/add_rewrite_rule/) — rewrite rule registration pattern (HIGH confidence — official docs)
+- Existing codebase: `includes/class-user-roles.php` — capability registration pattern, `ROLES` constant, `add_cap()` on admin role (HIGH confidence — read directly)
+- Existing codebase: `includes/class-vog-email.php`, `includes/class-invoice-email-sender.php` — email template pattern (HIGH confidence — read directly)
+- Existing codebase: `includes/class-rest-api.php` lines 2614–2628 — existing `get_users` / `delete_user` REST endpoints (HIGH confidence — read directly)
+- Existing codebase: `functions.php` line 620 — `rondo_linked_person_id` user meta confirmed; line 703 — `show_admin_bar(false)` pattern (HIGH confidence — read directly)
+- Existing codebase: `rondo-sync/steps/download-functions-from-sportlink.js` — Functie data structure confirmed (`function_description`, `is_active` fields in `sportlink_member_functions` SQLite table) (HIGH confidence — read directly)
+- Existing codebase: `rondo-sync/lib/rondo-club-db.js` — SQLite schema for `sportlink_member_functions` and tracked members confirmed (HIGH confidence — read directly)
+- Existing codebase: `package.json` — `react-hook-form`, `@tanstack/react-query`, `lucide-react`, `axios` all confirmed present (HIGH confidence — read directly)
 
 ---
 
-*Stack research for: Membership fee invoicing with payment plans, public landing pages, installment scheduling*
-*Researched: 2026-02-18*
+*Stack research for: User Accounts & Profiles milestone — Rondo Club WordPress theme*
+*Researched: 2026-02-20*

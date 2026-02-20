@@ -1,678 +1,540 @@
-# Architecture Patterns: Membership Fee Invoicing with Payment Plans
+# Architecture Research
 
-**Domain:** Extending an existing WordPress invoice system for membership fees with payment plans, bulk creation, installment scheduling, overdue tracking, and a public landing page
-**Researched:** 2026-02-18
-**Confidence:** HIGH (based on direct codebase inspection — all existing components verified)
+**Domain:** User Accounts & Profiles — WordPress theme + React SPA integration
+**Researched:** 2026-02-20
+**Confidence:** HIGH (sourced from reading existing codebase)
 
----
+## Standard Architecture
 
-## System Overview
-
-The existing invoice system handles discipline cases only. This milestone extends it for membership fees. The architectural challenge is that membership fee invoices introduce fundamentally new concepts — payment plans with installments, bulk creation across hundreds of members, a scheduled reminder system, and the first public-facing page — while the existing `rondo_invoice` CPT, `MolliePayment` service, `MollieWebhook` handler, and `RestInvoices` controller all remain in place and must not regress.
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                PUBLIC LAYER (new — first unauthenticated page)           │
-│                                                                         │
-│  WordPress template: /betaling/{token}                                  │
-│  PHP: PaymentLandingPage class                                          │
-│  No React, no WP auth, reads token from post meta → renders HTML        │
-└──────────────────────────────┬──────────────────────────────────────────┘
-                               │ payment completed
-                               ↓
-┌─────────────────────────────────────────────────────────────────────────┐
-│                MOLLIE WEBHOOK (unchanged public endpoint)                │
-│                                                                         │
-│  POST /rondo/v1/mollie/webhook                                          │
-│  MODIFIED: after marking invoice paid, check for payment plan           │
-│  If paid installment → mark installment paid, check if all paid         │
-│  If all installments paid → transition parent invoice to rondo_paid     │
-└──────────────────────────────┬──────────────────────────────────────────┘
-                               │
-┌─────────────────────────────────────────────────────────────────────────┐
-│                REST LAYER (rondo/v1, authenticated)                      │
-│                                                                         │
-│  RestInvoices (MODIFIED)          RestMembershipInvoices (NEW)          │
-│  - unchanged discipline flow      - bulk create from fee data           │
-│  - payment plan fields in         - list/get/filter by invoice_type     │
-│    format_invoice_detail()        - installment status summary          │
-│  - on send: if has_payment_plan                                         │
-│    → create installments via                                            │
-│    PaymentPlanManager                                                   │
-│                                                                         │
-│  RestInvoiceInstallments (NEW)                                          │
-│  - GET /invoices/{id}/installments                                      │
-│  - POST /invoices/{id}/installments/{n}/send                            │
-│  - POST /invoices/{id}/installments/{n}/mark-paid                       │
-└─────────────────────────────┬───────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────────────────┐
-│                SERVICE LAYER                                             │
-│                                                                         │
-│  PaymentPlanManager (NEW)         InstallmentScheduler (NEW)            │
-│  - create_installments()          - WP-Cron hook: monthly send          │
-│  - get_installments()             - sends due installment emails        │
-│  - mark_installment_paid()        - escalates overdue installments      │
-│  - all_installments_paid()                                              │
-│                                   MembershipInvoiceBulkCreator (NEW)   │
-│  MolliePayment (MODIFIED)         - iterates fee list                   │
-│  - create_payment_link() now      - calls RestInvoices::create()        │
-│    accepts optional $installment_ - progress tracking via WP transient  │
-│    number context                                                        │
-│                                                                         │
-│  InvoiceEmailSender (MODIFIED)    PaymentLandingPage (NEW)              │
-│  - new template vars for          - generates/validates opaque tokens   │
-│    installment emails             - renders public payment page HTML    │
-│  - installment email flow         - updates redirect URL in FinanceConf │
-└─────────────────────────────┬───────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────────────────┐
-│                DATA LAYER                                                │
-│                                                                         │
-│  rondo_invoice CPT (MODIFIED — new ACF fields via acf-json)             │
-│  Post meta (new):                                                       │
-│    _invoice_type          'discipline' | 'membership'                   │
-│    _invoice_season        '2025-2026'                                   │
-│    _has_payment_plan      '1' | ''                                      │
-│    _payment_plan_count    '3' | '2' (number of installments)           │
-│    _installment_{n}_amount  float                                       │
-│    _installment_{n}_due_date  'Ymd'                                     │
-│    _installment_{n}_status  'pending' | 'sent' | 'paid' | 'overdue'    │
-│    _installment_{n}_mollie_payment_id  'tr_xxx'                         │
-│    _installment_{n}_sent_date  'Ymd'                                    │
-│    _public_payment_token  opaque random string (for landing page URL)  │
-│                                                                         │
-│  WordPress Options (new):                                               │
-│    rondo_installment_scheduler_active   bool                            │
-└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                      rondo-sync (Node.js CLI)                        │
+│  Sportlink → download-functions-from-sportlink.js (SQLite staging)  │
+│           → [NEW] submit-capabilities-to-rondo-club.js              │
+│           → submit-rondo-club-sync.js (person upsert, sets email)   │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ REST API (Basic Auth, Application Password)
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   Rondo Club (WordPress + PHP)                        │
+│                                                                       │
+│  functions.php → rondo_init() conditional class loading              │
+│                                                                       │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────────┐  │
+│  │  class-rest-api  │  │ class-user-roles │  │class-access-ctrl │  │
+│  │  /rondo/v1/      │  │ role + caps mgmt │  │ per-request check│  │
+│  │  [NEW] /users/   │  │ [MOD] cap sync   │  │                  │  │
+│  │   provision      │  │                  │  │                  │  │
+│  │  [MOD] /user/me  │  │                  │  │                  │  │
+│  │  [NEW] /user/    │  │                  │  │                  │  │
+│  │   password       │  │                  │  │                  │  │
+│  └────────┬─────────┘  └──────────────────┘  └───────────────────┘  │
+│           │                                                           │
+│  ┌────────▼──────────────────────────────────────────────────────┐   │
+│  │            WordPress User Meta (user_meta table)               │   │
+│  │  rondo_linked_person_id (int)  — EXISTING: user ↔ person link │   │
+│  │  rondo_knvb_id (string)        — NEW: KNVB ID for sync lookup │   │
+│  │  rondo_functies (JSON string)  — NEW: last-known Functies      │   │
+│  │  rondo_notification_channels   — existing                     │   │
+│  │  rondo_people_list_preferences — existing                     │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+│                                                                       │
+│  WordPress Options API (options table)                                │
+│  rondo_functie_capability_map (JSON) — NEW: Functie→role config      │
+│  rondo_functie_auto_provision (bool) — NEW: auto-create users        │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ REST API (nonce auth)
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     React SPA (Vite + React 18)                      │
+│                                                                       │
+│  useCurrentUser() → /rondo/v1/user/me                               │
+│  [MOD] returns: linked person thumbnail, functies[]                  │
+│                                                                       │
+│  [NEW] Profile page → /profile                                       │
+│    - Display name, email from WP user record                         │
+│    - Password change form → POST /rondo/v1/user/password             │
+│    - Avatar: linked person thumbnail or Gravatar fallback            │
+│                                                                       │
+│  Layout.jsx Sidebar → profile link in bottom user area               │
+│  router.jsx → [NEW] /profile route (all authenticated users)         │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
----
+### Component Responsibilities
 
-## Component Boundaries
-
-### New Components
-
-| Component | Namespace | Responsibility | Communicates With |
-|-----------|-----------|----------------|-------------------|
-| `RestMembershipInvoices` | `Rondo\REST` | Bulk invoice creation endpoint; fee-data-to-invoice conversion | `MembershipFees`, `RestInvoices` create flow, `PaymentPlanManager` |
-| `RestInvoiceInstallments` | `Rondo\REST` | Read/send/mark-paid individual installments | `PaymentPlanManager`, `MolliePayment`, `InvoiceEmailSender` |
-| `PaymentPlanManager` | `Rondo\Finance` | Create, read, update installments stored as post meta on invoice | WordPress post meta, `MolliePayment` |
-| `InstallmentScheduler` | `Rondo\Finance` | WP-Cron job: find due installments, send emails, mark overdue | `PaymentPlanManager`, `InvoiceEmailSender`, `MolliePayment` |
-| `MembershipInvoiceBulkCreator` | `Rondo\Finance` | Iterate members from fee data, create one invoice per member | `MembershipFees`, `RestInvoices` (reuses create logic), progress transient |
-| `PaymentLandingPage` | `Rondo\Finance` | Token-gated public HTML page for members to pay; no WP login | WordPress template system, `FinanceConfig`, `MolliePayment` |
-
-### Modified Components
-
-| Component | What Changes | Why |
-|-----------|-------------|-----|
-| `rondo_invoice` ACF fields | Add `invoice_type`, `season`, `has_payment_plan`, `payment_plan_count` | Distinguish membership vs discipline invoices; store plan metadata |
-| `RestInvoices::send_invoice()` | After send, if `has_payment_plan`: call `PaymentPlanManager::create_installments()` | Installment creation is triggered at send time, not at draft creation |
-| `RestInvoices::format_invoice_detail()` | Include payment plan fields + installment summary in response | Frontend needs to render plan state |
-| `MollieWebhook::handle_webhook()` | Check if matched invoice is an installment payment (`_installment_{n}_mollie_payment_id`); mark installment paid; check if all paid | Installments have their own Mollie payment IDs, not the parent invoice's |
-| `MolliePayment::create_payment_link()` | Accept optional `$context` array (`installment_number`, `installment_amount`) to override amount and description | Installment payments are for a fraction of total; need separate Mollie payment per installment |
-| `InvoiceEmailSender::send()` | Add installment-specific template variables: `{termijn}`, `{termijn_bedrag}`, `{termijn_vervaldatum}` | Installment reminder emails need different copy than the initial invoice email |
-| `FinanceConfig` | Add `get_mollie_redirect_url()` setter; add `get_installment_email_template()` | Landing page needs its URL stored; installment emails need their own template |
-| `functions.php` | Instantiate `MollieWebhook` class (MODIFIED), `RestMembershipInvoices`, `RestInvoiceInstallments`, `InstallmentScheduler`, `PaymentLandingPage` | Register new REST routes and cron hooks |
-| `rondo_theme_template_redirect()` | Add `/betaling` to exempt routes (serve landing page template, not SPA index.php) | Public page is WordPress-rendered, not React |
-
----
-
-## Data Flow
-
-### Flow 1: Bulk Membership Invoice Creation
-
-```
-Admin clicks "Contributie factureren" (season, payment plan options)
-    ↓
-POST /rondo/v1/membership-invoices/bulk-create
-    { season: '2025-2026', has_payment_plan: true, installment_count: 3 }
-    ↓
-RestMembershipInvoices::bulk_create()
-    ↓
-MembershipFees::get_fee_for_person_cached() — for each eligible person
-    ↓ (for each person with calculable fee)
-Create rondo_invoice CPT post, set ACF fields:
-    invoice_type = 'membership'
-    season = '2025-2026'
-    has_payment_plan = true / false
-    payment_plan_count = 3
-    total_amount = person's final_fee
-    line_items = [{ description: 'Contributie 2025-2026', amount: final_fee }]
-    ↓
-Store progress in WP transient (for ~500 members, this runs in a WP-Cron batch)
-    ↓
-Return { created: N, skipped: M, job_id: 'xyz' } immediately
-Client polls GET /rondo/v1/membership-invoices/bulk-status/{job_id}
-```
-
-### Flow 2: Send Membership Invoice with Payment Plan
-
-```
-Admin sends invoice (POST /rondo/v1/invoices/{id}/send)
-    ↓
-RestInvoices::send_invoice() — existing flow runs:
-    - MolliePayment::create_payment_link() for full invoice total
-    - InvoicePdfGenerator::generate()
-    - InvoiceEmailSender::send() (initial invoice email)
-    - invoice status → rondo_sent
-    ↓
-if get_post_meta($invoice_id, '_has_payment_plan') === '1':
-    ↓
-PaymentPlanManager::create_installments($invoice_id)
-    total = get_field('total_amount', $invoice_id)
-    count = get_post_meta($invoice_id, '_payment_plan_count')
-    installment_amount = round(total / count, 2)
-
-    For n = 1 to count:
-        due_date = calculate_due_date(n)  // n months from sent_date
-        update_post_meta($invoice_id, '_installment_{n}_amount', $installment_amount)
-        update_post_meta($invoice_id, '_installment_{n}_due_date', $due_date)
-        update_post_meta($invoice_id, '_installment_{n}_status', 'pending')
-
-    // Installment 1 is sent immediately:
-    MolliePayment::create_payment_link($invoice_id, ['installment_number' => 1, 'amount' => installment_amount])
-    → stores _installment_1_mollie_payment_id
-    → stores _installment_1_payment_link (separate from parent invoice payment_link)
-    InvoiceEmailSender::send_installment($invoice_id, installment_number: 1)
-    update_post_meta($invoice_id, '_installment_1_status', 'sent')
-```
-
-### Flow 3: Mollie Webhook — Installment Payment Received
-
-```
-Member pays installment 1 on Mollie checkout page
-    ↓
-POST /rondo/v1/mollie/webhook  { id: 'tr_installment_abc' }
-    ↓
-MollieWebhook::handle_webhook()
-    ↓
-$payment = MollieClient::get()->payments->get('tr_installment_abc')
-    ↓
-$payment->isPaid() → true
-    ↓
-// Try invoice-level payment ID first (existing discipline path):
-$invoice = find_invoice_by_meta('_mollie_payment_id', 'tr_installment_abc')
-
-// If not found, try installment-level (new path):
-if (!$invoice):
-    find_invoice_by_any_meta('_installment_%_mollie_payment_id', 'tr_installment_abc')
-    → returns ($invoice_id, $installment_number)
-    ↓
-    PaymentPlanManager::mark_installment_paid($invoice_id, $installment_number)
-    update_post_meta($invoice_id, '_installment_{n}_status', 'paid')
-    ↓
-    PaymentPlanManager::all_installments_paid($invoice_id) ?
-        YES → wp_update_post(post_status: 'rondo_paid'), update_field('status', 'paid')
-        NO  → no invoice status change; next installment scheduled by cron
-    ↓
-HTTP 200 (always)
-```
-
-### Flow 4: Scheduled Installment Reminders (WP-Cron)
-
-```
-WP-Cron fires 'rondo_send_due_installments' (daily)
-    ↓
-InstallmentScheduler::process_due_installments()
-    ↓
-WP_Query: all rondo_invoice posts where _has_payment_plan = '1'
-    and post_status IN ('rondo_sent', 'rondo_overdue')
-    ↓
-For each invoice, for each installment n (1 to _payment_plan_count):
-    status = get_post_meta($invoice_id, '_installment_{n}_status')
-    due_date = get_post_meta($invoice_id, '_installment_{n}_due_date')
-
-    if status === 'pending' AND due_date <= today + advance_days:
-        // Send installment email + create Mollie payment link
-        MolliePayment::create_payment_link($invoice_id, ['installment_number' => n])
-        InvoiceEmailSender::send_installment($invoice_id, n)
-        update_post_meta → status = 'sent', sent_date = today
-
-    elif status === 'sent' AND due_date < today:
-        // Overdue: escalate
-        update_post_meta → status = 'overdue'
-        // Optional: send overdue reminder email
-```
-
-### Flow 5: Public Payment Landing Page
-
-```
-Member receives email with link: https://rondo.svawc.nl/betaling/{token}
-    ↓
-WordPress template_redirect:
-    Path starts with 'betaling/' → do NOT serve React SPA index.php
-    Load PaymentLandingPage template (PHP-rendered, no WP auth)
-    ↓
-PaymentLandingPage::render($token)
-    ↓
-Find invoice by _public_payment_token meta
-    → Not found: render "Ongeldig token" page
-    → Found but invoice is 'paid': render "Al betaald" confirmation page
-    ↓
-Get payment_link (or installment payment_link if payment plan)
-    ↓
-Render minimal HTML page (Tailwind CSS via CDN or inline):
-    - Club logo from FinanceConfig
-    - Invoice number, amount, due date
-    - "Betaal nu" button → redirect to Mollie checkout URL
-    - OR: installment breakdown if payment plan (shows which installment is due)
-```
-
----
+| Component | Responsibility | New or Modified |
+|-----------|----------------|-----------------|
+| `class-user-roles.php` | Role registration, capability definitions | MODIFIED: add capability sync helper |
+| `class-rest-api.php` | REST endpoints for user/me, users CRUD, user settings | MODIFIED: provision endpoint, expanded /user/me, password endpoint, capability map endpoints |
+| `class-user-provisioning.php` | Create WP user from person record, link to person, send welcome email | NEW |
+| `class-functie-capability-map.php` | Config storage and apply/sync Functie→role mappings | NEW |
+| `functions.php` | WP admin redirect blocking, class loading | MODIFIED: add admin_init redirect hook, load new classes |
+| `rondo-sync` submit step | Push Functies to Rondo Club provisioning endpoint | NEW STEP |
+| `src/pages/Profile/index.jsx` | In-app profile page, password change form | NEW |
+| `src/hooks/useProfile.js` | TanStack Query hooks for profile reads + password mutation | NEW |
+| `src/hooks/useCurrentUser.js` | Fetch current user (already exists) | MODIFIED: include linked person thumbnail |
+| `src/api/client.js` | API helper methods | MODIFIED: add profile/password/functie-map endpoints |
+| `src/router.jsx` | Route definitions | MODIFIED: add /profile route |
+| `src/components/layout/Layout.jsx` | Sidebar navigation | MODIFIED: add profile link to bottom user area |
 
 ## Recommended Project Structure
 
+New files to create:
+
 ```
 includes/
-├── class-rest-invoices.php                # MODIFIED: payment plan fields in create/format; send triggers installments
-├── class-rest-membership-invoices.php     # NEW: bulk create endpoint + status polling
-├── class-rest-invoice-installments.php   # NEW: installment CRUD + send/mark-paid
-├── class-payment-plan-manager.php        # NEW: installment storage/retrieval/state transitions
-├── class-installment-scheduler.php       # NEW: WP-Cron for due installments
-├── class-membership-invoice-bulk-creator.php  # NEW: iterates MembershipFees to create invoices
-├── class-invoice-email-sender.php        # MODIFIED: installment email template vars + send_installment()
-├── class-mollie-payment.php              # MODIFIED: $context parameter for installment amount
-├── class-mollie-webhook.php              # MODIFIED: installment payment ID lookup
-├── class-payment-landing-page.php        # NEW: public HTML page + token management
-└── class-finance-config.php              # MODIFIED: installment email template option
+├── class-user-provisioning.php      # NEW: WP user creation from person record + welcome email
+├── class-functie-capability-map.php # NEW: Functie→role config (Options API) + sync logic
 
-acf-json/
-└── group_invoice_fields.json             # MODIFIED: add invoice_type, season, has_payment_plan, payment_plan_count fields
-
-src/pages/Finance/
-├── Facturen.jsx                          # MODIFIED: filter by invoice_type; show membership invoices
-├── FactuurDetail.jsx                     # MODIFIED: installment timeline section
-└── MembershipInvoices.jsx                # NEW: bulk create UI + progress display (or tab within existing Facturen)
-
-src/pages/Contributie/
-└── ContributieList.jsx                   # MODIFIED: "Factureer geselecteerde leden" bulk action
+src/pages/
+└── Profile/
+    └── index.jsx                    # NEW: Profile page (display info + password change)
 
 src/hooks/
-├── useInvoices.js                        # MODIFIED: useInvoiceInstallments() hook
-└── useMembershipInvoices.js              # NEW: useBulkCreate(), useBulkStatus()
-
-functions.php                             # MODIFIED: instantiate new classes
+└── useProfile.js                    # NEW: profile data fetch + password change mutation
 ```
 
----
+Modified files:
+
+```
+includes/
+├── class-user-roles.php             # MOD: add sync_user_capabilities() helper
+├── class-rest-api.php               # MOD: provision, /user/me expansion, /user/password,
+│                                    #      functie-capability-map endpoints
+
+functions.php                        # MOD: admin_init redirect for non-admins, load new classes
+
+src/
+├── router.jsx                       # MOD: /profile route under ProtectedLayout
+├── lazyPages.js                     # MOD: export Profile lazy component
+├── api/client.js                    # MOD: prmApi.updatePassword(), capability map methods
+├── components/layout/Layout.jsx     # MOD: profile link in sidebar bottom section
+```
+
+### Structure Rationale
+
+- **`class-user-provisioning.php` separate from `class-user-roles.php`:** Provisioning is a one-time event (create user, send email). Role management is ongoing infrastructure. Keeps SRP. Load conditionally on REST requests only.
+- **`class-functie-capability-map.php` separate from `class-user-roles.php`:** Config concerns (what Functie maps to what role) are separate from infrastructure concerns (what roles exist). Admin can tune the mapping without touching role code.
+- **Profile as standalone route `/profile`, not inside `/settings`:** Settings is admin-heavy with multiple tabs. Profile is personal and should be discoverable without navigating a settings tree. All authenticated users need it.
 
 ## Architectural Patterns
 
-### Pattern 1: Installments as Post Meta (Not a Separate CPT)
+### Pattern 1: Extend class-rest-api.php for new user endpoints
 
-**What:** Each installment is stored as a set of numbered post meta keys on the parent `rondo_invoice` post. No new CPT, no separate ACF field group.
+**What:** Add new REST routes to the existing `Api` class (which already extends `Base`). `Base` provides `check_user_approved()`, `check_admin_permission()`, and common response helpers. All new user endpoints follow this pattern.
 
-**Why:** The number of installments per invoice is small (2-3). Querying installment state is always done in the context of the parent invoice. A separate CPT would complicate every query, add an extra WP_Query per invoice, and create orphan records when invoices are deleted. Post meta with a numbered key prefix (`_installment_1_*`, `_installment_2_*`) is simpler, transactional (deletion of the invoice post cascades to all its meta), and consistent with how Mollie payment IDs are already stored.
+**When to use:** For all new `/rondo/v1/` endpoints. This is the established convention for every domain REST class in the codebase.
 
-**Trade-off:** Post meta is not directly queryable in a JOIN sense. For the scheduler to find "all invoices with overdue installment 2", it must query posts with `_has_payment_plan = '1'` and then loop. At 500 members this is fast. If the club scales to 5,000 members, the query strategy would need revisiting — but that is not this club's scope.
+**Trade-offs:** `class-rest-api.php` is already large (~4440 lines). However, user endpoints are closely related to the existing `/rondo/v1/user/me`, `/rondo/v1/user/linked-person`, and `/rondo/v1/users` endpoints already in that file. The actual provisioning logic lives in `class-user-provisioning.php`, so the REST callbacks are thin wrappers.
 
-**Implementation:**
+**Example:**
 ```php
-// PaymentPlanManager::create_installments()
-public function create_installments( int $invoice_id, int $count ): void {
-    $total    = (float) get_field( 'total_amount', $invoice_id );
-    $base     = round( $total / $count, 2 );
-    $sent_date = get_post_meta( $invoice_id, 'sent_date', true );
-    $sent_ts   = $sent_date ? strtotime( $sent_date ) : time();
-
-    for ( $n = 1; $n <= $count; $n++ ) {
-        $due = date( 'Ymd', strtotime( "+{$n} months", $sent_ts ) );
-        update_post_meta( $invoice_id, "_installment_{$n}_amount",   $base );
-        update_post_meta( $invoice_id, "_installment_{$n}_due_date", $due );
-        update_post_meta( $invoice_id, "_installment_{$n}_status",   'pending' );
-    }
-    update_post_meta( $invoice_id, '_payment_plan_count', $count );
-    update_post_meta( $invoice_id, '_has_payment_plan',   '1' );
-}
-```
-
-### Pattern 2: MollieWebhook Extended with Fallback Lookup
-
-**What:** The existing webhook first searches for the payment ID in `_mollie_payment_id` (invoice-level). If not found, it searches across `_installment_1_mollie_payment_id` through `_installment_N_mollie_payment_id` using a meta_query with LIKE.
-
-**Why:** Installment payments have separate Mollie payment IDs from the parent invoice. The webhook receives only the payment ID and must determine whether it belongs to a full-invoice payment or an installment payment.
-
-**Implementation:**
-```php
-// In MollieWebhook::handle_webhook() — after failing to find invoice by _mollie_payment_id:
-$query = new \WP_Query([
-    'post_type'      => 'rondo_invoice',
-    'post_status'    => 'any',
-    'posts_per_page' => 1,
-    'meta_query'     => [[
-        'key'     => '_installment_%_mollie_payment_id',
-        'value'   => $payment_id,
-        'compare' => '=',
-    ]],
+// In class-rest-api.php register_routes():
+register_rest_route('rondo/v1', '/users/provision', [
+    'methods'             => WP_REST_Server::CREATABLE,
+    'callback'            => [ $this, 'provision_user' ],
+    'permission_callback' => [ $this, 'check_admin_permission' ],
+    'args'                => [
+        'person_id' => [ 'required' => true, 'type' => 'integer' ],
+        'email'     => [ 'required' => true, 'type' => 'string'  ],
+        'knvb_id'   => [ 'required' => false, 'type' => 'string' ],
+        'functies'  => [ 'required' => false, 'type' => 'array'  ],
+    ],
 ]);
 
-// NOTE: WordPress meta_query with wildcard % in key does NOT work with MySQL LIKE.
-// Instead, search with a direct $wpdb->get_row() for efficiency, or:
-// Store a reverse-lookup key: update_post_meta($invoice_id, '_mollie_pid_' . $payment_id, $installment_number)
-// Then look up: get_posts where meta_key = '_mollie_pid_' . $payment_id
-```
-
-**Recommended: Reverse Lookup Key Pattern**
-
-When creating an installment payment link, store a reverse-lookup meta:
-```php
-update_post_meta( $invoice_id, '_mollie_pid_' . $payment->id, $installment_number );
-```
-
-Then in the webhook:
-```php
-$reverse = get_posts([
-    'post_type'   => 'rondo_invoice',
-    'post_status' => 'any',
-    'meta_key'    => '_mollie_pid_' . $payment_id,
-    'fields'      => 'ids',
-    'numberposts' => 1,
-]);
-if ( $reverse ) {
-    $invoice_id        = $reverse[0];
-    $installment_number = (int) get_post_meta( $invoice_id, '_mollie_pid_' . $payment_id, true );
-    // mark installment paid
+public function provision_user( $request ) {
+    $provisioner = new \Rondo\Core\UserProvisioning();
+    return rest_ensure_response(
+        $provisioner->provision(
+            $request->get_param('person_id'),
+            $request->get_param('email'),
+            $request->get_param('knvb_id') ?? '',
+            $request->get_param('functies') ?? []
+        )
+    );
 }
 ```
 
-This avoids the WP meta_query wildcard limitation entirely. HIGH confidence this is the correct pattern.
+### Pattern 2: WordPress Options API for Functie→capability mapping
 
-### Pattern 3: Public Landing Page via WordPress Template Redirect
+**What:** Store the admin-configurable Functie→role mapping as a single WordPress option (`rondo_functie_capability_map`) containing a JSON object. Follow the pattern established by `ClubConfig` and `FinanceConfig`.
 
-**What:** A dedicated PHP class `PaymentLandingPage` registers on `template_redirect` (priority 5, before the SPA redirect at priority 1... actually: the SPA redirect runs at priority 1 with an early return, so the landing page must intercept before it). The class checks if the URL path starts with `betaling/`, validates the token, and renders a standalone HTML page.
+**When to use:** Site-wide configuration that the admin sets once and the system reads on every provisioning call. Options API has built-in object caching via `get_option()` autoload, so no custom caching is needed.
 
-**Implementation approach:**
+**Trade-offs:** JSON in one option is simpler than one option per Functie. Easy to export, reset to defaults, and version. Downside: no per-entry validation — validate at REST API write time.
 
-The existing `rondo_theme_template_redirect()` runs at priority 1. It serves `index.php` for any path it recognises and calls `exit`. To allow `/betaling/*` to be handled by the new class, one of two approaches works:
-
-**Option A (modify existing function):** Add `betaling` as an excluded prefix before the SPA match. Then `PaymentLandingPage` registers at priority 1 as well (same priority, but added after, so runs second — or use priority 0).
-
-**Option B (check in PaymentLandingPage at priority 0):** Register `PaymentLandingPage` at priority 0. If path starts with `betaling/`, render and exit. The SPA redirect at priority 1 never fires.
-
-**Recommended: Option B — PaymentLandingPage at priority 0**
-
+**Example:**
 ```php
-// In PaymentLandingPage::__construct():
-add_action( 'template_redirect', [ $this, 'maybe_render' ], 0 );
+// class-functie-capability-map.php
+class FunctieCapabilityMap {
+    const OPTION_MAP           = 'rondo_functie_capability_map';
+    const OPTION_AUTO_PROVISION = 'rondo_functie_auto_provision';
 
-public function maybe_render(): void {
-    $path = trim( parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH ), '/' );
-    if ( ! str_starts_with( $path, 'betaling/' ) ) {
-        return; // Let SPA handle it
+    // Stored as: { "Bestuurslid": "rondo_bestuur", "Leider": "rondo_fairplay" }
+    public function get_map(): array {
+        return get_option( self::OPTION_MAP, [] );
     }
 
-    $token = substr( $path, strlen( 'betaling/' ) );
-    $this->render( sanitize_text_field( $token ) );
-    exit;
+    // Returns WP role slug for an array of Functies, or null if no mapping found.
+    // Priority: highest-privilege role wins when multiple Functies map to different roles.
+    public function get_role_for_functies( array $functies ): ?string {
+        $map = $this->get_map();
+        $role_priority = [
+            'rondo_bestuur'  => 4,
+            'rondo_fairplay' => 3,
+            'rondo_vog'      => 2,
+            'rondo_user'     => 1,
+        ];
+        $best_role     = null;
+        $best_priority = 0;
+        foreach ( $functies as $functie ) {
+            $role = $map[ $functie ] ?? null;
+            if ( $role && ( $role_priority[ $role ] ?? 0 ) > $best_priority ) {
+                $best_role     = $role;
+                $best_priority = $role_priority[ $role ];
+            }
+        }
+        return $best_role;
+    }
 }
 ```
 
-**Token generation:** When a membership invoice is sent, generate a cryptographically random token:
+### Pattern 3: User meta for user-to-person linkage (already established)
+
+**What:** `rondo_linked_person_id` user meta already links a WP user to a person post. Auto-set this during provisioning from the `person_id` passed in the request. The REST endpoint `GET /rondo/v1/user/linked-person` already reads and returns this. The existing `GET /rondo/v1/user/me` response can then read the linked person's thumbnail.
+
+**When to use:** Provisioning must call `update_user_meta( $user_id, 'rondo_linked_person_id', $person_id )` immediately after creating the user. This makes avatar resolution, profile display, and meeting attendee filtering work with zero additional code.
+
+**Example:**
 ```php
-$token = bin2hex( random_bytes( 32 ) ); // 64-char hex string
-update_post_meta( $invoice_id, '_public_payment_token', $token );
+// In UserProvisioning::provision():
+$user_id = wp_insert_user( $userdata );
+if ( ! is_wp_error( $user_id ) ) {
+    update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+    update_user_meta( $user_id, 'rondo_knvb_id', $knvb_id );
+    update_user_meta( $user_id, 'rondo_functies', wp_json_encode( $functies ) );
+}
 ```
 
-The landing page URL is: `home_url( '/betaling/' . $token )`
+### Pattern 4: WP admin blocking via admin_init hook
 
-This URL is included in the membership invoice email as the primary call-to-action link instead of (or in addition to) the direct Mollie checkout URL.
+**What:** Hook into `admin_init` to redirect non-admin users who try to reach `/wp-admin/`. WordPress fires `admin_init` on every admin page load. If the user lacks `manage_options`, redirect to `home_url()` and exit.
 
-**Landing page renders standalone HTML** (no React, no WP admin bar, no theme files). Use inline Tailwind via CDN for styling, or a minimal embedded `<style>` block that matches the brand from `FinanceConfig::get_accent_color()`.
+**Critical:** Only block the HTTP request to `/wp-admin/`. REST API requests have `is_admin()` = false during execution — the `admin_init` hook never fires during REST calls. AJAX requests must also be exempted (`DOING_AJAX`).
 
-### Pattern 4: Bulk Creation via WP-Cron Batching
-
-**What:** Creating 500 invoices in a single HTTP request will time out. The bulk create endpoint starts a WP-Cron batch job and returns a job ID immediately. The React frontend polls a status endpoint.
-
-**Implementation:**
+**Example:**
 ```php
-// POST /rondo/v1/membership-invoices/bulk-create
-public function start_bulk_create( \WP_REST_Request $request ): \WP_REST_Response {
-    $season     = $request->get_param( 'season' );
-    $has_plan   = (bool) $request->get_param( 'has_payment_plan' );
-    $plan_count = (int) $request->get_param( 'installment_count' );
+// In functions.php (or called from rondo_init):
+add_action( 'admin_init', function() {
+    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+        return;
+    }
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_redirect( home_url() );
+        exit;
+    }
+} );
+```
 
-    $job_id = 'bulk_' . uniqid();
-    set_transient( $job_id, [ 'status' => 'pending', 'created' => 0, 'skipped' => 0 ], HOUR_IN_SECONDS );
+### Pattern 5: Password change via custom REST endpoint
 
-    wp_schedule_single_event( time(), 'rondo_bulk_create_invoices', [ $job_id, $season, $has_plan, $plan_count ] );
+**What:** New `POST /rondo/v1/user/password` endpoint. Accepts `current_password` and `new_password`. Verifies current password with `wp_check_password()`, then calls `wp_set_password()`. Returns 200 on success, 400 on wrong current password.
 
-    return rest_ensure_response( [ 'job_id' => $job_id ] );
+**Why not `POST /wp/v2/users/me`:** WordPress's native user REST endpoint requires `edit_users` capability to change passwords. `rondo_user` role does not have `edit_users`. A custom endpoint with `check_user_approved()` permission is required.
+
+**Example:**
+```php
+register_rest_route('rondo/v1', '/user/password', [
+    'methods'             => WP_REST_Server::CREATABLE,
+    'callback'            => [ $this, 'update_password' ],
+    'permission_callback' => 'is_user_logged_in',
+    'args'                => [
+        'current_password' => [ 'required' => true, 'type' => 'string' ],
+        'new_password'     => [ 'required' => true, 'type' => 'string', 'minLength' => 8 ],
+    ],
+]);
+
+public function update_password( $request ) {
+    $user = get_userdata( get_current_user_id() );
+    if ( ! wp_check_password( $request['current_password'], $user->user_pass, $user->ID ) ) {
+        return new \WP_Error( 'wrong_password', 'Huidig wachtwoord klopt niet.', [ 'status' => 400 ] );
+    }
+    wp_set_password( $request['new_password'], $user->ID );
+    return rest_ensure_response( [ 'success' => true ] );
 }
 ```
 
-The cron handler runs `MembershipInvoiceBulkCreator::run()`, updating the transient as it processes. The React frontend polls `GET /rondo/v1/membership-invoices/bulk-status/{job_id}` every 2 seconds until `status === 'complete'`.
+## Data Flow
 
-**Batch size:** Process 50 members per cron execution to stay within the 30-second PHP execution limit. If more remain, schedule a follow-up cron event immediately.
+### Provisioning Flow (rondo-sync triggers)
 
-### Pattern 5: Invoice Type Discrimination via Post Meta
-
-**What:** A `_invoice_type` post meta field (`'discipline'` or `'membership'`) distinguishes the two invoice flows. The `line_items` ACF repeater remains shared — membership invoices use it with `discipline_case = null` and a description like "Contributie 2025-2026". The ACF field group gets three new optional top-level fields: `invoice_type`, `season`, `has_payment_plan`.
-
-**Why:** The existing `rondo_invoice` CPT handles the common invoice shape (number, person, line items, total, status, payment link). A separate CPT for membership invoices would duplicate the entire payment, PDF, and email infrastructure. Discrimination by post meta keeps the CPT unified and the `RestInvoices` controller largely unchanged.
-
-**ACF additions** (in `group_invoice_fields.json`):
-```json
-{
-    "key": "field_invoice_type",
-    "name": "invoice_type",
-    "type": "select",
-    "choices": { "discipline": "Tuchtzaak", "membership": "Contributie" },
-    "default_value": "discipline"
-},
-{
-    "key": "field_invoice_season",
-    "name": "season",
-    "type": "text"
-},
-{
-    "key": "field_invoice_has_payment_plan",
-    "name": "has_payment_plan",
-    "type": "true_false",
-    "default_value": 0
-},
-{
-    "key": "field_invoice_payment_plan_count",
-    "name": "payment_plan_count",
-    "type": "number",
-    "min": 2,
-    "max": 12
-}
+```
+Sportlink Functies sync (download-functions-from-sportlink.js)
+    ↓ stores in SQLite: sportlink_member_functions table
+    ↓ (knvb_id, function_description, is_active)
+    ↓
+[NEW] submit-capabilities-to-rondo-club.js
+    ↓ For each member with email in rondo-club-db:
+    ↓ POST /rondo/v1/users/provision
+    ↓ { person_id, email, knvb_id, functies: ["Bestuurslid", ...] }
+    ↓
+class-rest-api.php → provision_user()
+    ↓
+class-user-provisioning.php → provision()
+    ├── email_exists( $email )?
+    │   YES → get user, skip creation, go to capability sync
+    │   NO  → wp_insert_user({ user_login: email, user_email: email,
+    │            display_name: first_name + last_name, role: 'rondo_user' })
+    ├── update_user_meta(user_id, 'rondo_linked_person_id', person_id)
+    ├── update_user_meta(user_id, 'rondo_knvb_id', knvb_id)
+    ├── update_user_meta(user_id, 'rondo_functies', json_encode(functies))
+    ├── class-functie-capability-map → get_role_for_functies(functies)
+    │   → returns: 'rondo_bestuur' | 'rondo_fairplay' | 'rondo_vog' | 'rondo_user' | null
+    ├── wp_update_user([ 'ID' => user_id, 'role' => $role ])
+    └── If new user: wp_mail() welcome email with login link
+        ↓
+REST response: { user_id, created: true|false, role: "rondo_bestuur" }
 ```
 
----
+### Capability Sync Flow (on-demand or triggered by admin)
 
-## Build Order
+```
+functies[] (e.g. ["Bestuurslid", "Penningmeester"])
+    ↓
+FunctieCapabilityMap::get_role_for_functies(functies)
+    ↓ reads rondo_functie_capability_map option
+    ↓ highest-privilege role wins
+    ↓
+wp_update_user([ 'ID' => user_id, 'role' => $role_slug ])
+    ↓
+update_user_meta(user_id, 'rondo_functies', json_encode($functies))
+    ↓ (stored for profile display + next sync comparison)
 
-Build order follows strict dependency direction. Each phase is deployable and testable independently.
+Admin can also trigger "sync all" via:
+POST /rondo/v1/users/sync-capabilities (admin only)
+→ loops all WP users with rondo_knvb_id meta
+→ re-reads stored rondo_functies and re-applies role from config
+```
 
-### Phase 1: Data Model Extension
+### Profile Page Data Flow (React)
 
-**Depends on:** Nothing.
+```
+User navigates to /profile
+    ↓
+Profile page mounts → useCurrentUser() (already cached from layout)
+    ↓ { id, name, email, avatar_url, is_admin, can_access_*,
+    ↓   linked_person_thumbnail, functies[] }     ← MOD: new fields
+    ↓
+Avatar resolution:
+    linked_person_thumbnail ?? avatar_url (Gravatar fallback)
+    ↓
+Profile renders: name, email, avatar, functies list
+    ↓
+Password change form submits:
+    { current_password, new_password }
+    ↓ POST /rondo/v1/user/password
+    ↓ success → toast "Wachtwoord gewijzigd", clear form
+    ↓ 400 → inline error "Huidig wachtwoord klopt niet"
+```
 
-- Add new ACF fields to `group_invoice_fields.json`: `invoice_type`, `season`, `has_payment_plan`, `payment_plan_count`
-- No PHP changes needed yet — ACF auto-sync on deploy
-- After deploy: verify fields appear on invoice posts in WP admin
+### Admin Capability Map Config Flow
 
-### Phase 2: PaymentLandingPage (Public Page)
+```
+Admin opens Settings → Gebruikers tab (or dedicated sub-section)
+    ↓
+GET /rondo/v1/functie-capability-map (admin only)
+    → { map: { "Bestuurslid": "rondo_bestuur" }, available_functies: [...] }
+    ↓
+Admin sets: Functie X → role Y via dropdown
+    ↓ POST /rondo/v1/functie-capability-map
+    ↓ saves to WordPress Options
+    ↓
+Admin clicks "Synchroniseer rollen"
+    ↓ POST /rondo/v1/users/sync-capabilities
+    → loops all rondo users, re-applies roles
+```
 
-**Depends on:** Phase 1 (token stored on invoice posts).
+### Key Data Flows Summary
 
-- Create `includes/class-payment-landing-page.php`
-- Register at `template_redirect` priority 0
-- Token generation: add to `RestInvoices::send_invoice()` when `invoice_type === 'membership'`
-- Add `betaling` path to `rondo_theme_template_redirect()` exclusion list as a safeguard
-- Test: manually create a token, visit `/betaling/{token}`, verify page renders without WP auth
+1. **Provisioning:** rondo-sync posts to REST → UserProvisioning creates/updates WP user, links to person, applies role from Functie mapping, sends welcome email
+2. **Capability sync:** REST endpoint reads stored functies from user meta, applies FunctieCapabilityMap config to determine WP role
+3. **Avatar in profile:** `GET /rondo/v1/user/me` returns linked person's thumbnail; React falls back to Gravatar if no linked person
+4. **Admin blocking:** `admin_init` hook checks `manage_options`; non-admins redirected to `home_url()`
+5. **Password change:** `POST /rondo/v1/user/password` verifies current password before setting new one
 
-**Why Phase 2 before payment plans:** The landing page is needed by membership invoice emails regardless of whether payment plans are involved. It's also the lowest-risk new feature — pure read-only PHP rendering, no data mutations.
+## New vs Modified — Explicit Breakdown
 
-### Phase 3: MolliePayment Installment Context
+### NEW PHP classes (create in `includes/`)
 
-**Depends on:** Phase 1 (invoice type discrimination).
+| File | Class | Namespace | Loaded When |
+|------|-------|-----------|-------------|
+| `class-user-provisioning.php` | `UserProvisioning` | `Rondo\Core` | REST requests only (`$is_rest`) |
+| `class-functie-capability-map.php` | `FunctieCapabilityMap` | `Rondo\Config` | REST + admin (`$is_rest || $is_admin`) |
 
-- Modify `MolliePayment::create_payment_link()` to accept optional `$context` parameter
-- If `$context['installment_number']` is set, use `$context['amount']` and append installment number to description
-- Store reverse-lookup meta `_mollie_pid_{payment_id}` = `installment_number` on the invoice
-- Test: manually call with installment context, verify Mollie receives correct amount
+### MODIFIED PHP
 
-### Phase 4: PaymentPlanManager + MollieWebhook Extension
+| File | What Changes |
+|------|-------------|
+| `functions.php` | (1) Add `admin_init` hook to redirect non-admins from wp-admin. (2) Load `UserProvisioning` and `FunctieCapabilityMap` in `rondo_init()`. (3) Add class aliases for backward compat. |
+| `class-rest-api.php` | (1) `POST /rondo/v1/users/provision`. (2) `POST /rondo/v1/user/password`. (3) `GET/POST /rondo/v1/functie-capability-map` (admin). (4) `POST /rondo/v1/users/sync-capabilities` (admin). (5) Expand `get_current_user()` to include `linked_person_thumbnail` and `functies`. |
+| `class-user-roles.php` | Add optional `sync_user_capabilities( int $user_id, array $functies )` static helper (delegates to FunctieCapabilityMap). |
 
-**Depends on:** Phase 3 (installment Mollie payment IDs in reverse-lookup format).
+### NEW React files
 
-- Create `includes/class-payment-plan-manager.php`
-- Modify `MollieWebhook::handle_webhook()` to check reverse-lookup meta after invoice-level lookup fails
-- Mark installment paid; check `all_installments_paid()` to transition parent invoice
-- Test: use Mollie test mode; confirm installment status transitions
+| File | Purpose |
+|------|---------|
+| `src/pages/Profile/index.jsx` | Profile page: avatar, display info, password change form |
+| `src/hooks/useProfile.js` | TanStack Query hooks: profile data read, password mutation |
 
-### Phase 5: InstallmentScheduler (WP-Cron)
+### MODIFIED React files
 
-**Depends on:** Phase 4 (PaymentPlanManager).
+| File | What Changes |
+|------|-------------|
+| `src/router.jsx` | Add `{ path: 'profile', element: <Profile /> }` under ProtectedLayout |
+| `src/lazyPages.js` | Export `Profile` as lazy component |
+| `src/api/client.js` | Add `prmApi.updatePassword()`, `prmApi.getFunctieCapabilityMap()`, `prmApi.updateFunctieCapabilityMap()`, `prmApi.syncUserCapabilities()` |
+| `src/components/layout/Layout.jsx` | Add profile link to bottom user area in sidebar (next to logout) |
 
-- Create `includes/class-installment-scheduler.php`
-- Register `rondo_send_due_installments` WP-Cron hook (daily, runs at midnight)
-- Logic: query invoices with `_has_payment_plan = '1'`; for each, check installment statuses
-- Send due installments via `MolliePayment` + `InvoiceEmailSender`
-- Modify `InvoiceEmailSender::send()` to handle installment template variables
-- Test: manually trigger hook, verify installment 2 email sent on schedule
+### NEW rondo-sync step
 
-### Phase 6: RestInvoices Extension for Payment Plans
-
-**Depends on:** Phases 4+5 (PaymentPlanManager, InstallmentScheduler).
-
-- Modify `RestInvoices::send_invoice()`: after status → rondo_sent, check `_has_payment_plan`; call `PaymentPlanManager::create_installments()` and send installment 1
-- Modify `RestInvoices::format_invoice_detail()`: include installment array in response
-- Add `RestInvoiceInstallments` controller (GET installments, POST mark-paid manually)
-- Test: send a membership invoice with payment plan; verify installments created and installment 1 sent
-
-### Phase 7: Bulk Invoice Creation
-
-**Depends on:** Phase 6 (RestInvoices create logic handles membership type).
-
-- Create `includes/class-membership-invoice-bulk-creator.php`
-- Create `includes/class-rest-membership-invoices.php` (bulk create + status endpoints)
-- WP-Cron batch logic: 50 members per execution, transient progress tracking
-- Frontend: `MembershipInvoices.jsx` or new tab in Contributie page with progress display
-- Test: trigger bulk create for current season, verify invoices created, no timeouts
-
-### Phase 8: Frontend Updates (Facturen + Contributie)
-
-**Depends on:** Phase 6+7 (REST API returns invoice_type, installment data).
-
-- `Facturen.jsx`: add invoice_type filter (show all / discipline / membership)
-- `FactuurDetail.jsx`: render installment timeline when `has_payment_plan: true`
-- `ContributieList.jsx`: add "Factureer" bulk action button to send to bulk create flow
-
----
+| File | Purpose |
+|------|---------|
+| `steps/submit-capabilities-to-rondo-club.js` | Reads SQLite `sportlink_member_functions`, POSTs to `/rondo/v1/users/provision` for each member with email |
 
 ## Integration Points
 
-### What Remains Unchanged
+### External Services
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| `rondo_invoice` CPT registration | Unchanged | New ACF fields are additive |
-| `RestInvoices` discipline flow | Unchanged | `invoice_type: 'discipline'` path is untouched |
-| `MollieWebhook` existing path | Unchanged | Falls through to existing discipline lookup if not installment |
-| `InvoicePdfGenerator` | Unchanged | PDF generation is provider-agnostic |
-| `RabobankPayment` | Unchanged | Only Mollie supports installments; Rabobank users skip payment plan feature |
-| `FinanceConfig` credential encryption | Unchanged | |
-| `MembershipFees` fee calculation | Unchanged | `get_fee_for_person_cached()` is consumed by bulk creator |
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Sportlink (via rondo-sync) | Existing Basic Auth REST + new provision step | rondo-sync adds new step after the existing sync, reading already-downloaded Functies from SQLite |
+| Lettermint (via WordPress `wp_mail()`) | Existing email delivery plugin | Welcome email uses same pattern as VOG emails and installment emails — `wp_mail()` with HTML content |
+| Gravatar | `get_avatar_url()` WordPress function | Already used in existing `get_current_user()` endpoint. Fallback when no linked person photo exists |
 
-### New REST Endpoints
+### Internal Boundaries
 
-| Endpoint | Method | Auth | Purpose |
-|----------|--------|------|---------|
-| `/rondo/v1/membership-invoices/bulk-create` | POST | `financieel` | Start batch invoice creation |
-| `/rondo/v1/membership-invoices/bulk-status/{job_id}` | GET | `financieel` | Poll batch progress |
-| `/rondo/v1/invoices/{id}/installments` | GET | `financieel` | List installments for invoice |
-| `/rondo/v1/invoices/{id}/installments/{n}/send` | POST | `financieel` | Manually send installment n |
-| `/rondo/v1/invoices/{id}/installments/{n}/mark-paid` | POST | `financieel` | Manually mark installment paid |
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `class-rest-api.php` ↔ `class-user-provisioning.php` | Direct instantiation inside callback | `Api::provision_user()` instantiates `UserProvisioning` and calls `provision()` |
+| `class-user-provisioning.php` ↔ `class-functie-capability-map.php` | Direct instantiation | Provisioner creates map instance to resolve the correct role |
+| `class-user-provisioning.php` ↔ `class-user-roles.php` | `UserRoles::ROLES` constant | Read to validate that the resolved role slug is one of the 4 Rondo roles |
+| `class-user-roles.php` ↔ WordPress DB | `add_role()`, `wp_update_user()` | No change to role infrastructure — purely additive |
+| React Profile ↔ PHP REST | `POST /rondo/v1/user/password` via axios with nonce | Follows existing auth pattern |
+| rondo-sync ↔ Rondo Club API | Basic Auth via Application Password | New step uses existing `rondoClubRequest()` from `lib/rondo-club-client.js` |
 
-### External Service Changes
+## Data Storage
 
-| Service | Change |
-|---------|--------|
-| Mollie API | New payment calls per installment (each installment = separate Mollie payment with its own `tr_xxx` ID) |
-| Mollie Webhook | Receives webhook for installment payments — webhook URL unchanged, logic extended |
+### New user meta keys
 
-### Frontend Route Changes
+| Key | Type | Set By | Read By |
+|-----|------|--------|---------|
+| `rondo_knvb_id` | string | `UserProvisioning::provision()` | FunctieCapabilityMap sync endpoint; profile display |
+| `rondo_functies` | JSON string | `UserProvisioning::provision()` on create + sync | Profile display; `sync-capabilities` endpoint |
 
-| Route | Change |
-|-------|--------|
-| `/betaling/{token}` | New — PHP-rendered public page, not React |
-| `/financien/facturen` | New filter by `invoice_type` |
-| `/financien/contributie/per-lid` | New "Factureer" action |
+### New WordPress options
 
----
+| Key | Type | Default | Set By |
+|-----|------|---------|--------|
+| `rondo_functie_capability_map` | JSON object | `{}` | Admin via `POST /rondo/v1/functie-capability-map` |
+| `rondo_functie_auto_provision` | bool | `false` | Admin config — whether to auto-create users during sync |
 
-## Anti-Patterns to Avoid
+### Existing data re-used (no schema changes needed)
 
-### Anti-Pattern 1: Creating a Separate CPT for Membership Invoices
+- `rondo_linked_person_id` user meta — already exists; provisioning sets it automatically during user creation
+- Person post thumbnail — `get_the_post_thumbnail_url()` already called in linked-person endpoint; re-used in profile/me response
+- `UserRoles::ROLES` constant — defines the 4 valid roles; no new roles needed
 
-**What goes wrong:** Developer creates `rondo_membership_invoice` CPT alongside `rondo_invoice`.
+## Build Order (Phase Dependencies)
 
-**Why:** Duplicates PDF generation, email sending, Mollie payment integration, ACF field groups, and REST infrastructure. The two CPTs diverge over time. Existing invoice list page can't show unified view.
+The features have clear dependency chains:
 
-**Do instead:** Discriminate with `_invoice_type` post meta on the existing `rondo_invoice` CPT. Conditional logic is limited to the `RestInvoices` and `MollieWebhook` — both already have provider branching as a precedent.
+```
+Phase 1: WP Admin Blocking
+    → No dependencies
+    → Simple: add_action('admin_init', ...) in functions.php
+    → Must ship first to prevent non-admins accessing wp-admin
+      once we start creating WP user accounts at scale
 
-### Anti-Pattern 2: Creating Installments in a Separate ACF Repeater
+Phase 2: Functie-to-capability config
+    → Depends on Phase 1 (admin must be able to reach wp-admin to test)
+    → New FunctieCapabilityMap class + REST endpoints
+    → Admin configures mapping before provisioning uses it
+    → Can include Settings UI tab or standalone admin-only page
 
-**What goes wrong:** Developer adds an ACF repeater field `payment_plan_installments` to the invoice field group.
+Phase 3: User Provisioning REST endpoint + rondo-sync step
+    → Depends on Phase 2 (provisioner reads capability map)
+    → New UserProvisioning class + POST /rondo/v1/users/provision
+    → New submit-capabilities-to-rondo-club.js rondo-sync step
+    → Welcome email
 
-**Why:** ACF repeater rows generate `field_N` suffixed keys in wp_postmeta. Querying "which invoices have an overdue installment" via WP_Query meta_query is impossible without knowing which row index corresponds to which installment. The cron scheduler would need to load every invoice and iterate ACF repeater data — slow and fragile.
+Phase 4: In-app Profile page + password change
+    → Technically independent of Phase 3 (profile reads /user/me which exists today)
+    → But expand /user/me to include linked_person_thumbnail and functies in Phase 3
+    → Password change endpoint is fully independent of provisioning
+    → Can be built in parallel with Phase 3 or after
 
-**Do instead:** Flat numbered post meta (`_installment_1_status`, `_installment_2_status`). These are directly queryable, easily deleted with the parent post, and have no ACF SDK dependency at query time.
+Phase 5: Avatar + sidebar profile link
+    → Depends on Phase 4 UI + Phase 3 data (/user/me expansion)
+    → Reads linked_person_thumbnail from expanded /user/me
+    → Adds profile link to Layout.jsx sidebar bottom area
+```
 
-### Anti-Pattern 3: Generating All 500 Invoices in One HTTP Request
+## Anti-Patterns
 
-**What goes wrong:** `RestMembershipInvoices::bulk_create()` loops over all members and creates invoices inline.
+### Anti-Pattern 1: Using wp/v2/users for password changes
 
-**Why:** PHP execution timeout (30s) kills the request after ~50-100 invoices. The client never gets a response. Partial creation with no way to resume is worse than no creation.
+**What people do:** Call `PUT /wp/v2/users/{id}` with `{ password: "..." }` from the React profile page.
+**Why it's wrong:** Requires `edit_users` capability. The `rondo_user` role does not have `edit_users`. Returns 403 for all non-admin users.
+**Do this instead:** Custom `POST /rondo/v1/user/password` endpoint with `is_user_logged_in` permission, verifies current password via `wp_check_password()`, then calls `wp_set_password()`.
 
-**Do instead:** Return immediately with a `job_id`. Use `wp_schedule_single_event()` to run the batch in WP-Cron. Process 50 members per cron execution. Frontend polls status.
+### Anti-Pattern 2: Storing Functie→capability mapping in ACF fields
 
-### Anti-Pattern 4: Serving the Public Landing Page via React
+**What people do:** Create an ACF field group for the mapping configuration.
+**Why it's wrong:** ACF is for per-post data, not site-wide configuration. The existing pattern for site-wide settings is the WordPress Options API — see `ClubConfig` and `FinanceConfig`. Using ACF here breaks the established convention and adds unnecessary complexity.
+**Do this instead:** WordPress Options API with a JSON value, accessed via a `FunctieCapabilityMap` class that mirrors the `ClubConfig` pattern.
 
-**What goes wrong:** Developer adds a `/betaling/:token` route to the React SPA and marks it public with `ProtectedRoute` skipped.
+### Anti-Pattern 3: Creating new WP roles for each possible Functie
 
-**Why:** The React SPA requires `wpApiSettings` injected via `wp_localize_script`, which requires WordPress to bootstrap. Members accessing the landing page from an email link are not WP-authenticated — the nonce won't be present. WordPress will still partially bootstrap (for script injection), revealing internal WP URLs and schema. Public pages must be pure PHP renders.
+**What people do:** Map "Bestuurslid" → new WP role "rondo_bestuurslid", "Penningmeester" → "rondo_penningmeester", etc.
+**Why it's wrong:** The 4 existing Rondo roles (`rondo_user`, `rondo_fairplay`, `rondo_vog`, `rondo_bestuur`) map precisely to the 3 capability gates in the React app (`fairplay`, `vog`, `financieel`). Adding more roles breaks this clean mapping and creates role management chaos. WordPress stores roles globally — too many causes confusion.
+**Do this instead:** Map many Functies to one of the 4 existing Rondo roles. "Bestuurslid", "Penningmeester", "Voorzitter" all map to `rondo_bestuur`. The mapping is N Functies → 1 of 4 Rondo roles.
 
-**Do instead:** Intercept the path in `template_redirect` (priority 0, before the SPA redirect), render a standalone PHP HTML page with no WP admin scripts, exit.
+### Anti-Pattern 4: Blocking wp-admin by removing capabilities from rondo_user
 
-### Anti-Pattern 5: Using the Parent Invoice's Mollie Payment ID for Installment Lookups
+**What people do:** Remove `read` or other capabilities from `rondo_user` role to prevent admin access.
+**Why it's wrong:** The Rondo React SPA depends on REST API access, which requires authenticated WordPress sessions. The `read` capability is required for WordPress REST auth to work. Removing capabilities breaks REST for non-admin users.
+**Do this instead:** Keep all capabilities intact. Block only the HTTP request to `/wp-admin/` via `admin_init` hook with a redirect. REST API requests are unaffected because `is_admin()` is false during REST execution.
 
-**What goes wrong:** Developer reuses `_mollie_payment_id` for installment payments, overwriting it on each installment.
+### Anti-Pattern 5: Auto-provisioning every synced member as a WP user
 
-**Why:** The first installment overwrites the full-invoice payment ID. Mollie webhook for the first installment can't be matched. Idempotency in `MolliePayment::create_payment_link()` (which checks `_mollie_payment_id`) creates the wrong payment on re-run.
+**What people do:** Create a WP user for every person record during Sportlink sync.
+**Why it's wrong:** Most members don't need Rondo Club access — it's an internal management tool, not a member portal. Hundreds of unnecessary user records, password reset emails flooding inboxes, and confusion about who has access.
+**Do this instead:** Only provision users who have a Sportlink Functie that the admin has explicitly mapped to a Rondo role. Gate auto-provisioning behind `rondo_functie_auto_provision` option (default: `false`). The admin decides which Functies imply app access.
 
-**Do instead:** Use separate meta keys per installment (`_installment_1_mollie_payment_id`). Use the reverse-lookup pattern (`_mollie_pid_{payment_id}`) for webhook matching. Leave `_mollie_payment_id` as the full-invoice payment reference.
+### Anti-Pattern 6: Setting user password during provisioning
 
----
-
-## Scalability Considerations
-
-Single club, ~500 members. Scale is not a primary driver. The only genuine scaling concern is the bulk creation flow: 500 WP_Query calls + 500 `wp_insert_post()` calls + 500 `update_field()` calls in sequence. The WP-Cron batch approach with 50-per-run limits handles this.
-
-The installment scheduler (daily cron) queries all `rondo_invoice` posts with `_has_payment_plan = '1'`. At 500 members, this is one WP_Query returning at most 500 posts, each with a small fixed number of meta reads. Well within acceptable limits.
-
----
+**What people do:** Generate a temporary password and set it on the WP user during provisioning, then email it.
+**Why it's wrong:** Email is not a secure channel. Temporary passwords need to be force-changed. WordPress has a built-in password reset flow that is more secure.
+**Do this instead:** Use WordPress's native `wp_new_user_notification()` or `wp_send_new_user_notifications()` which sends a set-password link (not the password itself). Or generate a password reset key via `get_password_reset_key()` and include the reset URL in the welcome email. The user sets their own password on first login.
 
 ## Sources
 
-- Existing codebase (direct inspection, HIGH confidence):
-  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-invoices.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-mollie-webhook.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-mollie-payment.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-membership-fees.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-finance-config.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-reminders.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/acf-json/group_invoice_fields.json`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/functions.php`
-  - `/Users/joostdevalk/Code/rondo/rondo-club/src/router.jsx`
-- WordPress meta_query documentation — `LIKE` wildcard in meta_key is not supported by WP_Query; workaround is direct `$wpdb` query or reverse-lookup meta pattern. HIGH confidence (established limitation).
-- WordPress `wp_schedule_single_event()` for one-time cron batching — HIGH confidence (core API).
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-user-roles.php` — roles, capabilities, ROLES constant (HIGH confidence, direct read)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-rest-api.php` lines 351-410, 2570-2610, 1734-1820 — existing user endpoints, linked person pattern (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-access-control.php` — permission model (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-finance-config.php` — Options API pattern to follow (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/includes/class-club-config.php` — simpler Options API pattern (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/functions.php` lines 286-395, 610-655 — class loading, rondoConfig globals (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/hooks/useCurrentUser.js` — hook structure (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/router.jsx` — ProtectedRoute, CapabilityRoute patterns (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-club/src/components/layout/Layout.jsx` — sidebar capability filtering (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-sync/steps/download-functions-from-sportlink.js` — Functies data structure and SQLite schema (HIGH confidence)
+- `/Users/joostdevalk/Code/rondo/rondo-sync/lib/rondo-club-client.js` — REST client pattern for new step (HIGH confidence)
+- WordPress `admin_init` redirect pattern — standard WordPress approach for non-admin access control (MEDIUM confidence, training data + consistent with existing codebase usage)
 
 ---
-
-*Architecture research for: Membership fee invoicing with payment plans — Rondo Club*
-*Researched: 2026-02-18*
+*Architecture research for: User Accounts & Profiles — Rondo Club*
+*Researched: 2026-02-20*

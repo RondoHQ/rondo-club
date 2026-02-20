@@ -1,198 +1,192 @@
-# Project Research Summary
+# Research Summary
 
-**Project:** Membership Fee Invoicing with Payment Plans
-**Domain:** WordPress invoice system extension — installment billing, public payment landing pages, scheduled reminders
-**Researched:** 2026-02-18
+**Project:** Rondo Club — v30.0 User Accounts & Profiles
+**Domain:** User provisioning, Functie-based capability mapping, in-app profile management, WP admin blocking
+**Researched:** 2026-02-20
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone extends Rondo Club's existing discipline case invoice system to support membership fee invoicing with installment payment plans. The existing stack (WordPress, PHP 8.0+, React 18, Mollie SDK v3.9, mPDF, WP-Cron) requires no new dependencies — all needed capabilities are already installed and verified in vendor. The core challenge is a set of fundamentally new concepts layered onto the existing `rondo_invoice` CPT: payment plans with per-installment tracking, bulk creation across 500 members, the first unauthenticated public-facing page in the app, and a scheduled monthly reminder system. Research across 5 Dutch football clubs confirms that three fixed payment plans (full, 3-term, 8-term) cover the full range of Dutch club billing norms, and that a token-secured member self-service page replaces the ClubCollect workflow clubs currently use.
+The User Accounts & Profiles milestone adds the missing layer between the Sportlink member data (already synced to Rondo Club via rondo-sync) and WordPress user accounts. Today, Rondo Club stores all member data in the `person` CPT and team/committee relationships in related post types — but no automated path exists to turn a Sportlink member into a logged-in Rondo user with the right capabilities. This milestone closes that gap by building a provisioning flow (admin-triggered or rondo-sync-triggered), a Functie-to-role mapping config, and an in-app profile page for password management.
 
-The recommended approach follows established patterns from the existing codebase throughout: rewrite rules plus `template_redirect` for the public page (same pattern as the iCal feed), `bin2hex(random_bytes(32))` 64-char hex tokens (same as iCal), a single daily WP-Cron sweeper (same as Reminders class), and flat numbered post meta for installment storage (avoids ACF repeater query limitations). The key architectural decision is discriminating invoice types via `_invoice_type` post meta on the existing `rondo_invoice` CPT rather than creating a separate CPT, which avoids duplicating the entire invoice, PDF, email, and Mollie infrastructure. Installments are stored as flat post meta keys (`_installment_1_status`, `_installment_2_due_date`, etc.) with a reverse-lookup key (`_mollie_pid_{payment_id} = installment_number`) that enables O(1) webhook payment matching without WP_Query wildcard limitations.
+The recommended approach reuses every existing mechanism in the stack. No new npm packages or Composer dependencies are needed. User creation uses WordPress core `wp_create_user()`. Email uses the existing `wp_mail()` + Lettermint pattern established by `VogEmail`, `InvoiceEmailSender`, and `InstallmentEmailSender`. Capability mapping is stored in the Options API (same pattern as `ClubConfig` and `FinanceConfig`). The rondo-sync pipeline already downloads Sportlink Functies to SQLite — a new step at the end of that pipeline submits them to Rondo Club's REST API. The React profile page uses `react-hook-form` (already installed) and TanStack Query. The entire milestone is pure logic work inside existing patterns.
 
-The primary risk is a cluster of interconnected pitfalls around the Mollie webhook: the existing 1:1 invoice-to-payment assumption breaks the moment installment payments arrive, and a naive implementation silently marks invoices paid after the first installment. This must be resolved at the data model phase using the reverse-lookup meta pattern before any installment or webhook code is written. A secondary risk cluster involves bulk operations: WP-Cron unreliability for scheduled emails, HTTP timeout on 500-invoice synchronous requests, and SMTP rate limits on SiteGround shared hosting. All are mitigated by batching (50 invoices per cron execution, 50 emails per batch) and a single daily cron sweeper rather than per-invoice scheduled events.
+The key risks are all operational, not architectural. The most critical: the `admin_init` admin-blocking hook must exempt `admin-ajax.php` (via `wp_doing_ajax()`) or it silently breaks all AJAX-dependent plugins and features for non-admin users. The capability sync must use `add_cap()`/`remove_cap()` (not `set_role()`) to avoid overwriting manually-granted capabilities and must include a full revocation pass to strip capabilities from former board members — not just a grant pass. The welcome email must use the `EmailChannel` Lettermint from-address pattern and implement a `_welcome_email_sent` flag to prevent duplicate sends on re-sync runs.
+
+---
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new dependencies are required. The Mollie SDK v3.9 already installed includes `CreateCustomerRequest`, `CreateCustomerPaymentRequest`, and `CreateSubscriptionRequest` (all verified by reading source files in `vendor/mollie/mollie-api-php/src/Http/Requests/`). WordPress core functions cover all other needs: rewrite rules for public pages, `wp_schedule_single_event` for cron, and post meta for installment storage.
-
-Important: Mollie Subscriptions (fully automatic recurring charges via SEPA Direct Debit) are available in the SDK but require SEPA Direct Debit activated on the Mollie account — a business prerequisite. The recommended primary flow is manual payment links per installment (separate Mollie payment per installment, sent by email on the 25th), which requires no mandate setup and keeps members in control of each payment. This matches what Dutch clubs using ClubCollect actually do.
+No new dependencies are needed. Every required capability exists in the current stack: WordPress core for user management (`wp_create_user`, `wp_set_password`, `wp_generate_password`, `add_cap`, `remove_cap`), ACF Pro for person data access, `wp_mail()` + Lettermint for email delivery, `react-hook-form` + TanStack Query for the profile form, and the existing `rondoClubRequest()` REST client in rondo-sync for the new capability-sync step. This is the lowest-risk stack profile possible: zero new surface area outside existing patterns.
 
 **Core technologies (all existing):**
-- `mollie/mollie-api-php ^3.9` — per-installment Mollie payment link creation — verified in vendor
-- WordPress Rewrite API + `template_redirect` — public landing page — identical pattern to existing iCal feed
-- `bin2hex(random_bytes(32))` — 64-char secure token generation — identical pattern to existing iCal tokens
-- `wp_schedule_single_event()` — installment reminder cron — identical pattern to existing Reminders and FeeCacheInvalidator
-- Flat numbered post meta — installment storage — directly queryable, cascade-deletes with parent invoice, no ACF overhead
+- WordPress core user API: user creation, role and capability management — stable since WP 2.0, used throughout the codebase
+- `wp_mail()` + Lettermint: welcome email delivery — same pattern as `VogEmail` and `InvoiceEmailSender`
+- WordPress Options API: Functie→role mapping config — same pattern as `ClubConfig` and `FinanceConfig`
+- `react-hook-form` (already installed): profile page password change form — no new install needed
+- rondo-sync SQLite + `rondoClubRequest()`: capability sync step — new step appended to existing `sync-functions.js` pipeline
+- TanStack Query 5: profile data fetching — same pattern as existing notification-channels and dashboard-settings hooks
 
 ### Expected Features
 
-Research across 5 Dutch football clubs (HZVV, AMVJ, Be Quick '28, SV Orion, DFS) confirms these as standard expectations. The feature dependency chain is strict: invoice type field must exist before bulk creation; bulk creation must exist before the token landing page; the token landing page must exist before plan selection; plan selection must exist before installment scheduling.
-
 **Must have (table stakes):**
-- Per-season billing method toggle (Nikki vs Rondo) — prevents retroactive billing conflicts when transitioning mid-contract
-- `invoice_type` field on `rondo_invoice` CPT + backfill of existing invoices as `discipline`
-- Bulk concept invoice creation from fee calculations — idempotent, async via WP-Cron batch, returns job ID
-- Public token-secured landing page at `/betaling/{token}` — mobile-first, no WP login, serves PHP template
-- Three fixed payment plans: Volledig (1x in Sep), 3 Termijnen (Sep 50% / Nov 25% / Feb 25%), 8 Termijnen (Sep + monthly Oct–Apr on 25th)
-- Per-installment administration fee — configurable in Finance Settings, shown on landing page before member confirms
-- Automatic installment emails on the 25th via daily cron sweeper + individual Mollie payment link per installment
-- Overdue reminders: 14-day resend, 21-day resend with BCC to treasurer
-- Facturen page filters: invoice type, payment plan type, overdue installments
+- Create WP user from person record — admin needs a one-click path; `wp-admin > Users` is unfamiliar to non-technical admins and bypasses the Rondo workflow
+- Welcome email with password-set link (not plaintext password) — uses `get_password_reset_key()`, 7-day expiry for initial activation links
+- Functie-to-role mapping config — admin configures "Penningmeester = rondo_bestuur" once; system enforces automatically from then on
+- Auto-assign role from Sportlink Functies on sync — rondo-sync step reads SQLite Functies, posts to Rondo Club REST; must be a full reconciliation (grant + revoke)
+- Manual capability override per user — `_cap_source_{cap}` user meta flag distinguishes functies-driven from manual; auto-sync must respect manual overrides
+- Block wp-admin for non-admin users — `admin_init` hook with `wp_doing_ajax()` + `WP_CLI` + `DOING_CRON` exemptions; redirects to `home_url()`
+- In-app password change — new Profile tab in Settings; `POST /rondo/v1/user/password`; requires current password verification; redirects to login on success
 
 **Should have (differentiators):**
-- Member self-selects payment plan on token page — no back-and-forth with treasurer; replaces ClubCollect
-- Mollie webhook auto-marks individual installments paid — real-time treasurer visibility without manual reconciliation
-- Treasurer BCC on second overdue reminder — passive visibility without active monitoring
+- Functie-to-role matrix UI in Settings — checkbox matrix showing Functies as rows, roles as columns; saves to Options API
+- Bidirectional user-person link on provisioning — person stores `_wp_user_id`, WP user stores `rondo_linked_person_id`; enables avatar and attendee self-exclusion features with zero additional code
+- Known-functies list written by rondo-sync to `rondo_known_functies` WP option — populates the mapping UI without admin typing Functie names manually
+- Admin-triggered "sync all capabilities" endpoint — `POST /rondo/v1/users/sync-capabilities`; re-applies roles from stored Functies + current map config
 
-**Defer (v2+):**
-- Treasurer cash flow projection dashboard — useful once plan selection data exists in production
-- Batch-send rate limiting queue system — manual resend is acceptable for MVP
-- Nikki reconciliation import — Rondo billing replaces Nikki; import is low priority
+**Defer to post-launch:**
+- Paginated user list in Settings > Gebruikers — useful for admin oversight but not required for provisioning to work
+- rondo-sync auto-provisioning flag (`--provision`) — gate on explicit opt-in to avoid accidental mass user creation; implement after core provisioning is validated
 
-**Anti-features (explicitly excluded from this milestone):**
-- Mollie Recurring Subscriptions as primary flow — SEPA activation required; unfamiliar member UX for mandate; keep as opt-in variant only
-- Configurable installment schedules — Dutch club norms are standardized; generic configuration multiplies complexity for no benefit
-- Member portal / login for payment history — token page is sufficient; members are not tech-savvy (stated project constraint)
-- Automatic KNVB player registration blocking — Rondo has no Sportlink integration; enforcement is symbolic
+**Anti-features (do not build):**
+- Self-registration / public signup — Sportlink is the source of truth for membership; no approval flow or GDPR consent collection in scope
+- Email username-based login — members use a set-password link, not `wp-login.php` directly; WordPress username is internal
+- Role hierarchy (`rondo_bestuur` inheriting from `rondo_fairplay`) — the 4 existing roles plus per-user `add_cap()` covers all cases; role hierarchies add complexity with no benefit
+- Bulk user creation from CSV — bypasses Sportlink-to-person sync chain; breaks the knvb-id link needed for auto-sync to work
 
 ### Architecture Approach
 
-The system extends five existing components (RestInvoices, MollieWebhook, MolliePayment, InvoiceEmailSender, FinanceConfig) and adds six new components (PaymentPlanManager, InstallmentScheduler, MembershipInvoiceBulkCreator, RestMembershipInvoices, RestInvoiceInstallments, PaymentLandingPage). Installments are stored as flat numbered post meta on the parent invoice — not a separate CPT and not an ACF repeater. This enables direct meta queries by the scheduler while preserving cascade deletion behavior. The public landing page is PHP-rendered, not React, because the React SPA requires `wpApiSettings` (WP nonce) injected by WordPress, which is not present for unauthenticated users.
+The architecture adds two new PHP classes (`UserProvisioning`, `FunctieCapabilityMap`), modifies three existing ones (`class-rest-api.php`, `class-user-roles.php`, `functions.php`), adds one new React page (`Profile/index.jsx`) with its companion hook, and appends one new step to the rondo-sync `sync-functions.js` pipeline. All data is stored in WordPress native tables: user accounts in `wp_users`, capability config in `wp_options`, and user-to-person/knvb-id links in `wp_usermeta`. No schema changes required.
 
 **Major components:**
-1. `PaymentLandingPage` — Public PHP template served at `/betaling/{token}` via `template_redirect` priority 0, intercepting before the SPA catch-all at priority 1
-2. `PaymentPlanManager` — Creates, reads, and transitions installment post meta; provides `all_installments_paid()` for webhook use
-3. `InstallmentScheduler` — Daily WP-Cron sweeper that queries invoices with `_has_payment_plan = '1'`, sends due installments, escalates overdue, BCCs treasurer on second reminder
-4. `MembershipInvoiceBulkCreator` — Processes 50 members per cron execution from WP transient queue, tracks progress, enables frontend polling
-5. `MollieWebhook` (modified) — Extended with reverse-lookup pattern: when creating each installment payment, stores `_mollie_pid_{payment_id} = installment_number` on invoice; webhook looks up this key directly; only transitions invoice to `rondo_paid` when all installments are paid
-6. `RestMembershipInvoices` — Bulk create endpoint (returns job ID immediately) + status polling endpoint
+1. `class-user-provisioning.php` — creates WP user from person record, links to person, resolves role via FunctieCapabilityMap, sends welcome email; loaded on REST requests only
+2. `class-functie-capability-map.php` — stores and resolves the admin-configured Functie→role mapping (`rondo_functie_capability_map` WP option); highest-privilege-wins resolution when multiple Functies map to different roles
+3. `POST /rondo/v1/users/provision` (in `class-rest-api.php`) — thin wrapper calling `UserProvisioning::provision()`; requires `manage_options`; idempotent (skips user creation if user already exists, still syncs capabilities)
+4. `submit-capabilities-to-rondo-club.js` (rondo-sync) — new step appended to `sync-functions.js`; reads SQLite member_functions, fetches capability map from Rondo Club REST, POSTs provision for each member with email
+5. `Profile/index.jsx` — in-app profile page at `/profile` route; reads from expanded `GET /rondo/v1/user/me`; password change form calls `POST /rondo/v1/user/password`
+6. `admin_init` hook in `functions.php` — non-admin redirect with `wp_doing_ajax()`, `WP_CLI`, and `DOING_CRON` exemptions
 
 ### Critical Pitfalls
 
-1. **Webhook lookup breaks on multi-payment invoices** — The existing webhook finds invoices by `_mollie_payment_id` (singular). This fails for installments 2+. Use the reverse-lookup pattern: when creating each installment payment, store `_mollie_pid_{payment_id} = installment_number` on the invoice. Webhook looks up this key directly. Address in data model phase before writing any installment or webhook code.
+1. **admin_init block catches admin-ajax.php and breaks SPA/plugin AJAX** — always call `wp_doing_ajax()` before the redirect; also exempt `WP_CLI` and `DOING_CRON`; test immediately after implementing with a non-admin user: verify AJAX and REST both still work
+2. **Capability sync overwrites manually-granted capabilities** — never call `set_role()` on administrator users (check `in_array('administrator', $user->roles)` first); use `add_cap()`/`remove_cap()` for functies-driven capabilities; track capability source in `_cap_source_{cap}` user meta so manual overrides survive re-sync
+3. **Capability sync is append-only — former board members retain elevated access** — sync must be a full reconciliation: grant caps to current functie holders AND revoke from former holders; write tests proving revocation before shipping
+4. **Duplicate welcome emails on re-sync** — set `_welcome_email_sent` user meta flag after sending; check before sending; suppress WordPress default `wp_new_user_notification_to_user`; use KNVB ID (not email) as primary user lookup key so email changes do not create duplicate accounts
+5. **Lettermint from-address mismatch causes welcome emails to fail or land in spam** — all `wp_mail()` calls must use the `add_filter('wp_mail_from', ...) / remove_filter` pattern from `EmailChannel`; verify correct from-address in Lettermint dashboard during Phase 3 testing before sending to real members
 
-2. **Webhook marks entire invoice paid after first installment** — The existing binary transition (sent → paid) fires on any confirmed payment. For installment plans, only transition to `rondo_paid` when `PaymentPlanManager::all_installments_paid()` returns true. If some installments remain, keep the invoice in `rondo_sent`. Address in the same webhook extension phase as pitfall 1.
-
-3. **Public landing page intercepted by SPA catch-all** — `rondo_theme_template_redirect()` serves `index.php` for all 404s, including `/betaling/TOKEN`. The member clicks the email link and sees the Rondo login screen. Register `PaymentLandingPage` at `template_redirect` priority 0, before the SPA at priority 1. Test in incognito browser immediately after creating the route.
-
-4. **Bulk creation HTTP timeout at 500 members** — Each `wp_insert_post()` triggers multiple hooks (AutoTitle, FeeCacheInvalidator, Google Contacts export). 500 in a single request exhausts the 30-60s PHP limit. Return job ID immediately; process in batches of 50 via `wp_schedule_single_event`.
-
-5. **WP-Cron installment reminders never fire** — WP-Cron is visitor-triggered and SiteGround caching can serve pages without loading WordPress. Set up a real server cron via SiteGround's cron panel before the first installment reminder is due. Use a single daily sweeper hook, not per-invoice scheduled events (which bloat wp_options and slow page loads).
+---
 
 ## Implications for Roadmap
 
-The dependency chain is strict. Each phase must be deployable and testable independently. Phase order follows the dependency graph from FEATURES.md and the build order defined in ARCHITECTURE.md.
+The features have clear dependency chains that dictate build order. Each phase is independently deployable and testable before the next phase depends on it.
 
-### Phase 1: Data Model Foundation
+### Phase 1: WP Admin Blocking
 
-**Rationale:** Everything else depends on the ability to distinguish membership from discipline invoices and on having a defined installment payment ID storage strategy. The webhook lookup pattern (reverse-lookup meta) must be decided before any installment payment IDs are stored. Invoice number race condition must be fixed before bulk creation runs.
-**Delivers:** `invoice_type` ACF field added to `rondo_invoice` (select: discipline/membership, default: discipline), backfill migration for existing discipline invoices, defined installment post meta schema, option-based atomic invoice number counter replacing scan-and-increment
-**Addresses:** invoice type filter (FEATURES.md), invoice email template type-awareness
-**Avoids:** Invoice number race condition under bulk creation (PITFALL #7), wrong email template for membership invoices (PITFALL #11), webhook lookup strategy not decided before code written (PITFALL #1)
+**Rationale:** Zero dependencies on other phases. A simple single-hook change in `functions.php`. Must ship first so that once user accounts are created at scale, non-admins can never accidentally reach wp-admin. Delivers real security value immediately and prevents the most embarrassing possible outcome.
+**Delivers:** `admin_init` hook with `wp_doing_ajax()`, `WP_CLI`, `DOING_CRON` exemptions; redirect non-admins to `home_url()`
+**Addresses:** Block wp-admin access (table stakes)
+**Avoids:** The admin-ajax.php break pitfall — test immediately with a non-admin user in browser devtools; verify AJAX and REST both work after implementing
 
-### Phase 2: Public Payment Landing Page
+### Phase 2: Functie-to-Role Mapping Config
 
-**Rationale:** Lowest-risk new feature (read-only, no mutations). Must be proven in production before any invoice email includes the link. If the landing page fails, all downstream member UX breaks. Builds the public page infrastructure that installment emails will link to.
-**Delivers:** `PaymentLandingPage` class, token generation (`bin2hex(random_bytes(32))`) on invoice send for membership invoices, `/betaling/{token}` rewrite rule, PHP template (mobile-first, no React, no WP auth), 404 and "already paid" states, template_redirect priority 0 registration
-**Addresses:** Public token-secured landing page (FEATURES.md table stakes)
-**Avoids:** SPA catch-all intercept (PITFALL #3), token brute force (PITFALL #4 — 64-char hex from day 1), public page performance (PITFALL #9 — use `get_post_meta()` not `get_field()`)
+**Rationale:** Provisioning (Phase 3) reads the mapping config to assign the correct role on user creation. The mapping must exist before provisioning runs, or all provisioned users get `rondo_user` regardless of their Sportlink position. Admin must be able to configure this before the first sync runs.
+**Delivers:** `FunctieCapabilityMap` class; `rondo_functie_capability_map` WordPress option; `GET/POST /rondo/v1/functie-capability-map` REST endpoints (admin-only); Settings admin UI — Functie-to-role matrix with checkboxes
+**Uses:** WordPress Options API (same pattern as ClubConfig), existing Settings > Admin tab structure
+**Implements:** Architecture component: `class-functie-capability-map.php`
 
-### Phase 3: Payment Plan Manager + Webhook Extension
+### Phase 3: User Provisioning
 
-**Rationale:** Core business logic of installment tracking and fixed plan schedules. Must be built before the scheduler (which reads installment state) and before the bulk creation UI (which creates invoices with payment plan flags). Webhook extension must happen in the same phase as plan manager — both depend on the same reverse-lookup meta pattern.
-**Delivers:** `PaymentPlanManager` class, three fixed plan schedules with Dutch-standard dates (Sep/Nov/Feb and Sep–Apr 25th), installment state machine (pending → sent → paid | overdue | cancelled), extended `MollieWebhook` with reverse-lookup pattern, correct all-installments-paid invoice transition, "cancel remaining installments" action
-**Addresses:** Payment plan selection + installment schedule storage (FEATURES.md), Mollie webhook auto-marks installments paid (FEATURES.md differentiator)
-**Avoids:** Webhook marks invoice paid on first installment (PITFALL #2), multi-payment webhook lookup failure (PITFALL #1), missing cancelled/defaulted state (PITFALL #12), Mollie payment expiry unhandled (PITFALL #8)
+**Rationale:** Core of the milestone. Creates WP user accounts. Depends on Phase 2 (mapping config) so the right role is assigned at creation time. Welcome email must be tested end-to-end including Lettermint from-address and 7-day password-set link.
+**Delivers:** `UserProvisioning` class; `POST /rondo/v1/users/provision` REST endpoint; welcome email with `get_password_reset_key()` and 7-day expiry; bidirectional user-person link (`rondo_linked_person_id`, `_wp_user_id`); KNVB ID stored in user meta (`rondo_knvb_id`); `_welcome_email_sent` idempotency flag
+**Avoids:** Duplicate user creation (KNVB ID as primary lookup key), duplicate welcome emails (`_welcome_email_sent` flag), role-not-set pitfall (always pass explicit `role` to `wp_insert_user()`), Lettermint from-address mismatch (wrap all `wp_mail()` calls with `EmailChannel` filter pattern)
 
-### Phase 4: Installment Scheduler + Email System
+### Phase 4: Capability Sync (rondo-sync step)
 
-**Rationale:** Automation layer, only buildable after the payment plan data model exists. Real server cron must be verified and configured before this phase ships — it is a deployment prerequisite, not a code change.
-**Delivers:** `InstallmentScheduler` daily cron sweeper, monthly installment emails with per-installment Mollie payment links, 14-day and 21-day overdue reminders with treasurer BCC, type-aware `InvoiceEmailSender` (no Datum/Wedstrijd/Kaart columns for membership invoices), per-installment admin fee configuration in Finance Settings
-**Addresses:** Automatic installment emails, overdue reminders with BCC, per-installment admin fee (FEATURES.md table stakes)
-**Avoids:** WP-Cron unreliability (PITFALL #6 — real server cron must be set up in SiteGround panel), SMTP rate limits (PITFALL #10 — batch emails in groups of 50), Mollie payment expiry unhandled (PITFALL #8 — generate payment link at send time, not at invoice creation), wrong email template (PITFALL #11 — invoice type awareness in email sender)
+**Rationale:** Depends on Phase 3 — users must exist and have `rondo_knvb_id` user meta before the sync can find them. This is where the full reconciliation logic lives: grant and revoke. The administrator guard and `_cap_source_{cap}` manual-override tracking are correctness requirements with high recovery cost if missed.
+**Delivers:** `submit-capabilities-to-rondo-club.js` rondo-sync step appended to `sync-functions.js`; `POST /rondo/v1/users/sync-capabilities` admin-triggered endpoint; full grant + revoke reconciliation; administrator role protection; manual-override (`_cap_source_*`) respect; sync logs showing both grants and revocations
+**Avoids:** Append-only sync leaving former board members with elevated access, capability sync overwriting administrator role, capability revocation not implemented
 
-### Phase 5: Bulk Invoice Creation
+### Phase 5: In-App Profile Page
 
-**Rationale:** Most operationally complex phase. Depends on all previous phases so newly created invoices immediately have correct type, plan metadata, and token. Async architecture must be designed before implementation — synchronous creation is not viable at 500-member scale.
-**Delivers:** `MembershipInvoiceBulkCreator` (batches of 50 per cron execution), `RestMembershipInvoices` bulk create endpoint (returns job ID immediately) + status polling endpoint, WP-Cron batch processing with transient progress tracking, React progress UI with polling, per-season billing method toggle in Finance Settings, idempotency (skip existing membership invoices for same person and season)
-**Addresses:** Per-season billing method toggle, bulk concept invoice creation (FEATURES.md table stakes)
-**Avoids:** Bulk creation HTTP timeout (PITFALL #5), invoice number race condition (PITFALL #7), Google Contacts export hook explosion during batch (PITFALL #5), SMTP rate limit on bulk send (PITFALL #10)
-
-### Phase 6: Frontend Updates (Facturen + Contributie)
-
-**Rationale:** UI layer on top of completed API. Only buildable once REST endpoints return invoice type and installment data. Brings all treasurer-facing features to completion and verifies Finance capability gating.
-**Delivers:** Facturen page filters (invoice type, payment plan, overdue installments), FactuurDetail installment timeline section with per-installment status, Contributie list "Factureer" bulk action button triggering bulk create flow, Finance capability verification for `rondo_bestuur` role and `financieel` capability
-**Addresses:** All Facturen filters (FEATURES.md table stakes), Finance capability for non-admin users, invoice type visible on member's person page (FEATURES.md differentiator)
-**Avoids:** Treasurer unable to filter membership from discipline invoices, role/capability gaps in route guards
+**Rationale:** Can be built in parallel with or after Phase 3. Needs WP user accounts to exist and the expanded `/user/me` data (set in Phase 3). Password change endpoint is independent of provisioning but the user experience only makes sense once accounts exist. Profile link in sidebar completes the end-to-end user experience.
+**Delivers:** `Profile/index.jsx` page at `/profile` route; `useProfile.js` TanStack Query hook; `POST /rondo/v1/user/password` endpoint with current-password verification; session-expiry warning and redirect to login after password change; global 401 interceptor in `src/api/client.js`; sidebar profile link in `Layout.jsx`; expanded `GET /rondo/v1/user/me` (adds `linked_person_thumbnail`, `functies[]`)
+**Avoids:** Silent 401s after password change (explicit redirect to login), no session management after `wp_set_password()`, missing 401 interceptor causing broken app state
 
 ### Phase Ordering Rationale
 
-- **Data model first** — `_invoice_type` and installment post meta schema (including reverse-lookup strategy) are prerequisites for every other phase. The webhook lookup pattern must be decided before any installment payment IDs are stored.
-- **Public landing page second** — Must be tested in incognito before any invoice email includes the link. A broken landing page on invoice send day cannot be patched mid-send.
-- **Webhook extension with plan manager** — Both depend on the reverse-lookup meta pattern and must be built together to enable end-to-end testing.
-- **Scheduler after plan manager** — The scheduler reads installment state created by `PaymentPlanManager`; building it first would require mocking that state.
-- **Bulk creation after all invoice logic is settled** — It creates invoices using the existing create flow; any change to invoice creation after bulk creation is built requires retesting the entire batch path.
-- **Frontend last** — The React components are thin layers on stable API responses; building them before the API is complete causes churn.
+- Phase 1 first — zero dependencies, immediate security value, prevents gap once accounts are created
+- Phase 2 before Phase 3 — provisioning reads the mapping config; without it all provisioned users get `rondo_user` regardless of Sportlink position
+- Phase 3 before Phase 4 — the sync step needs WP users with `rondo_knvb_id` user meta to exist
+- Phase 5 last (or parallel with Phase 3) — depends on expanded `/user/me` data from Phase 3; users can change passwords via `wp-login.php` as a fallback until this phase ships
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 4 (Installment Scheduler):** Real server cron setup on SiteGround requires verification of actual cron panel access and PHP execution time limits for cron contexts. PITFALLS.md rates this MEDIUM confidence. Verify before finalizing batch size and reminder timing logic.
-- **Phase 5 (Bulk Creation):** SiteGround PHP memory limits for WP-Cron execution contexts are LOW confidence in research. Batch size of 50 per cron run is conservative — verify actual limits on the account before committing to the number.
+Phases with standard patterns (no additional research needed):
+- **Phase 1 (WP Admin Blocking):** Single `admin_init` hook — thoroughly documented WordPress pattern, verified in codebase; zero ambiguity
+- **Phase 2 (Functie Mapping Config):** Options API + REST endpoints — established pattern in codebase (`ClubConfig`, `FinanceConfig`); no novel decisions
+- **Phase 3 (User Provisioning):** WordPress user API stable since WP 2.0; email follows `VogEmail` pattern exactly; all patterns read from codebase
+- **Phase 4 (Capability Sync):** Logic is clear; rondo-sync pipeline structure is established; patterns read from codebase
+- **Phase 5 (Profile Page):** React + TanStack Query + react-hook-form — all established patterns; password change endpoint mirrors existing REST patterns
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1 (Data Model):** ACF JSON field additions are established and well-documented in this codebase; option-based invoice counter is standard WordPress.
-- **Phase 2 (Public Page):** Identical pattern to existing iCal feed (`class-ical-feed.php`) — no unknowns.
-- **Phase 3 (Plan Manager + Webhook):** Mollie API calls and post meta patterns are verified in vendor source. Reverse-lookup meta pattern is a known WordPress pattern.
-- **Phase 6 (Frontend):** React + TanStack Query patterns are established; Facturen filter pattern already exists in the codebase.
+No phases require `/gsd:research-phase` — all required patterns are verified with HIGH confidence from direct codebase reads and WordPress official documentation.
+
+---
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All Mollie SDK classes verified by reading vendor source; all codebase patterns verified by reading existing class files; no new dependencies required |
-| Features | HIGH | Verified against 5 Dutch football club websites; Mollie payment link docs confirmed; codebase feature audit complete; fixed plan schedules match Dutch club norms |
-| Architecture | HIGH | All existing classes read directly from codebase; component boundaries and data flows verified against real implementations; reverse-lookup meta pattern resolves WP_Query wildcard limitation |
-| Pitfalls | HIGH (Mollie webhook, SPA routing, token security) / MEDIUM (bulk creation batch sizes, SiteGround-specific memory limits) | Webhook behavior from official Mollie docs and codebase; SPA routing from direct functions.php reading; batch sizing from SiteGround community docs |
+| Stack | HIGH | All technologies verified by reading existing class files and package.json; zero new dependencies confirmed |
+| Features | HIGH | Sourced from deep codebase analysis + WordPress official docs; anti-features explicitly reasoned; no speculation |
+| Architecture | HIGH | All patterns read directly from existing class files; component boundaries match established codebase conventions; build order derived from feature dependency graph |
+| Pitfalls | HIGH (critical pitfalls) / MEDIUM (moderate pitfalls) | admin-ajax.php break, capability overwrite, duplicate emails, append-only sync all confirmed from codebase + official docs; Lettermint-specific sending behavior needs live verification |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Mollie SEPA activation status:** The automatic subscription flow requires SEPA Direct Debit enabled on the Mollie account. Verify with the treasurer before planning the automatic subscription variant. The manual payment link flow works without it and is the recommended primary approach.
-- **SiteGround system cron access:** PITFALLS.md recommends disabling WP-Cron's visitor trigger and using real server cron. Verify SiteGround cron panel access and PHP execution limits for cron jobs before finalizing batch sizes in Phase 5. This is a deployment concern, not a code change.
-- **Existing `rondo_daily_cron` hook:** FEATURES.md references an existing `rondo_daily_cron` hook in `class-reminders.php`. Verify whether this hook already exists before creating a new daily hook in `InstallmentScheduler`. If it exists, register `InstallmentScheduler` on it rather than creating a duplicate.
-- **Installment plan dates for non-2025-2026 seasons:** The three fixed plan schedules use hardcoded Dutch season dates (Sep 25, Nov 25, Feb 25 for Plan B; Sep–Apr 25th for Plan C). Verify how dates should be calculated for other seasons before implementing `PaymentPlanManager::calculate_due_date()`.
+- **Lettermint from-address validation behavior:** The pattern is clear (follow `EmailChannel`), but Lettermint's specific rejection behavior for unlisted from-addresses has not been verified against the live account. Verify in Lettermint dashboard during Phase 3 execution before sending to real members.
+- **rondo-sync service account permissions:** The Application Password used by rondo-sync must belong to an administrator WordPress user for the provisioning endpoint (`manage_options` requirement) to succeed. Verify the service account's role in wp-admin before Phase 3 execution — check the owner of the Application Password.
+- **Password reset expiry filter scope:** The `password_reset_expiration` filter extending expiry to 7 days must only be applied in the provisioning context, not globally. Ensure `remove_filter` is called immediately after `get_password_reset_key()` to avoid extending expiry for standard password resets elsewhere in the app.
+- **Manual re-send of welcome email:** If a member loses their set-password link and it expires, they need a recovery path. The `_welcome_email_sent` flag prevents re-send. The MVP recovery is the standard `wp-login.php?action=lostpassword` page — document this in admin notes. A dedicated "resend welcome email" admin action is a post-launch addition.
+
+---
 
 ## Sources
 
-### Primary (HIGH confidence)
-- Codebase direct inspection: `vendor/mollie/mollie-api-php/src/Http/Requests/CreateSubscriptionRequest.php`, `CreateCustomerRequest.php`, `CreateCustomerPaymentRequest.php`
-- Codebase direct inspection: `includes/class-ical-feed.php`, `includes/class-fee-cache-invalidator.php`, `includes/class-mollie-webhook.php`, `includes/class-mollie-payment.php`, `includes/class-rest-invoices.php`, `includes/class-reminders.php`, `includes/class-finance-config.php`, `includes/class-membership-fees.php`
-- Codebase direct inspection: `functions.php` (template_redirect catch-all confirmed), `acf-json/group_invoice_fields.json`
-- [Mollie Recurring Payments docs](https://docs.mollie.com/docs/recurring-payments) — iDEAL creates SEPA Direct Debit mandate; SEPA activation required as account prerequisite
-- [Mollie Create Subscription](https://docs.mollie.com/reference/create-subscription) — `times` parameter limits total charges; `startDate` format verified
-- [Mollie Webhooks Reference](https://docs.mollie.com/reference/webhooks) — 10 retries over 26h, re-fetch required, 15s timeout, always return 200
-- [Mollie Handling Payment Status](https://docs.mollie.com/docs/handling-payment-status) — `expired` status handling
-- [WordPress Developer Docs: add_rewrite_rule](https://developer.wordpress.org/reference/functions/add_rewrite_rule/)
-- [WordPress WP_Cron documentation](https://developer.wordpress.org/plugins/cron/) — visitor-triggered, unreliable on cached sites
-- Dutch club research: HZVV (4 terms, 2 reminders within 2 weeks), AMVJ (3 terms via ClubCollect, admin fee for incasso), Be Quick '28 (10 monthly terms, 10% fee max €19), SV Orion (1-4 terms, €3/installment admin fee)
+### Primary (HIGH confidence — direct codebase reads)
 
-### Secondary (MEDIUM confidence)
-- [WP-Cron Missed Events — WP Crontrol](https://wp-crontrol.com/help/missed-cron-events/) — visitor-trigger reliability issues; solution: system cron
-- [WP Mail SMTP Rate Limiting](https://wpmailsmtp.com/introducing-wp-mail-smtp-4-0-optimized-email-sending-rate-limiting/) — email rate limiting per host; batching required for bulk sends
-- [Packagist: woocommerce/action-scheduler](https://packagist.org/packages/woocommerce/action-scheduler) — `wordpress-plugin` type, not suitable for theme; confirms WP-Cron is correct approach
-- [Mollie Payment Expiry Times](https://wordpress.org/support/topic/mollie-payments-expire-too-soon/) — 15-min iDEAL, 12-day bank transfer confirmed
-- [Duplicate Invoice Numbers — WordPress.org](https://wordpress.org/support/topic/duplicate-invoice-numbers-1/) — race conditions in scan-and-increment patterns
+- `includes/class-user-roles.php` — role registration, ROLES constant, `add_cap()` / `remove_cap()` pattern
+- `includes/class-rest-api.php` lines 2614–2660 — existing users GET/DELETE endpoints; REST pattern
+- `includes/class-vog-email.php`, `class-invoice-email-sender.php`, `class-installment-email-sender.php` — email template and `wp_mail()` wrapper pattern
+- `includes/class-finance-config.php`, `class-club-config.php` — Options API pattern for site-wide config
+- `includes/class-email-channel.php` — from-address filter pattern (`add_filter` / `remove_filter`) that all new email sends must follow
+- `includes/class-access-control.php` — permission model and `check_admin_permission()`
+- `functions.php` lines 620, 703 — `rondo_linked_person_id` confirmed; `show_admin_bar(false)` pattern
+- `rondo-sync/steps/download-functions-from-sportlink.js` — Functies data structure (`function_description`, `is_active`)
+- `rondo-sync/lib/rondo-club-db.js` — `sportlink_member_functions` SQLite schema confirmed
+- `rondo-sync/lib/rondo-club-client.js` — `rondoClubRequest()` REST client pattern for new step
+- `package.json` — `react-hook-form`, `@tanstack/react-query`, `lucide-react`, `axios` all confirmed present
+
+### Secondary (MEDIUM confidence — official documentation)
+
+- WordPress Developer Reference: `WP_User::add_cap()`, `remove_cap()` — capability storage in `wp_usermeta`, persistence across role changes
+- WordPress Developer Reference: `get_password_reset_key()` — 24h default expiry, single-use, `password_reset_expiration` filter
+- WordPress Developer Reference: `wp_set_password()` — clears `session_tokens`, invalidates all active sessions
+- WordPress Developer Reference: Roles and Capabilities — `set_role()` replaces role caps; `add_cap()` adds per-user overrides that persist independently
+- WordPress: `wp_send_new_user_notification_to_user` filter — suppress default WP welcome notification
+- WordPress: `admin_init` + `wp_doing_ajax()` for non-admin redirect — standard idiomatic WordPress pattern
+- WordPress Core: `password_reset_expiration` filter — 24h default confirmed; 7-day extended TTL for provisioning context
 
 ### Tertiary (LOW confidence — validate during implementation)
-- SiteGround PHP memory limits for WP-Cron execution contexts — verify on actual account before finalizing batch sizes
-- Token hashing recommendations for stored payment tokens — `hash('sha256', $token)` is standard; PHP docs are authoritative
+
+- Lettermint specific sending limits and from-address validation behavior — verify directly in Lettermint dashboard before sending welcome emails to members
+- SiteGround server-level `.htaccess` interaction with PHP-level `admin_init` hook — verify no double-blocking after implementing Phase 1
+- Rate limiting transient approach for password reset endpoint — standard WordPress community pattern; no authoritative official documentation
 
 ---
-*Research completed: 2026-02-18*
+
+*Research completed: 2026-02-20*
 *Ready for roadmap: yes*
