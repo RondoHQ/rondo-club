@@ -543,6 +543,10 @@ class People extends Base {
 			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
 		}
 
+		// Expose provisioning status for admin AccountCard (Plan 205-02).
+		$data['linked_user_id']        = (int) get_post_meta( $post->ID, '_rondo_wp_user_id', true ) ?: null;
+		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
+
 		$response->set_data( $data );
 
 		return $response;
