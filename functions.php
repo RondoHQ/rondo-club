@@ -38,14 +38,10 @@ use Rondo\REST\Teams;
 use Rondo\REST\Commissies;
 use Rondo\REST\Todos;
 use Rondo\REST\ImportExport;
-use Rondo\REST\Calendar as RESTCalendar;
 use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
-use Rondo\Calendar\Connections;
 use Rondo\Calendar\Matcher;
-use Rondo\Calendar\Sync;
-use Rondo\Calendar\GoogleProvider;
 use Rondo\Calendar\CalDAVProvider;
 use Rondo\Calendar\GoogleOAuth;
 use Rondo\Notifications\EmailChannel;
@@ -167,25 +163,13 @@ if ( ! class_exists( 'RONDO_REST_Todos' ) ) {
 if ( ! class_exists( 'RONDO_REST_Import_Export' ) ) {
 	class_alias( ImportExport::class, 'RONDO_REST_Import_Export' );
 }
-if ( ! class_exists( 'RONDO_REST_Calendar' ) ) {
-	class_alias( RESTCalendar::class, 'RONDO_REST_Calendar' );
-}
 if ( ! class_exists( 'RONDO_REST_Feedback' ) ) {
 	class_alias( RESTFeedback::class, 'RONDO_REST_Feedback' );
 }
 
 // Calendar classes
-if ( ! class_exists( 'RONDO_Calendar_Connections' ) ) {
-	class_alias( Connections::class, 'RONDO_Calendar_Connections' );
-}
 if ( ! class_exists( 'RONDO_Calendar_Matcher' ) ) {
 	class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
-}
-if ( ! class_exists( 'RONDO_Calendar_Sync' ) ) {
-	class_alias( Sync::class, 'RONDO_Calendar_Sync' );
-}
-if ( ! class_exists( 'RONDO_Google_Calendar_Provider' ) ) {
-	class_alias( GoogleProvider::class, 'RONDO_Google_Calendar_Provider' );
 }
 if ( ! class_exists( 'RONDO_CalDAV_Provider' ) ) {
 	class_alias( CalDAVProvider::class, 'RONDO_CalDAV_Provider' );
@@ -359,7 +343,6 @@ function rondo_init() {
 		new Commissies();
 		new Todos();
 		new ImportExport();
-		new RESTCalendar();
 		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
@@ -373,10 +356,6 @@ function rondo_init() {
 	if ( $is_admin || $is_cron ) {
 		new Reminders();
 	}
-
-	// Calendar sync - needs hooks registered for cron schedule filter
-	// Initialize on all requests to register cron_schedules filter
-	new Sync();
 
 	// iCal feed - also initialize on non-iCal requests for hook registration
 	// but we check for its specific request above for early return optimization
@@ -412,6 +391,11 @@ add_action( 'plugins_loaded', 'rondo_init', 5 );
 // Clear orphaned Google Contacts sync cron hook (removed in v29.0)
 if ( wp_next_scheduled( 'rondo_google_contacts_sync' ) ) {
 	wp_clear_scheduled_hook( 'rondo_google_contacts_sync' );
+}
+
+// Clear orphaned Calendar sync cron hook (removed in v29.0)
+if ( wp_next_scheduled( 'rondo_calendar_sync' ) ) {
+	wp_clear_scheduled_hook( 'rondo_calendar_sync' );
 }
 
 /**
@@ -857,10 +841,6 @@ function rondo_theme_activation() {
 	$reminders = new Reminders();
 	$reminders->schedule_all_user_reminders();
 
-	// Schedule calendar background sync
-	$calendar_sync = new Sync();
-	$calendar_sync->schedule_sync();
-
 	// Also handle theme-specific rewrite rules
 	rondo_theme_rewrite_rules();
 
@@ -883,10 +863,6 @@ function rondo_theme_deactivation() {
 
 	// Clear legacy scheduled hook (for backward compatibility)
 	wp_clear_scheduled_hook( 'rondo_daily_reminder_check' );
-
-	// Clear calendar sync cron job
-	$calendar_sync = new Sync();
-	$calendar_sync->unschedule_sync();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
 	$user_roles = new UserRoles();
