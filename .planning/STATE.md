@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 207 in progress
+**Current focus:** v30.0 User Accounts & Profiles — COMPLETE
 
 ## Current Position
 
-Milestone: v30.0 User Accounts & Profiles
-Phase: 207 of 208 (In-App Profile Page) — COMPLETE
-Plan: 1 of 1 complete in phase 207
-Status: Phase 207 complete — In-app Profile page with Sportlink identity + password change deployed (v29.4.0)
-Last activity: 2026-02-20 — Phase 207 Plan 01 (Profile page + password endpoint) complete
+Milestone: v30.0 User Accounts & Profiles — COMPLETE
+Phase: 208 of 208 (Avatar and Sidebar) — COMPLETE
+Plan: 1 of 1 complete in phase 208
+Status: Phase 208 complete — Sidebar avatar with linked person photo deployed (v30.0.0)
+Last activity: 2026-02-20 — Phase 208 Plan 01 (Sidebar avatar + linked_person_photo) complete
 
-Progress: [██████░░░░] 75% (5/6 phases complete)
+Progress: [██████████] 100% (6/6 phases complete)
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ Recent decisions affecting v30.0:
 - Phase 207 Plan 01: Hard-redirect to login immediately on password change success — session is dead, no intermediate state possible
 - Phase 207 Plan 01: Demo guard in backend (not just frontend) — returns 403 for demo login regardless of UI state
 - Phase 207 Plan 01: Non-admin UserMenu links to /profile; admin users also get in-app /profile link (wp-admin link remains for admins)
+- Phase 208 Plan 01: Use ?: null (not ?? null) for get_the_post_thumbnail_url() — returns false (not null) when no thumbnail
+- Phase 208 Plan 01: Demo users get plain div sidebar identity row (not clickable); regular users get Link to /profile — matches UserMenu pattern
 
 ### Pending Todos
 
@@ -83,10 +85,10 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed quick task 111 — FunctiesTab refactored to semantic HTML table
+Stopped at: Completed Phase 208 Plan 01 — Sidebar avatar with linked person photo, v30.0.0 deployed
 Resume file: None
 
-**Next action:** Execute Phase 208 (Avatar)
+**Next action:** v30.0 milestone complete — plan next milestone
 
 ---
 *State created: 2026-02-15*
