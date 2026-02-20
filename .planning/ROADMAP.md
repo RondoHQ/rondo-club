@@ -222,7 +222,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 208-01-PLAN.md — Add linked_person_photo to /user/me, sidebar footer avatar + name + logout, v30.0.0
+- [x] 208-01-PLAN.md — Add linked_person_photo to /user/me, sidebar footer avatar + name + logout, v30.0.0
 
 ## Progress
 
@@ -243,8 +243,8 @@ Plans:
 | 205 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 206 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 207 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
-| 208 | v30.0 | 0/TBD | Not started | - |
+| 208 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — Phase 207 (In-App Profile Page) complete*
+*Last updated: 2026-02-20 — Phase 208 (Avatar & Sidebar) complete — v30.0 milestone complete*
