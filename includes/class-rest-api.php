@@ -982,6 +982,42 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// User provisioning (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<person_id>\d+)/provision',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'provision_user' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'person_id' => [
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param );
+						},
+					],
+				],
+			]
+		);
+
+		// Provisioning email template settings (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/provisioning/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_provisioning_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_provisioning_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+			]
+		);
 	}
 
 	/**
@@ -2642,15 +2678,81 @@ class Api extends Base {
 
 		$user_list = [];
 		foreach ( $users as $user ) {
+			$linked_person_id   = (int) get_user_meta( $user->ID, 'rondo_linked_person_id', true );
+			$linked_person_name = null;
+			if ( $linked_person_id ) {
+				$person = get_post( $linked_person_id );
+				if ( $person && 'person' === $person->post_type ) {
+					$first              = get_field( 'first_name', $linked_person_id ) ?: '';
+					$last               = get_field( 'last_name', $linked_person_id ) ?: '';
+					$linked_person_name = trim( $first . ' ' . $last );
+				}
+			}
+
 			$user_list[] = [
-				'id'          => $user->ID,
-				'name'        => $user->display_name,
-				'email'       => $user->user_email,
-				'registered'  => $user->user_registered,
+				'id'                 => $user->ID,
+				'name'               => $user->display_name,
+				'email'              => $user->user_email,
+				'registered'         => $user->user_registered,
+				'linked_person_id'   => $linked_person_id ?: null,
+				'linked_person_name' => $linked_person_name,
 			];
 		}
 
 		return rest_ensure_response( $user_list );
+	}
+
+	/**
+	 * Provision a WordPress user account for a person (admin only).
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response with status, user_id, message or WP_Error.
+	 */
+	public function provision_user( $request ) {
+		$person_id   = (int) $request->get_param( 'person_id' );
+		$provisioner = new \Rondo\Users\UserProvisioning();
+		$result      = $provisioner->provision( $person_id );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Get provisioning email template settings (admin only).
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Current settings array.
+	 */
+	public function get_provisioning_settings( $request ) {
+		$provisioner = new \Rondo\Users\UserProvisioning();
+		return rest_ensure_response( $provisioner->get_settings() );
+	}
+
+	/**
+	 * Update provisioning email template settings (admin only).
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Updated settings array.
+	 */
+	public function update_provisioning_settings( $request ) {
+		$provisioner = new \Rondo\Users\UserProvisioning();
+
+		$settings = array_filter(
+			[
+				'subject'    => $request->get_param( 'subject' ),
+				'body'       => $request->get_param( 'body' ),
+				'from_email' => $request->get_param( 'from_email' ),
+				'from_name'  => $request->get_param( 'from_name' ),
+			],
+			function ( $v ) {
+				return $v !== null;
+			}
+		);
+
+		return rest_ensure_response( $provisioner->update_settings( $settings ) );
 	}
 
 	/**
