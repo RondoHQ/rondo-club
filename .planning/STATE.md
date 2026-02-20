@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v29.0 Made in Europe — Phase 199: OAuth + Frontend Cleanup
+**Current focus:** v29.0 Made in Europe — Phase 200: CSV Export complete
 
 ## Current Position
 
@@ -84,4 +84,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 199 OAuth + Frontend Cleanup complete*
+*Last updated: 2026-02-20 — Phase 200 CSV Export complete*
