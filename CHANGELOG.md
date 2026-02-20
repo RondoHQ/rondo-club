@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [29.1.0] - 2026-02-20
+
+### Added
+- Functie-to-Role mapping configuration: admin can configure which Sportlink Functies (job titles) grant which Rondo WordPress roles via a checkbox matrix in Settings > Beheer > Functies
+- `FunctieCapabilityMap` PHP class with `get_map()`, `update_map()`, `get_roles_for_functie()` static methods
+- REST API endpoints `GET/POST /rondo/v1/functie-capability-map` (admin only) for reading and persisting the mapping
+
 ## [29.0.0] - 2026-02-20
 
 ### Added
