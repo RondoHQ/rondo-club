@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [29.3.0] - 2026-02-20
+
+### Added
+- Automatic capability sync: user roles are kept in sync with Sportlink Functies during rondo-sync runs (grant and revoke)
+- Manual override support: admin-granted roles survive automatic sync
+- Administrator guard: administrator users are never modified by capability sync
+- On-demand "Sync nu uitvoeren" button in Functies settings to re-apply mapping
+- rondo-sync capability sync step integrated into functions pipeline as Step 5
+
 ## [29.2.0] - 2026-02-20
 
 ### Added
