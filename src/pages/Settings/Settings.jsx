@@ -104,6 +104,10 @@ export default function Settings() {
   const [welcomeSaving, setWelcomeSaving] = useState(false);
   const [welcomeSaved, setWelcomeSaved] = useState(false);
 
+  // Capability sync state (admin only)
+  const [syncingCapabilities, setSyncingCapabilities] = useState(false);
+  const [capabilitySyncMessage, setCapabilitySyncMessage] = useState('');
+
   // Functie-to-role mapping state (admin only)
   const [availableFuncties, setAvailableFuncties] = useState([]);
   const [functieMapState, setFunctieMapState] = useState({});
@@ -239,6 +243,28 @@ export default function Settings() {
       setFunctiesMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setFunctiesSaving(false);
+    }
+  };
+
+  // Handle capability sync (on-demand re-apply mapping to all users)
+  const handleSyncCapabilities = async () => {
+    if (!confirm('Dit synchroniseert rollen van alle gebruikers op basis van hun functies. Doorgaan?')) {
+      return;
+    }
+    setSyncingCapabilities(true);
+    setCapabilitySyncMessage('');
+    try {
+      const response = await prmApi.syncAllCapabilities();
+      const data = response.data;
+      setCapabilitySyncMessage(
+        `Synchronisatie voltooid: ${data.synced || 0} bijgewerkt, ${data.skipped || 0} overgeslagen.`
+      );
+    } catch (fout) {
+      setCapabilitySyncMessage(
+        fout.response?.data?.message || 'Kan rollen niet synchroniseren. Controleer de serverlogboeken.'
+      );
+    } finally {
+      setSyncingCapabilities(false);
     }
   };
 
@@ -478,6 +504,9 @@ export default function Settings() {
             functiesSaving={functiesSaving}
             functiesMessage={functiesMessage}
             handleFunctiesSave={handleFunctiesSave}
+            handleSyncCapabilities={handleSyncCapabilities}
+            syncingCapabilities={syncingCapabilities}
+            capabilitySyncMessage={capabilitySyncMessage}
             welcomeSettings={welcomeSettings}
             setWelcomeSettings={setWelcomeSettings}
             welcomeSettingsLoading={welcomeSettingsLoading}
@@ -1289,6 +1318,9 @@ function AdminTabWithSubtabs({
   functiesSaving,
   functiesMessage,
   handleFunctiesSave,
+  handleSyncCapabilities,
+  syncingCapabilities,
+  capabilitySyncMessage,
   welcomeSettings,
   setWelcomeSettings,
   welcomeSettingsLoading,
@@ -1343,6 +1375,9 @@ function AdminTabWithSubtabs({
           saving={functiesSaving}
           message={functiesMessage}
           handleSave={handleFunctiesSave}
+          handleSyncCapabilities={handleSyncCapabilities}
+          syncingCapabilities={syncingCapabilities}
+          capabilitySyncMessage={capabilitySyncMessage}
         />
       ) : activeSubtab === 'welkomstmail' ? (
         <WelkomstmailTab
@@ -1586,6 +1621,9 @@ function FunctiesTab({
   saving,
   message,
   handleSave,
+  handleSyncCapabilities,
+  syncingCapabilities,
+  capabilitySyncMessage,
 }) {
   // Union of available functies and keys already in the saved map, deduplicated and sorted
   const allFuncties = [...new Set([
@@ -1688,6 +1726,35 @@ function FunctiesTab({
                 {message}
               </span>
             )}
+          </div>
+
+          {/* Capability sync section */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Rollen synchroniseren</h4>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+              Pas de huidige functie-toewijzing toe op alle gebruikers met een account.
+            </p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleSyncCapabilities}
+                disabled={syncingCapabilities}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              >
+                {syncingCapabilities ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Synchroniseren...
+                  </>
+                ) : (
+                  'Sync nu uitvoeren'
+                )}
+              </button>
+              {capabilitySyncMessage && (
+                <span className={`text-sm ${capabilitySyncMessage.includes('niet') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                  {capabilitySyncMessage}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
