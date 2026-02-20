@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** Planning next milestone
+**Current focus:** v30.0 User Accounts & Profiles
 
 ## Current Position
 
-Milestone: v29.0 Made in Europe — SHIPPED
-Phase: All complete (198-202)
-Status: Archived
-Last activity: 2026-02-20 - Completed quick task 110: People with finance rights should be able to see (and change) the Financiën -> Instellingen
+Milestone: v30.0 User Accounts & Profiles
+Phase: Not started (defining requirements)
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v30.0 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -55,11 +55,11 @@ Decisions logged in PROJECT.md Key Decisions table (750+ entries).
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: v29.0 milestone archived
+Stopped at: Milestone v30.0 started, defining requirements
 Resume file: None
 
-**Next action:** `/gsd:new-milestone` to start next milestone
+**Next action:** Define requirements and create roadmap
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — v29.0 Made in Europe archived*
+*Last updated: 2026-02-20 — v30.0 User Accounts & Profiles started*
