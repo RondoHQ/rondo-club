@@ -22,6 +22,7 @@ import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
+import AccountCard from '@/components/AccountCard';
 import { format, parseISO, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -1335,10 +1336,15 @@ export default function PersonDetail() {
             />
             </div>
 
-            {/* Column 2: Sportlink, Relaties, VOG */}
+            {/* Column 2: Sportlink, Account, Relaties, VOG */}
             <div className="space-y-6">
             {/* Sportlink Card */}
             <SportlinkCard acfData={person?.acf} />
+
+            {/* Account Card (admin only) */}
+            {config.isAdmin && (
+              <AccountCard personId={id} personData={person} />
+            )}
 
             {/* Relationships */}
             <div className="card p-6">
