@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 Milestone: v29.0 Made in Europe — SHIPPED
 Phase: All complete (198-202)
 Status: Archived
-Last activity: 2026-02-20 — v29.0 milestone archived
+Last activity: 2026-02-20 - Completed quick task 110: People with finance rights should be able to see (and change) the Financiën -> Instellingen
 
 Progress: [██████████] 100%
 
@@ -45,6 +45,12 @@ Decisions logged in PROJECT.md Key Decisions table (750+ entries).
 
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
 - Orphaned Google Sheets code: 4 dead client.js methods + 5 unreachable REST routes (tech debt from v29.0)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 110 | People with finance rights should be able to see (and change) the Financiën -> Instellingen | 2026-02-20 | a33f152a | [110-people-with-finance-rights-should-be-abl](./quick/110-people-with-finance-rights-should-be-abl/) |
 
 ## Session Continuity
 
