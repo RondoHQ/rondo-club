@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v29.0 Made in Europe — Phase 200: CSV Export complete
+**Current focus:** v29.0 Made in Europe — Phase 201: Lettermint Setup complete
 
 ## Current Position
 
 Milestone: v29.0 Made in Europe
-Phase: 200 of 202 (CSV Export)
+Phase: 201 of 202 (Lettermint Setup)
 Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-20 — Phase 200 Plan 01 complete: CSV export added to People/VOG/Contributie pages, dead Google Sheets code removed
+Last activity: 2026-02-20 — Phase 201 Plan 01 complete: Lettermint activated on production, Gravity SMTP deactivated, test email delivered
 
-Progress: [█████░░░░░] 50%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: [█████░░░░░] 50%
 | 199 | 01 | 2min | 2 | 4 |
 | 199 | 02 | 7min | 2 | 4 |
 | 200 | 01 | 4min | 2 | 4 |
+| 201 | 01 | 5min | 4 | 0 |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Key decisions for v29.0 planning:
 - [Phase 200-01]: CSV export exports current page only (not all filtered pages) — no new API endpoint needed
 - [Phase 200-01]: CSV uses fixed columns (not user-configured visible columns) — avoids coupling to complex column preferences system
 - [Phase 200-01]: No CSV library added — browser Blob + URL.createObjectURL sufficient for flat data
+- [Phase 201-01]: No "force" options enabled for Lettermint — theme email classes already set correct From headers
+- [Phase 201-01]: Gravity SMTP (Postmark) deactivated, Lettermint v1.4.2 activated — European email transport
 
 ### Pending Todos
 
@@ -70,18 +73,17 @@ Key decisions for v29.0 planning:
 
 ### Blockers/Concerns
 
-- Phase 201 (Lettermint Setup) requires SSH access to production for plugin install and DNS changes at the registrar
 - PDF attachment passthrough via Lettermint plugin is MEDIUM confidence — must be explicitly tested before marking EMAIL-03 complete (see research/LETTERMINT.md)
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 200-01-PLAN.md — CSV export deployed to production
+Stopped at: Completed 201-01-PLAN.md — Lettermint activated on production, test email delivered
 Resume file: None
 
-**Next action:** Phase 201 (Lettermint Setup)
+**Next action:** Phase 202 (Email Verification)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 200 CSV Export complete*
+*Last updated: 2026-02-20 — Phase 201 Lettermint Setup complete*

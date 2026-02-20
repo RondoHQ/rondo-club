@@ -123,7 +123,7 @@
 - [x] **Phase 198: Backend Sync Removal** — Delete Google Contacts and Calendar sync PHP classes and REST endpoints — completed 2026-02-20
 - [x] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar — completed 2026-02-20
 - [x] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages — completed 2026-02-20
-- [ ] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery
+- [x] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery — completed 2026-02-20
 - [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications)
 
 ## Phase Details
@@ -188,10 +188,10 @@ Plans:
   3. DKIM TXT record, bounce CNAME, and DMARC TXT record added to the sending domain DNS
   4. Lettermint dashboard shows domain as verified
   5. A test email sent from WordPress appears in the Lettermint activity log
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 201-01-PLAN.md -- Deactivate Gravity SMTP, activate Lettermint, configure API token, verify delivery
+- [x] 201-01-PLAN.md -- Deactivate Gravity SMTP, activate Lettermint, configure API token, verify delivery — completed 2026-02-20
 
 ### Phase 202: Email Verification
 
@@ -226,9 +226,9 @@ Plans:
 | 198 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 199 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 200 | v29.0 | 1/1 | ✓ Complete | 2026-02-20 |
-| 201 | v29.0 | 0/1 | Not started | - |
+| 201 | v29.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 202 | v29.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — Phase 200 CSV Export complete*
+*Last updated: 2026-02-20 — Phase 201 Lettermint Setup complete*
