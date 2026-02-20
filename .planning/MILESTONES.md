@@ -1057,3 +1057,34 @@
 
 ---
 
+
+## v29.0 Made in Europe (Shipped: 2026-02-20)
+
+**Delivered:** Removed non-European service dependencies (Google Contacts/Calendar sync, Gravatar) for data sovereignty, added CSV export as a local alternative to Google Sheets, and switched all transactional email delivery from Postmark (US) to Lettermint (EU) with full verification of all 7 email types including PDF attachments.
+
+**Phases completed:** 198-202 (5 phases, 8 plans)
+
+**Key accomplishments:**
+
+- Removed Google Contacts sync (5 PHP classes) and Calendar sync (4 PHP classes) with full cron and WP-CLI cleanup
+- Simplified Google OAuth to Sheets-only scope, removed Gravatar REST endpoint and frontend integration
+- Cleaned up ~1,700 lines from Settings frontend, dead API client methods, and sync UI components
+- Added CSV export to People, VOG, and Contributie list pages (semicolon delimiter, UTF-8 BOM for Dutch Excel)
+- Switched email transport from Gravity SMTP/Postmark (US) to Lettermint (EU) with DNS verification
+- Verified all 7 email types through Lettermint: discipline invoice, membership invoice, installments, reminders (with BCC), VOG, mention notifications, and digests
+
+**Stats:**
+
+- 68 files changed
+- +6,035 / -10,592 lines changed (net: -4,557 — cleanup milestone)
+- 5 phases, 8 plans, 49 commits
+- 1 day (2026-02-20)
+
+**Git range:** `a67ecc0` → `e9a2cd2`
+
+**Tech debt:** Orphaned Google Sheets backend code (4 dead client.js methods, 5 unreachable REST routes), minor DRY deferral for root domain extraction (2-file duplication)
+
+**What's next:** To be determined
+
+---
+

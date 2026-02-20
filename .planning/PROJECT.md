@@ -461,19 +461,22 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Separate email template and payment clause for contributie invoices — v28.0
 - ✓ Membership invoice PDF with category name, discount line items, dynamic payment section — v28.0
 
+**v29.0 Made in Europe (shipped 2026-02-20):**
+- ✓ Google Contacts sync classes removed (sync, export, import, connection, REST endpoints) — v29.0
+- ✓ Google Calendar sync classes removed (sync, connections, google-calendar-provider, REST endpoints) — v29.0
+- ✓ Google OAuth simplified to serve only Google Sheets (Contacts/Calendar scopes removed) — v29.0
+- ✓ Settings UI cleaned up (Contacts and Calendar connection UI removed) — v29.0
+- ✓ Frontend hooks, API client methods, and pages for Contacts/Calendar removed — v29.0
+- ✓ CSV export available on People, VOG, and Contributie list pages — v29.0
+- ✓ Gravatar REST endpoint removed from backend — v29.0
+- ✓ Gravatar API calls and hooks removed from frontend — v29.0
+- ✓ Lettermint WordPress plugin installed and configured on production — v29.0
+- ✓ DNS records (DKIM, bounce CNAME, DMARC) configured for sending domain — v29.0
+- ✓ All transactional email types verified through Lettermint (invoices, installments, reminders, VOG, mentions) — v29.0
+
 ### Active
 
-**Current Milestone: v29.0 Made in Europe**
-
-**Goal:** Remove non-European service dependencies (Google sync, Gravatar) and replace wp_mail email delivery with Lettermint for European data sovereignty.
-
-**Target features:**
-- Drop Google Contacts sync (5+ PHP classes, REST endpoints, OAuth callbacks, frontend UI)
-- Drop Google Calendar sync (calendar-sync, connections, google-calendar-provider classes, frontend UI)
-- Simplify Google OAuth to serve only Google Sheets export
-- Add CSV export alongside Google Sheets on applicable pages
-- Drop Gravatar integration (REST endpoint, API client, frontend hooks)
-- Replace wp_mail() with Lettermint for all transactional emails (invoices, installments, reminders, VOG, mentions)
+(No active milestone — use `/gsd:new-milestone` to start next milestone)
 
 ### Out of Scope
 
@@ -488,14 +491,18 @@ Club administrators can manage their members, teams, and club operations through
 - Member self-service portal beyond payment — payment landing page is single-purpose
 - Partial payment handling — each installment is a fixed amount via Mollie
 - Bank transfer / manual payment tracking — Mollie handles all payment processing
+- Google Sheets backend removal — kept as working export option; orphaned frontend code is tech debt
+- Lettermint PHP SDK — WordPress plugin sufficient; SDK requires PHP 8.2+, project is PHP 8.0+
+- Email log viewer in admin — Lettermint dashboard provides delivery monitoring
 
 ## Context
 
-**Codebase State (post v28.0):**
+**Codebase State (post v29.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 28.1.2 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
-- Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery, webhook status updates, installment payment management
-- Membership fee billing: bulk invoice creation, public payment landing page, 3 payment plans (full/3/8 installments), automated installment emails, overdue reminders
+- Version 29.0.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management
+- No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
+- CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced
 - ESLint clean (0 errors/warnings), pre-commit lint enforcement via husky + lint-staged
 - Demo site at demo.rondo.club with anonymized fixture data
@@ -741,6 +748,13 @@ Club administrators can manage their members, teams, and club operations through
 | Separate C-prefix invoice numbering | Membership invoices (C2026001) distinct from discipline (2026T001) | ✓ Good |
 | Separate email templates per invoice type | Membership vs discipline have different content needs | ✓ Good |
 | Conditional invoice PDF sections | Different table headers, line items, and payment sections by type | ✓ Good |
+| Lettermint WordPress plugin over PHP SDK | Zero code changes to wp_mail() callers; SDK requires PHP 8.2+ | ✓ Good |
+| Google OAuth kept for Sheets only | Scoped down after Contacts/Calendar sync removal | ✓ Good |
+| CSV export as client-side Blob download | No server-side endpoint needed for flat data export | ✓ Good |
+| Semicolon CSV delimiter with UTF-8 BOM | Dutch Excel compatibility without import wizard | ✓ Good |
+| Root domain extraction for email From address | wp_parse_url + array_slice(-2) for Lettermint-compatible subdomain-to-root mapping | ✓ Good |
+| DRY deferred for root domain extraction | 2-file duplication acceptable, refactor when third email sender needs it | ✓ Good |
+| Orphaned Google Sheets code preserved | No user flow broken; cleanup in future milestone | Tech Debt |
 
 ---
-*Last updated: 2026-02-20 after starting v29.0 Made in Europe milestone*
+*Last updated: 2026-02-20 after v29.0 Made in Europe milestone*
