@@ -142,10 +142,10 @@
   2. Admin-ajax.php requests from non-admin users continue to work (no broken plugins or SPA functionality)
   3. WP-CLI and cron tasks run without the admin block applying to them
   4. Administrator users reach wp-admin normally and are unaffected by the hook
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 203-01: admin_init hook with wp_doing_ajax, WP_CLI, and DOING_CRON exemptions
+- [ ] 203-01-PLAN.md — admin_init redirect hook with AJAX/CLI/cron exemptions + developer docs
 
 #### Phase 204: Functie-to-Role Mapping Config
 
