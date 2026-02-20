@@ -257,6 +257,10 @@ export const prmApi = {
   copySeasonCategories: (fromSeason, toSeason) => api.post('/rondo/v1/membership-fees/copy-season', { from_season: fromSeason, to_season: toSeason }),
   getAvailableWerkfuncties: () => api.get('/rondo/v1/werkfuncties/available'),
 
+  // Functie-to-capability mapping (admin only)
+  getFunctieCapabilityMap: () => api.get('/rondo/v1/functie-capability-map'),
+  updateFunctieCapabilityMap: (data) => api.post('/rondo/v1/functie-capability-map', data),
+
   // Club configuration (admin only)
   getClubConfig: () => api.get('/rondo/v1/config'),
   updateClubConfig: (data) => api.post('/rondo/v1/config', data),

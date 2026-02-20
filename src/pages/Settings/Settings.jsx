@@ -29,6 +29,7 @@ const CONNECTION_SUBTABS = [
 const ADMIN_SUBTABS = [
   { id: 'users', label: 'Gebruikers', icon: Users },
   { id: 'rollen', label: 'Rollen' },
+  { id: 'functies', label: 'Functies' },
 ];
 
 export default function Settings() {
@@ -96,6 +97,14 @@ export default function Settings() {
   const [rolesSaving, setRolesSaving] = useState(false);
   const [rolesMessage, setRolesMessage] = useState('');
 
+  // Functie-to-role mapping state (admin only)
+  const [availableFuncties, setAvailableFuncties] = useState([]);
+  const [functieMapState, setFunctieMapState] = useState({});
+  const [functieRoles, setFunctieRoles] = useState([]);
+  const [functiesLoading, setFunctiesLoading] = useState(true);
+  const [functiesSaving, setFunctiesSaving] = useState(false);
+  const [functiesMessage, setFunctiesMessage] = useState('');
+
   // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
@@ -158,6 +167,46 @@ export default function Settings() {
     };
     fetchRoleSettings();
   }, [isAdmin]);
+
+  // Fetch functie-to-role mapping on mount (admin only)
+  useEffect(() => {
+    const fetchFunctieMapping = async () => {
+      if (!isAdmin) {
+        setFunctiesLoading(false);
+        return;
+      }
+      try {
+        const [werkfunctiesResponse, mapResponse] = await Promise.all([
+          prmApi.getAvailableWerkfuncties(),
+          prmApi.getFunctieCapabilityMap(),
+        ]);
+        setAvailableFuncties(werkfunctiesResponse.data || []);
+        setFunctieMapState(mapResponse.data.map || {});
+        setFunctieRoles(mapResponse.data.roles || []);
+      } catch {
+        // Functie mapping fetch failed silently
+      } finally {
+        setFunctiesLoading(false);
+      }
+    };
+    fetchFunctieMapping();
+  }, [isAdmin]);
+
+  // Handle functie-to-role mapping save
+  const handleFunctiesSave = async () => {
+    setFunctiesSaving(true);
+    setFunctiesMessage('');
+    try {
+      const response = await prmApi.updateFunctieCapabilityMap({ map: functieMapState });
+      setFunctieMapState(response.data.map || {});
+      setFunctieRoles(response.data.roles || []);
+      setFunctiesMessage('Functietoewijzing opgeslagen.');
+    } catch (error) {
+      setFunctiesMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
+    } finally {
+      setFunctiesSaving(false);
+    }
+  };
 
   // Handle volunteer role settings save
   const handleRolesSave = async () => {
@@ -387,6 +436,14 @@ export default function Settings() {
             rolesSaving={rolesSaving}
             rolesMessage={rolesMessage}
             handleRolesSave={handleRolesSave}
+            availableFuncties={availableFuncties}
+            functieMapState={functieMapState}
+            setFunctieMapState={setFunctieMapState}
+            functieRoles={functieRoles}
+            functiesLoading={functiesLoading}
+            functiesSaving={functiesSaving}
+            functiesMessage={functiesMessage}
+            handleFunctiesSave={handleFunctiesSave}
           />
         ) : null;
       case 'about':
@@ -1184,6 +1241,14 @@ function AdminTabWithSubtabs({
   rolesSaving,
   rolesMessage,
   handleRolesSave,
+  availableFuncties,
+  functieMapState,
+  setFunctieMapState,
+  functieRoles,
+  functiesLoading,
+  functiesSaving,
+  functiesMessage,
+  handleFunctiesSave,
 }) {
   return (
     <div className="space-y-6">
@@ -1221,6 +1286,17 @@ function AdminTabWithSubtabs({
           rolesSaving={rolesSaving}
           rolesMessage={rolesMessage}
           handleRolesSave={handleRolesSave}
+        />
+      ) : activeSubtab === 'functies' ? (
+        <FunctiesTab
+          availableFuncties={availableFuncties}
+          functieMapState={functieMapState}
+          setFunctieMapState={setFunctieMapState}
+          roles={functieRoles}
+          loading={functiesLoading}
+          saving={functiesSaving}
+          message={functiesMessage}
+          handleSave={handleFunctiesSave}
         />
       ) : null}
     </div>
@@ -1436,6 +1512,125 @@ function RollenTab({
             {rolesMessage && (
               <span className={`text-sm ${rolesMessage.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                 {rolesMessage}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Functies Tab Component - Functie-to-Role mapping
+function FunctiesTab({
+  availableFuncties,
+  functieMapState,
+  setFunctieMapState,
+  roles,
+  loading,
+  saving,
+  message,
+  handleSave,
+}) {
+  // Union of available functies and keys already in the saved map, deduplicated and sorted
+  const allFuncties = [...new Set([
+    ...availableFuncties,
+    ...Object.keys(functieMapState),
+  ])].sort((a, b) => a.localeCompare(b, 'nl'));
+
+  const handleCheckboxChange = (functie, roleSlug, checked) => {
+    setFunctieMapState(prev => ({
+      ...prev,
+      [functie]: {
+        ...(prev[functie] || {}),
+        [roleSlug]: checked,
+      },
+    }));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          Functie-toewijzing
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Bepaal welke Sportlink-functies welke Rondo-rollen toekennen. Een functie kan meerdere rollen toekennen.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+        </div>
+      ) : allFuncties.length === 0 ? (
+        <div className="text-sm text-gray-500 dark:text-gray-400 py-4">
+          Geen functies gevonden. Functies worden automatisch geladen vanuit Sportlink-sync.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {/* Functie-to-role mapping table */}
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr,auto] gap-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Functie</span>
+              <div className={`grid gap-6 text-center`} style={{ gridTemplateColumns: `repeat(${roles.length}, 6rem)` }}>
+                {roles.map(role => (
+                  <span key={role.slug} className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
+                    {role.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {/* Rows */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
+              {allFuncties.map(functie => {
+                const isStale = !availableFuncties.includes(functie);
+                return (
+                  <div key={functie} className="grid grid-cols-[1fr,auto] gap-4 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 items-center">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm text-gray-900 dark:text-gray-100 truncate">{functie}</span>
+                      {isStale && (
+                        <span className="text-xs text-gray-400 dark:text-gray-500 italic whitespace-nowrap">(niet meer actief)</span>
+                      )}
+                    </div>
+                    <div className={`grid gap-6`} style={{ gridTemplateColumns: `repeat(${roles.length}, 6rem)` }}>
+                      {roles.map(role => (
+                        <label key={role.slug} className="flex items-center justify-center w-24 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!(functieMapState[functie]?.[role.slug])}
+                            onChange={(e) => handleCheckboxChange(functie, role.slug, e.target.checked)}
+                            className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Save button and message */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Opslaan...
+                </>
+              ) : (
+                'Opslaan'
+              )}
+            </button>
+            {message && (
+              <span className={`text-sm ${message.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {message}
               </span>
             )}
           </div>
