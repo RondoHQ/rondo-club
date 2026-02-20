@@ -167,12 +167,50 @@ function Sidebar({ mobile = false, onClose, stats }) {
           })}
       </nav>
 
-      {/* Logout */}
+      {/* User identity + Logout */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <a
-          href={logoutUrl}
-          className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
-        >
+        {/* User identity row */}
+        {window.rondoConfig?.isDemoUser ? (
+          <div className="flex items-center gap-3 px-1 mb-3">
+            {currentUser?.linked_person_photo ? (
+              <img
+                src={currentUser.linked_person_photo}
+                alt={currentUser?.name || ''}
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-obsidian flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan-light" />
+              </div>
+            )}
+            {currentUser?.name && (
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                {currentUser.name}
+              </span>
+            )}
+          </div>
+        ) : (
+          <Link to="/profile" className="flex items-center gap-3 px-1 mb-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            {currentUser?.linked_person_photo ? (
+              <img
+                src={currentUser.linked_person_photo}
+                alt={currentUser?.name || ''}
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-cyan-100 dark:bg-obsidian flex items-center justify-center flex-shrink-0">
+                <User className="w-4 h-4 text-bright-cobalt dark:text-electric-cyan-light" />
+              </div>
+            )}
+            {currentUser?.name && (
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                {currentUser.name}
+              </span>
+            )}
+          </Link>
+        )}
+        {/* Logout link — unchanged styling */}
+        <a href={logoutUrl} className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700">
           <LogOut className="w-5 h-5 mr-3" />
           Uitloggen
         </a>
