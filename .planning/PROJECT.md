@@ -445,23 +445,25 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Configurable administration fee auto-injected on invoice creation — v27.0
 - ✓ ESLint cleanup (132 errors → 0) and pre-commit lint enforcement (husky + lint-staged) — v27.0
 
+**v28.0 Membership Fee Invoicing (shipped 2026-02-20):**
+- ✓ Per-season billing method toggle (Nikki vs Rondo invoicing) — v28.0
+- ✓ Bulk concept invoice creation from Contributie data via WP-Cron batches (50/batch) — v28.0
+- ✓ Public token-secured landing page for payment plan selection (mobile-friendly) — v28.0
+- ✓ Payment plans: full, 3 installments (Sep/Nov/Feb), 8 installments (Sep + Oct-Apr monthly) — v28.0
+- ✓ Configurable per-installment administration fee for multi-payment plans — v28.0
+- ✓ Automatic installment emails on the 25th with fresh Mollie payment links — v28.0
+- ✓ Overdue payment reminders (2 weeks, then 3 weeks with BCC to treasurer) — v28.0
+- ✓ Configurable email templates for invoices, installments, and reminders — v28.0
+- ✓ Facturen page filters for type, payment plan, and overdue status — v28.0
+- ✓ Per-installment timeline on invoice detail page — v28.0
+- ✓ Finance capability for non-admin users to manage invoicing — v28.0
+- ✓ Separate invoice numbering for contributie (C prefix) — v28.0
+- ✓ Separate email template and payment clause for contributie invoices — v28.0
+- ✓ Membership invoice PDF with category name, discount line items, dynamic payment section — v28.0
+
 ### Active
 
-## Current Milestone: v28.0 Membership Fee Invoicing
-
-**Goal:** Enable clubs to invoice members for seasonal fees through Rondo Club with Mollie payments, replacing external billing systems like Nikki.
-
-**Target features:**
-- Per-season billing method toggle (Nikki vs Rondo invoicing)
-- Bulk concept invoice creation from Contributie data with preview/test workflow
-- Public token-secured landing page for payment plan selection
-- Payment plans: full, 3 installments (Sep/Nov/Feb), 8 installments (Sep + Oct-Apr monthly)
-- Configurable per-installment administration fee for multi-payment plans
-- Automatic installment emails on the 25th with fresh Mollie payment links
-- Overdue payment reminders (2 weeks, then 3 weeks with BCC to treasurer)
-- Configurable email templates for invoices, installments, and reminders
-- Facturen page filters for overdue, payment status, invoice type
-- Finance capability for non-admin users to manage invoicing
+(No active requirements — planning next milestone)
 
 ### Out of Scope
 
@@ -469,30 +471,40 @@ Club administrators can manage their members, teams, and club operations through
 - Real-time updates (WebSockets) — future enhancement
 - Mollie OAuth (multi-merchant) — single-club app, API key auth sufficient
 - Mollie refunds UI — admin uses Mollie Dashboard for infrequent refunds
-- Membership fee invoicing via subscription/recurring payments — single payments per installment sufficient
+- Mollie Recurring/SEPA Direct Debit — requires SEPA creditor ID and member mandate; manual payment links sufficient
 - iDEAL enforcement in code — Mollie Dashboard controls payment methods
 - Public-facing feedback portal — internal use only
+- Configurable installment schedules — fixed 3 and 8 plans match Dutch football club norms
+- Member self-service portal beyond payment — payment landing page is single-purpose
+- Partial payment handling — each installment is a fixed amount via Mollie
+- Bank transfer / manual payment tracking — Mollie handles all payment processing
 
 ## Context
 
-**Codebase State (post v27.0):**
+**Codebase State (post v28.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 27.1.2 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
-- Complete invoicing system: discipline case invoice creation, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery, webhook status updates
+- Version 28.1.2 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery, webhook status updates, installment payment management
+- Membership fee billing: bulk invoice creation, public payment landing page, 3 payment plans (full/3/8 installments), automated installment emails, overdue reminders
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced
 - ESLint clean (0 errors/warnings), pre-commit lint enforcement via husky + lint-staged
 - Demo site at demo.rondo.club with anonymized fixture data
 - Developer docs at developer.rondo.club
 
 **Key Finance Files:**
-- `includes/class-finance-config.php` — FinanceConfig with settings, Rabobank/Mollie credentials
-- `includes/class-rest-invoices.php` — Invoice CRUD + send/resend/mark-paid endpoints
-- `includes/class-invoice-pdf-generator.php` — mPDF invoice generation
+- `includes/class-finance-config.php` — FinanceConfig with settings, Rabobank/Mollie credentials, email templates
+- `includes/class-rest-invoices.php` — Invoice CRUD + send/resend/mark-paid + installment toggle endpoints
+- `includes/class-invoice-pdf-generator.php` — mPDF invoice generation (discipline + membership types)
 - `includes/class-invoice-email-sender.php` — Email delivery with template variables
 - `includes/class-mollie-payment.php` — Mollie Payments API integration
-- `includes/class-mollie-webhook.php` — Webhook endpoint for payment status
+- `includes/class-mollie-webhook.php` — Webhook endpoint for payment status + installment tracking
 - `includes/class-rabobank-oauth.php` — Rabobank OAuth 2.0
 - `includes/class-rabobank-payment.php` — Rabobank betaalverzoek API
+- `includes/class-public-payment-page.php` — Token-secured public landing page for payment plan selection
+- `includes/class-installment-payment-service.php` — Installment payment creation and webhook handling
+- `includes/class-installment-scheduler.php` — Daily cron sweeper for emails and reminders
+- `includes/class-installment-email-sender.php` — Installment and reminder email delivery
+- `includes/class-bulk-invoice-creator.php` — WP-Cron batched bulk invoice creation
 
 ## Constraints
 
@@ -706,6 +718,19 @@ Club administrators can manage their members, teams, and club operations through
 | Rabobank as default/else branch | Backward compatibility, unknown providers route to Rabobank | ✓ Good |
 | Admin fee injected server-side | Backend is single source of truth, prevents client tampering | ✓ Good |
 | Pre-commit lint enforcement (husky + lint-staged) | Zero-tolerance for new lint errors in commits | ✓ Good |
+| Flat numbered post meta for installments | `_installment_N_*` pattern, not ACF repeater or separate CPT | ✓ Good |
+| Reverse-lookup meta for Mollie webhook | `_mollie_pid_{payment_id} = installment_number` for O(1) lookup | ✓ Good |
+| PHP-rendered public payment page | No WP nonce for unauthenticated users, template_redirect priority 0 | ✓ Good |
+| Single daily cron sweeper for scheduler | Not per-invoice scheduled events, prevents unbounded wp_options growth | ✓ Good |
+| 50 invoices per cron batch for bulk creation | Avoids PHP timeout at 500+ members, chained single-events | ✓ Good |
+| Installment due dates hardcoded as 25th | Sep-Apr derived from season, matches Dutch football club billing norms | ✓ Good |
+| Fresh Mollie payment link per email | Links expire, each send creates independent payment | ✓ Good |
+| Reminder 2 checked before reminder 1 | 21-day threshold satisfies 14-day; checking order ensures exactly one per period | ✓ Good |
+| Status written before wp_mail for idempotency | Prevents duplicate sends if cron re-runs | ✓ Good |
+| Installment plan toggles per-season | plan_3 and plan_8 as WP options, default true | ✓ Good |
+| Separate C-prefix invoice numbering | Membership invoices (C2026001) distinct from discipline (2026T001) | ✓ Good |
+| Separate email templates per invoice type | Membership vs discipline have different content needs | ✓ Good |
+| Conditional invoice PDF sections | Different table headers, line items, and payment sections by type | ✓ Good |
 
 ---
-*Last updated: 2026-02-18 after starting v28.0 Membership Fee Invoicing milestone*
+*Last updated: 2026-02-20 after v28.0 Membership Fee Invoicing milestone*

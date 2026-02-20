@@ -1027,3 +1027,33 @@
 
 ---
 
+
+## v28.0 Membership Fee Invoicing (Shipped: 2026-02-20)
+
+**Delivered:** Complete membership fee invoicing system replacing external billing systems like Nikki — from bulk invoice creation through public payment plan selection, Mollie installment payments, automated email scheduling, and overdue reminders with full Facturen page management.
+
+**Phases completed:** 192-197 (6 phases, 9 plans)
+
+**Key accomplishments:**
+
+- Per-season billing method toggle (Nikki vs Rondo invoicing) with configurable installment plans (3 or 8 installments)
+- Public token-secured payment landing page where members select payment plans and pay via Mollie, mobile-friendly
+- Installment payment management with Mollie webhook reverse-lookup, automatic N+1 payment creation, and all-paid gating
+- Automated email system: installment emails on the 25th of each month, 2-week and 3-week overdue reminders with BCC to treasurer
+- Bulk invoice creation via WP-Cron batched processing (50/batch) with progress polling UI, preventing PHP timeouts
+- Facturen page type/plan/overdue filters and per-installment timeline on invoice detail page
+- 25 quick tasks: contributie invoice PDF improvements, separate email templates, dynamic payment clauses, navigation polish
+
+**Stats:**
+
+- 55 files changed (phases only)
+- +10,165 / -120 lines changed
+- 6 phases, 9 plans, 49 commits
+- 2 days (2026-02-18 → 2026-02-19)
+
+**Git range:** `830205bc` → `32a9391a`
+
+**What's next:** To be determined
+
+---
+

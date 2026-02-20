@@ -2,19 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-18)
+See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v28.0 Membership Fee Invoicing — Phase 197: Frontend Updates (COMPLETE)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 197 of 197 (Frontend Updates) — COMPLETE
-Plan: 2 of 2 in current phase — 197-02 complete
-Status: Phase 197 complete — v28.1.0 deployed to production (Facturen filters + installment timeline)
-Last activity: 2026-02-19 - Completed quick task 109: Replace Financien with Financiën everywhere
+Milestone: v28.0 Membership Fee Invoicing — SHIPPED 2026-02-20
+Status: Between milestones — v28.0 archived, ready for next milestone
+Last activity: 2026-02-20 - Completed v28.0 milestone archival
 
-Progress: [██████████] 100% (v28.0 complete — all 7 phases shipped)
+Progress: [██████████] 100% (v28.0 shipped and archived)
 
 ## Performance Metrics
 
@@ -127,12 +126,12 @@ Phase 192-01 decisions:
 
 ## Session Continuity
 
-Last session: 2026-02-19
-Stopped at: Completed quick task 109 — replace Financien with Financiën in sidebar and page title display strings
+Last session: 2026-02-20
+Stopped at: Completed v28.0 milestone archival
 Resume file: None
 
-**Next action:** Phase 197 complete — v28.0 milestone shipped
+**Next action:** `/gsd:new-milestone` to start next milestone
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-19 — Quick task 109 complete (replace Financien with Financiën in display strings)*
+*Last updated: 2026-02-20 — v28.0 Membership Fee Invoicing milestone archived*
