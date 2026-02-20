@@ -871,30 +871,36 @@ class Invoices extends Base {
 			);
 		}
 
-		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF
-		$finance_config  = new FinanceConfig();
-		$active_provider = $finance_config->get_active_payment_provider();
+		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF.
+		// Membership invoices use the public payment page (/betaling/{token}) for plan selection,
+		// so skip direct Mollie/Rabobank payment link creation — it would overwrite the token URL.
+		$invoice_type = get_post_meta( $invoice_id, 'invoice_type', true );
 
-		if ( 'mollie' === $active_provider ) {
-			$mollie_payment = new MolliePayment();
-			$payment_result = $mollie_payment->create_payment_link( $invoice_id );
-			if ( is_wp_error( $payment_result ) ) {
-				error_log( 'Mollie payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
-			} elseif ( ! empty( $payment_result ) ) {
-				// Generate branded QR code from payment URL (non-blocking)
-				$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_result, $invoice_id );
-				if ( is_wp_error( $qr_result ) ) {
-					error_log( 'QR code generation failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
-				}
-			}
-		} else {
-			$oauth = new RabobankOAuth();
-			if ( $oauth->is_connected() ) {
-				$payment        = new RabobankPayment( $oauth );
-				$payment_result = $payment->create_payment_request( $invoice_id );
-				// Log error but continue - payment link is non-blocking
+		if ( 'membership' !== $invoice_type ) {
+			$finance_config  = new FinanceConfig();
+			$active_provider = $finance_config->get_active_payment_provider();
+
+			if ( 'mollie' === $active_provider ) {
+				$mollie_payment = new MolliePayment();
+				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 				if ( is_wp_error( $payment_result ) ) {
-					error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+					error_log( 'Mollie payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+				} elseif ( ! empty( $payment_result ) ) {
+					// Generate branded QR code from payment URL (non-blocking)
+					$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_result, $invoice_id );
+					if ( is_wp_error( $qr_result ) ) {
+						error_log( 'QR code generation failed for invoice ' . $invoice_id . ': ' . $qr_result->get_error_message() );
+					}
+				}
+			} else {
+				$oauth = new RabobankOAuth();
+				if ( $oauth->is_connected() ) {
+					$payment        = new RabobankPayment( $oauth );
+					$payment_result = $payment->create_payment_request( $invoice_id );
+					// Log error but continue - payment link is non-blocking
+					if ( is_wp_error( $payment_result ) ) {
+						error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+					}
 				}
 			}
 		}
