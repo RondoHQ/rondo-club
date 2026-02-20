@@ -39,7 +39,6 @@ use Rondo\REST\Commissies;
 use Rondo\REST\Todos;
 use Rondo\REST\ImportExport;
 use Rondo\REST\Calendar as RESTCalendar;
-use Rondo\REST\GoogleContacts as RESTGoogleContacts;
 use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
@@ -53,11 +52,8 @@ use Rondo\Notifications\EmailChannel;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
-use Rondo\Import\GoogleContactsAPI;
 use Rondo\Export\VCard as VCardExport;
 use Rondo\Export\ICalFeed;
-use Rondo\Export\GoogleContactsExport;
-use Rondo\Contacts\GoogleContactsSync;
 use Rondo\Sheets\GoogleSheetsConnection;
 use Rondo\CardDAV\Server as CardDAVServer;
 use Rondo\Data\InverseRelationships;
@@ -225,11 +221,6 @@ if ( ! class_exists( 'RONDO_Reminders' ) ) {
 	class_alias( Reminders::class, 'RONDO_Reminders' );
 }
 
-// Import classes
-if ( ! class_exists( 'RONDO_Google_Contacts_API_Import' ) ) {
-	class_alias( GoogleContactsAPI::class, 'RONDO_Google_Contacts_API_Import' );
-}
-
 // Export classes
 if ( ! class_exists( 'RONDO_VCard_Export' ) ) {
 	class_alias( VCardExport::class, 'RONDO_VCard_Export' );
@@ -237,10 +228,6 @@ if ( ! class_exists( 'RONDO_VCard_Export' ) ) {
 if ( ! class_exists( 'RONDO_ICal_Feed' ) ) {
 	class_alias( ICalFeed::class, 'RONDO_ICal_Feed' );
 }
-if ( ! class_exists( 'RONDO_Google_Contacts_Export' ) ) {
-	class_alias( GoogleContactsExport::class, 'RONDO_Google_Contacts_Export' );
-}
-
 // CardDAV class
 if ( ! class_exists( 'RONDO_CardDAV_Server' ) ) {
 	class_alias( CardDAVServer::class, 'RONDO_CardDAV_Server' );
@@ -362,9 +349,6 @@ function rondo_init() {
 
 		// Initialize fee cache invalidation hooks
 		new FeeCacheInvalidator();
-
-		// Initialize Google Contacts export hooks (save_post triggers cron job)
-		GoogleContactsExport::init();
 	}
 
 	// REST API classes - only for REST requests
@@ -376,7 +360,6 @@ function rondo_init() {
 		new Todos();
 		new ImportExport();
 		new RESTCalendar();
-		new RESTGoogleContacts();
 		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
@@ -394,9 +377,6 @@ function rondo_init() {
 	// Calendar sync - needs hooks registered for cron schedule filter
 	// Initialize on all requests to register cron_schedules filter
 	new Sync();
-
-	// Google Contacts sync - needs hooks registered for cron schedule filter
-	new GoogleContactsSync();
 
 	// iCal feed - also initialize on non-iCal requests for hook registration
 	// but we check for its specific request above for early return optimization
@@ -428,6 +408,11 @@ function rondo_init() {
 // in case ACF Pro isn't loaded yet (plugins load after themes)
 add_action( 'after_setup_theme', 'rondo_init', 5 );
 add_action( 'plugins_loaded', 'rondo_init', 5 );
+
+// Clear orphaned Google Contacts sync cron hook (removed in v29.0)
+if ( wp_next_scheduled( 'rondo_google_contacts_sync' ) ) {
+	wp_clear_scheduled_hook( 'rondo_google_contacts_sync' );
+}
 
 /**
  * Migrate WordPress options from stadion_ prefix to rondo_ prefix.
@@ -876,10 +861,6 @@ function rondo_theme_activation() {
 	$calendar_sync = new Sync();
 	$calendar_sync->schedule_sync();
 
-	// Schedule Google Contacts background sync
-	$contacts_sync = new GoogleContactsSync();
-	$contacts_sync->schedule_sync();
-
 	// Also handle theme-specific rewrite rules
 	rondo_theme_rewrite_rules();
 
@@ -906,10 +887,6 @@ function rondo_theme_deactivation() {
 	// Clear calendar sync cron job
 	$calendar_sync = new Sync();
 	$calendar_sync->unschedule_sync();
-
-	// Clear Google Contacts sync cron job
-	$contacts_sync = new GoogleContactsSync();
-	$contacts_sync->unschedule_sync();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
 	$user_roles = new UserRoles();
