@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 Milestone: v29.0 Made in Europe
 Phase: 199 of 202 (OAuth + Frontend Cleanup)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-20 — Phase 198 complete (verified, deployed), gap in google-oauth.php fixed
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-20 — Phase 199 Plan 01 complete: GoogleOAuth namespace to Rondo\Sheets, Gravatar endpoint removed
 
 Progress: [██░░░░░░░░] 20%
 
@@ -38,6 +38,7 @@ Progress: [██░░░░░░░░] 20%
 | 197 | 02 | 3min | 2 | 5 |
 | 198 | 01 | 3min | 2 | 7 |
 | 198 | 02 | 4min | 2 | 6 |
+| 199 | 01 | 2min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -52,6 +53,9 @@ Key decisions for v29.0 planning:
 - CSV export is independent additive work (Phase 200) — can execute in parallel with Lettermint phases
 - [Phase 198]: Added wp_clear_scheduled_hook('rondo_google_contacts_sync') in functions.php top level for automatic cleanup of orphaned cron event on existing installs
 - [Phase 198]: Kept RONDO_Calendar_CLI_Command class but removed sync/status/auto_log methods — rematch() survived since it uses only Matcher (kept)
+- [Phase 199-01]: GoogleOAuth namespace changed from Rondo\Calendar to Rondo\Sheets — namespace should reflect sole responsibility
+- [Phase 199-01]: refresh_token() inlines client creation instead of calling deleted get_client() — scopes not needed for token refresh
+- [Phase 199-01]: Gravatar endpoint removed — Gravatar.com is a US service (Made in Europe cleanup)
 
 ### Pending Todos
 
@@ -66,10 +70,10 @@ Key decisions for v29.0 planning:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Phase 198 complete, verified, deployed
+Stopped at: Phase 199 Plan 01 complete (199-01-SUMMARY.md)
 Resume file: None
 
-**Next action:** Plan Phase 199 — OAuth + Frontend Cleanup
+**Next action:** Execute Phase 199 Plan 02 — Frontend cleanup
 
 ---
 *State created: 2026-02-15*
