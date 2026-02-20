@@ -190,11 +190,11 @@ Plans:
   3. A manually-granted capability survives a subsequent automatic sync run without being revoked
   4. Administrator users are never modified by automatic capability sync, regardless of their Functies
   5. Admin can trigger "sync all capabilities" from Settings to re-apply the current mapping on demand
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 206-01: Capability sync REST endpoint, grant/revoke reconciliation, administrator guard, manual override tracking
-- [ ] 206-02: rondo-sync step submitting Functies to Rondo Club REST, on-demand sync UI in Settings
+- [ ] 206-01-PLAN.md — CapabilitySync PHP service class, REST endpoints (per-user + sync-all), manual override data model
+- [ ] 206-02-PLAN.md — rondo-sync capability sync step, functions pipeline Step 5, FunctiesTab sync button, version bump
 
 #### Phase 207: In-App Profile Page
 
