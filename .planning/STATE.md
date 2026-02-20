@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 206 (next)
+**Current focus:** v30.0 User Accounts & Profiles — Phase 206 in progress
 
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 205 of 208 (User Provisioning) — COMPLETE
-Plan: 2 of 2 complete in phase 205
-Status: Phase 205 complete — UserProvisioning backend + frontend UI both deployed to production
-Last activity: 2026-02-20 — Phase 205 Plan 02 (AccountCard + WelkomstmailTab frontend) complete
+Phase: 206 of 208 (Capability Sync) — IN PROGRESS
+Plan: 1 of 2 complete in phase 206
+Status: Phase 206 Plan 01 complete — CapabilitySync backend service + two REST endpoints deployed
+Last activity: 2026-02-20 — Phase 206 Plan 01 (CapabilitySync PHP service + REST endpoints) complete
 
 Progress: [████░░░░░░] 50% (3/6 phases complete)
 
@@ -52,6 +52,10 @@ Recent decisions affecting v30.0:
 - Phase 205 Plan 02: AccountCard reads personData from parent (no separate fetch) — same pattern as VOGCard
 - Phase 205 Plan 02: WelkomstmailTab lazy-fetches settings only when first opened (useEffect with !welcomeSettings guard)
 - Phase 205 Plan 02: No re-provision button when account already exists — backend is idempotent, UI prevents confusion
+- Phase 206 Plan 01: sync_all() derives functies from ACF work_history (body-less endpoint) — server re-applies current map against existing ACF data
+- Phase 206 Plan 01: sync_user_by_knvb_id() returns {status: no_user} HTTP 200 (not 404) when no WP user has the KNVB ID
+- Phase 206 Plan 01: rondo_user excluded from syncable roles — only rondo_fairplay, rondo_vog, rondo_bestuur managed by sync
+- Phase 206 Plan 01: Manual overrides: target = (mapped ∪ manual_grants) − manual_revokes, stored as JSON arrays in user meta
 
 ### Pending Todos
 
@@ -73,11 +77,11 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 205-02-PLAN.md — AccountCard + WelkomstmailTab frontend UI, version 29.2.0, deployed to production
+Stopped at: Completed 206-01-PLAN.md — CapabilitySync PHP service class + REST endpoints (capability-sync backend)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 206` to plan the next phase
+**Next action:** Execute 206-02-PLAN.md (rondo-sync step + Settings UI)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 205 complete (backend + frontend), v29.2.0 deployed to production*
+*Last updated: 2026-02-20 — Phase 206 Plan 01 complete (CapabilitySync backend service + REST endpoints)*
