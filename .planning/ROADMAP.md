@@ -122,7 +122,7 @@
 
 - [x] **Phase 198: Backend Sync Removal** — Delete Google Contacts and Calendar sync PHP classes and REST endpoints — completed 2026-02-20
 - [x] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar — completed 2026-02-20
-- [ ] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages
+- [x] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages — completed 2026-02-20
 - [ ] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery
 - [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications)
 
@@ -172,10 +172,10 @@ Plans:
   2. VOG list page has a CSV download button that exports the displayed VOG data
   3. Contributie list page has a CSV download button that exports fee data for the selected season
   4. Downloaded CSV files open correctly in Excel/Numbers with Dutch-formatted data
-**Plans**: 1 plan
+**Plans**: 1/1 complete
 
 Plans:
-- [ ] 200-01-PLAN.md -- Create CSV utility, add CSV download buttons to People/VOG/Contributie, remove dead Sheets code
+- [x] 200-01-PLAN.md -- Create CSV utility, add CSV download buttons to People/VOG/Contributie, remove dead Sheets code — completed 2026-02-20
 
 ### Phase 201: Lettermint Setup
 
@@ -225,10 +225,10 @@ Plans:
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
 | 198 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 199 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
-| 200 | v29.0 | 0/1 | Not started | - |
+| 200 | v29.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 201 | v29.0 | 0/1 | Not started | - |
 | 202 | v29.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — v29.0 Made in Europe roadmap added*
+*Last updated: 2026-02-20 — Phase 200 CSV Export complete*
