@@ -11,6 +11,7 @@
 - ✅ **v26.0 Discipline Case Invoicing** — Phases 178-185 (shipped 2026-02-16) — [Archive](milestones/v26.0-ROADMAP.md)
 - ✅ **v27.0 Mollie** — Phases 186-191 (shipped 2026-02-18) — [Archive](milestones/v27.0-ROADMAP.md)
 - ✅ **v28.0 Membership Fee Invoicing** — Phases 192-197 (shipped 2026-02-20) — [Archive](milestones/v28.0-ROADMAP.md)
+- 🚧 **v29.0 Made in Europe** — Phases 198-202 (in progress)
 
 ## Phases
 
@@ -115,6 +116,100 @@
 
 </details>
 
+### 🚧 v29.0 Made in Europe (In Progress)
+
+**Milestone Goal:** Remove non-European service dependencies (Google sync, Gravatar) and replace wp_mail email delivery with Lettermint for European data sovereignty.
+
+- [ ] **Phase 198: Backend Sync Removal** — Delete Google Contacts and Calendar sync PHP classes and REST endpoints
+- [ ] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar
+- [ ] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages
+- [ ] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery
+- [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications)
+
+## Phase Details
+
+### Phase 198: Backend Sync Removal
+
+**Goal**: Google Contacts and Calendar sync code no longer exists in the backend
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: GSYNC-01, GSYNC-02
+**Success Criteria** (what must be TRUE):
+  1. Google Contacts sync classes deleted (class-google-contacts-sync.php, class-google-contacts-export.php, class-google-contacts-import.php, class-google-contacts-connection.php)
+  2. Google Calendar sync classes deleted (class-calendar-sync.php, class-google-calendar-provider.php, calendar connection management classes)
+  3. All REST endpoints for Contacts and Calendar sync return 404 (routes no longer registered)
+  4. functions.php no longer loads any Contacts or Calendar sync classes
+  5. Codebase builds cleanly (no PHP errors, ESLint clean)
+**Plans**: TBD
+
+Plans:
+- [ ] 198-01: Remove Google Contacts sync backend (classes, REST endpoints, cron hooks)
+- [ ] 198-02: Remove Google Calendar sync backend (classes, REST endpoints, cron hooks)
+
+### Phase 199: OAuth + Frontend Cleanup
+
+**Goal**: Google OAuth serves only Sheets export; all sync UI, hooks, and pages removed; Gravatar integration gone
+**Depends on**: Phase 198
+**Requirements**: GSYNC-03, GSYNC-04, GSYNC-05, GRAV-01, GRAV-02
+**Success Criteria** (what must be TRUE):
+  1. Google OAuth flow connects only the Sheets scope (no Contacts or Calendar scopes requested)
+  2. Settings Connections tab shows no Contacts or Calendar connection UI
+  3. No Contacts or Calendar sync pages accessible in the frontend (routes removed)
+  4. Gravatar REST endpoint removed and person photos fall back to initials avatars
+  5. No frontend hooks or API client methods reference Contacts, Calendar sync, or Gravatar
+**Plans**: TBD
+
+Plans:
+- [ ] 199-01: Simplify Google OAuth (remove Contacts/Calendar scopes, OAuth callbacks, token storage)
+- [ ] 199-02: Remove frontend sync UI, pages, hooks, and API methods; remove Gravatar frontend and backend
+
+### Phase 200: CSV Export
+
+**Goal**: Users can download people, VOG, and contributie data as CSV files without needing Google
+**Depends on**: Nothing (independent of removal work)
+**Requirements**: GSYNC-06
+**Success Criteria** (what must be TRUE):
+  1. Leden (People) list page has a CSV download button that exports visible/filtered people
+  2. VOG list page has a CSV download button that exports the displayed VOG data
+  3. Contributie list page has a CSV download button that exports fee data for the selected season
+  4. Downloaded CSV files open correctly in Excel/Numbers with Dutch-formatted data
+**Plans**: TBD
+
+Plans:
+- [ ] 200-01: Implement CSV export for People, VOG, and Contributie pages
+
+### Phase 201: Lettermint Setup
+
+**Goal**: Lettermint WordPress plugin is installed and DNS is configured so all outgoing email routes through Lettermint
+**Depends on**: Nothing (independent infrastructure phase)
+**Requirements**: EMAIL-01, EMAIL-02
+**Success Criteria** (what must be TRUE):
+  1. Lettermint plugin installed and activated on production WordPress
+  2. API token configured in Settings > Lettermint
+  3. DKIM TXT record, bounce CNAME, and DMARC TXT record added to the sending domain DNS
+  4. Lettermint dashboard shows domain as verified
+  5. A test email sent from WordPress appears in the Lettermint activity log
+**Plans**: TBD
+
+Plans:
+- [ ] 201-01: Install Lettermint plugin, configure API token, add and verify DNS records
+
+### Phase 202: Email Verification
+
+**Goal**: All transactional email types are confirmed working through Lettermint with attachments and delivery verified
+**Depends on**: Phase 201
+**Requirements**: EMAIL-03, EMAIL-04, EMAIL-05
+**Success Criteria** (what must be TRUE):
+  1. Invoice email with PDF attachment arrives at recipient and appears in Lettermint dashboard
+  2. Installment email and overdue reminder emails deliver correctly (including BCC to treasurer on reminder 2)
+  3. VOG request and reminder emails deliver correctly
+  4. Mention notification email delivers correctly
+  5. Lettermint dashboard shows successful delivery for each email type tested
+**Plans**: TBD
+
+Plans:
+- [ ] 202-01: Trigger and verify invoice email with PDF attachment through Lettermint
+- [ ] 202-02: Trigger and verify installment, reminder, VOG, and notification emails through Lettermint
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -128,7 +223,12 @@
 | 178-185 | v26.0 | 13/13 | ✓ Complete | 2026-02-16 |
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
+| 198 | v29.0 | 0/2 | Not started | - |
+| 199 | v29.0 | 0/2 | Not started | - |
+| 200 | v29.0 | 0/1 | Not started | - |
+| 201 | v29.0 | 0/1 | Not started | - |
+| 202 | v29.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — v28.0 Membership Fee Invoicing shipped*
+*Last updated: 2026-02-20 — v29.0 Made in Europe roadmap added*

@@ -51,25 +51,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GSYNC-01 | TBD | Pending |
-| GSYNC-02 | TBD | Pending |
-| GSYNC-03 | TBD | Pending |
-| GSYNC-04 | TBD | Pending |
-| GSYNC-05 | TBD | Pending |
-| GSYNC-06 | TBD | Pending |
-| GRAV-01 | TBD | Pending |
-| GRAV-02 | TBD | Pending |
-| EMAIL-01 | TBD | Pending |
-| EMAIL-02 | TBD | Pending |
-| EMAIL-03 | TBD | Pending |
-| EMAIL-04 | TBD | Pending |
-| EMAIL-05 | TBD | Pending |
+| GSYNC-01 | Phase 198 | Pending |
+| GSYNC-02 | Phase 198 | Pending |
+| GSYNC-03 | Phase 199 | Pending |
+| GSYNC-04 | Phase 199 | Pending |
+| GSYNC-05 | Phase 199 | Pending |
+| GSYNC-06 | Phase 200 | Pending |
+| GRAV-01 | Phase 199 | Pending |
+| GRAV-02 | Phase 199 | Pending |
+| EMAIL-01 | Phase 201 | Pending |
+| EMAIL-02 | Phase 201 | Pending |
+| EMAIL-03 | Phase 202 | Pending |
+| EMAIL-04 | Phase 202 | Pending |
+| EMAIL-05 | Phase 202 | Pending |
 
 **Coverage:**
 - v29.0 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13
+- Mapped to phases: 13
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-20*
-*Last updated: 2026-02-20 after initial definition*
+*Last updated: 2026-02-20 — traceability mapped to phases 198-202*
