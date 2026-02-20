@@ -30,6 +30,7 @@ const ADMIN_SUBTABS = [
   { id: 'users', label: 'Gebruikers', icon: Users },
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
+  { id: 'welkomstmail', label: 'Welkomstmail' },
 ];
 
 export default function Settings() {
@@ -96,6 +97,12 @@ export default function Settings() {
   const [rolesLoading, setRolesLoading] = useState(true);
   const [rolesSaving, setRolesSaving] = useState(false);
   const [rolesMessage, setRolesMessage] = useState('');
+
+  // Welcome email settings state (admin only)
+  const [welcomeSettings, setWelcomeSettings] = useState(null);
+  const [welcomeSettingsLoading, setWelcomeSettingsLoading] = useState(false);
+  const [welcomeSaving, setWelcomeSaving] = useState(false);
+  const [welcomeSaved, setWelcomeSaved] = useState(false);
 
   // Functie-to-role mapping state (admin only)
   const [availableFuncties, setAvailableFuncties] = useState([]);
@@ -168,6 +175,17 @@ export default function Settings() {
     fetchRoleSettings();
   }, [isAdmin]);
 
+  // Fetch welcome email settings when welkomstmail subtab is active
+  useEffect(() => {
+    if (activeTab === 'admin' && activeSubtab === 'welkomstmail' && isAdmin && !welcomeSettings) {
+      setWelcomeSettingsLoading(true);
+      prmApi.getProvisioningSettings()
+        .then(res => setWelcomeSettings(res.data))
+        .catch(() => {})
+        .finally(() => setWelcomeSettingsLoading(false));
+    }
+  }, [activeTab, activeSubtab, isAdmin, welcomeSettings]);
+
   // Fetch functie-to-role mapping on mount (admin only)
   useEffect(() => {
     const fetchFunctieMapping = async () => {
@@ -191,6 +209,22 @@ export default function Settings() {
     };
     fetchFunctieMapping();
   }, [isAdmin]);
+
+  // Handle welcome email settings save
+  const handleWelcomeSave = async () => {
+    setWelcomeSaving(true);
+    setWelcomeSaved(false);
+    try {
+      const res = await prmApi.updateProvisioningSettings(welcomeSettings);
+      setWelcomeSettings(res.data);
+      setWelcomeSaved(true);
+      setTimeout(() => setWelcomeSaved(false), 2000);
+    } catch {
+      // Handle error silently
+    } finally {
+      setWelcomeSaving(false);
+    }
+  };
 
   // Handle functie-to-role mapping save
   const handleFunctiesSave = async () => {
@@ -444,6 +478,12 @@ export default function Settings() {
             functiesSaving={functiesSaving}
             functiesMessage={functiesMessage}
             handleFunctiesSave={handleFunctiesSave}
+            welcomeSettings={welcomeSettings}
+            setWelcomeSettings={setWelcomeSettings}
+            welcomeSettingsLoading={welcomeSettingsLoading}
+            welcomeSaving={welcomeSaving}
+            welcomeSaved={welcomeSaved}
+            handleWelcomeSave={handleWelcomeSave}
           />
         ) : null;
       case 'about':
@@ -1249,6 +1289,12 @@ function AdminTabWithSubtabs({
   functiesSaving,
   functiesMessage,
   handleFunctiesSave,
+  welcomeSettings,
+  setWelcomeSettings,
+  welcomeSettingsLoading,
+  welcomeSaving,
+  welcomeSaved,
+  handleWelcomeSave,
 }) {
   return (
     <div className="space-y-6">
@@ -1297,6 +1343,15 @@ function AdminTabWithSubtabs({
           saving={functiesSaving}
           message={functiesMessage}
           handleSave={handleFunctiesSave}
+        />
+      ) : activeSubtab === 'welkomstmail' ? (
+        <WelkomstmailTab
+          settings={welcomeSettings}
+          setSettings={setWelcomeSettings}
+          loading={welcomeSettingsLoading}
+          saving={welcomeSaving}
+          saved={welcomeSaved}
+          handleSave={handleWelcomeSave}
         />
       ) : null}
     </div>
@@ -1636,6 +1691,115 @@ function FunctiesTab({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Welkomstmail Tab Component - Welcome email template configuration
+function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handleSave }) {
+  const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Welkomstmail</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Stel het sjabloon in voor de welkomstmail die verstuurd wordt als een account wordt aangemaakt.
+        </p>
+      </div>
+
+      <div className="space-y-5">
+        {/* From email */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Van e-mailadres
+          </label>
+          <input
+            type="text"
+            value={settings?.from_email || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, from_email: e.target.value }))}
+            className={inputClass}
+            placeholder="noreply@example.com"
+          />
+        </div>
+
+        {/* From name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Van naam
+          </label>
+          <input
+            type="text"
+            value={settings?.from_name || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, from_name: e.target.value }))}
+            className={inputClass}
+            placeholder="Rondo Club"
+          />
+        </div>
+
+        {/* Subject */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Onderwerp
+          </label>
+          <input
+            type="text"
+            value={settings?.subject || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, subject: e.target.value }))}
+            className={inputClass}
+            placeholder="Welkom bij {club_naam}"
+          />
+        </div>
+
+        {/* Body */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Bericht
+          </label>
+          <textarea
+            rows={12}
+            value={settings?.body || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, body: e.target.value }))}
+            className={`${inputClass} font-mono text-sm`}
+            placeholder="Hallo {first_name},..."
+          />
+          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+            Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{login}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{set_password_url}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
+          </p>
+        </div>
+
+        {/* Save button */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving || !settings}
+            className="btn-primary flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Opslaan...
+              </>
+            ) : (
+              'Opslaan'
+            )}
+          </button>
+          {saved && (
+            <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+              <Check className="w-4 h-4" />
+              Opgeslagen
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
