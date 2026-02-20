@@ -463,7 +463,17 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-(No active requirements — planning next milestone)
+**Current Milestone: v29.0 Made in Europe**
+
+**Goal:** Remove non-European service dependencies (Google sync, Gravatar) and replace wp_mail email delivery with Lettermint for European data sovereignty.
+
+**Target features:**
+- Drop Google Contacts sync (5+ PHP classes, REST endpoints, OAuth callbacks, frontend UI)
+- Drop Google Calendar sync (calendar-sync, connections, google-calendar-provider classes, frontend UI)
+- Simplify Google OAuth to serve only Google Sheets export
+- Add CSV export alongside Google Sheets on applicable pages
+- Drop Gravatar integration (REST endpoint, API client, frontend hooks)
+- Replace wp_mail() with Lettermint for all transactional emails (invoices, installments, reminders, VOG, mentions)
 
 ### Out of Scope
 
@@ -733,4 +743,4 @@ Club administrators can manage their members, teams, and club operations through
 | Conditional invoice PDF sections | Different table headers, line items, and payment sections by type | ✓ Good |
 
 ---
-*Last updated: 2026-02-20 after v28.0 Membership Fee Invoicing milestone*
+*Last updated: 2026-02-20 after starting v29.0 Made in Europe milestone*
