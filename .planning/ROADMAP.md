@@ -12,6 +12,7 @@
 - ✅ **v27.0 Mollie** — Phases 186-191 (shipped 2026-02-18) — [Archive](milestones/v27.0-ROADMAP.md)
 - ✅ **v28.0 Membership Fee Invoicing** — Phases 192-197 (shipped 2026-02-20) — [Archive](milestones/v28.0-ROADMAP.md)
 - ✅ **v29.0 Made in Europe** — Phases 198-202 (shipped 2026-02-20) — [Archive](milestones/v29.0-ROADMAP.md)
+- 🚧 **v30.0 User Accounts & Profiles** — Phases 203-208 (in progress)
 
 ## Phases
 
@@ -127,6 +128,102 @@
 
 </details>
 
+### 🚧 v30.0 User Accounts & Profiles (In Progress)
+
+**Milestone Goal:** Replace WordPress admin access for non-admin users with in-app user management — provisioning from Sportlink members, Functie-based capability mapping with auto-sync, in-app profile page, and branded welcome emails.
+
+#### Phase 203: WP Admin Blocking
+
+**Goal**: Non-admin users can never reach wp-admin, with no side effects on existing functionality
+**Depends on**: Nothing (first phase, zero dependencies)
+**Requirements**: ACCS-01, ACCS-02
+**Success Criteria** (what must be TRUE):
+  1. A logged-in non-admin user who navigates to /wp-admin/ is immediately redirected to the app home page
+  2. Admin-ajax.php requests from non-admin users continue to work (no broken plugins or SPA functionality)
+  3. WP-CLI and cron tasks run without the admin block applying to them
+  4. Administrator users reach wp-admin normally and are unaffected by the hook
+**Plans**: TBD
+
+Plans:
+- [ ] 203-01: admin_init hook with wp_doing_ajax, WP_CLI, and DOING_CRON exemptions
+
+#### Phase 204: Functie-to-Role Mapping Config
+
+**Goal**: Admin can configure which Sportlink Functies grant which Rondo capabilities, with Functies populated automatically
+**Depends on**: Phase 203
+**Requirements**: CAPS-01, CAPS-02, CAPS-03
+**Success Criteria** (what must be TRUE):
+  1. Admin sees a checkbox matrix in Settings with known Sportlink Functies as rows and Rondo roles as columns
+  2. Admin can check/uncheck cells to define which Functie grants which role and save the mapping
+  3. Known Functies appear automatically in the matrix (populated by rondo-sync, not typed manually by admin)
+  4. The mapping persists across sessions and is immediately reflected when provisioning or syncing users
+**Plans**: TBD
+
+Plans:
+- [ ] 204-01: FunctieCapabilityMap class, Options API storage, GET/POST REST endpoints, Settings UI matrix
+
+#### Phase 205: User Provisioning
+
+**Goal**: Admin can create a WordPress user account from a Sportlink person record with a branded welcome email and bidirectional link
+**Depends on**: Phase 204 (mapping config read at provisioning time to assign correct role)
+**Requirements**: PROV-01, PROV-02, PROV-03, PROV-04, PROV-05, PROV-06
+**Success Criteria** (what must be TRUE):
+  1. Admin clicks a "Maak account aan" action on a person record and a WordPress user account is created for that person
+  2. The new user receives a branded welcome email with a password-set link valid for 7 days
+  3. The user account is linked bidirectionally to the person record (user stores person ID, person stores user ID)
+  4. Re-triggering provisioning for an existing user skips account creation and does not send a second welcome email
+  5. Admin can customize the welcome email subject and body text in Settings
+**Plans**: TBD
+
+Plans:
+- [ ] 205-01: UserProvisioning class, provision REST endpoint, bidirectional link, KNVB ID storage, idempotency flag
+- [ ] 205-02: Welcome email with password-set link, Lettermint from-address, configurable template in Settings
+
+#### Phase 206: Capability Sync
+
+**Goal**: User capabilities are automatically kept in sync with Sportlink Functies, with full grant-and-revoke reconciliation and manual override support
+**Depends on**: Phase 204 (mapping config) and Phase 205 (user accounts with rondo_knvb_id)
+**Requirements**: CAPS-04, CAPS-05, CAPS-06, CAPS-07, CAPS-08
+**Success Criteria** (what must be TRUE):
+  1. After a rondo-sync run, users whose Functies match a mapped role have that capability granted automatically
+  2. Users whose Functies no longer match a mapped role have that capability revoked (not just append-only)
+  3. A manually-granted capability survives a subsequent automatic sync run without being revoked
+  4. Administrator users are never modified by automatic capability sync, regardless of their Functies
+  5. Admin can trigger "sync all capabilities" from Settings to re-apply the current mapping on demand
+**Plans**: TBD
+
+Plans:
+- [ ] 206-01: Capability sync REST endpoint, grant/revoke reconciliation, administrator guard, manual override tracking
+- [ ] 206-02: rondo-sync step submitting Functies to Rondo Club REST, on-demand sync UI in Settings
+
+#### Phase 207: In-App Profile Page
+
+**Goal**: Users can change their password from inside the app without ever needing to visit wp-login.php
+**Depends on**: Phase 205 (WP user accounts must exist; expanded /user/me data from provisioning)
+**Requirements**: PROF-01, PROF-02, PROF-03, PROF-04
+**Success Criteria** (what must be TRUE):
+  1. User navigates to a Profile page in the app and sees their linked Sportlink name and active Functies
+  2. User can enter their current password and a new password to change credentials
+  3. The password change form rejects the new password if the current password is wrong
+  4. After a successful password change, the user is redirected to the login page (session invalidated)
+**Plans**: TBD
+
+Plans:
+- [ ] 207-01: POST /rondo/v1/user/password endpoint, expanded GET /rondo/v1/user/me, Profile page React component, sidebar link
+
+#### Phase 208: Avatar & Sidebar
+
+**Goal**: Users see their own Sportlink photo as their avatar in the app sidebar
+**Depends on**: Phase 205 (bidirectional user-person link must exist to fetch the photo)
+**Requirements**: AVTR-01, AVTR-02
+**Success Criteria** (what must be TRUE):
+  1. A user with a linked Sportlink person who has a profile photo sees that photo as their avatar in the sidebar
+  2. A user without a linked person, or whose linked person has no photo, sees a default avatar icon
+**Plans**: TBD
+
+Plans:
+- [ ] 208-01: Sidebar avatar component reading linked person photo from /user/me, fallback default icon
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -141,7 +238,13 @@
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
 | 198-202 | v29.0 | 8/8 | ✓ Complete | 2026-02-20 |
+| 203 | v30.0 | 0/TBD | Not started | - |
+| 204 | v30.0 | 0/TBD | Not started | - |
+| 205 | v30.0 | 0/TBD | Not started | - |
+| 206 | v30.0 | 0/TBD | Not started | - |
+| 207 | v30.0 | 0/TBD | Not started | - |
+| 208 | v30.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — v29.0 Made in Europe shipped*
+*Last updated: 2026-02-20 — v30.0 User Accounts & Profiles roadmap added (phases 203-208)*
