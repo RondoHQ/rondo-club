@@ -209,7 +209,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 207-01-PLAN.md — Backend password endpoint + expanded /user/me, Frontend Profile page + sidebar integration + version bump
+- [x] 207-01-PLAN.md — Backend password endpoint + expanded /user/me, Frontend Profile page + sidebar integration + version bump
 
 #### Phase 208: Avatar & Sidebar
 
@@ -242,9 +242,9 @@ Plans:
 | 204 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 205 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 206 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
-| 207 | v30.0 | 0/TBD | Not started | - |
+| 207 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 208 | v30.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — Phase 206 (Capability Sync) complete*
+*Last updated: 2026-02-20 — Phase 207 (In-App Profile Page) complete*
