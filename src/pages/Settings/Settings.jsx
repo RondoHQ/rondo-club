@@ -1664,44 +1664,50 @@ function FunctiesTab({
         <div className="space-y-6">
           {/* Functie-to-role mapping table */}
           <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
-            {/* Header */}
-            <div className="grid grid-cols-[1fr,auto] gap-4 px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Functie</span>
-              <div className={`grid gap-6 text-center`} style={{ gridTemplateColumns: `repeat(${roles.length}, 6rem)` }}>
-                {roles.map(role => (
-                  <span key={role.slug} className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">
-                    {role.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {/* Rows */}
-            <div className="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto">
-              {allFuncties.map(functie => {
-                const isStale = !availableFuncties.includes(functie);
-                return (
-                  <div key={functie} className="grid grid-cols-[1fr,auto] gap-4 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 items-center">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm text-gray-900 dark:text-gray-100 truncate">{functie}</span>
-                      {isStale && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500 italic whitespace-nowrap">(niet meer actief)</span>
-                      )}
-                    </div>
-                    <div className={`grid gap-6`} style={{ gridTemplateColumns: `repeat(${roles.length}, 6rem)` }}>
-                      {roles.map(role => (
-                        <label key={role.slug} className="flex items-center justify-center w-24 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={!!(functieMapState[functie]?.[role.slug])}
-                            onChange={(e) => handleCheckboxChange(functie, role.slug, e.target.checked)}
-                            className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300"
-                          />
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                  <tr>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
+                      Functie
+                    </th>
+                    {roles.map(role => (
+                      <th key={role.slug} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 w-24">
+                        {role.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {allFuncties.map(functie => {
+                    const isStale = !availableFuncties.includes(functie);
+                    return (
+                      <tr key={functie} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 py-2.5 align-middle">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm text-gray-900 dark:text-gray-100 truncate">{functie}</span>
+                            {isStale && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500 italic whitespace-nowrap">(niet meer actief)</span>
+                            )}
+                          </div>
+                        </td>
+                        {roles.map(role => (
+                          <td key={role.slug} className="px-4 py-2.5 w-24 text-center align-middle">
+                            <label className="flex items-center justify-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!!(functieMapState[functie]?.[role.slug])}
+                                onChange={(e) => handleCheckboxChange(functie, role.slug, e.target.checked)}
+                                className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300"
+                              />
+                            </label>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
