@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 Milestone: v29.0 Made in Europe
 Phase: 198 of 202 (Backend Sync Removal)
-Plan: 1 of 2 in current phase
+Plan: 2 of 2 in current phase (phase complete)
 Status: In progress
-Last activity: 2026-02-20 — 198-01: Google Contacts sync backend removal complete
+Last activity: 2026-02-20 — 198-02: Calendar sync backend removal complete
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -37,6 +37,7 @@ Progress: [░░░░░░░░░░] 0%
 | 197 | 01 | 3min | 2 | 2 |
 | 197 | 02 | 3min | 2 | 5 |
 | 198 | 01 | 3min | 2 | 7 |
+| 198 | 02 | 4min | 2 | 6 |
 
 ## Accumulated Context
 
@@ -50,6 +51,7 @@ Key decisions for v29.0 planning:
 - Gravatar removal bundled with frontend cleanup phase (Phase 199) — small enough to not warrant own phase
 - CSV export is independent additive work (Phase 200) — can execute in parallel with Lettermint phases
 - [Phase 198]: Added wp_clear_scheduled_hook('rondo_google_contacts_sync') in functions.php top level for automatic cleanup of orphaned cron event on existing installs
+- [Phase 198]: Kept RONDO_Calendar_CLI_Command class but removed sync/status/auto_log methods — rematch() survived since it uses only Matcher (kept)
 
 ### Pending Todos
 
@@ -64,11 +66,11 @@ Key decisions for v29.0 planning:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 198-01-PLAN.md
+Stopped at: Completed 198-02-PLAN.md
 Resume file: None
 
-**Next action:** Execute Phase 198 Plan 02 — Calendar Sync Removal
+**Next action:** Execute Phase 199 — Frontend Cleanup
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — 198-01 Google Contacts sync backend removal complete*
+*Last updated: 2026-02-20 — 198-02 Calendar sync backend removal complete*
