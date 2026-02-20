@@ -9,8 +9,8 @@ Requirements for milestone v30.0. Each maps to roadmap phases.
 
 ### Access Control
 
-- [ ] **ACCS-01**: Non-admin users are redirected away from wp-admin to the app home page
-- [ ] **ACCS-02**: WP admin blocking exempts admin-ajax.php, WP-CLI, and cron requests so existing functionality is unaffected
+- [x] **ACCS-01**: Non-admin users are redirected away from wp-admin to the app home page
+- [x] **ACCS-02**: WP admin blocking exempts admin-ajax.php, WP-CLI, and cron requests so existing functionality is unaffected
 
 ### User Provisioning
 
@@ -23,9 +23,9 @@ Requirements for milestone v30.0. Each maps to roadmap phases.
 
 ### Capability Mapping
 
-- [ ] **CAPS-01**: Admin can configure a mapping from Sportlink Functies to Rondo roles via Settings
-- [ ] **CAPS-02**: Functie-to-role mapping is displayed as a visual matrix UI (Functies as rows, roles as columns)
-- [ ] **CAPS-03**: Known Functies are populated automatically by rondo-sync so admin does not type names manually
+- [x] **CAPS-01**: Admin can configure a mapping from Sportlink Functies to Rondo roles via Settings
+- [x] **CAPS-02**: Functie-to-role mapping is displayed as a visual matrix UI (Functies as rows, roles as columns)
+- [x] **CAPS-03**: Known Functies are populated automatically by rondo-sync so admin does not type names manually
 - [ ] **CAPS-04**: Capabilities are automatically assigned from Sportlink Functies during sync with full reconciliation (grant and revoke)
 - [ ] **CAPS-05**: Admin can manually override a user's capabilities independent of their Functies
 - [ ] **CAPS-06**: Manual capability overrides survive automatic Functie-based sync
@@ -71,11 +71,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ACCS-01 | Phase 203 | Pending |
-| ACCS-02 | Phase 203 | Pending |
-| CAPS-01 | Phase 204 | Pending |
-| CAPS-02 | Phase 204 | Pending |
-| CAPS-03 | Phase 204 | Pending |
+| ACCS-01 | Phase 203 | ✓ Delivered |
+| ACCS-02 | Phase 203 | ✓ Delivered |
+| CAPS-01 | Phase 204 | ✓ Delivered |
+| CAPS-02 | Phase 204 | ✓ Delivered |
+| CAPS-03 | Phase 204 | ✓ Delivered |
 | PROV-01 | Phase 205 | Pending |
 | PROV-02 | Phase 205 | Pending |
 | PROV-03 | Phase 205 | Pending |

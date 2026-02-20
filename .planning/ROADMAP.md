@@ -160,7 +160,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 204-01-PLAN.md -- FunctieCapabilityMap PHP class, REST endpoints, FunctiesTab checkbox matrix UI, developer docs
+- [x] 204-01-PLAN.md — FunctieCapabilityMap PHP class, REST endpoints, FunctiesTab checkbox matrix UI, developer docs
 
 #### Phase 205: User Provisioning
 
@@ -239,7 +239,7 @@ Plans:
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
 | 198-202 | v29.0 | 8/8 | ✓ Complete | 2026-02-20 |
 | 203 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
-| 204 | v30.0 | 0/TBD | Not started | - |
+| 204 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 205 | v30.0 | 0/TBD | Not started | - |
 | 206 | v30.0 | 0/TBD | Not started | - |
 | 207 | v30.0 | 0/TBD | Not started | - |
@@ -247,4 +247,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — v30.0 User Accounts & Profiles roadmap added (phases 203-208)*
+*Last updated: 2026-02-20 — Phase 204 (Functie-to-Role Mapping Config) complete*
