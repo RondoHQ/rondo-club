@@ -504,22 +504,36 @@ class PublicPaymentPage {
 			exit;
 		}
 
-		// Always create a fresh Mollie payment link rather than reusing stored checkout URLs.
-		// A member may change their plan selection on a return visit, so clearing old data
-		// ensures the new payment link matches the currently selected plan and amount.
-		delete_post_meta( $invoice_id, '_installment_1_mollie_payment_id' );
-		delete_post_meta( $invoice_id, '_installment_1_payment_link' );
+		// Clear all previous installment data before writing new plan.
+		// A member may change their plan selection on a return visit (e.g. quarterly → full),
+		// so we must remove stale amounts, Mollie links, and reverse-lookup keys.
+		$old_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		for ( $n = 1; $n <= max( $old_count, 8 ); $n++ ) {
+			$old_mollie_id = get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
+			if ( $old_mollie_id ) {
+				delete_post_meta( $invoice_id, '_mollie_pid_' . $old_mollie_id );
+			}
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_amount' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_admin_fee' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_status' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_due_date' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_payment_link' );
+		}
 
 		// Read amounts.
 		$total     = (float) get_field( 'total_amount', $invoice_id );
 		$config    = new FinanceConfig();
 		$admin_fee = $config->get_installment_admin_fee();
 
-		// Store plan meta and write installment breakdown for multi-installment plans.
+		// Store plan meta and write installment breakdown.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );
 
 		if ( 'full' === $plan ) {
 			update_post_meta( $invoice_id, '_installment_count', 1 );
+			update_post_meta( $invoice_id, '_installment_1_amount', $total );
+			update_post_meta( $invoice_id, '_installment_1_admin_fee', 0 );
+			update_post_meta( $invoice_id, '_installment_1_status', 'pending' );
 		} elseif ( 'quarterly_3' === $plan ) {
 			$available_dates = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
 			$due_dates       = self::calculate_installment_due_dates( 3, $available_dates, true );
