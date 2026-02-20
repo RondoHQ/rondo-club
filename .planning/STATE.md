@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** Planning next milestone
+**Current focus:** v29.0 Made in Europe
 
 ## Current Position
 
-Milestone: v28.0 Membership Fee Invoicing — SHIPPED 2026-02-20
-Status: Between milestones — v28.0 archived, ready for next milestone
-Last activity: 2026-02-20 - Completed v28.0 milestone archival
+Milestone: v29.0 Made in Europe
+Status: Defining requirements
+Last activity: 2026-02-20 — Milestone v29.0 started
 
-Progress: [██████████] 100% (v28.0 shipped and archived)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -130,8 +130,8 @@ Last session: 2026-02-20
 Stopped at: Completed v28.0 milestone archival
 Resume file: None
 
-**Next action:** `/gsd:new-milestone` to start next milestone
+**Next action:** Define requirements and create roadmap
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — v28.0 Membership Fee Invoicing milestone archived*
+*Last updated: 2026-02-20 — v29.0 Made in Europe milestone started*
