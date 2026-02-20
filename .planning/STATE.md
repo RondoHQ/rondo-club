@@ -88,7 +88,7 @@ Phase 192-01 decisions:
 
 ### Pending Todos
 
-3 todo(s) in `.planning/todos/pending/`
+4 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
