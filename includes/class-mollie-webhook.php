@@ -5,11 +5,14 @@
  * Receives Mollie webhook POST events and idempotently transitions invoices
  * to `rondo_paid` when payment is confirmed.
  *
- * Supports three lookup paths:
- * - Path 0 (payment links): Fires when a payment link (pl_xxx) is paid. Looks up
+ * Supports four lookup paths:
+ * - Path 0a (installment payment links): Fires when a payment link (pl_xxx) is paid.
+ *   Reverse-lookup via _mollie_pid_{pl_xxx} meta. Used for membership fee installments.
+ * - Path 0b (full payment links): Fires when a payment link (pl_xxx) is paid. Looks up
  *   invoice by _mollie_payment_link_id. Used for discipline case invoices.
- * - Path 1 (installments): Reverse-lookup via _mollie_pid_{payment_id} meta.
- * - Path 2 (legacy): Full-payment lookup via _mollie_payment_id meta.
+ * - Path 1 (legacy installments): Reverse-lookup via _mollie_pid_{tr_xxx} meta.
+ *   For installments created before the switch to payment links.
+ * - Path 2 (legacy full payment): Full-payment lookup via _mollie_payment_id meta.
  *
  * @package Rondo\Finance
  */
@@ -58,10 +61,11 @@ class MollieWebhook {
 	/**
 	 * Handle an incoming Mollie webhook notification.
 	 *
-	 * Supports three lookup paths based on the ID prefix:
-	 * - Path 0 (pl_xxx): Payment link webhook — re-fetches payment link, marks invoice paid.
-	 * - Path 1 (tr_xxx): Installment reverse-lookup via _mollie_pid_{payment_id} meta.
-	 * - Path 2 (tr_xxx, legacy): Full-payment lookup via _mollie_payment_id meta.
+	 * Supports four lookup paths based on the ID prefix:
+	 * - Path 0a (pl_xxx): Installment payment link — reverse-lookup via _mollie_pid_{pl_xxx}.
+	 * - Path 0b (pl_xxx): Full/discipline payment link — lookup via _mollie_payment_link_id.
+	 * - Path 1 (tr_xxx): Legacy installment reverse-lookup via _mollie_pid_{tr_xxx} meta.
+	 * - Path 2 (tr_xxx): Legacy full-payment lookup via _mollie_payment_id meta.
 	 *
 	 * Always returns HTTP 200 to prevent Mollie retry storms.
 	 *
@@ -172,8 +176,12 @@ class MollieWebhook {
 	/**
 	 * Handle a payment link webhook notification (Path 0).
 	 *
-	 * Re-fetches the payment link from Mollie to verify it is paid, then looks up
-	 * the invoice by _mollie_payment_link_id meta and transitions it to rondo_paid.
+	 * Re-fetches the payment link from Mollie to verify it is paid, then routes
+	 * to the correct handler:
+	 * - Path 0a (installments): Reverse-lookup via _mollie_pid_{pl_xxx} meta.
+	 *   Routes to handle_installment_paid() for installment tracking and auto-creation.
+	 * - Path 0b (full payment / discipline): Lookup via _mollie_payment_link_id meta.
+	 *   Transitions invoice directly to rondo_paid.
 	 *
 	 * @param string $payment_link_id Mollie payment link ID (pl_xxx).
 	 * @return \WP_REST_Response Response with ok:true (always 200).
@@ -193,7 +201,28 @@ class MollieWebhook {
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
 
-		// Look up invoice by payment link ID.
+		// Path 0a — Installment reverse-lookup via _mollie_pid_{pl_xxx}.
+		// InstallmentPaymentService stores payment links (pl_xxx) with this meta pattern.
+		$installment_posts = get_posts( [
+			'post_type'      => 'rondo_invoice',
+			'post_status'    => 'any',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_query'     => [
+				[
+					'key'     => '_mollie_pid_' . $payment_link_id,
+					'compare' => 'EXISTS',
+				],
+			],
+		] );
+
+		if ( ! empty( $installment_posts ) ) {
+			$invoice_id         = (int) $installment_posts[0];
+			$installment_number = (int) get_post_meta( $invoice_id, '_mollie_pid_' . $payment_link_id, true );
+			return $this->handle_installment_paid( $invoice_id, $installment_number, $payment_link_id );
+		}
+
+		// Path 0b — Full payment / discipline case lookup via _mollie_payment_link_id.
 		$posts = get_posts( [
 			'post_type'      => 'rondo_invoice',
 			'post_status'    => 'any',

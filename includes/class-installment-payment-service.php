@@ -2,7 +2,10 @@
 /**
  * Installment Payment Service
  *
- * Shared service for creating Mollie payments for invoice installments.
+ * Shared service for creating Mollie payment links for invoice installments.
+ * Uses the Payment Links API (not regular Payments API) so that links emailed
+ * to members remain valid until paid — regular payments expire in ~15 minutes.
+ *
  * Used by both PublicPaymentPage (initial payment) and MollieWebhook
  * (subsequent installment creation after each payment is confirmed).
  *
@@ -18,20 +21,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Shared service for Mollie installment payment creation.
+ * Shared service for Mollie installment payment link creation.
  *
- * Extracts the payment creation logic that was previously private to
+ * Extracts the payment link creation logic that was previously private to
  * PublicPaymentPage so it can be reused by the webhook handler when
- * automatically creating the next installment payment after one is confirmed.
+ * automatically creating the next installment payment link after one is confirmed.
  */
 class InstallmentPaymentService {
 
 	/**
-	 * Create a Mollie payment for a specific installment of an invoice.
+	 * Create a Mollie payment link for a specific installment of an invoice.
 	 *
-	 * Reads installment meta from the invoice post, builds the Mollie payment
-	 * payload, creates the payment via the Mollie API, and stores the results
-	 * (payment ID, checkout URL, reverse-lookup meta) back on the invoice.
+	 * Uses the Mollie Payment Links API (POST /v2/payment-links) which creates a
+	 * persistent link that remains valid until paid — unlike regular Mollie payments
+	 * (POST /v2/payments) which expire in ~15 minutes. This is critical because
+	 * installment links are emailed to members who may open them hours or days later.
+	 *
+	 * Reads installment meta from the invoice post, builds the Mollie payload,
+	 * creates the payment link via the Mollie API, and stores the results
+	 * (payment link ID, checkout URL, reverse-lookup meta) back on the invoice.
 	 *
 	 * For the `full` plan (no installment meta written by write_installment_meta),
 	 * the amount falls back to the ACF total_amount field.
@@ -74,7 +82,7 @@ class InstallmentPaymentService {
 			$description = 'Termijn ' . $installment_number . '/' . $count . ' - Factuur ' . $invoice_number;
 		}
 
-		// Build Mollie payment payload.
+		// Build Mollie payment link payload.
 		$payload = [
 			'amount'      => [
 				'currency' => 'EUR',
@@ -82,10 +90,6 @@ class InstallmentPaymentService {
 			],
 			'description' => $description,
 			'redirectUrl' => home_url( '/betaling/' . $token . '?betaald=1' ),
-			'metadata'    => [
-				'invoice_id'         => $invoice_id,
-				'installment_number' => $installment_number,
-			],
 		];
 
 		// Conditionally add webhookUrl — omit on localhost/.local environments.
@@ -94,23 +98,23 @@ class InstallmentPaymentService {
 			$payload['webhookUrl'] = rest_url( 'rondo/v1/mollie/webhook' );
 		}
 
-		// Create payment via Mollie SDK.
+		// Create payment link via Mollie Payment Links API (persistent, no expiry).
 		try {
 			$mollie_client = new MollieClient();
 			$mollie        = $mollie_client->get();
-			$payment       = $mollie->payments->create( $payload );
+			$payment_link  = $mollie->paymentLinks->create( $payload );
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie API exception (installment ' . $installment_number . '): ' . $e->getMessage() );
 			return new \WP_Error( 'mollie_api_error', $e->getMessage() );
 		}
 
-		// Store payment results on invoice (raw WP meta).
-		update_post_meta( $invoice_id, '_installment_' . $installment_number . '_mollie_payment_id', $payment->id );
-		update_post_meta( $invoice_id, '_installment_' . $installment_number . '_payment_link', $payment->getCheckoutUrl() );
+		// Store payment link results on invoice (raw WP meta).
+		update_post_meta( $invoice_id, '_installment_' . $installment_number . '_mollie_payment_id', $payment_link->id );
+		update_post_meta( $invoice_id, '_installment_' . $installment_number . '_payment_link', $payment_link->getCheckoutUrl() );
 
 		// Reverse-lookup meta for O(1) webhook matching.
-		update_post_meta( $invoice_id, '_mollie_pid_' . $payment->id, $installment_number );
+		update_post_meta( $invoice_id, '_mollie_pid_' . $payment_link->id, $installment_number );
 
-		return $payment->getCheckoutUrl();
+		return $payment_link->getCheckoutUrl();
 	}
 }

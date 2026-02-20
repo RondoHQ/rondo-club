@@ -504,10 +504,9 @@ class PublicPaymentPage {
 			exit;
 		}
 
-		// Always create a fresh Mollie payment rather than reusing stored checkout URLs.
-		// Mollie regular payments (POST /v2/payments) expire in ~15 minutes, so a returning
-		// member who re-opens the payment page after that window would be sent to an expired
-		// Mollie checkout URL. Clearing the old data forces a new payment to be created.
+		// Always create a fresh Mollie payment link rather than reusing stored checkout URLs.
+		// A member may change their plan selection on a return visit, so clearing old data
+		// ensures the new payment link matches the currently selected plan and amount.
 		delete_post_meta( $invoice_id, '_installment_1_mollie_payment_id' );
 		delete_post_meta( $invoice_id, '_installment_1_payment_link' );
 
