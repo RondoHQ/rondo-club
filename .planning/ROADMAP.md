@@ -172,10 +172,10 @@ Plans:
   2. VOG list page has a CSV download button that exports the displayed VOG data
   3. Contributie list page has a CSV download button that exports fee data for the selected season
   4. Downloaded CSV files open correctly in Excel/Numbers with Dutch-formatted data
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 200-01: Implement CSV export for People, VOG, and Contributie pages
+- [ ] 200-01-PLAN.md -- Create CSV utility, add CSV download buttons to People/VOG/Contributie, remove dead Sheets code
 
 ### Phase 201: Lettermint Setup
 
