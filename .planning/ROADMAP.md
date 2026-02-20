@@ -176,8 +176,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 205-01-PLAN.md — UserProvisioning PHP class, REST endpoints (provision + settings), person meta exposure, users list enhancement
-- [ ] 205-02-PLAN.md — AccountCard UI on PersonDetail, WelkomstmailTab in Settings, API client methods
+- [x] 205-01-PLAN.md — UserProvisioning PHP class, REST endpoints (provision + settings), person meta exposure, users list enhancement
+- [x] 205-02-PLAN.md — AccountCard UI on PersonDetail, WelkomstmailTab in Settings, API client methods
 
 #### Phase 206: Capability Sync
 
@@ -240,11 +240,11 @@ Plans:
 | 198-202 | v29.0 | 8/8 | ✓ Complete | 2026-02-20 |
 | 203 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 204 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
-| 205 | v30.0 | 0/TBD | Not started | - |
+| 205 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 206 | v30.0 | 0/TBD | Not started | - |
 | 207 | v30.0 | 0/TBD | Not started | - |
 | 208 | v30.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — Phase 204 (Functie-to-Role Mapping Config) complete*
+*Last updated: 2026-02-20 — Phase 205 (User Provisioning) complete*
