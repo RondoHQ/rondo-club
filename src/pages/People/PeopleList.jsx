@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Settings, FileSpreadsheet } from 'lucide-react';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Settings, Download } from 'lucide-react';
 import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
+import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
 import { getTeamName, formatPhoneForTel } from '@/utils/formatters';
@@ -605,20 +606,10 @@ export default function PeopleList() {
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const filterRef = useRef(null);
   const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
-
-  // Google Sheets connection status
-  const { data: sheetsStatus } = useQuery({
-    queryKey: ['google-sheets-status'],
-    queryFn: async () => {
-      const response = await prmApi.getSheetsStatus();
-      return response.data;
-    },
-  });
 
   // Column preferences hook
   const {
@@ -908,67 +899,20 @@ export default function PeopleList() {
     }
   }, [sortField, sortOrder, setSortField, setSortOrder]);
 
-  // Handle export to Google Sheets
-  const handleExportToSheets = async () => {
-    if (isExporting) return;
-
-    setIsExporting(true);
-
-    // Open window immediately (before async) to avoid popup blocker
-    const newWindow = window.open('about:blank', '_blank');
-
-    try {
-      // Build column list: always include 'name', then visible columns
-      const columns = ['name', ...visibleColumns];
-
-      // Build filter params from current URL state (matching useFilteredPeople params)
-      const filters = {
-        search: searchParams.get('search') || undefined,
-        modified_days: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : undefined,
-        birth_year_from: selectedBirthYear || undefined,
-        birth_year_to: selectedBirthYear || undefined,
-        huidig_vrijwilliger: huidigeVrijwilliger || undefined,
-        financiele_blokkade: financieleBlokkade || undefined,
-        type_lid: typeLid || undefined,
-        foto_missing: fotoMissing || undefined,
-        vog_missing: vogMissing || undefined,
-        vog_older_than_years: vogOlderThanYears || undefined,
-        include_former: includeFormer || undefined,
-        lid_tot_future: lidTotFuture || undefined,
-        orderby: sortField,
-        order: sortOrder,
-      };
-
-      // Call export endpoint
-      const response = await prmApi.exportPeopleToSheets({ columns, filters });
-
-      // Navigate the opened window to the spreadsheet
-      if (response.data.spreadsheet_url && newWindow) {
-        newWindow.location.href = response.data.spreadsheet_url;
-      }
-
-    } catch (error) {
-      console.error('Export error:', error);
-      // Close the blank window on error
-      if (newWindow) newWindow.close();
-      const message = error.response?.data?.message || 'Export mislukt. Probeer het opnieuw.';
-      alert(message);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Handle connect to Google Sheets
-  const handleConnectSheets = async () => {
-    try {
-      const response = await prmApi.getSheetsAuthUrl();
-      if (response.data.auth_url) {
-        window.location.href = response.data.auth_url;
-      }
-    } catch (error) {
-      console.error('Auth error:', error);
-      alert('Kon geen verbinding maken met Google Sheets. Probeer het opnieuw.');
-    }
+  // Handle CSV export
+  const handleExportCsv = () => {
+    const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team'];
+    const rows = people.map(person => [
+      [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
+      person.first_name || '',
+      person.infix || '',
+      person.last_name || '',
+      getFirstContactByType(person, 'email') || '',
+      getFirstPhone(person) || '',
+      personTeamMap[person.id] || '',
+    ]);
+    const csv = buildCsv([headers, ...rows]);
+    downloadCsv(csv, `leden-${format(new Date(), 'yyyy-MM-dd')}.csv`);
   };
 
   return (
@@ -1365,29 +1309,15 @@ export default function PeopleList() {
           )}
         </div>
         <div className="flex gap-2">
-          {/* Google Sheets Export Button */}
-          {sheetsStatus?.connected ? (
-            <button
-              onClick={handleExportToSheets}
-              disabled={isExporting}
-              className="btn-secondary"
-              title="Exporteren naar Google Sheets"
-            >
-              {isExporting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-              ) : (
-                <FileSpreadsheet className="w-4 h-4" />
-              )}
-            </button>
-          ) : sheetsStatus?.google_configured ? (
-            <button
-              onClick={handleConnectSheets}
-              className="btn-secondary"
-              title="Verbinden met Google Sheets"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-            </button>
-          ) : null}
+          {/* CSV Export Button */}
+          <button
+            onClick={handleExportCsv}
+            className="btn-secondary"
+            title="Downloaden als CSV"
+            disabled={!people.length}
+          >
+            <Download className="w-4 h-4" />
+          </button>
 
           {/* Column Settings Button */}
           <button
