@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [29.0.0] - 2026-02-20
+
+### Added
+- CSV export on People, VOG, and Contributie list pages (semicolon delimiter, UTF-8 BOM for Dutch Excel)
+
+### Changed
+- Email delivery switched from Gravity SMTP/Postmark (US) to Lettermint (EU) for European data sovereignty
+- Google OAuth simplified to Sheets-only scope (removed Contacts and Calendar scopes)
+- GoogleOAuth namespace changed from `Rondo\Calendar` to `Rondo\Sheets`
+- Email FROM addresses use root domain extraction for Lettermint-compatible verified domain
+
+### Removed
+- Google Contacts sync (5 PHP classes, REST endpoints, WP-CLI commands, cron hooks)
+- Google Calendar sync (4 PHP classes, REST endpoints, WP-CLI commands, cron hooks)
+- Gravatar REST endpoint and frontend integration
+- Settings Connections UI for Calendar and Contacts (now only CardDAV and API-toegang)
+- ~1,700 lines of dead frontend code from Settings, API client, and hooks
+
 ## [28.1.0] - 2026-02-19
 
 ### Added
