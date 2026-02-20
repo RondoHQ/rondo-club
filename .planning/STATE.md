@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v29.0 Made in Europe — Phase 201: Lettermint Setup complete
+**Current focus:** v29.0 Made in Europe — Phase 202: Email Verification in progress
 
 ## Current Position
 
 Milestone: v29.0 Made in Europe
-Phase: 201 of 202 (Lettermint Setup)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-02-20 — Phase 201 Plan 01 complete: Lettermint activated on production, Gravity SMTP deactivated, test email delivered
+Phase: 202 of 202 (Email Verification)
+Plan: 1 of 2 in current phase
+Status: In Progress
+Last activity: 2026-02-20 — Phase 202 Plan 01 complete: FROM-address bug fixed, both invoice email types confirmed through Lettermint (HTTP 202, PDF attachment)
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [████████░░] 80%
 | 199 | 02 | 7min | 2 | 4 |
 | 200 | 01 | 4min | 2 | 4 |
 | 201 | 01 | 5min | 4 | 0 |
+| 202 | 01 | 2min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Key decisions for v29.0 planning:
 - [Phase 200-01]: No CSV library added — browser Blob + URL.createObjectURL sufficient for flat data
 - [Phase 201-01]: No "force" options enabled for Lettermint — theme email classes already set correct From headers
 - [Phase 201-01]: Gravity SMTP (Postmark) deactivated, Lettermint v1.4.2 activated — European email transport
+- [Phase 202-01]: Root domain extraction (wp_parse_url + array_slice(-2)) pattern for Lettermint-compatible From address in EmailChannel and MentionNotifications
+- [Phase 202-01]: DRY deferred for root domain extraction — 2-file duplication acceptable, refactor when third email sender needs it
 
 ### Pending Todos
 
@@ -73,17 +76,17 @@ Key decisions for v29.0 planning:
 
 ### Blockers/Concerns
 
-- PDF attachment passthrough via Lettermint plugin is MEDIUM confidence — must be explicitly tested before marking EMAIL-03 complete (see research/LETTERMINT.md)
+- PDF attachment passthrough via Lettermint plugin CONFIRMED — HTTP 202 with 1 attachment for both discipline and membership fee invoices (resolved by 202-01)
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00 — consider SG Cron integration for reliable daily execution
 
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 201-01-PLAN.md — Lettermint activated on production, test email delivered
+Stopped at: Completed 202-01-PLAN.md — FROM-address fix deployed, invoice emails confirmed through Lettermint
 Resume file: None
 
-**Next action:** Phase 202 (Email Verification)
+**Next action:** Phase 202 Plan 02 (Email Verification — remaining notification channels)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 201 Lettermint Setup complete*
+*Last updated: 2026-02-20 — Phase 202 Plan 01 complete: FROM-address fix, Lettermint PDF delivery confirmed*
