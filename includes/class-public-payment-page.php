@@ -491,24 +491,30 @@ class PublicPaymentPage {
 			exit;
 		}
 
-		// Idempotency check: if installment 1 payment ID already exists, redirect to existing checkout.
-		$existing_payment_id = get_post_meta( $invoice_id, '_installment_1_mollie_payment_id', true );
-		if ( ! empty( $existing_payment_id ) ) {
-			$existing_url = get_post_meta( $invoice_id, '_installment_1_payment_link', true );
-			if ( ! empty( $existing_url ) ) {
-				wp_redirect( $existing_url );
-				exit;
-			}
+		// Guard: if invoice is already paid, show a success page instead of creating a new payment.
+		if ( 'rondo_paid' === get_post_status( $invoice_id ) ) {
+			$this->render_success_page( $invoice_id );
+			exit;
 		}
+
+		// Guard: if installment 1 is already confirmed paid, redirect to success page.
+		// This prevents creating a duplicate payment for a member who already paid installment 1.
+		if ( 'betaald' === get_post_meta( $invoice_id, '_installment_1_status', true ) ) {
+			$this->render_success_page( $invoice_id );
+			exit;
+		}
+
+		// Always create a fresh Mollie payment rather than reusing stored checkout URLs.
+		// Mollie regular payments (POST /v2/payments) expire in ~15 minutes, so a returning
+		// member who re-opens the payment page after that window would be sent to an expired
+		// Mollie checkout URL. Clearing the old data forces a new payment to be created.
+		delete_post_meta( $invoice_id, '_installment_1_mollie_payment_id' );
+		delete_post_meta( $invoice_id, '_installment_1_payment_link' );
 
 		// Read amounts.
 		$total     = (float) get_field( 'total_amount', $invoice_id );
 		$config    = new FinanceConfig();
 		$admin_fee = $config->get_installment_admin_fee();
-
-		// Calculate available payment dates for dynamic installment count.
-		$today           = current_time( 'Y-m-d' );
-		$available_dates = self::get_available_payment_dates( $today, $invoice_season );
 
 		// Store plan meta and write installment breakdown for multi-installment plans.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );
@@ -516,12 +522,14 @@ class PublicPaymentPage {
 		if ( 'full' === $plan ) {
 			update_post_meta( $invoice_id, '_installment_count', 1 );
 		} elseif ( 'quarterly_3' === $plan ) {
-			$due_dates = self::calculate_installment_due_dates( 3, $available_dates, true );
+			$available_dates = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
+			$due_dates       = self::calculate_installment_due_dates( 3, $available_dates, true );
 			update_post_meta( $invoice_id, '_installment_count', 3 );
 			$this->write_installment_meta( $invoice_id, 3, $total, $admin_fee, $due_dates );
 		} else { // monthly_8 — actual count capped at available dates.
-			$actual_count = min( 8, count( $available_dates ) );
-			$due_dates    = self::calculate_installment_due_dates( $actual_count, $available_dates );
+			$available_dates = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
+			$actual_count    = min( 8, count( $available_dates ) );
+			$due_dates       = self::calculate_installment_due_dates( $actual_count, $available_dates );
 			update_post_meta( $invoice_id, '_installment_count', $actual_count );
 			$this->write_installment_meta( $invoice_id, $actual_count, $total, $admin_fee, $due_dates );
 		}
