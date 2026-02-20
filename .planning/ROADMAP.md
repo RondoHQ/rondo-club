@@ -145,7 +145,7 @@
 **Plans**: 1 plan
 
 Plans:
-- [ ] 203-01-PLAN.md — admin_init redirect hook with AJAX/CLI/cron exemptions + developer docs
+- [x] 203-01-PLAN.md — admin_init redirect hook with AJAX/CLI/cron exemptions + developer docs
 
 #### Phase 204: Functie-to-Role Mapping Config
 
@@ -238,7 +238,7 @@ Plans:
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
 | 198-202 | v29.0 | 8/8 | ✓ Complete | 2026-02-20 |
-| 203 | v30.0 | 0/TBD | Not started | - |
+| 203 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 204 | v30.0 | 0/TBD | Not started | - |
 | 205 | v30.0 | 0/TBD | Not started | - |
 | 206 | v30.0 | 0/TBD | Not started | - |
