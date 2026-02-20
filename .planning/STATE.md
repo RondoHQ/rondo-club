@@ -39,7 +39,7 @@ Decisions logged in PROJECT.md Key Decisions table (750+ entries).
 
 ### Pending Todos
 
-5 todo(s) in `.planning/todos/pending/`
+6 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
