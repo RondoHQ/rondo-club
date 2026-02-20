@@ -52,6 +52,15 @@ abstract class Base {
 	}
 
 	/**
+	 * Check if the current user has the financieel capability.
+	 *
+	 * @return bool True if user has financieel capability.
+	 */
+	public function check_financieel_permission() {
+		return current_user_can( 'financieel' );
+	}
+
+	/**
 	 * Check if user can access a person
 	 *
 	 * Permission callback for person-specific endpoints.
