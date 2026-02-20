@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 
 Milestone: v29.0 Made in Europe
 Phase: 202 of 202 (Email Verification)
-Plan: 1 of 2 in current phase
-Status: In Progress
-Last activity: 2026-02-20 — Phase 202 Plan 01 complete: FROM-address bug fixed, both invoice email types confirmed through Lettermint (HTTP 202, PDF attachment)
+Plan: 2 of 2 in current phase
+Status: Awaiting checkpoint (human verification)
+Last activity: 2026-02-20 — Phase 202 Plan 02 complete (automated): all 5 remaining email types confirmed through Lettermint (HTTP 202), BCC passthrough confirmed; awaiting human Lettermint dashboard verification
 
-Progress: [█████████░] 90%
+Progress: [█████████░] 95%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [█████████░] 90%
 | 200 | 01 | 4min | 2 | 4 |
 | 201 | 01 | 5min | 4 | 0 |
 | 202 | 01 | 2min | 2 | 2 |
+| 202 | 02 | 1min | 1 | 0 |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Key decisions for v29.0 planning:
 - [Phase 201-01]: Gravity SMTP (Postmark) deactivated, Lettermint v1.4.2 activated — European email transport
 - [Phase 202-01]: Root domain extraction (wp_parse_url + array_slice(-2)) pattern for Lettermint-compatible From address in EmailChannel and MentionNotifications
 - [Phase 202-01]: DRY deferred for root domain extraction — 2-file duplication acceptable, refactor when third email sender needs it
+- [Phase 202-02]: No code changes required — all 5 email types route correctly through Lettermint after 202-01 fix
+- [Phase 202-02]: BCC passthrough confirmed working natively through Lettermint plugin — Bcc header in wp_mail headers array passes through as bcc field in request_data
 
 ### Pending Todos
 
@@ -82,11 +85,11 @@ Key decisions for v29.0 planning:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 202-01-PLAN.md — FROM-address fix deployed, invoice emails confirmed through Lettermint
+Stopped at: 202-02-PLAN.md checkpoint (Task 2: human-verify) — all 5 email types confirmed through Lettermint API; awaiting human Lettermint dashboard verification
 Resume file: None
 
-**Next action:** Phase 202 Plan 02 (Email Verification — remaining notification channels)
+**Next action:** Human verification in Lettermint dashboard (https://dash.lettermint.co), then v29.0 milestone complete
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 202 Plan 01 complete: FROM-address fix, Lettermint PDF delivery confirmed*
+*Last updated: 2026-02-20 — Phase 202 Plan 02 automated tasks complete: all 5 remaining email types confirmed through Lettermint, awaiting human checkpoint*
