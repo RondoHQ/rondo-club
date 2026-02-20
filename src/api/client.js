@@ -261,6 +261,11 @@ export const prmApi = {
   getFunctieCapabilityMap: () => api.get('/rondo/v1/functie-capability-map'),
   updateFunctieCapabilityMap: (data) => api.post('/rondo/v1/functie-capability-map', data),
 
+  // User provisioning (admin only)
+  provisionUser: (personId) => api.post(`/rondo/v1/people/${personId}/provision`),
+  getProvisioningSettings: () => api.get('/rondo/v1/provisioning/settings'),
+  updateProvisioningSettings: (data) => api.post('/rondo/v1/provisioning/settings', data),
+
   // Club configuration (admin only)
   getClubConfig: () => api.get('/rondo/v1/config'),
   updateClubConfig: (data) => api.post('/rondo/v1/config', data),
