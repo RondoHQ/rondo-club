@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 204 (next)
+**Current focus:** v30.0 User Accounts & Profiles — Phase 205 (next)
 
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 203 of 208 (WP Admin Blocking) — COMPLETE
-Plan: 1 of 1 complete in phase 203
-Status: Phase 203 complete, ready for phase 204
-Last activity: 2026-02-20 — Phase 203 (WP Admin Blocking) complete
+Phase: 204 of 208 (Functie-to-Role Mapping Config) — COMPLETE
+Plan: 1 of 1 complete in phase 204
+Status: Phase 204 complete, ready for phase 205
+Last activity: 2026-02-20 — Phase 204 (Functie-to-Role Mapping Config) complete
 
-Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
+Progress: [██░░░░░░░░] 33% (2/6 phases complete)
 
 ## Performance Metrics
 
@@ -43,6 +43,9 @@ Recent decisions affecting v30.0:
 - Phase 208 (Avatar) depends on Phase 205 bidirectional link, not Phase 207 — avatar can ship before profile page if needed
 - Phase 203: Used admin_init hook (not init/template_redirect) — fires only inside wp-admin, implicit is_admin(), clean redirect before output
 - Phase 203: No REST API exemption needed — REST uses rest_api_init, not admin_init
+- Phase 204: FunctieCapabilityMap is a pure static class — no constructor, no hooks, no functions.php entry needed
+- Phase 204: GET /rondo/v1/functie-capability-map returns { map, roles } in one response (no separate roles endpoint needed)
+- Phase 204: Row list = union(availableFuncties, keys(functieMapState)) — stale Functies remain visible with "(niet meer actief)" label until admin cleans up
 
 ### Pending Todos
 
@@ -64,10 +67,10 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 203-01-PLAN.md — WP Admin Blocking (admin_init redirect hook + developer docs)
+Stopped at: Completed 204-01-PLAN.md — Functie-to-Role Mapping Config (FunctieCapabilityMap class, REST endpoints, FunctiesTab checkbox matrix)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 204` to plan the next phase
+**Next action:** Run `/gsd:plan-phase 205` to plan the next phase
 
 ---
 *State created: 2026-02-15*
