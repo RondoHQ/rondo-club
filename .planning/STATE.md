@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 206 of 208 (Capability Sync) — IN PROGRESS
-Plan: 1 of 2 complete in phase 206
-Status: Phase 206 Plan 01 complete — CapabilitySync backend service + two REST endpoints deployed
-Last activity: 2026-02-20 — Phase 206 Plan 01 (CapabilitySync PHP service + REST endpoints) complete
+Phase: 206 of 208 (Capability Sync) — COMPLETE
+Plan: 2 of 2 complete in phase 206
+Status: Phase 206 complete — CapabilitySync backend + rondo-sync Step 5 + Settings UI sync button deployed (v29.3.0)
+Last activity: 2026-02-20 — Phase 206 Plan 02 (rondo-sync step + Settings UI + version bump) complete
 
-Progress: [████░░░░░░] 50% (3/6 phases complete)
+Progress: [█████░░░░░] 62% (4/6 phases complete)
 
 ## Performance Metrics
 
@@ -56,6 +56,8 @@ Recent decisions affecting v30.0:
 - Phase 206 Plan 01: sync_user_by_knvb_id() returns {status: no_user} HTTP 200 (not 404) when no WP user has the KNVB ID
 - Phase 206 Plan 01: rondo_user excluded from syncable roles — only rondo_fairplay, rondo_vog, rondo_bestuur managed by sync
 - Phase 206 Plan 01: Manual overrides: target = (mapped ∪ manual_grants) − manual_revokes, stored as JSON arrays in user meta
+- Phase 206 Plan 02: Secondary button style (gray border) for sync button vs primary (cyan) for save — visual hierarchy: save = change mapping, sync = apply mapping
+- Phase 206 Plan 02: rondo-sync Step 5 runs unconditionally on every functions sync — no skip flag, capabilities always kept current
 
 ### Pending Todos
 
@@ -77,10 +79,10 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 206-01-PLAN.md — CapabilitySync PHP service class + REST endpoints (capability-sync backend)
+Stopped at: Completed 206-02-PLAN.md — rondo-sync Step 5 capability sync + Settings sync button + v29.3.0 deployed
 Resume file: None
 
-**Next action:** Execute 206-02-PLAN.md (rondo-sync step + Settings UI)
+**Next action:** Execute Phase 207 or 208
 
 ---
 *State created: 2026-02-15*
