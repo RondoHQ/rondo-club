@@ -358,6 +358,34 @@ class Api extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/user/password',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'change_password' ],
+				'permission_callback' => function () {
+					return is_user_logged_in();
+				},
+				'args'                => [
+					'current_password' => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => function ( $v ) {
+							return $v;
+						},
+					],
+					'new_password'     => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => function ( $v ) {
+							return $v;
+						},
+					],
+				],
+			]
+		);
+
 		// User management (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -2690,20 +2718,74 @@ class Api extends Base {
 		// Get admin URL
 		$admin_url = admin_url();
 
+		// Get linked person name and active functies
+		$person_id          = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$linked_person_name = null;
+		$active_functies    = [];
+		if ( $person_id ) {
+			$person = get_post( $person_id );
+			if ( $person && 'person' === $person->post_type ) {
+				$first              = get_field( 'first_name', $person_id ) ?: '';
+				$last               = get_field( 'last_name', $person_id ) ?: '';
+				$linked_person_name = trim( $first . ' ' . $last ) ?: null;
+
+				$work_history = get_field( 'work_history', $person_id ) ?: [];
+				foreach ( $work_history as $job ) {
+					if ( ! empty( $job['is_current'] ) && ! empty( $job['job_title'] ) ) {
+						$active_functies[] = $job['job_title'];
+					}
+				}
+			}
+		}
+
 		return rest_ensure_response(
 			[
-				'id'                  => $user_id,
-				'name'                => $user->display_name,
-				'email'               => $user->user_email,
-				'avatar_url'          => $avatar_url,
-				'is_admin'            => $is_admin,
+				'id'                    => $user_id,
+				'name'                  => $user->display_name,
+				'email'                 => $user->user_email,
+				'avatar_url'            => $avatar_url,
+				'is_admin'              => $is_admin,
 				'can_access_fairplay'   => current_user_can( 'fairplay' ),
 				'can_access_vog'        => current_user_can( 'vog' ),
 				'can_access_financieel' => current_user_can( 'financieel' ),
-				'profile_url'         => $profile_url,
-				'admin_url'           => $admin_url,
+				'profile_url'           => $profile_url,
+				'admin_url'             => $admin_url,
+				'linked_person_name'    => $linked_person_name,
+				'active_functies'       => $active_functies,
 			]
 		);
+	}
+
+	/**
+	 * Change the current user's password.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response or WP_Error.
+	 */
+	public function change_password( $request ) {
+		$user_id          = get_current_user_id();
+		$user             = get_userdata( $user_id );
+		$current_password = $request->get_param( 'current_password' );
+		$new_password     = $request->get_param( 'new_password' );
+
+		// Demo guard
+		if ( $user->user_login === 'demo' ) {
+			return new \WP_Error( 'demo_user', 'Wachtwoord wijzigen is niet beschikbaar in de demo.', [ 'status' => 403 ] );
+		}
+
+		// Verify current password
+		if ( ! wp_check_password( $current_password, $user->user_pass, $user_id ) ) {
+			return new \WP_Error( 'wrong_password', 'Huidig wachtwoord is onjuist.', [ 'status' => 400 ] );
+		}
+
+		// Change password
+		wp_set_password( $new_password, $user_id );
+
+		// Destroy all sessions so the old session is invalidated
+		$sessions = \WP_Session_Tokens::get_instance( $user_id );
+		$sessions->destroy_all();
+
+		return rest_ensure_response( [ 'success' => true, 'message' => 'Wachtwoord succesvol gewijzigd. Log opnieuw in.' ] );
 	}
 
 	/**
