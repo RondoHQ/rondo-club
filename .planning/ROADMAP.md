@@ -193,8 +193,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 206-01-PLAN.md — CapabilitySync PHP service class, REST endpoints (per-user + sync-all), manual override data model
-- [ ] 206-02-PLAN.md — rondo-sync capability sync step, functions pipeline Step 5, FunctiesTab sync button, version bump
+- [x] 206-01-PLAN.md — CapabilitySync PHP service class, REST endpoints (per-user + sync-all), manual override data model
+- [x] 206-02-PLAN.md — rondo-sync capability sync step, functions pipeline Step 5, FunctiesTab sync button, version bump
 
 #### Phase 207: In-App Profile Page
 
@@ -241,10 +241,10 @@ Plans:
 | 203 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 204 | v30.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 205 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
-| 206 | v30.0 | 0/TBD | Not started | - |
+| 206 | v30.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 207 | v30.0 | 0/TBD | Not started | - |
 | 208 | v30.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — Phase 205 (User Provisioning) complete*
+*Last updated: 2026-02-20 — Phase 206 (Capability Sync) complete*
