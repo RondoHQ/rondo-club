@@ -173,11 +173,11 @@ Plans:
   3. The user account is linked bidirectionally to the person record (user stores person ID, person stores user ID)
   4. Re-triggering provisioning for an existing user skips account creation and does not send a second welcome email
   5. Admin can customize the welcome email subject and body text in Settings
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 205-01: UserProvisioning class, provision REST endpoint, bidirectional link, KNVB ID storage, idempotency flag
-- [ ] 205-02: Welcome email with password-set link, Lettermint from-address, configurable template in Settings
+- [ ] 205-01-PLAN.md — UserProvisioning PHP class, REST endpoints (provision + settings), person meta exposure, users list enhancement
+- [ ] 205-02-PLAN.md — AccountCard UI on PersonDetail, WelkomstmailTab in Settings, API client methods
 
 #### Phase 206: Capability Sync
 
