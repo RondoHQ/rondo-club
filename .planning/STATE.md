@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 205 of 208 (User Provisioning) — IN PROGRESS
-Plan: 1 of 2 complete in phase 205
-Status: Phase 205 Plan 01 complete — UserProvisioning backend done, ready for Plan 02 (frontend AccountCard)
-Last activity: 2026-02-20 — Phase 205 Plan 01 (UserProvisioning backend) complete
+Phase: 205 of 208 (User Provisioning) — COMPLETE
+Plan: 2 of 2 complete in phase 205
+Status: Phase 205 complete — UserProvisioning backend + frontend UI both deployed to production
+Last activity: 2026-02-20 — Phase 205 Plan 02 (AccountCard + WelkomstmailTab frontend) complete
 
-Progress: [███░░░░░░░] 37% (2.5/6 phases complete)
+Progress: [████░░░░░░] 50% (3/6 phases complete)
 
 ## Performance Metrics
 
@@ -49,6 +49,9 @@ Recent decisions affecting v30.0:
 - Phase 205 Plan 01: UserProvisioning is a pure service class with no hooks — no functions.php entry needed (same pattern as VOGEmail)
 - Phase 205 Plan 01: Welcome email failure is non-blocking — user created successfully even if wp_mail() fails, failure logged
 - Phase 205 Plan 01: 7-day password reset expiry via scoped add/remove filter on password_reset_expiration
+- Phase 205 Plan 02: AccountCard reads personData from parent (no separate fetch) — same pattern as VOGCard
+- Phase 205 Plan 02: WelkomstmailTab lazy-fetches settings only when first opened (useEffect with !welcomeSettings guard)
+- Phase 205 Plan 02: No re-provision button when account already exists — backend is idempotent, UI prevents confusion
 
 ### Pending Todos
 
@@ -70,11 +73,11 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 205-01-PLAN.md — UserProvisioning backend (UserProvisioning class, REST endpoints, person/user response enrichment)
+Stopped at: Completed 205-02-PLAN.md — AccountCard + WelkomstmailTab frontend UI, version 29.2.0, deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 205 Plan 02 (frontend AccountCard UI)
+**Next action:** Execute Phase 206 (capability sync)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 205 Plan 01 complete (UserProvisioning backend), ready for Plan 02 (frontend)*
+*Last updated: 2026-02-20 — Phase 205 complete (backend + frontend), v29.2.0 deployed to production*
