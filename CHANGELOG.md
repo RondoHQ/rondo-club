@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [29.4.0] - 2026-02-20
+
+### Added
+- In-app Profile page with Sportlink identity display and password change form
+- POST /rondo/v1/user/password endpoint for in-app password management
+- GET /rondo/v1/user/me now returns linked_person_name and active_functies
+- Sidebar UserMenu links to in-app profile instead of wp-admin for non-admin users
+
 ## [29.3.0] - 2026-02-20
 
 ### Added

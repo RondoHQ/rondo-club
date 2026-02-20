@@ -243,16 +243,14 @@ function UserMenu() {
         <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700">
           <div className="py-1">
             {!window.rondoConfig?.isDemoUser && (
-              <a
-                href={user.profile_url}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/profile"
                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors dark:text-gray-200 dark:hover:bg-gray-700"
                 onClick={() => setIsOpen(false)}
               >
                 <User className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Profiel bewerken</span>
-              </a>
+                <span className="hidden md:inline">Profiel</span>
+              </Link>
             )}
             {user.is_admin && (
               <a
@@ -534,6 +532,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/todos')) return 'Taken';
     if (path.startsWith('/settings')) return 'Instellingen';
+    if (path.startsWith('/profile')) return 'Profiel';
     return '';
   };
 
