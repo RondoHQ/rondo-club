@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 205 (next)
+**Current focus:** v30.0 User Accounts & Profiles — Phase 205 (in progress)
 
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 204 of 208 (Functie-to-Role Mapping Config) — COMPLETE
-Plan: 1 of 1 complete in phase 204
-Status: Phase 204 complete, ready for phase 205
-Last activity: 2026-02-20 — Phase 204 (Functie-to-Role Mapping Config) complete
+Phase: 205 of 208 (User Provisioning) — IN PROGRESS
+Plan: 1 of 2 complete in phase 205
+Status: Phase 205 Plan 01 complete — UserProvisioning backend done, ready for Plan 02 (frontend AccountCard)
+Last activity: 2026-02-20 — Phase 205 Plan 01 (UserProvisioning backend) complete
 
-Progress: [██░░░░░░░░] 33% (2/6 phases complete)
+Progress: [███░░░░░░░] 37% (2.5/6 phases complete)
 
 ## Performance Metrics
 
@@ -46,6 +46,9 @@ Recent decisions affecting v30.0:
 - Phase 204: FunctieCapabilityMap is a pure static class — no constructor, no hooks, no functions.php entry needed
 - Phase 204: GET /rondo/v1/functie-capability-map returns { map, roles } in one response (no separate roles endpoint needed)
 - Phase 204: Row list = union(availableFuncties, keys(functieMapState)) — stale Functies remain visible with "(niet meer actief)" label until admin cleans up
+- Phase 205 Plan 01: UserProvisioning is a pure service class with no hooks — no functions.php entry needed (same pattern as VOGEmail)
+- Phase 205 Plan 01: Welcome email failure is non-blocking — user created successfully even if wp_mail() fails, failure logged
+- Phase 205 Plan 01: 7-day password reset expiry via scoped add/remove filter on password_reset_expiration
 
 ### Pending Todos
 
@@ -67,11 +70,11 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 204-01-PLAN.md — Functie-to-Role Mapping Config (FunctieCapabilityMap class, REST endpoints, FunctiesTab checkbox matrix)
+Stopped at: Completed 205-01-PLAN.md — UserProvisioning backend (UserProvisioning class, REST endpoints, person/user response enrichment)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 205` to plan the next phase
+**Next action:** Execute Phase 205 Plan 02 (frontend AccountCard UI)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 204 complete (Functie-to-Role Mapping Config), ready for phase 205*
+*Last updated: 2026-02-20 — Phase 205 Plan 01 complete (UserProvisioning backend), ready for Plan 02 (frontend)*
