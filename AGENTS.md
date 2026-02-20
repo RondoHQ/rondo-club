@@ -125,6 +125,78 @@ Entry point: `src/main.jsx`
 - `src/components/layout/Layout.jsx` - Sidebar navigation, capability-based menu filtering
 - `vite.config.js` - Build configuration
 
+## Mollie Payment Integration
+
+### Critical Rule: Always Use Payment Links API
+
+**NEVER use `$mollie->payments->create()` for any payment that could be opened later.** Regular Mollie payments expire in ~15 minutes. Use `$mollie->paymentLinks->create()` instead — payment links remain valid until paid or archived.
+
+This applies to all payments, including installments. The only exception would be a payment where the user is immediately redirected to Mollie checkout in the same request (and even then, payment links are preferred for consistency).
+
+### Two Mollie APIs
+
+| API | Method | Expiry | Webhook ID | Use case |
+|-----|--------|--------|------------|----------|
+| Payment Links | `$mollie->paymentLinks->create()` | Never | `pl_xxx` | All invoices and installments |
+| Payments | `$mollie->payments->create()` | ~15 min | `tr_xxx` | **Legacy only** — do not use for new code |
+
+### Payment Flows
+
+**Membership fee invoices** (created by cron via `MembershipFees`):
+1. Invoice created → `PublicPaymentPage::generate_token()` stores `/betaling/{token}` as `payment_link` ACF field
+2. Email sent with `{betaallink}` → links to `/betaling/{token}` (public page, always valid)
+3. Member visits public page → selects plan (full / 3 termijnen / 8 termijnen)
+4. `InstallmentPaymentService::create_payment()` creates a Mollie **payment link** (`pl_xxx`)
+5. Member is redirected to Mollie checkout
+6. Webhook fires → routes through Path 0a (installment payment link)
+7. For multi-installment plans: webhook marks installment paid, creates next payment link, cron sends email when due
+
+**Discipline case invoices** (created manually via admin):
+1. `MolliePayment::create_payment_link()` creates a Mollie **payment link** (`pl_xxx`)
+2. Checkout URL stored in `payment_link` ACF field and emailed directly
+3. Webhook fires → routes through Path 0b (full payment link)
+
+### Webhook Routing (4 paths)
+
+File: `includes/class-mollie-webhook.php` — single endpoint at `POST /rondo/v1/mollie/webhook`
+
+| Path | ID prefix | Lookup | Handler |
+|------|-----------|--------|---------|
+| **0a** | `pl_xxx` | `_mollie_pid_{pl_xxx}` (EXISTS) | `handle_installment_paid()` — marks installment, checks all-paid, creates next |
+| **0b** | `pl_xxx` | `_mollie_payment_link_id` = `pl_xxx` | Direct transition to `rondo_paid` |
+| **1** | `tr_xxx` | `_mollie_pid_{tr_xxx}` (EXISTS) | `handle_installment_paid()` — legacy installments |
+| **2** | `tr_xxx` | `_mollie_payment_id` = `tr_xxx` | Direct transition to `rondo_paid` — legacy full payments |
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `includes/class-mollie-payment.php` | `MolliePayment` — creates payment links for discipline/full invoices |
+| `includes/class-installment-payment-service.php` | `InstallmentPaymentService` — creates payment links for installments |
+| `includes/class-mollie-webhook.php` | `MollieWebhook` — handles all incoming Mollie webhook notifications |
+| `includes/class-mollie-client.php` | `MollieClient` — wraps Mollie SDK initialization with API key from config |
+| `includes/class-public-payment-page.php` | `PublicPaymentPage` — standalone HTML page at `/betaling/{token}` for plan selection |
+| `includes/class-installment-email-sender.php` | `InstallmentEmailSender` — sends installment emails and reminders with payment links |
+| `includes/class-invoice-email-sender.php` | `InvoiceEmailSender` — sends discipline case invoice emails with PDF attachments |
+
+### Meta Storage Pattern
+
+Invoices use flat numbered post meta for installment tracking:
+
+```
+_installment_plan              → full | quarterly_3 | monthly_8
+_installment_count             → number of installments
+_installment_{N}_amount        → base amount for installment N
+_installment_{N}_admin_fee     → admin fee for installment N
+_installment_{N}_status        → pending | sent | betaald
+_installment_{N}_due_date      → Y-m-d due date
+_installment_{N}_mollie_payment_id → pl_xxx (payment link ID)
+_installment_{N}_payment_link  → Mollie checkout URL
+_mollie_pid_{pl_xxx}           → N (reverse-lookup for O(1) webhook matching)
+_payment_token                 → 64-char hex token for public payment page
+_mollie_payment_link_id        → pl_xxx (for discipline case invoices via MolliePayment)
+```
+
 ## Git Workflow
 
 This is a single repository containing both backend (PHP) and frontend (React) code. All changes should be committed together to keep the system in sync.
