@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-20)
 ## Current Position
 
 Milestone: v29.0 Made in Europe
-Phase: 199 of 202 (OAuth + Frontend Cleanup)
-Plan: 2 of 2 in current phase
+Phase: 200 of 202 (CSV Export)
+Plan: 1 of 1 in current phase
 Status: Complete
-Last activity: 2026-02-20 — Phase 199 Plan 02 complete: Frontend cleanup — Calendar/Contacts UI removed, Connections tab has only CardDAV and API-toegang
+Last activity: 2026-02-20 — Phase 200 Plan 01 complete: CSV export added to People/VOG/Contributie pages, dead Google Sheets code removed
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [████░░░░░░] 40%
 | 198 | 02 | 4min | 2 | 6 |
 | 199 | 01 | 2min | 2 | 4 |
 | 199 | 02 | 7min | 2 | 4 |
+| 200 | 01 | 4min | 2 | 4 |
 
 ## Accumulated Context
 
@@ -59,6 +60,9 @@ Key decisions for v29.0 planning:
 - [Phase 199-01]: Gravatar endpoint removed — Gravatar.com is a US service (Made in Europe cleanup)
 - [Phase 199-02]: Removed testCalDAVConnection from client.js — research said keep but backend endpoint was in class-rest-calendar.php (deleted Phase 198)
 - [Phase 199-02]: Settings Connections tab now shows only CardDAV and API-toegang subtabs (Calendar/Contacts tabs removed with ~1700 lines)
+- [Phase 200-01]: CSV export exports current page only (not all filtered pages) — no new API endpoint needed
+- [Phase 200-01]: CSV uses fixed columns (not user-configured visible columns) — avoids coupling to complex column preferences system
+- [Phase 200-01]: No CSV library added — browser Blob + URL.createObjectURL sufficient for flat data
 
 ### Pending Todos
 
@@ -73,10 +77,10 @@ Key decisions for v29.0 planning:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Phase 199 complete — both plans executed and deployed
+Stopped at: Completed 200-01-PLAN.md — CSV export deployed to production
 Resume file: None
 
-**Next action:** Phase 200 (CSV Export) or Phase 201 (Lettermint Setup)
+**Next action:** Phase 201 (Lettermint Setup)
 
 ---
 *State created: 2026-02-15*
