@@ -219,10 +219,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A user with a linked Sportlink person who has a profile photo sees that photo as their avatar in the sidebar
   2. A user without a linked person, or whose linked person has no photo, sees a default avatar icon
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 208-01: Sidebar avatar component reading linked person photo from /user/me, fallback default icon
+- [ ] 208-01-PLAN.md — Add linked_person_photo to /user/me, sidebar footer avatar + name + logout, v30.0.0
 
 ## Progress
 
