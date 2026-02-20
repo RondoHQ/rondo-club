@@ -188,10 +188,10 @@ Plans:
   3. DKIM TXT record, bounce CNAME, and DMARC TXT record added to the sending domain DNS
   4. Lettermint dashboard shows domain as verified
   5. A test email sent from WordPress appears in the Lettermint activity log
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 201-01: Install Lettermint plugin, configure API token, add and verify DNS records
+- [ ] 201-01-PLAN.md -- Deactivate Gravity SMTP, activate Lettermint, configure API token, verify delivery
 
 ### Phase 202: Email Verification
 
