@@ -156,11 +156,11 @@ Plans:
   3. No Contacts or Calendar sync pages accessible in the frontend (routes removed)
   4. Gravatar REST endpoint removed and person photos fall back to initials avatars
   5. No frontend hooks or API client methods reference Contacts, Calendar sync, or Gravatar
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 199-01: Simplify Google OAuth (remove Contacts/Calendar scopes, OAuth callbacks, token storage)
-- [ ] 199-02: Remove frontend sync UI, pages, hooks, and API methods; remove Gravatar frontend and backend
+- [ ] 199-01-PLAN.md -- Simplify Google OAuth to Sheets-only (namespace change, remove Calendar/Contacts methods, remove Gravatar REST endpoint)
+- [ ] 199-02-PLAN.md -- Remove frontend sync UI, dead API methods, Gravatar hooks and text from Settings, client.js, usePeople.js, PersonEditModal
 
 ### Phase 200: CSV Export
 
