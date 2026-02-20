@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.0.0] - 2026-02-20
+
+### Added
+- Sidebar avatar: users with a linked Sportlink person see their profile photo in the sidebar
+- Default avatar icon (User icon) for users without a linked person or photo
+- User name displayed in sidebar footer next to avatar
+- `linked_person_photo` field added to GET /rondo/v1/user/me response
+
 ## [29.4.0] - 2026-02-20
 
 ### Added
