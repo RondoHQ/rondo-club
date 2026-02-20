@@ -99,9 +99,6 @@ export const prmApi = {
   // Dashboard
   getDashboard: () => api.get('/rondo/v1/dashboard'),
   
-  // Gravatar
-  sideloadGravatar: (personId, email) => api.post(`/rondo/v1/people/${personId}/gravatar`, { email }),
-
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),
   bulkUpdateTeams: (ids, updates) => api.post('/rondo/v1/teams/bulk-update', { ids, updates }),
@@ -220,16 +217,6 @@ export const prmApi = {
   getMeetingNotes: (eventId) => api.get(`/rondo/v1/calendar/events/${eventId}/notes`),
   updateMeetingNotes: (eventId, notes) => api.put(`/rondo/v1/calendar/events/${eventId}/notes`, { notes }),
 
-  // Google Contacts OAuth
-  getGoogleContactsStatus: () => api.get('/rondo/v1/google-contacts/status'),
-  initiateGoogleContactsAuth: (readonly = true) => api.get('/rondo/v1/google-contacts/auth', { params: { readonly } }),
-  disconnectGoogleContacts: () => api.delete('/rondo/v1/google-contacts'),
-  triggerGoogleContactsImport: () => api.post('/rondo/v1/google-contacts/import'),
-  getGoogleContactsUnlinkedCount: () => api.get('/rondo/v1/google-contacts/unlinked-count'),
-  bulkExportGoogleContacts: () => api.post('/rondo/v1/google-contacts/bulk-export'),
-  triggerContactsSync: () => api.post('/rondo/v1/google-contacts/sync'),
-  updateContactsSyncFrequency: (frequency) => api.post('/rondo/v1/google-contacts/sync-frequency', { frequency }),
-
   // Google Sheets OAuth
   getSheetsStatus: () => api.get('/rondo/v1/google-sheets/status'),
   getSheetsAuthUrl: () => api.get('/rondo/v1/google-sheets/auth'),
@@ -245,16 +232,6 @@ export const prmApi = {
 
   // Custom Fields metadata (read-only, for display)
   getCustomFieldsMetadata: (postType) => api.get(`/rondo/v1/custom-fields/${postType}/metadata`),
-
-  // Calendar connections
-  getCalendarConnections: () => api.get('/rondo/v1/calendar/connections'),
-  createCalendarConnection: (data) => api.post('/rondo/v1/calendar/connections', data),
-  updateCalendarConnection: (id, data) => api.put(`/rondo/v1/calendar/connections/${id}`, data),
-  deleteCalendarConnection: (id) => api.delete(`/rondo/v1/calendar/connections/${id}`),
-  triggerCalendarSync: (id) => api.post(`/rondo/v1/calendar/connections/${id}/sync`),
-  getConnectionCalendars: (id) => api.get(`/rondo/v1/calendar/connections/${id}/calendars`),
-  getGoogleAuthUrl: () => api.get('/rondo/v1/calendar/auth/google'),
-  testCalDAVConnection: (credentials) => api.post('/rondo/v1/calendar/auth/caldav/test', credentials),
 
   // Feedback
   getFeedbackList: (params) => api.get('/rondo/v1/feedback', { params }),

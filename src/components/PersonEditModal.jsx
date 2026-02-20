@@ -369,9 +369,6 @@ export default function PersonEditModal({
                   placeholder="jan@voorbeeld.nl"
                   disabled={isLoading}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Gravatar wordt automatisch opgehaald indien beschikbaar
-                </p>
               </div>
             )}
 
