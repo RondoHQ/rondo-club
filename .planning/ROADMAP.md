@@ -139,11 +139,11 @@
   3. All REST endpoints for Contacts and Calendar sync return 404 (routes no longer registered)
   4. functions.php no longer loads any Contacts or Calendar sync classes
   5. Codebase builds cleanly (no PHP errors, ESLint clean)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 198-01: Remove Google Contacts sync backend (classes, REST endpoints, cron hooks)
-- [ ] 198-02: Remove Google Calendar sync backend (classes, REST endpoints, cron hooks)
+- [ ] 198-01-PLAN.md -- Remove Google Contacts sync backend (5 class files, functions.php, WP-CLI cleanup, cron deregistration)
+- [ ] 198-02-PLAN.md -- Remove Calendar sync backend (4 class files, functions.php, WP-CLI cleanup, cron deregistration)
 
 ### Phase 199: OAuth + Frontend Cleanup
 
