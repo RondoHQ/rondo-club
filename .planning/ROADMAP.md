@@ -124,7 +124,7 @@
 - [x] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar — completed 2026-02-20
 - [x] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages — completed 2026-02-20
 - [x] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery — completed 2026-02-20
-- [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications) — **Plans:** 2 plans
+- [x] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications) — completed 2026-02-20
 
 ## Phase Details
 
@@ -204,11 +204,11 @@ Plans:
   3. VOG request and reminder emails deliver correctly
   4. Mention notification email delivers correctly
   5. Lettermint dashboard shows successful delivery for each email type tested
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 202-01-PLAN.md -- Fix FROM-address bug in EmailChannel/MentionNotifications, deploy, verify invoice email with PDF through Lettermint
-- [ ] 202-02-PLAN.md -- Verify installment, reminder (BCC), VOG, mention notification, and digest emails through Lettermint + human dashboard check
+- [x] 202-01-PLAN.md -- Fix FROM-address bug in EmailChannel/MentionNotifications, deploy, verify invoice email with PDF through Lettermint — completed 2026-02-20
+- [x] 202-02-PLAN.md -- Verify installment, reminder (BCC), VOG, mention notification, and digest emails through Lettermint + human dashboard check — completed 2026-02-20
 
 ## Progress
 
@@ -227,8 +227,8 @@ Plans:
 | 199 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 200 | v29.0 | 1/1 | ✓ Complete | 2026-02-20 |
 | 201 | v29.0 | 1/1 | ✓ Complete | 2026-02-20 |
-| 202 | v29.0 | 0/2 | Not started | - |
+| 202 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-20 — Phase 201 Lettermint Setup complete*
+*Last updated: 2026-02-20 — Phase 202 Email Verification complete — v29.0 milestone done*
