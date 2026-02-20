@@ -121,7 +121,7 @@
 **Milestone Goal:** Remove non-European service dependencies (Google sync, Gravatar) and replace wp_mail email delivery with Lettermint for European data sovereignty.
 
 - [x] **Phase 198: Backend Sync Removal** — Delete Google Contacts and Calendar sync PHP classes and REST endpoints — completed 2026-02-20
-- [ ] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar
+- [x] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar — completed 2026-02-20
 - [ ] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages
 - [ ] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery
 - [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications)
@@ -156,11 +156,11 @@ Plans:
   3. No Contacts or Calendar sync pages accessible in the frontend (routes removed)
   4. Gravatar REST endpoint removed and person photos fall back to initials avatars
   5. No frontend hooks or API client methods reference Contacts, Calendar sync, or Gravatar
-**Plans**: 2 plans
+**Plans**: 2/2 complete
 
 Plans:
-- [ ] 199-01-PLAN.md -- Simplify Google OAuth to Sheets-only (namespace change, remove Calendar/Contacts methods, remove Gravatar REST endpoint)
-- [ ] 199-02-PLAN.md -- Remove frontend sync UI, dead API methods, Gravatar hooks and text from Settings, client.js, usePeople.js, PersonEditModal
+- [x] 199-01-PLAN.md -- Simplify Google OAuth to Sheets-only (namespace change, remove Calendar/Contacts methods, remove Gravatar REST endpoint) — completed 2026-02-20
+- [x] 199-02-PLAN.md -- Remove frontend sync UI, dead API methods, Gravatar hooks and text from Settings, client.js, usePeople.js, PersonEditModal — completed 2026-02-20
 
 ### Phase 200: CSV Export
 
@@ -224,7 +224,7 @@ Plans:
 | 186-191 | v27.0 | 6/6 | ✓ Complete | 2026-02-18 |
 | 192-197 | v28.0 | 9/9 | ✓ Complete | 2026-02-20 |
 | 198 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
-| 199 | v29.0 | 0/2 | Not started | - |
+| 199 | v29.0 | 2/2 | ✓ Complete | 2026-02-20 |
 | 200 | v29.0 | 0/1 | Not started | - |
 | 201 | v29.0 | 0/1 | Not started | - |
 | 202 | v29.0 | 0/2 | Not started | - |
