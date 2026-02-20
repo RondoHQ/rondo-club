@@ -830,7 +830,7 @@ class Api extends Base {
 			]
 		);
 
-		// Finance settings (admin only)
+		// Finance settings (financieel capability required)
 		register_rest_route(
 			'rondo/v1',
 			'/finance/settings',
@@ -838,12 +838,12 @@ class Api extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_finance_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'update_finance_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
 						'org_name'              => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'org_address'           => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
