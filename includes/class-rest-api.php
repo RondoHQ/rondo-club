@@ -2718,9 +2718,10 @@ class Api extends Base {
 		// Get admin URL
 		$admin_url = admin_url();
 
-		// Get linked person name and active functies
+		// Get linked person name, photo, and active functies
 		$person_id          = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		$linked_person_name = null;
+		$linked_person_photo = null;
 		$active_functies    = [];
 		if ( $person_id ) {
 			$person = get_post( $person_id );
@@ -2728,6 +2729,7 @@ class Api extends Base {
 				$first              = get_field( 'first_name', $person_id ) ?: '';
 				$last               = get_field( 'last_name', $person_id ) ?: '';
 				$linked_person_name = trim( $first . ' ' . $last ) ?: null;
+				$linked_person_photo = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
 
 				$work_history = get_field( 'work_history', $person_id ) ?: [];
 				foreach ( $work_history as $job ) {
@@ -2752,6 +2754,7 @@ class Api extends Base {
 				'admin_url'             => $admin_url,
 				'linked_person_name'    => $linked_person_name,
 				'active_functies'       => $active_functies,
+				'linked_person_photo'   => $linked_person_photo,
 			]
 		);
 	}
