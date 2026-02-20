@@ -48,7 +48,7 @@ const navigation = [
   { name: 'Financiën', type: 'section', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
-  { name: 'Instellingen', href: '/financien/instellingen', icon: Settings, indent: true, requiresFinancieel: true, adminOnly: true },
+  { name: 'Instellingen', href: '/financien/instellingen', icon: Settings, indent: true, requiresFinancieel: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
