@@ -284,9 +284,16 @@ class EmailChannel extends Channel {
 
 	/**
 	 * Set email from address
+	 *
+	 * Extracts the root domain (e.g. svawc.nl from rondo.svawc.nl) so the
+	 * From address matches the verified sending domain in Lettermint.
 	 */
 	public function set_email_from_address( $from_email ) {
-		$domain = parse_url( home_url(), PHP_URL_HOST );
+		$host   = wp_parse_url( home_url(), PHP_URL_HOST );
+		$parts  = explode( '.', $host );
+		$domain = count( $parts ) >= 2
+			? implode( '.', array_slice( $parts, -2 ) )
+			: $host;
 		return 'notifications@' . $domain;
 	}
 

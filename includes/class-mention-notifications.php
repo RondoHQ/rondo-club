@@ -85,11 +85,21 @@ class MentionNotifications {
 			esc_html( $post_title )
 		);
 
+		$host      = wp_parse_url( home_url(), PHP_URL_HOST );
+		$parts     = explode( '.', $host );
+		$domain    = count( $parts ) >= 2
+			? implode( '.', array_slice( $parts, -2 ) )
+			: $host;
+		$site_name = get_bloginfo( 'name' );
+
 		wp_mail(
 			$user->user_email,
 			$subject,
 			$message,
-			[ 'Content-Type: text/html; charset=UTF-8' ]
+			[
+				'Content-Type: text/html; charset=UTF-8',
+				'From: ' . $site_name . ' <notifications@' . $domain . '>',
+			]
 		);
 	}
 
