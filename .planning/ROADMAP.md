@@ -157,10 +157,10 @@ Plans:
   2. Admin can check/uncheck cells to define which Functie grants which role and save the mapping
   3. Known Functies appear automatically in the matrix (populated by rondo-sync, not typed manually by admin)
   4. The mapping persists across sessions and is immediately reflected when provisioning or syncing users
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 204-01: FunctieCapabilityMap class, Options API storage, GET/POST REST endpoints, Settings UI matrix
+- [ ] 204-01-PLAN.md -- FunctieCapabilityMap PHP class, REST endpoints, FunctiesTab checkbox matrix UI, developer docs
 
 #### Phase 205: User Provisioning
 
