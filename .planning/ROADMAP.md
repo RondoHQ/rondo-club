@@ -206,10 +206,10 @@ Plans:
   2. User can enter their current password and a new password to change credentials
   3. The password change form rejects the new password if the current password is wrong
   4. After a successful password change, the user is redirected to the login page (session invalidated)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 207-01: POST /rondo/v1/user/password endpoint, expanded GET /rondo/v1/user/me, Profile page React component, sidebar link
+- [ ] 207-01-PLAN.md — Backend password endpoint + expanded /user/me, Frontend Profile page + sidebar integration + version bump
 
 #### Phase 208: Avatar & Sidebar
 
