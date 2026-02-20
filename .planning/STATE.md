@@ -62,7 +62,7 @@ Key decisions for v29.0 planning:
 
 ### Pending Todos
 
-4 todo(s) in `.planning/todos/pending/`
+5 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
