@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 206 in progress
+**Current focus:** v30.0 User Accounts & Profiles — Phase 207 in progress
 
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 206 of 208 (Capability Sync) — COMPLETE
-Plan: 2 of 2 complete in phase 206
-Status: Phase 206 complete — CapabilitySync backend + rondo-sync Step 5 + Settings UI sync button deployed (v29.3.0)
-Last activity: 2026-02-20 — Phase 206 Plan 02 (rondo-sync step + Settings UI + version bump) complete
+Phase: 207 of 208 (In-App Profile Page) — COMPLETE
+Plan: 1 of 1 complete in phase 207
+Status: Phase 207 complete — In-app Profile page with Sportlink identity + password change deployed (v29.4.0)
+Last activity: 2026-02-20 — Phase 207 Plan 01 (Profile page + password endpoint) complete
 
-Progress: [█████░░░░░] 62% (4/6 phases complete)
+Progress: [██████░░░░] 75% (5/6 phases complete)
 
 ## Performance Metrics
 
@@ -58,6 +58,9 @@ Recent decisions affecting v30.0:
 - Phase 206 Plan 01: Manual overrides: target = (mapped ∪ manual_grants) − manual_revokes, stored as JSON arrays in user meta
 - Phase 206 Plan 02: Secondary button style (gray border) for sync button vs primary (cyan) for save — visual hierarchy: save = change mapping, sync = apply mapping
 - Phase 206 Plan 02: rondo-sync Step 5 runs unconditionally on every functions sync — no skip flag, capabilities always kept current
+- Phase 207 Plan 01: Hard-redirect to login immediately on password change success — session is dead, no intermediate state possible
+- Phase 207 Plan 01: Demo guard in backend (not just frontend) — returns 403 for demo login regardless of UI state
+- Phase 207 Plan 01: Non-admin UserMenu links to /profile; admin users also get in-app /profile link (wp-admin link remains for admins)
 
 ### Pending Todos
 
@@ -79,10 +82,10 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: Completed 206-02-PLAN.md — rondo-sync Step 5 capability sync + Settings sync button + v29.3.0 deployed
+Stopped at: Completed 207-01-PLAN.md — In-app Profile page + POST /user/password endpoint + v29.4.0 deployed
 Resume file: None
 
-**Next action:** Execute Phase 207 or 208
+**Next action:** Execute Phase 208 (Avatar)
 
 ---
 *State created: 2026-02-15*
