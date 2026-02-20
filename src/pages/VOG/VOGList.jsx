@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, FileSpreadsheet } from 'lucide-react';
+import { CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, Download } from 'lucide-react';
 import { useFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
+import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import { format } from '@/utils/dateFormat';
@@ -234,9 +235,6 @@ export default function VOGList() {
   const filterDropdownRef = useRef(null);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
 
-  // Google Sheets export state
-  const [isExporting, setIsExporting] = useState(false);
-
   // Modal state
   const [showSendEmailModal, setShowSendEmailModal] = useState(false);
   const [showMarkJustisModal, setShowMarkJustisModal] = useState(false);
@@ -302,15 +300,6 @@ export default function VOGList() {
     queryKey: ['custom-fields-metadata', 'person'],
     queryFn: async () => {
       const response = await prmApi.getCustomFieldsMetadata('person');
-      return response.data;
-    },
-  });
-
-  // Google Sheets connection status
-  const { data: sheetsStatus } = useQuery({
-    queryKey: ['google-sheets-status'],
-    queryFn: async () => {
-      const response = await prmApi.getSheetsStatus();
       return response.data;
     },
   });
@@ -437,58 +426,23 @@ export default function VOGList() {
     }
   };
 
-  // Handle export to Google Sheets
-  const handleExportToSheets = async () => {
-    if (isExporting) return;
-
-    setIsExporting(true);
-
-    // Open window immediately (before async) to avoid popup blocker
-    const newWindow = window.open('about:blank', '_blank');
-
-    try {
-      // VOG-specific columns
-      const columns = ['name', 'knvb-id', 'email', 'phone', 'datum-vog', 'vog_email_sent_date', 'vog_justis_submitted_date', 'vog_reminder_sent_date'];
-
-      // VOG-specific filters (matching the useFilteredPeople params in VOGList)
-      const filters = {
-        huidig_vrijwilliger: '1',
-        vog_missing: '1',
-        vog_older_than_years: 3,
-        vog_email_status: emailStatusFilter || undefined,
-        vog_type: vogTypeFilter || undefined,
-        vog_justis_status: justisStatusFilter || undefined,
-        vog_reminder_status: reminderStatusFilter || undefined,
-        orderby,
-        order,
-      };
-
-      const response = await prmApi.exportPeopleToSheets({ columns, filters });
-
-      if (response.data.spreadsheet_url && newWindow) {
-        newWindow.location.href = response.data.spreadsheet_url;
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      if (newWindow) newWindow.close();
-      const message = error.response?.data?.message || 'Export mislukt. Probeer het opnieuw.';
-      alert(message);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  // Handle connect to Google Sheets
-  const handleConnectSheets = async () => {
-    try {
-      const response = await prmApi.getSheetsAuthUrl();
-      if (response.data.auth_url) {
-        window.location.href = response.data.auth_url;
-      }
-    } catch (error) {
-      console.error('Auth error:', error);
-      alert('Kon geen verbinding maken met Google Sheets. Probeer het opnieuw.');
-    }
+  // Handle CSV export
+  const handleExportCsv = () => {
+    const headers = ['Naam', 'KNVB ID', 'Email', 'Telefoon', 'Datum VOG', 'Type', '1e email', 'Justis', 'Herinnering'];
+    const formatDate = (d) => d ? format(new Date(d), 'yyyy-MM-dd') : '';
+    const rows = people.map(person => [
+      [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
+      person.acf?.['knvb-id'] || '',
+      getFirstContactByType(person, 'email') || '',
+      getFirstPhone(person) || '',
+      formatDate(person.acf?.['datum-vog']),
+      person.acf?.['datum-vog'] ? 'Vernieuwing' : 'Nieuw',
+      formatDate(person.acf?.['vog_email_sent_date']),
+      formatDate(person.acf?.['vog_justis_submitted_date']),
+      formatDate(person.acf?.['vog_reminder_sent_date']),
+    ]);
+    const csv = buildCsv([headers, ...rows]);
+    downloadCsv(csv, `vog-${format(new Date(), 'yyyy-MM-dd')}.csv`);
   };
 
   // Handle sort
@@ -986,30 +940,16 @@ export default function VOGList() {
             )}
           </div>
 
-          {/* Export Button */}
+          {/* CSV Export Button */}
           <div className="flex gap-2">
-            {sheetsStatus?.connected ? (
-              <button
-                onClick={handleExportToSheets}
-                disabled={isExporting}
-                className="btn-secondary"
-                title="Exporteren naar Google Sheets"
-              >
-                {isExporting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                ) : (
-                  <FileSpreadsheet className="w-4 h-4" />
-                )}
-              </button>
-            ) : sheetsStatus?.google_configured ? (
-              <button
-                onClick={handleConnectSheets}
-                className="btn-secondary"
-                title="Verbinden met Google Sheets"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-              </button>
-            ) : null}
+            <button
+              onClick={handleExportCsv}
+              className="btn-secondary"
+              title="Downloaden als CSV"
+              disabled={!people.length}
+            >
+              <Download className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
