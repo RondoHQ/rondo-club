@@ -124,7 +124,7 @@
 - [x] **Phase 199: OAuth + Frontend Cleanup** — Simplify Google OAuth to Sheets only, remove sync UI/hooks/pages, remove Gravatar — completed 2026-02-20
 - [x] **Phase 200: CSV Export** — Add CSV export to People, VOG, and Contributie list pages — completed 2026-02-20
 - [x] **Phase 201: Lettermint Setup** — Install plugin on production, configure DNS records, verify basic delivery — completed 2026-02-20
-- [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications)
+- [ ] **Phase 202: Email Verification** — Verify all email types work through Lettermint (invoices, installments, reminders, VOG, notifications) — **Plans:** 2 plans
 
 ## Phase Details
 
@@ -204,11 +204,11 @@ Plans:
   3. VOG request and reminder emails deliver correctly
   4. Mention notification email delivers correctly
   5. Lettermint dashboard shows successful delivery for each email type tested
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 202-01: Trigger and verify invoice email with PDF attachment through Lettermint
-- [ ] 202-02: Trigger and verify installment, reminder, VOG, and notification emails through Lettermint
+- [ ] 202-01-PLAN.md -- Fix FROM-address bug in EmailChannel/MentionNotifications, deploy, verify invoice email with PDF through Lettermint
+- [ ] 202-02-PLAN.md -- Verify installment, reminder (BCC), VOG, mention notification, and digest emails through Lettermint + human dashboard check
 
 ## Progress
 
