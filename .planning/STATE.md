@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 203: WP Admin Blocking
+**Current focus:** v30.0 User Accounts & Profiles — Phase 204 (next)
 
 ## Current Position
 
 Milestone: v30.0 User Accounts & Profiles
-Phase: 203 of 208 (WP Admin Blocking)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-20 — Roadmap created for v30.0 (phases 203-208)
+Phase: 203 of 208 (WP Admin Blocking) — COMPLETE
+Plan: 1 of 1 complete in phase 203
+Status: Phase 203 complete, ready for phase 204
+Last activity: 2026-02-20 — Phase 203 (WP Admin Blocking) complete
 
-Progress: [░░░░░░░░░░] 0% (0/6 phases complete)
+Progress: [█░░░░░░░░░] 17% (1/6 phases complete)
 
 ## Performance Metrics
 
@@ -41,6 +41,8 @@ Decisions logged in PROJECT.md Key Decisions table (750+ entries).
 Recent decisions affecting v30.0:
 - Capability sync (CAPS-04-08) gets its own phase (206) separate from provisioning (205) — sync reconciliation logic is distinct from account creation and crosses repos (rondo-sync step)
 - Phase 208 (Avatar) depends on Phase 205 bidirectional link, not Phase 207 — avatar can ship before profile page if needed
+- Phase 203: Used admin_init hook (not init/template_redirect) — fires only inside wp-admin, implicit is_admin(), clean redirect before output
+- Phase 203: No REST API exemption needed — REST uses rest_api_init, not admin_init
 
 ### Pending Todos
 
@@ -62,11 +64,11 @@ Recent decisions affecting v30.0:
 ## Session Continuity
 
 Last session: 2026-02-20
-Stopped at: v30.0 roadmap created — 6 phases (203-208), 20/20 requirements mapped
+Stopped at: Completed 203-01-PLAN.md — WP Admin Blocking (admin_init redirect hook + developer docs)
 Resume file: None
 
-**Next action:** Run `/gsd:plan-phase 203` to plan WP Admin Blocking
+**Next action:** Run `/gsd:plan-phase 204` to plan the next phase
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — v30.0 roadmap created, ready to plan phase 203*
+*Last updated: 2026-02-20 — Phase 203 complete (WP Admin Blocking), ready for phase 204*
