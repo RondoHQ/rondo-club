@@ -214,7 +214,7 @@ export function usePersonTodos(personId) {
 
 /**
  * Create a new person with all associated data.
- * Handles: payload building, Gravatar sideload, birthday creation.
+ * Handles: payload building, birthday creation.
  *
  * @param {Object} options - Hook options
  * @param {Function} options.onSuccess - Called with created person data after successful creation
@@ -259,16 +259,6 @@ export function useCreatePerson({ onSuccess } = {}) {
 
       // Create the person
       const response = await wpApi.createPerson(payload);
-      const personId = response.data.id;
-
-      // Try to sideload Gravatar if email is provided
-      if (data.email) {
-        try {
-          await prmApi.sideloadGravatar(personId, data.email);
-        } catch {
-          // Gravatar sideload failed silently - not critical
-        }
-      }
 
       return response.data;
     },
