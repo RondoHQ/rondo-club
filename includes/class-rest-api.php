@@ -956,6 +956,32 @@ class Api extends Base {
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
 		);
+
+		// Functie-to-capability mapping (admin only for both read and write)
+		register_rest_route(
+			'rondo/v1',
+			'/functie-capability-map',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_functie_capability_map' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_functie_capability_map' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'map' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -4214,6 +4240,68 @@ class Api extends Base {
 		sort( $unique );
 
 		return rest_ensure_response( $unique );
+	}
+
+	/**
+	 * Get all Rondo roles as [ slug, label ] pairs.
+	 *
+	 * @return array[] Array of [ 'slug' => string, 'label' => string ].
+	 */
+	private function get_rondo_roles_list(): array {
+		$roles = [];
+		foreach ( \Rondo\Core\UserRoles::ROLES as $slug => $data ) {
+			$roles[] = [ 'slug' => $slug, 'label' => $data[0] ];
+		}
+		return $roles;
+	}
+
+	/**
+	 * Get the current Functie-to-Role capability mapping.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response The current map plus all available Rondo roles.
+	 */
+	public function get_functie_capability_map( $request ) {
+		return rest_ensure_response(
+			[
+				'map'   => \Rondo\Config\FunctieCapabilityMap::get_map(),
+				'roles' => $this->get_rondo_roles_list(),
+			]
+		);
+	}
+
+	/**
+	 * Update the Functie-to-Role capability mapping.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response The updated map plus all available Rondo roles.
+	 */
+	public function update_functie_capability_map( $request ) {
+		$raw_map = $request->get_param( 'map' );
+
+		// Sanitize: ensure all keys are strings and all values are arrays of booleans
+		$sanitized = [];
+		if ( is_array( $raw_map ) ) {
+			foreach ( $raw_map as $functie => $role_flags ) {
+				$key = sanitize_text_field( $functie );
+				if ( ! is_array( $role_flags ) ) {
+					continue;
+				}
+				$sanitized[ $key ] = [];
+				foreach ( $role_flags as $role_slug => $enabled ) {
+					$sanitized[ $key ][ sanitize_text_field( $role_slug ) ] = (bool) $enabled;
+				}
+			}
+		}
+
+		\Rondo\Config\FunctieCapabilityMap::update_map( $sanitized );
+
+		return rest_ensure_response(
+			[
+				'map'   => \Rondo\Config\FunctieCapabilityMap::get_map(),
+				'roles' => $this->get_rondo_roles_list(),
+			]
+		);
 	}
 
 	/**
