@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-20)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — Phase 205 (in progress)
+**Current focus:** v30.0 User Accounts & Profiles — Phase 206 (next)
 
 ## Current Position
 
@@ -76,7 +76,7 @@ Last session: 2026-02-20
 Stopped at: Completed 205-02-PLAN.md — AccountCard + WelkomstmailTab frontend UI, version 29.2.0, deployed to production
 Resume file: None
 
-**Next action:** Execute Phase 206 (capability sync)
+**Next action:** Run `/gsd:plan-phase 206` to plan the next phase
 
 ---
 *State created: 2026-02-15*
