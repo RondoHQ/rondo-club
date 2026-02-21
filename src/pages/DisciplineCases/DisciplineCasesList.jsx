@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Gavel, Filter } from 'lucide-react';
+import { Gavel } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import {
   useDisciplineCases,
@@ -10,54 +10,67 @@ import { wpApi } from '@/api/client';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
 import { isDoorbelastNVT } from '@/utils/disciplineCases';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
+import { DataTableToolbar, ColumnSettingsPanel, createColumn, FILTER_TYPES } from '@/components/DataTable';
+
+// Static column definitions for the filter toolbar
+const FILTER_COLUMNS = [
+  createColumn({
+    id: 'doorbelast',
+    header: 'Doorbelast',
+    filterType: FILTER_TYPES.SELECT,
+    filterOptions: [
+      { value: 'nvt', label: 'N.v.t.' },
+      { value: 'none', label: 'Nee' },
+      { value: 'sportlink', label: 'Ja, Sportlink' },
+      { value: 'rondo', label: 'Ja, Rondo' },
+    ],
+  }),
+  createColumn({
+    id: 'sanctie',
+    header: 'Sanctie',
+    filterType: FILTER_TYPES.TEXT,
+  }),
+];
 
 export default function DisciplineCasesList() {
   const queryClient = useQueryClient();
 
-  // Fetch current season to set as default
   const { data: currentSeason, isLoading: isCurrentSeasonLoading } =
     useCurrentSeason();
 
-  // Season filter state - initialize to null (will be set after currentSeason loads)
   const [selectedSeasonId, setSelectedSeasonId] = useState(null);
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Client-side filter state
   const [doorbelastFilter, setDoorbelastFilter] = useState('');
   const [sanctieFilter, setSanctieFilter] = useState('');
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
-  // Set default season when currentSeason loads
   useEffect(() => {
     if (currentSeason && !hasInitialized) {
       setSelectedSeasonId(currentSeason.id);
       setHasInitialized(true);
     } else if (!currentSeason && !isCurrentSeasonLoading && !hasInitialized) {
-      // No current season set, use null (all seasons)
       setHasInitialized(true);
     }
   }, [currentSeason, isCurrentSeasonLoading, hasInitialized]);
 
-  // Fetch seasons for dropdown
   const { data: seasons = [] } = useSeasons();
 
-  // Fetch discipline cases (filtered by season if selected)
   const {
     data: cases,
     isLoading: isCasesLoading,
     error: casesError,
   } = useDisciplineCases({
     seizoen: selectedSeasonId,
-    enabled: hasInitialized, // Wait until default season is determined
+    enabled: hasInitialized,
   });
 
-  // Collect person IDs from cases
   const personIds = useMemo(() => {
     if (!cases) return [];
     const ids = cases.map((dc) => dc.acf?.person).filter(Boolean);
     return [...new Set(ids)];
   }, [cases]);
 
-  // Batch fetch persons for table display
   const { data: personsData } = useQuery({
     queryKey: ['people', 'batch', personIds.sort().join(',')],
     queryFn: async () => {
@@ -72,18 +85,15 @@ export default function DisciplineCasesList() {
     enabled: personIds.length > 0,
   });
 
-  // Create person map for table
   const personMap = useMemo(() => {
     const map = new Map();
     if (personsData) {
       personsData.forEach((person) => {
-        // Person name fields are in the acf object, not at root level
         const firstName = person.acf?.first_name || '';
         const infix = person.acf?.infix || '';
         const lastName = person.acf?.last_name || '';
         const fullName = person.title?.rendered || [firstName, infix, lastName].filter(Boolean).join(' ');
 
-        // Extract thumbnail from embedded featured media (same logic as transformPerson in usePeople.js)
         const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
                          person._embedded?.['wp:featuredmedia']?.[0]?.media_details?.sizes?.thumbnail?.source_url ||
                          null;
@@ -99,13 +109,11 @@ export default function DisciplineCasesList() {
     return map;
   }, [personsData]);
 
-  // Apply client-side filters
   const filteredCases = useMemo(() => {
     if (!cases) return [];
     return cases.filter(dc => {
       const acf = dc.acf || {};
 
-      // Doorbelast filter
       if (doorbelastFilter !== '') {
         const isNVT = isDoorbelastNVT(acf);
         if (doorbelastFilter === 'nvt' && !isNVT) return false;
@@ -114,7 +122,6 @@ export default function DisciplineCasesList() {
         if (doorbelastFilter === 'rondo' && acf.is_charged !== 'rondo') return false;
       }
 
-      // Sanctie filter (case-insensitive)
       if (sanctieFilter.trim() !== '') {
         const sanctionText = (acf.sanction_description || '').toLowerCase();
         if (!sanctionText.includes(sanctieFilter.toLowerCase().trim())) return false;
@@ -123,6 +130,19 @@ export default function DisciplineCasesList() {
       return true;
     });
   }, [cases, doorbelastFilter, sanctieFilter]);
+
+  const hasActiveFilters = !!doorbelastFilter || !!sanctieFilter;
+  const activeFilterCount = (doorbelastFilter ? 1 : 0) + (sanctieFilter ? 1 : 0);
+
+  const clearFilters = () => {
+    setDoorbelastFilter('');
+    setSanctieFilter('');
+  };
+
+  const setFilter = (colId, value) => {
+    if (colId === 'doorbelast') setDoorbelastFilter(value || '');
+    else if (colId === 'sanctie') setSanctieFilter(value || '');
+  };
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['discipline-cases'] });
@@ -151,47 +171,31 @@ export default function DisciplineCasesList() {
             </p>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-
-            {/* Season Filter */}
-            <select
-              value={selectedSeasonId ?? ''}
-              onChange={handleSeasonChange}
-              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-            >
-              <option value="">Alle seizoenen</option>
-              {seasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  {season.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Doorbelast Filter */}
-            <select
-              value={doorbelastFilter}
-              onChange={(e) => setDoorbelastFilter(e.target.value)}
-              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-            >
-              <option value="">Alle doorbelast</option>
-              <option value="nvt">n.v.t.</option>
-              <option value="none">Nee</option>
-              <option value="sportlink">Ja, Sportlink</option>
-              <option value="rondo">Ja, Rondo</option>
-            </select>
-
-            {/* Sanctie Filter */}
-            <input
-              type="text"
-              value={sanctieFilter}
-              onChange={(e) => setSanctieFilter(e.target.value)}
-              placeholder="Zoek op sanctie..."
-              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan w-48"
-            />
-          </div>
+          {/* Season filter (server-side — kept separate from client-side toolbar) */}
+          <select
+            value={selectedSeasonId ?? ''}
+            onChange={handleSeasonChange}
+            className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+          >
+            <option value="">Alle seizoenen</option>
+            {seasons.map((season) => (
+              <option key={season.id} value={season.id}>
+                {season.name}
+              </option>
+            ))}
+          </select>
         </div>
+
+        {/* Client-side filter toolbar */}
+        <DataTableToolbar
+          columns={FILTER_COLUMNS}
+          filters={{ doorbelast: doorbelastFilter, sanctie: sanctieFilter }}
+          onFilterChange={setFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+        />
 
         {/* Error state */}
         {casesError && (
@@ -231,6 +235,13 @@ export default function DisciplineCasesList() {
           </div>
         )}
       </div>
+
+      <ColumnSettingsPanel
+        isOpen={isColumnSettingsOpen}
+        onClose={() => setIsColumnSettingsOpen(false)}
+        columns={[]}
+        onToggleColumn={() => {}}
+      />
     </PullToRefreshWrapper>
   );
 }
