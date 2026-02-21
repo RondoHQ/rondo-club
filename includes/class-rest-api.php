@@ -1022,6 +1022,32 @@ class Api extends Base {
 			]
 		);
 
+		// Commissie-to-capability mapping (admin only for both read and write)
+		register_rest_route(
+			'rondo/v1',
+			'/commissie-capability-map',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_commissie_capability_map' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_commissie_capability_map' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'map' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
 		// User provisioning (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -4644,6 +4670,69 @@ class Api extends Base {
 				'roles' => $this->get_rondo_roles_list(),
 			]
 		);
+	}
+
+	/**
+	 * Get the current Commissie-to-Role capability mapping.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response The current map, all commissies, and available roles.
+	 */
+	public function get_commissie_capability_map( $request ) {
+		$commissies = get_posts(
+			[
+				'post_type'      => 'commissie',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			]
+		);
+
+		$commissie_list = [];
+		foreach ( $commissies as $c ) {
+			$commissie_list[] = [
+				'id'   => $c->ID,
+				'name' => $c->post_title,
+			];
+		}
+
+		return rest_ensure_response(
+			[
+				'map'        => \Rondo\Config\CommissieCapabilityMap::get_map(),
+				'commissies' => $commissie_list,
+				'roles'      => $this->get_rondo_roles_list(),
+			]
+		);
+	}
+
+	/**
+	 * Update the Commissie-to-Role capability mapping.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response The updated map plus all available Rondo roles.
+	 */
+	public function update_commissie_capability_map( $request ) {
+		$raw_map = $request->get_param( 'map' );
+
+		$sanitized = [];
+		if ( is_array( $raw_map ) ) {
+			foreach ( $raw_map as $commissie_id => $role_flags ) {
+				$key = sanitize_text_field( $commissie_id );
+				if ( ! is_array( $role_flags ) ) {
+					continue;
+				}
+				$sanitized[ $key ] = [];
+				foreach ( $role_flags as $role_slug => $enabled ) {
+					$sanitized[ $key ][ sanitize_text_field( $role_slug ) ] = (bool) $enabled;
+				}
+			}
+		}
+
+		\Rondo\Config\CommissieCapabilityMap::update_map( $sanitized );
+
+		// Re-fetch full response (reuse GET handler logic).
+		return $this->get_commissie_capability_map( $request );
 	}
 
 	/**

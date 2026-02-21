@@ -41,17 +41,18 @@ class CapabilitySync {
 	const META_MANUAL_REVOKES = '_rondo_cap_manual_revokes';
 
 	/**
-	 * Sync capabilities for a single WordPress user given their current Functies.
+	 * Sync capabilities for a single WordPress user given their current Functies and Commissies.
 	 *
-	 * Reconciles the user's syncable roles against the FunctieCapabilityMap,
-	 * respecting manual override grants and revokes. Never touches rondo_user
-	 * (the base role) or any roles assigned to administrator users.
+	 * Reconciles the user's syncable roles against both FunctieCapabilityMap and
+	 * CommissieCapabilityMap, respecting manual override grants and revokes. Never
+	 * touches rondo_user (the base role) or any roles assigned to administrator users.
 	 *
-	 * @param int   $user_id  WordPress user ID.
-	 * @param array $functies Array of Functie strings (active ones from Sportlink).
+	 * @param int   $user_id       WordPress user ID.
+	 * @param array $functies      Array of Functie strings (active ones from Sportlink).
+	 * @param array $commissie_ids Array of commissie post IDs the user is active in.
 	 * @return array|\WP_Error Result array with status and changes, or WP_Error.
 	 */
-	public function sync_user( int $user_id, array $functies ): array|\WP_Error {
+	public function sync_user( int $user_id, array $functies, array $commissie_ids = [] ): array|\WP_Error {
 		// Load the user.
 		$user = new \WP_User( $user_id );
 		if ( ! $user->exists() ) {
@@ -80,6 +81,16 @@ class CapabilitySync {
 		$mapped_roles = [];
 		foreach ( $functies as $functie ) {
 			$roles = \Rondo\Config\FunctieCapabilityMap::get_roles_for_functie( $functie );
+			foreach ( $roles as $role ) {
+				if ( in_array( $role, $syncable_roles, true ) ) {
+					$mapped_roles[] = $role;
+				}
+			}
+		}
+
+		// Compute mapped roles from Commissie membership via CommissieCapabilityMap.
+		foreach ( $commissie_ids as $commissie_id ) {
+			$roles = \Rondo\Config\CommissieCapabilityMap::get_roles_for_commissie( (int) $commissie_id );
 			foreach ( $roles as $role ) {
 				if ( in_array( $role, $syncable_roles, true ) ) {
 					$mapped_roles[] = $role;
@@ -184,14 +195,18 @@ class CapabilitySync {
 			// derive_functies_from_work_history() works via rondo_linked_person_id (always set).
 			$knvb_id = get_user_meta( $wp_user->ID, \Rondo\Users\UserProvisioning::META_KNVB_ID, true );
 
-			// Determine functies: from provided map (by KNVB ID if available), or derive from ACF work_history.
+			// Derive functies and commissie IDs from work history.
+			$derived       = $this->derive_from_work_history( $wp_user->ID );
+			$commissie_ids = $derived['commissie_ids'];
+
+			// Functies: prefer provided map (by KNVB ID if available), fall back to derived.
 			if ( ! empty( $knvb_functies_map ) && $knvb_id && isset( $knvb_functies_map[ $knvb_id ] ) ) {
 				$functies = (array) $knvb_functies_map[ $knvb_id ];
 			} else {
-				$functies = $this->derive_functies_from_work_history( $wp_user->ID );
+				$functies = $derived['functies'];
 			}
 
-			$sync_result = $this->sync_user( $wp_user->ID, $functies );
+			$sync_result = $this->sync_user( $wp_user->ID, $functies, $commissie_ids );
 
 			if ( is_wp_error( $sync_result ) ) {
 				$result['errors'][] = [
@@ -236,8 +251,8 @@ class CapabilitySync {
 			];
 		}
 
-		$functies = $this->derive_functies_from_work_history( $user_id );
-		return $this->sync_user( $user_id, $functies );
+		$derived = $this->derive_from_work_history( $user_id );
+		return $this->sync_user( $user_id, $derived['functies'], $derived['commissie_ids'] );
 	}
 
 	/**
@@ -272,32 +287,42 @@ class CapabilitySync {
 	}
 
 	/**
-	 * Derive functies from a user's linked person's work_history ACF field.
+	 * Derive functies and commissie IDs from a user's linked person's work_history ACF field.
 	 *
 	 * Reads the `work_history` repeater field on the linked person post and
-	 * returns job_title values for entries where is_current is truthy.
+	 * returns job_title values and team (commissie) IDs for entries where is_current is truthy.
 	 *
 	 * @param int $user_id WordPress user ID.
-	 * @return string[] Array of active Functie strings.
+	 * @return array{ functies: string[], commissie_ids: int[] }
 	 */
-	private function derive_functies_from_work_history( int $user_id ): array {
+	private function derive_from_work_history( int $user_id ): array {
 		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		if ( ! $person_id ) {
-			return [];
+			return [ 'functies' => [], 'commissie_ids' => [] ];
 		}
 
 		$work_history = get_field( 'work_history', $person_id );
 		if ( ! is_array( $work_history ) ) {
-			return [];
+			return [ 'functies' => [], 'commissie_ids' => [] ];
 		}
 
-		$functies = [];
+		$functies      = [];
+		$commissie_ids = [];
 		foreach ( $work_history as $job ) {
-			if ( ! empty( $job['job_title'] ) && ! empty( $job['is_current'] ) ) {
+			if ( empty( $job['is_current'] ) ) {
+				continue;
+			}
+			if ( ! empty( $job['job_title'] ) ) {
 				$functies[] = $job['job_title'];
+			}
+			if ( ! empty( $job['team'] ) ) {
+				$commissie_ids[] = (int) $job['team'];
 			}
 		}
 
-		return $functies;
+		return [
+			'functies'      => $functies,
+			'commissie_ids' => array_values( array_unique( $commissie_ids ) ),
+		];
 	}
 }

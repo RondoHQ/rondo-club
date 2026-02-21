@@ -116,6 +116,10 @@ export default function Settings() {
   const [functiesLoading, setFunctiesLoading] = useState(true);
   const [functiesSaving, setFunctiesSaving] = useState(false);
   const [functiesMessage, setFunctiesMessage] = useState('');
+  const [commissieMapState, setCommissieMapState] = useState({});
+  const [commissieList, setCommissieList] = useState([]);
+  const [commissieSaving, setCommissieSaving] = useState(false);
+  const [commissieMessage, setCommissieMessage] = useState('');
 
   // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
   useEffect(() => {
@@ -199,15 +203,18 @@ export default function Settings() {
         return;
       }
       try {
-        const [werkfunctiesResponse, mapResponse] = await Promise.all([
+        const [werkfunctiesResponse, mapResponse, commissieMapResponse] = await Promise.all([
           prmApi.getAvailableWerkfuncties(),
           prmApi.getFunctieCapabilityMap(),
+          prmApi.getCommissieCapabilityMap(),
         ]);
         setAvailableFuncties(werkfunctiesResponse.data || []);
         setFunctieMapState(mapResponse.data.map || {});
         setFunctieRoles(mapResponse.data.roles || []);
+        setCommissieMapState(commissieMapResponse.data.map || {});
+        setCommissieList(commissieMapResponse.data.commissies || []);
       } catch {
-        // Functie mapping fetch failed silently
+        // Mapping fetch failed silently
       } finally {
         setFunctiesLoading(false);
       }
@@ -244,6 +251,21 @@ export default function Settings() {
       setFunctiesMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setFunctiesSaving(false);
+    }
+  };
+
+  // Handle commissie-to-role mapping save
+  const handleCommissieSave = async () => {
+    setCommissieSaving(true);
+    setCommissieMessage('');
+    try {
+      const response = await prmApi.updateCommissieCapabilityMap({ map: commissieMapState });
+      setCommissieMapState(response.data.map || {});
+      setCommissieMessage('Commissietoewijzing opgeslagen.');
+    } catch (error) {
+      setCommissieMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
+    } finally {
+      setCommissieSaving(false);
     }
   };
 
@@ -505,6 +527,12 @@ export default function Settings() {
             functiesSaving={functiesSaving}
             functiesMessage={functiesMessage}
             handleFunctiesSave={handleFunctiesSave}
+            commissieList={commissieList}
+            commissieMapState={commissieMapState}
+            setCommissieMapState={setCommissieMapState}
+            commissieSaving={commissieSaving}
+            commissieMessage={commissieMessage}
+            handleCommissieSave={handleCommissieSave}
             handleSyncCapabilities={handleSyncCapabilities}
             syncingCapabilities={syncingCapabilities}
             capabilitySyncMessage={capabilitySyncMessage}
@@ -1319,6 +1347,12 @@ function AdminTabWithSubtabs({
   functiesSaving,
   functiesMessage,
   handleFunctiesSave,
+  commissieList,
+  commissieMapState,
+  setCommissieMapState,
+  commissieSaving,
+  commissieMessage,
+  handleCommissieSave,
   handleSyncCapabilities,
   syncingCapabilities,
   capabilitySyncMessage,
@@ -1369,6 +1403,12 @@ function AdminTabWithSubtabs({
           saving={functiesSaving}
           message={functiesMessage}
           handleSave={handleFunctiesSave}
+          commissieList={commissieList}
+          commissieMapState={commissieMapState}
+          setCommissieMapState={setCommissieMapState}
+          commissieSaving={commissieSaving}
+          commissieMessage={commissieMessage}
+          handleCommissieSave={handleCommissieSave}
           handleSyncCapabilities={handleSyncCapabilities}
           syncingCapabilities={syncingCapabilities}
           capabilitySyncMessage={capabilitySyncMessage}
@@ -1828,6 +1868,12 @@ function FunctiesTab({
   saving,
   message,
   handleSave,
+  commissieList,
+  commissieMapState,
+  setCommissieMapState,
+  commissieSaving,
+  commissieMessage,
+  handleCommissieSave,
   handleSyncCapabilities,
   syncingCapabilities,
   capabilitySyncMessage,
@@ -1843,6 +1889,16 @@ function FunctiesTab({
       ...prev,
       [functie]: {
         ...(prev[functie] || {}),
+        [roleSlug]: checked,
+      },
+    }));
+  };
+
+  const handleCommissieCheckboxChange = (commissieId, roleSlug, checked) => {
+    setCommissieMapState(prev => ({
+      ...prev,
+      [commissieId]: {
+        ...(prev[commissieId] || {}),
         [roleSlug]: checked,
       },
     }));
@@ -1938,6 +1994,82 @@ function FunctiesTab({
               <span className={`text-sm ${message.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                 {message}
               </span>
+            )}
+          </div>
+
+          {/* Commissie-to-role mapping table */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Commissie-toewijzing
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Bepaal welke commissies welke Rondo-rollen toekennen aan al hun leden.
+            </p>
+
+            {commissieList.length > 0 && (
+              <>
+                <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+                  <div className="max-h-96 overflow-y-auto">
+                    <table className="w-full border-collapse">
+                      <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                        <tr>
+                          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
+                            Commissie
+                          </th>
+                          {roles.map(role => (
+                            <th key={role.slug} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 w-24">
+                              {role.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {commissieList.map(c => (
+                          <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="px-4 py-2.5 align-middle">
+                              <span className="text-sm text-gray-900 dark:text-gray-100">{c.name}</span>
+                            </td>
+                            {roles.map(role => (
+                              <td key={role.slug} className="px-4 py-2.5 w-24 text-center align-middle">
+                                <label className="flex items-center justify-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={!!(commissieMapState[c.id]?.[role.slug])}
+                                    onChange={(e) => handleCommissieCheckboxChange(c.id, role.slug, e.target.checked)}
+                                    className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300"
+                                  />
+                                </label>
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 mt-4">
+                  <button
+                    onClick={handleCommissieSave}
+                    disabled={commissieSaving}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+                  >
+                    {commissieSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Opslaan...
+                      </>
+                    ) : (
+                      'Opslaan'
+                    )}
+                  </button>
+                  {commissieMessage && (
+                    <span className={`text-sm ${commissieMessage.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {commissieMessage}
+                    </span>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
