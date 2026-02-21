@@ -1399,20 +1399,18 @@ function AdminTabWithSubtabs({
 // Gebruikers Tab Component - User management (active users + invite)
 function GebruikersTab() {
   const [users, setUsers] = useState([]);
-  const [provisionable, setProvisionable] = useState([]);
   const [loading, setLoading] = useState(true);
   const [provisioning, setProvisioning] = useState(null);
   const [provisionMessage, setProvisionMessage] = useState(null);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [inviteResults, setInviteResults] = useState([]);
+  const [inviteSearching, setInviteSearching] = useState(false);
 
-  const fetchData = async () => {
+  const fetchUsers = async () => {
     setLoading(true);
     try {
-      const [usersRes, provRes] = await Promise.all([
-        prmApi.getUsers(),
-        prmApi.getProvisionableUsers(),
-      ]);
+      const usersRes = await prmApi.getUsers();
       setUsers(usersRes.data || []);
-      setProvisionable(provRes.data || []);
     } catch {
       // Fetch failed silently
     } finally {
@@ -1420,7 +1418,27 @@ function GebruikersTab() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchUsers(); }, []);
+
+  // Debounced search for provisionable people
+  useEffect(() => {
+    if (inviteSearch.length < 2) {
+      setInviteResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setInviteSearching(true);
+      try {
+        const res = await prmApi.searchProvisionableUsers(inviteSearch);
+        setInviteResults(res.data || []);
+      } catch {
+        setInviteResults([]);
+      } finally {
+        setInviteSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [inviteSearch]);
 
   const handleProvision = async (personId, personName) => {
     setProvisioning(personId);
@@ -1428,7 +1446,9 @@ function GebruikersTab() {
     try {
       await prmApi.provisionUser(personId);
       setProvisionMessage({ type: 'success', text: `Account aangemaakt voor ${personName}.` });
-      await fetchData();
+      setInviteSearch('');
+      setInviteResults([]);
+      await fetchUsers();
     } catch (error) {
       setProvisionMessage({
         type: 'error',
@@ -1513,28 +1533,37 @@ function GebruikersTab() {
         )}
       </div>
 
-      {/* Provisionable people */}
+      {/* Invite by search */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-brand-gradient mb-1">Uitnodigen</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          {provisionable.length} {provisionable.length === 1 ? 'persoon' : 'personen'} zonder account maar met een e-mailadres.
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          Zoek een lid op naam om een account aan te maken.
         </p>
 
-        {provisionable.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">Alle personen met een e-mailadres hebben al een account.</p>
-        ) : (
-          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
-            <div className="max-h-96 overflow-y-auto">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={inviteSearch}
+            onChange={(e) => setInviteSearch(e.target.value)}
+            placeholder="Zoek op naam..."
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
+          />
+          {inviteSearching && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+          )}
+        </div>
+
+        {inviteSearch.length >= 2 && !inviteSearching && inviteResults.length === 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">Geen leden gevonden zonder account.</p>
+        )}
+
+        {inviteResults.length > 0 && (
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden mt-3">
+            <div className="max-h-64 overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
-                  <tr>
-                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Naam</th>
-                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">E-mail</th>
-                    <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Actie</th>
-                  </tr>
-                </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {provisionable.map(person => (
+                  {inviteResults.map(person => (
                     <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-2.5 text-sm">
                         <div className="flex items-center gap-2">
