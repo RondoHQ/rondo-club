@@ -24,10 +24,11 @@ class UserRoles {
 	 * Each role gets the base rondo_user capabilities plus the listed extras.
 	 */
 	const ROLES = [
-		'rondo_user'     => [ 'Rondo User', [] ],
-		'rondo_fairplay' => [ 'Rondo FairPlay', [ 'fairplay' ] ],
-		'rondo_vog'      => [ 'Rondo VOG', [ 'vog' ] ],
-		'rondo_bestuur'  => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel' ] ],
+		'rondo_user'       => [ 'Rondo User', [] ],
+		'rondo_fairplay'   => [ 'Rondo FairPlay', [ 'fairplay' ] ],
+		'rondo_vog'        => [ 'Rondo VOG', [ 'vog' ] ],
+		'rondo_financieel' => [ 'Rondo Financieel', [ 'financieel' ] ],
+		'rondo_bestuur'    => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel' ] ],
 	];
 
 	public function __construct() {

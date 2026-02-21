@@ -8,6 +8,7 @@ const ROLE_LABELS = {
   rondo_user: 'Gebruiker',
   rondo_fairplay: 'FairPlay',
   rondo_vog: 'VOG',
+  rondo_financieel: 'Financieel',
   rondo_bestuur: 'Bestuur',
   administrator: 'Admin',
 };
