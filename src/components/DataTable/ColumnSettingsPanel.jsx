@@ -2,16 +2,38 @@ import { useEffect, useCallback } from 'react';
 import { Settings, X } from 'lucide-react';
 
 /**
- * Column visibility modal for DataTable.
- * Checkboxes to show/hide columns. Changes are applied instantly.
- * Column order reordering can be added in a future iteration.
+ * Column visibility modal — works in two modes:
+ *
+ * **TanStack Table mode** (pass `table`):
+ *   Uses TanStack's column visibility API directly.
+ *
+ * **Simple mode** (pass `columns` + `onToggleColumn`):
+ *   `columns` is an array of `{ id, label, isVisible }`.
+ *   `onToggleColumn(id)` flips visibility.
  *
  * @param {boolean} props.isOpen
  * @param {function} props.onClose
- * @param {object} props.table - TanStack Table instance
+ * @param {object} [props.table] - TanStack Table instance (mode A)
+ * @param {Array<{id: string, label: string, isVisible: boolean}>} [props.columns] - Simple mode (mode B)
+ * @param {function} [props.onToggleColumn] - (colId) => void — simple mode callback
  */
-export default function ColumnSettingsPanel({ isOpen, onClose, table }) {
-  const columns = table.getAllLeafColumns().filter((col) => col.getCanHide());
+export default function ColumnSettingsPanel({ isOpen, onClose, table, columns: simpleColumns, onToggleColumn }) {
+  // Normalise to a single interface regardless of mode
+  const columns = table
+    ? table.getAllLeafColumns().filter((col) => col.getCanHide()).map((col) => ({
+        id: col.id,
+        label: typeof col.columnDef.header === 'string'
+          ? col.columnDef.header
+          : col.columnDef.meta?.filterLabel || col.id,
+        isVisible: col.getIsVisible(),
+        toggle: col.getToggleVisibilityHandler(),
+      }))
+    : (simpleColumns || []).map((col) => ({
+        id: col.id,
+        label: col.label,
+        isVisible: col.isVisible,
+        toggle: () => onToggleColumn?.(col.id),
+      }));
 
   useEffect(() => {
     if (!isOpen) return;
@@ -59,29 +81,22 @@ export default function ColumnSettingsPanel({ isOpen, onClose, table }) {
             </p>
           ) : (
             <div className="space-y-2">
-              {columns.map((column) => {
-                const label =
-                  typeof column.columnDef.header === 'string'
-                    ? column.columnDef.header
-                    : column.columnDef.meta?.filterLabel || column.id;
-
-                return (
-                  <label
-                    key={column.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={column.getIsVisible()}
-                      onChange={column.getToggleVisibilityHandler()}
-                      className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan dark:bg-gray-700"
-                    />
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {label}
-                    </span>
-                  </label>
-                );
-              })}
+              {columns.map((col) => (
+                <label
+                  key={col.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={col.isVisible}
+                    onChange={col.toggle}
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-electric-cyan focus:ring-electric-cyan dark:bg-gray-700"
+                  />
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {col.label}
+                  </span>
+                </label>
+              ))}
             </div>
           )}
         </div>

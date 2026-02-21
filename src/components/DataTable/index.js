@@ -4,3 +4,4 @@ export { default as FilterDropdown } from './FilterDropdown';
 export { default as FilterChips } from './FilterChips';
 export { default as ColumnSettingsPanel } from './ColumnSettingsPanel';
 export { createColumn, FILTER_TYPES } from './columnHelpers';
+export { useColumnVisibility } from './useColumnVisibility';
