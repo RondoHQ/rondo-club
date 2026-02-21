@@ -163,7 +163,18 @@ export function NogTeFactureren() {
           ) : (
             <span className="text-gray-400 dark:text-gray-500">-</span>
           ),
-        filterType: null,
+        filterType: FILTER_TYPES.SELECT,
+        filterLabel: 'Gezinskorting',
+        filterOptions: [
+          { value: 'heeft', label: 'Heeft gezinskorting' },
+          { value: 'geen', label: 'Geen gezinskorting' },
+        ],
+        filterFn: (row, _id, value) => {
+          if (!value) return true;
+          if (value === 'heeft') return row.original.family_discount_rate > 0;
+          if (value === 'geen') return !(row.original.family_discount_rate > 0);
+          return true;
+        },
         sortable: true,
         headerClassName: 'text-right',
         className: 'text-right',
@@ -181,7 +192,18 @@ export function NogTeFactureren() {
           ) : (
             <span className="text-gray-400 dark:text-gray-500">100%</span>
           ),
-        filterType: null,
+        filterType: FILTER_TYPES.SELECT,
+        filterLabel: 'Pro-rata',
+        filterOptions: [
+          { value: 'heeft', label: 'Heeft pro-rata' },
+          { value: 'geen', label: 'Geen pro-rata' },
+        ],
+        filterFn: (row, _id, value) => {
+          if (!value) return true;
+          if (value === 'heeft') return row.original.prorata_percentage < 1.0;
+          if (value === 'geen') return !(row.original.prorata_percentage < 1.0);
+          return true;
+        },
         sortable: true,
         headerClassName: 'text-right',
         className: 'text-right',

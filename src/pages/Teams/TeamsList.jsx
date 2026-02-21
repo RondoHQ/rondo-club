@@ -240,6 +240,8 @@ export default function TeamsList() {
   const [search, setSearch] = useState('');
   const [speeldagFilter, setSpeeldagFilter] = useState('');
   const [genderFilter, setGenderFilter] = useState('');
+  const [playerCountFilter, setPlayerCountFilter] = useState('');
+  const [staffCountFilter, setStaffCountFilter] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -321,17 +323,21 @@ export default function TeamsList() {
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  const hasActiveFilters = !!speeldagFilter || !!genderFilter;
-  const activeFilterCount = (speeldagFilter ? 1 : 0) + (genderFilter ? 1 : 0);
+  const hasActiveFilters = !!(speeldagFilter || genderFilter || playerCountFilter || staffCountFilter);
+  const activeFilterCount = [speeldagFilter, genderFilter, playerCountFilter, staffCountFilter].filter(Boolean).length;
 
   const clearFilters = () => {
     setSpeeldagFilter('');
     setGenderFilter('');
+    setPlayerCountFilter('');
+    setStaffCountFilter('');
   };
 
   const setFilter = (colId, value) => {
     if (colId === 'speeldag') setSpeeldagFilter(value || '');
     else if (colId === 'gender') setGenderFilter(value || '');
+    else if (colId === 'player_count_filter') setPlayerCountFilter(value || '');
+    else if (colId === 'staff_count_filter') setStaffCountFilter(value || '');
   };
 
   const toggleSelection = (teamId) => {
@@ -369,6 +375,26 @@ export default function TeamsList() {
       filterType: genderOptions.length > 0 ? FILTER_TYPES.SELECT : null,
       filterOptions: genderOptions.map(v => ({ value: v, label: v })),
     }),
+    createColumn({
+      id: 'player_count_filter',
+      header: 'Spelers',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: 'Heeft spelers' },
+        { value: 'geen', label: 'Geen spelers' },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft spelers' : 'Geen spelers',
+    }),
+    createColumn({
+      id: 'staff_count_filter',
+      header: 'Staf',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: 'Heeft staf' },
+        { value: 'geen', label: 'Geen staf' },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft staf' : 'Geen staf',
+    }),
   ], [speeldagOptions, genderOptions]);
 
   // Column definitions for the settings panel
@@ -384,15 +410,15 @@ export default function TeamsList() {
 
     let filtered = [...teams];
 
-    if (speeldagFilter) {
-      filtered = filtered.filter(t => getSpeeldag(t.acf?.activiteit) === speeldagFilter);
-    }
-    if (genderFilter) {
-      filtered = filtered.filter(t => getGenderLabel(t.acf?.gender) === genderFilter);
-    }
+    if (speeldagFilter) filtered = filtered.filter(t => getSpeeldag(t.acf?.activiteit) === speeldagFilter);
+    if (genderFilter) filtered = filtered.filter(t => getGenderLabel(t.acf?.gender) === genderFilter);
+    if (playerCountFilter === 'heeft') filtered = filtered.filter(t => (t.player_count ?? 0) > 0);
+    else if (playerCountFilter === 'geen') filtered = filtered.filter(t => (t.player_count ?? 0) === 0);
+    if (staffCountFilter === 'heeft') filtered = filtered.filter(t => (t.staff_count ?? 0) > 0);
+    else if (staffCountFilter === 'geen') filtered = filtered.filter(t => (t.staff_count ?? 0) === 0);
 
     return filtered;
-  }, [teams, speeldagFilter, genderFilter]);
+  }, [teams, speeldagFilter, genderFilter, playerCountFilter, staffCountFilter]);
 
   const sortedTeams = useMemo(() => {
     if (!filteredTeams) return [];
@@ -464,7 +490,7 @@ export default function TeamsList() {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [speeldagFilter, genderFilter, teams]);
+  }, [speeldagFilter, genderFilter, playerCountFilter, staffCountFilter, teams]);
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -484,7 +510,7 @@ export default function TeamsList() {
 
           <DataTableToolbar
             columns={filterColumns}
-            filters={{ speeldag: speeldagFilter, gender: genderFilter }}
+            filters={{ speeldag: speeldagFilter, gender: genderFilter, player_count_filter: playerCountFilter, staff_count_filter: staffCountFilter }}
             onFilterChange={setFilter}
             onClearFilters={clearFilters}
             hasActiveFilters={hasActiveFilters}

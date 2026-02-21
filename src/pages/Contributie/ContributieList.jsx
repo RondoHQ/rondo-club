@@ -133,6 +133,9 @@ export function ContributieList() {
   const [firstNameFilter, setFirstNameFilter] = useState('');
   const [lastNameFilter, setLastNameFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [leeftijdsgroepFilter, setLeeftijdsgroepFilter] = useState('');
+  const [familyDiscountFilter, setFamilyDiscountFilter] = useState('');
+  const [prorataFilter, setProrataFilter] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -167,6 +170,11 @@ export function ContributieList() {
       .map(([slug, meta]) => ({ value: slug, label: meta.label ?? slug }));
   }, [data?.categories]);
 
+  const leeftijdsgroepOptions = useMemo(() => {
+    return [...new Set((data?.members ?? []).map(m => m.leeftijdsgroep).filter(Boolean))].sort()
+      .map(v => ({ value: v, label: v }));
+  }, [data?.members]);
+
   const filterColumns = useMemo(() => [
     createColumn({
       id: 'first_name',
@@ -184,21 +192,53 @@ export function ContributieList() {
       filterType: categoryOptions.length > 0 ? FILTER_TYPES.SELECT : null,
       filterOptions: categoryOptions,
     }),
-  ], [categoryOptions]);
+    createColumn({
+      id: 'leeftijdsgroep',
+      header: 'Leeftijdsgroep',
+      filterType: leeftijdsgroepOptions.length > 0 ? FILTER_TYPES.SELECT : null,
+      filterOptions: leeftijdsgroepOptions,
+    }),
+    createColumn({
+      id: 'family_discount',
+      header: 'Gezinskorting',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: 'Heeft gezinskorting' },
+        { value: 'geen', label: 'Geen gezinskorting' },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft gezinskorting' : 'Geen gezinskorting',
+    }),
+    createColumn({
+      id: 'prorata',
+      header: 'Pro-rata',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: 'Heeft pro-rata' },
+        { value: 'geen', label: 'Geen pro-rata' },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft pro-rata' : 'Geen pro-rata',
+    }),
+  ], [categoryOptions, leeftijdsgroepOptions]);
 
-  const hasActiveFilters = !!firstNameFilter || !!lastNameFilter || !!categoryFilter;
-  const activeFilterCount = (firstNameFilter ? 1 : 0) + (lastNameFilter ? 1 : 0) + (categoryFilter ? 1 : 0);
+  const hasActiveFilters = !!(firstNameFilter || lastNameFilter || categoryFilter || leeftijdsgroepFilter || familyDiscountFilter || prorataFilter);
+  const activeFilterCount = [firstNameFilter, lastNameFilter, categoryFilter, leeftijdsgroepFilter, familyDiscountFilter, prorataFilter].filter(Boolean).length;
 
   const clearFilters = () => {
     setFirstNameFilter('');
     setLastNameFilter('');
     setCategoryFilter('');
+    setLeeftijdsgroepFilter('');
+    setFamilyDiscountFilter('');
+    setProrataFilter('');
   };
 
   const setFilter = (colId, value) => {
     if (colId === 'first_name') setFirstNameFilter(value || '');
     else if (colId === 'last_name') setLastNameFilter(value || '');
     else if (colId === 'category') setCategoryFilter(value || '');
+    else if (colId === 'leeftijdsgroep') setLeeftijdsgroepFilter(value || '');
+    else if (colId === 'family_discount') setFamilyDiscountFilter(value || '');
+    else if (colId === 'prorata') setProrataFilter(value || '');
   };
 
   const colVisColumns = [
@@ -213,9 +253,14 @@ export function ContributieList() {
       if (firstNameFilter && !(m.first_name || '').toLowerCase().includes(firstNameFilter.toLowerCase())) return false;
       if (lastNameFilter && !(m.last_name || '').toLowerCase().includes(lastNameFilter.toLowerCase())) return false;
       if (categoryFilter && m.category !== categoryFilter) return false;
+      if (leeftijdsgroepFilter && m.leeftijdsgroep !== leeftijdsgroepFilter) return false;
+      if (familyDiscountFilter === 'heeft' && !(m.family_discount_rate > 0)) return false;
+      if (familyDiscountFilter === 'geen' && m.family_discount_rate > 0) return false;
+      if (prorataFilter === 'heeft' && !(m.prorata_percentage < 1.0)) return false;
+      if (prorataFilter === 'geen' && m.prorata_percentage < 1.0) return false;
       return true;
     });
-  }, [data?.members, showMismatchOnly, firstNameFilter, lastNameFilter, categoryFilter]);
+  }, [data?.members, showMismatchOnly, firstNameFilter, lastNameFilter, categoryFilter, leeftijdsgroepFilter, familyDiscountFilter, prorataFilter]);
 
   const categoryOrder = {};
   Object.entries(data?.categories || {}).forEach(([slug, meta]) => {
@@ -375,7 +420,7 @@ export function ContributieList() {
         {/* Filter toolbar */}
         <DataTableToolbar
           columns={filterColumns}
-          filters={{ first_name: firstNameFilter, last_name: lastNameFilter, category: categoryFilter }}
+          filters={{ first_name: firstNameFilter, last_name: lastNameFilter, category: categoryFilter, leeftijdsgroep: leeftijdsgroepFilter, family_discount: familyDiscountFilter, prorata: prorataFilter }}
           onFilterChange={setFilter}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}

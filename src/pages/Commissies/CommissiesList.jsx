@@ -203,6 +203,7 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
 export default function CommissiesList() {
   const [search, setSearch] = useState('');
   const [ownershipFilter, setOwnershipFilter] = useState(''); // '' = all, 'mine', 'shared'
+  const [memberCountFilter, setMemberCountFilter] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -286,13 +287,17 @@ export default function CommissiesList() {
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  const hasActiveFilters = !!ownershipFilter;
-  const activeFilterCount = ownershipFilter ? 1 : 0;
+  const hasActiveFilters = !!(ownershipFilter || memberCountFilter);
+  const activeFilterCount = [ownershipFilter, memberCountFilter].filter(Boolean).length;
 
-  const clearFilters = () => setOwnershipFilter('');
+  const clearFilters = () => {
+    setOwnershipFilter('');
+    setMemberCountFilter('');
+  };
 
   const setFilter = (colId, value) => {
     if (colId === 'ownership') setOwnershipFilter(value || '');
+    else if (colId === 'member_count_filter') setMemberCountFilter(value || '');
   };
 
   // Column definitions for the filter toolbar
@@ -305,6 +310,16 @@ export default function CommissiesList() {
         { value: 'mine', label: 'Mijn commissies' },
         { value: 'shared', label: 'Gedeeld met mij' },
       ],
+    }),
+    createColumn({
+      id: 'member_count_filter',
+      header: 'Leden',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: 'Heeft leden' },
+        { value: 'geen', label: 'Geen leden' },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft leden' : 'Geen leden',
     }),
   ], []);
 
@@ -329,14 +344,13 @@ export default function CommissiesList() {
 
     let filtered = [...commissies];
 
-    if (ownershipFilter === 'mine') {
-      filtered = filtered.filter(commissie => commissie.author === currentUserId);
-    } else if (ownershipFilter === 'shared') {
-      filtered = filtered.filter(commissie => commissie.author !== currentUserId);
-    }
+    if (ownershipFilter === 'mine') filtered = filtered.filter(c => c.author === currentUserId);
+    else if (ownershipFilter === 'shared') filtered = filtered.filter(c => c.author !== currentUserId);
+    if (memberCountFilter === 'heeft') filtered = filtered.filter(c => (c.member_count ?? 0) > 0);
+    else if (memberCountFilter === 'geen') filtered = filtered.filter(c => (c.member_count ?? 0) === 0);
 
     return filtered;
-  }, [commissies, ownershipFilter, currentUserId]);
+  }, [commissies, ownershipFilter, memberCountFilter, currentUserId]);
 
   const sortedCommissies = useMemo(() => {
     if (!filteredCommissies) return [];
@@ -398,7 +412,7 @@ export default function CommissiesList() {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [ownershipFilter, commissies]);
+  }, [ownershipFilter, memberCountFilter, commissies]);
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -418,7 +432,7 @@ export default function CommissiesList() {
 
           <DataTableToolbar
             columns={filterColumns}
-            filters={{ ownership: ownershipFilter }}
+            filters={{ ownership: ownershipFilter, member_count_filter: memberCountFilter }}
             onFilterChange={setFilter}
             onClearFilters={clearFilters}
             hasActiveFilters={hasActiveFilters}
