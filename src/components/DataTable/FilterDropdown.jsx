@@ -1,21 +1,54 @@
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FILTER_TYPES } from './columnHelpers';
 
 /**
  * Filter dropdown panel — matches the People list filter style.
- * Absolute-positioned below the filter button.
+ * Rendered via portal (appended to <body>) and positioned with position:fixed
+ * so it is never clipped by overflow:hidden/auto ancestors.
  *
  * Renders one control per filterable column:
  *   SELECT  → <select> with options
  *   TEXT    → <input type="text">
  *   BOOLEAN → toggle switch
  */
-export default function FilterDropdown({ columns, filters, onFilterChange, onClearFilters, hasActiveFilters }) {
+export default function FilterDropdown({ anchorRef, columns, filters, onFilterChange, onClearFilters, hasActiveFilters }) {
   const filterableColumns = columns.filter((col) => col.enableColumnFilter && col.meta?.filterType);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef(null);
+
+  // Compute position from the anchor button's bounding rect
+  useEffect(() => {
+    if (!anchorRef?.current) return;
+
+    const updatePosition = () => {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+      });
+    };
+
+    updatePosition();
+
+    // Re-position on scroll or resize
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [anchorRef]);
 
   if (filterableColumns.length === 0) return null;
 
-  return (
-    <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+  return createPortal(
+    <div
+      ref={dropdownRef}
+      data-filter-dropdown
+      className="fixed w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[9999]"
+      style={{ top: position.top, left: position.left }}
+    >
       <div className="p-4 space-y-4">
         {filterableColumns.map((col) => {
           const meta = col.meta;
@@ -95,6 +128,7 @@ export default function FilterDropdown({ columns, filters, onFilterChange, onCle
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
