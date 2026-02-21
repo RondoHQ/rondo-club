@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Coins, Download, Filter } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
@@ -8,9 +8,9 @@ import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
 import SeasonSelector from './SeasonSelector';
 import SortableHeader from '@/components/SortableHeader';
+import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
-// Fee row component
-function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
+function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
   const hasDiscount = member.family_discount_rate > 0;
   const hasProrata = member.prorata_percentage < 1.0;
 
@@ -18,7 +18,6 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     } ${hasProrata ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
-      {/* First Name */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
@@ -28,7 +27,6 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
         </Link>
       </td>
 
-      {/* Last Name */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link
           to={`/people/${member.id}`}
@@ -38,51 +36,50 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
         </Link>
       </td>
 
-      {/* Category */}
       <td className="px-4 py-3 whitespace-nowrap">
         <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getCategoryColor(categories?.[member.category]?.sort_order)}`}>
           {categories?.[member.category]?.label ?? member.category}
         </span>
       </td>
 
-      {/* Age Group */}
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-        {member.leeftijdsgroep || '-'}
-      </td>
+      {isColVisible('leeftijdsgroep') && (
+        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+          {member.leeftijdsgroep || '-'}
+        </td>
+      )}
 
-      {/* Base Fee */}
       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
         {formatCurrency(member.base_fee, 2)}
       </td>
 
-      {/* Family Discount */}
-      <td className="px-4 py-3 text-sm text-right">
-        {hasDiscount ? (
-          <span className="text-green-600 dark:text-green-400">
-            -{formatPercentage(member.family_discount_rate)}
-          </span>
-        ) : (
-          <span className="text-gray-400 dark:text-gray-500">-</span>
-        )}
-      </td>
+      {isColVisible('family_discount_rate') && (
+        <td className="px-4 py-3 text-sm text-right">
+          {hasDiscount ? (
+            <span className="text-green-600 dark:text-green-400">
+              -{formatPercentage(member.family_discount_rate)}
+            </span>
+          ) : (
+            <span className="text-gray-400 dark:text-gray-500">-</span>
+          )}
+        </td>
+      )}
 
-      {/* Pro-rata */}
-      <td className="px-4 py-3 text-sm text-right">
-        {hasProrata ? (
-          <span className="text-amber-600 dark:text-amber-400">
-            {formatPercentage(member.prorata_percentage)}
-          </span>
-        ) : (
-          <span className="text-gray-400 dark:text-gray-500">100%</span>
-        )}
-      </td>
+      {isColVisible('prorata_percentage') && (
+        <td className="px-4 py-3 text-sm text-right">
+          {hasProrata ? (
+            <span className="text-amber-600 dark:text-amber-400">
+              {formatPercentage(member.prorata_percentage)}
+            </span>
+          ) : (
+            <span className="text-gray-400 dark:text-gray-500">100%</span>
+          )}
+        </td>
+      )}
 
-      {/* Final Fee */}
       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
         {formatCurrency(member.final_fee, 2)}
       </td>
 
-      {/* Nikki Total - Only when showNikkiColumns (nikki billing, not forecast) */}
       {showNikkiColumns && (
         <>
           <td className="px-4 py-3 text-sm text-right">
@@ -95,7 +92,6 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
             )}
           </td>
 
-          {/* Saldo (Outstanding) */}
           <td className="px-4 py-3 text-sm text-right">
             {member.nikki_saldo !== null ? (
               <span className="text-gray-700 dark:text-gray-300">
@@ -111,7 +107,6 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories }) {
   );
 }
 
-// Empty state component
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -135,42 +130,93 @@ export function ContributieList() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [showMismatchOnly, setShowMismatchOnly] = useState(false);
   const [isForecast, setIsForecast] = useState(false);
+  const [firstNameFilter, setFirstNameFilter] = useState('');
+  const [lastNameFilter, setLastNameFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch fee data
+  const { isVisible, toggle } = useColumnVisibility('contributie');
+
   const { data, isLoading, error } = useFeeList(
     isForecast ? { forecast: true } : {}
   );
 
-  // Handle sort
   const handleSort = useCallback((field, order) => {
     setSortField(field);
     setSortOrder(order);
   }, []);
 
-  // Derive billing method from fee data
   const billingMethod = data?.billing_method ?? 'nikki';
   const showNikkiColumns = billingMethod === 'nikki' && !isForecast;
 
-  // Reset sort field if switching to forecast or rondo billing while sorting by nikki columns
   useEffect(() => {
     if (!showNikkiColumns && (sortField === 'nikki_total' || sortField === 'nikki_saldo')) {
       setSortField('last_name');
     }
   }, [showNikkiColumns, sortField]);
 
-  // Handle refresh
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['fees'] });
   };
 
-  // Filter members client-side
-  const filteredMembers = (data?.members ?? []).filter(m => {
-    if (showMismatchOnly) return m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1;
-    return true;
-  });
+  // Build category filter options from loaded data
+  const categoryOptions = useMemo(() => {
+    return Object.entries(data?.categories || {})
+      .sort(([, a], [, b]) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
+      .map(([slug, meta]) => ({ value: slug, label: meta.label ?? slug }));
+  }, [data?.categories]);
 
-  // Sort members client-side
+  const filterColumns = useMemo(() => [
+    createColumn({
+      id: 'first_name',
+      header: 'Voornaam',
+      filterType: FILTER_TYPES.TEXT,
+    }),
+    createColumn({
+      id: 'last_name',
+      header: 'Achternaam',
+      filterType: FILTER_TYPES.TEXT,
+    }),
+    createColumn({
+      id: 'category',
+      header: 'Categorie',
+      filterType: categoryOptions.length > 0 ? FILTER_TYPES.SELECT : null,
+      filterOptions: categoryOptions,
+    }),
+  ], [categoryOptions]);
+
+  const hasActiveFilters = !!firstNameFilter || !!lastNameFilter || !!categoryFilter;
+  const activeFilterCount = (firstNameFilter ? 1 : 0) + (lastNameFilter ? 1 : 0) + (categoryFilter ? 1 : 0);
+
+  const clearFilters = () => {
+    setFirstNameFilter('');
+    setLastNameFilter('');
+    setCategoryFilter('');
+  };
+
+  const setFilter = (colId, value) => {
+    if (colId === 'first_name') setFirstNameFilter(value || '');
+    else if (colId === 'last_name') setLastNameFilter(value || '');
+    else if (colId === 'category') setCategoryFilter(value || '');
+  };
+
+  const colVisColumns = [
+    { id: 'leeftijdsgroep', label: 'Leeftijdsgroep', isVisible: isVisible('leeftijdsgroep') },
+    { id: 'family_discount_rate', label: 'Gezinskorting', isVisible: isVisible('family_discount_rate') },
+    { id: 'prorata_percentage', label: 'Pro-rata', isVisible: isVisible('prorata_percentage') },
+  ];
+
+  const filteredMembers = useMemo(() => {
+    return (data?.members ?? []).filter(m => {
+      if (showMismatchOnly && !(m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1)) return false;
+      if (firstNameFilter && !(m.first_name || '').toLowerCase().includes(firstNameFilter.toLowerCase())) return false;
+      if (lastNameFilter && !(m.last_name || '').toLowerCase().includes(lastNameFilter.toLowerCase())) return false;
+      if (categoryFilter && m.category !== categoryFilter) return false;
+      return true;
+    });
+  }, [data?.members, showMismatchOnly, firstNameFilter, lastNameFilter, categoryFilter]);
+
   const categoryOrder = {};
   Object.entries(data?.categories || {}).forEach(([slug, meta]) => {
     categoryOrder[slug] = meta.sort_order ?? 999;
@@ -211,7 +257,6 @@ export function ContributieList() {
     return sortOrder === 'asc' ? cmp : -cmp;
   });
 
-  // Handle CSV export
   const handleExportCsv = () => {
     const baseHeaders = ['Voornaam', 'Achternaam', 'Categorie', 'Leeftijdsgroep', 'Basis', 'Gezinskorting', 'Pro-rata', 'Bedrag'];
     const headers = showNikkiColumns ? [...baseHeaders, 'Nikki', 'Saldo'] : baseHeaders;
@@ -236,11 +281,9 @@ export function ContributieList() {
     downloadCsv(csv, `contributie-${data?.season || 'export'}.csv`);
   };
 
-  // Count members without Nikki data and with mismatch
   const allMembers = data?.members ?? [];
   const mismatchCount = allMembers.filter(m => m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1).length;
 
-  // Calculate totals
   const totals = sortedMembers.reduce(
     (acc, m) => ({
       baseFee: acc.baseFee + m.base_fee,
@@ -251,7 +294,6 @@ export function ContributieList() {
     { baseFee: 0, finalFee: 0, nikkiTotal: 0, nikkiSaldo: 0 }
   );
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -260,7 +302,6 @@ export function ContributieList() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="card p-6 text-center">
@@ -278,8 +319,7 @@ export function ContributieList() {
     );
   }
 
-  // Empty state
-  if (!sortedMembers.length) {
+  if (!allMembers.length) {
     return (
       <PullToRefreshWrapper onRefresh={handleRefresh}>
         <div className="card">
@@ -292,7 +332,7 @@ export function ContributieList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Season indicator */}
+        {/* Season indicator + totals + mismatch toggle + CSV export */}
         <div className="flex items-center justify-between">
           <SeasonSelector
             season={data?.season}
@@ -309,7 +349,6 @@ export function ContributieList() {
                 Nog te ontvangen: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.nikkiSaldo, 2)}</span>
               </div>
             )}
-            {/* Filter: Mismatch - Only in nikki billing current season mode */}
             {showNikkiColumns && mismatchCount > 0 && (
               <button
                 onClick={() => setShowMismatchOnly(!showMismatchOnly)}
@@ -322,7 +361,6 @@ export function ContributieList() {
                 <span className="text-xs">Afwijking ({mismatchCount})</span>
               </button>
             )}
-            {/* CSV Export Button */}
             <button
               onClick={handleExportCsv}
               className="btn-secondary"
@@ -334,131 +372,168 @@ export function ContributieList() {
           </div>
         </div>
 
+        {/* Filter toolbar */}
+        <DataTableToolbar
+          columns={filterColumns}
+          filters={{ first_name: firstNameFilter, last_name: lastNameFilter, category: categoryFilter }}
+          onFilterChange={setFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+        />
+
         {/* Fee list table */}
         <div className="card overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <SortableHeader
-                  label="Voornaam"
-                  columnId="first_name"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Achternaam"
-                  columnId="last_name"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Categorie"
-                  columnId="category"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Leeftijdsgroep"
-                  columnId="leeftijdsgroep"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Basis"
-                  columnId="base_fee"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  className="text-right"
-                />
-                <SortableHeader
-                  label="Gezin"
-                  columnId="family_discount_rate"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  className="text-right"
-                />
-                <SortableHeader
-                  label="Pro-rata"
-                  columnId="prorata_percentage"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  className="text-right"
-                />
-                <SortableHeader
-                  label="Bedrag"
-                  columnId="final_fee"
-                  sortField={sortField}
-                  sortOrder={sortOrder}
-                  onSort={handleSort}
-                  className="text-right"
-                />
-                {showNikkiColumns && (
-                  <>
+          {sortedMembers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Geen leden gevonden voor de geselecteerde filters.
+              </p>
+              <button onClick={clearFilters} className="mt-3 btn-secondary text-sm">
+                Filters wissen
+              </button>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <SortableHeader
+                    label="Voornaam"
+                    columnId="first_name"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    label="Achternaam"
+                    columnId="last_name"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  <SortableHeader
+                    label="Categorie"
+                    columnId="category"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                  />
+                  {isVisible('leeftijdsgroep') && (
                     <SortableHeader
-                      label="Nikki"
-                      columnId="nikki_total"
+                      label="Leeftijdsgroep"
+                      columnId="leeftijdsgroep"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                    />
+                  )}
+                  <SortableHeader
+                    label="Basis"
+                    columnId="base_fee"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="text-right"
+                  />
+                  {isVisible('family_discount_rate') && (
+                    <SortableHeader
+                      label="Gezin"
+                      columnId="family_discount_rate"
                       sortField={sortField}
                       sortOrder={sortOrder}
                       onSort={handleSort}
                       className="text-right"
                     />
+                  )}
+                  {isVisible('prorata_percentage') && (
                     <SortableHeader
-                      label="Saldo"
-                      columnId="nikki_saldo"
+                      label="Pro-rata"
+                      columnId="prorata_percentage"
                       sortField={sortField}
                       sortOrder={sortOrder}
                       onSort={handleSort}
                       className="text-right"
                     />
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {sortedMembers.map((member, index) => (
-                <FeeRow
-                  key={member.id}
-                  member={member}
-                  isOdd={index % 2 === 1}
-                  showNikkiColumns={showNikkiColumns}
-                  categories={data?.categories}
-                />
-              ))}
-            </tbody>
-            <tfoot className="bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <td colSpan="4" className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Totaal
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                  {formatCurrency(totals.baseFee, 2)}
-                </td>
-                <td colSpan="2"></td>
-                <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
-                  {formatCurrency(totals.finalFee, 2)}
-                </td>
-                {showNikkiColumns && (
-                  <>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                      {formatCurrency(totals.nikkiTotal, 2)}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
-                      {formatCurrency(totals.nikkiSaldo, 2)}
-                    </td>
-                  </>
-                )}
-              </tr>
-            </tfoot>
-          </table>
+                  )}
+                  <SortableHeader
+                    label="Bedrag"
+                    columnId="final_fee"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSort={handleSort}
+                    className="text-right"
+                  />
+                  {showNikkiColumns && (
+                    <>
+                      <SortableHeader
+                        label="Nikki"
+                        columnId="nikki_total"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="text-right"
+                      />
+                      <SortableHeader
+                        label="Saldo"
+                        columnId="nikki_saldo"
+                        sortField={sortField}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        className="text-right"
+                      />
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {sortedMembers.map((member, index) => (
+                  <FeeRow
+                    key={member.id}
+                    member={member}
+                    isOdd={index % 2 === 1}
+                    showNikkiColumns={showNikkiColumns}
+                    categories={data?.categories}
+                    isColVisible={isVisible}
+                  />
+                ))}
+              </tbody>
+              <tfoot className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <td colSpan={isVisible('leeftijdsgroep') ? 4 : 3} className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Totaal
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                    {formatCurrency(totals.baseFee, 2)}
+                  </td>
+                  {isVisible('family_discount_rate') && <td></td>}
+                  {isVisible('prorata_percentage') && <td></td>}
+                  <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
+                    {formatCurrency(totals.finalFee, 2)}
+                  </td>
+                  {showNikkiColumns && (
+                    <>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                        {formatCurrency(totals.nikkiTotal, 2)}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">
+                        {formatCurrency(totals.nikkiSaldo, 2)}
+                      </td>
+                    </>
+                  )}
+                </tr>
+              </tfoot>
+            </table>
+          )}
         </div>
       </div>
+
+      <ColumnSettingsPanel
+        isOpen={isColumnSettingsOpen}
+        onClose={() => setIsColumnSettingsOpen(false)}
+        columns={colVisColumns}
+        onToggleColumn={toggle}
+      />
     </PullToRefreshWrapper>
   );
 }
