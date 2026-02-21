@@ -1088,3 +1088,34 @@
 
 ---
 
+
+## v30.0 User Accounts & Profiles (Shipped: 2026-02-21)
+
+**Delivered:** Replaced WordPress admin access for non-admin club members with in-app user management — admin-provisioned accounts from Sportlink person records, Functie-based capability mapping with automatic grant-and-revoke sync, in-app profile page with password change, and sidebar avatar from linked Sportlink person photo.
+
+**Phases completed:** 203-208 (6 phases, 8 plans)
+
+**Key accomplishments:**
+
+- Non-admin users blocked from wp-admin via `admin_init` hook with AJAX/CLI/cron exemptions — zero impact on existing functionality
+- Functie-to-role checkbox matrix in Settings — admin maps Sportlink Functies to Rondo roles, matrix populated automatically by rondo-sync
+- Admin provisions WordPress accounts from person records — branded welcome email with 7-day password-set link, bidirectional person↔user link, KNVB ID in user meta, configurable email template
+- CapabilitySync service with full grant-and-revoke reconciliation, manual override meta keys, administrator guard, and rondo-sync Step 5 integration — on-demand sync-all button in Settings
+- In-app profile page — users change password without wp-login.php, linked Sportlink name and active Functies displayed, session destroyed and redirected to login after password change
+- Sidebar footer redesigned with Sportlink person photo as circular avatar, graceful fallback icon, demo-safe non-clickable identity row
+
+**Stats:**
+
+- 58 files changed
+- +9,202 / -197 lines changed
+- 6 phases, 8 plans
+- 2 days (2026-02-20 → 2026-02-21)
+
+**Git range:** `44b25865` → `b583dddf` (51 commits)
+
+**Tech debt:** CAPS-05 — No in-app UI for manual capability overrides (backend mechanism exists in META_MANUAL_GRANTS/META_MANUAL_REVOKES; admins use WP admin user meta editor); Orphaned Google Sheets code (pre-existing v29.0 debt)
+
+**What's next:** To be determined
+
+---
+

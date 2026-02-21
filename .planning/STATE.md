@@ -2,20 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-20)
+See: .planning/PROJECT.md (updated 2026-02-21)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v30.0 User Accounts & Profiles — COMPLETE
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Milestone: v30.0 User Accounts & Profiles — COMPLETE
-Phase: 208 of 208 (Avatar and Sidebar) — COMPLETE
-Plan: 1 of 1 complete in phase 208
-Status: Phase 208 complete — Sidebar avatar with linked person photo deployed (v30.0.0)
-Last activity: 2026-02-20 — Phase 208 Plan 01 (Sidebar avatar + linked_person_photo) complete
+Milestone: v30.0 User Accounts & Profiles — ARCHIVED
+Status: Milestone complete and archived — git tag v30.0 created
+Last activity: 2026-02-21 — v30.0 milestone archived, PROJECT.md evolved
 
-Progress: [██████████] 100% (6/6 phases complete)
+Next: `/gsd:new-milestone` to plan next milestone
 
 ## Performance Metrics
 
@@ -92,4 +90,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-20 — Phase 208 complete (Avatar & Sidebar), v30.0.0 deployed — v30.0 milestone complete*
+*Last updated: 2026-02-21 — v30.0 User Accounts & Profiles archived, tag v30.0 created*

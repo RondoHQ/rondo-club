@@ -474,21 +474,20 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ DNS records (DKIM, bounce CNAME, DMARC) configured for sending domain — v29.0
 - ✓ All transactional email types verified through Lettermint (invoices, installments, reminders, VOG, mentions) — v29.0
 
+**v30.0 User Accounts & Profiles (shipped 2026-02-21):**
+- ✓ Non-admin users blocked from wp-admin — admin_init redirect with AJAX/CLI/cron exemptions — v30.0
+- ✓ Functie-to-role checkbox matrix in Settings, populated automatically by rondo-sync — v30.0
+- ✓ Admin provisions WordPress accounts from person records with KNVB ID user meta — v30.0
+- ✓ Welcome email with 7-day password-set link, branded and configurable via Settings — v30.0
+- ✓ Bidirectional user↔person link established at provisioning time — v30.0
+- ✓ CapabilitySync service with grant-and-revoke reconciliation, manual override meta keys — v30.0
+- ✓ rondo-sync Step 5 for automatic capability sync from Sportlink Functies — v30.0
+- ✓ In-app profile page with password change, session invalidation, linked Sportlink identity display — v30.0
+- ✓ Sidebar footer with Sportlink person photo as circular avatar, fallback icon — v30.0
+- ✓ Commissie-to-role mapping alongside Functie mapping — v30.0
+- ✓ rondo_financieel role for independent financial access — v30.0
+
 ### Active
-
-## Current Milestone: v30.0 User Accounts & Profiles
-
-**Goal:** Replace WordPress admin access for non-admin users with in-app user management — provisioning from Sportlink members, Functie-based capability mapping with auto-sync, in-app profile page, and branded welcome emails.
-
-**Target features:**
-- Block non-admin users from WP admin entirely (redirect away from /wp-admin/)
-- In-app profile page with password change form
-- Admin creates WP user accounts from Sportlink member records
-- User avatar in top-right shows linked Sportlink person photo
-- Admin maps Sportlink Functies to Rondo capabilities (financieel, fairplay, club-admin)
-- Auto-sync capabilities from Functies via rondo-sync with per-user manual override
-- Club-admin role for operational settings (VOG, contributie, role management)
-- Branded, template-configurable welcome email with password-set link
 
 ### Out of Scope
 
@@ -509,9 +508,10 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v29.0):**
+**Codebase State (post v30.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 29.0.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 30.0.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
 - CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
@@ -519,6 +519,7 @@ Club administrators can manage their members, teams, and club operations through
 - ESLint clean (0 errors/warnings), pre-commit lint enforcement via husky + lint-staged
 - Demo site at demo.rondo.club with anonymized fixture data
 - Developer docs at developer.rondo.club
+- Tech debt: orphaned Google Sheets backend (4 dead client.js methods, 5 unreachable REST routes), CAPS-05 manual capability override UI deferred
 
 **Key Finance Files:**
 - `includes/class-finance-config.php` — FinanceConfig with settings, Rabobank/Mollie credentials, email templates
@@ -767,6 +768,18 @@ Club administrators can manage their members, teams, and club operations through
 | Root domain extraction for email From address | wp_parse_url + array_slice(-2) for Lettermint-compatible subdomain-to-root mapping | ✓ Good |
 | DRY deferred for root domain extraction | 2-file duplication acceptable, refactor when third email sender needs it | ✓ Good |
 | Orphaned Google Sheets code preserved | No user flow broken; cleanup in future milestone | Tech Debt |
+| admin_init for WP admin blocking | Fires only inside wp-admin; is_admin() check implicit; exempt AJAX/CLI/cron | ✓ Good |
+| Static FunctieCapabilityMap config class | Options API storage, get_map/update_map/get_roles_for_functie() pattern; simpler than active record | ✓ Good |
+| UserProvisioning as pure service class | No hooks, PSR-4 autoloaded, instantiated on-demand; same pattern as other service classes | ✓ Good |
+| Idempotency check before wp_create_user | Read _rondo_wp_user_id before creating; return already_exists if valid user found | ✓ Good |
+| 7-day password-reset expiry via filter | scoped add/remove password_reset_expiration filter — no permanent config change | ✓ Good |
+| rondo_user excluded from capability sync | rondo_fairplay, rondo_vog, rondo_bestuur, rondo_financieel managed by sync; rondo_user assigned at provisioning | ✓ Good |
+| sync_user_by_knvb_id returns HTTP 200 for no_user | Not 404 — no_user is expected (member without WP account), counted as skipped not error | ✓ Good |
+| Role reconciliation with add/remove_role not set_role | Preserves roles from other sources; diff-based — never blow away and rebuild | ✓ Good |
+| Hard-redirect to login on password change | Session is dead; no intermediate state possible; window.location.href vs React Router | ✓ Good |
+| Demo guard in backend for password endpoint | Returns 403 regardless of frontend state; consistent with DemoProtection pattern | ✓ Good |
+| get_the_post_thumbnail_url() ?: null | Returns false (not null) when no thumbnail — use ?: not ?? | ✓ Good |
+| CAPS-05 manual override UI deferred | Backend mechanism (META_MANUAL_GRANTS) exists; admin can use WP admin user meta editor | Deferred |
 
 ---
-*Last updated: 2026-02-20 after v30.0 User Accounts & Profiles milestone started*
+*Last updated: 2026-02-21 after v30.0 User Accounts & Profiles milestone*
