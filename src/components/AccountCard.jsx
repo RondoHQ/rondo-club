@@ -4,6 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { format } from '@/utils/dateFormat';
 
+const ROLE_LABELS = {
+  rondo_user: 'Gebruiker',
+  rondo_fairplay: 'FairPlay',
+  rondo_vog: 'VOG',
+  rondo_bestuur: 'Bestuur',
+  administrator: 'Admin',
+};
+
 /**
  * AccountCard - Admin-only provisioning status card for person detail page.
  * Shows whether a WordPress account has been created for this person,
@@ -27,6 +35,7 @@ export default function AccountCard({ personId, personData }) {
 
   const linkedUserId = personData?.linked_user_id;
   const welcomeEmailSentAt = personData?.welcome_email_sent_at;
+  const linkedUserRoles = personData?.linked_user_roles;
 
   // Check if person has an email address
   const hasEmail = personData?.acf?.contact_info?.some(
@@ -64,6 +73,18 @@ export default function AccountCard({ personId, personData }) {
             <p className="text-xs text-gray-500 dark:text-gray-400 pl-7">
               Welkomstmail verstuurd op {format(new Date(welcomeEmailSentAt), 'd MMM yyyy')}
             </p>
+          )}
+          {linkedUserRoles?.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pl-7 pt-1">
+              {linkedUserRoles.map((role) => (
+                <span
+                  key={role}
+                  className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                >
+                  {ROLE_LABELS[role] || role}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       ) : (
