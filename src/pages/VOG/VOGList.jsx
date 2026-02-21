@@ -180,6 +180,9 @@ export default function VOGList() {
   const [vogTypeFilter, setVogTypeFilter] = useState('');
   const [justisStatusFilter, setJustisStatusFilter] = useState('');
   const [reminderStatusFilter, setReminderStatusFilter] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
+  const [knvbIdFilter, setKnvbIdFilter] = useState('');
+  const [emailPresenceFilter, setEmailPresenceFilter] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
   const { isVisible, toggle } = useColumnVisibility('vog');
@@ -220,8 +223,24 @@ export default function VOGList() {
     order,
   });
 
-  const people = useMemo(() => data?.people || [], [data?.people]);
+  const allServerPeople = useMemo(() => data?.people || [], [data?.people]);
   const totalPeople = data?.total || 0;
+
+  // Client-side filtering for columns not covered by server-side filters
+  const people = useMemo(() => {
+    let result = allServerPeople;
+    if (nameFilter) {
+      const search = nameFilter.toLowerCase();
+      result = result.filter(p =>
+        [p.first_name, p.infix, p.last_name].filter(Boolean).join(' ').toLowerCase().includes(search)
+      );
+    }
+    if (knvbIdFilter === 'heeft') result = result.filter(p => p.acf?.['knvb-id']);
+    else if (knvbIdFilter === 'geen') result = result.filter(p => !p.acf?.['knvb-id']);
+    if (emailPresenceFilter === 'heeft') result = result.filter(p => getFirstContactByType(p, 'email'));
+    else if (emailPresenceFilter === 'geen') result = result.filter(p => !getFirstContactByType(p, 'email'));
+    return result;
+  }, [allServerPeople, nameFilter, knvbIdFilter, emailPresenceFilter]);
 
   const emailCounts = useMemo(() => {
     const allPeople = allData?.people || [];
@@ -244,6 +263,18 @@ export default function VOGList() {
     return { total: allPeople.length, submitted, notSubmitted };
   }, [allData?.people]);
 
+  const knvbIdCounts = useMemo(() => {
+    const allPeople = allData?.people || [];
+    const heeft = allPeople.filter(p => p.acf?.['knvb-id']).length;
+    return { heeft, geen: allPeople.length - heeft };
+  }, [allData?.people]);
+
+  const emailPresenceCounts = useMemo(() => {
+    const allPeople = allData?.people || [];
+    const heeft = allPeople.filter(p => getFirstContactByType(p, 'email')).length;
+    return { heeft, geen: allPeople.length - heeft };
+  }, [allData?.people]);
+
   const { data: customFields = [] } = useQuery({
     queryKey: ['custom-fields-metadata', 'person'],
     queryFn: async () => {
@@ -262,6 +293,32 @@ export default function VOGList() {
 
   // Filter columns for DataTableToolbar — labels include live counts from allData
   const filterColumns = useMemo(() => [
+    createColumn({
+      id: 'naam',
+      header: 'Naam',
+      filterType: FILTER_TYPES.TEXT,
+    }),
+    createColumn({
+      id: 'knvb_id_filter',
+      header: 'KNVB ID',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: `Heeft KNVB ID (${knvbIdCounts.heeft})` },
+        { value: 'geen', label: `Geen KNVB ID (${knvbIdCounts.geen})` },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft KNVB ID' : 'Geen KNVB ID',
+    }),
+    createColumn({
+      id: 'email_presence',
+      header: 'Email',
+      filterLabel: 'Email aanwezig',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'heeft', label: `Heeft email (${emailPresenceCounts.heeft})` },
+        { value: 'geen', label: `Geen email (${emailPresenceCounts.geen})` },
+      ],
+      getFilterLabel: (val) => val === 'heeft' ? 'Heeft email' : 'Geen email',
+    }),
     createColumn({
       id: 'vog_type',
       header: 'VOG type',
@@ -305,16 +362,19 @@ export default function VOGList() {
       ],
       getFilterLabel: (val) => val === 'sent' ? 'Wel verzonden' : 'Niet verzonden',
     }),
-  ], [emailCounts, vogTypeCounts, justisCounts]);
+  ], [emailCounts, vogTypeCounts, justisCounts, knvbIdCounts, emailPresenceCounts]);
 
-  const hasActiveFilters = !!(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter);
-  const activeFilterCount = (emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0) + (reminderStatusFilter ? 1 : 0);
+  const hasActiveFilters = !!(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter || nameFilter || knvbIdFilter || emailPresenceFilter);
+  const activeFilterCount = [emailStatusFilter, vogTypeFilter, justisStatusFilter, reminderStatusFilter, nameFilter, knvbIdFilter, emailPresenceFilter].filter(Boolean).length;
 
   const clearFilters = () => {
     setEmailStatusFilter('');
     setVogTypeFilter('');
     setJustisStatusFilter('');
     setReminderStatusFilter('');
+    setNameFilter('');
+    setKnvbIdFilter('');
+    setEmailPresenceFilter('');
   };
 
   const setFilter = (colId, value) => {
@@ -322,6 +382,9 @@ export default function VOGList() {
     else if (colId === 'vog_type') setVogTypeFilter(value || '');
     else if (colId === 'justis_status') setJustisStatusFilter(value || '');
     else if (colId === 'reminder_status') setReminderStatusFilter(value || '');
+    else if (colId === 'naam') setNameFilter(value || '');
+    else if (colId === 'knvb_id_filter') setKnvbIdFilter(value || '');
+    else if (colId === 'email_presence') setEmailPresenceFilter(value || '');
   };
 
   const colVisColumns = [
@@ -556,7 +619,7 @@ export default function VOGList() {
         {/* Filter toolbar + CSV export */}
         <DataTableToolbar
           columns={filterColumns}
-          filters={{ vog_type: vogTypeFilter, email_status: emailStatusFilter, justis_status: justisStatusFilter, reminder_status: reminderStatusFilter }}
+          filters={{ naam: nameFilter, knvb_id_filter: knvbIdFilter, email_presence: emailPresenceFilter, vog_type: vogTypeFilter, email_status: emailStatusFilter, justis_status: justisStatusFilter, reminder_status: reminderStatusFilter }}
           onFilterChange={setFilter}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
