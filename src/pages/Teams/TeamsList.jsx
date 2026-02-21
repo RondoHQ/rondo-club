@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +8,7 @@ import { getTeamName } from '@/utils/formatters';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import InlineFieldInput from '@/components/InlineFieldInput';
 import SortableHeader from '@/components/SortableHeader';
+import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
 function getSpeeldag(activiteit) {
   if (!activiteit) return '';
@@ -21,14 +22,11 @@ function getGenderLabel(gender) {
   return map[gender] || gender;
 }
 
-function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit }) {
-  // Local state for edited field values (includes name, website, and custom fields)
+function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelection, isOdd, onSaveRow, isUpdating, isEditing, onStartEdit, onCancelEdit, isColVisible }) {
   const [editedFields, setEditedFields] = useState({});
 
-  // Reset edited fields when entering/exiting edit mode
   useEffect(() => {
     if (isEditing) {
-      // Initialize with current values for core fields and custom fields
       const initialValues = {
         _name: team.title?.rendered || team.title || '',
       };
@@ -53,7 +51,6 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
     if (e.key === 'Escape') {
       onCancelEdit();
     }
-    // Save on Enter (but not in textareas or selects where Enter might have other meaning)
     if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
       e.preventDefault();
       handleSave();
@@ -94,18 +91,26 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
           </Link>
         )}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
-        {team.player_count ?? 0}
-      </td>
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
-        {team.staff_count ?? 0}
-      </td>
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-        {getSpeeldag(team.acf?.activiteit)}
-      </td>
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-        {getGenderLabel(team.acf?.gender)}
-      </td>
+      {isColVisible('player_count') && (
+        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
+          {team.player_count ?? 0}
+        </td>
+      )}
+      {isColVisible('staff_count') && (
+        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap text-right">
+          {team.staff_count ?? 0}
+        </td>
+      )}
+      {isColVisible('speeldag') && (
+        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+          {getSpeeldag(team.acf?.activiteit)}
+        </td>
+      )}
+      {isColVisible('gender') && (
+        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+          {getGenderLabel(team.acf?.gender)}
+        </td>
+      )}
       {listViewFields.map(field => (
         <td key={field.key} className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400" onDoubleClick={() => !isEditing && onStartEdit(team.id)}>
           {isEditing ? (
@@ -123,7 +128,6 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
           )}
         </td>
       ))}
-      {/* Actions column */}
       <td className="px-2 py-3 whitespace-nowrap text-sm">
         {isEditing ? (
           <div className="flex items-center gap-1">
@@ -162,7 +166,7 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
   );
 }
 
-function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit }) {
+function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSelection, onToggleSelectAll, isAllSelected, isSomeSelected, sortField, sortOrder, onSort, onSaveRow, isUpdating, editingRowId, onStartEdit, onCancelEdit, isColVisible }) {
   return (
     <div className="card !overflow-x-auto max-h-[calc(100vh-12rem)] !overflow-y-auto">
       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -184,10 +188,18 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
               </button>
             </th>
             <SortableHeader columnId="name" label="Naam" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader columnId="player_count" label="Spelers" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader columnId="staff_count" label="Staf" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader columnId="speeldag" label="Speeldag" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
-            <SortableHeader columnId="gender" label="Gender" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            {isColVisible('player_count') && (
+              <SortableHeader columnId="player_count" label="Spelers" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            )}
+            {isColVisible('staff_count') && (
+              <SortableHeader columnId="staff_count" label="Staf" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            )}
+            {isColVisible('speeldag') && (
+              <SortableHeader columnId="speeldag" label="Speeldag" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            )}
+            {isColVisible('gender') && (
+              <SortableHeader columnId="gender" label="Gender" sortField={sortField} sortOrder={sortOrder} onSort={onSort} />
+            )}
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
@@ -198,7 +210,6 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
                 onSort={onSort}
               />
             ))}
-            {/* Actions column header */}
             <th scope="col" className="w-20 px-2 bg-gray-50 dark:bg-gray-800"></th>
           </tr>
         </thead>
@@ -216,6 +227,7 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
               isEditing={editingRowId === team.id}
               onStartEdit={onStartEdit}
               onCancelEdit={onCancelEdit}
+              isColVisible={isColVisible}
             />
           ))}
         </tbody>
@@ -226,15 +238,15 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
 
 export default function TeamsList() {
   const [search, setSearch] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [speeldagFilter, setSpeeldagFilter] = useState(new Set());
-  const [genderFilter, setGenderFilter] = useState(new Set());
+  const [speeldagFilter, setSpeeldagFilter] = useState('');
+  const [genderFilter, setGenderFilter] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [editingRowId, setEditingRowId] = useState(null);
-  const filterRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+
+  const { isVisible, toggle } = useColumnVisibility('teams');
 
   const queryClient = useQueryClient();
 
@@ -242,35 +254,25 @@ export default function TeamsList() {
     await queryClient.invalidateQueries({ queryKey: ['teams'] });
   };
 
-  // Mutation for updating row custom fields
-  // ACF fields that require array type (repeaters, multi-select post_object, etc.)
-  // These cannot be null - must be empty array [] when empty
   const arrayTypeAcfFields = ['contact_info', 'investors'];
 
   const updateRowMutation = useMutation({
     mutationFn: async ({ teamId, editedFields, existingAcf }) => {
-      // Extract core fields (prefixed with _) from custom fields
       const { _name, ...customFields } = editedFields;
 
-      // Merge custom fields with existing ACF data
       const mergedAcf = {
         ...existingAcf,
         ...customFields
       };
 
-      // Sanitize null values for array-type fields (REST API requires [] not null)
       arrayTypeAcfFields.forEach(fieldName => {
         if (mergedAcf[fieldName] === null || mergedAcf[fieldName] === undefined) {
           mergedAcf[fieldName] = [];
         }
       });
 
-      // Build update payload
-      const updatePayload = {
-        acf: mergedAcf
-      };
+      const updatePayload = { acf: mergedAcf };
 
-      // Update title if name changed
       if (_name !== undefined) {
         updatePayload.title = _name;
       }
@@ -284,9 +286,7 @@ export default function TeamsList() {
     },
   });
 
-  // Handler for saving all edited fields in a row
   const handleSaveRow = async (teamId, editedFields, existingAcf) => {
-    // Convert empty strings to null for number fields (REST API requires number or null)
     const processedFields = { ...editedFields };
     listViewFields.forEach(field => {
       if (field.type === 'number' && processedFields[field.name] === '') {
@@ -296,14 +296,8 @@ export default function TeamsList() {
     await updateRowMutation.mutateAsync({ teamId, editedFields: processedFields, existingAcf });
   };
 
-  // Row edit mode handlers
-  const handleStartEdit = (teamId) => {
-    setEditingRowId(teamId);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingRowId(null);
-  };
+  const handleStartEdit = (teamId) => setEditingRowId(teamId);
+  const handleCancelEdit = () => setEditingRowId(null);
 
   const { data: teams, isLoading, error } = useQuery({
     queryKey: ['teams', search],
@@ -313,7 +307,6 @@ export default function TeamsList() {
     },
   });
 
-  // Fetch custom field definitions for list view columns
   const { data: customFields = [] } = useQuery({
     queryKey: ['custom-fields-metadata', 'team'],
     queryFn: async () => {
@@ -322,55 +315,36 @@ export default function TeamsList() {
     },
   });
 
-  // Filter to list-view-enabled fields, sorted by order
   const listViewFields = useMemo(() => {
     return customFields
       .filter(f => f.show_in_list_view)
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        filterRef.current &&
-        !filterRef.current.contains(event.target)
-      ) {
-        setIsFilterOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const hasActiveFilters = speeldagFilter.size > 0 || genderFilter.size > 0;
+  const hasActiveFilters = !!speeldagFilter || !!genderFilter;
+  const activeFilterCount = (speeldagFilter ? 1 : 0) + (genderFilter ? 1 : 0);
 
   const clearFilters = () => {
-    setSpeeldagFilter(new Set());
-    setGenderFilter(new Set());
+    setSpeeldagFilter('');
+    setGenderFilter('');
   };
 
-  // Selection helper functions
+  const setFilter = (colId, value) => {
+    if (colId === 'speeldag') setSpeeldagFilter(value || '');
+    else if (colId === 'gender') setGenderFilter(value || '');
+  };
+
   const toggleSelection = (teamId) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(teamId)) {
-        next.delete(teamId);
-      } else {
-        next.add(teamId);
-      }
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
       return next;
     });
   };
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  // Compute unique filter options from teams data
   const speeldagOptions = useMemo(() => {
     if (!teams) return [];
     return [...new Set(teams.map(t => getSpeeldag(t.acf?.activiteit)).filter(Boolean))].sort();
@@ -381,23 +355,45 @@ export default function TeamsList() {
     return [...new Set(teams.map(t => getGenderLabel(t.acf?.gender)).filter(Boolean))].sort();
   }, [teams]);
 
-  // Filter teams
+  // Column definitions for the filter toolbar
+  const filterColumns = useMemo(() => [
+    createColumn({
+      id: 'speeldag',
+      header: 'Speeldag',
+      filterType: speeldagOptions.length > 0 ? FILTER_TYPES.SELECT : null,
+      filterOptions: speeldagOptions.map(v => ({ value: v, label: v })),
+    }),
+    createColumn({
+      id: 'gender',
+      header: 'Gender',
+      filterType: genderOptions.length > 0 ? FILTER_TYPES.SELECT : null,
+      filterOptions: genderOptions.map(v => ({ value: v, label: v })),
+    }),
+  ], [speeldagOptions, genderOptions]);
+
+  // Column definitions for the settings panel
+  const colVisColumns = [
+    { id: 'player_count', label: 'Spelers', isVisible: isVisible('player_count') },
+    { id: 'staff_count', label: 'Staf', isVisible: isVisible('staff_count') },
+    { id: 'speeldag', label: 'Speeldag', isVisible: isVisible('speeldag') },
+    { id: 'gender', label: 'Gender', isVisible: isVisible('gender') },
+  ];
+
   const filteredTeams = useMemo(() => {
     if (!teams) return [];
 
     let filtered = [...teams];
 
-    if (speeldagFilter.size > 0) {
-      filtered = filtered.filter(t => speeldagFilter.has(getSpeeldag(t.acf?.activiteit)));
+    if (speeldagFilter) {
+      filtered = filtered.filter(t => getSpeeldag(t.acf?.activiteit) === speeldagFilter);
     }
-    if (genderFilter.size > 0) {
-      filtered = filtered.filter(t => genderFilter.has(getGenderLabel(t.acf?.gender)));
+    if (genderFilter) {
+      filtered = filtered.filter(t => getGenderLabel(t.acf?.gender) === genderFilter);
     }
 
     return filtered;
   }, [teams, speeldagFilter, genderFilter]);
 
-  // Sort filtered teams
   const sortedTeams = useMemo(() => {
     if (!filteredTeams) return [];
 
@@ -422,13 +418,11 @@ export default function TeamsList() {
         valueB = b.staff_count ?? 0;
         return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
       } else if (sortField.startsWith('custom_')) {
-        // Handle custom field sorting
         const fieldName = sortField.replace('custom_', '');
         const fieldMeta = listViewFields.find(f => f.name === fieldName);
         valueA = a.acf?.[fieldName];
         valueB = b.acf?.[fieldName];
 
-        // Handle different field types
         if (fieldMeta?.type === 'number') {
           valueA = parseFloat(valueA) || 0;
           valueB = parseFloat(valueB) || 0;
@@ -441,7 +435,6 @@ export default function TeamsList() {
           return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
         }
 
-        // Text comparison for other types
         valueA = String(valueA || '').toLowerCase();
         valueB = String(valueB || '').toLowerCase();
       } else {
@@ -449,7 +442,6 @@ export default function TeamsList() {
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
       }
 
-      // Empty values sort last
       if (!valueA && valueB) return sortOrder === 'asc' ? 1 : -1;
       if (valueA && !valueB) return sortOrder === 'asc' ? -1 : 1;
       if (!valueA && !valueB) return 0;
@@ -459,11 +451,8 @@ export default function TeamsList() {
     });
   }, [filteredTeams, sortField, sortOrder, listViewFields]);
 
-  // Computed selection state
-  const isAllSelected = sortedTeams.length > 0 &&
-    selectedIds.size === sortedTeams.length;
-  const isSomeSelected = selectedIds.size > 0 &&
-    selectedIds.size < sortedTeams.length;
+  const isAllSelected = sortedTeams.length > 0 && selectedIds.size === sortedTeams.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < sortedTeams.length;
 
   const toggleSelectAll = () => {
     if (selectedIds.size === sortedTeams.length) {
@@ -473,18 +462,16 @@ export default function TeamsList() {
     }
   };
 
-  // Clear selection when filters change
   useEffect(() => {
     setSelectedIds(new Set());
   }, [speeldagFilter, genderFilter, teams]);
-  
+
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-48 max-w-md">
+        {/* Header: search + filter toolbar */}
+        <div className="space-y-2">
+          <div className="relative max-w-md">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
             <input
               type="search"
@@ -495,232 +482,109 @@ export default function TeamsList() {
             />
           </div>
 
-          <div className="relative" ref={filterRef}>
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${hasActiveFilters ? 'bg-cyan-50 text-bright-cobalt border-cyan-200' : ''}`}
-            >
-              <Filter className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Filter</span>
-              {hasActiveFilters && (
-                <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
-                  {speeldagFilter.size + genderFilter.size}
-                </span>
-              )}
-            </button>
+          <DataTableToolbar
+            columns={filterColumns}
+            filters={{ speeldag: speeldagFilter, gender: genderFilter }}
+            onFilterChange={setFilter}
+            onClearFilters={clearFilters}
+            hasActiveFilters={hasActiveFilters}
+            activeFilterCount={activeFilterCount}
+            onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+          />
+        </div>
 
-            {/* Filter Dropdown */}
-            {isFilterOpen && (
-              <div
-                ref={dropdownRef}
-                className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
-              >
-                <div className="p-4 space-y-4">
-                  {/* Speeldag Filter */}
-                  {speeldagOptions.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Speeldag
-                      </h3>
-                      <div className="space-y-1">
-                        {speeldagOptions.map(option => (
-                          <label
-                            key={option}
-                            className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={speeldagFilter.has(option)}
-                              onChange={() => {
-                                setSpeeldagFilter(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(option)) next.delete(option);
-                                  else next.add(option);
-                                  return next;
-                                });
-                              }}
-                              className="sr-only"
-                            />
-                            <div className={`flex items-center justify-center w-4 h-4 border-2 rounded mr-3 ${
-                              speeldagFilter.has(option)
-                                ? 'border-electric-cyan bg-electric-cyan'
-                                : 'border-gray-300 dark:border-gray-500'
-                            }`}>
-                              {speeldagFilter.has(option) && (
-                                <Check className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <span className="text-sm text-gray-700 dark:text-gray-200">{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Gender Filter */}
-                  {genderOptions.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Gender
-                      </h3>
-                      <div className="space-y-1">
-                        {genderOptions.map(option => (
-                          <label
-                            key={option}
-                            className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={genderFilter.has(option)}
-                              onChange={() => {
-                                setGenderFilter(prev => {
-                                  const next = new Set(prev);
-                                  if (next.has(option)) next.delete(option);
-                                  else next.add(option);
-                                  return next;
-                                });
-                              }}
-                              className="sr-only"
-                            />
-                            <div className={`flex items-center justify-center w-4 h-4 border-2 rounded mr-3 ${
-                              genderFilter.has(option)
-                                ? 'border-electric-cyan bg-electric-cyan'
-                                : 'border-gray-300 dark:border-gray-500'
-                            }`}>
-                              {genderFilter.has(option) && (
-                                <Check className="w-3 h-3 text-white" />
-                              )}
-                            </div>
-                            <span className="text-sm text-gray-700 dark:text-gray-200">{option}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Clear Filters */}
-                  {hasActiveFilters && (
-                    <button
-                      onClick={clearFilters}
-                      className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
-                    >
-                      Alle filters wissen
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+        {/* Loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
           </div>
+        )}
 
-          {/* Active Filter Chips */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2">
-              {[...speeldagFilter].map(val => (
-                <span key={`speeldag-${val}`} className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-obsidian/50 text-deep-midnight dark:text-cyan-200 rounded-full text-xs">
-                  {val}
-                  <button onClick={() => setSpeeldagFilter(prev => { const next = new Set(prev); next.delete(val); return next; })} className="hover:text-electric-cyan dark:hover:text-electric-cyan-light">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-              {[...genderFilter].map(val => (
-                <span key={`gender-${val}`} className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-100 dark:bg-obsidian/50 text-deep-midnight dark:text-cyan-200 rounded-full text-xs">
-                  {val}
-                  <button onClick={() => setGenderFilter(prev => { const next = new Set(prev); next.delete(val); return next; })} className="hover:text-electric-cyan dark:hover:text-electric-cyan-light">
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
+        {/* Error */}
+        {error && (
+          <div className="card p-6 text-center">
+            <p className="text-red-600 dark:text-red-400">Teams konden niet worden geladen.</p>
+          </div>
+        )}
+
+        {/* Empty - no teams at all */}
+        {!isLoading && !error && teams?.length === 0 && (
+          <div className="card p-12 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
-        </div>
-      )}
-      
-      {/* Error */}
-      {error && (
-        <div className="card p-6 text-center">
-          <p className="text-red-600 dark:text-red-400">Teams konden niet worden geladen.</p>
-        </div>
-      )}
-
-      {/* Empty - no teams at all */}
-      {!isLoading && !error && teams?.length === 0 && (
-        <div className="card p-12 text-center">
-          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen teams gevonden</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {search ? 'Probeer een andere zoekopdracht.' : 'Teams worden via de API of data import toegevoegd.'}
+            </p>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen teams gevonden</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {search ? 'Probeer een andere zoekopdracht.' : 'Teams worden via de API of data import toegevoegd.'}
-          </p>
-        </div>
-      )}
+        )}
 
-      {/* No results with filters */}
-      {!isLoading && !error && teams?.length > 0 && sortedTeams?.length === 0 && (
-        <div className="card p-12 text-center">
-          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen teams voldoen aan je filters</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Pas je filters aan om meer resultaten te zien.
-          </p>
-          <button onClick={clearFilters} className="btn-secondary">
-            Filters wissen
-          </button>
-        </div>
-      )}
-      
-      {/* Selection toolbar - sticky */}
-      {selectedIds.size > 0 && (
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-cyan-50 border border-cyan-200 rounded-lg px-4 py-2 shadow-sm">
-          <span className="text-sm text-deep-midnight font-medium">
-            {selectedIds.size} {selectedIds.size === 1 ? 'team' : 'teams'} geselecteerd
-          </span>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={clearSelection}
-              className="text-sm text-electric-cyan hover:text-deep-midnight font-medium"
-            >
-              Selectie wissen
+        {/* No results with filters */}
+        {!isLoading && !error && teams?.length > 0 && sortedTeams?.length === 0 && (
+          <div className="card p-12 text-center">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Filter className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen teams voldoen aan je filters</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Pas je filters aan om meer resultaten te zien.
+            </p>
+            <button onClick={clearFilters} className="btn-secondary">
+              Filters wissen
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Organizations list */}
-      {!isLoading && !error && sortedTeams?.length > 0 && (
-        <OrganizationListView
-          teams={sortedTeams}
-          listViewFields={listViewFields}
-          selectedIds={selectedIds}
-          onToggleSelection={toggleSelection}
-          onToggleSelectAll={toggleSelectAll}
-          isAllSelected={isAllSelected}
-          isSomeSelected={isSomeSelected}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={(field, order) => {
-            setSortField(field);
-            setSortOrder(order);
-          }}
-          onSaveRow={handleSaveRow}
-          isUpdating={updateRowMutation.isPending}
-          editingRowId={editingRowId}
-          onStartEdit={handleStartEdit}
-          onCancelEdit={handleCancelEdit}
-        />
-      )}
+        {/* Selection toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="sticky top-0 z-20 flex items-center justify-between bg-cyan-50 border border-cyan-200 rounded-lg px-4 py-2 shadow-sm">
+            <span className="text-sm text-deep-midnight font-medium">
+              {selectedIds.size} {selectedIds.size === 1 ? 'team' : 'teams'} geselecteerd
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={clearSelection}
+                className="text-sm text-electric-cyan hover:text-deep-midnight font-medium"
+              >
+                Selectie wissen
+              </button>
+            </div>
+          </div>
+        )}
 
+        {/* Teams list */}
+        {!isLoading && !error && sortedTeams?.length > 0 && (
+          <OrganizationListView
+            teams={sortedTeams}
+            listViewFields={listViewFields}
+            selectedIds={selectedIds}
+            onToggleSelection={toggleSelection}
+            onToggleSelectAll={toggleSelectAll}
+            isAllSelected={isAllSelected}
+            isSomeSelected={isSomeSelected}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSort={(field, order) => {
+              setSortField(field);
+              setSortOrder(order);
+            }}
+            onSaveRow={handleSaveRow}
+            isUpdating={updateRowMutation.isPending}
+            editingRowId={editingRowId}
+            onStartEdit={handleStartEdit}
+            onCancelEdit={handleCancelEdit}
+            isColVisible={isVisible}
+          />
+        )}
       </div>
+
+      <ColumnSettingsPanel
+        isOpen={isColumnSettingsOpen}
+        onClose={() => setIsColumnSettingsOpen(false)}
+        columns={colVisColumns}
+        onToggleColumn={toggle}
+      />
     </PullToRefreshWrapper>
   );
 }

@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Filter, Check, Download } from 'lucide-react';
+import { CheckCircle, Mail, RefreshCw, Square, CheckSquare, MinusSquare, ChevronDown, X, Download } from 'lucide-react';
 import { useFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
@@ -11,26 +10,22 @@ import CustomFieldColumn from '@/components/CustomFieldColumn';
 import { format } from '@/utils/dateFormat';
 import { formatPhoneForTel } from '@/utils/formatters';
 import SortableHeader from '@/components/SortableHeader';
+import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
-// Helper function to get first contact value by type
 function getFirstContactByType(person, type) {
   const contactInfo = person.acf?.contact_info || [];
   const contact = contactInfo.find(c => c.contact_type === type);
   return contact?.contact_value || null;
 }
 
-// Helper function to get first phone (includes mobile)
 function getFirstPhone(person) {
   const contactInfo = person.acf?.contact_info || [];
   const contact = contactInfo.find(c => c.contact_type === 'phone' || c.contact_type === 'mobile');
   return contact?.contact_value || null;
 }
 
-// VOG Badge component - determines badge type based on datum-vog presence
 function VOGBadge({ person }) {
   const datumVog = person.acf?.['datum-vog'];
-
-  // No VOG = new volunteer (blue badge)
   const isNew = !datumVog;
 
   return (
@@ -44,10 +39,8 @@ function VOGBadge({ person }) {
   );
 }
 
-// VOG Email Sent Indicator
 function VOGEmailIndicator({ person }) {
   const emailSentDate = person.acf?.['vog-email-verzonden'];
-
   if (!emailSentDate) return null;
 
   return (
@@ -60,7 +53,6 @@ function VOGEmailIndicator({ person }) {
   );
 }
 
-// Empty state component with success message
 function VOGEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -79,8 +71,7 @@ function VOGEmptyState() {
   );
 }
 
-// VOG row component
-function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection }) {
+function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection, isColVisible }) {
   const email = getFirstContactByType(person, 'email');
   const phone = getFirstPhone(person);
 
@@ -90,7 +81,6 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
         ? 'bg-cyan-50 dark:bg-obsidian/30'
         : isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     }`}>
-      {/* Checkbox column */}
       <td className="pl-4 pr-2 py-3 w-10">
         <button
           onClick={(e) => { e.preventDefault(); onToggleSelection(person.id); }}
@@ -103,13 +93,10 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
           )}
         </button>
       </td>
-      {/* Name with badge */}
       <td className="px-4 py-3 whitespace-nowrap">
         <Link to={`/people/${person.id}`} className="flex items-center gap-2">
           <span className={`text-sm font-medium ${
-            isSelected
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-900 dark:text-gray-50'
+            isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-gray-50'
           }`}>
             {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
           </span>
@@ -118,131 +105,97 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection 
         </Link>
       </td>
 
-      {/* KNVB ID */}
-      <td className={`px-4 py-3 text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {customFieldsMap['knvb-id'] ? (
-          <CustomFieldColumn
-            field={customFieldsMap['knvb-id']}
-            value={person.acf?.['knvb-id']}
-          />
-        ) : (
-          person.acf?.['knvb-id'] || '-'
-        )}
-      </td>
+      {isColVisible('knvb_id') && (
+        <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {customFieldsMap['knvb-id'] ? (
+            <CustomFieldColumn field={customFieldsMap['knvb-id']} value={person.acf?.['knvb-id']} />
+          ) : (
+            person.acf?.['knvb-id'] || '-'
+          )}
+        </td>
+      )}
 
-      {/* Email */}
-      <td className={`px-4 py-3 whitespace-nowrap text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {email ? (
-          <a href={`mailto:${email}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
-            {email}
-          </a>
-        ) : '-'}
-      </td>
+      {isColVisible('email') && (
+        <td className={`px-4 py-3 whitespace-nowrap text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {email ? (
+            <a href={`mailto:${email}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
+              {email}
+            </a>
+          ) : '-'}
+        </td>
+      )}
 
-      {/* Phone */}
-      <td className={`px-4 py-3 whitespace-nowrap text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {phone ? (
-          <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
-            {phone}
-          </a>
-        ) : '-'}
-      </td>
+      {isColVisible('phone') && (
+        <td className={`px-4 py-3 whitespace-nowrap text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {phone ? (
+            <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
+              {phone}
+            </a>
+          ) : '-'}
+        </td>
+      )}
 
-      {/* Datum VOG */}
-      <td className={`px-4 py-3 text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {customFieldsMap['datum-vog'] ? (
-          <CustomFieldColumn
-            field={customFieldsMap['datum-vog']}
-            value={person.acf?.['datum-vog']}
-          />
-        ) : (
-          person.acf?.['datum-vog'] || '-'
-        )}
-      </td>
+      {isColVisible('datum_vog') && (
+        <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {customFieldsMap['datum-vog'] ? (
+            <CustomFieldColumn field={customFieldsMap['datum-vog']} value={person.acf?.['datum-vog']} />
+          ) : (
+            person.acf?.['datum-vog'] || '-'
+          )}
+        </td>
+      )}
 
-      {/* 1e email date */}
-      <td className={`px-4 py-3 text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {person.acf?.['vog_email_sent_date']
-          ? format(new Date(person.acf['vog_email_sent_date']), 'yyyy-MM-dd')
-          : '-'}
-      </td>
+      {isColVisible('vog_email_sent') && (
+        <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {person.acf?.['vog_email_sent_date']
+            ? format(new Date(person.acf['vog_email_sent_date']), 'yyyy-MM-dd')
+            : '-'}
+        </td>
+      )}
 
-      {/* Justis date */}
-      <td className={`px-4 py-3 text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {person.acf?.['vog_justis_submitted_date']
-          ? format(new Date(person.acf['vog_justis_submitted_date']), 'yyyy-MM-dd')
-          : '-'}
-      </td>
+      {isColVisible('justis') && (
+        <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {person.acf?.['vog_justis_submitted_date']
+            ? format(new Date(person.acf['vog_justis_submitted_date']), 'yyyy-MM-dd')
+            : '-'}
+        </td>
+      )}
 
-      {/* Reminder date */}
-      <td className={`px-4 py-3 text-sm ${
-        isSelected
-          ? 'text-gray-700 dark:text-gray-100'
-          : 'text-gray-500 dark:text-gray-400'
-      }`}>
-        {person.acf?.['vog_reminder_sent_date']
-          ? format(new Date(person.acf['vog_reminder_sent_date']), 'yyyy-MM-dd')
-          : '-'}
-      </td>
+      {isColVisible('reminder') && (
+        <td className={`px-4 py-3 text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
+          {person.acf?.['vog_reminder_sent_date']
+            ? format(new Date(person.acf['vog_reminder_sent_date']), 'yyyy-MM-dd')
+            : '-'}
+        </td>
+      )}
     </tr>
   );
 }
 
 export default function VOGList() {
-  // Sort state
   const [orderby, setOrderby] = useState('custom_datum-vog');
   const [order, setOrder] = useState('asc');
 
-  // Filter state
   const [emailStatusFilter, setEmailStatusFilter] = useState('');
   const [vogTypeFilter, setVogTypeFilter] = useState('');
   const [justisStatusFilter, setJustisStatusFilter] = useState('');
   const [reminderStatusFilter, setReminderStatusFilter] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+
+  const { isVisible, toggle } = useColumnVisibility('vog');
 
   const queryClient = useQueryClient();
 
-  // Selection state
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const bulkDropdownRef = useRef(null);
-  const filterButtonRef = useRef(null);
-  const filterRef = useRef(null);
-  const filterDropdownRef = useRef(null);
-  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
 
-  // Modal state
   const [showSendEmailModal, setShowSendEmailModal] = useState(false);
   const [showMarkJustisModal, setShowMarkJustisModal] = useState(false);
   const [showSendReminderModal, setShowSendReminderModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [bulkActionResult, setBulkActionResult] = useState(null);
 
-  // Fetch filtered people with VOG-specific filters
   const { data, isLoading, error } = useFilteredPeople({
     page: 1,
     perPage: 100,
@@ -257,7 +210,6 @@ export default function VOGList() {
     order,
   });
 
-  // Fetch all data for counts (without email filter)
   const { data: allData } = useFilteredPeople({
     page: 1,
     perPage: 100,
@@ -266,14 +218,11 @@ export default function VOGList() {
     vogOlderThanYears: 3,
     orderby,
     order,
-    // Note: no vogEmailStatus - fetches all to calculate counts
   });
 
-  // Extract data from response - memoize to avoid effect dependency issues
   const people = useMemo(() => data?.people || [], [data?.people]);
   const totalPeople = data?.total || 0;
 
-  // Calculate counts from allData for filter dropdown
   const emailCounts = useMemo(() => {
     const allPeople = allData?.people || [];
     const sent = allPeople.filter(p => p.acf?.['vog_email_sent_date']).length;
@@ -295,7 +244,6 @@ export default function VOGList() {
     return { total: allPeople.length, submitted, notSubmitted };
   }, [allData?.people]);
 
-  // Fetch custom field definitions for list view columns
   const { data: customFields = [] } = useQuery({
     queryKey: ['custom-fields-metadata', 'person'],
     queryFn: async () => {
@@ -304,7 +252,6 @@ export default function VOGList() {
     },
   });
 
-  // Create map of custom field name to field definition
   const customFieldsMap = useMemo(() => {
     const map = {};
     customFields.forEach(field => {
@@ -313,15 +260,85 @@ export default function VOGList() {
     return map;
   }, [customFields]);
 
-  // Selection helpers
+  // Filter columns for DataTableToolbar — labels include live counts from allData
+  const filterColumns = useMemo(() => [
+    createColumn({
+      id: 'vog_type',
+      header: 'VOG type',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'nieuw', label: `Nieuw (${vogTypeCounts.nieuw})` },
+        { value: 'vernieuwing', label: `Vernieuwing (${vogTypeCounts.vernieuwing})` },
+      ],
+      getFilterLabel: (val) => val === 'nieuw' ? 'Nieuw' : 'Vernieuwing',
+    }),
+    createColumn({
+      id: 'email_status',
+      header: '1e email',
+      filterLabel: '1e email status',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'not_sent', label: `Niet verzonden (${emailCounts.notSent})` },
+        { value: 'sent', label: `Wel verzonden (${emailCounts.sent})` },
+      ],
+      getFilterLabel: (val) => val === 'sent' ? 'Wel verzonden' : 'Niet verzonden',
+    }),
+    createColumn({
+      id: 'justis_status',
+      header: 'Justis',
+      filterLabel: 'Justis status',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'not_submitted', label: `Niet aangevraagd (${justisCounts.notSubmitted})` },
+        { value: 'submitted', label: `Aangevraagd (${justisCounts.submitted})` },
+      ],
+      getFilterLabel: (val) => val === 'submitted' ? 'Aangevraagd' : 'Niet aangevraagd',
+    }),
+    createColumn({
+      id: 'reminder_status',
+      header: 'Herinnering',
+      filterLabel: 'Herinnering status',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'not_sent', label: 'Niet verzonden' },
+        { value: 'sent', label: 'Wel verzonden' },
+      ],
+      getFilterLabel: (val) => val === 'sent' ? 'Wel verzonden' : 'Niet verzonden',
+    }),
+  ], [emailCounts, vogTypeCounts, justisCounts]);
+
+  const hasActiveFilters = !!(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter);
+  const activeFilterCount = (emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0) + (reminderStatusFilter ? 1 : 0);
+
+  const clearFilters = () => {
+    setEmailStatusFilter('');
+    setVogTypeFilter('');
+    setJustisStatusFilter('');
+    setReminderStatusFilter('');
+  };
+
+  const setFilter = (colId, value) => {
+    if (colId === 'email_status') setEmailStatusFilter(value || '');
+    else if (colId === 'vog_type') setVogTypeFilter(value || '');
+    else if (colId === 'justis_status') setJustisStatusFilter(value || '');
+    else if (colId === 'reminder_status') setReminderStatusFilter(value || '');
+  };
+
+  const colVisColumns = [
+    { id: 'knvb_id', label: 'KNVB ID', isVisible: isVisible('knvb_id') },
+    { id: 'email', label: 'Email', isVisible: isVisible('email') },
+    { id: 'phone', label: 'Telefoon', isVisible: isVisible('phone') },
+    { id: 'datum_vog', label: 'Datum VOG', isVisible: isVisible('datum_vog') },
+    { id: 'vog_email_sent', label: '1e email', isVisible: isVisible('vog_email_sent') },
+    { id: 'justis', label: 'Justis', isVisible: isVisible('justis') },
+    { id: 'reminder', label: 'Herinnering', isVisible: isVisible('reminder') },
+  ];
+
   const toggleSelection = (personId) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(personId)) {
-        next.delete(personId);
-      } else {
-        next.add(personId);
-      }
+      if (next.has(personId)) next.delete(personId);
+      else next.add(personId);
       return next;
     });
   };
@@ -336,31 +353,24 @@ export default function VOGList() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  // Derived state
   const isAllSelected = people.length > 0 && selectedIds.size === people.length;
   const isSomeSelected = selectedIds.size > 0 && selectedIds.size < people.length;
 
-  // Clear selection when data changes
   useEffect(() => {
     setSelectedIds(new Set());
   }, [people]);
 
-  // Close dropdowns when clicking outside
+  // Close bulk dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (bulkDropdownRef.current && !bulkDropdownRef.current.contains(event.target)) {
         setShowBulkDropdown(false);
-      }
-      if (filterRef.current && !filterRef.current.contains(event.target) &&
-          filterDropdownRef.current && !filterDropdownRef.current.contains(event.target)) {
-        setIsFilterOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Bulk action mutations
   const sendEmailsMutation = useMutation({
     mutationFn: ({ ids }) => prmApi.bulkSendVOGEmails(ids),
     onSuccess: (response) => {
@@ -385,7 +395,6 @@ export default function VOGList() {
     },
   });
 
-  // Bulk action handlers
   const handleSendEmails = async () => {
     setBulkActionLoading(true);
     setBulkActionResult(null);
@@ -426,7 +435,6 @@ export default function VOGList() {
     }
   };
 
-  // Handle CSV export
   const handleExportCsv = () => {
     const headers = ['Naam', 'KNVB ID', 'Email', 'Telefoon', 'Datum VOG', 'Type', '1e email', 'Justis', 'Herinnering'];
     const formatDate = (d) => d ? format(new Date(d), 'yyyy-MM-dd') : '';
@@ -445,18 +453,15 @@ export default function VOGList() {
     downloadCsv(csv, `vog-${format(new Date(), 'yyyy-MM-dd')}.csv`);
   };
 
-  // Handle sort
   const handleSort = useCallback((columnId, newOrder) => {
     setOrderby(columnId);
     setOrder(newOrder);
   }, []);
 
-  // Handle refresh
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['people', 'filtered'] });
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -465,7 +470,6 @@ export default function VOGList() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="card p-6 text-center">
@@ -483,7 +487,6 @@ export default function VOGList() {
     );
   }
 
-  // Empty state
   if (totalPeople === 0) {
     return (
       <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -504,7 +507,6 @@ export default function VOGList() {
               {selectedIds.size} {selectedIds.size === 1 ? 'vrijwilliger' : 'vrijwilligers'} geselecteerd
             </span>
             <div className="flex items-center gap-3">
-              {/* Bulk Actions Dropdown */}
               <div className="relative" ref={bulkDropdownRef}>
                 <button
                   onClick={() => setShowBulkDropdown(!showBulkDropdown)}
@@ -517,30 +519,21 @@ export default function VOGList() {
                   <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
                     <div className="py-1">
                       <button
-                        onClick={() => {
-                          setShowBulkDropdown(false);
-                          setShowSendEmailModal(true);
-                        }}
+                        onClick={() => { setShowBulkDropdown(false); setShowSendEmailModal(true); }}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         <Mail className="w-4 h-4" />
                         VOG email verzenden...
                       </button>
                       <button
-                        onClick={() => {
-                          setShowBulkDropdown(false);
-                          setShowMarkJustisModal(true);
-                        }}
+                        onClick={() => { setShowBulkDropdown(false); setShowMarkJustisModal(true); }}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         <CheckCircle className="w-4 h-4" />
                         Markeren bij Justis aangevraagd...
                       </button>
                       <button
-                        onClick={() => {
-                          setShowBulkDropdown(false);
-                          setShowSendReminderModal(true);
-                        }}
+                        onClick={() => { setShowBulkDropdown(false); setShowSendReminderModal(true); }}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         <Mail className="w-4 h-4" />
@@ -560,388 +553,16 @@ export default function VOGList() {
           </div>
         )}
 
-        {/* Filter and Export Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Filter Dropdown Button */}
-            <div ref={filterRef}>
-              <button
-                ref={filterButtonRef}
-                onClick={() => {
-                  if (!isFilterOpen && filterButtonRef.current) {
-                    const rect = filterButtonRef.current.getBoundingClientRect();
-                    setFilterDropdownPos({ top: rect.bottom + 8, left: rect.left });
-                  }
-                  setIsFilterOpen(!isFilterOpen);
-                }}
-                className={`btn-secondary ${(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) ? 'bg-cyan-50 text-bright-cobalt border-cyan-200 dark:bg-obsidian/30 dark:text-electric-cyan-light dark:border-bright-cobalt' : ''}`}
-              >
-                <Filter className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">Filter</span>
-                {(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) && (
-                  <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
-                    {(emailStatusFilter ? 1 : 0) + (vogTypeFilter ? 1 : 0) + (justisStatusFilter ? 1 : 0) + (reminderStatusFilter ? 1 : 0)}
-                  </span>
-                )}
-              </button>
-
-              {/* Filter Dropdown Panel - rendered via portal to escape overflow clipping */}
-              {isFilterOpen && createPortal(
-                <div
-                  ref={filterDropdownRef}
-                  className="fixed w-64 max-h-[calc(100vh-4rem)] overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
-                  style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-                >
-                  <div className="p-4 space-y-4">
-                    {/* VOG Type Filter */}
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        VOG type
-                      </h3>
-                      <div className="space-y-1">
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={vogTypeFilter === ''}
-                            onChange={() => setVogTypeFilter('')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            vogTypeFilter === ''
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {vogTypeFilter === '' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Alle ({vogTypeCounts.total})
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={vogTypeFilter === 'nieuw'}
-                            onChange={() => setVogTypeFilter('nieuw')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            vogTypeFilter === 'nieuw'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {vogTypeFilter === 'nieuw' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Nieuw ({vogTypeCounts.nieuw})
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={vogTypeFilter === 'vernieuwing'}
-                            onChange={() => setVogTypeFilter('vernieuwing')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            vogTypeFilter === 'vernieuwing'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {vogTypeFilter === 'vernieuwing' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Vernieuwing ({vogTypeCounts.vernieuwing})
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Email Status Filter */}
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Email status
-                      </h3>
-                      <div className="space-y-1">
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={emailStatusFilter === ''}
-                            onChange={() => setEmailStatusFilter('')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            emailStatusFilter === ''
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {emailStatusFilter === '' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Alle ({emailCounts.total})
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={emailStatusFilter === 'not_sent'}
-                            onChange={() => setEmailStatusFilter('not_sent')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            emailStatusFilter === 'not_sent'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {emailStatusFilter === 'not_sent' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Niet verzonden ({emailCounts.notSent})
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={emailStatusFilter === 'sent'}
-                            onChange={() => setEmailStatusFilter('sent')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            emailStatusFilter === 'sent'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {emailStatusFilter === 'sent' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Wel verzonden ({emailCounts.sent})
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Justis Status Filter */}
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Justis status
-                      </h3>
-                      <div className="space-y-1">
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={justisStatusFilter === ''}
-                            onChange={() => setJustisStatusFilter('')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            justisStatusFilter === ''
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {justisStatusFilter === '' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Alle ({justisCounts.total})
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={justisStatusFilter === 'not_submitted'}
-                            onChange={() => setJustisStatusFilter('not_submitted')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            justisStatusFilter === 'not_submitted'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {justisStatusFilter === 'not_submitted' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Niet aangevraagd ({justisCounts.notSubmitted})
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={justisStatusFilter === 'submitted'}
-                            onChange={() => setJustisStatusFilter('submitted')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            justisStatusFilter === 'submitted'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {justisStatusFilter === 'submitted' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Aangevraagd ({justisCounts.submitted})
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Herinnering Status Filter */}
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Herinnering status
-                      </h3>
-                      <div className="space-y-1">
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={reminderStatusFilter === ''}
-                            onChange={() => setReminderStatusFilter('')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            reminderStatusFilter === ''
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {reminderStatusFilter === '' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Alle
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={reminderStatusFilter === 'not_sent'}
-                            onChange={() => setReminderStatusFilter('not_sent')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            reminderStatusFilter === 'not_sent'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {reminderStatusFilter === 'not_sent' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Niet verzonden
-                          </span>
-                        </label>
-                        <label className="flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-1 rounded">
-                          <input
-                            type="checkbox"
-                            checked={reminderStatusFilter === 'sent'}
-                            onChange={() => setReminderStatusFilter('sent')}
-                            className="sr-only"
-                          />
-                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded mr-3 ${
-                            reminderStatusFilter === 'sent'
-                              ? 'bg-electric-cyan border-electric-cyan'
-                              : 'border-gray-300 dark:border-gray-500'
-                          }`}>
-                            {reminderStatusFilter === 'sent' && (
-                              <Check className="w-3 h-3 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-gray-700 dark:text-gray-200">
-                            Wel verzonden
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* Clear Filters */}
-                    {(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) && (
-                      <button
-                        onClick={() => {
-                          setEmailStatusFilter('');
-                          setVogTypeFilter('');
-                          setJustisStatusFilter('');
-                          setReminderStatusFilter('');
-                        }}
-                        className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
-                      >
-                        Alle filters wissen
-                      </button>
-                    )}
-                  </div>
-                </div>,
-                document.body
-              )}
-            </div>
-
-            {/* Active Filter Chips */}
-            {(emailStatusFilter || vogTypeFilter || justisStatusFilter || reminderStatusFilter) && (
-              <div className="flex items-center gap-2">
-                {emailStatusFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
-                    1e email: {emailStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
-                    <button
-                      onClick={() => setEmailStatusFilter('')}
-                      className="hover:text-obsidian dark:hover:text-cyan-100"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {vogTypeFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
-                    Type: {vogTypeFilter === 'nieuw' ? 'Nieuw' : 'Vernieuwing'}
-                    <button
-                      onClick={() => setVogTypeFilter('')}
-                      className="hover:text-obsidian dark:hover:text-cyan-100"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {justisStatusFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
-                    Justis: {justisStatusFilter === 'submitted' ? 'Aangevraagd' : 'Niet aangevraagd'}
-                    <button
-                      onClick={() => setJustisStatusFilter('')}
-                      className="hover:text-obsidian dark:hover:text-cyan-100"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-                {reminderStatusFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-cyan-50 dark:bg-obsidian/30 text-bright-cobalt dark:text-electric-cyan-light border border-cyan-200 dark:border-bright-cobalt rounded">
-                    Herinnering: {reminderStatusFilter === 'sent' ? 'Wel verzonden' : 'Niet verzonden'}
-                    <button
-                      onClick={() => setReminderStatusFilter('')}
-                      className="hover:text-obsidian dark:hover:text-cyan-100"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* CSV Export Button */}
-          <div className="flex gap-2">
+        {/* Filter toolbar + CSV export */}
+        <DataTableToolbar
+          columns={filterColumns}
+          filters={{ vog_type: vogTypeFilter, email_status: emailStatusFilter, justis_status: justisStatusFilter, reminder_status: reminderStatusFilter }}
+          onFilterChange={setFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+          toolbarEnd={
             <button
               onClick={handleExportCsv}
               className="btn-secondary"
@@ -950,15 +571,14 @@ export default function VOGList() {
             >
               <Download className="w-4 h-4" />
             </button>
-          </div>
-        </div>
+          }
+        />
 
         {/* VOG list table */}
         <div className="card overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
-                {/* Checkbox header */}
                 <th scope="col" className="pl-4 pr-2 py-3 w-10 bg-gray-50 dark:bg-gray-800">
                   <button
                     onClick={toggleSelectAll}
@@ -974,65 +594,28 @@ export default function VOGList() {
                     )}
                   </button>
                 </th>
-                <SortableHeader
-                  label="Naam"
-                  columnId="first_name"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="KNVB ID"
-                  columnId="knvb-id"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                  sortable={false}
-                />
-                <SortableHeader
-                  label="Email"
-                  columnId="email"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                  sortable={false}
-                />
-                <SortableHeader
-                  label="Telefoon"
-                  columnId="phone"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                  sortable={false}
-                />
-                <SortableHeader
-                  label="Datum VOG"
-                  columnId="custom_datum-vog"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="1e email"
-                  columnId="custom_vog_email_sent_date"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Justis"
-                  columnId="custom_vog_justis_submitted_date"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Herinnering"
-                  columnId="custom_vog_reminder_sent_date"
-                  sortField={orderby}
-                  sortOrder={order}
-                  onSort={handleSort}
-                />
+                <SortableHeader label="Naam" columnId="first_name" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                {isVisible('knvb_id') && (
+                  <SortableHeader label="KNVB ID" columnId="knvb-id" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
+                )}
+                {isVisible('email') && (
+                  <SortableHeader label="Email" columnId="email" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
+                )}
+                {isVisible('phone') && (
+                  <SortableHeader label="Telefoon" columnId="phone" sortField={orderby} sortOrder={order} onSort={handleSort} sortable={false} />
+                )}
+                {isVisible('datum_vog') && (
+                  <SortableHeader label="Datum VOG" columnId="custom_datum-vog" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                )}
+                {isVisible('vog_email_sent') && (
+                  <SortableHeader label="1e email" columnId="custom_vog_email_sent_date" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                )}
+                {isVisible('justis') && (
+                  <SortableHeader label="Justis" columnId="custom_vog_justis_submitted_date" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                )}
+                {isVisible('reminder') && (
+                  <SortableHeader label="Herinnering" columnId="custom_vog_reminder_sent_date" sortField={orderby} sortOrder={order} onSort={handleSort} />
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1044,6 +627,7 @@ export default function VOGList() {
                   isOdd={index % 2 === 1}
                   isSelected={selectedIds.has(person.id)}
                   onToggleSelection={toggleSelection}
+                  isColVisible={isVisible}
                 />
               ))}
             </tbody>
@@ -1069,14 +653,10 @@ export default function VOGList() {
                       </p>
                     )}
                     {bulkActionResult.failed > 0 && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {bulkActionResult.failed} mislukt
-                      </p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{bulkActionResult.failed} mislukt</p>
                     )}
                     {bulkActionResult.results?.filter(r => !r.success).map((r, i) => (
-                      <p key={i} className="text-xs text-gray-500 dark:text-gray-400 pl-2">
-                        ID {r.id}: {r.error}
-                      </p>
+                      <p key={i} className="text-xs text-gray-500 dark:text-gray-400 pl-2">ID {r.id}: {r.error}</p>
                     ))}
                   </div>
                 ) : (
@@ -1129,9 +709,7 @@ export default function VOGList() {
                       </p>
                     )}
                     {bulkActionResult.failed > 0 && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {bulkActionResult.failed} mislukt
-                      </p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{bulkActionResult.failed} mislukt</p>
                     )}
                   </div>
                 ) : (
@@ -1184,14 +762,10 @@ export default function VOGList() {
                       </p>
                     )}
                     {bulkActionResult.failed > 0 && (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {bulkActionResult.failed} mislukt
-                      </p>
+                      <p className="text-sm text-red-600 dark:text-red-400">{bulkActionResult.failed} mislukt</p>
                     )}
                     {bulkActionResult.results?.filter(r => !r.success).map((r, i) => (
-                      <p key={i} className="text-xs text-gray-500 dark:text-gray-400 pl-2">
-                        ID {r.id}: {r.error}
-                      </p>
+                      <p key={i} className="text-xs text-gray-500 dark:text-gray-400 pl-2">ID {r.id}: {r.error}</p>
                     ))}
                   </div>
                 ) : (
@@ -1225,6 +799,13 @@ export default function VOGList() {
           </div>
         )}
       </div>
+
+      <ColumnSettingsPanel
+        isOpen={isColumnSettingsOpen}
+        onClose={() => setIsColumnSettingsOpen(false)}
+        columns={colVisColumns}
+        onToggleColumn={toggle}
+      />
     </PullToRefreshWrapper>
   );
 }
