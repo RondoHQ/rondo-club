@@ -1341,11 +1341,6 @@ export default function PersonDetail() {
             {/* Sportlink Card */}
             <SportlinkCard acfData={person?.acf} />
 
-            {/* Account Card (admin only) */}
-            {config.isAdmin && (
-              <AccountCard personId={id} personData={person} />
-            )}
-
             {/* Relationships */}
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
@@ -1653,6 +1648,11 @@ export default function PersonDetail() {
                 </p>
               )}
             </div>
+
+            {/* Account Card (admin only, volunteers only) */}
+            {config.isAdmin && acf['huidig-vrijwilliger'] && (
+              <AccountCard personId={id} personData={person} />
+            )}
           </div>
         </aside>
       </div>
