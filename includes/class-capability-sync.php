@@ -140,19 +140,25 @@ class CapabilitySync {
 	/**
 	 * Sync capabilities for all provisioned WordPress users.
 	 *
-	 * Iterates all users with a KNVB ID stored in user meta. If $knvb_functies_map
-	 * is provided, reads functies from it; otherwise falls back to deriving functies
-	 * from the linked person's work_history ACF field (is_current entries only).
+	 * Iterates all users with a linked person (rondo_linked_person_id in user meta).
+	 * This covers all provisioned users regardless of whether they have a KNVB ID stored —
+	 * users provisioned before PROV-04 may lack _rondo_knvb_id but are still eligible.
+	 *
+	 * If $knvb_functies_map is provided, reads functies from it for users whose linked
+	 * person has a KNVB ID; otherwise falls back to deriving functies from the linked
+	 * person's work_history ACF field (is_current entries only).
 	 *
 	 * @param array $knvb_functies_map Optional map of knvb_id => string[] functies.
 	 *                                  Pass empty array to derive from ACF work_history.
 	 * @return array Aggregated result: { total, synced, skipped, errors, details }.
 	 */
 	public function sync_all( array $knvb_functies_map = [] ): array {
-		// Get all provisioned users (users who have a KNVB ID in user meta).
+		// Get all provisioned users (users who have a linked person in user meta).
+		// Using rondo_linked_person_id as the eligibility criterion covers all provisioned
+		// users, including those created before _rondo_knvb_id storage was introduced.
 		$provisioned_users = get_users(
 			[
-				'meta_key'     => \Rondo\Users\UserProvisioning::META_KNVB_ID,
+				'meta_key'     => 'rondo_linked_person_id',
 				'meta_compare' => '!=',
 				'meta_value'   => '',
 				'number'       => -1,
@@ -168,13 +174,12 @@ class CapabilitySync {
 		];
 
 		foreach ( $provisioned_users as $wp_user ) {
+			// KNVB ID is optional — users provisioned before PROV-04 may not have it.
+			// derive_functies_from_work_history() works via rondo_linked_person_id (always set).
 			$knvb_id = get_user_meta( $wp_user->ID, \Rondo\Users\UserProvisioning::META_KNVB_ID, true );
-			if ( ! $knvb_id ) {
-				continue;
-			}
 
-			// Determine functies: from provided map, or derive from ACF work_history.
-			if ( ! empty( $knvb_functies_map ) && isset( $knvb_functies_map[ $knvb_id ] ) ) {
+			// Determine functies: from provided map (by KNVB ID if available), or derive from ACF work_history.
+			if ( ! empty( $knvb_functies_map ) && $knvb_id && isset( $knvb_functies_map[ $knvb_id ] ) ) {
 				$functies = (array) $knvb_functies_map[ $knvb_id ];
 			} else {
 				$functies = $this->derive_functies_from_work_history( $wp_user->ID );
@@ -185,7 +190,7 @@ class CapabilitySync {
 			if ( is_wp_error( $sync_result ) ) {
 				$result['errors'][] = [
 					'user_id' => $wp_user->ID,
-					'knvb_id' => $knvb_id,
+					'knvb_id' => $knvb_id ?: '',
 					'message' => $sync_result->get_error_message(),
 				];
 			} elseif ( isset( $sync_result['status'] ) && 'skipped' === $sync_result['status'] ) {
@@ -196,12 +201,37 @@ class CapabilitySync {
 
 			$result['details'][] = [
 				'user_id' => $wp_user->ID,
-				'knvb_id' => $knvb_id,
+				'knvb_id' => $knvb_id ?: '',
 				'result'  => $sync_result,
 			];
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Sync capabilities for the WordPress user linked to a given person post ID.
+	 *
+	 * Looks up the WordPress user via _rondo_wp_user_id post meta, then derives
+	 * functies from the person's current work_history and calls sync_user().
+	 *
+	 * Returns a no_user result (not a WP_Error) if no WordPress user is linked
+	 * to this person — expected for people without an account.
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return array|\WP_Error Result array, or WP_Error on failure.
+	 */
+	public function sync_user_by_person_id( int $person_id ): array|\WP_Error {
+		$user_id = (int) get_post_meta( $person_id, \Rondo\Users\UserProvisioning::META_USER_ID, true );
+		if ( ! $user_id ) {
+			return [
+				'status'    => 'no_user',
+				'person_id' => $person_id,
+			];
+		}
+
+		$functies = $this->derive_functies_from_work_history( $user_id );
+		return $this->sync_user( $user_id, $functies );
 	}
 
 	/**

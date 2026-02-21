@@ -262,6 +262,7 @@ export const prmApi = {
   getFunctieCapabilityMap: () => api.get('/rondo/v1/functie-capability-map'),
   updateFunctieCapabilityMap: (data) => api.post('/rondo/v1/functie-capability-map', data),
   syncAllCapabilities: () => api.post('/rondo/v1/capability-sync/all'),
+  syncPersonCapabilities: (personId) => api.post(`/rondo/v1/people/${personId}/capability-sync`),
 
   // User provisioning (admin only)
   getProvisionableUsers: () => api.get('/rondo/v1/users/provisionable'),
