@@ -158,6 +158,21 @@ button, [role="tab"], [role="button"], summary {
   cursor: pointer;
 }
 
+/*
+ * Pull-to-refresh library (react-simple-pull-to-refresh) injects CSS that sets
+ * overflow:hidden on .ptr__children, and also sets overflowX/overflowY via
+ * inline styles in initContainer(). This clips position:fixed descendants
+ * (e.g. the FilterDropdown portal) on iOS Safari.
+ *
+ * The <main> element in Layout.jsx already handles page scrolling with
+ * overflow-y-auto, so .ptr__children does not need to be a scroll container.
+ * Using !important overrides both the class-level and inline styles (author
+ * !important declarations beat inline normal declarations in the CSS cascade).
+ */
+.ptr__children {
+  overflow: visible !important;
+}
+
 /* Custom component classes */
 .btn {
   @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 ease-in-out hover:-translate-y-0.5 focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900;
