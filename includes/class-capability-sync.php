@@ -174,6 +174,12 @@ class CapabilitySync {
 		];
 
 		foreach ( $provisioned_users as $wp_user ) {
+			// Ensure every provisioned user has the base rondo_user role.
+			// Users provisioned before the role system may be missing it.
+			if ( ! in_array( 'rondo_user', $wp_user->roles, true ) && ! in_array( 'administrator', $wp_user->roles, true ) ) {
+				$wp_user->add_role( 'rondo_user' );
+			}
+
 			// KNVB ID is optional — users provisioned before PROV-04 may not have it.
 			// derive_functies_from_work_history() works via rondo_linked_person_id (always set).
 			$knvb_id = get_user_meta( $wp_user->ID, \Rondo\Users\UserProvisioning::META_KNVB_ID, true );
