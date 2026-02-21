@@ -1599,8 +1599,8 @@ export default function PersonDetail() {
         </div>
 
         {/* Sidebar - always visible */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-6">
+        <div className="hidden lg:block">
+          <div className="sticky top-6 space-y-6">
             {/* Finances Card */}
             <FinancesCard personId={parseInt(id)} />
 
@@ -1654,7 +1654,7 @@ export default function PersonDetail() {
               <AccountCard personId={id} personData={person} />
             )}
           </div>
-        </aside>
+        </div>
       </div>
 
       {/* Mobile Todos FAB - visible on screens below lg */}
