@@ -2862,23 +2862,37 @@ class Api extends Base {
 	}
 
 	/**
-	 * Get people who are eligible for provisioning: have an email, no WP account,
-	 * are published, and are not former members.
+	 * Search people eligible for provisioning: have a KNVB ID, email, no WP account,
+	 * are published, and are not former members. Requires a search query of at least 2 chars.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
-	 * @return \WP_REST_Response List of provisionable people.
+	 * @return \WP_REST_Response List of matching provisionable people.
 	 */
 	public function get_provisionable_users( $request ) {
+		$search = sanitize_text_field( $request->get_param( 'search' ) ?? '' );
+
+		// Require at least 2 characters to search.
+		if ( strlen( $search ) < 2 ) {
+			return rest_ensure_response( [] );
+		}
+
 		$meta_key = \Rondo\Users\UserProvisioning::META_USER_ID;
 
 		$people = get_posts( [
 			'post_type'      => 'person',
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
+			's'              => $search,
 			'meta_query'     => [
+				'relation' => 'AND',
 				[
 					'key'     => $meta_key,
 					'compare' => 'NOT EXISTS',
+				],
+				[
+					'key'     => 'knvb-id',
+					'compare' => '!=',
+					'value'   => '',
 				],
 			],
 			'fields'         => 'ids',
