@@ -56,6 +56,7 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
     >
       {/* Drag handle */}
       <button
+        type="button"
         {...attributes}
         {...listeners}
         className="mt-1 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
@@ -103,6 +104,7 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => onEdit(slug, category)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/30 rounded"
               title="Bewerken"
@@ -110,6 +112,7 @@ function SortableCategoryCard({ slug, category, onEdit, onDelete }) {
               <Edit2 className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => onDelete(slug, category)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
               title="Verwijderen"
@@ -134,8 +137,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
     matching_werkfuncties: category?.matching_werkfuncties || [],
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     const effectiveSlug = isNew ? slugify(formData.label) : slug;
     onSave(effectiveSlug, {
       label: formData.label,
@@ -175,7 +177,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-4 space-y-4 border-2 border-cyan-200 dark:border-deep-midnight">
+    <div className="card p-4 space-y-4 border-2 border-cyan-200 dark:border-deep-midnight">
       {/* Label field */}
       <div>
         <label htmlFor="label" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -314,7 +316,8 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
       {/* Actions */}
       <div className="flex items-center gap-3 pt-2">
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={isSaving || !formData.label}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
         >
@@ -336,7 +339,7 @@ function EditCategoryForm({ slug, category, onSave, onCancel, isSaving, isNew = 
           Annuleren
         </button>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -476,6 +479,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
 
       <div className="mt-4 flex items-center gap-3">
         <button
+          type="button"
           onClick={handleSave}
           disabled={isSaving || !isDirty}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
@@ -490,6 +494,7 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
           )}
         </button>
         <button
+          type="button"
           onClick={handleReset}
           disabled={isSaving}
           className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
@@ -873,6 +878,7 @@ export default function FeeCategorySettings() {
       {/* Season selector */}
       <div className="flex gap-2">
         <button
+          type="button"
           onClick={() => handleSeasonChange('current')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             selectedSeason === 'current'
@@ -883,6 +889,7 @@ export default function FeeCategorySettings() {
           Huidig seizoen ({data?.current_season?.key})
         </button>
         <button
+          type="button"
           onClick={() => handleSeasonChange('next')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             selectedSeason === 'next'
@@ -900,6 +907,7 @@ export default function FeeCategorySettings() {
        Object.keys(data?.current_season?.categories || {}).length > 0 && (
         <div className="card p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
           <button
+            type="button"
             onClick={() => {
               if (confirm(`Categorieën van seizoen ${data?.current_season?.key} kopiëren naar ${data?.next_season?.key}?`)) {
                 copyMutation.mutate({
@@ -1014,6 +1022,7 @@ export default function FeeCategorySettings() {
       {Object.keys(categories).length > 0 && (
         <div className="flex items-center gap-4">
           <button
+            type="button"
             onClick={() => {
               if (confirm('Alle contributies herberekenen voor dit seizoen? Dit kan even duren.')) {
                 clearMessages();
@@ -1121,6 +1130,7 @@ export default function FeeCategorySettings() {
         />
       ) : (
         <button
+          type="button"
           onClick={handleAddNew}
           disabled={saveMutation.isPending}
           className="w-full card p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-electric-cyan dark:hover:border-electric-cyan hover:bg-cyan-50 dark:hover:bg-obsidian/10 transition-colors flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan disabled:opacity-50"
