@@ -1093,6 +1093,26 @@ class Api extends Base {
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
 		);
+
+		// Capability sync for a single person (admin only — on-demand from AccountCard)
+		register_rest_route(
+			'rondo/v1',
+			'/people/(?P<id>[\d]+)/capability-sync',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'sync_person_capabilities' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'id' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && (int) $param > 0;
+						},
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -4780,6 +4800,9 @@ class Api extends Base {
 	/**
 	 * Proxy a single-member sync request to the Rondo Sync server.
 	 *
+	 * After a successful Sportlink sync, also triggers a capability sync for
+	 * the linked WordPress user so role mappings are applied immediately.
+	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response|\WP_Error Response from sync server or error.
 	 */
@@ -4824,7 +4847,46 @@ class Api extends Base {
 			);
 		}
 
+		// After a successful Sportlink sync, trigger capability sync for the linked WP user.
+		// The Sportlink sync may have updated work_history; we re-apply role mappings now.
+		// Look up the person by KNVB ID via ACF field meta, then sync via person ID.
+		$person_id = $this->find_person_id_by_knvb_id( $knvb_id );
+		if ( $person_id ) {
+			$cap_sync        = new \Rondo\Users\CapabilitySync();
+			$cap_sync_result = $cap_sync->sync_user_by_person_id( $person_id );
+			if ( is_array( $cap_sync_result ) ) {
+				$body['capability_sync'] = $cap_sync_result;
+			}
+		}
+
 		return rest_ensure_response( $body );
+	}
+
+	/**
+	 * Find a person post ID by their KNVB ID stored in ACF meta.
+	 *
+	 * @param string $knvb_id The KNVB member ID.
+	 * @return int|null Person post ID, or null if not found.
+	 */
+	private function find_person_id_by_knvb_id( string $knvb_id ): ?int {
+		// ACF stores the field key as meta for the 'knvb-id' field.
+		// The raw post meta key is 'knvb-id'.
+		$posts = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					[
+						'key'   => 'knvb-id',
+						'value' => $knvb_id,
+					],
+				],
+			]
+		);
+
+		return ! empty( $posts ) ? (int) $posts[0] : null;
 	}
 
 	/**
@@ -4863,6 +4925,30 @@ class Api extends Base {
 	public function sync_all_capabilities( $request ) {
 		$sync   = new \Rondo\Users\CapabilitySync();
 		$result = $sync->sync_all();
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Sync capabilities for the WordPress user linked to a single person (admin only).
+	 *
+	 * Derives functies from the person's current work_history ACF field and
+	 * applies the FunctieCapabilityMap. Used by the per-person "Sync rollen"
+	 * button in AccountCard. Returns { status: 'no_user' } if the person has
+	 * no linked WordPress account.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Sync result or WP_Error.
+	 */
+	public function sync_person_capabilities( $request ) {
+		$person_id = (int) $request->get_param( 'id' );
+
+		$sync   = new \Rondo\Users\CapabilitySync();
+		$result = $sync->sync_user_by_person_id( $person_id );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
 
 		return rest_ensure_response( $result );
 	}

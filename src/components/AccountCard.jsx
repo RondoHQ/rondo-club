@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserPlus, Check, Loader2, AlertCircle } from 'lucide-react';
+import { UserPlus, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { format } from '@/utils/dateFormat';
@@ -27,6 +27,8 @@ export default function AccountCard({ personId, personData }) {
   const [provisioning, setProvisioning] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [syncingRoles, setSyncingRoles] = useState(false);
+  const [rolesSyncResult, setRolesSyncResult] = useState(null);
 
   // Only admins see this card
   if (!config.isAdmin) {
@@ -41,6 +43,33 @@ export default function AccountCard({ personId, personData }) {
   const hasEmail = personData?.acf?.contact_info?.some(
     (contact) => contact.contact_type === 'email' && contact.contact_value?.trim()
   );
+
+  const handleSyncRoles = async () => {
+    setSyncingRoles(true);
+    setRolesSyncResult(null);
+    try {
+      const res = await prmApi.syncPersonCapabilities(personId);
+      const data = res.data;
+      if (data.status === 'no_user') {
+        setRolesSyncResult({ type: 'info', message: 'Geen account gevonden.' });
+      } else if (data.status === 'skipped') {
+        setRolesSyncResult({ type: 'info', message: 'Overgeslagen (administrator).' });
+      } else {
+        const granted = data.granted?.length || 0;
+        const revoked = data.revoked?.length || 0;
+        const msg = granted === 0 && revoked === 0
+          ? 'Rollen zijn al up-to-date.'
+          : `${granted} toegevoegd, ${revoked} verwijderd.`;
+        setRolesSyncResult({ type: 'success', message: msg });
+        // Refresh person data so linked_user_roles updates
+        queryClient.invalidateQueries({ queryKey: ['people', 'detail', String(personId)] });
+      }
+    } catch {
+      setRolesSyncResult({ type: 'error', message: 'Kon rollen niet synchroniseren.' });
+    } finally {
+      setSyncingRoles(false);
+    }
+  };
 
   const handleProvision = async () => {
     setProvisioning(true);
@@ -86,6 +115,25 @@ export default function AccountCard({ personId, personData }) {
               ))}
             </div>
           )}
+          <div className="flex items-center gap-3 pl-7 pt-2">
+            <button
+              onClick={handleSyncRoles}
+              disabled={syncingRoles}
+              className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingRoles ? 'animate-spin' : ''}`} />
+              <span>Sync rollen</span>
+            </button>
+            {rolesSyncResult && (
+              <span className={`text-xs ${
+                rolesSyncResult.type === 'error' ? 'text-red-600 dark:text-red-400' :
+                rolesSyncResult.type === 'success' ? 'text-green-600 dark:text-green-400' :
+                'text-gray-500 dark:text-gray-400'
+              }`}>
+                {rolesSyncResult.message}
+              </span>
+            )}
+          </div>
         </div>
       ) : (
         /* Not yet provisioned */
