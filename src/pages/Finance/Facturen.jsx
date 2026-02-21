@@ -61,7 +61,7 @@ const COLUMNS = [
         {row.original.invoice_number}
       </Link>
     ),
-    filterType: null,
+    filterType: FILTER_TYPES.TEXT,
     size: 160,
   }),
   createColumn({
@@ -175,6 +175,7 @@ export default function Facturen() {
     invoice_type: searchParams.get('invoice_type') || '',
     plan: searchParams.get('plan') || '',
     person_name: searchParams.get('person_name') || '',
+    invoice_number: searchParams.get('invoice_number') || '',
   }), [searchParams]);
 
   const handleFilterChange = useCallback((colId, value) => {
@@ -189,7 +190,7 @@ export default function Facturen() {
   const handleClearFilters = useCallback(() => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      ['status', 'invoice_type', 'plan', 'person_name'].forEach((k) => next.delete(k));
+      ['status', 'invoice_type', 'plan', 'person_name', 'invoice_number'].forEach((k) => next.delete(k));
       return next;
     }, { replace: true });
   }, [setSearchParams]);

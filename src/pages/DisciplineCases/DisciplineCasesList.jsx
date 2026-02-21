@@ -15,6 +15,11 @@ import { DataTableToolbar, ColumnSettingsPanel, createColumn, FILTER_TYPES } fro
 // Static column definitions for the filter toolbar
 const FILTER_COLUMNS = [
   createColumn({
+    id: 'persoon',
+    header: 'Persoon',
+    filterType: FILTER_TYPES.TEXT,
+  }),
+  createColumn({
     id: 'doorbelast',
     header: 'Doorbelast',
     filterType: FILTER_TYPES.SELECT,
@@ -30,6 +35,27 @@ const FILTER_COLUMNS = [
     header: 'Sanctie',
     filterType: FILTER_TYPES.TEXT,
   }),
+  createColumn({
+    id: 'kaart',
+    header: 'Kaart',
+    filterType: FILTER_TYPES.SELECT,
+    filterOptions: [
+      { value: 'geel', label: 'Geel' },
+      { value: 'rood', label: 'Rood' },
+      { value: 'geen', label: 'Geen kaart' },
+    ],
+    getFilterLabel: (val) => ({ geel: 'Geel', rood: 'Rood', geen: 'Geen kaart' }[val] || val),
+  }),
+  createColumn({
+    id: 'boete',
+    header: 'Boete',
+    filterType: FILTER_TYPES.SELECT,
+    filterOptions: [
+      { value: 'heeft', label: 'Heeft boete' },
+      { value: 'geen', label: 'Geen boete' },
+    ],
+    getFilterLabel: (val) => val === 'heeft' ? 'Heeft boete' : 'Geen boete',
+  }),
 ];
 
 export default function DisciplineCasesList() {
@@ -43,6 +69,9 @@ export default function DisciplineCasesList() {
 
   const [doorbelastFilter, setDoorbelastFilter] = useState('');
   const [sanctieFilter, setSanctieFilter] = useState('');
+  const [persoonFilter, setPersoonFilter] = useState('');
+  const [kaartFilter, setKaartFilter] = useState('');
+  const [boeteFilter, setBoeteFilter] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -114,6 +143,12 @@ export default function DisciplineCasesList() {
     return cases.filter(dc => {
       const acf = dc.acf || {};
 
+      if (persoonFilter.trim() !== '') {
+        const person = personMap.get(acf.person);
+        const personName = (person ? (person.name || '') : '').toLowerCase();
+        if (!personName.includes(persoonFilter.toLowerCase().trim())) return false;
+      }
+
       if (doorbelastFilter !== '') {
         const isNVT = isDoorbelastNVT(acf);
         if (doorbelastFilter === 'nvt' && !isNVT) return false;
@@ -127,21 +162,42 @@ export default function DisciplineCasesList() {
         if (!sanctionText.includes(sanctieFilter.toLowerCase().trim())) return false;
       }
 
+      if (kaartFilter !== '') {
+        const codes = (acf.charge_codes || '').trim();
+        const isGeel = codes ? codes.endsWith('-1') : false;
+        const isRood = codes ? !codes.endsWith('-1') : false;
+        if (kaartFilter === 'geel' && !isGeel) return false;
+        if (kaartFilter === 'rood' && !isRood) return false;
+        if (kaartFilter === 'geen' && codes) return false;
+      }
+
+      if (boeteFilter !== '') {
+        const fee = parseFloat(acf.administrative_fee) || 0;
+        if (boeteFilter === 'heeft' && !(fee > 0)) return false;
+        if (boeteFilter === 'geen' && fee > 0) return false;
+      }
+
       return true;
     });
-  }, [cases, doorbelastFilter, sanctieFilter]);
+  }, [cases, persoonFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter, personMap]);
 
-  const hasActiveFilters = !!doorbelastFilter || !!sanctieFilter;
-  const activeFilterCount = (doorbelastFilter ? 1 : 0) + (sanctieFilter ? 1 : 0);
+  const hasActiveFilters = !!(persoonFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter);
+  const activeFilterCount = [persoonFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter].filter(Boolean).length;
 
   const clearFilters = () => {
+    setPersoonFilter('');
     setDoorbelastFilter('');
     setSanctieFilter('');
+    setKaartFilter('');
+    setBoeteFilter('');
   };
 
   const setFilter = (colId, value) => {
-    if (colId === 'doorbelast') setDoorbelastFilter(value || '');
+    if (colId === 'persoon') setPersoonFilter(value || '');
+    else if (colId === 'doorbelast') setDoorbelastFilter(value || '');
     else if (colId === 'sanctie') setSanctieFilter(value || '');
+    else if (colId === 'kaart') setKaartFilter(value || '');
+    else if (colId === 'boete') setBoeteFilter(value || '');
   };
 
   const handleRefresh = async () => {
@@ -189,7 +245,7 @@ export default function DisciplineCasesList() {
         {/* Client-side filter toolbar */}
         <DataTableToolbar
           columns={FILTER_COLUMNS}
-          filters={{ doorbelast: doorbelastFilter, sanctie: sanctieFilter }}
+          filters={{ persoon: persoonFilter, doorbelast: doorbelastFilter, sanctie: sanctieFilter, kaart: kaartFilter, boete: boeteFilter }}
           onFilterChange={setFilter}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
@@ -228,7 +284,7 @@ export default function DisciplineCasesList() {
               Geen tuchtzaken gevonden
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              {selectedSeasonId || doorbelastFilter || sanctieFilter
+              {selectedSeasonId || persoonFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter
                 ? 'Pas de filters aan om meer resultaten te zien.'
                 : 'Er zijn momenteel geen tuchtzaken.'}
             </p>
