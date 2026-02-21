@@ -547,6 +547,19 @@ class People extends Base {
 		$data['linked_user_id']        = (int) get_post_meta( $post->ID, '_rondo_wp_user_id', true ) ?: null;
 		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
 
+		// Expose linked user roles for admin AccountCard.
+		if ( $data['linked_user_id'] && current_user_can( 'administrator' ) ) {
+			$user = get_user_by( 'ID', $data['linked_user_id'] );
+			if ( $user ) {
+				$data['linked_user_roles'] = array_values(
+					array_intersect(
+						$user->roles,
+						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_bestuur', 'administrator' ]
+					)
+				);
+			}
+		}
+
 		$response->set_data( $data );
 
 		return $response;
