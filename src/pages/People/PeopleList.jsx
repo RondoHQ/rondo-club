@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Settings, Download } from 'lucide-react';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download } from 'lucide-react';
+import { DataTableToolbar, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
@@ -583,14 +584,6 @@ export default function PeopleList() {
     updateSearchParams({ fotoMissing: value });
   }, [updateSearchParams]);
 
-  const setVogMissing = useCallback((value) => {
-    updateSearchParams({ vogMissing: value });
-  }, [updateSearchParams]);
-
-  const setVogOlderThanYears = useCallback((value) => {
-    updateSearchParams({ vogOuder: value });
-  }, [updateSearchParams]);
-
   const setIncludeFormer = useCallback((value) => {
     updateSearchParams({ oudLeden: value });
   }, [updateSearchParams]);
@@ -600,14 +593,11 @@ export default function PeopleList() {
   }, [updateSearchParams]);
 
   // Local UI state (not persisted in URL)
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
-  const filterRef = useRef(null);
-  const dropdownRef = useRef(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -648,8 +638,6 @@ export default function PeopleList() {
   const {
     data: filterOptions,
     isLoading: filterOptionsLoading,
-    error: filterOptionsError,
-    refetch: refetchFilterOptions,
   } = useFilterOptions();
 
   const bulkUpdateMutation = useBulkUpdatePeople();
@@ -736,18 +724,60 @@ export default function PeopleList() {
     return years;
   }, []);
 
-  // Close dropdown when clicking outside
+  const filterColumns = useMemo(() => [
+    createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
+    createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
+    createColumn({
+      id: 'birth_year', header: 'Geboortejaar', filterType: FILTER_TYPES.SELECT,
+      filterOptions: availableBirthYears.map(y => ({ value: String(y), label: String(y) })),
+      getFilterLabel: (val) => `Geboren ${val}`,
+    }),
+    createColumn({
+      id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: '7', label: 'Laatste 7 dagen' }, { value: '30', label: 'Laatste 30 dagen' },
+        { value: '90', label: 'Laatste 90 dagen' }, { value: '365', label: 'Laatste jaar' },
+      ],
+      getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
+    }),
+    createColumn({
+      id: 'vrijwilliger', header: 'Huidig vrijwilliger', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Vrijwilliger: ${val === '1' ? 'Ja' : 'Nee'}`,
+    }),
+    createColumn({
+      id: 'blokkade', header: 'Financiële blokkade', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Blokkade: ${val === '1' ? 'Ja' : 'Nee'}`,
+    }),
+    createColumn({
+      id: 'type_lid', header: 'Type lid', filterType: FILTER_TYPES.SELECT,
+      filterOptions: filterOptions?.member_types?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+      getFilterLabel: (val) => `Type: ${val}`,
+    }),
+    createColumn({
+      id: 'leeftijdsgroep', header: 'Leeftijdsgroep', filterType: FILTER_TYPES.SELECT,
+      filterOptions: filterOptions?.age_groups?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+    }),
+    createColumn({
+      id: 'foto_missing', header: 'Foto datum', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ontbreekt' }],
+      getFilterLabel: () => 'Foto ontbreekt',
+    }),
+    createColumn({
+      id: 'vog_datum', header: 'VOG datum', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'missing', label: 'Ontbreekt' },
+        { value: 'older_3', label: 'Ouder dan 3 jaar' },
+        { value: 'older_5', label: 'Ouder dan 5 jaar' },
+      ],
+      getFilterLabel: (val) => ({ missing: 'VOG ontbreekt', older_3: 'VOG ouder dan 3 jaar', older_5: 'VOG ouder dan 5 jaar' }[val] || val),
+    }),
+  ], [availableBirthYears, filterOptions]);
+
+  // Close bulk dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) &&
-        filterRef.current &&
-        !filterRef.current.contains(event.target)
-      ) {
-        setIsFilterOpen(false);
-      }
-      // Also close bulk dropdown when clicking outside
       if (
         bulkDropdownRef.current &&
         !bulkDropdownRef.current.contains(event.target)
@@ -762,9 +792,20 @@ export default function PeopleList() {
     };
   }, []);
 
-  const hasActiveFilters = selectedBirthYear || lastModifiedFilter ||
-    huidigeVrijwilliger || financieleBlokkade || typeLid || leeftijdsgroep || fotoMissing || vogMissing || vogOlderThanYears ||
-    includeFormer || lidTotFuture;
+  const filterValues = {
+    include_former: includeFormer,
+    lid_tot_future: lidTotFuture,
+    birth_year: selectedBirthYear,
+    last_modified: lastModifiedFilter,
+    vrijwilliger: huidigeVrijwilliger,
+    blokkade: financieleBlokkade,
+    type_lid: typeLid,
+    leeftijdsgroep,
+    foto_missing: fotoMissing,
+    vog_datum: vogMissing === '1' ? 'missing' : vogOlderThanYears ? `older_${vogOlderThanYears}` : '',
+  };
+  const hasActiveFilters = Object.values(filterValues).some(Boolean);
+  const activeFilterCount = Object.values(filterValues).filter(Boolean).length;
 
   // Update filteredCount URL param when filters are active and data is loaded
   useEffect(() => {
@@ -807,6 +848,26 @@ export default function PeopleList() {
       return next;
     }, { replace: true });
   };
+
+  const setFilter = useCallback((colId, value) => {
+    switch (colId) {
+      case 'include_former': setIncludeFormer(value); break;
+      case 'lid_tot_future': setLidTotFuture(value); break;
+      case 'birth_year': setSelectedBirthYear(value); break;
+      case 'last_modified': setLastModifiedFilter(value); break;
+      case 'vrijwilliger': setHuidigeVrijwilliger(value); break;
+      case 'blokkade': setFinancieleBlokkade(value); break;
+      case 'type_lid': setTypeLid(value); break;
+      case 'leeftijdsgroep': setLeeftijdsgroep(value); break;
+      case 'foto_missing': setFotoMissing(value); break;
+      case 'vog_datum':
+        if (value === 'missing') updateSearchParams({ vogMissing: '1', vogOuder: null });
+        else if (value?.startsWith('older_')) updateSearchParams({ vogMissing: '', vogOuder: parseInt(value.split('_')[1], 10) });
+        else updateSearchParams({ vogMissing: '', vogOuder: null });
+        break;
+      default: break;
+    }
+  }, [setIncludeFormer, setLidTotFuture, setSelectedBirthYear, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -918,417 +979,26 @@ export default function PeopleList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Header */}
-      <div className="flex flex-row flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative" ref={filterRef}>
+        {/* Toolbar */}
+        <DataTableToolbar
+          columns={filterColumns}
+          filters={filterValues}
+          onFilterChange={setFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onOpenColumnSettings={() => setShowColumnSettings(true)}
+          toolbarEnd={
             <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${hasActiveFilters ? 'bg-cyan-50 text-bright-cobalt border-cyan-200' : ''}`}
+              onClick={handleExportCsv}
+              className="btn-secondary"
+              title="Downloaden als CSV"
+              disabled={!people.length}
             >
-              <Filter className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">Filter</span>
-              {hasActiveFilters && (
-                <span className="ml-2 px-1.5 py-0.5 bg-electric-cyan text-white text-xs rounded-full">
-                  {(selectedBirthYear ? 1 : 0) + (lastModifiedFilter ? 1 : 0) +
-                   (huidigeVrijwilliger ? 1 : 0) + (financieleBlokkade ? 1 : 0) + (typeLid ? 1 : 0) +
-                   (leeftijdsgroep ? 1 : 0) + (fotoMissing ? 1 : 0) + (vogMissing ? 1 : 0) + (vogOlderThanYears ? 1 : 0) +
-                   (includeFormer ? 1 : 0) + (lidTotFuture ? 1 : 0)}
-                </span>
-              )}
+              <Download className="w-4 h-4" />
             </button>
-
-            {/* Filter Dropdown */}
-            {isFilterOpen && (
-              <div
-                ref={dropdownRef}
-                className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
-              >
-                <div className="p-4 space-y-4">
-                  {/* Former Members Toggle */}
-                  <div>
-                    <label className="flex items-center cursor-pointer">
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={includeFormer === '1'}
-                          onChange={() => setIncludeFormer(includeFormer === '1' ? '' : '1')}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-electric-cyan transition-colors"></div>
-                        <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
-                      </div>
-                      <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Toon oud-leden</span>
-                    </label>
-                  </div>
-
-                  {/* Lid-tot in Future Toggle */}
-                  <div>
-                    <label className="flex items-center cursor-pointer">
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={lidTotFuture === '1'}
-                          onChange={() => setLidTotFuture(lidTotFuture === '1' ? '' : '1')}
-                          className="sr-only peer"
-                        />
-                        <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-electric-cyan transition-colors"></div>
-                        <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4"></div>
-                      </div>
-                      <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-200">Afmelding in de toekomst</span>
-                    </label>
-                  </div>
-
-                  {/* Birth Year Filter */}
-                  {availableBirthYears.length > 0 && (
-                    <div>
-                      <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                        Geboortejaar
-                      </h3>
-                      <select
-                        value={selectedBirthYear}
-                        onChange={(e) => setSelectedBirthYear(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                      >
-                        <option value="">Alle jaren</option>
-                        {availableBirthYears.map(year => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Last Modified Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Laatst gewijzigd
-                    </h3>
-                    <select
-                      value={lastModifiedFilter}
-                      onChange={(e) => setLastModifiedFilter(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                    >
-                      <option value="">Alle tijden</option>
-                      <option value="7">Laatste 7 dagen</option>
-                      <option value="30">Laatste 30 dagen</option>
-                      <option value="90">Laatste 90 dagen</option>
-                      <option value="365">Laatste jaar</option>
-                    </select>
-                  </div>
-
-                  {/* Huidig Vrijwilliger Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Huidig vrijwilliger
-                    </h3>
-                    <select
-                      value={huidigeVrijwilliger}
-                      onChange={(e) => setHuidigeVrijwilliger(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                    >
-                      <option value="">Alle</option>
-                      <option value="1">Ja</option>
-                      <option value="0">Nee</option>
-                    </select>
-                  </div>
-
-                  {/* Financiele Blokkade Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Financiële blokkade
-                    </h3>
-                    <select
-                      value={financieleBlokkade}
-                      onChange={(e) => setFinancieleBlokkade(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                    >
-                      <option value="">Alle</option>
-                      <option value="1">Ja</option>
-                      <option value="0">Nee</option>
-                    </select>
-                  </div>
-
-                  {/* Type Lid Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Type lid
-                    </h3>
-                    {filterOptionsLoading ? (
-                      <select
-                        disabled
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                      >
-                        <option value="">Laden...</option>
-                      </select>
-                    ) : filterOptionsError ? (
-                      <div>
-                        <select
-                          disabled
-                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                        >
-                          <option value="">Fout bij laden</option>
-                        </select>
-                        <button
-                          onClick={() => refetchFilterOptions()}
-                          className="text-xs text-electric-cyan dark:text-electric-cyan hover:underline mt-1"
-                        >
-                          Opnieuw proberen
-                        </button>
-                      </div>
-                    ) : (
-                      <select
-                        value={typeLid}
-                        onChange={(e) => setTypeLid(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                      >
-                        <option value="">Alle ({filterOptions?.total || 0})</option>
-                        {filterOptions?.member_types?.map(opt => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.value} ({opt.count})
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-
-                  {/* Leeftijdsgroep Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Leeftijdsgroep
-                    </h3>
-                    {filterOptionsLoading ? (
-                      <select
-                        disabled
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                      >
-                        <option value="">Laden...</option>
-                      </select>
-                    ) : filterOptionsError ? (
-                      <div>
-                        <select
-                          disabled
-                          className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                        >
-                          <option value="">Fout bij laden</option>
-                        </select>
-                        <button
-                          onClick={() => refetchFilterOptions()}
-                          className="text-xs text-electric-cyan dark:text-electric-cyan hover:underline mt-1"
-                        >
-                          Opnieuw proberen
-                        </button>
-                      </div>
-                    ) : (
-                      <select
-                        value={leeftijdsgroep}
-                        onChange={(e) => setLeeftijdsgroep(e.target.value)}
-                        className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                      >
-                        <option value="">Alle ({filterOptions?.total || 0})</option>
-                        {filterOptions?.age_groups?.map(opt => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.value} ({opt.count})
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-
-                  {/* Foto Missing Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      Foto datum
-                    </h3>
-                    <select
-                      value={fotoMissing}
-                      onChange={(e) => setFotoMissing(e.target.value)}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                    >
-                      <option value="">Alle</option>
-                      <option value="1">Ontbreekt</option>
-                    </select>
-                  </div>
-
-                  {/* VOG Filter */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                      VOG datum
-                    </h3>
-                    <select
-                      value={vogMissing === '1' ? 'missing' : (vogOlderThanYears ? `older_${vogOlderThanYears}` : '')}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        // Update both params in single call to avoid race conditions
-                        if (val === 'missing') {
-                          updateSearchParams({ vogMissing: '1', vogOuder: null });
-                        } else if (val.startsWith('older_')) {
-                          updateSearchParams({ vogMissing: '', vogOuder: parseInt(val.split('_')[1], 10) });
-                        } else {
-                          updateSearchParams({ vogMissing: '', vogOuder: null });
-                        }
-                      }}
-                      className="w-full text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-                    >
-                      <option value="">Alle</option>
-                      <option value="missing">Ontbreekt</option>
-                      <option value="older_3">Ouder dan 3 jaar</option>
-                      <option value="older_5">Ouder dan 5 jaar</option>
-                    </select>
-                  </div>
-
-                  {/* Clear Filters */}
-                  {hasActiveFilters && (
-                    <button
-                      onClick={clearFilters}
-                      className="w-full text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light font-medium pt-2 border-t border-gray-200 dark:border-gray-700"
-                    >
-                      Alle filters wissen
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Active Filter Chips */}
-          {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2">
-              {selectedBirthYear && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Geboren {selectedBirthYear}
-                  <button
-                    onClick={() => setSelectedBirthYear('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {lastModifiedFilter && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Gewijzigd: {lastModifiedFilter === '7' ? 'laatste 7 dagen' :
-                             lastModifiedFilter === '30' ? 'laatste 30 dagen' :
-                             lastModifiedFilter === '90' ? 'laatste 90 dagen' : 'laatste jaar'}
-                  <button
-                    onClick={() => setLastModifiedFilter('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {huidigeVrijwilliger && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Vrijwilliger: {huidigeVrijwilliger === '1' ? 'Ja' : 'Nee'}
-                  <button
-                    onClick={() => setHuidigeVrijwilliger('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {financieleBlokkade && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Blokkade: {financieleBlokkade === '1' ? 'Ja' : 'Nee'}
-                  <button
-                    onClick={() => setFinancieleBlokkade('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {typeLid && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Type: {typeLid}
-                  <button
-                    onClick={() => setTypeLid('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {leeftijdsgroep && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Leeftijdsgroep: {leeftijdsgroep}
-                  <button
-                    onClick={() => setLeeftijdsgroep('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {fotoMissing === '1' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Foto ontbreekt
-                  <button
-                    onClick={() => setFotoMissing('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {vogMissing === '1' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  VOG ontbreekt
-                  <button
-                    onClick={() => setVogMissing('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {vogOlderThanYears && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  VOG ouder dan {vogOlderThanYears} jaar
-                  <button
-                    onClick={() => setVogOlderThanYears(null)}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-              {lidTotFuture === '1' && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs">
-                  Afmelding in de toekomst
-                  <button
-                    onClick={() => setLidTotFuture('')}
-                    className="hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {/* CSV Export Button */}
-          <button
-            onClick={handleExportCsv}
-            className="btn-secondary"
-            title="Downloaden als CSV"
-            disabled={!people.length}
-          >
-            <Download className="w-4 h-4" />
-          </button>
-
-          {/* Column Settings Button */}
-          <button
-            onClick={() => setShowColumnSettings(true)}
-            className="btn-secondary"
-            title="Kolommen aanpassen"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+          }
+        />
 
       {/* Loading state */}
       {(isLoading || prefsLoading) && (

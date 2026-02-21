@@ -32,7 +32,7 @@ export default function FilterChips({ columns, filters, onClearFilter }) {
             key={colId}
             className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs"
           >
-            {colLabel}: {valueLabel}
+            {colLabel}{valueLabel ? `: ${valueLabel}` : ''}
             <button
               onClick={() => onClearFilter(colId)}
               className="hover:text-gray-600 dark:hover:text-gray-300 ml-0.5"
