@@ -29,18 +29,23 @@ export default function DataTableToolbar({
   toolbarEnd,
 }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterRef = useRef(null);
+  const buttonRef = useRef(null);
+  const wrapperRef = useRef(null);
 
   const filterableColumns = columns.filter((c) => c.enableColumnFilter && c.meta?.filterType);
   const hasFilterableColumns = filterableColumns.length > 0;
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click.
+  // The dropdown is rendered via portal so we check both the wrapper and document.
   useEffect(() => {
     if (!isFilterOpen) return;
     const handler = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target)) {
-        setIsFilterOpen(false);
-      }
+      // Allow clicks inside the button wrapper
+      if (wrapperRef.current && wrapperRef.current.contains(e.target)) return;
+      // Allow clicks inside the portal-rendered dropdown (it is appended to body,
+      // not inside wrapperRef, so we check via closest data attribute)
+      if (e.target.closest('[data-filter-dropdown]')) return;
+      setIsFilterOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -51,8 +56,9 @@ export default function DataTableToolbar({
       {/* Left: filter button + active chips */}
       <div className="flex flex-wrap items-center gap-2">
         {hasFilterableColumns && (
-          <div className="relative" ref={filterRef}>
+          <div ref={wrapperRef}>
             <button
+              ref={buttonRef}
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`btn-secondary ${
                 hasActiveFilters
@@ -71,6 +77,7 @@ export default function DataTableToolbar({
 
             {isFilterOpen && (
               <FilterDropdown
+                anchorRef={buttonRef}
                 columns={columns}
                 filters={filters}
                 onFilterChange={(colId, value) => {
