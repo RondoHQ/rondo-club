@@ -100,7 +100,7 @@ export function ContributieOverzicht() {
       </div>
 
       {/* Bulk job progress */}
-      {jobStatus && jobStatus.status !== 'idle' && !isForecast && (
+      {jobStatus && ['running', 'done', 'error'].includes(jobStatus.status) && !isForecast && (
         <div className="card p-4">
           {jobStatus.status === 'running' && (
             <div className="flex items-center gap-3">
