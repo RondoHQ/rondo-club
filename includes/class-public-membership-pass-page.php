@@ -252,8 +252,9 @@ class PublicMembershipPassPage {
 	 */
 	private function render_page( int $person_id, string $token ) {
 		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
+		$infix      = (string) ( get_field( 'infix', $person_id ) ?: '' );
 		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
-		$name       = trim( $first_name . ' ' . $last_name );
+		$name       = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
 		$knvb_id    = (string) get_field( 'knvb-id', $person_id );
 
 		$fees   = new \Rondo\Fees\MembershipFees();

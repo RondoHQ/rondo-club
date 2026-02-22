@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.4.2] - 2026-02-22
+
+### Changed
+- Membership pass display name now includes `infix` (tussenvoegsel) for Apple and Google Wallet passes
+- Membership pass content now aggregates all active team/commissie links instead of only the first active work-history record
+- Membership pass content now includes active functies from work history
+- Public `/lidpas/{token}` landing page now shows full member name with infix
+
 ## [30.4.1] - 2026-02-22
 
 ### Added

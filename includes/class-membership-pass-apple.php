@@ -65,8 +65,10 @@ class MembershipPassApple {
 		$fees   = new MembershipFees();
 		$season = $fees->get_season_key();
 
-		$person_name = trim( (string) get_field( 'first_name', $person_id ) . ' ' . (string) get_field( 'last_name', $person_id ) );
-		$team_name   = $this->get_current_team_name( $person_id );
+		$person_name = $this->get_person_full_name( $person_id );
+		$details     = $this->get_current_work_details( $person_id );
+		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
+		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
 
 		$pass_data = [
 			'formatVersion'      => 1,
@@ -89,7 +91,7 @@ class MembershipPassApple {
 				'secondaryFields' => [
 					[
 						'key'   => 'team',
-						'label' => 'TEAM',
+						'label' => 'TEAMS',
 						'value' => $team_name,
 					],
 					[
@@ -103,6 +105,11 @@ class MembershipPassApple {
 						'key'   => 'knvb_id',
 						'label' => 'KNVB ID',
 						'value' => $knvb_id,
+					],
+					[
+						'key'   => 'functions',
+						'label' => 'FUNCTIES',
+						'value' => $functions,
 					],
 				],
 			],
@@ -211,32 +218,65 @@ class MembershipPassApple {
 	}
 
 	/**
-	 * Resolve current team label.
+	 * Resolve full person name with infix.
 	 *
 	 * @param int $person_id Person ID.
 	 * @return string
 	 */
-	private function get_current_team_name( int $person_id ): string {
+	private function get_person_full_name( int $person_id ): string {
+		$first_name = (string) get_field( 'first_name', $person_id );
+		$infix      = (string) get_field( 'infix', $person_id );
+		$last_name  = (string) get_field( 'last_name', $person_id );
+
+		return trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+	}
+
+	/**
+	 * Resolve current teams and functions from work history.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return array{teams:string,functions:string}
+	 */
+	private function get_current_work_details( int $person_id ): array {
 		$work_history = get_field( 'work_history', $person_id );
 		if ( ! is_array( $work_history ) ) {
-			return '';
+			return [
+				'teams'     => '',
+				'functions' => '',
+			];
 		}
+
+		$teams = [];
+		$roles = [];
 
 		foreach ( $work_history as $entry ) {
 			if ( ! is_array( $entry ) ) {
 				continue;
 			}
+
 			$is_current = ! empty( $entry['is_current'] );
+			if ( ! $is_current ) {
+				continue;
+			}
+
+			$job_title = isset( $entry['job_title'] ) ? trim( (string) $entry['job_title'] ) : '';
+			if ( $job_title !== '' ) {
+				$roles[ $job_title ] = true;
+			}
+
 			$team_id    = isset( $entry['team'] ) ? (int) $entry['team'] : 0;
-			if ( $is_current && $team_id > 0 ) {
+			if ( $team_id > 0 ) {
 				$title = get_the_title( $team_id );
-				if ( is_string( $title ) ) {
-					return $title;
+				if ( is_string( $title ) && $title !== '' ) {
+					$teams[ $title ] = true;
 				}
 			}
 		}
 
-		return '';
+		return [
+			'teams'     => implode( ' • ', array_keys( $teams ) ),
+			'functions' => implode( ' • ', array_keys( $roles ) ),
+		];
 	}
 
 	/**
