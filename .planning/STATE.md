@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 
 Milestone: v30.0 User Accounts & Profiles — ARCHIVED
 Status: Milestone complete and archived — git tag v30.0 created
-Last activity: 2026-02-21 — v30.0 milestone archived, PROJECT.md evolved
+Last activity: 2026-02-22 - Completed quick task 115: Add exclude team filter on tuchtzaken page
 
 Next: `/gsd:new-milestone` to plan next milestone
 
