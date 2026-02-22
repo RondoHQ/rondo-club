@@ -67,6 +67,7 @@ export default function FeedbackDetail() {
   useDocumentTitle(feedback?.title || 'Feedback');
 
   const isAdmin = currentUser?.is_admin ?? false;
+  const canEditFeedback = isAdmin || (currentUser?.id && feedback?.author?.id && currentUser.id === feedback.author.id);
 
   const handleEditSubmit = (data) => {
     updateFeedback.mutate(
@@ -177,13 +178,15 @@ export default function FeedbackDetail() {
           </div>
 
           {/* Edit button */}
-          <button
-            onClick={() => setIsEditModalOpen(true)}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <Pencil className="w-4 h-4" />
-            Edit
-          </button>
+          {canEditFeedback && (
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
+            </button>
+          )}
         </div>
       </div>
 

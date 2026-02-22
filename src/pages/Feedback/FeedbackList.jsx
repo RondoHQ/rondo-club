@@ -1,14 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
-import { MessageSquare, Bug, Lightbulb, Plus, Filter } from 'lucide-react';
+import { MessageSquare, Plus, ExternalLink } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFeedbackList, useCreateFeedback } from '@/hooks/useFeedback';
+import { useFeedbackList, useCreateFeedback, useUpdateFeedback } from '@/hooks/useFeedback';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import FeedbackModal from '@/components/FeedbackModal';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
+import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
-// Status badge colors
 const statusColors = {
   new: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -19,124 +20,329 @@ const statusColors = {
   needs_info: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
-// Type badge colors
 const typeColors = {
   bug: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   feature_request: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
 };
 
-// Status display labels
 const statusLabels = {
-  new: 'New',
-  approved: 'Approved',
-  in_progress: 'In Progress',
-  in_review: 'In Review',
-  resolved: 'Resolved',
-  declined: 'Declined',
-  needs_info: 'Needs Info',
+  new: 'Nieuw',
+  approved: 'Goedgekeurd',
+  in_progress: 'In behandeling',
+  in_review: 'In review',
+  resolved: 'Opgelost',
+  declined: 'Afgewezen',
+  needs_info: 'Info nodig',
 };
 
-// Type display labels
 const typeLabels = {
   bug: 'Bug',
-  feature_request: 'Feature Request',
+  feature_request: 'Functie',
 };
 
-// Project display labels
 const projectLabels = {
   'rondo-club': 'Rondo Club',
   'rondo-sync': 'Rondo Sync',
   'website': 'Website',
 };
 
-// Project badge colors
 const projectColors = {
   'rondo-club': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
   'rondo-sync': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
   'website': 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
 };
 
+const statusOptions = [
+  { value: 'new', label: 'Nieuw' },
+  { value: 'approved', label: 'Goedgekeurd' },
+  { value: 'in_progress', label: 'In behandeling' },
+  { value: 'in_review', label: 'In review' },
+  { value: 'needs_info', label: 'Info nodig' },
+  { value: 'resolved', label: 'Opgelost' },
+  { value: 'declined', label: 'Afgewezen' },
+];
+
+const statusSortOrder = {
+  new: 0,
+  approved: 1,
+  in_progress: 2,
+  in_review: 3,
+  needs_info: 4,
+  resolved: 5,
+  declined: 6,
+};
+
+const priorityOptions = [
+  { value: 'low', label: 'Laag' },
+  { value: 'medium', label: 'Gemiddeld' },
+  { value: 'high', label: 'Hoog' },
+  { value: 'critical', label: 'Kritiek' },
+];
+
+const typeFilterOptions = [
+  { value: 'bug', label: 'Bug' },
+  { value: 'feature_request', label: 'Functie' },
+];
+
+const projectFilterOptions = [
+  { value: 'rondo-club', label: 'Rondo Club' },
+  { value: 'rondo-sync', label: 'Rondo Sync' },
+  { value: 'website', label: 'Website' },
+];
+
+function StatusBadge({ status }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || statusColors.new}`}>
+      {statusLabels[status] || status}
+    </span>
+  );
+}
+
+function TypeBadge({ type }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[type] || typeColors.bug}`}>
+      {typeLabels[type] || type}
+    </span>
+  );
+}
+
+function ProjectBadge({ project }) {
+  const projectValue = project || 'rondo-club';
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${projectColors[projectValue] || projectColors['rondo-club']}`}>
+      {projectLabels[projectValue] || projectValue}
+    </span>
+  );
+}
+
+function priorityLabel(value) {
+  const option = priorityOptions.find((p) => p.value === value);
+  return option?.label || value || '-';
+}
+
 export default function FeedbackList() {
   useDocumentTitle('Feedback');
   const location = useLocation();
-
-  // URL-based filter state for persistence across refresh/navigation
+  const [showModal, setShowModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const typeFilter = searchParams.get('type') || '';
-  // Default to 'open' when no status param; 'all' in URL means show everything (empty string for API)
-  const rawStatus = searchParams.get('status');
-  const statusFilter = rawStatus === 'all' ? '' : (rawStatus || 'open');
-  const projectFilter = searchParams.get('project') || '';
+  const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
+  const createFeedback = useCreateFeedback();
+  const updateFeedback = useUpdateFeedback();
 
-  const updateSearchParams = useCallback((updates) => {
-    setSearchParams(prev => {
+  const canManageFeedback = currentUser?.is_admin ?? false;
+
+  const filters = useMemo(() => ({
+    id: searchParams.get('id') || '',
+    title: searchParams.get('title') || '',
+    type: searchParams.get('type') || '',
+    project: searchParams.get('project') || '',
+    author: searchParams.get('author') || '',
+    status: searchParams.get('status') || '',
+    priority: searchParams.get('priority') || '',
+  }), [searchParams]);
+
+  const handleFilterChange = useCallback((colId, value) => {
+    setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value === null || value === '' || value === undefined) {
-          next.delete(key);
-        } else {
-          next.set(key, String(value));
-        }
-      });
+      if (!value) next.delete(colId);
+      else next.set(colId, value);
       return next;
     }, { replace: true });
   }, [setSearchParams]);
 
-  const setTypeFilter = useCallback((value) => {
-    updateSearchParams({ type: value });
-  }, [updateSearchParams]);
+  const handleClearFilters = useCallback(() => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      ['id', 'title', 'type', 'project', 'author', 'status', 'priority'].forEach((k) => next.delete(k));
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
-  const setStatusFilter = useCallback((value) => {
-    if (value === 'open') {
-      // 'open' is the default — remove param to keep URLs clean
-      updateSearchParams({ status: null });
-    } else if (value === '') {
-      // "All" statuses — use 'all' sentinel in URL since empty string would be removed
-      updateSearchParams({ status: 'all' });
-    } else {
-      updateSearchParams({ status: value });
-    }
-  }, [updateSearchParams]);
-
-  const setProjectFilter = useCallback((value) => {
-    updateSearchParams({ project: value });
-  }, [updateSearchParams]);
-
-  const [showModal, setShowModal] = useState(false);
-  const queryClient = useQueryClient();
-
-  // Fetch feedback with filters
-  const { data: feedback, isLoading, error } = useFeedbackList({
-    type: typeFilter || undefined,
-    status: statusFilter || undefined,
-    project: projectFilter || undefined,
+  const { data: feedback = [], isLoading, error } = useFeedbackList({
+    per_page: 100,
+    orderby: 'date',
+    order: 'desc',
   });
-  const createFeedback = useCreateFeedback();
+
+  const sortedFeedback = useMemo(() => (
+    [...feedback].sort((a, b) => {
+      const statusA = a.meta?.status || 'new';
+      const statusB = b.meta?.status || 'new';
+      const rankA = statusSortOrder[statusA] ?? 999;
+      const rankB = statusSortOrder[statusB] ?? 999;
+
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    })
+  ), [feedback]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['feedback'] });
   };
 
-  // Submit handler
   const handleSubmit = async (data) => {
     await createFeedback.mutateAsync(data);
     setShowModal(false);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-cyan dark:border-electric-cyan"></div>
-      </div>
-    );
-  }
+  const handleStatusChange = useCallback((id, newStatus) => {
+    updateFeedback.mutate({ id, data: { status: newStatus } });
+  }, [updateFeedback]);
+
+  const handlePriorityChange = useCallback((id, newPriority) => {
+    updateFeedback.mutate({ id, data: { priority: newPriority } });
+  }, [updateFeedback]);
+
+  const columns = useMemo(() => [
+    createColumn({
+      id: 'id',
+      header: 'ID',
+      accessorFn: (row) => String(row.id),
+      cell: ({ row }) => (
+        <Link to={`/feedback/${row.original.id}`} className="text-electric-cyan dark:text-electric-cyan hover:underline font-medium">
+          #{row.original.id}
+        </Link>
+      ),
+      filterType: FILTER_TYPES.TEXT,
+      size: 90,
+    }),
+    createColumn({
+      id: 'type',
+      header: 'Type',
+      accessorFn: (row) => row.meta?.feedback_type || '',
+      cell: ({ row }) => <TypeBadge type={row.original.meta?.feedback_type} />,
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: typeFilterOptions,
+      size: 120,
+    }),
+    createColumn({
+      id: 'project',
+      header: 'Project',
+      accessorFn: (row) => row.meta?.project || 'rondo-club',
+      cell: ({ row }) => <ProjectBadge project={row.original.meta?.project} />,
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: projectFilterOptions,
+      size: 130,
+    }),
+    createColumn({
+      id: 'title',
+      header: 'Titel',
+      accessorFn: (row) => row.title || '',
+      cell: ({ row }) => (
+        <Link to={`/feedback/${row.original.id}`} className="text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan font-medium">
+          {row.original.title}
+        </Link>
+      ),
+      filterType: FILTER_TYPES.TEXT,
+      filterLabel: 'Titel',
+    }),
+    createColumn({
+      id: 'author',
+      header: 'Auteur',
+      accessorFn: (row) => row.author?.name || '',
+      cell: ({ row }) => row.original.author?.name || '-',
+      filterType: FILTER_TYPES.TEXT,
+      filterLabel: 'Auteur',
+      size: 180,
+    }),
+    createColumn({
+      id: 'status',
+      header: 'Status',
+      accessorFn: (row) => row.meta?.status || 'new',
+      cell: ({ row }) => {
+        const value = row.original.meta?.status || 'new';
+        if (!canManageFeedback) {
+          return <StatusBadge status={value} />;
+        }
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleStatusChange(row.original.id, e.target.value)}
+            className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded px-2 py-1"
+            disabled={updateFeedback.isPending}
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        );
+      },
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: statusOptions,
+      size: 160,
+    }),
+    createColumn({
+      id: 'priority',
+      header: 'Prioriteit',
+      accessorFn: (row) => row.meta?.priority || 'medium',
+      cell: ({ row }) => {
+        const value = row.original.meta?.priority || 'medium';
+        if (!canManageFeedback) {
+          return priorityLabel(value);
+        }
+        return (
+          <select
+            value={value}
+            onChange={(e) => handlePriorityChange(row.original.id, e.target.value)}
+            className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded px-2 py-1"
+            disabled={updateFeedback.isPending}
+          >
+            {priorityOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        );
+      },
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: priorityOptions,
+      size: 150,
+    }),
+    createColumn({
+      id: 'date',
+      header: 'Datum',
+      accessorFn: (row) => new Date(row.date).getTime(),
+      cell: ({ row }) => format(new Date(row.original.date), 'd MMM yyyy'),
+      filterType: null,
+      size: 130,
+    }),
+    createColumn({
+      id: 'pr',
+      header: 'PR',
+      accessorFn: (row) => row.meta?.pr_url || '',
+      cell: ({ row }) => {
+        const prUrl = row.original.meta?.pr_url;
+        if (!prUrl) {
+          return <span className="text-gray-400">-</span>;
+        }
+        return (
+          <a
+            href={prUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-electric-cyan dark:text-electric-cyan hover:underline"
+            title="Open PR"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            PR
+          </a>
+        );
+      },
+      filterType: null,
+      size: 90,
+      defaultHidden: true,
+    }),
+  ], [canManageFeedback, handlePriorityChange, handleStatusChange, updateFeedback.isPending]);
 
   if (error) {
     return (
       <div className="card p-8 text-center">
         <p className="text-red-600 dark:text-red-400">
-          Failed to load feedback: {error.message}
+          Feedback kon niet worden geladen: {error.message}
         </p>
       </div>
     );
@@ -145,123 +351,39 @@ export default function FeedbackList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-6">
-        {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-brand-gradient">Feedback</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="btn-primary text-sm flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Submit feedback
-        </button>
-      </div>
-
-      {/* Filter controls */}
-      <div className="flex flex-wrap items-center gap-3">
-        <Filter className="w-4 h-4 text-gray-400" />
-
-        {/* Type filter */}
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-        >
-          <option value="">All Types</option>
-          {Object.entries(typeLabels).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-        >
-          <option value="open">All Open</option>
-          <option value="">All</option>
-          {Object.entries(statusLabels).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-
-        {/* Project filter */}
-        <select
-          value={projectFilter}
-          onChange={(e) => setProjectFilter(e.target.value)}
-          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-        >
-          <option value="">All Projects</option>
-          {Object.entries(projectLabels).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Feedback list */}
-      {!feedback || feedback.length === 0 ? (
-        <div className="card p-12 text-center">
-          <MessageSquare className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-1">No feedback yet</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            Report bugs or request features.
-          </p>
-          <button onClick={() => setShowModal(true)} className="btn-primary">
-            <Plus className="w-4 h-4 mr-2" />
-            Submit feedback
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-bold text-brand-gradient">Feedback</h1>
         </div>
-      ) : (
-        <div className="card divide-y divide-gray-100 dark:divide-gray-700">
-          {feedback.map((item) => (
-            <Link
-              key={item.id}
-              to={`/feedback/${item.id}`}
-              className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+
+        <DataTable
+          storageKey="feedback"
+          data={sortedFeedback}
+          columns={columns}
+          isLoading={isLoading}
+          emptyIcon={<MessageSquare className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
+          emptyTitle="Geen feedback gevonden"
+          emptyDescription="Er is nog geen feedback of niets voldoet aan de gekozen filters."
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          toolbarEnd={(
+            <button
+              onClick={() => setShowModal(true)}
+              className="btn-primary text-sm flex items-center gap-2"
             >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  {/* Type badge */}
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[item.meta.feedback_type]}`}>
-                    {item.meta.feedback_type === 'bug' ? (
-                      <Bug className="w-3 h-3" />
-                    ) : (
-                      <Lightbulb className="w-3 h-3" />
-                    )}
-                    {typeLabels[item.meta.feedback_type]}
-                  </span>
-                  {/* Project badge (only show for non-default) */}
-                  {item.meta.project && item.meta.project !== 'rondo-club' && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${projectColors[item.meta.project] || ''}`}>
-                      {projectLabels[item.meta.project] || item.meta.project}
-                    </span>
-                  )}
-                  {/* Status badge */}
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[item.meta.status]}`}>
-                    {statusLabels[item.meta.status]}
-                  </span>
-                </div>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  #{item.id} - {format(new Date(item.date), 'd MMM yyyy')}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+              <Plus className="w-4 h-4" />
+              Submit feedback
+            </button>
+          )}
+        />
 
-      {/* Submit Feedback Modal */}
-      <FeedbackModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onSubmit={handleSubmit}
-        isLoading={createFeedback.isPending}
-        urlContext={location.pathname}
-      />
+        <FeedbackModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSubmit={handleSubmit}
+          isLoading={createFeedback.isPending}
+          urlContext={location.pathname}
+        />
       </div>
     </PullToRefreshWrapper>
   );

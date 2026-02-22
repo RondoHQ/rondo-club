@@ -18,7 +18,7 @@ import {
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
   Facturen, FactuurDetail, RelationshipTypes,
-  CustomFields, FeedbackManagement, Login, Profile,
+  CustomFields, Login, Profile,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -247,7 +247,7 @@ const router = createBrowserRouter([
           { path: 'settings/:tab/:subtab', element: <Settings /> },
           { path: 'settings/relationship-types', element: <RelationshipTypes /> },
           { path: 'settings/custom-fields', element: <CustomFields /> },
-          { path: 'settings/feedback', element: <FeedbackManagement /> },
+          { path: 'settings/feedback', element: <Navigate to="/feedback" replace /> },
 
           // Profile route
           { path: 'profile', element: <Profile /> },
