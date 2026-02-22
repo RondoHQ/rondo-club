@@ -41,6 +41,7 @@ use Rondo\REST\ImportExport;
 use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
+use Rondo\REST\MembershipPasses as RESTMembershipPasses;
 use Rondo\Calendar\Matcher;
 use Rondo\Calendar\CalDAVProvider;
 use Rondo\Sheets\GoogleOAuth;
@@ -80,6 +81,7 @@ use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
 use Rondo\Demo\DemoProtection;
+use Rondo\Passes\PublicMembershipPassPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -348,6 +350,7 @@ function rondo_init() {
 		new RESTCustomFields();
 		new RESTFeedback();
 		new RESTInvoices();
+		new RESTMembershipPasses();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
@@ -375,6 +378,9 @@ function rondo_init() {
 	// Public payment page - register rewrite rules and template_redirect handler
 	new PublicPaymentPage();
 
+	// Public membership pass landing page - /lidpas/{token}
+	new PublicMembershipPassPage();
+
 	// Installment scheduler — daily cron sweeper for installment emails and reminders
 	new InstallmentScheduler();
 
@@ -391,6 +397,22 @@ function rondo_init() {
 // in case ACF Pro isn't loaded yet (plugins load after themes)
 add_action( 'after_setup_theme', 'rondo_init', 5 );
 add_action( 'plugins_loaded', 'rondo_init', 5 );
+
+/**
+ * Allow membership pass config uploads (.p12 and .json) for financial users.
+ *
+ * @param array $mimes Existing mime map.
+ * @return array
+ */
+function rondo_membership_pass_upload_mimes( $mimes ) {
+	if ( current_user_can( 'financieel' ) || current_user_can( 'manage_options' ) ) {
+		$mimes['p12']  = 'application/x-pkcs12';
+		$mimes['json'] = 'application/json';
+	}
+
+	return $mimes;
+}
+add_filter( 'upload_mimes', 'rondo_membership_pass_upload_mimes' );
 
 // Clear orphaned Google Contacts sync cron hook (removed in v29.0)
 if ( wp_next_scheduled( 'rondo_google_contacts_sync' ) ) {
