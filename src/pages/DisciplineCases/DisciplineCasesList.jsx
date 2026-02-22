@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Gavel } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import {
@@ -119,35 +119,45 @@ export default function DisciplineCasesList() {
     },
   });
 
-  // Build team name → speeldag map and format function
-  // Team titles are "AWC 1", "AWC JO17-1" etc; discipline case team_name is "1", "JO17-1"
-  const formatTeamName = useMemo(() => {
-    const speeldagMap = new Map();
+  // Build team ID → speeldag map for resolving numeric team names
+  const teamSpeeldagMap = useMemo(() => {
+    const map = new Map();
     if (teamsData) {
       teamsData.forEach(team => {
         const speeldag = getSpeeldag(team.acf?.activiteit);
-        const title = team.title?.rendered || '';
-        const shortName = title.replace(/^AWC\s+/i, '');
-        if (speeldag && shortName) {
-          speeldagMap.set(shortName, speeldag);
-        }
+        if (speeldag) map.set(team.id, speeldag);
       });
     }
-    return (name) => {
-      if (!name) return '-';
-      if (/^\d+$/.test(name.trim())) {
-        const speeldag = speeldagMap.get(name.trim());
-        if (speeldag) return `${speeldag} ${name.trim()}`;
-      }
-      return name;
-    };
+    return map;
   }, [teamsData]);
 
-  // Derive dynamic team filter options from loaded cases (with formatted names)
+  // Format team name: use home_team/away_team ID to resolve speeldag for numeric names
+  const formatTeamName = useCallback((acf) => {
+    const name = acf?.team_name;
+    if (!name) return '-';
+    if (/^\d+$/.test(name.trim())) {
+      const teamId = parseInt(acf.home_team || acf.away_team, 10);
+      if (teamId && teamSpeeldagMap.has(teamId)) {
+        return `${teamSpeeldagMap.get(teamId)} ${name.trim()}`;
+      }
+    }
+    return name;
+  }, [teamSpeeldagMap]);
+
+  // Derive dynamic team filter options from loaded cases (with formatted display names)
   const teamFilterOptions = useMemo(() => {
     if (!cases) return [];
-    const names = [...new Set(cases.map(dc => dc.acf?.team_name).filter(Boolean))].sort();
-    return names.map(name => ({ value: name, label: formatTeamName(name) }));
+    // Build unique display names per raw team_name
+    const displayMap = new Map();
+    cases.forEach(dc => {
+      const raw = dc.acf?.team_name;
+      if (raw && !displayMap.has(raw)) {
+        displayMap.set(raw, formatTeamName(dc.acf));
+      }
+    });
+    return [...displayMap.entries()]
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([value, label]) => ({ value, label }));
   }, [cases, formatTeamName]);
 
   // Dynamic filter column definitions (depends on teamFilterOptions)
