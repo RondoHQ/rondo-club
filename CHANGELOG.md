@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.4.3] - 2026-02-22
+
+### Changed
+- Updated public membership pass page wallet CTAs to badge-style buttons
+- Google Wallet CTA now uses the official Google-hosted Add to Google Wallet badge asset
+- Apple Wallet CTA now uses a dedicated Add to Apple Wallet badge treatment for stronger platform consistency
+
 ## [30.4.2] - 2026-02-22
 
 ### Changed
