@@ -178,6 +178,9 @@ export default function DisciplineCaseTable({
           cmp = dateA - dateB;
           break;
         }
+        case 'team_name':
+          cmp = (acfA.team_name || '').localeCompare(acfB.team_name || '');
+          break;
         case 'sanction':
           cmp = (acfA.sanction_description || '').localeCompare(acfB.sanction_description || '');
           break;
@@ -283,6 +286,16 @@ export default function DisciplineCaseTable({
               <SortableHeader
                 label="Wedstrijd"
                 columnId="match_date"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-left"
+              />
+            )}
+            {isColVisible('team') && (
+              <SortableHeader
+                label="Team"
+                columnId="team_name"
                 sortField={sortField}
                 sortOrder={sortOrder}
                 onSort={handleSort}
@@ -399,6 +412,13 @@ export default function DisciplineCaseTable({
                       </div>
                     </td>
                   )}
+                  {isColVisible('team') && (
+                    <td className="px-4 py-3">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {acf.team_name || '-'}
+                      </span>
+                    </td>
+                  )}
                   {isColVisible('sanctie') && (
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
@@ -446,6 +466,7 @@ export default function DisciplineCaseTable({
                         (canCreateInvoice ? 1 : 0) +
                         (showPersonColumn ? 1 : 0) +
                         (isColVisible('wedstrijd') ? 1 : 0) +
+                        (isColVisible('team') ? 1 : 0) +
                         (isColVisible('sanctie') ? 1 : 0) +
                         (isColVisible('kaart') ? 1 : 0) +
                         (isColVisible('doorbelast') ? 1 : 0) +
