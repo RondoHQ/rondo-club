@@ -165,7 +165,11 @@ export default function VOGUpcoming() {
           {totalPeople} {totalPeople === 1 ? 'vrijwilliger' : 'vrijwilligers'} {totalPeople === 1 ? 'heeft' : 'hebben'} een VOG die binnen 30 dagen verloopt.
         </p>
 
-        <div className="card overflow-x-auto">
+        <div
+          className="card !overflow-x-auto"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+          data-horizontal-scroll="true"
+        >
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>

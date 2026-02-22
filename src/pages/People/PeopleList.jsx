@@ -86,9 +86,9 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           )}
         </button>
       </td>
-      {/* Photo - sticky with checkbox */}
+      {/* Photo */}
       <td
-        className="w-10 px-2 py-3 sticky left-10 z-[1] bg-inherit"
+        className="w-10 px-2 py-3"
         style={{ minWidth: '40px' }}
       >
         <Link to={`/people/${person.id}`} className="flex items-center justify-center">
@@ -100,9 +100,9 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           />
         </Link>
       </td>
-      {/* Name - sticky */}
+      {/* Name */}
       <td
-        className="px-4 py-3 whitespace-nowrap sticky left-[88px] z-[1] bg-inherit"
+        className="px-4 py-3 whitespace-nowrap"
         style={{
           width: columnWidths['name'] ? `${columnWidths['name']}px` : '200px',
           minWidth: columnWidths['name'] ? `${columnWidths['name']}px` : '200px',
@@ -254,7 +254,7 @@ function ResizableHeader({
     >
       <button
         onClick={() => onSort(columnSortField)}
-        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer uppercase tracking-wider"
       >
         {label}
         {isActive && (
@@ -325,13 +325,13 @@ function PersonListView({
                 )}
               </button>
             </th>
-            {/* Photo column - sticky */}
+            {/* Photo column */}
             <th
               scope="col"
-              className="w-10 px-2 bg-gray-50 dark:bg-gray-800 sticky left-10 z-[11]"
+              className="w-10 px-2 bg-gray-50 dark:bg-gray-800"
               style={{ minWidth: '40px' }}
             ></th>
-            {/* Name column - sticky and resizable */}
+            {/* Name column */}
             <ResizableHeader
               colId="name"
               label="Naam"
@@ -340,9 +340,6 @@ function PersonListView({
               sortOrder={sortOrder}
               onSort={onSort}
               onWidthChange={onColumnWidthChange}
-              isSticky={true}
-              stickyLeft="88px"
-              className="sticky left-[88px] z-[11]"
             />
             {/* Dynamic columns based on visible_columns order */}
             {visibleColumns.map(colId => {

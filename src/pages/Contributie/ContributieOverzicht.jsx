@@ -141,7 +141,11 @@ export function ContributieOverzicht() {
           </p>
         </div>
       ) : (
-        <div className="card overflow-x-auto">
+        <div
+          className="card !overflow-x-auto"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+          data-horizontal-scroll="true"
+        >
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>

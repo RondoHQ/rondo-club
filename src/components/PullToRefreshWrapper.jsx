@@ -12,6 +12,17 @@ export default function PullToRefreshWrapper({
   isPullable = true,
   children
 }) {
+  // Prevent pull-to-refresh from hijacking horizontal swipe gestures inside DataTable.
+  const blockPullForHorizontalScroll = (event) => {
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('[data-horizontal-scroll="true"], [class*="overflow-x-auto"], [class*="overflow-x-scroll"]')
+    ) {
+      event.stopPropagation();
+    }
+  };
+
   // Stadion-style spinner matching existing loading patterns
   const refreshingContent = (
     <div className="flex justify-center py-4">
@@ -39,7 +50,12 @@ export default function PullToRefreshWrapper({
       pullingContent={pullingContent}
       className="min-h-full"
     >
-      {children}
+      <div
+        onTouchStartCapture={blockPullForHorizontalScroll}
+        onTouchMoveCapture={blockPullForHorizontalScroll}
+      >
+        {children}
+      </div>
     </PullToRefresh>
   );
 }

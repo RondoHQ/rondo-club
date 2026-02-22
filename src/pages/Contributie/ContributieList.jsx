@@ -444,7 +444,11 @@ export function ContributieList() {
         />
 
         {/* Fee list table */}
-        <div className="card overflow-x-auto">
+        <div
+          className="card !overflow-x-auto"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+          data-horizontal-scroll="true"
+        >
           {sortedMembers.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">

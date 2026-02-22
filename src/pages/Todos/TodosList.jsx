@@ -202,10 +202,7 @@ export default function TodosList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-6">
-        {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold text-brand-gradient">Taken</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex justify-end">
           <button
             onClick={() => setShowGlobalTodoModal(true)}
             className="btn-primary text-sm flex items-center gap-2"
@@ -214,7 +211,6 @@ export default function TodosList() {
             Taak toevoegen
           </button>
         </div>
-      </div>
 
       {/* Personal tasks info message */}
       <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm dark:bg-blue-900/30 dark:border-blue-700">

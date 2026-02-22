@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
+import { Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -237,7 +237,7 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
 }
 
 export default function TeamsList() {
-  const [search, setSearch] = useState('');
+  const [teamFilter, setTeamFilter] = useState('');
   const [speeldagFilter, setSpeeldagFilter] = useState('');
   const [genderFilter, setGenderFilter] = useState('');
   const [playerCountFilter, setPlayerCountFilter] = useState('');
@@ -302,9 +302,9 @@ export default function TeamsList() {
   const handleCancelEdit = () => setEditingRowId(null);
 
   const { data: teams, isLoading, error } = useQuery({
-    queryKey: ['teams', search],
+    queryKey: ['teams'],
     queryFn: async () => {
-      const response = await wpApi.getTeams({ search, per_page: 100 });
+      const response = await wpApi.getTeams({ per_page: 100 });
       return response.data;
     },
   });
@@ -323,10 +323,11 @@ export default function TeamsList() {
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  const hasActiveFilters = !!(speeldagFilter || genderFilter || playerCountFilter || staffCountFilter);
-  const activeFilterCount = [speeldagFilter, genderFilter, playerCountFilter, staffCountFilter].filter(Boolean).length;
+  const hasActiveFilters = !!(teamFilter || speeldagFilter || genderFilter || playerCountFilter || staffCountFilter);
+  const activeFilterCount = [teamFilter, speeldagFilter, genderFilter, playerCountFilter, staffCountFilter].filter(Boolean).length;
 
   const clearFilters = () => {
+    setTeamFilter('');
     setSpeeldagFilter('');
     setGenderFilter('');
     setPlayerCountFilter('');
@@ -334,7 +335,8 @@ export default function TeamsList() {
   };
 
   const setFilter = (colId, value) => {
-    if (colId === 'speeldag') setSpeeldagFilter(value || '');
+    if (colId === 'team') setTeamFilter(value || '');
+    else if (colId === 'speeldag') setSpeeldagFilter(value || '');
     else if (colId === 'gender') setGenderFilter(value || '');
     else if (colId === 'player_count_filter') setPlayerCountFilter(value || '');
     else if (colId === 'staff_count_filter') setStaffCountFilter(value || '');
@@ -363,6 +365,11 @@ export default function TeamsList() {
 
   // Column definitions for the filter toolbar
   const filterColumns = useMemo(() => [
+    createColumn({
+      id: 'team',
+      header: 'Team',
+      filterType: FILTER_TYPES.TEXT,
+    }),
     createColumn({
       id: 'speeldag',
       header: 'Speeldag',
@@ -410,6 +417,10 @@ export default function TeamsList() {
 
     let filtered = [...teams];
 
+    if (teamFilter) {
+      const needle = teamFilter.toLowerCase();
+      filtered = filtered.filter(t => getTeamName(t).toLowerCase().includes(needle));
+    }
     if (speeldagFilter) filtered = filtered.filter(t => getSpeeldag(t.acf?.activiteit) === speeldagFilter);
     if (genderFilter) filtered = filtered.filter(t => getGenderLabel(t.acf?.gender) === genderFilter);
     if (playerCountFilter === 'heeft') filtered = filtered.filter(t => (t.player_count ?? 0) > 0);
@@ -418,7 +429,7 @@ export default function TeamsList() {
     else if (staffCountFilter === 'geen') filtered = filtered.filter(t => (t.staff_count ?? 0) === 0);
 
     return filtered;
-  }, [teams, speeldagFilter, genderFilter, playerCountFilter, staffCountFilter]);
+  }, [teams, teamFilter, speeldagFilter, genderFilter, playerCountFilter, staffCountFilter]);
 
   const sortedTeams = useMemo(() => {
     if (!filteredTeams) return [];
@@ -490,34 +501,20 @@ export default function TeamsList() {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [speeldagFilter, genderFilter, playerCountFilter, staffCountFilter, teams]);
+  }, [teamFilter, speeldagFilter, genderFilter, playerCountFilter, staffCountFilter, teams]);
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Header: search + filter toolbar */}
-        <div className="space-y-2">
-          <div className="relative max-w-md">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-            <input
-              type="search"
-              placeholder="Teams zoeken..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input pl-3 pr-9"
-            />
-          </div>
-
-          <DataTableToolbar
-            columns={filterColumns}
-            filters={{ speeldag: speeldagFilter, gender: genderFilter, player_count_filter: playerCountFilter, staff_count_filter: staffCountFilter }}
-            onFilterChange={setFilter}
-            onClearFilters={clearFilters}
-            hasActiveFilters={hasActiveFilters}
-            activeFilterCount={activeFilterCount}
-            onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
-          />
-        </div>
+        <DataTableToolbar
+          columns={filterColumns}
+          filters={{ team: teamFilter, speeldag: speeldagFilter, gender: genderFilter, player_count_filter: playerCountFilter, staff_count_filter: staffCountFilter }}
+          onFilterChange={setFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+        />
 
         {/* Loading */}
         {isLoading && (
@@ -541,7 +538,7 @@ export default function TeamsList() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen teams gevonden</h3>
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {search ? 'Probeer een andere zoekopdracht.' : 'Teams worden via de API of data import toegevoegd.'}
+              Teams worden via de API of data import toegevoegd.
             </p>
           </div>
         )}

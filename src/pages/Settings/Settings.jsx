@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FileCode, FileSpreadsheet, Download, Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import { prmApi } from '@/api/client';
 import { useTheme } from '@/hooks/useTheme';
-import { useSearch } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
@@ -16,7 +15,6 @@ import VOGSettings from '@/pages/VOG/VOGSettings';
 const TABS = [
   { id: 'appearance', label: 'Weergave' },
   { id: 'connections', label: 'Koppelingen' },
-  { id: 'data', label: 'Gegevens' },
   { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
   { id: 'vog', label: 'VOG', adminOnly: true, requiresVOG: true },
   { id: 'admin', label: 'Beheer', adminOnly: true },
@@ -426,8 +424,6 @@ export default function Settings() {
           handleDeleteAppPassword={handleDeleteAppPassword}
           formatDate={formatDate}
         />;
-      case 'data':
-        return <DataTab />;
       case 'financieel':
         return canAccessFinancieel ? (
           <FinanceSettings allowedTabs={['organization', 'payment', 'contributie', 'email']} />
@@ -516,65 +512,6 @@ function AppearanceTab() {
   const [clubName, setClubName] = useState(config.clubName || '');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
-
-  // Profile link state
-  const [linkedPerson, setLinkedPerson] = useState(null);
-  const [loadingLinkedPerson, setLoadingLinkedPerson] = useState(true);
-  const [personSearchQuery, setPersonSearchQuery] = useState('');
-  const [showPersonSearch, setShowPersonSearch] = useState(false);
-  const [savingLinkedPerson, setSavingLinkedPerson] = useState(false);
-
-  // Search for people
-  const trimmedQuery = personSearchQuery.trim();
-  const { data: searchResults, isLoading: isSearching } = useSearch(trimmedQuery);
-  const peopleResults = searchResults?.people || [];
-  const showSearchResults = trimmedQuery.length >= 2;
-
-  // Fetch linked person on mount
-  useEffect(() => {
-    const fetchLinkedPerson = async () => {
-      try {
-        const response = await prmApi.getLinkedPerson();
-        setLinkedPerson(response.data.person || null);
-      } catch {
-        // No linked person or fout
-        setLinkedPerson(null);
-      } finally {
-        setLoadingLinkedPerson(false);
-      }
-    };
-    fetchLinkedPerson();
-  }, []);
-
-  const handleSelectPerson = async (person) => {
-    setSavingLinkedPerson(true);
-    try {
-      const response = await prmApi.updateLinkedPerson(person.id);
-      setLinkedPerson(response.data.person);
-      setShowPersonSearch(false);
-      setPersonSearchQuery('');
-      // Update the global config so filtering works immediately
-      window.rondoConfig.currentUserPersonId = person.id;
-    } catch {
-      alert('Kan persoon niet koppelen. Probeer het opnieuw.');
-    } finally {
-      setSavingLinkedPerson(false);
-    }
-  };
-
-  const handleUnlinkPerson = async () => {
-    setSavingLinkedPerson(true);
-    try {
-      await prmApi.updateLinkedPerson(null);
-      setLinkedPerson(null);
-      // Update the global config
-      window.rondoConfig.currentUserPersonId = null;
-    } catch {
-      alert('Kan persoon niet ontkoppelen. Probeer het opnieuw.');
-    } finally {
-      setSavingLinkedPerson(false);
-    }
-  };
 
 
   const handleSaveClubConfig = async () => {
@@ -684,113 +621,6 @@ function AppearanceTab() {
           Momenteel <span className="font-medium">{effectiveColorScheme}</span> modus
           {colorScheme === 'system' && ' (op basis van je systeeminstelling)'}
         </p>
-      </div>
-
-      {/* Profile link card */}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold text-brand-gradient mb-4 flex items-center gap-2">
-          <LinkIcon className="w-5 h-5" />
-          Profielkoppeling
-        </h2>
-        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Koppel je account aan je persoonsrecord. Wanneer gekoppeld word je verborgen uit de deelnemerslijst van afspraken, omdat je al weet dat je aanwezig bent.
-        </p>
-
-        {loadingLinkedPerson ? (
-          <div className="text-sm text-gray-500 dark:text-gray-400">Laden...</div>
-        ) : linkedPerson ? (
-          <div className="space-y-3">
-            {/* Currently linked person */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="flex items-center gap-3">
-                <PersonAvatar
-                  thumbnail={linkedPerson.thumbnail}
-                  name={linkedPerson.name}
-                  size="lg"
-                />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{linkedPerson.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Gekoppeld aan je account</p>
-                </div>
-              </div>
-              <button
-                onClick={handleUnlinkPerson}
-                disabled={savingLinkedPerson}
-                className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
-              >
-                {savingLinkedPerson ? 'Ontkoppelen...' : 'Ontkoppelen'}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {showPersonSearch ? (
-              <div className="relative">
-                {/* Search input */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={personSearchQuery}
-                    onChange={(e) => setPersonSearchQuery(e.target.value)}
-                    placeholder="Zoek je persoonsrecord..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm placeholder:text-gray-400 bg-white dark:bg-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan outline-none"
-                    autoFocus
-                  />
-                </div>
-
-                {/* Search results dropdown */}
-                {showSearchResults && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto z-10">
-                    {isSearching ? (
-                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Zoeken...</div>
-                    ) : peopleResults.length === 0 ? (
-                      <div className="p-3 text-sm text-gray-500 dark:text-gray-400 text-center">Geen personen gevonden</div>
-                    ) : (
-                      peopleResults.map((person) => (
-                        <button
-                          key={person.id}
-                          onClick={() => handleSelectPerson(person)}
-                          disabled={savingLinkedPerson}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 text-left"
-                        >
-                          <PersonAvatar
-                            thumbnail={person.thumbnail}
-                            name={person.name}
-                            size="md"
-                          />
-                          <span className="text-sm text-gray-900 dark:text-gray-100">{person.name}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Cancel button */}
-                <button
-                  onClick={() => {
-                    setShowPersonSearch(false);
-                    setPersonSearchQuery('');
-                  }}
-                  className="mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  Annuleren
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowPersonSearch(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                <Search className="w-4 h-4" />
-                <span>Koppel aan je persoonsrecord</span>
-              </button>
-            )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Nog niet gekoppeld. Zoek je persoonsrecord om het aan je account te koppelen.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1213,62 +1043,6 @@ function APIAccessTab({
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
             Gebruik HTTP Basic Authentication met je gebruikersnaam en een applicatiewachtwoord.
           </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function DataTab() {
-  const handleExport = (format) => {
-    if (format === 'vcard') {
-      window.location.href = '/wp-json/rondo/v1/export/vcard';
-    } else if (format === 'google-csv') {
-      window.location.href = '/wp-json/rondo/v1/export/google-csv';
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Export Section */}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Gegevens exporteren</h2>
-        <p className="text-sm text-gray-600 mb-6">
-          Exporteer al je contacten in een formaat dat compatibel is met andere contactbeheersystemen.
-        </p>
-        
-        <div className="space-y-4">
-          <button
-            onClick={() => handleExport('vcard')}
-            className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
-          >
-            <div className="p-3 bg-cyan-50 rounded-lg">
-              <FileCode className="w-6 h-6 text-electric-cyan" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium">Exporteren als vCard (.vcf)</p>
-              <p className="text-sm text-gray-500">
-                Compatibel met Apple Contacten, Outlook, Android en de meeste contact-apps
-              </p>
-            </div>
-            <Download className="w-5 h-5 text-gray-400" />
-          </button>
-          
-          <button
-            onClick={() => handleExport('google-csv')}
-            className="w-full p-4 rounded-lg border border-gray-200 hover:bg-gray-50 text-left flex items-center gap-4"
-          >
-            <div className="p-3 bg-cyan-50 rounded-lg">
-              <FileSpreadsheet className="w-6 h-6 text-electric-cyan" />
-            </div>
-            <div className="flex-1">
-              <p className="font-medium">Exporteren als Google Contacten CSV</p>
-              <p className="text-sm text-gray-500">
-                Direct importeren in Google Contacten of andere CSV-compatibele systemen
-              </p>
-            </div>
-            <Download className="w-5 h-5 text-gray-400" />
-          </button>
         </div>
       </div>
     </div>

@@ -311,6 +311,20 @@ export default function FeedbackList() {
       size: 130,
     }),
     createColumn({
+      id: 'resolved_at',
+      header: 'Datum opgelost',
+      accessorFn: (row) => {
+        const resolvedAt = row.meta?.resolved_at;
+        return resolvedAt ? new Date(resolvedAt).getTime() : 0;
+      },
+      cell: ({ row }) => {
+        const resolvedAt = row.original.meta?.resolved_at;
+        return resolvedAt ? format(new Date(resolvedAt), 'd MMM yyyy') : '-';
+      },
+      filterType: null,
+      size: 150,
+    }),
+    createColumn({
       id: 'pr',
       header: 'PR',
       accessorFn: (row) => row.meta?.pr_url || '',
@@ -351,10 +365,6 @@ export default function FeedbackList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-brand-gradient">Feedback</h1>
-        </div>
-
         <DataTable
           storageKey="feedback"
           data={sortedFeedback}

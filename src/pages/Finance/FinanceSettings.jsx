@@ -182,12 +182,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
   useEffect(() => {
     if (!availableTabs.some((tab) => tab.id === activeTab)) {
       setActiveTab(availableTabs[0]?.id || 'organization');
-      return;
     }
-    if (initialTab && availableTabs.some((tab) => tab.id === initialTab) && activeTab !== initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [activeTab, availableTabs, initialTab]);
+  }, [activeTab, availableTabs]);
 
   // Load settings into form state
   useEffect(() => {
