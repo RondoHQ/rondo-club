@@ -1043,7 +1043,8 @@ class Invoices extends Base {
 		// Create payment link + QR code BEFORE PDF generation so QR is embedded in PDF.
 		// Membership invoices use the public payment page (/betaling/{token}) for plan selection,
 		// so skip direct Mollie/Rabobank payment link creation — it would overwrite the token URL.
-		$invoice_type = get_post_meta( $invoice_id, 'invoice_type', true );
+		$invoice_type   = get_post_meta( $invoice_id, 'invoice_type', true );
+		$finance_config = new FinanceConfig();
 
 		if ( 'membership' === $invoice_type ) {
 			// Membership invoices: QR points to /betaling/{token} plan selection page.
@@ -1056,7 +1057,6 @@ class Invoices extends Base {
 			}
 		} else {
 			// Discipline/other invoices: create direct Mollie/Rabobank payment link + QR.
-			$finance_config  = new FinanceConfig();
 			$active_provider = $finance_config->get_active_payment_provider();
 
 			if ( 'mollie' === $active_provider ) {

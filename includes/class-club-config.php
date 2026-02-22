@@ -29,6 +29,11 @@ class ClubConfig {
 	const OPTION_FREESCOUT_URL = 'rondo_freescout_url';
 
 	/**
+	 * Option key for FreeScout API key
+	 */
+	const OPTION_FREESCOUT_API_KEY = 'rondo_freescout_api_key';
+
+	/**
 	 * Default configuration values
 	 *
 	 * @var array<string, string>
@@ -36,6 +41,7 @@ class ClubConfig {
 	const DEFAULTS = [
 		'club_name'     => '',
 		'freescout_url' => '',
+		'freescout_api_key' => '',
 	];
 
 	/**
@@ -57,14 +63,33 @@ class ClubConfig {
 	}
 
 	/**
+	 * Get FreeScout API key.
+	 *
+	 * @return string The FreeScout API key (empty string if not configured)
+	 */
+	public static function get_freescout_api_key(): string {
+		return get_option( self::OPTION_FREESCOUT_API_KEY, self::DEFAULTS['freescout_api_key'] );
+	}
+
+	/**
+	 * Check whether a FreeScout API key is configured.
+	 *
+	 * @return bool True when a key exists, false otherwise.
+	 */
+	public static function has_freescout_api_key(): bool {
+		return '' !== trim( self::get_freescout_api_key() );
+	}
+
+	/**
 	 * Get all configuration settings
 	 *
-	 * @return array<string, string> Array of all configuration settings
+	 * @return array<string, string|bool> Array of all configuration settings
 	 */
 	public static function get_all_settings(): array {
 		return [
 			'club_name'     => self::get_club_name(),
 			'freescout_url' => self::get_freescout_url(),
+			'freescout_has_api_key' => self::has_freescout_api_key(),
 		];
 	}
 
@@ -88,5 +113,16 @@ class ClubConfig {
 	public static function update_freescout_url( string $url ): bool {
 		$sanitized = esc_url_raw( $url );
 		return update_option( self::OPTION_FREESCOUT_URL, $sanitized );
+	}
+
+	/**
+	 * Update FreeScout API key.
+	 *
+	 * @param string $api_key The FreeScout API key to set.
+	 * @return bool True on success, false on failure
+	 */
+	public static function update_freescout_api_key( string $api_key ): bool {
+		$sanitized = sanitize_text_field( $api_key );
+		return update_option( self::OPTION_FREESCOUT_API_KEY, $sanitized );
 	}
 }

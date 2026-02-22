@@ -16,7 +16,7 @@ import {
   PeopleList, PersonDetail, TeamsList, TeamDetail,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
-  Contributie, DisciplineCasesList, FinanceSettings,
+  Contributie, DisciplineCasesList,
   Facturen, FactuurDetail, RelationshipTypes,
   CustomFields, FeedbackManagement, Login, Profile,
 } from './lazyPages';
@@ -171,6 +171,10 @@ const router = createBrowserRouter([
               </VOGRoute>
             ),
           },
+          {
+            path: 'vog/instellingen',
+            element: <Navigate to="/settings/vog" replace />,
+          },
 
           // Finance routes - requires financieel capability
           {
@@ -189,14 +193,7 @@ const router = createBrowserRouter([
               </FinancieelRoute>
             ),
           },
-          {
-            path: 'financien/instellingen',
-            element: (
-              <FinancieelRoute>
-                <FinanceSettings />
-              </FinancieelRoute>
-            ),
-          },
+          { path: 'financien/instellingen', element: <Navigate to="/settings/financieel" replace /> },
           {
             path: 'financien/facturen',
             element: (
@@ -244,6 +241,7 @@ const router = createBrowserRouter([
           { path: 'feedback/:id', element: <FeedbackDetail /> },
 
           // Settings routes
+          { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },
           { path: 'settings', element: <Settings /> },
           { path: 'settings/:tab', element: <Settings /> },
           { path: 'settings/:tab/:subtab', element: <Settings /> },

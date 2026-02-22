@@ -864,6 +864,10 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
 						],
+						'freescout_api_key' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 					],
 				],
 			]
@@ -3720,6 +3724,11 @@ class Api extends Base {
 		$freescout_url = $request->get_param( 'freescout_url' );
 		if ( $freescout_url !== null ) {
 			\Rondo\Config\ClubConfig::update_freescout_url( $freescout_url );
+		}
+
+		$freescout_api_key = $request->get_param( 'freescout_api_key' );
+		if ( $freescout_api_key !== null ) {
+			\Rondo\Config\ClubConfig::update_freescout_api_key( $freescout_api_key );
 		}
 
 		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );

@@ -47,7 +47,6 @@ const navigation = [
   { name: 'Financiën', type: 'section', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
-  { name: 'Instellingen', href: '/financien/instellingen', icon: Settings, indent: true, requiresFinancieel: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
@@ -526,7 +525,6 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'Leden';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
-    if (path.startsWith('/financien/instellingen')) return 'Financiën Instellingen';
     if (path.startsWith('/financien/facturen')) return 'Facturen';
     if (path.startsWith('/contributie')) return 'Contributie';
     if (path.startsWith('/vog')) return 'VOG';

@@ -5,16 +5,20 @@ import { APP_NAME } from '@/constants/app';
 import { prmApi } from '@/api/client';
 import { useTheme } from '@/hooks/useTheme';
 import { useSearch } from '@/hooks/useDashboard';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
+import FinanceSettings from '@/pages/Finance/FinanceSettings';
+import VOGSettings from '@/pages/VOG/VOGSettings';
 
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
   { id: 'appearance', label: 'Weergave' },
   { id: 'connections', label: 'Koppelingen' },
-  { id: 'notifications', label: 'Meldingen' },
   { id: 'data', label: 'Gegevens' },
+  { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
+  { id: 'vog', label: 'VOG', adminOnly: true, requiresVOG: true },
   { id: 'admin', label: 'Beheer', adminOnly: true },
   { id: 'about', label: 'Info' },
 ];
@@ -23,6 +27,8 @@ const TABS = [
 const CONNECTION_SUBTABS = [
   { id: 'carddav', label: 'CardDAV', icon: Database },
   { id: 'api-access', label: 'API-toegang', icon: Key },
+  { id: 'freescout', label: 'FreeScout', icon: LinkIcon },
+  { id: 'payment-providers', label: 'Betaalproviders', icon: Wrench },
 ];
 
 // Admin subtabs configuration
@@ -38,13 +44,16 @@ export default function Settings() {
   const { tab: urlTab, subtab: urlSubtab } = useParams();
   const navigate = useNavigate();
   const config = window.rondoConfig || {};
-  const isAdmin = config.isAdmin || false;
+  const { data: currentUser, isLoading: currentUserLoading } = useCurrentUser();
+  const isAdmin = (currentUser?.is_admin ?? config.isAdmin) || false;
+  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canAccessVOG = currentUser?.can_access_vog ?? false;
   const userId = config.userId;
 
   // Get active tab from URL or default to 'appearance'
   const activeTab = urlTab || 'appearance';
-  // Get active subtab for connections tab
-  const activeSubtab = urlSubtab || 'carddav';
+  // Get active subtab for tabs that support subtabs.
+  const activeSubtab = urlSubtab || (activeTab === 'admin' ? 'users' : activeTab === 'connections' ? 'carddav' : null);
 
   const setActiveTab = (tab, subtab = null) => {
     if (subtab) {
@@ -61,11 +70,30 @@ export default function Settings() {
   };
 
   const setActiveSubtab = (subtab) => {
+    if (activeTab === 'admin') {
+      navigate(`/settings/admin/${subtab}`);
+      return;
+    }
     navigate(`/settings/connections/${subtab}`);
   };
   
-  // Filter tabs based on admin status
-  const visibleTabs = TABS.filter(tab => !tab.adminOnly || isAdmin);
+  // Filter tabs based on capabilities.
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab.adminOnly && !isAdmin) return false;
+    if (tab.requiresFinancieel && !canAccessFinancieel) return false;
+    if (tab.requiresVOG && !canAccessVOG) return false;
+    return true;
+  });
+
+  useEffect(() => {
+    if (currentUserLoading) {
+      return;
+    }
+    if (!visibleTabs.some((tab) => tab.id === activeTab)) {
+      const fallbackTab = visibleTabs[0]?.id || 'appearance';
+      navigate(`/settings/${fallbackTab}`, { replace: true });
+    }
+  }, [activeTab, currentUserLoading, navigate, visibleTabs]);
 
   // App Passwords state
   const [appPasswords, setAppPasswords] = useState([]);
@@ -75,15 +103,8 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState(null);
   const [passwordCopied, setPasswordCopied] = useState(false);
   const [carddavUrls, setCarddavUrls] = useState(null);
-  
-  // Notification channels state
-  const [notificationChannels, setNotificationChannels] = useState([]);
-  const [notificationTime, setNotificationTime] = useState('09:00');
-  const [mentionNotifications, setMentionNotifications] = useState('digest');
-  const [notificationsLoading, setNotificationsLoading] = useState(true);
-  const [savingChannels, setSavingChannels] = useState(false);
-  const [savingTime, setSavingTime] = useState(false);
-  const [savingMentionPref, setSavingMentionPref] = useState(false);
+  const [clubConfig, setClubConfig] = useState(null);
+  const [clubConfigLoading, setClubConfigLoading] = useState(true);
   
   // Manual trigger state (admin only)
   const [triggeringReminders, setTriggeringReminders] = useState(false);
@@ -125,39 +146,25 @@ export default function Settings() {
   useEffect(() => {
     const fetchAppPasswords = async () => {
       try {
-        const [passwordsResponse, urlsResponse] = await Promise.all([
+        const [passwordsResponse, urlsResponse, configResponse] = await Promise.all([
           prmApi.getAppPasswords(userId),
           prmApi.getCardDAVUrls(),
+          prmApi.getClubConfig(),
         ]);
         setAppPasswords(passwordsResponse.data || []);
         setCarddavUrls(urlsResponse.data);
+        setClubConfig(configResponse.data || null);
       } catch {
         // App passwords fetch failed silently
       } finally {
         setAppPasswordsLoading(false);
+        setClubConfigLoading(false);
       }
     };
     if (userId) {
       fetchAppPasswords();
     }
   }, [userId]);
-  
-  // Fetch notification channels on mount
-  useEffect(() => {
-    const fetchNotificationChannels = async () => {
-      try {
-        const response = await prmApi.getNotificationChannels();
-        setNotificationChannels(response.data.channels || ['email']);
-        setNotificationTime(response.data.notification_time || '09:00');
-        setMentionNotifications(response.data.mention_notifications || 'digest');
-      } catch {
-        // Notification channels fetch failed silently
-      } finally {
-        setNotificationsLoading(false);
-      }
-    };
-    fetchNotificationChannels();
-  }, []);
   
   // Fetch volunteer role settings on mount (admin only)
   useEffect(() => {
@@ -369,58 +376,6 @@ export default function Settings() {
     });
   };
 
-  const toggleChannel = async (channelId) => {
-    const newChannels = notificationChannels.includes(channelId)
-      ? notificationChannels.filter(c => c !== channelId)
-      : [...notificationChannels, channelId];
-    
-    setSavingChannels(true);
-    try {
-      await prmApi.updateNotificationChannels(newChannels);
-      setNotificationChannels(newChannels);
-    } catch (fout) {
-      alert(fout.response?.data?.message || 'Kan meldingskanalen niet bijwerken');
-    } finally {
-      setSavingChannels(false);
-    }
-  };
-  
-  const handleNotificationTimeChange = async (time) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const roundedMinutes = Math.round(minutes / 5) * 5;
-    const adjustedHours = roundedMinutes === 60 ? (hours + 1) % 24 : hours;
-    const adjustedMinutes = roundedMinutes === 60 ? 0 : roundedMinutes;
-    const roundedTime = `${String(adjustedHours).padStart(2, '0')}:${String(adjustedMinutes).padStart(2, '0')}`;
-
-    setNotificationTime(roundedTime);
-    setSavingTime(true);
-
-    try {
-      await prmApi.updateNotificationTime(roundedTime);
-    } catch (fout) {
-      alert(fout.response?.data?.message || 'Kan meldingstijd niet bijwerken');
-      const response = await prmApi.getNotificationChannels();
-      setNotificationTime(response.data.notification_time || '09:00');
-    } finally {
-      setSavingTime(false);
-    }
-  };
-
-  const handleMentionNotificationsChange = async (preference) => {
-    setSavingMentionPref(true);
-    const previousValue = mentionNotifications;
-    setMentionNotifications(preference);
-
-    try {
-      await prmApi.updateMentionNotifications(preference);
-    } catch (fout) {
-      alert(fout.response?.data?.message || 'Kan vermeldingsvoorkeur niet bijwerken');
-      setMentionNotifications(previousValue);
-    } finally {
-      setSavingMentionPref(false);
-    }
-  };
-  
   const handleTriggerReminders = async () => {
     if (!confirm('Dit verstuurt herinneringsmails voor alle herinneringen van vandaag. Doorgaan?')) {
       return;
@@ -467,10 +422,16 @@ export default function Settings() {
           activeSubtab={activeSubtab}
           setActiveSubtab={setActiveSubtab}
           setActiveTab={setActiveTab}
+          isAdmin={isAdmin}
+          canAccessFinancieel={canAccessFinancieel}
           // CardDAV props
           carddavUrls={carddavUrls}
           config={config}
           copyCarddavUrl={copyCarddavUrl}
+          // Club config props
+          clubConfig={clubConfig}
+          setClubConfig={setClubConfig}
+          clubConfigLoading={clubConfigLoading}
           // API Access props
           appPasswords={appPasswords}
           appPasswordsLoading={appPasswordsLoading}
@@ -485,26 +446,19 @@ export default function Settings() {
           handleDeleteAppPassword={handleDeleteAppPassword}
           formatDate={formatDate}
         />;
-      case 'notifications':
-        return <NotificationsTab
-          notificationsLoading={notificationsLoading}
-          notificationChannels={notificationChannels}
-          toggleChannel={toggleChannel}
-          savingChannels={savingChannels}
-          notificationTime={notificationTime}
-          handleNotificationTimeChange={handleNotificationTimeChange}
-          savingTime={savingTime}
-          mentionNotifications={mentionNotifications}
-          handleMentionNotificationsChange={handleMentionNotificationsChange}
-          savingMentionPref={savingMentionPref}
-        />;
       case 'data':
         return <DataTab />;
+      case 'financieel':
+        return canAccessFinancieel ? (
+          <FinanceSettings allowedTabs={['organization', 'payment', 'contributie', 'email']} />
+        ) : null;
+      case 'vog':
+        return isAdmin && canAccessVOG ? <VOGSettings /> : null;
       case 'admin':
         return isAdmin ? (
           <AdminTabWithSubtabs
             activeSubtab={activeSubtab}
-            setActiveSubtab={(subtab) => navigate(`/settings/admin/${subtab}`)}
+            setActiveSubtab={setActiveSubtab}
             handleTriggerReminders={handleTriggerReminders}
             triggeringReminders={triggeringReminders}
             reminderMessage={reminderMessage}
@@ -583,7 +537,6 @@ function AppearanceTab() {
 
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
-  const [freescoutUrl, setFreescoutUrl] = useState(config.freescoutUrl || '');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
 
@@ -653,11 +606,9 @@ function AppearanceTab() {
     try {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
-        freescout_url: freescoutUrl,
       });
       // Update window.rondoConfig with saved values
       window.rondoConfig.clubName = response.data.club_name;
-      window.rondoConfig.freescoutUrl = response.data.freescout_url;
 
       setClubConfigSaved(true);
       setTimeout(() => setClubConfigSaved(false), 3000);
@@ -698,21 +649,6 @@ function AppearanceTab() {
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Wordt getoond op het inlogscherm en in de paginatitel.
-              </p>
-            </div>
-
-            {/* FreeScout URL */}
-            <div>
-              <label className="label">FreeScout URL</label>
-              <input
-                type="url"
-                value={freescoutUrl}
-                onChange={(e) => setFreescoutUrl(e.target.value)}
-                className="input max-w-md"
-                placeholder="https://support.example.com"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Basis-URL voor FreeScout klantkoppelingen. Laat leeg om te verbergen.
               </p>
             </div>
 
@@ -886,8 +822,11 @@ function AppearanceTab() {
 // ConnectionsTab Component - Container for CardDAV and API subtabs
 function ConnectionsTab({
   activeSubtab, setActiveSubtab, setActiveTab,
+  isAdmin, canAccessFinancieel,
   // CardDAV props
   carddavUrls, config, copyCarddavUrl,
+  // Club config props
+  clubConfig, setClubConfig, clubConfigLoading,
   // API Access props
   appPasswords, appPasswordsLoading, newPasswordName, setNewPasswordName,
   handleCreateAppPassword, creatingPassword, newPassword, setNewPassword,
@@ -942,6 +881,17 @@ function ConnectionsTab({
           handleDeleteAppPassword={handleDeleteAppPassword}
           formatDate={formatDate}
         />
+      )}
+      {activeSubtab === 'freescout' && (
+        <FreeScoutConnectionSubtab
+          isAdmin={isAdmin}
+          clubConfig={clubConfig}
+          setClubConfig={setClubConfig}
+          loading={clubConfigLoading}
+        />
+      )}
+      {activeSubtab === 'payment-providers' && (
+        <PaymentProvidersSubtab canAccessFinancieel={canAccessFinancieel} />
       )}
     </div>
   );
@@ -1005,7 +955,7 @@ function ConnectionsCardDAVSubtab({
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Applicatiewachtwoorden voor CardDAV worden beheerd in{' '}
             <button
-              onClick={() => setActiveTab('api-access')}
+              onClick={() => setActiveTab('connections', 'api-access')}
               className="text-electric-cyan dark:text-electric-cyan hover:underline"
             >
               Instellingen &gt; API-toegang
@@ -1022,106 +972,133 @@ function ConnectionsCardDAVSubtab({
   );
 }
 
-// Notifications Tab Component - Channel toggles and preferences only
-function NotificationsTab({
-  notificationsLoading, notificationChannels, toggleChannel, savingChannels,
-  notificationTime, handleNotificationTimeChange, savingTime,
-  mentionNotifications, handleMentionNotificationsChange, savingMentionPref
-}) {
+function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading }) {
+  const [formData, setFormData] = useState({
+    freescout_url: '',
+    freescout_api_key: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    setFormData({
+      freescout_url: clubConfig?.freescout_url || '',
+      freescout_api_key: '',
+    });
+  }, [clubConfig]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!isAdmin) {
+      return;
+    }
+
+    setSaving(true);
+    setMessage('');
+    try {
+      const payload = {
+        freescout_url: formData.freescout_url,
+      };
+      if (formData.freescout_api_key.trim()) {
+        payload.freescout_api_key = formData.freescout_api_key.trim();
+      }
+      const response = await prmApi.updateClubConfig(payload);
+      setClubConfig(response.data || null);
+      window.rondoConfig.freescoutUrl = response.data?.freescout_url || '';
+      setFormData((prev) => ({ ...prev, freescout_api_key: '' }));
+      setMessage('FreeScout-instellingen opgeslagen.');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Kon FreeScout-instellingen niet opslaan.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="card p-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>FreeScout-instellingen laden...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold text-brand-gradient mb-4">Meldingen</h2>
-      <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Kies hoe je dagelijkse herinneringen wilt ontvangen over je belangrijke datums.
-      </p>
+    <form onSubmit={handleSave} className="card p-6 space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-brand-gradient">FreeScout</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Configureer de koppeling met FreeScout voor klantlinks en API-gebruik.
+        </p>
+      </div>
 
-      {notificationsLoading ? (
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded mb-3 dark:bg-gray-700"></div>
-          <div className="h-10 bg-gray-200 rounded dark:bg-gray-700"></div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Email channel */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div>
-              <p className="font-medium dark:text-gray-200">E-mail</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Ontvang dagelijkse samenvattingen per e-mail</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={notificationChannels.includes('email')}
-                onChange={() => toggleChannel('email')}
-                disabled={savingChannels}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-electric-cyan-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-electric-cyan dark:bg-gray-600 dark:peer-checked:bg-electric-cyan"></div>
-            </label>
-          </div>
+      <div>
+        <label className="label">FreeScout URL</label>
+        <input
+          type="url"
+          value={formData.freescout_url}
+          onChange={(e) => setFormData((prev) => ({ ...prev, freescout_url: e.target.value }))}
+          className="input"
+          placeholder="https://support.example.com"
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Basis-URL voor FreeScout klantkoppelingen.
+        </p>
+      </div>
 
-          {/* Notification time */}
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <label className="label mb-1">Meldingstijd (UTC)</label>
-            <input
-              type="time"
-              value={notificationTime}
-              onChange={(e) => handleNotificationTimeChange(e.target.value)}
-              className="input"
-              disabled={savingTime}
-              step="300"
-            />
-            {notificationTime && (
-              <div className="mt-2 p-2 bg-gray-50 rounded text-sm dark:bg-gray-800">
-                <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">UTC:</span> {notificationTime}
-                </p>
-                <p className="text-gray-700 mt-1 dark:text-gray-300">
-                  <span className="font-medium">Your time ({Intl.DateTimeFormat().resolvedOptions().timeZone}):</span>{' '}
-                  {(() => {
-                    try {
-                      const [hours, minutes] = notificationTime.split(':');
-                      const utcDate = new Date();
-                      utcDate.setUTCHours(parseInt(hours), parseInt(minutes), 0, 0);
-                      const localTime = utcDate.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      });
-                      return localTime;
-                    } catch (e) {
-                      return notificationTime;
-                    }
-                  })()}
-                </p>
-              </div>
-            )}
-            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              Choose the UTC time when you want to receive your daily reminder digest. Reminders are sent within a 1-hour window of your geselecteerd time.
-            </p>
-          </div>
+      <div>
+        <label className="label">FreeScout API key</label>
+        <input
+          type="password"
+          value={formData.freescout_api_key}
+          onChange={(e) => setFormData((prev) => ({ ...prev, freescout_api_key: e.target.value }))}
+          className="input"
+          placeholder={clubConfig?.freescout_has_api_key ? '••••••••' : 'FreeScout API key'}
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {clubConfig?.freescout_has_api_key
+            ? 'Er is al een API key opgeslagen. Laat leeg om de huidige key te behouden.'
+            : 'Wordt gebruikt voor toekomstige FreeScout API-acties.'}
+        </p>
+      </div>
 
-          {/* Mention notifications preference */}
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Vermeldingsmeldingen</label>
-            <select
-              value={mentionNotifications}
-              onChange={(e) => handleMentionNotificationsChange(e.target.value)}
-              className="input"
-              disabled={savingMentionPref}
-            >
-              <option value="digest">Opnemen in dagelijkse samenvatting (standaard)</option>
-              <option value="immediate">Direct verzenden</option>
-              <option value="never">Niet melden</option>
-            </select>
-            <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">
-              Kies wanneer je meldingen wilt ontvangen als iemand je @vermeldt in een notitie.
-            </p>
-          </div>
-        </div>
+      {!isAdmin && (
+        <p className="text-sm text-amber-600 dark:text-amber-400">
+          Alleen beheerders kunnen FreeScout-instellingen wijzigen.
+        </p>
       )}
-    </div>
+
+      {message && (
+        <p className={`text-sm ${message.includes('niet') || message.includes('Kon') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+          {message}
+        </p>
+      )}
+
+      <div className="flex justify-end">
+        <button type="submit" disabled={!isAdmin || saving} className="btn-primary">
+          {saving ? 'Opslaan...' : 'Opslaan'}
+        </button>
+      </div>
+    </form>
   );
+}
+
+function PaymentProvidersSubtab({ canAccessFinancieel }) {
+  if (!canAccessFinancieel) {
+    return (
+      <div className="card p-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Je hebt geen toegang tot betaalprovider-instellingen.
+        </p>
+      </div>
+    );
+  }
+
+  return <FinanceSettings initialTab="mollie" allowedTabs={['mollie', 'rabobank']} />;
 }
 
 // API Access Tab Component - Application password management
