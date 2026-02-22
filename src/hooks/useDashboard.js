@@ -82,7 +82,7 @@ export function useSearch(query) {
     queryKey: ['search', searchQuery],
     queryFn: async () => {
       if (!enabled) {
-        return { people: [], teams: [] };
+        return { people: [], teams: [], invoices: [] };
       }
       const response = await prmApi.search(searchQuery);
       return response.data;
