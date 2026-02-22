@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 
 Milestone: v30.0 User Accounts & Profiles — ARCHIVED
 Status: Milestone complete and archived — git tag v30.0 created
-Last activity: 2026-02-22 - Completed quick task 116: Bulk create invoices from selected tuchtzaken
+Last activity: 2026-02-22 - Completed quick task 117: in the sitewide search function, allow searching for invoice numbers too
 
 Next: `/gsd:new-milestone` to plan next milestone
 
