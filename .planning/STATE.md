@@ -81,15 +81,16 @@ Recent decisions affecting v30.0:
 | 111 | Refactor FunctiesTab mapping UI from CSS grid divs to semantic HTML table | 2026-02-20 | 122829b9 | [111-refactor-functiestab-mapping-ui-to-table](./quick/111-refactor-functiestab-mapping-ui-to-table/) |
 | 112 | Update demo export/import code for invoices, finance settings, capability maps | 2026-02-22 | 2bb4e816 | [112-update-demo-export-code-for-new-features](./quick/112-update-demo-export-code-for-new-features/) |
 | 113 | Add AWC team column and filter to tuchtzaken list | 2026-02-22 | f5c53c68 | [113-add-awc-team-column-and-filter-to-tuchtz](./quick/113-add-awc-team-column-and-filter-to-tuchtz/) |
+| 114 | Prefix numeric team names with speeldag on tuchtzaken | 2026-02-22 | b9a9e6ca | [114-prefix-numeric-team-names-with-speeldag-](./quick/114-prefix-numeric-team-names-with-speeldag-/) |
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed Quick Task 113 — AWC team column and filter added to tuchtzaken list
+Stopped at: Completed Quick Task 114 — Prefix numeric team names with speeldag on tuchtzaken
 Resume file: None
 
 **Next action:** v30.0 milestone complete — plan next milestone
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-22 — Quick task 113: AWC team column and filter on tuchtzaken page*
+*Last updated: 2026-02-22 — Quick task 114: Prefix numeric team names with speeldag on tuchtzaken*
