@@ -107,8 +107,6 @@ export default function Settings() {
   const [clubConfigLoading, setClubConfigLoading] = useState(true);
   
   // Manual trigger state (admin only)
-  const [triggeringReminders, setTriggeringReminders] = useState(false);
-  const [reminderMessage, setReminderMessage] = useState('');
   const [reschedulingCron, setReschedulingCron] = useState(false);
   const [cronMessage, setCronMessage] = useState('');
 
@@ -376,24 +374,6 @@ export default function Settings() {
     });
   };
 
-  const handleTriggerReminders = async () => {
-    if (!confirm('Dit verstuurt herinneringsmails voor alle herinneringen van vandaag. Doorgaan?')) {
-      return;
-    }
-    
-    setTriggeringReminders(true);
-    setReminderMessage('');
-    
-    try {
-      const response = await prmApi.triggerReminders();
-      setReminderMessage(response.data.message || 'Herinneringen succesvol verstuurd.');
-    } catch (fout) {
-      setReminderMessage(fout.response?.data?.message || 'Kan herinneringen niet versturen. Controleer de serverlogboeken.');
-    } finally {
-      setTriggeringReminders(false);
-    }
-  };
-  
   const handleRescheduleCron = async () => {
     if (!confirm('Dit herplant alle cron-taken op basis van de meldingsvoorkeuren van gebruikers. Doorgaan?')) {
       return;
@@ -459,9 +439,6 @@ export default function Settings() {
           <AdminTabWithSubtabs
             activeSubtab={activeSubtab}
             setActiveSubtab={setActiveSubtab}
-            handleTriggerReminders={handleTriggerReminders}
-            triggeringReminders={triggeringReminders}
-            reminderMessage={reminderMessage}
             handleRescheduleCron={handleRescheduleCron}
             reschedulingCron={reschedulingCron}
             cronMessage={cronMessage}
@@ -1302,9 +1279,6 @@ function DataTab() {
 function AdminTabWithSubtabs({
   activeSubtab,
   setActiveSubtab,
-  handleTriggerReminders,
-  triggeringReminders,
-  reminderMessage,
   handleRescheduleCron,
   reschedulingCron,
   cronMessage,
@@ -1401,9 +1375,6 @@ function AdminTabWithSubtabs({
         />
       ) : activeSubtab === 'systeem' ? (
         <AdminTab
-          handleTriggerReminders={handleTriggerReminders}
-          triggeringReminders={triggeringReminders}
-          reminderMessage={reminderMessage}
           handleRescheduleCron={handleRescheduleCron}
           reschedulingCron={reschedulingCron}
           cronMessage={cronMessage}
@@ -1619,7 +1590,6 @@ function GebruikersTab() {
 
 // Admin Tab Component (now used as Systeem subtab)
 function AdminTab({
-  handleTriggerReminders, triggeringReminders, reminderMessage,
   handleRescheduleCron, reschedulingCron, cronMessage
 }) {
   return (
@@ -1628,25 +1598,11 @@ function AdminTab({
         <h2 className="text-lg font-semibold text-brand-gradient mb-4">Configuratie</h2>
         <div className="space-y-3">
           <Link
-            to="/settings/relationship-types"
-            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-          >
-            <p className="font-medium">Relatietypes</p>
-            <p className="text-sm text-gray-500">Beheer relatietypes en hun omgekeerde koppelingen</p>
-          </Link>
-          <Link
             to="/settings/custom-fields"
             className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
           >
             <p className="font-medium">Aangepaste velden</p>
             <p className="text-sm text-gray-500">Definieer aangepaste gegevensvelden voor personen en organisaties</p>
-          </Link>
-          <Link
-            to="/settings/feedback"
-            className="block p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors dark:border-gray-700 dark:hover:bg-gray-700 dark:hover:border-gray-600"
-          >
-            <p className="font-medium dark:text-gray-100">Feedbackbeheer</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Bekijk en beheer alle gebruikersfeedback</p>
           </Link>
         </div>
       </div>
@@ -1654,19 +1610,6 @@ function AdminTab({
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-brand-gradient mb-4">Systeemacties</h2>
         <div className="space-y-3">
-          <button
-            onClick={handleTriggerReminders}
-            disabled={triggeringReminders}
-            className="w-full text-left p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <p className="font-medium">Herinneringen versturen</p>
-            <p className="text-sm text-gray-500">
-              {triggeringReminders ? 'Verzenden...' : 'Handmatig herinneringen voor vandaag versturen'}
-            </p>
-            {reminderMessage && (
-              <p className="text-sm text-green-600 mt-1">{reminderMessage}</p>
-            )}
-          </button>
           <button
             onClick={handleRescheduleCron}
             disabled={reschedulingCron}
