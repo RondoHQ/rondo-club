@@ -18,29 +18,35 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
     <tr className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
       isOdd ? 'bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-800'
     } ${hasProrata ? 'bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
-      <td className="px-4 py-3 whitespace-nowrap">
-        <Link
-          to={`/people/${member.id}`}
-          className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-electric-cyan dark:hover:text-electric-cyan"
-        >
-          {member.first_name}
-        </Link>
-      </td>
+      {isColVisible('first_name') && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          <Link
+            to={`/people/${member.id}`}
+            className="text-sm font-medium text-gray-900 dark:text-gray-50 hover:text-electric-cyan dark:hover:text-electric-cyan"
+          >
+            {member.first_name}
+          </Link>
+        </td>
+      )}
 
-      <td className="px-4 py-3 whitespace-nowrap">
-        <Link
-          to={`/people/${member.id}`}
-          className="text-sm text-gray-700 dark:text-gray-300 hover:text-electric-cyan dark:hover:text-electric-cyan"
-        >
-          {member.last_name}
-        </Link>
-      </td>
+      {isColVisible('last_name') && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          <Link
+            to={`/people/${member.id}`}
+            className="text-sm text-gray-700 dark:text-gray-300 hover:text-electric-cyan dark:hover:text-electric-cyan"
+          >
+            {member.last_name}
+          </Link>
+        </td>
+      )}
 
-      <td className="px-4 py-3 whitespace-nowrap">
-        <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getCategoryColor(categories?.[member.category]?.sort_order)}`}>
-          {categories?.[member.category]?.label ?? member.category}
-        </span>
-      </td>
+      {isColVisible('category') && (
+        <td className="px-4 py-3 whitespace-nowrap">
+          <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${getCategoryColor(categories?.[member.category]?.sort_order)}`}>
+            {categories?.[member.category]?.label ?? member.category}
+          </span>
+        </td>
+      )}
 
       {isColVisible('leeftijdsgroep') && (
         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
@@ -48,9 +54,11 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
         </td>
       )}
 
-      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-        {formatCurrency(member.base_fee, 2)}
-      </td>
+      {isColVisible('base_fee') && (
+        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+          {formatCurrency(member.base_fee, 2)}
+        </td>
+      )}
 
       {isColVisible('family_discount_rate') && (
         <td className="px-4 py-3 text-sm text-right">
@@ -76,9 +84,11 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
         </td>
       )}
 
-      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
-        {formatCurrency(member.final_fee, 2)}
-      </td>
+      {isColVisible('final_fee') && (
+        <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
+          {formatCurrency(member.final_fee, 2)}
+        </td>
+      )}
 
       {showNikkiColumns && (
         <>
@@ -242,9 +252,14 @@ export function ContributieList() {
   };
 
   const colVisColumns = [
+    { id: 'first_name', label: 'Voornaam', isVisible: isVisible('first_name') },
+    { id: 'last_name', label: 'Achternaam', isVisible: isVisible('last_name') },
+    { id: 'category', label: 'Categorie', isVisible: isVisible('category') },
     { id: 'leeftijdsgroep', label: 'Leeftijdsgroep', isVisible: isVisible('leeftijdsgroep') },
+    { id: 'base_fee', label: 'Basis', isVisible: isVisible('base_fee') },
     { id: 'family_discount_rate', label: 'Gezinskorting', isVisible: isVisible('family_discount_rate') },
     { id: 'prorata_percentage', label: 'Pro-rata', isVisible: isVisible('prorata_percentage') },
+    { id: 'final_fee', label: 'Bedrag', isVisible: isVisible('final_fee') },
   ];
 
   const filteredMembers = useMemo(() => {
@@ -443,27 +458,33 @@ export function ContributieList() {
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <SortableHeader
-                    label="Voornaam"
-                    columnId="first_name"
-                    sortField={sortField}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Achternaam"
-                    columnId="last_name"
-                    sortField={sortField}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                  />
-                  <SortableHeader
-                    label="Categorie"
-                    columnId="category"
-                    sortField={sortField}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                  />
+                  {isVisible('first_name') && (
+                    <SortableHeader
+                      label="Voornaam"
+                      columnId="first_name"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                    />
+                  )}
+                  {isVisible('last_name') && (
+                    <SortableHeader
+                      label="Achternaam"
+                      columnId="last_name"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                    />
+                  )}
+                  {isVisible('category') && (
+                    <SortableHeader
+                      label="Categorie"
+                      columnId="category"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                    />
+                  )}
                   {isVisible('leeftijdsgroep') && (
                     <SortableHeader
                       label="Leeftijdsgroep"
@@ -473,14 +494,16 @@ export function ContributieList() {
                       onSort={handleSort}
                     />
                   )}
-                  <SortableHeader
-                    label="Basis"
-                    columnId="base_fee"
-                    sortField={sortField}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                    className="text-right"
-                  />
+                  {isVisible('base_fee') && (
+                    <SortableHeader
+                      label="Basis"
+                      columnId="base_fee"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      className="text-right"
+                    />
+                  )}
                   {isVisible('family_discount_rate') && (
                     <SortableHeader
                       label="Gezin"
@@ -501,14 +524,16 @@ export function ContributieList() {
                       className="text-right"
                     />
                   )}
-                  <SortableHeader
-                    label="Bedrag"
-                    columnId="final_fee"
-                    sortField={sortField}
-                    sortOrder={sortOrder}
-                    onSort={handleSort}
-                    className="text-right"
-                  />
+                  {isVisible('final_fee') && (
+                    <SortableHeader
+                      label="Bedrag"
+                      columnId="final_fee"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      className="text-right"
+                    />
+                  )}
                   {showNikkiColumns && (
                     <>
                       <SortableHeader
@@ -545,17 +570,27 @@ export function ContributieList() {
               </tbody>
               <tfoot className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <td colSpan={isVisible('leeftijdsgroep') ? 4 : 3} className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <td
+                    colSpan={
+                      [isVisible('first_name'), isVisible('last_name'), isVisible('category'), isVisible('leeftijdsgroep')]
+                        .filter(Boolean).length || 1
+                    }
+                    className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100"
+                  >
                     Totaal
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-                    {formatCurrency(totals.baseFee, 2)}
-                  </td>
+                  {isVisible('base_fee') && (
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                      {formatCurrency(totals.baseFee, 2)}
+                    </td>
+                  )}
                   {isVisible('family_discount_rate') && <td></td>}
                   {isVisible('prorata_percentage') && <td></td>}
-                  <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
-                    {formatCurrency(totals.finalFee, 2)}
-                  </td>
+                  {isVisible('final_fee') && (
+                    <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
+                      {formatCurrency(totals.finalFee, 2)}
+                    </td>
+                  )}
                   {showNikkiColumns && (
                     <>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
