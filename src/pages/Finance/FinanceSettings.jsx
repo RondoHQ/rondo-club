@@ -132,7 +132,7 @@ function CertificateSection() {
   );
 }
 
-export default function FinanceSettings() {
+export default function FinanceSettings({ initialTab = 'organization', allowedTabs = null }) {
   const { data: settings, isLoading, error } = useFinanceSettings();
   const updateMutation = useUpdateFinanceSettings();
   const { data: rabobankStatus, isLoading: rabobankLoading } = useRabobankStatus();
@@ -169,10 +169,25 @@ export default function FinanceSettings() {
     mollie_redirect_url: '',
   });
 
-  const [activeTab, setActiveTab] = useState('organization');
+  const availableTabs = Array.isArray(allowedTabs) && allowedTabs.length > 0
+    ? TABS.filter((tab) => allowedTabs.includes(tab.id))
+    : TABS;
+  const [activeTab, setActiveTab] = useState(
+    availableTabs.some((tab) => tab.id === initialTab) ? initialTab : availableTabs[0]?.id || 'organization'
+  );
   const [emailSubTab, setEmailSubTab] = useState('boetes');
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    if (!availableTabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab(availableTabs[0]?.id || 'organization');
+      return;
+    }
+    if (initialTab && availableTabs.some((tab) => tab.id === initialTab) && activeTab !== initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [activeTab, availableTabs, initialTab]);
 
   // Load settings into form state
   useEffect(() => {
@@ -361,7 +376,7 @@ export default function FinanceSettings() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Tab Navigation */}
       <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
-        {TABS.map(tab => {
+        {availableTabs.map(tab => {
           let label = tab.label;
           if (tab.id === 'mollie' && formData.active_payment_provider !== 'mollie') {
             label += ' (niet in gebruik)';

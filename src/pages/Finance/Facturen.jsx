@@ -198,7 +198,8 @@ export default function Facturen() {
   const queryClient = useQueryClient();
 
   // Fetch all invoices — client-side filtering via DataTable
-  const { data: invoices, isLoading, error } = useInvoices();
+  // refetchOnMount ensures fresh data when navigating back after create/send actions
+  const { data: invoices, isLoading, error } = useInvoices({}, { refetchOnMount: 'always' });
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['invoices'] });

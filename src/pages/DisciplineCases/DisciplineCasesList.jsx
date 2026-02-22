@@ -390,22 +390,24 @@ export default function DisciplineCasesList() {
         )}
 
         {/* Table */}
-        <div className="card">
-          <DisciplineCaseTable
-            cases={filteredCases}
-            showPersonColumn={true}
-            personMap={personMap}
-            isLoading={isLoading}
-            isColVisible={isVisible}
-            formatTeamName={formatTeamName}
-            canCreateInvoice={canCreateInvoice}
-            selectedCaseIds={selectedCaseIds}
-            onSelectionChange={setSelectedCaseIds}
-            onCreateInvoice={handleBulkCreateInvoice}
-            isCreatingInvoice={bulkCreate.isPending}
-            invoicedCaseIds={new Set(invoicedCaseIds)}
-          />
-        </div>
+        {(isLoading || filteredCases?.length > 0) && (
+          <div className="card">
+            <DisciplineCaseTable
+              cases={filteredCases}
+              showPersonColumn={true}
+              personMap={personMap}
+              isLoading={isLoading}
+              isColVisible={isVisible}
+              formatTeamName={formatTeamName}
+              canCreateInvoice={canCreateInvoice}
+              selectedCaseIds={selectedCaseIds}
+              onSelectionChange={setSelectedCaseIds}
+              onCreateInvoice={handleBulkCreateInvoice}
+              isCreatingInvoice={bulkCreate.isPending}
+              invoicedCaseIds={new Set(invoicedCaseIds)}
+            />
+          </div>
+        )}
 
         {/* Empty state for filtered view */}
         {!isLoading && !casesError && filteredCases?.length === 0 && (

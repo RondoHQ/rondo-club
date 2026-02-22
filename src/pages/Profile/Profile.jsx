@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { User, Lock, Briefcase } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { User, Lock, Briefcase, Bell } from 'lucide-react';
 import { useCurrentUser, useChangePassword } from '@/hooks/useCurrentUser';
+import { prmApi } from '@/api/client';
 
 export default function Profile() {
   const { data: user, isLoading } = useCurrentUser();
@@ -11,8 +12,83 @@ export default function Profile() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [notificationChannels, setNotificationChannels] = useState([]);
+  const [notificationTime, setNotificationTime] = useState('09:00');
+  const [mentionNotifications, setMentionNotifications] = useState('digest');
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
+  const [savingChannels, setSavingChannels] = useState(false);
+  const [savingTime, setSavingTime] = useState(false);
+  const [savingMentionPref, setSavingMentionPref] = useState(false);
 
   const isDemoUser = window.rondoConfig?.isDemoUser;
+
+  useEffect(() => {
+    const fetchNotificationChannels = async () => {
+      try {
+        const response = await prmApi.getNotificationChannels();
+        setNotificationChannels(response.data.channels || ['email']);
+        setNotificationTime(response.data.notification_time || '09:00');
+        setMentionNotifications(response.data.mention_notifications || 'digest');
+      } catch {
+        // Notification channels fetch failed silently
+      } finally {
+        setNotificationsLoading(false);
+      }
+    };
+    fetchNotificationChannels();
+  }, []);
+
+  const toggleChannel = async (channelId) => {
+    const newChannels = notificationChannels.includes(channelId)
+      ? notificationChannels.filter(c => c !== channelId)
+      : [...notificationChannels, channelId];
+
+    setSavingChannels(true);
+    try {
+      await prmApi.updateNotificationChannels(newChannels);
+      setNotificationChannels(newChannels);
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Kan meldingskanalen niet bijwerken');
+    } finally {
+      setSavingChannels(false);
+    }
+  };
+
+  const handleNotificationTimeChange = async (time) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const roundedMinutes = Math.round(minutes / 5) * 5;
+    const adjustedHours = roundedMinutes === 60 ? (hours + 1) % 24 : hours;
+    const adjustedMinutes = roundedMinutes === 60 ? 0 : roundedMinutes;
+    const roundedTime = `${String(adjustedHours).padStart(2, '0')}:${String(adjustedMinutes).padStart(2, '0')}`;
+
+    setNotificationTime(roundedTime);
+    setSavingTime(true);
+
+    try {
+      await prmApi.updateNotificationTime(roundedTime);
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Kan meldingstijd niet bijwerken');
+      const response = await prmApi.getNotificationChannels();
+      setNotificationTime(response.data.notification_time || '09:00');
+    } finally {
+      setSavingTime(false);
+    }
+  };
+
+  const handleMentionNotificationsChange = async (preference) => {
+    setSavingMentionPref(true);
+    const previousValue = mentionNotifications;
+    setMentionNotifications(preference);
+
+    try {
+      await prmApi.updateMentionNotifications(preference);
+    } catch (fout) {
+      alert(fout.response?.data?.message || 'Kan vermeldingsvoorkeur niet bijwerken');
+      setMentionNotifications(previousValue);
+    } finally {
+      setSavingMentionPref(false);
+    }
+  };
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -115,6 +191,69 @@ export default function Profile() {
           </dl>
         </div>
       )}
+
+      {/* Notifications card */}
+      <div className="card p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Bell className="w-5 h-5 text-gray-400" />
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Meldingen</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
+          Kies hoe je dagelijkse herinneringen en vermeldingen wilt ontvangen.
+        </p>
+
+        {notificationsLoading ? (
+          <div className="animate-pulse">
+            <div className="h-10 bg-gray-200 rounded mb-3 dark:bg-gray-700"></div>
+            <div className="h-10 bg-gray-200 rounded dark:bg-gray-700"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div>
+                <p className="font-medium dark:text-gray-200">E-mail</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Ontvang dagelijkse samenvattingen per e-mail</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationChannels.includes('email')}
+                  onChange={() => toggleChannel('email')}
+                  disabled={savingChannels}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-electric-cyan-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-electric-cyan dark:bg-gray-600 dark:peer-checked:bg-electric-cyan"></div>
+              </label>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meldingstijd (UTC)</label>
+              <input
+                type="time"
+                value={notificationTime}
+                onChange={(e) => handleNotificationTimeChange(e.target.value)}
+                className="input"
+                disabled={savingTime}
+                step="300"
+              />
+            </div>
+
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Vermeldingsmeldingen</label>
+              <select
+                value={mentionNotifications}
+                onChange={(e) => handleMentionNotificationsChange(e.target.value)}
+                className="input"
+                disabled={savingMentionPref}
+              >
+                <option value="digest">Opnemen in dagelijkse samenvatting (standaard)</option>
+                <option value="immediate">Direct verzenden</option>
+                <option value="never">Niet melden</option>
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Password change card — hidden for demo users */}
       {!isDemoUser && (
