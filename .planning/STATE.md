@@ -84,15 +84,16 @@ Recent decisions affecting v30.0:
 | 114 | Prefix numeric team names with speeldag on tuchtzaken | 2026-02-22 | b9a9e6ca | [114-prefix-numeric-team-names-with-speeldag-](./quick/114-prefix-numeric-team-names-with-speeldag-/) |
 | 115 | Add exclude team filter on tuchtzaken page | 2026-02-22 | 87eea749 | [115-add-exclude-team-filter-on-tuchtzaken-pa](./quick/115-add-exclude-team-filter-on-tuchtzaken-pa/) |
 | 116 | Bulk create invoices from selected tuchtzaken | 2026-02-22 | 2ce6d17e | [116-bulk-create-invoices-from-selected-tucht](./quick/116-bulk-create-invoices-from-selected-tucht/) |
+| 117 | Invoice number search in sitewide search modal | 2026-02-22 | ca68558c | [117-in-the-sitewide-search-function-allow-se](./quick/117-in-the-sitewide-search-function-allow-se/) |
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed Quick Task 116 — Bulk create invoices from selected tuchtzaken
+Stopped at: Completed Quick Task 117 — Invoice number search in sitewide search modal
 Resume file: None
 
 **Next action:** v30.0 milestone complete — plan next milestone
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-22 — Quick task 116: Bulk create invoices from selected tuchtzaken*
+*Last updated: 2026-02-22 — Quick task 117: Invoice number search in sitewide search modal*
