@@ -2065,8 +2065,9 @@ class Api extends Base {
 		$query = sanitize_text_field( $request->get_param( 'q' ) );
 
 		$results = [
-			'people'    => [],
-			'teams' => [],
+			'people'   => [],
+			'teams'    => [],
+			'invoices' => [],
 		];
 
 		// Search people with scoring to prioritize first name matches
@@ -2303,6 +2304,57 @@ class Api extends Base {
 
 		foreach ( $team_results as $item ) {
 			$results['teams'][] = $this->format_company_summary( $item['team'] );
+		}
+
+		// Search invoices (only for users with financieel capability)
+		if ( current_user_can( 'financieel' ) ) {
+			$invoice_posts = get_posts(
+				[
+					'post_type'      => 'rondo_invoice',
+					'posts_per_page' => 10,
+					'post_status'    => [ 'publish', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'draft' ],
+					'meta_query'     => [
+						[
+							'key'     => 'invoice_number',
+							'value'   => $query,
+							'compare' => 'LIKE',
+						],
+					],
+				]
+			);
+
+			$invoice_results = [];
+			foreach ( $invoice_posts as $invoice ) {
+				$invoice_number = get_field( 'invoice_number', $invoice->ID );
+				$person_id      = get_field( 'person', $invoice->ID );
+				$person_name    = null;
+
+				if ( ! empty( $person_id ) ) {
+					$first_name  = get_field( 'first_name', $person_id ) ?: '';
+					$infix       = get_field( 'infix', $person_id ) ?: '';
+					$last_name   = get_field( 'last_name', $person_id ) ?: '';
+					$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
+					$person_name = implode( ' ', $name_parts ) ?: null;
+				}
+
+				$invoice_results[] = [
+					'id'             => $invoice->ID,
+					'invoice_number' => $invoice_number,
+					'person_name'    => $person_name,
+					'total_amount'   => (float) get_field( 'total_amount', $invoice->ID ),
+					'status'         => get_field( 'status', $invoice->ID ),
+				];
+			}
+
+			// Sort by invoice_number descending (most recent first)
+			usort(
+				$invoice_results,
+				function ( $a, $b ) {
+					return strcmp( $b['invoice_number'] ?? '', $a['invoice_number'] ?? '' );
+				}
+			);
+
+			$results['invoices'] = $invoice_results;
 		}
 
 		return rest_ensure_response( $results );
