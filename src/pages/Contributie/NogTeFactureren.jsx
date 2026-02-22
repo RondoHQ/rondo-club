@@ -141,6 +141,14 @@ export function NogTeFactureren() {
         filterOptions: categoryOptions,
       }),
       createColumn({
+        id: 'leeftijdsgroep',
+        header: 'Leeftijdsgroep',
+        accessorKey: 'leeftijdsgroep',
+        cell: ({ getValue }) => getValue() || '-',
+        filterType: FILTER_TYPES.TEXT,
+        defaultHidden: true,
+      }),
+      createColumn({
         id: 'base_fee',
         header: 'Basis',
         accessorKey: 'base_fee',
@@ -280,6 +288,7 @@ export function NogTeFactureren() {
         },
         sortable: false,
         filterType: null,
+        enableHiding: false,
         size: 130,
       }),
     ];

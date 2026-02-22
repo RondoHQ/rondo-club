@@ -23,6 +23,7 @@ export const FILTER_TYPES = {
  * @param {string} [config.filterLabel] - Override column header in filter dropdown/chip
  * @param {boolean} [config.sortable=true] - Whether the column supports sorting
  * @param {boolean} [config.defaultHidden=false] - Hide column by default
+ * @param {boolean} [config.enableHiding=true] - Whether column appears in column picker (false for action columns)
  * @param {number} [config.size] - Default column width in pixels
  * @param {string} [config.className] - Additional CSS class for <td> cells
  * @param {string} [config.headerClassName] - Additional CSS class for <th> header
@@ -40,6 +41,7 @@ export function createColumn({
   filterLabel,
   sortable = true,
   defaultHidden = false,
+  enableHiding = true,
   size,
   className = '',
   headerClassName = '',
@@ -48,6 +50,7 @@ export function createColumn({
     id,
     header,
     enableSorting: sortable,
+    enableHiding,
     enableColumnFilter: !!filterType,
     meta: {
       filterType: filterType || null,
