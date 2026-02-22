@@ -4198,8 +4198,9 @@ class Api extends Base {
 			foreach ( $group_members as $member_id ) {
 				if ( (int) $member_id !== $person_id ) {
 					$first_name = get_field( 'first_name', $member_id ) ?: '';
+					$infix      = get_field( 'infix', $member_id ) ?: '';
 					$last_name  = get_field( 'last_name', $member_id ) ?: '';
-					$name       = trim( $first_name . ' ' . $last_name );
+					$name       = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 					if ( empty( $name ) ) {
 						$name = get_the_title( $member_id );
 					}
