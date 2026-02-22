@@ -110,7 +110,7 @@ class DemoImport {
 		WP_CLI::log( sprintf( "  Deleted %d comments", count( $comments ) ) );
 
 		// 2. Delete all posts for each CPT (force delete, skip trash)
-		$post_types = [ "rondo_todo", "discipline_case", "person", "team", "commissie" ];
+		$post_types = [ "rondo_invoice", "rondo_todo", "discipline_case", "person", "team", "commissie" ];
 		$total_posts = 0;
 
 		foreach ( $post_types as $post_type ) {
@@ -163,18 +163,21 @@ class DemoImport {
 			"rondo_vog_reminder_template_new",
 			"rondo_vog_reminder_template_renewal",
 			"rondo_vog_exempt_commissies",
+			"rondo_functie_capability_map",
+			"rondo_commissie_capability_map",
 		];
 
 		foreach ( $option_keys as $key ) {
 			delete_option( $key );
 		}
 
-		// Dynamic season-keyed options (scan for pattern)
+		// Dynamic season-keyed options and finance config options (scan for pattern)
 		global $wpdb;
 		$dynamic_options = $wpdb->get_col(
 			"SELECT option_name FROM {$wpdb->options}
 			 WHERE option_name LIKE 'rondo_membership_fees_%'
-			    OR option_name LIKE 'rondo_family_discount_%'"
+			    OR option_name LIKE 'rondo_family_discount_%'
+			    OR option_name LIKE 'rondo_finance_%'"
 		);
 
 		foreach ( $dynamic_options as $option_name ) {
@@ -234,6 +237,9 @@ class DemoImport {
 		WP_CLI::log( 'Importing discipline cases...' );
 		$this->import_discipline_cases();
 
+		WP_CLI::log( 'Importing invoices...' );
+		$this->import_invoices();
+
 		WP_CLI::log( 'Importing todos...' );
 		$this->import_todos();
 
@@ -280,7 +286,7 @@ class DemoImport {
 		}
 
 		// Validate required top-level keys
-		$required_keys = [ 'people', 'teams', 'commissies', 'discipline_cases', 'todos', 'comments', 'taxonomies', 'settings' ];
+		$required_keys = [ 'people', 'teams', 'commissies', 'discipline_cases', 'invoices', 'todos', 'comments', 'taxonomies', 'settings' ];
 		foreach ( $required_keys as $key ) {
 			if ( ! isset( $this->fixture[ $key ] ) ) {
 				WP_CLI::error( sprintf( 'Invalid fixture: missing required key "%s"', $key ) );
@@ -288,11 +294,12 @@ class DemoImport {
 		}
 
 		WP_CLI::log( sprintf( 'Fixture loaded: version %s, exported %s', $this->fixture['meta']['version'], $this->fixture['meta']['exported_at'] ) );
-		WP_CLI::log( sprintf( 'Record counts: %d people, %d teams, %d commissies, %d discipline cases, %d todos, %d comments',
+		WP_CLI::log( sprintf( 'Record counts: %d people, %d teams, %d commissies, %d discipline cases, %d invoices, %d todos, %d comments',
 			$this->fixture['meta']['record_counts']['people'] ?? 0,
 			$this->fixture['meta']['record_counts']['teams'] ?? 0,
 			$this->fixture['meta']['record_counts']['commissies'] ?? 0,
 			$this->fixture['meta']['record_counts']['discipline_cases'] ?? 0,
+			$this->fixture['meta']['record_counts']['invoices'] ?? 0,
 			$this->fixture['meta']['record_counts']['todos'] ?? 0,
 			$this->fixture['meta']['record_counts']['comments'] ?? 0
 		) );
@@ -812,6 +819,111 @@ class DemoImport {
 		}
 
 		WP_CLI::log( sprintf( '  Imported %d discipline cases', $total ) );
+	}
+
+	/**
+	 * Import invoices (discipline case invoices and membership/contributie invoices)
+	 */
+	private function import_invoices() {
+		$invoices = $this->fixture['invoices'] ?? [];
+		$total    = count( $invoices );
+
+		foreach ( $invoices as $invoice ) {
+			$ref    = $invoice['_ref'];
+			$title  = $invoice['title'];
+			$status = $invoice['status'];
+
+			$post_id = wp_insert_post( [
+				'post_type'   => 'rondo_invoice',
+				'post_title'  => $title,
+				'post_status' => $status,
+			], true );
+
+			if ( is_wp_error( $post_id ) ) {
+				WP_CLI::warning( sprintf( 'Failed to create invoice "%s": %s', $title, $post_id->get_error_message() ) );
+				continue;
+			}
+
+			// Store ref mapping
+			$this->ref_map[ $ref ] = $post_id;
+
+			// Set ACF fields
+			$acf = $invoice['acf'] ?? [];
+
+			update_field( 'invoice_number', $acf['invoice_number'] ?? '', $post_id );
+			update_field( 'invoice_type', $acf['invoice_type'] ?? null, $post_id );
+			update_field( 'status', $acf['status'] ?? null, $post_id );
+			update_field( 'total_amount', $acf['total_amount'] ?? 0, $post_id );
+			update_field( 'sent_date', $this->shift_date( $acf['sent_date'] ?? null, 'Ymd' ), $post_id );
+			update_field( 'due_date', $this->shift_date( $acf['due_date'] ?? null, 'Ymd' ), $post_id );
+			update_field( 'payment_link', null, $post_id );
+			update_field( 'pdf_path', null, $post_id );
+			update_field( 'qr_code_path', null, $post_id );
+
+			// Resolve person ref
+			$person_ref = $acf['person'] ?? null;
+			if ( $person_ref ) {
+				$person_id = $this->resolve_ref( $person_ref );
+				if ( $person_id ) {
+					update_field( 'person', $person_id, $post_id );
+				}
+			}
+
+			// Resolve line items
+			$raw_line_items    = $acf['line_items'] ?? [];
+			$resolved_line_items = [];
+
+			foreach ( $raw_line_items as $item ) {
+				$dc_ref = $item['discipline_case'] ?? null;
+				$dc_id  = $dc_ref ? $this->resolve_ref( $dc_ref ) : null;
+
+				$resolved_line_items[] = [
+					'discipline_case' => $dc_id,
+					'description'     => $item['description'] ?? null,
+					'amount'          => (float) ( $item['amount'] ?? 0 ),
+				];
+			}
+
+			if ( ! empty( $resolved_line_items ) ) {
+				update_field( 'line_items', $resolved_line_items, $post_id );
+			}
+
+			// Set post meta
+			$post_meta = $invoice['post_meta'] ?? [];
+
+			if ( ! empty( $post_meta['_installment_plan'] ) ) {
+				update_post_meta( $post_id, '_installment_plan', $post_meta['_installment_plan'] );
+			}
+
+			if ( ! empty( $post_meta['_installment_count'] ) ) {
+				$installment_count = (int) $post_meta['_installment_count'];
+				update_post_meta( $post_id, '_installment_count', $installment_count );
+			}
+
+			if ( ! empty( $post_meta['_invoice_season'] ) ) {
+				$shifted_season = $this->shift_season_slug( $post_meta['_invoice_season'] );
+				update_post_meta( $post_id, '_invoice_season', $shifted_season );
+			}
+
+			// Set installment data
+			$installments = $post_meta['_installments'] ?? [];
+			foreach ( $installments as $n => $installment ) {
+				$n = (int) $n;
+				update_post_meta( $post_id, "_installment_{$n}_amount", $installment['amount'] ?? 0 );
+				update_post_meta( $post_id, "_installment_{$n}_admin_fee", $installment['admin_fee'] ?? 0 );
+				update_post_meta( $post_id, "_installment_{$n}_status", $installment['status'] ?? 'pending' );
+				update_post_meta( $post_id, "_installment_{$n}_due_date", $this->shift_date( $installment['due_date'] ?? null ) );
+			}
+
+			// Set seizoen taxonomy (shift the season slug)
+			$seizoen_slug = $invoice['seizoen'] ?? null;
+			if ( $seizoen_slug ) {
+				$shifted_seizoen = $this->shift_season_slug( $seizoen_slug );
+				wp_set_object_terms( $post_id, $shifted_seizoen, 'seizoen' );
+			}
+		}
+
+		WP_CLI::log( sprintf( '  Imported %d invoices', $total ) );
 	}
 
 	/**
