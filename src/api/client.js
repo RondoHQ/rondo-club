@@ -136,6 +136,12 @@ export const prmApi = {
   // Person-specific
   getPersonTimeline: (personId) => api.get(`/rondo/v1/people/${personId}/timeline`),
   getPersonNotes: (personId) => api.get(`/rondo/v1/people/${personId}/notes`),
+  issueMembershipPassQrToken: (personId, params = {}) =>
+    api.get(`/rondo/v1/membership-passes/people/${personId}/qr-token`, { params }),
+  getMembershipPassLandingUrl: (personId) =>
+    api.get(`/rondo/v1/membership-passes/people/${personId}/landing-url`),
+  verifyMembershipPassQrToken: (token) =>
+    api.post('/rondo/v1/membership-passes/verify', { token }),
   createNote: (personId, content, visibility = 'private') =>
     api.post(`/rondo/v1/people/${personId}/notes`, { content, visibility }),
   updateNote: (noteId, content, visibility = null) =>

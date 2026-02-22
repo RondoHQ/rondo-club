@@ -426,7 +426,7 @@ export default function Settings() {
         />;
       case 'financieel':
         return canAccessFinancieel ? (
-          <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']} />
+          <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email', 'membership_passes']} />
         ) : null;
       case 'vog':
         return isAdmin && canAccessVOG ? (

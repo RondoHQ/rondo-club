@@ -8,6 +8,7 @@
 namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
+use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -542,6 +543,9 @@ class People extends Base {
 		if ( current_user_can( 'financieel' ) ) {
 			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
 		}
+
+		// Expose stable public membership pass URL for KNVB members.
+		$data['membership_pass_url'] = PublicMembershipPassPage::ensure_person_pass_url( $post->ID ) ?: null;
 
 		// Expose provisioning status for admin AccountCard (Plan 205-02).
 		// Primary lookup: _rondo_wp_user_id post meta (set by UserProvisioning::provision()).

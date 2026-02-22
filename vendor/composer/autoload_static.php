@@ -100,6 +100,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
             'PhpParser\\' => 10,
             'PhpOption\\' => 10,
             'ParagonIE\\ConstantTime\\' => 23,
+            'PKPass\\' => 7,
             'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 57,
         ),
         'N' => 
@@ -317,6 +318,10 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'ParagonIE\\ConstantTime\\' => 
         array (
             0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
+        ),
+        'PKPass\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/pkpass/pkpass/src',
         ),
         'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 
         array (
@@ -34771,6 +34776,11 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'PHPUnit\\Util\\Xml' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Xml/Xml.php',
         'PHPUnit\\Util\\Xml\\Loader' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Xml/Loader.php',
         'PHPUnit\\Util\\Xml\\XmlException' => __DIR__ . '/..' . '/phpunit/phpunit/src/Util/Exception/XmlException.php',
+        'PKPass\\FinanceOrder' => __DIR__ . '/..' . '/pkpass/pkpass/src/FinanceOrder.php',
+        'PKPass\\PKPass' => __DIR__ . '/..' . '/pkpass/pkpass/src/PKPass.php',
+        'PKPass\\PKPassBundle' => __DIR__ . '/..' . '/pkpass/pkpass/src/PKPassBundle.php',
+        'PKPass\\PKPassException' => __DIR__ . '/..' . '/pkpass/pkpass/src/PKPassException.php',
+        'PKPass\\Push' => __DIR__ . '/..' . '/pkpass/pkpass/src/Push.php',
         'ParagonIE\\ConstantTime\\Base32' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base32.php',
         'ParagonIE\\ConstantTime\\Base32Hex' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base32Hex.php',
         'ParagonIE\\ConstantTime\\Base64' => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src/Base64.php',
@@ -35442,6 +35452,8 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Finance\\InvoiceEmailSender' => __DIR__ . '/../..' . '/includes/class-invoice-email-sender.php',
         'Rondo\\Finance\\InvoiceNumbering' => __DIR__ . '/../..' . '/includes/class-invoice-numbering.php',
         'Rondo\\Finance\\InvoicePdfGenerator' => __DIR__ . '/../..' . '/includes/class-invoice-pdf-generator.php',
+        'Rondo\\Finance\\InvoiceReminderScheduler' => __DIR__ . '/../..' . '/includes/class-invoice-reminder-scheduler.php',
+        'Rondo\\Finance\\InvoiceReminderSender' => __DIR__ . '/../..' . '/includes/class-invoice-reminder-sender.php',
         'Rondo\\Finance\\MollieClient' => __DIR__ . '/../..' . '/includes/class-mollie-client.php',
         'Rondo\\Finance\\MolliePayment' => __DIR__ . '/../..' . '/includes/class-mollie-payment.php',
         'Rondo\\Finance\\MollieWebhook' => __DIR__ . '/../..' . '/includes/class-mollie-webhook.php',
@@ -35451,6 +35463,10 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Finance\\RabobankPayment' => __DIR__ . '/../..' . '/includes/class-rabobank-payment.php',
         'Rondo\\Notifications\\Channel' => __DIR__ . '/../..' . '/includes/class-notification-channel.php',
         'Rondo\\Notifications\\EmailChannel' => __DIR__ . '/../..' . '/includes/class-email-channel.php',
+        'Rondo\\Passes\\MembershipPassApple' => __DIR__ . '/../..' . '/includes/class-membership-pass-apple.php',
+        'Rondo\\Passes\\MembershipPassGoogle' => __DIR__ . '/../..' . '/includes/class-membership-pass-google.php',
+        'Rondo\\Passes\\MembershipPassQr' => __DIR__ . '/../..' . '/includes/class-membership-pass-qr.php',
+        'Rondo\\Passes\\PublicMembershipPassPage' => __DIR__ . '/../..' . '/includes/class-public-membership-pass-page.php',
         'Rondo\\REST\\Api' => __DIR__ . '/../..' . '/includes/class-rest-api.php',
         'Rondo\\REST\\Base' => __DIR__ . '/../..' . '/includes/class-rest-base.php',
         'Rondo\\REST\\Commissies' => __DIR__ . '/../..' . '/includes/class-rest-commissies.php',
@@ -35459,6 +35475,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\REST\\GoogleSheets' => __DIR__ . '/../..' . '/includes/class-rest-google-sheets.php',
         'Rondo\\REST\\ImportExport' => __DIR__ . '/../..' . '/includes/class-rest-import-export.php',
         'Rondo\\REST\\Invoices' => __DIR__ . '/../..' . '/includes/class-rest-invoices.php',
+        'Rondo\\REST\\MembershipPasses' => __DIR__ . '/../..' . '/includes/class-rest-membership-passes.php',
         'Rondo\\REST\\People' => __DIR__ . '/../..' . '/includes/class-rest-people.php',
         'Rondo\\REST\\Teams' => __DIR__ . '/../..' . '/includes/class-rest-teams.php',
         'Rondo\\REST\\Todos' => __DIR__ . '/../..' . '/includes/class-rest-todos.php',

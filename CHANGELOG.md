@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.4.1] - 2026-02-22
+
+### Added
+- In-app help popup in Finance Settings → Lidpassen with step-by-step setup instructions for Google Wallet and Apple Wallet
+- Guidance in popup covers where to obtain Google service-account JSON, Google Issuer ID, Apple `.p12`, Apple Team ID, and Pass Type Identifier
+
+## [30.4.0] - 2026-02-22
+
+### Added
+- New Finance Settings tab: **Lidpassen** for Apple/Google Wallet configuration
+- Upload-based credentials for membership passes (Apple `.p12` certificate and Google service-account `.json`) stored as media attachment IDs
+- Support for `.p12` and `.json` uploads for financieel/admin users
+- New finance settings fields for Apple pass identifiers and Google Wallet issuer/class configuration
+
+### Changed
+- Membership pass generators now resolve uploaded media files (attachment IDs) instead of requiring path-based configuration
+
+## [30.3.0] - 2026-02-22
+
+### Added
+- Public membership pass landing page at `/lidpas/{token}` with wallet actions for Apple and Google
+- Per-person pass token + URL storage in post meta (`_membership_pass_token`, `_membership_pass_url`) for members with KNVB ID
+- Automatic pass URL generation/update on person save and ACF save
+- `MembershipPassApple` class for Apple Wallet `.pkpass` generation
+- `MembershipPassGoogle` class for Google Wallet object creation and Add-to-Wallet URL generation
+- `GET /rondo/v1/membership-passes/people/{person_id}/landing-url` endpoint to retrieve ensured landing URLs
+- `membership_pass_url` added to person REST responses
+
+## [30.2.0] - 2026-02-22
+
+### Added
+- Membership pass QR token service with signed JWT issuance (`GET /rondo/v1/membership-passes/people/{person_id}/qr-token`)
+- Membership pass scanner verification endpoint (`POST /rondo/v1/membership-passes/verify`) with token validation and member status response
+- Frontend API client helpers for issuing and verifying membership pass QR tokens
+
 ## [30.1.0] - 2026-02-22
 
 ### Added
@@ -3506,4 +3541,3 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Changed
 - Important Dates overview now uses masonry layout for date blocks
 - Increased month heading size on Important Dates overview screen
-
