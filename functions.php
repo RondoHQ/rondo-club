@@ -72,6 +72,7 @@ use Rondo\Finance\MollieWebhook;
 use Rondo\Finance\InstallmentPaymentService;
 use Rondo\Finance\InstallmentEmailSender;
 use Rondo\Finance\InstallmentScheduler;
+use Rondo\Finance\InvoiceReminderScheduler;
 use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\BulkInvoiceCreator;
 use Rondo\Finance\QrCodeGenerator;
@@ -376,6 +377,9 @@ function rondo_init() {
 
 	// Installment scheduler — daily cron sweeper for installment emails and reminders
 	new InstallmentScheduler();
+
+	// Invoice reminder scheduler — daily cron sweeper for no-plan membership invoice reminders
+	new InvoiceReminderScheduler();
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
 	// This must run on all requests, not just CardDAV requests
