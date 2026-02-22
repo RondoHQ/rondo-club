@@ -114,10 +114,12 @@ export default function DisciplineCaseTable({
     setSortOrder(order);
   }, []);
 
-  // Get uninvoiced case IDs
+  // Get uninvoiced case IDs (exclude invoiced and N.v.t. cases)
   const uninvoicedCaseIds = useMemo(() => {
     if (!cases || !canCreateInvoice) return [];
-    return cases.filter(dc => !invoicedSet.has(dc.id)).map(dc => dc.id);
+    return cases
+      .filter(dc => !invoicedSet.has(dc.id) && !isDoorbelastNVT(dc.acf || {}))
+      .map(dc => dc.id);
   }, [cases, invoicedSet, canCreateInvoice]);
 
   // Calculate total for selected cases
@@ -126,6 +128,18 @@ export default function DisciplineCaseTable({
     return cases
       .filter(dc => selectedCaseIds.has(dc.id))
       .reduce((sum, dc) => sum + (parseFloat(dc.acf?.administrative_fee) || 0), 0);
+  }, [cases, selectedCaseIds]);
+
+  // Count distinct persons among selected cases
+  const selectedPersonCount = useMemo(() => {
+    if (!cases || selectedCaseIds.size === 0) return 0;
+    const personIds = new Set(
+      cases
+        .filter(dc => selectedCaseIds.has(dc.id))
+        .map(dc => dc.acf?.person)
+        .filter(Boolean)
+    );
+    return personIds.size;
   }, [cases, selectedCaseIds]);
 
   // Handle checkbox toggle
@@ -236,7 +250,9 @@ export default function DisciplineCaseTable({
       {canCreateInvoice && selectedCaseIds.size > 0 && (
         <div className="bg-electric-cyan text-white rounded-lg px-4 py-3 mb-3 flex items-center justify-between">
           <div className="text-sm font-medium">
-            {selectedCaseIds.size} tuchtzaken geselecteerd — Totaal: {formatCurrency(selectedTotal, 2)}
+            {selectedCaseIds.size} tuchtzaken geselecteerd
+            {selectedPersonCount > 1 && ` (${selectedPersonCount} personen)`}
+            {' — '}Totaal: {formatCurrency(selectedTotal, 2)}
           </div>
           <button
             onClick={onCreateInvoice}
@@ -249,7 +265,7 @@ export default function DisciplineCaseTable({
                 <span>Bezig...</span>
               </>
             ) : (
-              <span>Maak factuur</span>
+              <span>{selectedPersonCount > 1 ? 'Maak facturen' : 'Maak factuur'}</span>
             )}
           </button>
         </div>
@@ -368,6 +384,8 @@ export default function DisciplineCaseTable({
                         <div className="flex items-center justify-center" title="Al gefactureerd">
                           <FileText className="w-4 h-4 text-gray-400" />
                         </div>
+                      ) : isDoorbelastNVT(acf) ? (
+                        <div />
                       ) : (
                         <input
                           type="checkbox"

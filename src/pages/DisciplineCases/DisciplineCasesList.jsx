@@ -1,11 +1,14 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Gavel } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   useDisciplineCases,
   useSeasons,
   useCurrentSeason,
 } from '@/hooks/useDisciplineCases';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAllInvoicedCaseIds, useBulkCreateInvoices } from '@/hooks/useInvoices';
 import { wpApi } from '@/api/client';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
 import { isDoorbelastNVT } from '@/utils/disciplineCases';
@@ -20,6 +23,16 @@ function getSpeeldag(activiteit) {
 
 export default function DisciplineCasesList() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const { data: currentUser } = useCurrentUser();
+  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
+  const canCreateInvoice = canAccessFairplay && canAccessFinancieel;
+
+  const [selectedCaseIds, setSelectedCaseIds] = useState(new Set());
+  const { data: invoicedCaseIds = [] } = useAllInvoicedCaseIds({ enabled: canCreateInvoice });
+  const bulkCreate = useBulkCreateInvoices();
 
   const { data: currentSeason, isLoading: isCurrentSeasonLoading } =
     useCurrentSeason();
@@ -301,13 +314,26 @@ export default function DisciplineCasesList() {
     else if (colId === 'boete') setBoeteFilter(value || '');
   };
 
+  const handleBulkCreateInvoice = async () => {
+    if (selectedCaseIds.size === 0) return;
+    try {
+      await bulkCreate.mutateAsync([...selectedCaseIds]);
+      setSelectedCaseIds(new Set());
+      navigate('/financien/facturen');
+    } catch {
+      alert('Facturen konden niet worden aangemaakt. Probeer het opnieuw.');
+    }
+  };
+
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['discipline-cases'] });
     await queryClient.invalidateQueries({ queryKey: ['seasons'] });
+    await queryClient.invalidateQueries({ queryKey: ['invoiced-case-ids'] });
   };
 
   const handleSeasonChange = (e) => {
     const value = e.target.value;
+    setSelectedCaseIds(new Set());
     setSelectedSeasonId(value === '' ? null : parseInt(value, 10));
   };
 
@@ -372,6 +398,12 @@ export default function DisciplineCasesList() {
             isLoading={isLoading}
             isColVisible={isVisible}
             formatTeamName={formatTeamName}
+            canCreateInvoice={canCreateInvoice}
+            selectedCaseIds={selectedCaseIds}
+            onSelectionChange={setSelectedCaseIds}
+            onCreateInvoice={handleBulkCreateInvoice}
+            isCreatingInvoice={bulkCreate.isPending}
+            invoicedCaseIds={new Set(invoicedCaseIds)}
           />
         </div>
 
