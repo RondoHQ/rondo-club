@@ -44,6 +44,11 @@ class VOGEmail {
 	const OPTION_EXEMPT_COMMISSIES = 'rondo_vog_exempt_commissies';
 
 	/**
+	 * Option key for teams exempt from discipline case charging
+	 */
+	const OPTION_EXEMPT_DISCIPLINE_TEAMS = 'rondo_vog_exempt_discipline_teams';
+
+	/**
 	 * Option key for new volunteer reminder template
 	 */
 	const OPTION_REMINDER_TEMPLATE_NEW = 'rondo_vog_reminder_template_new';
@@ -137,6 +142,30 @@ class VOGEmail {
 	}
 
 	/**
+	 * Get teams exempt from discipline case charging
+	 *
+	 * @return array Array of team IDs
+	 */
+	public function get_exempt_discipline_teams(): array {
+		$teams = get_option( self::OPTION_EXEMPT_DISCIPLINE_TEAMS, [] );
+		if ( ! is_array( $teams ) ) {
+			return [];
+		}
+		return array_map( 'intval', $teams );
+	}
+
+	/**
+	 * Update teams exempt from discipline case charging
+	 *
+	 * @param array $ids Array of team IDs.
+	 * @return bool True on success.
+	 */
+	public function update_exempt_discipline_teams( array $ids ): bool {
+		$sanitized = array_map( 'intval', array_filter( $ids, 'is_numeric' ) );
+		return update_option( self::OPTION_EXEMPT_DISCIPLINE_TEAMS, $sanitized );
+	}
+
+	/**
 	 * Get the reminder template for new volunteers
 	 *
 	 * @return string Reminder template content
@@ -176,6 +205,7 @@ class VOGEmail {
 			'reminder_template_new'   => $this->get_reminder_template_new(),
 			'reminder_template_renewal' => $this->get_reminder_template_renewal(),
 			'exempt_commissies'       => $this->get_exempt_commissies(),
+			'exempt_discipline_teams' => $this->get_exempt_discipline_teams(),
 		];
 	}
 

@@ -17,7 +17,7 @@ import {
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
-  Facturen, FactuurDetail, RelationshipTypes,
+  FinanceDashboard, Facturen, FactuurDetail, RelationshipTypes,
   CustomFields, Login, Profile,
 } from './lazyPages';
 
@@ -178,12 +178,24 @@ const router = createBrowserRouter([
 
           // Finance routes - requires financieel capability
           {
+            path: 'financien',
+            element: (
+              <FinancieelRoute>
+                <FinanceDashboard />
+              </FinancieelRoute>
+            ),
+          },
+          {
             path: 'financien/contributie',
             element: (
               <FinancieelRoute>
                 <Contributie />
               </FinancieelRoute>
             ),
+          },
+          {
+            path: 'financien/contributie/overzicht',
+            element: <Navigate to="/financien" replace />,
           },
           {
             path: 'financien/contributie/:tab',

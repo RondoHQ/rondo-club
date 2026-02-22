@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Users,
   Building2,
@@ -36,6 +37,7 @@ import { useCreateFeedback } from '@/hooks/useFeedback';
 const getSiteName = () => window.rondoConfig?.siteName || APP_NAME;
 import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
+import { prmApi } from '@/api/client';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -44,7 +46,7 @@ const navigation = [
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
-  { name: 'Financiën', type: 'section', icon: Wallet, requiresFinancieel: true },
+  { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
@@ -65,6 +67,37 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
 
+  // Finance menu counters
+  const { data: invoiceData = [] } = useQuery({
+    queryKey: ['sidebar', 'invoices'],
+    queryFn: async () => {
+      const response = await prmApi.getInvoices({});
+      return response.data;
+    },
+    enabled: canAccessFinancieel,
+    staleTime: 30000,
+  });
+
+  const { data: feeData } = useQuery({
+    queryKey: ['sidebar', 'fees'],
+    queryFn: async () => {
+      const response = await prmApi.getFeeList();
+      return response.data;
+    },
+    enabled: canAccessFinancieel,
+    staleTime: 30000,
+  });
+
+  const openInvoicesCount = useMemo(
+    () => invoiceData.filter((invoice) => invoice.status === 'sent' || invoice.status === 'overdue').length,
+    [invoiceData]
+  );
+
+  const payingMembersCount = useMemo(
+    () => (feeData?.members || []).filter((member) => (parseFloat(member.final_fee) || 0) > 0).length,
+    [feeData]
+  );
+
   // Map navigation items to their counts
   const getCounts = (name) => {
     switch (name) {
@@ -72,6 +105,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
       case 'Teams': return stats?.total_teams || null;
       case 'Commissies': return stats?.total_commissies || null;
       case 'Feedback': return stats?.open_feedback_count || null;
+      case 'Contributie': return canAccessFinancieel ? payingMembersCount : null;
+      case 'Facturen': return canAccessFinancieel ? openInvoicesCount : null;
       case 'VOG': {
         // Show two counts: not submitted to Justis | total needing VOG
         const totaal = notSubmittedToJustis + submittedToJustis;
@@ -524,6 +559,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people')) return 'Leden';
+    if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';
     if (path.startsWith('/contributie')) return 'Contributie';

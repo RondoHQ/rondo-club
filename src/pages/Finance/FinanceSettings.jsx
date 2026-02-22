@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
-import api, { prmApi } from '@/api/client';
+import api, { prmApi, wpApi } from '@/api/client';
 import TabButton from '@/components/TabButton';
 import RichTextEditor from '@/components/RichTextEditor';
 import FeeCategorySettings from '@/pages/Settings/FeeCategorySettings';
+import SearchableMultiSelect from '@/components/SearchableMultiSelect';
 
 const TABS = [
   { id: 'organization', label: 'Organisatie' },
   { id: 'payment', label: 'Betaling' },
+  { id: 'discipline', label: 'Tuchtzaken' },
   { id: 'contributie', label: 'Contributie' },
   { id: 'email', label: 'E-mail' },
   { id: 'mollie', label: 'Mollie' },
@@ -138,6 +140,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
   const { data: rabobankStatus, isLoading: rabobankLoading } = useRabobankStatus();
   const disconnectMutation = useDisconnectRabobank();
   const [searchParams, setSearchParams] = useSearchParams();
+  const isAdmin = window.rondoConfig?.isAdmin || false;
+  const [teams, setTeams] = useState([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -161,6 +165,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     bcc_email: '',
     admin_fee: 0,
     installment_admin_fee: 0,
+    exempt_discipline_teams: [],
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
     rabobank_client_secret: '',
@@ -209,6 +214,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
         installment_admin_fee: settings.installment_admin_fee || 0,
+        exempt_discipline_teams: [],
         rabobank_environment: settings.rabobank_environment || 'sandbox',
         // Don't populate credentials from API for security
         rabobank_client_id: '',
@@ -220,6 +226,27 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       });
     }
   }, [settings]);
+
+  // Load discipline exception settings + teams (admin only)
+  useEffect(() => {
+    if (!isAdmin) return;
+    const loadDisciplineSettings = async () => {
+      try {
+        const [vogSettingsResponse, teamsResponse] = await Promise.all([
+          prmApi.getVOGSettings(),
+          wpApi.getTeams({ per_page: 100, _fields: 'id,title' }),
+        ]);
+        setFormData((prev) => ({
+          ...prev,
+          exempt_discipline_teams: vogSettingsResponse.data?.exempt_discipline_teams || [],
+        }));
+        setTeams(teamsResponse.data || []);
+      } catch {
+        // Failed silently; finance settings remain usable.
+      }
+    };
+    loadDisciplineSettings();
+  }, [isAdmin]);
 
   // Handle OAuth callback notification
   useEffect(() => {
@@ -327,6 +354,13 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       payload.mollie_redirect_url = formData.mollie_redirect_url;
 
       await updateMutation.mutateAsync(payload);
+
+      // Discipline charging exceptions are stored in VOG settings (admin only).
+      if (isAdmin) {
+        await prmApi.updateVOGSettings({
+          exempt_discipline_teams: formData.exempt_discipline_teams || [],
+        });
+      }
 
       // Show success message
       setShowSuccess(true);
@@ -555,26 +589,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
             />
           </div>
           <div>
-            <label htmlFor="admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Administratiekosten tuchtzaken
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm pointer-events-none">&euro;</span>
-              <input
-                type="number"
-                id="admin_fee"
-                value={formData.admin_fee}
-                onChange={(e) => setFormData(prev => ({ ...prev, admin_fee: e.target.value }))}
-                min="0"
-                step="0.01"
-                className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-              />
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Vaste administratiekosten per factuur. Wordt automatisch als aparte regelpost toegevoegd. Gebruik 0 om uit te schakelen.
-            </p>
-          </div>
-          <div>
             <label htmlFor="installment_admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Administratiekosten termijnbetaling
             </label>
@@ -654,6 +668,62 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           </div>
         </div>
       </div>}
+
+      {/* Section: Discipline / Tuchtzaken */}
+      {activeTab === 'discipline' && (
+        <div className="card p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tuchtzaken</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Instellingen voor het doorbelasten van tuchtzaken.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Administratiekosten tuchtzaken
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm pointer-events-none">&euro;</span>
+                <input
+                  type="number"
+                  id="admin_fee"
+                  value={formData.admin_fee}
+                  onChange={(e) => setFormData(prev => ({ ...prev, admin_fee: e.target.value }))}
+                  min="0"
+                  step="0.01"
+                  className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Vaste administratiekosten per factuur. Wordt automatisch als aparte regelpost toegevoegd. Gebruik 0 om uit te schakelen.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Teams met doorbelasting-uitzondering
+              </label>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Voor deze teams krijgen tuchtzaken de status &quot;Uitzondering&quot; en worden ze niet doorberekend.
+              </p>
+              {isAdmin ? (
+                <SearchableMultiSelect
+                  options={teams.map(t => ({ id: t.id, label: t.title?.rendered || t.title }))}
+                  selectedIds={formData.exempt_discipline_teams || []}
+                  onChange={(newIds) => setFormData(prev => ({ ...prev, exempt_discipline_teams: newIds }))}
+                  placeholder="Team zoeken..."
+                  emptyMessage="Geen teams gevonden"
+                />
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Alleen beheerders kunnen deze uitzondering aanpassen.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Section 3: Email Templates */}
       {activeTab === 'email' && (

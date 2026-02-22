@@ -1,12 +1,11 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { RefreshCw, Coins, FileText, Loader2 } from 'lucide-react';
 import { useFeeList, feeKeys } from '@/hooks/useFees';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/formatters';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import SeasonSelector from './SeasonSelector';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
 function StatusBadge({ status }) {
@@ -30,7 +29,7 @@ function StatusBadge({ status }) {
 }
 
 export function NogTeFactureren() {
-  const [creatingForId, setCreatingForId] = useState(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState(new Set());
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(null);
   const queryClient = useQueryClient();
@@ -44,36 +43,77 @@ export function NogTeFactureren() {
     await queryClient.invalidateQueries({ queryKey: feeKeys.all });
   };
 
-  // Single invoice creation
-  const createInvoice = useMutation({
-    mutationFn: ({ personId, season }) =>
-      prmApi.createMembershipInvoice({ person_id: personId, season }),
-    onSuccess: () => {
-      queryClient.resetQueries({ queryKey: feeKeys.all });
-    },
-  });
-
-  const handleCreateInvoice = useCallback((personId) => {
-    setCreatingForId(personId);
-    createInvoice.mutate(
-      { personId, season: data?.season },
-      { onSettled: () => setCreatingForId(null) },
-    );
-  }, [createInvoice, data?.season]);
-
   // Filter to members without Nikki data
   const noNikkiMembers = useMemo(
     () => (data?.members ?? []).filter((m) => m.nikki_total === null),
     [data?.members],
   );
 
+  // Members eligible for invoice creation
+  const eligibleMemberIds = useMemo(
+    () => new Set(noNikkiMembers.filter((m) => !m.invoice_id && m.final_fee > 0).map((m) => m.id)),
+    [noNikkiMembers],
+  );
+
+  const statusSortOrder = useMemo(() => ({
+    none: 0,
+    draft: 1,
+    sent: 2,
+    paid: 3,
+    overdue: 4,
+  }), []);
+
+  const sortedNoNikkiMembers = useMemo(
+    () => [...noNikkiMembers].sort((a, b) => {
+      const statusA = a.invoice_status || 'none';
+      const statusB = b.invoice_status || 'none';
+      const statusDiff = (statusSortOrder[statusA] ?? 99) - (statusSortOrder[statusB] ?? 99);
+      if (statusDiff !== 0) return statusDiff;
+
+      const lastNameDiff = (a.last_name || '').localeCompare(b.last_name || '');
+      if (lastNameDiff !== 0) return lastNameDiff;
+
+      return (a.first_name || '').localeCompare(b.first_name || '');
+    }),
+    [noNikkiMembers, statusSortOrder],
+  );
+
+  const allEligibleSelected = eligibleMemberIds.size > 0 && selectedMemberIds.size === eligibleMemberIds.size;
+  const isSelectionIndeterminate = selectedMemberIds.size > 0 && selectedMemberIds.size < eligibleMemberIds.size;
+
+  // Keep selection valid after data refresh/filter changes
+  useEffect(() => {
+    setSelectedMemberIds((prev) => {
+      const next = new Set([...prev].filter((id) => eligibleMemberIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [eligibleMemberIds]);
+
+  const handleToggleMember = useCallback((memberId) => {
+    if (!eligibleMemberIds.has(memberId)) return;
+    setSelectedMemberIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(memberId)) next.delete(memberId);
+      else next.add(memberId);
+      return next;
+    });
+  }, [eligibleMemberIds]);
+
+  const handleToggleAll = useCallback(() => {
+    setSelectedMemberIds((prev) => {
+      if (eligibleMemberIds.size === 0) return prev;
+      if (prev.size === eligibleMemberIds.size) return new Set();
+      return new Set(eligibleMemberIds);
+    });
+  }, [eligibleMemberIds]);
+
   // Bulk invoice creation
   const handleBulkCreate = async () => {
-    if (bulkCreating) return;
+    if (bulkCreating || selectedMemberIds.size === 0) return;
     setBulkCreating(true);
     setBulkProgress({ created: 0, skipped: 0, total: 0 });
 
-    const toCreate = noNikkiMembers.filter((m) => !m.invoice_id && m.final_fee > 0);
+    const toCreate = noNikkiMembers.filter((m) => selectedMemberIds.has(m.id));
     setBulkProgress((prev) => ({ ...prev, total: toCreate.length }));
 
     let created = 0;
@@ -90,6 +130,7 @@ export function NogTeFactureren() {
     }
 
     setBulkCreating(false);
+    setSelectedMemberIds(new Set());
     queryClient.resetQueries({ queryKey: feeKeys.all });
   };
 
@@ -99,7 +140,42 @@ export function NogTeFactureren() {
       .sort(([, a], [, b]) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
       .map(([slug, meta]) => ({ value: slug, label: meta.label ?? slug }));
 
-    return [
+    const baseColumns = [
+      ...(isAdmin ? [createColumn({
+        id: 'select',
+        header: () => (
+          <input
+            type="checkbox"
+            checked={allEligibleSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = isSelectionIndeterminate;
+            }}
+            onChange={handleToggleAll}
+            disabled={eligibleMemberIds.size === 0}
+            className="w-4 h-4 text-electric-cyan border-gray-300 rounded focus:ring-electric-cyan disabled:opacity-50 cursor-pointer"
+            aria-label="Selecteer alle rijen"
+          />
+        ),
+        accessorFn: () => null,
+        cell: ({ row }) => {
+          const member = row.original;
+          const isEligible = eligibleMemberIds.has(member.id);
+          return (
+            <input
+              type="checkbox"
+              checked={selectedMemberIds.has(member.id)}
+              onChange={() => handleToggleMember(member.id)}
+              disabled={!isEligible || bulkCreating}
+              className="w-4 h-4 text-electric-cyan border-gray-300 rounded focus:ring-electric-cyan disabled:opacity-40 cursor-pointer"
+              aria-label={`Selecteer ${member.first_name} ${member.last_name}`}
+            />
+          );
+        },
+        sortable: false,
+        filterType: null,
+        enableHiding: false,
+        size: 44,
+      })] : []),
       createColumn({
         id: 'first_name',
         header: 'Voornaam',
@@ -263,41 +339,25 @@ export function NogTeFactureren() {
         },
         size: 120,
       }),
-      // Action column (admin only): create invoice button
-      createColumn({
-        id: 'actions',
-        header: '',
-        accessorFn: () => null,
-        cell: ({ row }) => {
-          const member = row.original;
-          if (!isAdmin || member.invoice_id || member.final_fee <= 0) return null;
-          return (
-            <button
-              onClick={() => handleCreateInvoice(member.id)}
-              disabled={creatingForId === member.id}
-              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-electric-cyan text-white hover:bg-electric-cyan/90 disabled:opacity-50 transition-colors"
-            >
-              {creatingForId === member.id ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <FileText className="w-3 h-3" />
-              )}
-              Maak factuur
-            </button>
-          );
-        },
-        sortable: false,
-        filterType: null,
-        enableHiding: false,
-        size: 130,
-      }),
     ];
-  }, [data?.categories, isAdmin, handleCreateInvoice, creatingForId]);
+
+    return baseColumns;
+  }, [
+    isAdmin,
+    data?.categories,
+    allEligibleSelected,
+    isSelectionIndeterminate,
+    handleToggleAll,
+    eligibleMemberIds,
+    selectedMemberIds,
+    handleToggleMember,
+    bulkCreating,
+  ]);
 
   // Totals (over all noNikkiMembers, regardless of filters)
   const totalBaseFee = noNikkiMembers.reduce((acc, m) => acc + m.base_fee, 0);
   const totalFee = noNikkiMembers.reduce((acc, m) => acc + m.final_fee, 0);
-  const uninvoicedCount = noNikkiMembers.filter((m) => !m.invoice_id && m.final_fee > 0).length;
+  const selectedCount = selectedMemberIds.size;
 
   if (!isLoading && error) {
     return (
@@ -316,37 +376,6 @@ export function NogTeFactureren() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Season selector + totals + bulk action */}
-        <div className="flex items-center justify-between">
-          <SeasonSelector
-            season={data?.season}
-            isForecast={false}
-            onForecastChange={() => {}}
-            memberCount={noNikkiMembers.length}
-          />
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Totaal:{' '}
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {formatCurrency(totalFee, 2)}
-              </span>
-            </div>
-            {isAdmin && uninvoicedCount > 0 && (
-              <button
-                onClick={handleBulkCreate}
-                disabled={bulkCreating}
-                className="btn-primary inline-flex items-center gap-2"
-              >
-                {bulkCreating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <FileText className="w-4 h-4" />
-                )}
-                Maak facturen ({uninvoicedCount})
-              </button>
-            )}
-          </div>
-        </div>
 
         {/* Bulk progress */}
         {bulkProgress && (bulkCreating || bulkProgress.created + bulkProgress.skipped > 0) && (
@@ -386,9 +415,25 @@ export function NogTeFactureren() {
         ) : (
           <DataTable
             storageKey="nog-te-factureren"
-            data={noNikkiMembers}
+            data={sortedNoNikkiMembers}
             columns={columns}
             isLoading={isLoading}
+            toolbarEnd={
+              isAdmin && selectedCount > 0 ? (
+                <button
+                  onClick={handleBulkCreate}
+                  disabled={bulkCreating}
+                  className="btn-primary inline-flex items-center gap-2"
+                >
+                  {bulkCreating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
+                  Maak facturen ({selectedCount})
+                </button>
+              ) : null
+            }
             emptyIcon={<Coins className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
             emptyTitle="Geen resultaten"
             emptyDescription="Geen leden gevonden voor de geselecteerde filters."

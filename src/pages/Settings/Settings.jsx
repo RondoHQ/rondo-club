@@ -426,10 +426,14 @@ export default function Settings() {
         />;
       case 'financieel':
         return canAccessFinancieel ? (
-          <FinanceSettings allowedTabs={['organization', 'payment', 'contributie', 'email']} />
+          <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']} />
         ) : null;
       case 'vog':
-        return isAdmin && canAccessVOG ? <VOGSettings /> : null;
+        return isAdmin && canAccessVOG ? (
+          <div className="card p-6">
+            <VOGSettings />
+          </div>
+        ) : null;
       case 'admin':
         return isAdmin ? (
           <AdminTabWithSubtabs
@@ -1108,45 +1112,51 @@ function AdminTabWithSubtabs({
       {activeSubtab === 'users' || !activeSubtab ? (
         <GebruikersTab />
       ) : activeSubtab === 'rollen' ? (
-        <RollenTab
-          availableRoles={availableRoles}
-          roleSettings={roleSettings}
-          setRoleSettings={setRoleSettings}
-          roleDefaults={roleDefaults}
-          rolesLoading={rolesLoading}
-          rolesSaving={rolesSaving}
-          rolesMessage={rolesMessage}
-          handleRolesSave={handleRolesSave}
-        />
+        <div className="card p-6">
+          <RollenTab
+            availableRoles={availableRoles}
+            roleSettings={roleSettings}
+            setRoleSettings={setRoleSettings}
+            roleDefaults={roleDefaults}
+            rolesLoading={rolesLoading}
+            rolesSaving={rolesSaving}
+            rolesMessage={rolesMessage}
+            handleRolesSave={handleRolesSave}
+          />
+        </div>
       ) : activeSubtab === 'functies' ? (
-        <FunctiesTab
-          availableFuncties={availableFuncties}
-          functieMapState={functieMapState}
-          setFunctieMapState={setFunctieMapState}
-          roles={functieRoles}
-          loading={functiesLoading}
-          saving={functiesSaving}
-          message={functiesMessage}
-          handleSave={handleFunctiesSave}
-          commissieList={commissieList}
-          commissieMapState={commissieMapState}
-          setCommissieMapState={setCommissieMapState}
-          commissieSaving={commissieSaving}
-          commissieMessage={commissieMessage}
-          handleCommissieSave={handleCommissieSave}
-          handleSyncCapabilities={handleSyncCapabilities}
-          syncingCapabilities={syncingCapabilities}
-          capabilitySyncMessage={capabilitySyncMessage}
-        />
+        <div className="card p-6">
+          <FunctiesTab
+            availableFuncties={availableFuncties}
+            functieMapState={functieMapState}
+            setFunctieMapState={setFunctieMapState}
+            roles={functieRoles}
+            loading={functiesLoading}
+            saving={functiesSaving}
+            message={functiesMessage}
+            handleSave={handleFunctiesSave}
+            commissieList={commissieList}
+            commissieMapState={commissieMapState}
+            setCommissieMapState={setCommissieMapState}
+            commissieSaving={commissieSaving}
+            commissieMessage={commissieMessage}
+            handleCommissieSave={handleCommissieSave}
+            handleSyncCapabilities={handleSyncCapabilities}
+            syncingCapabilities={syncingCapabilities}
+            capabilitySyncMessage={capabilitySyncMessage}
+          />
+        </div>
       ) : activeSubtab === 'welkomstmail' ? (
-        <WelkomstmailTab
-          settings={welcomeSettings}
-          setSettings={setWelcomeSettings}
-          loading={welcomeSettingsLoading}
-          saving={welcomeSaving}
-          saved={welcomeSaved}
-          handleSave={handleWelcomeSave}
-        />
+        <div className="card p-6">
+          <WelkomstmailTab
+            settings={welcomeSettings}
+            setSettings={setWelcomeSettings}
+            loading={welcomeSettingsLoading}
+            saving={welcomeSaving}
+            saved={welcomeSaved}
+            handleSave={handleWelcomeSave}
+          />
+        </div>
       ) : activeSubtab === 'systeem' ? (
         <AdminTab
           handleRescheduleCron={handleRescheduleCron}
