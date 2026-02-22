@@ -57,6 +57,32 @@ class Invoices extends Base {
 			]
 		);
 
+		// Get discipline case IDs that already have invoices (all persons)
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/all-invoiced-cases',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_all_invoiced_case_ids' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+				],
+			]
+		);
+
+		// Bulk create invoices from discipline case IDs
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/bulk',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'bulk_create_invoices' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+				],
+			]
+		);
+
 		// List invoices
 		register_rest_route(
 			'rondo/v1',
@@ -370,6 +396,149 @@ class Invoices extends Base {
 		$case_ids = array_values( array_unique( $case_ids ) );
 
 		return rest_ensure_response( [ 'case_ids' => $case_ids ] );
+	}
+
+	/**
+	 * Get all discipline case IDs that already have invoices (across all persons)
+	 *
+	 * @return \WP_REST_Response Response containing array of discipline case IDs.
+	 */
+	public function get_all_invoiced_case_ids() {
+		// Query all invoices (all non-trash statuses, all persons)
+		$args = [
+			'post_type'      => 'rondo_invoice',
+			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+			'posts_per_page' => -1,
+		];
+
+		$query    = new \WP_Query( $args );
+		$case_ids = [];
+
+		// Extract discipline case IDs from line items across all invoices
+		foreach ( $query->posts as $invoice ) {
+			$line_items = get_field( 'line_items', $invoice->ID );
+
+			if ( $line_items && is_array( $line_items ) ) {
+				foreach ( $line_items as $item ) {
+					if ( ! empty( $item['discipline_case'] ) ) {
+						$case_ids[] = (int) $item['discipline_case'];
+					}
+				}
+			}
+		}
+
+		// Return unique case IDs
+		$case_ids = array_values( array_unique( $case_ids ) );
+
+		return rest_ensure_response( [ 'case_ids' => $case_ids ] );
+	}
+
+	/**
+	 * Bulk create invoices from an array of discipline case IDs
+	 *
+	 * Groups cases by person and creates one invoice per person.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response containing created invoices and any errors.
+	 */
+	public function bulk_create_invoices( $request ) {
+		$case_ids = $request->get_param( 'case_ids' );
+
+		// Validate: non-empty array
+		if ( empty( $case_ids ) || ! is_array( $case_ids ) ) {
+			return new \WP_Error(
+				'rest_missing_param',
+				__( 'case_ids is required and must be a non-empty array.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Validate: all numeric
+		foreach ( $case_ids as $id ) {
+			if ( ! is_numeric( $id ) ) {
+				return new \WP_Error(
+					'rest_invalid_param',
+					__( 'All case_ids must be numeric.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+		}
+
+		// Load each discipline case and group by person
+		$cases_by_person = [];
+
+		foreach ( $case_ids as $case_id ) {
+			$case_id = (int) $case_id;
+			$case    = get_post( $case_id );
+
+			if ( ! $case || $case->post_type !== 'discipline_case' ) {
+				continue; // Skip invalid cases
+			}
+
+			$person_id = (int) get_field( 'person', $case_id );
+
+			if ( empty( $person_id ) ) {
+				continue; // Skip cases without a person
+			}
+
+			if ( ! isset( $cases_by_person[ $person_id ] ) ) {
+				$cases_by_person[ $person_id ] = [];
+			}
+
+			$cases_by_person[ $person_id ][] = $case;
+		}
+
+		if ( empty( $cases_by_person ) ) {
+			return new \WP_Error(
+				'rest_invalid_param',
+				__( 'No valid discipline cases found.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Create one invoice per person group
+		$created_invoices = [];
+		$errors           = [];
+
+		foreach ( $cases_by_person as $person_id => $person_cases ) {
+			// Build line items for this person's cases
+			$line_items = [];
+
+			foreach ( $person_cases as $case ) {
+				$acf         = get_fields( $case->ID );
+				$description = ! empty( $acf['match_description'] ) ? $acf['match_description'] : ( $acf['sanction_description'] ?? '' );
+				$amount      = (float) ( $acf['administrative_fee'] ?? 0 );
+
+				$line_items[] = [
+					'discipline_case_id' => $case->ID,
+					'description'        => $description,
+					'amount'             => $amount,
+				];
+			}
+
+			// Build a WP_REST_Request and call create_invoice
+			$sub_request = new \WP_REST_Request( 'POST', '/rondo/v1/invoices' );
+			$sub_request->set_param( 'person_id', $person_id );
+			$sub_request->set_param( 'line_items', $line_items );
+
+			$result = $this->create_invoice( $sub_request );
+
+			if ( is_wp_error( $result ) ) {
+				$errors[] = [
+					'person_id' => $person_id,
+					'error'     => $result->get_error_message(),
+				];
+			} else {
+				$created_invoices[] = $result->get_data();
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'invoices' => $created_invoices,
+				'errors'   => $errors,
+			]
+		);
 	}
 
 	/**
