@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.1.0] - 2026-02-22
+
+### Added
+- Automatic reminder emails for membership invoices where member hasn't selected a payment plan (first reminder at 2 weeks, second at 4 weeks with BCC to treasurer)
+- Configurable email templates for invoice reminders in Finance Settings > E-mail > Factuurherinneringen
+
 ## [30.0.0] - 2026-02-20
 
 ### Added
