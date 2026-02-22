@@ -119,14 +119,17 @@ export default function DisciplineCasesList() {
     },
   });
 
-  // Build team title → speeldag map and format function
+  // Build team name → speeldag map and format function
+  // Team titles are "AWC 1", "AWC JO17-1" etc; discipline case team_name is "1", "JO17-1"
   const formatTeamName = useMemo(() => {
     const speeldagMap = new Map();
     if (teamsData) {
       teamsData.forEach(team => {
         const speeldag = getSpeeldag(team.acf?.activiteit);
-        if (speeldag) {
-          speeldagMap.set(team.title?.rendered, speeldag);
+        const title = team.title?.rendered || '';
+        const shortName = title.replace(/^AWC\s+/i, '');
+        if (speeldag && shortName) {
+          speeldagMap.set(shortName, speeldag);
         }
       });
     }
