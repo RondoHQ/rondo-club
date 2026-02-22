@@ -10,7 +10,7 @@ import { wpApi } from '@/api/client';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
 import { isDoorbelastNVT } from '@/utils/disciplineCases';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
-import { DataTableToolbar, ColumnSettingsPanel, createColumn, FILTER_TYPES } from '@/components/DataTable';
+import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
 // Static column definitions for the filter toolbar
 const FILTER_COLUMNS = [
@@ -73,6 +73,16 @@ export default function DisciplineCasesList() {
   const [kaartFilter, setKaartFilter] = useState('');
   const [boeteFilter, setBoeteFilter] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+
+  const { isVisible, toggle } = useColumnVisibility('tuchtzaken');
+
+  const colVisColumns = [
+    { id: 'wedstrijd', label: 'Wedstrijd', isVisible: isVisible('wedstrijd') },
+    { id: 'sanctie', label: 'Sanctie', isVisible: isVisible('sanctie') },
+    { id: 'kaart', label: 'Kaart', isVisible: isVisible('kaart') },
+    { id: 'doorbelast', label: 'Doorbelast', isVisible: isVisible('doorbelast') },
+    { id: 'boete', label: 'Boete', isVisible: isVisible('boete') },
+  ];
 
   useEffect(() => {
     if (currentSeason && !hasInitialized) {
@@ -269,6 +279,7 @@ export default function DisciplineCasesList() {
             showPersonColumn={true}
             personMap={personMap}
             isLoading={isLoading}
+            isColVisible={isVisible}
           />
         </div>
 
@@ -295,8 +306,8 @@ export default function DisciplineCasesList() {
       <ColumnSettingsPanel
         isOpen={isColumnSettingsOpen}
         onClose={() => setIsColumnSettingsOpen(false)}
-        columns={[]}
-        onToggleColumn={() => {}}
+        columns={colVisColumns}
+        onToggleColumn={toggle}
       />
     </PullToRefreshWrapper>
   );
