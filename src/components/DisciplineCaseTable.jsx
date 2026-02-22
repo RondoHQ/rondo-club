@@ -97,7 +97,7 @@ export default function DisciplineCaseTable({
   isCreatingInvoice = false,
   canCreateInvoice = false,
   isColVisible = () => true,
-  formatTeamName = (name) => name || '-',
+  formatTeamName = (acf) => acf?.team_name || '-',
 }) {
   const [expandedId, setExpandedId] = useState(null);
   const [sortField, setSortField] = useState('match_date');
@@ -180,7 +180,7 @@ export default function DisciplineCaseTable({
           break;
         }
         case 'team_name':
-          cmp = (acfA.team_name || '').localeCompare(acfB.team_name || '');
+          cmp = formatTeamName(acfA).localeCompare(formatTeamName(acfB));
           break;
         case 'sanction':
           cmp = (acfA.sanction_description || '').localeCompare(acfB.sanction_description || '');
@@ -208,7 +208,7 @@ export default function DisciplineCaseTable({
 
       return sortOrder === 'asc' ? cmp : -cmp;
     });
-  }, [cases, sortField, sortOrder, personMap]);
+  }, [cases, sortField, sortOrder, personMap, formatTeamName]);
 
   const toggleExpand = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -416,7 +416,7 @@ export default function DisciplineCaseTable({
                   {isColVisible('team') && (
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-900 dark:text-gray-100">
-                        {formatTeamName(acf.team_name)}
+                        {formatTeamName(acf)}
                       </span>
                     </td>
                   )}
@@ -504,7 +504,7 @@ export default function DisciplineCaseTable({
                             Team
                           </h4>
                           <p className="text-gray-600 dark:text-gray-400">
-                            {formatTeamName(acf.team_name)}
+                            {formatTeamName(acf)}
                           </p>
                         </div>
                         <div>
