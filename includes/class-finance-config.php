@@ -60,6 +60,8 @@ class FinanceConfig {
 	const OPTION_REMINDER_2_EMAIL_TEMPLATE   = 'rondo_finance_reminder_2_email_template';
 	const OPTION_MEMBERSHIP_EMAIL_TEMPLATE   = 'rondo_finance_membership_email_template';
 	const OPTION_MEMBERSHIP_PAYMENT_CLAUSE   = 'rondo_finance_membership_payment_clause';
+	const OPTION_INVOICE_REMINDER_1_EMAIL_TEMPLATE = 'rondo_finance_invoice_reminder_1_email_template';
+	const OPTION_INVOICE_REMINDER_2_EMAIL_TEMPLATE = 'rondo_finance_invoice_reminder_2_email_template';
 
 	/**
 	 * Default configuration values
@@ -84,6 +86,8 @@ class FinanceConfig {
 		'reminder_2_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u dringend dit bedrag direct te voldoen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij de vordering overdragen aan ons bestuur.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'membership_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor uw contributie.</p><p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'membership_payment_clause'  => '',
+		'invoice_reminder_1_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Op {factuurdatum} hebben wij u een factuur ({factuur_nummer}) gestuurd voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>.</p><p>Wij hebben nog geen betaling ontvangen. Via onderstaande link kunt u uw betaalwijze kiezen en direct betalen:</p><p>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
+		'invoice_reminder_2_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor factuur {factuur_nummer} voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>, verstuurd op {factuurdatum}.</p><p>Het is nu {dagen_sinds_factuur} dagen geleden dat deze factuur is verstuurd en wij hebben nog geen betaling ontvangen.</p><p>Wij verzoeken u dringend zo spoedig mogelijk te betalen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij contact met u opnemen.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 	];
 
 	/**
@@ -207,6 +211,29 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get first invoice reminder email template
+	 *
+	 * Sent 14 days after the invoice sent_date when member hasn't selected a payment plan.
+	 *
+	 * @return string The first invoice reminder email template (default template if not configured)
+	 */
+	public function get_invoice_reminder_1_email_template(): string {
+		return get_option( self::OPTION_INVOICE_REMINDER_1_EMAIL_TEMPLATE, self::DEFAULTS['invoice_reminder_1_email_template'] );
+	}
+
+	/**
+	 * Get second invoice reminder email template
+	 *
+	 * Sent 28 days after the invoice sent_date when member hasn't selected a payment plan.
+	 * The treasurer receives a BCC.
+	 *
+	 * @return string The second invoice reminder email template (default template if not configured)
+	 */
+	public function get_invoice_reminder_2_email_template(): string {
+		return get_option( self::OPTION_INVOICE_REMINDER_2_EMAIL_TEMPLATE, self::DEFAULTS['invoice_reminder_2_email_template'] );
+	}
+
+	/**
 	 * Get club logo ID
 	 *
 	 * @return int The club logo attachment ID (0 if not configured)
@@ -304,6 +331,8 @@ class FinanceConfig {
 			'installment_email_template' => $this->get_installment_email_template(),
 			'reminder_1_email_template'  => $this->get_reminder_1_email_template(),
 			'reminder_2_email_template'  => $this->get_reminder_2_email_template(),
+			'invoice_reminder_1_email_template' => $this->get_invoice_reminder_1_email_template(),
+			'invoice_reminder_2_email_template' => $this->get_invoice_reminder_2_email_template(),
 			'club_logo_id'          => $club_logo_id,
 			'club_logo_url'         => $club_logo_url,
 			'accent_color'          => $this->get_accent_color(),
@@ -351,6 +380,10 @@ class FinanceConfig {
 				return $this->get_reminder_1_email_template();
 			case 'reminder_2_email_template':
 				return $this->get_reminder_2_email_template();
+			case 'invoice_reminder_1_email_template':
+				return $this->get_invoice_reminder_1_email_template();
+			case 'invoice_reminder_2_email_template':
+				return $this->get_invoice_reminder_2_email_template();
 			case 'club_logo_id':
 				return $this->get_club_logo_id();
 			case 'accent_color':
@@ -425,6 +458,14 @@ class FinanceConfig {
 
 		if ( isset( $data['reminder_2_email_template'] ) ) {
 			$success = update_option( self::OPTION_REMINDER_2_EMAIL_TEMPLATE, wp_kses_post( $data['reminder_2_email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['invoice_reminder_1_email_template'] ) ) {
+			$success = update_option( self::OPTION_INVOICE_REMINDER_1_EMAIL_TEMPLATE, wp_kses_post( $data['invoice_reminder_1_email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['invoice_reminder_2_email_template'] ) ) {
+			$success = update_option( self::OPTION_INVOICE_REMINDER_2_EMAIL_TEMPLATE, wp_kses_post( $data['invoice_reminder_2_email_template'] ) ) && $success;
 		}
 
 		if ( isset( $data['club_logo_id'] ) ) {
