@@ -229,10 +229,11 @@ function SearchModal({ isOpen, onClose }) {
   const { data: searchResults, isLoading: isSearchLoading } = useSearch(trimmedQuery);
   
   // Safe results
-  const safeResults = searchResults || { people: [], teams: [] };
+  const safeResults = searchResults || { people: [], teams: [], invoices: [] };
   const allResults = [
     ...(safeResults.people || []).map(p => ({ ...p, type: 'person' })),
     ...(safeResults.teams || []).map(c => ({ ...c, type: 'team' })),
+    ...(safeResults.invoices || []).map(i => ({ ...i, type: 'invoice' })),
   ];
   const hasResults = allResults.length > 0;
   const showResults = searchQuery.trim().length >= 2;
@@ -283,6 +284,8 @@ function SearchModal({ isOpen, onClose }) {
       navigate(`/people/${id}`);
     } else if (type === 'team') {
       navigate(`/teams/${id}`);
+    } else if (type === 'invoice') {
+      navigate(`/financien/facturen/${id}`);
     }
   };
   
@@ -407,6 +410,58 @@ function SearchModal({ isOpen, onClose }) {
                           )}
                           <span className="text-sm font-medium flex-1 truncate">
                             {team.name}
+                          </span>
+                          {isSelected && (
+                            <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">Enter</kbd>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Invoice results */}
+                {safeResults.invoices && safeResults.invoices.length > 0 && (
+                  <div className="px-2 mt-2">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
+                      Facturen
+                    </div>
+                    {safeResults.invoices.map((invoice, index) => {
+                      const globalIndex = (safeResults.people?.length || 0) + (safeResults.teams?.length || 0) + index;
+                      const isSelected = selectedIndex === globalIndex;
+                      const statusMap = {
+                        draft: { label: 'Concept', color: 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300' },
+                        sent: { label: 'Verzonden', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' },
+                        paid: { label: 'Betaald', color: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' },
+                        overdue: { label: 'Te laat', color: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' },
+                      };
+                      const statusInfo = statusMap[invoice.status] || {
+                        label: invoice.status ? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1) : '',
+                        color: 'bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300',
+                      };
+                      return (
+                        <button
+                          key={invoice.id}
+                          onClick={() => handleResultClick('invoice', invoice.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                            isSelected ? 'bg-cyan-50 text-obsidian dark:bg-gray-700 dark:text-electric-cyan dark:ring-1 dark:ring-electric-cyan' : 'hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200'
+                          }`}
+                        >
+                          <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center dark:bg-gray-700 flex-shrink-0">
+                            <Receipt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium truncate block">
+                              {invoice.invoice_number}
+                            </span>
+                            {invoice.person_name && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 truncate block">
+                                {invoice.person_name}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium flex-shrink-0 ${statusInfo.color}`}>
+                            {statusInfo.label}
                           </span>
                           {isSelected && (
                             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded text-xs text-gray-500 font-mono dark:bg-gray-700 dark:text-gray-400">Enter</kbd>
