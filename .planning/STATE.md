@@ -79,15 +79,16 @@ Recent decisions affecting v30.0:
 |---|-------------|------|--------|-----------|
 | 110 | People with finance rights should be able to see (and change) the Financiën -> Instellingen | 2026-02-20 | a33f152a | [110-people-with-finance-rights-should-be-abl](./quick/110-people-with-finance-rights-should-be-abl/) |
 | 111 | Refactor FunctiesTab mapping UI from CSS grid divs to semantic HTML table | 2026-02-20 | 122829b9 | [111-refactor-functiestab-mapping-ui-to-table](./quick/111-refactor-functiestab-mapping-ui-to-table/) |
+| 112 | Update demo export/import code for invoices, finance settings, capability maps | 2026-02-22 | 2bb4e816 | [112-update-demo-export-code-for-new-features](./quick/112-update-demo-export-code-for-new-features/) |
 
 ## Session Continuity
 
-Last session: 2026-02-20
-Stopped at: Completed Phase 208 Plan 01 — Sidebar avatar with linked person photo, v30.0.0 deployed
+Last session: 2026-02-22
+Stopped at: Completed Quick Task 112 — Demo export/import updated for invoices and finance settings
 Resume file: None
 
 **Next action:** v30.0 milestone complete — plan next milestone
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-21 — v30.0 User Accounts & Profiles archived, tag v30.0 created*
+*Last updated: 2026-02-22 — Quick task 112: demo export/import updated with invoice and finance settings support*
