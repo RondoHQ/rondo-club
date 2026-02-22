@@ -160,15 +160,29 @@ button, [role="tab"], [role="button"], summary {
 
 /*
  * Pull-to-refresh library (react-simple-pull-to-refresh) injects CSS that sets
- * overflow:hidden on .ptr__children, and also sets overflowX/overflowY via
- * inline styles in initContainer(). This clips position:fixed descendants
- * (e.g. the FilterDropdown portal) on iOS Safari.
+ * height:100% and overflow:hidden on both .ptr and .ptr__children, and also
+ * sets overflowX/overflowY via inline styles in initContainer().
  *
- * The <main> element in Layout.jsx already handles page scrolling with
- * overflow-y-auto, so .ptr__children does not need to be a scroll container.
- * Using !important overrides both the class-level and inline styles (author
- * !important declarations beat inline normal declarations in the CSS cascade).
+ * Problem 1 — scroll broken:
+ *   height:100% on .ptr caps it at the <main> scroll container's height, so
+ *   content that overflows is clipped by overflow:hidden and <main> never sees
+ *   extra scroll height. Pages with more rows than fit on screen cannot scroll.
+ *
+ * Problem 2 — dropdown clipping on iOS Safari:
+ *   overflow:hidden/auto on .ptr__children clips position:fixed descendants
+ *   (e.g. the FilterDropdown portal) on iOS Safari, where fixed positioning
+ *   is relative to the nearest scroll ancestor.
+ *
+ * Fix:
+ *   Override height on .ptr to auto so it grows with content — <main> then
+ *   provides correct scrolling. Override overflow on .ptr__children to visible
+ *   so fixed descendants are not clipped. Using !important overrides both
+ *   class-level and inline styles (author !important declarations beat inline
+ *   normal declarations in the CSS cascade).
  */
+.ptr {
+  height: auto !important;
+}
 .ptr__children {
   overflow: visible !important;
 }
