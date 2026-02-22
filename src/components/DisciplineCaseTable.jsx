@@ -96,6 +96,7 @@ export default function DisciplineCaseTable({
   onCreateInvoice = () => {},
   isCreatingInvoice = false,
   canCreateInvoice = false,
+  isColVisible = () => true,
 }) {
   const [expandedId, setExpandedId] = useState(null);
   const [sortField, setSortField] = useState('match_date');
@@ -278,46 +279,56 @@ export default function DisciplineCaseTable({
                 className="text-left"
               />
             )}
-            <SortableHeader
-              label="Wedstrijd"
-              columnId="match_date"
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              className="text-left"
-            />
-            <SortableHeader
-              label="Sanctie"
-              columnId="sanction"
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              className="text-left"
-            />
-            <SortableHeader
-              label="Kaart"
-              columnId="card"
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              className="text-center"
-            />
-            <SortableHeader
-              label="Doorbelast"
-              columnId="charged"
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              className="text-center"
-            />
-            <SortableHeader
-              label="Boete"
-              columnId="fee"
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={handleSort}
-              className="text-right"
-            />
+            {isColVisible('wedstrijd') && (
+              <SortableHeader
+                label="Wedstrijd"
+                columnId="match_date"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-left"
+              />
+            )}
+            {isColVisible('sanctie') && (
+              <SortableHeader
+                label="Sanctie"
+                columnId="sanction"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-left"
+              />
+            )}
+            {isColVisible('kaart') && (
+              <SortableHeader
+                label="Kaart"
+                columnId="card"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-center"
+              />
+            )}
+            {isColVisible('doorbelast') && (
+              <SortableHeader
+                label="Doorbelast"
+                columnId="charged"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-center"
+              />
+            )}
+            {isColVisible('boete') && (
+              <SortableHeader
+                label="Boete"
+                columnId="fee"
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={handleSort}
+                className="text-right"
+              />
+            )}
             <th scope="col" className="w-10"></th>
           </tr>
         </thead>
@@ -378,38 +389,48 @@ export default function DisciplineCaseTable({
                       )}
                     </td>
                   )}
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900 dark:text-gray-100">
-                      {acf.match_description || '-'}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatAcfDate(acf.match_date)}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
-                      {acf.sanction_description || '-'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-lg">
-                      {acf.charge_codes ? (
-                        acf.charge_codes.endsWith('-1') ? '🟨' : '🟥'
-                      ) : (
-                        <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-sm text-gray-900 dark:text-gray-100">
-                      {getDoorbelastLabel(acf)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {formatCurrency(parseFloat(acf.administrative_fee) || 0, 2)}
-                    </span>
-                  </td>
+                  {isColVisible('wedstrijd') && (
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
+                        {acf.match_description || '-'}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatAcfDate(acf.match_date)}
+                      </div>
+                    </td>
+                  )}
+                  {isColVisible('sanctie') && (
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
+                        {acf.sanction_description || '-'}
+                      </div>
+                    </td>
+                  )}
+                  {isColVisible('kaart') && (
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-lg">
+                        {acf.charge_codes ? (
+                          acf.charge_codes.endsWith('-1') ? '🟨' : '🟥'
+                        ) : (
+                          <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+                        )}
+                      </span>
+                    </td>
+                  )}
+                  {isColVisible('doorbelast') && (
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {getDoorbelastLabel(acf)}
+                      </span>
+                    </td>
+                  )}
+                  {isColVisible('boete') && (
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {formatCurrency(parseFloat(acf.administrative_fee) || 0, 2)}
+                      </span>
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-center">
                     {isExpanded ? (
                       <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -424,7 +445,12 @@ export default function DisciplineCaseTable({
                       colSpan={
                         (canCreateInvoice ? 1 : 0) +
                         (showPersonColumn ? 1 : 0) +
-                        6 // Wedstrijd, Sanctie, Kaart, Doorbelast, Boete, expand arrow
+                        (isColVisible('wedstrijd') ? 1 : 0) +
+                        (isColVisible('sanctie') ? 1 : 0) +
+                        (isColVisible('kaart') ? 1 : 0) +
+                        (isColVisible('doorbelast') ? 1 : 0) +
+                        (isColVisible('boete') ? 1 : 0) +
+                        1 // expand arrow
                       }
                       className="px-4 py-4"
                     >
