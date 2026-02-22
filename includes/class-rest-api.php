@@ -1958,7 +1958,12 @@ class Api extends Base {
 
 		// Handle unlinking
 		if ( ! $person_id || $person_id === 0 ) {
+			// Remove bidirectional link: clear user meta and person post meta.
+			$old_person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 			delete_user_meta( $user_id, 'rondo_linked_person_id' );
+			if ( $old_person_id ) {
+				delete_post_meta( $old_person_id, \Rondo\Users\UserProvisioning::META_USER_ID );
+			}
 			return rest_ensure_response(
 				[
 					'success'   => true,
@@ -1987,8 +1992,11 @@ class Api extends Base {
 			);
 		}
 
-		// Save the link
+		// Save the bidirectional link: user meta AND person post meta.
+		// This mirrors what UserProvisioning::provision() does (PROV-03), ensuring
+		// that AccountCard can always find the link via _rondo_wp_user_id on the person.
 		update_user_meta( $user_id, 'rondo_linked_person_id', (int) $person_id );
+		update_post_meta( (int) $person_id, \Rondo\Users\UserProvisioning::META_USER_ID, $user_id );
 
 		$first_name = get_field( 'first_name', $person_id ) ?: '';
 		$last_name  = get_field( 'last_name', $person_id ) ?: '';
