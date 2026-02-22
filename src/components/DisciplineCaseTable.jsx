@@ -5,7 +5,7 @@ import PersonAvatar from '@/components/PersonAvatar';
 import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import SortableHeader from '@/components/SortableHeader';
-import { isDoorbelastNVT } from '@/utils/disciplineCases';
+import { isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
 
 /**
  * Parse ACF date format to Date object
@@ -64,6 +64,7 @@ function formatAcfDate(dateStr) {
  * @returns {string}
  */
 function getDoorbelastLabel(acf) {
+  if (isDoorbelastException(acf)) return 'Uitzondering';
   if (isDoorbelastNVT(acf)) return 'n.v.t.';
   if (acf.is_charged === 'sportlink') return 'Ja, Sportlink';
   if (acf.is_charged === 'rondo') return 'Ja, Rondo';
@@ -118,7 +119,7 @@ export default function DisciplineCaseTable({
   const uninvoicedCaseIds = useMemo(() => {
     if (!cases || !canCreateInvoice) return [];
     return cases
-      .filter(dc => !invoicedSet.has(dc.id) && !isDoorbelastNVT(dc.acf || {}))
+      .filter(dc => !invoicedSet.has(dc.id) && !isDoorbelastNVT(dc.acf || {}) && !isDoorbelastException(dc.acf || {}))
       .map(dc => dc.id);
   }, [cases, invoicedSet, canCreateInvoice]);
 
@@ -143,8 +144,8 @@ export default function DisciplineCaseTable({
   }, [cases, selectedCaseIds]);
 
   // Handle checkbox toggle
-  const handleToggleCase = useCallback((caseId, isInvoiced) => {
-    if (isInvoiced) return; // Can't select already-invoiced cases
+  const handleToggleCase = useCallback((caseId, isInvoiced, isException) => {
+    if (isInvoiced || isException) return; // Can't select already-invoiced or exception cases
 
     const newSelected = new Set(selectedCaseIds);
     if (newSelected.has(caseId)) {
@@ -209,9 +210,16 @@ export default function DisciplineCaseTable({
           break;
         }
         case 'charged':
-          // n.v.t. sorts lowest (-1), then Nee (0), then charged (1)
-          cmp = (isDoorbelastNVT(acfA) ? -1 : acfA.is_charged ? 1 : 0) -
-                (isDoorbelastNVT(acfB) ? -1 : acfB.is_charged ? 1 : 0);
+          // n.v.t. -> uitzondering -> nee -> doorbelast
+          {
+            const chargedRank = (acf) => {
+              if (isDoorbelastNVT(acf)) return -1;
+              if (isDoorbelastException(acf)) return 0;
+              if (!acf.is_charged) return 1;
+              return 2;
+            };
+            cmp = chargedRank(acfA) - chargedRank(acfB);
+          }
           break;
         case 'fee':
           cmp = (parseFloat(acfA.administrative_fee) || 0) - (parseFloat(acfB.administrative_fee) || 0);
@@ -372,6 +380,7 @@ export default function DisciplineCaseTable({
             const person = personMap.get(dc.acf?.person);
             const acf = dc.acf || {};
             const isInvoiced = invoicedSet.has(dc.id);
+            const isException = isDoorbelastException(acf);
             const isSelected = selectedCaseIds.has(dc.id);
 
             return (
@@ -379,7 +388,7 @@ export default function DisciplineCaseTable({
                 <tr
                   className={`hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
                     index % 2 === 1 ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                  } ${isInvoiced ? 'opacity-60' : ''}`}
+                  } ${(isInvoiced || isException) ? 'opacity-60' : ''}`}
                   onClick={() => toggleExpand(dc.id)}
                 >
                   {canCreateInvoice && (
@@ -388,13 +397,17 @@ export default function DisciplineCaseTable({
                         <div className="flex items-center justify-center" title="Al gefactureerd">
                           <FileText className="w-4 h-4 text-gray-400" />
                         </div>
+                      ) : isException ? (
+                        <div className="flex items-center justify-center" title="Doorbelast uitzondering">
+                          <span className="text-xs text-gray-400">-</span>
+                        </div>
                       ) : isDoorbelastNVT(acf) ? (
                         <div />
                       ) : (
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => handleToggleCase(dc.id, isInvoiced)}
+                          onChange={() => handleToggleCase(dc.id, isInvoiced, isException)}
                           className="w-4 h-4 text-electric-cyan border-gray-300 rounded focus:ring-electric-cyan cursor-pointer"
                         />
                       )}

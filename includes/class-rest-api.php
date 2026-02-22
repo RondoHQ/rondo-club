@@ -506,6 +506,12 @@ class Api extends Base {
 								return is_array( $param );
 							},
 						],
+						'exempt_discipline_teams' => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
 					],
 				],
 			]
@@ -1157,6 +1163,9 @@ class Api extends Base {
 
 		// Add VOG post meta fields to person REST API response
 		add_filter( 'rest_prepare_person', [ $this, 'add_vog_fields_to_person' ], 10, 3 );
+
+		// Add computed discipline case charging exception status based on settings.
+		add_filter( 'rest_prepare_discipline_case', [ $this, 'add_discipline_case_exception_status' ], 10, 3 );
 	}
 
 	/**
@@ -1203,6 +1212,98 @@ class Api extends Base {
 
 		$response->set_data( $data );
 		return $response;
+	}
+
+	/**
+	 * Add computed discipline case charging exception status to REST response.
+	 *
+	 * Cases belonging to configured exempt teams are exposed with is_charged = 'exception'
+	 * so frontend can display "Uitzondering" without mutating stored ACF values.
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response.
+	 */
+	public function add_discipline_case_exception_status( $response, $post, $request ) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$vog_email     = new \Rondo\VOG\VOGEmail();
+		$exempt_teams  = $vog_email->get_exempt_discipline_teams();
+		if ( empty( $exempt_teams ) ) {
+			return $response;
+		}
+
+		if ( ! $this->is_discipline_case_charging_exception( $post->ID, $exempt_teams ) ) {
+			return $response;
+		}
+
+		$data = $response->get_data();
+		if ( ! isset( $data['acf'] ) || ! is_array( $data['acf'] ) ) {
+			$data['acf'] = [];
+		}
+
+		$data['acf']['is_charged'] = 'exception';
+		$response->set_data( $data );
+		return $response;
+	}
+
+	/**
+	 * Check whether a discipline case matches exempt charging teams.
+	 *
+	 * @param int   $case_id       Discipline case post ID.
+	 * @param array $exempt_teams  Exempt team IDs.
+	 * @return bool True when case should be treated as exception.
+	 */
+	private function is_discipline_case_charging_exception( int $case_id, array $exempt_teams ): bool {
+		$team_id = $this->get_discipline_case_team_id( $case_id );
+		if ( $team_id && in_array( $team_id, $exempt_teams, true ) ) {
+			return true;
+		}
+
+		// Fallback: match by team_name text when home/away team IDs are missing.
+		$team_name = get_field( 'team_name', $case_id );
+		if ( ! is_string( $team_name ) || '' === trim( $team_name ) ) {
+			return false;
+		}
+		$team_name = trim( wp_strip_all_tags( $team_name ) );
+
+		foreach ( $exempt_teams as $exempt_team_id ) {
+			$title = get_the_title( (int) $exempt_team_id );
+			if ( ! is_string( $title ) || '' === $title ) {
+				continue;
+			}
+			if ( 0 === strcasecmp( trim( $title ), $team_name ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Resolve team ID for a discipline case.
+	 *
+	 * @param int $case_id Discipline case post ID.
+	 * @return int|null Team post ID or null.
+	 */
+	private function get_discipline_case_team_id( int $case_id ): ?int {
+		$home_team = get_field( 'home_team', $case_id );
+		$away_team = get_field( 'away_team', $case_id );
+
+		$home_id = is_numeric( $home_team ) ? (int) $home_team : 0;
+		$away_id = is_numeric( $away_team ) ? (int) $away_team : 0;
+
+		if ( $home_id > 0 ) {
+			return $home_id;
+		}
+		if ( $away_id > 0 ) {
+			return $away_id;
+		}
+
+		return null;
 	}
 
 	/**
@@ -3280,6 +3381,7 @@ class Api extends Base {
 		$reminder_template_new   = $request->get_param( 'reminder_template_new' );
 		$reminder_template_renewal = $request->get_param( 'reminder_template_renewal' );
 		$exempt_commissies       = $request->get_param( 'exempt_commissies' );
+		$exempt_discipline_teams = $request->get_param( 'exempt_discipline_teams' );
 
 		// Update provided settings
 		if ( $from_email !== null ) {
@@ -3317,6 +3419,10 @@ class Api extends Base {
 			if ( $old_exempt !== $new_exempt ) {
 				$people_recalculated = $this->trigger_vog_recalculation();
 			}
+		}
+
+		if ( $exempt_discipline_teams !== null ) {
+			$vog_email->update_exempt_discipline_teams( $exempt_discipline_teams );
 		}
 
 		// Return updated settings

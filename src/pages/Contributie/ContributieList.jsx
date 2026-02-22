@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { RefreshCw, Coins, Download, Filter } from 'lucide-react';
+import { RefreshCw, Coins, Download } from 'lucide-react';
 import { useFeeList } from '@/hooks/useFees';
+import { useInvoices } from '@/hooks/useInvoices';
 import { useQueryClient } from '@tanstack/react-query';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -9,6 +10,11 @@ import { formatCurrency, formatPercentage, getCategoryColor } from '@/utils/form
 import SeasonSelector from './SeasonSelector';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
+
+function formatCurrencyOrDash(value) {
+  const amount = parseFloat(value) || 0;
+  return amount === 0 ? '-' : formatCurrency(amount, 2);
+}
 
 function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
   const hasDiscount = member.family_discount_rate > 0;
@@ -56,7 +62,7 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
 
       {isColVisible('base_fee') && (
         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
-          {formatCurrency(member.base_fee, 2)}
+          {formatCurrencyOrDash(member.base_fee)}
         </td>
       )}
 
@@ -86,7 +92,13 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
 
       {isColVisible('final_fee') && (
         <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-50 text-right">
-          {formatCurrency(member.final_fee, 2)}
+          {formatCurrencyOrDash(member.final_fee)}
+        </td>
+      )}
+
+      {isColVisible('rondo_invoiced') && (
+        <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 text-right">
+          {formatCurrencyOrDash(member.rondo_invoiced || 0)}
         </td>
       )}
 
@@ -95,7 +107,7 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
           <td className="px-4 py-3 text-sm text-right">
             {member.nikki_total !== null ? (
               <span className="text-gray-700 dark:text-gray-300">
-                {formatCurrency(member.nikki_total, 2)}
+                {formatCurrencyOrDash(member.nikki_total)}
               </span>
             ) : (
               <span className="text-gray-400 dark:text-gray-500">-</span>
@@ -105,7 +117,7 @@ function FeeRow({ member, isOdd, showNikkiColumns, categories, isColVisible }) {
           <td className="px-4 py-3 text-sm text-right">
             {member.nikki_saldo !== null ? (
               <span className="text-gray-700 dark:text-gray-300">
-                {formatCurrency(member.nikki_saldo, 2)}
+                {formatCurrencyOrDash(member.nikki_saldo)}
               </span>
             ) : (
               <span className="text-gray-400 dark:text-gray-500">-</span>
@@ -135,10 +147,9 @@ function EmptyState() {
   );
 }
 
-export function ContributieList() {
+export function ContributieList({ onlyMismatch = false }) {
   const [sortField, setSortField] = useState('last_name');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [showMismatchOnly, setShowMismatchOnly] = useState(false);
   const [isForecast, setIsForecast] = useState(false);
   const [firstNameFilter, setFirstNameFilter] = useState('');
   const [lastNameFilter, setLastNameFilter] = useState('');
@@ -150,6 +161,7 @@ export function ContributieList() {
   const queryClient = useQueryClient();
 
   const { isVisible, toggle } = useColumnVisibility('contributie');
+  const { data: invoices = [] } = useInvoices();
 
   const { data, isLoading, error } = useFeeList(
     isForecast ? { forecast: true } : {}
@@ -260,11 +272,72 @@ export function ContributieList() {
     { id: 'family_discount_rate', label: 'Gezinskorting', isVisible: isVisible('family_discount_rate') },
     { id: 'prorata_percentage', label: 'Pro-rata', isVisible: isVisible('prorata_percentage') },
     { id: 'final_fee', label: 'Bedrag', isVisible: isVisible('final_fee') },
+    { id: 'rondo_invoiced', label: 'Rondo', isVisible: isVisible('rondo_invoiced') },
   ];
 
+  const rondoByPerson = useMemo(() => {
+    const map = new Map();
+    invoices
+      .filter((invoice) => invoice?.invoice_type === 'membership' && invoice?.person?.id)
+      .forEach((invoice) => {
+        const personId = invoice.person.id;
+        const current = map.get(personId) || 0;
+        map.set(personId, current + (parseFloat(invoice.total_amount) || 0));
+      });
+    return map;
+  }, [invoices]);
+
+  const disciplineByPerson = useMemo(() => {
+    const map = new Map();
+    invoices
+      .filter((invoice) => invoice?.invoice_type === 'discipline' && invoice?.person?.id)
+      .forEach((invoice) => {
+        const personId = invoice.person.id;
+        const current = map.get(personId) || 0;
+        map.set(personId, current + (parseFloat(invoice.total_amount) || 0));
+      });
+    return map;
+  }, [invoices]);
+
+  const allMembers = useMemo(() => {
+    const sourceMembers = data?.members ?? [];
+    const map = new Map();
+
+    sourceMembers.forEach((member) => {
+      map.set(member.id, {
+        ...member,
+        rondo_invoiced: rondoByPerson.get(member.id) || 0,
+        discipline_invoiced: disciplineByPerson.get(member.id) || 0,
+      });
+    });
+
+    rondoByPerson.forEach((rondoAmount, personId) => {
+      if (map.has(personId)) return;
+      const invoicePerson = invoices.find((invoice) => invoice?.person?.id === personId)?.person;
+      map.set(personId, {
+        id: personId,
+        first_name: invoicePerson?.name || `Lid #${personId}`,
+        last_name: '',
+        category: '',
+        leeftijdsgroep: '',
+        base_fee: 0,
+        family_discount_rate: 0,
+        prorata_percentage: 1,
+        final_fee: 0,
+        nikki_total: null,
+        nikki_saldo: null,
+        rondo_invoiced: rondoAmount,
+        discipline_invoiced: disciplineByPerson.get(personId) || 0,
+      });
+    });
+
+    return [...map.values()];
+  }, [data?.members, rondoByPerson, disciplineByPerson, invoices]);
+
   const filteredMembers = useMemo(() => {
-    return (data?.members ?? []).filter(m => {
-      if (showMismatchOnly && !(m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1)) return false;
+    return allMembers.filter(m => {
+      const contributiePlusTuchtzaken = (parseFloat(m.final_fee) || 0) + (parseFloat(m.discipline_invoiced) || 0);
+      if (onlyMismatch && !(m.nikki_total !== null && Math.abs(m.nikki_total - contributiePlusTuchtzaken) >= 1)) return false;
       if (firstNameFilter && !(m.first_name || '').toLowerCase().includes(firstNameFilter.toLowerCase())) return false;
       if (lastNameFilter && !(m.last_name || '').toLowerCase().includes(lastNameFilter.toLowerCase())) return false;
       if (categoryFilter && m.category !== categoryFilter) return false;
@@ -275,7 +348,7 @@ export function ContributieList() {
       if (prorataFilter === 'geen' && m.prorata_percentage < 1.0) return false;
       return true;
     });
-  }, [data?.members, showMismatchOnly, firstNameFilter, lastNameFilter, categoryFilter, leeftijdsgroepFilter, familyDiscountFilter, prorataFilter]);
+  }, [allMembers, onlyMismatch, firstNameFilter, lastNameFilter, categoryFilter, leeftijdsgroepFilter, familyDiscountFilter, prorataFilter]);
 
   const categoryOrder = {};
   Object.entries(data?.categories || {}).forEach(([slug, meta]) => {
@@ -304,6 +377,7 @@ export function ContributieList() {
       case 'final_fee':
       case 'family_discount_rate':
       case 'prorata_percentage':
+      case 'rondo_invoiced':
         cmp = a[sortField] - b[sortField];
         break;
       case 'nikki_total':
@@ -319,7 +393,7 @@ export function ContributieList() {
 
   const handleExportCsv = () => {
     const baseHeaders = ['Voornaam', 'Achternaam', 'Categorie', 'Leeftijdsgroep', 'Basis', 'Gezinskorting', 'Pro-rata', 'Bedrag'];
-    const headers = showNikkiColumns ? [...baseHeaders, 'Nikki', 'Saldo'] : baseHeaders;
+    const headers = showNikkiColumns ? [...baseHeaders, 'Rondo', 'Nikki', 'Saldo'] : [...baseHeaders, 'Rondo'];
     const rows = sortedMembers.map(member => {
       const row = [
         member.first_name || '',
@@ -330,6 +404,7 @@ export function ContributieList() {
         member.family_discount_rate,
         member.prorata_percentage,
         member.final_fee,
+        member.rondo_invoiced || 0,
       ];
       if (showNikkiColumns) {
         row.push(member.nikki_total ?? '');
@@ -341,17 +416,15 @@ export function ContributieList() {
     downloadCsv(csv, `contributie-${data?.season || 'export'}.csv`);
   };
 
-  const allMembers = data?.members ?? [];
-  const mismatchCount = allMembers.filter(m => m.nikki_total !== null && Math.abs(m.nikki_total - m.final_fee) >= 1).length;
-
   const totals = sortedMembers.reduce(
     (acc, m) => ({
       baseFee: acc.baseFee + m.base_fee,
       finalFee: acc.finalFee + m.final_fee,
+      rondoInvoiced: acc.rondoInvoiced + (m.rondo_invoiced || 0),
       nikkiTotal: acc.nikkiTotal + (m.nikki_total || 0),
       nikkiSaldo: acc.nikkiSaldo + (m.nikki_saldo || 0),
     }),
-    { baseFee: 0, finalFee: 0, nikkiTotal: 0, nikkiSaldo: 0 }
+    { baseFee: 0, finalFee: 0, rondoInvoiced: 0, nikkiTotal: 0, nikkiSaldo: 0 }
   );
 
   if (isLoading) {
@@ -392,46 +465,6 @@ export function ContributieList() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Season indicator + totals + mismatch toggle + CSV export */}
-        <div className="flex items-center justify-between">
-          <SeasonSelector
-            season={data?.season}
-            isForecast={isForecast}
-            onForecastChange={setIsForecast}
-            memberCount={sortedMembers.length}
-          />
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Totaal: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.finalFee, 2)}</span>
-            </div>
-            {showNikkiColumns && (
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Nog te ontvangen: <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(totals.nikkiSaldo, 2)}</span>
-              </div>
-            )}
-            {showNikkiColumns && mismatchCount > 0 && (
-              <button
-                onClick={() => setShowMismatchOnly(!showMismatchOnly)}
-                className={`btn-secondary inline-flex items-center gap-1.5 ${
-                  showMismatchOnly ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700' : ''
-                }`}
-                title={showMismatchOnly ? 'Toon alle leden' : 'Toon alleen leden waar Nikki afwijkt van Bedrag'}
-              >
-                <Filter className="w-4 h-4" />
-                <span className="text-xs">Afwijking ({mismatchCount})</span>
-              </button>
-            )}
-            <button
-              onClick={handleExportCsv}
-              className="btn-secondary"
-              title="Downloaden als CSV"
-              disabled={!sortedMembers.length}
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
         {/* Filter toolbar */}
         <DataTableToolbar
           columns={filterColumns}
@@ -441,6 +474,23 @@ export function ContributieList() {
           hasActiveFilters={hasActiveFilters}
           activeFilterCount={activeFilterCount}
           onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+          toolbarEnd={(
+            <div className="flex items-center gap-2">
+              <SeasonSelector
+                season={data?.season}
+                isForecast={isForecast}
+                onForecastChange={setIsForecast}
+              />
+              <button
+                onClick={handleExportCsv}
+                className="btn-secondary"
+                title="Downloaden als CSV"
+                disabled={!sortedMembers.length}
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         />
 
         {/* Fee list table */}
@@ -538,6 +588,16 @@ export function ContributieList() {
                       className="text-right"
                     />
                   )}
+                  {isVisible('rondo_invoiced') && (
+                    <SortableHeader
+                      label="Rondo"
+                      columnId="rondo_invoiced"
+                      sortField={sortField}
+                      sortOrder={sortOrder}
+                      onSort={handleSort}
+                      className="text-right"
+                    />
+                  )}
                   {showNikkiColumns && (
                     <>
                       <SortableHeader
@@ -593,6 +653,11 @@ export function ContributieList() {
                   {isVisible('final_fee') && (
                     <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100 text-right">
                       {formatCurrency(totals.finalFee, 2)}
+                    </td>
+                  )}
+                  {isVisible('rondo_invoiced') && (
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right">
+                      {formatCurrency(totals.rondoInvoiced, 2)}
                     </td>
                   )}
                   {showNikkiColumns && (

@@ -11,7 +11,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAllInvoicedCaseIds, useBulkCreateInvoices } from '@/hooks/useInvoices';
 import { wpApi } from '@/api/client';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
-import { isDoorbelastNVT } from '@/utils/disciplineCases';
+import { isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -206,6 +206,7 @@ export default function DisciplineCasesList() {
       header: 'Doorbelast',
       filterType: FILTER_TYPES.SELECT,
       filterOptions: [
+        { value: 'exception', label: 'Uitzondering' },
         { value: 'nvt', label: 'N.v.t.' },
         { value: 'none', label: 'Nee' },
         { value: 'sportlink', label: 'Ja, Sportlink' },
@@ -261,8 +262,10 @@ export default function DisciplineCasesList() {
 
       if (doorbelastFilter !== '') {
         const isNVT = isDoorbelastNVT(acf);
+        const isException = isDoorbelastException(acf);
+        if (doorbelastFilter === 'exception' && !isException) return false;
         if (doorbelastFilter === 'nvt' && !isNVT) return false;
-        if (doorbelastFilter === 'none' && (acf.is_charged || isNVT)) return false;
+        if (doorbelastFilter === 'none' && (acf.is_charged || isNVT || isException)) return false;
         if (doorbelastFilter === 'sportlink' && acf.is_charged !== 'sportlink') return false;
         if (doorbelastFilter === 'rondo' && acf.is_charged !== 'rondo') return false;
       }

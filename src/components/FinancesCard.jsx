@@ -9,6 +9,7 @@ import { useUpdatePerson } from '@/hooks/usePeople';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
+import { isDoorbelastException } from '@/utils/disciplineCases';
 
 /**
  * Status badge component for invoices
@@ -89,7 +90,7 @@ export default function FinancesCard({ personId }) {
     return disciplineCases.reduce((acc, dc) => {
       const fee = parseFloat(dc.acf?.administrative_fee) || 0;
       if (fee > 0) {
-        const key = dc.acf?.is_charged ? 'doorbelast' : 'notDoorbelast';
+        const key = (dc.acf?.is_charged && !isDoorbelastException(dc.acf)) ? 'doorbelast' : 'notDoorbelast';
         acc[key] += fee;
       }
       return acc;

@@ -475,6 +475,11 @@ class Invoices extends Base {
 				continue; // Skip invalid cases
 			}
 
+			// Skip discipline cases for teams configured as charging exceptions.
+			if ( $this->is_discipline_case_charging_exception( $case_id ) ) {
+				continue;
+			}
+
 			$person_id = (int) get_field( 'person', $case_id );
 
 			if ( empty( $person_id ) ) {
@@ -539,6 +544,53 @@ class Invoices extends Base {
 				'errors'   => $errors,
 			]
 		);
+	}
+
+	/**
+	 * Check whether a discipline case belongs to a team that is exempt from charging.
+	 *
+	 * @param int $case_id Discipline case post ID.
+	 * @return bool True when case should be treated as exception.
+	 */
+	private function is_discipline_case_charging_exception( int $case_id ): bool {
+		$vog_email    = new \Rondo\VOG\VOGEmail();
+		$exempt_teams = $vog_email->get_exempt_discipline_teams();
+		if ( empty( $exempt_teams ) ) {
+			return false;
+		}
+
+		$home_team = get_field( 'home_team', $case_id );
+		$away_team = get_field( 'away_team', $case_id );
+
+		$team_id = 0;
+		if ( is_numeric( $home_team ) && (int) $home_team > 0 ) {
+			$team_id = (int) $home_team;
+		} elseif ( is_numeric( $away_team ) && (int) $away_team > 0 ) {
+			$team_id = (int) $away_team;
+		}
+
+		if ( $team_id > 0 && in_array( $team_id, $exempt_teams, true ) ) {
+			return true;
+		}
+
+		// Fallback: match by team_name text when home/away team IDs are missing.
+		$team_name = get_field( 'team_name', $case_id );
+		if ( ! is_string( $team_name ) || '' === trim( $team_name ) ) {
+			return false;
+		}
+		$team_name = trim( wp_strip_all_tags( $team_name ) );
+
+		foreach ( $exempt_teams as $exempt_team_id ) {
+			$title = get_the_title( (int) $exempt_team_id );
+			if ( ! is_string( $title ) || '' === $title ) {
+				continue;
+			}
+			if ( 0 === strcasecmp( trim( $title ), $team_name ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
