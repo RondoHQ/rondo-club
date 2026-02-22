@@ -33,6 +33,7 @@ export default function DisciplineCasesList() {
   const [kaartFilter, setKaartFilter] = useState('');
   const [boeteFilter, setBoeteFilter] = useState('');
   const [teamFilter, setTeamFilter] = useState('');
+  const [excludeTeamFilter, setExcludeTeamFilter] = useState('');
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
   const { isVisible, toggle } = useColumnVisibility('tuchtzaken');
@@ -172,6 +173,20 @@ export default function DisciplineCasesList() {
       header: 'Team',
       filterType: FILTER_TYPES.SELECT,
       filterOptions: teamFilterOptions,
+      getFilterLabel: (val) => {
+        const opt = teamFilterOptions.find(o => o.value === val);
+        return opt ? opt.label : val;
+      },
+    }),
+    createColumn({
+      id: 'excludeTeam',
+      header: 'Uitsluiten team',
+      filterType: FILTER_TYPES.SELECT,
+      filterOptions: teamFilterOptions,
+      getFilterLabel: (val) => {
+        const opt = teamFilterOptions.find(o => o.value === val);
+        return opt ? opt.label : val;
+      },
     }),
     createColumn({
       id: 'doorbelast',
@@ -227,6 +242,10 @@ export default function DisciplineCasesList() {
         if ((acf.team_name || '') !== teamFilter) return false;
       }
 
+      if (excludeTeamFilter !== '') {
+        if ((acf.team_name || '') === excludeTeamFilter) return false;
+      }
+
       if (doorbelastFilter !== '') {
         const isNVT = isDoorbelastNVT(acf);
         if (doorbelastFilter === 'nvt' && !isNVT) return false;
@@ -257,14 +276,15 @@ export default function DisciplineCasesList() {
 
       return true;
     });
-  }, [cases, persoonFilter, teamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter, personMap]);
+  }, [cases, persoonFilter, teamFilter, excludeTeamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter, personMap]);
 
-  const hasActiveFilters = !!(persoonFilter || teamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter);
-  const activeFilterCount = [persoonFilter, teamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter].filter(Boolean).length;
+  const hasActiveFilters = !!(persoonFilter || teamFilter || excludeTeamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter);
+  const activeFilterCount = [persoonFilter, teamFilter, excludeTeamFilter, doorbelastFilter, sanctieFilter, kaartFilter, boeteFilter].filter(Boolean).length;
 
   const clearFilters = () => {
     setPersoonFilter('');
     setTeamFilter('');
+    setExcludeTeamFilter('');
     setDoorbelastFilter('');
     setSanctieFilter('');
     setKaartFilter('');
@@ -274,6 +294,7 @@ export default function DisciplineCasesList() {
   const setFilter = (colId, value) => {
     if (colId === 'persoon') setPersoonFilter(value || '');
     else if (colId === 'team') setTeamFilter(value || '');
+    else if (colId === 'excludeTeam') setExcludeTeamFilter(value || '');
     else if (colId === 'doorbelast') setDoorbelastFilter(value || '');
     else if (colId === 'sanctie') setSanctieFilter(value || '');
     else if (colId === 'kaart') setKaartFilter(value || '');
@@ -325,7 +346,7 @@ export default function DisciplineCasesList() {
         {/* Client-side filter toolbar */}
         <DataTableToolbar
           columns={filterColumns}
-          filters={{ persoon: persoonFilter, team: teamFilter, doorbelast: doorbelastFilter, sanctie: sanctieFilter, kaart: kaartFilter, boete: boeteFilter }}
+          filters={{ persoon: persoonFilter, team: teamFilter, excludeTeam: excludeTeamFilter, doorbelast: doorbelastFilter, sanctie: sanctieFilter, kaart: kaartFilter, boete: boeteFilter }}
           onFilterChange={setFilter}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
@@ -366,7 +387,7 @@ export default function DisciplineCasesList() {
               Geen tuchtzaken gevonden
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              {selectedSeasonId || persoonFilter || teamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter
+              {selectedSeasonId || persoonFilter || teamFilter || excludeTeamFilter || doorbelastFilter || sanctieFilter || kaartFilter || boeteFilter
                 ? 'Pas de filters aan om meer resultaten te zien.'
                 : 'Er zijn momenteel geen tuchtzaken.'}
             </p>
