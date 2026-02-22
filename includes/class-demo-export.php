@@ -33,6 +33,7 @@ class DemoExport {
 		'commissie'       => [],
 		'discipline_case' => [],
 		'todo'            => [],
+		'invoice'         => [],
 	];
 
 	/**
@@ -87,6 +88,9 @@ class DemoExport {
 		WP_CLI::log( 'Exporting discipline cases...' );
 		$discipline_cases = $this->export_discipline_cases();
 
+		WP_CLI::log( 'Exporting invoices...' );
+		$invoices = $this->export_invoices();
+
 		WP_CLI::log( 'Exporting todos...' );
 		$todos = $this->export_todos();
 
@@ -110,6 +114,7 @@ class DemoExport {
 				'teams'            => count( $teams ),
 				'commissies'       => count( $commissies ),
 				'discipline_cases' => count( $discipline_cases ),
+				'invoices'         => count( $invoices ),
 				'todos'            => count( $todos ),
 				'comments'         => count( $comments ),
 			],
@@ -122,6 +127,7 @@ class DemoExport {
 			'teams'            => $teams,
 			'commissies'       => $commissies,
 			'discipline_cases' => $discipline_cases,
+			'invoices'         => $invoices,
 			'todos'            => $todos,
 			'comments'         => $comments,
 			'taxonomies'       => $taxonomies,
@@ -158,15 +164,17 @@ class DemoExport {
 		$this->build_ref_map_for_type( 'commissie', [ 'publish', 'draft', 'private' ] );
 		$this->build_ref_map_for_type( 'discipline_case', 'any' );
 		$this->build_ref_map_for_type( 'rondo_todo', [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ], 'todo' );
+		$this->build_ref_map_for_type( 'rondo_invoice', [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ], 'invoice' );
 
 		WP_CLI::log(
 			sprintf(
-				'Reference maps built: %d people, %d teams, %d commissies, %d discipline cases, %d todos',
+				'Reference maps built: %d people, %d teams, %d commissies, %d discipline cases, %d todos, %d invoices',
 				count( $this->ref_maps['person'] ),
 				count( $this->ref_maps['team'] ),
 				count( $this->ref_maps['commissie'] ),
 				count( $this->ref_maps['discipline_case'] ),
-				count( $this->ref_maps['todo'] )
+				count( $this->ref_maps['todo'] ),
+				count( $this->ref_maps['invoice'] )
 			)
 		);
 	}
@@ -465,10 +473,13 @@ class DemoExport {
 	 * @return array Object with post meta fields.
 	 */
 	private function export_person_post_meta( $post_id ) {
+		$exclude_from_contributie = get_post_meta( $post_id, '_exclude_from_contributie', true );
+
 		$post_meta = [
-			'vog_email_sent_date'      => $this->normalize_value( get_post_meta( $post_id, 'vog_email_sent_date', true ) ),
-			'vog_justis_submitted_date' => $this->normalize_value( get_post_meta( $post_id, 'vog_justis_submitted_date', true ) ),
-			'vog_reminder_sent_date'   => $this->normalize_value( get_post_meta( $post_id, 'vog_reminder_sent_date', true ) ),
+			'vog_email_sent_date'        => $this->normalize_value( get_post_meta( $post_id, 'vog_email_sent_date', true ) ),
+			'vog_justis_submitted_date'  => $this->normalize_value( get_post_meta( $post_id, 'vog_justis_submitted_date', true ) ),
+			'vog_reminder_sent_date'     => $this->normalize_value( get_post_meta( $post_id, 'vog_reminder_sent_date', true ) ),
+			'_exclude_from_contributie'  => '' !== $exclude_from_contributie ? (bool) $exclude_from_contributie : null,
 		];
 
 		// Scan for dynamic meta keys (nikki, fee snapshots/forecasts).
@@ -1008,6 +1019,138 @@ class DemoExport {
 	}
 
 	/**
+	 * Export invoices (discipline case invoices and membership/contributie invoices)
+	 *
+	 * @return array Array of invoice objects.
+	 */
+	protected function export_invoices() {
+		$posts = get_posts(
+			[
+				'post_type'    => 'rondo_invoice',
+				'numberposts'  => -1,
+				'post_status'  => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+				'orderby'      => 'ID',
+				'order'        => 'ASC',
+			]
+		);
+
+		$invoices = [];
+		$seq      = 1;
+
+		foreach ( $posts as $post ) {
+			$invoice_type = get_field( 'invoice_type', $post->ID );
+
+			// Get person reference
+			$person_field = get_field( 'person', $post->ID );
+			$person_id    = null;
+			if ( is_object( $person_field ) && isset( $person_field->ID ) ) {
+				$person_id = (int) $person_field->ID;
+			} elseif ( is_numeric( $person_field ) ) {
+				$person_id = (int) $person_field;
+			}
+			$person_ref = $person_id ? $this->get_ref( $person_id, 'person' ) : null;
+
+			// Get line items, resolving discipline_case refs
+			$raw_line_items = get_field( 'line_items', $post->ID );
+			$line_items     = [];
+			if ( is_array( $raw_line_items ) ) {
+				foreach ( $raw_line_items as $item ) {
+					$dc_field = $item['discipline_case'] ?? null;
+					$dc_id    = null;
+					if ( is_object( $dc_field ) && isset( $dc_field->ID ) ) {
+						$dc_id = (int) $dc_field->ID;
+					} elseif ( is_numeric( $dc_field ) ) {
+						$dc_id = (int) $dc_field;
+					}
+
+					$dc_ref = $dc_id ? $this->get_ref( $dc_id, 'discipline_case' ) : null;
+
+					// Skip line items whose discipline_case cannot be resolved
+					if ( null === $dc_ref && $dc_id ) {
+						continue;
+					}
+
+					$line_items[] = [
+						'discipline_case' => $dc_ref,
+						'description'     => $item['description'] ?? null,
+						'amount'          => (float) ( $item['amount'] ?? 0 ),
+					];
+				}
+			}
+
+			// Anonymize total_amount to realistic range
+			if ( 'membership' === $invoice_type ) {
+				$total_amount = (float) mt_rand( 50, 300 );
+			} else {
+				$total_amount = (float) mt_rand( 10, 100 );
+			}
+
+			// Get seizoen taxonomy term slug
+			$seizoen       = null;
+			$seizoen_terms = wp_get_post_terms( $post->ID, 'seizoen' );
+			if ( ! empty( $seizoen_terms ) && ! is_wp_error( $seizoen_terms ) ) {
+				$seizoen = $seizoen_terms[0]->slug;
+			}
+
+			// Export installment meta
+			$installment_plan  = get_post_meta( $post->ID, '_installment_plan', true );
+			$installment_count = (int) get_post_meta( $post->ID, '_installment_count', true );
+			$invoice_season    = get_post_meta( $post->ID, '_invoice_season', true );
+
+			$installments = [];
+			if ( $installment_count > 0 ) {
+				// Split anonymized total evenly across installments
+				$base_per_installment = round( $total_amount / $installment_count, 2 );
+
+				for ( $n = 1; $n <= $installment_count; $n++ ) {
+					$installments[ $n ] = [
+						'amount'    => $base_per_installment,
+						'admin_fee' => (float) get_post_meta( $post->ID, "_installment_{$n}_admin_fee", true ),
+						'status'    => get_post_meta( $post->ID, "_installment_{$n}_status", true ),
+						'due_date'  => get_post_meta( $post->ID, "_installment_{$n}_due_date", true ),
+					];
+				}
+			}
+
+			// Demo invoice number (DEMO-YEAR-SEQ)
+			$year         = gmdate( 'Y' );
+			$invoice_number = sprintf( 'DEMO-%d-%04d', $year, $seq++ );
+
+			$invoice = [
+				'_ref'           => $this->get_ref( $post->ID, 'invoice' ),
+				'title'          => $invoice_number,
+				'status'         => $post->post_status,
+				'acf'            => [
+					'invoice_number' => $invoice_number,
+					'invoice_type'   => $invoice_type,
+					'person'         => $person_ref,
+					'status'         => get_field( 'status', $post->ID ),
+					'total_amount'   => $total_amount,
+					'sent_date'      => $this->normalize_value( get_field( 'sent_date', $post->ID ) ),
+					'due_date'       => $this->normalize_value( get_field( 'due_date', $post->ID ) ),
+					'line_items'     => $line_items,
+					'payment_link'   => null,
+					'pdf_path'       => null,
+					'qr_code_path'   => null,
+				],
+				'post_meta'      => [
+					'_installment_plan'  => $this->normalize_value( $installment_plan ),
+					'_installment_count' => $installment_count > 0 ? $installment_count : null,
+					'_invoice_season'    => $this->normalize_value( $invoice_season ),
+					'_installments'      => $installments,
+				],
+				'seizoen'        => $seizoen,
+			];
+
+			$invoices[] = $invoice;
+		}
+
+		WP_CLI::log( sprintf( '  Exported %d invoices', count( $invoices ) ) );
+
+		return $invoices;
+	}
+
+	/**
 	 * Export todos
 	 *
 	 * @return array Array of todo objects.
@@ -1368,6 +1511,64 @@ class DemoExport {
 		}
 		if ( ! empty( $settings['rondo_vog_reminder_template_renewal'] ) ) {
 			$settings['rondo_vog_reminder_template_renewal'] = '<p>Dit is een demo e-mailtemplate.</p>';
+		}
+
+		// Finance configuration settings (non-sensitive)
+		$settings['rondo_finance_org_name']     = 'Demo Club';
+		$settings['rondo_finance_org_address']  = 'Sportlaan 1, 1234 AB Amsterdam';
+		$settings['rondo_finance_contact_email'] = 'penningmeester@rondo-demo.nl';
+		$settings['rondo_finance_iban']          = 'NL00DEMO0000000000';
+
+		$payment_term_days = get_option( 'rondo_finance_payment_term_days' );
+		if ( false !== $payment_term_days ) {
+			$settings['rondo_finance_payment_term_days'] = (int) $payment_term_days;
+		}
+
+		$payment_clause = get_option( 'rondo_finance_payment_clause' );
+		if ( false !== $payment_clause ) {
+			$settings['rondo_finance_payment_clause'] = $payment_clause;
+		}
+
+		$membership_payment_clause = get_option( 'rondo_finance_membership_payment_clause' );
+		if ( false !== $membership_payment_clause ) {
+			$settings['rondo_finance_membership_payment_clause'] = $membership_payment_clause;
+		}
+
+		// Email templates: replace with demo placeholders
+		$settings['rondo_finance_email_template']              = '<p>Dit is een demo e-mailtemplate voor facturen.</p>';
+		$settings['rondo_finance_membership_email_template']   = '<p>Dit is een demo e-mailtemplate voor contributie.</p>';
+		$settings['rondo_finance_installment_email_template']  = '<p>Dit is een demo e-mailtemplate voor termijnen.</p>';
+		$settings['rondo_finance_reminder_1_email_template']   = '<p>Dit is een demo herinnering.</p>';
+		$settings['rondo_finance_reminder_2_email_template']   = '<p>Dit is een demo tweede herinnering.</p>';
+
+		$accent_color = get_option( 'rondo_finance_accent_color' );
+		if ( false !== $accent_color ) {
+			$settings['rondo_finance_accent_color'] = $accent_color;
+		}
+
+		$admin_fee = get_option( 'rondo_finance_admin_fee' );
+		if ( false !== $admin_fee ) {
+			$settings['rondo_finance_admin_fee'] = (float) $admin_fee;
+		}
+
+		$installment_admin_fee = get_option( 'rondo_finance_installment_admin_fee' );
+		if ( false !== $installment_admin_fee ) {
+			$settings['rondo_finance_installment_admin_fee'] = (float) $installment_admin_fee;
+		}
+
+		// Active payment provider: always set to mollie for demo
+		$settings['rondo_finance_active_payment_provider'] = 'mollie';
+
+		// Capability maps
+		$functie_map  = get_option( 'rondo_functie_capability_map' );
+		$commissie_map = get_option( 'rondo_commissie_capability_map' );
+
+		if ( false !== $functie_map ) {
+			$settings['rondo_functie_capability_map'] = $functie_map;
+		}
+
+		if ( false !== $commissie_map ) {
+			$settings['rondo_commissie_capability_map'] = $commissie_map;
 		}
 
 		WP_CLI::log( sprintf( '  Exported settings (%d fee configs, %d family discount configs)', $fee_config_count, $discount_config_count ) );
