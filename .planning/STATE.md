@@ -92,4 +92,4 @@ Resume file: None
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-22 — Quick task 112: demo export/import updated with invoice and finance settings support*
+*Last updated: 2026-02-22 — Quick task 113: AWC team column and filter on tuchtzaken page*
