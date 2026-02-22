@@ -2784,8 +2784,9 @@ class Api extends Base {
 			$person = get_post( $person_id );
 			if ( $person && 'person' === $person->post_type ) {
 				$first              = get_field( 'first_name', $person_id ) ?: '';
+				$infix              = get_field( 'infix', $person_id ) ?: '';
 				$last               = get_field( 'last_name', $person_id ) ?: '';
-				$linked_person_name = trim( $first . ' ' . $last ) ?: null;
+				$linked_person_name = implode( ' ', array_filter( [ $first, $infix, $last ] ) ) ?: null;
 				$linked_person_photo = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
 
 				$work_history = get_field( 'work_history', $person_id ) ?: [];
@@ -2869,8 +2870,9 @@ class Api extends Base {
 				$person = get_post( $linked_person_id );
 				if ( $person && 'person' === $person->post_type ) {
 					$first              = get_field( 'first_name', $linked_person_id ) ?: '';
+					$infix              = get_field( 'infix', $linked_person_id ) ?: '';
 					$last               = get_field( 'last_name', $linked_person_id ) ?: '';
-					$linked_person_name = trim( $first . ' ' . $last );
+					$linked_person_name = implode( ' ', array_filter( [ $first, $infix, $last ] ) );
 				}
 			}
 
