@@ -20,7 +20,8 @@ const EMAIL_SUB_TABS = [
   { id: 'boetes', label: 'Boetes' },
   { id: 'contributie', label: 'Contributie' },
   { id: 'termijnen', label: 'Termijnen' },
-  { id: 'herinneringen', label: 'Herinneringen' },
+  { id: 'herinneringen', label: 'Termijnherinneringen' },
+  { id: 'factuur_herinneringen', label: 'Factuurherinneringen' },
 ];
 
 /**
@@ -152,6 +153,8 @@ export default function FinanceSettings() {
     installment_email_template: '',
     reminder_1_email_template: '',
     reminder_2_email_template: '',
+    invoice_reminder_1_email_template: '',
+    invoice_reminder_2_email_template: '',
     club_logo_id: 0,
     club_logo_url: '',
     accent_color: '',
@@ -187,6 +190,8 @@ export default function FinanceSettings() {
         installment_email_template: settings.installment_email_template || '',
         reminder_1_email_template: settings.reminder_1_email_template || '',
         reminder_2_email_template: settings.reminder_2_email_template || '',
+        invoice_reminder_1_email_template: settings.invoice_reminder_1_email_template || '',
+        invoice_reminder_2_email_template: settings.invoice_reminder_2_email_template || '',
         club_logo_id: settings.club_logo_id || 0,
         club_logo_url: settings.club_logo_url || '',
         accent_color: settings.accent_color || '',
@@ -287,6 +292,8 @@ export default function FinanceSettings() {
         installment_email_template: formData.installment_email_template,
         reminder_1_email_template: formData.reminder_1_email_template,
         reminder_2_email_template: formData.reminder_2_email_template,
+        invoice_reminder_1_email_template: formData.invoice_reminder_1_email_template,
+        invoice_reminder_2_email_template: formData.invoice_reminder_2_email_template,
         club_logo_id: formData.club_logo_id,
         accent_color: formData.accent_color,
         bcc_email: formData.bcc_email,
@@ -781,7 +788,7 @@ export default function FinanceSettings() {
             </div>
           )}
 
-          {/* Herinneringen templates */}
+          {/* Termijnherinneringen templates */}
           {emailSubTab === 'herinneringen' && (
             <div className="card p-6">
               <div className="mb-6">
@@ -835,6 +842,68 @@ export default function FinanceSettings() {
                   <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
                   <div><code>{'{vervaldatum}'}</code> - Vervaldatum van de termijn</div>
                   <div><code>{'{dagen_te_laat}'}</code> - Aantal dagen te laat</div>
+                  <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
+              </p>
+            </div>
+          )}
+
+          {/* Factuurherinneringen templates */}
+          {emailSubTab === 'factuur_herinneringen' && (
+            <div className="card p-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Herinneringen voor facturen zonder betaalplan</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Deze herinneringen worden automatisch verstuurd aan leden die hun contributiefactuur hebben ontvangen maar nog geen betaalwijze hebben gekozen.
+                </p>
+              </div>
+
+              {/* Reminder 1 — 14 days */}
+              <div className="space-y-4 mb-8">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Eerste herinnering</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Wordt verstuurd 2 weken na de factuurdatum.
+                  </p>
+                  <RichTextEditor
+                    value={formData.invoice_reminder_1_email_template}
+                    onChange={(html) => setFormData(prev => ({ ...prev, invoice_reminder_1_email_template: html }))}
+                    placeholder="Schrijf hier het template voor de eerste factuurherinnering..."
+                    minHeight="200px"
+                  />
+                </div>
+              </div>
+
+              {/* Reminder 2 — 28 days */}
+              <div className="space-y-4 mb-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Tweede herinnering</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Wordt verstuurd 4 weken na de factuurdatum. De penningmeester ontvangt een BCC.
+                  </p>
+                  <RichTextEditor
+                    value={formData.invoice_reminder_2_email_template}
+                    onChange={(html) => setFormData(prev => ({ ...prev, invoice_reminder_2_email_template: html }))}
+                    placeholder="Schrijf hier het template voor de tweede factuurherinnering..."
+                    minHeight="200px"
+                  />
+                </div>
+              </div>
+
+              {/* Available variables */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
+                <p className="font-semibold mb-2">Beschikbare variabelen:</p>
+                <div className="space-y-1 font-mono">
+                  <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
+                  <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
+                  <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
+                  <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
+                  <div><code>{'{betaallink}'}</code> - Link naar betaalpagina</div>
+                  <div><code>{'{factuurdatum}'}</code> - Datum van de originele factuur</div>
+                  <div><code>{'{dagen_sinds_factuur}'}</code> - Aantal dagen sinds factuurdatum</div>
                   <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                 </div>
               </div>
