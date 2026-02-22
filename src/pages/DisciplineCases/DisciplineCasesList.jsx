@@ -342,33 +342,7 @@ export default function DisciplineCasesList() {
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-gradient">
-              Tuchtzaken
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Overzicht van tuchtrechtelijke procedures en dossiers
-            </p>
-          </div>
-
-          {/* Season filter (server-side — kept separate from client-side toolbar) */}
-          <select
-            value={selectedSeasonId ?? ''}
-            onChange={handleSeasonChange}
-            className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-          >
-            <option value="">Alle seizoenen</option>
-            {seasons.map((season) => (
-              <option key={season.id} value={season.id}>
-                {season.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      <div className="space-y-6">
         {/* Client-side filter toolbar */}
         <DataTableToolbar
           columns={filterColumns}
@@ -378,6 +352,20 @@ export default function DisciplineCasesList() {
           hasActiveFilters={hasActiveFilters}
           activeFilterCount={activeFilterCount}
           onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+          toolbarEnd={(
+            <select
+              value={selectedSeasonId ?? ''}
+              onChange={handleSeasonChange}
+              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+            >
+              <option value="">Alle seizoenen</option>
+              {seasons.map((season) => (
+                <option key={season.id} value={season.id}>
+                  {season.name}
+                </option>
+              ))}
+            </select>
+          )}
         />
 
         {/* Error state */}

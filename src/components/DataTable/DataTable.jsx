@@ -164,8 +164,9 @@ export default function DataTable({
       />
 
       <div
-        className={`card overflow-x-auto overscroll-x-contain ${className}`}
+        className={`card !overflow-x-auto overscroll-x-contain ${className}`}
         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+        data-horizontal-scroll="true"
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-64">

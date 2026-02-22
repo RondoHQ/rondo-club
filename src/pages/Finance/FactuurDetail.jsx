@@ -419,7 +419,11 @@ export default function FactuurDetail() {
       {/* Line items table */}
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Regels</h2>
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto"
+          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+          data-horizontal-scroll="true"
+        >
           <table className="w-full">
             <thead className="border-b border-gray-200 dark:border-gray-700">
               <tr>
@@ -474,7 +478,11 @@ export default function FactuurDetail() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Termijnen ({getPlanLabel(invoice.installment_plan, invoice.installment_count)})
           </h2>
-          <div className="overflow-x-auto">
+          <div
+            className="overflow-x-auto"
+            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+            data-horizontal-scroll="true"
+          >
             <table className="w-full">
               <thead className="border-b border-gray-200 dark:border-gray-700">
                 <tr>

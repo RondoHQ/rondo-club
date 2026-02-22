@@ -528,9 +528,11 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path.startsWith('/financien/facturen')) return 'Facturen';
     if (path.startsWith('/contributie')) return 'Contributie';
     if (path.startsWith('/vog')) return 'VOG';
+    if (path.startsWith('/tuchtzaken')) return 'Tuchtzaken';
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/todos')) return 'Taken';
+    if (path.startsWith('/feedback')) return 'Feedback';
     if (path.startsWith('/settings')) return 'Instellingen';
     if (path.startsWith('/profile')) return 'Profiel';
     return '';

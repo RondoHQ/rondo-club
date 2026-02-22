@@ -377,8 +377,12 @@ class Feedback extends Base {
 
 		// Determine default status: admins get 'approved', regular users get 'new'
 		$default_status = current_user_can( 'manage_options' ) ? 'approved' : 'new';
-		update_field( 'status', $request->get_param( 'status' ) ?? $default_status, $post_id );
+		$initial_status = $request->get_param( 'status' ) ?? $default_status;
+		update_field( 'status', $initial_status, $post_id );
 		update_field( 'priority', $request->get_param( 'priority' ) ?? 'medium', $post_id );
+		if ( $initial_status === 'resolved' ) {
+			update_post_meta( $post_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
+		}
 
 		// Optional context fields
 		$browser_info = $request->get_param( 'browser_info' );
@@ -467,6 +471,7 @@ class Feedback extends Base {
 		}
 
 		$is_admin = current_user_can( 'manage_options' );
+		$current_status = get_field( 'status', $feedback_id ) ?: 'new';
 
 		// Check field-level permissions for status and priority
 		$new_status = $request->get_param( 'status' );
@@ -537,6 +542,11 @@ class Feedback extends Base {
 
 		if ( $new_status !== null ) {
 			update_field( 'status', $new_status, $feedback_id );
+			if ( $new_status === 'resolved' && $current_status !== 'resolved' ) {
+				update_post_meta( $feedback_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
+			} elseif ( $new_status !== 'resolved' && $current_status === 'resolved' ) {
+				delete_post_meta( $feedback_id, '_feedback_resolved_at' );
+			}
 		}
 
 		if ( $new_priority !== null ) {
@@ -789,11 +799,12 @@ class Feedback extends Base {
 				'steps_to_reproduce' => $this->sanitize_text( get_field( 'steps_to_reproduce', $post->ID ) ?: '' ),
 				'expected_behavior'  => $this->sanitize_text( get_field( 'expected_behavior', $post->ID ) ?: '' ),
 				'actual_behavior'    => $this->sanitize_text( get_field( 'actual_behavior', $post->ID ) ?: '' ),
-				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
-				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
-				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
-				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
-				'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',
+					'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
+					'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
+					'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
+					'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
+					'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
+					'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',
 			],
 		];
 	}

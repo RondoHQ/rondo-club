@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
+import { Building2, Filter, X, CheckSquare, Square, MinusSquare, Check, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -201,7 +201,7 @@ function OrganizationListView({ commissies, listViewFields, selectedIds, onToggl
 }
 
 export default function CommissiesList() {
-  const [search, setSearch] = useState('');
+  const [commissieFilter, setCommissieFilter] = useState('');
   const [ownershipFilter, setOwnershipFilter] = useState(''); // '' = all, 'mine', 'shared'
   const [memberCountFilter, setMemberCountFilter] = useState('');
   const [sortField, setSortField] = useState('name');
@@ -266,9 +266,9 @@ export default function CommissiesList() {
   const handleCancelEdit = () => setEditingRowId(null);
 
   const { data: commissies, isLoading, error } = useQuery({
-    queryKey: ['commissies', search],
+    queryKey: ['commissies'],
     queryFn: async () => {
-      const response = await wpApi.getCommissies({ search, per_page: 100 });
+      const response = await wpApi.getCommissies({ per_page: 100 });
       return response.data;
     },
   });
@@ -287,21 +287,28 @@ export default function CommissiesList() {
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
 
-  const hasActiveFilters = !!(ownershipFilter || memberCountFilter);
-  const activeFilterCount = [ownershipFilter, memberCountFilter].filter(Boolean).length;
+  const hasActiveFilters = !!(commissieFilter || ownershipFilter || memberCountFilter);
+  const activeFilterCount = [commissieFilter, ownershipFilter, memberCountFilter].filter(Boolean).length;
 
   const clearFilters = () => {
+    setCommissieFilter('');
     setOwnershipFilter('');
     setMemberCountFilter('');
   };
 
   const setFilter = (colId, value) => {
-    if (colId === 'ownership') setOwnershipFilter(value || '');
+    if (colId === 'commissie') setCommissieFilter(value || '');
+    else if (colId === 'ownership') setOwnershipFilter(value || '');
     else if (colId === 'member_count_filter') setMemberCountFilter(value || '');
   };
 
   // Column definitions for the filter toolbar
   const filterColumns = useMemo(() => [
+    createColumn({
+      id: 'commissie',
+      header: 'Commissie',
+      filterType: FILTER_TYPES.TEXT,
+    }),
     createColumn({
       id: 'ownership',
       header: 'Eigenaar',
@@ -344,13 +351,17 @@ export default function CommissiesList() {
 
     let filtered = [...commissies];
 
+    if (commissieFilter) {
+      const needle = commissieFilter.toLowerCase();
+      filtered = filtered.filter(c => getCommissieName(c).toLowerCase().includes(needle));
+    }
     if (ownershipFilter === 'mine') filtered = filtered.filter(c => c.author === currentUserId);
     else if (ownershipFilter === 'shared') filtered = filtered.filter(c => c.author !== currentUserId);
     if (memberCountFilter === 'heeft') filtered = filtered.filter(c => (c.member_count ?? 0) > 0);
     else if (memberCountFilter === 'geen') filtered = filtered.filter(c => (c.member_count ?? 0) === 0);
 
     return filtered;
-  }, [commissies, ownershipFilter, memberCountFilter, currentUserId]);
+  }, [commissies, commissieFilter, ownershipFilter, memberCountFilter, currentUserId]);
 
   const sortedCommissies = useMemo(() => {
     if (!filteredCommissies) return [];
@@ -412,34 +423,20 @@ export default function CommissiesList() {
 
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [ownershipFilter, memberCountFilter, commissies]);
+  }, [commissieFilter, ownershipFilter, memberCountFilter, commissies]);
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-4">
-        {/* Header: search + filter toolbar */}
-        <div className="space-y-2">
-          <div className="relative max-w-md">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
-            <input
-              type="search"
-              placeholder="Commissies zoeken..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input pl-3 pr-9"
-            />
-          </div>
-
-          <DataTableToolbar
-            columns={filterColumns}
-            filters={{ ownership: ownershipFilter, member_count_filter: memberCountFilter }}
-            onFilterChange={setFilter}
-            onClearFilters={clearFilters}
-            hasActiveFilters={hasActiveFilters}
-            activeFilterCount={activeFilterCount}
-            onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
-          />
-        </div>
+        <DataTableToolbar
+          columns={filterColumns}
+          filters={{ commissie: commissieFilter, ownership: ownershipFilter, member_count_filter: memberCountFilter }}
+          onFilterChange={setFilter}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          activeFilterCount={activeFilterCount}
+          onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
+        />
 
         {/* Loading */}
         {isLoading && (
@@ -463,7 +460,7 @@ export default function CommissiesList() {
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-50 mb-1">Geen commissies gevonden</h3>
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {search ? 'Probeer een andere zoekopdracht.' : 'Commissies worden via de API of data import toegevoegd.'}
+              Commissies worden via de API of data import toegevoegd.
             </p>
           </div>
         )}
