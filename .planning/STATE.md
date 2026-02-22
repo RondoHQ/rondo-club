@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 
 Milestone: v30.0 User Accounts & Profiles — ARCHIVED
 Status: Milestone complete and archived — git tag v30.0 created
-Last activity: 2026-02-22 - Completed quick task 115: Add exclude team filter on tuchtzaken page
+Last activity: 2026-02-22 - Completed quick task 116: Bulk create invoices from selected tuchtzaken
 
 Next: `/gsd:new-milestone` to plan next milestone
 
@@ -83,15 +83,16 @@ Recent decisions affecting v30.0:
 | 113 | Add AWC team column and filter to tuchtzaken list | 2026-02-22 | f5c53c68 | [113-add-awc-team-column-and-filter-to-tuchtz](./quick/113-add-awc-team-column-and-filter-to-tuchtz/) |
 | 114 | Prefix numeric team names with speeldag on tuchtzaken | 2026-02-22 | b9a9e6ca | [114-prefix-numeric-team-names-with-speeldag-](./quick/114-prefix-numeric-team-names-with-speeldag-/) |
 | 115 | Add exclude team filter on tuchtzaken page | 2026-02-22 | 87eea749 | [115-add-exclude-team-filter-on-tuchtzaken-pa](./quick/115-add-exclude-team-filter-on-tuchtzaken-pa/) |
+| 116 | Bulk create invoices from selected tuchtzaken | 2026-02-22 | 2ce6d17e | [116-bulk-create-invoices-from-selected-tucht](./quick/116-bulk-create-invoices-from-selected-tucht/) |
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed Quick Task 115 — Add exclude team filter on tuchtzaken page
+Stopped at: Completed Quick Task 116 — Bulk create invoices from selected tuchtzaken
 Resume file: None
 
 **Next action:** v30.0 milestone complete — plan next milestone
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-02-22 — Quick task 115: Add exclude team filter on tuchtzaken page*
+*Last updated: 2026-02-22 — Quick task 116: Bulk create invoices from selected tuchtzaken*
