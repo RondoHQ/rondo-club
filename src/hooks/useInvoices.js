@@ -231,6 +231,45 @@ export function useResetPaymentState() {
 }
 
 /**
+ * Get all discipline case IDs that already have invoices (across all persons)
+ * @param {object} options - TanStack Query options
+ * @returns {object} Query result with array of invoiced case IDs
+ */
+export function useAllInvoicedCaseIds(options = {}) {
+  return useQuery({
+    queryKey: ['invoiced-case-ids', 'all'],
+    queryFn: async () => {
+      const response = await prmApi.getAllInvoicedCaseIds();
+      return response.data.case_ids;
+    },
+    staleTime: 30000, // 30 seconds
+    ...options,
+  });
+}
+
+/**
+ * Bulk create invoices from an array of discipline case IDs
+ * Groups by person — one invoice per person.
+ * @returns {object} Mutation object for bulk invoice creation
+ */
+export function useBulkCreateInvoices() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (caseIds) => {
+      const response = await prmApi.bulkCreateInvoices(caseIds);
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate invoiced case IDs, all invoices, and person-specific invoices
+      queryClient.invalidateQueries({ queryKey: ['invoiced-case-ids'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
+    },
+  });
+}
+
+/**
  * Toggle installments disabled flag for a membership invoice
  * @returns {object} Mutation object
  */
