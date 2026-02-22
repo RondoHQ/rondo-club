@@ -97,6 +97,7 @@ export default function DisciplineCaseTable({
   isCreatingInvoice = false,
   canCreateInvoice = false,
   isColVisible = () => true,
+  formatTeamName = (name) => name || '-',
 }) {
   const [expandedId, setExpandedId] = useState(null);
   const [sortField, setSortField] = useState('match_date');
@@ -415,7 +416,7 @@ export default function DisciplineCaseTable({
                   {isColVisible('team') && (
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-900 dark:text-gray-100">
-                        {acf.team_name || '-'}
+                        {formatTeamName(acf.team_name)}
                       </span>
                     </td>
                   )}
@@ -503,7 +504,7 @@ export default function DisciplineCaseTable({
                             Team
                           </h4>
                           <p className="text-gray-600 dark:text-gray-400">
-                            {acf.team_name || '-'}
+                            {formatTeamName(acf.team_name)}
                           </p>
                         </div>
                         <div>

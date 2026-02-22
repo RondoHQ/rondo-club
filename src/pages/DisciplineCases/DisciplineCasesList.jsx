@@ -12,6 +12,12 @@ import { isDoorbelastNVT } from '@/utils/disciplineCases';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
+function getSpeeldag(activiteit) {
+  if (!activiteit) return '';
+  const parts = activiteit.split(/veld\s*-\s*/i);
+  return parts.length > 1 ? parts[parts.length - 1].trim() : activiteit;
+}
+
 export default function DisciplineCasesList() {
   const queryClient = useQueryClient();
 
@@ -104,12 +110,42 @@ export default function DisciplineCasesList() {
     return map;
   }, [personsData]);
 
-  // Derive dynamic team filter options from loaded cases
+  // Fetch all teams for speeldag lookup
+  const { data: teamsData } = useQuery({
+    queryKey: ['teams', 'all'],
+    queryFn: async () => {
+      const response = await wpApi.getTeams({ per_page: 100 });
+      return response.data;
+    },
+  });
+
+  // Build team title → speeldag map and format function
+  const formatTeamName = useMemo(() => {
+    const speeldagMap = new Map();
+    if (teamsData) {
+      teamsData.forEach(team => {
+        const speeldag = getSpeeldag(team.acf?.activiteit);
+        if (speeldag) {
+          speeldagMap.set(team.title?.rendered, speeldag);
+        }
+      });
+    }
+    return (name) => {
+      if (!name) return '-';
+      if (/^\d+$/.test(name.trim())) {
+        const speeldag = speeldagMap.get(name.trim());
+        if (speeldag) return `${speeldag} ${name.trim()}`;
+      }
+      return name;
+    };
+  }, [teamsData]);
+
+  // Derive dynamic team filter options from loaded cases (with formatted names)
   const teamFilterOptions = useMemo(() => {
     if (!cases) return [];
     const names = [...new Set(cases.map(dc => dc.acf?.team_name).filter(Boolean))].sort();
-    return names.map(name => ({ value: name, label: name }));
-  }, [cases]);
+    return names.map(name => ({ value: name, label: formatTeamName(name) }));
+  }, [cases, formatTeamName]);
 
   // Dynamic filter column definitions (depends on teamFilterOptions)
   const filterColumns = useMemo(() => [
@@ -301,6 +337,7 @@ export default function DisciplineCasesList() {
             personMap={personMap}
             isLoading={isLoading}
             isColVisible={isVisible}
+            formatTeamName={formatTeamName}
           />
         </div>
 
