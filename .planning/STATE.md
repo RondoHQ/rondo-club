@@ -11,7 +11,7 @@ See: .planning/PROJECT.md (updated 2026-02-21)
 
 Milestone: v30.0 User Accounts & Profiles — ARCHIVED
 Status: Milestone complete and archived — git tag v30.0 created
-Last activity: 2026-02-22 - Completed quick task 117: in the sitewide search function, allow searching for invoice numbers too
+Last activity: 2026-02-22 - Completed quick task 118: add reminder emails for contributie invoices without a payment plan
 
 Next: `/gsd:new-milestone` to plan next milestone
 
@@ -85,11 +85,12 @@ Recent decisions affecting v30.0:
 | 115 | Add exclude team filter on tuchtzaken page | 2026-02-22 | 87eea749 | [115-add-exclude-team-filter-on-tuchtzaken-pa](./quick/115-add-exclude-team-filter-on-tuchtzaken-pa/) |
 | 116 | Bulk create invoices from selected tuchtzaken | 2026-02-22 | 2ce6d17e | [116-bulk-create-invoices-from-selected-tucht](./quick/116-bulk-create-invoices-from-selected-tucht/) |
 | 117 | Invoice number search in sitewide search modal | 2026-02-22 | ca68558c | [117-in-the-sitewide-search-function-allow-se](./quick/117-in-the-sitewide-search-function-allow-se/) |
+| 118 | Add reminder emails for contributie invoices without a payment plan | 2026-02-22 | a577c542 | [118-add-reminder-emails-for-contributie-invo](./quick/118-add-reminder-emails-for-contributie-invo/) |
 
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed Quick Task 117 — Invoice number search in sitewide search modal
+Stopped at: Completed Quick Task 118 — Invoice reminder emails for contributie invoices without a payment plan
 Resume file: None
 
 **Next action:** v30.0 milestone complete — plan next milestone
