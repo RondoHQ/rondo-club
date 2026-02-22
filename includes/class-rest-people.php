@@ -544,7 +544,29 @@ class People extends Base {
 		}
 
 		// Expose provisioning status for admin AccountCard (Plan 205-02).
-		$data['linked_user_id']        = (int) get_post_meta( $post->ID, '_rondo_wp_user_id', true ) ?: null;
+		// Primary lookup: _rondo_wp_user_id post meta (set by UserProvisioning::provision()).
+		$linked_user_id = (int) get_post_meta( $post->ID, '_rondo_wp_user_id', true ) ?: 0;
+
+		// Fallback lookup: find a WP user with rondo_linked_person_id pointing to this person.
+		// This covers admins who linked themselves via Settings without going through provisioning,
+		// and any case where update_linked_person was called before the bidirectional fix.
+		if ( ! $linked_user_id ) {
+			$linked_users = get_users(
+				[
+					'meta_key'   => 'rondo_linked_person_id',
+					'meta_value' => $post->ID,
+					'number'     => 1,
+					'fields'     => 'ids',
+				]
+			);
+			if ( ! empty( $linked_users ) ) {
+				$linked_user_id = (int) $linked_users[0];
+				// Backfill the post meta so subsequent requests skip this lookup.
+				update_post_meta( $post->ID, \Rondo\Users\UserProvisioning::META_USER_ID, $linked_user_id );
+			}
+		}
+
+		$data['linked_user_id']        = $linked_user_id ?: null;
 		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
 
 		// Expose linked user roles for admin AccountCard.
