@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.0] - 2026-02-23
+
+### Added
+- New clothing management backend module with:
+  - `rondo_clothing_item` CPT for clothing catalog items.
+  - `rondo_clothing_txn` CPT for handout/return transactions.
+  - `clothing_category` taxonomy.
+  - New role `rondo_clothing_manager` and capability `manage_clothing`.
+  - New REST API endpoints under `/rondo/v1/clothing/*` for items, transactions, person profile, overview, export, and settings.
+- New frontend page `/kleding` with inventory metrics, item management, transaction registration, CSV export, and eligibility settings.
+- New `Kleding` tab on member detail pages showing eligibility, current items, history, and outstanding deposit.
+- Developer documentation for clothing feature and API in the docs site.
+
+### Changed
+- Current-user API (`GET /rondo/v1/user/me`) now returns `can_access_clothing`.
+- Access control now includes clothing post types and hides clothing data from users without `manage_clothing`.
+
 ## [30.9.18] - 2026-02-23
 
 ### Changed

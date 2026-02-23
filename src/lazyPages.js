@@ -25,3 +25,4 @@ export const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackMa
 export const Login = lazy(() => import('@/pages/Login'));
 export const Profile = lazy(() => import('@/pages/Profile/Profile'));
 export const MembershipPassScanner = lazy(() => import('@/pages/MembershipPassScanner'));
+export const ClothingPage = lazy(() => import('@/pages/Clothing/ClothingPage'));

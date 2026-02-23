@@ -3356,6 +3356,7 @@ class Api extends Base {
 				'can_access_vog'        => current_user_can( 'vog' ),
 				'can_access_financieel' => current_user_can( 'financieel' ),
 				'can_access_toegangscontrole' => current_user_can( 'toegangscontrole' ),
+				'can_access_clothing'   => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
 				'profile_url'           => $profile_url,
 				'admin_url'             => $admin_url,
 				'linked_person_name'    => $linked_person_name,

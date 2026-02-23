@@ -20,6 +20,7 @@ import {
   FinanceDashboard, Facturen, FactuurDetail, RelationshipTypes,
   CustomFields, Login, Profile,
   MembershipPassScanner,
+  ClothingPage,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -105,6 +106,14 @@ function FinancieelRoute({ children }) {
 function ToegangscontroleRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_toegangscontrole}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function ClothingRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_clothing}>
       {children}
     </CapabilityRoute>
   );
@@ -250,6 +259,14 @@ const router = createBrowserRouter([
           // Teams routes
           { path: 'teams', element: <TeamsList /> },
           { path: 'teams/:id', element: <TeamDetail /> },
+          {
+            path: 'kleding',
+            element: (
+              <ClothingRoute>
+                <ClothingPage />
+              </ClothingRoute>
+            ),
+          },
 
           // Commissies routes
           { path: 'commissies', element: <CommissiesList /> },

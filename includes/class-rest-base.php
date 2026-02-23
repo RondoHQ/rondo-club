@@ -61,6 +61,15 @@ abstract class Base {
 	}
 
 	/**
+	 * Check if the current user can manage clothing.
+	 *
+	 * @return bool True if user has clothing capability.
+	 */
+	public function check_clothing_permission() {
+		return current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
 	 * Check if user can access a person
 	 *
 	 * Permission callback for person-specific endpoints.

@@ -42,6 +42,7 @@ use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\REST\MembershipPasses as RESTMembershipPasses;
+use Rondo\REST\Clothing as RESTClothing;
 use Rondo\Calendar\Matcher;
 use Rondo\Calendar\CalDAVProvider;
 use Rondo\Sheets\GoogleOAuth;
@@ -168,6 +169,9 @@ if ( ! class_exists( 'RONDO_REST_Import_Export' ) ) {
 }
 if ( ! class_exists( 'RONDO_REST_Feedback' ) ) {
 	class_alias( RESTFeedback::class, 'RONDO_REST_Feedback' );
+}
+if ( ! class_exists( 'RONDO_REST_Clothing' ) ) {
+	class_alias( RESTClothing::class, 'RONDO_REST_Clothing' );
 }
 
 // Calendar classes
@@ -351,6 +355,7 @@ function rondo_init() {
 		new RESTFeedback();
 		new RESTInvoices();
 		new RESTMembershipPasses();
+		new RESTClothing();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
