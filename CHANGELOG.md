@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.4] - 2026-02-23
+
+### Fixed
+- `Lidpas Scanner` menu item is now consistently hidden on desktop for all users, including admins.
+
 ## [30.9.3] - 2026-02-23
 
 ### Changed
