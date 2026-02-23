@@ -507,7 +507,12 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
 }
 
 // Main FeeCategorySettings component
-export default function FeeCategorySettings() {
+export default function FeeCategorySettings({
+  membershipPaymentClause = '',
+  onMembershipPaymentClauseChange = null,
+  onSaveMembershipPaymentClause = null,
+  savingMembershipPaymentClause = false,
+}) {
   const queryClient = useQueryClient();
   const [selectedSeason, setSelectedSeason] = useState('current');
   const [editingSlug, setEditingSlug] = useState(null);
@@ -515,6 +520,7 @@ export default function FeeCategorySettings() {
   const [saveErrors, setSaveErrors] = useState([]);
   const [saveWarnings, setSaveWarnings] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [installmentAdminFee, setInstallmentAdminFee] = useState(0);
 
   // Fetch membership fee settings
   const { data, isLoading } = useQuery({
@@ -709,6 +715,10 @@ export default function FeeCategorySettings() {
   // Fetch billing settings for the active season
   const { data: billingSettings } = useBillingSettings(activeSeasonKey);
 
+  useEffect(() => {
+    setInstallmentAdminFee(Number(billingSettings?.installment_admin_fee ?? 0));
+  }, [billingSettings?.installment_admin_fee, activeSeasonKey]);
+
   // Billing settings mutation
   const billingMutation = useMutation({
     mutationFn: async (data) => {
@@ -868,7 +878,7 @@ export default function FeeCategorySettings() {
       {/* Header */}
       <div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-          Contributiecategorieën
+          Instellingen Contributie
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Configureer categorieën met bedragen en leeftijdsklassen per seizoen.
@@ -1006,6 +1016,63 @@ export default function FeeCategorySettings() {
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">8 termijnen beschikbaar</span>
               </label>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="installment_admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Administratiekosten termijnbetaling
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm pointer-events-none">&euro;</span>
+              <input
+                type="number"
+                id="installment_admin_fee"
+                value={installmentAdminFee}
+                onChange={(e) => setInstallmentAdminFee(Number(e.target.value))}
+                min="0"
+                step="0.01"
+                className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Extra administratiekosten per termijn bij betaling in meerdere termijnen. Deze instelling geldt alleen voor het gekozen seizoen.
+            </p>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => billingMutation.mutate({ season: activeSeasonKey, installment_admin_fee: installmentAdminFee })}
+                disabled={billingMutation.isPending || !activeSeasonKey}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {billingMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Opslaan termijnkosten
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="membership_payment_clause" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Betalingsclausule contributie
+            </label>
+            <textarea
+              id="membership_payment_clause"
+              value={membershipPaymentClause}
+              onChange={(e) => onMembershipPaymentClauseChange?.(e.target.value)}
+              placeholder="Tekst die onderaan de contributiefactuur wordt getoond"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
+            />
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={onSaveMembershipPaymentClause}
+                disabled={savingMembershipPaymentClause || !onSaveMembershipPaymentClause}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingMembershipPaymentClause && <Loader2 className="w-4 h-4 animate-spin" />}
+                Opslaan clausule
+              </button>
             </div>
           </div>
         </div>

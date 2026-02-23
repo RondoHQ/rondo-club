@@ -24,8 +24,8 @@ import {
   Receipt
 } from 'lucide-react';
 
-// Logo URL from theme directory
-const getLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/public/icons/rondo-logo.png`;
+// Logo URL from theme directory (SVG for crisp rendering and smaller payload)
+const getLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/favicon.svg`;
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
@@ -125,7 +125,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-          <img src={getLogoUrl()} alt="Rondo" className="w-16 h-16" />
+          <img src={getLogoUrl()} alt="Rondo" className="w-12 h-12 p-0.5 object-contain shrink-0" />
           <span className="text-brand-gradient">{getSiteName()}</span>
         </Link>
         {mobile && (

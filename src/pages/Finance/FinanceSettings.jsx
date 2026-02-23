@@ -9,7 +9,7 @@ import FeeCategorySettings from '@/pages/Settings/FeeCategorySettings';
 import SearchableMultiSelect from '@/components/SearchableMultiSelect';
 
 const TABS = [
-  { id: 'organization', label: 'Organisatie' },
+  { id: 'organization', label: 'Factuur' },
   { id: 'payment', label: 'Betaling' },
   { id: 'discipline', label: 'Tuchtzaken' },
   { id: 'contributie', label: 'Contributie' },
@@ -24,7 +24,7 @@ const EMAIL_SUB_TABS = [
   { id: 'contributie', label: 'Contributie' },
   { id: 'termijnen', label: 'Termijnen' },
   { id: 'herinneringen', label: 'Termijnherinneringen' },
-  { id: 'factuur_herinneringen', label: 'Factuurherinneringen' },
+  { id: 'factuur_herinneringen', label: 'Contributieherinneringen' },
 ];
 
 /**
@@ -162,7 +162,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     invoice_reminder_2_email_template: '',
     bcc_email: '',
     admin_fee: 0,
-    installment_admin_fee: 0,
     exempt_discipline_teams: [],
     rabobank_environment: 'sandbox',
     rabobank_client_id: '',
@@ -219,7 +218,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         invoice_reminder_2_email_template: settings.invoice_reminder_2_email_template || '',
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
-        installment_admin_fee: settings.installment_admin_fee || 0,
         exempt_discipline_teams: [],
         rabobank_environment: settings.rabobank_environment || 'sandbox',
         // Don't populate credentials from API for security
@@ -345,7 +343,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         invoice_reminder_2_email_template: formData.invoice_reminder_2_email_template,
         bcc_email: formData.bcc_email,
         admin_fee: parseFloat(formData.admin_fee) || 0,
-        installment_admin_fee: parseFloat(formData.installment_admin_fee) || 0,
         rabobank_environment: formData.rabobank_environment,
         active_payment_provider: formData.active_payment_provider,
         membership_pass_apple_cert_attachment_id: formData.membership_pass_apple_cert_attachment_id,
@@ -447,7 +444,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       {/* Section 1: Organization Details */}
       {activeTab === 'organization' && <div className="card p-6">
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Organisatiegegevens</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Factuurgegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Deze gegevens worden op facturen vermeld.
           </p>
@@ -549,52 +546,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
             />
           </div>
           <div>
-            <label htmlFor="installment_admin_fee" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Administratiekosten termijnbetaling
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-sm pointer-events-none">&euro;</span>
-              <input
-                type="number"
-                id="installment_admin_fee"
-                value={formData.installment_admin_fee}
-                onChange={(e) => setFormData(prev => ({ ...prev, installment_admin_fee: e.target.value }))}
-                min="0"
-                step="0.01"
-                className="w-full pl-7 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-              />
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Extra administratiekosten per termijn bij betaling in meerdere termijnen. Gebruik 0 om uit te schakelen.
-            </p>
-          </div>
-          <div>
-            <label htmlFor="payment_clause" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Betalingsclausule tuchtzaken
-            </label>
-            <textarea
-              id="payment_clause"
-              value={formData.payment_clause}
-              onChange={(e) => setFormData(prev => ({ ...prev, payment_clause: e.target.value }))}
-              placeholder="Tekst die onderaan de tuchtzaakfactuur wordt getoond over de betalingsvoorwaarden"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
-            />
-          </div>
-          <div>
-            <label htmlFor="membership_payment_clause" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Betalingsclausule contributie
-            </label>
-            <textarea
-              id="membership_payment_clause"
-              value={formData.membership_payment_clause}
-              onChange={(e) => setFormData(prev => ({ ...prev, membership_payment_clause: e.target.value }))}
-              placeholder="Tekst die onderaan de contributiefactuur wordt getoond"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
-            />
-          </div>
-          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Betalingsprovider
             </label>
@@ -658,6 +609,19 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Vaste administratiekosten per factuur. Wordt automatisch als aparte regelpost toegevoegd. Gebruik 0 om uit te schakelen.
               </p>
+            </div>
+            <div>
+              <label htmlFor="payment_clause" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Betalingsclausule tuchtzaken
+              </label>
+              <textarea
+                id="payment_clause"
+                value={formData.payment_clause}
+                onChange={(e) => setFormData(prev => ({ ...prev, payment_clause: e.target.value }))}
+                placeholder="Tekst die onderaan de tuchtzaakfactuur wordt getoond over de betalingsvoorwaarden"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-none"
+              />
             </div>
 
             <div>
@@ -1409,7 +1373,26 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       )}
 
       {/* Section 6: Fee Category Settings */}
-      {activeTab === 'contributie' && <FeeCategorySettings />}
+      {activeTab === 'contributie' && (
+        <FeeCategorySettings
+          membershipPaymentClause={formData.membership_payment_clause}
+          onMembershipPaymentClauseChange={(value) => setFormData(prev => ({ ...prev, membership_payment_clause: value }))}
+          onSaveMembershipPaymentClause={async () => {
+            setSaveError(null);
+            setShowSuccess(false);
+            try {
+              await updateMutation.mutateAsync({
+                membership_payment_clause: formData.membership_payment_clause,
+              });
+              setShowSuccess(true);
+              setTimeout(() => setShowSuccess(false), 3000);
+            } catch (err) {
+              setSaveError(err.response?.data?.message || 'Er is een fout opgetreden bij het opslaan.');
+            }
+          }}
+          savingMembershipPaymentClause={updateMutation.isPending}
+        />
+      )}
 
       {/* Error message */}
       {saveError && (

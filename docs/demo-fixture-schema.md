@@ -403,6 +403,16 @@ WordPress options needed for the demo to function properly. All options are stor
 
 - `rondo_vog_exempt_commissies` (array of strings, nullable): References to commissies exempt from VOG requirements (e.g., `["commissie:1", "commissie:3"]`). During import, these refs are resolved to WordPress post IDs.
 
+- `rondo_finance_*` (object keys, nullable): Finance configuration used by invoicing and finance dashboard pages.
+  - Includes non-sensitive options such as organization/contact details, payment terms, accent colors, admin fees, and email template placeholders.
+  - Includes `rondo_finance_active_payment_provider` and reminder template keys.
+  - Demo fixtures use anonymized values and placeholder templates.
+
+- `rondo_membership_pass_*` (object keys, nullable): Membership pass settings used by Wallet configuration screens.
+  - Includes portable/non-secret values such as Apple pass identifiers, Google issuer/class suffix, and organization name.
+  - Attachment IDs are stored as `0` in fixtures because media is not exported.
+  - Secrets and credentials (certificate passwords, service account files, JWT secrets) are not exported from production.
+
 ---
 
 ## Reference ID System
@@ -474,6 +484,8 @@ The following data types are explicitly **NOT** included in fixtures:
 - CardDAV connection settings
 - FreeScout synchronization state
 - Laposta synchronization state
+- Payment provider credentials/secrets (e.g. Mollie API keys, Rabobank credentials, membership pass JWT secret)
+- Membership pass certificate/service-account files (media attachments are excluded)
 
 ### User Accounts
 - WordPress user accounts (users are created separately)

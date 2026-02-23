@@ -63,6 +63,46 @@
     font-family: var(--font-display);
   }
 
+  h1,
+  h2 {
+    font-weight: 700;
+    font-family: "Montserrat", sans-serif;
+  }
+
+  h1:not([class]) {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h2:not([class]) {
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    color: #001b60;
+    background: none;
+    -webkit-text-fill-color: initial;
+  }
+
+  /* Brand heading style for app/page titles. */
+  h1.text-brand-gradient,
+  h2.text-brand-gradient,
+  .brand-heading {
+    background: linear-gradient(135deg, #00908b 0%, #602d91 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Opt-out for places where headings should stay plain. */
+  .heading-plain {
+    background: none !important;
+    -webkit-text-fill-color: initial !important;
+    color: inherit !important;
+  }
+
   /* iOS Safe Area utility classes - handle notch and Dynamic Island */
   .safe-top {
     padding-top: env(safe-area-inset-top);
@@ -227,9 +267,35 @@ button, [role="tab"], [role="button"], summary {
 }
 
 .card {
-  @apply bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden dark:bg-gray-800 dark:border-gray-700;
-  background-image: linear-gradient(to right, var(--color-electric-cyan), var(--color-bright-cobalt));
-  background-size: 100% 3px;
-  background-position: top;
-  background-repeat: no-repeat;
+  @apply rounded-xl overflow-hidden dark:bg-gray-800 dark:border-gray-700;
+  background: #fff;
+  border: 1px solid #d8e3ee;
+  position: relative;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.06);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right, #29a09c, #602d91);
+}
+
+.card:hover {
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
+}
+
+.dark .card {
+  @apply bg-gray-800 border-gray-700;
+  box-shadow: none;
+}
+
+.dark .card:hover {
+  @apply bg-gray-800;
+  box-shadow: none;
 }
