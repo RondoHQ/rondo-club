@@ -16,7 +16,7 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = [ 'person', 'team', 'rondo_todo' ];
+	private $controlled_post_types = [ 'person', 'team', 'rondo_todo', 'rondo_clothing_item', 'rondo_clothing_txn' ];
 
 	public function __construct() {
 		// Filter queries to block unapproved users
@@ -26,11 +26,15 @@ class AccessControl {
 		add_filter( 'rest_person_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'person' ), 10, 2 );
 		add_filter( 'rest_team_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'team' ), 10, 2 );
 		add_filter( 'rest_rondo_todo_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_todo' ), 10, 2 );
+		add_filter( 'rest_rondo_clothing_item_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_clothing_item' ), 10, 2 );
+		add_filter( 'rest_rondo_clothing_txn_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_clothing_txn' ), 10, 2 );
 
 		// Filter REST API single item access
 		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_team', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_rondo_clothing_item', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		add_filter( 'rest_prepare_rondo_clothing_txn', [ $this, 'filter_rest_single_access' ], 10, 3 );
 	}
 
 	/**
@@ -148,6 +152,13 @@ class AccessControl {
 			$query->set( 'author', get_current_user_id() );
 		}
 
+		// Clothing data is only available to clothing managers/admins.
+		if ( in_array( $post_type, [ 'rondo_clothing_item', 'rondo_clothing_txn' ], true ) ) {
+			if ( ! current_user_can( 'manage_clothing' ) && ! current_user_can( 'manage_options' ) ) {
+				$query->set( 'post__in', [ 0 ] );
+			}
+		}
+
 		// VOG-only users see only volunteers for person post type
 		if ( $post_type === 'person' && $this->is_vog_only_user() ) {
 			$this->apply_vog_filter( $query );
@@ -174,6 +185,13 @@ class AccessControl {
 		// User isolation for tasks - users only see their own tasks
 		if ( $post_type === 'rondo_todo' ) {
 			$args['author'] = get_current_user_id();
+		}
+
+		// Clothing data is only available to clothing managers/admins.
+		if ( in_array( $post_type, [ 'rondo_clothing_item', 'rondo_clothing_txn' ], true ) ) {
+			if ( ! current_user_can( 'manage_clothing' ) && ! current_user_can( 'manage_options' ) ) {
+				$args['post__in'] = [ 0 ];
+			}
 		}
 
 		return $args;

@@ -33,6 +33,7 @@ import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks, SOCIAL_TYPES } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
+import { useClothingPersonProfile } from '@/hooks/useClothing';
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -73,6 +74,11 @@ export default function PersonDetail() {
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canAccessClothing = currentUser?.can_access_clothing ?? false;
+
+  const { data: clothingProfile } = useClothingPersonProfile(id, {
+    enabled: canAccessClothing && !!id,
+  });
 
   // Fetch discipline cases for this person (fairplay users only)
   const { data: disciplineCases, isLoading: isDisciplineCasesLoading } = usePersonDisciplineCases(id, {
@@ -1175,6 +1181,9 @@ export default function PersonDetail() {
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex gap-8">
           <TabButton label="Profiel" isActive={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+          {canAccessClothing && (
+            <TabButton label="Kleding" isActive={activeTab === 'clothing'} onClick={() => setActiveTab('clothing')} />
+          )}
           <TabButton label="Tijdlijn" isActive={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
           <TabButton label="Rollen" isActive={activeTab === 'work'} onClick={() => setActiveTab('work')} />
           {canAccessFairplay && hasDisciplineCases && (
@@ -1457,6 +1466,74 @@ export default function PersonDetail() {
               }}
               isUpdating={updatePerson.isPending}
             />
+            </div>
+          </div>
+        )}
+
+        {/* Clothing Tab */}
+        {activeTab === 'clothing' && canAccessClothing && (
+          <div className="space-y-6">
+            <div className="card p-6">
+              <h2 className="font-semibold text-brand-gradient mb-3">Kledingprofiel</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">Eligibility</p>
+                  <p className={`font-medium ${clothingProfile?.eligibility?.eligible ? 'text-green-600' : 'text-red-600'}`}>
+                    {clothingProfile?.eligibility?.eligible ? 'Geschikt' : 'Niet geschikt'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{clothingProfile?.eligibility?.reason || ''}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Items in bezit</p>
+                  <p className="font-medium">{clothingProfile?.current_items?.length || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Openstaande borg</p>
+                  <p className="font-medium">{(clothingProfile?.outstanding_deposit || 0).toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="card p-6">
+              <h2 className="font-semibold text-brand-gradient mb-4">Huidige items</h2>
+              {(clothingProfile?.current_items || []).length > 0 ? (
+                <div className="space-y-2">
+                  {clothingProfile.current_items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 py-2">
+                      <div>
+                        <p className="text-sm font-medium">{item.item_name}</p>
+                        <p className="text-xs text-gray-500">Maat {item.size} • {item.season}</p>
+                      </div>
+                      <span className="text-xs rounded-full px-2 py-1 bg-cyan-50 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-200">
+                        Uitgegeven
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Geen items in bezit.</p>
+              )}
+            </div>
+
+            <div className="card p-6">
+              <h2 className="font-semibold text-brand-gradient mb-4">Kledinghistorie</h2>
+              {(clothingProfile?.history || []).length > 0 ? (
+                <div className="space-y-2">
+                  {clothingProfile.history.map((row) => (
+                    <div key={row.id} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 py-2">
+                      <div>
+                        <p className="text-sm font-medium">{row.item_name} ({row.size})</p>
+                        <p className="text-xs text-gray-500">{row.date} • {row.season}</p>
+                      </div>
+                      <span className={`text-xs rounded-full px-2 py-1 ${row.in_or_out === 'out' ? 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-200' : 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-200'}`}>
+                        {row.in_or_out === 'out' ? 'Uit' : 'In'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Nog geen kledinghistorie.</p>
+              )}
             </div>
           </div>
         )}

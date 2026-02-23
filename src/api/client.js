@@ -174,6 +174,19 @@ export const prmApi = {
   updateTodo: (todoId, data) => 
     api.put(`/rondo/v1/todos/${todoId}`, data),
   deleteTodo: (todoId) => api.delete(`/rondo/v1/todos/${todoId}`),
+
+  // Clothing
+  getClothingItems: () => api.get('/rondo/v1/clothing/items'),
+  createClothingItem: (data) => api.post('/rondo/v1/clothing/items', data),
+  updateClothingItem: (id, data) => api.put(`/rondo/v1/clothing/items/${id}`, data),
+  deleteClothingItem: (id) => api.delete(`/rondo/v1/clothing/items/${id}`),
+  getClothingAssignments: (params = {}) => api.get('/rondo/v1/clothing/assignments', { params }),
+  createClothingAssignment: (data) => api.post('/rondo/v1/clothing/assignments', data),
+  getClothingPersonProfile: (personId) => api.get(`/rondo/v1/clothing/person/${personId}/profile`),
+  getClothingOverview: () => api.get('/rondo/v1/clothing/overview'),
+  exportClothingCsv: () => api.get('/rondo/v1/clothing/export', { responseType: 'blob' }),
+  getClothingSettings: () => api.get('/rondo/v1/clothing/settings'),
+  updateClothingSettings: (data) => api.post('/rondo/v1/clothing/settings', data),
   
   // Team-specific
   getTeamPeople: (teamId) => api.get(`/rondo/v1/teams/${teamId}/people`),

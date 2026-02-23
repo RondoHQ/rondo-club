@@ -22,7 +22,8 @@ import {
   Coins,
   Gavel,
   Wallet,
-  Receipt
+  Receipt,
+  Shirt
 } from 'lucide-react';
 
 // Logo URL from theme directory (SVG for crisp rendering and smaller payload)
@@ -48,6 +49,7 @@ const navigation = [
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
+  { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
@@ -70,6 +72,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessVOG = currentUser?.can_access_vog ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
+  const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
 
   // Finance menu counters
@@ -149,6 +152,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             if (item.requiresVOG && !canAccessVOG) return false;
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
             if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
+            if (item.requiresClothing && !canAccessClothing) return false;
             return true;
           })
           .map((item) => {

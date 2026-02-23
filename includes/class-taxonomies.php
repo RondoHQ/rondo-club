@@ -24,6 +24,7 @@ class Taxonomies {
 	public function register_taxonomies() {
 		$this->register_relationship_type_taxonomy();
 		$this->register_seizoen_taxonomy();
+		$this->register_clothing_category_taxonomy();
 
 		// One-time cleanup: remove stale person_label, team_label, and commissie_label data
 		$this->cleanup_removed_taxonomies();
@@ -202,6 +203,35 @@ class Taxonomies {
 		];
 
 		register_taxonomy( 'seizoen', [ 'discipline_case' ], $args );
+	}
+
+	/**
+	 * Register Clothing Category taxonomy.
+	 */
+	private function register_clothing_category_taxonomy() {
+		$labels = [
+			'name'          => _x( 'Kledingcategorieen', 'taxonomy general name', 'rondo' ),
+			'singular_name' => _x( 'Kledingcategorie', 'taxonomy singular name', 'rondo' ),
+			'search_items'  => __( 'Search Clothing Categories', 'rondo' ),
+			'all_items'     => __( 'All Clothing Categories', 'rondo' ),
+			'edit_item'     => __( 'Edit Clothing Category', 'rondo' ),
+			'update_item'   => __( 'Update Clothing Category', 'rondo' ),
+			'add_new_item'  => __( 'Add New Clothing Category', 'rondo' ),
+			'new_item_name' => __( 'New Clothing Category Name', 'rondo' ),
+			'menu_name'     => __( 'Kledingcategorieen', 'rondo' ),
+		];
+
+		$args = [
+			'hierarchical'      => false,
+			'labels'            => $labels,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'show_in_rest'      => true,
+			'query_var'         => true,
+			'rewrite'           => [ 'slug' => 'clothing-category' ],
+		];
+
+		register_taxonomy( 'clothing_category', [ 'rondo_clothing_item' ], $args );
 	}
 
 	/**

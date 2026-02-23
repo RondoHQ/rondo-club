@@ -19,6 +19,7 @@ class UserRoles {
 	const VOG_CAPABILITY         = 'vog';
 	const FINANCIEEL_CAPABILITY  = 'financieel';
 	const TOEGANG_CAPABILITY     = 'toegangscontrole';
+	const CLOTHING_CAPABILITY    = 'manage_clothing';
 
 	/**
 	 * All Rondo roles: slug => [ display_name, extra capabilities ]
@@ -30,7 +31,8 @@ class UserRoles {
 		'rondo_vog'        => [ 'Rondo VOG', [ 'vog' ] ],
 		'rondo_financieel' => [ 'Rondo Financieel', [ 'financieel' ] ],
 		'rondo_toegangscontrole' => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
-		'rondo_bestuur'    => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole' ] ],
+		'rondo_clothing_manager' => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
+		'rondo_bestuur'    => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ] ],
 	];
 
 	public function __construct() {
@@ -88,6 +90,7 @@ class UserRoles {
 			$admin_role->add_cap( self::VOG_CAPABILITY );
 			$admin_role->add_cap( self::FINANCIEEL_CAPABILITY );
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
+			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
 		}
 	}
 
@@ -102,6 +105,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::VOG_CAPABILITY );
 			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
+			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 		}
 
 		foreach ( self::ROLES as $slug => $_ ) {

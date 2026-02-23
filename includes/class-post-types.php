@@ -22,6 +22,8 @@ class PostTypes {
 		$this->register_person_post_type();
 		$this->register_team_post_type();
 		$this->register_commissie_post_type();
+		$this->register_clothing_item_post_type();
+		$this->register_clothing_assignment_post_type();
 		$this->register_todo_statuses();
 		$this->register_todo_post_type();
 		$this->register_calendar_event_post_type();
@@ -177,6 +179,86 @@ class PostTypes {
 		];
 
 		register_post_type( 'commissie', $args );
+	}
+
+	/**
+	 * Register Clothing Item CPT
+	 */
+	private function register_clothing_item_post_type() {
+		$labels = [
+			'name'               => _x( 'Kledingitems', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Kledingitem', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Kledingitems', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Clothing Item', 'rondo' ),
+			'edit_item'          => __( 'Edit Clothing Item', 'rondo' ),
+			'new_item'           => __( 'New Clothing Item', 'rondo' ),
+			'view_item'          => __( 'View Clothing Item', 'rondo' ),
+			'search_items'       => __( 'Search Clothing Items', 'rondo' ),
+			'not_found'          => __( 'No clothing items found', 'rondo' ),
+			'not_found_in_trash' => __( 'No clothing items found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Clothing Items', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'clothing-items',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 8,
+			'menu_icon'          => 'dashicons-tickets-alt',
+			'supports'           => [ 'title', 'thumbnail', 'author', 'custom-fields' ],
+		];
+
+		register_post_type( 'rondo_clothing_item', $args );
+	}
+
+	/**
+	 * Register Clothing Assignment CPT
+	 */
+	private function register_clothing_assignment_post_type() {
+		$labels = [
+			'name'               => _x( 'Kledinguitgiftes', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Kledinguitgifte', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Kledinguitgiftes', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Clothing Assignment', 'rondo' ),
+			'edit_item'          => __( 'Edit Clothing Assignment', 'rondo' ),
+			'new_item'           => __( 'New Clothing Assignment', 'rondo' ),
+			'view_item'          => __( 'View Clothing Assignment', 'rondo' ),
+			'search_items'       => __( 'Search Clothing Assignments', 'rondo' ),
+			'not_found'          => __( 'No clothing assignments found', 'rondo' ),
+			'not_found_in_trash' => __( 'No clothing assignments found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Clothing Assignments', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'clothing-assignments',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 9,
+			'menu_icon'          => 'dashicons-clipboard',
+			'supports'           => [ 'title', 'author', 'custom-fields' ],
+		];
+
+		register_post_type( 'rondo_clothing_txn', $args );
 	}
 
 	/**
