@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.1] - 2026-02-23
+
+### Fixed
+- Google Wallet object payload now includes required top-level `header`, fixing Android error: `header must be set` (`invalidResource`).
+
 ## [30.9.0] - 2026-02-23
 
 ### Added
