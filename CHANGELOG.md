@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.7.4] - 2026-02-23
+
+### Changed
+- Swapped field order on Apple Wallet membership pass card so `FUNCTIES` appears before `KNVB ID`.
+
 ## [30.7.3] - 2026-02-23
 
 ### Changed

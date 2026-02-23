@@ -107,14 +107,14 @@ class MembershipPassApple {
 				],
 				'auxiliaryFields' => [
 					[
-						'key'   => 'knvb_id',
-						'label' => 'KNVB ID',
-						'value' => $knvb_id,
-					],
-					[
 						'key'   => 'functions',
 						'label' => 'FUNCTIES',
 						'value' => $functions,
+					],
+					[
+						'key'   => 'knvb_id',
+						'label' => 'KNVB ID',
+						'value' => $knvb_id,
 					],
 				],
 			],
