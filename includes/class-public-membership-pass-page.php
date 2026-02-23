@@ -285,6 +285,14 @@ class PublicMembershipPassPage {
 		$work_options = $apple_service->get_work_options_for_person( $person_id );
 		$apple_url    = $this->build_wallet_url( $token, 'apple', $selected_work );
 		$google_url   = $this->build_wallet_url( $token, 'google', $selected_work );
+		$user_agent   = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
+		$is_android   = strpos( $user_agent, 'android' ) !== false;
+		$is_ios       = strpos( $user_agent, 'iphone' ) !== false
+			|| strpos( $user_agent, 'ipad' ) !== false
+			|| strpos( $user_agent, 'ipod' ) !== false
+			|| ( strpos( $user_agent, 'macintosh' ) !== false && strpos( $user_agent, 'mobile' ) !== false );
+		$show_apple_wallet  = ! $is_android;
+		$show_google_wallet = ! $is_ios;
 
 		$branding = $this->get_club_branding();
 
@@ -300,6 +308,7 @@ class PublicMembershipPassPage {
 			<img src="<?php echo esc_url( $branding['logo_url'] ); ?>" alt="<?php echo esc_attr( $branding['name'] ); ?>" class="club-logo" />
 		<?php endif; ?>
 		<h1>Digitale ledenpas</h1>
+		<p class="header-intro">Gebruik deze pas voor gratis toegang tot de meeste thuiswedstrijden van AWC 1.</p>
 	</div>
 
 	<div class="card">
@@ -314,10 +323,10 @@ class PublicMembershipPassPage {
 	</div>
 
 	<div class="card">
-		<h2 class="wallet-section-title">Voeg toe aan Wallet</h2>
+		<h2 class="wallet-section-title">Voeg de ledenpas toe aan je wallet!</h2>
 		<?php if ( count( $work_options ) > 1 ) : ?>
 			<form method="get" class="role-selector-form">
-				<label for="role-select" class="role-selector-label">Rol/functie op pas</label>
+				<label for="role-select" class="role-selector-label">Welke rol bij AWC wil je graag op je ledenpas hebben staan?</label>
 				<select id="role-select" name="role" class="role-selector-input" onchange="this.form.submit()">
 					<option value="">Alle actieve rollen</option>
 					<?php foreach ( $work_options as $option ) : ?>
@@ -330,16 +339,16 @@ class PublicMembershipPassPage {
 			</form>
 		<?php endif; ?>
 		<div class="wallet-actions">
-		<?php if ( $apple_available ) : ?>
+		<?php if ( $show_apple_wallet && $apple_available ) : ?>
 			<a href="<?php echo esc_url( $apple_url ); ?>" class="wallet-badge wallet-badge-apple" aria-label="Add to Apple Wallet">
 				<span class="wallet-badge-apple-icon" aria-hidden="true"></span>
 				<span class="wallet-badge-label">Add to Apple Wallet</span>
 			</a>
-		<?php else : ?>
+		<?php elseif ( $show_apple_wallet ) : ?>
 			<div class="hint">Apple Wallet is nog niet geconfigureerd.</div>
 		<?php endif; ?>
 
-		<?php if ( $google_available ) : ?>
+		<?php if ( $show_google_wallet && $google_available ) : ?>
 			<a href="<?php echo esc_url( $google_url ); ?>" class="wallet-badge wallet-badge-google" aria-label="Add to Google Wallet">
 				<img
 					src="https://developers.google.com/static/wallet/images/branding/temp-wallet-primary.png"
@@ -349,7 +358,7 @@ class PublicMembershipPassPage {
 					class="wallet-badge-google-img"
 				/>
 			</a>
-		<?php else : ?>
+		<?php elseif ( $show_google_wallet ) : ?>
 			<div class="hint">Google Wallet is nog niet geconfigureerd.</div>
 		<?php endif; ?>
 		</div>
@@ -511,11 +520,12 @@ class PublicMembershipPassPage {
 		.header-card { text-align: center; }
 		.club-logo { width: 76px; height: 76px; object-fit: contain; margin-bottom: 8px; }
 		h1, h2 { margin: 0 0 10px; }
+		.header-intro { margin: 0; color: #4b5563; font-size: 15px; line-height: 1.45; }
 		.info-table { width: 100%; border-collapse: collapse; }
 		.info-table th, .info-table td { border-bottom: 1px solid #e5e7eb; text-align: left; padding: 8px 0; }
 		.info-table th { width: 110px; color: #6b7280; font-weight: 600; }
-		.wallet-section-title { margin-bottom: 14px; }
-		.role-selector-form { margin-top: 6px; margin-bottom: 16px; }
+		.wallet-section-title { margin-bottom: 24px; }
+		.role-selector-form { margin-top: 6px; margin-bottom: 24px; }
 		.role-selector-label { display: block; font-size: 14px; color: #374151; margin-bottom: 6px; font-weight: 600; }
 		.role-selector-input { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #111827; background: #fff; }
 		.wallet-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }

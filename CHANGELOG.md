@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.5] - 2026-02-23
+
+### Changed
+- Updated copy on the public membership pass page:
+  - Added intro text under `Digitale ledenpas`.
+  - Changed `Voeg toe aan Wallet` to `Voeg de ledenpas toe aan je wallet!`.
+  - Changed `Rol/functie op pas` label to a clearer question.
+- Increased spacing below the wallet section heading and below the role dropdown for improved readability.
+- Wallet action buttons are now device-aware on the public pass page:
+  - iOS devices show Apple Wallet only.
+  - Android devices show Google Wallet only.
+  - Other devices continue showing both options.
+
 ## [30.9.4] - 2026-02-23
 
 ### Fixed
