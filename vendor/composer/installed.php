@@ -3,7 +3,7 @@
         'name' => 'rondohq/rondo-club',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '4cda9ff30956ca196bd7344327281b75da97faaa',
+        'reference' => '87b1e3eb23876120b775c6d7a06dbd281fd7b471',
         'type' => 'wordpress-theme',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -469,6 +469,15 @@
             'aliases' => array(),
             'dev_requirement' => true,
         ),
+        'pkpass/pkpass' => array(
+            'pretty_version' => 'v2.5.1',
+            'version' => '2.5.1.0',
+            'reference' => 'd735bb0dda737573fbd099684b90b33707f767d7',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../pkpass/pkpass',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'psr/cache' => array(
             'pretty_version' => '3.0.0',
             'version' => '3.0.0.0',
@@ -584,7 +593,7 @@
         'rondohq/rondo-club' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '4cda9ff30956ca196bd7344327281b75da97faaa',
+            'reference' => '87b1e3eb23876120b775c6d7a06dbd281fd7b471',
             'type' => 'wordpress-theme',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

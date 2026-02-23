@@ -55,6 +55,14 @@ class FinanceConfig {
 	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
 	const OPTION_ADMIN_FEE               = 'rondo_finance_admin_fee';
 	const OPTION_INSTALLMENT_ADMIN_FEE   = 'rondo_finance_installment_admin_fee';
+	const OPTION_MEMBERSHIP_PASS_APPLE_CERT_ATTACHMENT_ID = 'rondo_membership_pass_apple_cert_attachment_id';
+	const OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD      = 'rondo_membership_pass_apple_cert_password';
+	const OPTION_MEMBERSHIP_PASS_APPLE_PASS_TYPE_IDENTIFIER = 'rondo_membership_pass_apple_pass_type_identifier';
+	const OPTION_MEMBERSHIP_PASS_APPLE_TEAM_IDENTIFIER      = 'rondo_membership_pass_apple_team_identifier';
+	const OPTION_MEMBERSHIP_PASS_APPLE_ORGANIZATION_NAME    = 'rondo_membership_pass_apple_organization_name';
+	const OPTION_MEMBERSHIP_PASS_GOOGLE_SERVICE_ACCOUNT_ATTACHMENT_ID = 'rondo_membership_pass_google_service_account_attachment_id';
+	const OPTION_MEMBERSHIP_PASS_GOOGLE_ISSUER_ID                    = 'rondo_membership_pass_google_issuer_id';
+	const OPTION_MEMBERSHIP_PASS_GOOGLE_CLASS_SUFFIX                 = 'rondo_membership_pass_google_class_suffix';
 	const OPTION_INSTALLMENT_EMAIL_TEMPLATE  = 'rondo_finance_installment_email_template';
 	const OPTION_REMINDER_1_EMAIL_TEMPLATE   = 'rondo_finance_reminder_1_email_template';
 	const OPTION_REMINDER_2_EMAIL_TEMPLATE   = 'rondo_finance_reminder_2_email_template';
@@ -80,6 +88,7 @@ class FinanceConfig {
 		'bcc_email'          => '',
 		'admin_fee'              => 0.00,
 		'installment_admin_fee'  => 0.00,
+		'membership_pass_google_class_suffix' => 'rondo_membership',
 		'email_template'         => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de factuur {factuur_nummer} voor opgelegde boetes vanuit de tuchtcommissie.</p>{tuchtzaken_lijst}<p>Het totaalbedrag is <strong>{totaal_bedrag}</strong>.</p><p>U kunt betalen via de volgende link: {betaallink}</p>{qr_code}<p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'installment_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Hierbij ontvangt u het betaalverzoek voor termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}).</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum:</strong> {vervaldatum}</p><p>U kunt betalen via de volgende link:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'reminder_1_email_template'  => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Wij hebben geconstateerd dat termijn {termijn_nummer} van {totaal_termijnen} van uw contributie (factuur {factuur_nummer}) nog niet is voldaan.</p><p><strong>Termijnbedrag:</strong> {termijn_bedrag}<br/><strong>Vervaldatum was:</strong> {vervaldatum}<br/><strong>Aantal dagen te laat:</strong> {dagen_te_laat}</p><p>Wij verzoeken u vriendelijk dit bedrag zo spoedig mogelijk te voldoen via:<br/>{betaallink}</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
@@ -317,6 +326,10 @@ class FinanceConfig {
 		}
 
 		$mollie_api_key = $this->get_mollie_api_key();
+		$apple_cert_id  = $this->get_membership_pass_apple_cert_attachment_id();
+		$google_sa_id   = $this->get_membership_pass_google_service_account_attachment_id();
+		$apple_cert_url = $apple_cert_id > 0 ? ( wp_get_attachment_url( $apple_cert_id ) ?: '' ) : '';
+		$google_sa_url  = $google_sa_id > 0 ? ( wp_get_attachment_url( $google_sa_id ) ?: '' ) : '';
 
 		return [
 			'org_name'              => $this->get_org_name(),
@@ -345,6 +358,16 @@ class FinanceConfig {
 			'mollie_environment'    => $this->derive_mollie_environment( $mollie_api_key ),
 			'mollie_redirect_url'   => $this->get_mollie_redirect_url(),
 			'active_payment_provider' => $this->get_active_payment_provider(),
+			'membership_pass_apple_cert_attachment_id' => $apple_cert_id,
+			'membership_pass_apple_cert_url'           => $apple_cert_url,
+			'membership_pass_apple_has_cert_password'  => '' !== $this->get_membership_pass_apple_cert_password(),
+			'membership_pass_apple_pass_type_identifier' => $this->get_membership_pass_apple_pass_type_identifier(),
+			'membership_pass_apple_team_identifier'      => $this->get_membership_pass_apple_team_identifier(),
+			'membership_pass_apple_organization_name'    => $this->get_membership_pass_apple_organization_name(),
+			'membership_pass_google_service_account_attachment_id' => $google_sa_id,
+			'membership_pass_google_service_account_url'           => $google_sa_url,
+			'membership_pass_google_issuer_id'                     => $this->get_membership_pass_google_issuer_id(),
+			'membership_pass_google_class_suffix'                  => $this->get_membership_pass_google_class_suffix(),
 		];
 	}
 
@@ -492,6 +515,62 @@ class FinanceConfig {
 			$success = update_option( self::OPTION_INSTALLMENT_ADMIN_FEE, $fee ) && $success;
 		}
 
+		if ( isset( $data['membership_pass_apple_cert_attachment_id'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_ATTACHMENT_ID,
+				absint( $data['membership_pass_apple_cert_attachment_id'] )
+			) && $success;
+		}
+
+		if ( isset( $data['membership_pass_apple_cert_password'] ) ) {
+			$password = sanitize_text_field( $data['membership_pass_apple_cert_password'] );
+			if ( '' !== $password ) {
+				$success = update_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD, $password ) && $success;
+			}
+		}
+
+		if ( isset( $data['membership_pass_apple_pass_type_identifier'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_APPLE_PASS_TYPE_IDENTIFIER,
+				sanitize_text_field( $data['membership_pass_apple_pass_type_identifier'] )
+			) && $success;
+		}
+
+		if ( isset( $data['membership_pass_apple_team_identifier'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_APPLE_TEAM_IDENTIFIER,
+				sanitize_text_field( $data['membership_pass_apple_team_identifier'] )
+			) && $success;
+		}
+
+		if ( isset( $data['membership_pass_apple_organization_name'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_APPLE_ORGANIZATION_NAME,
+				sanitize_text_field( $data['membership_pass_apple_organization_name'] )
+			) && $success;
+		}
+
+		if ( isset( $data['membership_pass_google_service_account_attachment_id'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_GOOGLE_SERVICE_ACCOUNT_ATTACHMENT_ID,
+				absint( $data['membership_pass_google_service_account_attachment_id'] )
+			) && $success;
+		}
+
+		if ( isset( $data['membership_pass_google_issuer_id'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_GOOGLE_ISSUER_ID,
+				sanitize_text_field( $data['membership_pass_google_issuer_id'] )
+			) && $success;
+		}
+
+		if ( isset( $data['membership_pass_google_class_suffix'] ) ) {
+			$success = update_option(
+				self::OPTION_MEMBERSHIP_PASS_GOOGLE_CLASS_SUFFIX,
+				sanitize_key( $data['membership_pass_google_class_suffix'] )
+			) && $success;
+		}
+
 		// Handle Rabobank credentials with encryption
 		if ( isset( $data['rabobank_client_id'] ) && isset( $data['rabobank_client_secret'] ) && isset( $data['rabobank_environment'] ) ) {
 			$success = $this->update_rabobank_credentials(
@@ -528,6 +607,83 @@ class FinanceConfig {
 		}
 
 		return $success;
+	}
+
+	/**
+	 * Get Apple cert media attachment ID.
+	 *
+	 * @return int
+	 */
+	public function get_membership_pass_apple_cert_attachment_id(): int {
+		return (int) get_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_ATTACHMENT_ID, 0 );
+	}
+
+	/**
+	 * Get Apple cert password.
+	 *
+	 * @return string
+	 */
+	public function get_membership_pass_apple_cert_password(): string {
+		return (string) get_option( self::OPTION_MEMBERSHIP_PASS_APPLE_CERT_PASSWORD, '' );
+	}
+
+	/**
+	 * Get Apple pass type identifier.
+	 *
+	 * @return string
+	 */
+	public function get_membership_pass_apple_pass_type_identifier(): string {
+		return (string) get_option( self::OPTION_MEMBERSHIP_PASS_APPLE_PASS_TYPE_IDENTIFIER, '' );
+	}
+
+	/**
+	 * Get Apple team identifier.
+	 *
+	 * @return string
+	 */
+	public function get_membership_pass_apple_team_identifier(): string {
+		return (string) get_option( self::OPTION_MEMBERSHIP_PASS_APPLE_TEAM_IDENTIFIER, '' );
+	}
+
+	/**
+	 * Get Apple organization name override.
+	 *
+	 * @return string
+	 */
+	public function get_membership_pass_apple_organization_name(): string {
+		return (string) get_option( self::OPTION_MEMBERSHIP_PASS_APPLE_ORGANIZATION_NAME, '' );
+	}
+
+	/**
+	 * Get Google service account media attachment ID.
+	 *
+	 * @return int
+	 */
+	public function get_membership_pass_google_service_account_attachment_id(): int {
+		return (int) get_option( self::OPTION_MEMBERSHIP_PASS_GOOGLE_SERVICE_ACCOUNT_ATTACHMENT_ID, 0 );
+	}
+
+	/**
+	 * Get Google Wallet issuer ID.
+	 *
+	 * @return string
+	 */
+	public function get_membership_pass_google_issuer_id(): string {
+		return (string) get_option( self::OPTION_MEMBERSHIP_PASS_GOOGLE_ISSUER_ID, '' );
+	}
+
+	/**
+	 * Get Google Wallet class suffix.
+	 *
+	 * @return string
+	 */
+	public function get_membership_pass_google_class_suffix(): string {
+		$value = (string) get_option(
+			self::OPTION_MEMBERSHIP_PASS_GOOGLE_CLASS_SUFFIX,
+			self::DEFAULTS['membership_pass_google_class_suffix']
+		);
+		$value = sanitize_key( $value );
+		return '' !== $value ? $value : self::DEFAULTS['membership_pass_google_class_suffix'];
 	}
 
 	/**

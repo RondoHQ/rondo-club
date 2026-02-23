@@ -7,6 +7,187 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.5] - 2026-02-23
+
+### Changed
+- Updated copy on the public membership pass page:
+  - Added intro text under `Digitale ledenpas`.
+  - Changed `Voeg toe aan Wallet` to `Voeg de ledenpas toe aan je wallet!`.
+  - Changed `Rol/functie op pas` label to a clearer question.
+- Increased spacing below the wallet section heading and below the role dropdown for improved readability.
+- Wallet action buttons are now device-aware on the public pass page:
+  - iOS devices show Apple Wallet only.
+  - Android devices show Google Wallet only.
+  - Other devices continue showing both options.
+
+## [30.9.4] - 2026-02-23
+
+### Fixed
+- `Lidpas Scanner` menu item is now consistently hidden on desktop for all users, including admins.
+
+## [30.9.3] - 2026-02-23
+
+### Changed
+- Settings page layout now uses full available width to improve usability for larger role/permissions screens.
+
+## [30.9.2] - 2026-02-23
+
+### Changed
+- `Lidpas Scanner` menu item is now hidden on desktop and shown only in the mobile sidebar.
+
+## [30.9.1] - 2026-02-23
+
+### Fixed
+- Google Wallet object payload now includes required top-level `header`, fixing Android error: `header must be set` (`invalidResource`).
+
+## [30.9.0] - 2026-02-23
+
+### Added
+- New `Wallets` subtab under **Settings → Koppelingen** for Apple/Google wallet pass configuration.
+
+### Changed
+- Wallet pass settings moved out of **Financieel** and into **Koppelingen**.
+- `Lidpassen` labels in the settings UI are renamed to `Wallets`.
+- Updated the Info tab product description text to reflect Rondo Club (removed legacy CRM copy).
+
+## [30.8.2] - 2026-02-23
+
+### Changed
+- Added more spacing between the role/function selector and wallet buttons on the public membership pass page.
+- Public membership pass page now uses the configured club logo as favicon (including Apple touch icon).
+
+## [30.8.1] - 2026-02-23
+
+### Fixed
+- Membership pass tier selection now depends on `type-lid` (not KNVB ID presence), so `Verenigingslid` remains `Verenigingslid` even when a KNVB ID exists.
+- KNVB ID row/field is now shown only for `Bondslid` passes and hidden for `Verenigingslid` passes.
+
+## [30.8.0] - 2026-02-23
+
+### Added
+- Membership passes now support a second eligibility tier for `Verenigingslid` members without a KNVB ID.
+- One-time v2 backfill (`rondo_membership_pass_backfill_v2_done`) to generate pass URLs for newly eligible members.
+
+### Changed
+- Pass label now uses member tier naming (`Bondslid` / `BONDSLID` and `Verenigingslid` / `VERENIGINGSLID`) instead of generic `Lid` / `LID`.
+- Public `/lidpas/{token}` page now accepts eligible non-KNVB members and hides KNVB row when no KNVB ID exists.
+- Apple pass now omits the KNVB ID field when no KNVB ID is present.
+- Google pass generation no longer requires KNVB ID when member is otherwise eligible.
+
+## [30.7.4] - 2026-02-23
+
+### Changed
+- Swapped field order on Apple Wallet membership pass card so `FUNCTIES` appears before `KNVB ID`.
+
+## [30.7.3] - 2026-02-23
+
+### Changed
+- Scanner invalid-state card now shows the red helper text `Geen lid meer` directly below `Ongeldige ledenpas`.
+
+## [30.7.2] - 2026-02-23
+
+### Changed
+- Simplified `Lidpas Scanner` UI to camera-only flow by removing the top intro card and hidden manual token section.
+- Scanner result now prominently shows member photo + name for identity check.
+- Scanner result heading now reflects membership validity: `Geldige ledenpas` (green) for active, `Ongeldige ledenpas` (red) for non-active.
+
+### Fixed
+- Membership pass verify response now includes KNVB ID reliably for scanner output (`knvb_id` plus compatibility alias `knvb-id`).
+
+## [30.7.1] - 2026-02-23
+
+### Fixed
+- Added a JS-based QR scan fallback (`jsQR`) for browsers without `BarcodeDetector` support (notably iOS Chrome), so camera scanning remains available outside Safari.
+
+## [30.7.0] - 2026-02-22
+
+### Added
+- New in-app `Lidpas Scanner` page with camera QR scanning (where browser-supported) and manual token verification fallback
+- Scanner verification result view with member and pass status details
+- New role `Rondo Toegangscontrole` with dedicated capability `toegangscontrole`
+
+### Changed
+- Scanner route and sidebar navigation are now capability-gated behind `toegangscontrole`
+- Current user REST payload now includes `can_access_toegangscontrole`
+- `Rondo Bestuur` role now includes `toegangscontrole` capability
+- Capability sync now auto-adds `Rondo Toegangscontrole` role when `Rondo Bestuur` is assigned
+
+## [30.6.0] - 2026-02-22
+
+### Added
+- Person detail header now shows a membership pass quick link (card icon) next to social/Sportlink/Freescout links when a member has a pass URL
+
+## [30.5.1] - 2026-02-22
+
+### Changed
+- Added extra spacing under the "Voeg toe aan Wallet" heading on the public membership pass page
+- Increased vertical spacing between Apple and Google wallet buttons on mobile
+
+## [30.5.0] - 2026-02-22
+
+### Added
+- Role/function selector on the public `/lidpas/{token}` page for members with multiple active roles
+
+### Changed
+- Apple Wallet pass generation now supports a selected role and shows only that team/function when chosen
+- Google Wallet pass generation now supports a selected role and uses role-specific object IDs to allow separate passes per selected role
+
+## [30.4.4] - 2026-02-22
+
+### Changed
+- Aligned Apple and Google Wallet badges on the public membership pass page to a consistent height and baseline
+- Improved wallet badge layout responsiveness for small screens with a stacked mobile layout
+
+## [30.4.3] - 2026-02-22
+
+### Changed
+- Updated public membership pass page wallet CTAs to badge-style buttons
+- Google Wallet CTA now uses the official Google-hosted Add to Google Wallet badge asset
+- Apple Wallet CTA now uses a dedicated Add to Apple Wallet badge treatment for stronger platform consistency
+
+## [30.4.2] - 2026-02-22
+
+### Changed
+- Membership pass display name now includes `infix` (tussenvoegsel) for Apple and Google Wallet passes
+- Membership pass content now aggregates all active team/commissie links instead of only the first active work-history record
+- Membership pass content now includes active functies from work history
+- Public `/lidpas/{token}` landing page now shows full member name with infix
+
+## [30.4.1] - 2026-02-22
+
+### Added
+- In-app help popup in Finance Settings → Lidpassen with step-by-step setup instructions for Google Wallet and Apple Wallet
+- Guidance in popup covers where to obtain Google service-account JSON, Google Issuer ID, Apple `.p12`, Apple Team ID, and Pass Type Identifier
+
+## [30.4.0] - 2026-02-22
+
+### Added
+- New Finance Settings tab: **Lidpassen** for Apple/Google Wallet configuration
+- Upload-based credentials for membership passes (Apple `.p12` certificate and Google service-account `.json`) stored as media attachment IDs
+- Support for `.p12` and `.json` uploads for financieel/admin users
+- New finance settings fields for Apple pass identifiers and Google Wallet issuer/class configuration
+
+### Changed
+- Membership pass generators now resolve uploaded media files (attachment IDs) instead of requiring path-based configuration
+
+## [30.3.0] - 2026-02-22
+
+### Added
+- Public membership pass landing page at `/lidpas/{token}` with wallet actions for Apple and Google
+- Per-person pass token + URL storage in post meta (`_membership_pass_token`, `_membership_pass_url`) for members with KNVB ID
+- Automatic pass URL generation/update on person save and ACF save
+- `MembershipPassApple` class for Apple Wallet `.pkpass` generation
+- `MembershipPassGoogle` class for Google Wallet object creation and Add-to-Wallet URL generation
+- `GET /rondo/v1/membership-passes/people/{person_id}/landing-url` endpoint to retrieve ensured landing URLs
+- `membership_pass_url` added to person REST responses
+
+## [30.2.0] - 2026-02-22
+
+### Added
+- Membership pass QR token service with signed JWT issuance (`GET /rondo/v1/membership-passes/people/{person_id}/qr-token`)
+- Membership pass scanner verification endpoint (`POST /rondo/v1/membership-passes/verify`) with token validation and member status response
+- Frontend API client helpers for issuing and verifying membership pass QR tokens
+
 ## [30.1.0] - 2026-02-22
 
 ### Added
@@ -3506,4 +3687,3 @@ See previous changelog entry for v1.79.0 (Person Profile Polish milestone).
 ### Changed
 - Important Dates overview now uses masonry layout for date blocks
 - Increased month heading size on Important Dates overview screen
-

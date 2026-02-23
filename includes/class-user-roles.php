@@ -18,6 +18,7 @@ class UserRoles {
 	const FAIRPLAY_CAPABILITY    = 'fairplay';
 	const VOG_CAPABILITY         = 'vog';
 	const FINANCIEEL_CAPABILITY  = 'financieel';
+	const TOEGANG_CAPABILITY     = 'toegangscontrole';
 
 	/**
 	 * All Rondo roles: slug => [ display_name, extra capabilities ]
@@ -28,7 +29,8 @@ class UserRoles {
 		'rondo_fairplay'   => [ 'Rondo FairPlay', [ 'fairplay' ] ],
 		'rondo_vog'        => [ 'Rondo VOG', [ 'vog' ] ],
 		'rondo_financieel' => [ 'Rondo Financieel', [ 'financieel' ] ],
-		'rondo_bestuur'    => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel' ] ],
+		'rondo_toegangscontrole' => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
+		'rondo_bestuur'    => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole' ] ],
 	];
 
 	public function __construct() {
@@ -69,14 +71,23 @@ class UserRoles {
 				$capabilities[ $cap ] = true;
 			}
 			add_role( $slug, $display_name, $capabilities );
+
+			// Ensure existing roles are updated with current capabilities.
+			$role = get_role( $slug );
+			if ( $role ) {
+				foreach ( array_keys( $capabilities ) as $cap_name ) {
+					$role->add_cap( $cap_name );
+				}
+			}
 		}
 
-		// Add fairplay, VOG, and financieel capabilities to administrator role
+		// Add app-specific capabilities to administrator role
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->add_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->add_cap( self::VOG_CAPABILITY );
 			$admin_role->add_cap( self::FINANCIEEL_CAPABILITY );
+			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 		}
 	}
 
@@ -84,12 +95,13 @@ class UserRoles {
 	 * Remove all Rondo roles
 	 */
 	public function remove_role() {
-		// Remove fairplay, VOG, and financieel capabilities from administrator role
+		// Remove app-specific capabilities from administrator role
 		$admin_role = get_role( 'administrator' );
 		if ( $admin_role ) {
 			$admin_role->remove_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->remove_cap( self::VOG_CAPABILITY );
 			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
+			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 		}
 
 		foreach ( self::ROLES as $slug => $_ ) {

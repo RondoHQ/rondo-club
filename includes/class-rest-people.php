@@ -8,6 +8,7 @@
 namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
+use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -543,6 +544,9 @@ class People extends Base {
 			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
 		}
 
+		// Expose stable public membership pass URL for eligible members.
+		$data['membership_pass_url'] = PublicMembershipPassPage::ensure_person_pass_url( $post->ID ) ?: null;
+
 		// Expose provisioning status for admin AccountCard (Plan 205-02).
 		// Primary lookup: _rondo_wp_user_id post meta (set by UserProvisioning::provision()).
 		$linked_user_id = (int) get_post_meta( $post->ID, '_rondo_wp_user_id', true ) ?: 0;
@@ -576,7 +580,7 @@ class People extends Base {
 				$data['linked_user_roles'] = array_values(
 					array_intersect(
 						$user->roles,
-						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_bestuur', 'administrator' ]
+						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_toegangscontrole', 'rondo_bestuur', 'administrator' ]
 					)
 				);
 			}

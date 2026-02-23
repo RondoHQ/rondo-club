@@ -59,6 +59,7 @@ export const SOCIAL_DISPLAY_ORDER = {
   website: 8,
   sportlink: 9,
   freescout: 10,
+  membership_pass: 11,
 };
 
 /**
