@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.3] - 2026-02-23
+
+### Fixed
+- Replaced the clothing member picker input with a proper searchable selector, so `Selecteer lid (typ om te zoeken)` now reliably sets the selected member.
+- Transaction form now enforces item sizes:
+  - `Maat` is a dropdown populated from the selected item's configured `available_sizes`.
+  - Maat selection is reset automatically when switching to an item that doesn't include the previously selected size.
+- Backend now validates transaction size against the selected item's configured sizes and rejects invalid sizes.
+
 ## [30.10.2] - 2026-02-23
 
 ### Changed
