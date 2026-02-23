@@ -139,13 +139,14 @@ function Sidebar({ mobile = false, onClose, stats }) {
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navigation
           .filter(item => {
+            // Enforce mobile-only items regardless of role.
+            if (item.mobileOnly && !mobile) return false;
             if (isAdmin) return true;
             if (item.adminOnly && !isAdmin) return false;
             if (item.requiresFairplay && !canAccessFairplay) return false;
             if (item.requiresVOG && !canAccessVOG) return false;
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
             if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
-            if (item.mobileOnly && !mobile) return false;
             return true;
           })
           .map((item) => {
