@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.8.1] - 2026-02-23
+
+### Fixed
+- Membership pass tier selection now depends on `type-lid` (not KNVB ID presence), so `Verenigingslid` remains `Verenigingslid` even when a KNVB ID exists.
+- KNVB ID row/field is now shown only for `Bondslid` passes and hidden for `Verenigingslid` passes.
+
 ## [30.8.0] - 2026-02-23
 
 ### Added
