@@ -38,3 +38,6 @@ certs/
 
 # Misc
 *.tgz
+
+# Local demo export artifact
+fixtures/demo-fixture.json
