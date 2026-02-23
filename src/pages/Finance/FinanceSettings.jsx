@@ -14,7 +14,7 @@ const TABS = [
   { id: 'discipline', label: 'Tuchtzaken' },
   { id: 'contributie', label: 'Contributie' },
   { id: 'email', label: 'E-mail' },
-  { id: 'membership_passes', label: 'Lidpassen' },
+  { id: 'membership_passes', label: 'Wallets' },
   { id: 'mollie', label: 'Mollie' },
   { id: 'rabobank', label: 'Rabobank' },
 ];
@@ -1319,7 +1319,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       {activeTab === 'membership_passes' && <div className="card p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Lidpassen</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Wallets</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Upload certificaten en service-account bestanden voor Apple Wallet en Google Wallet.
             </p>
@@ -1461,7 +1461,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Lidpassen instellen</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Wallets instellen</h3>
               <button
                 type="button"
                 onClick={() => setShowMembershipPassHelp(false)}

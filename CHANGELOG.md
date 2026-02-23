@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.0] - 2026-02-23
+
+### Added
+- New `Wallets` subtab under **Settings → Koppelingen** for Apple/Google wallet pass configuration.
+
+### Changed
+- Wallet pass settings moved out of **Financieel** and into **Koppelingen**.
+- `Lidpassen` labels in the settings UI are renamed to `Wallets`.
+- Updated the Info tab product description text to reflect Rondo Club (removed legacy CRM copy).
+
 ## [30.8.2] - 2026-02-23
 
 ### Changed
