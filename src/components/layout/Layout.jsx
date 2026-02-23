@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-
 import { useQuery } from '@tanstack/react-query';
 import {
   Users,
+  Award,
   Building2,
   Settings,
   Menu,
@@ -43,6 +44,7 @@ import { prmApi } from '@/api/client';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
+  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
@@ -564,6 +566,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
+    if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
     if (path.startsWith('/people')) return 'Leden';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';

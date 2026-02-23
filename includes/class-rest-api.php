@@ -72,6 +72,49 @@ class Api extends Base {
 			]
 		);
 
+		// Upcoming anniversaries (jubilarissen)
+		register_rest_route(
+			'rondo/v1',
+			'/anniversaries',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_upcoming_anniversaries' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'days_ahead' => [
+						'default'           => 365,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param > 0 && $param <= 730;
+						},
+					],
+					'limit'     => [
+						'default'           => 100,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param > 0 && $param <= 500;
+						},
+					],
+				],
+			]
+		);
+
+		// Anniversary milestone settings
+		register_rest_route(
+			'rondo/v1',
+			'/anniversaries/settings',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_anniversary_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_anniversary_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+			]
+		);
+
 		// Get user notification channels
 		register_rest_route(
 			'rondo/v1',
@@ -1404,6 +1447,298 @@ class Api extends Base {
 	}
 
 	/**
+	 * Get upcoming anniversaries (jubilarissen).
+	 */
+	public function get_upcoming_anniversaries( $request ) {
+		$days_ahead    = (int) $request->get_param( 'days_ahead' );
+		$limit         = (int) $request->get_param( 'limit' );
+		$anniversaries = $this->get_upcoming_anniversaries_data( $days_ahead, $limit );
+
+		return rest_ensure_response( $anniversaries );
+	}
+
+	/**
+	 * Get anniversary milestone settings.
+	 */
+	public function get_anniversary_settings( $request ) {
+		return rest_ensure_response(
+			[
+				'milestones' => $this->get_anniversary_milestones(),
+			]
+		);
+	}
+
+	/**
+	 * Update anniversary milestone settings.
+	 */
+	public function update_anniversary_settings( $request ) {
+		$milestones = $request->get_param( 'milestones' );
+		if ( ! is_array( $milestones ) ) {
+			return new \WP_Error(
+				'invalid_milestones',
+				__( 'Milestones must be provided as an object.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$normalized = [
+			'member'    => self::DEFAULT_ANNIVERSARY_MILESTONES['member'],
+			'volunteer' => self::DEFAULT_ANNIVERSARY_MILESTONES['volunteer'],
+		];
+
+		if ( array_key_exists( 'member', $milestones ) ) {
+			if ( ! is_array( $milestones['member'] ) ) {
+				return new \WP_Error(
+					'invalid_member_milestones',
+					__( 'Member milestones must be an array of year values.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+			$normalized['member'] = $this->normalize_anniversary_milestones( $milestones['member'] );
+		}
+
+		if ( array_key_exists( 'volunteer', $milestones ) ) {
+			if ( ! is_array( $milestones['volunteer'] ) ) {
+				return new \WP_Error(
+					'invalid_volunteer_milestones',
+					__( 'Volunteer milestones must be an array of year values.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+			$normalized['volunteer'] = $this->normalize_anniversary_milestones( $milestones['volunteer'] );
+		}
+
+		update_option( 'rondo_anniversary_milestones', $normalized, false );
+
+		return rest_ensure_response(
+			[
+				'success'    => true,
+				'milestones' => $normalized,
+			]
+		);
+	}
+
+	/**
+	 * Get and compute upcoming anniversaries for active members.
+	 *
+	 * @param int $days_ahead Number of days ahead to include.
+	 * @param int $limit      Maximum results.
+	 * @return array
+	 */
+	private function get_upcoming_anniversaries_data( int $days_ahead, int $limit ): array {
+		$today      = new \DateTimeImmutable( 'today', wp_timezone() );
+		$cutoff     = $today->modify( '+' . max( 1, $days_ahead ) . ' days' );
+		$milestones = $this->get_anniversary_milestones();
+
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'     => 'lid-sinds',
+						'compare' => 'EXISTS',
+					],
+					[
+						'relation' => 'OR',
+						[
+							'key'     => 'former_member',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'     => 'former_member',
+							'value'   => '1',
+							'compare' => '!=',
+						],
+					],
+				],
+			]
+		);
+
+		$results = [];
+
+		foreach ( $people as $person ) {
+			$person_id    = (int) $person->ID;
+			$member_since = get_post_meta( $person_id, 'lid-sinds', true );
+
+			if ( empty( $member_since ) ) {
+				continue;
+			}
+
+			$start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $member_since, wp_timezone() );
+			if ( ! $start_date ) {
+				continue;
+			}
+
+			foreach ( $milestones['member'] as $milestone_years ) {
+				$item = $this->build_anniversary_item( $person, 'member', $milestone_years, $start_date, $today, $cutoff );
+				if ( $item ) {
+					$results[] = $item;
+				}
+			}
+
+			if ( get_field( 'huidig-vrijwilliger', $person_id ) ) {
+				foreach ( $milestones['volunteer'] as $milestone_years ) {
+					$item = $this->build_anniversary_item( $person, 'volunteer', $milestone_years, $start_date, $today, $cutoff );
+					if ( $item ) {
+						$results[] = $item;
+					}
+				}
+			}
+		}
+
+		usort(
+			$results,
+			static function ( array $a, array $b ): int {
+				$date_cmp = strcmp( $a['anniversary_date'], $b['anniversary_date'] );
+				if ( 0 !== $date_cmp ) {
+					return $date_cmp;
+				}
+				$years_cmp = $a['milestone_years'] <=> $b['milestone_years'];
+				if ( 0 !== $years_cmp ) {
+					return $years_cmp;
+				}
+				return strcasecmp( $a['person']['name'], $b['person']['name'] );
+			}
+		);
+
+		if ( $limit > 0 ) {
+			$results = array_slice( $results, 0, $limit );
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Build one anniversary record when it falls within the requested window.
+	 *
+	 * @param \WP_Post            $person          Person post object.
+	 * @param string              $type            Anniversary type: member|volunteer.
+	 * @param float               $milestone_years Milestone in years (supports .5).
+	 * @param \DateTimeImmutable  $start_date      Start date.
+	 * @param \DateTimeImmutable  $today           Window start (inclusive).
+	 * @param \DateTimeImmutable  $cutoff          Window end (inclusive).
+	 * @return array|null
+	 */
+	private function build_anniversary_item(
+		\WP_Post $person,
+		string $type,
+		float $milestone_years,
+		\DateTimeImmutable $start_date,
+		\DateTimeImmutable $today,
+		\DateTimeImmutable $cutoff
+	): ?array {
+		$anniversary_date = $this->calculate_anniversary_date( $start_date, $milestone_years );
+		if ( ! $anniversary_date || $anniversary_date < $today || $anniversary_date > $cutoff ) {
+			return null;
+		}
+
+		$interval = $today->diff( $anniversary_date );
+		$days     = (int) $interval->format( '%a' );
+		$label    = $this->format_milestone_years( $milestone_years );
+
+		return [
+			'id'               => sprintf( '%d-%s-%s', $person->ID, $type, str_replace( '.', '_', (string) $milestone_years ) ),
+			'type'             => $type,
+			'milestone_years'  => $milestone_years,
+			'milestone_label'  => $label . ' jaar',
+			'title'            => 'member' === $type ? $label . ' jaar lid' : $label . ' jaar vrijwilliger',
+			'anniversary_date' => $anniversary_date->format( 'Y-m-d' ),
+			'days_until'       => $days,
+			'person'           => $this->format_person_summary( $person ),
+		];
+	}
+
+	/**
+	 * Calculate anniversary date from a start date and milestone year value.
+	 */
+	private function calculate_anniversary_date( \DateTimeImmutable $start_date, float $milestone_years ): ?\DateTimeImmutable {
+		$whole_years = (int) floor( $milestone_years );
+		$fraction    = round( $milestone_years - $whole_years, 2 );
+
+		$date = $start_date->modify( '+' . $whole_years . ' years' );
+		if ( false === $date ) {
+			return null;
+		}
+
+		if ( 0.5 === $fraction ) {
+			$date = $date->modify( '+6 months' );
+			if ( false === $date ) {
+				return null;
+			}
+		}
+
+		return $date;
+	}
+
+	/**
+	 * Normalize milestone list to sorted unique float values.
+	 *
+	 * @param array $values Raw milestone values.
+	 * @return array
+	 */
+	private function normalize_anniversary_milestones( array $values ): array {
+		$normalized = [];
+
+		foreach ( $values as $value ) {
+			if ( ! is_numeric( $value ) ) {
+				continue;
+			}
+
+			$float_value = (float) $value;
+			if ( $float_value <= 0 || $float_value > 120 ) {
+				continue;
+			}
+
+			$fraction = round( $float_value - floor( $float_value ), 2 );
+			if ( ! in_array( $fraction, [ 0.0, 0.5 ], true ) ) {
+				continue;
+			}
+
+			$normalized[] = round( $float_value, 1 );
+		}
+
+		$normalized = array_values( array_unique( $normalized ) );
+		sort( $normalized, SORT_NUMERIC );
+
+		return $normalized;
+	}
+
+	/**
+	 * Get anniversary milestone settings merged with defaults.
+	 *
+	 * @return array
+	 */
+	private function get_anniversary_milestones(): array {
+		$stored = get_option( 'rondo_anniversary_milestones', [] );
+
+		if ( ! is_array( $stored ) ) {
+			$stored = [];
+		}
+
+		$member    = $this->normalize_anniversary_milestones( is_array( $stored['member'] ?? null ) ? $stored['member'] : self::DEFAULT_ANNIVERSARY_MILESTONES['member'] );
+		$volunteer = $this->normalize_anniversary_milestones( is_array( $stored['volunteer'] ?? null ) ? $stored['volunteer'] : self::DEFAULT_ANNIVERSARY_MILESTONES['volunteer'] );
+
+		return [
+			'member'    => ! empty( $member ) ? $member : self::DEFAULT_ANNIVERSARY_MILESTONES['member'],
+			'volunteer' => ! empty( $volunteer ) ? $volunteer : self::DEFAULT_ANNIVERSARY_MILESTONES['volunteer'],
+		];
+	}
+
+	/**
+	 * Format milestone years for Dutch labels (12.5 -> 12,5).
+	 */
+	private function format_milestone_years( float $milestone_years ): string {
+		$rounded = round( $milestone_years, 1 );
+		if ( abs( $rounded - (int) $rounded ) < 0.001 ) {
+			return (string) (int) $rounded;
+		}
+		return str_replace( '.', ',', number_format( $rounded, 1, '.', '' ) );
+	}
+
+	/**
 	 * Manually trigger reminder emails for today (admin only)
 	 */
 	public function trigger_reminders( $request ) {
@@ -1692,6 +2027,7 @@ class Api extends Base {
 	private const VALID_DASHBOARD_CARDS = [
 		'stats',
 		'reminders',
+		'anniversaries',
 		'todos',
 		'awaiting',
 		'meetings',
@@ -1705,11 +2041,20 @@ class Api extends Base {
 	private const DEFAULT_DASHBOARD_ORDER = [
 		'stats',
 		'reminders',
+		'anniversaries',
 		'todos',
 		'awaiting',
 		'meetings',
 		'recent-contacted',
 		'recent-edited',
+	];
+
+	/**
+	 * Default anniversary milestone settings.
+	 */
+	private const DEFAULT_ANNIVERSARY_MILESTONES = [
+		'member'    => [ 5, 10, 15, 20, 25, 40, 50, 60, 75 ],
+		'volunteer' => [ 12.5, 25, 40 ],
 	];
 
 	/**
@@ -2583,6 +2928,7 @@ class Api extends Base {
 		// Upcoming reminders
 		$reminders_handler  = new \RONDO_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
+		$upcoming_anniversaries = $this->get_upcoming_anniversaries_data( 365, 20 );
 
 		// Get open todos count
 		$open_todos_count = $this->count_open_todos();
@@ -2611,34 +2957,34 @@ class Api extends Base {
 					'open_feedback_count'  => $open_feedback_count,
 				],
 				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
-				'upcoming_reminders' => $this->limit_reminders_with_all_today( $upcoming_reminders, 5 ),
+				'upcoming_reminders' => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
+				'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
 				'recently_contacted' => $recently_contacted,
 			]
 		);
 	}
 
 	/**
-	 * Limit reminders to $limit items, but always include all of today's reminders.
+	 * Limit upcoming items to $limit while always including all items for today.
 	 *
-	 * Reminders are already sorted by next_occurrence (today first). If there are
-	 * more than $limit birthdays today, all of them are returned. Otherwise, the
-	 * list is padded with future reminders up to $limit.
+	 * Input arrays are expected to be sorted by date ascending and include
+	 * a `days_until` field.
 	 *
-	 * @param array $reminders Sorted array of reminder items with 'days_until' key.
-	 * @param int   $limit     Default maximum number of reminders to return.
+	 * @param array $items Sorted items with `days_until`.
+	 * @param int   $limit Default maximum items to return.
 	 * @return array
 	 */
-	private function limit_reminders_with_all_today( array $reminders, int $limit ): array {
+	private function limit_items_with_all_today( array $items, int $limit ): array {
 		$today_count = 0;
-		foreach ( $reminders as $reminder ) {
-			if ( 0 === $reminder['days_until'] ) {
+		foreach ( $items as $item ) {
+			if ( 0 === (int) ( $item['days_until'] ?? -1 ) ) {
 				$today_count++;
 			} else {
 				break; // Reminders are sorted by date, so no more today entries after this.
 			}
 		}
 
-		return array_slice( $reminders, 0, max( $limit, $today_count ) );
+		return array_slice( $items, 0, max( $limit, $today_count ) );
 	}
 
 	/**

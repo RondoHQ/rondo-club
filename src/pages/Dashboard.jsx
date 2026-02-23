@@ -10,6 +10,7 @@ import {
   Square,
   MessageCircle,
   HeartHandshake,
+  Award,
   CalendarClock,
   ChevronLeft,
   ChevronRight,
@@ -132,6 +133,36 @@ function ReminderCard({ reminder }) {
   }
 
   return <div className={className}>{cardContent}</div>;
+}
+
+/**
+ * Anniversary card showing upcoming jubilees.
+ */
+function AnniversaryCard({ anniversary }) {
+  const daysUntil = anniversary.days_until;
+  const urgencyClass = getReminderUrgencyClass(daysUntil);
+  const person = anniversary.person;
+  const typeLabel = anniversary.type === 'volunteer' ? 'Vrijwilliger' : 'Lid';
+
+  return (
+    <Link
+      to={`/people/${person.id}`}
+      className="flex items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+    >
+      <div className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
+        {daysUntil === 0 ? 'Vandaag' : `${daysUntil}d`}
+      </div>
+      <div className="ml-3 flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50 truncate">{person.name}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+          {anniversary.milestone_label} {typeLabel.toLowerCase()} · {format(new Date(anniversary.anniversary_date), 'd MMMM yyyy')}
+        </p>
+      </div>
+      <span className="ml-2 px-2 py-1 rounded-full text-[10px] font-medium bg-cyan-50 text-cyan-700 dark:bg-gray-700 dark:text-cyan-300">
+        {typeLabel}
+      </span>
+    </Link>
+  );
 }
 
 /**
@@ -530,7 +561,7 @@ export default function Dashboard() {
     return <DashboardError error={error} />;
   }
 
-  const { stats, recent_people, upcoming_reminders, recently_contacted } = data || {};
+  const { stats, recent_people, upcoming_reminders, upcoming_anniversaries, recently_contacted } = data || {};
   const totalItems = (stats?.total_people || 0) + (stats?.total_teams || 0) + (stats?.total_dates || 0);
   const isEmpty = totalItems === 0;
 
@@ -594,6 +625,21 @@ export default function Dashboard() {
       >
         {upcoming_reminders?.length > 0 &&
           upcoming_reminders.map((reminder) => <ReminderCard key={reminder.id} reminder={reminder} />)}
+      </DashboardCard>
+    ),
+
+    anniversaries: () => (
+      <DashboardCard
+        key="anniversaries"
+        title="Jubilarissen"
+        icon={Award}
+        count={upcoming_anniversaries?.length}
+        emptyMessage="Geen aankomende jubilarissen"
+      >
+        {upcoming_anniversaries?.length > 0 &&
+          upcoming_anniversaries.map((anniversary) => (
+            <AnniversaryCard key={anniversary.id} anniversary={anniversary} />
+          ))}
       </DashboardCard>
     ),
 

@@ -126,6 +126,12 @@ export const prmApi = {
     api.get('/rondo/v1/reminders', { params: { days_ahead: daysAhead } }),
   triggerReminders: () => api.post('/rondo/v1/reminders/trigger'),
   rescheduleCronJobs: () => api.post('/rondo/v1/reminders/reschedule-cron'),
+
+  // Anniversaries
+  getAnniversaries: (daysAhead = 365, limit = 100) =>
+    api.get('/rondo/v1/anniversaries', { params: { days_ahead: daysAhead, limit } }),
+  getAnniversarySettings: () => api.get('/rondo/v1/anniversaries/settings'),
+  updateAnniversarySettings: (milestones) => api.post('/rondo/v1/anniversaries/settings', { milestones }),
   
   // Notification channels
   getNotificationChannels: () => api.get('/rondo/v1/user/notification-channels'),

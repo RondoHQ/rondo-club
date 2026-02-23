@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet, Award } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -35,6 +35,7 @@ const ADMIN_SUBTABS = [
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
   { id: 'welkomstmail', label: 'Welkomstmail' },
+  { id: 'anniversaries', label: 'Jubilarissen', icon: Award },
   { id: 'systeem', label: 'Systeem', icon: Wrench },
 ];
 
@@ -122,6 +123,12 @@ export default function Settings() {
   const [welcomeSaving, setWelcomeSaving] = useState(false);
   const [welcomeSaved, setWelcomeSaved] = useState(false);
 
+  // Anniversary settings state (admin only)
+  const [anniversarySettings, setAnniversarySettings] = useState(null);
+  const [anniversarySettingsLoading, setAnniversarySettingsLoading] = useState(false);
+  const [anniversarySaving, setAnniversarySaving] = useState(false);
+  const [anniversaryMessage, setAnniversaryMessage] = useState('');
+
   // Capability sync state (admin only)
   const [syncingCapabilities, setSyncingCapabilities] = useState(false);
   const [capabilitySyncMessage, setCapabilitySyncMessage] = useState('');
@@ -198,6 +205,18 @@ export default function Settings() {
     }
   }, [activeTab, activeSubtab, isAdmin, welcomeSettings]);
 
+  // Fetch anniversary settings when jubilees subtab is active
+  useEffect(() => {
+    if (activeTab === 'admin' && activeSubtab === 'anniversaries' && isAdmin && !anniversarySettings) {
+      setAnniversarySettingsLoading(true);
+      setAnniversaryMessage('');
+      prmApi.getAnniversarySettings()
+        .then((res) => setAnniversarySettings(res.data?.milestones || { member: [], volunteer: [] }))
+        .catch((error) => setAnniversaryMessage(error.response?.data?.message || 'Kon jubileuminstellingen niet laden.'))
+        .finally(() => setAnniversarySettingsLoading(false));
+    }
+  }, [activeTab, activeSubtab, isAdmin, anniversarySettings]);
+
   // Fetch functie-to-role mapping on mount (admin only)
   useEffect(() => {
     const fetchFunctieMapping = async () => {
@@ -238,6 +257,23 @@ export default function Settings() {
       // Handle error silently
     } finally {
       setWelcomeSaving(false);
+    }
+  };
+
+  const handleAnniversarySave = async () => {
+    if (!anniversarySettings) {
+      return;
+    }
+    setAnniversarySaving(true);
+    setAnniversaryMessage('');
+    try {
+      const response = await prmApi.updateAnniversarySettings(anniversarySettings);
+      setAnniversarySettings(response.data?.milestones || anniversarySettings);
+      setAnniversaryMessage('Jubileuminstellingen opgeslagen.');
+    } catch (error) {
+      setAnniversaryMessage(error.response?.data?.message || 'Kon jubileuminstellingen niet opslaan.');
+    } finally {
+      setAnniversarySaving(false);
     }
   };
 
@@ -473,6 +509,12 @@ export default function Settings() {
             welcomeSaving={welcomeSaving}
             welcomeSaved={welcomeSaved}
             handleWelcomeSave={handleWelcomeSave}
+            anniversarySettings={anniversarySettings}
+            setAnniversarySettings={setAnniversarySettings}
+            anniversarySettingsLoading={anniversarySettingsLoading}
+            anniversarySaving={anniversarySaving}
+            anniversaryMessage={anniversaryMessage}
+            handleAnniversarySave={handleAnniversarySave}
           />
         ) : null;
       case 'about':
@@ -1288,6 +1330,12 @@ function AdminTabWithSubtabs({
   welcomeSaving,
   welcomeSaved,
   handleWelcomeSave,
+  anniversarySettings,
+  setAnniversarySettings,
+  anniversarySettingsLoading,
+  anniversarySaving,
+  anniversaryMessage,
+  handleAnniversarySave,
 }) {
   return (
     <div className="space-y-6">
@@ -1352,6 +1400,17 @@ function AdminTabWithSubtabs({
             saving={welcomeSaving}
             saved={welcomeSaved}
             handleSave={handleWelcomeSave}
+          />
+        </div>
+      ) : activeSubtab === 'anniversaries' ? (
+        <div className="card p-6">
+          <AnniversariesTab
+            settings={anniversarySettings}
+            setSettings={setAnniversarySettings}
+            loading={anniversarySettingsLoading}
+            saving={anniversarySaving}
+            message={anniversaryMessage}
+            handleSave={handleAnniversarySave}
           />
         </div>
       ) : activeSubtab === 'systeem' ? (
@@ -1605,6 +1664,198 @@ function AdminTab({
             )}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AnniversariesTab({
+  settings,
+  setSettings,
+  loading,
+  saving,
+  message,
+  handleSave,
+}) {
+  const MEMBER_PRESETS = [5, 10, 15, 20, 25, 40, 50, 60, 75];
+  const VOLUNTEER_PRESETS = [12.5, 25, 40];
+  const [newMemberMilestone, setNewMemberMilestone] = useState('');
+  const [newVolunteerMilestone, setNewVolunteerMilestone] = useState('');
+
+  const normalizeMilestones = (values) => {
+    const normalized = values
+      .map((value) => Number(value))
+      .filter((value) => Number.isFinite(value) && value > 0 && value <= 120)
+      .filter((value) => {
+        const fraction = Number((value - Math.floor(value)).toFixed(2));
+        return fraction === 0 || fraction === 0.5;
+      })
+      .map((value) => Number(value.toFixed(1)));
+
+    return [...new Set(normalized)].sort((a, b) => a - b);
+  };
+
+  const updateCategory = (category, values) => {
+    setSettings((prev) => ({
+      ...(prev || {}),
+      [category]: normalizeMilestones(values),
+    }));
+  };
+
+  const toggleMilestone = (category, milestone, checked) => {
+    const existing = settings?.[category] || [];
+    const next = checked
+      ? [...existing, milestone]
+      : existing.filter((value) => value !== milestone);
+    updateCategory(category, next);
+  };
+
+  const addCustomMilestone = (category) => {
+    const raw = category === 'member' ? newMemberMilestone : newVolunteerMilestone;
+    const value = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(value) || value <= 0 || value > 120) {
+      return;
+    }
+    const fraction = Number((value - Math.floor(value)).toFixed(2));
+    if (!(fraction === 0 || fraction === 0.5)) {
+      return;
+    }
+
+    const existing = settings?.[category] || [];
+    updateCategory(category, [...existing, value]);
+
+    if (category === 'member') {
+      setNewMemberMilestone('');
+    } else {
+      setNewVolunteerMilestone('');
+    }
+  };
+
+  const formatMilestone = (value) => (Number.isInteger(value) ? String(value) : String(value).replace('.', ','));
+
+  const renderCategory = (category, title, description, presets, customValue, setCustomValue) => {
+    const selected = settings?.[category] || [];
+    const customMilestones = selected.filter((value) => !presets.includes(value));
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</h4>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {presets.map((milestone) => (
+            <label
+              key={`${category}-${milestone}`}
+              className="flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm"
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(milestone)}
+                onChange={(e) => toggleMilestone(category, milestone, e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-electric-cyan focus:ring-electric-cyan"
+              />
+              <span>{formatMilestone(milestone)} jaar</span>
+            </label>
+          ))}
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center gap-2">
+          <input
+            type="text"
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            placeholder="Bijv. 30 of 12,5"
+            className="input md:max-w-xs"
+          />
+          <button
+            type="button"
+            onClick={() => addCustomMilestone(category)}
+            className="btn-secondary md:w-auto"
+          >
+            Mijlpaal toevoegen
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Alleen hele of halve jaren (bijv. 12,5).</p>
+        </div>
+
+        {customMilestones.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {customMilestones.map((milestone) => (
+              <button
+                key={`${category}-custom-${milestone}`}
+                type="button"
+                onClick={() => toggleMilestone(category, milestone, false)}
+                className="inline-flex items-center gap-1 rounded-full bg-cyan-50 dark:bg-gray-700 text-cyan-700 dark:text-cyan-300 px-3 py-1 text-xs"
+              >
+                {formatMilestone(milestone)} jaar
+                <span aria-hidden>×</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Jubileuminstellingen laden...
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        Kon jubileuminstellingen niet laden.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Jubilarissen</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Stel in welke lid- en vrijwilligersmijlpalen je club wil volgen in het jubileumoverzicht.
+        </p>
+      </div>
+
+      {renderCategory(
+        'member',
+        'Lidmaatschap',
+        'Mijlpalen op basis van lid sinds datum.',
+        MEMBER_PRESETS,
+        newMemberMilestone,
+        setNewMemberMilestone
+      )}
+
+      {renderCategory(
+        'volunteer',
+        'Vrijwilligers',
+        'Mijlpalen voor vrijwilligersjubilea.',
+        VOLUNTEER_PRESETS,
+        newVolunteerMilestone,
+        setNewVolunteerMilestone
+      )}
+
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className="btn-primary"
+        >
+          {saving ? 'Opslaan...' : 'Opslaan'}
+        </button>
+        {message && (
+          <span className={`text-sm ${message.includes('niet') || message.includes('Kon') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+            {message}
+          </span>
+        )}
       </div>
     </div>
   );
