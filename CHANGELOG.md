@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.14] - 2026-02-23
+
+### Changed
+- Public membership pass page role selection now requires exactly one active role when multiple roles are available:
+  - Removed the implicit "all roles/functions" option.
+  - Replaced dropdown with radio options.
+  - Wallet actions stay unavailable until one role is selected.
+- Team label `Verenigingsbreed` is now normalized to `Vereniging` in wallet role labels and generated pass content.
+- Google Wallet object payload now includes:
+  - `textModulesData`: `FUNCTIE`, `TEAM`, optional `KNVB ID`, and `SEIZOEN`
+  - `barcode.alternateText` as empty string
+  - `hexBackgroundColor` derived from accent settings (fallback `#006935`)
+  - `logo.contentDescription` localized in Dutch
+
 ## [30.9.13] - 2026-02-23
 
 ### Changed

@@ -352,7 +352,7 @@ class MembershipPassApple {
 			if ( $team_id > 0 ) {
 				$title = get_the_title( $team_id );
 				if ( is_string( $title ) && $title !== '' ) {
-					$team_name = $title;
+					$team_name = $this->normalize_team_name( $title );
 				}
 			}
 
@@ -376,6 +376,19 @@ class MembershipPassApple {
 		}
 
 		return array_values( $entries );
+	}
+
+	/**
+	 * Normalize team names for wallet card readability.
+	 *
+	 * @param string $team_name Team title.
+	 * @return string
+	 */
+	private function normalize_team_name( string $team_name ): string {
+		if ( strtolower( $team_name ) === 'verenigingsbreed' ) {
+			return 'Vereniging';
+		}
+		return $team_name;
 	}
 
 	/**

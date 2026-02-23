@@ -120,6 +120,15 @@ class PublicMembershipPassPage {
 
 		$wallet        = sanitize_key( wp_unslash( $_GET['wallet'] ?? '' ) );
 		$selected_work = sanitize_text_field( wp_unslash( $_GET['role'] ?? '' ) );
+		$apple_service = new MembershipPassApple();
+		$work_options  = $apple_service->get_work_options_for_person( $person_id );
+		$selected_work = $this->resolve_selected_work( $selected_work, $work_options );
+
+		if ( $wallet !== '' && count( $work_options ) > 1 && $selected_work === '' ) {
+			$this->render_error( 'Kies eerst precies één rol voor je ledenpas.' );
+			exit;
+		}
+
 		if ( $wallet === 'apple' ) {
 			$this->output_apple_pass( $person_id, $selected_work );
 			exit;
@@ -132,6 +141,32 @@ class PublicMembershipPassPage {
 
 		$this->render_page( $person_id, $token, $selected_work );
 		exit;
+	}
+
+	/**
+	 * Validate selected role key against current options.
+	 *
+	 * @param string $selected_work Raw selected key.
+	 * @param array  $work_options Work options.
+	 * @return string
+	 */
+	private function resolve_selected_work( string $selected_work, array $work_options ): string {
+		$keys = [];
+		foreach ( $work_options as $option ) {
+			if ( isset( $option['key'] ) ) {
+				$keys[ (string) $option['key'] ] = true;
+			}
+		}
+
+		if ( $selected_work !== '' && isset( $keys[ $selected_work ] ) ) {
+			return $selected_work;
+		}
+
+		if ( count( $work_options ) === 1 && isset( $work_options[0]['key'] ) ) {
+			return (string) $work_options[0]['key'];
+		}
+
+		return '';
 	}
 
 	/**
@@ -283,8 +318,10 @@ class PublicMembershipPassPage {
 		$google_available = $google_service->is_configured();
 
 		$work_options = $apple_service->get_work_options_for_person( $person_id );
-		$apple_url    = $this->build_wallet_url( $token, 'apple', $selected_work );
-		$google_url   = $this->build_wallet_url( $token, 'google', $selected_work );
+		$selected_work   = $this->resolve_selected_work( $selected_work, $work_options );
+		$must_select_work = count( $work_options ) > 1 && $selected_work === '';
+		$apple_url        = $this->build_wallet_url( $token, 'apple', $selected_work );
+		$google_url       = $this->build_wallet_url( $token, 'google', $selected_work );
 		$user_agent   = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
 		$is_android   = strpos( $user_agent, 'android' ) !== false;
 		$is_ios       = strpos( $user_agent, 'iphone' ) !== false
@@ -331,18 +368,27 @@ class PublicMembershipPassPage {
 		<h2 class="wallet-section-title">Voeg de ledenpas toe aan je wallet!</h2>
 		<?php if ( count( $work_options ) > 1 ) : ?>
 			<form method="get" class="role-selector-form">
-				<label for="role-select" class="role-selector-label">Welke rol bij AWC wil je graag op je ledenpas hebben staan?</label>
-				<select id="role-select" name="role" class="role-selector-input" onchange="this.form.submit()">
-					<option value="">Alle actieve rollen</option>
+				<span class="role-selector-label">Welke rol bij AWC wil je graag op je ledenpas hebben staan?</span>
+				<div class="role-selector-options">
 					<?php foreach ( $work_options as $option ) : ?>
-						<option value="<?php echo esc_attr( $option['key'] ); ?>" <?php selected( $selected_work, (string) $option['key'] ); ?>>
-							<?php echo esc_html( $option['label'] ); ?>
-						</option>
+						<label class="role-selector-option">
+							<input
+								type="radio"
+								name="role"
+								value="<?php echo esc_attr( $option['key'] ); ?>"
+								<?php checked( $selected_work, (string) $option['key'] ); ?>
+								onchange="this.form.submit()"
+							/>
+							<span><?php echo esc_html( $option['label'] ); ?></span>
+						</label>
 					<?php endforeach; ?>
-				</select>
+				</div>
 				<noscript><button type="submit">Toepassen</button></noscript>
 			</form>
 		<?php endif; ?>
+		<?php if ( $must_select_work ) : ?>
+			<div class="hint">Kies eerst precies één rol om je wallet-knoppen te activeren.</div>
+		<?php else : ?>
 		<div class="wallet-actions">
 		<?php if ( $show_apple_wallet && $apple_available ) : ?>
 			<a href="<?php echo esc_url( $apple_url ); ?>" class="wallet-badge wallet-badge-apple" aria-label="Add to Apple Wallet">
@@ -372,6 +418,7 @@ class PublicMembershipPassPage {
 			<div class="hint">Google Wallet is nog niet geconfigureerd.</div>
 		<?php endif; ?>
 		</div>
+		<?php endif; ?>
 	</div>
 </div>
 		<?php
@@ -548,7 +595,9 @@ class PublicMembershipPassPage {
 		.wallet-section-title { margin-bottom: 24px; }
 		.role-selector-form { margin-top: 6px; margin-bottom: 24px; }
 		.role-selector-label { display: block; font-size: 14px; color: #374151; margin-bottom: 6px; font-weight: 600; }
-		.role-selector-input { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #111827; background: #fff; }
+		.role-selector-options { display: grid; gap: 8px; }
+		.role-selector-option { display: flex; align-items: center; gap: 8px; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 10px; color: #111827; background: #fff; }
+		.role-selector-option input[type="radio"] { margin: 0; }
 		.wallet-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
 		.wallet-badge { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-top: 0; height: 54px; }
 		.wallet-badge-apple { border-radius: 999px; overflow: hidden; }
