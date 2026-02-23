@@ -14,6 +14,8 @@ use Google\Service\Walletobjects\Image;
 use Google\Service\Walletobjects\ImageUri;
 use Google\Service\Walletobjects\TextModuleData;
 use Rondo\Config\FinanceConfig;
+use Rondo\Fees\MembershipFees;
+use Rondo\Config\ClubConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -67,6 +69,8 @@ class MembershipPassGoogle {
 
 		$class_suffix = $this->get_class_suffix();
 		$class_id     = $issuer_id . '.' . $class_suffix;
+		$fees         = new MembershipFees();
+		$season       = $fees->get_season_key();
 
 		$qr_service = new MembershipPassQr();
 		$qr_result  = $qr_service->issue_for_person( $person_id );
@@ -77,6 +81,7 @@ class MembershipPassGoogle {
 		$person_name = $this->get_person_full_name( $person_id );
 		$issuer_name = $this->get_issuer_name();
 		$member_type = $this->get_member_type_label( $person_id );
+		$knvb_id     = trim( (string) get_field( 'knvb-id', $person_id ) );
 		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
@@ -87,7 +92,7 @@ class MembershipPassGoogle {
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $qr_result['token'] );
+			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $knvb_id, $season, $qr_result['token'] );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -141,11 +146,7 @@ class MembershipPassGoogle {
 		$logo  = $this->get_logo_image_url();
 		if ( $logo !== '' ) {
 			$class->setLogo(
-				new Image(
-					[
-						'sourceUri' => new ImageUri( [ 'uri' => $logo ] ),
-					]
-				)
+				$this->build_logo_image( $logo )
 			);
 		}
 
@@ -167,9 +168,44 @@ class MembershipPassGoogle {
 	 * @param string        $member_type Membership type label.
 	 * @param string        $team_name Team label.
 	 * @param string        $functions Functions label.
+	 * @param string        $knvb_id KNVB ID.
+	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $qr_payload ) {
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $knvb_id, string $season, string $qr_payload ) {
+		$text_modules = [
+			new TextModuleData(
+				[
+					'id'     => 'functie',
+					'header' => 'FUNCTIE',
+					'body'   => $functions,
+				]
+			),
+			new TextModuleData(
+				[
+					'id'     => 'team',
+					'header' => 'TEAM',
+					'body'   => $team_name,
+				]
+			),
+		];
+		if ( $knvb_id !== '' ) {
+			$text_modules[] = new TextModuleData(
+				[
+					'id'     => 'knvb_id',
+					'header' => 'KNVB ID',
+					'body'   => $knvb_id,
+				]
+			);
+		}
+		$text_modules[] = new TextModuleData(
+			[
+				'id'     => 'seizoen',
+				'header' => 'SEIZOEN',
+				'body'   => $season,
+			]
+		);
+
 		$object = new GenericObject(
 			[
 				'id'             => $object_id,
@@ -195,36 +231,19 @@ class MembershipPassGoogle {
 				],
 				'barcode'        => new Barcode(
 					[
-						'type'  => 'QR_CODE',
-						'value' => $qr_payload,
+						'type'          => 'QR_CODE',
+						'value'         => $qr_payload,
+						'alternateText' => '',
 					]
 				),
-				'textModulesData' => [
-					new TextModuleData(
-						[
-							'id'     => 'functie',
-							'header' => 'FUNCTIE',
-							'body'   => $functions,
-						]
-					),
-					new TextModuleData(
-						[
-							'id'     => 'team',
-							'header' => 'TEAM',
-							'body'   => $team_name,
-						]
-					),
-				],
+				'textModulesData'   => $text_modules,
+				'hexBackgroundColor' => $this->get_hex_background_color(),
 			]
 		);
 		$logo  = $this->get_logo_image_url();
 		if ( $logo !== '' ) {
 			$object->setLogo(
-				new Image(
-					[
-						'sourceUri' => new ImageUri( [ 'uri' => $logo ] ),
-					]
-				)
+				$this->build_logo_image( $logo )
 			);
 		}
 
@@ -417,7 +436,7 @@ class MembershipPassGoogle {
 			if ( $team_id > 0 ) {
 				$title = get_the_title( $team_id );
 				if ( is_string( $title ) && $title !== '' ) {
-					$team_name = $title;
+					$team_name = $this->normalize_team_name( $title );
 				}
 			}
 
@@ -444,6 +463,19 @@ class MembershipPassGoogle {
 	}
 
 	/**
+	 * Normalize team names for wallet card readability.
+	 *
+	 * @param string $team_name Team title.
+	 * @return string
+	 */
+	private function normalize_team_name( string $team_name ): string {
+		if ( strtolower( $team_name ) === 'verenigingsbreed' ) {
+			return 'Vereniging';
+		}
+		return $team_name;
+	}
+
+	/**
 	 * Resolve logo image URL.
 	 *
 	 * @return string
@@ -463,6 +495,26 @@ class MembershipPassGoogle {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Build logo image payload with localized content description.
+	 *
+	 * @param string $logo_url Logo URL.
+	 * @return Image
+	 */
+	private function build_logo_image( string $logo_url ): Image {
+		return new Image(
+			[
+				'sourceUri' => new ImageUri( [ 'uri' => $logo_url ] ),
+				'contentDescription' => [
+					'defaultValue' => [
+						'language' => 'nl-NL',
+						'value'    => $this->get_issuer_name() . ' Logo',
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -557,8 +609,8 @@ class MembershipPassGoogle {
 	 * @return string
 	 */
 	private function get_issuer_name(): string {
-		$config = new FinanceConfig();
-		$name   = $config->get_org_name();
+		$config = new ClubConfig();
+		$name   = $config->get_club_name();
 		if ( $name !== '' ) {
 			return $name;
 		}
@@ -577,5 +629,19 @@ class MembershipPassGoogle {
 			return 'Verenigingslid';
 		}
 		return 'Bondslid';
+	}
+
+	/**
+	 * Resolve Google pass background color in hex.
+	 *
+	 * @return string
+	 */
+	private function get_hex_background_color(): string {
+		$config = new FinanceConfig();
+		$hex    = trim( $config->get_accent_color() );
+		if ( preg_match( '/^#?[a-f0-9]{6}$/i', $hex ) ) {
+			return '#' . ltrim( strtolower( $hex ), '#' );
+		}
+		return '#006935';
 	}
 }
