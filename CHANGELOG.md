@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.3] - 2026-02-23
+
+### Changed
+- Settings page layout now uses full available width to improve usability for larger role/permissions screens.
+
 ## [30.9.2] - 2026-02-23
 
 ### Changed
