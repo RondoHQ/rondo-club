@@ -135,6 +135,7 @@ class Clothing extends Base {
 	 */
 	private function get_clothing_settings() {
 		$defaults = [
+			'eligibility_enabled' => true,
 			'cooldown_seasons' => 3,
 			'current_season'   => $this->guess_current_season(),
 		];
@@ -145,6 +146,7 @@ class Clothing extends Base {
 		}
 
 		$settings                      = wp_parse_args( $saved, $defaults );
+		$settings['eligibility_enabled'] = rest_sanitize_boolean( $settings['eligibility_enabled'] );
 		$settings['cooldown_seasons'] = max( 1, (int) $settings['cooldown_seasons'] );
 		$settings['current_season']   = sanitize_text_field( $settings['current_season'] );
 
@@ -487,6 +489,14 @@ class Clothing extends Base {
 	 * @return array
 	 */
 	private function evaluate_eligibility( $person_id, $item_id, $season, $override_reason = '' ) {
+		$settings = $this->get_clothing_settings();
+		if ( empty( $settings['eligibility_enabled'] ) ) {
+			return [
+				'eligible' => true,
+				'reason'   => 'Eligibility-regels zijn uitgeschakeld.',
+			];
+		}
+
 		if ( '' !== trim( (string) $override_reason ) ) {
 			return [
 				'eligible' => true,
@@ -494,7 +504,6 @@ class Clothing extends Base {
 			];
 		}
 
-		$settings      = $this->get_clothing_settings();
 		$cooldown      = (int) $settings['cooldown_seasons'];
 		$current_start = $this->season_start_year( $season ?: $settings['current_season'] );
 
@@ -835,6 +844,9 @@ class Clothing extends Base {
 		$current = $this->get_clothing_settings();
 		$next    = $current;
 
+		if ( null !== $request->get_param( 'eligibility_enabled' ) ) {
+			$next['eligibility_enabled'] = rest_sanitize_boolean( $request->get_param( 'eligibility_enabled' ) );
+		}
 		if ( null !== $request->get_param( 'cooldown_seasons' ) ) {
 			$next['cooldown_seasons'] = max( 1, (int) $request->get_param( 'cooldown_seasons' ) );
 		}
