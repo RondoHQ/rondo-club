@@ -32,6 +32,7 @@ export function NogTeFactureren() {
   const [selectedMemberIds, setSelectedMemberIds] = useState(new Set());
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(null);
+  const [singleCreatingId, setSingleCreatingId] = useState(null);
   const queryClient = useQueryClient();
 
   const config = window.rondoConfig || {};
@@ -106,6 +107,18 @@ export function NogTeFactureren() {
       return new Set(eligibleMemberIds);
     });
   }, [eligibleMemberIds]);
+
+  const handleCreateSingle = useCallback(async (memberId) => {
+    if (singleCreatingId || bulkCreating) return;
+    setSingleCreatingId(memberId);
+
+    try {
+      await prmApi.createMembershipInvoice({ person_id: memberId, season: data?.season });
+      queryClient.resetQueries({ queryKey: feeKeys.all });
+    } finally {
+      setSingleCreatingId(null);
+    }
+  }, [singleCreatingId, bulkCreating, data?.season, queryClient]);
 
   // Bulk invoice creation
   const handleBulkCreate = async () => {
@@ -339,6 +352,41 @@ export function NogTeFactureren() {
         },
         size: 120,
       }),
+      createColumn({
+        id: 'invoice_action',
+        header: 'Maak factuur',
+        accessorFn: () => null,
+        cell: ({ row }) => {
+          const member = row.original;
+          const canCreate = !member.invoice_id && member.final_fee > 0;
+          const isCreatingThis = singleCreatingId === member.id;
+
+          if (!canCreate) {
+            return (
+              <span className="text-xs text-gray-400 dark:text-gray-500">-</span>
+            );
+          }
+
+          return (
+            <button
+              type="button"
+              onClick={() => handleCreateSingle(member.id)}
+              disabled={bulkCreating || isCreatingThis}
+              className="btn-secondary inline-flex items-center gap-1.5 text-xs py-1 px-2 disabled:opacity-50"
+            >
+              {isCreatingThis ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
+              Maak factuur
+            </button>
+          );
+        },
+        sortable: false,
+        filterType: null,
+        size: 140,
+      }),
     ];
 
     return baseColumns;
@@ -352,6 +400,8 @@ export function NogTeFactureren() {
     selectedMemberIds,
     handleToggleMember,
     bulkCreating,
+    singleCreatingId,
+    handleCreateSingle,
   ]);
 
   // Totals (over all noNikkiMembers, regardless of filters)
