@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Download, Plus, Shirt, RotateCcw } from 'lucide-react';
 import { usePeople } from '@/hooks/usePeople';
 import {
@@ -58,6 +58,7 @@ export default function ClothingPage() {
 
   const [cooldown, setCooldown] = useState(settings?.cooldown_seasons || 3);
   const [currentSeason, setCurrentSeason] = useState(settings?.current_season || '');
+  const [personSearch, setPersonSearch] = useState('');
 
   const itemMap = useMemo(() => {
     const map = new Map();
@@ -69,6 +70,24 @@ export default function ClothingPage() {
     () => [...people].sort((a, b) => (a.name || '').localeCompare(b.name || 'nl')),
     [people]
   );
+
+  const personOptions = useMemo(
+    () => sortedPeople.map((person) => ({ id: person.id, label: `${person.name} (${person.id})` })),
+    [sortedPeople]
+  );
+
+  useEffect(() => {
+    if (settings?.cooldown_seasons) {
+      setCooldown(settings.cooldown_seasons);
+    }
+    if (settings?.current_season) {
+      setCurrentSeason(settings.current_season);
+      setAssignmentForm((prev) => ({
+        ...prev,
+        season: prev.season || settings.current_season,
+      }));
+    }
+  }, [settings]);
 
   const handleCreateItem = async (e) => {
     e.preventDefault();
@@ -98,6 +117,10 @@ export default function ClothingPage() {
 
   const handleCreateAssignment = async (e) => {
     e.preventDefault();
+    if (!assignmentForm.person_id) {
+      alert('Kies een lid uit de suggestielijst.');
+      return;
+    }
     try {
       await createAssignment.mutateAsync({
         ...assignmentForm,
@@ -140,6 +163,17 @@ export default function ClothingPage() {
       URL.revokeObjectURL(url);
     } catch {
       alert('Export mislukt.');
+    }
+  };
+
+  const handlePersonSearchChange = (value) => {
+    setPersonSearch(value);
+
+    const match = value.match(/\((\d+)\)\s*$/);
+    if (match) {
+      setAssignmentForm((prev) => ({ ...prev, person_id: match[1] }));
+    } else {
+      setAssignmentForm((prev) => ({ ...prev, person_id: '' }));
     }
   };
 
@@ -200,12 +234,21 @@ export default function ClothingPage() {
             <RotateCcw className="w-5 h-5" />
             Uitgifte / inname registreren
           </h2>
-          <select className="input" value={assignmentForm.person_id} onChange={(e) => setAssignmentForm((v) => ({ ...v, person_id: e.target.value }))} required>
-            <option value="">Selecteer lid</option>
-            {sortedPeople.map((person) => (
-              <option key={person.id} value={person.id}>{person.name}</option>
-            ))}
-          </select>
+          <div>
+            <input
+              list="clothing-person-options"
+              className="input"
+              value={personSearch}
+              onChange={(e) => handlePersonSearchChange(e.target.value)}
+              placeholder="Selecteer lid (typ om te zoeken)"
+              required
+            />
+            <datalist id="clothing-person-options">
+              {personOptions.map((person) => (
+                <option key={person.id} value={person.label} />
+              ))}
+            </datalist>
+          </div>
           <select className="input" value={assignmentForm.item_id} onChange={(e) => setAssignmentForm((v) => ({ ...v, item_id: e.target.value }))} required>
             <option value="">Selecteer item</option>
             {items.map((item) => (
@@ -238,6 +281,11 @@ export default function ClothingPage() {
 
       <form onSubmit={handleSaveSettings} className="card p-6 space-y-3">
         <h2 className="font-semibold text-brand-gradient">Eligibility-instellingen</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Stel hier alleen de clubregel in voor heruitgifte. Meestal is dit: <strong>cooldown 3</strong> en huidig seizoen
+          als <strong>YYYY-YYYY</strong> (bijv. 2025-2026). Bij een uitgifte binnen de cooldown kan je alsnog door met
+          een <strong>override reden</strong>.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <input
             type="number"
