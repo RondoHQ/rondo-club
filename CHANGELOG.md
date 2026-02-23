@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.5] - 2026-02-23
+
+### Fixed
+- Clothing member search now uses server-side search instead of loading all people via `/people`.
+- Search dropdown now activates from 3 typed characters and shows a guidance message below that threshold.
+- Selected member details are fetched only after selection, reducing initial load and improving search responsiveness.
+
 ## [30.10.4] - 2026-02-23
 
 ### Changed
