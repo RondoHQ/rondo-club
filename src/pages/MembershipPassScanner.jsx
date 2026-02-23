@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, CameraOff, QrCode, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Camera, CameraOff, CheckCircle2, XCircle } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import jsQR from 'jsqr';
 
@@ -12,8 +12,6 @@ export default function MembershipPassScanner() {
   const rafRef = useRef(0);
   const isDetectingRef = useRef(false);
 
-  const [token, setToken] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [scanError, setScanError] = useState('');
@@ -55,16 +53,12 @@ export default function MembershipPassScanner() {
     }
 
     setScanError('');
-    setIsVerifying(true);
     try {
       const response = await prmApi.verifyMembershipPassQrToken(cleanedToken);
       setResult(response.data);
-      setToken(cleanedToken);
     } catch (error) {
       setResult(null);
       setScanError(error?.response?.data?.message || 'Verificatie van QR-token mislukt.');
-    } finally {
-      setIsVerifying(false);
     }
   }, []);
 
@@ -122,7 +116,7 @@ export default function MembershipPassScanner() {
     setScanError('');
 
     if (!canScanQr) {
-      setCameraError('QR-camera is niet beschikbaar in deze browser. Gebruik handmatige invoer.');
+      setCameraError('QR-camera is niet beschikbaar in deze browser.');
       return;
     }
 
@@ -150,11 +144,6 @@ export default function MembershipPassScanner() {
     }
   }, [canScanQr, detectFrame, stopCamera]);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    await verifyToken(token);
-  };
-
   useEffect(() => {
     async function loadFormats() {
       if (!hasBarcodeDetector) {
@@ -175,18 +164,12 @@ export default function MembershipPassScanner() {
 
   useEffect(() => stopCamera, [stopCamera]);
 
+  const isActiveMembership = result?.membership?.status === 'active';
+  const resultPhoto = result?.person?.photo_thumbnail || result?.person?.thumbnail || '';
+  const resultKnvbId = result?.person?.knvb_id || result?.person?.['knvb-id'] || '';
+
   return (
     <div className="space-y-6">
-      <div className="card p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <QrCode className="w-6 h-6 text-electric-cyan" />
-          <h1 className="text-2xl font-bold text-brand-gradient">Lidpas Scanner</h1>
-        </div>
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          Scan de QR-code van een ledenpas of plak handmatig het token voor controle.
-        </p>
-      </div>
-
       <div className="card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Camera</h2>
         <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black/90">
@@ -210,36 +193,14 @@ export default function MembershipPassScanner() {
 
         {!canScanQr && (
           <p className="text-sm text-amber-700 dark:text-amber-400">
-            Deze browser ondersteunt geen QR-detectie via camera. Gebruik handmatige token-invoer hieronder.
+            Deze browser ondersteunt geen QR-detectie via camera.
           </p>
         )}
 
         {cameraError && <p className="text-sm text-red-600 dark:text-red-400">{cameraError}</p>}
-      </div>
-
-      <div className="card p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Handmatige controle</h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <label htmlFor="membership-token" className="label">QR token</label>
-          <textarea
-            id="membership-token"
-            value={token}
-            onChange={(event) => setToken(event.target.value)}
-            className="input min-h-28 font-mono text-xs"
-            placeholder="Plak hier het gescande token..."
-          />
-          <button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={isVerifying || !token.trim()}>
-            <Search className="w-4 h-4" />
-            {isVerifying ? 'Controleren...' : 'Controleer token'}
-          </button>
-        </form>
 
         {scanError && (
           <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900/40 dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-300">
-            <div className="flex items-center gap-2 font-medium mb-1">
-              <AlertCircle className="w-4 h-4" />
-              Ongeldig
-            </div>
             {scanError}
           </div>
         )}
@@ -247,35 +208,24 @@ export default function MembershipPassScanner() {
 
       {result && (
         <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold">
-            <CheckCircle2 className="w-5 h-5" />
-            Geldige ledenpas
+          <div className={`flex items-center gap-2 font-semibold ${isActiveMembership ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+            {isActiveMembership ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+            {isActiveMembership ? 'Geldige ledenpas' : 'Ongeldige ledenpas'}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center gap-4">
+            {resultPhoto ? (
+              <img
+                src={resultPhoto}
+                alt={result.person?.name || 'Lid'}
+                className="h-16 w-16 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700" aria-hidden="true" />
+            )}
             <div>
-              <div className="text-gray-500 dark:text-gray-400">Lid</div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{result.person?.name || '-'}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 dark:text-gray-400">KNVB ID</div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{result.person?.knvb_id || '-'}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 dark:text-gray-400">Status</div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{result.membership?.status || '-'}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 dark:text-gray-400">Lid tot</div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{result.membership?.lid_tot || '-'}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 dark:text-gray-400">Seizoen</div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{result.token?.season || '-'}</div>
-            </div>
-            <div>
-              <div className="text-gray-500 dark:text-gray-400">Vervalt op</div>
-              <div className="font-medium text-gray-900 dark:text-gray-100">{result.token?.expires_at || '-'}</div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{result.person?.name || '-'}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">KNVB ID: {resultKnvbId || '-'}</div>
             </div>
           </div>
 

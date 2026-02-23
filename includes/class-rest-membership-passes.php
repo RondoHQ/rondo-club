@@ -163,13 +163,31 @@ class MembershipPasses extends Base {
 					'expires_at' => isset( $payload['exp'] ) ? gmdate( DATE_ATOM, (int) $payload['exp'] ) : null,
 					'season'     => $payload['season'] ?? null,
 				],
-				'person'     => $this->format_person_summary( $person ),
+				'person'     => $this->format_verified_person_summary( $person ),
 				'membership' => [
 					'status'  => $status['status'],
 					'lid_tot' => $status['lid_tot'],
 				],
 			]
 		);
+	}
+
+	/**
+	 * Build scanner-specific person summary for verified passes.
+	 *
+	 * @param \WP_Post $post Person post object.
+	 * @return array
+	 */
+	private function format_verified_person_summary( $post ): array {
+		$person = $this->format_person_summary( $post );
+
+		$knvb_id = (string) ( get_field( 'knvb-id', $post->ID ) ?: get_post_meta( $post->ID, 'knvb-id', true ) ?: '' );
+
+		$person['knvb_id'] = $knvb_id;
+		$person['knvb-id'] = $knvb_id;
+		$person['photo_thumbnail'] = $person['thumbnail'] ?? '';
+
+		return $person;
 	}
 
 	/**
