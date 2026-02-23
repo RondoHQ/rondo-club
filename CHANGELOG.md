@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.7.0] - 2026-02-22
+
+### Added
+- New in-app `Lidpas Scanner` page with camera QR scanning (where browser-supported) and manual token verification fallback
+- Scanner verification result view with member and pass status details
+- New role `Rondo Toegangscontrole` with dedicated capability `toegangscontrole`
+
+### Changed
+- Scanner route and sidebar navigation are now capability-gated behind `toegangscontrole`
+- Current user REST payload now includes `can_access_toegangscontrole`
+- `Rondo Bestuur` role now includes `toegangscontrole` capability
+- Capability sync now auto-adds `Rondo Toegangscontrole` role when `Rondo Bestuur` is assigned
+
 ## [30.6.0] - 2026-02-22
 
 ### Added

@@ -19,6 +19,7 @@ import {
   Contributie, DisciplineCasesList,
   FinanceDashboard, Facturen, FactuurDetail, RelationshipTypes,
   CustomFields, Login, Profile,
+  MembershipPassScanner,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -96,6 +97,14 @@ function VOGRoute({ children }) {
 function FinancieelRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_financieel}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+function ToegangscontroleRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_toegangscontrole}>
       {children}
     </CapabilityRoute>
   );
@@ -263,6 +272,16 @@ const router = createBrowserRouter([
 
           // Profile route
           { path: 'profile', element: <Profile /> },
+
+          // Membership pass scanner
+          {
+            path: 'lidpas-scanner',
+            element: (
+              <ToegangscontroleRoute>
+                <MembershipPassScanner />
+              </ToegangscontroleRoute>
+            ),
+          },
 
           // Fallback to dashboard
           { path: '*', element: <Navigate to="/" replace /> },
