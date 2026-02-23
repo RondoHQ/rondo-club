@@ -175,6 +175,12 @@ class MembershipPassGoogle {
 						'value'    => $person_name,
 					],
 				],
+				'header'         => [
+					'defaultValue' => [
+						'language' => 'nl-NL',
+						'value'    => $person_name,
+					],
+				],
 				'barcode'        => new Barcode(
 					[
 						'type'  => 'QR_CODE',
