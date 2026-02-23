@@ -292,7 +292,7 @@ class PublicMembershipPassPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Ledenpas — ' . esc_html( $branding['name'] ), $branding['accent_color'] );
+		$this->render_html_header( 'Ledenpas — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
 		?>
 <div class="container">
 	<div class="card header-card">
@@ -438,7 +438,7 @@ class PublicMembershipPassPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Ledenpas — fout', $branding['accent_color'] );
+		$this->render_html_header( 'Ledenpas — fout', $branding['accent_color'], $branding['logo_url'] );
 		?>
 <div class="container">
 	<div class="card error-card">
@@ -488,8 +488,9 @@ class PublicMembershipPassPage {
 	 *
 	 * @param string $title Page title.
 	 * @param string $accent Accent color.
+	 * @param string $favicon_url Favicon URL.
 	 */
-	private function render_html_header( string $title, string $accent ) {
+	private function render_html_header( string $title, string $accent, string $favicon_url = '' ) {
 		?>
 <!doctype html>
 <html lang="nl">
@@ -497,6 +498,10 @@ class PublicMembershipPassPage {
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title><?php echo esc_html( $title ); ?></title>
+	<?php if ( $favicon_url !== '' ) : ?>
+		<link rel="icon" href="<?php echo esc_url( $favicon_url ); ?>" sizes="any">
+		<link rel="apple-touch-icon" href="<?php echo esc_url( $favicon_url ); ?>">
+	<?php endif; ?>
 	<style>
 		:root { --accent: <?php echo esc_html( $accent ); ?>; }
 		* { box-sizing: border-box; }
@@ -510,7 +515,7 @@ class PublicMembershipPassPage {
 		.info-table th, .info-table td { border-bottom: 1px solid #e5e7eb; text-align: left; padding: 8px 0; }
 		.info-table th { width: 110px; color: #6b7280; font-weight: 600; }
 		.wallet-section-title { margin-bottom: 14px; }
-		.role-selector-form { margin-top: 6px; }
+		.role-selector-form { margin-top: 6px; margin-bottom: 16px; }
 		.role-selector-label { display: block; font-size: 14px; color: #374151; margin-bottom: 6px; font-weight: 600; }
 		.role-selector-input { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #111827; background: #fff; }
 		.wallet-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
