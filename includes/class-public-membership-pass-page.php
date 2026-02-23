@@ -129,18 +129,19 @@ class PublicMembershipPassPage {
 			exit;
 		}
 
-		$wallet = sanitize_key( $_GET['wallet'] ?? '' );
+		$wallet        = sanitize_key( wp_unslash( $_GET['wallet'] ?? '' ) );
+		$selected_work = sanitize_text_field( wp_unslash( $_GET['role'] ?? '' ) );
 		if ( $wallet === 'apple' ) {
-			$this->output_apple_pass( $person_id );
+			$this->output_apple_pass( $person_id, $selected_work );
 			exit;
 		}
 
 		if ( $wallet === 'google' ) {
-			$this->redirect_to_google_wallet( $person_id );
+			$this->redirect_to_google_wallet( $person_id, $selected_work );
 			exit;
 		}
 
-		$this->render_page( $person_id, $token );
+		$this->render_page( $person_id, $token, $selected_work );
 		exit;
 	}
 
@@ -249,8 +250,9 @@ class PublicMembershipPassPage {
 	 *
 	 * @param int    $person_id Person ID.
 	 * @param string $token URL token.
+	 * @param string $selected_work Selected work option key.
 	 */
-	private function render_page( int $person_id, string $token ) {
+	private function render_page( int $person_id, string $token, string $selected_work = '' ) {
 		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
 		$infix      = (string) ( get_field( 'infix', $person_id ) ?: '' );
 		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
@@ -266,8 +268,9 @@ class PublicMembershipPassPage {
 		$apple_available  = $apple_service->is_configured();
 		$google_available = $google_service->is_configured();
 
-		$apple_url  = home_url( '/lidpas/' . $token . '?wallet=apple' );
-		$google_url = home_url( '/lidpas/' . $token . '?wallet=google' );
+		$work_options = $apple_service->get_work_options_for_person( $person_id );
+		$apple_url    = $this->build_wallet_url( $token, 'apple', $selected_work );
+		$google_url   = $this->build_wallet_url( $token, 'google', $selected_work );
 
 		$branding = $this->get_club_branding();
 
@@ -295,7 +298,21 @@ class PublicMembershipPassPage {
 	</div>
 
 	<div class="card">
-		<h2>Voeg toe aan Wallet</h2>
+		<h2 class="wallet-section-title">Voeg toe aan Wallet</h2>
+		<?php if ( count( $work_options ) > 1 ) : ?>
+			<form method="get" class="role-selector-form">
+				<label for="role-select" class="role-selector-label">Rol/functie op pas</label>
+				<select id="role-select" name="role" class="role-selector-input" onchange="this.form.submit()">
+					<option value="">Alle actieve rollen</option>
+					<?php foreach ( $work_options as $option ) : ?>
+						<option value="<?php echo esc_attr( $option['key'] ); ?>" <?php selected( $selected_work, (string) $option['key'] ); ?>>
+							<?php echo esc_html( $option['label'] ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<noscript><button type="submit">Toepassen</button></noscript>
+			</form>
+		<?php endif; ?>
 		<div class="wallet-actions">
 		<?php if ( $apple_available ) : ?>
 			<a href="<?php echo esc_url( $apple_url ); ?>" class="wallet-badge wallet-badge-apple" aria-label="Add to Apple Wallet">
@@ -329,11 +346,17 @@ class PublicMembershipPassPage {
 	/**
 	 * Output Apple pkpass payload.
 	 *
-	 * @param int $person_id Person ID.
+	 * @param int    $person_id Person ID.
+	 * @param string $selected_work Selected work option key.
 	 */
-	private function output_apple_pass( int $person_id ) {
+	private function output_apple_pass( int $person_id, string $selected_work = '' ) {
 		$service = new MembershipPassApple();
-		$result  = $service->generate_for_person( $person_id );
+		$result  = $service->generate_for_person(
+			$person_id,
+			[
+				'work' => $selected_work,
+			]
+		);
 
 		if ( is_wp_error( $result ) ) {
 			$this->render_error( $result->get_error_message() );
@@ -349,11 +372,17 @@ class PublicMembershipPassPage {
 	/**
 	 * Redirect to Google add-to-wallet URL.
 	 *
-	 * @param int $person_id Person ID.
+	 * @param int    $person_id Person ID.
+	 * @param string $selected_work Selected work option key.
 	 */
-	private function redirect_to_google_wallet( int $person_id ) {
+	private function redirect_to_google_wallet( int $person_id, string $selected_work = '' ) {
 		$service = new MembershipPassGoogle();
-		$result  = $service->get_add_to_wallet_url_for_person( $person_id );
+		$result  = $service->get_add_to_wallet_url_for_person(
+			$person_id,
+			[
+				'work' => $selected_work,
+			]
+		);
 
 		if ( is_wp_error( $result ) ) {
 			$this->render_error( $result->get_error_message() );
@@ -362,6 +391,23 @@ class PublicMembershipPassPage {
 
 		wp_redirect( $result );
 		exit;
+	}
+
+	/**
+	 * Build wallet action URL for this pass token.
+	 *
+	 * @param string $token Pass token.
+	 * @param string $wallet Wallet channel.
+	 * @param string $selected_work Selected work option key.
+	 * @return string
+	 */
+	private function build_wallet_url( string $token, string $wallet, string $selected_work = '' ): string {
+		$args = [ 'wallet' => $wallet ];
+		if ( $selected_work !== '' ) {
+			$args['role'] = $selected_work;
+		}
+
+		return add_query_arg( $args, home_url( '/lidpas/' . $token ) );
 	}
 
 	/**
@@ -447,6 +493,10 @@ class PublicMembershipPassPage {
 		.info-table { width: 100%; border-collapse: collapse; }
 		.info-table th, .info-table td { border-bottom: 1px solid #e5e7eb; text-align: left; padding: 8px 0; }
 		.info-table th { width: 110px; color: #6b7280; font-weight: 600; }
+		.wallet-section-title { margin-bottom: 14px; }
+		.role-selector-form { margin-top: 6px; }
+		.role-selector-label { display: block; font-size: 14px; color: #374151; margin-bottom: 6px; font-weight: 600; }
+		.role-selector-input { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #111827; background: #fff; }
 		.wallet-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
 		.wallet-badge { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-top: 0; height: 54px; }
 		.wallet-badge-apple { background: #000; color: #fff; border-radius: 10px; padding: 0 16px; font-size: 17px; font-weight: 600; letter-spacing: .01em; }
@@ -457,7 +507,7 @@ class PublicMembershipPassPage {
 		.hint { margin-top: 10px; color: #6b7280; font-size: 14px; }
 		.error-card { border-color: #fecaca; background: #fef2f2; }
 		@media (max-width: 520px) {
-			.wallet-actions { flex-direction: column; align-items: stretch; }
+			.wallet-actions { flex-direction: column; align-items: stretch; gap: 14px; }
 			.wallet-badge { width: 100%; }
 			.wallet-badge-google { justify-content: center; }
 			.wallet-badge-google-img { max-width: 100%; margin: 0 auto; }
