@@ -5,6 +5,7 @@ import { prmApi } from '@/api/client';
 export const DEFAULT_DASHBOARD_CARDS = [
   'stats',
   'reminders',
+  'anniversaries',
   'todos',
   'meetings',
   'recent-contacted',

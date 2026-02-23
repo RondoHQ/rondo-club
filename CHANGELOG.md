@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.18] - 2026-02-23
+
+### Changed
+- Jubilarissen page now defaults to a **6-month** lookahead instead of 3 months.
+- Added period dropdown on Jubilarissen page with selectable windows: **3, 6, 9, 12 months**.
+
+## [30.9.17] - 2026-02-23
+
+### Added
+- New **Jubilarissen** page under **Leden** (`/people/jubilarissen`) with:
+  - fixed 3-month lookahead window
+  - filters for `Alle`, `Leden`, and `Vrijwilligers`
+  - direct links to member detail pages
+- New sidebar navigation item **Jubilarissen** indented under **Leden**.
+
+## [30.9.16] - 2026-02-23
+
+### Added
+- New admin settings UI for anniversaries at **Settings → Beheer → Jubilarissen**.
+- Milestone editor for both categories:
+  - Member jubilees
+  - Volunteer jubilees
+- Support for adding and removing custom milestones from the UI (whole and half years).
+
+### Changed
+- Anniversary milestone settings are now manageable fully in the app UI (no API client/manual call needed).
+
+## [30.9.15] - 2026-02-23
+
+### Added
+- New anniversaries (jubilarissen) backend API endpoints:
+  - `GET /rondo/v1/anniversaries` for upcoming anniversaries.
+  - `GET/POST /rondo/v1/anniversaries/settings` for milestone configuration.
+- New dashboard card: `Jubilarissen`, including dashboard customization support (show/hide/order).
+- Developer docs page for the anniversaries feature and API.
+
+### Changed
+- Dashboard summary endpoint now includes `upcoming_anniversaries`.
+- Anniversary calculation now supports Dutch half-year milestones (for example `12,5 jaar`) and uses `lid-sinds` as the canonical start date.
+- Added configurable default milestone sets for member and volunteer anniversaries.
+
 ## [30.9.14] - 2026-02-23
 
 ### Changed
