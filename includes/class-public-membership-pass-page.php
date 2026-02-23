@@ -172,17 +172,16 @@ class PublicMembershipPassPage {
 	/**
 	 * Resolve pass eligibility tier for one person.
 	 *
-	 * - `bondslid`: KNVB ID available.
-	 * - `verenigingslid`: no KNVB ID and Type lid is Verenigingslid.
+	 * - `bondslid`: Type lid is Bondslid.
+	 * - `verenigingslid`: Type lid is Verenigingslid.
 	 *
 	 * @param int $person_id Person post ID.
 	 * @return string
 	 */
 	public static function get_person_member_tier( int $person_id ): string {
-		$knvb_id  = trim( (string) get_field( 'knvb-id', $person_id ) );
 		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
 
-		if ( $knvb_id !== '' ) {
+		if ( $type_lid === 'bondslid' ) {
 			return 'bondslid';
 		}
 
@@ -307,7 +306,7 @@ class PublicMembershipPassPage {
 		<h2>Gegevens</h2>
 		<table class="info-table">
 			<tr><th><?php echo esc_html( $member_label ); ?></th><td><?php echo esc_html( $name ); ?></td></tr>
-			<?php if ( $knvb_id !== '' ) : ?>
+			<?php if ( $member_tier === 'bondslid' && $knvb_id !== '' ) : ?>
 				<tr><th>KNVB ID</th><td><?php echo esc_html( $knvb_id ); ?></td></tr>
 			<?php endif; ?>
 			<tr><th>Seizoen</th><td><?php echo esc_html( $season ); ?></td></tr>

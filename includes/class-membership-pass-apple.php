@@ -48,7 +48,12 @@ class MembershipPassApple {
 		}
 
 		$knvb_id = (string) get_field( 'knvb-id', $person_id );
-		$member_label = $this->get_member_label( $person_id, $knvb_id );
+		$member_tier = $this->get_member_tier( $person_id );
+		if ( $member_tier === '' ) {
+			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
+		}
+
+		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
 
 		$cert_path = $this->get_cert_path();
 		if ( $cert_path === '' || ! file_exists( $cert_path ) ) {
@@ -114,7 +119,7 @@ class MembershipPassApple {
 					[
 						'key'   => 'knvb_id',
 						'label' => 'KNVB ID',
-						'value' => $knvb_id !== '' ? $knvb_id : null,
+						'value' => ( $member_tier === 'bondslid' && $knvb_id !== '' ) ? $knvb_id : null,
 					],
 						],
 						static function ( $field ) {
@@ -242,23 +247,20 @@ class MembershipPassApple {
 	}
 
 	/**
-	 * Resolve display label for membership tier on pass.
+	 * Resolve member tier from Type lid.
 	 *
-	 * @param int    $person_id Person ID.
-	 * @param string $knvb_id KNVB ID value.
+	 * @param int $person_id Person ID.
 	 * @return string
 	 */
-	private function get_member_label( int $person_id, string $knvb_id ): string {
-		if ( trim( $knvb_id ) !== '' ) {
-			return 'Bondslid';
-		}
-
+	private function get_member_tier( int $person_id ): string {
 		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
-		if ( $type_lid === 'verenigingslid' ) {
-			return 'Verenigingslid';
+		if ( $type_lid === 'bondslid' ) {
+			return 'bondslid';
 		}
-
-		return 'Bondslid';
+		if ( $type_lid === 'verenigingslid' ) {
+			return 'verenigingslid';
+		}
+		return '';
 	}
 
 	/**
