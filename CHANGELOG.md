@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.6.0] - 2026-02-22
+
+### Added
+- Person detail header now shows a membership pass quick link (card icon) next to social/Sportlink/Freescout links when a member has a pass URL
+
 ## [30.5.1] - 2026-02-22
 
 ### Changed

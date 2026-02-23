@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Globe, Building2, Calendar, Plus, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw
+  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
@@ -922,6 +922,14 @@ export default function PersonDetail() {
       });
     }
 
+    // Add Membership Pass if available
+    if (person.membership_pass_url) {
+      links.push({
+        contact_type: 'membership_pass',
+        contact_value: person.membership_pass_url,
+      });
+    }
+
     return sortSocialLinks(links);
   })();
 
@@ -1120,6 +1128,22 @@ export default function PersonDetail() {
                           title="Bekijk in Freescout"
                         >
                           <img src={`${window.rondoConfig?.themeUrl}/public/icons/freescout.png`} alt="Freescout" className="w-5 h-5" />
+                        </a>
+                      );
+                    }
+
+                    // Handle Membership Pass with card icon
+                    if (contact.contact_type === 'membership_pass') {
+                      return (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-shrink-0 hover:opacity-80 transition-opacity text-electric-cyan dark:text-electric-cyan"
+                          title="Open ledenpas"
+                        >
+                          <CreditCard className="w-5 h-5" />
                         </a>
                       );
                     }
