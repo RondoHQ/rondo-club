@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.1] - 2026-02-23
+
+### Added
+- New `Instellingen → Kleding` settings tab for clothing managers with:
+  - Eligibility toggle (on/off)
+  - Cooldown seasons field
+  - Current season field
+
+### Changed
+- Clothing page (`/kleding`) now uses 3 tabs:
+  - `Overzicht`
+  - `Items` (includes item create form)
+  - `Transacties` (includes transaction form, transaction table, CSV export)
+- Eligibility settings were removed from `/kleding` and moved to `Instellingen → Kleding`.
+- When eligibility is disabled, related rule fields are hidden in settings and override input is disabled in transaction form.
+
+### Fixed
+- Clothing settings API now supports `eligibility_enabled` to fully bypass eligibility checks when turned off.
+
 ## [30.10.0] - 2026-02-23
 
 ### Added

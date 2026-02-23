@@ -8,12 +8,14 @@ import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
 import FinanceSettings from '@/pages/Finance/FinanceSettings';
 import VOGSettings from '@/pages/VOG/VOGSettings';
+import { useClothingSettings, useUpdateClothingSettings } from '@/hooks/useClothing';
 
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
   { id: 'appearance', label: 'Club' },
   { id: 'connections', label: 'Koppelingen' },
+  { id: 'clothing', label: 'Kleding', requiresClothing: true },
   { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
   { id: 'vog', label: 'VOG', adminOnly: true, requiresVOG: true },
   { id: 'admin', label: 'Beheer', adminOnly: true },
@@ -47,6 +49,7 @@ export default function Settings() {
   const isAdmin = (currentUser?.is_admin ?? config.isAdmin) || false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessVOG = currentUser?.can_access_vog ?? false;
+  const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const userId = config.userId;
 
   // Get active tab from URL or default to 'appearance'
@@ -79,6 +82,7 @@ export default function Settings() {
   // Filter tabs based on capabilities.
   const visibleTabs = TABS.filter((tab) => {
     if (tab.adminOnly && !isAdmin) return false;
+    if (tab.requiresClothing && !canAccessClothing) return false;
     if (tab.requiresFinancieel && !canAccessFinancieel) return false;
     if (tab.requiresVOG && !canAccessVOG) return false;
     return true;
@@ -464,6 +468,8 @@ export default function Settings() {
         return canAccessFinancieel ? (
           <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']} />
         ) : null;
+      case 'clothing':
+        return canAccessClothing ? <ClothingSettingsTab /> : null;
       case 'vog':
         return isAdmin && canAccessVOG ? (
           <div className="card p-6">
@@ -543,6 +549,106 @@ export default function Settings() {
       {/* Tab Content */}
       <div className="space-y-6">
         {renderTabContent()}
+      </div>
+    </div>
+  );
+}
+
+function ClothingSettingsTab() {
+  const { data: settings, isLoading } = useClothingSettings();
+  const updateSettings = useUpdateClothingSettings();
+
+  const [eligibilityEnabled, setEligibilityEnabled] = useState(true);
+  const [cooldownSeasons, setCooldownSeasons] = useState(3);
+  const [currentSeason, setCurrentSeason] = useState('');
+
+  useEffect(() => {
+    if (!settings) return;
+    setEligibilityEnabled(Boolean(settings.eligibility_enabled));
+    setCooldownSeasons(Number(settings.cooldown_seasons || 3));
+    setCurrentSeason(settings.current_season || '');
+  }, [settings]);
+
+  const handleSave = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        eligibility_enabled: eligibilityEnabled,
+        ...(eligibilityEnabled ? { cooldown_seasons: cooldownSeasons, current_season: currentSeason } : {}),
+      });
+    } catch (error) {
+      alert(error.response?.data?.message || 'Kon kledinginstellingen niet opslaan.');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="card p-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Instellingen laden...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card p-6 space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold text-brand-gradient mb-2">Kledingregels</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Beheer hier of eligibility-regels actief zijn voor uitgifte.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <input
+          id="eligibility-enabled"
+          type="checkbox"
+          className="h-4 w-4"
+          checked={eligibilityEnabled}
+          onChange={(e) => setEligibilityEnabled(e.target.checked)}
+        />
+        <label htmlFor="eligibility-enabled" className="text-sm font-medium">
+          Eligibility-regels inschakelen
+        </label>
+      </div>
+
+      {eligibilityEnabled && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="label">Wachttijd (seizoenen)</label>
+            <input
+              type="number"
+              min={1}
+              className="input"
+              value={cooldownSeasons}
+              onChange={(e) => setCooldownSeasons(Number(e.target.value || 1))}
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Aantal seizoenen wachten voordat hetzelfde item opnieuw mag worden uitgegeven.
+            </p>
+          </div>
+          <div>
+            <label className="label">Huidig seizoen</label>
+            <input
+              className="input"
+              value={currentSeason}
+              onChange={(e) => setCurrentSeason(e.target.value)}
+              placeholder="bijv. 2025-2026"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Formaat: YYYY-YYYY.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={updateSettings.isPending}
+          className="btn-primary"
+        >
+          {updateSettings.isPending ? 'Opslaan...' : 'Opslaan'}
+        </button>
       </div>
     </div>
   );
