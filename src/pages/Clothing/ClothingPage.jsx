@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Plus, Shirt, RotateCcw, X, Undo2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import TabButton from '@/components/TabButton';
-import { usePeople } from '@/hooks/usePeople';
+import { usePerson } from '@/hooks/usePeople';
+import { useSearch } from '@/hooks/useDashboard';
 import {
   useClothingAssignments,
   useClothingItems,
@@ -19,7 +20,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 export default function ClothingPage() {
   useDocumentTitle('Kleding');
 
-  const { data: people = [] } = usePeople();
   const { data: items = [], isLoading: loadingItems } = useClothingItems();
   const { data: assignments = [], isLoading: loadingAssignments } = useClothingAssignments();
   const { data: overview } = useClothingOverview();
@@ -58,28 +58,21 @@ export default function ClothingPage() {
     return map;
   }, [items]);
 
-  const sortedPeople = useMemo(
-    () => [...people].sort((a, b) => (a.name || '').localeCompare(b.name || 'nl')),
-    [people]
-  );
+  const searchTerm = personSearch.trim();
+  const effectiveSearchTerm = searchTerm.length >= 3 ? searchTerm : '';
+  const { data: searchResults } = useSearch(effectiveSearchTerm);
 
-  const personOptions = useMemo(
-    () => sortedPeople.map((person) => ({ id: person.id, label: person.name || `Lid ${person.id}` })),
-    [sortedPeople]
-  );
+  const personOptions = useMemo(() => {
+    const results = searchResults?.people || [];
+    return results.map((person) => ({
+      id: person.id,
+      label: person.name || person.title || `Lid ${person.id}`,
+    }));
+  }, [searchResults]);
 
-  const filteredPersonOptions = useMemo(() => {
-    const term = personSearch.trim().toLowerCase();
-    if (!term) {
-      return personOptions.slice(0, 20);
-    }
-    return personOptions.filter((person) => person.label.toLowerCase().includes(term)).slice(0, 20);
-  }, [personOptions, personSearch]);
+  const filteredPersonOptions = useMemo(() => personOptions.slice(0, 20), [personOptions]);
 
-  const selectedPerson = useMemo(
-    () => sortedPeople.find((person) => String(person.id) === String(selectedPersonId)),
-    [sortedPeople, selectedPersonId]
-  );
+  const { data: selectedPerson } = usePerson(selectedPersonId);
 
   const selectedPersonTeamId = useMemo(() => {
     const workHistory = selectedPerson?.acf?.work_history;
@@ -312,7 +305,9 @@ export default function ClothingPage() {
                   ref={personDropdownRef}
                   className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto"
                 >
-                  {filteredPersonOptions.length > 0 ? (
+                  {searchTerm.length < 3 ? (
+                    <p className="px-3 py-2 text-sm text-gray-500">Typ minimaal 3 tekens om te zoeken</p>
+                  ) : filteredPersonOptions.length > 0 ? (
                     filteredPersonOptions.map((person) => (
                       <button
                         key={person.id}
