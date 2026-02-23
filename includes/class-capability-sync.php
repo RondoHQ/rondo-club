@@ -99,6 +99,11 @@ class CapabilitySync {
 		}
 		$mapped_roles = array_unique( $mapped_roles );
 
+		// Bestuur users should always include the dedicated Toegangscontrole role.
+		if ( in_array( 'rondo_bestuur', $mapped_roles, true ) && ! in_array( 'rondo_toegangscontrole', $mapped_roles, true ) ) {
+			$mapped_roles[] = 'rondo_toegangscontrole';
+		}
+
 		// Read manual overrides from user meta.
 		$manual_grants_raw  = get_user_meta( $user_id, self::META_MANUAL_GRANTS, true );
 		$manual_revokes_raw = get_user_meta( $user_id, self::META_MANUAL_REVOKES, true );

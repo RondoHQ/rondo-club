@@ -580,7 +580,7 @@ class People extends Base {
 				$data['linked_user_roles'] = array_values(
 					array_intersect(
 						$user->roles,
-						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_bestuur', 'administrator' ]
+						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_toegangscontrole', 'rondo_bestuur', 'administrator' ]
 					)
 				);
 			}

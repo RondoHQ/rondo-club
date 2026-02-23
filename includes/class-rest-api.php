@@ -2981,6 +2981,7 @@ class Api extends Base {
 				'can_access_fairplay'   => current_user_can( 'fairplay' ),
 				'can_access_vog'        => current_user_can( 'vog' ),
 				'can_access_financieel' => current_user_can( 'financieel' ),
+				'can_access_toegangscontrole' => current_user_can( 'toegangscontrole' ),
 				'profile_url'           => $profile_url,
 				'admin_url'             => $admin_url,
 				'linked_person_name'    => $linked_person_name,
