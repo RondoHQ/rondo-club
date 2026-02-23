@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.7.1] - 2026-02-23
+
+### Fixed
+- Added a JS-based QR scan fallback (`jsQR`) for browsers without `BarcodeDetector` support (notably iOS Chrome), so camera scanning remains available outside Safari.
+
 ## [30.7.0] - 2026-02-22
 
 ### Added
