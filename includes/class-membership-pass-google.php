@@ -78,6 +78,7 @@ class MembershipPassGoogle {
 		}
 
 		$person_name = $this->get_person_full_name( $person_id );
+		$issuer_name = $this->get_issuer_name();
 		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
@@ -88,7 +89,7 @@ class MembershipPassGoogle {
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $person_name, $team_name, $functions, $season, $qr_result['token'] );
+			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $team_name, $functions, $season, $qr_result['token'] );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -130,11 +131,7 @@ class MembershipPassGoogle {
 			// Continue with create.
 		}
 
-		$config = new FinanceConfig();
-		$name   = $config->get_org_name();
-		if ( $name === '' ) {
-			$name = get_bloginfo( 'name' );
-		}
+		$name = $this->get_issuer_name();
 
 		$class = new GenericClass(
 			[
@@ -143,6 +140,16 @@ class MembershipPassGoogle {
 				'reviewStatus' => 'UNDER_REVIEW',
 			]
 		);
+		$logo  = $this->get_logo_image_url();
+		if ( $logo !== '' ) {
+			$class->setLogo(
+				new Image(
+					[
+						'sourceUri' => new ImageUri( [ 'uri' => $logo ] ),
+					]
+				)
+			);
+		}
 
 		try {
 			$service->genericclass->insert( $class );
@@ -157,13 +164,14 @@ class MembershipPassGoogle {
 	 * @param Walletobjects $service Wallet service.
 	 * @param string        $object_id Object ID.
 	 * @param string        $class_id Class ID.
+	 * @param string        $card_title Top card title.
 	 * @param string        $person_name Person name.
 	 * @param string        $team_name Team label.
 	 * @param string        $functions Functions label.
 	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $person_name, string $team_name, string $functions, string $season, string $qr_payload ) {
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $team_name, string $functions, string $season, string $qr_payload ) {
 		$object = new GenericObject(
 			[
 				'id'             => $object_id,
@@ -172,7 +180,7 @@ class MembershipPassGoogle {
 				'cardTitle'      => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
-						'value'    => $person_name,
+						'value'    => $card_title,
 					],
 				],
 				'header'         => [
@@ -212,13 +220,12 @@ class MembershipPassGoogle {
 				],
 			]
 		);
-
-		$hero = $this->get_hero_image_url();
-		if ( $hero !== '' ) {
-			$object->setHeroImage(
+		$logo  = $this->get_logo_image_url();
+		if ( $logo !== '' ) {
+			$object->setLogo(
 				new Image(
 					[
-						'sourceUri' => new ImageUri( [ 'uri' => $hero ] ),
+						'sourceUri' => new ImageUri( [ 'uri' => $logo ] ),
 					]
 				)
 			);
@@ -226,7 +233,7 @@ class MembershipPassGoogle {
 
 		try {
 			$service->genericobject->get( $object_id );
-			$service->genericobject->patch( $object_id, $object );
+			$service->genericobject->update( $object_id, $object );
 		} catch ( \Throwable $e ) {
 			$service->genericobject->insert( $object );
 		}
@@ -440,11 +447,11 @@ class MembershipPassGoogle {
 	}
 
 	/**
-	 * Resolve hero image URL (club logo fallback).
+	 * Resolve logo image URL.
 	 *
 	 * @return string
 	 */
-	private function get_hero_image_url(): string {
+	private function get_logo_image_url(): string {
 		$config  = new FinanceConfig();
 		$logo_id = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
@@ -454,5 +461,19 @@ class MembershipPassGoogle {
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Resolve issuer display name.
+	 *
+	 * @return string
+	 */
+	private function get_issuer_name(): string {
+		$config = new FinanceConfig();
+		$name   = $config->get_org_name();
+		if ( $name !== '' ) {
+			return $name;
+		}
+		return (string) get_bloginfo( 'name' );
 	}
 }
