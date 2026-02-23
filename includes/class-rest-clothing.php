@@ -589,6 +589,15 @@ class Clothing extends Base {
 		if ( '' === $size ) {
 			return new \WP_Error( 'missing_size', __( 'Size is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
+
+		$available_sizes = get_post_meta( $item_id, '_clothing_available_sizes', true );
+		if ( ! is_array( $available_sizes ) || empty( $available_sizes ) ) {
+			return new \WP_Error( 'item_sizes_missing', __( 'This item has no configured sizes.', 'rondo' ), [ 'status' => 400 ] );
+		}
+		if ( ! in_array( $size, $available_sizes, true ) ) {
+			return new \WP_Error( 'invalid_size_for_item', __( 'Selected size is not available for this item.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
 		if ( '' === $date ) {
 			$date = gmdate( 'Y-m-d' );
 		}

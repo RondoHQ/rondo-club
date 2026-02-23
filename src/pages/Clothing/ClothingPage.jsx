@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Download, Plus, Shirt, RotateCcw } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Download, Plus, Shirt, RotateCcw, X } from 'lucide-react';
 import TabButton from '@/components/TabButton';
 import { usePeople } from '@/hooks/usePeople';
 import {
@@ -62,6 +62,9 @@ export default function ClothingPage() {
   });
 
   const [personSearch, setPersonSearch] = useState('');
+  const [isPersonOpen, setIsPersonOpen] = useState(false);
+  const personInputRef = useRef(null);
+  const personDropdownRef = useRef(null);
 
   const itemMap = useMemo(() => {
     const map = new Map();
@@ -78,6 +81,47 @@ export default function ClothingPage() {
     () => sortedPeople.map((person) => ({ id: person.id, label: `${person.name} (${person.id})` })),
     [sortedPeople]
   );
+
+  const filteredPersonOptions = useMemo(() => {
+    const term = personSearch.trim().toLowerCase();
+    if (!term) {
+      return personOptions.slice(0, 20);
+    }
+    return personOptions
+      .filter((person) => person.label.toLowerCase().includes(term))
+      .slice(0, 20);
+  }, [personOptions, personSearch]);
+
+  const selectedItem = useMemo(
+    () => items.find((item) => String(item.id) === String(assignmentForm.item_id)),
+    [items, assignmentForm.item_id]
+  );
+
+  const sizeOptions = useMemo(() => selectedItem?.available_sizes || [], [selectedItem]);
+
+  useEffect(() => {
+    setAssignmentForm((prev) => {
+      if (!prev.size) return prev;
+      if (sizeOptions.includes(prev.size)) return prev;
+      return { ...prev, size: '' };
+    });
+  }, [sizeOptions]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        personDropdownRef.current &&
+        !personDropdownRef.current.contains(event.target) &&
+        personInputRef.current &&
+        !personInputRef.current.contains(event.target)
+      ) {
+        setIsPersonOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleCreateItem = async (e) => {
     e.preventDefault();
@@ -148,13 +192,14 @@ export default function ClothingPage() {
 
   const handlePersonSearchChange = (value) => {
     setPersonSearch(value);
+    setAssignmentForm((prev) => ({ ...prev, person_id: '' }));
+    setIsPersonOpen(true);
+  };
 
-    const match = value.match(/\((\d+)\)\s*$/);
-    if (match) {
-      setAssignmentForm((prev) => ({ ...prev, person_id: match[1] }));
-    } else {
-      setAssignmentForm((prev) => ({ ...prev, person_id: '' }));
-    }
+  const handleSelectPerson = (person) => {
+    setPersonSearch(person.label);
+    setAssignmentForm((prev) => ({ ...prev, person_id: String(person.id) }));
+    setIsPersonOpen(false);
   };
 
   return (
@@ -203,19 +248,52 @@ export default function ClothingPage() {
               Uitgifte / inname registreren
             </h2>
             <div>
-              <input
-                list="clothing-person-options"
-                className="input"
-                value={personSearch}
-                onChange={(e) => handlePersonSearchChange(e.target.value)}
-                placeholder="Selecteer lid (typ om te zoeken)"
-                required
-              />
-              <datalist id="clothing-person-options">
-                {personOptions.map((person) => (
-                  <option key={person.id} value={person.label} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <input
+                  ref={personInputRef}
+                  className="input"
+                  value={personSearch}
+                  onChange={(e) => handlePersonSearchChange(e.target.value)}
+                  onFocus={() => setIsPersonOpen(true)}
+                  placeholder="Selecteer lid (typ om te zoeken)"
+                  required
+                />
+                {assignmentForm.person_id && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPersonSearch('');
+                      setAssignmentForm((prev) => ({ ...prev, person_id: '' }));
+                      setIsPersonOpen(false);
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    aria-label="Lid wissen"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                {isPersonOpen && (
+                  <div
+                    ref={personDropdownRef}
+                    className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto"
+                  >
+                    {filteredPersonOptions.length > 0 ? (
+                      filteredPersonOptions.map((person) => (
+                        <button
+                          key={person.id}
+                          type="button"
+                          onClick={() => handleSelectPerson(person)}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          {person.label}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-2 text-sm text-gray-500">Geen leden gevonden</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <select className="input" value={assignmentForm.item_id} onChange={(e) => setAssignmentForm((v) => ({ ...v, item_id: e.target.value }))} required>
               <option value="">Selecteer item</option>
@@ -224,7 +302,18 @@ export default function ClothingPage() {
               ))}
             </select>
             <div className="grid grid-cols-2 gap-3">
-              <input className="input" placeholder="Maat" value={assignmentForm.size} onChange={(e) => setAssignmentForm((v) => ({ ...v, size: e.target.value }))} required />
+              <select
+                className="input"
+                value={assignmentForm.size}
+                onChange={(e) => setAssignmentForm((v) => ({ ...v, size: e.target.value }))}
+                required
+                disabled={!assignmentForm.item_id || sizeOptions.length === 0}
+              >
+                <option value="">{assignmentForm.item_id ? 'Selecteer maat' : 'Kies eerst een item'}</option>
+                {sizeOptions.map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
               <select className="input" value={assignmentForm.condition} onChange={(e) => setAssignmentForm((v) => ({ ...v, condition: e.target.value }))}>
                 {CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
