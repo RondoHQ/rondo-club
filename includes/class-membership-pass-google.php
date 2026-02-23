@@ -14,7 +14,6 @@ use Google\Service\Walletobjects\Image;
 use Google\Service\Walletobjects\ImageUri;
 use Google\Service\Walletobjects\TextModuleData;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -68,8 +67,6 @@ class MembershipPassGoogle {
 
 		$class_suffix = $this->get_class_suffix();
 		$class_id     = $issuer_id . '.' . $class_suffix;
-		$fees   = new MembershipFees();
-		$season = $fees->get_season_key();
 
 		$qr_service = new MembershipPassQr();
 		$qr_result  = $qr_service->issue_for_person( $person_id );
@@ -79,6 +76,7 @@ class MembershipPassGoogle {
 
 		$person_name = $this->get_person_full_name( $person_id );
 		$issuer_name = $this->get_issuer_name();
+		$member_type = $this->get_member_type_label( $person_id );
 		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
@@ -89,7 +87,7 @@ class MembershipPassGoogle {
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $team_name, $functions, $season, $qr_result['token'] );
+			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $qr_result['token'] );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -166,12 +164,12 @@ class MembershipPassGoogle {
 	 * @param string        $class_id Class ID.
 	 * @param string        $card_title Top card title.
 	 * @param string        $person_name Person name.
+	 * @param string        $member_type Membership type label.
 	 * @param string        $team_name Team label.
 	 * @param string        $functions Functions label.
-	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $team_name, string $functions, string $season, string $qr_payload ) {
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $qr_payload ) {
 		$object = new GenericObject(
 			[
 				'id'             => $object_id,
@@ -189,6 +187,12 @@ class MembershipPassGoogle {
 						'value'    => $person_name,
 					],
 				],
+				'subheader'      => [
+					'defaultValue' => [
+						'language' => 'nl-NL',
+						'value'    => $member_type,
+					],
+				],
 				'barcode'        => new Barcode(
 					[
 						'type'  => 'QR_CODE',
@@ -198,23 +202,16 @@ class MembershipPassGoogle {
 				'textModulesData' => [
 					new TextModuleData(
 						[
-							'id'     => 'team',
-							'header' => 'Teams',
-							'body'   => $team_name,
-						]
-					),
-					new TextModuleData(
-						[
-							'id'     => 'functions',
-							'header' => 'Functies',
+							'id'     => 'functie',
+							'header' => 'FUNCTIE',
 							'body'   => $functions,
 						]
 					),
 					new TextModuleData(
 						[
-							'id'     => 'season',
-							'header' => 'Seizoen',
-							'body'   => $season,
+							'id'     => 'team',
+							'header' => 'TEAM',
+							'body'   => $team_name,
 						]
 					),
 				],
@@ -475,5 +472,19 @@ class MembershipPassGoogle {
 			return $name;
 		}
 		return (string) get_bloginfo( 'name' );
+	}
+
+	/**
+	 * Resolve membership type label shown above the member name.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return string
+	 */
+	private function get_member_type_label( int $person_id ): string {
+		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
+		if ( $type_lid === 'verenigingslid' ) {
+			return 'Verenigingslid';
+		}
+		return 'Bondslid';
 	}
 }

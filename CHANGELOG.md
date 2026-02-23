@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.10] - 2026-02-23
+
+### Changed
+- Google Wallet membership pass now sets `subheader` to member type (`Bondslid` or `Verenigingslid`) so it appears above the member name.
+- Google Wallet pass data section now uses two text modules matching the requested layout:
+  - `FUNCTIE` (`id: functie`)
+  - `TEAM` (`id: team`)
+- Removed the extra `Seizoen` text module from Google Wallet pass details to keep the card data compact.
+
 ## [30.9.9] - 2026-02-23
 
 ### Fixed
