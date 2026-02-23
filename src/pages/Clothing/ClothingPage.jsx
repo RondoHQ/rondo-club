@@ -1,24 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Plus, Shirt, RotateCcw, X } from 'lucide-react';
+import { Download, Plus, Shirt, RotateCcw, X, Undo2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import TabButton from '@/components/TabButton';
 import { usePeople } from '@/hooks/usePeople';
 import {
   useClothingAssignments,
   useClothingItems,
   useClothingOverview,
+  useClothingPersonProfile,
   useCreateClothingAssignment,
   useCreateClothingItem,
   useDeleteClothingItem,
   useClothingSettings,
 } from '@/hooks/useClothing';
-import { prmApi } from '@/api/client';
+import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-
-const CONDITION_OPTIONS = [
-  { value: 'nieuw', label: 'Nieuw' },
-  { value: 'goed', label: 'Goed' },
-  { value: 'redelijk', label: 'Redelijk' },
-];
 
 export default function ClothingPage() {
   useDocumentTitle('Kleding');
@@ -47,22 +43,12 @@ export default function ClothingPage() {
     active: true,
   });
 
-  const [assignmentForm, setAssignmentForm] = useState({
-    person_id: '',
-    item_id: '',
-    size: '',
-    condition: 'nieuw',
-    in_or_out: 'out',
-    date: new Date().toISOString().slice(0, 10),
-    season: '',
-    deposit_paid: false,
-    deposit_returned: false,
-    notes: '',
-    override_reason: '',
-  });
-
   const [personSearch, setPersonSearch] = useState('');
+  const [selectedPersonId, setSelectedPersonId] = useState(null);
   const [isPersonOpen, setIsPersonOpen] = useState(false);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueForm, setIssueForm] = useState({ item_id: '', size: '' });
+
   const personInputRef = useRef(null);
   const personDropdownRef = useRef(null);
 
@@ -78,7 +64,7 @@ export default function ClothingPage() {
   );
 
   const personOptions = useMemo(
-    () => sortedPeople.map((person) => ({ id: person.id, label: `${person.name} (${person.id})` })),
+    () => sortedPeople.map((person) => ({ id: person.id, label: person.name || `Lid ${person.id}` })),
     [sortedPeople]
   );
 
@@ -87,20 +73,52 @@ export default function ClothingPage() {
     if (!term) {
       return personOptions.slice(0, 20);
     }
-    return personOptions
-      .filter((person) => person.label.toLowerCase().includes(term))
-      .slice(0, 20);
+    return personOptions.filter((person) => person.label.toLowerCase().includes(term)).slice(0, 20);
   }, [personOptions, personSearch]);
 
-  const selectedItem = useMemo(
-    () => items.find((item) => String(item.id) === String(assignmentForm.item_id)),
-    [items, assignmentForm.item_id]
+  const selectedPerson = useMemo(
+    () => sortedPeople.find((person) => String(person.id) === String(selectedPersonId)),
+    [sortedPeople, selectedPersonId]
   );
 
-  const sizeOptions = useMemo(() => selectedItem?.available_sizes || [], [selectedItem]);
+  const selectedPersonTeamId = useMemo(() => {
+    const workHistory = selectedPerson?.acf?.work_history;
+    if (!Array.isArray(workHistory)) return 0;
+
+    const currentJobWithTeam = workHistory.find((job) => job?.is_current && job?.team);
+    if (!currentJobWithTeam?.team) return 0;
+
+    if (typeof currentJobWithTeam.team === 'object') {
+      return Number(currentJobWithTeam.team.ID || currentJobWithTeam.team.id || 0);
+    }
+
+    return Number(currentJobWithTeam.team || 0);
+  }, [selectedPerson]);
+
+  const { data: selectedPersonTeamData } = useQuery({
+    queryKey: ['clothing', 'person-team', selectedPersonTeamId],
+    queryFn: async () => {
+      const response = await wpApi.getEntity(selectedPersonTeamId);
+      return response.data;
+    },
+    enabled: selectedPersonTeamId > 0,
+  });
+
+  const teamName = selectedPersonTeamData?.name || 'Geen team gevonden';
+
+  const { data: personProfile } = useClothingPersonProfile(selectedPersonId, {
+    enabled: !!selectedPersonId,
+  });
+
+  const selectedIssueItem = useMemo(
+    () => items.find((item) => String(item.id) === String(issueForm.item_id)),
+    [items, issueForm.item_id]
+  );
+
+  const sizeOptions = useMemo(() => selectedIssueItem?.available_sizes || [], [selectedIssueItem]);
 
   useEffect(() => {
-    setAssignmentForm((prev) => {
+    setIssueForm((prev) => {
       if (!prev.size) return prev;
       if (sizeOptions.includes(prev.size)) return prev;
       return { ...prev, size: '' };
@@ -149,30 +167,6 @@ export default function ClothingPage() {
     }
   };
 
-  const handleCreateAssignment = async (e) => {
-    e.preventDefault();
-    if (!assignmentForm.person_id) {
-      alert('Kies een lid uit de suggestielijst.');
-      return;
-    }
-
-    try {
-      await createAssignment.mutateAsync({
-        ...assignmentForm,
-        person_id: parseInt(assignmentForm.person_id, 10),
-        item_id: parseInt(assignmentForm.item_id, 10),
-        season: assignmentForm.season || settings?.current_season || '',
-      });
-      setAssignmentForm((prev) => ({
-        ...prev,
-        notes: '',
-        override_reason: '',
-      }));
-    } catch (error) {
-      alert(error?.response?.data?.message || 'Transactie kon niet worden opgeslagen.');
-    }
-  };
-
   const handleExport = async () => {
     try {
       const response = await prmApi.exportClothingCsv();
@@ -192,14 +186,62 @@ export default function ClothingPage() {
 
   const handlePersonSearchChange = (value) => {
     setPersonSearch(value);
-    setAssignmentForm((prev) => ({ ...prev, person_id: '' }));
+    setSelectedPersonId(null);
+    setShowIssueForm(false);
+    setIssueForm({ item_id: '', size: '' });
     setIsPersonOpen(true);
   };
 
   const handleSelectPerson = (person) => {
     setPersonSearch(person.label);
-    setAssignmentForm((prev) => ({ ...prev, person_id: String(person.id) }));
+    setSelectedPersonId(person.id);
+    setShowIssueForm(false);
+    setIssueForm({ item_id: '', size: '' });
     setIsPersonOpen(false);
+  };
+
+  const handleIssueNewItem = async (e) => {
+    e.preventDefault();
+    if (!selectedPersonId) {
+      alert('Selecteer eerst een lid.');
+      return;
+    }
+
+    try {
+      await createAssignment.mutateAsync({
+        person_id: Number(selectedPersonId),
+        item_id: Number(issueForm.item_id),
+        size: issueForm.size,
+        condition: 'nieuw',
+        in_or_out: 'out',
+        date: new Date().toISOString().slice(0, 10),
+        season: settings?.current_season || '',
+      });
+      setIssueForm({ item_id: '', size: '' });
+      setShowIssueForm(false);
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Uitgifte kon niet worden opgeslagen.');
+    }
+  };
+
+  const handleReturnItem = async (itemRow) => {
+    if (!selectedPersonId) {
+      return;
+    }
+
+    try {
+      await createAssignment.mutateAsync({
+        person_id: Number(selectedPersonId),
+        item_id: Number(itemRow.item_id),
+        size: itemRow.size,
+        condition: 'goed',
+        in_or_out: 'in',
+        date: new Date().toISOString().slice(0, 10),
+        season: settings?.current_season || itemRow.season || '',
+      });
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Retour kon niet worden opgeslagen.');
+    }
   };
 
   return (
@@ -233,114 +275,155 @@ export default function ClothingPage() {
             </div>
           </div>
 
-          {settings?.eligibility_enabled && (
-            <div className="card p-6">
-              <h2 className="font-semibold text-brand-gradient mb-3">Regels</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Eligibility beheer je via <strong>Instellingen → Kleding</strong>.
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleCreateAssignment} className="card p-6 space-y-3">
+          <div className="card p-6 space-y-4">
             <h2 className="font-semibold text-brand-gradient flex items-center gap-2">
               <RotateCcw className="w-5 h-5" />
               Uitgifte / inname registreren
             </h2>
-            <div>
-              <div className="relative">
-                <input
-                  ref={personInputRef}
-                  className="input"
-                  value={personSearch}
-                  onChange={(e) => handlePersonSearchChange(e.target.value)}
-                  onFocus={() => setIsPersonOpen(true)}
-                  placeholder="Selecteer lid (typ om te zoeken)"
-                  required
-                />
-                {assignmentForm.person_id && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPersonSearch('');
-                      setAssignmentForm((prev) => ({ ...prev, person_id: '' }));
-                      setIsPersonOpen(false);
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    aria-label="Lid wissen"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-                {isPersonOpen && (
-                  <div
-                    ref={personDropdownRef}
-                    className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto"
-                  >
-                    {filteredPersonOptions.length > 0 ? (
-                      filteredPersonOptions.map((person) => (
-                        <button
-                          key={person.id}
-                          type="button"
-                          onClick={() => handleSelectPerson(person)}
-                          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                        >
-                          {person.label}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="px-3 py-2 text-sm text-gray-500">Geen leden gevonden</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-            <select className="input" value={assignmentForm.item_id} onChange={(e) => setAssignmentForm((v) => ({ ...v, item_id: e.target.value }))} required>
-              <option value="">Selecteer item</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-            </select>
-            <div className="grid grid-cols-2 gap-3">
-              <select
+
+            <div className="relative max-w-xl">
+              <input
+                ref={personInputRef}
                 className="input"
-                value={assignmentForm.size}
-                onChange={(e) => setAssignmentForm((v) => ({ ...v, size: e.target.value }))}
-                required
-                disabled={!assignmentForm.item_id || sizeOptions.length === 0}
-              >
-                <option value="">{assignmentForm.item_id ? 'Selecteer maat' : 'Kies eerst een item'}</option>
-                {sizeOptions.map((size) => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-              <select className="input" value={assignmentForm.condition} onChange={(e) => setAssignmentForm((v) => ({ ...v, condition: e.target.value }))}>
-                {CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
+                value={personSearch}
+                onChange={(e) => handlePersonSearchChange(e.target.value)}
+                onFocus={() => setIsPersonOpen(true)}
+                placeholder="Zoek lid..."
+              />
+              {(personSearch || selectedPersonId) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPersonSearch('');
+                    setSelectedPersonId(null);
+                    setShowIssueForm(false);
+                    setIssueForm({ item_id: '', size: '' });
+                    setIsPersonOpen(false);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label="Lid wissen"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+
+              {isPersonOpen && (
+                <div
+                  ref={personDropdownRef}
+                  className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto"
+                >
+                  {filteredPersonOptions.length > 0 ? (
+                    filteredPersonOptions.map((person) => (
+                      <button
+                        key={person.id}
+                        type="button"
+                        onClick={() => handleSelectPerson(person)}
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        {person.label}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-2 text-sm text-gray-500">Geen leden gevonden</p>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <select className="input" value={assignmentForm.in_or_out} onChange={(e) => setAssignmentForm((v) => ({ ...v, in_or_out: e.target.value }))}>
-                <option value="out">Uit</option>
-                <option value="in">In</option>
-              </select>
-              <input type="date" className="input" value={assignmentForm.date} onChange={(e) => setAssignmentForm((v) => ({ ...v, date: e.target.value }))} />
-            </div>
-            {settings?.eligibility_enabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  className="input"
-                  placeholder="Seizoen"
-                  value={assignmentForm.season || settings?.current_season || ''}
-                  onChange={(e) => setAssignmentForm((v) => ({ ...v, season: e.target.value }))}
-                />
-                <input className="input" placeholder="Override reden (optioneel)" value={assignmentForm.override_reason} onChange={(e) => setAssignmentForm((v) => ({ ...v, override_reason: e.target.value }))} />
+
+            {selectedPerson && (
+              <div className="space-y-4">
+                <div className="card p-4 bg-gray-50 dark:bg-gray-800/60">
+                  <div className="flex items-center gap-4">
+                    {selectedPerson.thumbnail ? (
+                      <img
+                        src={selectedPerson.thumbnail}
+                        alt={selectedPerson.name}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-gray-200 dark:bg-gray-700" />
+                    )}
+                    <div>
+                      <p className="font-semibold">{selectedPerson.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Team: {teamName}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-brand-gradient">Huidige kleding</h3>
+                    <button
+                      type="button"
+                      className="btn-secondary text-sm"
+                      onClick={() => setShowIssueForm((prev) => !prev)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nieuw item uitgeven
+                    </button>
+                  </div>
+
+                  {(personProfile?.current_items || []).length === 0 ? (
+                    <p className="text-sm text-gray-500">Dit lid heeft momenteel geen uitgegeven items.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {personProfile.current_items.map((row) => (
+                        <div key={row.id} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 py-2">
+                          <div>
+                            <p className="text-sm font-medium">{row.item_name}</p>
+                            <p className="text-xs text-gray-500">Maat {row.size}</p>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-secondary text-xs"
+                            onClick={() => handleReturnItem(row)}
+                            disabled={createAssignment.isPending}
+                          >
+                            <Undo2 className="w-3.5 h-3.5 mr-1" />
+                            Retourneren
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {showIssueForm && (
+                  <form onSubmit={handleIssueNewItem} className="card p-4 space-y-3">
+                    <h4 className="font-medium">Nieuw item uitgeven</h4>
+                    <select
+                      className="input"
+                      value={issueForm.item_id}
+                      onChange={(e) => setIssueForm((prev) => ({ ...prev, item_id: e.target.value, size: '' }))}
+                      required
+                    >
+                      <option value="">Selecteer item</option>
+                      {items.map((item) => (
+                        <option key={item.id} value={item.id}>{item.name}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="input"
+                      value={issueForm.size}
+                      onChange={(e) => setIssueForm((prev) => ({ ...prev, size: e.target.value }))}
+                      required
+                      disabled={!issueForm.item_id || sizeOptions.length === 0}
+                    >
+                      <option value="">{issueForm.item_id ? 'Selecteer maat' : 'Kies eerst een item'}</option>
+                      {sizeOptions.map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                    <div>
+                      <button type="submit" className="btn-primary text-sm" disabled={createAssignment.isPending}>
+                        Uitgeven
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             )}
-            <textarea className="input min-h-20" placeholder="Notities" value={assignmentForm.notes} onChange={(e) => setAssignmentForm((v) => ({ ...v, notes: e.target.value }))} />
-            <button type="submit" className="btn-primary text-sm" disabled={createAssignment.isPending}>
-              Opslaan
-            </button>
-          </form>
+          </div>
         </div>
       )}
 

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.4] - 2026-02-23
+
+### Changed
+- Clothing handout/return flow on `/kleding` redesigned to be member-first:
+  - First search/select a member.
+  - Then show member card with name, photo, team, and currently assigned clothing.
+  - Existing assigned items now include direct `Retourneren` actions.
+  - New handout now starts from `Nieuw item uitgeven`, then item + size selection.
+
+### Fixed
+- Reworked member search selector on clothing page to use a clickable filtered dropdown for reliable selection performance.
+- Team display is now resolved for the selected member using entity lookup.
+
 ## [30.10.3] - 2026-02-23
 
 ### Fixed
