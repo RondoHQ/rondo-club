@@ -56,6 +56,11 @@ class FeeCacheInvalidator {
 		// REST API updates
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
 
+		// Log timeline activity when contributie exclusion is toggled.
+		add_action( 'added_post_meta', [ $this, 'log_contributie_exclusion_toggle' ], 10, 4 );
+		add_action( 'updated_post_meta', [ $this, 'log_contributie_exclusion_toggle' ], 10, 4 );
+		add_action( 'deleted_post_meta', [ $this, 'log_contributie_exclusion_toggle' ], 10, 4 );
+
 		// Settings changes affect all people - trigger bulk recalculation
 		add_action( 'update_option_rondo_membership_fees', [ $this, 'schedule_bulk_recalculation' ], 10, 2 );
 
@@ -173,6 +178,59 @@ class FeeCacheInvalidator {
 	 */
 	public function invalidate_person_cache_rest( $post, $request ) {
 		$this->fees->clear_fee_cache( $post->ID );
+	}
+
+	/**
+	 * Log timeline activity when _exclude_from_contributie changes.
+	 *
+	 * @param int    $meta_id    Meta row ID.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 */
+	public function log_contributie_exclusion_toggle( $meta_id, $post_id, $meta_key, $meta_value ) {
+		unset( $meta_id, $meta_value );
+
+		if ( '_exclude_from_contributie' !== $meta_key ) {
+			return;
+		}
+
+		if ( 'person' !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		$is_excluded = (bool) get_post_meta( $post_id, '_exclude_from_contributie', true );
+		$actor_id    = get_current_user_id();
+		$actor_name  = __( 'Systeem', 'rondo' );
+
+		if ( $actor_id > 0 ) {
+			$user = get_userdata( $actor_id );
+			if ( $user && ! empty( $user->display_name ) ) {
+				$actor_name = $user->display_name;
+			}
+		}
+
+		$message = $is_excluded
+			? sprintf( __( 'Contributie uitgesloten door %s.', 'rondo' ), $actor_name )
+			: sprintf( __( 'Contributie opnieuw opgenomen door %s.', 'rondo' ), $actor_name );
+
+		$comment_id = wp_insert_comment(
+			[
+				'comment_post_ID'  => (int) $post_id,
+				'comment_content'  => $message,
+				'comment_type'     => \Rondo\Collaboration\CommentTypes::TYPE_ACTIVITY,
+				'user_id'          => $actor_id,
+				'comment_approved' => 1,
+			]
+		);
+
+		if ( ! $comment_id ) {
+			return;
+		}
+
+		update_comment_meta( $comment_id, 'activity_type', 'contributie_exclusion_toggle' );
+		update_comment_meta( $comment_id, 'activity_date', current_time( 'Y-m-d' ) );
+		update_comment_meta( $comment_id, 'activity_time', current_time( 'H:i' ) );
 	}
 
 	/**

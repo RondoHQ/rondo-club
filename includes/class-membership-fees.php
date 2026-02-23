@@ -313,6 +313,101 @@ class MembershipFees {
 		'zaterdag recreanten',
 	];
 
+	/**
+	 * Check whether a work_history row represents a current position.
+	 *
+	 * @param array<string,mixed> $job   A single work_history row.
+	 * @param int                 $today Timestamp for today's date.
+	 * @return bool True when the row is considered current.
+	 */
+	private function is_current_work_history_entry( array $job, int $today ): bool {
+		if ( ! empty( $job['is_current'] ) ) {
+			if ( ! empty( $job['end_date'] ) ) {
+				$end_date = strtotime( (string) $job['end_date'] );
+				return $end_date !== false && $end_date >= $today;
+			}
+			return true;
+		}
+
+		if ( empty( $job['end_date'] ) ) {
+			return true;
+		}
+
+		$end_date = strtotime( (string) $job['end_date'] );
+		return $end_date !== false && $end_date >= $today;
+	}
+
+	/**
+	 * Get effective werkfuncties for a person.
+	 *
+	 * Uses current work_history job titles as the source of truth for fee matching.
+	 *
+	 * @param int $person_id The person post ID.
+	 * @return array<string> List of unique werkfuncties.
+	 */
+	private function get_effective_werkfuncties( int $person_id ): array {
+		$work_history = get_field( 'work_history', $person_id ) ?: [];
+		if ( empty( $work_history ) ) {
+			return [];
+		}
+
+		$today   = strtotime( 'today' );
+		$derived = [];
+		foreach ( $work_history as $job ) {
+			if ( ! is_array( $job ) ) {
+				continue;
+			}
+
+			if ( ! $this->is_current_work_history_entry( $job, $today ) ) {
+				continue;
+			}
+
+			$job_title = trim( (string) ( $job['job_title'] ?? '' ) );
+			if ( $job_title === '' ) {
+				continue;
+			}
+
+			$derived[] = $job_title;
+		}
+
+		return array_values( array_unique( $derived ) );
+	}
+
+	/**
+	 * Normalize werkfuncties for fee matching.
+	 *
+	 * "Donateur" is treated as a donateur-only signal: when combined with any
+	 * other function, it is removed from matching so active roles can determine
+	 * the fee category.
+	 *
+	 * @param array<string> $werkfuncties Raw werkfuncties list.
+	 * @return array<string> Normalized list used for category matching.
+	 */
+	private function normalize_werkfuncties_for_fee_match( array $werkfuncties ): array {
+		$normalized = [];
+		foreach ( $werkfuncties as $functie ) {
+			$functie = trim( (string) $functie );
+			if ( $functie !== '' ) {
+				$normalized[] = $functie;
+			}
+		}
+
+		$normalized = array_values( array_unique( $normalized ) );
+
+		if ( count( $normalized ) > 1 ) {
+			$normalized = array_values(
+				array_filter(
+					$normalized,
+					function ( string $functie ): bool {
+						return strcasecmp( $functie, 'Donateur' ) !== 0;
+					}
+				)
+			);
+		}
+
+		return $normalized;
+	}
+
 	public function get_current_teams( int $person_id ): array {
 		$work_history = get_field( 'work_history', $person_id ) ?: [];
 		$team_ids     = [];
@@ -343,25 +438,7 @@ class MembershipFees {
 				continue;
 			}
 
-			// Determine if person is currently on this team
-			$is_current = false;
-
-			if ( ! empty( $job['is_current'] ) ) {
-				// is_current flag is set
-				if ( ! empty( $job['end_date'] ) ) {
-					$end_date   = strtotime( $job['end_date'] );
-					$is_current = ( $end_date >= $today );
-				} else {
-					$is_current = true;
-				}
-			} elseif ( empty( $job['end_date'] ) ) {
-				// No end date means still current
-				$is_current = true;
-			} else {
-				// Check if end date is in future
-				$end_date   = strtotime( $job['end_date'] );
-				$is_current = ( $end_date >= $today );
-			}
+			$is_current = $this->is_current_work_history_entry( $job, $today );
 
 			if ( $is_current && ! in_array( $team_id, $team_ids, true ) ) {
 				$team_ids[] = $team_id;
@@ -446,7 +523,7 @@ class MembershipFees {
 	 * @return bool True if the person is a donateur only.
 	 */
 	private function is_donateur( int $person_id ): bool {
-		$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
+		$werkfuncties = $this->get_effective_werkfuncties( $person_id );
 
 		if ( empty( $werkfuncties ) ) {
 			return false;
@@ -642,7 +719,9 @@ class MembershipFees {
 		}
 
 		// Check werkfunctie matching (config-driven)
-		$werkfuncties = get_field( 'werkfuncties', $person_id ) ?: [];
+		$werkfuncties = $this->normalize_werkfuncties_for_fee_match(
+			$this->get_effective_werkfuncties( $person_id )
+		);
 		if ( ! empty( $werkfuncties ) ) {
 			$werkfunctie_matched_category = $this->get_category_by_werkfunctie_match( $werkfuncties, $season );
 			if ( $werkfunctie_matched_category !== null ) {
