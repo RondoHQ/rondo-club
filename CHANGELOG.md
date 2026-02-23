@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.8.2] - 2026-02-23
+
+### Changed
+- Added more spacing between the role/function selector and wallet buttons on the public membership pass page.
+- Public membership pass page now uses the configured club logo as favicon (including Apple touch icon).
+
 ## [30.8.1] - 2026-02-23
 
 ### Fixed
