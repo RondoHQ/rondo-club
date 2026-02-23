@@ -212,6 +212,11 @@ export default function MembershipPassScanner() {
             {isActiveMembership ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
             {isActiveMembership ? 'Geldige ledenpas' : 'Ongeldige ledenpas'}
           </div>
+          {!isActiveMembership ? (
+            <div className="text-sm font-medium text-red-700 dark:text-red-400">
+              Geen lid meer
+            </div>
+          ) : null}
 
           <div className="flex items-center gap-4">
             {resultPhoto ? (

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.7.3] - 2026-02-23
+
+### Changed
+- Scanner invalid-state card now shows the red helper text `Geen lid meer` directly below `Ongeldige ledenpas`.
+
 ## [30.7.2] - 2026-02-23
 
 ### Changed
