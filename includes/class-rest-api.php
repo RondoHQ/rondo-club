@@ -775,6 +775,10 @@ class Api extends Base {
 							'required'          => false,
 							'type'              => 'boolean',
 						],
+						'installment_admin_fee'      => [
+							'required'          => false,
+							'type'              => 'number',
+						],
 					],
 				],
 			]
@@ -4575,6 +4579,7 @@ class Api extends Base {
 				'billing_method'             => $fees->get_billing_method( $season ),
 				'installment_plan_3_enabled' => $fees->get_installment_plan_3_enabled( $season ),
 				'installment_plan_8_enabled' => $fees->get_installment_plan_8_enabled( $season ),
+				'installment_admin_fee'      => $fees->get_installment_admin_fee( $season ),
 			]
 		);
 	}
@@ -4604,12 +4609,18 @@ class Api extends Base {
 			$fees->set_installment_plan_8_enabled( (bool) $plan_8_enabled, $season );
 		}
 
+		$installment_admin_fee = $request->get_param( 'installment_admin_fee' );
+		if ( $installment_admin_fee !== null ) {
+			$fees->set_installment_admin_fee( (float) $installment_admin_fee, $season );
+		}
+
 		return rest_ensure_response(
 			[
 				'season'                     => $season,
 				'billing_method'             => $fees->get_billing_method( $season ),
 				'installment_plan_3_enabled' => $fees->get_installment_plan_3_enabled( $season ),
 				'installment_plan_8_enabled' => $fees->get_installment_plan_8_enabled( $season ),
+				'installment_admin_fee'      => $fees->get_installment_admin_fee( $season ),
 			]
 		);
 	}

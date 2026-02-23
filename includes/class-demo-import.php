@@ -177,7 +177,8 @@ class DemoImport {
 			"SELECT option_name FROM {$wpdb->options}
 			 WHERE option_name LIKE 'rondo_membership_fees_%'
 			    OR option_name LIKE 'rondo_family_discount_%'
-			    OR option_name LIKE 'rondo_finance_%'"
+			    OR option_name LIKE 'rondo_finance_%'
+			    OR option_name LIKE 'rondo_membership_pass_%'"
 		);
 
 		foreach ( $dynamic_options as $option_name ) {

@@ -1513,10 +1513,11 @@ class DemoExport {
 			$settings['rondo_vog_reminder_template_renewal'] = '<p>Dit is een demo e-mailtemplate.</p>';
 		}
 
-		// Finance configuration settings (non-sensitive)
-		$settings['rondo_finance_org_name']     = 'Demo Club';
-		$settings['rondo_finance_org_address']  = 'Sportlaan 1, 1234 AB Amsterdam';
+		// Finance configuration settings (non-sensitive + anonymized).
+		$settings['rondo_finance_org_name']      = 'Demo Club';
+		$settings['rondo_finance_org_address']   = 'Sportlaan 1, 1234 AB Amsterdam';
 		$settings['rondo_finance_contact_email'] = 'penningmeester@rondo-demo.nl';
+		$settings['rondo_finance_bcc_email']     = 'financien@rondo-demo.nl';
 		$settings['rondo_finance_iban']          = 'NL00DEMO0000000000';
 
 		$payment_term_days = get_option( 'rondo_finance_payment_term_days' );
@@ -1540,6 +1541,8 @@ class DemoExport {
 		$settings['rondo_finance_installment_email_template']  = '<p>Dit is een demo e-mailtemplate voor termijnen.</p>';
 		$settings['rondo_finance_reminder_1_email_template']   = '<p>Dit is een demo herinnering.</p>';
 		$settings['rondo_finance_reminder_2_email_template']   = '<p>Dit is een demo tweede herinnering.</p>';
+		$settings['rondo_finance_invoice_reminder_1_email_template'] = '<p>Dit is een demo factuurherinnering.</p>';
+		$settings['rondo_finance_invoice_reminder_2_email_template'] = '<p>Dit is een demo tweede factuurherinnering.</p>';
 
 		$accent_color = get_option( 'rondo_finance_accent_color' );
 		if ( false !== $accent_color ) {
@@ -1563,6 +1566,20 @@ class DemoExport {
 
 		// Active payment provider: always set to mollie for demo
 		$settings['rondo_finance_active_payment_provider'] = 'mollie';
+
+		// Membership pass configuration (portable values only; no credentials/files).
+		$settings['rondo_membership_pass_apple_cert_attachment_id'] = 0;
+		$settings['rondo_membership_pass_apple_cert_password']      = '';
+		$settings['rondo_membership_pass_apple_pass_type_identifier'] = 'pass.nl.rondo.demo.membership';
+		$settings['rondo_membership_pass_apple_team_identifier']      = 'DEMO123456';
+		$settings['rondo_membership_pass_apple_organization_name']    = 'Demo Club';
+		$settings['rondo_membership_pass_google_service_account_attachment_id'] = 0;
+		$settings['rondo_membership_pass_google_issuer_id']                    = '3388000000022952745';
+
+		$google_class_suffix = get_option( 'rondo_membership_pass_google_class_suffix' );
+		$settings['rondo_membership_pass_google_class_suffix'] = is_string( $google_class_suffix ) && '' !== $google_class_suffix
+			? sanitize_key( $google_class_suffix )
+			: 'rondo_membership';
 
 		// Capability maps
 		$functie_map  = get_option( 'rondo_functie_capability_map' );

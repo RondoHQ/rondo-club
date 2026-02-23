@@ -766,6 +766,30 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get per-installment administration fee for a season.
+	 *
+	 * @param string|null $season Optional season key. Defaults to current season.
+	 * @return float Administration fee per installment (default: legacy global value, else 0.00).
+	 */
+	public function get_installment_admin_fee( ?string $season = null ): float {
+		$season = $season ?? $this->get_season_key();
+		$legacy_default = (float) get_option( 'rondo_finance_installment_admin_fee', 0 );
+		return (float) get_option( 'rondo_installment_admin_fee_' . $season, $legacy_default );
+	}
+
+	/**
+	 * Set per-installment administration fee for a season.
+	 *
+	 * @param float       $fee    Administration fee per installment.
+	 * @param string|null $season Optional season key. Defaults to current season.
+	 * @return bool True on success, false on failure.
+	 */
+	public function set_installment_admin_fee( float $fee, ?string $season = null ): bool {
+		$season = $season ?? $this->get_season_key();
+		return update_option( 'rondo_installment_admin_fee_' . $season, max( 0.0, $fee ) );
+	}
+
+	/**
 	 * Get the next season key (one year ahead of current/specified season)
 	 *
 	 * Takes a season key in "YYYY-YYYY" format and returns the next season.

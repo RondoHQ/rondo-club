@@ -178,8 +178,7 @@ class PublicPaymentPage {
 		$season          = $membership_fees->get_season_key( $invoice_date );
 
 		// Read installment admin fee.
-		$config     = new FinanceConfig();
-		$admin_fee  = $config->get_installment_admin_fee();
+		$admin_fee  = $membership_fees->get_installment_admin_fee( $season );
 
 		// Read installment plan toggles for this season.
 		$plan_3_enabled = $membership_fees->get_installment_plan_3_enabled( $season );
@@ -540,8 +539,10 @@ class PublicPaymentPage {
 
 		// Read amounts.
 		$total     = (float) get_field( 'total_amount', $invoice_id );
-		$config    = new FinanceConfig();
-		$admin_fee = $config->get_installment_admin_fee();
+		$fees_service = new MembershipFees();
+		$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
+		$invoice_season = $fees_service->get_season_key( $invoice_date );
+		$admin_fee = $fees_service->get_installment_admin_fee( $invoice_season );
 
 		// Store plan meta and write installment breakdown.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );

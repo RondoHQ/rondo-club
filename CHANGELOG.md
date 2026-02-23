@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.7] - 2026-02-23
+
+### Added
+- Demo fixture export now includes membership pass wallet configuration keys (`rondo_membership_pass_*`) using portable demo-safe values.
+
+### Changed
+- Demo fixture export now includes the newer finance configuration used by the finance dashboard and reminder flows, including invoice reminder template keys.
+- Demo data docs were updated to document finance and membership pass settings coverage in fixtures.
+
+### Fixed
+- `wp rondo demo import --clean` now also removes `rondo_membership_pass_%` options to prevent stale wallet config from leaking between demo imports.
+
+## [30.9.6] - 2026-02-23
+
+### Changed
+- Updated global heading typography:
+  - `h1`/`h2` use Montserrat with stronger title weight by default.
+  - Brand-gradient heading style is applied to `h1.text-brand-gradient`, `h2.text-brand-gradient`, and `.brand-heading`.
+  - Added `.heading-plain` opt-out utility for headings that should remain non-gradient.
+- Refreshed the shared `.card` component style to match the current website design:
+  - Light background (`#F2F7FA`), subtle border, stronger shadow, and gradient top accent line.
+  - Hover state now uses a slightly darker surface and elevated shadow.
+  - Dark mode cards keep existing dark surface behavior.
+
 ## [30.9.5] - 2026-02-23
 
 ### Changed
