@@ -296,6 +296,7 @@ class PublicMembershipPassPage {
 
 	<div class="card">
 		<h2>Voeg toe aan Wallet</h2>
+		<div class="wallet-actions">
 		<?php if ( $apple_available ) : ?>
 			<a href="<?php echo esc_url( $apple_url ); ?>" class="wallet-badge wallet-badge-apple" aria-label="Add to Apple Wallet">
 				<span class="wallet-badge-apple-icon" aria-hidden="true"></span>
@@ -318,6 +319,7 @@ class PublicMembershipPassPage {
 		<?php else : ?>
 			<div class="hint">Google Wallet is nog niet geconfigureerd.</div>
 		<?php endif; ?>
+		</div>
 	</div>
 </div>
 		<?php
@@ -445,20 +447,20 @@ class PublicMembershipPassPage {
 		.info-table { width: 100%; border-collapse: collapse; }
 		.info-table th, .info-table td { border-bottom: 1px solid #e5e7eb; text-align: left; padding: 8px 0; }
 		.info-table th { width: 110px; color: #6b7280; font-weight: 600; }
-		.wallet-badge { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-top: 10px; }
-		.wallet-badge + .wallet-badge { margin-left: 8px; }
-		.wallet-badge-apple { min-height: 46px; background: #000; color: #fff; border-radius: 10px; padding: 10px 14px; font-size: 17px; font-weight: 600; letter-spacing: .01em; }
+		.wallet-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+		.wallet-badge { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-top: 0; height: 54px; }
+		.wallet-badge-apple { background: #000; color: #fff; border-radius: 10px; padding: 0 16px; font-size: 17px; font-weight: 600; letter-spacing: .01em; }
 		.wallet-badge-apple-icon { font-size: 20px; line-height: 1; margin-right: 8px; }
 		.wallet-badge-label { line-height: 1; white-space: nowrap; }
-		.wallet-badge-google { border-radius: 999px; overflow: hidden; max-width: 290px; }
-		.wallet-badge-google-img { display: block; width: 100%; height: auto; max-height: 54px; }
+		.wallet-badge-google { border-radius: 999px; overflow: hidden; }
+		.wallet-badge-google-img { display: block; width: auto; height: 54px; }
 		.hint { margin-top: 10px; color: #6b7280; font-size: 14px; }
 		.error-card { border-color: #fecaca; background: #fef2f2; }
 		@media (max-width: 520px) {
+			.wallet-actions { flex-direction: column; align-items: stretch; }
 			.wallet-badge { width: 100%; }
-			.wallet-badge + .wallet-badge { margin-left: 0; }
-			.wallet-badge-google { max-width: none; }
-			.wallet-badge-google-img { width: auto; max-width: 100%; margin: 0 auto; }
+			.wallet-badge-google { justify-content: center; }
+			.wallet-badge-google-img { max-width: 100%; margin: 0 auto; }
 		}
 	</style>
 </head>
