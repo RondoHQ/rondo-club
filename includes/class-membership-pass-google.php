@@ -452,12 +452,103 @@ class MembershipPassGoogle {
 		$config  = new FinanceConfig();
 		$logo_id = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
+			$padded = $this->get_padded_logo_image_url( $logo_id );
+			if ( $padded !== '' ) {
+				return $padded;
+			}
+
 			$url = wp_get_attachment_url( $logo_id );
 			if ( is_string( $url ) ) {
 				return $url;
 			}
 		}
 		return '';
+	}
+
+	/**
+	 * Build (and cache) a padded PNG variant of the club logo.
+	 *
+	 * @param int $logo_id Attachment ID.
+	 * @return string
+	 */
+	private function get_padded_logo_image_url( int $logo_id ): string {
+		if ( ! function_exists( 'imagecreatefromstring' ) || ! function_exists( 'imagepng' ) ) {
+			return '';
+		}
+
+		$path = get_attached_file( $logo_id );
+		if ( ! is_string( $path ) || ! file_exists( $path ) ) {
+			return '';
+		}
+
+		$uploads = wp_get_upload_dir();
+		if ( empty( $uploads['basedir'] ) || empty( $uploads['baseurl'] ) ) {
+			return '';
+		}
+
+		$mtime = filemtime( $path );
+		if ( ! is_int( $mtime ) ) {
+			return '';
+		}
+
+		$subdir      = 'rondo-wallet';
+		$target_dir  = trailingslashit( (string) $uploads['basedir'] ) . $subdir;
+		$target_name = 'logo-' . $logo_id . '-' . $mtime . '-padded.png';
+		$target_path = trailingslashit( $target_dir ) . $target_name;
+		$target_url  = trailingslashit( (string) $uploads['baseurl'] ) . $subdir . '/' . $target_name;
+
+		if ( file_exists( $target_path ) ) {
+			return $target_url;
+		}
+
+		if ( ! wp_mkdir_p( $target_dir ) ) {
+			return '';
+		}
+
+		$source_data = file_get_contents( $path );
+		if ( ! is_string( $source_data ) || $source_data === '' ) {
+			return '';
+		}
+
+		$source = imagecreatefromstring( $source_data );
+		if ( ! is_resource( $source ) && ! ( $source instanceof \GdImage ) ) {
+			return '';
+		}
+
+		$width  = imagesx( $source );
+		$height = imagesy( $source );
+		if ( $width <= 0 || $height <= 0 ) {
+			imagedestroy( $source );
+			return '';
+		}
+
+		$max_side    = max( $width, $height );
+		$padding     = (int) ceil( $max_side * 0.16 );
+		$canvas_size = $max_side + ( 2 * $padding );
+		$dest        = imagecreatetruecolor( $canvas_size, $canvas_size );
+		if ( ! is_resource( $dest ) && ! ( $dest instanceof \GdImage ) ) {
+			imagedestroy( $source );
+			return '';
+		}
+
+		imagealphablending( $dest, false );
+		$transparent = imagecolorallocatealpha( $dest, 0, 0, 0, 127 );
+		imagefill( $dest, 0, 0, $transparent );
+		imagesavealpha( $dest, true );
+
+		$dst_x = (int) floor( ( $canvas_size - $width ) / 2 );
+		$dst_y = (int) floor( ( $canvas_size - $height ) / 2 );
+		imagecopy( $dest, $source, $dst_x, $dst_y, 0, 0, $width, $height );
+
+		$saved = imagepng( $dest, $target_path, 6 );
+		imagedestroy( $source );
+		imagedestroy( $dest );
+
+		if ( ! $saved ) {
+			return '';
+		}
+
+		return $target_url;
 	}
 
 	/**

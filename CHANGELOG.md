@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.13] - 2026-02-23
+
+### Changed
+- Public membership pass page now uses a local Dutch Apple Wallet badge SVG (`NL_Add_to_Apple_Wallet_RGB_101921.svg`) for the Add to Apple Wallet button instead of the custom text button.
+
+## [30.9.12] - 2026-02-23
+
+### Fixed
+- Google Wallet club logo now uses a generated padded PNG variant (transparent margin on all sides) to prevent crest clipping in wallet card previews.
+
 ## [30.9.11] - 2026-02-23
 
 ### Changed

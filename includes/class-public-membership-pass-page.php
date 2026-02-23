@@ -346,8 +346,13 @@ class PublicMembershipPassPage {
 		<div class="wallet-actions">
 		<?php if ( $show_apple_wallet && $apple_available ) : ?>
 			<a href="<?php echo esc_url( $apple_url ); ?>" class="wallet-badge wallet-badge-apple" aria-label="Add to Apple Wallet">
-				<span class="wallet-badge-apple-icon" aria-hidden="true"></span>
-				<span class="wallet-badge-label">Add to Apple Wallet</span>
+				<img
+					src="<?php echo esc_url( get_template_directory_uri() . '/public/icons/NL_Add_to_Apple_Wallet_RGB_101921.svg' ); ?>"
+					alt="Add to Apple Wallet"
+					loading="lazy"
+					decoding="async"
+					class="wallet-badge-apple-img"
+				/>
 			</a>
 		<?php elseif ( $show_apple_wallet ) : ?>
 			<div class="hint">Apple Wallet is nog niet geconfigureerd.</div>
@@ -546,9 +551,8 @@ class PublicMembershipPassPage {
 		.role-selector-input { width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #111827; background: #fff; }
 		.wallet-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
 		.wallet-badge { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-top: 0; height: 54px; }
-		.wallet-badge-apple { background: #000; color: #fff; border-radius: 10px; padding: 0 16px; font-size: 17px; font-weight: 600; letter-spacing: .01em; }
-		.wallet-badge-apple-icon { font-size: 20px; line-height: 1; margin-right: 8px; }
-		.wallet-badge-label { line-height: 1; white-space: nowrap; }
+		.wallet-badge-apple { border-radius: 999px; overflow: hidden; }
+		.wallet-badge-apple-img { display: block; width: auto; height: 54px; }
 		.wallet-badge-google { border-radius: 999px; overflow: hidden; }
 		.wallet-badge-google-img { display: block; width: auto; height: 54px; }
 		.hint { margin-top: 10px; color: #6b7280; font-size: 14px; }
@@ -556,6 +560,8 @@ class PublicMembershipPassPage {
 		@media (max-width: 520px) {
 			.wallet-actions { flex-direction: column; align-items: stretch; gap: 14px; }
 			.wallet-badge { width: 100%; }
+			.wallet-badge-apple { justify-content: center; }
+			.wallet-badge-apple-img { max-width: 100%; margin: 0 auto; }
 			.wallet-badge-google { justify-content: center; }
 			.wallet-badge-google-img { max-width: 100%; margin: 0 auto; }
 		}
