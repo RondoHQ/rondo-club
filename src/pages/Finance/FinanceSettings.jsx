@@ -14,6 +14,7 @@ const TABS = [
   { id: 'discipline', label: 'Tuchtzaken' },
   { id: 'contributie', label: 'Contributie' },
   { id: 'email', label: 'E-mail' },
+  { id: 'membership_passes', label: 'Wallets' },
   { id: 'mollie', label: 'Mollie' },
   { id: 'rabobank', label: 'Rabobank' },
 ];
@@ -172,6 +173,16 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     active_payment_provider: 'rabobank',
     mollie_api_key: '',
     mollie_redirect_url: '',
+    membership_pass_apple_cert_attachment_id: 0,
+    membership_pass_apple_cert_url: '',
+    membership_pass_apple_cert_password: '',
+    membership_pass_apple_pass_type_identifier: '',
+    membership_pass_apple_team_identifier: '',
+    membership_pass_apple_organization_name: '',
+    membership_pass_google_service_account_attachment_id: 0,
+    membership_pass_google_service_account_url: '',
+    membership_pass_google_issuer_id: '',
+    membership_pass_google_class_suffix: 'rondo_membership',
   });
 
   const availableTabs = Array.isArray(allowedTabs) && allowedTabs.length > 0
@@ -183,6 +194,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
   const [emailSubTab, setEmailSubTab] = useState('boetes');
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
+  const [showMembershipPassHelp, setShowMembershipPassHelp] = useState(false);
 
   useEffect(() => {
     if (!availableTabs.some((tab) => tab.id === activeTab)) {
@@ -223,6 +235,16 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         // Do NOT add mollie_api_key — key is never returned by API
         mollie_api_key: '',
         mollie_redirect_url: settings.mollie_redirect_url || '',
+        membership_pass_apple_cert_attachment_id: settings.membership_pass_apple_cert_attachment_id || 0,
+        membership_pass_apple_cert_url: settings.membership_pass_apple_cert_url || '',
+        membership_pass_apple_cert_password: '',
+        membership_pass_apple_pass_type_identifier: settings.membership_pass_apple_pass_type_identifier || '',
+        membership_pass_apple_team_identifier: settings.membership_pass_apple_team_identifier || '',
+        membership_pass_apple_organization_name: settings.membership_pass_apple_organization_name || '',
+        membership_pass_google_service_account_attachment_id: settings.membership_pass_google_service_account_attachment_id || 0,
+        membership_pass_google_service_account_url: settings.membership_pass_google_service_account_url || '',
+        membership_pass_google_issuer_id: settings.membership_pass_google_issuer_id || '',
+        membership_pass_google_class_suffix: settings.membership_pass_google_class_suffix || 'rondo_membership',
       });
     }
   }, [settings]);
@@ -295,6 +317,38 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     }
   };
 
+  const handleMembershipFileUpload = async (event, type) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await api.post('/wp/v2/media', uploadFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (type === 'apple') {
+        setFormData(prev => ({
+          ...prev,
+          membership_pass_apple_cert_attachment_id: response.data.id,
+          membership_pass_apple_cert_url: response.data.source_url,
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          membership_pass_google_service_account_attachment_id: response.data.id,
+          membership_pass_google_service_account_url: response.data.source_url,
+        }));
+      }
+    } catch (err) {
+      setSaveError(err.response?.data?.message || 'Fout bij uploaden bestand');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   // Remove logo
   const handleLogoRemove = () => {
     setFormData(prev => ({
@@ -339,6 +393,13 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         installment_admin_fee: parseFloat(formData.installment_admin_fee) || 0,
         rabobank_environment: formData.rabobank_environment,
         active_payment_provider: formData.active_payment_provider,
+        membership_pass_apple_cert_attachment_id: formData.membership_pass_apple_cert_attachment_id,
+        membership_pass_apple_pass_type_identifier: formData.membership_pass_apple_pass_type_identifier,
+        membership_pass_apple_team_identifier: formData.membership_pass_apple_team_identifier,
+        membership_pass_apple_organization_name: formData.membership_pass_apple_organization_name,
+        membership_pass_google_service_account_attachment_id: formData.membership_pass_google_service_account_attachment_id,
+        membership_pass_google_issuer_id: formData.membership_pass_google_issuer_id,
+        membership_pass_google_class_suffix: formData.membership_pass_google_class_suffix,
       };
 
       // Only include credentials if user entered new values
@@ -350,6 +411,9 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       }
       if (formData.mollie_api_key.trim()) {
         payload.mollie_api_key = formData.mollie_api_key;
+      }
+      if (formData.membership_pass_apple_cert_password.trim()) {
+        payload.membership_pass_apple_cert_password = formData.membership_pass_apple_cert_password;
       }
       payload.mollie_redirect_url = formData.mollie_redirect_url;
 
@@ -372,6 +436,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         rabobank_client_id: '',
         rabobank_client_secret: '',
         mollie_api_key: '',
+        membership_pass_apple_cert_password: '',
       }));
     } catch (err) {
       setSaveError(err.response?.data?.message || 'Er is een fout opgetreden bij het opslaan.');
@@ -1250,6 +1315,203 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           </div>
         </div>
       </div>}
+
+      {activeTab === 'membership_passes' && <div className="card p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Wallets</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Upload certificaten en service-account bestanden voor Apple Wallet en Google Wallet.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowMembershipPassHelp(true)}
+            className="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Hulp bij instellen
+          </button>
+        </div>
+
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Apple Wallet</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                P12 certificaat
+              </label>
+              {formData.membership_pass_apple_cert_url && (
+                <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                  Huidig bestand: {formData.membership_pass_apple_cert_url.split('/').pop()}
+                </div>
+              )}
+              <input
+                type="file"
+                accept=".p12,application/x-pkcs12"
+                onChange={(e) => handleMembershipFileUpload(e, 'apple')}
+                className="block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+              />
+            </div>
+            <div>
+              <label htmlFor="membership_pass_apple_cert_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Certificaat wachtwoord
+              </label>
+              <input
+                type="password"
+                id="membership_pass_apple_cert_password"
+                value={formData.membership_pass_apple_cert_password}
+                onChange={(e) => setFormData(prev => ({ ...prev, membership_pass_apple_cert_password: e.target.value }))}
+                placeholder={settings?.membership_pass_apple_has_cert_password ? '••••••••' : 'Voer wachtwoord in'}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="membership_pass_apple_pass_type_identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Pass Type Identifier
+              </label>
+              <input
+                type="text"
+                id="membership_pass_apple_pass_type_identifier"
+                value={formData.membership_pass_apple_pass_type_identifier}
+                onChange={(e) => setFormData(prev => ({ ...prev, membership_pass_apple_pass_type_identifier: e.target.value }))}
+                placeholder="pass.nl.voorbeeld.rondo.membership"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="membership_pass_apple_team_identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Apple Team Identifier
+              </label>
+              <input
+                type="text"
+                id="membership_pass_apple_team_identifier"
+                value={formData.membership_pass_apple_team_identifier}
+                onChange={(e) => setFormData(prev => ({ ...prev, membership_pass_apple_team_identifier: e.target.value }))}
+                placeholder="XXXXXXXXXX"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="membership_pass_apple_organization_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Organisatienaam op pas
+              </label>
+              <input
+                type="text"
+                id="membership_pass_apple_organization_name"
+                value={formData.membership_pass_apple_organization_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, membership_pass_apple_organization_name: e.target.value }))}
+                placeholder="Rondo"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">Google Wallet</h3>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Service Account JSON
+              </label>
+              {formData.membership_pass_google_service_account_url && (
+                <div className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                  Huidig bestand: {formData.membership_pass_google_service_account_url.split('/').pop()}
+                </div>
+              )}
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={(e) => handleMembershipFileUpload(e, 'google')}
+                className="block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+              />
+            </div>
+            <div>
+              <label htmlFor="membership_pass_google_issuer_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Google Wallet Issuer ID
+              </label>
+              <input
+                type="text"
+                id="membership_pass_google_issuer_id"
+                value={formData.membership_pass_google_issuer_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, membership_pass_google_issuer_id: e.target.value }))}
+                placeholder="3388000000022222222"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label htmlFor="membership_pass_google_class_suffix" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Class suffix
+              </label>
+              <input
+                type="text"
+                id="membership_pass_google_class_suffix"
+                value={formData.membership_pass_google_class_suffix}
+                onChange={(e) => setFormData(prev => ({ ...prev, membership_pass_google_class_suffix: e.target.value }))}
+                placeholder="rondo_membership"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Alleen kleine letters, cijfers en underscores.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>}
+
+      {showMembershipPassHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Wallets instellen</h3>
+              <button
+                type="button"
+                onClick={() => setShowMembershipPassHelp(false)}
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                Sluiten
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-6 text-sm text-gray-700 dark:text-gray-300">
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Google Wallet</h4>
+                <ol className="list-decimal pl-5 space-y-1">
+                  <li>Open Google Cloud Console en kies/projecteer je project.</li>
+                  <li>Activeer de Google Wallet API.</li>
+                  <li>Ga naar IAM &amp; Admin → Service Accounts en maak een service account.</li>
+                  <li>Open dat service account → Keys → Add key → Create new key → JSON.</li>
+                  <li>Upload dit JSON-bestand bij &quot;Service Account JSON&quot;.</li>
+                  <li>Open Google Pay &amp; Wallet Console en activeer je issuer-account.</li>
+                  <li>Geef het service account toegang in de Wallet Console.</li>
+                  <li>Kopieer daar je numerieke Issuer ID en vul die hier in.</li>
+                </ol>
+                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  Class suffix mag alleen kleine letters, cijfers en underscores bevatten.
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Apple Wallet</h4>
+                <ol className="list-decimal pl-5 space-y-1">
+                  <li>Log in op Apple Developer (Certificates, Identifiers &amp; Profiles).</li>
+                  <li>Maak een Pass Type ID aan (bijv. <code>pass.nl.jouwdomein.rondo.membership</code>).</li>
+                  <li>Maak daarna een Pass Type Certificate voor die Pass Type ID.</li>
+                  <li>Download het certificaat en importeer het in Keychain Access (macOS).</li>
+                  <li>Exporteer in Keychain het certificaat mét private key als <code>.p12</code>.</li>
+                  <li>Gebruik bij export een wachtwoord en vul dat hier in bij &quot;Certificaat wachtwoord&quot;.</li>
+                  <li>Upload het <code>.p12</code>-bestand bij &quot;P12 certificaat&quot;.</li>
+                  <li>Vul Team Identifier in (10 tekens, te vinden in Apple Developer account).</li>
+                  <li>Vul exact dezelfde Pass Type Identifier in als bij stap 2.</li>
+                  <li>Organisatienaam is de naam die op de Wallet-pass zichtbaar wordt.</li>
+                </ol>
+              </div>
+
+              <div className="rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 text-xs text-gray-600 dark:text-gray-400">
+                Tip: sla eerst op, open daarna een ledenpas-link (<code>/lidpas/{'{token}'}</code>) en test beide knoppen.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Section 6: Fee Category Settings */}
       {activeTab === 'contributie' && <FeeCategorySettings />}

@@ -17,6 +17,7 @@ import {
   MessageSquarePlus,
   User,
   FileCheck,
+  QrCode,
   Coins,
   Gavel,
   Wallet,
@@ -49,6 +50,7 @@ const navigation = [
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
+  { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
@@ -65,6 +67,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessVOG = currentUser?.can_access_vog ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
 
   // Finance menu counters
@@ -136,11 +139,14 @@ function Sidebar({ mobile = false, onClose, stats }) {
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {navigation
           .filter(item => {
+            // Enforce mobile-only items regardless of role.
+            if (item.mobileOnly && !mobile) return false;
             if (isAdmin) return true;
             if (item.adminOnly && !isAdmin) return false;
             if (item.requiresFairplay && !canAccessFairplay) return false;
             if (item.requiresVOG && !canAccessVOG) return false;
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
+            if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
             return true;
           })
           .map((item) => {
@@ -568,6 +574,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path.startsWith('/teams')) return 'Teams';
     if (path.startsWith('/commissies')) return 'Commissies';
     if (path.startsWith('/todos')) return 'Taken';
+    if (path.startsWith('/lidpas-scanner')) return 'Lidpas Scanner';
     if (path.startsWith('/feedback')) return 'Feedback';
     if (path.startsWith('/settings')) return 'Instellingen';
     if (path.startsWith('/profile')) return 'Profiel';

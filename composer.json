@@ -9,6 +9,7 @@
         "google/apiclient": "^2.15",
         "mollie/mollie-api-php": "^3.9",
         "mpdf/mpdf": "^8.2",
+        "pkpass/pkpass": "^2.4",
         "sabre/dav": "^4.6"
     },
     "autoload": {

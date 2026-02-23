@@ -23,3 +23,4 @@ export const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 export const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));
 export const Login = lazy(() => import('@/pages/Login'));
 export const Profile = lazy(() => import('@/pages/Profile/Profile'));
+export const MembershipPassScanner = lazy(() => import('@/pages/MembershipPassScanner'));
