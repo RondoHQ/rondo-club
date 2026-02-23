@@ -285,6 +285,8 @@ export const prmApi = {
   // Finance settings (admin only)
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),
   updateFinanceSettings: (data) => api.post('/rondo/v1/finance/settings', data),
+  getFinanceBranding: () => api.get('/rondo/v1/finance/branding'),
+  updateFinanceBranding: (data) => api.post('/rondo/v1/finance/branding', data),
 
   // Rabobank OAuth
   getRabobankStatus: () => api.get('/rondo/v1/rabobank/status'),

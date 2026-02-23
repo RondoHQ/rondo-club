@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { User, Lock, Briefcase, Bell } from 'lucide-react';
+import { User, Lock, Briefcase, Bell, Sun, Moon, Monitor } from 'lucide-react';
 import { useCurrentUser, useChangePassword } from '@/hooks/useCurrentUser';
 import { prmApi } from '@/api/client';
+import { useTheme } from '@/hooks/useTheme';
 
 export default function Profile() {
   const { data: user, isLoading } = useCurrentUser();
   const changePassword = useChangePassword();
+  const { colorScheme, setColorScheme, effectiveColorScheme } = useTheme();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -21,6 +23,11 @@ export default function Profile() {
   const [savingMentionPref, setSavingMentionPref] = useState(false);
 
   const isDemoUser = window.rondoConfig?.isDemoUser;
+  const colorSchemeOptions = [
+    { id: 'light', label: 'Licht', icon: Sun },
+    { id: 'dark', label: 'Donker', icon: Moon },
+    { id: 'system', label: 'Systeem', icon: Monitor },
+  ];
 
   useEffect(() => {
     const fetchNotificationChannels = async () => {
@@ -128,6 +135,41 @@ export default function Profile() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Profiel</h1>
+
+      {/* Color scheme card */}
+      <div className="card p-6">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Kleurenschema</h2>
+        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+          Kies hoe de app eruitziet. Selecteer een thema of synchroniseer met je systeeminstellingen.
+        </p>
+
+        <div className="flex gap-2">
+          {colorSchemeOptions.map((option) => {
+            const Icon = option.icon;
+            const isSelected = colorScheme === option.id;
+            return (
+              <button
+                key={option.id}
+                onClick={() => setColorScheme(option.id)}
+                className={`
+                  flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
+                  ${isSelected
+                    ? 'bg-electric-cyan text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
+                `}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+          Momenteel <span className="font-medium">{effectiveColorScheme}</span> modus
+          {colorScheme === 'system' && ' (op basis van je systeeminstelling)'}
+        </p>
+      </div>
 
       {/* Account card */}
       <div className="card p-6">

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
-import { prmApi } from '@/api/client';
-import { useTheme } from '@/hooks/useTheme';
+import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
@@ -13,7 +12,7 @@ import VOGSettings from '@/pages/VOG/VOGSettings';
 
 // Tab configuration (no icons - using TabButton component)
 const TABS = [
-  { id: 'appearance', label: 'Weergave' },
+  { id: 'appearance', label: 'Club' },
   { id: 'connections', label: 'Koppelingen' },
   { id: 'financieel', label: 'Financieel', requiresFinancieel: true },
   { id: 'vog', label: 'VOG', adminOnly: true, requiresVOG: true },
@@ -509,7 +508,6 @@ export default function Settings() {
 
 // Appearance Tab Component
 function AppearanceTab() {
-  const { colorScheme, setColorScheme, effectiveColorScheme } = useTheme();
   const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
@@ -517,6 +515,36 @@ function AppearanceTab() {
   const [clubName, setClubName] = useState(config.clubName || '');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
+  const [clubLogoId, setClubLogoId] = useState(0);
+  const [clubLogoUrl, setClubLogoUrl] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('');
+  const [accentColor, setAccentColor] = useState('');
+  const [loadingBranding, setLoadingBranding] = useState(false);
+  const [savingBranding, setSavingBranding] = useState(false);
+  const [brandingSaved, setBrandingSaved] = useState(false);
+  const [brandingError, setBrandingError] = useState('');
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const loadBranding = async () => {
+      setLoadingBranding(true);
+      setBrandingError('');
+      try {
+        const response = await prmApi.getFinanceBranding();
+        setClubLogoId(response.data?.club_logo_id || 0);
+        setClubLogoUrl(response.data?.club_logo_url || '');
+        setPrimaryColor(response.data?.accent_color || '');
+        setAccentColor(response.data?.accent_background_color || '');
+      } catch (error) {
+        setBrandingError(error.response?.data?.message || 'Kon huisstijlinstellingen niet laden.');
+      } finally {
+        setLoadingBranding(false);
+      }
+    };
+
+    loadBranding();
+  }, [isAdmin]);
 
 
   const handleSaveClubConfig = async () => {
@@ -538,11 +566,48 @@ function AppearanceTab() {
     }
   };
 
-  const colorSchemeOptions = [
-    { id: 'light', label: 'Licht', icon: Sun },
-    { id: 'dark', label: 'Donker', icon: Moon },
-    { id: 'system', label: 'Systeem', icon: Monitor },
-  ];
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setBrandingError('');
+    setBrandingSaved(false);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await api.post('/wp/v2/media', uploadFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setClubLogoId(response.data.id);
+      setClubLogoUrl(response.data.source_url);
+    } catch (error) {
+      setBrandingError(error.response?.data?.message || 'Fout bij uploaden logo');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleSaveBranding = async () => {
+    setSavingBranding(true);
+    setBrandingError('');
+    setBrandingSaved(false);
+    try {
+      await prmApi.updateFinanceBranding({
+        club_logo_id: clubLogoId,
+        accent_color: primaryColor,
+        accent_background_color: accentColor,
+      });
+      setBrandingSaved(true);
+      setTimeout(() => setBrandingSaved(false), 3000);
+    } catch (error) {
+      setBrandingError(error.response?.data?.message || 'Kon huisstijlinstellingen niet opslaan.');
+    } finally {
+      setSavingBranding(false);
+    }
+  };
 
 
   return (
@@ -591,42 +656,156 @@ function AppearanceTab() {
         </div>
       )}
 
-      {/* Color scheme card */}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold text-brand-gradient mb-4">Kleurenschema</h2>
-        <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
-          Kies hoe {APP_NAME} eruitziet. Selecteer een thema of synchroniseer met je systeeminstellingen.
-        </p>
+      {isAdmin && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-brand-gradient mb-2">Huisstijl</h2>
+          <p className="text-sm text-gray-600 mb-6 dark:text-gray-400">
+            Beheer het clublogo, de primaire kleur en de accentkleur voor publieke pagina&apos;s.
+          </p>
 
-        {/* Color scheme selector */}
-        <div className="flex gap-2">
-          {colorSchemeOptions.map((option) => {
-            const Icon = option.icon;
-            const isSelected = colorScheme === option.id;
-            return (
-              <button
-                key={option.id}
-                onClick={() => setColorScheme(option.id)}
-                className={`
-                  flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors
-                  ${isSelected
-                    ? 'bg-electric-cyan text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'}
-                `}
-              >
-                <Icon className="w-5 h-5" />
-                <span>{option.label}</span>
-              </button>
-            );
-          })}
+          {loadingBranding ? (
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Instellingen laden...
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <label className="label">Clublogo</label>
+                {clubLogoUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={clubLogoUrl}
+                      alt="Club logo"
+                      className="max-h-[60px] object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClubLogoId(0);
+                        setClubLogoUrl('');
+                        setBrandingSaved(false);
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      Verwijderen
+                    </button>
+                  </div>
+                ) : null}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Logo wordt getoond op facturen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Primaire kleur</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={primaryColor || '#0891b2'}
+                    onChange={(e) => {
+                      setPrimaryColor(e.target.value);
+                      setBrandingSaved(false);
+                    }}
+                    className="h-10 w-20 cursor-pointer border border-gray-300 dark:border-gray-600 rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={primaryColor || '#0891b2'}
+                    onChange={(e) => {
+                      setPrimaryColor(e.target.value);
+                      setBrandingSaved(false);
+                    }}
+                    placeholder="#0891b2"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent font-mono text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrimaryColor('');
+                      setBrandingSaved(false);
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap"
+                  >
+                    Reset naar standaard
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Deze kleur wordt gebruikt voor koppen en lijnen op facturen. Standaard: #0891b2 (electric cyan).
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Accentkleur</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={accentColor || '#f8fafc'}
+                    onChange={(e) => {
+                      setAccentColor(e.target.value);
+                      setBrandingSaved(false);
+                    }}
+                    className="h-10 w-20 cursor-pointer border border-gray-300 dark:border-gray-600 rounded-lg"
+                  />
+                  <input
+                    type="text"
+                    value={accentColor || '#f8fafc'}
+                    onChange={(e) => {
+                      setAccentColor(e.target.value);
+                      setBrandingSaved(false);
+                    }}
+                    placeholder="#f8fafc"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent font-mono text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccentColor('');
+                      setBrandingSaved(false);
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap"
+                  >
+                    Reset naar standaard
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Deze kleur wordt gebruikt als achtergrond op de publieke pagina&apos;s /betaling en /lidpas.
+                </p>
+              </div>
+
+              {brandingError ? (
+                <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>{brandingError}</span>
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleSaveBranding}
+                  disabled={savingBranding}
+                  className="btn-primary"
+                >
+                  {savingBranding ? 'Opslaan...' : 'Opslaan'}
+                </button>
+                {brandingSaved ? (
+                  <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                    <Check className="w-4 h-4" />
+                    Opgeslagen
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Current modus indicator */}
-        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          Momenteel <span className="font-medium">{effectiveColorScheme}</span> modus
-          {colorScheme === 'system' && ' (op basis van je systeeminstelling)'}
-        </p>
-      </div>
+      )}
     </div>
   );
 }

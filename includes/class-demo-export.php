@@ -1546,6 +1546,11 @@ class DemoExport {
 			$settings['rondo_finance_accent_color'] = $accent_color;
 		}
 
+		$accent_background_color = get_option( 'rondo_finance_accent_background_color' );
+		if ( false !== $accent_background_color ) {
+			$settings['rondo_finance_accent_background_color'] = $accent_background_color;
+		}
+
 		$admin_fee = get_option( 'rondo_finance_admin_fee' );
 		if ( false !== $admin_fee ) {
 			$settings['rondo_finance_admin_fee'] = (float) $admin_fee;

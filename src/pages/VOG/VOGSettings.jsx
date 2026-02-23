@@ -62,7 +62,7 @@ export default function VOGSettings() {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-          VOG E-mail Instellingen
+          VOG instellingen
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Configureer de e-mails die verstuurd worden voor VOG-aanvragen.

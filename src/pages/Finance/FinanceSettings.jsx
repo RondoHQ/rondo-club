@@ -160,9 +160,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     reminder_2_email_template: '',
     invoice_reminder_1_email_template: '',
     invoice_reminder_2_email_template: '',
-    club_logo_id: 0,
-    club_logo_url: '',
-    accent_color: '',
     bcc_email: '',
     admin_fee: 0,
     installment_admin_fee: 0,
@@ -220,9 +217,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_template: settings.reminder_2_email_template || '',
         invoice_reminder_1_email_template: settings.invoice_reminder_1_email_template || '',
         invoice_reminder_2_email_template: settings.invoice_reminder_2_email_template || '',
-        club_logo_id: settings.club_logo_id || 0,
-        club_logo_url: settings.club_logo_url || '',
-        accent_color: settings.accent_color || '',
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
         installment_admin_fee: settings.installment_admin_fee || 0,
@@ -294,29 +288,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     setFormData(prev => ({ ...prev, iban: formatted }));
   };
 
-  // Handle logo upload
-  const handleLogoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-
-      const response = await api.post('/wp/v2/media', uploadFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      setFormData(prev => ({
-        ...prev,
-        club_logo_id: response.data.id,
-        club_logo_url: response.data.source_url,
-      }));
-    } catch (err) {
-      setSaveError(err.response?.data?.message || 'Fout bij uploaden logo');
-    }
-  };
-
   const handleMembershipFileUpload = async (event, type) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -349,20 +320,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     }
   };
 
-  // Remove logo
-  const handleLogoRemove = () => {
-    setFormData(prev => ({
-      ...prev,
-      club_logo_id: 0,
-      club_logo_url: '',
-    }));
-  };
-
-  // Reset accent color to default
-  const handleResetAccentColor = () => {
-    setFormData(prev => ({ ...prev, accent_color: '' }));
-  };
-
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -386,8 +343,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_template: formData.reminder_2_email_template,
         invoice_reminder_1_email_template: formData.invoice_reminder_1_email_template,
         invoice_reminder_2_email_template: formData.invoice_reminder_2_email_template,
-        club_logo_id: formData.club_logo_id,
-        accent_color: formData.accent_color,
         bcc_email: formData.bcc_email,
         admin_fee: parseFloat(formData.admin_fee) || 0,
         installment_admin_fee: parseFloat(formData.installment_admin_fee) || 0,
@@ -500,7 +455,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         <div className="space-y-4">
           <div>
             <label htmlFor="org_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Organisatienaam
+              Officiële organisatienaam
             </label>
             <input
               type="text"
@@ -526,7 +481,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           </div>
           <div>
             <label htmlFor="contact_email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              E-mailadres
+              E-mailadres - Afzender voor facturen
             </label>
             <input
               type="email"
@@ -551,66 +506,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Alle factuurmails worden ook naar dit adres gestuurd (bv. voor de boekhouding of penningmeester)
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Clublogo
-            </label>
-            {formData.club_logo_url ? (
-              <div className="flex items-center gap-3">
-                <img
-                  src={formData.club_logo_url}
-                  alt="Club logo"
-                  className="max-h-[60px] object-contain"
-                />
-                <button
-                  type="button"
-                  onClick={handleLogoRemove}
-                  className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                >
-                  Verwijderen
-                </button>
-              </div>
-            ) : null}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Logo wordt getoond op facturen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Accentkleur
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="color"
-                value={formData.accent_color || '#0891b2'}
-                onChange={(e) => setFormData(prev => ({ ...prev, accent_color: e.target.value }))}
-                className="h-10 w-20 cursor-pointer border border-gray-300 dark:border-gray-600 rounded-lg"
-              />
-              <input
-                type="text"
-                value={formData.accent_color || '#0891b2'}
-                onChange={(e) => setFormData(prev => ({ ...prev, accent_color: e.target.value }))}
-                placeholder="#0891b2"
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent font-mono text-sm"
-              />
-              <button
-                type="button"
-                onClick={handleResetAccentColor}
-                className="text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 whitespace-nowrap"
-              >
-                Reset naar standaard
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Deze kleur wordt gebruikt voor koppen en lijnen op facturen. Standaard: #0891b2 (electric cyan).
             </p>
           </div>
         </div>
