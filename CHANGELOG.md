@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.9] - 2026-02-23
+
+### Fixed
+- Google Wallet membership pass layout now uses the club logo as a standard wallet logo (instead of a large hero image), removing the oversized crest panel.
+- Google Wallet pass top row now shows the club name as `cardTitle` while keeping the member name in the main header to avoid duplicate names.
+- Existing Google Wallet objects are now fully updated via `update` (not `patch`) so old hero-image styling is replaced.
+
 ## [30.9.8] - 2026-02-23
 
 ### Fixed
