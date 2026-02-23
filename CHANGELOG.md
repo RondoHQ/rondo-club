@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.11] - 2026-02-23
+
+### Changed
+- Public membership pass page now uses a local Dutch Google Wallet badge SVG (`nl_add_to_google_wallet_add-wallet-badge.svg`) for the Add to Google Wallet button instead of the external hosted image.
+
 ## [30.9.10] - 2026-02-23
 
 ### Changed

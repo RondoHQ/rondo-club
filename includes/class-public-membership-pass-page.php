@@ -356,7 +356,7 @@ class PublicMembershipPassPage {
 		<?php if ( $show_google_wallet && $google_available ) : ?>
 			<a href="<?php echo esc_url( $google_url ); ?>" class="wallet-badge wallet-badge-google" aria-label="Add to Google Wallet">
 				<img
-					src="https://developers.google.com/static/wallet/images/branding/temp-wallet-primary.png"
+					src="<?php echo esc_url( get_template_directory_uri() . '/public/icons/nl_add_to_google_wallet_add-wallet-badge.svg' ); ?>"
 					alt="Add to Google Wallet"
 					loading="lazy"
 					decoding="async"
