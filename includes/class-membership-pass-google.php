@@ -49,11 +49,6 @@ class MembershipPassGoogle {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
-		$knvb_id = (string) get_field( 'knvb-id', $person_id );
-		if ( $knvb_id === '' ) {
-			return new \WP_Error( 'membership_pass_missing_knvb', 'KNVB ID ontbreekt voor dit lid.' );
-		}
-
 		$issuer_id = $this->get_issuer_id();
 		$json_path = $this->get_service_account_path();
 		if ( $issuer_id === '' || $json_path === '' || ! file_exists( $json_path ) ) {

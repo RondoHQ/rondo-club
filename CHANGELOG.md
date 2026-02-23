@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.8.0] - 2026-02-23
+
+### Added
+- Membership passes now support a second eligibility tier for `Verenigingslid` members without a KNVB ID.
+- One-time v2 backfill (`rondo_membership_pass_backfill_v2_done`) to generate pass URLs for newly eligible members.
+
+### Changed
+- Pass label now uses member tier naming (`Bondslid` / `BONDSLID` and `Verenigingslid` / `VERENIGINGSLID`) instead of generic `Lid` / `LID`.
+- Public `/lidpas/{token}` page now accepts eligible non-KNVB members and hides KNVB row when no KNVB ID exists.
+- Apple pass now omits the KNVB ID field when no KNVB ID is present.
+- Google pass generation no longer requires KNVB ID when member is otherwise eligible.
+
 ## [30.7.4] - 2026-02-23
 
 ### Changed

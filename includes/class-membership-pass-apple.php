@@ -48,9 +48,7 @@ class MembershipPassApple {
 		}
 
 		$knvb_id = (string) get_field( 'knvb-id', $person_id );
-		if ( $knvb_id === '' ) {
-			return new \WP_Error( 'membership_pass_missing_knvb', 'KNVB ID ontbreekt voor dit lid.' );
-		}
+		$member_label = $this->get_member_label( $person_id, $knvb_id );
 
 		$cert_path = $this->get_cert_path();
 		if ( $cert_path === '' || ! file_exists( $cert_path ) ) {
@@ -89,7 +87,7 @@ class MembershipPassApple {
 				'primaryFields'   => [
 					[
 						'key'   => 'member_name',
-						'label' => 'LID',
+						'label' => strtoupper( $member_label ),
 						'value' => $person_name,
 					],
 				],
@@ -105,7 +103,9 @@ class MembershipPassApple {
 						'value' => $season,
 					],
 				],
-				'auxiliaryFields' => [
+				'auxiliaryFields' => array_values(
+					array_filter(
+						[
 					[
 						'key'   => 'functions',
 						'label' => 'FUNCTIES',
@@ -114,9 +114,14 @@ class MembershipPassApple {
 					[
 						'key'   => 'knvb_id',
 						'label' => 'KNVB ID',
-						'value' => $knvb_id,
+						'value' => $knvb_id !== '' ? $knvb_id : null,
 					],
-				],
+						],
+						static function ( $field ) {
+							return isset( $field['value'] ) && $field['value'] !== null && $field['value'] !== '';
+						}
+					)
+				),
 			],
 			'barcode'            => [
 				'format'          => 'PKBarcodeFormatQR',
@@ -234,6 +239,26 @@ class MembershipPassApple {
 		$last_name  = (string) get_field( 'last_name', $person_id );
 
 		return trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+	}
+
+	/**
+	 * Resolve display label for membership tier on pass.
+	 *
+	 * @param int    $person_id Person ID.
+	 * @param string $knvb_id KNVB ID value.
+	 * @return string
+	 */
+	private function get_member_label( int $person_id, string $knvb_id ): string {
+		if ( trim( $knvb_id ) !== '' ) {
+			return 'Bondslid';
+		}
+
+		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
+		if ( $type_lid === 'verenigingslid' ) {
+			return 'Verenigingslid';
+		}
+
+		return 'Bondslid';
 	}
 
 	/**
