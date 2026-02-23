@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.5.1] - 2026-02-22
+
+### Changed
+- Added extra spacing under the "Voeg toe aan Wallet" heading on the public membership pass page
+- Increased vertical spacing between Apple and Google wallet buttons on mobile
+
+## [30.5.0] - 2026-02-22
+
+### Added
+- Role/function selector on the public `/lidpas/{token}` page for members with multiple active roles
+
+### Changed
+- Apple Wallet pass generation now supports a selected role and shows only that team/function when chosen
+- Google Wallet pass generation now supports a selected role and uses role-specific object IDs to allow separate passes per selected role
+
 ## [30.4.4] - 2026-02-22
 
 ### Changed

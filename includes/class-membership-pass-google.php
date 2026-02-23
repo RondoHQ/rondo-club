@@ -39,10 +39,11 @@ class MembershipPassGoogle {
 	/**
 	 * Create/update wallet object and return Add-to-Wallet URL.
 	 *
-	 * @param int $person_id Person ID.
+	 * @param int   $person_id Person ID.
+	 * @param array $options Generation options.
 	 * @return string|\WP_Error
 	 */
-	public function get_add_to_wallet_url_for_person( int $person_id ) {
+	public function get_add_to_wallet_url_for_person( int $person_id, array $options = [] ) {
 		$post = get_post( $person_id );
 		if ( ! $post || $post->post_type !== 'person' ) {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
@@ -72,8 +73,6 @@ class MembershipPassGoogle {
 
 		$class_suffix = $this->get_class_suffix();
 		$class_id     = $issuer_id . '.' . $class_suffix;
-		$object_id    = $issuer_id . '.member_' . $person_id;
-
 		$fees   = new MembershipFees();
 		$season = $fees->get_season_key();
 
@@ -84,9 +83,13 @@ class MembershipPassGoogle {
 		}
 
 		$person_name = $this->get_person_full_name( $person_id );
-		$details     = $this->get_current_work_details( $person_id );
+		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
+		$object_id   = $issuer_id . '.member_' . $person_id;
+		if ( $details['selection'] !== '' ) {
+			$object_id .= '_' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
+		}
 
 		try {
 			$this->ensure_class( $service, $class_id );
@@ -321,22 +324,77 @@ class MembershipPassGoogle {
 	}
 
 	/**
+	 * Get selectable current work options for a person.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return array<int,array{key:string,label:string,team:string,function:string}>
+	 */
+	public function get_work_options_for_person( int $person_id ): array {
+		return $this->build_current_work_entries( $person_id );
+	}
+
+	/**
 	 * Resolve current teams and functions from work history.
 	 *
 	 * @param int $person_id Person ID.
-	 * @return array{teams:string,functions:string}
+	 * @return array{teams:string,functions:string,selection:string}
 	 */
 	private function get_current_work_details( int $person_id ): array {
-		$work_history = get_field( 'work_history', $person_id );
-		if ( ! is_array( $work_history ) ) {
-			return [
-				'teams'     => '',
-				'functions' => '',
-			];
+		return $this->get_pass_work_details( $person_id, '' );
+	}
+
+	/**
+	 * Resolve current work details for pass, optionally narrowed to one selection.
+	 *
+	 * @param int    $person_id Person ID.
+	 * @param string $selected_key Selected work option key.
+	 * @return array{teams:string,functions:string,selection:string}
+	 */
+	private function get_pass_work_details( int $person_id, string $selected_key ): array {
+		$entries = $this->build_current_work_entries( $person_id );
+		if ( $selected_key !== '' ) {
+			foreach ( $entries as $entry ) {
+				if ( hash_equals( $entry['key'], $selected_key ) ) {
+					return [
+						'teams'     => $entry['team'],
+						'functions' => $entry['function'],
+						'selection' => $entry['key'],
+					];
+				}
+			}
 		}
 
 		$teams = [];
 		$roles = [];
+		foreach ( $entries as $entry ) {
+			if ( $entry['team'] !== '' ) {
+				$teams[ $entry['team'] ] = true;
+			}
+			if ( $entry['function'] !== '' ) {
+				$roles[ $entry['function'] ] = true;
+			}
+		}
+
+		return [
+			'teams'     => implode( ' • ', array_keys( $teams ) ),
+			'functions' => implode( ' • ', array_keys( $roles ) ),
+			'selection' => '',
+		];
+	}
+
+	/**
+	 * Build active work entries for pass selection.
+	 *
+	 * @param int $person_id Person ID.
+	 * @return array<int,array{key:string,label:string,team:string,function:string}>
+	 */
+	private function build_current_work_entries( int $person_id ): array {
+		$work_history = get_field( 'work_history', $person_id );
+		if ( ! is_array( $work_history ) ) {
+			return [];
+		}
+
+		$entries = [];
 
 		foreach ( $work_history as $entry ) {
 			if ( ! is_array( $entry ) ) {
@@ -349,23 +407,35 @@ class MembershipPassGoogle {
 			}
 
 			$job_title = isset( $entry['job_title'] ) ? trim( (string) $entry['job_title'] ) : '';
-			if ( $job_title !== '' ) {
-				$roles[ $job_title ] = true;
-			}
-
+			$team_name = '';
 			$team_id    = isset( $entry['team'] ) ? (int) $entry['team'] : 0;
 			if ( $team_id > 0 ) {
 				$title = get_the_title( $team_id );
 				if ( is_string( $title ) && $title !== '' ) {
-					$teams[ $title ] = true;
+					$team_name = $title;
 				}
 			}
+
+			if ( $team_name === '' && $job_title === '' ) {
+				continue;
+			}
+
+			$key_raw = $team_id . '|' . $team_name . '|' . $job_title;
+			$key     = substr( hash( 'sha256', $key_raw ), 0, 16 );
+			$label   = $team_name;
+			if ( $job_title !== '' ) {
+				$label = $label !== '' ? $label . ' — ' . $job_title : $job_title;
+			}
+
+			$entries[ $key ] = [
+				'key'      => $key,
+				'label'    => $label,
+				'team'     => $team_name,
+				'function' => $job_title,
+			];
 		}
 
-		return [
-			'teams'     => implode( ' • ', array_keys( $teams ) ),
-			'functions' => implode( ' • ', array_keys( $roles ) ),
-		];
+		return array_values( $entries );
 	}
 
 	/**
