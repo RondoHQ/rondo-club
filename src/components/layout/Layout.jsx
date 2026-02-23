@@ -50,7 +50,7 @@ const navigation = [
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
-  { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true },
+  { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
   { name: 'Taken', href: '/todos', icon: CheckSquare },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare },
   { name: 'Instellingen', href: '/settings', icon: Settings },
@@ -145,6 +145,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             if (item.requiresVOG && !canAccessVOG) return false;
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
             if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
+            if (item.mobileOnly && !mobile) return false;
             return true;
           })
           .map((item) => {

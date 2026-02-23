@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.2] - 2026-02-23
+
+### Changed
+- `Lidpas Scanner` menu item is now hidden on desktop and shown only in the mobile sidebar.
+
 ## [30.9.1] - 2026-02-23
 
 ### Fixed
