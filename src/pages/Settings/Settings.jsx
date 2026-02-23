@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import { prmApi } from '@/api/client';
 import { useTheme } from '@/hooks/useTheme';
@@ -27,6 +27,7 @@ const CONNECTION_SUBTABS = [
   { id: 'api-access', label: 'API-toegang', icon: Key },
   { id: 'freescout', label: 'FreeScout', icon: LinkIcon },
   { id: 'payment-providers', label: 'Betaalproviders', icon: Wrench },
+  { id: 'wallets', label: 'Wallets', icon: Wallet },
 ];
 
 // Admin subtabs configuration
@@ -426,7 +427,7 @@ export default function Settings() {
         />;
       case 'financieel':
         return canAccessFinancieel ? (
-          <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email', 'membership_passes']} />
+          <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']} />
         ) : null;
       case 'vog':
         return isAdmin && canAccessVOG ? (
@@ -704,6 +705,9 @@ function ConnectionsTab({
       {activeSubtab === 'payment-providers' && (
         <PaymentProvidersSubtab canAccessFinancieel={canAccessFinancieel} />
       )}
+      {activeSubtab === 'wallets' && (
+        <WalletsSubtab canAccessFinancieel={canAccessFinancieel} />
+      )}
     </div>
   );
 }
@@ -910,6 +914,20 @@ function PaymentProvidersSubtab({ canAccessFinancieel }) {
   }
 
   return <FinanceSettings initialTab="mollie" allowedTabs={['mollie', 'rabobank']} />;
+}
+
+function WalletsSubtab({ canAccessFinancieel }) {
+  if (!canAccessFinancieel) {
+    return (
+      <div className="card p-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Je hebt geen toegang tot wallet-instellingen.
+        </p>
+      </div>
+    );
+  }
+
+  return <FinanceSettings initialTab="membership_passes" allowedTabs={['membership_passes']} />;
 }
 
 // API Access Tab Component - Application password management
@@ -1933,8 +1951,8 @@ function AboutTab({ config }) {
         </div>
         <div className="pt-4 border-t border-gray-200">
           <p className="text-sm text-gray-600">
-            {APP_NAME} is een persoonlijk CRM-systeem dat je helpt bij het beheren van je contacten,
-            het bijhouden van belangrijke datums en het onderhouden van betekenisvolle relaties.
+            {APP_NAME} is een clubmanagementplatform voor verenigingen: beheer leden, teams en commissies,
+            organiseer contributie en facturen, en regel dagelijkse clubprocessen in een centrale omgeving.
           </p>
         </div>
         <div className="pt-4 border-t border-gray-200">
