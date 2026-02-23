@@ -920,6 +920,7 @@ class Api extends Base {
 						],
 						'club_logo_id'  => [ 'required' => false, 'type' => 'integer' ],
 						'accent_color'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'accent_background_color' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'bcc_email'     => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
 						'admin_fee'              => [ 'required' => false, 'type' => 'number' ],
 						'installment_admin_fee'  => [ 'required' => false, 'type' => 'number' ],
@@ -934,6 +935,29 @@ class Api extends Base {
 					],
 				],
 			]
+		);
+
+		// Finance branding settings (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/finance/branding',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_finance_branding' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_finance_branding' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+						'args'                => [
+							'club_logo_id' => [ 'required' => false, 'type' => 'integer' ],
+							'accent_color' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+							'accent_background_color' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						],
+					],
+				]
 		);
 
 		// Volunteer role classification - available roles (admin only)
@@ -3873,6 +3897,60 @@ class Api extends Base {
 		$finance_config = new \Rondo\Config\FinanceConfig();
 		$finance_config->update_settings( $request->get_params() );
 		return rest_ensure_response( $finance_config->get_all_settings() );
+	}
+
+	/**
+	 * Get finance branding settings (admin only).
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Branding settings.
+	 */
+	public function get_finance_branding( $request ) {
+		$finance_config = new \Rondo\Config\FinanceConfig();
+		$settings       = $finance_config->get_all_settings();
+
+		return rest_ensure_response(
+			[
+				'club_logo_id'  => (int) ( $settings['club_logo_id'] ?? 0 ),
+				'club_logo_url' => isset( $settings['club_logo_url'] ) ? (string) $settings['club_logo_url'] : '',
+				'accent_color'  => isset( $settings['accent_color'] ) ? (string) $settings['accent_color'] : '',
+				'accent_background_color' => isset( $settings['accent_background_color'] ) ? (string) $settings['accent_background_color'] : '',
+			]
+		);
+	}
+
+	/**
+	 * Update finance branding settings (admin only).
+	 *
+	 * Supports partial updates - only provided fields will be updated.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response Branding settings.
+	 */
+	public function update_finance_branding( $request ) {
+		$finance_config = new \Rondo\Config\FinanceConfig();
+		$data           = [];
+
+		$club_logo_id = $request->get_param( 'club_logo_id' );
+		if ( null !== $club_logo_id ) {
+			$data['club_logo_id'] = (int) $club_logo_id;
+		}
+
+		$accent_color = $request->get_param( 'accent_color' );
+		if ( null !== $accent_color ) {
+			$data['accent_color'] = (string) $accent_color;
+		}
+
+		$accent_background_color = $request->get_param( 'accent_background_color' );
+		if ( null !== $accent_background_color ) {
+			$data['accent_background_color'] = (string) $accent_background_color;
+		}
+
+		if ( ! empty( $data ) ) {
+			$finance_config->update_settings( $data );
+		}
+
+		return $this->get_finance_branding( $request );
 	}
 
 	/**

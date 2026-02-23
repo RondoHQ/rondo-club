@@ -49,6 +49,7 @@ class FinanceConfig {
 	const OPTION_RABOBANK_CREDENTIALS  = 'rondo_finance_rabobank_credentials';
 	const OPTION_CLUB_LOGO_ID          = 'rondo_finance_club_logo_id';
 	const OPTION_ACCENT_COLOR          = 'rondo_finance_accent_color';
+	const OPTION_ACCENT_BACKGROUND_COLOR = 'rondo_finance_accent_background_color';
 	const OPTION_BCC_EMAIL             = 'rondo_finance_bcc_email';
 	const OPTION_MOLLIE_API_KEY        = 'rondo_finance_mollie_api_key';
 	const OPTION_MOLLIE_REDIRECT_URL   = 'rondo_finance_mollie_redirect_url';
@@ -85,6 +86,7 @@ class FinanceConfig {
 		'payment_clause'     => '',
 		'club_logo_id'       => 0,
 		'accent_color'       => '',
+		'accent_background_color' => '',
 		'bcc_email'          => '',
 		'admin_fee'              => 0.00,
 		'installment_admin_fee'  => 0.00,
@@ -261,6 +263,15 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get accent background color
+	 *
+	 * @return string The accent background color hex code (empty string if not configured)
+	 */
+	public function get_accent_background_color(): string {
+		return get_option( self::OPTION_ACCENT_BACKGROUND_COLOR, self::DEFAULTS['accent_background_color'] );
+	}
+
+	/**
 	 * Get BCC email for invoice sending
 	 *
 	 * @return string The BCC email address (empty string if not configured)
@@ -349,6 +360,7 @@ class FinanceConfig {
 			'club_logo_id'          => $club_logo_id,
 			'club_logo_url'         => $club_logo_url,
 			'accent_color'          => $this->get_accent_color(),
+			'accent_background_color' => $this->get_accent_background_color(),
 			'bcc_email'             => $this->get_bcc_email(),
 			'admin_fee'             => $this->get_admin_fee(),
 			'installment_admin_fee' => $this->get_installment_admin_fee(),
@@ -411,6 +423,8 @@ class FinanceConfig {
 				return $this->get_club_logo_id();
 			case 'accent_color':
 				return $this->get_accent_color();
+			case 'accent_background_color':
+				return $this->get_accent_background_color();
 			case 'bcc_email':
 				return $this->get_bcc_email();
 			case 'admin_fee':
@@ -499,6 +513,11 @@ class FinanceConfig {
 		if ( isset( $data['accent_color'] ) ) {
 			$color = sanitize_hex_color( $data['accent_color'] ) ?? '';
 			$success = update_option( self::OPTION_ACCENT_COLOR, $color ) && $success;
+		}
+
+		if ( isset( $data['accent_background_color'] ) ) {
+			$color   = sanitize_hex_color( $data['accent_background_color'] ) ?? '';
+			$success = update_option( self::OPTION_ACCENT_BACKGROUND_COLOR, $color ) && $success;
 		}
 
 		if ( isset( $data['bcc_email'] ) ) {

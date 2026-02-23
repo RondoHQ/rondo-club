@@ -300,7 +300,12 @@ class PublicMembershipPassPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Ledenpas — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
+		$this->render_html_header(
+			'Ledenpas — ' . esc_html( $branding['name'] ),
+			$branding['accent_color'],
+			$branding['accent_background_color'],
+			$branding['logo_url']
+		);
 		?>
 <div class="container">
 	<div class="card header-card">
@@ -447,7 +452,12 @@ class PublicMembershipPassPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Ledenpas — fout', $branding['accent_color'], $branding['logo_url'] );
+		$this->render_html_header(
+			'Ledenpas — fout',
+			$branding['accent_color'],
+			$branding['accent_background_color'],
+			$branding['logo_url']
+		);
 		?>
 <div class="container">
 	<div class="card error-card">
@@ -462,7 +472,7 @@ class PublicMembershipPassPage {
 	/**
 	 * Club branding helper.
 	 *
-	 * @return array{name:string,logo_url:string,accent_color:string}
+	 * @return array{name:string,logo_url:string,accent_color:string,accent_background_color:string}
 	 */
 	private function get_club_branding(): array {
 		$config   = new FinanceConfig();
@@ -484,11 +494,16 @@ class PublicMembershipPassPage {
 		if ( $accent === '' ) {
 			$accent = '#0f766e';
 		}
+		$accent_background = $config->get_accent_background_color();
+		if ( $accent_background === '' ) {
+			$accent_background = '#f7fafc';
+		}
 
 		return [
 			'name'         => $name,
 			'logo_url'     => $logo_url,
 			'accent_color' => $accent,
+			'accent_background_color' => $accent_background,
 		];
 	}
 
@@ -497,9 +512,10 @@ class PublicMembershipPassPage {
 	 *
 	 * @param string $title Page title.
 	 * @param string $accent Accent color.
+	 * @param string $accent_background Accent background color.
 	 * @param string $favicon_url Favicon URL.
 	 */
-	private function render_html_header( string $title, string $accent, string $favicon_url = '' ) {
+	private function render_html_header( string $title, string $accent, string $accent_background, string $favicon_url = '' ) {
 		?>
 <!doctype html>
 <html lang="nl">
@@ -512,9 +528,9 @@ class PublicMembershipPassPage {
 		<link rel="apple-touch-icon" href="<?php echo esc_url( $favicon_url ); ?>">
 	<?php endif; ?>
 	<style>
-		:root { --accent: <?php echo esc_html( $accent ); ?>; }
+		:root { --accent: <?php echo esc_html( $accent ); ?>; --accent-background: <?php echo esc_html( $accent_background ); ?>; }
 		* { box-sizing: border-box; }
-		body { margin: 0; background: #f7fafc; color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+		body { margin: 0; background: var(--accent-background); color: #1f2937; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 		.container { max-width: 720px; margin: 0 auto; padding: 20px 14px 36px; }
 		.card { background: #fff; border-radius: 12px; border: 1px solid #e5e7eb; padding: 18px; margin-bottom: 12px; }
 		.header-card { text-align: center; }

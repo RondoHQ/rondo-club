@@ -215,7 +215,12 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
+		$this->render_html_header(
+			'Betaling — ' . esc_html( $branding['name'] ),
+			$branding['accent_color'],
+			$branding['accent_background_color'],
+			$branding['logo_url']
+		);
 		?>
 
 <div class="container">
@@ -331,7 +336,12 @@ class PublicPaymentPage {
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
-		$this->render_html_header( 'Betaling ontvangen — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
+		$this->render_html_header(
+			'Betaling ontvangen — ' . esc_html( $branding['name'] ),
+			$branding['accent_color'],
+			$branding['accent_background_color'],
+			$branding['logo_url']
+		);
 		?>
 
 <div class="container">
@@ -376,12 +386,13 @@ class PublicPaymentPage {
 	/**
 	 * Get club name, logo URL, and accent color from FinanceConfig.
 	 *
-	 * @return array{name: string, logo_url: string, accent_color: string} Club branding.
+	 * @return array{name: string, logo_url: string, accent_color: string, accent_background_color: string} Club branding.
 	 */
 	private function get_club_branding(): array {
 		$config       = new FinanceConfig();
 		$name         = $config->get_org_name();
 		$accent_color = $config->get_accent_color();
+		$accent_background_color = $config->get_accent_background_color();
 		$logo_url     = '';
 		$logo_id      = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
@@ -394,6 +405,7 @@ class PublicPaymentPage {
 			'name'         => $name ?: get_bloginfo( 'name' ),
 			'logo_url'     => $logo_url,
 			'accent_color' => $accent_color ?: '#0891b2',
+			'accent_background_color' => $accent_background_color ?: '#f8fafc',
 		];
 	}
 
@@ -427,7 +439,12 @@ class PublicPaymentPage {
 		header( 'Content-Type: text/html; charset=UTF-8' );
 
 		$branding = $this->get_club_branding();
-		$this->render_html_header( 'Fout — ' . esc_html( $branding['name'] ), $branding['accent_color'], $branding['logo_url'] );
+		$this->render_html_header(
+			'Fout — ' . esc_html( $branding['name'] ),
+			$branding['accent_color'],
+			$branding['accent_background_color'],
+			$branding['logo_url']
+		);
 		?>
 
 <div class="container">
@@ -685,10 +702,16 @@ class PublicPaymentPage {
 	 * No external CSS/JS dependencies — fully self-contained.
 	 *
 	 * @param string $title        Page title for the <title> tag.
-	 * @param string $accent_color Hex accent color for primary buttons (default #0891b2).
-	 * @param string $logo_url     URL to club logo for favicon (optional).
+	 * @param string $accent_color            Hex accent color for primary buttons (default #0891b2).
+	 * @param string $accent_background_color Hex accent background color (default #f8fafc).
+	 * @param string $logo_url                URL to club logo for favicon (optional).
 	 */
-	private function render_html_header( string $title, string $accent_color = '#0891b2', string $logo_url = '' ) {
+	private function render_html_header(
+		string $title,
+		string $accent_color = '#0891b2',
+		string $accent_background_color = '#f8fafc',
+		string $logo_url = ''
+	) {
 		?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -702,6 +725,7 @@ class PublicPaymentPage {
 	<style>
 		:root {
 			--accent-color: <?php echo esc_attr( $accent_color ); ?>;
+			--accent-background-color: <?php echo esc_attr( $accent_background_color ); ?>;
 		}
 		* {
 			box-sizing: border-box;
@@ -711,7 +735,7 @@ class PublicPaymentPage {
 
 		body {
 			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-			background: #f8fafc;
+			background: var(--accent-background-color);
 			color: #1e293b;
 			min-height: 100vh;
 			padding: 1rem;
