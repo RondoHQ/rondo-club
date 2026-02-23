@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Camera, CameraOff, QrCode, Search, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import jsQR from 'jsqr';
 
 export default function MembershipPassScanner() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const detectorRef = useRef(null);
+  const canvasRef = useRef(null);
   const rafRef = useRef(0);
   const isDetectingRef = useRef(false);
 
@@ -20,10 +22,13 @@ export default function MembershipPassScanner() {
 
   const hasBarcodeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
 
-  const canScanQr = useMemo(
-    () => hasBarcodeDetector && supportedFormats.includes('qr_code'),
-    [hasBarcodeDetector, supportedFormats]
-  );
+  const canScanQr = useMemo(() => {
+    if (hasBarcodeDetector && supportedFormats.includes('qr_code')) {
+      return true;
+    }
+    // jsQR fallback support.
+    return typeof jsQR === 'function';
+  }, [hasBarcodeDetector, supportedFormats]);
 
   const stopCamera = useCallback(() => {
     if (rafRef.current) {
@@ -64,22 +69,43 @@ export default function MembershipPassScanner() {
   }, []);
 
   const detectFrame = useCallback(async () => {
-    if (!videoRef.current || !detectorRef.current) {
+    if (!videoRef.current) {
       return;
     }
 
     if (videoRef.current.readyState >= 2 && !isDetectingRef.current) {
       isDetectingRef.current = true;
       try {
-        const barcodes = await detectorRef.current.detect(videoRef.current);
-        if (barcodes?.length) {
-          const value = String(barcodes[0]?.rawValue || '').trim();
-          if (value) {
-            stopCamera();
-            await verifyToken(value);
-            isDetectingRef.current = false;
-            return;
+        let value = '';
+
+        if (detectorRef.current) {
+          const barcodes = await detectorRef.current.detect(videoRef.current);
+          if (barcodes?.length) {
+            value = String(barcodes[0]?.rawValue || '').trim();
           }
+        } else if (canvasRef.current) {
+          const canvas = canvasRef.current;
+          const video = videoRef.current;
+          const width = video.videoWidth || 0;
+          const height = video.videoHeight || 0;
+
+          if (width > 0 && height > 0) {
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            if (context) {
+              context.drawImage(video, 0, 0, width, height);
+              const imageData = context.getImageData(0, 0, width, height);
+              const decoded = jsQR(imageData.data, width, height, { inversionAttempts: 'dontInvert' });
+              value = String(decoded?.data || '').trim();
+            }
+          }
+        }
+
+        if (value) {
+          stopCamera();
+          await verifyToken(value);
+          return;
         }
       } catch {
         // Continue loop silently; camera stream stays active.
@@ -137,7 +163,9 @@ export default function MembershipPassScanner() {
       try {
         const formats = await window.BarcodeDetector.getSupportedFormats();
         setSupportedFormats(Array.isArray(formats) ? formats : []);
-        detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] });
+        if (Array.isArray(formats) && formats.includes('qr_code')) {
+          detectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] });
+        }
       } catch {
         setSupportedFormats([]);
       }
@@ -163,6 +191,7 @@ export default function MembershipPassScanner() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Camera</h2>
         <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-black/90">
           <video ref={videoRef} className="w-full max-h-80 object-cover" playsInline muted />
+          <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
         </div>
 
         <div className="flex flex-wrap gap-2">
