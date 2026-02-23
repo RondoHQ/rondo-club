@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.6] - 2026-02-23
+
+### Fixed
+- Clothing member search dropdown is no longer clipped by the card border on `/kleding` (parent card now allows visible overflow).
+
 ## [30.10.5] - 2026-02-23
 
 ### Fixed
