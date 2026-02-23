@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.7.2] - 2026-02-23
+
+### Changed
+- Simplified `Lidpas Scanner` UI to camera-only flow by removing the top intro card and hidden manual token section.
+- Scanner result now prominently shows member photo + name for identity check.
+- Scanner result heading now reflects membership validity: `Geldige ledenpas` (green) for active, `Ongeldige ledenpas` (red) for non-active.
+
+### Fixed
+- Membership pass verify response now includes KNVB ID reliably for scanner output (`knvb_id` plus compatibility alias `knvb-id`).
+
 ## [30.7.1] - 2026-02-23
 
 ### Fixed
