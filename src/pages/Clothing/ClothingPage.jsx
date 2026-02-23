@@ -268,7 +268,7 @@ export default function ClothingPage() {
             </div>
           </div>
 
-          <div className="card p-6 space-y-4">
+          <div className="card p-6 space-y-4 overflow-visible">
             <h2 className="font-semibold text-brand-gradient flex items-center gap-2">
               <RotateCcw className="w-5 h-5" />
               Uitgifte / inname registreren
