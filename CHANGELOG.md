@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.9.8] - 2026-02-23
+
+### Fixed
+- Sidebar `Tuchtzaken` badge now uses the WordPress REST total count header (`X-WP-Total`) instead of the loaded page length, so counts above 100 display correctly.
+
 ## [30.9.7] - 2026-02-23
 
 ### Added

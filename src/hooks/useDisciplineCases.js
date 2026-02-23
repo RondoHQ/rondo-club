@@ -100,16 +100,28 @@ export function useCurrentSeason() {
 export function useDisciplineCasesCount() {
   const { data: currentSeason, isLoading: isLoadingSeason } = useCurrentSeason();
 
-  // Wait until the season query has settled (loaded or errored), then fetch cases.
+  // Wait until the season query has settled (loaded or errored), then fetch total count.
   // If no current season is configured, fetch all cases (seizoen: null).
   const seasonResolved = !isLoadingSeason;
-  const { data: cases, isLoading: isLoadingCases } = useDisciplineCases({
-    seizoen: currentSeason?.id || null,
+  const { data: totalCases, isLoading: isLoadingCases } = useQuery({
+    queryKey: [...disciplineCaseKeys.all, 'count', { seizoen: currentSeason?.id || null }],
+    queryFn: async () => {
+      const params = {
+        per_page: 1,
+      };
+
+      if (currentSeason?.id) {
+        params.seizoen = currentSeason.id;
+      }
+
+      const response = await wpApi.getDisciplineCases(params);
+      return parseInt(response.headers?.['x-wp-total'] || '0', 10) || 0;
+    },
     enabled: seasonResolved,
   });
 
   return {
-    count: cases?.length || 0,
+    count: totalCases || 0,
     isLoading: isLoadingSeason || isLoadingCases,
   };
 }
