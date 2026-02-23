@@ -14,7 +14,11 @@ import {
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
-const CONDITION_OPTIONS = ['new', 'good', 'fair'];
+const CONDITION_OPTIONS = [
+  { value: 'nieuw', label: 'Nieuw' },
+  { value: 'goed', label: 'Goed' },
+  { value: 'redelijk', label: 'Redelijk' },
+];
 
 export default function ClothingPage() {
   useDocumentTitle('Kleding');
@@ -47,7 +51,7 @@ export default function ClothingPage() {
     person_id: '',
     item_id: '',
     size: '',
-    condition: 'good',
+    condition: 'nieuw',
     in_or_out: 'out',
     date: new Date().toISOString().slice(0, 10),
     season: '',
@@ -184,12 +188,70 @@ export default function ClothingPage() {
             </div>
           </div>
 
-          <div className="card p-6">
-            <h2 className="font-semibold text-brand-gradient mb-3">Regels</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              Eligibility beheer je via <strong>Instellingen → Kleding</strong>.
-            </p>
-          </div>
+          {settings?.eligibility_enabled && (
+            <div className="card p-6">
+              <h2 className="font-semibold text-brand-gradient mb-3">Regels</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Eligibility beheer je via <strong>Instellingen → Kleding</strong>.
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handleCreateAssignment} className="card p-6 space-y-3">
+            <h2 className="font-semibold text-brand-gradient flex items-center gap-2">
+              <RotateCcw className="w-5 h-5" />
+              Uitgifte / inname registreren
+            </h2>
+            <div>
+              <input
+                list="clothing-person-options"
+                className="input"
+                value={personSearch}
+                onChange={(e) => handlePersonSearchChange(e.target.value)}
+                placeholder="Selecteer lid (typ om te zoeken)"
+                required
+              />
+              <datalist id="clothing-person-options">
+                {personOptions.map((person) => (
+                  <option key={person.id} value={person.label} />
+                ))}
+              </datalist>
+            </div>
+            <select className="input" value={assignmentForm.item_id} onChange={(e) => setAssignmentForm((v) => ({ ...v, item_id: e.target.value }))} required>
+              <option value="">Selecteer item</option>
+              {items.map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+            </select>
+            <div className="grid grid-cols-2 gap-3">
+              <input className="input" placeholder="Maat" value={assignmentForm.size} onChange={(e) => setAssignmentForm((v) => ({ ...v, size: e.target.value }))} required />
+              <select className="input" value={assignmentForm.condition} onChange={(e) => setAssignmentForm((v) => ({ ...v, condition: e.target.value }))}>
+                {CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <select className="input" value={assignmentForm.in_or_out} onChange={(e) => setAssignmentForm((v) => ({ ...v, in_or_out: e.target.value }))}>
+                <option value="out">Uit</option>
+                <option value="in">In</option>
+              </select>
+              <input type="date" className="input" value={assignmentForm.date} onChange={(e) => setAssignmentForm((v) => ({ ...v, date: e.target.value }))} />
+            </div>
+            {settings?.eligibility_enabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  className="input"
+                  placeholder="Seizoen"
+                  value={assignmentForm.season || settings?.current_season || ''}
+                  onChange={(e) => setAssignmentForm((v) => ({ ...v, season: e.target.value }))}
+                />
+                <input className="input" placeholder="Override reden (optioneel)" value={assignmentForm.override_reason} onChange={(e) => setAssignmentForm((v) => ({ ...v, override_reason: e.target.value }))} />
+              </div>
+            )}
+            <textarea className="input min-h-20" placeholder="Notities" value={assignmentForm.notes} onChange={(e) => setAssignmentForm((v) => ({ ...v, notes: e.target.value }))} />
+            <button type="submit" className="btn-primary text-sm" disabled={createAssignment.isPending}>
+              Opslaan
+            </button>
+          </form>
         </div>
       )}
 
@@ -270,64 +332,6 @@ export default function ClothingPage() {
               Exporteer CSV
             </button>
           </div>
-
-          <form onSubmit={handleCreateAssignment} className="card p-6 space-y-3">
-            <h2 className="font-semibold text-brand-gradient flex items-center gap-2">
-              <RotateCcw className="w-5 h-5" />
-              Uitgifte / inname registreren
-            </h2>
-            <div>
-              <input
-                list="clothing-person-options"
-                className="input"
-                value={personSearch}
-                onChange={(e) => handlePersonSearchChange(e.target.value)}
-                placeholder="Selecteer lid (typ om te zoeken)"
-                required
-              />
-              <datalist id="clothing-person-options">
-                {personOptions.map((person) => (
-                  <option key={person.id} value={person.label} />
-                ))}
-              </datalist>
-            </div>
-            <select className="input" value={assignmentForm.item_id} onChange={(e) => setAssignmentForm((v) => ({ ...v, item_id: e.target.value }))} required>
-              <option value="">Selecteer item</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
-              ))}
-            </select>
-            <div className="grid grid-cols-2 gap-3">
-              <input className="input" placeholder="Maat" value={assignmentForm.size} onChange={(e) => setAssignmentForm((v) => ({ ...v, size: e.target.value }))} required />
-              <select className="input" value={assignmentForm.condition} onChange={(e) => setAssignmentForm((v) => ({ ...v, condition: e.target.value }))}>
-                {CONDITION_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <select className="input" value={assignmentForm.in_or_out} onChange={(e) => setAssignmentForm((v) => ({ ...v, in_or_out: e.target.value }))}>
-                <option value="out">Uit</option>
-                <option value="in">In</option>
-              </select>
-              <input type="date" className="input" value={assignmentForm.date} onChange={(e) => setAssignmentForm((v) => ({ ...v, date: e.target.value }))} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                className="input"
-                placeholder="Seizoen"
-                value={assignmentForm.season || settings?.current_season || ''}
-                onChange={(e) => setAssignmentForm((v) => ({ ...v, season: e.target.value }))}
-              />
-              {settings?.eligibility_enabled ? (
-                <input className="input" placeholder="Override reden (optioneel)" value={assignmentForm.override_reason} onChange={(e) => setAssignmentForm((v) => ({ ...v, override_reason: e.target.value }))} />
-              ) : (
-                <div className="input text-gray-500">Eligibility uitgeschakeld</div>
-              )}
-            </div>
-            <textarea className="input min-h-20" placeholder="Notities" value={assignmentForm.notes} onChange={(e) => setAssignmentForm((v) => ({ ...v, notes: e.target.value }))} />
-            <button type="submit" className="btn-primary text-sm" disabled={createAssignment.isPending}>
-              Opslaan
-            </button>
-          </form>
 
           <div className="card p-6 overflow-auto">
             <h2 className="font-semibold text-brand-gradient mb-4">Transacties</h2>

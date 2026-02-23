@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.2] - 2026-02-23
+
+### Changed
+- Kledingpagina tabs aangepast op basis van feedback:
+  - `Uitgifte / inname registreren` staat weer op de eerste tab (`Overzicht`).
+  - `Transacties` tab bevat nu alleen transactielijst + CSV export.
+- Conditie-opties voor kledingtransacties vertaald naar Nederlands:
+  - `Nieuw` (default)
+  - `Goed`
+  - `Redelijk`
+
+### Fixed
+- Het `Regels` blok op `/kleding` wordt nu niet getoond als eligibility is uitgeschakeld.
+- Bij uitgeschakelde eligibility verdwijnen seizoensinvoer en eligibility-gerelateerde invoervelden volledig uit het transactiesformulier.
+
 ## [30.10.1] - 2026-02-23
 
 ### Added
