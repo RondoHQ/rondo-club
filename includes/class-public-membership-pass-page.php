@@ -53,7 +53,7 @@ class PublicMembershipPassPage {
 	 * Backfill pass URLs once for existing KNVB members.
 	 */
 	public function maybe_backfill_pass_urls() {
-		$done = (bool) get_option( 'rondo_membership_pass_backfill_done', false );
+		$done = (bool) get_option( 'rondo_membership_pass_backfill_v2_done', false );
 		if ( $done ) {
 			return;
 		}
@@ -64,17 +64,6 @@ class PublicMembershipPassPage {
 				'post_status'    => 'any',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
-				'meta_query'     => [
-					[
-						'key'     => 'knvb-id',
-						'compare' => 'EXISTS',
-					],
-					[
-						'key'     => 'knvb-id',
-						'value'   => '',
-						'compare' => '!=',
-					],
-				],
 			]
 		);
 
@@ -82,7 +71,7 @@ class PublicMembershipPassPage {
 			self::ensure_person_pass_url( (int) $person_id );
 		}
 
-		update_option( 'rondo_membership_pass_backfill_done', true, false );
+		update_option( 'rondo_membership_pass_backfill_v2_done', true, false );
 	}
 
 	/**
@@ -123,9 +112,9 @@ class PublicMembershipPassPage {
 			exit;
 		}
 
-		$knvb_id = get_field( 'knvb-id', $person_id );
-		if ( empty( $knvb_id ) ) {
-			$this->render_error( 'Voor dit lid is geen KNVB ID beschikbaar.' );
+		$member_tier = self::get_person_member_tier( $person_id );
+		if ( $member_tier === '' ) {
+			$this->render_error( 'Voor dit lid is geen geldige ledenpas beschikbaar.' );
 			exit;
 		}
 
@@ -157,8 +146,8 @@ class PublicMembershipPassPage {
 			return '';
 		}
 
-		$knvb_id = get_field( 'knvb-id', $person_id );
-		if ( empty( $knvb_id ) ) {
+		$member_tier = self::get_person_member_tier( $person_id );
+		if ( $member_tier === '' ) {
 			delete_post_meta( $person_id, self::TOKEN_META_KEY );
 			delete_post_meta( $person_id, self::URL_META_KEY );
 			return '';
@@ -178,6 +167,30 @@ class PublicMembershipPassPage {
 		update_post_meta( $person_id, self::URL_META_KEY, esc_url_raw( $url ) );
 
 		return $url;
+	}
+
+	/**
+	 * Resolve pass eligibility tier for one person.
+	 *
+	 * - `bondslid`: KNVB ID available.
+	 * - `verenigingslid`: no KNVB ID and Type lid is Verenigingslid.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return string
+	 */
+	public static function get_person_member_tier( int $person_id ): string {
+		$knvb_id  = trim( (string) get_field( 'knvb-id', $person_id ) );
+		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
+
+		if ( $knvb_id !== '' ) {
+			return 'bondslid';
+		}
+
+		if ( $type_lid === 'verenigingslid' ) {
+			return 'verenigingslid';
+		}
+
+		return '';
 	}
 
 	/**
@@ -258,6 +271,8 @@ class PublicMembershipPassPage {
 		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
 		$name       = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
 		$knvb_id    = (string) get_field( 'knvb-id', $person_id );
+		$member_tier = self::get_person_member_tier( $person_id );
+		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
 
 		$fees   = new \Rondo\Fees\MembershipFees();
 		$season = $fees->get_season_key();
@@ -291,8 +306,10 @@ class PublicMembershipPassPage {
 	<div class="card">
 		<h2>Gegevens</h2>
 		<table class="info-table">
-			<tr><th>Lid</th><td><?php echo esc_html( $name ); ?></td></tr>
-			<tr><th>KNVB ID</th><td><?php echo esc_html( $knvb_id ); ?></td></tr>
+			<tr><th><?php echo esc_html( $member_label ); ?></th><td><?php echo esc_html( $name ); ?></td></tr>
+			<?php if ( $knvb_id !== '' ) : ?>
+				<tr><th>KNVB ID</th><td><?php echo esc_html( $knvb_id ); ?></td></tr>
+			<?php endif; ?>
 			<tr><th>Seizoen</th><td><?php echo esc_html( $season ); ?></td></tr>
 		</table>
 	</div>
