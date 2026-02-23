@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.4.4] - 2026-02-22
+
+### Changed
+- Aligned Apple and Google Wallet badges on the public membership pass page to a consistent height and baseline
+- Improved wallet badge layout responsiveness for small screens with a stacked mobile layout
+
 ## [30.4.3] - 2026-02-22
 
 ### Changed
