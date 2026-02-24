@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.12] - 2026-02-24
+
+### Fixed
+- Improved anniversaries endpoint performance for volunteer jubilees by batching oldest `work_history_*_start_date` lookup across people instead of per-person ACF repeater reads.
+- Prevented `/people/jubilarissen` from hanging during long anniversary queries on larger datasets.
+
+## [30.10.11] - 2026-02-24
+
+### Changed
+- Volunteer anniversaries are now calculated from the oldest `work_history.start_date` instead of `lid-sinds`.
+
+## [30.10.10] - 2026-02-24
+
+### Changed
+- In **Settings → Beheer → Jubilarissen**, custom milestones now use the same left checkbox interaction as built-in milestones.
+- Unchecking a custom milestone checkbox now removes that custom milestone.
+
+## [30.10.9] - 2026-02-24
+
+### Changed
+- In **Settings → Beheer → Jubilarissen**, custom milestones now render in the same grid tile style as built-in milestones.
+- Custom milestone tiles now include a remove cross (`x`) on the right side.
+
+## [30.10.8] - 2026-02-24
+
+### Added
+- Active users endpoint (`GET /rondo/v1/users`) now returns `last_active` per user.
+- Last activity tracking for authenticated users (stored in user meta) with 5-minute write throttling.
+
+### Fixed
+- Settings → Gebruikers “Actieve gebruikers” table no longer uses an internal vertical scroll cap and grows naturally with content.
+- Added “Laatst actief” column to the active users table with `-` fallback when no activity data exists yet.
+
+## [30.10.7] - 2026-02-23
+
+### Added
+- Jubilarissen periode-dropdown now includes:
+  - `Afgelopen 6 maanden`
+  - `Afgelopen 12 maanden`
+  - `Afgelopen 18 maanden`
+
+### Changed
+- Anniversaries API now supports a backward-looking window via `days_back`.
+- Jubilarissen page now supports both future and past period windows.
+
 ## [30.10.6] - 2026-02-23
 
 ### Fixed
