@@ -1,197 +1,181 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Award } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import PersonAvatar from '@/components/PersonAvatar';
-import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { format, addDays } from '@/utils/dateFormat';
+import { format } from '@/utils/dateFormat';
 
-const MONTH_OPTIONS = [3, 6, 9, 12];
-const DEFAULT_MONTHS = 6;
+const PERIOD_OPTIONS = [
+  { value: 'future-3', label: 'Komende 3 maanden', daysAhead: 90, daysBack: 0 },
+  { value: 'future-6', label: 'Komende 6 maanden', daysAhead: 180, daysBack: 0 },
+  { value: 'future-9', label: 'Komende 9 maanden', daysAhead: 270, daysBack: 0 },
+  { value: 'future-12', label: 'Komende 12 maanden', daysAhead: 360, daysBack: 0 },
+  { value: 'past-6', label: 'Afgelopen 6 maanden', daysAhead: 0, daysBack: 180 },
+  { value: 'past-12', label: 'Afgelopen 12 maanden', daysAhead: 0, daysBack: 360 },
+  { value: 'past-18', label: 'Afgelopen 18 maanden', daysAhead: 0, daysBack: 540 },
+];
+const DEFAULT_PERIOD = 'future-6';
 
-function AnniversaryRow({ item }) {
-  const person = item.person;
-  const typeLabel = item.type === 'volunteer' ? 'Vrijwilliger' : 'Lid';
-
-  return (
-    <Link
-      to={`/people/${person.id}`}
-      className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-    >
-      <PersonAvatar
-        thumbnail={person.thumbnail}
-        name={person.name}
-        firstName={person.first_name}
-        size="lg"
-      />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{person.name}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-          {item.milestone_label} {typeLabel.toLowerCase()} · {format(new Date(item.anniversary_date), 'EEEE d MMMM yyyy')}
-        </p>
-      </div>
-      <div className="text-right flex-shrink-0">
-        <div className="text-xs font-medium text-electric-cyan dark:text-electric-cyan">{typeLabel}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          {item.days_until === 0 ? 'Vandaag' : `Over ${item.days_until} dagen`}
-        </div>
-      </div>
-    </Link>
-  );
-}
+const COLUMNS = [
+  createColumn({
+    id: 'person_name',
+    header: 'Naam',
+    accessorFn: (row) => row.person?.name || '',
+    cell: ({ row }) => (
+      <Link to={`/people/${row.original.person.id}`} className="flex items-center gap-3 min-w-0">
+        <PersonAvatar
+          thumbnail={row.original.person.thumbnail}
+          name={row.original.person.name}
+          firstName={row.original.person.first_name}
+          size="md"
+        />
+        <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{row.original.person.name}</span>
+      </Link>
+    ),
+    filterType: FILTER_TYPES.TEXT,
+    filterLabel: 'Naam',
+    size: 280,
+  }),
+  createColumn({
+    id: 'type',
+    header: 'Type',
+    accessorKey: 'type',
+    cell: ({ row }) => (row.original.type === 'volunteer' ? 'Vrijwilliger' : 'Lid'),
+    filterType: FILTER_TYPES.SELECT,
+    filterLabel: 'Type',
+    filterOptions: [
+      { value: 'member', label: 'Leden' },
+      { value: 'volunteer', label: 'Vrijwilligers' },
+    ],
+    getFilterLabel: (value) => (value === 'volunteer' ? 'Vrijwilligers' : 'Leden'),
+    size: 140,
+  }),
+  createColumn({
+    id: 'milestone_label',
+    header: 'Mijlpaal',
+    accessorKey: 'milestone_label',
+    filterType: FILTER_TYPES.TEXT,
+    filterLabel: 'Mijlpaal',
+    size: 130,
+  }),
+  createColumn({
+    id: 'anniversary_date',
+    header: 'Jubileumdatum',
+    accessorFn: (row) => new Date(row.anniversary_date).getTime(),
+    cell: ({ row }) => format(new Date(row.original.anniversary_date), 'EEEE d MMMM yyyy'),
+    filterType: null,
+    size: 220,
+  }),
+  createColumn({
+    id: 'days_until',
+    header: 'Wanneer',
+    accessorFn: (row) => row.days_until,
+    cell: ({ row }) => {
+      const days = row.original.days_until;
+      if (days === 0) return 'Vandaag';
+      if (days > 0) return `Over ${days} dagen`;
+      return `${Math.abs(days)} dagen geleden`;
+    },
+    filterType: null,
+    size: 140,
+    headerClassName: 'text-right',
+    className: 'text-right',
+  }),
+];
 
 export default function PeopleAnniversaries() {
   useDocumentTitle('Jubilarissen');
   const [searchParams, setSearchParams] = useSearchParams();
-  const typeFilter = searchParams.get('type') || 'all';
-  const monthsParam = Number(searchParams.get('months'));
-  const monthsAhead = MONTH_OPTIONS.includes(monthsParam) ? monthsParam : DEFAULT_MONTHS;
-  const lookaheadDays = monthsAhead * 30;
+  const typeFilter = searchParams.get('type') || '';
+  const nameFilter = searchParams.get('person_name') || '';
+  const milestoneFilter = searchParams.get('milestone_label') || '';
+  const periodParam = searchParams.get('period') || DEFAULT_PERIOD;
+  const periodOption = PERIOD_OPTIONS.find((option) => option.value === periodParam) || PERIOD_OPTIONS.find((option) => option.value === DEFAULT_PERIOD);
+  const { daysAhead, daysBack, label: periodLabel } = periodOption;
 
-  const { data = [], isLoading, error, refetch, isRefetching } = useQuery({
-    queryKey: ['anniversaries', lookaheadDays],
+  const { data = [], isLoading, error } = useQuery({
+    queryKey: ['anniversaries', daysAhead, daysBack],
     queryFn: async () => {
-      const response = await prmApi.getAnniversaries(lookaheadDays, 500);
+      const response = await prmApi.getAnniversaries(daysAhead, 500, daysBack);
       return response.data || [];
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const filtered = useMemo(() => {
-    if (typeFilter === 'member') {
-      return data.filter((item) => item.type === 'member');
-    }
-    if (typeFilter === 'volunteer') {
-      return data.filter((item) => item.type === 'volunteer');
-    }
-    return data;
-  }, [data, typeFilter]);
-
-  const memberCount = useMemo(() => data.filter((item) => item.type === 'member').length, [data]);
-  const volunteerCount = useMemo(() => data.filter((item) => item.type === 'volunteer').length, [data]);
-
-  const endDate = addDays(new Date(), lookaheadDays);
-
-  const updateSearch = (nextType, nextMonths = monthsAhead) => {
+  const updateSearch = useCallback((changes) => {
     const next = new URLSearchParams(searchParams);
-    if (nextType === 'all') {
-      next.delete('type');
-    } else {
-      next.set('type', nextType);
+    Object.entries(changes).forEach(([key, value]) => {
+      if (!value || (key === 'period' && value === DEFAULT_PERIOD)) {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    });
+    if (!changes.period && periodParam === DEFAULT_PERIOD) {
+      next.delete('period');
     }
-    if (nextMonths === DEFAULT_MONTHS) {
-      next.delete('months');
-    } else {
-      next.set('months', String(nextMonths));
-    }
-    setSearchParams(next);
-  };
+    setSearchParams(next, { replace: true });
+  }, [periodParam, searchParams, setSearchParams]);
 
-  const setFilter = (nextType) => updateSearch(nextType, monthsAhead);
-  const setMonths = (nextMonths) => updateSearch(typeFilter, nextMonths);
+  const filters = useMemo(() => ({
+    type: typeFilter,
+    person_name: nameFilter,
+    milestone_label: milestoneFilter,
+  }), [typeFilter, nameFilter, milestoneFilter]);
 
-  if (isLoading) {
-    return <ContentLoadingSpinner minHeight="40vh" />;
-  }
+  const handleFilterChange = useCallback((colId, value) => {
+    updateSearch({ [colId]: value });
+  }, [updateSearch]);
+
+  const handleClearFilters = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    ['type', 'person_name', 'milestone_label'].forEach((key) => next.delete(key));
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const setPeriod = useCallback((nextPeriod) => {
+    updateSearch({ period: nextPeriod });
+  }, [updateSearch]);
 
   return (
     <div className="space-y-6">
-      <div className="card p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-brand-gradient flex items-center gap-2">
-              <Award className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              Jubilarissen
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Overzicht van aankomende jubilea in de komende {monthsAhead} maanden (tot en met {format(endDate, 'd MMMM yyyy')}).
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <select
-              value={monthsAhead}
-              onChange={(e) => setMonths(Number(e.target.value))}
-              className="input w-auto min-w-[8.5rem]"
-              aria-label="Periode vooruitkijken"
-            >
-              {MONTH_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option} maanden
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="btn-secondary"
-              disabled={isRefetching}
-            >
-              {isRefetching ? 'Verversen...' : 'Verversen'}
-            </button>
-          </div>
+      {error ? (
+        <div className="card p-6 text-sm text-red-600 dark:text-red-400">
+          Jubilarissen konden niet worden geladen.
         </div>
-      </div>
-
-      <div className="card p-4">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              typeFilter === 'all'
-                ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan'
-                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700'
-            }`}
-          >
-            Alle ({data.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('member')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              typeFilter === 'member'
-                ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan'
-                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700'
-            }`}
-          >
-            Leden ({memberCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('volunteer')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              typeFilter === 'volunteer'
-                ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan'
-                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700'
-            }`}
-          >
-            Vrijwilligers ({volunteerCount})
-          </button>
-        </div>
-      </div>
-
-      <div className="card overflow-hidden">
-        {error ? (
-          <div className="p-6 text-sm text-red-600 dark:text-red-400">
-            Jubilarissen konden niet worden geladen.
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-8 text-center">
-            <Users className="w-10 h-10 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Geen jubilarissen gevonden voor deze filter in de komende {monthsAhead} maanden.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {filtered.map((item) => (
-              <AnniversaryRow key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-      </div>
+      ) : (
+        <DataTable
+          storageKey="people-jubilarissen"
+          data={data}
+          columns={COLUMNS}
+          isLoading={isLoading}
+          emptyIcon={<Users className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
+          emptyTitle="Geen jubilarissen gevonden"
+          emptyDescription={`Geen jubilarissen gevonden voor de geselecteerde periode (${periodLabel.toLowerCase()}).`}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          toolbarEnd={
+            <div className="flex items-center gap-2">
+              <select
+                value={periodParam}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="input w-auto min-w-[8.5rem]"
+                aria-label="Periode vooruitkijken"
+              >
+                {PERIOD_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }
