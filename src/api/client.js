@@ -128,8 +128,11 @@ export const prmApi = {
   rescheduleCronJobs: () => api.post('/rondo/v1/reminders/reschedule-cron'),
 
   // Anniversaries
-  getAnniversaries: (daysAhead = 365, limit = 100) =>
-    api.get('/rondo/v1/anniversaries', { params: { days_ahead: daysAhead, limit } }),
+  getAnniversaries: (daysAhead = 365, limit = 100, daysBack = 0) =>
+    api.get('/rondo/v1/anniversaries', {
+      params: { days_ahead: daysAhead, days_back: daysBack, limit },
+      timeout: 30000,
+    }),
   getAnniversarySettings: () => api.get('/rondo/v1/anniversaries/settings'),
   updateAnniversarySettings: (milestones) => api.post('/rondo/v1/anniversaries/settings', { milestones }),
   

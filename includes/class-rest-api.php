@@ -10,10 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Api extends Base {
+	private const VOLUNTEER_START_DATE_META_KEY = '_rondo_volunteer_start_date';
+	private const VOLUNTEER_START_DATE_NONE     = '__none__';
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_action( 'rest_api_init', [ $this, 'register_acf_fields' ] );
+		add_action( 'save_post_person', [ $this, 'invalidate_cached_volunteer_start_date' ], 10, 3 );
 	}
 
 	/**
@@ -84,7 +87,13 @@ class Api extends Base {
 					'days_ahead' => [
 						'default'           => 365,
 						'validate_callback' => function ( $param ) {
-							return is_numeric( $param ) && $param > 0 && $param <= 730;
+							return is_numeric( $param ) && $param >= 0 && $param <= 730;
+						},
+					],
+					'days_back'  => [
+						'default'           => 0,
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && $param >= 0 && $param <= 730;
 						},
 					],
 					'limit'     => [
@@ -1451,8 +1460,12 @@ class Api extends Base {
 	 */
 	public function get_upcoming_anniversaries( $request ) {
 		$days_ahead    = (int) $request->get_param( 'days_ahead' );
+		$days_back     = (int) $request->get_param( 'days_back' );
 		$limit         = (int) $request->get_param( 'limit' );
-		$anniversaries = $this->get_upcoming_anniversaries_data( $days_ahead, $limit );
+		if ( $days_ahead <= 0 && $days_back <= 0 ) {
+			$days_ahead = 365;
+		}
+		$anniversaries = $this->get_upcoming_anniversaries_data( $days_ahead, $limit, $days_back );
 
 		return rest_ensure_response( $anniversaries );
 	}
@@ -1525,9 +1538,10 @@ class Api extends Base {
 	 * @param int $limit      Maximum results.
 	 * @return array
 	 */
-	private function get_upcoming_anniversaries_data( int $days_ahead, int $limit ): array {
+	private function get_upcoming_anniversaries_data( int $days_ahead, int $limit, int $days_back = 0 ): array {
 		$today      = new \DateTimeImmutable( 'today', wp_timezone() );
-		$cutoff     = $today->modify( '+' . max( 1, $days_ahead ) . ' days' );
+		$window_start = $today->modify( '-' . max( 0, $days_back ) . ' days' );
+		$cutoff       = $today->modify( '+' . max( 0, $days_ahead ) . ' days' );
 		$milestones = $this->get_anniversary_milestones();
 
 		$people = get_posts(
@@ -1535,53 +1549,59 @@ class Api extends Base {
 				'post_type'      => 'person',
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
-				'meta_query'     => [
-					'relation' => 'AND',
-					[
-						'key'     => 'lid-sinds',
-						'compare' => 'EXISTS',
-					],
-					[
-						'relation' => 'OR',
-						[
-							'key'     => 'former_member',
-							'compare' => 'NOT EXISTS',
-						],
-						[
-							'key'     => 'former_member',
-							'value'   => '1',
-							'compare' => '!=',
-						],
-					],
-				],
+				'no_found_rows'  => true,
+				'update_post_meta_cache' => true,
+				'update_post_term_cache' => false,
 			]
 		);
 
 		$results = [];
+		$person_ids = array_map(
+			static function ( $person ) {
+				return (int) $person->ID;
+			},
+			$people
+		);
+		$volunteer_ids = [];
+		foreach ( $person_ids as $person_id ) {
+			if ( ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ) ) {
+				$volunteer_ids[] = $person_id;
+			}
+		}
+		$volunteer_start_dates = $this->get_cached_volunteer_start_dates_for_people( $volunteer_ids );
 
 		foreach ( $people as $person ) {
 			$person_id    = (int) $person->ID;
-			$member_since = get_post_meta( $person_id, 'lid-sinds', true );
-
-			if ( empty( $member_since ) ) {
+			if ( ! empty( get_post_meta( $person_id, 'former_member', true ) ) ) {
 				continue;
 			}
-
-			$start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $member_since, wp_timezone() );
-			if ( ! $start_date ) {
-				continue;
+			$person_summary = $this->format_anniversary_person_summary( $person );
+			$member_since      = get_post_meta( $person_id, 'lid-sinds', true );
+			$member_start_date = null;
+			if ( ! empty( $member_since ) ) {
+				$member_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $member_since, wp_timezone() );
 			}
 
-			foreach ( $milestones['member'] as $milestone_years ) {
-				$item = $this->build_anniversary_item( $person, 'member', $milestone_years, $start_date, $today, $cutoff );
-				if ( $item ) {
-					$results[] = $item;
+			if ( $member_start_date ) {
+				foreach ( $milestones['member'] as $milestone_years ) {
+					$item = $this->build_anniversary_item( $person, $person_summary, 'member', $milestone_years, $member_start_date, $today, $window_start, $cutoff );
+					if ( $item ) {
+						$results[] = $item;
+					}
 				}
 			}
 
-			if ( get_field( 'huidig-vrijwilliger', $person_id ) ) {
+			if ( ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ) ) {
+				$volunteer_start_date = null;
+				if ( ! empty( $volunteer_start_dates[ $person_id ] ) ) {
+					$volunteer_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $volunteer_start_dates[ $person_id ], wp_timezone() );
+				}
+				if ( ! $volunteer_start_date ) {
+					continue;
+				}
+
 				foreach ( $milestones['volunteer'] as $milestone_years ) {
-					$item = $this->build_anniversary_item( $person, 'volunteer', $milestone_years, $start_date, $today, $cutoff );
+					$item = $this->build_anniversary_item( $person, $person_summary, 'volunteer', $milestone_years, $volunteer_start_date, $today, $window_start, $cutoff );
 					if ( $item ) {
 						$results[] = $item;
 					}
@@ -1615,28 +1635,35 @@ class Api extends Base {
 	 * Build one anniversary record when it falls within the requested window.
 	 *
 	 * @param \WP_Post            $person          Person post object.
+	 * @param array               $person_summary  Preformatted person payload.
 	 * @param string              $type            Anniversary type: member|volunteer.
 	 * @param float               $milestone_years Milestone in years (supports .5).
 	 * @param \DateTimeImmutable  $start_date      Start date.
 	 * @param \DateTimeImmutable  $today           Window start (inclusive).
+	 * @param \DateTimeImmutable  $window_start    Lower bound (inclusive).
 	 * @param \DateTimeImmutable  $cutoff          Window end (inclusive).
 	 * @return array|null
 	 */
 	private function build_anniversary_item(
 		\WP_Post $person,
+		array $person_summary,
 		string $type,
 		float $milestone_years,
 		\DateTimeImmutable $start_date,
 		\DateTimeImmutable $today,
+		\DateTimeImmutable $window_start,
 		\DateTimeImmutable $cutoff
 	): ?array {
 		$anniversary_date = $this->calculate_anniversary_date( $start_date, $milestone_years );
-		if ( ! $anniversary_date || $anniversary_date < $today || $anniversary_date > $cutoff ) {
+		if ( ! $anniversary_date || $anniversary_date < $window_start || $anniversary_date > $cutoff ) {
 			return null;
 		}
 
 		$interval = $today->diff( $anniversary_date );
 		$days     = (int) $interval->format( '%a' );
+		if ( 1 === (int) $interval->invert ) {
+			$days = -$days;
+		}
 		$label    = $this->format_milestone_years( $milestone_years );
 
 		return [
@@ -1647,7 +1674,27 @@ class Api extends Base {
 			'title'            => 'member' === $type ? $label . ' jaar lid' : $label . ' jaar vrijwilliger',
 			'anniversary_date' => $anniversary_date->format( 'Y-m-d' ),
 			'days_until'       => $days,
-			'person'           => $this->format_person_summary( $person ),
+			'person'           => $person_summary,
+		];
+	}
+
+	/**
+	 * Format anniversary person summary without expensive ACF calls.
+	 *
+	 * @param \WP_Post $person Person post object.
+	 * @return array
+	 */
+	private function format_anniversary_person_summary( \WP_Post $person ): array {
+		$person_id = (int) $person->ID;
+
+		return [
+			'id'                 => $person_id,
+			'name'               => $this->sanitize_text( $person->post_title ),
+			'first_name'         => $this->sanitize_text( (string) get_post_meta( $person_id, 'first_name', true ) ),
+			'last_name'          => $this->sanitize_text( (string) get_post_meta( $person_id, 'last_name', true ) ),
+			'thumbnail'          => $this->sanitize_url( get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ),
+			'former_member'      => ! empty( get_post_meta( $person_id, 'former_member', true ) ),
+			'huidig_vrijwilliger' => ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ),
 		];
 	}
 
@@ -1671,6 +1718,145 @@ class Api extends Base {
 		}
 
 		return $date;
+	}
+
+	/**
+	 * Determine oldest work_history start dates for a set of people in one query.
+	 *
+	 * @param array<int> $person_ids Person post IDs.
+	 * @return array<int,string> Map of person_id => oldest start date (Y-m-d).
+	 */
+	private function get_oldest_work_history_start_dates_for_people( array $person_ids ): array {
+		$person_ids = array_values( array_filter( array_map( 'absint', $person_ids ) ) );
+		if ( empty( $person_ids ) ) {
+			return [];
+		}
+
+		$oldest_by_person = [];
+		foreach ( $person_ids as $person_id ) {
+			$all_meta = get_post_meta( $person_id );
+			if ( empty( $all_meta ) || ! is_array( $all_meta ) ) {
+				continue;
+			}
+
+			foreach ( $all_meta as $meta_key => $meta_values ) {
+				if ( 1 !== preg_match( '/^work_history_[0-9]+_start_date$/', (string) $meta_key ) ) {
+					continue;
+				}
+
+				foreach ( (array) $meta_values as $meta_value ) {
+					$normalized_date = $this->normalize_iso_date_string( (string) $meta_value );
+					if ( null === $normalized_date ) {
+						continue;
+					}
+
+					$existing = $oldest_by_person[ $person_id ] ?? null;
+					if ( null === $existing || $normalized_date < $existing ) {
+						$oldest_by_person[ $person_id ] = $normalized_date;
+					}
+				}
+			}
+		}
+
+		return $oldest_by_person;
+	}
+
+	/**
+	 * Read cached volunteer start dates and backfill missing values in one pass.
+	 *
+	 * @param array<int> $person_ids Person post IDs.
+	 * @return array<int,string> Map of person_id => volunteer start date (Y-m-d).
+	 */
+	private function get_cached_volunteer_start_dates_for_people( array $person_ids ): array {
+		$person_ids = array_values( array_filter( array_map( 'absint', $person_ids ) ) );
+		if ( empty( $person_ids ) ) {
+			return [];
+		}
+
+		update_meta_cache( 'post', $person_ids );
+		$cached  = [];
+		$missing = [];
+
+		foreach ( $person_ids as $person_id ) {
+			$cached_raw = trim( (string) get_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, true ) );
+			if ( self::VOLUNTEER_START_DATE_NONE === $cached_raw ) {
+				continue;
+			}
+
+			$start_date = $this->normalize_iso_date_string( $cached_raw );
+			if ( null !== $start_date ) {
+				$cached[ $person_id ] = $start_date;
+				if ( $cached_raw !== $start_date ) {
+					update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $start_date );
+				}
+				continue;
+			}
+
+			$missing[] = $person_id;
+		}
+
+		if ( empty( $missing ) ) {
+			return $cached;
+		}
+
+		$calculated = $this->get_oldest_work_history_start_dates_for_people( $missing );
+		foreach ( $missing as $person_id ) {
+			if ( ! empty( $calculated[ $person_id ] ) ) {
+				$cached[ $person_id ] = $calculated[ $person_id ];
+				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $calculated[ $person_id ] );
+				continue;
+			}
+
+			update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, self::VOLUNTEER_START_DATE_NONE );
+		}
+
+		return $cached;
+	}
+
+	/**
+	 * Normalize supported date strings to ISO Y-m-d.
+	 *
+	 * Supports ACF date formats Y-m-d and Ymd.
+	 *
+	 * @param string $raw_date Raw date value.
+	 * @return string|null
+	 */
+	private function normalize_iso_date_string( string $raw_date ): ?string {
+		$raw_date = trim( $raw_date );
+		if ( '' === $raw_date ) {
+			return null;
+		}
+
+		$date = null;
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw_date ) ) {
+			$date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $raw_date, wp_timezone() );
+		} elseif ( preg_match( '/^\d{8}$/', $raw_date ) ) {
+			$date = \DateTimeImmutable::createFromFormat( 'Ymd', $raw_date, wp_timezone() );
+		}
+
+		if ( ! $date ) {
+			return null;
+		}
+
+		return $date->format( 'Y-m-d' );
+	}
+
+	/**
+	 * Invalidate cached volunteer start date when a person record is saved.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an existing post update.
+	 * @return void
+	 */
+	public function invalidate_cached_volunteer_start_date( int $post_id, \WP_Post $post, bool $update ): void {
+		unset( $update );
+
+		if ( 'person' !== $post->post_type || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		delete_post_meta( $post_id, self::VOLUNTEER_START_DATE_META_KEY );
 	}
 
 	/**
@@ -3430,6 +3616,7 @@ class Api extends Base {
 				'name'               => $user->display_name,
 				'email'              => $user->user_email,
 				'registered'         => $user->user_registered,
+				'last_active'        => get_user_meta( $user->ID, 'rondo_last_active', true ) ?: null,
 				'linked_person_id'   => $linked_person_id ?: null,
 				'linked_person_name' => $linked_person_name,
 			];
