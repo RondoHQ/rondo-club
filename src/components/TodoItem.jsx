@@ -11,6 +11,7 @@ import PersonAvatar from '@/components/PersonAvatar.jsx';
 import { format } from '@/utils/dateFormat';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
 import { stripHtmlTags } from '@/utils/richTextUtils';
+import { isValidDate } from '@/utils/formatters';
 
 /**
  * Props for TodoItem component.
@@ -40,6 +41,11 @@ export default function TodoItem({
   showActionsAlways = false,
   variant = 'compact',
 }) {
+  const formatTodoDueDate = (dueDate) => {
+    if (!dueDate || !isValidDate(dueDate)) return null;
+    return format(new Date(dueDate), 'MMM d, yyyy');
+  };
+
   const isOverdue = isTodoOverdue(todo);
   const awaitingDays = getAwaitingDays(todo);
 
@@ -179,7 +185,7 @@ export default function TodoItem({
             {/* Due date - only show for open todos */}
             {todo.due_date && todo.status === 'open' && (
               <span className={`text-xs ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                Deadline: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+                Deadline: {formatTodoDueDate(todo.due_date) || todo.due_date}
                 {isOverdue && ' (te laat)'}
               </span>
             )}
@@ -202,7 +208,7 @@ export default function TodoItem({
                   isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
-                Due: {format(new Date(todo.due_date), 'MMM d, yyyy')}
+                Due: {formatTodoDueDate(todo.due_date) || todo.due_date}
                 {isOverdue && ' (overdue)'}
               </p>
             )}

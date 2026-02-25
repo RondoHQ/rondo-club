@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.0] - 2026-02-25
+
+### Added
+- Added a new `/kaderlijst` roster page using DataTable with grouped age/year/team rendering, persisted snapshot storage in WordPress options, and a manual refresh button that clears query cache before rebuilding.
+
+### Changed
+- Updated Kaderlijst structure and ordering to match club expectations: age-group coordinators at the top of each age group, year coordinators at the top of each year block, then team rows.
+- Updated Kaderlijst labels and normalization: `Jaargroep` renamed to `Jaarlaag`, `Overig` mapped to `Senioren`, `Mini's` grouped under `JO7` in `Pupillen`, and `AWC ` prefixes removed for `JO` team names.
+- Updated intra-team sorting to use explicit role priority order for coaches/staff roles.
+
+### Fixed
+- Fixed missing coordinator visibility in Kaderlijst (including `Technisch Coördinator` and `Organisatorisch coördinator` rows) and corrected Junioren/Pupillen coordinator placement.
+- Fixed Kaderlijst loading performance and reliability by removing heavy fan-out requests and optimizing roster build behavior.
+- Fixed `Invalid time value` crashes on person detail pages by hardening date parsing/formatting across PersonDetail and related cards/components.
+- Fixed duplicate work-history roles introduced by repeated Sportlink syncs by deduplicating rows server-side after individual sync.
+
+## [30.11.5] - 2026-02-25
+
+### Changed
+- Kaderlijst column label `Jaargroep` is now `Jaarlaag`.
+- Team names in Kaderlijst now strip the `AWC ` prefix when the team name contains a `JOxx` pattern.
+
+### Fixed
+- Kaderlijst now excludes non-team senior roles except the explicit `Coördinator Senioren` role.
+
+## [30.11.4] - 2026-02-25
+
+### Fixed
+- Corrected Kaderlijst age-group inference for coordinator roles without `JOxx` in the role text, so `Coördinator Junioren` and `Coördinator Pupillen` no longer fall back to `Senioren`.
+- Corrected Kaderlijst ordering to render per-year blocks as expected: age-group coordinator first, then `JO19` coordinator + `JO19` teams, then `JO17` coordinator + `JO17` teams, etc.
+
+## [30.11.3] - 2026-02-25
+
+### Changed
+- Kaderlijst ordering now enforces coordinator hierarchy inside groups: age-group coordinators first, then year-group coordinators, then team-level roles.
+
+### Fixed
+- Optimized Kaderlijst loading performance by fetching paginated teams/people in parallel batches and limiting REST payloads to required fields only.
+
+## [30.11.2] - 2026-02-25
+
+### Fixed
+- Kaderlijst now maps `Mini's` entries to `JO7` under `Pupillen`.
+- Replaced `Overig` labeling in Kaderlijst with `Senioren`.
+- Included current coordinator roles without a linked team (such as `Organisatorisch coördinator` and `Technisch Coördinator`) by inferring grouping from role text when needed.
+
+## [30.11.1] - 2026-02-25
+
+### Fixed
+- Fixed `/kaderlijst` infinite loading by replacing per-team people fan-out requests with a bulk build from `people.work_history`, reducing request count and preventing stalled loading states.
+
+## [30.11.0] - 2026-02-25
+
+### Added
+- New **Kaderlijst** page at `/kaderlijst`, built with the shared DataTable component, to replace static trainer/coaching sheets with a live roster view.
+- Roster rows now aggregate active team assignments across all teams, include first name, surname (`infix + last_name`), role, mobile, and email, and allow people to appear multiple times for different roles/teams.
+- Nice-to-have filters added for `leeftijdsgroep` and `jaargroep` in the roster toolbar.
+
+### Changed
+- Sidebar navigation now includes **Kaderlijst** as a child item under Teams.
+- Kaderlijst ordering now follows youth structure from older to younger (`Junioren` JO19→JO12, then `Pupillen` JO11→JO6) with grouped display that suppresses repeated age group/year/team values on consecutive rows.
+
 ## [30.10.17] - 2026-02-25
 
 ### Added

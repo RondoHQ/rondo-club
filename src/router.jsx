@@ -14,6 +14,7 @@ import Dashboard from '@/pages/Dashboard';
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
   PeopleList, PeopleAnniversaries, PersonDetail, TeamsList, TeamDetail,
+  Kaderlijst,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
@@ -267,6 +268,7 @@ const router = createBrowserRouter([
           // Teams routes
           { path: 'teams', element: <TeamsList /> },
           { path: 'teams/:id', element: <TeamDetail /> },
+          { path: 'kaderlijst', element: <Kaderlijst /> },
           {
             path: 'kleding',
             element: (

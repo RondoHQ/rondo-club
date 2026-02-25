@@ -98,6 +98,10 @@ export const prmApi = {
   
   // Dashboard
   getDashboard: () => api.get('/rondo/v1/dashboard'),
+
+  // Kaderlijst snapshot (database-backed cache)
+  getKaderlijstSnapshot: () => api.get('/rondo/v1/kaderlijst/snapshot'),
+  updateKaderlijstSnapshot: (snapshot) => api.post('/rondo/v1/kaderlijst/snapshot', { snapshot }),
   
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),
