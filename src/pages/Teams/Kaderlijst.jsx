@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
-import { wpApi, prmApi } from '@/api/client';
+import { wpApi } from '@/api/client';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -72,6 +72,25 @@ function buildLineage(team, teamsById) {
   }
 
   return lineage;
+}
+
+function isTruthy(value) {
+  return value === true || value === 1 || value === '1';
+}
+
+function isCurrentJob(job) {
+  const hasEndDate = !!job?.end_date;
+  const endDate = hasEndDate ? new Date(job.end_date) : null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (isTruthy(job?.is_current)) {
+    if (!hasEndDate) return true;
+    return !Number.isNaN(endDate.getTime()) && endDate >= today;
+  }
+
+  if (!hasEndDate) return true;
+  return !Number.isNaN(endDate.getTime()) && endDate >= today;
 }
 
 function deriveGrouping(team, teamsById) {
@@ -186,47 +205,42 @@ export default function Kaderlijst() {
     queryKey: ['kaderlijst'],
     queryFn: async () => {
       const [teams, people] = await Promise.all([fetchAllTeams(), fetchAllPeople()]);
-
-      const peopleById = new Map(people.map((person) => [person.id, person]));
-      const assignments = await Promise.all(
-        teams.map(async (team) => {
-          try {
-            const response = await prmApi.getTeamPeople(team.id);
-            return {
-              teamId: team.id,
-              current: response.data?.current || [],
-            };
-          } catch {
-            return {
-              teamId: team.id,
-              current: [],
-            };
-          }
-        }),
-      );
+      const teamsById = new Map(teams.map((team) => [team.id, team]));
 
       const rows = [];
-      assignments.forEach((assignment) => {
-        const team = teams.find((item) => item.id === assignment.teamId);
-        if (!team) return;
+      people.forEach((person) => {
+        if (isTruthy(person?.acf?.former_member)) return;
 
-        assignment.current.forEach((member) => {
-          const person = peopleById.get(member.id);
-          const firstName = person?.acf?.first_name || member.first_name || '';
-          const infix = person?.acf?.infix || '';
-          const lastName = person?.acf?.last_name || member.last_name || '';
+        const workHistory = Array.isArray(person?.acf?.work_history) ? person.acf.work_history : [];
+        if (workHistory.length === 0) return;
+
+        const firstName = person?.acf?.first_name || '';
+        const infix = person?.acf?.infix || '';
+        const lastName = person?.acf?.last_name || '';
+        const mobile = getPrimaryPhone(person);
+        const email = getPrimaryContactByType(person, 'email');
+
+        workHistory.forEach((job) => {
+          const teamId = Number.parseInt(job?.team, 10);
+          if (!teamId || !isCurrentJob(job)) return;
+
+          const team = teamsById.get(teamId);
+          if (!team) return;
+
+          const role = decodeHtml(job?.job_title || '');
+          if (!role) return;
 
           rows.push({
-            id: `${team.id}-${member.id}-${member.job_title || 'rol'}`,
-            personId: member.id,
-            teamId: team.id,
+            id: `${teamId}-${person.id}-${role}`,
+            personId: person.id,
+            teamId,
             teamName: team.name,
             firstName: decodeHtml(firstName),
             infix: decodeHtml(infix),
             lastName: decodeHtml(lastName),
-            role: decodeHtml(member.job_title || ''),
-            mobile: decodeHtml(getPrimaryPhone(person)),
-            email: decodeHtml(getPrimaryContactByType(person, 'email')),
+            role,
+            mobile: decodeHtml(mobile),
+            email: decodeHtml(email),
           });
         });
       });
