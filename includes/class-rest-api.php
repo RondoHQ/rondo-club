@@ -5852,6 +5852,11 @@ class Api extends Base {
 		// Look up the person by KNVB ID via ACF field meta, then sync via person ID.
 		$person_id = $this->find_person_id_by_knvb_id( $knvb_id );
 		if ( $person_id ) {
+			$deduped_count = $this->dedupe_person_work_history_entries( $person_id );
+			if ( $deduped_count > 0 ) {
+				$body['work_history_deduped'] = $deduped_count;
+			}
+
 			$cap_sync        = new \Rondo\Users\CapabilitySync();
 			$cap_sync_result = $cap_sync->sync_user_by_person_id( $person_id );
 			if ( is_array( $cap_sync_result ) ) {
@@ -5887,6 +5892,74 @@ class Api extends Base {
 		);
 
 		return ! empty( $posts ) ? (int) $posts[0] : null;
+	}
+
+	/**
+	 * Normalize one work history row into a stable dedupe key.
+	 *
+	 * @param array $row Raw ACF work_history row.
+	 * @return string Stable serialized key.
+	 */
+	private function get_work_history_dedupe_key( array $row ): string {
+		$team = $row['team'] ?? '';
+		if ( is_array( $team ) ) {
+			$team = $team['ID'] ?? $team['id'] ?? $team['post_id'] ?? '';
+		}
+
+		$team = is_numeric( $team ) ? (string) (int) $team : trim( (string) $team );
+
+		$normalized = [
+			'team'        => $team,
+			'entity_type' => strtolower( trim( (string) ( $row['entity_type'] ?? '' ) ) ),
+			'job_title'   => trim( (string) ( $row['job_title'] ?? '' ) ),
+			'description' => trim( (string) ( $row['description'] ?? '' ) ),
+			'start_date'  => trim( (string) ( $row['start_date'] ?? '' ) ),
+			'end_date'    => trim( (string) ( $row['end_date'] ?? '' ) ),
+			'is_current'  => ! empty( $row['is_current'] ) ? '1' : '0',
+		];
+
+		return wp_json_encode( $normalized );
+	}
+
+	/**
+	 * Remove exact duplicate work_history rows for a person.
+	 *
+	 * Duplicates are determined by normalized team/context + role + dates + current flag.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return int Number of removed duplicate rows.
+	 */
+	private function dedupe_person_work_history_entries( int $person_id ): int {
+		$work_history = get_field( 'work_history', $person_id );
+		if ( ! is_array( $work_history ) || empty( $work_history ) ) {
+			return 0;
+		}
+
+		$seen          = [];
+		$deduped       = [];
+		$removed_count = 0;
+
+		foreach ( $work_history as $row ) {
+			if ( ! is_array( $row ) ) {
+				$deduped[] = $row;
+				continue;
+			}
+
+			$key = $this->get_work_history_dedupe_key( $row );
+			if ( isset( $seen[ $key ] ) ) {
+				++$removed_count;
+				continue;
+			}
+
+			$seen[ $key ] = true;
+			$deduped[]    = $row;
+		}
+
+		if ( $removed_count > 0 ) {
+			update_field( 'work_history', $deduped, $person_id );
+		}
+
+		return $removed_count;
 	}
 
 	/**
