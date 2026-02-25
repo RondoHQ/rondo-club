@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.11.4] - 2026-02-25
+
+### Fixed
+- Corrected Kaderlijst age-group inference for coordinator roles without `JOxx` in the role text, so `Coördinator Junioren` and `Coördinator Pupillen` no longer fall back to `Senioren`.
+- Corrected Kaderlijst ordering to render per-year blocks as expected: age-group coordinator first, then `JO19` coordinator + `JO19` teams, then `JO17` coordinator + `JO17` teams, etc.
+
 ## [30.11.3] - 2026-02-25
 
 ### Changed
