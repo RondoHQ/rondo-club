@@ -128,7 +128,7 @@ export default function PersonDetail() {
   useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Lid');
 
   // Get birthdate from ACF field
-  const birthDate = person?.acf?.birthdate && person.acf.birthdate !== ''
+  const birthDate = person?.acf?.birthdate && isValidDate(person.acf.birthdate)
     ? new Date(person.acf.birthdate)
     : null;
 
@@ -140,6 +140,8 @@ export default function PersonDetail() {
 
   // Format birthdate for display: "6 feb 1982"
   const formattedBirthdate = birthDate ? format(birthDate, 'd MMM yyyy') : null;
+  const hasValidLidTot = !!(person?.acf?.['lid-tot'] && isValidDate(person.acf['lid-tot']));
+  const formattedLidTot = hasValidLidTot ? format(parseISO(person.acf['lid-tot']), 'd MMMM yyyy') : null;
 
   // Handle saving all contacts from modal
   const handleSaveContacts = async (contacts) => {
@@ -1040,7 +1042,7 @@ export default function PersonDetail() {
                   Oud-lid
                 </span>
               )}
-              {!acf.former_member && acf['lid-tot'] && new Date(acf['lid-tot']) > new Date() && (
+              {!acf.former_member && hasValidLidTot && new Date(acf['lid-tot']) > new Date() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Afmelding in de toekomst
                 </span>
@@ -1089,10 +1091,10 @@ export default function PersonDetail() {
                     <span className="text-red-600 dark:text-red-400 font-medium">Financiële blokkade</span>
                   </>
                 )}
-                {acf['lid-tot'] && (
+                {hasValidLidTot && (
                   <>
                     {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && <span>&nbsp;—&nbsp;</span>}
-                    <span>Lid tot: {format(parseISO(acf['lid-tot']), 'd MMMM yyyy')}</span>
+                    <span>Lid tot: {formattedLidTot}</span>
                   </>
                 )}
               </p>
