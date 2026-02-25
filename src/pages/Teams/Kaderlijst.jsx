@@ -135,7 +135,8 @@ function deriveGrouping(team, teamsById) {
 function deriveGroupingFromText(label) {
   const yearGroup = parseYearGroupFromLabel(label);
   const yearNumber = parseYearFromLabel(yearGroup || label);
-  const ageGroup = yearNumber ? getAgeGroupFromYear(yearNumber) : 'Senioren';
+  const ageGroupFromText = parseAgeGroupFromLabel(label);
+  const ageGroup = yearNumber ? getAgeGroupFromYear(yearNumber) : (ageGroupFromText || 'Senioren');
 
   return {
     ageGroup,
@@ -313,12 +314,18 @@ export default function Kaderlijst() {
       const ageCmp = (AGE_GROUP_ORDER[a.ageGroup] ?? 99) - (AGE_GROUP_ORDER[b.ageGroup] ?? 99);
       if (ageCmp !== 0) return ageCmp;
 
-      const scopeCmp = (a.scopePriority ?? 9) - (b.scopePriority ?? 9);
-      if (scopeCmp !== 0) return scopeCmp;
+      // Keep age-group coordinator rows above all year rows in that age group.
+      const aIsAgeCoordinator = (a.scopePriority ?? 9) === 0;
+      const bIsAgeCoordinator = (b.scopePriority ?? 9) === 0;
+      if (aIsAgeCoordinator !== bIsAgeCoordinator) return aIsAgeCoordinator ? -1 : 1;
 
       const yearA = a.yearNumber ?? -1;
       const yearB = b.yearNumber ?? -1;
       if (yearA !== yearB) return yearB - yearA;
+
+      // Within the same year block, coordinator rows come before team rows.
+      const scopeCmp = (a.scopePriority ?? 9) - (b.scopePriority ?? 9);
+      if (scopeCmp !== 0) return scopeCmp;
 
       const teamCmp = collator.compare(a.teamName, b.teamName);
       if (teamCmp !== 0) return teamCmp;
