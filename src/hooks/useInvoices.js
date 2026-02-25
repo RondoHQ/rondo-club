@@ -60,6 +60,23 @@ export function useCreateInvoice() {
   });
 }
 
+
+/**
+ * Get preview of the next invoice number
+ * @returns {object} Query result
+ */
+export function useNextInvoiceNumber(options = {}) {
+  return useQuery({
+    queryKey: ['invoices', 'next-number'],
+    queryFn: async () => {
+      const response = await prmApi.getNextInvoiceNumber();
+      return response.data;
+    },
+    staleTime: 30000,
+    ...options,
+  });
+}
+
 /**
  * Get all invoices (optionally filtered)
  * @param {object} params - Query parameters (status, person_id)

@@ -323,6 +323,7 @@ export const prmApi = {
   getRabobankCertificate: () => api.get('/rondo/v1/rabobank/certificate'),
 
   // Invoice endpoints
+  getNextInvoiceNumber: () => api.get('/rondo/v1/invoices/next-number'),
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),

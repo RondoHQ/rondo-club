@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.7] - 2026-02-25
+
+### Added
+- New manual finance invoice creation screen (`/financien/facturen/nieuw`) with unified normal/credit workflow, multi-line items, optional member link, customer override data, due-date override, email override, and invoice number preview.
+
+### Changed
+- Invoice numbering now uses a shared yearly sequence in `{year}F{0001}` format for all invoice kinds, including credits.
+- Invoice API now supports manual invoices (`invoice_type=manual`), optional customer metadata, invoice kind (`normal|credit`), and next-number preview endpoint.
+- Sending credit invoices now records a payment-adjustment timestamp and auto-transitions to paid after finalize.
+
 ## [30.10.6] - 2026-02-23
 
 ### Fixed
