@@ -102,7 +102,11 @@ export default function DataTableToolbar({
 
       {/* Right: custom slot + column settings cog */}
       <div className="flex items-center gap-2">
-        {toolbarEnd}
+        {toolbarEnd && (
+          <div className="shrink-0">
+            {toolbarEnd}
+          </div>
+        )}
         <button
           onClick={onOpenColumnSettings}
           className="btn-secondary"

@@ -1600,6 +1600,20 @@ function GebruikersTab() {
     });
   };
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '-';
+    const normalized = dateString.includes('T') ? dateString : `${dateString.replace(' ', 'T')}Z`;
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleString('nl-NL', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -1635,13 +1649,14 @@ function GebruikersTab() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Geen actieve gebruikers gevonden.</p>
         ) : (
           <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
-            <div className="max-h-96 overflow-y-auto">
+            <div className="overflow-x-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
                   <tr>
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Naam</th>
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">E-mail</th>
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Geregistreerd</th>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">Laatst actief</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1658,6 +1673,7 @@ function GebruikersTab() {
                       </td>
                       <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{user.email}</td>
                       <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{formatDate(user.registered)}</td>
+                      <td className="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">{formatDateTime(user.last_active)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1865,6 +1881,24 @@ function AnniversariesTab({
               <span>{formatMilestone(milestone)} jaar</span>
             </label>
           ))}
+          {customMilestones.map((milestone) => (
+            <label
+              key={`${category}-custom-${milestone}`}
+              className="flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm"
+            >
+              <input
+                type="checkbox"
+                checked
+                onChange={(e) => {
+                  if (!e.target.checked) {
+                    toggleMilestone(category, milestone, false);
+                  }
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-electric-cyan focus:ring-electric-cyan"
+              />
+              <span>{formatMilestone(milestone)} jaar</span>
+            </label>
+          ))}
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center gap-2">
@@ -1885,21 +1919,6 @@ function AnniversariesTab({
           <p className="text-xs text-gray-500 dark:text-gray-400">Alleen hele of halve jaren (bijv. 12,5).</p>
         </div>
 
-        {customMilestones.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {customMilestones.map((milestone) => (
-              <button
-                key={`${category}-custom-${milestone}`}
-                type="button"
-                onClick={() => toggleMilestone(category, milestone, false)}
-                className="inline-flex items-center gap-1 rounded-full bg-cyan-50 dark:bg-gray-700 text-cyan-700 dark:text-cyan-300 px-3 py-1 text-xs"
-              >
-                {formatMilestone(milestone)} jaar
-                <span aria-hidden>×</span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     );
   };
