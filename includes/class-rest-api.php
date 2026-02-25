@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Api extends Base {
 	private const VOLUNTEER_START_DATE_META_KEY = '_rondo_volunteer_start_date';
 	private const VOLUNTEER_START_DATE_NONE     = '__none__';
+	private const KADERLIJST_SNAPSHOT_OPTION    = 'rondo_kaderlijst_snapshot';
+	private const KADERLIJST_UPDATED_OPTION     = 'rondo_kaderlijst_snapshot_updated_at';
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -353,6 +355,32 @@ class Api extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_dashboard_summary' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		// Kaderlijst snapshot (database-backed)
+		register_rest_route(
+			'rondo/v1',
+			'/kaderlijst/snapshot',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_kaderlijst_snapshot' ],
+					'permission_callback' => [ $this, 'check_user_approved' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_kaderlijst_snapshot' ],
+					'permission_callback' => [ $this, 'check_user_approved' ],
+					'args'                => [
+						'snapshot' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param ) && isset( $param['teams'], $param['rows'] ) && is_array( $param['teams'] ) && is_array( $param['rows'] );
+							},
+						],
+					],
+				],
 			]
 		);
 
@@ -2287,6 +2315,56 @@ class Api extends Base {
 			[
 				'visible_cards' => $visible_cards,
 				'card_order'    => $card_order,
+			]
+		);
+	}
+
+	/**
+	 * Get persisted kaderlijst snapshot from WordPress options.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_kaderlijst_snapshot( $request ) {
+		$snapshot   = get_option( self::KADERLIJST_SNAPSHOT_OPTION, null );
+		$updated_at = get_option( self::KADERLIJST_UPDATED_OPTION, null );
+
+		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) ) {
+			$snapshot = null;
+		}
+
+		return rest_ensure_response(
+			[
+				'snapshot'   => $snapshot,
+				'updated_at' => is_string( $updated_at ) ? $updated_at : null,
+			]
+		);
+	}
+
+	/**
+	 * Persist kaderlijst snapshot in WordPress options.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_kaderlijst_snapshot( $request ) {
+		$snapshot = $request->get_param( 'snapshot' );
+		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) || ! is_array( $snapshot['teams'] ) || ! is_array( $snapshot['rows'] ) ) {
+			return new \WP_Error(
+				'invalid_snapshot',
+				__( 'Invalid kaderlijst snapshot payload.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		update_option( self::KADERLIJST_SNAPSHOT_OPTION, $snapshot, false );
+		$updated_at = gmdate( 'c' );
+		update_option( self::KADERLIJST_UPDATED_OPTION, $updated_at, false );
+
+		return rest_ensure_response(
+			[
+				'snapshot'   => $snapshot,
+				'updated_at' => $updated_at,
 			]
 		);
 	}
@@ -5774,6 +5852,11 @@ class Api extends Base {
 		// Look up the person by KNVB ID via ACF field meta, then sync via person ID.
 		$person_id = $this->find_person_id_by_knvb_id( $knvb_id );
 		if ( $person_id ) {
+			$deduped_count = $this->dedupe_person_work_history_entries( $person_id );
+			if ( $deduped_count > 0 ) {
+				$body['work_history_deduped'] = $deduped_count;
+			}
+
 			$cap_sync        = new \Rondo\Users\CapabilitySync();
 			$cap_sync_result = $cap_sync->sync_user_by_person_id( $person_id );
 			if ( is_array( $cap_sync_result ) ) {
@@ -5809,6 +5892,74 @@ class Api extends Base {
 		);
 
 		return ! empty( $posts ) ? (int) $posts[0] : null;
+	}
+
+	/**
+	 * Normalize one work history row into a stable dedupe key.
+	 *
+	 * @param array $row Raw ACF work_history row.
+	 * @return string Stable serialized key.
+	 */
+	private function get_work_history_dedupe_key( array $row ): string {
+		$team = $row['team'] ?? '';
+		if ( is_array( $team ) ) {
+			$team = $team['ID'] ?? $team['id'] ?? $team['post_id'] ?? '';
+		}
+
+		$team = is_numeric( $team ) ? (string) (int) $team : trim( (string) $team );
+
+		$normalized = [
+			'team'        => $team,
+			'entity_type' => strtolower( trim( (string) ( $row['entity_type'] ?? '' ) ) ),
+			'job_title'   => trim( (string) ( $row['job_title'] ?? '' ) ),
+			'description' => trim( (string) ( $row['description'] ?? '' ) ),
+			'start_date'  => trim( (string) ( $row['start_date'] ?? '' ) ),
+			'end_date'    => trim( (string) ( $row['end_date'] ?? '' ) ),
+			'is_current'  => ! empty( $row['is_current'] ) ? '1' : '0',
+		];
+
+		return wp_json_encode( $normalized );
+	}
+
+	/**
+	 * Remove exact duplicate work_history rows for a person.
+	 *
+	 * Duplicates are determined by normalized team/context + role + dates + current flag.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return int Number of removed duplicate rows.
+	 */
+	private function dedupe_person_work_history_entries( int $person_id ): int {
+		$work_history = get_field( 'work_history', $person_id );
+		if ( ! is_array( $work_history ) || empty( $work_history ) ) {
+			return 0;
+		}
+
+		$seen          = [];
+		$deduped       = [];
+		$removed_count = 0;
+
+		foreach ( $work_history as $row ) {
+			if ( ! is_array( $row ) ) {
+				$deduped[] = $row;
+				continue;
+			}
+
+			$key = $this->get_work_history_dedupe_key( $row );
+			if ( isset( $seen[ $key ] ) ) {
+				++$removed_count;
+				continue;
+			}
+
+			$seen[ $key ] = true;
+			$deduped[]    = $row;
+		}
+
+		if ( $removed_count > 0 ) {
+			update_field( 'work_history', $deduped, $person_id );
+		}
+
+		return $removed_count;
 	}
 
 	/**
