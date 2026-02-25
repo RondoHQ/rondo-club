@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.1] - 2026-02-25
+
+### Added
+- Added native WordPress person post meta field `team` (REST-exposed) to store a direct primary team link for sync workflows (e.g. `rondo-sync`) without requiring ACF.
+
 ## [31.0.0] - 2026-02-25
 
 ### Added
