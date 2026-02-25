@@ -6,6 +6,7 @@ export const PeopleAnniversaries = lazy(() => import('@/pages/People/PeopleAnniv
 export const PersonDetail = lazy(() => import('@/pages/People/PersonDetail'));
 export const TeamsList = lazy(() => import('@/pages/Teams/TeamsList'));
 export const TeamDetail = lazy(() => import('@/pages/Teams/TeamDetail'));
+export const Kaderlijst = lazy(() => import('@/pages/Teams/Kaderlijst'));
 export const CommissiesList = lazy(() => import('@/pages/Commissies/CommissiesList'));
 export const CommissieDetail = lazy(() => import('@/pages/Commissies/CommissieDetail'));
 export const TodosList = lazy(() => import('@/pages/Todos/TodosList'));
