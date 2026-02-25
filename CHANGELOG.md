@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.0] - 2026-02-25
+
+### Added
+- Added a new `/kaderlijst` roster page using DataTable with grouped age/year/team rendering, persisted snapshot storage in WordPress options, and a manual refresh button that clears query cache before rebuilding.
+
+### Changed
+- Updated Kaderlijst structure and ordering to match club expectations: age-group coordinators at the top of each age group, year coordinators at the top of each year block, then team rows.
+- Updated Kaderlijst labels and normalization: `Jaargroep` renamed to `Jaarlaag`, `Overig` mapped to `Senioren`, `Mini's` grouped under `JO7` in `Pupillen`, and `AWC ` prefixes removed for `JO` team names.
+- Updated intra-team sorting to use explicit role priority order for coaches/staff roles.
+
+### Fixed
+- Fixed missing coordinator visibility in Kaderlijst (including `Technisch Coördinator` and `Organisatorisch coördinator` rows) and corrected Junioren/Pupillen coordinator placement.
+- Fixed Kaderlijst loading performance and reliability by removing heavy fan-out requests and optimizing roster build behavior.
+- Fixed `Invalid time value` crashes on person detail pages by hardening date parsing/formatting across PersonDetail and related cards/components.
+- Fixed duplicate work-history roles introduced by repeated Sportlink syncs by deduplicating rows server-side after individual sync.
+
 ## [30.11.5] - 2026-02-25
 
 ### Changed
