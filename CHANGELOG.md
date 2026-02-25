@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.11.0] - 2026-02-25
+
+### Added
+- New **Kaderlijst** page at `/kaderlijst`, built with the shared DataTable component, to replace static trainer/coaching sheets with a live roster view.
+- Roster rows now aggregate active team assignments across all teams, include first name, surname (`infix + last_name`), role, mobile, and email, and allow people to appear multiple times for different roles/teams.
+- Nice-to-have filters added for `leeftijdsgroep` and `jaargroep` in the roster toolbar.
+
+### Changed
+- Sidebar navigation now includes **Kaderlijst** as a child item under Teams.
+- Kaderlijst ordering now follows youth structure from older to younger (`Junioren` JO19→JO12, then `Pupillen` JO11→JO6) with grouped display that suppresses repeated age group/year/team values on consecutive rows.
+
 ## [30.10.17] - 2026-02-25
 
 ### Added

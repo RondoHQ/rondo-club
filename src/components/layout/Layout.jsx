@@ -49,6 +49,7 @@ const navigation = [
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
+  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
