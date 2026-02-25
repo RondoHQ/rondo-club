@@ -15,6 +15,7 @@ const AGE_GROUP_ORDER = {
   Pupillen: 1,
   Senioren: 2,
 };
+const FETCH_CONCURRENCY = 4;
 
 function getPrimaryContactByType(person, type) {
   const contactInfo = person?.acf?.contact_info || [];
@@ -122,7 +123,7 @@ function deriveGrouping(team, teamsById) {
     }
   }
 
-  if (!ageGroup) ageGroup = 'Overig';
+  if (!ageGroup) ageGroup = 'Senioren';
 
   return {
     ageGroup,
@@ -143,70 +144,83 @@ function deriveGroupingFromText(label) {
   };
 }
 
-async function fetchAllTeams() {
-  const allTeams = [];
-  const perPage = 100;
-  let page = 1;
-  let hasMore = true;
+function getRowScopePriority(row) {
+  const normalizedRole = String(row.role || '').toLowerCase();
+  const hasYearInRole = !!parseYearFromLabel(normalizedRole);
+  const hasAgeGroupInRole = normalizedRole.includes('junior') || normalizedRole.includes('pupil') || normalizedRole.includes('senior');
+  const isCoordinator = normalizedRole.includes('coördinator') || normalizedRole.includes('coordinator');
 
-  while (hasMore) {
-    const response = await wpApi.getTeams({ page, per_page: perPage });
-    const teams = response.data || [];
-
-    allTeams.push(...teams.map((team) => ({
-      id: team.id,
-      parent: team.parent || 0,
-      name: getTeamName(team),
-    })));
-
-    if (teams.length < perPage) {
-      hasMore = false;
-      break;
-    }
-
-    const totalPages = Number.parseInt(
-      response.headers['x-wp-totalpages'] || response.headers['X-WP-TotalPages'] || '0',
-      10,
-    );
-
-    if (totalPages > 0 && page >= totalPages) {
-      hasMore = false;
-      break;
-    }
-
-    page += 1;
+  // Age-group coordinator (e.g. Coördinator Junioren) should be top within age group.
+  if ((isCoordinator && hasAgeGroupInRole && !hasYearInRole) || (!row.hasTeamLink && hasAgeGroupInRole && !hasYearInRole)) {
+    return 0;
   }
 
-  return allTeams;
+  // Year-group coordinator (e.g. Technisch/Organisatorisch coördinator JO19) comes before teams in that year group.
+  if ((isCoordinator && hasYearInRole) || (!row.hasTeamLink && hasYearInRole)) {
+    return 1;
+  }
+
+  // Team-linked roles appear after coordinator rows.
+  return 2;
+}
+
+async function fetchAllTeams() {
+  const perPage = 100;
+  const params = {
+    per_page: perPage,
+    _fields: 'id,parent,title',
+  };
+
+  const firstResponse = await wpApi.getTeams({ ...params, page: 1 });
+  const totalPages = Number.parseInt(
+    firstResponse.headers['x-wp-totalpages'] || firstResponse.headers['X-WP-TotalPages'] || '1',
+    10,
+  ) || 1;
+
+  const allTeams = [...(firstResponse.data || [])];
+  if (totalPages > 1) {
+    const pageNumbers = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
+
+    for (let i = 0; i < pageNumbers.length; i += FETCH_CONCURRENCY) {
+      const batch = pageNumbers.slice(i, i + FETCH_CONCURRENCY);
+      const responses = await Promise.all(batch.map((page) => wpApi.getTeams({ ...params, page })));
+      responses.forEach((response) => {
+        allTeams.push(...(response.data || []));
+      });
+    }
+  }
+
+  return allTeams.map((team) => ({
+    id: team.id,
+    parent: team.parent || 0,
+    name: getTeamName(team),
+  }));
 }
 
 async function fetchAllPeople() {
-  const allPeople = [];
   const perPage = 100;
-  let page = 1;
-  let hasMore = true;
+  const params = {
+    per_page: perPage,
+    _fields: 'id,acf',
+  };
 
-  while (hasMore) {
-    const response = await wpApi.getPeople({ page, per_page: perPage });
-    const people = response.data || [];
-    allPeople.push(...people);
+  const firstResponse = await wpApi.getPeople({ ...params, page: 1 });
+  const totalPages = Number.parseInt(
+    firstResponse.headers['x-wp-totalpages'] || firstResponse.headers['X-WP-TotalPages'] || '1',
+    10,
+  ) || 1;
 
-    if (people.length < perPage) {
-      hasMore = false;
-      break;
+  const allPeople = [...(firstResponse.data || [])];
+  if (totalPages > 1) {
+    const pageNumbers = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
+
+    for (let i = 0; i < pageNumbers.length; i += FETCH_CONCURRENCY) {
+      const batch = pageNumbers.slice(i, i + FETCH_CONCURRENCY);
+      const responses = await Promise.all(batch.map((page) => wpApi.getPeople({ ...params, page })));
+      responses.forEach((response) => {
+        allPeople.push(...(response.data || []));
+      });
     }
-
-    const totalPages = Number.parseInt(
-      response.headers['x-wp-totalpages'] || response.headers['X-WP-TotalPages'] || '0',
-      10,
-    );
-
-    if (totalPages > 0 && page >= totalPages) {
-      hasMore = false;
-      break;
-    }
-
-    page += 1;
   }
 
   return allPeople;
@@ -291,12 +305,16 @@ export default function Kaderlijst() {
         yearGroup: grouping.yearGroup,
         yearNumber: grouping.yearNumber,
         surname: [row.infix, row.lastName].filter(Boolean).join(' '),
+        scopePriority: getRowScopePriority(row),
       };
     });
 
     const sortedRows = [...enrichedRows].sort((a, b) => {
       const ageCmp = (AGE_GROUP_ORDER[a.ageGroup] ?? 99) - (AGE_GROUP_ORDER[b.ageGroup] ?? 99);
       if (ageCmp !== 0) return ageCmp;
+
+      const scopeCmp = (a.scopePriority ?? 9) - (b.scopePriority ?? 9);
+      if (scopeCmp !== 0) return scopeCmp;
 
       const yearA = a.yearNumber ?? -1;
       const yearB = b.yearNumber ?? -1;
