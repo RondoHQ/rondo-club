@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.16] - 2026-02-25
+
+### Fixed
+- Switched the app shell to use document-level scrolling on mobile (while keeping fixed-shell scrolling on desktop) to prevent long pages from getting clipped at the bottom.
+- Kept global safe-area/mobile bottom spacing in the shared `<main>` container for consistent end-of-page reachability across screens.
+
+## [30.10.15] - 2026-02-25
+
+### Fixed
+- Applied a global mobile scroll-end buffer in the shared app layout (`<main>`) so long pages like `/people/jubilarissen`, `/vog`, and other list/detail screens can reliably scroll to the bottom.
+- Removed page-specific bottom padding workaround from PersonDetail in favor of the shared layout fix.
+
+## [30.10.14] - 2026-02-25
+
+### Fixed
+- Added extra mobile bottom padding on `/people/:id` so the end of PersonDetail content remains reachable above Safari bottom UI and the floating todos button.
+
+## [30.10.13] - 2026-02-25
+
+### Fixed
+- Fixed mobile scrolling on person detail pages by making the app shell height account for the WordPress admin bar offset.
+- Added `min-h-0` constraints in the main layout flex containers to prevent content clipping and allow full scroll to the end.
+
 ## [30.10.12] - 2026-02-24
 
 ### Fixed

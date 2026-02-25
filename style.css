@@ -4,7 +4,7 @@ Theme URI: https://github.com/jdevalk/rondo
 Author: Joost de Valk
 Author URI: https://joost.blog/
 Description: A React-powered club management theme for sports clubs.
-Version: 30.10.12
+Version: 30.10.16
 Requires at least: 6.0
 Requires PHP: 8.0
 License: GNU General Public License v2 or later
@@ -24,13 +24,20 @@ html, body {
     min-height: 100vh;
 }
 
+/* Admin bar offset used by the app shell height calculation */
+:root {
+    --rondo-admin-bar-offset: 0px;
+}
+
 /* WordPress admin bar spacing */
 body.admin-bar #root {
+    --rondo-admin-bar-offset: 32px;
     margin-top: 32px;
 }
 
 @media screen and (max-width: 782px) {
     body.admin-bar #root {
+        --rondo-admin-bar-offset: 46px;
         margin-top: 46px;
     }
 }
