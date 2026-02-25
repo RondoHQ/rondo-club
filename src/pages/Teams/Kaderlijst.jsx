@@ -16,6 +16,38 @@ const AGE_GROUP_ORDER = {
   Senioren: 2,
 };
 const FETCH_CONCURRENCY = 4;
+const ROLE_SORT_ORDER = {
+  'trainer/coach': 0,
+  'assistenttrainer/coach': 1,
+  keeperstrainer: 2,
+  trainer: 3,
+  performancecoach: 4,
+  teammanager: 5,
+  assistentscheidsrechterclub: 6,
+  fysiotherapeut: 7,
+  verzorger: 8,
+  materiaalman: 9,
+};
+
+function toCompactRoleKey(role) {
+  return String(role || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9/]/g, '');
+}
+
+function getRolePriority(role) {
+  const key = toCompactRoleKey(role);
+  return ROLE_SORT_ORDER[key] ?? 999;
+}
+
+function normalizeRoleForDisplay(role) {
+  const trimmed = String(role || '').trim();
+  if (toCompactRoleKey(trimmed) === 'trainer') return 'Trainer';
+  return trimmed;
+}
 
 function normalizeTeamNameForRoster(name) {
   const decoded = decodeHtml(name || '').trim();
@@ -265,7 +297,7 @@ export default function Kaderlijst() {
 
           const team = teamId ? teamsById.get(teamId) : null;
 
-          const role = decodeHtml(job?.job_title || '');
+          const role = normalizeRoleForDisplay(decodeHtml(job?.job_title || ''));
           if (!role) return;
 
           const fallbackGrouping = deriveGroupingFromText(role);
@@ -283,6 +315,7 @@ export default function Kaderlijst() {
             infix: decodeHtml(infix),
             lastName: decodeHtml(lastName),
             role,
+            rolePriority: getRolePriority(role),
             mobile: decodeHtml(mobile),
             email: decodeHtml(email),
           });
@@ -343,6 +376,9 @@ export default function Kaderlijst() {
 
       const teamCmp = collator.compare(a.teamName, b.teamName);
       if (teamCmp !== 0) return teamCmp;
+
+      const roleCmp = (a.rolePriority ?? 999) - (b.rolePriority ?? 999);
+      if (roleCmp !== 0) return roleCmp;
 
       const surnameCmp = collator.compare(a.surname, b.surname);
       if (surnameCmp !== 0) return surnameCmp;
