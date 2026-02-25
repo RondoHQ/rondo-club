@@ -699,11 +699,21 @@ export default function Layout({ children }) {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const appMinHeight = isDemo
+    ? 'calc(100vh - 28px - var(--rondo-admin-bar-offset, 0px))'
+    : 'calc(100vh - var(--rondo-admin-bar-offset, 0px))';
+  const appHeight = isDemo
+    ? 'calc(100dvh - 28px - var(--rondo-admin-bar-offset, 0px))'
+    : 'calc(100dvh - var(--rondo-admin-bar-offset, 0px))';
   
   return (
     <>
       <DemoBanner />
-      <div className={`flex ${isDemo ? 'h-[calc(100vh-28px)]' : 'h-screen'} bg-gray-50 dark:bg-gray-900`}>
+      <div
+        className="flex min-h-[var(--app-min-height)] lg:h-[var(--app-height)] bg-gray-50 dark:bg-gray-900"
+        style={{ '--app-min-height': appMinHeight, '--app-height': appHeight }}
+      >
         {/* Desktop sidebar */}
         <div className="hidden lg:flex lg:w-64 lg:flex-col">
           <Sidebar stats={stats} />
@@ -726,14 +736,14 @@ export default function Layout({ children }) {
       )}
 
       {/* Main content */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 lg:min-h-0">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           onOpenSearch={() => setShowSearchModal(true)}
           onOpenFeedback={() => setShowFeedbackModal(true)}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 [overscroll-behavior-y:none]">
+        <main className="flex-1 px-4 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom))] overflow-visible lg:min-h-0 lg:overflow-y-auto lg:p-6 [overscroll-behavior-y:none]">
           {children}
         </main>
       </div>
