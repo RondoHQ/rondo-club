@@ -16,6 +16,7 @@ import {
   getAwaitingDays,
   getAwaitingUrgencyClass,
 } from '@/utils/timeline';
+import { isValidDate } from '@/utils/formatters';
 
 const ICON_MAP = {
   Phone,
@@ -36,6 +37,10 @@ export default function TimelineView({
   onToggleTodo,
   allPeople = [],
 }) {
+  const formatTodoDueDate = (dueDate) => {
+    if (!dueDate || !isValidDate(dueDate)) return null;
+    return format(new Date(dueDate), 'MMM d, yyyy');
+  };
   // State for tracking expanded email entries
   const [expandedEmails, setExpandedEmails] = useState(new Set());
 
@@ -243,7 +248,7 @@ export default function TimelineView({
                   <span className={`text-xs ${
                     isOverdue ? 'text-red-600 font-medium' : 'text-gray-500 dark:text-gray-400'
                   }`}>
-                    Due: {format(new Date(item.due_date), 'MMM d, yyyy')}
+                    Due: {formatTodoDueDate(item.due_date) || item.due_date}
                     {isOverdue && ' (overdue)'}
                   </span>
                 </div>
@@ -325,4 +330,3 @@ export default function TimelineView({
     </div>
   );
 }
-

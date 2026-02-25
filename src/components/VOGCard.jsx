@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell } from 'lucide-react';
 import { format } from '@/utils/dateFormat';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { isValidDate } from '@/utils/formatters';
 
 /**
  * Calculate VOG status based on date
@@ -9,7 +10,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
  * @returns {Object} Status object with status, label, and color
  */
 function calculateVogStatus(vogDate) {
-  if (!vogDate) {
+  if (!vogDate || !isValidDate(vogDate)) {
     return { status: 'missing', label: 'Geen VOG', color: 'red' };
   }
 
@@ -52,6 +53,12 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
   const emailSentDate = acfData?.vog_email_sent_date;
   const justisSubmittedDate = acfData?.vog_justis_submitted_date;
   const reminderSentDate = acfData?.vog_reminder_sent_date;
+  const hasValidVogDate = !!(vogDate && isValidDate(vogDate));
+
+  const formatSafeDate = (value) => {
+    if (!value || !isValidDate(value)) return null;
+    return format(new Date(value), 'd MMM yyyy');
+  };
 
   // Determine which icon to show
   function getStatusIcon(status) {
@@ -93,9 +100,9 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
           <span className={`font-medium ${statusColorClass}`}>
             {vogStatus.label}
           </span>
-          {vogDate && (
+          {hasValidVogDate && (
             <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
-              ({format(new Date(vogDate), 'd MMM yyyy')})
+              ({formatSafeDate(vogDate)})
             </span>
           )}
         </div>
@@ -132,7 +139,7 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 disabled={isUpdating || !personId}
                 className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
               >
-                {emailSentDate ? format(new Date(emailSentDate), 'd MMM yyyy') : 'Nog niet'}
+                {formatSafeDate(emailSentDate) || 'Nog niet'}
               </button>
             )}
           </div>
@@ -165,7 +172,7 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 disabled={isUpdating || !personId}
                 className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
               >
-                {justisSubmittedDate ? format(new Date(justisSubmittedDate), 'd MMM yyyy') : 'Nog niet'}
+                {formatSafeDate(justisSubmittedDate) || 'Nog niet'}
               </button>
             )}
           </div>
@@ -198,7 +205,7 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
                 disabled={isUpdating || !personId}
                 className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
               >
-                {reminderSentDate ? format(new Date(reminderSentDate), 'd MMM yyyy') : 'Nog niet'}
+                {formatSafeDate(reminderSentDate) || 'Nog niet'}
               </button>
             )}
           </div>
@@ -206,7 +213,7 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
       )}
 
       {/* Show valid VOG details */}
-      {vogStatus.status === 'valid' && vogDate && (
+      {vogStatus.status === 'valid' && hasValidVogDate && (
         <div className="text-sm text-gray-500 dark:text-gray-400">
           <span>Geldig tot: </span>
           <span className="text-gray-900 dark:text-gray-100">
