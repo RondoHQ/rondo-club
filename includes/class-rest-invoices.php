@@ -83,6 +83,19 @@ class Invoices extends Base {
 			]
 		);
 
+		// Preview next invoice number
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/next-number',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_next_invoice_number' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+				],
+			]
+		);
+
 		// List invoices
 		register_rest_route(
 			'rondo/v1',
@@ -109,7 +122,7 @@ class Invoices extends Base {
 						'type'      => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'membership', 'discipline' ], true );
+								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual' ], true );
 							},
 						],
 						'payment_plan' => [
@@ -594,6 +607,17 @@ class Invoices extends Base {
 	}
 
 	/**
+	 * Get preview of the next invoice number.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_next_invoice_number() {
+		return rest_ensure_response( [
+			'invoice_number' => InvoiceNumbering::generate_next(),
+		] );
+	}
+
+	/**
 	 * Get list of invoices
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
@@ -714,17 +738,16 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response containing created invoice or error.
 	 */
 	public function create_invoice( $request ) {
-		$person_id  = $request->get_param( 'person_id' );
-		$line_items = $request->get_param( 'line_items' );
-
-		// Validate required fields
-		if ( empty( $person_id ) ) {
-			return new \WP_Error(
-				'rest_missing_param',
-				__( 'Person ID is required.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'person_id' => 'Person ID is required' ] ]
-			);
-		}
+		$person_id           = (int) $request->get_param( 'person_id' );
+		$line_items          = $request->get_param( 'line_items' );
+		$invoice_kind        = $request->get_param( 'invoice_kind' ) === 'credit' ? 'credit' : 'normal';
+		$invoice_type        = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
+		$customer_name       = sanitize_text_field( (string) $request->get_param( 'customer_name' ) );
+		$customer_address    = sanitize_textarea_field( (string) $request->get_param( 'customer_address' ) );
+		$due_date_override   = preg_replace( '/[^0-9]/', '', (string) $request->get_param( 'payment_terms_due_date' ) );
+		$email_subject       = sanitize_text_field( (string) $request->get_param( 'email_subject' ) );
+		$email_body_override = wp_kses_post( (string) $request->get_param( 'email_body_override' ) );
+		$custom_fields       = $request->get_param( 'custom_fields' );
 
 		if ( empty( $line_items ) || ! is_array( $line_items ) ) {
 			return new \WP_Error(
@@ -734,26 +757,54 @@ class Invoices extends Base {
 			);
 		}
 
-		// Validate person exists
-		$person = get_post( $person_id );
-		if ( ! $person || $person->post_type !== 'person' ) {
+		$rows = [];
+		$total_amount = 0.0;
+		foreach ( $line_items as $item ) {
+			$amount = (float) ( $item['amount'] ?? 0 );
+			if ( $invoice_kind === 'credit' ) {
+				$amount = -abs( $amount );
+			}
+			$rows[] = [
+				'discipline_case' => ! empty( $item['discipline_case_id'] ) ? absint( $item['discipline_case_id'] ) : null,
+				'description'     => sanitize_text_field( $item['description'] ?? '' ),
+				'amount'          => $amount,
+			];
+			$total_amount += $amount;
+		}
+
+		if ( empty( $rows ) ) {
 			return new \WP_Error(
-				'rest_invalid_param',
-				__( 'Invalid person ID.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'person_id' => 'Person does not exist' ] ]
+				'rest_missing_param',
+				__( 'At least one line item is required.', 'rondo' ),
+				[ 'status' => 400 ]
 			);
 		}
 
-		// Generate invoice number
-		$invoice_number = InvoiceNumbering::generate_next();
-
-		// Calculate total amount
-		$total_amount = 0;
-		foreach ( $line_items as $item ) {
-			$total_amount += (float) ( $item['amount'] ?? 0 );
+		$person = null;
+		if ( $person_id > 0 ) {
+			$person = get_post( $person_id );
+			if ( ! $person || $person->post_type !== 'person' ) {
+				return new \WP_Error(
+					'rest_invalid_param',
+					__( 'Invalid person ID.', 'rondo' ),
+					[ 'status' => 400, 'params' => [ 'person_id' => 'Person does not exist' ] ]
+				);
+			}
 		}
 
-		// Create the invoice post
+		if ( $person_id <= 0 && ( '' === $customer_name || '' === $customer_address ) ) {
+			return new \WP_Error(
+				'rest_missing_param',
+				__( 'Customer name and address are required when no member is linked.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! in_array( $invoice_type, [ 'discipline', 'membership', 'manual' ], true ) ) {
+			$invoice_type = 'manual';
+		}
+
+		$invoice_number = InvoiceNumbering::generate_next();
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => 'rondo_invoice',
@@ -771,37 +822,37 @@ class Invoices extends Base {
 			);
 		}
 
-		// Set line items repeater
-		$rows = [];
-		foreach ( $line_items as $item ) {
-			$rows[] = [
-				'discipline_case' => $item['discipline_case_id'] ?? null,
-				'description'     => sanitize_text_field( $item['description'] ?? '' ),
-				'amount'          => (float) ( $item['amount'] ?? 0 ),
-			];
-		}
-
-		// Inject administration fee if configured
-		$finance_config = new FinanceConfig();
-		$admin_fee      = $finance_config->get_admin_fee();
-		if ( $admin_fee > 0 ) {
-			$rows[]        = [
-				'discipline_case' => null,
-				'description'     => 'Administratiekosten',
-				'amount'          => $admin_fee,
-			];
-			$total_amount += $admin_fee;
-		}
-
-		// Set ACF fields (total_amount after admin fee injection so it's included)
 		update_field( 'invoice_number', $invoice_number, $post_id );
-		update_field( 'person', $person_id, $post_id );
+		update_field( 'person', $person_id > 0 ? $person_id : null, $post_id );
 		update_field( 'status', 'draft', $post_id );
-		update_field( 'invoice_type', 'discipline', $post_id );
+		update_field( 'invoice_type', $invoice_type, $post_id );
 		update_field( 'total_amount', $total_amount, $post_id );
 		update_field( 'line_items', $rows, $post_id );
 
-		// Return the created invoice
+		update_post_meta( $post_id, '_invoice_kind', $invoice_kind );
+		update_post_meta( $post_id, '_customer_name', $customer_name );
+		update_post_meta( $post_id, '_customer_address', $customer_address );
+		update_post_meta( $post_id, '_email_subject', $email_subject );
+		update_post_meta( $post_id, '_email_body_override', $email_body_override );
+		if ( preg_match( '/^\d{8}$/', $due_date_override ) ) {
+			update_field( 'field_invoice_due_date', $due_date_override, $post_id );
+		}
+
+		if ( is_array( $custom_fields ) ) {
+			$normalized = [];
+			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
+				$label = sanitize_text_field( (string) ( $field['label'] ?? '' ) );
+				$text  = sanitize_textarea_field( (string) ( $field['text'] ?? '' ) );
+				if ( '' !== $label || '' !== $text ) {
+					$normalized[] = [
+						'label' => $label,
+						'text'  => $text,
+					];
+				}
+			}
+			update_post_meta( $post_id, '_custom_fields', wp_json_encode( $normalized ) );
+		}
+
 		$invoice = get_post( $post_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
 	}
@@ -1097,8 +1148,15 @@ class Invoices extends Base {
 		// so skip direct Mollie/Rabobank payment link creation — it would overwrite the token URL.
 		$invoice_type   = get_post_meta( $invoice_id, 'invoice_type', true );
 		$finance_config = new FinanceConfig();
+		$invoice_kind   = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
 
-		if ( 'membership' === $invoice_type ) {
+		if ( 'credit' === $invoice_kind ) {
+			// Credit invoices should not create payment links; they represent a financial adjustment.
+			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
+			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+			update_field( 'payment_link', '', $invoice_id );
+			$this->clear_qr_code( $invoice_id );
+		} elseif ( 'membership' === $invoice_type ) {
 			// Membership invoices: QR points to /betaling/{token} plan selection page.
 			$payment_url = get_field( 'payment_link', $invoice_id );
 			if ( ! empty( $payment_url ) ) {
@@ -1150,9 +1208,18 @@ class Invoices extends Base {
 			}
 		}
 
+		$custom_email_subject = (string) get_post_meta( $invoice_id, '_email_subject', true );
+		$custom_email_body    = (string) get_post_meta( $invoice_id, '_email_body_override', true );
+		if ( '' !== trim( $custom_email_subject ) ) {
+			$email_options['subject'] = $custom_email_subject;
+		}
+		if ( '' !== trim( $custom_email_body ) ) {
+			$email_options['template'] = $custom_email_body;
+		}
+
 		// Select email template based on invoice type
 		$invoice_type = get_field( 'invoice_type', $invoice_id );
-		if ( 'membership' === $invoice_type ) {
+		if ( 'membership' === $invoice_type && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $finance_config->get_membership_email_template();
 		}
 
@@ -1178,9 +1245,14 @@ class Invoices extends Base {
 		update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
 
 		// Calculate and set due_date
-		$config = new FinanceConfig();
-		$payment_term_days = $config->get_payment_term_days();
-		$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
+		$due_date_override = (string) get_field( 'due_date', $invoice_id );
+		if ( preg_match( '/^\d{8}$/', $due_date_override ) ) {
+			$due_date = $due_date_override;
+		} else {
+			$config = new FinanceConfig();
+			$payment_term_days = $config->get_payment_term_days();
+			$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
+		}
 		update_field( 'field_invoice_due_date', $due_date, $invoice_id );
 
 		// Mark linked discipline cases as charged via Rondo
@@ -1191,6 +1263,17 @@ class Invoices extends Base {
 					update_field( 'is_charged', 'rondo', (int) $item['discipline_case'] );
 				}
 			}
+		}
+
+		if ( 'credit' === $invoice_kind ) {
+			wp_update_post(
+				[
+					'ID'          => $invoice_id,
+					'post_status' => 'rondo_paid',
+				]
+			);
+			update_field( 'status', 'paid', $invoice_id );
+			update_post_meta( $invoice_id, '_credit_payment_adjustment_recorded_at', current_time( 'mysql' ) );
 		}
 
 		// Return updated invoice detail
@@ -1237,6 +1320,15 @@ class Invoices extends Base {
 				$email_options['override_email'] = $current_user->user_email;
 				$email_options['skip_bcc']       = true;
 			}
+		}
+
+		$custom_email_subject = (string) get_post_meta( $invoice_id, '_email_subject', true );
+		$custom_email_body    = (string) get_post_meta( $invoice_id, '_email_body_override', true );
+		if ( '' !== trim( $custom_email_subject ) ) {
+			$email_options['subject'] = $custom_email_subject;
+		}
+		if ( '' !== trim( $custom_email_body ) ) {
+			$email_options['template'] = $custom_email_body;
 		}
 
 		// Select email template based on invoice type
@@ -1514,6 +1606,9 @@ class Invoices extends Base {
 			'id'               => $post->ID,
 			'invoice_number'   => get_field( 'invoice_number', $post->ID ),
 			'person'           => $this->get_invoice_person_summary( $post->ID ),
+			'customer_name'    => (string) get_post_meta( $post->ID, '_customer_name', true ),
+			'customer_address' => (string) get_post_meta( $post->ID, '_customer_address', true ),
+			'invoice_kind'     => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
 			'total_amount'     => (float) get_field( 'total_amount', $post->ID ),
 			'status'           => get_field( 'status', $post->ID ),
 			'post_status'      => $post->post_status,
@@ -1608,9 +1703,15 @@ class Invoices extends Base {
 			}
 		}
 
-		$invoice['line_items']    = $formatted_items;
-		$invoice['pdf_path']      = get_field( 'pdf_path', $post->ID ) ?: null;
-		$invoice['qr_code_path']  = get_field( 'qr_code_path', $post->ID ) ?: null;
+		$invoice['line_items']          = $formatted_items;
+		$invoice['pdf_path']            = get_field( 'pdf_path', $post->ID ) ?: null;
+		$invoice['qr_code_path']        = get_field( 'qr_code_path', $post->ID ) ?: null;
+		$invoice['email_subject']       = (string) get_post_meta( $post->ID, '_email_subject', true );
+		$invoice['email_body_override'] = (string) get_post_meta( $post->ID, '_email_body_override', true );
+		$invoice['payment_adjusted_at'] = (string) get_post_meta( $post->ID, '_credit_payment_adjustment_recorded_at', true ) ?: null;
+		$custom_fields_raw = (string) get_post_meta( $post->ID, '_custom_fields', true );
+		$custom_fields = json_decode( $custom_fields_raw, true );
+		$invoice['custom_fields'] = is_array( $custom_fields ) ? $custom_fields : [];
 
 		// Add installment data for multi-installment invoices
 		$plan  = get_post_meta( $post->ID, '_installment_plan', true ) ?: null;

@@ -51,50 +51,59 @@ class InvoiceEmailSender {
 		$payment_link   = get_field( 'payment_link', $invoice_id );
 		$pdf_path       = get_field( 'pdf_path', $invoice_id );
 
-		// Validate person exists
-		$person = get_post( $person_id );
-		if ( ! $person || $person->post_type !== 'person' ) {
-			return new \WP_Error(
-				'invalid_person',
-				__( 'Persoon niet gevonden voor deze factuur.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		// Build person name
-		$first_name = get_field( 'first_name', $person_id );
-		$infix      = get_field( 'infix', $person_id );
-		$last_name  = get_field( 'last_name', $person_id );
-		$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
-		$person_name = implode( ' ', $name_parts );
-
-		// Get person email
-		$contact_info = get_field( 'contact_info', $person_id );
+		$person = $person_id ? get_post( $person_id ) : null;
+		$first_name = '';
+		$person_name = (string) get_post_meta( $invoice_id, '_customer_name', true );
 		$person_email = '';
-		if ( $contact_info && is_array( $contact_info ) ) {
-			foreach ( $contact_info as $contact ) {
-				if ( isset( $contact['contact_type'] ) &&
-					 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
-					$person_email = $contact['contact_value'] ?? '';
-					break;
+
+		if ( $person && $person->post_type === 'person' ) {
+			$first_name = (string) get_field( 'first_name', $person_id );
+			$infix      = (string) get_field( 'infix', $person_id );
+			$last_name  = (string) get_field( 'last_name', $person_id );
+			$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
+			$person_name = implode( ' ', $name_parts );
+
+			$contact_info = get_field( 'contact_info', $person_id );
+			if ( $contact_info && is_array( $contact_info ) ) {
+				foreach ( $contact_info as $contact ) {
+					if ( isset( $contact['contact_type'] ) &&
+						 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
+						$person_email = $contact['contact_value'] ?? '';
+						break;
+					}
 				}
 			}
 		}
 
-		if ( empty( $person_email ) ) {
-			return new \WP_Error(
-				'no_email',
-				__( 'Geen e-mailadres gevonden voor dit lid.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
+		if ( empty( $person_name ) ) {
+			$person_name = __( 'Relatie', 'rondo' );
 		}
 
 		// In test mode, redirect email to override address
 		$recipient_email = $options['override_email'] ?? $person_email;
+		if ( empty( $recipient_email ) ) {
+			return new \WP_Error(
+				'no_email',
+				__( 'Geen e-mailadres gevonden voor deze factuur.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
 
 		// Get finance configuration
 		$config = new FinanceConfig();
-		$template = $options['template'] ?? $config->get_email_template();
+		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$template     = (string) ( $options['template'] ?? '' );
+		$is_regular_invoice_default = false;
+		if ( '' === trim( $template ) ) {
+			if ( 'membership' === $invoice_type ) {
+				$template = $config->get_membership_email_template();
+			} elseif ( 'manual' === $invoice_type ) {
+				$template = $config->get_regular_invoice_email_body();
+				$is_regular_invoice_default = true;
+			} else {
+				$template = $config->get_email_template();
+			}
+		}
 		$org_name = $config->get_org_name();
 
 		// Build discipline cases list as HTML table
@@ -191,6 +200,10 @@ class InvoiceEmailSender {
 		}
 
 		// Replace template variables
+		if ( $is_regular_invoice_default ) {
+			$template = nl2br( esc_html( $template ) );
+		}
+
 		$email_body = str_replace(
 			[
 				'{naam}',
@@ -216,7 +229,35 @@ class InvoiceEmailSender {
 		);
 
 		// Build email subject
-		$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+		$subject = (string) ( $options['subject'] ?? '' );
+		if ( '' === trim( $subject ) ) {
+			if ( 'manual' === $invoice_type ) {
+				$subject = $config->get_regular_invoice_email_subject();
+				if ( '' === trim( $subject ) ) {
+					$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+				}
+			} else {
+				$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+			}
+		}
+
+		$subject = str_replace(
+			[
+				'{naam}',
+				'{voornaam}',
+				'{factuur_nummer}',
+				'{organisatie_naam}',
+				'{totaal_bedrag}',
+			],
+			[
+				$person_name,
+				$first_name,
+				$invoice_number,
+				$org_name,
+				wp_strip_all_tags( $formatted_total ),
+			],
+			$subject
+		);
 
 		// In test mode, prefix subject to make test emails clearly identifiable
 		if ( ! empty( $options['override_email'] ) || ! empty( $options['skip_bcc'] ) ) {

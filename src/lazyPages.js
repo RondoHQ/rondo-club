@@ -19,6 +19,7 @@ export const FinanceSettings = lazy(() => import('@/pages/Finance/FinanceSetting
 export const FinanceDashboard = lazy(() => import('@/pages/Finance/FinanceDashboard'));
 export const Facturen = lazy(() => import('@/pages/Finance/Facturen'));
 export const FactuurDetail = lazy(() => import('@/pages/Finance/FactuurDetail'));
+export const FactuurNieuw = lazy(() => import('@/pages/Finance/FactuurNieuw'));
 export const RelationshipTypes = lazy(() => import('@/pages/Settings/RelationshipTypes'));
 export const CustomFields = lazy(() => import('@/pages/Settings/CustomFields'));
 export const FeedbackManagement = lazy(() => import('@/pages/Settings/FeedbackManagement'));

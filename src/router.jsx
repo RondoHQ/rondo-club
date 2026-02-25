@@ -17,7 +17,7 @@ import {
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
-  FinanceDashboard, Facturen, FactuurDetail, RelationshipTypes,
+  FinanceDashboard, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
   CustomFields, Login, Profile,
   MembershipPassScanner,
   ClothingPage,
@@ -225,6 +225,14 @@ const router = createBrowserRouter([
             ),
           },
           { path: 'financien/instellingen', element: <Navigate to="/settings/financieel" replace /> },
+          {
+            path: 'financien/facturen/nieuw',
+            element: (
+              <FinancieelRoute>
+                <FactuurNieuw />
+              </FinancieelRoute>
+            ),
+          },
           {
             path: 'financien/facturen',
             element: (
