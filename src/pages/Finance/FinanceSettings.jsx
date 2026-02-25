@@ -20,6 +20,7 @@ const TABS = [
 ];
 
 const EMAIL_SUB_TABS = [
+  { id: 'gewone_facturen', label: 'Gewone facturen' },
   { id: 'boetes', label: 'Boetes' },
   { id: 'contributie', label: 'Contributie' },
   { id: 'termijnen', label: 'Termijnen' },
@@ -160,6 +161,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     reminder_2_email_template: '',
     invoice_reminder_1_email_template: '',
     invoice_reminder_2_email_template: '',
+    regular_invoice_email_subject: '',
+    regular_invoice_email_body: '',
     bcc_email: '',
     admin_fee: 0,
     exempt_discipline_teams: [],
@@ -187,7 +190,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
   const [activeTab, setActiveTab] = useState(
     availableTabs.some((tab) => tab.id === initialTab) ? initialTab : availableTabs[0]?.id || 'organization'
   );
-  const [emailSubTab, setEmailSubTab] = useState('boetes');
+  const [emailSubTab, setEmailSubTab] = useState('gewone_facturen');
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [showMembershipPassHelp, setShowMembershipPassHelp] = useState(false);
@@ -216,6 +219,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_template: settings.reminder_2_email_template || '',
         invoice_reminder_1_email_template: settings.invoice_reminder_1_email_template || '',
         invoice_reminder_2_email_template: settings.invoice_reminder_2_email_template || '',
+        regular_invoice_email_subject: settings.regular_invoice_email_subject || '',
+        regular_invoice_email_body: settings.regular_invoice_email_body || '',
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
         exempt_discipline_teams: [],
@@ -341,6 +346,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_template: formData.reminder_2_email_template,
         invoice_reminder_1_email_template: formData.invoice_reminder_1_email_template,
         invoice_reminder_2_email_template: formData.invoice_reminder_2_email_template,
+        regular_invoice_email_subject: formData.regular_invoice_email_subject,
+        regular_invoice_email_body: formData.regular_invoice_email_body,
         bcc_email: formData.bcc_email,
         admin_fee: parseFloat(formData.admin_fee) || 0,
         rabobank_environment: formData.rabobank_environment,
@@ -669,6 +676,55 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               </button>
             ))}
           </div>
+
+          {/* Boetes template */}
+          {emailSubTab === 'gewone_facturen' && (
+            <div className="card p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Standaard e-mail voor gewone facturen</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Wordt gebruikt voor handmatige facturen (niet boetes, niet contributie), tenzij je op de factuur zelf een override invult.
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Onderwerp
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.regular_invoice_email_subject}
+                    onChange={(e) => setFormData(prev => ({ ...prev, regular_invoice_email_subject: e.target.value }))}
+                    placeholder="Factuur {factuur_nummer} - {organisatie_naam}"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Tekst body
+                  </label>
+                  <textarea
+                    value={formData.regular_invoice_email_body}
+                    onChange={(e) => setFormData(prev => ({ ...prev, regular_invoice_email_body: e.target.value }))}
+                    placeholder="Beste {naam},"
+                    rows={10}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-y"
+                  />
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
+                  <p className="font-semibold mb-2">Beschikbare variabelen:</p>
+                  <div className="space-y-1 font-mono">
+                    <div><code>{'{naam}'}</code> - Volledige naam van de ontvanger</div>
+                    <div><code>{'{voornaam}'}</code> - Voornaam van de ontvanger</div>
+                    <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
+                    <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
+                    <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                    <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Boetes template */}
           {emailSubTab === 'boetes' && (

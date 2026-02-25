@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.10.17] - 2026-02-25
+
+### Added
+- New manual finance invoice creation screen (`/financien/facturen/nieuw`) with unified normal/credit workflow, multi-line items, optional member link, customer override data, due-date override, email override, and invoice number preview.
+- Finance settings now include a dedicated `E-mail -> Gewone facturen` tab with configurable default subject and body template for manual invoices.
+
+### Changed
+- Invoice numbering now uses a shared yearly sequence in `{year}F{0001}` format for all invoice kinds, including credits.
+- Invoice API now supports manual invoices (`invoice_type=manual`), optional customer metadata, invoice kind (`normal|credit`), and next-number preview endpoint.
+- Sending credit invoices now records a payment-adjustment timestamp and auto-transitions to paid after finalize.
+- On `/financien/facturen/nieuw`, replaced the manual `Lid-ID (optioneel)` input with a member name search field that selects and stores the linked `person_id`.
+- On `/financien/facturen`, moved `Nieuwe factuur` into the DataTable toolbar so it appears next to the column settings cog.
+- New invoice form now pre-fills e-mail subject/body with the configured defaults as editable values, while keeping template variables functional.
+
+### Fixed
+- New invoice due date now defaults to 14 days from today.
+- Due-date input layout no longer shifts when toggling between `Lid` and `Extern`; it always renders on its own row.
+- Added a down chevron to the “PO nummer of andere gegevens toevoegen?” control to make the expandable behavior explicit.
+- Fixed a runtime initialization error on `/financien/facturen/nieuw` caused by default email template variables being referenced before initialization.
+
 ## [30.10.16] - 2026-02-25
 
 ### Fixed

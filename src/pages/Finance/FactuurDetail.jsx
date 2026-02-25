@@ -294,7 +294,7 @@ export default function FactuurDetail() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-brand-gradient mb-2">
-              {invoice.invoice_number}
+              {invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Credit' : ''}
             </h1>
           </div>
           <StatusBadge status={invoice.status} />
@@ -384,7 +384,7 @@ export default function FactuurDetail() {
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <User className="w-5 h-5" />
-            Lid
+            Klant
           </h2>
           <div className="space-y-3">
             <div>
@@ -397,9 +397,15 @@ export default function FactuurDetail() {
                   {invoice.person.name}
                 </Link>
               ) : (
-                <p className="text-gray-700 dark:text-gray-300">{invoice.person?.name || '-'}</p>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.person?.name || invoice.customer_name || '-'}</p>
               )}
             </div>
+            {invoice.customer_address && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Adres</h3>
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{invoice.customer_address}</p>
+              </div>
+            )}
             {invoice.person?.email && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h3>

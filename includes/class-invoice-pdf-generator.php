@@ -62,44 +62,50 @@ class InvoicePdfGenerator {
 			$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days", $invoice_timestamp ) );
 		}
 
-		// Gather person data
-		$person = get_post( $person_id );
-		if ( ! $person || $person->post_type !== 'person' ) {
-			return new \WP_Error(
-				'invalid_person',
-				__( 'Person not found for this invoice.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
+		// Gather customer data (member-linked and/or custom invoice data)
+		$person_name    = (string) get_post_meta( $invoice_id, '_customer_name', true );
+		$person_street  = '';
+		$person_city    = '';
+		$person_email   = '';
+		$address_text   = (string) get_post_meta( $invoice_id, '_customer_address', true );
 
-		// Build person name
-		$first_name = get_field( 'first_name', $person_id );
-		$infix      = get_field( 'infix', $person_id );
-		$last_name  = get_field( 'last_name', $person_id );
-		$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
-		$person_name = implode( ' ', $name_parts );
+		$person = $person_id ? get_post( $person_id ) : null;
+		if ( $person && $person->post_type === 'person' ) {
+			$first_name = get_field( 'first_name', $person_id );
+			$infix      = get_field( 'infix', $person_id );
+			$last_name  = get_field( 'last_name', $person_id );
+			$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
+			$member_name = implode( ' ', $name_parts );
+			if ( '' === $person_name ) {
+				$person_name = $member_name;
+			}
 
-		// Get person address
-		$addresses = get_field( 'addresses', $person_id );
-		$person_street = '';
-		$person_city = '';
-		if ( $addresses && is_array( $addresses ) && count( $addresses ) > 0 ) {
-			$first_address = $addresses[0];
-			$person_street = $first_address['street'] ?? '';
-			$person_city = $first_address['city'] ?? '';
-		}
+			$addresses = get_field( 'addresses', $person_id );
+			if ( $addresses && is_array( $addresses ) && count( $addresses ) > 0 ) {
+				$first_address = $addresses[0];
+				$person_street = $first_address['street'] ?? '';
+				$person_city = $first_address['city'] ?? '';
+			}
 
-		// Get person email
-		$contact_info = get_field( 'contact_info', $person_id );
-		$person_email = '';
-		if ( $contact_info && is_array( $contact_info ) ) {
-			foreach ( $contact_info as $contact ) {
-				if ( isset( $contact['contact_type'] ) &&
-					 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
-					$person_email = $contact['contact_value'] ?? '';
-					break;
+			$contact_info = get_field( 'contact_info', $person_id );
+			if ( $contact_info && is_array( $contact_info ) ) {
+				foreach ( $contact_info as $contact ) {
+					if ( isset( $contact['contact_type'] ) &&
+						 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
+						$person_email = $contact['contact_value'] ?? '';
+						break;
+					}
 				}
 			}
+		}
+
+		if ( '' !== trim( $address_text ) ) {
+			$address_lines = preg_split( '/\r\n|\r|\n/', $address_text );
+			$person_street = $address_lines[0] ?? '';
+			$person_city   = implode( ' ', array_filter( array_slice( $address_lines, 1 ) ) );
+		}
+		if ( '' === $person_name ) {
+			$person_name = __( 'Relatie', 'rondo' );
 		}
 
 		// Gather finance settings
