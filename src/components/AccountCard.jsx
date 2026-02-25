@@ -3,6 +3,7 @@ import { UserPlus, Check, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { format } from '@/utils/dateFormat';
+import { isValidDate } from '@/utils/formatters';
 
 const ROLE_LABELS = {
   rondo_user: 'Gebruiker',
@@ -39,6 +40,7 @@ export default function AccountCard({ personId, personData }) {
 
   const linkedUserId = personData?.linked_user_id;
   const welcomeEmailSentAt = personData?.welcome_email_sent_at;
+  const hasValidWelcomeEmailSentAt = !!(welcomeEmailSentAt && isValidDate(welcomeEmailSentAt));
   const linkedUserRoles = personData?.linked_user_roles;
 
   // Check if person has an email address
@@ -100,7 +102,7 @@ export default function AccountCard({ personId, personData }) {
             <Check className="w-5 h-5 flex-shrink-0" />
             <span className="text-sm font-medium">Account aangemaakt</span>
           </div>
-          {welcomeEmailSentAt && (
+          {hasValidWelcomeEmailSentAt && (
             <p className="text-xs text-gray-500 dark:text-gray-400 pl-7">
               Welkomstmail verstuurd op {format(new Date(welcomeEmailSentAt), 'd MMM yyyy')}
             </p>

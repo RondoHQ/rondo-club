@@ -1,5 +1,6 @@
 import { Database } from 'lucide-react';
-import { format } from '@/utils/dateFormat';
+import { format, parseYmd } from '@/utils/dateFormat';
+import { isValidDate } from '@/utils/formatters';
 
 /**
  * Sportlink info card for person detail page
@@ -48,8 +49,25 @@ export default function SportlinkCard({ acfData }) {
     }
 
     switch (field.type) {
-      case 'date':
-        return format(new Date(field.value), 'd MMM yyyy');
+      case 'date': {
+        const raw = String(field.value).trim();
+        let parsedDate = null;
+
+        if (/^\d{8}$/.test(raw)) {
+          const ymdDate = parseYmd(raw);
+          if (!Number.isNaN(ymdDate.getTime())) {
+            parsedDate = ymdDate;
+          }
+        } else if (isValidDate(raw)) {
+          parsedDate = new Date(raw);
+        }
+
+        if (!parsedDate) {
+          return raw;
+        }
+
+        return format(parsedDate, 'd MMM yyyy');
+      }
       case 'boolean':
         return (field.value === true || field.value === '1') ? 'Ja' : 'Nee';
       case 'text':
