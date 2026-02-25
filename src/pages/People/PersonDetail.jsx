@@ -23,7 +23,7 @@ import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
 import SportlinkCard from '@/components/SportlinkCard';
 import AccountCard from '@/components/AccountCard';
-import { format, parseISO, differenceInYears } from '@/utils/dateFormat';
+import { format, parseYmd, differenceInYears } from '@/utils/dateFormat';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -140,8 +140,23 @@ export default function PersonDetail() {
 
   // Format birthdate for display: "6 feb 1982"
   const formattedBirthdate = birthDate ? format(birthDate, 'd MMM yyyy') : null;
-  const hasValidLidTot = !!(person?.acf?.['lid-tot'] && isValidDate(person.acf['lid-tot']));
-  const formattedLidTot = hasValidLidTot ? format(parseISO(person.acf['lid-tot']), 'd MMMM yyyy') : null;
+  const parseSafeDate = (value) => {
+    if (!value) return null;
+    const raw = String(value).trim();
+
+    if (/^\d{8}$/.test(raw)) {
+      const parsed = parseYmd(raw);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    if (!isValidDate(raw)) return null;
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const lidTotDate = parseSafeDate(person?.acf?.['lid-tot']);
+  const hasValidLidTot = !!lidTotDate;
+  const formattedLidTot = lidTotDate ? format(lidTotDate, 'd MMMM yyyy') : null;
 
   // Handle saving all contacts from modal
   const handleSaveContacts = async (contacts) => {
