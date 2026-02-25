@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.11.3] - 2026-02-25
+
+### Changed
+- Kaderlijst ordering now enforces coordinator hierarchy inside groups: age-group coordinators first, then year-group coordinators, then team-level roles.
+
+### Fixed
+- Optimized Kaderlijst loading performance by fetching paginated teams/people in parallel batches and limiting REST payloads to required fields only.
+
 ## [30.11.2] - 2026-02-25
 
 ### Fixed
