@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.11.5] - 2026-02-25
+
+### Changed
+- Kaderlijst column label `Jaargroep` is now `Jaarlaag`.
+- Team names in Kaderlijst now strip the `AWC ` prefix when the team name contains a `JOxx` pattern.
+
+### Fixed
+- Kaderlijst now excludes non-team senior roles except the explicit `Coördinator Senioren` role.
+
 ## [30.11.4] - 2026-02-25
 
 ### Fixed
