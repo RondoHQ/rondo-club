@@ -17,6 +17,14 @@ const AGE_GROUP_ORDER = {
 };
 const FETCH_CONCURRENCY = 4;
 
+function normalizeTeamNameForRoster(name) {
+  const decoded = decodeHtml(name || '').trim();
+  if (/\bJO\s?\d{1,2}\b/i.test(decoded)) {
+    return decoded.replace(/^AWC\s+/i, '').trim();
+  }
+  return decoded;
+}
+
 function getPrimaryContactByType(person, type) {
   const contactInfo = person?.acf?.contact_info || [];
   const contact = contactInfo.find((item) => item.contact_type === type && item.contact_value);
@@ -194,7 +202,7 @@ async function fetchAllTeams() {
   return allTeams.map((team) => ({
     id: team.id,
     parent: team.parent || 0,
-    name: getTeamName(team),
+    name: normalizeTeamNameForRoster(getTeamName(team)),
   }));
 }
 
@@ -310,7 +318,13 @@ export default function Kaderlijst() {
       };
     });
 
-    const sortedRows = [...enrichedRows].sort((a, b) => {
+    const seniorenFilteredRows = enrichedRows.filter((row) => {
+      if (row.ageGroup !== 'Senioren' || row.hasTeamLink) return true;
+      const normalizedRole = String(row.role || '').trim().toLowerCase();
+      return normalizedRole === 'coördinator senioren' || normalizedRole === 'coordinator senioren';
+    });
+
+    const sortedRows = [...seniorenFilteredRows].sort((a, b) => {
       const ageCmp = (AGE_GROUP_ORDER[a.ageGroup] ?? 99) - (AGE_GROUP_ORDER[b.ageGroup] ?? 99);
       if (ageCmp !== 0) return ageCmp;
 
@@ -376,11 +390,11 @@ export default function Kaderlijst() {
     }),
     createColumn({
       id: 'year_group',
-      header: 'Jaargroep',
+      header: 'Jaarlaag',
       accessorFn: (row) => row.yearGroup,
       cell: ({ row }) => <span className="font-medium text-gray-900 dark:text-gray-100">{row.original.yearGroupDisplay}</span>,
       filterType: FILTER_TYPES.SELECT,
-      filterLabel: 'Jaargroep',
+      filterLabel: 'Jaarlaag',
       filterOptions: yearGroupOptions,
       sortable: false,
       size: 120,
