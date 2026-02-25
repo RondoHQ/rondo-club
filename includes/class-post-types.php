@@ -83,19 +83,27 @@ class PostTypes {
 			] );
 		}
 
-		// Register contributie exclusion meta field for REST API access.
-		// Write access is gated by the 'financieel' capability in the auth_callback.
-		register_post_meta( 'person', '_exclude_from_contributie', [
-			'type'              => 'boolean',
-			'single'            => true,
-			'show_in_rest'      => true,
-			'default'           => false,
-			'sanitize_callback' => 'rest_sanitize_boolean',
-			'auth_callback'     => function () {
-				return current_user_can( 'financieel' );
-			},
-		] );
-	}
+			// Register contributie exclusion meta field for REST API access.
+			// Write access is gated by the 'financieel' capability in the auth_callback.
+			register_post_meta( 'person', '_exclude_from_contributie', [
+				'type'              => 'boolean',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'auth_callback'     => function () {
+					return current_user_can( 'financieel' );
+				},
+			] );
+
+			// Register primary team meta field for person records (non-ACF).
+			register_post_meta( 'person', 'team', [
+				'type'              => 'integer',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'absint',
+			] );
+		}
 
 	/**
 	 * Register Team CPT
