@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Plus, Shirt, RotateCcw, X, Undo2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import TabButton from '@/components/TabButton';
 import { usePerson } from '@/hooks/usePeople';
 import { useSearch } from '@/hooks/useDashboard';
@@ -74,30 +74,76 @@ export default function ClothingPage() {
 
   const { data: selectedPerson } = usePerson(selectedPersonId);
 
-  const selectedPersonTeamId = useMemo(() => {
+  const currentRoles = useMemo(() => {
     const workHistory = selectedPerson?.acf?.work_history;
-    if (!Array.isArray(workHistory)) return 0;
+    if (!Array.isArray(workHistory) || workHistory.length === 0) return [];
 
-    const currentJobWithTeam = workHistory.find((job) => job?.is_current && job?.team);
-    if (!currentJobWithTeam?.team) return 0;
+    const toTeamId = (team) => {
+      if (!team) return 0;
+      if (typeof team === 'object') {
+        return Number(team.ID || team.id || 0);
+      }
+      return Number(team || 0);
+    };
 
-    if (typeof currentJobWithTeam.team === 'object') {
-      return Number(currentJobWithTeam.team.ID || currentJobWithTeam.team.id || 0);
-    }
+    const toTimestamp = (dateValue) => {
+      if (!dateValue) return 0;
+      const ts = new Date(dateValue).getTime();
+      return Number.isNaN(ts) ? 0 : ts;
+    };
 
-    return Number(currentJobWithTeam.team || 0);
+    const nowTs = Date.now();
+
+    const ranked = workHistory
+      .map((job) => {
+        const teamId = toTeamId(job?.team);
+        const endTs = toTimestamp(job?.end_date);
+        return {
+          teamId,
+          jobTitle: String(job?.job_title || '').trim(),
+          isCurrent: !!job?.is_current,
+          isActiveByDate: endTs > 0 && endTs >= nowTs,
+          endTs,
+          startTs: toTimestamp(job?.start_date),
+        };
+      })
+      .filter((job) => job.teamId > 0 && (job.isCurrent || job.isActiveByDate))
+      .sort((a, b) => {
+        if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+        if (a.endTs !== b.endTs) return b.endTs - a.endTs;
+        return b.startTs - a.startTs;
+      });
+
+    return ranked;
   }, [selectedPerson]);
 
-  const { data: selectedPersonTeamData } = useQuery({
-    queryKey: ['clothing', 'person-team', selectedPersonTeamId],
-    queryFn: async () => {
-      const response = await wpApi.getEntity(selectedPersonTeamId);
-      return response.data;
-    },
-    enabled: selectedPersonTeamId > 0,
+  const roleEntityIds = useMemo(
+    () => [...new Set((Array.isArray(currentRoles) ? currentRoles : []).map((role) => role.teamId))],
+    [currentRoles]
+  );
+
+  const roleEntityQueries = useQueries({
+    queries: roleEntityIds.map((entityId) => ({
+      queryKey: ['clothing', 'person-role-entity', entityId],
+      queryFn: async () => {
+        const response = await wpApi.getEntity(entityId);
+        return response.data;
+      },
+      enabled: entityId > 0,
+      retry: false,
+    })),
   });
 
-  const teamName = selectedPersonTeamData?.name || 'Geen team gevonden';
+  const roleEntityNameMap = useMemo(() => {
+    const map = new Map();
+    roleEntityQueries.forEach((query, index) => {
+      const entityId = roleEntityIds[index];
+      if (!entityId || !query?.data) return;
+      const title = query.data?.title?.rendered || query.data?.title || query.data?.name || `Organisatie ${entityId}`;
+      map.set(entityId, title);
+    });
+    return map;
+  }, [roleEntityQueries, roleEntityIds]);
 
   const { data: personProfile } = useClothingPersonProfile(selectedPersonId, {
     enabled: !!selectedPersonId,
@@ -268,7 +314,7 @@ export default function ClothingPage() {
             </div>
           </div>
 
-          <div className="card p-6 space-y-4 overflow-visible">
+          <div className="card p-6 space-y-4" style={{ overflow: 'visible' }}>
             <h2 className="font-semibold text-brand-gradient flex items-center gap-2">
               <RotateCcw className="w-5 h-5" />
               Uitgifte / inname registreren
@@ -303,7 +349,7 @@ export default function ClothingPage() {
               {isPersonOpen && (
                 <div
                   ref={personDropdownRef}
-                  className="absolute z-20 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto"
+                  className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-56 overflow-y-auto"
                 >
                   {searchTerm.length < 3 ? (
                     <p className="px-3 py-2 text-sm text-gray-500">Typ minimaal 3 tekens om te zoeken</p>
@@ -340,7 +386,23 @@ export default function ClothingPage() {
                     )}
                     <div>
                       <p className="font-semibold">{selectedPerson.name}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Team: {teamName}</p>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        <p>Rollen:</p>
+                        {currentRoles.length > 0 ? (
+                          <div className="mt-1 space-y-0.5">
+                            {currentRoles.map((role, index) => {
+                              const entityName = roleEntityNameMap.get(role.teamId) || `Organisatie ${role.teamId}`;
+                              return (
+                                <p key={`${role.teamId}-${role.jobTitle}-${index}`}>
+                                  {role.jobTitle ? `${role.jobTitle} (${entityName})` : entityName}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="mt-1">Geen actieve rollen gevonden</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

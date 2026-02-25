@@ -404,6 +404,41 @@ add_action( 'after_setup_theme', 'rondo_init', 5 );
 add_action( 'plugins_loaded', 'rondo_init', 5 );
 
 /**
+ * Track when an authenticated user was last active.
+ *
+ * Stores a UTC datetime and throttles writes to once per 5 minutes per user
+ * to avoid excessive database writes on frequent requests.
+ *
+ * @return void
+ */
+function rondo_track_user_last_active() {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+
+	if ( wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		return;
+	}
+
+	$user_id = get_current_user_id();
+	if ( $user_id <= 0 ) {
+		return;
+	}
+
+	$now_ts      = current_time( 'timestamp', true );
+	$last_seen_ts = (int) get_user_meta( $user_id, 'rondo_last_active_ts', true );
+
+	// Update at most once every 5 minutes per user.
+	if ( $last_seen_ts > 0 && ( $now_ts - $last_seen_ts ) < 300 ) {
+		return;
+	}
+
+	update_user_meta( $user_id, 'rondo_last_active', gmdate( 'Y-m-d H:i:s', $now_ts ) );
+	update_user_meta( $user_id, 'rondo_last_active_ts', $now_ts );
+}
+add_action( 'init', 'rondo_track_user_last_active', 20 );
+
+/**
  * Allow membership pass config uploads (.p12 and .json) for financial users.
  *
  * @param array $mimes Existing mime map.

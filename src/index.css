@@ -86,6 +86,27 @@
     -webkit-text-fill-color: initial;
   }
 
+  /* Keep native select chevrons a bit away from the edge for readability. */
+  select:not([multiple]):not([size]) {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%236B7280' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: 1rem;
+    background-position: calc(100% - 0.9rem) center !important;
+    padding-right: 3.25rem !important;
+    text-overflow: ellipsis;
+  }
+
+  .dark select:not([multiple]):not([size]) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%239CA3AF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  select::-ms-expand {
+    display: none;
+  }
+
   /* Brand heading style for app/page titles. */
   h1.text-brand-gradient,
   h2.text-brand-gradient,

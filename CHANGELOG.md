@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [30.10.7] - 2026-02-25
-
 ### Added
 - New manual finance invoice creation screen (`/financien/facturen/nieuw`) with unified normal/credit workflow, multi-line items, optional member link, customer override data, due-date override, email override, and invoice number preview.
 
@@ -16,6 +14,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Invoice numbering now uses a shared yearly sequence in `{year}F{0001}` format for all invoice kinds, including credits.
 - Invoice API now supports manual invoices (`invoice_type=manual`), optional customer metadata, invoice kind (`normal|credit`), and next-number preview endpoint.
 - Sending credit invoices now records a payment-adjustment timestamp and auto-transitions to paid after finalize.
+
+## [30.10.16] - 2026-02-25
+
+### Fixed
+- Switched the app shell to use document-level scrolling on mobile (while keeping fixed-shell scrolling on desktop) to prevent long pages from getting clipped at the bottom.
+- Kept global safe-area/mobile bottom spacing in the shared `<main>` container for consistent end-of-page reachability across screens.
+
+## [30.10.15] - 2026-02-25
+
+### Fixed
+- Applied a global mobile scroll-end buffer in the shared app layout (`<main>`) so long pages like `/people/jubilarissen`, `/vog`, and other list/detail screens can reliably scroll to the bottom.
+- Removed page-specific bottom padding workaround from PersonDetail in favor of the shared layout fix.
+
+## [30.10.14] - 2026-02-25
+
+### Fixed
+- Added extra mobile bottom padding on `/people/:id` so the end of PersonDetail content remains reachable above Safari bottom UI and the floating todos button.
+
+## [30.10.13] - 2026-02-25
+
+### Fixed
+- Fixed mobile scrolling on person detail pages by making the app shell height account for the WordPress admin bar offset.
+- Added `min-h-0` constraints in the main layout flex containers to prevent content clipping and allow full scroll to the end.
+
+## [30.10.12] - 2026-02-24
+
+### Fixed
+- Improved anniversaries endpoint performance for volunteer jubilees by batching oldest `work_history_*_start_date` lookup across people instead of per-person ACF repeater reads.
+- Prevented `/people/jubilarissen` from hanging during long anniversary queries on larger datasets.
+
+## [30.10.11] - 2026-02-24
+
+### Changed
+- Volunteer anniversaries are now calculated from the oldest `work_history.start_date` instead of `lid-sinds`.
+
+## [30.10.10] - 2026-02-24
+
+### Changed
+- In **Settings → Beheer → Jubilarissen**, custom milestones now use the same left checkbox interaction as built-in milestones.
+- Unchecking a custom milestone checkbox now removes that custom milestone.
+
+## [30.10.9] - 2026-02-24
+
+### Changed
+- In **Settings → Beheer → Jubilarissen**, custom milestones now render in the same grid tile style as built-in milestones.
+- Custom milestone tiles now include a remove cross (`x`) on the right side.
+
+## [30.10.8] - 2026-02-24
+
+### Added
+- Active users endpoint (`GET /rondo/v1/users`) now returns `last_active` per user.
+- Last activity tracking for authenticated users (stored in user meta) with 5-minute write throttling.
+
+### Fixed
+- Settings → Gebruikers “Actieve gebruikers” table no longer uses an internal vertical scroll cap and grows naturally with content.
+- Added “Laatst actief” column to the active users table with `-` fallback when no activity data exists yet.
+
+## [30.10.7] - 2026-02-23
+
+### Added
+- Jubilarissen periode-dropdown now includes:
+  - `Afgelopen 6 maanden`
+  - `Afgelopen 12 maanden`
+  - `Afgelopen 18 maanden`
+
+### Changed
+- Anniversaries API now supports a backward-looking window via `days_back`.
+- Jubilarissen page now supports both future and past period windows.
 
 ## [30.10.6] - 2026-02-23
 
