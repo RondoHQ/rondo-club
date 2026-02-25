@@ -220,12 +220,7 @@ export default function Facturen() {
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
-      <div className="space-y-6">
-        <div className="flex justify-end">
-          <Link to="/financien/facturen/nieuw" className="btn btn-primary inline-flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Nieuwe factuur
-          </Link>
-        </div>
+      <div>
         <DataTable
           storageKey="facturen"
           data={invoices || []}
@@ -237,6 +232,11 @@ export default function Facturen() {
           filters={filters}
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
+          toolbarEnd={(
+            <Link to="/financien/facturen/nieuw" className="btn btn-primary inline-flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Nieuwe factuur
+            </Link>
+          )}
         />
       </div>
     </PullToRefreshWrapper>
