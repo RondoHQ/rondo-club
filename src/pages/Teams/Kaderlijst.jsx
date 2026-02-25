@@ -13,7 +13,7 @@ const collator = new Intl.Collator('nl-NL', { numeric: true, sensitivity: 'base'
 const AGE_GROUP_ORDER = {
   Junioren: 0,
   Pupillen: 1,
-  Overig: 2,
+  Senioren: 2,
 };
 
 function getPrimaryContactByType(person, type) {
@@ -33,6 +33,9 @@ function getPrimaryPhone(person) {
 
 function parseYearFromLabel(label) {
   if (!label) return null;
+  const normalized = String(label).toLowerCase();
+  if (normalized.includes("mini")) return 7;
+
   const match = String(label).toUpperCase().match(/\bJ?O\s?(\d{1,2})\b/);
   if (!match) return null;
 
@@ -49,14 +52,15 @@ function parseAgeGroupFromLabel(label) {
   const normalized = String(label || '').toLowerCase();
   if (normalized.includes('junior')) return 'Junioren';
   if (normalized.includes('pupil')) return 'Pupillen';
+  if (normalized.includes('senior')) return 'Senioren';
   return '';
 }
 
 function getAgeGroupFromYear(year) {
-  if (!year) return '';
+  if (!year) return 'Senioren';
   if (year >= 12 && year <= 19) return 'Junioren';
   if (year >= 6 && year <= 11) return 'Pupillen';
-  return 'Overig';
+  return 'Senioren';
 }
 
 function buildLineage(team, teamsById) {
@@ -108,7 +112,7 @@ function deriveGrouping(team, teamsById) {
   }
 
   let ageGroup = getAgeGroupFromYear(yearNumber);
-  if (!ageGroup || ageGroup === 'Overig') {
+  if (!ageGroup || ageGroup === 'Senioren') {
     for (const node of lineage) {
       const parsed = parseAgeGroupFromLabel(node.name);
       if (parsed) {
@@ -119,6 +123,18 @@ function deriveGrouping(team, teamsById) {
   }
 
   if (!ageGroup) ageGroup = 'Overig';
+
+  return {
+    ageGroup,
+    yearGroup,
+    yearNumber,
+  };
+}
+
+function deriveGroupingFromText(label) {
+  const yearGroup = parseYearGroupFromLabel(label);
+  const yearNumber = parseYearFromLabel(yearGroup || label);
+  const ageGroup = yearNumber ? getAgeGroupFromYear(yearNumber) : 'Senioren';
 
   return {
     ageGroup,
@@ -222,19 +238,24 @@ export default function Kaderlijst() {
 
         workHistory.forEach((job) => {
           const teamId = Number.parseInt(job?.team, 10);
-          if (!teamId || !isCurrentJob(job)) return;
+          if (!isCurrentJob(job)) return;
 
-          const team = teamsById.get(teamId);
-          if (!team) return;
+          const team = teamId ? teamsById.get(teamId) : null;
 
           const role = decodeHtml(job?.job_title || '');
           if (!role) return;
 
+          const fallbackGrouping = deriveGroupingFromText(role);
+          const fallbackTeamName = fallbackGrouping.yearGroup || fallbackGrouping.ageGroup;
+          const teamName = team?.name || fallbackTeamName;
+          if (!teamName) return;
+
           rows.push({
-            id: `${teamId}-${person.id}-${role}`,
+            id: `${teamId || 'no-team'}-${person.id}-${role}`,
             personId: person.id,
-            teamId,
-            teamName: team.name,
+            teamId: team?.id || null,
+            teamName,
+            hasTeamLink: !!team?.id,
             firstName: decodeHtml(firstName),
             infix: decodeHtml(infix),
             lastName: decodeHtml(lastName),
@@ -259,10 +280,10 @@ export default function Kaderlijst() {
     const filteredRows = rows.filter((row) => !playerRoles.has(row.role));
 
     const enrichedRows = filteredRows.map((row) => {
-      const team = teamsById.get(row.teamId);
+      const team = row.teamId ? teamsById.get(row.teamId) : null;
       const grouping = team
         ? deriveGrouping(team, teamsById)
-        : { ageGroup: 'Overig', yearGroup: '', yearNumber: null };
+        : deriveGroupingFromText(`${row.teamName} ${row.role}`);
 
       return {
         ...row,
@@ -344,11 +365,11 @@ export default function Kaderlijst() {
       header: 'Team',
       accessorFn: (row) => row.teamName,
       cell: ({ row }) => (
-        row.original.teamDisplay ? (
+        row.original.teamDisplay && row.original.hasTeamLink ? (
           <Link to={`/teams/${row.original.teamId}`} className="font-medium text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan">
             {row.original.teamDisplay}
           </Link>
-        ) : ''
+        ) : row.original.teamDisplay
       ),
       filterType: FILTER_TYPES.TEXT,
       filterLabel: 'Team',

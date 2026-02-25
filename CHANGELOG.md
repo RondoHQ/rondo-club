@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.11.2] - 2026-02-25
+
+### Fixed
+- Kaderlijst now maps `Mini's` entries to `JO7` under `Pupillen`.
+- Replaced `Overig` labeling in Kaderlijst with `Senioren`.
+- Included current coordinator roles without a linked team (such as `Organisatorisch coördinator` and `Technisch Coördinator`) by inferring grouping from role text when needed.
+
 ## [30.11.1] - 2026-02-25
 
 ### Fixed
