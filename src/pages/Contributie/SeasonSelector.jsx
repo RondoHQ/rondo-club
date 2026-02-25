@@ -17,7 +17,7 @@ export default function SeasonSelector({ season, isForecast, onForecastChange, m
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundSize: '1.25rem',
-            backgroundPosition: 'right 0.75rem center',
+            backgroundPosition: 'right 1rem center',
             width: '220px',
           }}
         >
