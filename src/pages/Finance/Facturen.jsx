@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Receipt } from 'lucide-react';
+import { Plus, Receipt } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -27,11 +27,13 @@ const statusLabels = {
 const typeLabels = {
   membership: 'Contributie',
   discipline: 'Tuchtrecht',
+  manual: 'Handmatig',
 };
 
 const typeColors = {
   membership: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   discipline: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  manual: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
 };
 
 function StatusBadge({ status }) {
@@ -113,6 +115,7 @@ const COLUMNS = [
     filterOptions: [
       { value: 'membership', label: 'Contributie' },
       { value: 'discipline', label: 'Tuchtrecht' },
+      { value: 'manual', label: 'Handmatig' },
     ],
     size: 130,
   }),
@@ -218,6 +221,11 @@ export default function Facturen() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div className="space-y-6">
+        <div className="flex justify-end">
+          <Link to="/financien/facturen/nieuw" className="btn btn-primary inline-flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Nieuwe factuur
+          </Link>
+        </div>
         <DataTable
           storageKey="facturen"
           data={invoices || []}
