@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
-import { Users } from 'lucide-react';
-import { wpApi } from '@/api/client';
+import { RefreshCw, Users } from 'lucide-react';
+import { prmApi, wpApi } from '@/api/client';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -267,64 +268,83 @@ async function fetchAllPeople() {
   return allPeople;
 }
 
+async function buildKaderlijstSnapshot() {
+  const [teams, people] = await Promise.all([fetchAllTeams(), fetchAllPeople()]);
+  const teamsById = new Map(teams.map((team) => [team.id, team]));
+
+  const rows = [];
+  people.forEach((person) => {
+    if (isTruthy(person?.acf?.former_member)) return;
+
+    const workHistory = Array.isArray(person?.acf?.work_history) ? person.acf.work_history : [];
+    if (workHistory.length === 0) return;
+
+    const firstName = person?.acf?.first_name || '';
+    const infix = person?.acf?.infix || '';
+    const lastName = person?.acf?.last_name || '';
+    const mobile = getPrimaryPhone(person);
+    const email = getPrimaryContactByType(person, 'email');
+
+    workHistory.forEach((job) => {
+      const teamId = Number.parseInt(job?.team, 10);
+      if (!isCurrentJob(job)) return;
+
+      const team = teamId ? teamsById.get(teamId) : null;
+
+      const role = normalizeRoleForDisplay(decodeHtml(job?.job_title || ''));
+      if (!role) return;
+
+      const fallbackGrouping = deriveGroupingFromText(role);
+      const fallbackTeamName = fallbackGrouping.yearGroup || fallbackGrouping.ageGroup;
+      const teamName = team?.name || fallbackTeamName;
+      if (!teamName) return;
+
+      rows.push({
+        id: `${teamId || 'no-team'}-${person.id}-${role}`,
+        personId: person.id,
+        teamId: team?.id || null,
+        teamName,
+        hasTeamLink: !!team?.id,
+        firstName: decodeHtml(firstName),
+        infix: decodeHtml(infix),
+        lastName: decodeHtml(lastName),
+        role,
+        rolePriority: getRolePriority(role),
+        mobile: decodeHtml(mobile),
+        email: decodeHtml(email),
+      });
+    });
+  });
+
+  return { teams, rows };
+}
+
 export default function Kaderlijst() {
   useDocumentTitle('Kaderlijst');
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: roleSettings } = useVolunteerRoleSettings();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, isFetching } = useQuery({
     queryKey: ['kaderlijst'],
     queryFn: async () => {
-      const [teams, people] = await Promise.all([fetchAllTeams(), fetchAllPeople()]);
-      const teamsById = new Map(teams.map((team) => [team.id, team]));
+      const response = await prmApi.getKaderlijstSnapshot();
+      const snapshot = response.data?.snapshot;
 
-      const rows = [];
-      people.forEach((person) => {
-        if (isTruthy(person?.acf?.former_member)) return;
+      if (snapshot && Array.isArray(snapshot.teams) && Array.isArray(snapshot.rows)) {
+        return snapshot;
+      }
 
-        const workHistory = Array.isArray(person?.acf?.work_history) ? person.acf.work_history : [];
-        if (workHistory.length === 0) return;
-
-        const firstName = person?.acf?.first_name || '';
-        const infix = person?.acf?.infix || '';
-        const lastName = person?.acf?.last_name || '';
-        const mobile = getPrimaryPhone(person);
-        const email = getPrimaryContactByType(person, 'email');
-
-        workHistory.forEach((job) => {
-          const teamId = Number.parseInt(job?.team, 10);
-          if (!isCurrentJob(job)) return;
-
-          const team = teamId ? teamsById.get(teamId) : null;
-
-          const role = normalizeRoleForDisplay(decodeHtml(job?.job_title || ''));
-          if (!role) return;
-
-          const fallbackGrouping = deriveGroupingFromText(role);
-          const fallbackTeamName = fallbackGrouping.yearGroup || fallbackGrouping.ageGroup;
-          const teamName = team?.name || fallbackTeamName;
-          if (!teamName) return;
-
-          rows.push({
-            id: `${teamId || 'no-team'}-${person.id}-${role}`,
-            personId: person.id,
-            teamId: team?.id || null,
-            teamName,
-            hasTeamLink: !!team?.id,
-            firstName: decodeHtml(firstName),
-            infix: decodeHtml(infix),
-            lastName: decodeHtml(lastName),
-            role,
-            rolePriority: getRolePriority(role),
-            mobile: decodeHtml(mobile),
-            email: decodeHtml(email),
-          });
-        });
-      });
-
-      return { teams, rows };
+      const rebuiltSnapshot = await buildKaderlijstSnapshot();
+      await prmApi.updateKaderlijstSnapshot(rebuiltSnapshot);
+      return rebuiltSnapshot;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
   });
 
   const rosterRows = useMemo(() => {
@@ -533,6 +553,27 @@ export default function Kaderlijst() {
         data={rosterRows}
         columns={columns}
         isLoading={isLoading}
+        toolbarEnd={(
+          <button
+            type="button"
+            onClick={async () => {
+              setIsRefreshing(true);
+              await queryClient.removeQueries({ queryKey: ['kaderlijst'], exact: true });
+              try {
+                const rebuiltSnapshot = await buildKaderlijstSnapshot();
+                await prmApi.updateKaderlijstSnapshot(rebuiltSnapshot);
+                queryClient.setQueryData(['kaderlijst'], rebuiltSnapshot);
+              } finally {
+                setIsRefreshing(false);
+              }
+            }}
+            disabled={isFetching || isRefreshing}
+            className="btn-secondary inline-flex items-center"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isFetching || isRefreshing ? 'animate-spin' : ''}`} />
+            {isFetching || isRefreshing ? 'Verversen...' : 'Kaderlijst verversen'}
+          </button>
+        )}
         emptyIcon={<Users className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
         emptyTitle="Geen kaderleden gevonden"
         emptyDescription="Er zijn geen actieve kaderrollen gevonden voor teams of jaargroepen."
