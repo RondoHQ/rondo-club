@@ -12,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Api extends Base {
 	private const VOLUNTEER_START_DATE_META_KEY = '_rondo_volunteer_start_date';
 	private const VOLUNTEER_START_DATE_NONE     = '__none__';
+	private const KADERLIJST_SNAPSHOT_OPTION    = 'rondo_kaderlijst_snapshot';
+	private const KADERLIJST_UPDATED_OPTION     = 'rondo_kaderlijst_snapshot_updated_at';
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
@@ -353,6 +355,32 @@ class Api extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_dashboard_summary' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		// Kaderlijst snapshot (database-backed)
+		register_rest_route(
+			'rondo/v1',
+			'/kaderlijst/snapshot',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_kaderlijst_snapshot' ],
+					'permission_callback' => [ $this, 'check_user_approved' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_kaderlijst_snapshot' ],
+					'permission_callback' => [ $this, 'check_user_approved' ],
+					'args'                => [
+						'snapshot' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param ) && isset( $param['teams'], $param['rows'] ) && is_array( $param['teams'] ) && is_array( $param['rows'] );
+							},
+						],
+					],
+				],
 			]
 		);
 
@@ -2287,6 +2315,56 @@ class Api extends Base {
 			[
 				'visible_cards' => $visible_cards,
 				'card_order'    => $card_order,
+			]
+		);
+	}
+
+	/**
+	 * Get persisted kaderlijst snapshot from WordPress options.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_kaderlijst_snapshot( $request ) {
+		$snapshot   = get_option( self::KADERLIJST_SNAPSHOT_OPTION, null );
+		$updated_at = get_option( self::KADERLIJST_UPDATED_OPTION, null );
+
+		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) ) {
+			$snapshot = null;
+		}
+
+		return rest_ensure_response(
+			[
+				'snapshot'   => $snapshot,
+				'updated_at' => is_string( $updated_at ) ? $updated_at : null,
+			]
+		);
+	}
+
+	/**
+	 * Persist kaderlijst snapshot in WordPress options.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_kaderlijst_snapshot( $request ) {
+		$snapshot = $request->get_param( 'snapshot' );
+		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) || ! is_array( $snapshot['teams'] ) || ! is_array( $snapshot['rows'] ) ) {
+			return new \WP_Error(
+				'invalid_snapshot',
+				__( 'Invalid kaderlijst snapshot payload.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		update_option( self::KADERLIJST_SNAPSHOT_OPTION, $snapshot, false );
+		$updated_at = gmdate( 'c' );
+		update_option( self::KADERLIJST_UPDATED_OPTION, $updated_at, false );
+
+		return rest_ensure_response(
+			[
+				'snapshot'   => $snapshot,
+				'updated_at' => $updated_at,
 			]
 		);
 	}
