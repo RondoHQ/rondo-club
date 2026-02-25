@@ -91,7 +91,19 @@ class InvoiceEmailSender {
 
 		// Get finance configuration
 		$config = new FinanceConfig();
-		$template = $options['template'] ?? $config->get_email_template();
+		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$template     = (string) ( $options['template'] ?? '' );
+		$is_regular_invoice_default = false;
+		if ( '' === trim( $template ) ) {
+			if ( 'membership' === $invoice_type ) {
+				$template = $config->get_membership_email_template();
+			} elseif ( 'manual' === $invoice_type ) {
+				$template = $config->get_regular_invoice_email_body();
+				$is_regular_invoice_default = true;
+			} else {
+				$template = $config->get_email_template();
+			}
+		}
 		$org_name = $config->get_org_name();
 
 		// Build discipline cases list as HTML table
@@ -188,6 +200,10 @@ class InvoiceEmailSender {
 		}
 
 		// Replace template variables
+		if ( $is_regular_invoice_default ) {
+			$template = nl2br( esc_html( $template ) );
+		}
+
 		$email_body = str_replace(
 			[
 				'{naam}',
@@ -215,8 +231,33 @@ class InvoiceEmailSender {
 		// Build email subject
 		$subject = (string) ( $options['subject'] ?? '' );
 		if ( '' === trim( $subject ) ) {
-			$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+			if ( 'manual' === $invoice_type ) {
+				$subject = $config->get_regular_invoice_email_subject();
+				if ( '' === trim( $subject ) ) {
+					$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+				}
+			} else {
+				$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
+			}
 		}
+
+		$subject = str_replace(
+			[
+				'{naam}',
+				'{voornaam}',
+				'{factuur_nummer}',
+				'{organisatie_naam}',
+				'{totaal_bedrag}',
+			],
+			[
+				$person_name,
+				$first_name,
+				$invoice_number,
+				$org_name,
+				wp_strip_all_tags( $formatted_total ),
+			],
+			$subject
+		);
 
 		// In test mode, prefix subject to make test emails clearly identifiable
 		if ( ! empty( $options['override_email'] ) || ! empty( $options['skip_bcc'] ) ) {
