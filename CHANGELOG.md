@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [30.11.1] - 2026-02-25
+
+### Fixed
+- Fixed `/kaderlijst` infinite loading by replacing per-team people fan-out requests with a bulk build from `people.work_history`, reducing request count and preventing stalled loading states.
+
 ## [30.11.0] - 2026-02-25
 
 ### Added
