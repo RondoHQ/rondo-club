@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.8] - 2026-02-26
+
+### Changed
+- Sportlink card now always shows the `Vrijwilliger sinds` row on person detail pages, rendering `-` when no date is available.
+
 ## [31.0.7] - 2026-02-26
 
 ### Fixed

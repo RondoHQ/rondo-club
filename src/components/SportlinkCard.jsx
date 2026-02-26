@@ -32,7 +32,7 @@ export default function SportlinkCard({ acfData, primaryTeam }) {
   const fields = [
     { key: 'knvb-id', label: 'KNVB ID', value: knvbId, type: 'text' },
     { key: 'lid-sinds', label: 'Lid sinds', value: lidSinds, type: 'date' },
-    { key: 'vrijwilliger-sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date' },
+    { key: 'vrijwilliger-sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date', showWhenEmpty: true },
     { key: 'lid-tot', label: 'Lid tot', value: lidTot, type: 'date' },
     { key: 'leeftijdsgroep', label: 'Leeftijdsgroep', value: leeftijdsgroep, type: 'text' },
     { key: 'type-lid', label: 'Type lid', value: typeLid, type: 'text' },
@@ -57,7 +57,7 @@ export default function SportlinkCard({ acfData, primaryTeam }) {
   // Format field value based on type
   function formatValue(field) {
     if (!field.value && field.type !== 'boolean') {
-      return null;
+      return field.showWhenEmpty ? '-' : null;
     }
 
     switch (field.type) {
@@ -109,7 +109,7 @@ export default function SportlinkCard({ acfData, primaryTeam }) {
       <dl className="space-y-2">
         {fields.map((field) => {
           // Skip fields without values (except boolean which we always render when visible)
-          if (!field.value && field.type !== 'boolean') {
+          if (!field.value && field.type !== 'boolean' && !field.showWhenEmpty) {
             return null;
           }
 
