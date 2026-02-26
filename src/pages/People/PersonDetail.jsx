@@ -1404,7 +1404,7 @@ export default function PersonDetail() {
             {/* Column 2: Sportlink, Account, Relaties, VOG */}
             <div className="space-y-6">
             {/* Sportlink Card */}
-            <SportlinkCard acfData={person?.acf} primaryTeam={sportlinkPrimaryTeam} />
+            <SportlinkCard acfData={person?.acf} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
             {/* Relationships */}
             <div className="card p-6">
@@ -1693,9 +1693,6 @@ export default function PersonDetail() {
                       )}
                       <div className="ml-3">
                         <p className="text-sm font-medium group-hover:text-electric-cyan">{investment.name}</p>
-                        {investment.industry && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{investment.industry}</p>
-                        )}
                       </div>
                     </Link>
                   );
