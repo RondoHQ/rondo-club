@@ -2477,14 +2477,22 @@ class Api extends Base {
 		}
 
 		// Default column order if not set: use available_columns order (excluding name which is always first)
-		if ( empty( $column_order ) || ! is_array( $column_order ) ) {
-			$column_order = array_column( $available_columns, 'id' );
-		} else {
-			$column_order = array_values( array_intersect( $column_order, $valid_column_ids ) );
-			if ( empty( $column_order ) ) {
+			if ( empty( $column_order ) || ! is_array( $column_order ) ) {
 				$column_order = array_column( $available_columns, 'id' );
+			} else {
+				$column_order = array_values( array_intersect( $column_order, $valid_column_ids ) );
+				if ( empty( $column_order ) ) {
+					$column_order = array_column( $available_columns, 'id' );
+				}
 			}
-		}
+
+			// Ensure new columns are appended for users with older saved column_order.
+			$ordered_set = array_fill_keys( $column_order, true );
+			foreach ( $valid_column_ids as $column_id ) {
+				if ( ! isset( $ordered_set[ $column_id ] ) ) {
+					$column_order[] = $column_id;
+				}
+			}
 
 		// Default column widths if not set or empty
 		if ( empty( $column_widths ) || ! is_array( $column_widths ) ) {
@@ -2635,9 +2643,18 @@ class Api extends Base {
 		if ( empty( $stored_visible ) || ! is_array( $stored_visible ) ) {
 			$stored_visible = self::DEFAULT_LIST_COLUMNS;
 		}
-		if ( empty( $stored_order ) || ! is_array( $stored_order ) ) {
-			$stored_order = array_column( $available_columns, 'id' );
-		}
+			if ( empty( $stored_order ) || ! is_array( $stored_order ) ) {
+				$stored_order = array_column( $available_columns, 'id' );
+			} else {
+				$valid_column_ids = array_column( $available_columns, 'id' );
+				$stored_order     = array_values( array_intersect( $stored_order, $valid_column_ids ) );
+				$ordered_set      = array_fill_keys( $stored_order, true );
+				foreach ( $valid_column_ids as $column_id ) {
+					if ( ! isset( $ordered_set[ $column_id ] ) ) {
+						$stored_order[] = $column_id;
+					}
+				}
+			}
 		if ( empty( $stored_widths ) || ! is_array( $stored_widths ) ) {
 			$stored_widths = new \stdClass();
 		}

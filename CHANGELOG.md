@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.6] - 2026-02-26
+
+### Fixed
+- Fixed People column toggling for older saved column preferences by appending newly available columns (including `lid-sinds`) to `column_order`, so enabling them in column settings now immediately shows them.
+
 ## [31.0.5] - 2026-02-26
 
 ### Fixed
