@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments } from '@/hooks/useInvoices';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
@@ -73,6 +73,26 @@ function InstallmentStatusBadge({ status }) {
   );
 }
 
+function getCurrentFamilyDiscountPercent(invoice) {
+  const discountLine = invoice?.line_items?.find((item) => /^Gezinskorting\s*\(([\d.,]+)%\)/i.test(item?.description || ''));
+  if (!discountLine?.description) return 0;
+  const match = discountLine.description.match(/^Gezinskorting\s*\(([\d.,]+)%\)/i);
+  if (!match) return 0;
+  const parsed = Number.parseFloat(match[1].replace(',', '.'));
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(100, parsed));
+}
+
+function getCurrentEntryDiscountPercent(invoice) {
+  const discountLine = invoice?.line_items?.find((item) => /^Instapkorting\s*\(([\d.,]+)%\)/i.test(item?.description || ''));
+  if (!discountLine?.description) return 0;
+  const match = discountLine.description.match(/^Instapkorting\s*\(([\d.,]+)%\)/i);
+  if (!match) return 0;
+  const parsed = Number.parseFloat(match[1].replace(',', '.'));
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(100, parsed));
+}
+
 export default function FactuurDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -86,9 +106,12 @@ export default function FactuurDetail() {
   const resetPaymentState = useResetPaymentState();
   const deleteInvoice = useDeleteInvoice();
   const toggleInstallments = useToggleInstallments();
+  const updateMembershipDiscount = useUpdateMembershipInvoiceDiscount();
   const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [familyDiscountPercentInput, setFamilyDiscountPercentInput] = useState('');
+  const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
 
   const isTestMode = (() => {
     if (!financeSettings) return false;
@@ -111,6 +134,12 @@ export default function FactuurDetail() {
   // Clear error on invoice change
   useEffect(() => {
     setErrorMessage('');
+  }, [invoice]);
+
+  useEffect(() => {
+    if (!invoice) return;
+    setFamilyDiscountPercentInput(String(getCurrentFamilyDiscountPercent(invoice)));
+    setEntryDiscountPercentInput(String(getCurrentEntryDiscountPercent(invoice)));
   }, [invoice]);
 
   const handleSend = async () => {
@@ -230,7 +259,32 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending;
+  const handleUpdateMembershipDiscount = async () => {
+    const parsedFamily = Number.parseFloat(String(familyDiscountPercentInput).replace(',', '.'));
+    const parsedEntry = Number.parseFloat(String(entryDiscountPercentInput).replace(',', '.'));
+    if (!Number.isFinite(parsedFamily) || parsedFamily < 0 || parsedFamily > 100 || !Number.isFinite(parsedEntry) || parsedEntry < 0 || parsedEntry > 100) {
+      setErrorMessage('Vul geldige kortingspercentages in tussen 0 en 100.');
+      return;
+    }
+    if (!window.confirm(`Weet je zeker dat je de gezinskorting (${parsedFamily}%) en instapkorting (${parsedEntry}%) wilt aanpassen?`)) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      const updated = await updateMembershipDiscount.mutateAsync({
+        id,
+        familyDiscountPercent: parsedFamily,
+        entryDiscountPercent: parsedEntry,
+      });
+      setFamilyDiscountPercentInput(String(getCurrentFamilyDiscountPercent(updated)));
+      setEntryDiscountPercentInput(String(getCurrentEntryDiscountPercent(updated)));
+      setSuccessMessage('Kortingen aangepast. Genereer de PDF opnieuw als je die wilt delen.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het aanpassen van de kortingen.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending;
 
   if (isLoading) {
     return (
@@ -309,63 +363,65 @@ export default function FactuurDetail() {
             <Receipt className="w-5 h-5" />
             Factuurgegevens
           </h2>
-          <div className="space-y-3">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Factuurnummer</h3>
-              <p className="text-gray-700 dark:text-gray-300">{invoice.invoice_number}</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
-              <div className="mt-1">
-                <StatusBadge status={invoice.status} />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Aangemaakt</h3>
-              <p className="text-gray-700 dark:text-gray-300">
-                {format(new Date(invoice.created), 'd MMM yyyy')}
-              </p>
-            </div>
-            {invoice.sent_date && (
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="space-y-3 sm:flex-1">
               <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Verstuurd</h3>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Factuurnummer</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.invoice_number}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
+                <div className="mt-1">
+                  <StatusBadge status={invoice.status} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Aangemaakt</h3>
                 <p className="text-gray-700 dark:text-gray-300">
-                  {format(parseYmd(invoice.sent_date), 'd MMM yyyy')}
+                  {format(new Date(invoice.created), 'd MMM yyyy')}
                 </p>
               </div>
-            )}
-            {invoice.due_date && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervaldatum</h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {format(parseYmd(invoice.due_date), 'd MMM yyyy')}
-                </p>
-              </div>
-            )}
-            {invoice.installment_plan && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalplan</h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {getPlanLabel(invoice.installment_plan, invoice.installment_count)}
-                </p>
-              </div>
-            )}
-            {invoice.payment_link && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Betaallink</h3>
-                <a
-                  href={invoice.payment_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-electric-cyan dark:text-electric-cyan hover:underline text-sm flex items-center gap-1"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Open betaallink
-                </a>
-              </div>
-            )}
+              {invoice.sent_date && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Verstuurd</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {format(parseYmd(invoice.sent_date), 'd MMM yyyy')}
+                  </p>
+                </div>
+              )}
+              {invoice.due_date && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervaldatum</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {format(parseYmd(invoice.due_date), 'd MMM yyyy')}
+                  </p>
+                </div>
+              )}
+              {invoice.installment_plan && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalplan</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {getPlanLabel(invoice.installment_plan, invoice.installment_count)}
+                  </p>
+                </div>
+              )}
+              {invoice.payment_link && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Betaallink</h3>
+                  <a
+                    href={invoice.payment_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-electric-cyan dark:text-electric-cyan hover:underline text-sm inline-flex items-center gap-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Open betaallink
+                  </a>
+                </div>
+              )}
+            </div>
             {invoice.qr_code_path && (
-              <div>
+              <div className="sm:shrink-0">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 flex items-center gap-1">
                   <QrCode className="w-3.5 h-3.5" />
                   QR Code
@@ -373,7 +429,7 @@ export default function FactuurDetail() {
                 <img
                   src={prmApi.getInvoiceQrUrl(id)}
                   alt="Betaal QR code"
-                  className="max-w-48 rounded border border-gray-200 dark:border-gray-700"
+                  className="w-40 h-40 rounded border border-gray-200 dark:border-gray-700"
                 />
               </div>
             )}
@@ -610,6 +666,57 @@ export default function FactuurDetail() {
           {/* Sent/Overdue status actions */}
           {(invoice.status === 'sent' || invoice.status === 'overdue') && (
             <>
+              {invoice.invoice_type === 'membership' && (
+                <div className="w-full mb-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Gezinskorting (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={familyDiscountPercentInput}
+                        onChange={(e) => setFamilyDiscountPercentInput(e.target.value)}
+                        className="input w-40"
+                        disabled={isPending}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Instapkorting (%)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={entryDiscountPercentInput}
+                        onChange={(e) => setEntryDiscountPercentInput(e.target.value)}
+                        className="input w-40"
+                        disabled={isPending}
+                      />
+                    </div>
+                    <button
+                      onClick={handleUpdateMembershipDiscount}
+                      disabled={isPending}
+                      className="btn-secondary flex items-center gap-2"
+                    >
+                      {updateMembershipDiscount.isPending ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                      ) : (
+                        <RefreshCw className="w-4 h-4" />
+                      )}
+                      Kortingen aanpassen
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    Alleen beschikbaar voor verstuurde/onbetaalde contributiefacturen zonder actieve termijnbetaallinks.
+                  </p>
+                </div>
+              )}
               <button
                 onClick={handleMarkPaid}
                 disabled={isPending}

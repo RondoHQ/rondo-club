@@ -331,10 +331,10 @@ class Invoices extends Base {
 			]
 		);
 
-		// Toggle installments disabled flag
-		register_rest_route(
-			'rondo/v1',
-			'/invoices/(?P<id>\d+)/toggle-installments',
+			// Toggle installments disabled flag
+			register_rest_route(
+				'rondo/v1',
+				'/invoices/(?P<id>\d+)/toggle-installments',
 			[
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
@@ -350,10 +350,36 @@ class Invoices extends Base {
 							'sanitize_callback' => 'rest_sanitize_boolean',
 						],
 					],
-				],
-			]
-		);
-	}
+					],
+				]
+			);
+
+			// Update membership discounts on sent/unpaid invoices
+			register_rest_route(
+				'rondo/v1',
+				'/invoices/(?P<id>\d+)/membership-discount',
+				[
+					[
+						'methods'             => \WP_REST_Server::CREATABLE,
+						'callback'            => [ $this, 'update_membership_discount' ],
+						'permission_callback' => [ $this, 'check_financieel_permission' ],
+						'args'                => [
+							'id' => [
+								'validate_callback' => fn( $p ) => is_numeric( $p ),
+							],
+							'family_discount_percent' => [
+								'required'          => false,
+								'validate_callback' => fn( $p ) => is_numeric( $p ),
+							],
+							'entry_discount_percent' => [
+								'required'          => false,
+								'validate_callback' => fn( $p ) => is_numeric( $p ),
+							],
+						],
+					],
+				]
+			);
+		}
 
 	/**
 	 * Check if user has financieel capability
@@ -1460,6 +1486,195 @@ class Invoices extends Base {
 	}
 
 	/**
+	 * Update family/entry discount percentages on a sent/unpaid membership invoice.
+	 *
+	 * Guardrails:
+	 * - membership invoices only
+	 * - sent/overdue only (not draft/paid)
+	 * - blocked when a paid installment exists
+	 * - blocked when installment Mollie payment links were already issued
+	 *
+	 * @param \WP_REST_Request $request REST request.
+	 * @return \WP_REST_Response|\WP_Error Response or error.
+	 */
+	public function update_membership_discount( \WP_REST_Request $request ) {
+		$invoice_id             = (int) $request->get_param( 'id' );
+		$has_family_param       = null !== $request->get_param( 'family_discount_percent' );
+		$has_entry_param        = null !== $request->get_param( 'entry_discount_percent' );
+		$family_discount_percent = $has_family_param ? round( (float) $request->get_param( 'family_discount_percent' ), 2 ) : null;
+		$entry_discount_percent  = $has_entry_param ? round( (float) $request->get_param( 'entry_discount_percent' ), 2 ) : null;
+
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error( 'not_found', __( 'Factuur niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		if ( 'membership' !== $invoice_type ) {
+			return new \WP_Error(
+				'invalid_invoice_type',
+				__( 'Alleen contributiefacturen kunnen hier worden aangepast.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$status = (string) get_field( 'status', $invoice_id );
+		if ( ! in_array( $status, [ 'sent', 'overdue' ], true ) ) {
+			return new \WP_Error(
+				'invoice_status_invalid',
+				__( 'Alleen verstuurde of verlopen contributiefacturen kunnen worden aangepast.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! $has_family_param && ! $has_entry_param ) {
+			return new \WP_Error(
+				'missing_discount_param',
+				__( 'Geef minimaal één korting op om aan te passen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+		if ( $has_family_param && ( $family_discount_percent < 0 || $family_discount_percent > 100 ) ) {
+			return new \WP_Error(
+				'invalid_family_discount_percent',
+				__( 'Gezinskorting moet tussen 0 en 100 liggen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+		if ( $has_entry_param && ( $entry_discount_percent < 0 || $entry_discount_percent > 100 ) ) {
+			return new \WP_Error(
+				'invalid_entry_discount_percent',
+				__( 'Instapkorting moet tussen 0 en 100 liggen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$installment_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		for ( $n = 1; $n <= max( $installment_count, 8 ); $n++ ) {
+			$installment_status = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
+			if ( 'betaald' === $installment_status ) {
+				return new \WP_Error(
+					'installment_paid',
+					__( 'Deze factuur heeft al betaalde termijn(en) en kan niet meer worden aangepast.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			$issued_payment_link_id = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
+			if ( '' !== $issued_payment_link_id ) {
+				return new \WP_Error(
+					'installment_link_issued',
+					__( 'Deze factuur heeft al een actieve termijnbetaallink. Pas eerst het betaalplan aan via de publieke betaalpagina.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+		}
+
+		$line_items = get_field( 'line_items', $invoice_id );
+		if ( ! is_array( $line_items ) || empty( $line_items ) ) {
+			return new \WP_Error( 'missing_line_items', __( 'Factuurregels ontbreken.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$family_line_index          = -1;
+		$entry_line_index           = -1;
+		$current_family_rate_percent = 0.0;
+		$current_family_discount_abs = 0.0;
+		$current_entry_rate_percent  = 0.0;
+		$current_entry_discount_abs  = 0.0;
+		$base_line_index             = -1;
+		$base_amount                 = 0.0;
+
+		foreach ( $line_items as $index => $item ) {
+			$description = (string) ( $item['description'] ?? '' );
+			$amount      = (float) ( $item['amount'] ?? 0 );
+
+			if ( $base_line_index < 0 && $amount > 0 && 0 === stripos( trim( $description ), 'Contributie ' ) ) {
+				$base_line_index = (int) $index;
+				$base_amount     = $amount;
+			}
+
+				if ( preg_match( '/^Gezinskorting\s*\(([\d\.,]+)%\)/i', trim( $description ), $matches ) ) {
+					$family_line_index           = (int) $index;
+					$current_family_discount_abs = abs( $amount );
+					$current_family_rate_percent = (float) str_replace( ',', '.', $matches[1] );
+				}
+
+				if ( preg_match( '/^Instapkorting\s*\(([\d\.,]+)%\)/i', trim( $description ), $matches ) ) {
+					$entry_line_index           = (int) $index;
+					$current_entry_discount_abs = abs( $amount );
+					$current_entry_rate_percent = (float) str_replace( ',', '.', $matches[1] );
+				}
+			}
+
+			if ( $base_amount <= 0 && $current_family_discount_abs > 0 && $current_family_rate_percent > 0 ) {
+				$base_amount = round( $current_family_discount_abs / ( $current_family_rate_percent / 100 ), 2 );
+			}
+			if ( $base_amount <= 0 && $current_entry_discount_abs > 0 && $current_entry_rate_percent > 0 ) {
+				$base_amount = round( $current_entry_discount_abs / ( $current_entry_rate_percent / 100 ), 2 );
+			}
+
+		if ( $base_amount <= 0 ) {
+			return new \WP_Error(
+				'missing_base_fee',
+				__( 'Kon basis contributiebedrag niet bepalen voor kortingsherberekening.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$effective_family_percent = $has_family_param ? $family_discount_percent : $current_family_rate_percent;
+		$effective_entry_percent  = $has_entry_param ? $entry_discount_percent : $current_entry_rate_percent;
+		$family_discount_abs      = round( $base_amount * ( $effective_family_percent / 100 ), 2 );
+		$fee_after_family         = round( $base_amount - $family_discount_abs, 2 );
+		$entry_discount_abs       = round( $fee_after_family * ( $effective_entry_percent / 100 ), 2 );
+
+		$updated_line_items = $line_items;
+		if ( $family_line_index >= 0 ) {
+			unset( $updated_line_items[ $family_line_index ] );
+		}
+		if ( $entry_line_index >= 0 ) {
+			unset( $updated_line_items[ $entry_line_index ] );
+		}
+		$updated_line_items = array_values( $updated_line_items );
+
+		$insert_index = $base_line_index >= 0 ? $base_line_index + 1 : count( $updated_line_items );
+		if ( $family_discount_abs > 0 ) {
+			$family_label     = 'Gezinskorting (' . $this->format_percentage_label( $effective_family_percent ) . '%)';
+			$family_discount_row = [
+				'discipline_case' => null,
+				'description'     => $family_label,
+				'amount'          => -$family_discount_abs,
+			];
+			array_splice( $updated_line_items, $insert_index, 0, [ $family_discount_row ] );
+			$insert_index++;
+		}
+		if ( $entry_discount_abs > 0 ) {
+			$entry_label      = 'Instapkorting (' . $this->format_percentage_label( $effective_entry_percent ) . '%) - omdat je later in het seizoen start';
+			$entry_discount_row = [
+				'discipline_case' => null,
+				'description'     => $entry_label,
+				'amount'          => -$entry_discount_abs,
+			];
+			array_splice( $updated_line_items, $insert_index, 0, [ $entry_discount_row ] );
+		}
+
+		$updated_line_items = array_values( $updated_line_items );
+		$new_total          = 0.0;
+		foreach ( $updated_line_items as $item ) {
+			$new_total += (float) ( $item['amount'] ?? 0 );
+		}
+		$new_total = round( $new_total, 2 );
+
+		update_field( 'line_items', $updated_line_items, $invoice_id );
+		update_field( 'total_amount', $new_total, $invoice_id );
+
+		// Existing PDF contains outdated totals; force explicit regeneration.
+		$this->clear_pdf( $invoice_id );
+
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
 	 * Check whether the active payment provider is in test/sandbox mode
 	 *
 	 * Used to gate the reset-payment-state endpoint so it is never
@@ -1661,6 +1876,18 @@ class Invoices extends Base {
 			}
 			update_field( 'pdf_path', '', $invoice_id );
 		}
+	}
+
+	/**
+	 * Format percentage for labels without trailing zeros.
+	 *
+	 * @param float $value Percentage value.
+	 * @return string Formatted value (e.g. "25" or "12.5").
+	 */
+	private function format_percentage_label( float $value ): string {
+		$formatted = number_format( $value, 2, '.', '' );
+		$formatted = rtrim( rtrim( $formatted, '0' ), '.' );
+		return '' === $formatted ? '0' : $formatted;
 	}
 
 	/**

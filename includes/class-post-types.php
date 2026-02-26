@@ -98,10 +98,10 @@ class PostTypes {
 
 			// Register primary team meta field for person records (non-ACF).
 			register_post_meta( 'person', 'team', [
-				'type'              => 'integer',
+				'type'              => 'string',
 				'single'            => true,
 				'show_in_rest'      => true,
-				'sanitize_callback' => 'absint',
+				'sanitize_callback' => 'sanitize_text_field',
 			] );
 		}
 

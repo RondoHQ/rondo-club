@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.3] - 2026-02-26
+
+### Added
+- Added support to adjust both gezinskorting and instapkorting on sent/unpaid contributiefacturen via `POST /rondo/v1/invoices/{id}/membership-discount`.
+- Added a second instapkorting input in invoice detail so both discounts can be edited together.
+
+### Changed
+- Membership discount endpoint now accepts `family_discount_percent` and `entry_discount_percent` and recalculates both discount line items before updating totals.
+
+## [31.0.2] - 2026-02-26
+
+### Added
+- Added a new finance endpoint `POST /rondo/v1/invoices/{id}/membership-discount` to update family discount percentage on sent/unpaid membership invoices.
+- Added an inline "Gezinskorting (%)" action in the invoice detail page for sent/overdue membership invoices.
+
+### Changed
+- Membership invoice discount updates now recalculate `line_items` and `total_amount` and clear `pdf_path` to prevent stale PDF totals.
+
+### Fixed
+- Prevented unsafe discount changes when installment payment links were already issued or when any installment is already paid.
+
 ## [31.0.1] - 2026-02-25
 
 ### Added

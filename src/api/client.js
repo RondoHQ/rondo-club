@@ -332,6 +332,10 @@ export const prmApi = {
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),
   updateInvoiceStatus: (id, status) => api.post(`/rondo/v1/invoices/${id}/status`, { status }),
+  updateMembershipInvoiceDiscount: (id, familyDiscountPercent, entryDiscountPercent) => api.post(`/rondo/v1/invoices/${id}/membership-discount`, {
+    family_discount_percent: familyDiscountPercent,
+    entry_discount_percent: entryDiscountPercent,
+  }),
   getInvoicedCaseIds: (personId) => api.get('/rondo/v1/invoices/invoiced-cases', { params: { person_id: personId } }),
   getAllInvoicedCaseIds: () => api.get('/rondo/v1/invoices/all-invoiced-cases'),
   bulkCreateInvoices: (caseIds) => api.post('/rondo/v1/invoices/bulk', { case_ids: caseIds }),

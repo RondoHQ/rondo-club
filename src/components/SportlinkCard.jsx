@@ -1,12 +1,13 @@
 import { Database } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { isValidDate } from '@/utils/formatters';
 
 /**
  * Sportlink info card for person detail page
- * Shows Sportlink sync fields (lid-sinds, lid-tot, leeftijdsgroep, type-lid, datum-foto, isparent)
+ * Shows Sportlink sync fields (lid-sinds, lid-tot, leeftijdsgroep, type-lid, datum-foto, isparent, team)
  */
-export default function SportlinkCard({ acfData }) {
+export default function SportlinkCard({ acfData, primaryTeam }) {
   // Get Sportlink field values
   const knvbId = acfData?.['knvb-id'];
   const lidSinds = acfData?.['lid-sinds'];
@@ -15,9 +16,11 @@ export default function SportlinkCard({ acfData }) {
   const typeLid = acfData?.['type-lid'];
   const datumFoto = acfData?.['datum-foto'];
   const isParent = acfData?.isparent;
+  const teamName = primaryTeam?.name || '';
+  const teamId = primaryTeam?.id || null;
 
   // Check if at least one field (other than isparent alone) is populated
-  const hasData = knvbId || lidSinds || lidTot || leeftijdsgroep || typeLid || datumFoto;
+  const hasData = knvbId || lidSinds || lidTot || leeftijdsgroep || typeLid || datumFoto || teamName;
 
   // Hide card if no Sportlink data
   if (!hasData) {
@@ -32,6 +35,13 @@ export default function SportlinkCard({ acfData }) {
     { key: 'leeftijdsgroep', label: 'Leeftijdsgroep', value: leeftijdsgroep, type: 'text' },
     { key: 'type-lid', label: 'Type lid', value: typeLid, type: 'text' },
     { key: 'datum-foto', label: 'Datum foto', value: datumFoto, type: 'date' },
+    {
+      key: 'team',
+      label: 'Team',
+      value: teamName,
+      type: teamId ? 'team-link' : 'text',
+      teamId
+    },
     {
       key: 'isparent',
       label: 'Ouder van lid',
@@ -70,6 +80,15 @@ export default function SportlinkCard({ acfData }) {
       }
       case 'boolean':
         return (field.value === true || field.value === '1') ? 'Ja' : 'Nee';
+      case 'team-link':
+        return (
+          <Link
+            to={`/teams/${field.teamId}`}
+            className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
+          >
+            {field.value}
+          </Link>
+        );
       case 'text':
       default:
         return field.value;
