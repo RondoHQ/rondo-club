@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.10] - 2026-02-26
+
+### Changed
+- Refactored person meta registration in `PostTypes` to use one shared string-meta list (including `vrijwilliger-sinds` and `team`) while keeping `_exclude_from_contributie` as a separately auth-gated boolean meta field.
+
 ## [31.0.9] - 2026-02-26
 
 ### Changed

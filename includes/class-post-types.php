@@ -72,10 +72,16 @@ class PostTypes {
 
 		register_post_type( 'person', $args );
 
-		// Register VOG tracking meta fields for REST API access.
-		$vog_meta_fields = [ 'vog_email_sent_date', 'vog_justis_submitted_date', 'vog_reminder_sent_date' ];
-		foreach ( $vog_meta_fields as $field ) {
-			register_post_meta( 'person', $field, [
+		// Person meta: string fields exposed in REST (VOG, Sportlink, primary team).
+		$person_string_meta = [
+			'vog_email_sent_date',
+			'vog_justis_submitted_date',
+			'vog_reminder_sent_date',
+			'vrijwilliger-sinds',
+			'team',
+		];
+		foreach ( $person_string_meta as $key ) {
+			register_post_meta( 'person', $key, [
 				'type'              => 'string',
 				'single'            => true,
 				'show_in_rest'      => true,
@@ -83,35 +89,18 @@ class PostTypes {
 			] );
 		}
 
-		// Register Sportlink volunteer start date for REST meta read/write access.
-		register_post_meta( 'person', 'vrijwilliger-sinds', [
-			'type'              => 'string',
+		// Contributie exclusion: boolean, write gated by 'financieel'.
+		register_post_meta( 'person', '_exclude_from_contributie', [
+			'type'              => 'boolean',
 			'single'            => true,
 			'show_in_rest'      => true,
-			'sanitize_callback' => 'sanitize_text_field',
+			'default'           => false,
+			'sanitize_callback' => 'rest_sanitize_boolean',
+			'auth_callback'     => function () {
+				return current_user_can( 'financieel' );
+			},
 		] );
-
-			// Register contributie exclusion meta field for REST API access.
-			// Write access is gated by the 'financieel' capability in the auth_callback.
-			register_post_meta( 'person', '_exclude_from_contributie', [
-				'type'              => 'boolean',
-				'single'            => true,
-				'show_in_rest'      => true,
-				'default'           => false,
-				'sanitize_callback' => 'rest_sanitize_boolean',
-				'auth_callback'     => function () {
-					return current_user_can( 'financieel' );
-				},
-			] );
-
-			// Register primary team meta field for person records (non-ACF).
-			register_post_meta( 'person', 'team', [
-				'type'              => 'string',
-				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'sanitize_text_field',
-			] );
-		}
+	}
 
 	/**
 	 * Register Team CPT
