@@ -92,6 +92,14 @@ class Invoices extends Base {
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_next_invoice_number' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'invoice_type' => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership' ], true );
+							},
+						],
+					],
 				],
 			]
 		);
@@ -564,6 +572,7 @@ class Invoices extends Base {
 			$sub_request = new \WP_REST_Request( 'POST', '/rondo/v1/invoices' );
 			$sub_request->set_param( 'person_id', $person_id );
 			$sub_request->set_param( 'line_items', $line_items );
+			$sub_request->set_param( 'invoice_type', 'discipline' );
 
 			$result = $this->create_invoice( $sub_request );
 
@@ -635,11 +644,17 @@ class Invoices extends Base {
 	/**
 	 * Get preview of the next invoice number.
 	 *
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response
 	 */
-	public function get_next_invoice_number() {
+	public function get_next_invoice_number( $request ) {
+		$invoice_type = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
+		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership' ], true ) ) {
+			$invoice_type = 'manual';
+		}
+
 		return rest_ensure_response( [
-			'invoice_number' => InvoiceNumbering::generate_next(),
+			'invoice_number' => InvoiceNumbering::generate_next( $invoice_type ),
 		] );
 	}
 
@@ -830,7 +845,7 @@ class Invoices extends Base {
 			$invoice_type = 'manual';
 		}
 
-		$invoice_number = InvoiceNumbering::generate_next();
+		$invoice_number = InvoiceNumbering::generate_next( $invoice_type );
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => 'rondo_invoice',
