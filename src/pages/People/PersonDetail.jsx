@@ -821,38 +821,20 @@ export default function PersonDetail() {
     return result;
   }, [currentPositions, teamMap]);
 
-  const primaryTeamId = useMemo(() => {
+  const primaryTeamMetaValue = useMemo(() => {
     const raw = person?.meta?.team;
-    const parsed = Number(raw);
-    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+    if (raw === null || raw === undefined) {
+      return '';
+    }
+    return String(raw).trim();
   }, [person?.meta?.team]);
 
-  const { data: primaryTeamData } = useQuery({
-    queryKey: ['person-primary-team', primaryTeamId],
-    queryFn: async () => {
-      const response = await wpApi.getTeam(primaryTeamId, { _embed: true });
-      return response.data;
-    },
-    enabled: !!primaryTeamId,
-    staleTime: 5 * 60 * 1000,
-  });
-
   const sportlinkPrimaryTeam = useMemo(() => {
-    if (!primaryTeamId) {
+    if (!primaryTeamMetaValue) {
       return null;
     }
-
-    const fromWorkHistory = teamMap[primaryTeamId];
-    if (fromWorkHistory?.name) {
-      return { id: primaryTeamId, name: fromWorkHistory.name };
-    }
-
-    if (primaryTeamData) {
-      return { id: primaryTeamId, name: getTeamName(primaryTeamData) };
-    }
-
-    return { id: primaryTeamId, name: `Team ${primaryTeamId}` };
-  }, [primaryTeamData, primaryTeamId, teamMap]);
+    return { id: null, name: primaryTeamMetaValue };
+  }, [primaryTeamMetaValue]);
 
   // Extract and sort todos from timeline
   // Open first, awaiting second, completed last
