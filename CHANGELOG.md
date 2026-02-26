@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.7] - 2026-02-26
+
+### Fixed
+- Fixed People list sorting when switching to a different column by applying `sort` and `order` URL updates in a single state update, so `Lid sinds` and other columns now sort reliably.
+
 ## [31.0.6] - 2026-02-26
 
 ### Fixed
