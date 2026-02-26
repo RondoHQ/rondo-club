@@ -7,11 +7,11 @@ import { isValidDate } from '@/utils/formatters';
  * Sportlink info card for person detail page
  * Shows Sportlink sync fields (lid-sinds, lid-tot, vrijwilliger-sinds, leeftijdsgroep, type-lid, datum-foto, isparent, team)
  */
-export default function SportlinkCard({ acfData, primaryTeam }) {
+export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
   // Get Sportlink field values
   const knvbId = acfData?.['knvb-id'];
   const lidSinds = acfData?.['lid-sinds'];
-  const vrijwilligerSinds = acfData?.['vrijwilliger-sinds'];
+  const vrijwilligerSinds = metaData?.['vrijwilliger-sinds'] || acfData?.['vrijwilliger-sinds'];
   const lidTot = acfData?.['lid-tot'];
   const leeftijdsgroep = acfData?.leeftijdsgroep;
   const typeLid = acfData?.['type-lid'];

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.9] - 2026-02-26
+
+### Changed
+- Registered `person` post meta `vrijwilliger-sinds` for REST read/write access via native WordPress `meta`.
+- Person Detail Sportlink card now reads `vrijwilliger-sinds` from `meta` first (with ACF fallback for existing data), so display no longer depends on ACF.
+
 ## [31.0.8] - 2026-02-26
 
 ### Changed

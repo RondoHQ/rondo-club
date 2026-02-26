@@ -83,6 +83,14 @@ class PostTypes {
 			] );
 		}
 
+		// Register Sportlink volunteer start date for REST meta read/write access.
+		register_post_meta( 'person', 'vrijwilliger-sinds', [
+			'type'              => 'string',
+			'single'            => true,
+			'show_in_rest'      => true,
+			'sanitize_callback' => 'sanitize_text_field',
+		] );
+
 			// Register contributie exclusion meta field for REST API access.
 			// Write access is gated by the 'financieel' capability in the auth_callback.
 			register_post_meta( 'person', '_exclude_from_contributie', [
