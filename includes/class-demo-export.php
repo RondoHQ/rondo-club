@@ -321,6 +321,7 @@ class DemoExport {
 
 					// Sportlink-Synced Fields
 					'lid-sinds'         => $this->normalize_value( get_field( 'lid-sinds', $post->ID ) ),
+					'vrijwilliger-sinds' => $this->normalize_value( get_field( 'vrijwilliger-sinds', $post->ID ) ),
 					'leeftijdsgroep'    => $this->normalize_value( get_field( 'leeftijdsgroep', $post->ID ) ),
 					'datum-vog'         => $this->normalize_value( get_field( 'datum-vog', $post->ID ) ),
 					'datum-foto'        => $this->normalize_value( get_field( 'datum-foto', $post->ID ) ),

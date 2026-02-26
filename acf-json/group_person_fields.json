@@ -462,6 +462,18 @@
             }
         },
         {
+            "key": "field_vrijwilliger_sinds",
+            "label": "Vrijwilliger sinds",
+            "name": "vrijwilliger-sinds",
+            "type": "date_picker",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
             "key": "field_datum_foto",
             "label": "Datum foto",
             "name": "datum-foto",

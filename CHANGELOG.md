@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.4] - 2026-02-26
+
+### Added
+- Added new Sportlink-synced person field `vrijwilliger-sinds` (Vrijwilliger sinds), including People list sorting support and display in the Sportlink card on person detail.
+
+### Changed
+- Anniversary volunteer start-date resolution now uses the earliest available date from `vrijwilliger-sinds` and `work_history` start dates, and stores that minimum in the volunteer start-date cache.
+
 ## [31.0.3] - 2026-02-26
 
 ### Added

@@ -5,12 +5,13 @@ import { isValidDate } from '@/utils/formatters';
 
 /**
  * Sportlink info card for person detail page
- * Shows Sportlink sync fields (lid-sinds, lid-tot, leeftijdsgroep, type-lid, datum-foto, isparent, team)
+ * Shows Sportlink sync fields (lid-sinds, lid-tot, vrijwilliger-sinds, leeftijdsgroep, type-lid, datum-foto, isparent, team)
  */
 export default function SportlinkCard({ acfData, primaryTeam }) {
   // Get Sportlink field values
   const knvbId = acfData?.['knvb-id'];
   const lidSinds = acfData?.['lid-sinds'];
+  const vrijwilligerSinds = acfData?.['vrijwilliger-sinds'];
   const lidTot = acfData?.['lid-tot'];
   const leeftijdsgroep = acfData?.leeftijdsgroep;
   const typeLid = acfData?.['type-lid'];
@@ -20,7 +21,7 @@ export default function SportlinkCard({ acfData, primaryTeam }) {
   const teamId = primaryTeam?.id || null;
 
   // Check if at least one field (other than isparent alone) is populated
-  const hasData = knvbId || lidSinds || lidTot || leeftijdsgroep || typeLid || datumFoto || teamName;
+  const hasData = knvbId || lidSinds || vrijwilligerSinds || lidTot || leeftijdsgroep || typeLid || datumFoto || teamName;
 
   // Hide card if no Sportlink data
   if (!hasData) {
@@ -31,6 +32,7 @@ export default function SportlinkCard({ acfData, primaryTeam }) {
   const fields = [
     { key: 'knvb-id', label: 'KNVB ID', value: knvbId, type: 'text' },
     { key: 'lid-sinds', label: 'Lid sinds', value: lidSinds, type: 'date' },
+    { key: 'vrijwilliger-sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date' },
     { key: 'lid-tot', label: 'Lid tot', value: lidTot, type: 'date' },
     { key: 'leeftijdsgroep', label: 'Leeftijdsgroep', value: leeftijdsgroep, type: 'text' },
     { key: 'type-lid', label: 'Type lid', value: typeLid, type: 'text' },

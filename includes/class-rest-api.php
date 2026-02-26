@@ -1808,17 +1808,33 @@ class Api extends Base {
 		$missing = [];
 
 		foreach ( $person_ids as $person_id ) {
+			$manual_raw  = trim( (string) get_post_meta( $person_id, 'vrijwilliger-sinds', true ) );
+			$manual_date = $this->normalize_iso_date_string( $manual_raw );
 			$cached_raw = trim( (string) get_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, true ) );
 			if ( self::VOLUNTEER_START_DATE_NONE === $cached_raw ) {
+				if ( null !== $manual_date ) {
+					$cached[ $person_id ] = $manual_date;
+					update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $manual_date );
+				}
 				continue;
 			}
 
 			$start_date = $this->normalize_iso_date_string( $cached_raw );
 			if ( null !== $start_date ) {
-				$cached[ $person_id ] = $start_date;
-				if ( $cached_raw !== $start_date ) {
-					update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $start_date );
+				$best_date = $start_date;
+				if ( null !== $manual_date && $manual_date < $best_date ) {
+					$best_date = $manual_date;
 				}
+				$cached[ $person_id ] = $best_date;
+				if ( $cached_raw !== $best_date ) {
+					update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $best_date );
+				}
+				continue;
+			}
+
+			if ( null !== $manual_date ) {
+				$cached[ $person_id ] = $manual_date;
+				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $manual_date );
 				continue;
 			}
 
@@ -1832,8 +1848,21 @@ class Api extends Base {
 		$calculated = $this->get_oldest_work_history_start_dates_for_people( $missing );
 		foreach ( $missing as $person_id ) {
 			if ( ! empty( $calculated[ $person_id ] ) ) {
-				$cached[ $person_id ] = $calculated[ $person_id ];
-				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $calculated[ $person_id ] );
+				$work_history_date = $calculated[ $person_id ];
+				$manual_date       = $this->normalize_iso_date_string( (string) get_post_meta( $person_id, 'vrijwilliger-sinds', true ) );
+				$best_date         = $work_history_date;
+				if ( null !== $manual_date && $manual_date < $best_date ) {
+					$best_date = $manual_date;
+				}
+				$cached[ $person_id ] = $best_date;
+				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $best_date );
+				continue;
+			}
+
+			$manual_date = $this->normalize_iso_date_string( (string) get_post_meta( $person_id, 'vrijwilliger-sinds', true ) );
+			if ( null !== $manual_date ) {
+				$cached[ $person_id ] = $manual_date;
+				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $manual_date );
 				continue;
 			}
 
@@ -2220,6 +2249,7 @@ class Api extends Base {
 		[ 'id' => 'type-lid', 'label' => 'Type lid', 'type' => 'text' ],
 		[ 'id' => 'leeftijdsgroep', 'label' => 'Leeftijdsgroep', 'type' => 'text' ],
 		[ 'id' => 'lid-sinds', 'label' => 'Lid sinds', 'type' => 'date' ],
+		[ 'id' => 'vrijwilliger-sinds', 'label' => 'Vrijwilliger sinds', 'type' => 'date' ],
 		[ 'id' => 'datum-foto', 'label' => 'Datum foto', 'type' => 'date' ],
 		[ 'id' => 'datum-vog', 'label' => 'Datum VOG', 'type' => 'date' ],
 		[ 'id' => 'isparent', 'label' => 'Is ouder', 'type' => 'true_false' ],

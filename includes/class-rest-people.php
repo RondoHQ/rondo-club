@@ -863,6 +863,7 @@ class People extends Base {
 			'custom_type-lid',
 			'custom_leeftijdsgroep',
 			'custom_lid-sinds',
+			'custom_vrijwilliger-sinds',
 			'custom_datum-foto',
 			'custom_datum-vog',
 			'custom_isparent',
@@ -1168,6 +1169,7 @@ class People extends Base {
 				$order_clause   = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
 			case 'custom_lid-sinds':
+			case 'custom_vrijwilliger-sinds':
 			case 'custom_datum-foto':
 				// ACF date fields (not from Manager)
 				$field_name     = substr( $orderby, 7 ); // Remove 'custom_' prefix
