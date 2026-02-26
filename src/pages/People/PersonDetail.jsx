@@ -821,6 +821,39 @@ export default function PersonDetail() {
     return result;
   }, [currentPositions, teamMap]);
 
+  const primaryTeamId = useMemo(() => {
+    const raw = person?.meta?.team;
+    const parsed = Number(raw);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }, [person?.meta?.team]);
+
+  const { data: primaryTeamData } = useQuery({
+    queryKey: ['person-primary-team', primaryTeamId],
+    queryFn: async () => {
+      const response = await wpApi.getTeam(primaryTeamId, { _embed: true });
+      return response.data;
+    },
+    enabled: !!primaryTeamId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const sportlinkPrimaryTeam = useMemo(() => {
+    if (!primaryTeamId) {
+      return null;
+    }
+
+    const fromWorkHistory = teamMap[primaryTeamId];
+    if (fromWorkHistory?.name) {
+      return { id: primaryTeamId, name: fromWorkHistory.name };
+    }
+
+    if (primaryTeamData) {
+      return { id: primaryTeamId, name: getTeamName(primaryTeamData) };
+    }
+
+    return { id: primaryTeamId, name: `Team ${primaryTeamId}` };
+  }, [primaryTeamData, primaryTeamId, teamMap]);
+
   // Extract and sort todos from timeline
   // Open first, awaiting second, completed last
   const sortedTodos = useMemo(() => {
@@ -1389,7 +1422,7 @@ export default function PersonDetail() {
             {/* Column 2: Sportlink, Account, Relaties, VOG */}
             <div className="space-y-6">
             {/* Sportlink Card */}
-            <SportlinkCard acfData={person?.acf} />
+            <SportlinkCard acfData={person?.acf} primaryTeam={sportlinkPrimaryTeam} />
 
             {/* Relationships */}
             <div className="card p-6">

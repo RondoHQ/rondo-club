@@ -303,3 +303,22 @@ export function useToggleInstallments() {
     },
   });
 }
+
+/**
+ * Update family discount percentage on a sent/unpaid membership invoice
+ * @returns {object} Mutation object
+ */
+export function useUpdateMembershipInvoiceDiscount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, familyDiscountPercent, entryDiscountPercent }) => {
+      const response = await prmApi.updateMembershipInvoiceDiscount(id, familyDiscountPercent, entryDiscountPercent);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
+    },
+  });
+}
