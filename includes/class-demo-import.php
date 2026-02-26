@@ -661,6 +661,7 @@ class DemoImport {
 
 			// Sportlink-Synced Fields
 			update_field( 'lid-sinds', $this->shift_date( $acf['lid-sinds'] ?? null ), $post_id );
+			update_field( 'vrijwilliger-sinds', $this->shift_date( $acf['vrijwilliger-sinds'] ?? null ), $post_id );
 			update_field( 'leeftijdsgroep', $acf['leeftijdsgroep'] ?? null, $post_id );
 			update_field( 'datum-vog', $this->shift_date( $acf['datum-vog'] ?? null ), $post_id );
 			update_field( 'datum-foto', $this->shift_date( $acf['datum-foto'] ?? null ), $post_id );

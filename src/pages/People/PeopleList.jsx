@@ -63,6 +63,7 @@ const COLUMN_SORT_FIELDS = {
   'type-lid': 'custom_type-lid',
   'leeftijdsgroep': 'custom_leeftijdsgroep',
   'lid-sinds': 'custom_lid-sinds',
+  'vrijwilliger-sinds': 'custom_vrijwilliger-sinds',
   'datum-foto': 'custom_datum-foto',
   'datum-vog': 'custom_datum-vog',
   'isparent': 'custom_isparent',
