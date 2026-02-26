@@ -549,14 +549,6 @@ export default function PeopleList() {
     updateSearchParams({ modified: value });
   }, [updateSearchParams]);
 
-  const setSortField = useCallback((value) => {
-    updateSearchParams({ sort: value });
-  }, [updateSearchParams]);
-
-  const setSortOrder = useCallback((value) => {
-    updateSearchParams({ order: value });
-  }, [updateSearchParams]);
-
   const setPage = useCallback((value) => {
     updateSearchParams({ page: value === 1 ? null : value });
   }, [updateSearchParams]);
@@ -951,12 +943,11 @@ export default function PeopleList() {
   // Handle sort from table header
   const handleSort = useCallback((field) => {
     if (field === sortField) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      updateSearchParams({ order: sortOrder === 'asc' ? 'desc' : 'asc' });
     } else {
-      setSortField(field);
-      setSortOrder('asc');
+      updateSearchParams({ sort: field, order: 'asc' });
     }
-  }, [sortField, sortOrder, setSortField, setSortOrder]);
+  }, [sortField, sortOrder, updateSearchParams]);
 
   // Handle CSV export
   const handleExportCsv = () => {
