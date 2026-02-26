@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.5] - 2026-02-26
+
+### Fixed
+- Sportlink card team display now uses `person.meta.team` as a plain string value (no team-ID lookup), so values like `JO19-2` always render.
+
 ## [31.0.4] - 2026-02-26
 
 ### Added
