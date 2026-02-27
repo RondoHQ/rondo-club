@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.12] - 2026-02-27
+
+### Added
+- Added a direct "Markeer als betaald (zonder versturen)" action on draft invoices in invoice detail, with a dedicated confirmation dialog to prevent accidental clicks.
+
+### Changed
+- The paid-status confirmation flow now uses a stricter warning message when transitioning from `draft` to `paid` without sending first.
+
 ## [31.0.11] - 2026-02-27
 
 ### Added
