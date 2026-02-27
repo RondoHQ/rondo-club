@@ -115,6 +115,10 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
             'Monolog\\' => 8,
             'Mollie\\Api\\' => 11,
         ),
+        'L' => 
+        array (
+            'Lettermint\\' => 11,
+        ),
         'H' => 
         array (
             'Hautelook\\Phpass\\' => 17,
@@ -350,6 +354,10 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\' => 
         array (
             0 => __DIR__ . '/..' . '/mollie/mollie-api-php/src',
+        ),
+        'Lettermint\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/lettermint/lettermint-php/src',
         ),
         'Hautelook\\Phpass\\' => 
         array (
@@ -32944,6 +32952,15 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'GuzzleHttp\\TransferStats' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/TransferStats.php',
         'GuzzleHttp\\Utils' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Utils.php',
         'Hautelook\\Phpass\\PasswordHash' => __DIR__ . '/..' . '/lucatume/wp-browser/includes/Hautelook/Phpass/PasswordHash.php',
+        'Lettermint\\Client\\HttpClient' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Client/HttpClient.php',
+        'Lettermint\\Endpoints\\EmailEndpoint' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Endpoints/EmailEndpoint.php',
+        'Lettermint\\Endpoints\\Endpoint' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Endpoints/Endpoint.php',
+        'Lettermint\\Exceptions\\InvalidSignatureException' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Exceptions/InvalidSignatureException.php',
+        'Lettermint\\Exceptions\\JsonDecodeException' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Exceptions/JsonDecodeException.php',
+        'Lettermint\\Exceptions\\TimestampToleranceException' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Exceptions/TimestampToleranceException.php',
+        'Lettermint\\Exceptions\\WebhookVerificationException' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Exceptions/WebhookVerificationException.php',
+        'Lettermint\\Lettermint' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Lettermint.php',
+        'Lettermint\\Webhook' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Webhook.php',
         'Mollie\\Api\\CompatibilityChecker' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/CompatibilityChecker.php',
         'Mollie\\Api\\Config' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Config.php',
         'Mollie\\Api\\Contracts\\Arrayable' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/Arrayable.php',
@@ -35469,6 +35486,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Passes\\PublicMembershipPassPage' => __DIR__ . '/../..' . '/includes/class-public-membership-pass-page.php',
         'Rondo\\REST\\Api' => __DIR__ . '/../..' . '/includes/class-rest-api.php',
         'Rondo\\REST\\Base' => __DIR__ . '/../..' . '/includes/class-rest-base.php',
+        'Rondo\\REST\\Clothing' => __DIR__ . '/../..' . '/includes/class-rest-clothing.php',
         'Rondo\\REST\\Commissies' => __DIR__ . '/../..' . '/includes/class-rest-commissies.php',
         'Rondo\\REST\\CustomFields' => __DIR__ . '/../..' . '/includes/class-rest-custom-fields.php',
         'Rondo\\REST\\Feedback' => __DIR__ . '/../..' . '/includes/class-rest-feedback.php',
