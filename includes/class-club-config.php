@@ -54,6 +54,16 @@ class ClubConfig {
 	const OPTION_LETTERMINT_ROUTE_ID = \Rondo\Notifications\LettermintConfig::OPTION_ROUTE_ID;
 
 	/**
+	 * Option key for Lettermint default from email.
+	 */
+	const OPTION_LETTERMINT_FROM_EMAIL = \Rondo\Notifications\LettermintConfig::OPTION_FROM_EMAIL;
+
+	/**
+	 * Option key for Lettermint default from name.
+	 */
+	const OPTION_LETTERMINT_FROM_NAME = \Rondo\Notifications\LettermintConfig::OPTION_FROM_NAME;
+
+	/**
 	 * Option key for Lettermint webhook secret.
 	 */
 	const OPTION_LETTERMINT_WEBHOOK_SECRET = \Rondo\Notifications\LettermintConfig::OPTION_WEBHOOK_SECRET;
@@ -76,6 +86,8 @@ class ClubConfig {
 		'lettermint_team_api_token' => '',
 		'lettermint_project_id' => '',
 		'lettermint_route_id' => '',
+		'lettermint_from_email' => '',
+		'lettermint_from_name' => '',
 		'lettermint_webhook_secret' => '',
 		'lettermint_webhook_id' => '',
 	];
@@ -123,6 +135,24 @@ class ClubConfig {
 	 */
 	public static function get_lettermint_route_id(): string {
 		return get_option( self::OPTION_LETTERMINT_ROUTE_ID, self::DEFAULTS['lettermint_route_id'] );
+	}
+
+	/**
+	 * Get Lettermint default from email.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_from_email(): string {
+		return sanitize_email( (string) get_option( self::OPTION_LETTERMINT_FROM_EMAIL, self::DEFAULTS['lettermint_from_email'] ) );
+	}
+
+	/**
+	 * Get Lettermint default from name.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_from_name(): string {
+		return sanitize_text_field( (string) get_option( self::OPTION_LETTERMINT_FROM_NAME, self::DEFAULTS['lettermint_from_name'] ) );
 	}
 
 	/**
@@ -184,6 +214,8 @@ class ClubConfig {
 			'freescout_has_api_key' => self::has_freescout_api_key(),
 			'lettermint_project_id' => self::get_lettermint_project_id(),
 			'lettermint_route_id' => self::get_lettermint_route_id(),
+			'lettermint_from_email' => self::get_lettermint_from_email(),
+			'lettermint_from_name' => self::get_lettermint_from_name(),
 			'lettermint_webhook_id' => self::get_lettermint_webhook_id(),
 			'lettermint_has_api_token' => self::has_lettermint_api_token(),
 			'lettermint_has_team_api_token' => self::has_lettermint_team_api_token(),
@@ -267,6 +299,28 @@ class ClubConfig {
 	public static function update_lettermint_route_id( string $route_id ): bool {
 		$sanitized = sanitize_text_field( $route_id );
 		return update_option( self::OPTION_LETTERMINT_ROUTE_ID, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint default from email.
+	 *
+	 * @param string $email Email.
+	 * @return bool
+	 */
+	public static function update_lettermint_from_email( string $email ): bool {
+		$sanitized = sanitize_email( $email );
+		return update_option( self::OPTION_LETTERMINT_FROM_EMAIL, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint default from name.
+	 *
+	 * @param string $name Name.
+	 * @return bool
+	 */
+	public static function update_lettermint_from_name( string $name ): bool {
+		$sanitized = sanitize_text_field( $name );
+		return update_option( self::OPTION_LETTERMINT_FROM_NAME, $sanitized );
 	}
 
 	/**

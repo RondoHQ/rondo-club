@@ -1244,6 +1244,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
   const [formData, setFormData] = useState({
     lettermint_api_token: '',
     lettermint_team_api_token: '',
+    lettermint_from_email: '',
+    lettermint_from_name: '',
     lettermint_webhook_secret: '',
     lettermint_route_id: '',
   });
@@ -1266,8 +1268,10 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     setFormData((prev) => ({
       ...prev,
       lettermint_route_id: clubConfig?.lettermint_route_id || '',
+      lettermint_from_email: clubConfig?.lettermint_from_email || '',
+      lettermint_from_name: clubConfig?.lettermint_from_name || '',
     }));
-  }, [clubConfig?.lettermint_route_id]);
+  }, [clubConfig?.lettermint_route_id, clubConfig?.lettermint_from_email, clubConfig?.lettermint_from_name]);
 
   useEffect(() => {
     setSelectedProjectId(clubConfig?.lettermint_project_id || '');
@@ -1331,6 +1335,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     try {
       const payload = {};
       const currentProjectId = clubConfig?.lettermint_project_id || '';
+      const currentFromEmail = clubConfig?.lettermint_from_email || '';
+      const currentFromName = clubConfig?.lettermint_from_name || '';
 
       if (formData.lettermint_api_token.trim()) {
         payload.lettermint_api_token = formData.lettermint_api_token.trim();
@@ -1347,6 +1353,12 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       if (showAdvanced && formData.lettermint_webhook_secret.trim()) {
         payload.lettermint_webhook_secret = formData.lettermint_webhook_secret.trim();
       }
+      if (formData.lettermint_from_email.trim() !== currentFromEmail) {
+        payload.lettermint_from_email = formData.lettermint_from_email.trim();
+      }
+      if (formData.lettermint_from_name.trim() !== currentFromName) {
+        payload.lettermint_from_name = formData.lettermint_from_name.trim();
+      }
 
       if (Object.keys(payload).length === 0) {
         setSaveMessage('Geen wijzigingen om op te slaan.');
@@ -1360,6 +1372,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
         ...prev,
         lettermint_api_token: '',
         lettermint_team_api_token: '',
+        lettermint_from_email: response.data?.lettermint_from_email || '',
+        lettermint_from_name: response.data?.lettermint_from_name || '',
         lettermint_webhook_secret: '',
         lettermint_route_id: response.data?.lettermint_route_id || '',
       }));
@@ -1486,6 +1500,36 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
           >
             dash.lettermint.co/team/api-tokens
           </a>.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Standaard afzender e-mailadres</label>
+        <input
+          type="email"
+          value={formData.lettermint_from_email}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_from_email: e.target.value }))}
+          className="input"
+          placeholder="noreply@jouwdomein.nl"
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Wordt gebruikt als standaard `From` wanneer een e-mail geen eigen afzender instelt.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Standaard afzender naam</label>
+        <input
+          type="text"
+          value={formData.lettermint_from_name}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_from_name: e.target.value }))}
+          className="input"
+          placeholder="Rondo Club"
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Wordt gebruikt als standaard `From`-naam wanneer een e-mail geen eigen naam instelt.
         </p>
       </div>
 

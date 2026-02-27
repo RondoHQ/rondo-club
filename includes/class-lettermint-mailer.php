@@ -247,6 +247,16 @@ class LettermintMailer {
 		$default_email = (string) get_option( 'admin_email' );
 		$default_name  = 'WordPress';
 
+		$config_email = LettermintConfig::get_from_email();
+		if ( $config_email !== '' ) {
+			$default_email = $config_email;
+		}
+
+		$config_name = LettermintConfig::get_from_name();
+		if ( trim( $config_name ) !== '' ) {
+			$default_name = $config_name;
+		}
+
 		$email = $default_email;
 		$name  = $default_name;
 
