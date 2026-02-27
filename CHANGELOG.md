@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.4.0] - 2026-02-27
+
+### Changed
+- Lettermint webhook setup now auto-detects a route ID via Team API projects (`default_route_id`) when no route ID is configured.
+- Lettermint webhook creation now automatically stores the generated webhook secret from the API response when available.
+- Lettermint settings UI no longer requires route ID and webhook secret in the default flow; both moved to optional advanced overrides.
+
 ## [31.3.0] - 2026-02-27
 
 ### Added
