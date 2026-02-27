@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet, Award } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -27,6 +27,7 @@ const CONNECTION_SUBTABS = [
   { id: 'carddav', label: 'CardDAV', icon: Database },
   { id: 'api-access', label: 'API-toegang', icon: Key },
   { id: 'freescout', label: 'FreeScout', icon: LinkIcon },
+  { id: 'lettermint', label: 'Lettermint', icon: Mail },
   { id: 'payment-providers', label: 'Betaalproviders', icon: Wrench },
   { id: 'wallets', label: 'Wallets', icon: Wallet },
 ];
@@ -1029,6 +1030,14 @@ function ConnectionsTab({
           loading={clubConfigLoading}
         />
       )}
+      {activeSubtab === 'lettermint' && (
+        <LettermintConnectionSubtab
+          isAdmin={isAdmin}
+          clubConfig={clubConfig}
+          setClubConfig={setClubConfig}
+          loading={clubConfigLoading}
+        />
+      )}
       {activeSubtab === 'payment-providers' && (
         <PaymentProvidersSubtab canAccessFinancieel={canAccessFinancieel} />
       )}
@@ -1221,6 +1230,214 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
       )}
 
       <div className="flex justify-end">
+        <button type="submit" disabled={!isAdmin || saving} className="btn-primary">
+          {saving ? 'Opslaan...' : 'Opslaan'}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading }) {
+  const [formData, setFormData] = useState({
+    lettermint_api_token: '',
+    lettermint_team_api_token: '',
+    lettermint_webhook_secret: '',
+    lettermint_route_id: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+  const [creatingWebhook, setCreatingWebhook] = useState(false);
+  const [webhookMessage, setWebhookMessage] = useState('');
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      lettermint_route_id: clubConfig?.lettermint_route_id || '',
+    }));
+  }, [clubConfig?.lettermint_route_id]);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!isAdmin) {
+      return;
+    }
+
+    setSaving(true);
+    setSaveMessage('');
+    try {
+      const payload = {
+        lettermint_route_id: formData.lettermint_route_id.trim(),
+      };
+
+      if (formData.lettermint_api_token.trim()) {
+        payload.lettermint_api_token = formData.lettermint_api_token.trim();
+      }
+      if (formData.lettermint_team_api_token.trim()) {
+        payload.lettermint_team_api_token = formData.lettermint_team_api_token.trim();
+      }
+      if (formData.lettermint_webhook_secret.trim()) {
+        payload.lettermint_webhook_secret = formData.lettermint_webhook_secret.trim();
+      }
+
+      const response = await prmApi.updateClubConfig(payload);
+      setClubConfig(response.data || null);
+      setFormData((prev) => ({
+        ...prev,
+        lettermint_api_token: '',
+        lettermint_team_api_token: '',
+        lettermint_webhook_secret: '',
+        lettermint_route_id: response.data?.lettermint_route_id || '',
+      }));
+      setSaveMessage('Lettermint-instellingen opgeslagen.');
+    } catch (error) {
+      setSaveMessage(error.response?.data?.message || 'Kon Lettermint-instellingen niet opslaan.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateWebhook = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
+    setCreatingWebhook(true);
+    setWebhookMessage('');
+    try {
+      const payload = {};
+      if (formData.lettermint_route_id.trim()) {
+        payload.route_id = formData.lettermint_route_id.trim();
+      }
+
+      const response = await prmApi.createLettermintWebhook(payload);
+      if (response.data?.config) {
+        setClubConfig(response.data.config);
+      }
+      setWebhookMessage(response.data?.message || 'Lettermint-webhook aangemaakt.');
+    } catch (error) {
+      setWebhookMessage(error.response?.data?.message || 'Kon Lettermint-webhook niet aanmaken.');
+    } finally {
+      setCreatingWebhook(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="card p-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <Loader2 className="w-4 h-4 animate-spin" />
+          <span>Lettermint-instellingen laden...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSave} className="card p-6 space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold text-brand-gradient">Lettermint</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Beheer hier Lettermint tokens en webhook-configuratie voor verzendingen, bounces en spamklachten.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Project API token</label>
+        <input
+          type="password"
+          value={formData.lettermint_api_token}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_api_token: e.target.value }))}
+          className="input"
+          placeholder={clubConfig?.lettermint_has_api_token ? '••••••••' : 'lm_...'}
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Wordt gebruikt voor uitgaande e-mails via Lettermint. Laat leeg om de huidige token te behouden.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Team API token</label>
+        <input
+          type="password"
+          value={formData.lettermint_team_api_token}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_team_api_token: e.target.value }))}
+          className="input"
+          placeholder={clubConfig?.lettermint_has_team_api_token ? '••••••••' : 'lt_...'}
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Alleen nodig voor Team API-acties zoals automatisch webhooks aanmaken.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Route ID</label>
+        <input
+          type="text"
+          value={formData.lettermint_route_id}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_route_id: e.target.value }))}
+          className="input"
+          placeholder="route_..."
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Vereist voor webhook-registratie via Lettermint Team API.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Webhook secret</label>
+        <input
+          type="password"
+          value={formData.lettermint_webhook_secret}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_webhook_secret: e.target.value }))}
+          className="input"
+          placeholder={clubConfig?.lettermint_has_webhook_secret ? '••••••••' : 'whsec_...'}
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Wordt gebruikt om inkomende Lettermint-webhooks te verifiëren.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Webhook endpoint</label>
+        <input
+          type="text"
+          readOnly
+          value={clubConfig?.lettermint_webhook_url || `${window.location.origin}/wp-json/rondo/v1/lettermint/webhook`}
+          className="input bg-gray-50 dark:bg-gray-700 font-mono text-xs"
+          onClick={(e) => e.target.select()}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Dit endpoint wordt gebruikt bij automatisch webhook aanmaken.
+        </p>
+      </div>
+
+      {!isAdmin && (
+        <p className="text-sm text-amber-600 dark:text-amber-400">
+          Alleen beheerders kunnen Lettermint-instellingen wijzigen.
+        </p>
+      )}
+
+      {saveMessage && (
+        <p className={`text-sm ${saveMessage.includes('niet') || saveMessage.includes('Kon') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+          {saveMessage}
+        </p>
+      )}
+
+      {webhookMessage && (
+        <p className={`text-sm ${webhookMessage.includes('niet') || webhookMessage.includes('Kon') || webhookMessage.includes('ontbreekt') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+          {webhookMessage}
+        </p>
+      )}
+
+      <div className="flex flex-col md:flex-row gap-3 md:justify-end">
+        <button type="button" onClick={handleCreateWebhook} disabled={!isAdmin || creatingWebhook} className="btn-secondary">
+          {creatingWebhook ? 'Webhook aanmaken...' : 'Webhook aanmaken'}
+        </button>
         <button type="submit" disabled={!isAdmin || saving} className="btn-primary">
           {saving ? 'Opslaan...' : 'Opslaan'}
         </button>

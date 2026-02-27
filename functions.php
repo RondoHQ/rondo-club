@@ -47,6 +47,8 @@ use Rondo\Calendar\Matcher;
 use Rondo\Calendar\CalDAVProvider;
 use Rondo\Sheets\GoogleOAuth;
 use Rondo\Notifications\EmailChannel;
+use Rondo\Notifications\LettermintMailer;
+use Rondo\Notifications\LettermintWebhook;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
@@ -306,6 +308,7 @@ function rondo_init() {
 	new Taxonomies();
 	new AccessControl();
 	new UserRoles();
+	new LettermintMailer();
 	new DemoProtection();
 
 	// iCal feed - only load for iCal requests
@@ -359,6 +362,7 @@ function rondo_init() {
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();
+		new LettermintWebhook();
 	}
 
 	// Reminders - only for admin or cron

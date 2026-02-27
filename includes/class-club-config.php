@@ -34,6 +34,31 @@ class ClubConfig {
 	const OPTION_FREESCOUT_API_KEY = 'rondo_freescout_api_key';
 
 	/**
+	 * Option key for Lettermint project API token.
+	 */
+	const OPTION_LETTERMINT_API_TOKEN = \Rondo\Notifications\LettermintConfig::OPTION_API_TOKEN;
+
+	/**
+	 * Option key for Lettermint team API token.
+	 */
+	const OPTION_LETTERMINT_TEAM_API_TOKEN = \Rondo\Notifications\LettermintConfig::OPTION_TEAM_API_TOKEN;
+
+	/**
+	 * Option key for Lettermint route ID.
+	 */
+	const OPTION_LETTERMINT_ROUTE_ID = \Rondo\Notifications\LettermintConfig::OPTION_ROUTE_ID;
+
+	/**
+	 * Option key for Lettermint webhook secret.
+	 */
+	const OPTION_LETTERMINT_WEBHOOK_SECRET = \Rondo\Notifications\LettermintConfig::OPTION_WEBHOOK_SECRET;
+
+	/**
+	 * Option key for the last created Lettermint webhook ID.
+	 */
+	const OPTION_LETTERMINT_WEBHOOK_ID = 'rondo_lettermint_webhook_id';
+
+	/**
 	 * Default configuration values
 	 *
 	 * @var array<string, string>
@@ -42,6 +67,11 @@ class ClubConfig {
 		'club_name'     => '',
 		'freescout_url' => '',
 		'freescout_api_key' => '',
+		'lettermint_api_token' => '',
+		'lettermint_team_api_token' => '',
+		'lettermint_route_id' => '',
+		'lettermint_webhook_secret' => '',
+		'lettermint_webhook_id' => '',
 	];
 
 	/**
@@ -77,7 +107,52 @@ class ClubConfig {
 	 * @return bool True when a key exists, false otherwise.
 	 */
 	public static function has_freescout_api_key(): bool {
-		return '' !== trim( self::get_freescout_api_key() );
+		return trim( self::get_freescout_api_key() ) !== '';
+	}
+
+	/**
+	 * Get Lettermint route ID.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_route_id(): string {
+		return get_option( self::OPTION_LETTERMINT_ROUTE_ID, self::DEFAULTS['lettermint_route_id'] );
+	}
+
+	/**
+	 * Get Lettermint webhook ID.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_webhook_id(): string {
+		return get_option( self::OPTION_LETTERMINT_WEBHOOK_ID, self::DEFAULTS['lettermint_webhook_id'] );
+	}
+
+	/**
+	 * Check whether a Lettermint project API token is configured.
+	 *
+	 * @return bool
+	 */
+	public static function has_lettermint_api_token(): bool {
+		return trim( (string) get_option( self::OPTION_LETTERMINT_API_TOKEN, self::DEFAULTS['lettermint_api_token'] ) ) !== '';
+	}
+
+	/**
+	 * Check whether a Lettermint team API token is configured.
+	 *
+	 * @return bool
+	 */
+	public static function has_lettermint_team_api_token(): bool {
+		return trim( (string) get_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, self::DEFAULTS['lettermint_team_api_token'] ) ) !== '';
+	}
+
+	/**
+	 * Check whether a Lettermint webhook secret is configured.
+	 *
+	 * @return bool
+	 */
+	public static function has_lettermint_webhook_secret(): bool {
+		return trim( (string) get_option( self::OPTION_LETTERMINT_WEBHOOK_SECRET, self::DEFAULTS['lettermint_webhook_secret'] ) ) !== '';
 	}
 
 	/**
@@ -86,10 +161,18 @@ class ClubConfig {
 	 * @return array<string, string|bool> Array of all configuration settings
 	 */
 	public static function get_all_settings(): array {
+		$webhook_path = 'rondo/v1/lettermint/webhook';
+
 		return [
 			'club_name'     => self::get_club_name(),
 			'freescout_url' => self::get_freescout_url(),
 			'freescout_has_api_key' => self::has_freescout_api_key(),
+			'lettermint_route_id' => self::get_lettermint_route_id(),
+			'lettermint_webhook_id' => self::get_lettermint_webhook_id(),
+			'lettermint_has_api_token' => self::has_lettermint_api_token(),
+			'lettermint_has_team_api_token' => self::has_lettermint_team_api_token(),
+			'lettermint_has_webhook_secret' => self::has_lettermint_webhook_secret(),
+			'lettermint_webhook_url' => rest_url( $webhook_path ),
 		];
 	}
 
@@ -124,5 +207,60 @@ class ClubConfig {
 	public static function update_freescout_api_key( string $api_key ): bool {
 		$sanitized = sanitize_text_field( $api_key );
 		return update_option( self::OPTION_FREESCOUT_API_KEY, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint project API token.
+	 *
+	 * @param string $api_token Token.
+	 * @return bool
+	 */
+	public static function update_lettermint_api_token( string $api_token ): bool {
+		$sanitized = sanitize_text_field( $api_token );
+		return update_option( self::OPTION_LETTERMINT_API_TOKEN, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint team API token.
+	 *
+	 * @param string $api_token Token.
+	 * @return bool
+	 */
+	public static function update_lettermint_team_api_token( string $api_token ): bool {
+		$sanitized = sanitize_text_field( $api_token );
+		return update_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint route ID.
+	 *
+	 * @param string $route_id Route ID.
+	 * @return bool
+	 */
+	public static function update_lettermint_route_id( string $route_id ): bool {
+		$sanitized = sanitize_text_field( $route_id );
+		return update_option( self::OPTION_LETTERMINT_ROUTE_ID, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint webhook secret.
+	 *
+	 * @param string $secret Secret.
+	 * @return bool
+	 */
+	public static function update_lettermint_webhook_secret( string $secret ): bool {
+		$sanitized = sanitize_text_field( $secret );
+		return update_option( self::OPTION_LETTERMINT_WEBHOOK_SECRET, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint webhook ID.
+	 *
+	 * @param string $webhook_id Webhook ID.
+	 * @return bool
+	 */
+	public static function update_lettermint_webhook_id( string $webhook_id ): bool {
+		$sanitized = sanitize_text_field( $webhook_id );
+		return update_option( self::OPTION_LETTERMINT_WEBHOOK_ID, $sanitized );
 	}
 }

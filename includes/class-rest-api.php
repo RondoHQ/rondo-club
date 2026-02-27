@@ -958,6 +958,39 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'lettermint_api_token' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'lettermint_team_api_token' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'lettermint_route_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'lettermint_webhook_secret' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+					],
+				],
+			]
+		);
+
+		// Lettermint webhook provisioning (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/lettermint/webhook/create',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'create_lettermint_webhook' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'route_id' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
 					],
 				],
 			]
@@ -4534,7 +4567,161 @@ class Api extends Base {
 			\Rondo\Config\ClubConfig::update_freescout_api_key( $freescout_api_key );
 		}
 
+		$lettermint_api_token = $request->get_param( 'lettermint_api_token' );
+		if ( $lettermint_api_token !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_api_token( $lettermint_api_token );
+		}
+
+		$lettermint_team_api_token = $request->get_param( 'lettermint_team_api_token' );
+		if ( $lettermint_team_api_token !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_team_api_token( $lettermint_team_api_token );
+		}
+
+		$lettermint_route_id = $request->get_param( 'lettermint_route_id' );
+		if ( $lettermint_route_id !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_route_id( $lettermint_route_id );
+		}
+
+		$lettermint_webhook_secret = $request->get_param( 'lettermint_webhook_secret' );
+		if ( $lettermint_webhook_secret !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_webhook_secret( $lettermint_webhook_secret );
+		}
+
 		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
+	}
+
+	/**
+	 * Create a Lettermint webhook for this Rondo install.
+	 *
+	 * Uses the Lettermint Team API and stores returned identifiers/secrets in
+	 * WordPress options for immediate use by the inbound webhook verifier.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function create_lettermint_webhook( $request ) {
+		$token = \Rondo\Notifications\LettermintConfig::get_team_api_token();
+		if ( $token === '' ) {
+			return new \WP_Error(
+				'lettermint_missing_token',
+				'Lettermint team API token ontbreekt. Sla eerst een token op onder Instellingen > Koppelingen > Lettermint.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$route_id = sanitize_text_field( (string) $request->get_param( 'route_id' ) );
+		if ( $route_id === '' ) {
+			$route_id = \Rondo\Notifications\LettermintConfig::get_route_id();
+		}
+		if ( $route_id === '' ) {
+			return new \WP_Error(
+				'lettermint_missing_route_id',
+				'Lettermint route ID ontbreekt. Vul eerst een route ID in.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$webhook_url = rest_url( 'rondo/v1/lettermint/webhook' );
+		$site_host   = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		$name        = sprintf( 'Rondo Club (%s)', $site_host ?: 'site' );
+
+		$payload = [
+			'name'     => $name,
+			'url'      => $webhook_url,
+			'route_id' => $route_id,
+			'events'   => array_values( \Rondo\Notifications\LettermintWebhook::ACTIONABLE_EVENTS ),
+			'enabled'  => true,
+		];
+
+		$response = wp_remote_post(
+			'https://api.lettermint.co/v1/webhooks',
+			[
+				'headers' => [
+					'Content-Type'  => 'application/json',
+					'Authorization' => 'Bearer ' . $token,
+				],
+				'body'    => wp_json_encode( $payload ),
+				'timeout' => 20,
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new \WP_Error(
+				'lettermint_request_failed',
+				$response->get_error_message(),
+				[ 'status' => 502 ]
+			);
+		}
+
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body_raw    = wp_remote_retrieve_body( $response );
+		$body        = json_decode( $body_raw, true );
+		$data        = is_array( $body['data'] ?? null ) ? $body['data'] : [];
+
+		if ( $status_code >= 400 ) {
+			$message = $this->extract_lettermint_api_error_message( is_array( $body ) ? $body : [] );
+			return new \WP_Error(
+				'lettermint_create_failed',
+				$message ?: 'Lettermint API retourneerde een fout bij het aanmaken van de webhook.',
+				[ 'status' => $status_code ]
+			);
+		}
+
+		$resolved_route_id = sanitize_text_field( (string) ( $data['route_id'] ?? $route_id ) );
+		$webhook_id        = sanitize_text_field( (string) ( $data['id'] ?? '' ) );
+		$secret            = sanitize_text_field( (string) ( $data['secret'] ?? '' ) );
+		$resolved_url      = esc_url_raw( (string) ( $data['url'] ?? $webhook_url ) );
+		$resolved_events   = isset( $data['events'] ) && is_array( $data['events'] )
+			? array_values( array_map( 'sanitize_text_field', $data['events'] ) )
+			: array_values( \Rondo\Notifications\LettermintWebhook::ACTIONABLE_EVENTS );
+
+		\Rondo\Config\ClubConfig::update_lettermint_route_id( $resolved_route_id );
+		if ( $webhook_id !== '' ) {
+			\Rondo\Config\ClubConfig::update_lettermint_webhook_id( $webhook_id );
+		}
+		if ( $secret !== '' ) {
+			\Rondo\Config\ClubConfig::update_lettermint_webhook_secret( $secret );
+		}
+
+		return rest_ensure_response(
+			[
+				'message' => 'Lettermint-webhook aangemaakt.',
+				'webhook' => [
+					'id'       => $webhook_id,
+					'url'      => $resolved_url,
+					'route_id' => $resolved_route_id,
+					'events'   => $resolved_events,
+				],
+				'secret_saved' => $secret !== '',
+				'config'       => \Rondo\Config\ClubConfig::get_all_settings(),
+			]
+		);
+	}
+
+	/**
+	 * Extract a human-readable Lettermint API error message from response body.
+	 *
+	 * @param array<string, mixed> $body Parsed Lettermint API response.
+	 * @return string
+	 */
+	private function extract_lettermint_api_error_message( array $body ): string {
+		$message = sanitize_text_field( (string) ( $body['message'] ?? '' ) );
+		if ( $message !== '' ) {
+			return $message;
+		}
+
+		if ( isset( $body['errors'] ) && is_array( $body['errors'] ) ) {
+			foreach ( $body['errors'] as $error ) {
+				if ( is_array( $error ) && isset( $error['message'] ) ) {
+					$error_message = sanitize_text_field( (string) $error['message'] );
+					if ( $error_message !== '' ) {
+						return $error_message;
+					}
+				}
+			}
+		}
+
+		return '';
 	}
 
 	/**
