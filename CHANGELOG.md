@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.13] - 2026-02-27
+
+### Changed
+- Invoice PDFs now show a large `BETAALD` watermark when invoice status is paid.
+- Payment QR codes are now omitted from paid invoice PDFs.
+
 ## [31.0.12] - 2026-02-27
 
 ### Added
