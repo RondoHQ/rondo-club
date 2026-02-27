@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.2.0] - 2026-02-27
+
+### Added
+- Added a new Lettermint settings section under `Instellingen > Koppelingen > Lettermint` with secure fields for project token, team token, route ID, and webhook secret.
+- Added a new admin endpoint `POST /wp-json/rondo/v1/lettermint/webhook/create` that provisions a Lettermint webhook through the Team API and stores the resulting webhook metadata in WordPress options.
+
+### Changed
+- Extended club config API responses with Lettermint configuration status flags (`has token/secret`) and the resolved webhook URL so the settings UI can safely manage credentials without exposing stored secrets.
+
+## [31.1.0] - 2026-02-27
+
+### Added
+- Added native Lettermint transport in Rondo Club by intercepting `wp_mail()` and sending through the Lettermint PHP SDK (including support for HTML/text bodies, CC/BCC/Reply-To, custom headers, tags, metadata, and attachments).
+- Added a signed public webhook endpoint at `POST /wp-json/rondo/v1/lettermint/webhook` to process Lettermint delivery events.
+- Added automatic follow-up task creation for Secretaris users (fallback: admins) on `message.hard_bounced`, `message.soft_bounced`, and `message.spam_complaint` events.
+- Added persistent suppressed-email tracking in WordPress option `rondo_lettermint_suppressed_emails` with event history per recipient.
+
+### Changed
+- Theme bootstrap now initializes Lettermint mail transport on all requests and Lettermint webhook handling on REST requests.
+- Email delivery configuration now supports Lettermint credentials via constants, environment variables, or options.
+
 ## [31.0.21] - 2026-02-27
 
 ### Added
