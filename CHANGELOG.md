@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.5.1] - 2026-02-27
+
+### Changed
+- Simplified Lettermint webhook status UI to a single green check/red cross indicator.
+- Moved detailed webhook metadata (project, route ID, webhook ID, secret state) into `Geavanceerde velden`.
+- Added direct help links in Lettermint settings for finding Project API tokens and Team API tokens in the Lettermint dashboard.
+- Removed the webhook endpoint field from the Lettermint settings UI because endpoint management is fully internal.
+
 ## [31.5.0] - 2026-02-27
 
 ### Added

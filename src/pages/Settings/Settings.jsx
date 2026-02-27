@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -1260,6 +1260,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailMessage, setTestEmailMessage] = useState('');
   const selectedProject = projects.find((project) => project.id === selectedProjectId) || null;
+  const webhookConfigured = Boolean(clubConfig?.lettermint_webhook_id && clubConfig?.lettermint_has_webhook_secret);
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -1453,7 +1454,15 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
           disabled={!isAdmin}
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Wordt gebruikt voor uitgaande e-mails via Lettermint. Laat leeg om de huidige token te behouden.
+          Wordt gebruikt voor uitgaande e-mails via Lettermint. Laat leeg om de huidige token te behouden. Je vindt deze op{' '}
+          <a
+            href="https://dash.lettermint.co/projects"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-electric-cyan hover:underline"
+          >
+            dash.lettermint.co/projects
+          </a>.
         </p>
       </div>
 
@@ -1468,7 +1477,15 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
           disabled={!isAdmin}
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Alleen nodig voor Team API-acties zoals automatisch webhooks aanmaken.
+          Alleen nodig voor Team API-acties zoals automatisch webhooks aanmaken. Je vindt deze op{' '}
+          <a
+            href="https://dash.lettermint.co/team/api-tokens"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-electric-cyan hover:underline"
+          >
+            dash.lettermint.co/team/api-tokens
+          </a>.
         </p>
       </div>
 
@@ -1528,37 +1545,14 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
 
       <div>
         <label className="label">Webhook status</label>
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/40 text-sm space-y-1">
-          <p className="text-gray-700 dark:text-gray-200">
-            Project: <span className="font-mono text-xs">{selectedProject?.name || selectedProjectId || 'nog niet gekozen'}</span>
-          </p>
-          <p className="text-gray-700 dark:text-gray-200">
-            Route ID: <span className="font-mono text-xs">{clubConfig?.lettermint_route_id || 'automatisch (default route)'}</span>
-          </p>
-          <p className="text-gray-700 dark:text-gray-200">
-            Webhook ID: <span className="font-mono text-xs">{clubConfig?.lettermint_webhook_id || 'nog niet aangemaakt'}</span>
-          </p>
-          <p className="text-gray-700 dark:text-gray-200">
-            Geheim: {clubConfig?.lettermint_has_webhook_secret ? 'automatisch opgeslagen' : 'nog niet opgeslagen'}
-          </p>
+        <div className={`rounded-lg border p-3 text-sm flex items-center gap-2 ${
+          webhookConfigured
+            ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-700/40 dark:bg-green-900/20 dark:text-green-400'
+            : 'border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-400'
+        }`}>
+          {webhookConfigured ? <Check className="w-4 h-4 shrink-0" /> : <X className="w-4 h-4 shrink-0" />}
+          <span>{webhookConfigured ? 'Webhook is actief.' : 'Webhook is nog niet volledig ingesteld.'}</span>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Route ID en webhook secret worden bij webhook-aanmaak automatisch bepaald via de Lettermint API.
-        </p>
-      </div>
-
-      <div>
-        <label className="label">Webhook endpoint</label>
-        <input
-          type="text"
-          readOnly
-          value={clubConfig?.lettermint_webhook_url || `${window.location.origin}/wp-json/rondo/v1/lettermint/webhook`}
-          className="input bg-gray-50 dark:bg-gray-700 font-mono text-xs"
-          onClick={(e) => e.target.select()}
-        />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Dit endpoint wordt gebruikt bij automatisch webhook aanmaken.
-        </p>
       </div>
 
       <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -1572,6 +1566,27 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
 
         {showAdvanced && (
           <div className="mt-3 space-y-4">
+            <div>
+              <label className="label">Huidige webhook details</label>
+              <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/40 text-sm space-y-1">
+                <p className="text-gray-700 dark:text-gray-200">
+                  Project: <span className="font-mono text-xs">{selectedProject?.name || selectedProjectId || 'nog niet gekozen'}</span>
+                </p>
+                <p className="text-gray-700 dark:text-gray-200">
+                  Route ID: <span className="font-mono text-xs">{clubConfig?.lettermint_route_id || 'automatisch (default route)'}</span>
+                </p>
+                <p className="text-gray-700 dark:text-gray-200">
+                  Webhook ID: <span className="font-mono text-xs">{clubConfig?.lettermint_webhook_id || 'nog niet aangemaakt'}</span>
+                </p>
+                <p className="text-gray-700 dark:text-gray-200">
+                  Geheim: {clubConfig?.lettermint_has_webhook_secret ? 'automatisch opgeslagen' : 'nog niet opgeslagen'}
+                </p>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Route ID en webhook secret worden bij webhook-aanmaak automatisch bepaald via de Lettermint API.
+              </p>
+            </div>
+
             <div>
               <label className="label">Route ID (optioneel override)</label>
               <input
