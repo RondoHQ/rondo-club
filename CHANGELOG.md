@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.20] - 2026-02-27
+
+### Fixed
+- Credit invoice line amounts now preserve the sign entered by finance users (both positive and negative values), in both draft total preview and backend invoice creation.
+
 ## [31.0.19] - 2026-02-27
 
 ### Fixed

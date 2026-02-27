@@ -99,8 +99,8 @@ export default function FactuurNieuw() {
 
   const total = useMemo(() => lineItems.reduce((sum, item) => {
     const amount = parseFloat(item.amount) || 0;
-    return sum + (invoiceKind === 'credit' ? -Math.abs(amount) : amount);
-  }, 0), [lineItems, invoiceKind]);
+    return sum + amount;
+  }, 0), [lineItems]);
 
   const updateLine = (index, key, value) => {
     setLineItems((prev) => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
