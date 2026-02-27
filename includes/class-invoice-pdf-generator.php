@@ -51,6 +51,8 @@ class InvoicePdfGenerator {
 		$payment_link   = get_field( 'payment_link', $invoice_id );
 		$invoice_status = get_field( 'status', $invoice_id ) ?: str_replace( 'rondo_', '', (string) $invoice->post_status );
 		$is_paid        = ( $invoice_status === 'paid' || $invoice->post_status === 'rondo_paid' );
+		$invoice_kind   = (string) get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
+		$is_credit      = ( 'credit' === $invoice_kind );
 
 		// Use current date as invoice date if not sent yet (draft preview)
 		if ( empty( $sent_date ) ) {
@@ -188,9 +190,10 @@ class InvoicePdfGenerator {
 				'margin_top'        => 15,
 				'margin_bottom'     => 15,
 			]);
-			if ( $is_paid ) {
+			if ( $is_credit || $is_paid ) {
 				// Use mPDF native watermark so angle and opacity are applied reliably.
-				$mpdf->SetWatermarkText( new WatermarkText( 'BETAALD', 96, 45, $accent_color, 0.5 ) );
+				$watermark_text = $is_credit ? 'CREDIT' : 'BETAALD';
+				$mpdf->SetWatermarkText( new WatermarkText( $watermark_text, 96, 45, $accent_color, 0.5 ) );
 				$mpdf->showWatermarkText = true;
 			}
 			$mpdf->WriteHTML( $html );
