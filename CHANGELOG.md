@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.1] - 2026-02-27
+
+### Fixed
+- Replaced temporary direct Lettermint class includes with a fallback `Rondo\\*` autoloader in theme bootstrap to prevent class-not-found fatals when Composer classmaps are stale.
+
 ## [31.6.0] - 2026-02-27
 
 ### Added
