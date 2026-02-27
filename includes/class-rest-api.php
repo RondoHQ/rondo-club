@@ -3590,7 +3590,6 @@ class Api extends Base {
 				'id'        => $entity->ID,
 				'type'      => $entity->post_type,
 				'name'      => $this->sanitize_text( $entity->post_title ),
-				'industry'  => $this->sanitize_text( get_field( 'industry', $entity->ID ) ),
 				'website'   => $this->sanitize_url( get_field( 'website', $entity->ID ) ),
 				'thumbnail' => $this->sanitize_url( $thumbnail_url ),
 			];
@@ -5506,8 +5505,8 @@ class Api extends Base {
 	/**
 	 * Get all distinct werkfunctie values from the database.
 	 *
-	 * Queries all people who have a werkfuncties field, unserializes the data,
-	 * and returns unique werkfunctie values sorted alphabetically.
+	 * Derives job titles from current people work_history rows and returns
+	 * unique werkfunctie values sorted alphabetically.
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response List of distinct werkfunctie names.
@@ -5694,8 +5693,6 @@ class Api extends Base {
 			$result = $vog_email->send( (int) $person_id, $template_type );
 
 			if ( $result === true ) {
-				// Update ACF field for email sent date
-				update_field( 'vog-email-verzonden', current_time( 'Y-m-d' ), $person_id );
 				++$sent;
 				$results[] = [
 					'id'      => $person_id,

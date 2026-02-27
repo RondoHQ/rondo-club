@@ -79,7 +79,7 @@ Entry point: `src/main.jsx`
 
 **Custom Post Types:**
 - `person` - Contact records with relationships, work history, photo gallery
-- `team` - Teams with logo, industry, contact info (post type slug remains `team` for backward compatibility)
+- `team` - Teams with logo and contact info (post type slug remains `team` for backward compatibility)
 - `commissie` - Committees with staff members and team structure
 - `rondo_todo` - Task/todo items linked to people
 - `rondo_feedback` - User feedback items with agent processing workflow

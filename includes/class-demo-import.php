@@ -502,7 +502,7 @@ class DemoImport {
 	}
 
 	/**
-	 * Resolve team relationships (work_history or werkfuncties)
+	 * Resolve team relationships for work_history rows.
 	 *
 	 * @param array $rows Array of relationship rows.
 	 * @return array Array of resolved relationships.
@@ -668,11 +668,8 @@ class DemoImport {
 			update_field( 'type-lid', $acf['type-lid'] ?? null, $post_id );
 			update_field( 'huidig-vrijwilliger', $acf['huidig-vrijwilliger'] ?? null, $post_id );
 			update_field( 'financiele-blokkade', $acf['financiele-blokkade'] ?? false, $post_id );
-			update_field( 'relatiecode', $acf['relatiecode'] ?? null, $post_id );
+			update_field( 'knvb-id', $acf['knvb-id'] ?? ( $acf['relatiecode'] ?? null ), $post_id );
 			update_field( 'freescout-id', $acf['freescout-id'] ?? null, $post_id );
-			update_field( 'factuur-adres', $acf['factuur-adres'] ?? null, $post_id );
-			update_field( 'factuur-email', $acf['factuur-email'] ?? null, $post_id );
-			update_field( 'factuur-referentie', $acf['factuur-referentie'] ?? null, $post_id );
 
 			// Set post_meta directly (non-ACF fields)
 			$post_meta = $person['post_meta'] ?? [];
@@ -705,7 +702,7 @@ class DemoImport {
 
 		WP_CLI::log( sprintf( '  Pass 1: Created %d people', $total ) );
 
-		// Pass 2: Resolve refs in work_history, werkfuncties, and relationships
+		// Pass 2: Resolve refs in work_history and relationships
 		WP_CLI::log( '  Pass 2: Resolving relationships...' );
 
 		foreach ( $people as $i => $person ) {
@@ -727,12 +724,6 @@ class DemoImport {
 			$work_history = $this->resolve_team_relationships( $acf['work_history'] ?? [] );
 			if ( ! empty( $work_history ) ) {
 				update_field( 'work_history', $work_history, $post_id );
-			}
-
-			// Resolve werkfuncties refs
-			$werkfuncties = $this->resolve_team_relationships( $acf['werkfuncties'] ?? [] );
-			if ( ! empty( $werkfuncties ) ) {
-				update_field( 'werkfuncties', $werkfuncties, $post_id );
 			}
 
 			// Resolve relationships refs
