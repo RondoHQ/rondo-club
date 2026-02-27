@@ -966,6 +966,10 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'lettermint_project_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 						'lettermint_route_id' => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -988,11 +992,26 @@ class Api extends Base {
 				'callback'            => [ $this, 'create_lettermint_webhook' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
+					'project_id' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
 					'route_id' => [
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 				],
+			]
+		);
+
+		// Lettermint projects and default routes (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/lettermint/projects',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_lettermint_projects' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
 			]
 		);
 
@@ -4597,6 +4616,11 @@ class Api extends Base {
 			\Rondo\Config\ClubConfig::update_lettermint_team_api_token( $lettermint_team_api_token );
 		}
 
+		$lettermint_project_id = $request->get_param( 'lettermint_project_id' );
+		if ( $lettermint_project_id !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_project_id( $lettermint_project_id );
+		}
+
 		$lettermint_route_id = $request->get_param( 'lettermint_route_id' );
 		if ( $lettermint_route_id !== null ) {
 			\Rondo\Config\ClubConfig::update_lettermint_route_id( $lettermint_route_id );
@@ -4608,6 +4632,79 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
+	}
+
+	/**
+	 * List Lettermint projects and resolved default routes for project selection.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_lettermint_projects( $request ) {
+		$token = \Rondo\Notifications\LettermintConfig::get_team_api_token();
+		if ( $token === '' ) {
+			return new \WP_Error(
+				'lettermint_missing_token',
+				'Lettermint team API token ontbreekt. Sla eerst een token op onder Instellingen > Koppelingen > Lettermint.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$projects_response = $this->request_lettermint_team_api( $token, 'GET', '/projects' );
+		if ( is_wp_error( $projects_response ) ) {
+			return $projects_response;
+		}
+
+		$projects = $this->extract_lettermint_data_list( $projects_response );
+		$results  = [];
+
+		foreach ( $projects as $project ) {
+			if ( ! is_array( $project ) ) {
+				continue;
+			}
+
+			$project_id   = sanitize_text_field( (string) ( $project['id'] ?? '' ) );
+			$project_name = sanitize_text_field( (string) ( $project['name'] ?? '' ) );
+			if ( $project_id === '' ) {
+				continue;
+			}
+
+			$default_route_id   = '';
+			$default_route_name = '';
+			$route_count        = 0;
+			$route_error        = '';
+
+			$route_result = $this->get_lettermint_project_default_route( $token, $project_id );
+			if ( is_wp_error( $route_result ) ) {
+				$route_error = $route_result->get_error_message();
+			} else {
+				$default_route_id   = $route_result['id'];
+				$default_route_name = $route_result['name'];
+				$route_count        = (int) $route_result['route_count'];
+			}
+
+			$results[] = [
+				'id'                => $project_id,
+				'name'              => $project_name,
+				'is_default'        => isset( $project['is_default'] ) ? rest_sanitize_boolean( $project['is_default'] ) : false,
+				'default_route_id'  => $default_route_id,
+				'default_route_name'=> $default_route_name,
+				'route_count'       => $route_count,
+				'route_error'       => $route_error,
+			];
+		}
+
+		$selected_project_id = \Rondo\Config\ClubConfig::get_lettermint_project_id();
+		if ( $selected_project_id === '' && count( $results ) === 1 ) {
+			$selected_project_id = $results[0]['id'];
+		}
+
+		return rest_ensure_response(
+			[
+				'projects'            => $results,
+				'selected_project_id' => $selected_project_id,
+			]
+		);
 	}
 
 	/**
@@ -4629,13 +4726,19 @@ class Api extends Base {
 			);
 		}
 
-		$route_id = $this->resolve_lettermint_route_id(
+		$resolved_route = $this->resolve_lettermint_project_and_route(
 			$token,
+			sanitize_text_field( (string) $request->get_param( 'project_id' ) ),
 			sanitize_text_field( (string) $request->get_param( 'route_id' ) )
 		);
-		if ( is_wp_error( $route_id ) ) {
-			return $route_id;
+		if ( is_wp_error( $resolved_route ) ) {
+			return $resolved_route;
 		}
+
+		$route_id     = $resolved_route['route_id'];
+		$route_name   = $resolved_route['route_name'];
+		$project_id   = $resolved_route['project_id'];
+		$project_name = $resolved_route['project_name'];
 
 		$webhook_url = rest_url( 'rondo/v1/lettermint/webhook' );
 		$site_host   = (string) wp_parse_url( home_url(), PHP_URL_HOST );
@@ -4663,6 +4766,9 @@ class Api extends Base {
 			? array_values( array_map( 'sanitize_text_field', $data['events'] ) )
 			: array_values( \Rondo\Notifications\LettermintWebhook::ACTIONABLE_EVENTS );
 
+		if ( $project_id !== '' ) {
+			\Rondo\Config\ClubConfig::update_lettermint_project_id( $project_id );
+		}
 		\Rondo\Config\ClubConfig::update_lettermint_route_id( $resolved_route_id );
 		if ( $webhook_id !== '' ) {
 			\Rondo\Config\ClubConfig::update_lettermint_webhook_id( $webhook_id );
@@ -4679,7 +4785,10 @@ class Api extends Base {
 				'webhook' => [
 					'id'       => $webhook_id,
 					'url'      => $resolved_url,
+					'project_id' => $project_id,
+					'project_name' => $project_name,
 					'route_id' => $resolved_route_id,
+					'route_name' => $route_name,
 					'events'   => $resolved_events,
 				],
 				'secret_saved' => $secret !== '',
@@ -4689,26 +4798,33 @@ class Api extends Base {
 	}
 
 	/**
-	 * Resolve a route ID for webhook creation.
+	 * Resolve a project and route ID for webhook creation.
 	 *
 	 * Priority:
-	 * 1. Explicit request override.
-	 * 2. Stored route ID in local config.
-	 * 3. Lettermint Team API projects default_route_id.
+	 * 1. Explicit route override (advanced/manual).
+	 * 2. Explicit project override.
+	 * 3. Stored project selection.
+	 * 4. Single available project fallback.
 	 *
-	 * @param string $token          Team API token.
-	 * @param string $route_override Optional route override.
-	 * @return string|\WP_Error
+	 * @param string $token            Team API token.
+	 * @param string $project_override Optional project override.
+	 * @param string $route_override   Optional route override.
+	 * @return array<string, string>|\WP_Error
 	 */
-	private function resolve_lettermint_route_id( string $token, string $route_override = '' ) {
+	private function resolve_lettermint_project_and_route(
+		string $token,
+		string $project_override = '',
+		string $route_override = ''
+	) {
+		$project_override = sanitize_text_field( $project_override );
 		$route_override = sanitize_text_field( $route_override );
 		if ( $route_override !== '' ) {
-			return $route_override;
-		}
-
-		$stored_route_id = \Rondo\Notifications\LettermintConfig::get_route_id();
-		if ( $stored_route_id !== '' ) {
-			return $stored_route_id;
+			return [
+				'project_id'   => $project_override ?: \Rondo\Config\ClubConfig::get_lettermint_project_id(),
+				'project_name' => '',
+				'route_id'     => $route_override,
+				'route_name'   => 'Handmatige override',
+			];
 		}
 
 		$projects_response = $this->request_lettermint_team_api( $token, 'GET', '/projects' );
@@ -4725,40 +4841,139 @@ class Api extends Base {
 			);
 		}
 
-		$default_route_ids = [];
-		$preferred_route   = '';
-
+		$projects_by_id = [];
 		foreach ( $projects as $project ) {
 			if ( ! is_array( $project ) ) {
 				continue;
 			}
-
-			$default_route_id = sanitize_text_field( (string) ( $project['default_route_id'] ?? '' ) );
-			if ( $default_route_id === '' ) {
+			$project_id = sanitize_text_field( (string) ( $project['id'] ?? '' ) );
+			if ( $project_id === '' ) {
 				continue;
 			}
+			$projects_by_id[ $project_id ] = [
+				'id'   => $project_id,
+				'name' => sanitize_text_field( (string) ( $project['name'] ?? '' ) ),
+			];
+		}
 
-			$default_route_ids[] = $default_route_id;
+		$project_id = $project_override;
+		if ( $project_id === '' ) {
+			$project_id = \Rondo\Config\ClubConfig::get_lettermint_project_id();
+		}
 
-			$is_default = isset( $project['is_default'] ) ? rest_sanitize_boolean( $project['is_default'] ) : false;
+		if ( $project_id === '' && count( $projects_by_id ) === 1 ) {
+			$project_id = array_key_first( $projects_by_id );
+		}
+
+		if ( $project_id === '' && count( $projects_by_id ) > 1 ) {
+			$project_names = array_values(
+				array_filter(
+					array_map(
+						static function ( array $project ): string {
+							return trim( (string) ( $project['name'] ?? '' ) );
+						},
+						$projects_by_id
+					)
+				)
+			);
+			$project_names_suffix = '';
+			if ( ! empty( $project_names ) ) {
+				$project_names_suffix = ' Gevonden projecten: ' . implode( ', ', array_slice( $project_names, 0, 8 ) ) . '.';
+			}
+
+			return new \WP_Error(
+				'lettermint_project_selection_required',
+				'Meerdere Lettermint-projecten gevonden. Kies eerst een project in de dropdown.' . $project_names_suffix,
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( $project_id === '' || ! isset( $projects_by_id[ $project_id ] ) ) {
+			return new \WP_Error(
+				'lettermint_invalid_project',
+				'Het geselecteerde Lettermint-project bestaat niet of is niet toegankelijk.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$route = $this->get_lettermint_project_default_route( $token, $project_id );
+		if ( is_wp_error( $route ) ) {
+			return $route;
+		}
+
+		return [
+			'project_id'   => $project_id,
+			'project_name' => $projects_by_id[ $project_id ]['name'],
+			'route_id'     => $route['id'],
+			'route_name'   => $route['name'],
+		];
+	}
+
+	/**
+	 * Resolve the default route for a specific Lettermint project.
+	 *
+	 * @param string $token      Team API token.
+	 * @param string $project_id Lettermint project ID.
+	 * @return array<string, int|string>|\WP_Error
+	 */
+	private function get_lettermint_project_default_route( string $token, string $project_id ) {
+		$routes_response = $this->request_lettermint_team_api(
+			$token,
+			'GET',
+			'/projects/' . rawurlencode( $project_id ) . '/routes'
+		);
+		if ( is_wp_error( $routes_response ) ) {
+			return $routes_response;
+		}
+
+		$routes      = $this->extract_lettermint_data_list( $routes_response );
+		$route_count = count( $routes );
+		if ( $route_count === 0 ) {
+			return new \WP_Error(
+				'lettermint_missing_project_routes',
+				'Geen routes gevonden voor het geselecteerde Lettermint-project.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$default_route = null;
+		foreach ( $routes as $route ) {
+			if ( ! is_array( $route ) ) {
+				continue;
+			}
+			$is_default = isset( $route['is_default'] ) ? rest_sanitize_boolean( $route['is_default'] ) : false;
 			if ( $is_default ) {
-				$preferred_route = $default_route_id;
+				$default_route = $route;
+				break;
 			}
 		}
 
-		$default_route_ids = array_values( array_unique( $default_route_ids ) );
-		if ( $preferred_route !== '' ) {
-			return $preferred_route;
-		}
-		if ( count( $default_route_ids ) === 1 ) {
-			return $default_route_ids[0];
+		if ( null === $default_route && $route_count === 1 && is_array( $routes[0] ?? null ) ) {
+			$default_route = $routes[0];
 		}
 
-		return new \WP_Error(
-			'lettermint_missing_route_id',
-			'Meerdere routes gevonden. Vul handmatig een route ID in onder geavanceerde Lettermint-instellingen.',
-			[ 'status' => 400 ]
-		);
+		if ( ! is_array( $default_route ) ) {
+			return new \WP_Error(
+				'lettermint_missing_default_route',
+				'Het geselecteerde project heeft geen default route.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$route_id = sanitize_text_field( (string) ( $default_route['id'] ?? '' ) );
+		if ( $route_id === '' ) {
+			return new \WP_Error(
+				'lettermint_missing_default_route',
+				'Default route gevonden, maar zonder geldig route ID.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		return [
+			'id'          => $route_id,
+			'name'        => sanitize_text_field( (string) ( $default_route['name'] ?? '' ) ),
+			'route_count' => $route_count,
+		];
 	}
 
 	/**

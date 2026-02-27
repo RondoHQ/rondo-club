@@ -1247,6 +1247,10 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     lettermint_webhook_secret: '',
     lettermint_route_id: '',
   });
+  const [projects, setProjects] = useState([]);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsMessage, setProjectsMessage] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
@@ -1255,6 +1259,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
   const [testRecipient, setTestRecipient] = useState('');
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [testEmailMessage, setTestEmailMessage] = useState('');
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) || null;
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -1264,10 +1269,55 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
   }, [clubConfig?.lettermint_route_id]);
 
   useEffect(() => {
+    setSelectedProjectId(clubConfig?.lettermint_project_id || '');
+  }, [clubConfig?.lettermint_project_id]);
+
+  useEffect(() => {
     if (testRecipient === '' && currentUserEmail) {
       setTestRecipient(currentUserEmail);
     }
   }, [currentUserEmail, testRecipient]);
+
+  useEffect(() => {
+    const loadProjects = async () => {
+      if (!isAdmin || loading) {
+        return;
+      }
+      if (!clubConfig?.lettermint_has_team_api_token) {
+        setProjects([]);
+        setProjectsMessage('Sla eerst een Team API token op om projecten te laden.');
+        return;
+      }
+
+      setProjectsLoading(true);
+      setProjectsMessage('');
+      try {
+        const response = await prmApi.getLettermintProjects();
+        const loadedProjects = response.data?.projects || [];
+        const apiSelectedProjectId = response.data?.selected_project_id || '';
+
+        setProjects(loadedProjects);
+        setSelectedProjectId((prev) => {
+          if (apiSelectedProjectId) {
+            return apiSelectedProjectId;
+          }
+          if (loadedProjects.some((project) => project.id === prev)) {
+            return prev;
+          }
+          if (loadedProjects.length === 1) {
+            return loadedProjects[0].id;
+          }
+          return '';
+        });
+      } catch (error) {
+        setProjectsMessage(error.response?.data?.message || 'Kon Lettermint-projecten niet laden.');
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+
+    loadProjects();
+  }, [isAdmin, loading, clubConfig?.lettermint_has_team_api_token]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -1279,12 +1329,16 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     setSaveMessage('');
     try {
       const payload = {};
+      const currentProjectId = clubConfig?.lettermint_project_id || '';
 
       if (formData.lettermint_api_token.trim()) {
         payload.lettermint_api_token = formData.lettermint_api_token.trim();
       }
       if (formData.lettermint_team_api_token.trim()) {
         payload.lettermint_team_api_token = formData.lettermint_team_api_token.trim();
+      }
+      if (selectedProjectId !== currentProjectId) {
+        payload.lettermint_project_id = selectedProjectId;
       }
       if (showAdvanced) {
         payload.lettermint_route_id = formData.lettermint_route_id.trim();
@@ -1325,6 +1379,14 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     setWebhookMessage('');
     try {
       const payload = {};
+      if (projects.length > 1 && !selectedProjectId && !(showAdvanced && formData.lettermint_route_id.trim())) {
+        setWebhookMessage('Kies eerst een Lettermint-project.');
+        setCreatingWebhook(false);
+        return;
+      }
+      if (selectedProjectId) {
+        payload.project_id = selectedProjectId;
+      }
       if (showAdvanced && formData.lettermint_route_id.trim()) {
         payload.route_id = formData.lettermint_route_id.trim();
       }
@@ -1411,8 +1473,65 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       </div>
 
       <div>
+        <label className="label">Lettermint-project</label>
+        <select
+          value={selectedProjectId}
+          onChange={(e) => setSelectedProjectId(e.target.value)}
+          className="input"
+          disabled={!isAdmin || projectsLoading || !clubConfig?.lettermint_has_team_api_token || projects.length === 0}
+        >
+          {projects.length !== 1 && (
+            <option value="">
+              {projects.length > 1 ? 'Kies een project...' : 'Geen projecten gevonden'}
+            </option>
+          )}
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Bij webhook-aanmaak gebruiken we de default route van het geselecteerde project.
+        </p>
+        {projectsLoading && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Lettermint-projecten laden...
+          </p>
+        )}
+        {!projectsLoading && projects.length > 1 && !selectedProjectId && clubConfig?.lettermint_has_team_api_token && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+            Meerdere projecten gevonden, kies er eerst een.
+          </p>
+        )}
+        {!projectsLoading && selectedProject && selectedProject.route_error && (
+          <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+            {selectedProject.route_error}
+          </p>
+        )}
+        {!projectsLoading && selectedProject && !selectedProject.route_error && selectedProject.default_route_id && (
+          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+            Default route: {selectedProject.default_route_name || selectedProject.default_route_id}
+          </p>
+        )}
+        {!projectsLoading && projects.length === 0 && clubConfig?.lettermint_has_team_api_token && !projectsMessage && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+            Geen Lettermint-projecten gevonden voor dit Team API token.
+          </p>
+        )}
+        {projectsMessage && (
+          <p className={`text-xs mt-1 ${projectsMessage.includes('Kon') ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+            {projectsMessage}
+          </p>
+        )}
+      </div>
+
+      <div>
         <label className="label">Webhook status</label>
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/40 text-sm space-y-1">
+          <p className="text-gray-700 dark:text-gray-200">
+            Project: <span className="font-mono text-xs">{selectedProject?.name || selectedProjectId || 'nog niet gekozen'}</span>
+          </p>
           <p className="text-gray-700 dark:text-gray-200">
             Route ID: <span className="font-mono text-xs">{clubConfig?.lettermint_route_id || 'automatisch (default route)'}</span>
           </p>
@@ -1524,7 +1643,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       )}
 
       {webhookMessage && (
-        <p className={`text-sm ${webhookMessage.includes('niet') || webhookMessage.includes('Kon') || webhookMessage.includes('ontbreekt') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+        <p className={`text-sm ${webhookMessage.includes('niet') || webhookMessage.includes('Kon') || webhookMessage.includes('ontbreekt') || webhookMessage.includes('Kies') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
           {webhookMessage}
         </p>
       )}

@@ -44,6 +44,11 @@ class ClubConfig {
 	const OPTION_LETTERMINT_TEAM_API_TOKEN = \Rondo\Notifications\LettermintConfig::OPTION_TEAM_API_TOKEN;
 
 	/**
+	 * Option key for Lettermint project ID.
+	 */
+	const OPTION_LETTERMINT_PROJECT_ID = 'rondo_lettermint_project_id';
+
+	/**
 	 * Option key for Lettermint route ID.
 	 */
 	const OPTION_LETTERMINT_ROUTE_ID = \Rondo\Notifications\LettermintConfig::OPTION_ROUTE_ID;
@@ -69,6 +74,7 @@ class ClubConfig {
 		'freescout_api_key' => '',
 		'lettermint_api_token' => '',
 		'lettermint_team_api_token' => '',
+		'lettermint_project_id' => '',
 		'lettermint_route_id' => '',
 		'lettermint_webhook_secret' => '',
 		'lettermint_webhook_id' => '',
@@ -120,6 +126,15 @@ class ClubConfig {
 	}
 
 	/**
+	 * Get Lettermint project ID.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_project_id(): string {
+		return get_option( self::OPTION_LETTERMINT_PROJECT_ID, self::DEFAULTS['lettermint_project_id'] );
+	}
+
+	/**
 	 * Get Lettermint webhook ID.
 	 *
 	 * @return string
@@ -167,6 +182,7 @@ class ClubConfig {
 			'club_name'     => self::get_club_name(),
 			'freescout_url' => self::get_freescout_url(),
 			'freescout_has_api_key' => self::has_freescout_api_key(),
+			'lettermint_project_id' => self::get_lettermint_project_id(),
 			'lettermint_route_id' => self::get_lettermint_route_id(),
 			'lettermint_webhook_id' => self::get_lettermint_webhook_id(),
 			'lettermint_has_api_token' => self::has_lettermint_api_token(),
@@ -229,6 +245,17 @@ class ClubConfig {
 	public static function update_lettermint_team_api_token( string $api_token ): bool {
 		$sanitized = sanitize_text_field( $api_token );
 		return update_option( self::OPTION_LETTERMINT_TEAM_API_TOKEN, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint project ID.
+	 *
+	 * @param string $project_id Project ID.
+	 * @return bool
+	 */
+	public static function update_lettermint_project_id( string $project_id ): bool {
+		$sanitized = sanitize_text_field( $project_id );
+		return update_option( self::OPTION_LETTERMINT_PROJECT_ID, $sanitized );
 	}
 
 	/**
