@@ -32,6 +32,16 @@ class LettermintConfig {
 	const OPTION_ROUTE_ID = 'rondo_lettermint_route_id';
 
 	/**
+	 * Option key for Lettermint default from email.
+	 */
+	const OPTION_FROM_EMAIL = 'rondo_lettermint_from_email';
+
+	/**
+	 * Option key for Lettermint default from name.
+	 */
+	const OPTION_FROM_NAME = 'rondo_lettermint_from_name';
+
+	/**
 	 * Option key for Lettermint webhook secret.
 	 */
 	const OPTION_WEBHOOK_SECRET = 'rondo_lettermint_webhook_secret';
@@ -116,6 +126,55 @@ class LettermintConfig {
 
 		$option = get_option( self::OPTION_ROUTE_ID, '' );
 		return is_string( $option ) ? trim( $option ) : '';
+	}
+
+	/**
+	 * Get optional Lettermint default from email.
+	 *
+	 * Priority:
+	 * 1. RONDO_LETTERMINT_FROM_EMAIL constant
+	 * 2. LETTERMINT_FROM_EMAIL environment variable
+	 * 3. rondo_lettermint_from_email option
+	 *
+	 * @return string
+	 */
+	public static function get_from_email(): string {
+		if ( defined( 'RONDO_LETTERMINT_FROM_EMAIL' ) ) {
+			$value = trim( (string) RONDO_LETTERMINT_FROM_EMAIL );
+			return is_email( $value ) ? $value : '';
+		}
+
+		$env = getenv( 'LETTERMINT_FROM_EMAIL' );
+		if ( is_string( $env ) && trim( $env ) !== '' ) {
+			$env = trim( $env );
+			return is_email( $env ) ? $env : '';
+		}
+
+		$option = sanitize_email( (string) get_option( self::OPTION_FROM_EMAIL, '' ) );
+		return is_email( $option ) ? $option : '';
+	}
+
+	/**
+	 * Get optional Lettermint default from name.
+	 *
+	 * Priority:
+	 * 1. RONDO_LETTERMINT_FROM_NAME constant
+	 * 2. LETTERMINT_FROM_NAME environment variable
+	 * 3. rondo_lettermint_from_name option
+	 *
+	 * @return string
+	 */
+	public static function get_from_name(): string {
+		if ( defined( 'RONDO_LETTERMINT_FROM_NAME' ) ) {
+			return sanitize_text_field( (string) RONDO_LETTERMINT_FROM_NAME );
+		}
+
+		$env = getenv( 'LETTERMINT_FROM_NAME' );
+		if ( is_string( $env ) && trim( $env ) !== '' ) {
+			return sanitize_text_field( $env );
+		}
+
+		return sanitize_text_field( (string) get_option( self::OPTION_FROM_NAME, '' ) );
 	}
 
 	/**

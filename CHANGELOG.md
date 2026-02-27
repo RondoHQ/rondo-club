@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.0] - 2026-02-27
+
+### Added
+- Added Lettermint settings for a default `From` email address and `From` name in `Instellingen > Koppelingen > Lettermint`.
+
+### Changed
+- Lettermint transport now uses the configured default sender values when a `wp_mail()` call does not provide an explicit `From` header.
+
 ## [31.5.1] - 2026-02-27
 
 ### Changed

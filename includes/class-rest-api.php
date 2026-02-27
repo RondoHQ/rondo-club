@@ -974,6 +974,17 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'lettermint_from_email' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_email',
+							'validate_callback' => function ( $param ) {
+								return $param === null || $param === '' || is_email( $param );
+							},
+						],
+						'lettermint_from_name' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 						'lettermint_webhook_secret' => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -4624,6 +4635,16 @@ class Api extends Base {
 		$lettermint_route_id = $request->get_param( 'lettermint_route_id' );
 		if ( $lettermint_route_id !== null ) {
 			\Rondo\Config\ClubConfig::update_lettermint_route_id( $lettermint_route_id );
+		}
+
+		$lettermint_from_email = $request->get_param( 'lettermint_from_email' );
+		if ( $lettermint_from_email !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_from_email( $lettermint_from_email );
+		}
+
+		$lettermint_from_name = $request->get_param( 'lettermint_from_name' );
+		if ( $lettermint_from_name !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_from_name( $lettermint_from_name );
 		}
 
 		$lettermint_webhook_secret = $request->get_param( 'lettermint_webhook_secret' );
