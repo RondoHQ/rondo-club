@@ -48,6 +48,8 @@ class InvoicePdfGenerator {
 		$due_date       = get_field( 'due_date', $invoice_id );
 		$invoice_type   = get_field( 'invoice_type', $invoice_id ) ?: 'discipline';
 		$payment_link   = get_field( 'payment_link', $invoice_id );
+		$invoice_status = get_field( 'status', $invoice_id ) ?: str_replace( 'rondo_', '', (string) $invoice->post_status );
+		$is_paid        = ( $invoice_status === 'paid' || $invoice->post_status === 'rondo_paid' );
 
 		// Use current date as invoice date if not sent yet (draft preview)
 		if ( empty( $sent_date ) ) {
@@ -143,6 +145,10 @@ class InvoicePdfGenerator {
 				$qr_code_abspath = $qr_full_path;
 			}
 		}
+		if ( $is_paid ) {
+			// Do not show payment QR for already-paid invoices.
+			$qr_code_abspath = null;
+		}
 
 		// Build HTML template
 		$html = self::build_html(
@@ -165,7 +171,8 @@ class InvoicePdfGenerator {
 			$accent_color,
 			$invoice_type,
 			$payment_link,
-			$membership_payment_clause
+			$membership_payment_clause,
+			$is_paid
 		);
 
 		// Generate PDF with mPDF
@@ -234,6 +241,7 @@ class InvoicePdfGenerator {
 	 * @param string      $invoice_type            Invoice type: 'membership' or 'discipline'.
 	 * @param string      $payment_link            Payment link URL (for membership invoices).
 	 * @param string      $membership_payment_clause Membership payment clause text (shown below membership payment section).
+	 * @param bool        $is_paid                 Whether the invoice is paid.
 	 * @return string HTML content.
 	 */
 	private static function build_html(
@@ -256,7 +264,8 @@ class InvoicePdfGenerator {
 		$accent_color = '#0891b2',
 		$invoice_type = 'discipline',
 		$payment_link = '',
-		$membership_payment_clause = ''
+		$membership_payment_clause = '',
+		$is_paid = false
 	) {
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
@@ -447,9 +456,21 @@ table.line-items .total-row td {
 	color: #666;
 	white-space: pre-line;
 }
+.paid-watermark {
+	position: fixed;
+	top: 43%;
+	left: 6%;
+	font-size: 96pt;
+	font-weight: bold;
+	color: rgba(22, 163, 74, 0.16);
+	transform: rotate(-24deg);
+	letter-spacing: 6px;
+}
 </style>
 </head>
 <body>
+
+' . ( $is_paid ? '<div class="paid-watermark">BETAALD</div>' : '' ) . '
 
 <div class="header">
 	<table><tr>
