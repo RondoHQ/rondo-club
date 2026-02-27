@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.19] - 2026-02-27
+
+### Fixed
+- Fixed paid-invoice PDF generation crash by passing watermark color as a supported hex string to mPDF watermark rendering.
+
 ## [31.0.18] - 2026-02-27
 
 ### Changed

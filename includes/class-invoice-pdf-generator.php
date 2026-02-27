@@ -190,8 +190,7 @@ class InvoicePdfGenerator {
 			]);
 			if ( $is_paid ) {
 				// Use mPDF native watermark so angle and opacity are applied reliably.
-				$watermark_rgb = self::hex_to_rgb( $accent_color );
-				$mpdf->SetWatermarkText( new WatermarkText( 'BETAALD', 96, 45, $watermark_rgb, 0.5 ) );
+				$mpdf->SetWatermarkText( new WatermarkText( 'BETAALD', 96, 45, $accent_color, 0.5 ) );
 				$mpdf->showWatermarkText = true;
 			}
 			$mpdf->WriteHTML( $html );
@@ -611,25 +610,4 @@ table.line-items .total-row td {
 		return $day . ' ' . $month_name . ' ' . $year;
 	}
 
-	/**
-	 * Convert a hex color string to RGB triplet for mPDF watermark text color.
-	 *
-	 * @param string $hex Hex color like "#0891b2" or "0891b2".
-	 * @return array{int,int,int} RGB values.
-	 */
-	private static function hex_to_rgb( string $hex ): array {
-		$normalized = ltrim( trim( $hex ), '#' );
-		if ( strlen( $normalized ) === 3 ) {
-			$normalized = $normalized[0] . $normalized[0] . $normalized[1] . $normalized[1] . $normalized[2] . $normalized[2];
-		}
-		if ( ! preg_match( '/^[a-fA-F0-9]{6}$/', $normalized ) ) {
-			return [ 8, 145, 178 ];
-		}
-
-		return [
-			hexdec( substr( $normalized, 0, 2 ) ),
-			hexdec( substr( $normalized, 2, 2 ) ),
-			hexdec( substr( $normalized, 4, 2 ) ),
-		];
-	}
 }
