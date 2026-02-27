@@ -5135,6 +5135,11 @@ class Api extends Base {
 		}
 
 		$subject = sprintf( '[Rondo Club] Lettermint testmail - %s', wp_date( 'Y-m-d H:i:s' ) );
+		$route_override = \Rondo\Notifications\LettermintConfig::get_route_id();
+		$project_id     = \Rondo\Config\ClubConfig::get_lettermint_project_id();
+		$route_label    = $route_override !== ''
+			? sprintf( '%s (handmatige override)', $route_override )
+			: 'automatisch via project default route';
 		$body    = implode(
 			"\n",
 			[
@@ -5143,7 +5148,8 @@ class Api extends Base {
 				'Als je dit bericht ontvangt, werkt de Lettermint-transportlaag voor wp_mail().',
 				'',
 				'Site: ' . home_url(),
-				'Route ID: ' . ( \Rondo\Notifications\LettermintConfig::get_route_id() ?: '(geen)' ),
+				'Project ID: ' . ( $project_id !== '' ? $project_id : '(niet geselecteerd)' ),
+				'Route: ' . $route_label,
 				'Tijd: ' . wp_date( DATE_RFC3339 ),
 			]
 		);
