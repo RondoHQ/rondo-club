@@ -156,6 +156,7 @@ class DemoImport {
 			"rondo_club_name",
 			"rondo_player_roles",
 			"rondo_excluded_roles",
+			"rondo_anniversary_milestones",
 			"rondo_vog_from_email",
 			"rondo_vog_from_name",
 			"rondo_vog_template_new",

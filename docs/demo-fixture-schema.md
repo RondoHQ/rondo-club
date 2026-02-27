@@ -389,6 +389,10 @@ WordPress options needed for the demo to function properly. All options are stor
 - `rondo_excluded_roles` (array of objects): Excluded role configuration for fee calculations
   - Each object has `value` (role identifier) and `label` (display label)
 
+- `rondo_anniversary_milestones` (object, nullable): Jubilarissen milestone configuration used by both the Jubilarissen page and dashboard card.
+  - `member` (array of numbers): Membership milestone years (supports half-years, e.g. `12.5`)
+  - `volunteer` (array of numbers): Volunteer milestone years (supports half-years)
+
 - `rondo_vog_from_email` (string, nullable): VOG sender email address
 
 - `rondo_vog_from_name` (string, nullable): VOG sender name
