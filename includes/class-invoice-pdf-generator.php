@@ -187,6 +187,12 @@ class InvoicePdfGenerator {
 				'margin_top'        => 15,
 				'margin_bottom'     => 15,
 			]);
+			if ( $is_paid ) {
+				// Use mPDF native watermark so angle and opacity are applied reliably.
+				$mpdf->SetWatermarkText( 'BETAALD', 0.5 );
+				$mpdf->watermarkAngle   = 45;
+				$mpdf->showWatermarkText = true;
+			}
 			$mpdf->WriteHTML( $html );
 
 			// Save PDF to WordPress uploads
@@ -456,21 +462,9 @@ table.line-items .total-row td {
 	color: #666;
 	white-space: pre-line;
 }
-.paid-watermark {
-	position: fixed;
-	top: 35%;
-	left: 3%;
-	font-size: 96pt;
-	font-weight: bold;
-	color: rgba(22, 163, 74, 0.5);
-	transform: rotate(-45deg);
-	letter-spacing: 6px;
-}
 </style>
 </head>
 <body>
-
-' . ( $is_paid ? '<div class="paid-watermark">BETAALD</div>' : '' ) . '
 
 <div class="header">
 	<table><tr>
