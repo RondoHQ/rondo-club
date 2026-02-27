@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.21] - 2026-02-27
+
+### Added
+- Credit invoice PDFs now render a `CREDIT` watermark using the same style as paid-invoice watermarks.
+
 ## [31.0.20] - 2026-02-27
 
 ### Fixed
