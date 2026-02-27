@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.17] - 2026-02-27
+
+### Fixed
+- Paid invoice PDF watermark now uses native mPDF watermark rendering, so `BETAALD` is applied at 45° with 50% opacity reliably.
+
 ## [31.0.16] - 2026-02-27
 
 ### Changed
