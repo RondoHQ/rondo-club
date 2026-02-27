@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.3] - 2026-02-27
+
+### Changed
+- Lettermint testmail toont nu duidelijke transportcontext: project-ID en of de route handmatig ge-override is of automatisch via de project default route loopt.
+
 ## [31.6.2] - 2026-02-27
 
 ### Fixed
