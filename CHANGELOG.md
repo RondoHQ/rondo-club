@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.5.0] - 2026-02-27
+
+### Added
+- Added project discovery endpoint `GET /wp-json/rondo/v1/lettermint/projects` to list Lettermint projects with resolved default-route metadata for settings UI selection.
+- Added a Lettermint project dropdown in `Instellingen > Koppelingen > Lettermint` so admins can explicitly choose which Lettermint project is used for webhook provisioning.
+
+### Changed
+- Lettermint webhook creation now resolves the route from the selected project via `GET /v1/projects/{projectId}/routes` and uses that project’s `is_default` route.
+- Stored Lettermint project selection (`rondo_lettermint_project_id`) is now reused automatically for future webhook creation calls.
+- Multi-project validation errors now include discovered project names to clarify available choices.
+
 ## [31.4.0] - 2026-02-27
 
 ### Changed
