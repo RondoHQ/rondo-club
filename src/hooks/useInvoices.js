@@ -156,6 +156,26 @@ export function useUpdateInvoiceStatus() {
 }
 
 /**
+ * Add a manual correction line to a draft invoice
+ * @returns {object} Mutation object
+ */
+export function useAddDraftInvoiceLineItem() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, description, amount }) => {
+      const response = await prmApi.addDraftInvoiceLineItem(id, description, amount);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
+    },
+  });
+}
+
+/**
  * Generate PDF for an invoice
  * @returns {object} Mutation object for generating invoice PDFs
  */

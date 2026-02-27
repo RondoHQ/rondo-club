@@ -332,6 +332,10 @@ export const prmApi = {
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),
   updateInvoiceStatus: (id, status) => api.post(`/rondo/v1/invoices/${id}/status`, { status }),
+  addDraftInvoiceLineItem: (id, description, amount) => api.post(`/rondo/v1/invoices/${id}/draft-line-items`, {
+    description,
+    amount,
+  }),
   updateMembershipInvoiceDiscount: (id, familyDiscountPercent, entryDiscountPercent) => api.post(`/rondo/v1/invoices/${id}/membership-discount`, {
     family_discount_percent: familyDiscountPercent,
     entry_discount_percent: entryDiscountPercent,

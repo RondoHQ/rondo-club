@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.11] - 2026-02-27
+
+### Added
+- Added a new finance endpoint `POST /rondo/v1/invoices/{id}/draft-line-items` to append a manual correction line to draft invoices with a positive (surcharge) or negative (discount) amount.
+- Added a new "Extra regel toevoegen" action in invoice detail for draft invoices to update totals by adding a correction line.
+
+### Changed
+- Draft invoice total recalculation now runs after adding manual correction lines and clears any generated PDF to avoid stale totals.
+
 ## [31.0.10] - 2026-02-26
 
 ### Changed

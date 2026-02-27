@@ -201,6 +201,36 @@ class Invoices extends Base {
 			]
 		);
 
+		// Add line item to a draft invoice (manual correction/discount)
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/draft-line-items',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'add_draft_line_item' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+						'description' => [
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'amount' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
 		// Generate PDF for invoice
 		register_rest_route(
 			'rondo/v1',
@@ -1020,6 +1050,80 @@ class Invoices extends Base {
 		}
 
 		// Return updated invoice
+		$invoice = get_post( $invoice_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Add a manual line item to a draft invoice.
+	 *
+	 * Used for post-creation corrections, including positive surcharges
+	 * or negative discounts.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
+	 */
+	public function add_draft_line_item( $request ) {
+		$invoice_id  = (int) $request->get_param( 'id' );
+		$description = sanitize_text_field( (string) $request->get_param( 'description' ) );
+		$amount      = round( (float) $request->get_param( 'amount' ), 2 );
+
+		$invoice = get_post( $invoice_id );
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Factuur niet gevonden.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		if ( 'rondo_draft' !== $invoice->post_status ) {
+			return new \WP_Error(
+				'invoice_not_draft',
+				__( 'Alleen conceptfacturen kunnen worden aangepast.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( '' === trim( $description ) ) {
+			return new \WP_Error(
+				'invalid_description',
+				__( 'Omschrijving is verplicht.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( abs( $amount ) < 0.01 ) {
+			return new \WP_Error(
+				'invalid_amount',
+				__( 'Bedrag moet groter dan 0 zijn.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$line_items = get_field( 'line_items', $invoice_id );
+		if ( ! is_array( $line_items ) ) {
+			$line_items = [];
+		}
+
+		$line_items[] = [
+			'discipline_case' => null,
+			'description'     => $description,
+			'amount'          => $amount,
+		];
+
+		$new_total = 0.0;
+		foreach ( $line_items as $item ) {
+			$new_total += (float) ( $item['amount'] ?? 0 );
+		}
+		$new_total = round( $new_total, 2 );
+
+		update_field( 'line_items', $line_items, $invoice_id );
+		update_field( 'total_amount', $new_total, $invoice_id );
+
+		// Existing PDF can have stale totals after manual correction.
+		$this->clear_pdf( $invoice_id );
+
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
 	}
