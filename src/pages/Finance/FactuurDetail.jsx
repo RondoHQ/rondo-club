@@ -158,14 +158,19 @@ export default function FactuurDetail() {
     }
   };
 
-  const handleMarkPaid = async () => {
-    if (!window.confirm('Weet je zeker dat je deze factuur als betaald wilt markeren?')) {
+  const handleMarkPaid = async ({ fromDraft = false } = {}) => {
+    const confirmationMessage = fromDraft
+      ? 'Weet je zeker dat je deze conceptfactuur direct als betaald wilt markeren zonder te versturen?'
+      : 'Weet je zeker dat je deze factuur als betaald wilt markeren?';
+    if (!window.confirm(confirmationMessage)) {
       return;
     }
     setErrorMessage('');
     try {
       await updateInvoiceStatus.mutateAsync({ id, status: 'paid' });
-      setSuccessMessage('Factuur gemarkeerd als betaald!');
+      setSuccessMessage(fromDraft
+        ? 'Conceptfactuur gemarkeerd als betaald zonder te versturen.'
+        : 'Factuur gemarkeerd als betaald!');
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het markeren als betaald.');
     }
@@ -675,6 +680,18 @@ export default function FactuurDetail() {
                   <Send className="w-4 h-4" />
                 )}
                 {isTestMode ? 'Verstuur factuur (test)' : 'Verstuur factuur'}
+              </button>
+              <button
+                onClick={() => handleMarkPaid({ fromDraft: true })}
+                disabled={isPending}
+                className="btn-secondary flex items-center gap-2 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+              >
+                {updateInvoiceStatus.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-700 dark:border-green-400"></div>
+                ) : (
+                  <CheckCircle className="w-4 h-4" />
+                )}
+                Markeer als betaald (zonder versturen)
               </button>
               {invoice.pdf_path ? (
                 <button
