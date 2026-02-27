@@ -315,11 +315,11 @@ class DemoAnonymizer {
 	}
 
 	/**
-	 * Generate fake relatiecode (Sportlink member number)
+	 * Generate fake KNVB ID (Sportlink member number)
 	 *
-	 * @return string 7-digit relatiecode.
+	 * @return string 7-digit KNVB ID.
 	 */
-	public function generate_relatiecode(): string {
+	public function generate_knvb_id(): string {
 		return str_pad( (string) mt_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
 	}
 

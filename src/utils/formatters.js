@@ -300,19 +300,17 @@ export function getGenderSymbol(gender) {
 /**
  * Calculate VOG (Certificate of Conduct) status based on ACF data
  *
- * @param {Object} acf - ACF data object containing werkfuncties and vog_datum
+ * @param {Object} acf - ACF data object containing volunteer status and VOG date
  * @returns {Object|null} Status object with status, label, and color, or null if not applicable
  */
 export function getVogStatus(acf) {
-  // Check if person has work functions other than "Donateur"
-  const werkfuncties = acf?.werkfuncties || [];
-  const hasNonDonateurFunction = werkfuncties.some(fn => fn !== 'Donateur');
-
-  if (!hasNonDonateurFunction) {
-    return null; // Don't show VOG indicator for Donateurs only
+  // Only show VOG status for current volunteers.
+  const isVolunteer = acf?.['huidig-vrijwilliger'] === true || acf?.['huidig-vrijwilliger'] === '1';
+  if (!isVolunteer) {
+    return null;
   }
 
-  const vogDate = acf?.vog_datum;
+  const vogDate = acf?.['datum-vog'] || acf?.vog_datum;
   if (!vogDate) {
     return { status: 'missing', label: 'Geen VOG', color: 'red' };
   }
@@ -350,4 +348,3 @@ export function formatPhoneForTel(phone) {
   // Prepend + if it was at the start
   return hasPlus ? `+${cleaned}` : cleaned;
 }
-

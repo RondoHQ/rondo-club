@@ -173,9 +173,6 @@ export default function CommissieDetail() {
                 )}
                 <div className="ml-3">
                   <p className="text-sm font-medium">{getCommissieName(child)}</p>
-                  {child.acf?.industry && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{child.acf.industry}</p>
-                  )}
                 </div>
               </Link>
             ))}

@@ -26,18 +26,15 @@ import {
   Shirt
 } from 'lucide-react';
 
-// Logo URL from theme directory (SVG for crisp rendering and smaller payload)
-const getLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/favicon.svg`;
+// Wordmark URL from theme directory.
+const getLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/rondo-logo-wordmark.svg`;
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { APP_NAME } from '@/constants/app';
 import FeedbackModal from '@/components/FeedbackModal';
 import { useCreateFeedback } from '@/hooks/useFeedback';
 
-// Get site name from WordPress config or fall back to APP_NAME
-const getSiteName = () => window.rondoConfig?.siteName || APP_NAME;
 import { useVOGCount } from '@/hooks/useVOGCount';
 import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
@@ -130,9 +127,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
     <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-        <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-          <img src={getLogoUrl()} alt="Rondo" className="w-12 h-12 p-0.5 object-contain shrink-0" />
-          <span className="text-brand-gradient">{getSiteName()}</span>
+        <Link to="/" className="flex items-center">
+          <img src={getLogoUrl()} alt="Rondo Club" className="h-10 w-auto object-contain shrink-0" />
         </Link>
         {mobile && (
           <button onClick={onClose} className="p-2 -mr-2 dark:text-gray-300">

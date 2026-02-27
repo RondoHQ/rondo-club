@@ -247,9 +247,6 @@ export default function TeamDetail() {
                 )}
                 <div className="ml-3">
                   <p className="text-sm font-medium">{getTeamName(child)}</p>
-                  {child.acf?.industry && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{child.acf.industry}</p>
-                  )}
                 </div>
               </Link>
             ))}
@@ -442,9 +439,6 @@ export default function TeamDetail() {
                   )}
                   <div className="ml-3">
                     <p className="text-sm font-medium">{investment.name}</p>
-                    {investment.industry && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{investment.industry}</p>
-                    )}
                   </div>
                 </Link>
               );

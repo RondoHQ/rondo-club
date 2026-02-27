@@ -40,7 +40,7 @@ function VOGBadge({ person }) {
 }
 
 function VOGEmailIndicator({ person }) {
-  const emailSentDate = person.acf?.['vog-email-verzonden'];
+  const emailSentDate = person.acf?.['vog_email_sent_date'];
   if (!emailSentDate) return null;
 
   return (

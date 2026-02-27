@@ -20,7 +20,6 @@ export function useCreateTeam({ onSuccess } = {}) {
         parent: data.parentId || 0,
         acf: {
           website: data.website,
-          industry: data.industry,
           investors: data.investors || [],
         },
       };

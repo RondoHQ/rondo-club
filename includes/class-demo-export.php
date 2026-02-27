@@ -328,13 +328,9 @@ class DemoExport {
 					'type-lid'          => $this->normalize_value( get_field( 'type-lid', $post->ID ) ),
 					'huidig-vrijwilliger' => $this->normalize_value( get_field( 'huidig-vrijwilliger', $post->ID ) ),
 					'financiele-blokkade' => (bool) get_field( 'financiele-blokkade', $post->ID ),
-					'relatiecode'       => $this->normalize_value( get_field( 'relatiecode', $post->ID ) ),
-					'werkfuncties'      => get_field( 'werkfuncties', $post->ID ),
+					'knvb-id'           => $this->normalize_value( get_field( 'knvb-id', $post->ID ) ),
 					'freescout-id'      => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
-					'factuur-adres'     => $this->normalize_value( get_field( 'factuur-adres', $post->ID ) ),
-					'factuur-email'     => $this->normalize_value( get_field( 'factuur-email', $post->ID ) ),
-					'factuur-referentie' => $this->normalize_value( get_field( 'factuur-referentie', $post->ID ) ),
-				],
+					],
 				'post_meta' => $this->export_person_post_meta( $post->ID ),
 			];
 
@@ -529,11 +525,8 @@ class DemoExport {
 		$person['acf']['addresses'] = $this->anonymize_addresses( $person['acf']['addresses'] );
 
 		// Replace Sportlink fields that contain PII.
-		$person['acf']['relatiecode']        = $this->anonymizer->generate_relatiecode();
-		$person['acf']['freescout-id']       = null; // Strip external system ID.
-		$person['acf']['factuur-adres']      = null; // Strip invoice address (real address).
-		$person['acf']['factuur-email']      = null; // Strip invoice email.
-		$person['acf']['factuur-referentie'] = null; // Strip invoice reference.
+		$person['acf']['knvb-id']      = $this->anonymizer->generate_knvb_id();
+		$person['acf']['freescout-id'] = null; // Strip external system ID.
 
 		// Strip photo date (no photo = no photo date).
 		$person['acf']['datum-foto'] = null;

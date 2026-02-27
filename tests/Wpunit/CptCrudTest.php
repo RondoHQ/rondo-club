@@ -544,8 +544,7 @@ class CptCrudTest extends RondoTestCase {
 				'post_author' => $user_id,
 			],
 			[
-				'website'  => 'https://example.com',
-				'industry' => 'Technology',
+				'website' => 'https://example.com',
 			]
 		);
 
@@ -557,7 +556,6 @@ class CptCrudTest extends RondoTestCase {
 
 		$this->assertArrayHasKey( 'acf', $data, 'Response should include acf key' );
 		$this->assertEquals( 'https://example.com', $data['acf']['website'], 'website should match' );
-		$this->assertEquals( 'Technology', $data['acf']['industry'], 'industry should match' );
 	}
 
 	/**
@@ -611,8 +609,7 @@ class CptCrudTest extends RondoTestCase {
 				'post_author' => $user_id,
 			],
 			[
-				'website'  => 'https://old.com',
-				'industry' => 'Finance',
+				'website' => 'https://old.com',
 			]
 		);
 
@@ -628,6 +625,5 @@ class CptCrudTest extends RondoTestCase {
 
 		$this->assertEquals( 200, $response->get_status() );
 		$this->assertEquals( 'https://new.com', get_field( 'website', $team_id ) );
-		$this->assertEquals( 'Finance', get_field( 'industry', $team_id ), 'industry should be unchanged' );
 	}
 }

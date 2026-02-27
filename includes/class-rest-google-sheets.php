@@ -888,8 +888,8 @@ class GoogleSheets extends Base {
 			$last_name  = get_field( 'last_name', $person->ID ) ?: '';
 			$name       = trim( $first_name . ' ' . $last_name );
 
-			// Get relatiecode (KNVB ID)
-			$relatiecode = get_field( 'relatiecode', $person->ID ) ?: '';
+			// Get KNVB ID
+			$knvb_id = get_field( 'knvb-id', $person->ID ) ?: '';
 
 			if ( $forecast ) {
 				// Calculate with 100% pro-rata for forecast
@@ -910,7 +910,7 @@ class GoogleSheets extends Base {
 			$result = [
 				'id'                   => $person->ID,
 				'name'                 => $name ?: $person->post_title,
-				'relatiecode'          => $relatiecode,
+				'knvb-id'              => $knvb_id,
 				'category'             => $fee_data['category'],
 				'leeftijdsgroep'       => $fee_data['leeftijdsgroep'],
 				'base_fee'             => $fee_data['base_fee'],
@@ -972,7 +972,7 @@ class GoogleSheets extends Base {
 	 * Build spreadsheet data from fee data
 	 *
 	 * Builds 2D array with header row, data rows, and totals row.
-	 * Columns: Naam, Relatiecode, Categorie, Leeftijdsgroep, Basis, Gezinskorting, Pro-rata %, Bedrag, Nikki Total, Saldo
+	 * Columns: Naam, KNVB ID, Categorie, Leeftijdsgroep, Basis, Gezinskorting, Pro-rata %, Bedrag, Nikki Total, Saldo
 	 * For forecast mode: Only first 8 columns (no Nikki Total, no Saldo)
 	 *
 	 * @param array $fee_data Fee data with season and members.
@@ -985,7 +985,7 @@ class GoogleSheets extends Base {
 		// Header row with Dutch labels (conditional Nikki columns)
 		$headers = [
 			'Naam',
-			'Relatiecode',
+				'KNVB ID',
 			'Categorie',
 			'Leeftijdsgroep',
 			'Basis',
@@ -1014,7 +1014,7 @@ class GoogleSheets extends Base {
 		foreach ( $fee_data['members'] as $member ) {
 			$row = [
 				$member['name'],
-				$member['relatiecode'] ?: '',
+					$member['knvb-id'] ?: '',
 				$category_labels[ $member['category'] ] ?? $member['category'],
 				$member['leeftijdsgroep'] ?: '',
 				$member['base_fee'],
