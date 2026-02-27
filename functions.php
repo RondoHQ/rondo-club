@@ -25,6 +25,19 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }
 
+// Defensive direct-load for Lettermint classes so plugin toggles and autoload
+// cache drift never cause fatal "class not found" on theme bootstrap.
+$rondo_lettermint_files = [
+	__DIR__ . '/includes/class-lettermint-config.php',
+	__DIR__ . '/includes/class-lettermint-mailer.php',
+	__DIR__ . '/includes/class-lettermint-webhook.php',
+];
+foreach ( $rondo_lettermint_files as $rondo_lettermint_file ) {
+	if ( file_exists( $rondo_lettermint_file ) ) {
+		require_once $rondo_lettermint_file;
+	}
+}
+
 // PSR-4 namespaced class imports
 use Rondo\Core\PostTypes;
 use Rondo\Core\Taxonomies;
