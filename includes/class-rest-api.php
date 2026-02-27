@@ -4629,16 +4629,12 @@ class Api extends Base {
 			);
 		}
 
-		$route_id = sanitize_text_field( (string) $request->get_param( 'route_id' ) );
-		if ( $route_id === '' ) {
-			$route_id = \Rondo\Notifications\LettermintConfig::get_route_id();
-		}
-		if ( $route_id === '' ) {
-			return new \WP_Error(
-				'lettermint_missing_route_id',
-				'Lettermint route ID ontbreekt. Vul eerst een route ID in.',
-				[ 'status' => 400 ]
-			);
+		$route_id = $this->resolve_lettermint_route_id(
+			$token,
+			sanitize_text_field( (string) $request->get_param( 'route_id' ) )
+		);
+		if ( is_wp_error( $route_id ) ) {
+			return $route_id;
 		}
 
 		$webhook_url = rest_url( 'rondo/v1/lettermint/webhook' );
@@ -4653,43 +4649,15 @@ class Api extends Base {
 			'enabled'  => true,
 		];
 
-		$response = wp_remote_post(
-			'https://api.lettermint.co/v1/webhooks',
-			[
-				'headers' => [
-					'Content-Type'  => 'application/json',
-					'Authorization' => 'Bearer ' . $token,
-				],
-				'body'    => wp_json_encode( $payload ),
-				'timeout' => 20,
-			]
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return new \WP_Error(
-				'lettermint_request_failed',
-				$response->get_error_message(),
-				[ 'status' => 502 ]
-			);
+		$body = $this->request_lettermint_team_api( $token, 'POST', '/webhooks', [], $payload );
+		if ( is_wp_error( $body ) ) {
+			return $body;
 		}
-
-		$status_code = wp_remote_retrieve_response_code( $response );
-		$body_raw    = wp_remote_retrieve_body( $response );
-		$body        = json_decode( $body_raw, true );
-		$data        = is_array( $body['data'] ?? null ) ? $body['data'] : [];
-
-		if ( $status_code >= 400 ) {
-			$message = $this->extract_lettermint_api_error_message( is_array( $body ) ? $body : [] );
-			return new \WP_Error(
-				'lettermint_create_failed',
-				$message ?: 'Lettermint API retourneerde een fout bij het aanmaken van de webhook.',
-				[ 'status' => $status_code ]
-			);
-		}
+		$data = is_array( $body['data'] ?? null ) ? $body['data'] : [];
 
 		$resolved_route_id = sanitize_text_field( (string) ( $data['route_id'] ?? $route_id ) );
 		$webhook_id        = sanitize_text_field( (string) ( $data['id'] ?? '' ) );
-		$secret            = sanitize_text_field( (string) ( $data['secret'] ?? '' ) );
+		$secret            = sanitize_text_field( (string) ( $data['secret'] ?? $data['signing_secret'] ?? $data['webhook_secret'] ?? '' ) );
 		$resolved_url      = esc_url_raw( (string) ( $data['url'] ?? $webhook_url ) );
 		$resolved_events   = isset( $data['events'] ) && is_array( $data['events'] )
 			? array_values( array_map( 'sanitize_text_field', $data['events'] ) )
@@ -4705,7 +4673,9 @@ class Api extends Base {
 
 		return rest_ensure_response(
 			[
-				'message' => 'Lettermint-webhook aangemaakt.',
+				'message' => $secret !== ''
+					? 'Lettermint-webhook aangemaakt. Geheim automatisch opgeslagen.'
+					: 'Lettermint-webhook aangemaakt, maar het geheim is niet meegeleverd door de API.',
 				'webhook' => [
 					'id'       => $webhook_id,
 					'url'      => $resolved_url,
@@ -4716,6 +4686,179 @@ class Api extends Base {
 				'config'       => \Rondo\Config\ClubConfig::get_all_settings(),
 			]
 		);
+	}
+
+	/**
+	 * Resolve a route ID for webhook creation.
+	 *
+	 * Priority:
+	 * 1. Explicit request override.
+	 * 2. Stored route ID in local config.
+	 * 3. Lettermint Team API projects default_route_id.
+	 *
+	 * @param string $token          Team API token.
+	 * @param string $route_override Optional route override.
+	 * @return string|\WP_Error
+	 */
+	private function resolve_lettermint_route_id( string $token, string $route_override = '' ) {
+		$route_override = sanitize_text_field( $route_override );
+		if ( $route_override !== '' ) {
+			return $route_override;
+		}
+
+		$stored_route_id = \Rondo\Notifications\LettermintConfig::get_route_id();
+		if ( $stored_route_id !== '' ) {
+			return $stored_route_id;
+		}
+
+		$projects_response = $this->request_lettermint_team_api( $token, 'GET', '/projects' );
+		if ( is_wp_error( $projects_response ) ) {
+			return $projects_response;
+		}
+
+		$projects = $this->extract_lettermint_data_list( $projects_response );
+		if ( empty( $projects ) ) {
+			return new \WP_Error(
+				'lettermint_missing_route_id',
+				'Kon geen Lettermint-projecten vinden om automatisch een route ID te bepalen.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$default_route_ids = [];
+		$preferred_route   = '';
+
+		foreach ( $projects as $project ) {
+			if ( ! is_array( $project ) ) {
+				continue;
+			}
+
+			$default_route_id = sanitize_text_field( (string) ( $project['default_route_id'] ?? '' ) );
+			if ( $default_route_id === '' ) {
+				continue;
+			}
+
+			$default_route_ids[] = $default_route_id;
+
+			$is_default = isset( $project['is_default'] ) ? rest_sanitize_boolean( $project['is_default'] ) : false;
+			if ( $is_default ) {
+				$preferred_route = $default_route_id;
+			}
+		}
+
+		$default_route_ids = array_values( array_unique( $default_route_ids ) );
+		if ( $preferred_route !== '' ) {
+			return $preferred_route;
+		}
+		if ( count( $default_route_ids ) === 1 ) {
+			return $default_route_ids[0];
+		}
+
+		return new \WP_Error(
+			'lettermint_missing_route_id',
+			'Meerdere routes gevonden. Vul handmatig een route ID in onder geavanceerde Lettermint-instellingen.',
+			[ 'status' => 400 ]
+		);
+	}
+
+	/**
+	 * Call a Lettermint Team API endpoint.
+	 *
+	 * @param string                    $token   Team API token.
+	 * @param string                    $method  HTTP method.
+	 * @param string                    $path    API path, e.g. /projects.
+	 * @param array<string, string>     $query   Optional query parameters.
+	 * @param array<string, mixed>|null $payload Optional JSON payload.
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private function request_lettermint_team_api(
+		string $token,
+		string $method,
+		string $path,
+		array $query = [],
+		?array $payload = null
+	) {
+		$api_url = 'https://api.lettermint.co/v1/' . ltrim( $path, '/' );
+		if ( ! empty( $query ) ) {
+			$api_url = add_query_arg( $query, $api_url );
+		}
+
+		$args = [
+			'method'  => strtoupper( $method ),
+			'headers' => [
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Bearer ' . $token,
+			],
+			'timeout' => 20,
+		];
+
+		if ( ! empty( $payload ) ) {
+			$args['body'] = wp_json_encode( $payload );
+		}
+
+		$response = wp_remote_request( $api_url, $args );
+		if ( is_wp_error( $response ) ) {
+			return new \WP_Error(
+				'lettermint_request_failed',
+				$response->get_error_message(),
+				[ 'status' => 502 ]
+			);
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		$body_raw    = (string) wp_remote_retrieve_body( $response );
+		$body        = json_decode( $body_raw, true );
+		if ( ! is_array( $body ) ) {
+			$body = [];
+		}
+
+		if ( $status_code >= 400 ) {
+			$message = $this->extract_lettermint_api_error_message( $body );
+			return new \WP_Error(
+				'lettermint_api_error',
+				$message !== '' ? $message : 'Lettermint API retourneerde een fout.',
+				[ 'status' => $status_code ]
+			);
+		}
+
+		return $body;
+	}
+
+	/**
+	 * Normalize Lettermint response data into a list.
+	 *
+	 * @param array<string, mixed> $body Parsed API response.
+	 * @return array
+	 */
+	private function extract_lettermint_data_list( array $body ): array {
+		$data = $body['data'] ?? null;
+		if ( ! is_array( $data ) ) {
+			return [];
+		}
+
+		if ( $this->is_list_array( $data ) ) {
+			return $data;
+		}
+
+		return [ $data ];
+	}
+
+	/**
+	 * Check whether an array uses a sequential numeric index.
+	 *
+	 * @param array $items Input array.
+	 * @return bool
+	 */
+	private function is_list_array( array $items ): bool {
+		$index = 0;
+		foreach ( array_keys( $items ) as $key ) {
+			if ( $key !== $index ) {
+				return false;
+			}
+			++$index;
+		}
+
+		return true;
 	}
 
 	/**

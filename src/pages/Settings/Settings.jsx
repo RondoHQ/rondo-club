@@ -1247,6 +1247,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     lettermint_webhook_secret: '',
     lettermint_route_id: '',
   });
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [creatingWebhook, setCreatingWebhook] = useState(false);
@@ -1277,9 +1278,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     setSaving(true);
     setSaveMessage('');
     try {
-      const payload = {
-        lettermint_route_id: formData.lettermint_route_id.trim(),
-      };
+      const payload = {};
 
       if (formData.lettermint_api_token.trim()) {
         payload.lettermint_api_token = formData.lettermint_api_token.trim();
@@ -1287,8 +1286,17 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       if (formData.lettermint_team_api_token.trim()) {
         payload.lettermint_team_api_token = formData.lettermint_team_api_token.trim();
       }
-      if (formData.lettermint_webhook_secret.trim()) {
+      if (showAdvanced) {
+        payload.lettermint_route_id = formData.lettermint_route_id.trim();
+      }
+      if (showAdvanced && formData.lettermint_webhook_secret.trim()) {
         payload.lettermint_webhook_secret = formData.lettermint_webhook_secret.trim();
+      }
+
+      if (Object.keys(payload).length === 0) {
+        setSaveMessage('Geen wijzigingen om op te slaan.');
+        setSaving(false);
+        return;
       }
 
       const response = await prmApi.updateClubConfig(payload);
@@ -1317,7 +1325,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     setWebhookMessage('');
     try {
       const payload = {};
-      if (formData.lettermint_route_id.trim()) {
+      if (showAdvanced && formData.lettermint_route_id.trim()) {
         payload.route_id = formData.lettermint_route_id.trim();
       }
 
@@ -1403,32 +1411,20 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       </div>
 
       <div>
-        <label className="label">Route ID</label>
-        <input
-          type="text"
-          value={formData.lettermint_route_id}
-          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_route_id: e.target.value }))}
-          className="input"
-          placeholder="route_..."
-          disabled={!isAdmin}
-        />
+        <label className="label">Webhook status</label>
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/40 text-sm space-y-1">
+          <p className="text-gray-700 dark:text-gray-200">
+            Route ID: <span className="font-mono text-xs">{clubConfig?.lettermint_route_id || 'automatisch (default route)'}</span>
+          </p>
+          <p className="text-gray-700 dark:text-gray-200">
+            Webhook ID: <span className="font-mono text-xs">{clubConfig?.lettermint_webhook_id || 'nog niet aangemaakt'}</span>
+          </p>
+          <p className="text-gray-700 dark:text-gray-200">
+            Geheim: {clubConfig?.lettermint_has_webhook_secret ? 'automatisch opgeslagen' : 'nog niet opgeslagen'}
+          </p>
+        </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Vereist voor webhook-registratie via Lettermint Team API.
-        </p>
-      </div>
-
-      <div>
-        <label className="label">Webhook secret</label>
-        <input
-          type="password"
-          value={formData.lettermint_webhook_secret}
-          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_webhook_secret: e.target.value }))}
-          className="input"
-          placeholder={clubConfig?.lettermint_has_webhook_secret ? '••••••••' : 'whsec_...'}
-          disabled={!isAdmin}
-        />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Wordt gebruikt om inkomende Lettermint-webhooks te verifiëren.
+          Route ID en webhook secret worden bij webhook-aanmaak automatisch bepaald via de Lettermint API.
         </p>
       </div>
 
@@ -1444,6 +1440,50 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Dit endpoint wordt gebruikt bij automatisch webhook aanmaken.
         </p>
+      </div>
+
+      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((prev) => !prev)}
+          className="text-sm text-electric-cyan hover:underline"
+        >
+          {showAdvanced ? 'Geavanceerde velden verbergen' : 'Geavanceerde velden tonen'}
+        </button>
+
+        {showAdvanced && (
+          <div className="mt-3 space-y-4">
+            <div>
+              <label className="label">Route ID (optioneel override)</label>
+              <input
+                type="text"
+                value={formData.lettermint_route_id}
+                onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_route_id: e.target.value }))}
+                className="input"
+                placeholder="route_..."
+                disabled={!isAdmin}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Alleen nodig als automatische route-detectie niet werkt.
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Webhook secret (optioneel handmatig)</label>
+              <input
+                type="password"
+                value={formData.lettermint_webhook_secret}
+                onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_webhook_secret: e.target.value }))}
+                className="input"
+                placeholder={clubConfig?.lettermint_has_webhook_secret ? '••••••••' : 'whsec_...'}
+                disabled={!isAdmin}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Alleen nodig als Lettermint API het geheim niet teruggeeft bij webhook-aanmaak.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -1497,7 +1537,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
 
       <div className="flex flex-col md:flex-row gap-3 md:justify-end">
         <button type="button" onClick={handleCreateWebhook} disabled={!isAdmin || creatingWebhook} className="btn-secondary">
-          {creatingWebhook ? 'Webhook aanmaken...' : 'Webhook aanmaken'}
+          {creatingWebhook ? 'Webhook automatisch aanmaken...' : 'Webhook automatisch aanmaken'}
         </button>
         <button type="submit" disabled={!isAdmin || saving} className="btn-primary">
           {saving ? 'Opslaan...' : 'Opslaan'}
