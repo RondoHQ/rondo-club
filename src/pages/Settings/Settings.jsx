@@ -443,6 +443,7 @@ export default function Settings() {
           setActiveTab={setActiveTab}
           isAdmin={isAdmin}
           canAccessFinancieel={canAccessFinancieel}
+          currentUserEmail={currentUser?.email || ''}
           // CardDAV props
           carddavUrls={carddavUrls}
           config={config}
@@ -962,7 +963,7 @@ function AppearanceTab() {
 // ConnectionsTab Component - Container for CardDAV and API subtabs
 function ConnectionsTab({
   activeSubtab, setActiveSubtab, setActiveTab,
-  isAdmin, canAccessFinancieel,
+  isAdmin, canAccessFinancieel, currentUserEmail,
   // CardDAV props
   carddavUrls, config, copyCarddavUrl,
   // Club config props
@@ -1033,6 +1034,7 @@ function ConnectionsTab({
       {activeSubtab === 'lettermint' && (
         <LettermintConnectionSubtab
           isAdmin={isAdmin}
+          currentUserEmail={currentUserEmail}
           clubConfig={clubConfig}
           setClubConfig={setClubConfig}
           loading={clubConfigLoading}
@@ -1238,7 +1240,7 @@ function FreeScoutConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading
   );
 }
 
-function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loading }) {
+function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, setClubConfig, loading }) {
   const [formData, setFormData] = useState({
     lettermint_api_token: '',
     lettermint_team_api_token: '',
@@ -1249,6 +1251,9 @@ function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loadin
   const [saveMessage, setSaveMessage] = useState('');
   const [creatingWebhook, setCreatingWebhook] = useState(false);
   const [webhookMessage, setWebhookMessage] = useState('');
+  const [testRecipient, setTestRecipient] = useState('');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailMessage, setTestEmailMessage] = useState('');
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -1256,6 +1261,12 @@ function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loadin
       lettermint_route_id: clubConfig?.lettermint_route_id || '',
     }));
   }, [clubConfig?.lettermint_route_id]);
+
+  useEffect(() => {
+    if (testRecipient === '' && currentUserEmail) {
+      setTestRecipient(currentUserEmail);
+    }
+  }, [currentUserEmail, testRecipient]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -1319,6 +1330,25 @@ function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loadin
       setWebhookMessage(error.response?.data?.message || 'Kon Lettermint-webhook niet aanmaken.');
     } finally {
       setCreatingWebhook(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
+    setSendingTestEmail(true);
+    setTestEmailMessage('');
+    try {
+      const response = await prmApi.sendLettermintTestEmail(testRecipient.trim());
+      setTestEmailMessage(response.data?.message
+        ? `${response.data.message} (${response.data.recipient})`
+        : 'Testmail verzonden.');
+    } catch (error) {
+      setTestEmailMessage(error.response?.data?.message || 'Kon testmail niet verzenden.');
+    } finally {
+      setSendingTestEmail(false);
     }
   };
 
@@ -1416,6 +1446,31 @@ function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loadin
         </p>
       </div>
 
+      <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+        <label className="label">Test e-mailadres</label>
+        <div className="flex flex-col md:flex-row gap-3">
+          <input
+            type="email"
+            value={testRecipient}
+            onChange={(e) => setTestRecipient(e.target.value)}
+            className="input"
+            placeholder="naam@voorbeeld.nl"
+            disabled={!isAdmin || sendingTestEmail}
+          />
+          <button
+            type="button"
+            onClick={handleSendTestEmail}
+            disabled={!isAdmin || sendingTestEmail}
+            className="btn-secondary md:whitespace-nowrap"
+          >
+            {sendingTestEmail ? 'Testmail verzenden...' : 'Verstuur testmail'}
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Sla wijzigingen op voordat je test. De test gebruikt de opgeslagen Lettermint-instellingen.
+        </p>
+      </div>
+
       {!isAdmin && (
         <p className="text-sm text-amber-600 dark:text-amber-400">
           Alleen beheerders kunnen Lettermint-instellingen wijzigen.
@@ -1431,6 +1486,12 @@ function LettermintConnectionSubtab({ isAdmin, clubConfig, setClubConfig, loadin
       {webhookMessage && (
         <p className={`text-sm ${webhookMessage.includes('niet') || webhookMessage.includes('Kon') || webhookMessage.includes('ontbreekt') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
           {webhookMessage}
+        </p>
+      )}
+
+      {testEmailMessage && (
+        <p className={`text-sm ${testEmailMessage.includes('niet') || testEmailMessage.includes('Kon') || testEmailMessage.includes('ontbreekt') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+          {testEmailMessage}
         </p>
       )}
 

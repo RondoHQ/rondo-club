@@ -308,6 +308,7 @@ export const prmApi = {
   getClubConfig: () => api.get('/rondo/v1/config'),
   updateClubConfig: (data) => api.post('/rondo/v1/config', data),
   createLettermintWebhook: (data = {}) => api.post('/rondo/v1/lettermint/webhook/create', data),
+  sendLettermintTestEmail: (recipient) => api.post('/rondo/v1/lettermint/test-email', { recipient }),
 
   // Finance settings (admin only)
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),

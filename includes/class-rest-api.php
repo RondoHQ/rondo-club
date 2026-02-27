@@ -996,6 +996,26 @@ class Api extends Base {
 			]
 		);
 
+		// Lettermint test email (admin only)
+		register_rest_route(
+			'rondo/v1',
+			'/lettermint/test-email',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_lettermint_test_email' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'recipient' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_email',
+						'validate_callback' => function ( $param ) {
+							return $param === null || $param === '' || is_email( $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Finance settings (financieel capability required)
 		register_rest_route(
 			'rondo/v1',
@@ -4694,6 +4714,79 @@ class Api extends Base {
 				],
 				'secret_saved' => $secret !== '',
 				'config'       => \Rondo\Config\ClubConfig::get_all_settings(),
+			]
+		);
+	}
+
+	/**
+	 * Send a Lettermint test email through wp_mail transport.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function send_lettermint_test_email( $request ) {
+		if ( \Rondo\Notifications\LettermintConfig::get_api_token() === '' ) {
+			return new \WP_Error(
+				'lettermint_missing_api_token',
+				'Lettermint API token ontbreekt. Sla eerst de instellingen op.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! class_exists( '\Lettermint\Lettermint' ) ) {
+			return new \WP_Error(
+				'lettermint_sdk_missing',
+				'Lettermint SDK niet gevonden op de server.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		$recipient = sanitize_email( (string) $request->get_param( 'recipient' ) );
+		if ( $recipient === '' ) {
+			$current_user = wp_get_current_user();
+			$recipient    = sanitize_email( (string) ( $current_user->user_email ?? '' ) );
+		}
+
+		if ( ! is_email( $recipient ) ) {
+			return new \WP_Error(
+				'lettermint_invalid_recipient',
+				'Geen geldig ontvanger e-mailadres opgegeven.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$subject = sprintf( '[Rondo Club] Lettermint testmail - %s', wp_date( 'Y-m-d H:i:s' ) );
+		$body    = implode(
+			"\n",
+			[
+				'Dit is een testmail vanuit Rondo Club.',
+				'',
+				'Als je dit bericht ontvangt, werkt de Lettermint-transportlaag voor wp_mail().',
+				'',
+				'Site: ' . home_url(),
+				'Route ID: ' . ( \Rondo\Notifications\LettermintConfig::get_route_id() ?: '(geen)' ),
+				'Tijd: ' . wp_date( DATE_RFC3339 ),
+			]
+		);
+
+		$headers = [
+			'Content-Type: text/plain; charset=UTF-8',
+			'X-Rondo-Email-Tag: lettermint-test',
+		];
+
+		$sent = wp_mail( $recipient, $subject, $body, $headers );
+		if ( ! $sent ) {
+			return new \WP_Error(
+				'lettermint_test_failed',
+				'Testmail kon niet worden verzonden. Controleer Lettermint-instellingen en serverlogs.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response(
+			[
+				'message'   => 'Testmail verzonden.',
+				'recipient' => $recipient,
 			]
 		);
 	}

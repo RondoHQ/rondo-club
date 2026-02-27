@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.3.0] - 2026-02-27
+
+### Added
+- Added a Lettermint test email action in `Instellingen > Koppelingen > Lettermint`, including a configurable recipient field and inline delivery feedback.
+- Added a new admin endpoint `POST /wp-json/rondo/v1/lettermint/test-email` to send a tagged test message through `wp_mail()` and the Lettermint transport.
+
 ## [31.2.0] - 2026-02-27
 
 ### Added
