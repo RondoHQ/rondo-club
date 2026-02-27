@@ -1464,6 +1464,12 @@ class DemoExport {
 		$settings['rondo_player_roles'] = get_option( 'rondo_player_roles', [] );
 		$settings['rondo_excluded_roles'] = get_option( 'rondo_excluded_roles', [] );
 
+		// Anniversary milestone settings.
+		$anniversary_milestones = get_option( 'rondo_anniversary_milestones' );
+		if ( is_array( $anniversary_milestones ) ) {
+			$settings['rondo_anniversary_milestones'] = $anniversary_milestones;
+		}
+
 		// VOG email settings (nullable)
 		$settings['rondo_vog_from_email'] = $this->normalize_value( get_option( 'rondo_vog_from_email', '' ) );
 		$settings['rondo_vog_from_name'] = $this->normalize_value( get_option( 'rondo_vog_from_name', '' ) );

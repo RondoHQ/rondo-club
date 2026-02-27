@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.4] - 2026-02-27
+
+### Fixed
+- Demo fixture export now includes `rondo_anniversary_milestones`, so imported demo sites keep Jubilarissen milestone configuration used by both the Jubilarissen page and dashboard card.
+- Demo import cleanup now also removes `rondo_anniversary_milestones` to avoid stale anniversary settings between imports.
+
 ## [31.6.3] - 2026-02-27
 
 ### Changed

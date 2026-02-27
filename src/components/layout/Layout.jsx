@@ -26,8 +26,9 @@ import {
   Shirt
 } from 'lucide-react';
 
-// Wordmark URL from theme directory.
-const getLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/rondo-logo-wordmark.svg`;
+// Wordmark URLs from theme directory.
+const getLightLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/rondo-logo-wordmark.svg`;
+const getDarkLogoUrl = () => `${window.rondoConfig?.themeUrl || ''}/rondo_logo_white.svg`;
 import { useAuth } from '@/hooks/useAuth';
 import { useRouteTitle } from '@/hooks/useDocumentTitle';
 import { useSearch, useDashboard } from '@/hooks/useDashboard';
@@ -128,7 +129,8 @@ function Sidebar({ mobile = false, onClose, stats }) {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
         <Link to="/" className="flex items-center">
-          <img src={getLogoUrl()} alt="Rondo Club" className="h-10 w-auto object-contain shrink-0" />
+          <img src={getLightLogoUrl()} alt="Rondo Club" className="h-10 w-auto object-contain shrink-0 dark:hidden" />
+          <img src={getDarkLogoUrl()} alt="Rondo Club" className="hidden h-10 w-auto object-contain shrink-0 dark:block" />
         </Link>
         {mobile && (
           <button onClick={onClose} className="p-2 -mr-2 dark:text-gray-300">
