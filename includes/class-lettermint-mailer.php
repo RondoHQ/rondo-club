@@ -85,9 +85,9 @@ class LettermintMailer {
 				$email->replyTo( ...$headers['reply_to'] );
 			}
 
-			$route_id = LettermintConfig::get_route_id();
-			if ( $route_id !== '' ) {
-				$email->route( $route_id );
+			$route_override = sanitize_text_field( (string) ( $headers['x_lettermint_route'] ?? '' ) );
+			if ( $route_override !== '' ) {
+				$email->route( $route_override );
 			}
 
 			$tag = $headers['x_rondo_email_tag'] ?? self::DEFAULT_TAG;
@@ -172,6 +172,7 @@ class LettermintMailer {
 			'reply_to'          => [],
 			'content_type'      => '',
 			'x_rondo_email_tag' => '',
+			'x_lettermint_route'=> '',
 			'custom'            => [],
 		];
 
@@ -224,6 +225,10 @@ class LettermintMailer {
 					break;
 				case 'x-rondo-email-tag':
 					$parsed['x_rondo_email_tag'] = $value;
+					break;
+				case 'x-lettermint-route':
+				case 'x-lm-route':
+					$parsed['x_lettermint_route'] = $value;
 					break;
 				default:
 					$parsed['custom'][ $name ] = $value;
