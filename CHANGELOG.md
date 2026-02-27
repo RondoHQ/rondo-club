@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.2] - 2026-02-27
+
+### Fixed
+- Lettermint verzending gebruikt nu standaard de project default route (geen verplichte `route` parameter meer op `POST /v1/send`), waardoor `422 Invalid route provided` wordt voorkomen.
+- Added optional per-message route override via email header `X-Lettermint-Route` (or `X-LM-Route`) for advanced use cases.
+
 ## [31.6.1] - 2026-02-27
 
 ### Fixed
