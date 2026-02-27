@@ -1037,22 +1037,30 @@ class Invoices extends Base {
 		// Update ACF status field
 		update_field( 'status', $status, $invoice_id );
 
-		// If transitioning to "sent", set sent_date and calculate due_date
-		if ( $status === 'sent' ) {
-			$sent_date = current_time( 'Ymd' );
-			update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
+			// If transitioning to "sent", set sent_date and calculate due_date
+			if ( $status === 'sent' ) {
+				$sent_date = current_time( 'Ymd' );
+				update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
 
 			// Calculate due date
 			$finance_config   = new FinanceConfig();
 			$payment_term_days = $finance_config->get_payment_term_days();
-			$due_date         = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
-			update_field( 'field_invoice_due_date', $due_date, $invoice_id );
-		}
+				$due_date         = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
+				update_field( 'field_invoice_due_date', $due_date, $invoice_id );
+			}
 
-		// Return updated invoice
-		$invoice = get_post( $invoice_id );
-		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
-	}
+			// If transitioning to paid, remove payment artifacts (link/QR/provider IDs).
+			if ( $status === 'paid' ) {
+				update_field( 'payment_link', '', $invoice_id );
+				delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
+				delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+				$this->clear_qr_code( $invoice_id );
+			}
+
+			// Return updated invoice
+			$invoice = get_post( $invoice_id );
+			return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+		}
 
 	/**
 	 * Add a manual line item to a draft invoice.
