@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.15] - 2026-02-27
+
+### Changed
+- When an invoice is marked as `paid`, payment artifacts are now cleared automatically: `payment_link`, payment-provider IDs, and QR code.
+
+## [31.0.14] - 2026-02-27
+
+### Fixed
+- Paid invoice detail now shows a `Genereer PDF` action when no PDF exists yet, instead of only a disabled `Download PDF` button.
+
 ## [31.0.13] - 2026-02-27
 
 ### Changed
