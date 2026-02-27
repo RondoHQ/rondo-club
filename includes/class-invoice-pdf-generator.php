@@ -12,6 +12,7 @@
 namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
+use Mpdf\WatermarkText;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -189,8 +190,8 @@ class InvoicePdfGenerator {
 			]);
 			if ( $is_paid ) {
 				// Use mPDF native watermark so angle and opacity are applied reliably.
-				$mpdf->SetWatermarkText( 'BETAALD', 0.5 );
-				$mpdf->watermarkAngle   = 45;
+				$watermark_rgb = self::hex_to_rgb( $accent_color );
+				$mpdf->SetWatermarkText( new WatermarkText( 'BETAALD', 96, 45, $watermark_rgb, 0.5 ) );
 				$mpdf->showWatermarkText = true;
 			}
 			$mpdf->WriteHTML( $html );
@@ -539,7 +540,7 @@ table.line-items .total-row td {
 	</tbody>
 </table>' ) . '
 
-' . ( $is_membership ? '
+		' . ( ! $is_paid && $is_membership ? '
 <div class="payment-section">
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
@@ -552,7 +553,7 @@ table.line-items .total-row td {
 			<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
 		</td>' : '' ) . '
 	</tr></table>
-</div>' : '
+</div>' : ( ! $is_paid ? '
 <div class="payment-section">
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
@@ -567,7 +568,7 @@ table.line-items .total-row td {
 			<div style="font-size: 8pt; color: #666; margin-top: 5px;">Scan om te betalen</div>
 		</td>' : '' ) . '
 	</tr></table>
-</div>' ) . '
+</div>' : '' ) ) . '
 
 </body>
 </html>';
@@ -608,5 +609,27 @@ table.line-items .total-row td {
 		$month_name = $dutch_months[ $month ] ?? '';
 
 		return $day . ' ' . $month_name . ' ' . $year;
+	}
+
+	/**
+	 * Convert a hex color string to RGB triplet for mPDF watermark text color.
+	 *
+	 * @param string $hex Hex color like "#0891b2" or "0891b2".
+	 * @return array{int,int,int} RGB values.
+	 */
+	private static function hex_to_rgb( string $hex ): array {
+		$normalized = ltrim( trim( $hex ), '#' );
+		if ( strlen( $normalized ) === 3 ) {
+			$normalized = $normalized[0] . $normalized[0] . $normalized[1] . $normalized[1] . $normalized[2] . $normalized[2];
+		}
+		if ( ! preg_match( '/^[a-fA-F0-9]{6}$/', $normalized ) ) {
+			return [ 8, 145, 178 ];
+		}
+
+		return [
+			hexdec( substr( $normalized, 0, 2 ) ),
+			hexdec( substr( $normalized, 2, 2 ) ),
+			hexdec( substr( $normalized, 4, 2 ) ),
+		];
 	}
 }

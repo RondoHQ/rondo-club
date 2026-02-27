@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.18] - 2026-02-27
+
+### Changed
+- Paid invoice PDFs no longer render the `Betaalgegevens` section.
+- Paid `BETAALD` watermark now uses native mPDF watermark color set to the primary club accent color.
+
 ## [31.0.17] - 2026-02-27
 
 ### Fixed
