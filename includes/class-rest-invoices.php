@@ -832,9 +832,6 @@ class Invoices extends Base {
 		$total_amount = 0.0;
 		foreach ( $line_items as $item ) {
 			$amount = (float) ( $item['amount'] ?? 0 );
-			if ( $invoice_kind === 'credit' ) {
-				$amount = -abs( $amount );
-			}
 			$rows[] = [
 				'discipline_case' => ! empty( $item['discipline_case_id'] ) ? absint( $item['discipline_case_id'] ) : null,
 				'description'     => sanitize_text_field( $item['description'] ?? '' ),
