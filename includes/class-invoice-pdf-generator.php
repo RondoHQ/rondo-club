@@ -458,12 +458,12 @@ table.line-items .total-row td {
 }
 .paid-watermark {
 	position: fixed;
-	top: 43%;
-	left: 6%;
+	top: 35%;
+	left: 3%;
 	font-size: 96pt;
 	font-weight: bold;
-	color: rgba(22, 163, 74, 0.16);
-	transform: rotate(-24deg);
+	color: rgba(22, 163, 74, 0.5);
+	transform: rotate(-45deg);
 	letter-spacing: 6px;
 }
 </style>

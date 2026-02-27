@@ -1944,6 +1944,10 @@ class Invoices extends Base {
 	 * @return array Formatted invoice data.
 	 */
 	private function format_invoice( $post ) {
+		$status          = get_field( 'status', $post->ID );
+		$raw_payment_link = get_field( 'payment_link', $post->ID ) ?: null;
+		$payment_link     = ( 'paid' === $status ) ? null : $raw_payment_link;
+
 		return [
 			'id'               => $post->ID,
 			'invoice_number'   => get_field( 'invoice_number', $post->ID ),
@@ -1952,11 +1956,11 @@ class Invoices extends Base {
 			'customer_address' => (string) get_post_meta( $post->ID, '_customer_address', true ),
 			'invoice_kind'     => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
 			'total_amount'     => (float) get_field( 'total_amount', $post->ID ),
-			'status'           => get_field( 'status', $post->ID ),
+			'status'           => $status,
 			'post_status'      => $post->post_status,
 			'sent_date'        => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
 			'due_date'         => get_post_meta( $post->ID, 'due_date', true ) ?: null,
-			'payment_link'     => get_field( 'payment_link', $post->ID ) ?: null,
+			'payment_link'     => $payment_link,
 			'created'          => $post->post_date,
 			'invoice_type'     => get_field( 'invoice_type', $post->ID ) ?: null,
 			'installment_plan' => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,

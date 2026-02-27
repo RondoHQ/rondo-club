@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.0.16] - 2026-02-27
+
+### Changed
+- Paid invoice detail now hides payment links consistently (API + UI), including legacy paid invoices that still had a stored link.
+- Paid invoice PDF watermark styling updated to a 45° diagonal `BETAALD` stamp at 50% opacity.
+
 ## [31.0.15] - 2026-02-27
 
 ### Changed

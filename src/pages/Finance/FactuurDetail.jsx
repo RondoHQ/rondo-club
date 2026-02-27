@@ -440,7 +440,7 @@ export default function FactuurDetail() {
                   </p>
                 </div>
               )}
-              {invoice.payment_link && (
+              {invoice.status !== 'paid' && invoice.payment_link && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Betaallink</h3>
                   <a
