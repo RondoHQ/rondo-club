@@ -25,18 +25,76 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }
 
-// Defensive direct-load for Lettermint classes so plugin toggles and autoload
-// cache drift never cause fatal "class not found" on theme bootstrap.
-$rondo_lettermint_files = [
-	__DIR__ . '/includes/class-lettermint-config.php',
-	__DIR__ . '/includes/class-lettermint-mailer.php',
-	__DIR__ . '/includes/class-lettermint-webhook.php',
-];
-foreach ( $rondo_lettermint_files as $rondo_lettermint_file ) {
-	if ( file_exists( $rondo_lettermint_file ) ) {
-		require_once $rondo_lettermint_file;
-	}
+/**
+ * Register a fallback autoloader for Rondo classes.
+ *
+ * Composer classmaps can become stale on deployments where autoload regeneration
+ * fails. This loader lazily builds a class map from includes/class-*.php and only
+ * resolves Rondo classes that Composer did not load.
+ */
+function rondo_register_fallback_autoloader() {
+	spl_autoload_register(
+		static function ( $class ) {
+			if ( 0 !== strpos( $class, 'Rondo\\' ) ) {
+				return;
+			}
+
+			static $classmap = null;
+			if ( null === $classmap ) {
+				$classmap = [];
+				$files    = glob( __DIR__ . '/includes/class-*.php' );
+				if ( false === $files ) {
+					$files = [];
+				}
+
+				foreach ( $files as $file ) {
+					$contents = file_get_contents( $file );
+					if ( false === $contents ) {
+						continue;
+					}
+
+					if ( ! preg_match( '/^\s*namespace\s+([^;]+);/m', $contents, $namespace_match ) ) {
+						continue;
+					}
+
+					$namespace = trim( $namespace_match[1] );
+					if ( 'Rondo' !== $namespace && 0 !== strpos( $namespace, 'Rondo\\' ) ) {
+						continue;
+					}
+
+					if ( preg_match_all( '/^\s*(?:final\s+|abstract\s+)?class\s+([A-Za-z_][A-Za-z0-9_]*)/m', $contents, $class_matches ) ) {
+						foreach ( $class_matches[1] as $short_name ) {
+							$classmap[ $namespace . '\\' . $short_name ] = $file;
+						}
+					}
+
+					if ( preg_match_all( '/^\s*interface\s+([A-Za-z_][A-Za-z0-9_]*)/m', $contents, $interface_matches ) ) {
+						foreach ( $interface_matches[1] as $short_name ) {
+							$classmap[ $namespace . '\\' . $short_name ] = $file;
+						}
+					}
+
+					if ( preg_match_all( '/^\s*trait\s+([A-Za-z_][A-Za-z0-9_]*)/m', $contents, $trait_matches ) ) {
+						foreach ( $trait_matches[1] as $short_name ) {
+							$classmap[ $namespace . '\\' . $short_name ] = $file;
+						}
+					}
+
+					if ( preg_match_all( '/^\s*enum\s+([A-Za-z_][A-Za-z0-9_]*)/m', $contents, $enum_matches ) ) {
+						foreach ( $enum_matches[1] as $short_name ) {
+							$classmap[ $namespace . '\\' . $short_name ] = $file;
+						}
+					}
+				}
+			}
+
+			if ( isset( $classmap[ $class ] ) && file_exists( $classmap[ $class ] ) ) {
+				require_once $classmap[ $class ];
+			}
+		}
+	);
 }
+rondo_register_fallback_autoloader();
 
 // PSR-4 namespaced class imports
 use Rondo\Core\PostTypes;
