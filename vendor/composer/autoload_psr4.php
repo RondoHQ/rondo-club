@@ -55,6 +55,7 @@ return array(
     'Mpdf\\' => array($vendorDir . '/mpdf/mpdf/src'),
     'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'Mollie\\Api\\' => array($vendorDir . '/mollie/mollie-api-php/src'),
+    'Lettermint\\' => array($vendorDir . '/lettermint/lettermint-php/src'),
     'Hautelook\\Phpass\\' => array($vendorDir . '/lucatume/wp-browser/includes/Hautelook/Phpass'),
     'GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
     'GuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),
