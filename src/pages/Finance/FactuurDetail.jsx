@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount } from '@/hooks/useInvoices';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
@@ -107,11 +107,14 @@ export default function FactuurDetail() {
   const deleteInvoice = useDeleteInvoice();
   const toggleInstallments = useToggleInstallments();
   const updateMembershipDiscount = useUpdateMembershipInvoiceDiscount();
+  const addDraftLineItem = useAddDraftInvoiceLineItem();
   const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [familyDiscountPercentInput, setFamilyDiscountPercentInput] = useState('');
   const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
+  const [draftAdjustmentDescription, setDraftAdjustmentDescription] = useState('Correctie');
+  const [draftAdjustmentAmount, setDraftAdjustmentAmount] = useState('');
 
   const isTestMode = (() => {
     if (!financeSettings) return false;
@@ -259,6 +262,33 @@ export default function FactuurDetail() {
     }
   };
 
+  const handleAddDraftLineItem = async () => {
+    const description = draftAdjustmentDescription.trim();
+    const parsedAmount = Number.parseFloat(String(draftAdjustmentAmount).replace(',', '.'));
+
+    if (!description) {
+      setErrorMessage('Vul een omschrijving in voor de correctieregel.');
+      return;
+    }
+    if (!Number.isFinite(parsedAmount) || Math.abs(parsedAmount) < 0.01) {
+      setErrorMessage('Vul een geldig bedrag in (groter dan 0, positief of negatief).');
+      return;
+    }
+
+    setErrorMessage('');
+    try {
+      await addDraftLineItem.mutateAsync({
+        id,
+        description,
+        amount: parsedAmount,
+      });
+      setDraftAdjustmentAmount('');
+      setSuccessMessage('Correctieregel toegevoegd. Totaalbedrag is bijgewerkt.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het toevoegen van de correctieregel.');
+    }
+  };
+
   const handleUpdateMembershipDiscount = async () => {
     const parsedFamily = Number.parseFloat(String(familyDiscountPercentInput).replace(',', '.'));
     const parsedEntry = Number.parseFloat(String(entryDiscountPercentInput).replace(',', '.'));
@@ -284,7 +314,7 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending;
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending;
 
   if (isLoading) {
     return (
@@ -532,6 +562,41 @@ export default function FactuurDetail() {
             </tfoot>
           </table>
         </div>
+        {invoice.status === 'draft' && (
+          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Extra regel toevoegen</h3>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+              <input
+                type="text"
+                className="input md:col-span-8"
+                placeholder="Omschrijving (bijv. Correctie of Korting)"
+                value={draftAdjustmentDescription}
+                onChange={(e) => setDraftAdjustmentDescription(e.target.value)}
+                disabled={addDraftLineItem.isPending}
+              />
+              <input
+                type="number"
+                step="0.01"
+                className="input md:col-span-2"
+                placeholder="+/- bedrag"
+                value={draftAdjustmentAmount}
+                onChange={(e) => setDraftAdjustmentAmount(e.target.value)}
+                disabled={addDraftLineItem.isPending}
+              />
+              <button
+                type="button"
+                onClick={handleAddDraftLineItem}
+                className="btn btn-secondary md:col-span-2"
+                disabled={addDraftLineItem.isPending}
+              >
+                {addDraftLineItem.isPending ? 'Toevoegen...' : 'Voeg regel toe'}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Gebruik een positief bedrag voor opslag en een negatief bedrag voor korting.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Installment timeline */}
