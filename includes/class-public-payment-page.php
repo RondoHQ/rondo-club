@@ -198,8 +198,9 @@ class PublicPaymentPage {
 		// Hide plans that don't fit within available dates.
 		$plan_3_visible = $plan_3_enabled && $max_installments >= 3;
 
-		$large_count        = min( 8, $max_installments );
-		$large_plan_visible = $plan_8_enabled && $large_count > 3;
+		$large_count = min( 8, $max_installments );
+		// Keep existing behavior (4..8 dynamic) and additionally allow a late-season 2-installment fallback.
+		$large_plan_visible = $plan_8_enabled && ( $large_count > 3 || 2 === $large_count );
 
 		// Calculate per-plan amounts.
 		$amount_3  = round( $total_amount / 3, 2 ) + $admin_fee;
@@ -484,12 +485,14 @@ class PublicPaymentPage {
 			exit;
 		}
 
-		// Check if selected installment plan is enabled for this season.
-		if ( 'quarterly_3' === $plan || 'monthly_8' === $plan ) {
-			$fees_service = new MembershipFees();
-			$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
-			$invoice_season = $fees_service->get_season_key( $invoice_date );
+		$fees_service     = new MembershipFees();
+		$invoice_date     = get_the_date( 'Y-m-d', $invoice_id );
+		$invoice_season   = $fees_service->get_season_key( $invoice_date );
+		$available_dates  = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
+		$max_installments = count( $available_dates );
 
+		// Check if selected installment plan is enabled and currently available.
+		if ( 'quarterly_3' === $plan || 'monthly_8' === $plan ) {
 			if ( 'quarterly_3' === $plan && ! $fees_service->get_installment_plan_3_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
@@ -498,6 +501,19 @@ class PublicPaymentPage {
 			if ( 'monthly_8' === $plan && ! $fees_service->get_installment_plan_8_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
+			}
+
+			if ( 'quarterly_3' === $plan && $max_installments < 3 ) {
+				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
+				exit;
+			}
+
+			if ( 'monthly_8' === $plan ) {
+				$large_count = min( 8, $max_installments );
+				if ( ! ( $large_count > 3 || 2 === $large_count ) ) {
+					$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
+					exit;
+				}
 			}
 		}
 
@@ -539,9 +555,6 @@ class PublicPaymentPage {
 
 		// Read amounts.
 		$total     = (float) get_field( 'total_amount', $invoice_id );
-		$fees_service = new MembershipFees();
-		$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
-		$invoice_season = $fees_service->get_season_key( $invoice_date );
 		$admin_fee = $fees_service->get_installment_admin_fee( $invoice_season );
 
 		// Store plan meta and write installment breakdown.
@@ -553,12 +566,10 @@ class PublicPaymentPage {
 			update_post_meta( $invoice_id, '_installment_1_admin_fee', 0 );
 			update_post_meta( $invoice_id, '_installment_1_status', 'pending' );
 		} elseif ( 'quarterly_3' === $plan ) {
-			$available_dates = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
 			$due_dates       = self::calculate_installment_due_dates( 3, $available_dates, true );
 			update_post_meta( $invoice_id, '_installment_count', 3 );
 			$this->write_installment_meta( $invoice_id, 3, $total, $admin_fee, $due_dates );
 		} else { // monthly_8 — actual count capped at available dates.
-			$available_dates = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
 			$actual_count    = min( 8, count( $available_dates ) );
 			$due_dates       = self::calculate_installment_due_dates( $actual_count, $available_dates );
 			update_post_meta( $invoice_id, '_installment_count', $actual_count );
