@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.6] - 2026-02-28
+
+### Fixed
+- Public payment page now supports a late-season 2-installment fallback when only two payment dates remain (typically March/April), so members can still choose spread payments near season end.
+- Plan-selection POST validation now mirrors UI plan availability checks, preventing invalid forged plan submissions when a plan is not currently available.
+
+## [31.6.5] - 2026-02-28
+
+### Added
+- Added `bin/person-values.sh`, a remote-safe REST utility to find people and get/set person field values using application password auth (`RONDO_API_URL`, `RONDO_API_USER`, `RONDO_API_PASSWORD`), including automatic `fields`/`acf`/`meta` fallback.
+
 ## [31.6.4] - 2026-02-27
 
 ### Fixed
