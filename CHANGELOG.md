@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.7] - 2026-02-28
+
+### Fixed
+- Updated public payment CTA copy from "Betalen in {x} termijnen" to "Betaal in {x} termijnen" for installment buttons.
+
 ## [31.6.6] - 2026-02-28
 
 ### Fixed

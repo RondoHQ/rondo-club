@@ -282,7 +282,7 @@ class PublicPaymentPage {
 				<?php else : ?>
 				<div class="plan-detail">Totaal: <?php echo esc_html( $this->format_currency( $total_3 ) ); ?></div>
 				<?php endif; ?>
-				<button type="submit" class="btn btn-secondary">Betalen in 3 termijnen</button>
+				<button type="submit" class="btn btn-secondary">Betaal in 3 termijnen</button>
 			</div>
 		</form>
 		<?php endif; ?>
@@ -303,7 +303,7 @@ class PublicPaymentPage {
 				<?php else : ?>
 				<div class="plan-detail">Totaal: <?php echo esc_html( $this->format_currency( $total_large ) ); ?></div>
 				<?php endif; ?>
-				<button type="submit" class="btn btn-secondary">Betalen in <?php echo (int) $large_count; ?> termijnen</button>
+				<button type="submit" class="btn btn-secondary">Betaal in <?php echo (int) $large_count; ?> termijnen</button>
 			</div>
 		</form>
 		<?php endif; ?>
