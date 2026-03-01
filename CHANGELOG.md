@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.8] - 2026-03-01
+
+### Added
+- Added a new `Verjaardag` column to the `/people` ledenoverzicht and made it available in the column settings metadata.
+
+### Changed
+- Updated people list default visible columns to include `Verjaardag` between `Team` and `Laatst gewijzigd`.
+- Added a new month-based birthday filter (`Verjaardagmaand`) to the `/people` filter dropdown.
+
+### Fixed
+- People list preference reset now restores the updated default columns including `Verjaardag`.
+
 ## [31.6.7] - 2026-02-28
 
 ### Fixed

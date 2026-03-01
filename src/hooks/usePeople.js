@@ -99,6 +99,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {number} filters.modifiedDays - Only people modified within N days
  * @param {number} filters.birthYearFrom - Filter by birth year (minimum, inclusive)
  * @param {number} filters.birthYearTo - Filter by birth year (maximum, inclusive)
+ * @param {number} filters.birthMonth - Filter by birth month (1-12)
  * @param {string} filters.orderby - 'first_name', 'last_name', or 'modified' (default: 'first_name')
  * @param {string} filters.order - 'asc' or 'desc' (default: 'asc')
  * @param {string} filters.huidigeVrijwilliger - '1' for yes, '0' for no, '' for all
@@ -124,6 +125,7 @@ export function useFilteredPeople(filters = {}, options = {}) {
     modified_days: filters.modifiedDays || null,
     birth_year_from: filters.birthYearFrom || null,
     birth_year_to: filters.birthYearTo || null,
+    birth_month: filters.birthMonth || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
     // Custom field filters
@@ -501,4 +503,3 @@ export function useDeleteTodo() {
     },
   });
 }
-

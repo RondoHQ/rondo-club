@@ -2311,7 +2311,7 @@ class Api extends Base {
 	 * Default visible columns for People list.
 	 * Name column is always visible and first - not included here.
 	 */
-	private const DEFAULT_LIST_COLUMNS = [ 'team', 'modified' ];
+	private const DEFAULT_LIST_COLUMNS = [ 'team', 'birthdate', 'modified' ];
 
 	/**
 	 * Core columns (non-custom-field columns).
@@ -2320,6 +2320,7 @@ class Api extends Base {
 		[ 'id' => 'email', 'label' => 'E-mail', 'type' => 'core' ],
 		[ 'id' => 'phone', 'label' => 'Telefoon', 'type' => 'core' ],
 		[ 'id' => 'team', 'label' => 'Team', 'type' => 'core' ],
+		[ 'id' => 'birthdate', 'label' => 'Verjaardag', 'type' => 'core' ],
 		[ 'id' => 'modified', 'label' => 'Laatst gewijzigd', 'type' => 'core' ],
 	];
 
