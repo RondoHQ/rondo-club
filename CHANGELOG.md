@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.10] - 2026-03-01
+
+### Fixed
+- Birthday sorting in `/people` now uses full chronological `Y-M-D` ordering instead of partial month/day ordering.
+- Birth year and birth month filters now parse both `YYYY-MM-DD` and `YYYYMMDD` values consistently from denormalized `_birthdate` meta.
+
 ## [31.6.9] - 2026-03-01
 
 ### Fixed
