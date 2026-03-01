@@ -1023,19 +1023,20 @@ class People extends Base {
 		// Birth year filter (uses denormalized _birthdate meta from Phase 112)
 		if ( $birth_year_from !== null || $birth_year_to !== null ) {
 			$ensure_birthdate_join();
+			$birth_year_expr = "CAST(SUBSTRING(REPLACE(bd.meta_value, '-', ''), 1, 4) AS UNSIGNED)";
 
 			if ( $birth_year_from !== null && $birth_year_to !== null ) {
 				// Range filter
-				$where_clauses[]  = 'YEAR(bd.meta_value) BETWEEN %d AND %d';
+				$where_clauses[]  = "$birth_year_expr BETWEEN %d AND %d";
 				$prepare_values[] = $birth_year_from;
 				$prepare_values[] = $birth_year_to;
 			} elseif ( $birth_year_from !== null ) {
 				// Minimum year only (treat as exact match for single year)
-				$where_clauses[]  = 'YEAR(bd.meta_value) = %d';
+				$where_clauses[]  = "$birth_year_expr = %d";
 				$prepare_values[] = $birth_year_from;
 			} else {
 				// Maximum year only (treat as exact match for single year)
-				$where_clauses[]  = 'YEAR(bd.meta_value) = %d';
+				$where_clauses[]  = "$birth_year_expr = %d";
 				$prepare_values[] = $birth_year_to;
 			}
 		}
@@ -1043,7 +1044,7 @@ class People extends Base {
 		// Birth month filter (1-12) on denormalized _birthdate meta.
 		if ( $birth_month !== null ) {
 			$ensure_birthdate_join();
-			$where_clauses[]  = 'MONTH(bd.meta_value) = %d';
+			$where_clauses[]  = "CAST(SUBSTRING(REPLACE(bd.meta_value, '-', ''), 5, 2) AS UNSIGNED) = %d";
 			$prepare_values[] = $birth_month;
 		}
 
@@ -1181,7 +1182,7 @@ class People extends Base {
 				$ensure_birthdate_join();
 				$order_clause = "ORDER BY
 					(bd.meta_value IS NULL OR bd.meta_value = '') ASC,
-					SUBSTRING(bd.meta_value, 6, 5) $order,
+					CAST(REPLACE(bd.meta_value, '-', '') AS UNSIGNED) $order,
 					fn.meta_value ASC";
 				break;
 			case 'custom_datum-vog':
