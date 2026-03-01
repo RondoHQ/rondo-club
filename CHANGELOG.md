@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.26] - 2026-03-01
+
+### Fixed
+- Fixed a regression where KNVB/email search logic was mistakenly injected into `get_current_user()` instead of `global_search()`, causing no results in the global search modal.
+- Global search email matching now queries ACF repeater storage keys (`contact_info_%_contact_value`) directly, restoring e-mail search results.
+
 ## [31.6.25] - 2026-03-01
 
 ### Fixed

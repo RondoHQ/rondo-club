@@ -3137,15 +3137,60 @@ class Api extends Base {
 				]
 			);
 
-			foreach ( $custom_field_matches as $person ) {
+				foreach ( $custom_field_matches as $person ) {
+					if ( ! isset( $people_results[ $person->ID ] ) ) {
+						$people_results[ $person->ID ] = [
+							'person' => $person,
+							'score'  => 30,
+						];
+					}
+				}
+			}
+
+			// Query 6: KNVB ID matches (score: 70)
+			$knvb_matches = get_posts(
+				[
+					'post_type'      => 'person',
+					'posts_per_page' => 20,
+					'post_status'    => 'publish',
+					'meta_query'     => [
+						'relation' => 'OR',
+						[
+							'key'     => 'knvb-id',
+							'value'   => $query,
+							'compare' => 'LIKE',
+						],
+						[
+							'key'     => 'custom_knvb-id',
+							'value'   => $query,
+							'compare' => 'LIKE',
+						],
+					],
+				]
+			);
+
+			foreach ( $knvb_matches as $person ) {
 				if ( ! isset( $people_results[ $person->ID ] ) ) {
 					$people_results[ $person->ID ] = [
 						'person' => $person,
-						'score'  => 30,
+						'score'  => 70,
 					];
 				}
 			}
-		}
+
+			// Query 7: Contact email matches in contact_info repeater (score: 75)
+			if ( strpos( $query, '@' ) !== false || is_email( $query ) ) {
+				$email_matches = $this->find_people_by_contact_email_fragment( $query, 20 );
+
+				foreach ( $email_matches as $person ) {
+					if ( ! isset( $people_results[ $person->ID ] ) ) {
+						$people_results[ $person->ID ] = [
+							'person' => $person,
+							'score'  => 75,
+						];
+					}
+				}
+			}
 
 		// Apply former member penalty to prioritize current members
 		foreach ( $people_results as $person_id => &$item ) {
@@ -3808,68 +3853,23 @@ class Api extends Base {
 		$linked_person_name = null;
 		$linked_person_photo = null;
 		$active_functies    = [];
-		if ( $person_id ) {
-			$person = get_post( $person_id );
-			if ( $person && 'person' === $person->post_type ) {
-				$first              = get_field( 'first_name', $person_id ) ?: '';
+			if ( $person_id ) {
+				$person = get_post( $person_id );
+				if ( $person && 'person' === $person->post_type ) {
+					$first              = get_field( 'first_name', $person_id ) ?: '';
 				$infix              = get_field( 'infix', $person_id ) ?: '';
 				$last               = get_field( 'last_name', $person_id ) ?: '';
 				$linked_person_name = implode( ' ', array_filter( [ $first, $infix, $last ] ) ) ?: null;
 				$linked_person_photo = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
 
 				$work_history = get_field( 'work_history', $person_id ) ?: [];
-				foreach ( $work_history as $job ) {
-					if ( ! empty( $job['is_current'] ) && ! empty( $job['job_title'] ) ) {
-						$active_functies[] = $job['job_title'];
+					foreach ( $work_history as $job ) {
+						if ( ! empty( $job['is_current'] ) && ! empty( $job['job_title'] ) ) {
+							$active_functies[] = $job['job_title'];
+						}
 					}
 				}
 			}
-
-			// Query 6: KNVB ID matches (score: 70)
-			$knvb_matches = get_posts(
-				[
-					'post_type'      => 'person',
-					'posts_per_page' => 20,
-					'post_status'    => 'publish',
-					'meta_query'     => [
-						'relation' => 'OR',
-						[
-							'key'     => 'knvb-id',
-							'value'   => $query,
-							'compare' => 'LIKE',
-						],
-						[
-							'key'     => 'custom_knvb-id',
-							'value'   => $query,
-							'compare' => 'LIKE',
-						],
-					],
-				]
-			);
-
-			foreach ( $knvb_matches as $person ) {
-				if ( ! isset( $people_results[ $person->ID ] ) ) {
-					$people_results[ $person->ID ] = [
-						'person' => $person,
-						'score'  => 70,
-					];
-				}
-			}
-
-			// Query 7: Contact email matches in contact_info repeater (score: 75)
-			if ( strpos( $query, '@' ) !== false || is_email( $query ) ) {
-				$email_matches = $this->find_people_by_contact_email_fragment( $query, 20 );
-
-				foreach ( $email_matches as $person ) {
-					if ( ! isset( $people_results[ $person->ID ] ) ) {
-						$people_results[ $person->ID ] = [
-							'person' => $person,
-							'score'  => 75,
-						];
-					}
-				}
-			}
-		}
 
 		return rest_ensure_response(
 			[
@@ -4238,25 +4238,33 @@ class Api extends Base {
 	 * @return array<int, \WP_Post>
 	 */
 	private function find_people_by_contact_email_fragment( string $query, int $limit = 20 ): array {
+		global $wpdb;
+
 		$query_lower = strtolower( trim( sanitize_email( $query ) ) );
 		if ( $query_lower === '' ) {
 			return [];
 		}
 
-		$people_ids = get_posts(
-			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					[
-						'key'     => 'contact_info',
-						'compare' => 'EXISTS',
-					],
-				],
-			]
+		$meta_key_pattern = 'contact_info\\_%\\_contact_value';
+		$meta_like        = '%' . $wpdb->esc_like( $query_lower ) . '%';
+		$query_sql        = $wpdb->prepare(
+			"SELECT DISTINCT pm.post_id
+			 FROM {$wpdb->postmeta} pm
+			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE pm.meta_key LIKE %s
+			   AND LOWER(pm.meta_value) LIKE %s
+			   AND p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			 LIMIT %d",
+			$meta_key_pattern,
+			$meta_like,
+			$limit
 		);
+
+		$people_ids = array_map( 'intval', (array) $wpdb->get_col( $query_sql ) );
+		if ( empty( $people_ids ) ) {
+			return [];
+		}
 
 		$matched_ids = [];
 		foreach ( $people_ids as $person_id ) {

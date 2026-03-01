@@ -424,6 +424,12 @@ export default function FactuurDetail() {
                   </p>
                 </div>
               )}
+              {invoice.sent_by?.name && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Verstuurd door</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{invoice.sent_by.name}</p>
+                </div>
+              )}
               {invoice.due_date && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervaldatum</h3>

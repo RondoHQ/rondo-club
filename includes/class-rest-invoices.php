@@ -1038,6 +1038,13 @@ class Invoices extends Base {
 			if ( $status === 'sent' ) {
 				$sent_date = current_time( 'Ymd' );
 				update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
+				$sender_user_id = get_current_user_id();
+				if ( $sender_user_id > 0 ) {
+					if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
+						update_post_meta( $invoice_id, '_invoice_sent_by_user_id', $sender_user_id );
+					}
+					update_post_meta( $invoice_id, '_invoice_last_sent_by_user_id', $sender_user_id );
+				}
 
 			// Calculate due date
 			$finance_config   = new FinanceConfig();
@@ -1299,6 +1306,7 @@ class Invoices extends Base {
 		$invoice_type   = get_post_meta( $invoice_id, 'invoice_type', true );
 		$finance_config = new FinanceConfig();
 		$invoice_kind   = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
+		$sender_user_id = get_current_user_id();
 
 		if ( 'credit' === $invoice_kind ) {
 			// Credit invoices should not create payment links; they represent a financial adjustment.
@@ -1394,6 +1402,14 @@ class Invoices extends Base {
 		$sent_date = current_time( 'Ymd' );
 		update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
 
+		// Persist who sent the invoice.
+		if ( $sender_user_id > 0 ) {
+			if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
+				update_post_meta( $invoice_id, '_invoice_sent_by_user_id', $sender_user_id );
+			}
+			update_post_meta( $invoice_id, '_invoice_last_sent_by_user_id', $sender_user_id );
+		}
+
 		// Calculate and set due_date
 		$due_date_override = (string) get_field( 'due_date', $invoice_id );
 		if ( preg_match( '/^\d{8}$/', $due_date_override ) ) {
@@ -1442,6 +1458,7 @@ class Invoices extends Base {
 	 */
 	public function resend_invoice( $request ) {
 		$invoice_id = (int) $request->get_param( 'id' );
+		$sender_user_id = get_current_user_id();
 
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
@@ -1492,6 +1509,14 @@ class Invoices extends Base {
 		$email_result = InvoiceEmailSender::send( $invoice_id, $email_options );
 		if ( is_wp_error( $email_result ) ) {
 			return $email_result;
+		}
+
+		// Track who performed the resend.
+		if ( $sender_user_id > 0 ) {
+			if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
+				update_post_meta( $invoice_id, '_invoice_sent_by_user_id', $sender_user_id );
+			}
+			update_post_meta( $invoice_id, '_invoice_last_sent_by_user_id', $sender_user_id );
 		}
 
 		// Return updated invoice detail
@@ -1872,6 +1897,8 @@ class Invoices extends Base {
 		update_field( 'due_date', '', $invoice_id );
 		delete_post_meta( $invoice_id, 'sent_date' );
 		delete_post_meta( $invoice_id, 'due_date' );
+		delete_post_meta( $invoice_id, '_invoice_sent_by_user_id' );
+		delete_post_meta( $invoice_id, '_invoice_last_sent_by_user_id' );
 
 		// Reset invoice status back to draft (concept)
 		wp_update_post(
@@ -1944,6 +1971,19 @@ class Invoices extends Base {
 		$status          = get_field( 'status', $post->ID );
 		$raw_payment_link = get_field( 'payment_link', $post->ID ) ?: null;
 		$payment_link     = ( 'paid' === $status ) ? null : $raw_payment_link;
+		$reminder_1_sent_at = (string) get_post_meta( $post->ID, '_invoice_reminder_1_sent_at', true ) ?: null;
+		$reminder_2_sent_at = (string) get_post_meta( $post->ID, '_invoice_reminder_2_sent_at', true ) ?: null;
+		$sent_by_user_id    = (int) get_post_meta( $post->ID, '_invoice_sent_by_user_id', true );
+		$last_sent_by_user_id = (int) get_post_meta( $post->ID, '_invoice_last_sent_by_user_id', true );
+		$reminder_sent_at   = null;
+
+		if ( $reminder_1_sent_at && $reminder_2_sent_at ) {
+			$reminder_sent_at = ( strtotime( $reminder_2_sent_at ) >= strtotime( $reminder_1_sent_at ) ) ? $reminder_2_sent_at : $reminder_1_sent_at;
+		} elseif ( $reminder_2_sent_at ) {
+			$reminder_sent_at = $reminder_2_sent_at;
+		} elseif ( $reminder_1_sent_at ) {
+			$reminder_sent_at = $reminder_1_sent_at;
+		}
 
 		return [
 			'id'               => $post->ID,
@@ -1961,6 +2001,30 @@ class Invoices extends Base {
 			'created'          => $post->post_date,
 			'invoice_type'     => get_field( 'invoice_type', $post->ID ) ?: null,
 			'installment_plan' => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
+			'reminder_sent_at' => $reminder_sent_at,
+			'sent_by'          => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
+		];
+	}
+
+	/**
+	 * Get WordPress user summary by ID.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return array|null User summary data or null if user not found.
+	 */
+	private function get_user_summary_by_id( int $user_id ) {
+		if ( $user_id <= 0 ) {
+			return null;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return null;
+		}
+
+		return [
+			'id'   => $user->ID,
+			'name' => $this->sanitize_text( (string) $user->display_name ),
 		];
 	}
 
