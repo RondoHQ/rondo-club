@@ -197,6 +197,13 @@ export default function TodoItem({
                 {awaitingDays === 0 ? 'Wacht sinds vandaag' : `Wacht ${awaitingDays}d`}
               </span>
             )}
+
+            {/* Assignee */}
+            {todo.assignee?.display_name && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Toegewezen aan: {todo.assignee.display_name}
+              </span>
+            )}
           </div>
         ) : (
           <>

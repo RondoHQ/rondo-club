@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { X, User, ChevronDown, Search, Plus, Pencil } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { usePeople } from '@/hooks/usePeople';
+import { useUserSearch } from '@/hooks/useSharing';
 import { format } from '@/utils/dateFormat';
 
 export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo = null }) {
@@ -14,8 +15,12 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
   const [personSearchQuery, setPersonSearchQuery] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState(null);
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState('');
 
   const { data: people = [], isLoading: isPeopleLoading } = usePeople({}, { enabled: isOpen });
+  const { data: assigneeOptions = [], isLoading: isAssigneeLoading } = useUserSearch(assigneeSearchQuery);
 
   // Filter and sort people based on search query
   const filteredPeople = useMemo(() => {
@@ -60,6 +65,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setShowNotes(!!todo.notes);
       // Start in view mode for existing todos
       setIsViewMode(true);
+      setSelectedAssignee(todo.assignee || null);
     } else {
       setContent('');
       setDueDate(getTomorrowDate());
@@ -68,9 +74,12 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setShowNotes(false);
       // Start in edit mode for new todos
       setIsViewMode(false);
+      setSelectedAssignee(null);
     }
     setIsPersonDropdownOpen(false);
     setPersonSearchQuery('');
+    setIsAssigneeDropdownOpen(false);
+    setAssigneeSearchQuery('');
   }, [todo, isOpen]);
 
   useEffect(() => {
@@ -80,6 +89,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       if (event.key !== 'Escape') return;
       event.preventDefault();
       setIsPersonDropdownOpen(false);
+      setIsAssigneeDropdownOpen(false);
       handleClose();
     };
 
@@ -99,6 +109,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     const data = {
       content: content.trim(),
       due_date: dueDate || null,
+      assigned_user_id: selectedAssignee?.id || null,
     };
 
     // Include notes only if not empty
@@ -119,6 +130,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setNotes('');
       setSelectedPersonIds([]);
       setShowNotes(false);
+      setSelectedAssignee(null);
     }
   };
 
@@ -129,9 +141,12 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setNotes('');
       setSelectedPersonIds([]);
       setShowNotes(false);
+      setSelectedAssignee(null);
     }
     setIsPersonDropdownOpen(false);
     setPersonSearchQuery('');
+    setIsAssigneeDropdownOpen(false);
+    setAssigneeSearchQuery('');
     setIsViewMode(false);
     onClose();
   };
@@ -145,6 +160,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       setDueDate(todo.due_date || '');
       setNotes(todo.notes || '');
       setSelectedPersonIds(todo.persons?.map(p => p.id) || [todo.person_id].filter(Boolean));
+      setSelectedAssignee(todo.assignee || null);
     } else {
       // For new todos, just close
       handleClose();
@@ -203,6 +219,25 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
       <div className="mb-4">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deadline</p>
         <p className="text-gray-600 dark:text-gray-400">{formatDateForDisplay(todo?.due_date)}</p>
+      </div>
+
+      {/* Assignee */}
+      <div className="mb-4">
+        <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Toegewezen aan</p>
+        {todo?.assignee ? (
+          <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700">
+            {todo.assignee.avatar_url ? (
+              <img src={todo.assignee.avatar_url} alt={todo.assignee.display_name} className="w-5 h-5 rounded-full object-cover" />
+            ) : (
+              <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+              </div>
+            )}
+            <span className="text-sm text-gray-700 dark:text-gray-200">{todo.assignee.display_name}</span>
+          </div>
+        ) : (
+          <p className="text-gray-600 dark:text-gray-400">Niemand</p>
+        )}
       </div>
 
       {/* Notes - only show if there are notes */}
@@ -298,6 +333,111 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
           disabled={isLoading}
         />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Toegewezen aan
+        </label>
+
+        {selectedAssignee && (
+          <div className="mb-2">
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
+              {selectedAssignee.avatar_url ? (
+                <img
+                  src={selectedAssignee.avatar_url}
+                  alt={selectedAssignee.display_name}
+                  className="w-5 h-5 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                  <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                </div>
+              )}
+              <span className="text-gray-700 dark:text-gray-200">{selectedAssignee.display_name}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedAssignee(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                disabled={isLoading}
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </span>
+          </div>
+        )}
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsAssigneeDropdownOpen((prev) => !prev)}
+            className="flex items-center gap-1 text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light"
+            disabled={isLoading}
+          >
+            <Plus className="w-4 h-4" />
+            {selectedAssignee ? 'Wijzigen' : 'Toewijzen'}
+          </button>
+
+          {isAssigneeDropdownOpen && (
+            <div className="absolute z-10 left-0 mt-1 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
+              <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={assigneeSearchQuery}
+                    onChange={(e) => setAssigneeSearchQuery(e.target.value)}
+                    placeholder="Gebruiker zoeken..."
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="overflow-y-auto max-h-48">
+                {!assigneeSearchQuery || assigneeSearchQuery.length < 2 ? (
+                  <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    Typ minimaal 2 tekens
+                  </div>
+                ) : isAssigneeLoading ? (
+                  <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    Laden...
+                  </div>
+                ) : assigneeOptions.length > 0 ? (
+                  assigneeOptions.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedAssignee(user);
+                        setIsAssigneeDropdownOpen(false);
+                        setAssigneeSearchQuery('');
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      {user.avatar_url ? (
+                        <img
+                          src={user.avatar_url}
+                          alt={user.display_name}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        </div>
+                      )}
+                      <span className="text-sm text-gray-900 dark:text-gray-50 truncate">{user.display_name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                    Geen gebruikers gevonden
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notes field - collapsible */}

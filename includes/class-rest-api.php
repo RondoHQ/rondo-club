@@ -3402,22 +3402,33 @@ class Api extends Base {
 	}
 
 	/**
-	 * Count open (non-completed) todos
+	 * Count open todos visible to the current user.
 	 *
-	 * Uses prepared SQL query with post_author filter for user isolation.
-	 * Only counts todos with 'rondo_open' status (not awaiting or completed).
+	 * Visibility rule:
+	 * - user is post author (creator), OR
+	 * - user is the assigned user in `assigned_user_id` post meta.
 	 */
 	private function count_open_todos() {
 		global $wpdb;
-		return (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->posts}
-			 WHERE post_type = %s
-			 AND post_status = %s
-			 AND post_author = %d",
-			'rondo_todo',
-			'rondo_open',
-			get_current_user_id()
-		) );
+		$current_user_id = get_current_user_id();
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 LEFT JOIN {$wpdb->postmeta} pm
+				   ON pm.post_id = p.ID
+				  AND pm.meta_key = %s
+				 WHERE p.post_type = %s
+				   AND p.post_status = %s
+				   AND (p.post_author = %d OR CAST(pm.meta_value AS UNSIGNED) = %d)",
+				'assigned_user_id',
+				'rondo_todo',
+				'rondo_open',
+				$current_user_id,
+				$current_user_id
+			)
+		);
 	}
 
 	/**
@@ -3494,22 +3505,33 @@ class Api extends Base {
 	}
 
 	/**
-	 * Count awaiting todos
+	 * Count awaiting todos visible to the current user.
 	 *
-	 * Uses prepared SQL query with post_author filter for user isolation.
-	 * Only counts todos with 'rondo_awaiting' status.
+	 * Visibility rule:
+	 * - user is post author (creator), OR
+	 * - user is the assigned user in `assigned_user_id` post meta.
 	 */
 	private function count_awaiting_todos() {
 		global $wpdb;
-		return (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->posts}
-			 WHERE post_type = %s
-			 AND post_status = %s
-			 AND post_author = %d",
-			'rondo_todo',
-			'rondo_awaiting',
-			get_current_user_id()
-		) );
+		$current_user_id = get_current_user_id();
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT p.ID)
+				 FROM {$wpdb->posts} p
+				 LEFT JOIN {$wpdb->postmeta} pm
+				   ON pm.post_id = p.ID
+				  AND pm.meta_key = %s
+				 WHERE p.post_type = %s
+				   AND p.post_status = %s
+				   AND (p.post_author = %d OR CAST(pm.meta_value AS UNSIGNED) = %d)",
+				'assigned_user_id',
+				'rondo_todo',
+				'rondo_awaiting',
+				$current_user_id,
+				$current_user_id
+			)
+		);
 	}
 
 	/**
