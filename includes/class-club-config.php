@@ -84,6 +84,16 @@ class ClubConfig {
 	const OPTION_LETTERMINT_VERIFICATION_EMAIL_BODY = 'rondo_lettermint_verification_email_body';
 
 	/**
+	 * Option key for Lettermint verification email from address.
+	 */
+	const OPTION_LETTERMINT_VERIFICATION_FROM_EMAIL = 'rondo_lettermint_verification_from_email';
+
+	/**
+	 * Option key for Lettermint verification email from name.
+	 */
+	const OPTION_LETTERMINT_VERIFICATION_FROM_NAME = 'rondo_lettermint_verification_from_name';
+
+	/**
 	 * Default configuration values
 	 *
 	 * @var array<string, string>
@@ -102,6 +112,8 @@ class ClubConfig {
 		'lettermint_webhook_id' => '',
 		'lettermint_verification_email_subject' => '[Rondo Club] Controle e-mailadres',
 		'lettermint_verification_email_body' => "Beste {name},\n\nWe krijgen een foutmelding op e-mails naar {email}.\nWil je controleren of dit e-mailadres nog klopt en op deze mail reageren?\n\nAlvast bedankt,\n{sender_name}",
+		'lettermint_verification_from_email' => '',
+		'lettermint_verification_from_name' => '',
 	];
 
 	/**
@@ -212,6 +224,34 @@ class ClubConfig {
 	}
 
 	/**
+	 * Get Lettermint verification email from address.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_verification_from_email(): string {
+		return sanitize_email(
+			(string) get_option(
+				self::OPTION_LETTERMINT_VERIFICATION_FROM_EMAIL,
+				self::DEFAULTS['lettermint_verification_from_email']
+			)
+		);
+	}
+
+	/**
+	 * Get Lettermint verification email from name.
+	 *
+	 * @return string
+	 */
+	public static function get_lettermint_verification_from_name(): string {
+		return sanitize_text_field(
+			(string) get_option(
+				self::OPTION_LETTERMINT_VERIFICATION_FROM_NAME,
+				self::DEFAULTS['lettermint_verification_from_name']
+			)
+		);
+	}
+
+	/**
 	 * Check whether a Lettermint project API token is configured.
 	 *
 	 * @return bool
@@ -257,6 +297,8 @@ class ClubConfig {
 			'lettermint_webhook_id' => self::get_lettermint_webhook_id(),
 			'lettermint_verification_email_subject' => self::get_lettermint_verification_email_subject(),
 			'lettermint_verification_email_body' => self::get_lettermint_verification_email_body(),
+			'lettermint_verification_from_email' => self::get_lettermint_verification_from_email(),
+			'lettermint_verification_from_name' => self::get_lettermint_verification_from_name(),
 			'lettermint_has_api_token' => self::has_lettermint_api_token(),
 			'lettermint_has_team_api_token' => self::has_lettermint_team_api_token(),
 			'lettermint_has_webhook_secret' => self::has_lettermint_webhook_secret(),
@@ -405,5 +447,27 @@ class ClubConfig {
 	public static function update_lettermint_verification_email_body( string $body ): bool {
 		$sanitized = wp_kses_post( $body );
 		return update_option( self::OPTION_LETTERMINT_VERIFICATION_EMAIL_BODY, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint verification email from address.
+	 *
+	 * @param string $email From address.
+	 * @return bool
+	 */
+	public static function update_lettermint_verification_from_email( string $email ): bool {
+		$sanitized = sanitize_email( $email );
+		return update_option( self::OPTION_LETTERMINT_VERIFICATION_FROM_EMAIL, $sanitized );
+	}
+
+	/**
+	 * Update Lettermint verification email from name.
+	 *
+	 * @param string $name From name.
+	 * @return bool
+	 */
+	public static function update_lettermint_verification_from_name( string $name ): bool {
+		$sanitized = sanitize_text_field( $name );
+		return update_option( self::OPTION_LETTERMINT_VERIFICATION_FROM_NAME, $sanitized );
 	}
 }
