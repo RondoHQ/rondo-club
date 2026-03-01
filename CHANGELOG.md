@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.24] - 2026-03-01
+
+### Fixed
+- Lettermint bounce/complaint follow-up tasks are now deduplicated per mail via `message_id + recipient` (with existing `event_id` dedupe as primary key), preventing multiple todos for the same sent email when providers send retry/follow-up events.
+
 ## [31.6.23] - 2026-03-01
 
 ### Added
