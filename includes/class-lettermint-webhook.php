@@ -286,10 +286,12 @@ class LettermintWebhook {
 			return (int) $existing[0];
 		}
 
-		$title_prefix = $flow === self::FLOW_EMAIL_VERIFICATION
-			? 'Verificatiemail ' . strtolower( $this->event_label( $event_name ) )
-			: $this->event_label( $event_name );
-		$title        = sprintf( '%s: %s', $title_prefix, $recipient );
+		$person_name  = $this->resolve_person_name( $person_id, $recipient );
+		if ( $flow === self::FLOW_EMAIL_VERIFICATION ) {
+			$title = sprintf( 'Het email adres van %s werkt niet meer.', $person_name );
+		} else {
+			$title = sprintf( '%s: %s', $this->event_label( $event_name ), $recipient );
+		}
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => 'rondo_todo',
@@ -304,7 +306,7 @@ class LettermintWebhook {
 			return $post_id;
 		}
 
-		$notes = $this->build_task_notes( $event_name, $recipient, $subject, $message_id, $timestamp, $tag, $event_id, $data, $flow );
+		$notes = $this->build_task_notes( $event_name, $recipient, $subject, $message_id, $timestamp, $tag, $event_id, $data, $flow, $person_id );
 		update_field( 'notes', wpautop( esc_html( $notes ) ), $post_id );
 
 		if ( $person_id > 0 ) {
@@ -333,6 +335,7 @@ class LettermintWebhook {
 	 * @param string $event_id   Event ID.
 	 * @param array  $data       Event payload data.
 	 * @param string $flow       Optional event flow.
+	 * @param int    $person_id  Matched person ID.
 	 * @return string
 	 */
 	private function build_task_notes(
@@ -344,7 +347,8 @@ class LettermintWebhook {
 		string $tag,
 		string $event_id,
 		array $data,
-		string $flow = ''
+		string $flow = '',
+		int $person_id = 0
 	): string {
 		$reason = '';
 		if ( is_array( $data['response'] ?? null ) ) {
@@ -378,7 +382,15 @@ class LettermintWebhook {
 
 		$lines[] = '';
 		if ( $flow === self::FLOW_EMAIL_VERIFICATION ) {
-			$lines[] = 'Actie: de verificatiemail is gebounced; markeer dit e-mailadres als onbruikbaar en vraag het lid om een werkend e-mailadres.';
+			$first_name = $this->resolve_person_first_name( $person_id );
+			$person_name = $this->resolve_person_name( $person_id, $recipient );
+			$lines[] = sprintf( 'We hebben ontdekt dat het e-mailadres %s van %s niet meer werkt. Zou je hem willen contacten en vragen om een werkend e-mailadres? Hieronder vind je een bericht wat je hem kan sturen:', $recipient, $person_name );
+			$lines[] = '';
+			$lines[] = sprintf( 'Hoi %s,', $first_name );
+			$lines[] = '';
+			$lines[] = sprintf( 'Onze secretaris heeft ontdekt dat je e-mailadres %s niet meer werkt. Zou je me een werkend nieuw e-mailadres kunnen sturen?', $recipient );
+			$lines[] = '';
+			$lines[] = 'Dank je wel!';
 		} else {
 			$lines[] = 'Actie: controleer het e-mailadres, neem contact op met het lid en werk de gegevens bij indien nodig.';
 		}
@@ -513,6 +525,40 @@ class LettermintWebhook {
 		];
 
 		update_post_meta( $person_id, '_rondo_inactive_emails', $inactive );
+	}
+
+	/**
+	 * Resolve display name for notes/titles.
+	 *
+	 * @param int    $person_id Person post ID.
+	 * @param string $fallback  Fallback value.
+	 * @return string
+	 */
+	private function resolve_person_name( int $person_id, string $fallback ): string {
+		if ( $person_id <= 0 ) {
+			return $fallback;
+		}
+
+		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+		$last_name  = trim( (string) get_field( 'last_name', $person_id ) );
+		$full_name  = trim( $first_name . ' ' . $last_name );
+
+		return $full_name !== '' ? $full_name : $fallback;
+	}
+
+	/**
+	 * Resolve first name for note template.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return string
+	 */
+	private function resolve_person_first_name( int $person_id ): string {
+		if ( $person_id <= 0 ) {
+			return 'daar';
+		}
+
+		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+		return $first_name !== '' ? $first_name : 'daar';
 	}
 
 	/**
