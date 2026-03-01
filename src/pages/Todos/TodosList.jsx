@@ -216,7 +216,7 @@ export default function TodosList() {
       <div className="flex items-start gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm dark:bg-blue-900/30 dark:border-blue-700">
         <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
         <p className="text-blue-700 dark:text-blue-300">
-          Taken zijn alleen zichtbaar voor jou
+          Je ziet hier je eigen taken en taken die aan jou zijn toegewezen
         </p>
       </div>
 

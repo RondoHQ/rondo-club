@@ -121,6 +121,7 @@ export const prmApi = {
   // User management (admin only)
   getUsers: () => api.get('/rondo/v1/users'),
   deleteUser: (userId) => api.delete(`/rondo/v1/users/${userId}`),
+  searchUsers: (query) => api.get('/rondo/v1/users/search', { params: { q: query } }),
   
   // Search
   search: (query) => api.get('/rondo/v1/search', { params: { q: query } }),

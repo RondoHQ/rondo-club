@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.17] - 2026-03-01
+
+### Added
+- Todo create/edit modals now support assigning a task to another user via a searchable user picker.
+- Todo API responses now include assignee data (`assigned_user_id` and `assignee`) for UI display.
+
+### Changed
+- Todo visibility now includes tasks you created and tasks assigned to you.
+- Todo overview messaging now reflects the new creator+assignee visibility model.
+
+### Fixed
+- Dashboard task counters now include assigned tasks (not just self-authored tasks).
+
 ## [31.6.16] - 2026-03-01
 
 ### Added

@@ -17,6 +17,7 @@ class AccessControl {
 	 * Post types that should have access control
 	 */
 	private $controlled_post_types = [ 'person', 'team', 'rondo_todo', 'rondo_clothing_item', 'rondo_clothing_txn' ];
+	private const TODO_ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
 	public function __construct() {
 		// Filter queries to block unapproved users
@@ -147,9 +148,10 @@ class AccessControl {
 			return;
 		}
 
-		// User isolation for tasks - users only see their own tasks
+		// Task visibility: users see tasks they created OR tasks assigned to them.
 		if ( $post_type === 'rondo_todo' ) {
-			$query->set( 'author', get_current_user_id() );
+			$visible_ids = $this->get_visible_todo_ids( get_current_user_id() );
+			$query->set( 'post__in', ! empty( $visible_ids ) ? $visible_ids : [ 0 ] );
 		}
 
 		// Clothing data is only available to clothing managers/admins.
@@ -182,9 +184,10 @@ class AccessControl {
 			return $args;
 		}
 
-		// User isolation for tasks - users only see their own tasks
+		// Task visibility: users see tasks they created OR tasks assigned to them.
 		if ( $post_type === 'rondo_todo' ) {
-			$args['author'] = get_current_user_id();
+			$visible_ids      = $this->get_visible_todo_ids( get_current_user_id() );
+			$args['post__in'] = ! empty( $visible_ids ) ? $visible_ids : [ 0 ];
 		}
 
 		// Clothing data is only available to clothing managers/admins.
@@ -195,6 +198,48 @@ class AccessControl {
 		}
 
 		return $args;
+	}
+
+	/**
+	 * Get todo IDs visible to a user.
+	 *
+	 * Visibility rule:
+	 * - user is post author (creator), OR
+	 * - user is the assigned user in post meta.
+	 *
+	 * @param int $user_id User ID.
+	 * @return int[] List of visible todo post IDs.
+	 */
+	private function get_visible_todo_ids( int $user_id ): array {
+		global $wpdb;
+
+		if ( $user_id <= 0 ) {
+			return [];
+		}
+
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT p.ID
+			 FROM {$wpdb->posts} p
+			 LEFT JOIN {$wpdb->postmeta} pm
+			   ON pm.post_id = p.ID
+			  AND pm.meta_key = %s
+			 WHERE p.post_type = %s
+			   AND p.post_status <> 'trash'
+			   AND (p.post_author = %d OR CAST(pm.meta_value AS UNSIGNED) = %d)",
+			self::TODO_ASSIGNED_USER_META_KEY,
+			'rondo_todo',
+			$user_id,
+			$user_id
+		);
+
+		$ids = $wpdb->get_col( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+
+		return array_values(
+			array_filter(
+				array_map( 'intval', (array) $ids ),
+				static fn( $id ) => $id > 0
+			)
+		);
 	}
 
 	/**

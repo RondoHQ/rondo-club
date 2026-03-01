@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Todos extends Base {
+	private const ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
 	/**
 	 * Constructor
@@ -125,7 +126,7 @@ class Todos extends Base {
 	 * Check if user can access a todo
 	 *
 	 * Permission callback for single-todo operations.
-	 * Verifies user is approved and is the author of the todo (user isolation).
+	 * Verifies user is approved and can view the todo.
 	 *
 	 * @param WP_REST_Request $request The REST request object.
 	 * @return bool True if user can access the todo, false otherwise.
@@ -153,8 +154,10 @@ class Todos extends Base {
 			return false;
 		}
 
-		// User isolation: users can only access their own todos
-		if ( (int) $todo->post_author !== get_current_user_id() ) {
+		$current_user_id = get_current_user_id();
+		$assigned_user   = (int) get_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY, true );
+
+		if ( (int) $todo->post_author !== $current_user_id && $assigned_user !== $current_user_id ) {
 			return false;
 		}
 
@@ -208,6 +211,7 @@ class Todos extends Base {
 		$due_date  = sanitize_text_field( $request->get_param( 'due_date' ) );
 		$status    = $request->get_param( 'status' );
 		$notes     = $request->get_param( 'notes' );
+		$assigned_user_id = $this->sanitize_assigned_user_id( $request->get_param( 'assigned_user_id' ) );
 
 		// Accept person_ids array for multi-person support, fallback to URL person_id
 		$person_ids = $request->get_param( 'person_ids' );
@@ -257,6 +261,12 @@ class Todos extends Base {
 		// Save notes if provided (sanitize HTML for XSS protection)
 		if ( $notes !== null ) {
 			update_field( 'notes', wp_kses_post( $notes ), $post_id );
+		}
+
+		if ( $assigned_user_id !== null ) {
+			update_post_meta( $post_id, self::ASSIGNED_USER_META_KEY, $assigned_user_id );
+		} else {
+			delete_post_meta( $post_id, self::ASSIGNED_USER_META_KEY );
 		}
 
 		// Set awaiting_since timestamp if creating with awaiting status
@@ -377,6 +387,7 @@ class Todos extends Base {
 		$status     = $request->get_param( 'status' );
 		$person_ids = $request->get_param( 'person_ids' );
 		$notes      = $request->get_param( 'notes' );
+		$assigned_user_param = $request->get_param( 'assigned_user_id' );
 
 		$todo = get_post( $todo_id );
 
@@ -439,6 +450,15 @@ class Todos extends Base {
 		// Update notes if provided (sanitize HTML for XSS protection)
 		if ( $notes !== null ) {
 			update_field( 'notes', wp_kses_post( $notes ), $todo_id );
+		}
+
+		if ( $assigned_user_param !== null ) {
+			$assigned_user_id = $this->sanitize_assigned_user_id( $assigned_user_param );
+			if ( $assigned_user_id !== null ) {
+				update_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY, $assigned_user_id );
+			} else {
+				delete_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY );
+			}
 		}
 
 		// Refresh the post object
@@ -514,6 +534,19 @@ class Todos extends Base {
 		$due_date       = get_field( 'due_date', $post->ID );
 		$awaiting_since = get_field( 'awaiting_since', $post->ID );
 		$notes          = get_field( 'notes', $post->ID );
+		$assigned_user_id = (int) get_post_meta( $post->ID, self::ASSIGNED_USER_META_KEY, true );
+		$assignee         = null;
+		if ( $assigned_user_id > 0 ) {
+			$user = get_userdata( $assigned_user_id );
+			if ( $user ) {
+				$assignee = [
+					'id'           => (int) $user->ID,
+					'display_name' => $this->sanitize_text( $user->display_name ),
+					'email'        => sanitize_email( $user->user_email ),
+					'avatar_url'   => $this->sanitize_url( get_avatar_url( $user->ID, [ 'size' => 48 ] ) ),
+				];
+			}
+		}
 
 		return [
 			'id'               => $post->ID,
@@ -527,10 +560,36 @@ class Todos extends Base {
 			'persons'          => $persons,
 			'notes'            => $notes ?: null,
 			'author_id'        => (int) $post->post_author,
+			'assigned_user_id' => $assigned_user_id > 0 ? $assigned_user_id : null,
+			'assignee'         => $assignee,
 			'created'          => $post->post_date,
 			'status'           => $status,
 			'due_date'         => $due_date ?: null,
 			'awaiting_since'   => $awaiting_since ?: null,
 		];
+	}
+
+	/**
+	 * Normalize and validate the assigned user ID input.
+	 *
+	 * @param mixed $raw_value Raw request value.
+	 * @return int|null User ID when valid, or null for unassigned/invalid.
+	 */
+	private function sanitize_assigned_user_id( $raw_value ) {
+		if ( $raw_value === null || $raw_value === '' ) {
+			return null;
+		}
+
+		$user_id = (int) $raw_value;
+		if ( $user_id <= 0 ) {
+			return null;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return null;
+		}
+
+		return $user_id;
 	}
 }

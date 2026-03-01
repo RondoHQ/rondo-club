@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, User, ChevronDown, Search, Plus, Info } from 'lucide-react';
 import { usePeople, useCreateTodo } from '@/hooks/usePeople';
+import { useUserSearch } from '@/hooks/useSharing';
 import { useQueryClient } from '@tanstack/react-query';
 import RichTextEditor from '@/components/RichTextEditor';
 
@@ -12,8 +13,12 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
   const [personSearchQuery, setPersonSearchQuery] = useState('');
   const [notes, setNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState(null);
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState('');
   
   const { data: people = [], isLoading: isPeopleLoading } = usePeople({}, { enabled: isOpen });
+  const { data: assigneeOptions = [], isLoading: isAssigneeLoading } = useUserSearch(assigneeSearchQuery);
   const createTodo = useCreateTodo();
   const queryClient = useQueryClient();
   
@@ -59,6 +64,9 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
       setIsPersonDropdownOpen(false);
       setNotes('');
       setShowNotes(false);
+      setSelectedAssignee(null);
+      setIsAssigneeDropdownOpen(false);
+      setAssigneeSearchQuery('');
     }
   }, [isOpen]);
 
@@ -74,6 +82,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
         content: content.trim(),
         due_date: dueDate || null,
         person_ids: selectedPersonIds,
+        assigned_user_id: selectedAssignee?.id || null,
       };
 
       // Include notes only if not empty
@@ -142,7 +151,7 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
         <div className="mx-4 mt-4 mb-2 flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg text-xs dark:bg-blue-900/30 dark:border-blue-700">
           <Info className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
           <p className="text-blue-700 dark:text-blue-300">
-            Deze taak is alleen zichtbaar voor jou
+            De taak blijft zichtbaar voor jou, ook als je hem aan iemand anders toewijst
           </p>
         </div>
 
@@ -256,6 +265,111 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
             </div>
           </div>
 
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Toegewezen aan
+            </label>
+
+            {selectedAssignee && (
+              <div className="mb-2">
+                <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
+                  {selectedAssignee.avatar_url ? (
+                    <img
+                      src={selectedAssignee.avatar_url}
+                      alt={selectedAssignee.display_name}
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                      <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                    </div>
+                  )}
+                  <span className="text-gray-700 dark:text-gray-200">{selectedAssignee.display_name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedAssignee(null)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    disabled={createTodo.isPending}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              </div>
+            )}
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsAssigneeDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-1 text-sm text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light"
+                disabled={createTodo.isPending}
+              >
+                <Plus className="w-4 h-4" />
+                {selectedAssignee ? 'Wijzigen' : 'Toewijzen'}
+              </button>
+
+              {isAssigneeDropdownOpen && (
+                <div className="absolute z-10 left-0 mt-1 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                  <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={assigneeSearchQuery}
+                        onChange={(e) => setAssigneeSearchQuery(e.target.value)}
+                        placeholder="Gebruiker zoeken..."
+                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="overflow-y-auto max-h-48">
+                    {!assigneeSearchQuery || assigneeSearchQuery.length < 2 ? (
+                      <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                        Typ minimaal 2 tekens
+                      </div>
+                    ) : isAssigneeLoading ? (
+                      <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                        Laden...
+                      </div>
+                    ) : assigneeOptions.length > 0 ? (
+                      assigneeOptions.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAssignee(user);
+                            setIsAssigneeDropdownOpen(false);
+                            setAssigneeSearchQuery('');
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {user.avatar_url ? (
+                            <img
+                              src={user.avatar_url}
+                              alt={user.display_name}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-sm text-gray-900 dark:text-gray-50 truncate">{user.display_name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
+                        Geen gebruikers gevonden
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Description */}
           <div className="mb-4">
             <label htmlFor="todo-content" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -330,4 +444,3 @@ export default function GlobalTodoModal({ isOpen, onClose }) {
     </div>
   );
 }
-
