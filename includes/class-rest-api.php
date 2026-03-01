@@ -2316,6 +2316,11 @@ class Api extends Base {
 	/**
 	 * Core columns (non-custom-field columns).
 	 */
+	private const LIST_PREFERENCES_VERSION = 2;
+
+	/**
+	 * Core columns (non-custom-field columns).
+	 */
 	private const CORE_LIST_COLUMNS = [
 		[ 'id' => 'email', 'label' => 'E-mail', 'type' => 'core' ],
 		[ 'id' => 'phone', 'label' => 'Telefoon', 'type' => 'core' ],
@@ -2583,6 +2588,16 @@ class Api extends Base {
 			$column_widths = new \stdClass(); // Empty object for JSON encoding
 		}
 
+		// One-time migration: append new default columns for legacy preference sets.
+		$preferences_version = (int) get_user_meta( $user_id, 'rondo_people_list_pref_version', true );
+		if ( $preferences_version < self::LIST_PREFERENCES_VERSION ) {
+			if ( in_array( 'birthdate', $valid_column_ids, true ) && ! in_array( 'birthdate', $visible_columns, true ) ) {
+				$visible_columns[] = 'birthdate';
+				update_user_meta( $user_id, 'rondo_people_list_preferences', $visible_columns );
+			}
+			update_user_meta( $user_id, 'rondo_people_list_pref_version', self::LIST_PREFERENCES_VERSION );
+		}
+
 		return rest_ensure_response(
 			[
 				'visible_columns'   => $visible_columns,
@@ -2607,6 +2622,7 @@ class Api extends Base {
 			delete_user_meta( $user_id, 'rondo_people_list_preferences' );
 			delete_user_meta( $user_id, 'rondo_people_list_column_order' );
 			delete_user_meta( $user_id, 'rondo_people_list_column_widths' );
+			update_user_meta( $user_id, 'rondo_people_list_pref_version', self::LIST_PREFERENCES_VERSION );
 
 			$available_columns = $this->get_available_columns_metadata();
 
@@ -2647,6 +2663,7 @@ class Api extends Base {
 
 				// Persist validated preferences
 				update_user_meta( $user_id, 'rondo_people_list_preferences', $validated_columns );
+				update_user_meta( $user_id, 'rondo_people_list_pref_version', self::LIST_PREFERENCES_VERSION );
 			}
 		}
 
