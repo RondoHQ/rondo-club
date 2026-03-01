@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.19] - 2026-03-01
+
+### Fixed
+- Lettermint verification mails now send metadata values as strings, matching Lettermint API validation and fixing `422 Unprocessable Content` errors when clicking the verification mail button on bounce tasks.
+
 ## [31.6.18] - 2026-03-01
 
 ### Added
