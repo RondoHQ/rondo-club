@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { X, User, ChevronDown, Search, Plus, Pencil } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { usePeople } from '@/hooks/usePeople';
@@ -71,6 +72,22 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
     setIsPersonDropdownOpen(false);
     setPersonSearchQuery('');
   }, [todo, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setIsPersonDropdownOpen(false);
+      handleClose();
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  // handleClose is recreated each render; binding fresh listener while open is intended.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -205,9 +222,11 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gerelateerde personen</p>
           <div className="flex flex-wrap gap-2">
             {selectedPersons.map(person => (
-              <span
+              <Link
                 key={person.id}
+                to={`/people/${person.id}`}
                 className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm"
+                onClick={handleClose}
               >
                 {person.thumbnail ? (
                   <img
@@ -220,8 +239,8 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
                     <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                   </div>
                 )}
-                <span className="text-gray-700 dark:text-gray-200">{person.name}</span>
-              </span>
+                <span className="text-electric-cyan dark:text-electric-cyan hover:underline">{person.name}</span>
+              </Link>
             ))}
           </div>
         </div>

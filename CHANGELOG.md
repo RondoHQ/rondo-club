@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.15] - 2026-03-01
+
+### Added
+- Dashboard `Open taken` card now shows clickable related persons that navigate directly to `/people/{id}`.
+- Todo view popover now shows related persons as links to their person detail page.
+
+### Fixed
+- Pressing `Esc` now closes the todo popover on the dashboard.
+
 ## [31.6.14] - 2026-03-01
 
 ### Changed

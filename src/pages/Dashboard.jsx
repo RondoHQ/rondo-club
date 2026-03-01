@@ -170,11 +170,23 @@ function AnniversaryCard({ anniversary }) {
  */
 function TodoCard({ todo, onToggle, onView }) {
   const isOverdue = isTodoOverdue(todo);
+  const relatedPersons = todo.persons?.length
+    ? todo.persons
+    : todo.person_id
+      ? [{ id: todo.person_id, name: todo.person_name, thumbnail: todo.person_thumbnail }]
+      : [];
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onView(todo)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onView(todo);
+        }
+      }}
       className="w-full flex items-start p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group text-left"
     >
       <button
@@ -196,14 +208,30 @@ function TodoCard({ todo, onToggle, onView }) {
         <p className={`text-sm font-medium ${todo.status === 'completed' ? 'line-through text-gray-400 dark:text-gray-500' : isOverdue ? 'text-red-600 dark:text-red-300' : 'text-gray-900 dark:text-gray-50'}`}>
           {todo.content}
         </p>
-        <div className="flex items-center gap-2 mt-1">
-          <PersonAvatar
-            thumbnail={todo.person_thumbnail}
-            name={todo.person_name}
-            size="xs"
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{todo.person_name}</span>
-        </div>
+        {relatedPersons.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            {relatedPersons.slice(0, 3).map((person) => (
+              <Link
+                key={person.id}
+                to={`/people/${person.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 text-xs text-electric-cyan dark:text-electric-cyan hover:underline"
+              >
+                <PersonAvatar
+                  thumbnail={person.thumbnail}
+                  name={person.name}
+                  size="xs"
+                />
+                <span className="truncate max-w-28">{person.name}</span>
+              </Link>
+            ))}
+            {relatedPersons.length > 3 && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                +{relatedPersons.length - 3}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       {todo.due_date && todo.status === 'open' && (
         <div className={`ml-3 text-xs text-right flex-shrink-0 ${isOverdue ? 'text-red-600 dark:text-red-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -211,7 +239,7 @@ function TodoCard({ todo, onToggle, onView }) {
           {isOverdue && <div className="text-red-600 dark:text-red-300">achterstallig</div>}
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
