@@ -39,6 +39,8 @@ function formatBirthdateDisplay(birthdate) {
 
 // Helper function to get current team ID from person's work history
 function getCurrentTeamId(person) {
+  if (person?.team_id) return person.team_id;
+
   const workHistory = person.acf?.work_history || [];
   if (workHistory.length === 0) return null;
 

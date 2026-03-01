@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.14] - 2026-03-01
+
+### Changed
+- People list team display now prefers the direct `team` meta value from the filtered people endpoint (with fallback to legacy work history parsing in the frontend).
+- Filtered people endpoint now returns `team_id` directly, reducing frontend dependency on `acf.work_history` for team resolution.
+
 ## [31.6.13] - 2026-03-01
 
 ### Added
