@@ -991,9 +991,11 @@ class People extends Base {
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 
 		$has_birthdate_join = false;
+		$birthdate_value_sql = "COALESCE(NULLIF(bd.meta_value, ''), NULLIF(br.meta_value, ''))";
 		$ensure_birthdate_join = static function () use ( &$has_birthdate_join, &$join_clauses, $wpdb ) {
 			if ( ! $has_birthdate_join ) {
 				$join_clauses[]      = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
+				$join_clauses[]      = "LEFT JOIN {$wpdb->postmeta} br ON p.ID = br.post_id AND br.meta_key = 'birthdate'";
 				$has_birthdate_join = true;
 			}
 		};
@@ -1020,10 +1022,10 @@ class People extends Base {
 			$prepare_values[] = $date_threshold;
 		}
 
-		// Birth year filter (uses denormalized _birthdate meta from Phase 112)
+		// Birth year filter (supports denormalized _birthdate and direct birthdate meta)
 		if ( $birth_year_from !== null || $birth_year_to !== null ) {
 			$ensure_birthdate_join();
-			$birth_year_expr = "CAST(SUBSTRING(REPLACE(bd.meta_value, '-', ''), 1, 4) AS UNSIGNED)";
+			$birth_year_expr = "CAST(SUBSTRING(REPLACE($birthdate_value_sql, '-', ''), 1, 4) AS UNSIGNED)";
 
 			if ( $birth_year_from !== null && $birth_year_to !== null ) {
 				// Range filter
@@ -1041,10 +1043,10 @@ class People extends Base {
 			}
 		}
 
-		// Birth month filter (1-12) on denormalized _birthdate meta.
+		// Birth month filter (1-12) on normalized birthdate value.
 		if ( $birth_month !== null ) {
 			$ensure_birthdate_join();
-			$where_clauses[]  = "CAST(SUBSTRING(REPLACE(bd.meta_value, '-', ''), 5, 2) AS UNSIGNED) = %d";
+			$where_clauses[]  = "CAST(SUBSTRING(REPLACE($birthdate_value_sql, '-', ''), 5, 2) AS UNSIGNED) = %d";
 			$prepare_values[] = $birth_month;
 		}
 
@@ -1181,8 +1183,8 @@ class People extends Base {
 			case 'birthdate':
 				$ensure_birthdate_join();
 				$order_clause = "ORDER BY
-					(bd.meta_value IS NULL OR bd.meta_value = '') ASC,
-					CAST(REPLACE(bd.meta_value, '-', '') AS UNSIGNED) $order,
+					($birthdate_value_sql IS NULL) ASC,
+					CAST(REPLACE($birthdate_value_sql, '-', '') AS UNSIGNED) $order,
 					fn.meta_value ASC";
 				break;
 			case 'custom_datum-vog':
