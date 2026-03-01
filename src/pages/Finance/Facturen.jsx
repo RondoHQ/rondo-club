@@ -158,6 +158,24 @@ const COLUMNS = [
     size: 130,
   }),
   createColumn({
+    id: 'reminder_sent_at',
+    header: 'Herinnering',
+    accessorFn: (row) => (row.reminder_sent_at ? new Date(row.reminder_sent_at).getTime() : 0),
+    cell: ({ row }) =>
+      row.original.reminder_sent_at ? format(new Date(row.original.reminder_sent_at), 'd MMM yyyy') : '-',
+    filterType: null,
+    size: 130,
+  }),
+  createColumn({
+    id: 'sent_by',
+    header: 'Verstuurd door',
+    accessorFn: (row) => row.sent_by?.name || '',
+    cell: ({ row }) => row.original.sent_by?.name || '-',
+    filterType: FILTER_TYPES.TEXT,
+    filterLabel: 'Verstuurd door',
+    size: 170,
+  }),
+  createColumn({
     id: 'created',
     header: 'Aangemaakt',
     accessorFn: (row) => new Date(row.created).getTime(),
@@ -179,6 +197,7 @@ export default function Facturen() {
     plan: searchParams.get('plan') || '',
     person_name: searchParams.get('person_name') || '',
     invoice_number: searchParams.get('invoice_number') || '',
+    sent_by: searchParams.get('sent_by') || '',
   }), [searchParams]);
 
   const handleFilterChange = useCallback((colId, value) => {
@@ -193,7 +212,7 @@ export default function Facturen() {
   const handleClearFilters = useCallback(() => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      ['status', 'invoice_type', 'plan', 'person_name', 'invoice_number'].forEach((k) => next.delete(k));
+      ['status', 'invoice_type', 'plan', 'person_name', 'invoice_number', 'sent_by'].forEach((k) => next.delete(k));
       return next;
     }, { replace: true });
   }, [setSearchParams]);
