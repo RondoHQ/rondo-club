@@ -393,7 +393,7 @@ class LettermintMailer {
 	 * Sanitize metadata values for Lettermint payload.
 	 *
 	 * @param array $metadata Raw metadata map.
-	 * @return array<string, string|int|float|bool>
+	 * @return array<string, string>
 	 */
 	private function sanitize_metadata( array $metadata ): array {
 		$sanitized = [];
@@ -404,8 +404,13 @@ class LettermintMailer {
 				continue;
 			}
 
-			if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
-				$sanitized[ $key ] = $value;
+			if ( is_bool( $value ) ) {
+				$sanitized[ $key ] = $value ? '1' : '0';
+				continue;
+			}
+
+			if ( is_int( $value ) || is_float( $value ) ) {
+				$sanitized[ $key ] = (string) $value;
 				continue;
 			}
 
