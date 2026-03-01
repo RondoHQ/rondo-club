@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.9] - 2026-03-01
+
+### Fixed
+- People list sorting now only enables for columns with supported backend sort fields, preventing invalid `orderby` values from causing unreliable sorting behavior.
+- Added a defensive frontend `orderby` fallback so stale/unsupported sort query values resolve safely to `first_name`.
+
 ## [31.6.8] - 2026-03-01
 
 ### Added
