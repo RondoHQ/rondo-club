@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.11] - 2026-03-01
+
+### Fixed
+- People birthday sorting now falls back to both `_birthdate` and `birthdate` post meta, preventing silent fallback to name sorting on datasets that only store one of the two keys.
+- Birthday year/month filters now use the same dual-key fallback logic for consistent results across legacy and current data.
+
 ## [31.6.10] - 2026-03-01
 
 ### Fixed
