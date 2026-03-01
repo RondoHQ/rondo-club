@@ -63,6 +63,7 @@ const COLUMN_SORT_FIELDS = {
   name: 'first_name',
   first_name: 'first_name',
   last_name: 'last_name',
+  team: 'organization',
   birthdate: 'birthdate',
   modified: 'modified',
   // Sportlink field mappings
@@ -79,7 +80,7 @@ const COLUMN_SORT_FIELDS = {
   'freescout-id': 'custom_freescout-id',
 };
 
-const UNSORTABLE_CORE_COLUMNS = new Set(['team', 'email', 'phone']);
+const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone']);
 const SORTABLE_CUSTOM_TYPES = new Set(['text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false']);
 
 function getColumnSortField(colId, column) {
@@ -649,8 +650,8 @@ export default function PeopleList() {
   } = useListPreferences();
 
   const resolvedOrderBy = useMemo(() => {
-    if (sortField === 'organization') return 'first_name';
-    if (sortField === 'email' || sortField === 'phone' || sortField === 'team') return 'first_name';
+    if (sortField === 'email' || sortField === 'phone') return 'first_name';
+    if (sortField === 'organization') return 'organization';
     if (sortField === 'first_name' || sortField === 'last_name' || sortField === 'modified' || sortField === 'birthdate') {
       return sortField;
     }
