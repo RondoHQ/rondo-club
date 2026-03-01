@@ -672,7 +672,55 @@ class LettermintWebhook {
 			}
 		}
 
+		// WordPress normalizes headers in different ways depending on server stack.
+		// Add canonical Lettermint keys expected by the SDK verifier.
+		$signature = $this->pick_header_value(
+			$flat,
+			[
+				'X-Lettermint-Signature',
+				'x-lettermint-signature',
+				'x_lettermint_signature',
+				'HTTP_X_LETTERMINT_SIGNATURE',
+			]
+		);
+		if ( $signature !== '' ) {
+			$flat['X-Lettermint-Signature'] = $signature;
+		}
+
+		$delivery = $this->pick_header_value(
+			$flat,
+			[
+				'X-Lettermint-Delivery',
+				'x-lettermint-delivery',
+				'x_lettermint_delivery',
+				'HTTP_X_LETTERMINT_DELIVERY',
+			]
+		);
+		if ( $delivery !== '' ) {
+			$flat['X-Lettermint-Delivery'] = $delivery;
+		}
+
 		return $flat;
+	}
+
+	/**
+	 * Pick first non-empty value from candidate header keys.
+	 *
+	 * @param array  $headers    Flattened headers.
+	 * @param string[] $candidates Candidate keys.
+	 * @return string
+	 */
+	private function pick_header_value( array $headers, array $candidates ): string {
+		foreach ( $candidates as $candidate ) {
+			if ( isset( $headers[ $candidate ] ) ) {
+				$value = trim( (string) $headers[ $candidate ] );
+				if ( $value !== '' ) {
+					return $value;
+				}
+			}
+		}
+
+		return '';
 	}
 
 	/**

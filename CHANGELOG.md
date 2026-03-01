@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.20] - 2026-03-01
+
+### Fixed
+- Lettermint webhook signature verification now accepts server-normalized header variants and maps them to canonical `X-Lettermint-*` names before SDK verification, fixing missed bounce processing when headers were present but differently keyed.
+
 ## [31.6.19] - 2026-03-01
 
 ### Fixed
