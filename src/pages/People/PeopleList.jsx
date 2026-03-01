@@ -63,7 +63,6 @@ const COLUMN_SORT_FIELDS = {
   name: 'first_name',
   first_name: 'first_name',
   last_name: 'last_name',
-  team: 'organization',
   birthdate: 'birthdate',
   modified: 'modified',
   // Sportlink field mappings
@@ -79,6 +78,23 @@ const COLUMN_SORT_FIELDS = {
   'financiele-blokkade': 'custom_financiele-blokkade',
   'freescout-id': 'custom_freescout-id',
 };
+
+const UNSORTABLE_CORE_COLUMNS = new Set(['team', 'email', 'phone']);
+const SORTABLE_CUSTOM_TYPES = new Set(['text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false']);
+
+function getColumnSortField(colId, column) {
+  if (UNSORTABLE_CORE_COLUMNS.has(colId)) return null;
+
+  if (COLUMN_SORT_FIELDS[colId]) return COLUMN_SORT_FIELDS[colId];
+
+  // Dynamic custom fields use `custom_{field_name}` orderby in backend.
+  if (column?.custom) {
+    if (!SORTABLE_CUSTOM_TYPES.has(column.type)) return null;
+    return `custom_${colId}`;
+  }
+
+  return null;
+}
 
 function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidths, customFieldsMap, isSelected, onToggleSelection, isOdd }) {
   return (
@@ -235,6 +251,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
 // Resizable header component for column resizing
 function ResizableHeader({
   colId,
+  column,
   label,
   width: initialWidth,
   sortField,
@@ -252,9 +269,9 @@ function ResizableHeader({
 
   const { width, isResizing, resizeHandlers } = useColumnResize(initialWidth, 50, handleResizeEnd);
 
-  // Determine sort field for this column
-  const columnSortField = COLUMN_SORT_FIELDS[colId] || (colId.startsWith('custom_') ? colId : `custom_${colId}`);
-  const isActive = sortField === columnSortField;
+  const columnSortField = getColumnSortField(colId, column);
+  const isSortable = Boolean(columnSortField);
+  const isActive = isSortable && sortField === columnSortField;
 
   const stickyStyles = isSticky ? {
     position: 'sticky',
@@ -273,19 +290,25 @@ function ResizableHeader({
         ...stickyStyles,
       }}
     >
-      <button
-        onClick={() => onSort(columnSortField)}
-        className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer uppercase tracking-wider"
-      >
-        {label}
-        {isActive && (
-          sortOrder === 'asc' ? (
-            <ArrowUp className="w-3 h-3" />
-          ) : (
-            <ArrowDown className="w-3 h-3" />
-          )
-        )}
-      </button>
+      {isSortable ? (
+        <button
+          onClick={() => onSort(columnSortField)}
+          className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer uppercase tracking-wider"
+        >
+          {label}
+          {isActive && (
+            sortOrder === 'asc' ? (
+              <ArrowUp className="w-3 h-3" />
+            ) : (
+              <ArrowDown className="w-3 h-3" />
+            )
+          )}
+        </button>
+      ) : (
+        <span className="flex items-center gap-1 uppercase tracking-wider">
+          {label}
+        </span>
+      )}
       {/* Resize handle */}
       <div
         {...resizeHandlers}
@@ -355,6 +378,7 @@ function PersonListView({
             {/* Name column */}
             <ResizableHeader
               colId="name"
+              column={{ id: 'name', type: 'core', custom: false }}
               label="Naam"
               width={columnWidths['name'] || 200}
               sortField={sortField}
@@ -371,6 +395,7 @@ function PersonListView({
                 <ResizableHeader
                   key={colId}
                   colId={colId}
+                  column={column}
                   label={column.label}
                   width={columnWidths[colId] || 150}
                   sortField={sortField}
@@ -623,6 +648,16 @@ export default function PeopleList() {
     updateColumnWidths
   } = useListPreferences();
 
+  const resolvedOrderBy = useMemo(() => {
+    if (sortField === 'organization') return 'first_name';
+    if (sortField === 'email' || sortField === 'phone' || sortField === 'team') return 'first_name';
+    if (sortField === 'first_name' || sortField === 'last_name' || sortField === 'modified' || sortField === 'birthdate') {
+      return sortField;
+    }
+    if (sortField.startsWith('custom_')) return sortField;
+    return 'first_name';
+  }, [sortField]);
+
   const { data, isLoading, isFetching, error } = useFilteredPeople({
     page,
     perPage: 100,
@@ -631,7 +666,7 @@ export default function PeopleList() {
     birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
     birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
     birthMonth: selectedBirthMonth ? parseInt(selectedBirthMonth, 10) : null,
-    orderby: sortField.startsWith('custom_') ? sortField : sortField === 'organization' ? 'first_name' : sortField,
+    orderby: resolvedOrderBy,
     order: sortOrder,
     // Custom field filters
     huidigeVrijwilliger,
