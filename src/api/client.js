@@ -311,6 +311,7 @@ export const prmApi = {
   getLettermintProjects: () => api.get('/rondo/v1/lettermint/projects'),
   createLettermintWebhook: (data = {}) => api.post('/rondo/v1/lettermint/webhook/create', data),
   sendLettermintTestEmail: (recipient) => api.post('/rondo/v1/lettermint/test-email', { recipient }),
+  sendLettermintVerificationEmail: (todoId, recipient = '') => api.post('/rondo/v1/lettermint/verify-email', { todo_id: todoId, recipient }),
 
   // Finance settings (admin only)
   getFinanceSettings: () => api.get('/rondo/v1/finance/settings'),

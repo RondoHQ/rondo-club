@@ -989,6 +989,14 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'lettermint_verification_email_subject' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'lettermint_verification_email_body' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
 					],
 				],
 			]
@@ -1035,6 +1043,33 @@ class Api extends Base {
 				'callback'            => [ $this, 'send_lettermint_test_email' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
+					'recipient' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_email',
+						'validate_callback' => function ( $param ) {
+							return $param === null || $param === '' || is_email( $param );
+						},
+					],
+				],
+			]
+		);
+
+		// Lettermint verification email for bounced-address follow-up tasks.
+		register_rest_route(
+			'rondo/v1',
+			'/lettermint/verify-email',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_lettermint_verification_email' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'todo_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $param ) {
+							return is_numeric( $param ) && (int) $param > 0;
+						},
+					],
 					'recipient' => [
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_email',
@@ -4692,6 +4727,16 @@ class Api extends Base {
 			\Rondo\Config\ClubConfig::update_lettermint_webhook_secret( $lettermint_webhook_secret );
 		}
 
+		$lettermint_verification_email_subject = $request->get_param( 'lettermint_verification_email_subject' );
+		if ( $lettermint_verification_email_subject !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_verification_email_subject( $lettermint_verification_email_subject );
+		}
+
+		$lettermint_verification_email_body = $request->get_param( 'lettermint_verification_email_body' );
+		if ( $lettermint_verification_email_body !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_verification_email_body( $lettermint_verification_email_body );
+		}
+
 		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
 	}
 
@@ -5214,6 +5259,225 @@ class Api extends Base {
 				'recipient' => $recipient,
 			]
 		);
+	}
+
+	/**
+	 * Send a verification email for a bounced-address todo.
+	 *
+	 * Uses Lettermint via wp_mail transport and tags the message with metadata so
+	 * a future bounce can create a follow-up task for the sender.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function send_lettermint_verification_email( $request ) {
+		if ( \Rondo\Notifications\LettermintConfig::get_api_token() === '' ) {
+			return new \WP_Error(
+				'lettermint_missing_api_token',
+				'Lettermint API token ontbreekt. Sla eerst de instellingen op.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! class_exists( '\Lettermint\Lettermint' ) ) {
+			return new \WP_Error(
+				'lettermint_sdk_missing',
+				'Lettermint SDK niet gevonden op de server.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		$todo_id = (int) $request->get_param( 'todo_id' );
+		$todo    = get_post( $todo_id );
+		if ( ! $todo || $todo->post_type !== 'rondo_todo' ) {
+			return new \WP_Error(
+				'todo_not_found',
+				'Taak niet gevonden.',
+				[ 'status' => 404 ]
+			);
+		}
+
+		$current_user_id = get_current_user_id();
+		$assigned_user_id = (int) get_post_meta( $todo_id, 'assigned_user_id', true );
+		if ( (int) $todo->post_author !== $current_user_id && $assigned_user_id !== $current_user_id && ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'todo_forbidden',
+				'Je hebt geen toegang tot deze taak.',
+				[ 'status' => 403 ]
+			);
+		}
+
+		$recipient = sanitize_email( (string) $request->get_param( 'recipient' ) );
+		if ( $recipient === '' ) {
+			$recipient = sanitize_email( (string) get_post_meta( $todo_id, \Rondo\Notifications\LettermintWebhook::META_RECIPIENT, true ) );
+		}
+
+		$person_id = 0;
+		$related_persons = get_field( 'related_persons', $todo_id );
+		if ( is_array( $related_persons ) && ! empty( $related_persons ) ) {
+			$person_id = (int) $related_persons[0];
+		}
+
+		if ( $recipient === '' ) {
+			if ( $person_id > 0 ) {
+				$recipient = $this->get_person_email_address( $person_id );
+			}
+		}
+
+		if ( $recipient === '' && $person_id === 0 ) {
+			$recipient_meta = sanitize_email( (string) get_post_meta( $todo_id, \Rondo\Notifications\LettermintWebhook::META_RECIPIENT, true ) );
+			if ( $recipient_meta !== '' ) {
+				$found_person_id = $this->find_person_id_by_email( $recipient_meta );
+				if ( $found_person_id > 0 ) {
+					$person_id = $found_person_id;
+				}
+			}
+		}
+
+		if ( ! is_email( $recipient ) ) {
+			return new \WP_Error(
+				'lettermint_invalid_recipient',
+				'Geen geldig ontvanger e-mailadres gevonden. Voeg een e-mailadres toe aan de gekoppelde persoon of geef recipient mee.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$person_name = '';
+		if ( $person_id > 0 ) {
+			$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+			$last_name  = trim( (string) get_field( 'last_name', $person_id ) );
+			$person_name = trim( $first_name . ' ' . $last_name );
+		}
+		if ( $person_name === '' ) {
+			$person_name = $recipient;
+		}
+
+		$current_user = wp_get_current_user();
+		$sender_name  = sanitize_text_field( (string) ( $current_user->display_name ?? '' ) );
+		if ( $sender_name === '' ) {
+			$sender_name = 'Rondo Club';
+		}
+		$sender_email = sanitize_email( (string) ( $current_user->user_email ?? '' ) );
+		$club_name    = \Rondo\Config\ClubConfig::get_club_name();
+		if ( $club_name === '' ) {
+			$club_name = 'Rondo Club';
+		}
+
+		$replacements = [
+			'{name}'         => $person_name,
+			'{email}'        => $recipient,
+			'{club_name}'    => $club_name,
+			'{sender_name}'  => $sender_name,
+			'{sender_email}' => $sender_email,
+			'{date}'         => wp_date( 'Y-m-d H:i:s' ),
+		];
+
+		$subject_template = \Rondo\Config\ClubConfig::get_lettermint_verification_email_subject();
+		$body_template    = \Rondo\Config\ClubConfig::get_lettermint_verification_email_body();
+		$subject          = strtr( $subject_template, $replacements );
+		$body             = strtr( $body_template, $replacements );
+
+		if ( trim( $subject ) === '' ) {
+			$subject = '[Rondo Club] Controle e-mailadres';
+		}
+
+		$metadata = [
+			'flow'           => 'email_verification',
+			'sender_user_id' => (int) $current_user_id,
+			'source_todo_id' => (int) $todo_id,
+			'source_person_id' => (int) $person_id,
+		];
+
+		$headers = [
+			'Content-Type: text/plain; charset=UTF-8',
+			'X-Rondo-Email-Tag: email-verification',
+			'X-Rondo-Metadata: ' . wp_json_encode( $metadata ),
+		];
+
+		$sent = wp_mail( $recipient, $subject, $body, $headers );
+		if ( ! $sent ) {
+			return new \WP_Error(
+				'lettermint_verification_send_failed',
+				'Verificatiemail kon niet worden verzonden. Controleer Lettermint-instellingen en serverlogs.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response(
+			[
+				'message'   => 'Verificatiemail verzonden.',
+				'recipient' => $recipient,
+				'todo_id'   => $todo_id,
+				'person_id' => $person_id > 0 ? $person_id : null,
+			]
+		);
+	}
+
+	/**
+	 * Get first email address from person contact_info.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return string
+	 */
+	private function get_person_email_address( int $person_id ): string {
+		$contact_info = get_field( 'contact_info', $person_id );
+		if ( ! is_array( $contact_info ) ) {
+			return '';
+		}
+
+		foreach ( $contact_info as $contact ) {
+			$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
+			if ( $type !== 'email' ) {
+				continue;
+			}
+
+			$email = sanitize_email( (string) ( $contact['contact_value'] ?? '' ) );
+			if ( is_email( $email ) ) {
+				return $email;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Find person by email address.
+	 *
+	 * @param string $email Email address.
+	 * @return int
+	 */
+	private function find_person_id_by_email( string $email ): int {
+		$email = strtolower( trim( sanitize_email( $email ) ) );
+		if ( $email === '' ) {
+			return 0;
+		}
+
+		$people = get_posts(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'post_status'      => 'publish',
+				'suppress_filters' => true,
+				'fields'           => 'ids',
+			]
+		);
+
+		foreach ( $people as $person_id ) {
+			$contact_info = get_field( 'contact_info', (int) $person_id ) ?: [];
+			if ( ! is_array( $contact_info ) ) {
+				continue;
+			}
+
+			foreach ( $contact_info as $contact ) {
+				$type  = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
+				$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
+				if ( $type === 'email' && $value !== '' && $value === $email ) {
+					return (int) $person_id;
+				}
+			}
+		}
+
+		return 0;
 	}
 
 	/**

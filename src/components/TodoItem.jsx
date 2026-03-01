@@ -6,7 +6,7 @@
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckSquare2, Square, Clock, Pencil, Trash2, RotateCcw } from 'lucide-react';
+import { CheckSquare2, Square, Clock, Pencil, Trash2, RotateCcw, Mail } from 'lucide-react';
 import PersonAvatar from '@/components/PersonAvatar.jsx';
 import { format } from '@/utils/dateFormat';
 import { isTodoOverdue, getAwaitingDays, getAwaitingUrgencyClass } from '@/utils/timeline';
@@ -22,6 +22,8 @@ import { isValidDate } from '@/utils/formatters';
  * @property {Function} onEdit - Handler for editing the todo
  * @property {Function} onDelete - Handler for deleting the todo
  * @property {Function} [onReopen] - Handler for reopening a completed/awaiting todo
+ * @property {Function} [onSendVerificationEmail] - Handler for sending a verification email for bounce tasks
+ * @property {boolean} [verificationEmailSending=false] - Loading state for verification email action
  * @property {boolean} [showActionsAlways=false] - Whether to always show action buttons (vs hover-only)
  * @property {'compact'|'full'} [variant='compact'] - Display variant
  */
@@ -38,6 +40,8 @@ export default function TodoItem({
   onEdit,
   onDelete,
   onReopen,
+  onSendVerificationEmail,
+  verificationEmailSending = false,
   showActionsAlways = false,
   variant = 'compact',
 }) {
@@ -277,6 +281,16 @@ export default function TodoItem({
             title="Taak heropenen"
           >
             <RotateCcw className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+          </button>
+        )}
+        {onSendVerificationEmail && todo?.email_verification?.can_send && (
+          <button
+            onClick={() => onSendVerificationEmail(todo)}
+            className="p-1 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded"
+            title="Verificatiemail sturen"
+            disabled={verificationEmailSending}
+          >
+            <Mail className={`w-4 h-4 ${verificationEmailSending ? 'text-cyan-500' : 'text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400'}`} />
           </button>
         )}
         <button

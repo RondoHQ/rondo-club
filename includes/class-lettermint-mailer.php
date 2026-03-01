@@ -122,11 +122,14 @@ class LettermintMailer {
 			}
 
 			$email->metadata(
-				[
-					'site_host'    => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
-					'mail_hash'    => md5( implode( '|', $recipients ) . '|' . $subject . '|' . $message ),
-					'content_type' => $content_type,
-				]
+				array_merge(
+					[
+						'site_host'    => (string) wp_parse_url( home_url(), PHP_URL_HOST ),
+						'mail_hash'    => md5( implode( '|', $recipients ) . '|' . $subject . '|' . $message ),
+						'content_type' => $content_type,
+					],
+					is_array( $headers['x_rondo_metadata'] ?? null ) ? $headers['x_rondo_metadata'] : []
+				)
 			);
 
 			$email->send();
@@ -172,6 +175,7 @@ class LettermintMailer {
 			'reply_to'          => [],
 			'content_type'      => '',
 			'x_rondo_email_tag' => '',
+			'x_rondo_metadata'  => [],
 			'x_lettermint_route'=> '',
 			'custom'            => [],
 		];
@@ -225,6 +229,12 @@ class LettermintMailer {
 					break;
 				case 'x-rondo-email-tag':
 					$parsed['x_rondo_email_tag'] = $value;
+					break;
+				case 'x-rondo-metadata':
+					$decoded = json_decode( $value, true );
+					if ( is_array( $decoded ) ) {
+						$parsed['x_rondo_metadata'] = $this->sanitize_metadata( $decoded );
+					}
 					break;
 				case 'x-lettermint-route':
 				case 'x-lm-route':
@@ -377,5 +387,33 @@ class LettermintMailer {
 		}
 
 		return [];
+	}
+
+	/**
+	 * Sanitize metadata values for Lettermint payload.
+	 *
+	 * @param array $metadata Raw metadata map.
+	 * @return array<string, string|int|float|bool>
+	 */
+	private function sanitize_metadata( array $metadata ): array {
+		$sanitized = [];
+
+		foreach ( $metadata as $key => $value ) {
+			$key = sanitize_key( (string) $key );
+			if ( $key === '' ) {
+				continue;
+			}
+
+			if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
+				$sanitized[ $key ] = $value;
+				continue;
+			}
+
+			if ( is_string( $value ) ) {
+				$sanitized[ $key ] = sanitize_text_field( $value );
+			}
+		}
+
+		return $sanitized;
 	}
 }

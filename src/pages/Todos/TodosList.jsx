@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { CheckSquare, Square, Clock, Plus, Info } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { prmApi } from '@/api/client';
 import { useTodos, useUpdateTodo, useDeleteTodo } from '@/hooks/useDashboard';
 import { useCreateActivity } from '@/hooks/usePeople';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -26,6 +27,7 @@ export default function TodosList() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
+  const [verificationTodoId, setVerificationTodoId] = useState(null);
   const queryClient = useQueryClient();
 
   // Fetch todos with the current filter
@@ -158,6 +160,20 @@ export default function TodosList() {
     await deleteTodo.mutateAsync(todoId);
   };
 
+  const handleSendVerificationEmail = async (todo) => {
+    setVerificationTodoId(todo.id);
+    try {
+      const response = await prmApi.sendLettermintVerificationEmail(todo.id, todo?.email_verification?.recipient || '');
+      await queryClient.invalidateQueries({ queryKey: ['todos'] });
+      const recipient = response.data?.recipient || todo?.email_verification?.recipient || 'onbekend e-mailadres';
+      window.alert(`Verificatiemail verzonden naar ${recipient}.`);
+    } catch (error) {
+      window.alert(error?.response?.data?.message || 'Kon verificatiemail niet verzenden.');
+    } finally {
+      setVerificationTodoId(null);
+    }
+  };
+
   // Get the appropriate header text based on filter
   const getHeaderText = () => {
     const labels = {
@@ -281,6 +297,8 @@ export default function TodosList() {
                   setShowTodoModal(true);
                 }}
                 onDelete={handleDeleteTodo}
+                onSendVerificationEmail={handleSendVerificationEmail}
+                verificationEmailSending={verificationTodoId === todo.id}
               />
             ))}
           </div>
