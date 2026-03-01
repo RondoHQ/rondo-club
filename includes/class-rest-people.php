@@ -989,7 +989,9 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} fn ON p.ID = fn.post_id AND fn.meta_key = 'first_name'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ix ON p.ID = ix.post_id AND ix.meta_key = 'infix'";
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ln ON p.ID = ln.post_id AND ln.meta_key = 'last_name'";
+		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} tm ON p.ID = tm.post_id AND tm.meta_key = 'team'";
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
+		$select_fields .= ', tm.meta_value AS team_id';
 
 		$has_birthdate_join = false;
 		$birthdate_value_sql = "CASE
@@ -1186,7 +1188,6 @@ class People extends Base {
 				$order_clause = "ORDER BY p.post_modified $order";
 				break;
 			case 'organization':
-				$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} tm ON p.ID = tm.post_id AND tm.meta_key = 'team'";
 				$order_clause   = "ORDER BY
 					(tm.meta_value IS NULL OR tm.meta_value = '') ASC,
 					tm.meta_value $order,
@@ -1378,6 +1379,7 @@ class People extends Base {
 				'first_name'    => $this->sanitize_text( $row->first_name ?: '' ),
 				'infix'         => $this->sanitize_text( $row->infix ?: '' ),
 				'last_name'     => $this->sanitize_text( $row->last_name ?: '' ),
+				'team_id'       => is_numeric( $row->team_id ) ? (int) $row->team_id : null,
 				'modified'      => $row->post_modified,
 				'former_member' => ( $row->is_former_member === '1' ),
 				// These are fetched post-query to avoid complex JOINs
