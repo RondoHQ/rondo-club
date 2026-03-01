@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.21] - 2026-03-01
+
+### Changed
+- Verification-bounce follow-up todos now use the requested actionable copy:
+  - Title: `Het email adres van {naam} werkt niet meer.`
+  - Notes include the full contact request text and ready-to-send message template with resolved `{naam}`, `{firstname}`, and `{email}` values.
+
 ## [31.6.20] - 2026-03-01
 
 ### Fixed
