@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.22] - 2026-03-01
+
+### Changed
+- Verification-bounce todo notes now hide all Lettermint technical event details (event type, message ID, tag, timestamp, reason, etc.) and show only the actionable contact text template.
+
 ## [31.6.21] - 2026-03-01
 
 ### Changed

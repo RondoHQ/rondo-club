@@ -350,6 +350,22 @@ class LettermintWebhook {
 		string $flow = '',
 		int $person_id = 0
 	): string {
+		if ( $flow === self::FLOW_EMAIL_VERIFICATION ) {
+			$first_name  = $this->resolve_person_first_name( $person_id );
+			$person_name = $this->resolve_person_name( $person_id, $recipient );
+
+			$lines   = [];
+			$lines[] = sprintf( 'We hebben ontdekt dat het e-mailadres %s van %s niet meer werkt. Zou je hem willen contacten en vragen om een werkend e-mailadres? Hieronder vind je een bericht wat je hem kan sturen:', $recipient, $person_name );
+			$lines[] = '';
+			$lines[] = sprintf( 'Hoi %s,', $first_name );
+			$lines[] = '';
+			$lines[] = sprintf( 'Onze secretaris heeft ontdekt dat je e-mailadres %s niet meer werkt. Zou je me een werkend nieuw e-mailadres kunnen sturen?', $recipient );
+			$lines[] = '';
+			$lines[] = 'Dank je wel!';
+
+			return implode( "\n", $lines );
+		}
+
 		$reason = '';
 		if ( is_array( $data['response'] ?? null ) ) {
 			$reason = trim( (string) ( $data['response']['content'] ?? '' ) );
@@ -381,19 +397,7 @@ class LettermintWebhook {
 		}
 
 		$lines[] = '';
-		if ( $flow === self::FLOW_EMAIL_VERIFICATION ) {
-			$first_name = $this->resolve_person_first_name( $person_id );
-			$person_name = $this->resolve_person_name( $person_id, $recipient );
-			$lines[] = sprintf( 'We hebben ontdekt dat het e-mailadres %s van %s niet meer werkt. Zou je hem willen contacten en vragen om een werkend e-mailadres? Hieronder vind je een bericht wat je hem kan sturen:', $recipient, $person_name );
-			$lines[] = '';
-			$lines[] = sprintf( 'Hoi %s,', $first_name );
-			$lines[] = '';
-			$lines[] = sprintf( 'Onze secretaris heeft ontdekt dat je e-mailadres %s niet meer werkt. Zou je me een werkend nieuw e-mailadres kunnen sturen?', $recipient );
-			$lines[] = '';
-			$lines[] = 'Dank je wel!';
-		} else {
-			$lines[] = 'Actie: controleer het e-mailadres, neem contact op met het lid en werk de gegevens bij indien nodig.';
-		}
+		$lines[] = 'Actie: controleer het e-mailadres, neem contact op met het lid en werk de gegevens bij indien nodig.';
 
 		return implode( "\n", $lines );
 	}
