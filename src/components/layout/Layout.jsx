@@ -105,12 +105,17 @@ function Sidebar({ mobile = false, onClose, stats }) {
     [feeData]
   );
 
+  const formatMenuCount = (count) => (
+    typeof count === 'number' ? count.toLocaleString('nl-NL') : count
+  );
+
   // Map navigation items to their counts
   const getCounts = (name) => {
     switch (name) {
       case 'Leden': return stats?.total_people || null;
       case 'Teams': return stats?.total_teams || null;
       case 'Commissies': return stats?.total_commissies || null;
+      case 'Taken': return stats?.open_todos_count || null;
       case 'Feedback': return stats?.open_feedback_count || null;
       case 'Contributie': return canAccessFinancieel ? payingMembersCount : null;
       case 'Facturen': return canAccessFinancieel ? openInvoicesCount : null;
@@ -204,7 +209,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
                 <item.icon className="w-5 h-5 mr-3" />
                 {item.name}
                 {count != null && (
-                  <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{count}</span>
+                  <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{formatMenuCount(count)}</span>
                 )}
               </NavLink>
             );
