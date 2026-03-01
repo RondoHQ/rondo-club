@@ -46,6 +46,11 @@ class LettermintWebhook {
 	const META_RECIPIENT = '_rondo_lettermint_recipient';
 
 	/**
+	 * Todo meta key for provider message ID.
+	 */
+	const META_MESSAGE_ID = '_rondo_lettermint_message_id';
+
+	/**
 	 * Todo meta key for flow (e.g. email verification).
 	 */
 	const META_FLOW = '_rondo_lettermint_flow';
@@ -262,28 +267,17 @@ class LettermintWebhook {
 		int $person_id = 0,
 		string $flow = ''
 	) {
-		$existing = get_posts(
-			[
-				'post_type'      => 'rondo_todo',
-				'post_status'    => 'any',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'author'         => $owner_id,
-				'meta_query'     => [
-					[
-						'key'   => self::META_EVENT_ID,
-						'value' => $event_id,
-					],
-					[
-						'key'   => self::META_EVENT_NAME,
-						'value' => $event_name,
-					],
-				],
-			]
+		$existing = $this->find_existing_follow_up_task(
+			$owner_id,
+			$event_id,
+			$event_name,
+			$recipient,
+			$message_id,
+			$flow
 		);
 
-		if ( ! empty( $existing ) ) {
-			return (int) $existing[0];
+		if ( $existing > 0 ) {
+			return $existing;
 		}
 
 		$person_name  = $this->resolve_person_name( $person_id, $recipient );
@@ -316,11 +310,98 @@ class LettermintWebhook {
 		update_post_meta( $post_id, self::META_EVENT_ID, $event_id );
 		update_post_meta( $post_id, self::META_EVENT_NAME, $event_name );
 		update_post_meta( $post_id, self::META_RECIPIENT, $recipient );
+		if ( $message_id !== '' ) {
+			update_post_meta( $post_id, self::META_MESSAGE_ID, $message_id );
+		}
 		if ( $flow !== '' ) {
 			update_post_meta( $post_id, self::META_FLOW, $flow );
 		}
 
 		return (int) $post_id;
+	}
+
+	/**
+	 * Find existing follow-up task for this delivery event/mail.
+	 *
+	 * Primary dedupe key is event_id+event_name. Secondary key is
+	 * message_id+recipient(+flow), which prevents duplicate tasks when a single
+	 * mail triggers multiple webhook retries/events with different event IDs.
+	 *
+	 * @param int    $owner_id   Task owner (post_author).
+	 * @param string $event_id   Event ID.
+	 * @param string $event_name Event name.
+	 * @param string $recipient  Recipient email.
+	 * @param string $message_id Provider message ID.
+	 * @param string $flow       Optional event flow.
+	 * @return int Existing todo ID or 0 when not found.
+	 */
+	private function find_existing_follow_up_task(
+		int $owner_id,
+		string $event_id,
+		string $event_name,
+		string $recipient,
+		string $message_id,
+		string $flow
+	): int {
+		$by_event = get_posts(
+			[
+				'post_type'      => 'rondo_todo',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'author'         => $owner_id,
+				'meta_query'     => [
+					[
+						'key'   => self::META_EVENT_ID,
+						'value' => $event_id,
+					],
+					[
+						'key'   => self::META_EVENT_NAME,
+						'value' => $event_name,
+					],
+				],
+			]
+		);
+		if ( ! empty( $by_event ) ) {
+			return (int) $by_event[0];
+		}
+
+		if ( $message_id === '' || $recipient === '' ) {
+			return 0;
+		}
+
+		$message_meta_query = [
+			[
+				'key'   => self::META_MESSAGE_ID,
+				'value' => $message_id,
+			],
+			[
+				'key'   => self::META_RECIPIENT,
+				'value' => $recipient,
+			],
+		];
+		if ( $flow !== '' ) {
+			$message_meta_query[] = [
+				'key'   => self::META_FLOW,
+				'value' => $flow,
+			];
+		}
+
+		$by_message = get_posts(
+			[
+				'post_type'      => 'rondo_todo',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'author'         => $owner_id,
+				'meta_query'     => $message_meta_query,
+			]
+		);
+		if ( ! empty( $by_message ) ) {
+			return (int) $by_message[0];
+		}
+
+		return 0;
 	}
 
 	/**
