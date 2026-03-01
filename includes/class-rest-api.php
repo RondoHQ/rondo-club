@@ -3123,10 +3123,10 @@ class Api extends Base {
 			}
 		}
 
-		// Query 5: Custom field matches (score: 30)
-		$custom_field_names = $this->get_searchable_custom_fields( 'person' );
-		if ( ! empty( $custom_field_names ) ) {
-			$custom_meta_query = $this->build_custom_field_meta_query( $custom_field_names, $query );
+			// Query 5: Custom field matches (score: 30)
+			$custom_field_names = $this->get_searchable_custom_fields( 'person' );
+			if ( ! empty( $custom_field_names ) ) {
+				$custom_meta_query = $this->build_custom_field_meta_query( $custom_field_names, $query );
 
 			$custom_field_matches = get_posts(
 				[
@@ -3824,6 +3824,51 @@ class Api extends Base {
 					}
 				}
 			}
+
+			// Query 6: KNVB ID matches (score: 70)
+			$knvb_matches = get_posts(
+				[
+					'post_type'      => 'person',
+					'posts_per_page' => 20,
+					'post_status'    => 'publish',
+					'meta_query'     => [
+						'relation' => 'OR',
+						[
+							'key'     => 'knvb-id',
+							'value'   => $query,
+							'compare' => 'LIKE',
+						],
+						[
+							'key'     => 'custom_knvb-id',
+							'value'   => $query,
+							'compare' => 'LIKE',
+						],
+					],
+				]
+			);
+
+			foreach ( $knvb_matches as $person ) {
+				if ( ! isset( $people_results[ $person->ID ] ) ) {
+					$people_results[ $person->ID ] = [
+						'person' => $person,
+						'score'  => 70,
+					];
+				}
+			}
+
+			// Query 7: Contact email matches in contact_info repeater (score: 75)
+			if ( strpos( $query, '@' ) !== false || is_email( $query ) ) {
+				$email_matches = $this->find_people_by_contact_email_fragment( $query, 20 );
+
+				foreach ( $email_matches as $person ) {
+					if ( ! isset( $people_results[ $person->ID ] ) ) {
+						$people_results[ $person->ID ] = [
+							'person' => $person,
+							'score'  => 75,
+						];
+					}
+				}
+			}
 		}
 
 		return rest_ensure_response(
@@ -4183,6 +4228,74 @@ class Api extends Base {
 		}
 
 		return $meta_query;
+	}
+
+	/**
+	 * Find people where contact_info contains an email matching the query fragment.
+	 *
+	 * @param string $query Search query.
+	 * @param int    $limit Max number of results.
+	 * @return array<int, \WP_Post>
+	 */
+	private function find_people_by_contact_email_fragment( string $query, int $limit = 20 ): array {
+		$query_lower = strtolower( trim( sanitize_email( $query ) ) );
+		if ( $query_lower === '' ) {
+			return [];
+		}
+
+		$people_ids = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					[
+						'key'     => 'contact_info',
+						'compare' => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		$matched_ids = [];
+		foreach ( $people_ids as $person_id ) {
+			$contact_info = get_field( 'contact_info', (int) $person_id );
+			if ( ! is_array( $contact_info ) ) {
+				continue;
+			}
+
+			foreach ( $contact_info as $contact ) {
+				$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
+				if ( $type !== 'email' ) {
+					continue;
+				}
+
+				$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
+				if ( $value !== '' && strpos( $value, $query_lower ) !== false ) {
+					$matched_ids[] = (int) $person_id;
+					break;
+				}
+			}
+
+			if ( count( $matched_ids ) >= $limit ) {
+				break;
+			}
+		}
+
+		if ( empty( $matched_ids ) ) {
+			return [];
+		}
+
+		return get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'post__in'       => $matched_ids,
+				'orderby'        => 'post__in',
+				'posts_per_page' => $limit,
+			]
+		);
 	}
 
 	/**
