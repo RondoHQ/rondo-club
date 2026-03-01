@@ -867,6 +867,7 @@ class People extends Base {
 			'last_name',
 			'modified',
 			'birthdate',
+			'organization',
 			// Sportlink fields (ACF fields, not from Manager)
 			'custom_knvb-id',
 			'custom_type-lid',
@@ -1183,6 +1184,13 @@ class People extends Base {
 				break;
 			case 'modified':
 				$order_clause = "ORDER BY p.post_modified $order";
+				break;
+			case 'organization':
+				$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} tm ON p.ID = tm.post_id AND tm.meta_key = 'team'";
+				$order_clause   = "ORDER BY
+					(tm.meta_value IS NULL OR tm.meta_value = '') ASC,
+					tm.meta_value $order,
+					fn.meta_value ASC";
 				break;
 			case 'birthdate':
 				$ensure_birthdate_join();

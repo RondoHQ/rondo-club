@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.13] - 2026-03-01
+
+### Added
+- Added backend support for `orderby=organization` on `/rondo/v1/people/filtered`.
+
+### Changed
+- Team column in `/people` is now sortable from the UI and maps to backend organization sorting.
+
 ## [31.6.12] - 2026-03-01
 
 ### Fixed
