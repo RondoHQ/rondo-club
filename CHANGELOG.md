@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.23] - 2026-03-01
+
+### Added
+- Lettermint settings now include a dedicated `Verificatiemail` block with separate verification sender fields:
+  - `Verificatiemail From e-mailadres`
+  - `Verificatiemail From naam`
+
+### Changed
+- Verification emails now send with an explicit `From` header resolved from verification sender settings, with fallback to default Lettermint sender settings.
+
 ## [31.6.22] - 2026-03-01
 
 ### Changed

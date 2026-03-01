@@ -997,6 +997,17 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_textarea_field',
 						],
+						'lettermint_verification_from_email' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_email',
+							'validate_callback' => function ( $param ) {
+								return $param === null || $param === '' || is_email( $param );
+							},
+						],
+						'lettermint_verification_from_name' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 					],
 				],
 			]
@@ -4737,6 +4748,16 @@ class Api extends Base {
 			\Rondo\Config\ClubConfig::update_lettermint_verification_email_body( $lettermint_verification_email_body );
 		}
 
+		$lettermint_verification_from_email = $request->get_param( 'lettermint_verification_from_email' );
+		if ( $lettermint_verification_from_email !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_verification_from_email( $lettermint_verification_from_email );
+		}
+
+		$lettermint_verification_from_name = $request->get_param( 'lettermint_verification_from_name' );
+		if ( $lettermint_verification_from_name !== null ) {
+			\Rondo\Config\ClubConfig::update_lettermint_verification_from_name( $lettermint_verification_from_name );
+		}
+
 		return rest_ensure_response( \Rondo\Config\ClubConfig::get_all_settings() );
 	}
 
@@ -5352,12 +5373,38 @@ class Api extends Base {
 			$person_name = $recipient;
 		}
 
-		$current_user = wp_get_current_user();
-		$sender_name  = sanitize_text_field( (string) ( $current_user->display_name ?? '' ) );
-		if ( $sender_name === '' ) {
-			$sender_name = 'Rondo Club';
+		$current_user                 = wp_get_current_user();
+		$verification_from_email      = \Rondo\Config\ClubConfig::get_lettermint_verification_from_email();
+		$verification_from_name       = \Rondo\Config\ClubConfig::get_lettermint_verification_from_name();
+		$default_from_email           = \Rondo\Config\ClubConfig::get_lettermint_from_email();
+		$default_from_name            = \Rondo\Config\ClubConfig::get_lettermint_from_name();
+		$current_user_sender_name     = sanitize_text_field( (string) ( $current_user->display_name ?? '' ) );
+		$current_user_sender_email    = sanitize_email( (string) ( $current_user->user_email ?? '' ) );
+		$resolved_sender_email        = '';
+		$resolved_sender_name         = '';
+
+		if ( is_email( $verification_from_email ) ) {
+			$resolved_sender_email = $verification_from_email;
+		} elseif ( is_email( $default_from_email ) ) {
+			$resolved_sender_email = $default_from_email;
+		} elseif ( is_email( $current_user_sender_email ) ) {
+			$resolved_sender_email = $current_user_sender_email;
 		}
-		$sender_email = sanitize_email( (string) ( $current_user->user_email ?? '' ) );
+
+		if ( $verification_from_name !== '' ) {
+			$resolved_sender_name = $verification_from_name;
+		} elseif ( $default_from_name !== '' ) {
+			$resolved_sender_name = $default_from_name;
+		} elseif ( $current_user_sender_name !== '' ) {
+			$resolved_sender_name = $current_user_sender_name;
+		}
+
+		if ( $resolved_sender_name === '' ) {
+			$resolved_sender_name = 'Rondo Club';
+		}
+
+		$sender_name  = $resolved_sender_name;
+		$sender_email = $resolved_sender_email;
 		$club_name    = \Rondo\Config\ClubConfig::get_club_name();
 		if ( $club_name === '' ) {
 			$club_name = 'Rondo Club';
@@ -5393,6 +5440,14 @@ class Api extends Base {
 			'X-Rondo-Email-Tag: email-verification',
 			'X-Rondo-Metadata: ' . wp_json_encode( $metadata ),
 		];
+		if ( is_email( $resolved_sender_email ) ) {
+			$from_display = str_replace( [ "\r", "\n" ], '', trim( $resolved_sender_name ) );
+			if ( $from_display !== '' ) {
+				$headers[] = sprintf( 'From: %s <%s>', $from_display, $resolved_sender_email );
+			} else {
+				$headers[] = sprintf( 'From: %s', $resolved_sender_email );
+			}
+		}
 
 		$sent = wp_mail( $recipient, $subject, $body, $headers );
 		if ( ! $sent ) {
