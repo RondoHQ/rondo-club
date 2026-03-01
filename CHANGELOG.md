@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.12] - 2026-03-01
+
+### Fixed
+- Production birthday sorting bug: `_birthdate` ACF field-key values (e.g. `field_birthdate`) are now ignored as non-date values.
+- Birthday sorting/filtering now only uses validated date-formatted meta values and prefers `birthdate` data, with safe fallback to `_birthdate` only when it is an actual date.
+
 ## [31.6.11] - 2026-03-01
 
 ### Fixed
