@@ -224,6 +224,14 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
+					'birth_month'          => [
+						'description'       => 'Filter by birth month (1-12)',
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+						'validate_callback' => function ( $value ) {
+							return $value >= 1 && $value <= 12;
+						},
+					],
 					// Custom field filters
 					'huidig_vrijwilliger'  => [
 						'description'       => 'Filter by current volunteer status (1=yes, 0=no, empty=all)',
@@ -858,6 +866,7 @@ class People extends Base {
 			'first_name',
 			'last_name',
 			'modified',
+			'birthdate',
 			// Sportlink fields (ACF fields, not from Manager)
 			'custom_knvb-id',
 			'custom_type-lid',
@@ -919,6 +928,7 @@ class People extends Base {
 		$modified_days   = $request->get_param( 'modified_days' );
 		$birth_year_from = $request->get_param( 'birth_year_from' );
 		$birth_year_to   = $request->get_param( 'birth_year_to' );
+		$birth_month     = $request->get_param( 'birth_month' );
 		$orderby         = $request->get_param( 'orderby' );
 		$order           = strtoupper( $request->get_param( 'order' ) );
 
@@ -980,6 +990,14 @@ class People extends Base {
 		$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} ln ON p.ID = ln.post_id AND ln.meta_key = 'last_name'";
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 
+		$has_birthdate_join = false;
+		$ensure_birthdate_join = static function () use ( &$has_birthdate_join, &$join_clauses, $wpdb ) {
+			if ( ! $has_birthdate_join ) {
+				$join_clauses[]      = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
+				$has_birthdate_join = true;
+			}
+		};
+
 		// VOG-only users can only see volunteers
 		if ( $volunteers_only ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} vog_hv ON p.ID = vog_hv.post_id AND vog_hv.meta_key = 'huidig-vrijwilliger'";
@@ -1004,7 +1022,7 @@ class People extends Base {
 
 		// Birth year filter (uses denormalized _birthdate meta from Phase 112)
 		if ( $birth_year_from !== null || $birth_year_to !== null ) {
-			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
+			$ensure_birthdate_join();
 
 			if ( $birth_year_from !== null && $birth_year_to !== null ) {
 				// Range filter
@@ -1020,6 +1038,13 @@ class People extends Base {
 				$where_clauses[]  = 'YEAR(bd.meta_value) = %d';
 				$prepare_values[] = $birth_year_to;
 			}
+		}
+
+		// Birth month filter (1-12) on denormalized _birthdate meta.
+		if ( $birth_month !== null ) {
+			$ensure_birthdate_join();
+			$where_clauses[]  = 'MONTH(bd.meta_value) = %d';
+			$prepare_values[] = $birth_month;
 		}
 
 		// Custom field filters
@@ -1151,6 +1176,13 @@ class People extends Base {
 				break;
 			case 'modified':
 				$order_clause = "ORDER BY p.post_modified $order";
+				break;
+			case 'birthdate':
+				$ensure_birthdate_join();
+				$order_clause = "ORDER BY
+					(bd.meta_value IS NULL OR bd.meta_value = '') ASC,
+					SUBSTRING(bd.meta_value, 6, 5) $order,
+					fn.meta_value ASC";
 				break;
 			case 'custom_datum-vog':
 				// ACF date field - not a custom field from Manager, so handle explicitly

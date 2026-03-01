@@ -9,7 +9,7 @@ import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
 import { getTeamName, formatPhoneForTel } from '@/utils/formatters';
-import { format } from '@/utils/dateFormat';
+import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
 import { useListPreferences } from '@/hooks/useListPreferences';
@@ -28,6 +28,13 @@ function getFirstPhone(person) {
   const contactInfo = person.acf?.contact_info || [];
   const contact = contactInfo.find(c => c.contact_type === 'phone' || c.contact_type === 'mobile');
   return contact?.contact_value || null;
+}
+
+function formatBirthdateDisplay(birthdate) {
+  if (!birthdate) return '-';
+  const parsed = parseYmd(birthdate);
+  if (!isValid(parsed)) return '-';
+  return format(parsed, 'd MMM yyyy');
 }
 
 // Helper function to get current team ID from person's work history
@@ -57,6 +64,7 @@ const COLUMN_SORT_FIELDS = {
   first_name: 'first_name',
   last_name: 'last_name',
   team: 'organization',
+  birthdate: 'birthdate',
   modified: 'modified',
   // Sportlink field mappings
   'knvb-id': 'custom_knvb-id',
@@ -168,6 +176,18 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               style={style}
             >
               {person.modified ? format(new Date(person.modified), 'yyyy-MM-dd') : '-'}
+            </td>
+          );
+        }
+
+        if (colId === 'birthdate') {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {formatBirthdateDisplay(person.acf?.birthdate)}
             </td>
           );
         }
@@ -503,6 +523,7 @@ export default function PeopleList() {
 
   // Parse filters from URL
   const selectedBirthYear = searchParams.get('birthYear') || '';
+  const selectedBirthMonth = searchParams.get('birthdayMonth') || '';
   const lastModifiedFilter = searchParams.get('modified') || '';
   const sortField = searchParams.get('sort') || 'first_name';
   const sortOrder = searchParams.get('order') || 'asc';
@@ -543,6 +564,10 @@ export default function PeopleList() {
   // Filter setters that update URL
   const setSelectedBirthYear = useCallback((value) => {
     updateSearchParams({ birthYear: value });
+  }, [updateSearchParams]);
+
+  const setSelectedBirthMonth = useCallback((value) => {
+    updateSearchParams({ birthdayMonth: value });
   }, [updateSearchParams]);
 
   const setLastModifiedFilter = useCallback((value) => {
@@ -605,6 +630,7 @@ export default function PeopleList() {
     modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
     birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
     birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+    birthMonth: selectedBirthMonth ? parseInt(selectedBirthMonth, 10) : null,
     orderby: sortField.startsWith('custom_') ? sortField : sortField === 'organization' ? 'first_name' : sortField,
     order: sortOrder,
     // Custom field filters
@@ -723,6 +749,40 @@ export default function PeopleList() {
       getFilterLabel: (val) => `Geboren ${val}`,
     }),
     createColumn({
+      id: 'birthday_month', header: 'Verjaardagmaand', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: '1', label: 'Januari' },
+        { value: '2', label: 'Februari' },
+        { value: '3', label: 'Maart' },
+        { value: '4', label: 'April' },
+        { value: '5', label: 'Mei' },
+        { value: '6', label: 'Juni' },
+        { value: '7', label: 'Juli' },
+        { value: '8', label: 'Augustus' },
+        { value: '9', label: 'September' },
+        { value: '10', label: 'Oktober' },
+        { value: '11', label: 'November' },
+        { value: '12', label: 'December' },
+      ],
+      getFilterLabel: (val) => {
+        const monthLabels = {
+          '1': 'Januari',
+          '2': 'Februari',
+          '3': 'Maart',
+          '4': 'April',
+          '5': 'Mei',
+          '6': 'Juni',
+          '7': 'Juli',
+          '8': 'Augustus',
+          '9': 'September',
+          '10': 'Oktober',
+          '11': 'November',
+          '12': 'December',
+        };
+        return `Verjaardag: ${monthLabels[val] || val}`;
+      },
+    }),
+    createColumn({
       id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
       filterOptions: [
         { value: '7', label: 'Laatste 7 dagen' }, { value: '30', label: 'Laatste 30 dagen' },
@@ -786,6 +846,7 @@ export default function PeopleList() {
     include_former: includeFormer,
     lid_tot_future: lidTotFuture,
     birth_year: selectedBirthYear,
+    birthday_month: selectedBirthMonth,
     last_modified: lastModifiedFilter,
     vrijwilliger: huidigeVrijwilliger,
     blokkade: financieleBlokkade,
@@ -844,6 +905,7 @@ export default function PeopleList() {
       case 'include_former': setIncludeFormer(value); break;
       case 'lid_tot_future': setLidTotFuture(value); break;
       case 'birth_year': setSelectedBirthYear(value); break;
+      case 'birthday_month': setSelectedBirthMonth(value); break;
       case 'last_modified': setLastModifiedFilter(value); break;
       case 'vrijwilliger': setHuidigeVrijwilliger(value); break;
       case 'blokkade': setFinancieleBlokkade(value); break;
@@ -857,7 +919,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setSelectedBirthYear, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -890,7 +952,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
