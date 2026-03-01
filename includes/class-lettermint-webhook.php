@@ -45,6 +45,16 @@ class LettermintWebhook {
 	 */
 	const META_RECIPIENT = '_rondo_lettermint_recipient';
 
+	/**
+	 * Todo meta key for flow (e.g. email verification).
+	 */
+	const META_FLOW = '_rondo_lettermint_flow';
+
+	/**
+	 * Metadata flow value for manual email verification sends.
+	 */
+	const FLOW_EMAIL_VERIFICATION = 'email_verification';
+
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
@@ -159,8 +169,16 @@ class LettermintWebhook {
 		$message_id = sanitize_text_field( (string) ( $data['message_id'] ?? '' ) );
 		$timestamp  = sanitize_text_field( (string) ( $data['timestamp'] ?? ( $event['timestamp'] ?? '' ) ) );
 		$tag        = sanitize_text_field( (string) ( $data['tag'] ?? '' ) );
+		$metadata   = $this->extract_metadata( $data );
+		$flow       = sanitize_text_field( (string) ( $metadata['flow'] ?? '' ) );
 
 		$person_id = $this->find_person_by_email( $recipient );
+		if ( $person_id <= 0 && isset( $metadata['source_person_id'] ) ) {
+			$source_person_id = (int) $metadata['source_person_id'];
+			if ( $source_person_id > 0 ) {
+				$person_id = $source_person_id;
+			}
+		}
 		$this->upsert_suppressed_email(
 			$recipient,
 			$event_name,
@@ -172,7 +190,17 @@ class LettermintWebhook {
 			$person_id
 		);
 
-		$owners = $this->get_secretaris_user_ids();
+		if ( $flow === self::FLOW_EMAIL_VERIFICATION && $person_id > 0 ) {
+			$this->mark_person_email_inactive( $person_id, $recipient, $event_name, $event_id );
+		}
+
+		$sender_user_id = isset( $metadata['sender_user_id'] ) ? (int) $metadata['sender_user_id'] : 0;
+		if ( $flow === self::FLOW_EMAIL_VERIFICATION && $sender_user_id > 0 ) {
+			$owners = [ $sender_user_id ];
+		} else {
+			$owners = $this->get_secretaris_user_ids();
+		}
+
 		if ( empty( $owners ) ) {
 			return new \WP_Error( 'lettermint_no_secretaris', 'No Secretaris or admin user available for task assignment.' );
 		}
@@ -189,7 +217,8 @@ class LettermintWebhook {
 				$timestamp,
 				$tag,
 				$data,
-				$person_id
+				$person_id,
+				$flow
 			);
 
 			if ( is_wp_error( $task_result ) ) {
@@ -217,6 +246,7 @@ class LettermintWebhook {
 	 * @param string $tag        Event tag.
 	 * @param array  $data       Event data payload.
 	 * @param int    $person_id  Matched person ID.
+	 * @param string $flow       Optional event flow.
 	 * @return int|\WP_Error
 	 */
 	private function create_follow_up_task(
@@ -229,7 +259,8 @@ class LettermintWebhook {
 		string $timestamp,
 		string $tag,
 		array $data,
-		int $person_id = 0
+		int $person_id = 0,
+		string $flow = ''
 	) {
 		$existing = get_posts(
 			[
@@ -255,7 +286,10 @@ class LettermintWebhook {
 			return (int) $existing[0];
 		}
 
-		$title   = sprintf( '%s: %s', $this->event_label( $event_name ), $recipient );
+		$title_prefix = $flow === self::FLOW_EMAIL_VERIFICATION
+			? 'Verificatiemail ' . strtolower( $this->event_label( $event_name ) )
+			: $this->event_label( $event_name );
+		$title        = sprintf( '%s: %s', $title_prefix, $recipient );
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => 'rondo_todo',
@@ -270,7 +304,7 @@ class LettermintWebhook {
 			return $post_id;
 		}
 
-		$notes = $this->build_task_notes( $event_name, $recipient, $subject, $message_id, $timestamp, $tag, $event_id, $data );
+		$notes = $this->build_task_notes( $event_name, $recipient, $subject, $message_id, $timestamp, $tag, $event_id, $data, $flow );
 		update_field( 'notes', wpautop( esc_html( $notes ) ), $post_id );
 
 		if ( $person_id > 0 ) {
@@ -280,6 +314,9 @@ class LettermintWebhook {
 		update_post_meta( $post_id, self::META_EVENT_ID, $event_id );
 		update_post_meta( $post_id, self::META_EVENT_NAME, $event_name );
 		update_post_meta( $post_id, self::META_RECIPIENT, $recipient );
+		if ( $flow !== '' ) {
+			update_post_meta( $post_id, self::META_FLOW, $flow );
+		}
 
 		return (int) $post_id;
 	}
@@ -295,6 +332,7 @@ class LettermintWebhook {
 	 * @param string $tag        Event tag.
 	 * @param string $event_id   Event ID.
 	 * @param array  $data       Event payload data.
+	 * @param string $flow       Optional event flow.
 	 * @return string
 	 */
 	private function build_task_notes(
@@ -305,7 +343,8 @@ class LettermintWebhook {
 		string $timestamp,
 		string $tag,
 		string $event_id,
-		array $data
+		array $data,
+		string $flow = ''
 	): string {
 		$reason = '';
 		if ( is_array( $data['response'] ?? null ) ) {
@@ -330,12 +369,19 @@ class LettermintWebhook {
 		if ( $tag !== '' ) {
 			$lines[] = 'Tag: ' . $tag;
 		}
+		if ( $flow !== '' ) {
+			$lines[] = 'Flow: ' . $flow;
+		}
 		if ( $reason !== '' ) {
 			$lines[] = 'Melding: ' . $reason;
 		}
 
 		$lines[] = '';
-		$lines[] = 'Actie: controleer het e-mailadres, neem contact op met het lid en werk de gegevens bij indien nodig.';
+		if ( $flow === self::FLOW_EMAIL_VERIFICATION ) {
+			$lines[] = 'Actie: de verificatiemail is gebounced; markeer dit e-mailadres als onbruikbaar en vraag het lid om een werkend e-mailadres.';
+		} else {
+			$lines[] = 'Actie: controleer het e-mailadres, neem contact op met het lid en werk de gegevens bij indien nodig.';
+		}
 
 		return implode( "\n", $lines );
 	}
@@ -384,6 +430,89 @@ class LettermintWebhook {
 		];
 
 		update_option( self::OPTION_SUPPRESSED_EMAILS, $suppressed, false );
+	}
+
+	/**
+	 * Extract and sanitize provider metadata from event payload.
+	 *
+	 * @param array $data Event data payload.
+	 * @return array<string, mixed>
+	 */
+	private function extract_metadata( array $data ): array {
+		$metadata = [];
+		if ( is_array( $data['metadata'] ?? null ) ) {
+			$metadata = $data['metadata'];
+		} elseif ( is_array( $data['meta'] ?? null ) ) {
+			$metadata = $data['meta'];
+		}
+
+		$sanitized = [];
+		foreach ( $metadata as $key => $value ) {
+			$key = sanitize_key( (string) $key );
+			if ( $key === '' ) {
+				continue;
+			}
+
+			if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
+				$sanitized[ $key ] = $value;
+				continue;
+			}
+
+			if ( is_string( $value ) ) {
+				$sanitized[ $key ] = sanitize_text_field( $value );
+			}
+		}
+
+		return $sanitized;
+	}
+
+	/**
+	 * Mark matching person contact email as inactive after verification bounce.
+	 *
+	 * @param int    $person_id  Person post ID.
+	 * @param string $recipient  Recipient email.
+	 * @param string $event_name Event name.
+	 * @param string $event_id   Event ID.
+	 * @return void
+	 */
+	private function mark_person_email_inactive( int $person_id, string $recipient, string $event_name, string $event_id ): void {
+		$contact_info = get_field( 'contact_info', $person_id );
+		if ( ! is_array( $contact_info ) ) {
+			return;
+		}
+
+		$updated = false;
+		foreach ( $contact_info as &$contact ) {
+			$type  = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
+			$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
+			if ( $type !== 'email' || $value !== $recipient ) {
+				continue;
+			}
+
+			$label = trim( (string) ( $contact['contact_label'] ?? '' ) );
+			if ( stripos( $label, 'inactief' ) === false ) {
+				$contact['contact_label'] = $label !== '' ? $label . ' (inactief)' : 'Inactief';
+				$updated                  = true;
+			}
+		}
+		unset( $contact );
+
+		if ( $updated ) {
+			update_field( 'contact_info', $contact_info, $person_id );
+		}
+
+		$inactive = get_post_meta( $person_id, '_rondo_inactive_emails', true );
+		if ( ! is_array( $inactive ) ) {
+			$inactive = [];
+		}
+
+		$inactive[ $recipient ] = [
+			'event'      => $event_name,
+			'event_id'   => $event_id,
+			'updated_at' => gmdate( 'Y-m-d H:i:s' ),
+		];
+
+		update_post_meta( $person_id, '_rondo_inactive_emails', $inactive );
 	}
 
 	/**

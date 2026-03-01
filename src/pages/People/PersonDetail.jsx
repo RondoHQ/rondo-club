@@ -119,6 +119,7 @@ export default function PersonDetail() {
   const [todoToComplete, setTodoToComplete] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [activityInitialData, setActivityInitialData] = useState(null);
+  const [verificationTodoId, setVerificationTodoId] = useState(null);
 
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
@@ -535,6 +536,23 @@ export default function PersonDetail() {
     }
 
     await deleteTodo.mutateAsync({ todoId, personId: id });
+  };
+
+  const handleSendVerificationEmail = async (todo) => {
+    setVerificationTodoId(todo.id);
+    try {
+      const response = await prmApi.sendLettermintVerificationEmail(todo.id, todo?.email_verification?.recipient || '');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['people', id, 'timeline'] }),
+        queryClient.invalidateQueries({ queryKey: ['todos'] }),
+      ]);
+      const recipient = response.data?.recipient || todo?.email_verification?.recipient || 'onbekend e-mailadres';
+      window.alert(`Verificatiemail verzonden naar ${recipient}.`);
+    } catch (error) {
+      window.alert(error?.response?.data?.message || 'Kon verificatiemail niet verzenden.');
+    } finally {
+      setVerificationTodoId(null);
+    }
   };
 
   // Handle editing timeline item
@@ -1769,6 +1787,8 @@ export default function PersonDetail() {
                         setShowTodoModal(true);
                       }}
                       onDelete={handleDeleteTodo}
+                      onSendVerificationEmail={handleSendVerificationEmail}
+                      verificationEmailSending={verificationTodoId === todo.id}
                     />
                   ))}
                 </div>
@@ -1862,6 +1882,8 @@ export default function PersonDetail() {
                         setShowMobileTodos(false);
                       }}
                       onDelete={handleDeleteTodo}
+                      onSendVerificationEmail={handleSendVerificationEmail}
+                      verificationEmailSending={verificationTodoId === todo.id}
                       showActionsAlways
                     />
                   ))}

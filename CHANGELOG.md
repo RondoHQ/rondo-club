@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.18] - 2026-03-01
+
+### Added
+- Added a new Lettermint verification email flow for bounce follow-up tasks, including a task action that sends a verification email from the todo.
+- Added configurable Lettermint verification email subject/body templates in `Instellingen > Koppelingen > Lettermint`.
+- Todo API responses now include `lettermint` bounce metadata and an `email_verification` action hint (`can_send`, `recipient`) for the frontend.
+
+### Changed
+- Lettermint transport now accepts `X-Rondo-Metadata` headers and forwards sanitized values into Lettermint metadata for webhook correlation.
+- Lettermint webhook handling now routes verification-email bounces back to the user who sent the verification email (instead of always Secretaris/admin fallback).
+
+### Fixed
+- Verification-email bounces now mark the matched person contact email as inactive (label suffix `(inactief)` and `_rondo_inactive_emails` post meta), and create a follow-up todo for the sender to collect a working address.
+
 ## [31.6.17] - 2026-03-01
 
 ### Added

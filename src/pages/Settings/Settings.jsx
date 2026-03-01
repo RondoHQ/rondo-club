@@ -1246,6 +1246,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
     lettermint_team_api_token: '',
     lettermint_from_email: '',
     lettermint_from_name: '',
+    lettermint_verification_email_subject: '',
+    lettermint_verification_email_body: '',
     lettermint_webhook_secret: '',
     lettermint_route_id: '',
   });
@@ -1270,8 +1272,16 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       lettermint_route_id: clubConfig?.lettermint_route_id || '',
       lettermint_from_email: clubConfig?.lettermint_from_email || '',
       lettermint_from_name: clubConfig?.lettermint_from_name || '',
+      lettermint_verification_email_subject: clubConfig?.lettermint_verification_email_subject || '',
+      lettermint_verification_email_body: clubConfig?.lettermint_verification_email_body || '',
     }));
-  }, [clubConfig?.lettermint_route_id, clubConfig?.lettermint_from_email, clubConfig?.lettermint_from_name]);
+  }, [
+    clubConfig?.lettermint_route_id,
+    clubConfig?.lettermint_from_email,
+    clubConfig?.lettermint_from_name,
+    clubConfig?.lettermint_verification_email_subject,
+    clubConfig?.lettermint_verification_email_body,
+  ]);
 
   useEffect(() => {
     setSelectedProjectId(clubConfig?.lettermint_project_id || '');
@@ -1337,6 +1347,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       const currentProjectId = clubConfig?.lettermint_project_id || '';
       const currentFromEmail = clubConfig?.lettermint_from_email || '';
       const currentFromName = clubConfig?.lettermint_from_name || '';
+      const currentVerificationSubject = clubConfig?.lettermint_verification_email_subject || '';
+      const currentVerificationBody = clubConfig?.lettermint_verification_email_body || '';
 
       if (formData.lettermint_api_token.trim()) {
         payload.lettermint_api_token = formData.lettermint_api_token.trim();
@@ -1359,6 +1371,12 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
       if (formData.lettermint_from_name.trim() !== currentFromName) {
         payload.lettermint_from_name = formData.lettermint_from_name.trim();
       }
+      if (formData.lettermint_verification_email_subject.trim() !== currentVerificationSubject) {
+        payload.lettermint_verification_email_subject = formData.lettermint_verification_email_subject.trim();
+      }
+      if (formData.lettermint_verification_email_body !== currentVerificationBody) {
+        payload.lettermint_verification_email_body = formData.lettermint_verification_email_body;
+      }
 
       if (Object.keys(payload).length === 0) {
         setSaveMessage('Geen wijzigingen om op te slaan.');
@@ -1374,6 +1392,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
         lettermint_team_api_token: '',
         lettermint_from_email: response.data?.lettermint_from_email || '',
         lettermint_from_name: response.data?.lettermint_from_name || '',
+        lettermint_verification_email_subject: response.data?.lettermint_verification_email_subject || '',
+        lettermint_verification_email_body: response.data?.lettermint_verification_email_body || '',
         lettermint_webhook_secret: '',
         lettermint_route_id: response.data?.lettermint_route_id || '',
       }));
@@ -1530,6 +1550,34 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
         />
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Wordt gebruikt als standaard `From`-naam wanneer een e-mail geen eigen naam instelt.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Verificatiemail onderwerp</label>
+        <input
+          type="text"
+          value={formData.lettermint_verification_email_subject}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_verification_email_subject: e.target.value }))}
+          className="input"
+          placeholder="[Rondo Club] Controle e-mailadres"
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Beschikbare placeholders: {'{name}'}, {'{email}'}, {'{club_name}'}, {'{sender_name}'}, {'{sender_email}'}, {'{date}'}.
+        </p>
+      </div>
+
+      <div>
+        <label className="label">Verificatiemail bericht</label>
+        <textarea
+          value={formData.lettermint_verification_email_body}
+          onChange={(e) => setFormData((prev) => ({ ...prev, lettermint_verification_email_body: e.target.value }))}
+          className="input min-h-32"
+          disabled={!isAdmin}
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Dit bericht wordt gebruikt bij de actie &quot;verstuur verificatiemail&quot; op bounce-taken.
         </p>
       </div>
 

@@ -548,6 +548,19 @@ class Todos extends Base {
 			}
 		}
 
+		$lettermint_event_name = sanitize_text_field(
+			(string) get_post_meta( $post->ID, \Rondo\Notifications\LettermintWebhook::META_EVENT_NAME, true )
+		);
+		$lettermint_recipient = sanitize_email(
+			(string) get_post_meta( $post->ID, \Rondo\Notifications\LettermintWebhook::META_RECIPIENT, true )
+		);
+		$lettermint_flow = sanitize_text_field(
+			(string) get_post_meta( $post->ID, \Rondo\Notifications\LettermintWebhook::META_FLOW, true )
+		);
+		$candidate_recipient = $lettermint_recipient !== '' ? $lettermint_recipient : $this->find_first_email_from_persons( $person_ids );
+		$contains_bounce     = stripos( $post->post_title, 'bounce' ) !== false;
+		$can_verify_email    = $candidate_recipient !== '' && ( $lettermint_event_name !== '' || $contains_bounce );
+
 		return [
 			'id'               => $post->ID,
 			'type'             => 'todo',
@@ -566,6 +579,16 @@ class Todos extends Base {
 			'status'           => $status,
 			'due_date'         => $due_date ?: null,
 			'awaiting_since'   => $awaiting_since ?: null,
+			'lettermint'       => [
+				'event_name'          => $lettermint_event_name !== '' ? $lettermint_event_name : null,
+				'recipient'           => $lettermint_recipient !== '' ? $lettermint_recipient : null,
+				'flow'                => $lettermint_flow !== '' ? $lettermint_flow : null,
+				'is_actionable_bounce'=> $lettermint_event_name !== '' ? in_array( $lettermint_event_name, \Rondo\Notifications\LettermintWebhook::ACTIONABLE_EVENTS, true ) : false,
+			],
+			'email_verification' => [
+				'can_send'  => $can_verify_email,
+				'recipient' => $candidate_recipient !== '' ? $candidate_recipient : null,
+			],
 		];
 	}
 
@@ -591,5 +614,34 @@ class Todos extends Base {
 		}
 
 		return $user_id;
+	}
+
+	/**
+	 * Find first valid email address across related persons.
+	 *
+	 * @param int[] $person_ids Related person IDs.
+	 * @return string
+	 */
+	private function find_first_email_from_persons( array $person_ids ): string {
+		foreach ( $person_ids as $person_id ) {
+			$contact_info = get_field( 'contact_info', (int) $person_id );
+			if ( ! is_array( $contact_info ) ) {
+				continue;
+			}
+
+			foreach ( $contact_info as $contact ) {
+				$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
+				if ( $type !== 'email' ) {
+					continue;
+				}
+
+				$email = sanitize_email( (string) ( $contact['contact_value'] ?? '' ) );
+				if ( is_email( $email ) ) {
+					return $email;
+				}
+			}
+		}
+
+		return '';
 	}
 }
