@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.25] - 2026-03-01
+
+### Fixed
+- Global search (`/rondo/v1/search`) now correctly finds people by KNVB ID (`knvb-id` and `custom_knvb-id` meta keys).
+- Global search now correctly finds people by e-mail address from `contact_info` (ACF repeater e-mail contacts).
+
 ## [31.6.24] - 2026-03-01
 
 ### Fixed
