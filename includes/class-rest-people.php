@@ -991,7 +991,11 @@ class People extends Base {
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 
 		$has_birthdate_join = false;
-		$birthdate_value_sql = "COALESCE(NULLIF(bd.meta_value, ''), NULLIF(br.meta_value, ''))";
+		$birthdate_value_sql = "CASE
+			WHEN br.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' OR br.meta_value REGEXP '^[0-9]{8}$' THEN br.meta_value
+			WHEN bd.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' OR bd.meta_value REGEXP '^[0-9]{8}$' THEN bd.meta_value
+			ELSE NULL
+		END";
 		$ensure_birthdate_join = static function () use ( &$has_birthdate_join, &$join_clauses, $wpdb ) {
 			if ( ! $has_birthdate_join ) {
 				$join_clauses[]      = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
