@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.16] - 2026-03-01
+
+### Added
+- Sidebar menu item `Taken` now shows the number of open tasks using dashboard stats.
+
+### Changed
+- Sidebar menu counts are now locale-formatted (`nl-NL`) so larger values (including over 100) remain clearly readable.
+
 ## [31.6.15] - 2026-03-01
 
 ### Added
