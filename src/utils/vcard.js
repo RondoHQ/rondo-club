@@ -131,7 +131,8 @@ export function generateVCard(person, options = {}) {
       const label = contact.contact_label ? escapeVCardValue(contact.contact_label) : '';
       
       switch (contact.contact_type) {
-        case 'email': {
+        case 'email':
+        case 'email2': {
           // EMAIL;TYPE=INTERNET,WORK:email@example.com
           const emailType = label ? `EMAIL;TYPE=INTERNET,${label.toUpperCase()}` : 'EMAIL;TYPE=INTERNET';
           lines.push(`${emailType}:${value}`);
@@ -251,4 +252,3 @@ export function downloadVCard(person, options = {}) {
   // Clean up
   URL.revokeObjectURL(url);
 }
-

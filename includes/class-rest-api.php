@@ -4275,7 +4275,7 @@ class Api extends Base {
 
 			foreach ( $contact_info as $contact ) {
 				$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-				if ( $type !== 'email' ) {
+				if ( ! in_array( $type, [ 'email', 'email2' ], true ) ) {
 					continue;
 				}
 

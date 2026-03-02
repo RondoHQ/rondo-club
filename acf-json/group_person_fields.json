@@ -161,6 +161,7 @@
                     "type": "select",
                     "choices": {
                         "email": "Email",
+                        "email2": "Email (2e)",
                         "phone": "Phone",
                         "mobile": "Mobile",
                         "website": "Website",
