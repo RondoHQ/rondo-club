@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.28] - 2026-03-02
+
+### Added
+- Todo assignees now automatically receive an email when a task is assigned or reassigned to them.
+- Assignment emails use subject format `[Rondo] Nieuwe taak: {titel taak}` and include assigner name, task title, and task description.
+
 ## [31.6.27] - 2026-03-02
 
 ### Changed

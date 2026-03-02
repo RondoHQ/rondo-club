@@ -269,6 +269,8 @@ class Todos extends Base {
 			delete_post_meta( $post_id, self::ASSIGNED_USER_META_KEY );
 		}
 
+		$this->maybe_send_assignment_notification_email( $post_id, null, $assigned_user_id, $content, $notes );
+
 		// Set awaiting_since timestamp if creating with awaiting status
 		if ( $status === 'awaiting' ) {
 			update_field( 'awaiting_since', gmdate( 'Y-m-d H:i:s' ), $post_id );
@@ -388,6 +390,8 @@ class Todos extends Base {
 		$person_ids = $request->get_param( 'person_ids' );
 		$notes      = $request->get_param( 'notes' );
 		$assigned_user_param = $request->get_param( 'assigned_user_id' );
+		$previous_assigned_user_id = (int) get_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY, true );
+		$new_assigned_user_id      = $previous_assigned_user_id;
 
 		$todo = get_post( $todo_id );
 
@@ -456,9 +460,13 @@ class Todos extends Base {
 			$assigned_user_id = $this->sanitize_assigned_user_id( $assigned_user_param );
 			if ( $assigned_user_id !== null ) {
 				update_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY, $assigned_user_id );
+				$new_assigned_user_id = $assigned_user_id;
 			} else {
 				delete_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY );
+				$new_assigned_user_id = null;
 			}
+
+			$this->maybe_send_assignment_notification_email( $todo_id, $previous_assigned_user_id, $new_assigned_user_id, $content, $notes );
 		}
 
 		// Refresh the post object
@@ -643,5 +651,93 @@ class Todos extends Base {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Send assignment notification email when a todo gets assigned to a user.
+	 *
+	 * @param int         $todo_id               Todo post ID.
+	 * @param int|null    $previous_assignee_id  Previous assignee user ID.
+	 * @param int|null    $new_assignee_id       New assignee user ID.
+	 * @param string|null $fallback_title        Optional title from request payload.
+	 * @param string|null $fallback_description  Optional notes/description from request payload.
+	 * @return void
+	 */
+	private function maybe_send_assignment_notification_email(
+		int $todo_id,
+		?int $previous_assignee_id,
+		?int $new_assignee_id,
+		?string $fallback_title = null,
+		?string $fallback_description = null
+	): void {
+		$new_assignee_id      = $new_assignee_id !== null ? (int) $new_assignee_id : null;
+		$previous_assignee_id = $previous_assignee_id !== null ? (int) $previous_assignee_id : null;
+
+		if ( empty( $new_assignee_id ) ) {
+			return;
+		}
+
+		if ( $previous_assignee_id !== null && $new_assignee_id === $previous_assignee_id ) {
+			return;
+		}
+
+		$assignee = get_userdata( $new_assignee_id );
+		if ( ! $assignee || ! is_email( $assignee->user_email ) ) {
+			return;
+		}
+
+		$current_user = wp_get_current_user();
+		$assigner     = trim( (string) ( $current_user->display_name ?: $current_user->user_login ?: '' ) );
+		if ( $assigner === '' ) {
+			$assigner = 'Een gebruiker';
+		}
+
+		$title = $fallback_title !== null ? $fallback_title : get_the_title( $todo_id );
+		$title = trim( wp_strip_all_tags( html_entity_decode( (string) $title, ENT_QUOTES, 'UTF-8' ) ) );
+		if ( $title === '' ) {
+			$title = __( '(zonder titel)', 'rondo' );
+		}
+
+		$description = $fallback_description !== null ? $fallback_description : (string) get_field( 'notes', $todo_id );
+		$description = $this->normalize_todo_description_for_email( $description );
+
+		$subject = sprintf( '[Rondo] Nieuwe taak: %s', $title );
+		$message = sprintf(
+			"%s heeft een taak aan jou toegewezen:\n\nTitel: %s\nBeschrijving:\n%s",
+			$assigner,
+			$title,
+			$description
+		);
+
+		$sent = wp_mail(
+			$assignee->user_email,
+			$subject,
+			$message,
+			[
+				'Content-Type: text/plain; charset=UTF-8',
+				'X-Rondo-Email-Tag: todo-assigned',
+			]
+		);
+
+		if ( ! $sent ) {
+			error_log( sprintf( 'Todo assignment email failed for todo %d to user %d', $todo_id, $new_assignee_id ) );
+		}
+	}
+
+	/**
+	 * Convert todo description HTML into plain text for assignment emails.
+	 *
+	 * @param string $description Raw description/notes value.
+	 * @return string
+	 */
+	private function normalize_todo_description_for_email( string $description ): string {
+		$text = html_entity_decode( $description, ENT_QUOTES, 'UTF-8' );
+		$text = preg_replace( '/<\s*br\s*\/?>/i', "\n", $text );
+		$text = preg_replace( '/<\/p>/i', "\n\n", $text );
+		$text = wp_strip_all_tags( $text );
+		$text = preg_replace( "/\n{3,}/", "\n\n", $text );
+		$text = trim( (string) $text );
+
+		return $text;
 	}
 }
