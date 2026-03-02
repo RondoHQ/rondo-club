@@ -260,6 +260,7 @@ class VCard {
 
 				switch ( $contact['contact_type'] ) {
 					case 'email':
+					case 'email2':
 						$email_type = $label ? "EMAIL;TYPE=INTERNET,{$label}" : 'EMAIL;TYPE=INTERNET';
 						$lines[]    = "{$email_type}:{$value}";
 						break;

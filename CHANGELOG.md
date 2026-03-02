@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.27] - 2026-03-02
+
+### Changed
+- Person contact type choices now include `email2` so Rondo Sync can persist a second email address (`Email2`) without being dropped by ACF validation.
+- Sportlink secondary phone values (`Mobile2`, `Telephone2`) continue to sync as extra `mobile` / `phone` contact rows with label `2`, and are now documented as part of the contact sync contract.
+- Contact editing and person detail rendering now treat `email2` as an email contact (mail icon + `mailto:` behavior), consistent with synced Sportlink data.
+- vCard export (frontend and backend paths) now includes `email2` entries as email fields.
+
+### Fixed
+- Global search email fragment matching now also checks `contact_type = email2`, so members can be found by secondary email addresses synced from Sportlink.
+
 ## [31.6.26] - 2026-03-01
 
 ### Fixed

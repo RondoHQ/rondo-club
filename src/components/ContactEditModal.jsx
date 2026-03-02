@@ -5,6 +5,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 const CONTACT_TYPES = [
   { value: 'email', label: 'Email' },
+  { value: 'email2', label: 'Email (2e)' },
   { value: 'phone', label: 'Telefoon' },
   { value: 'mobile', label: 'Mobiel' },
   { value: 'website', label: 'Website' },

@@ -1270,6 +1270,7 @@ export default function PersonDetail() {
                   // Define display order for contact information
                   const contactOrder = {
                     'email': 1,
+                    'email2': 1,
                     'phone': 2,
                     'mobile': 2, // Phone numbers grouped together
                     'calendar': 3,
@@ -1291,11 +1292,11 @@ export default function PersonDetail() {
                     });
                   
                   return nonSocialContacts.map((contact) => {
-                        const Icon = contact.contact_type === 'email' ? Mail :
+                        const Icon = contact.contact_type === 'email' || contact.contact_type === 'email2' ? Mail :
                                      contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
                                      contact.contact_type === 'calendar' ? Calendar : Globe;
 
-                        const isEmail = contact.contact_type === 'email';
+                        const isEmail = contact.contact_type === 'email' || contact.contact_type === 'email2';
                         const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
                         const isCalendar = contact.contact_type === 'calendar';
                         
