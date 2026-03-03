@@ -244,8 +244,6 @@ export const prmApi = {
   // Person meetings
   getPersonMeetings: (personId, params = {}) => api.get(`/rondo/v1/people/${personId}/meetings`, { params }),
   logMeetingAsActivity: (eventId) => api.post(`/rondo/v1/calendar/events/${eventId}/log`),
-  getTodayMeetings: () => api.get('/rondo/v1/calendar/today-meetings'),
-  getMeetingsForDate: (date) => api.get('/rondo/v1/calendar/today-meetings', { params: { date } }),
 
   // Meeting notes
   getMeetingNotes: (eventId) => api.get(`/rondo/v1/calendar/events/${eventId}/notes`),
@@ -377,5 +375,9 @@ export const prmApi = {
   bulkSendVOGReminders: (ids) => api.post('/rondo/v1/vog/bulk-send-reminder', { ids }),
 
   // Sportlink sync
-  syncFromSportlink: (knvbId) => api.post('/rondo/v1/sportlink/sync-individual', { knvb_id: knvbId }),
+  syncFromSportlink: (knvbId) => api.post(
+    '/rondo/v1/sportlink/sync-individual',
+    { knvb_id: knvbId },
+    { timeout: 60000 }
+  ),
 };

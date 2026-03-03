@@ -25,7 +25,6 @@ const CARD_DEFINITIONS = {
   'reminders': { label: 'Verjaardagen', description: 'Aankomende verjaardagen' },
   'anniversaries': { label: 'Jubilarissen', description: 'Aankomende jubilea' },
   'todos': { label: 'Open taken', description: 'Taken om af te ronden' },
-  'meetings': { label: 'Afspraken vandaag', description: 'Agenda-items voor vandaag' },
   'recent-contacted': { label: 'Recent berichten', description: 'Contacten met recente activiteit' },
   'recent-edited': { label: 'Recent bewerkt', description: 'Recent gewijzigde leden' },
 };

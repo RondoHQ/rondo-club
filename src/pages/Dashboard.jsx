@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Users,
@@ -11,9 +11,6 @@ import {
   MessageCircle,
   HeartHandshake,
   Award,
-  CalendarClock,
-  ChevronLeft,
-  ChevronRight,
   FileCheck,
   Gavel,
 } from 'lucide-react';
@@ -25,9 +22,8 @@ import {
   useUpdateDashboardSettings,
   DEFAULT_DASHBOARD_CARDS,
 } from '@/hooks/useDashboard.js';
-import { useDateMeetings } from '@/hooks/useMeetings.js';
 import { useTodoCompletion } from '@/hooks/useTodoCompletion.js';
-import { format, addDays, subDays, isToday } from '@/utils/dateFormat.js';
+import { format } from '@/utils/dateFormat.js';
 import { APP_NAME } from '@/constants/app.js';
 import {
   isTodoOverdue,
@@ -44,7 +40,6 @@ import DashboardCustomizeModal from '@/components/DashboardCustomizeModal.jsx';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper.jsx';
 
 const TodoModal = lazy(() => import('@/components/Timeline/TodoModal.jsx'));
-const MeetingDetailModal = lazy(() => import('@/components/MeetingDetailModal.jsx'));
 
 /**
  * Statistics card for dashboard header.
@@ -244,77 +239,6 @@ function TodoCard({ todo, onToggle, onView }) {
 }
 
 /**
- * Meeting card showing calendar events.
- */
-function MeetingCard({ meeting, onClick, isNext }) {
-  const now = new Date();
-  const startTime = new Date(meeting.start_time);
-  const endTime = new Date(meeting.end_time);
-  const isPast = endTime < now;
-  const isNow = startTime <= now && now <= endTime;
-
-  const formattedStartTime = format(startTime, 'HH:mm');
-  const formattedEndTime = format(endTime, 'HH:mm');
-
-  // Filter out current user from matched people
-  const currentUserPersonId = window.rondoConfig?.currentUserPersonId
-    ? Number(window.rondoConfig.currentUserPersonId)
-    : null;
-  const filteredMatchedPeople = (meeting.matched_people || []).filter(
-    (person) => !currentUserPersonId || person.person_id !== currentUserPersonId
-  );
-
-  const cardContent = (
-    <>
-      <div className={`text-sm font-medium w-16 flex-shrink-0 ${isNow ? 'font-semibold text-electric-cyan dark:text-white/90' : 'text-electric-cyan dark:text-electric-cyan'}`}>
-        {meeting.all_day ? 'Hele dag' : <>{formattedStartTime} - <br />{formattedEndTime}</>}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium truncate ${isNow ? 'text-obsidian dark:text-white' : 'text-gray-900 dark:text-gray-50'}`}>
-          {meeting.title}
-        </p>
-        {meeting.location && (
-          <p className={`text-xs truncate ${isNow ? 'text-bright-cobalt dark:text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-            {meeting.location}
-          </p>
-        )}
-      </div>
-      {filteredMatchedPeople.length > 0 && (
-        <div className="flex -space-x-2 ml-3 flex-shrink-0">
-          {filteredMatchedPeople.slice(0, 3).map((person) => (
-            <PersonAvatar
-              key={person.person_id}
-              thumbnail={person.thumbnail}
-              name={person.name}
-              size="md"
-              borderClassName="border-2 border-white dark:border-gray-800"
-            />
-          ))}
-        </div>
-      )}
-    </>
-  );
-
-  const buttonClasses = [
-    'w-full flex items-center p-3 rounded-lg transition-colors text-left',
-    isPast ? 'opacity-50' : '',
-    isNow ? 'bg-cyan-50 dark:bg-deep-midnight ring-1 ring-cyan-200 dark:ring-bright-cobalt' : 'hover:bg-gray-50 dark:hover:bg-gray-700',
-  ].filter(Boolean).join(' ');
-
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(meeting)}
-      className={buttonClasses}
-      data-is-now={isNow && !meeting.all_day ? 'true' : undefined}
-      data-is-next={isNext ? 'true' : undefined}
-    >
-      {cardContent}
-    </button>
-  );
-}
-
-/**
  * Empty state shown when no data exists.
  */
 function EmptyState() {
@@ -499,57 +423,9 @@ export default function Dashboard() {
   // Use the todo completion hook
   const todoCompletion = useTodoCompletion();
 
-  // Date navigation state for meetings widget
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const { data: meetingsData } = useDateMeetings(selectedDate);
-
-  // Meeting modal state
-  const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [showMeetingModal, setShowMeetingModal] = useState(false);
-
   // URL params for customize modal
   const [searchParams, setSearchParams] = useSearchParams();
   const showCustomizeModal = searchParams.get('customize') === 'true';
-
-  // Meetings data
-  const dateMeetings = useMemo(() => meetingsData?.meetings || [], [meetingsData?.meetings]);
-  const hasCalendarConnections = meetingsData?.has_connections ?? false;
-
-  // Find the next upcoming meeting
-  const nextMeetingId = useMemo(() => {
-    if (!isToday(selectedDate)) return null;
-    const now = new Date();
-    const nextMeeting = dateMeetings.find((m) => {
-      if (m.all_day) return false;
-      return new Date(m.start_time) > now;
-    });
-    return nextMeeting?.id || null;
-  }, [dateMeetings, selectedDate]);
-
-  // Ref for auto-scroll to current/next meeting
-  const meetingsContainerRef = useRef(null);
-
-  // Auto-scroll to current or next meeting
-  useEffect(() => {
-    if (!isToday(selectedDate) || !meetingsContainerRef.current) return;
-
-    const timer = setTimeout(() => {
-      let targetMeeting = meetingsContainerRef.current?.querySelector('[data-is-now="true"]');
-      if (!targetMeeting) {
-        targetMeeting = meetingsContainerRef.current?.querySelector('[data-is-next="true"]');
-      }
-      if (targetMeeting) {
-        targetMeeting.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [selectedDate, dateMeetings]);
-
-  // Date navigation handlers
-  const handlePrevDay = () => setSelectedDate((d) => subDays(d, 1));
-  const handleNextDay = () => setSelectedDate((d) => addDays(d, 1));
-  const handleToday = () => setSelectedDate(new Date());
 
   // Refresh handler for pull-to-refresh
   const handleRefresh = async () => {
@@ -567,16 +443,6 @@ export default function Dashboard() {
     updateDashboardSettings.mutate(settings, {
       onSuccess: () => closeCustomizeModal(),
     });
-  };
-
-  const handleMeetingClick = (meeting) => {
-    setSelectedMeeting(meeting);
-    setShowMeetingModal(true);
-  };
-
-  const closeMeetingModal = () => {
-    setShowMeetingModal(false);
-    setSelectedMeeting(null);
   };
 
   // Loading state
@@ -610,34 +476,6 @@ export default function Dashboard() {
 
   // Limit todos for dashboard display
   const dashboardTodos = openTodos?.slice(0, 5) || [];
-
-  // Meeting card header actions
-  const meetingsHeaderActions = (
-    <div className="flex items-center gap-1">
-      {!isToday(selectedDate) && (
-        <button
-          onClick={handleToday}
-          className="px-2 py-1 text-xs font-medium text-electric-cyan dark:text-electric-cyan hover:bg-cyan-50 dark:hover:bg-deep-midnight dark:hover:text-cyan-100 rounded transition-colors"
-        >
-          Vandaag
-        </button>
-      )}
-      <button
-        onClick={handlePrevDay}
-        className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-        aria-label="Previous day"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-      <button
-        onClick={handleNextDay}
-        className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-        aria-label="Next day"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-    </div>
-  );
 
   // Card renderers
   const cardRenderers = {
@@ -691,33 +529,6 @@ export default function Dashboard() {
           ))}
       </DashboardCard>
     ),
-
-    meetings: () =>
-      hasCalendarConnections ? (
-        <DashboardCard
-          key="meetings"
-          title={isToday(selectedDate) ? 'Afspraken vandaag' : format(selectedDate, 'EEEE d MMMM')}
-          icon={CalendarClock}
-          count={dateMeetings.length}
-          headerActions={meetingsHeaderActions}
-          emptyMessage={
-            isToday(selectedDate)
-              ? 'Geen afspraken gepland voor vandaag'
-              : `Geen afspraken op ${format(selectedDate, 'd MMMM')}`
-          }
-          contentRef={meetingsContainerRef}
-        >
-          {dateMeetings.length > 0 &&
-            dateMeetings.map((meeting) => (
-              <MeetingCard
-                key={meeting.id}
-                meeting={meeting}
-                isNext={meeting.id === nextMeetingId}
-                onClick={handleMeetingClick}
-              />
-            ))}
-        </DashboardCard>
-      ) : null,
 
     'recent-contacted': () => (
       <DashboardCard
@@ -812,12 +623,6 @@ export default function Dashboard() {
             onSubmit={todoCompletion.handleUpdateTodo}
             isLoading={todoCompletion.isUpdatingTodo}
             todo={todoCompletion.todoToView}
-          />
-
-          <MeetingDetailModal
-            isOpen={showMeetingModal}
-            onClose={closeMeetingModal}
-            meeting={selectedMeeting}
           />
         </Suspense>
 

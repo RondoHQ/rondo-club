@@ -7013,15 +7013,22 @@ class Api extends Base {
 					'X-Sync-API-Key' => RONDO_SYNC_API_KEY,
 				],
 				'body'    => wp_json_encode( [ 'knvb_id' => $knvb_id ] ),
-				'timeout' => 30,
+				'timeout' => 60,
 			]
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$error_message = $response->get_error_message();
+			$is_timeout    = false !== stripos( $error_message, 'timed out' )
+				|| false !== stripos( $error_message, 'cURL error 28' )
+				|| false !== stripos( $error_message, 'operation timeout' );
+
 			return new \WP_Error(
 				'sync_request_failed',
-				$response->get_error_message(),
-				[ 'status' => 502 ]
+				$is_timeout
+					? 'Sportlink sync duurde te lang en is afgebroken. Probeer het opnieuw.'
+					: $error_message,
+				[ 'status' => $is_timeout ? 504 : 502 ]
 			);
 		}
 
@@ -7029,9 +7036,14 @@ class Api extends Base {
 		$body        = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $status_code >= 400 ) {
+			$default_message = wp_remote_retrieve_response_message( $response );
+			if ( empty( $default_message ) ) {
+				$default_message = 'Sync server returned an error.';
+			}
+
 			return new \WP_Error(
 				'sync_error',
-				$body['error'] ?? 'Sync server returned an error.',
+				$body['error'] ?? $default_message,
 				[ 'status' => $status_code ]
 			);
 		}

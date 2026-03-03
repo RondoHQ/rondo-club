@@ -7,7 +7,6 @@ export const DEFAULT_DASHBOARD_CARDS = [
   'reminders',
   'anniversaries',
   'todos',
-  'meetings',
   'recent-contacted',
   'recent-edited',
 ];
