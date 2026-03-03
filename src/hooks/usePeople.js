@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { decodeHtml, formatPersonName } from '@/utils/formatters';
-import { meetingsKeys } from './useMeetings';
 import { trackNoteAdded } from '@/hooks/useEngagementTracking';
 
 // Query keys
@@ -268,8 +267,6 @@ export function useCreatePerson({ onSuccess } = {}) {
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
-      // Invalidate meetings to trigger re-matching of attendees
-      queryClient.invalidateQueries({ queryKey: meetingsKeys.today });
       queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
       // Call custom onSuccess if provided
       onSuccess?.(result);
@@ -352,9 +349,6 @@ export function useAddEmailToPerson() {
       // Invalidate person detail and list caches
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(personId) });
       queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
-      // Invalidate meetings to trigger re-matching (email was added)
-      queryClient.invalidateQueries({ queryKey: meetingsKeys.today });
-      queryClient.invalidateQueries({ queryKey: meetingsKeys.date });
       queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
     },
   });

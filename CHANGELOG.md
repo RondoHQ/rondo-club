@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.29] - 2026-03-03
+
+### Fixed
+- Removed stale dashboard meetings widget wiring that still triggered requests to `/wp-json/rondo/v1/calendar/today-meetings` after the endpoint had been removed.
+- Removed obsolete dashboard meetings customization/default-card entries so users no longer keep a defunct `meetings` card in saved layout settings.
+
 ## [31.6.28] - 2026-03-02
 
 ### Added

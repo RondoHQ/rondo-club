@@ -99,6 +99,7 @@ export default function PersonDetail() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null); // null | 'success' | 'error'
+  const [syncErrorMessage, setSyncErrorMessage] = useState('');
   const fileInputRef = useRef(null);
   const config = window.rondoConfig || {};
 
@@ -635,14 +636,32 @@ export default function PersonDetail() {
 
     setIsSyncing(true);
     setSyncStatus(null);
+    setSyncErrorMessage('');
     try {
       await prmApi.syncFromSportlink(knvbId);
       setSyncStatus('success');
       await queryClient.invalidateQueries({ queryKey: ['people', 'detail', id] });
-      setTimeout(() => setSyncStatus(null), 3000);
-    } catch {
+      setTimeout(() => {
+        setSyncStatus(null);
+        setSyncErrorMessage('');
+      }, 3000);
+    } catch (error) {
+      const statusCode = error?.response?.status;
+      const isRateLimited = statusCode === 429;
+      const isGatewayTimeout = statusCode === 502 || statusCode === 504 || statusCode === 524;
+      const isClientTimeout = error?.code === 'ECONNABORTED';
+      setSyncErrorMessage(
+        isRateLimited
+          ? 'Sportlink verwerkt nu te veel verzoeken (429). Wacht even en probeer het opnieuw.'
+          : isGatewayTimeout || isClientTimeout
+            ? 'Sportlink reageert nu niet op tijd. Wacht even en probeer het opnieuw.'
+            : 'Synchroniseren met Sportlink mislukte. Probeer het opnieuw.'
+      );
       setSyncStatus('error');
-      setTimeout(() => setSyncStatus(null), 3000);
+      setTimeout(() => {
+        setSyncStatus(null);
+        setSyncErrorMessage('');
+      }, 5000);
     } finally {
       setIsSyncing(false);
     }
@@ -1027,6 +1046,9 @@ export default function PersonDetail() {
           </button>
         </div>
       </div>
+      {syncErrorMessage && (
+        <p className="text-sm text-red-600 dark:text-red-400">{syncErrorMessage}</p>
+      )}
       
       {/* Profile header */}
       <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>

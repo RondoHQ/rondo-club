@@ -1,13 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from '@/utils/dateFormat';
 import { prmApi } from '@/api/client';
 import { peopleKeys } from './usePeople';
 
 // Query keys
 export const meetingsKeys = {
   all: ['meetings'],
-  today: ['meetings', 'today'],
-  forDate: (dateStr) => ['meetings', 'forDate', dateStr],
   person: (personId) => ['person-meetings', personId],
   notes: (eventId) => ['meeting-notes', eventId],
 };
@@ -28,36 +25,6 @@ export function usePersonMeetings(personId) {
     },
     enabled: !!personId,
   });
-}
-
-/**
- * Hook to fetch meetings for a specific date
- * Returns meetings for the given date with matched attendees and their details
- *
- * @param {Date} date - The date to fetch meetings for
- * @returns {Object} TanStack Query result with { meetings, total, has_connections }
- */
-export function useDateMeetings(date) {
-  const dateStr = format(date, 'yyyy-MM-dd');
-  return useQuery({
-    queryKey: meetingsKeys.forDate(dateStr),
-    queryFn: async () => {
-      const response = await prmApi.getMeetingsForDate(dateStr);
-      return response.data;
-    },
-    enabled: !!date,
-    staleTime: 5 * 60 * 1000, // 5 minutes - meetings don't change often
-    refetchInterval: 15 * 60 * 1000, // Refetch every 15 minutes
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new date
-  });
-}
-
-/**
- * Hook to fetch today's meetings for the dashboard widget (legacy alias)
- * @returns {Object} TanStack Query result with { meetings, total, has_connections }
- */
-export function useTodayMeetings() {
-  return useDateMeetings(new Date());
 }
 
 /**
