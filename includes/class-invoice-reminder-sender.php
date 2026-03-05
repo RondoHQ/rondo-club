@@ -2,9 +2,9 @@
 /**
  * Invoice Reminder Sender Service
  *
- * Handles email composition and sending for membership invoice reminders.
- * These reminders are sent to members who received a contributie invoice but have
- * not yet visited the payment page to select a payment plan.
+ * Handles email composition and sending for invoice reminders.
+ * These reminders are sent for both membership invoices (no plan selected yet)
+ * and discipline invoices that remain unpaid.
  *
  * Unlike InstallmentEmailSender, no Mollie payment link creation is needed —
  * the betaallink (/betaling/{token}) already exists on the invoice and is valid
@@ -56,7 +56,7 @@ class InvoiceReminderSender {
 	/**
 	 * Send the first invoice reminder email.
 	 *
-	 * Called when a membership invoice is 14+ days old with no payment plan selected.
+	 * Called when an eligible invoice is 14+ days old without payment.
 	 * Uses the invoice_reminder_1_email_template from FinanceConfig.
 	 *
 	 * Timestamp is written BEFORE wp_mail() for idempotency.
@@ -79,7 +79,7 @@ class InvoiceReminderSender {
 	/**
 	 * Send the second (final) invoice reminder email.
 	 *
-	 * Called when a membership invoice is 28+ days old with no payment plan selected.
+	 * Called when an eligible invoice is 28+ days old without payment.
 	 * Uses the invoice_reminder_2_email_template from FinanceConfig.
 	 * The treasurer receives a BCC if configured.
 	 *

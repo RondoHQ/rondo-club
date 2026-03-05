@@ -2,11 +2,14 @@
 /**
  * Invoice Reminder Scheduler — Daily Cron Sweeper
  *
- * Registers a single daily WP-Cron event that queries all membership invoices
- * in rondo_sent status where the member has NOT yet selected a payment plan
- * (i.e. _installment_plan meta does NOT exist). For each matching invoice,
- * it evaluates the days since the sent_date and triggers reminder emails via
- * InvoiceReminderSender.
+ * Registers a single daily WP-Cron event that queries eligible invoices in
+ * rondo_sent status and triggers reminder emails via InvoiceReminderSender.
+ *
+ * Eligible invoices:
+ * - Membership invoices where the member has NOT yet selected a payment plan
+ *   (i.e. _installment_plan meta does NOT exist)
+ * - Discipline invoices (including legacy discipline invoices with missing/
+ *   empty invoice_type) identified via Mollie payment-link metadata
  *
  * Email timing:
  *   - Reminder 1: 14+ days since sent_date AND no _invoice_reminder_1_sent_at meta
@@ -99,11 +102,12 @@ class InvoiceReminderScheduler {
 	}
 
 	/**
-	 * Query all membership invoices without a payment plan and process each one
+	 * Query all eligible invoices and process each one
 	 *
-	 * Queries rondo_invoice posts with rondo_sent status where:
-	 * 1. _installment_plan meta does NOT exist (member hasn't visited payment page)
-	 * 2. invoice_type = 'membership' (ACF field stored as post meta)
+	 * Queries rondo_invoice posts with rondo_sent status where either:
+	 * 1. Membership invoice without installment plan selected
+	 * 2. Discipline invoice (including legacy invoices with missing/empty type)
+	 *    identified via Mollie payment link meta
 	 */
 	private function process_invoices(): void {
 		$invoice_ids = get_posts( [
@@ -114,14 +118,39 @@ class InvoiceReminderScheduler {
 			'no_found_rows'    => true,
 			'suppress_filters' => true,
 			'meta_query'       => [
-				'relation' => 'AND',
+				'relation' => 'OR',
 				[
-					'key'     => '_installment_plan',
-					'compare' => 'NOT EXISTS',
+					'relation' => 'AND',
+					[
+						'key'     => '_installment_plan',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'   => 'invoice_type',
+						'value' => 'membership',
+					],
 				],
 				[
-					'key'   => 'invoice_type',
-					'value' => 'membership',
+					'relation' => 'AND',
+					[
+						'key'     => '_mollie_payment_link_id',
+						'compare' => 'EXISTS',
+					],
+					[
+						'relation' => 'OR',
+						[
+							'key'   => 'invoice_type',
+							'value' => 'discipline',
+						],
+						[
+							'key'     => 'invoice_type',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'   => 'invoice_type',
+							'value' => '',
+						],
+					],
 				],
 			],
 		] );

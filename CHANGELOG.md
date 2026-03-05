@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.30] - 2026-03-05
+
+### Fixed
+- Invoice reminder cron now also includes discipline invoices (including legacy discipline invoices) so unpaid discipline invoices receive the same 14/28-day reminder flow as membership invoices.
+
 ## [31.6.29] - 2026-03-03
 
 ### Fixed

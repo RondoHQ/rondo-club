@@ -464,7 +464,7 @@ function rondo_init() {
 	// Installment scheduler — daily cron sweeper for installment emails and reminders
 	new InstallmentScheduler();
 
-	// Invoice reminder scheduler — daily cron sweeper for no-plan membership invoice reminders
+	// Invoice reminder scheduler — daily cron sweeper for membership and discipline invoice reminders
 	new InvoiceReminderScheduler();
 
 	// Initialize CardDAV sync hooks to track changes made via web UI
