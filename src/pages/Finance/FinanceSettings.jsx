@@ -848,12 +848,10 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Tekst body
                   </label>
-                  <textarea
+                  <RichTextEditor
                     value={formData.regular_invoice_email_body}
-                    onChange={(e) => setFormData(prev => ({ ...prev, regular_invoice_email_body: e.target.value }))}
+                    onChange={(html) => setFormData(prev => ({ ...prev, regular_invoice_email_body: html }))}
                     placeholder="Beste {naam},"
-                    rows={10}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent resize-y"
                   />
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">

@@ -221,13 +221,11 @@ class InvoiceEmailSender {
 		$config = new FinanceConfig();
 		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
 		$template     = (string) ( $options['template'] ?? '' );
-		$is_regular_invoice_default = false;
 		if ( '' === trim( $template ) ) {
 			if ( 'membership' === $invoice_type ) {
 				$template = $config->get_membership_email_template();
 			} elseif ( 'manual' === $invoice_type ) {
 				$template = $config->get_regular_invoice_email_body();
-				$is_regular_invoice_default = true;
 			} else {
 				$template = $config->get_email_template();
 			}
@@ -328,7 +326,7 @@ class InvoiceEmailSender {
 		}
 
 		// Replace template variables
-		if ( $is_regular_invoice_default ) {
+		if ( 'manual' === $invoice_type && ! self::contains_html_markup( $template ) ) {
 			$template = nl2br( esc_html( $template ) );
 		}
 
@@ -447,5 +445,15 @@ class InvoiceEmailSender {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Detect whether a template already contains HTML markup.
+	 *
+	 * @param string $template Email template.
+	 * @return bool
+	 */
+	private static function contains_html_markup( string $template ): bool {
+		return preg_match( '/<\s*[a-z!\/][^>]*>/i', $template ) === 1;
 	}
 }
