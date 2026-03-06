@@ -68,12 +68,14 @@ class InvoicePdfGenerator {
 		}
 
 		// Gather customer data (member-linked and/or custom invoice data)
-		$person_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
-		$attention_of     = (string) get_post_meta( $invoice_id, '_customer_attention', true );
-		$person_street    = '';
-		$person_city      = '';
-		$person_email     = (string) get_post_meta( $invoice_id, '_customer_email', true );
-		$address_text     = (string) get_post_meta( $invoice_id, '_customer_address', true );
+		$person_name       = (string) get_post_meta( $invoice_id, '_customer_name', true );
+		$person_attention  = (string) get_post_meta( $invoice_id, '_customer_attention', true );
+		$person_street     = '';
+		$person_city       = '';
+		$person_email      = (string) get_post_meta( $invoice_id, '_customer_email', true );
+		$address_text      = (string) get_post_meta( $invoice_id, '_customer_address', true );
+		$custom_fields_raw = (string) get_post_meta( $invoice_id, '_custom_fields', true );
+		$custom_fields     = json_decode( $custom_fields_raw, true );
 
 		$person = $person_id ? get_post( $person_id ) : null;
 		if ( $person && $person->post_type === 'person' ) {
@@ -160,10 +162,11 @@ class InvoicePdfGenerator {
 			$sent_date,
 			$due_date,
 			$person_name,
-			$attention_of,
+			$person_attention,
 			$person_street,
 			$person_city,
 			$person_email,
+			is_array( $custom_fields ) ? $custom_fields : [],
 			$line_items,
 			$total_amount,
 			$org_name,
@@ -236,10 +239,11 @@ class InvoicePdfGenerator {
 	 * @param string      $invoice_date   Invoice date (Ymd format).
 	 * @param string      $due_date       Due date (Ymd format).
 	 * @param string      $person_name    Person's full name.
-	 * @param string      $attention_of   Optional attention line.
+	 * @param string      $person_attention Person attention line.
 	 * @param string      $person_street  Person's street address.
 	 * @param string      $person_city    Person's city.
 	 * @param string      $person_email   Person's email.
+	 * @param array       $custom_fields  Extra invoice metadata rows.
 	 * @param array       $line_items     Invoice line items.
 	 * @param float       $total_amount   Total invoice amount.
 	 * @param string      $org_name       Organization name.
@@ -261,10 +265,11 @@ class InvoicePdfGenerator {
 		$invoice_date,
 		$due_date,
 		$person_name,
-		$attention_of,
+		$person_attention,
 		$person_street,
 		$person_city,
 		$person_email,
+		$custom_fields,
 		$line_items,
 		$total_amount,
 		$org_name,
@@ -280,6 +285,8 @@ class InvoicePdfGenerator {
 		$membership_payment_clause = '',
 		$is_paid = false
 	) {
+		$person_attention = preg_replace( '/^\s*(t\.?\s*a\.?\s*v\.?:?\s*)/i', '', (string) $person_attention );
+
 		// Format dates
 		$formatted_invoice_date = self::format_dutch_date( $invoice_date );
 		$formatted_due_date     = self::format_dutch_date( $due_date );
@@ -297,6 +304,27 @@ class InvoicePdfGenerator {
 		// Build line items table rows
 		$is_membership   = ( $invoice_type === 'membership' );
 		$line_items_html = '';
+		$custom_fields_html = '';
+
+		if ( is_array( $custom_fields ) ) {
+			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
+				$label = trim( (string) ( $field['label'] ?? '' ) );
+				$text  = trim( (string) ( $field['text'] ?? '' ) );
+				if ( '' === $label && '' === $text ) {
+					continue;
+				}
+
+				if ( preg_match( '/^ter attentie van$/i', $label ) ) {
+					$text = preg_replace( '/^\s*(t\.?\s*a\.?\s*v\.?:?\s*)/i', '', $text );
+				}
+
+				$custom_fields_html .= '
+		<tr>
+			<td class="label">' . esc_html( $label ?: __( 'Extra veld', 'rondo' ) ) . ':</td>
+			<td>' . nl2br( esc_html( $text ) ) . '</td>
+		</tr>';
+			}
+		}
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
 				$amount = (float) ( $item['amount'] ?? 0 );
@@ -500,17 +528,18 @@ table.line-items .total-row td {
 		<tr>
 			<td class="label">Vervaldatum:</td>
 			<td>' . esc_html( $formatted_due_date ) . '</td>
-		</tr>' : '' ) . '
+		</tr>' : '' )
+		. $custom_fields_html . '
 	</table>
 </div>
 
 <div class="recipient">
 	<div class="label">Aan:</div>
 	<div>' . esc_html( $person_name ) . '</div>
-	' . ( ! empty( $attention_of ) ? '<div>T.a.v. ' . esc_html( $attention_of ) . '</div>' : '' ) . '
-	' . ( ! empty( $person_email ) ? '<div>' . esc_html( $person_email ) . '</div>' : '' ) . '
+	' . ( ! empty( $person_attention ) ? '<div>T.a.v. ' . esc_html( $person_attention ) . '</div>' : '' ) . '
 	' . ( ! empty( $person_street ) ? '<div>' . esc_html( $person_street ) . '</div>' : '' ) . '
 	' . ( ! empty( $person_city ) ? '<div>' . esc_html( $person_city ) . '</div>' : '' ) . '
+	' . ( ! empty( $person_email ) ? '<div>' . esc_html( $person_email ) . '</div>' : '' ) . '
 </div>
 
 ' . ( $is_membership ? '
