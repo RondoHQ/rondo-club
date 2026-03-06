@@ -43,6 +43,7 @@ class FinanceConfig {
 	const OPTION_ORG_ADDRESS           = 'rondo_finance_org_address';
 	const OPTION_CONTACT_EMAIL         = 'rondo_finance_contact_email';
 	const OPTION_IBAN                  = 'rondo_finance_iban';
+	const OPTION_BANK_ACCOUNTS         = 'rondo_finance_bank_accounts';
 	const OPTION_PAYMENT_TERM_DAYS     = 'rondo_finance_payment_term_days';
 	const OPTION_PAYMENT_CLAUSE        = 'rondo_finance_payment_clause';
 	const OPTION_EMAIL_TEMPLATE        = 'rondo_finance_email_template';
@@ -84,6 +85,7 @@ class FinanceConfig {
 		'org_address'        => '',
 		'contact_email'      => '',
 		'iban'               => '',
+		'bank_accounts'      => [],
 		'payment_term_days'  => 14,
 		'payment_clause'     => '',
 		'club_logo_id'       => 0,
@@ -138,7 +140,87 @@ class FinanceConfig {
 	 * @return string The IBAN (empty string if not configured)
 	 */
 	public function get_iban(): string {
+		$default_account = $this->get_default_bank_account();
+		if ( is_array( $default_account ) && ! empty( $default_account['iban'] ) ) {
+			return (string) $default_account['iban'];
+		}
+
 		return get_option( self::OPTION_IBAN, self::DEFAULTS['iban'] );
+	}
+
+	/**
+	 * Get configured bank accounts.
+	 *
+	 * Falls back to the legacy single-IBAN setting when no structured accounts
+	 * have been stored yet, so existing installations keep working.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	public function get_bank_accounts(): array {
+		$stored_accounts = get_option( self::OPTION_BANK_ACCOUNTS, null );
+		$normalized      = $this->normalize_bank_accounts_for_storage( is_array( $stored_accounts ) ? $stored_accounts : [] );
+
+		if ( ! is_wp_error( $normalized ) && ! empty( $normalized ) ) {
+			return $normalized;
+		}
+
+		$legacy_iban = strtoupper( str_replace( ' ', '', (string) get_option( self::OPTION_IBAN, self::DEFAULTS['iban'] ) ) );
+		if ( '' === $legacy_iban ) {
+			return [];
+		}
+
+		return [
+			[
+				'id'              => 'legacy-default',
+				'internal_name'   => 'Standaardrekening',
+				'account_holder'  => $this->get_org_name(),
+				'iban'            => $legacy_iban,
+				'linked_provider' => $this->get_active_payment_provider(),
+			],
+		];
+	}
+
+	/**
+	 * Get a configured bank account by ID.
+	 *
+	 * @param string $account_id Bank account ID.
+	 * @return array<string, string>|null
+	 */
+	public function get_bank_account_by_id( string $account_id ): ?array {
+		$account_id = sanitize_key( $account_id );
+		if ( '' === $account_id ) {
+			return null;
+		}
+
+		foreach ( $this->get_bank_accounts() as $account ) {
+			if ( ( $account['id'] ?? '' ) === $account_id ) {
+				return $account;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Get the default bank account for a provider, or the first configured one.
+	 *
+	 * @param string|null $provider Provider slug.
+	 * @return array<string, string>|null
+	 */
+	public function get_default_bank_account( ?string $provider = null ): ?array {
+		$accounts = $this->get_bank_accounts();
+		if ( empty( $accounts ) ) {
+			return null;
+		}
+
+		$provider = in_array( $provider, [ 'rabobank', 'mollie' ], true ) ? $provider : $this->get_active_payment_provider();
+		foreach ( $accounts as $account ) {
+			if ( ( $account['linked_provider'] ?? '' ) === $provider ) {
+				return $account;
+			}
+		}
+
+		return $accounts[0];
 	}
 
 	/**
@@ -369,6 +451,7 @@ class FinanceConfig {
 			'org_address'           => $this->get_org_address(),
 			'contact_email'         => $this->get_contact_email(),
 			'iban'                  => $this->get_iban(),
+			'bank_accounts'         => $this->get_bank_accounts(),
 			'payment_term_days'     => $this->get_payment_term_days(),
 			'payment_clause'        => $this->get_payment_clause(),
 			'membership_payment_clause' => $this->get_membership_payment_clause(),
@@ -394,6 +477,7 @@ class FinanceConfig {
 			'mollie_environment'    => $this->derive_mollie_environment( $mollie_api_key ),
 			'mollie_redirect_url'   => $this->get_mollie_redirect_url(),
 			'active_payment_provider' => $this->get_active_payment_provider(),
+			'default_payment_account_id' => $this->get_default_bank_account( $this->get_active_payment_provider() )['id'] ?? '',
 			'membership_pass_apple_cert_attachment_id' => $apple_cert_id,
 			'membership_pass_apple_cert_url'           => $apple_cert_url,
 			'membership_pass_apple_has_cert_password'  => '' !== $this->get_membership_pass_apple_cert_password(),
@@ -423,6 +507,8 @@ class FinanceConfig {
 				return $this->get_contact_email();
 			case 'iban':
 				return $this->get_iban();
+			case 'bank_accounts':
+				return $this->get_bank_accounts();
 			case 'payment_term_days':
 				return $this->get_payment_term_days();
 			case 'payment_clause':
@@ -470,7 +556,7 @@ class FinanceConfig {
 	 * @param array $data Associative array of settings to update
 	 * @return bool True on success
 	 */
-	public function update_settings( array $data ): bool {
+	public function update_settings( array $data ) {
 		$success = true;
 
 		// Handle regular text fields
@@ -490,6 +576,22 @@ class FinanceConfig {
 			// IBAN: uppercase, strip spaces
 			$iban = strtoupper( str_replace( ' ', '', sanitize_text_field( $data['iban'] ) ) );
 			$success = update_option( self::OPTION_IBAN, $iban ) && $success;
+		}
+
+		if ( isset( $data['bank_accounts'] ) ) {
+			$normalized_accounts = $this->normalize_bank_accounts_for_storage( is_array( $data['bank_accounts'] ) ? $data['bank_accounts'] : [] );
+			if ( is_wp_error( $normalized_accounts ) ) {
+				return $normalized_accounts;
+			}
+
+			$success = update_option( self::OPTION_BANK_ACCOUNTS, $normalized_accounts ) && $success;
+
+			if ( ! empty( $normalized_accounts ) ) {
+				$default_iban = (string) ( $normalized_accounts[0]['iban'] ?? '' );
+				if ( '' !== $default_iban ) {
+					$success = update_option( self::OPTION_IBAN, $default_iban ) && $success;
+				}
+			}
 		}
 
 		if ( isset( $data['payment_term_days'] ) ) {
@@ -662,6 +764,71 @@ class FinanceConfig {
 		}
 
 		return $success;
+	}
+
+	/**
+	 * Normalize and validate bank accounts before storage.
+	 *
+	 * @param array $accounts Raw bank accounts payload.
+	 * @return array<int, array<string, string>>|\WP_Error
+	 */
+	private function normalize_bank_accounts_for_storage( array $accounts ) {
+		$normalized       = [];
+		$linked_providers = [];
+
+		foreach ( $accounts as $index => $account ) {
+			if ( ! is_array( $account ) ) {
+				continue;
+			}
+
+			$internal_name  = sanitize_text_field( (string) ( $account['internal_name'] ?? '' ) );
+			$account_holder = sanitize_text_field( (string) ( $account['account_holder'] ?? '' ) );
+			$iban           = strtoupper( str_replace( ' ', '', sanitize_text_field( (string) ( $account['iban'] ?? '' ) ) ) );
+			$linked_provider = sanitize_key( (string) ( $account['linked_provider'] ?? '' ) );
+			$account_id      = sanitize_key( (string) ( $account['id'] ?? '' ) );
+
+			if ( '' === $internal_name && '' === $account_holder && '' === $iban && '' === $linked_provider ) {
+				continue;
+			}
+
+			if ( '' === $internal_name || '' === $account_holder || '' === $iban ) {
+				return new \WP_Error(
+					'invalid_bank_account',
+					sprintf( __( 'Bankrekening %d is onvolledig. Vul interne naam, tenaamstelling en IBAN in.', 'rondo' ), (int) $index + 1 ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			if ( ! in_array( $linked_provider, [ '', 'rabobank', 'mollie' ], true ) ) {
+				$linked_provider = '';
+			}
+
+			if ( '' !== $linked_provider ) {
+				if ( isset( $linked_providers[ $linked_provider ] ) ) {
+					return new \WP_Error(
+						'duplicate_linked_provider',
+						sprintf( __( 'Er kan maar één bankrekening aan %s gekoppeld zijn.', 'rondo' ), $linked_provider ),
+						[ 'status' => 400 ]
+					);
+				}
+
+				$linked_providers[ $linked_provider ] = true;
+			}
+
+			if ( '' === $account_id ) {
+				$account_id = 'bank-' . sanitize_key( wp_generate_uuid4() );
+			}
+
+			$normalized[] = [
+				'id'              => $account_id,
+				'internal_name'   => $internal_name,
+				'account_holder'  => $account_holder,
+				'iban'            => $iban,
+				'linked_provider' => $linked_provider,
+			];
+		}
+
+		return array_values( $normalized );
 	}
 
 	/**

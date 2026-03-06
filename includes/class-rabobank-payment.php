@@ -276,11 +276,13 @@ class RabobankPayment {
 		// Get finance config for IBAN and credentials
 		$finance_config = new \Rondo\Config\FinanceConfig();
 
-		// Use sandbox test IBAN when in sandbox mode, real IBAN in production
+		$invoice_payment_account_iban = (string) get_post_meta( $invoice_id, '_payment_account_iban', true );
+
+		// Use sandbox test IBAN when in sandbox mode, real invoice/account IBAN in production
 		if ( $this->oauth->get_environment() === 'sandbox' ) {
 			$iban = 'NL19RABO0123456790';
 		} else {
-			$iban = $finance_config->get_iban();
+			$iban = $invoice_payment_account_iban ?: $finance_config->get_iban();
 
 			if ( empty( $iban ) ) {
 				return new \WP_Error(

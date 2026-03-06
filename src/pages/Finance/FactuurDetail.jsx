@@ -457,6 +457,7 @@ export default function FactuurDetail() {
             personId: invoice.person?.id || null,
             personLabel: invoice.person?.name || '',
             dueDate: invoice.due_date || '',
+            paymentAccountId: invoice.payment_account?.id || '',
             emailSubject: invoice.email_subject || '',
             emailBody: invoice.email_body_override || '',
             customFields: invoice.custom_fields || [],
@@ -540,6 +541,16 @@ export default function FactuurDetail() {
                   <p className="text-gray-700 dark:text-gray-300">
                     {getPlanLabel(invoice.installment_plan, invoice.installment_count)}
                   </p>
+                </div>
+              )}
+              {invoice.payment_account?.iban && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bankrekening</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{invoice.payment_account.internal_name || invoice.payment_account.iban}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{invoice.payment_account.iban}</p>
+                  {invoice.payment_account.account_holder && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">t.n.v. {invoice.payment_account.account_holder}</p>
+                  )}
                 </div>
               )}
               {invoice.status !== 'paid' && invoice.payment_link && (

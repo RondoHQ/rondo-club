@@ -28,6 +28,30 @@ const EMAIL_SUB_TABS = [
   { id: 'factuur_herinneringen', label: 'Contributieherinneringen' },
 ];
 
+function createEmptyBankAccount() {
+  return {
+    id: `bank-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    internal_name: '',
+    account_holder: '',
+    iban: '',
+    linked_provider: '',
+  };
+}
+
+function normalizeBankAccounts(accounts = []) {
+  if (!Array.isArray(accounts)) {
+    return [];
+  }
+
+  return accounts.map((account, index) => ({
+    id: account?.id || `bank-${index}-${Math.random().toString(36).slice(2, 8)}`,
+    internal_name: account?.internal_name || '',
+    account_holder: account?.account_holder || '',
+    iban: account?.iban || '',
+    linked_provider: account?.linked_provider || '',
+  }));
+}
+
 /**
  * Certificate display section for Rabobank mTLS
  */
@@ -150,7 +174,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     org_name: '',
     org_address: '',
     contact_email: '',
-    iban: '',
+    bank_accounts: [],
     payment_term_days: 14,
     payment_clause: '',
     membership_payment_clause: '',
@@ -208,7 +232,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         org_name: settings.org_name || '',
         org_address: settings.org_address || '',
         contact_email: settings.contact_email || '',
-        iban: settings.iban || '',
+        bank_accounts: normalizeBankAccounts(settings.bank_accounts || []),
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
         membership_payment_clause: settings.membership_payment_clause || '',
@@ -285,10 +309,36 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     }
   }, [searchParams, setSearchParams]);
 
-  // Format IBAN on blur
-  const handleIbanBlur = () => {
-    const formatted = formData.iban.toUpperCase().replace(/\s+/g, '');
-    setFormData(prev => ({ ...prev, iban: formatted }));
+  const handleBankAccountChange = (accountId, key, value) => {
+    setFormData((prev) => {
+      const nextAccounts = (prev.bank_accounts || []).map((account) => {
+        if (account.id !== accountId) {
+          if (key === 'linked_provider' && value && account.linked_provider === value) {
+            return { ...account, linked_provider: '' };
+          }
+          return account;
+        }
+
+        const nextValue = key === 'iban' ? value.toUpperCase().replace(/\s+/g, '') : value;
+        return { ...account, [key]: nextValue };
+      });
+
+      return { ...prev, bank_accounts: nextAccounts };
+    });
+  };
+
+  const handleAddBankAccount = () => {
+    setFormData((prev) => ({
+      ...prev,
+      bank_accounts: [...(prev.bank_accounts || []), createEmptyBankAccount()],
+    }));
+  };
+
+  const handleRemoveBankAccount = (accountId) => {
+    setFormData((prev) => ({
+      ...prev,
+      bank_accounts: (prev.bank_accounts || []).filter((account) => account.id !== accountId),
+    }));
   };
 
   const handleMembershipFileUpload = async (event, type) => {
@@ -335,7 +385,13 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         org_name: formData.org_name,
         org_address: formData.org_address,
         contact_email: formData.contact_email,
-        iban: formData.iban,
+        bank_accounts: (formData.bank_accounts || []).map((account) => ({
+          id: account.id,
+          internal_name: account.internal_name,
+          account_holder: account.account_holder,
+          iban: account.iban,
+          linked_provider: account.linked_provider,
+        })),
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
         membership_payment_clause: formData.membership_payment_clause,
@@ -520,23 +576,112 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Betaalgegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Bankrekening en betalingsvoorwaarden voor facturen.
+            Bankrekeningen, providerkoppeling en betalingsvoorwaarden voor facturen.
           </p>
         </div>
         <div className="space-y-4">
-          <div>
-            <label htmlFor="iban" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              IBAN
-            </label>
-            <input
-              type="text"
-              id="iban"
-              value={formData.iban}
-              onChange={(e) => setFormData(prev => ({ ...prev, iban: e.target.value }))}
-              onBlur={handleIbanBlur}
-              placeholder="NL00 RABO 0000 0000 00"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-            />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Bankrekeningen</h3>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Per rekening vul je een interne naam, tenaamstelling en IBAN in. Koppel maximaal één rekening aan Rabobank en maximaal één aan Mollie.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddBankAccount}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-electric-cyan text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Bankrekening toevoegen
+              </button>
+            </div>
+
+            {(formData.bank_accounts || []).length === 0 && (
+              <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
+                Er zijn nog geen bankrekeningen toegevoegd.
+              </div>
+            )}
+
+            {(formData.bank_accounts || []).map((account, index) => {
+              const isActiveProviderAccount = account.linked_provider && account.linked_provider === formData.active_payment_provider;
+
+              return (
+                <div
+                  key={account.id}
+                  className={`rounded-lg border p-4 space-y-4 ${isActiveProviderAccount ? 'border-electric-cyan bg-cyan-50/40 dark:bg-cyan-900/10 dark:border-cyan-700' : 'border-gray-200 dark:border-gray-700'}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Rekening {index + 1}</h4>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveBankAccount(account.id)}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Verwijderen
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Interne naam
+                      </label>
+                      <input
+                        type="text"
+                        value={account.internal_name}
+                        onChange={(e) => handleBankAccountChange(account.id, 'internal_name', e.target.value)}
+                        placeholder="Bijv. Hoofdrekening"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Tenaamstelling
+                      </label>
+                      <input
+                        type="text"
+                        value={account.account_holder}
+                        onChange={(e) => handleBankAccountChange(account.id, 'account_holder', e.target.value)}
+                        placeholder="Naam op de factuur"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        IBAN
+                      </label>
+                      <input
+                        type="text"
+                        value={account.iban}
+                        onChange={(e) => handleBankAccountChange(account.id, 'iban', e.target.value)}
+                        placeholder="NL00RABO0000000000"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Gekoppelde provider
+                      </label>
+                      <select
+                        value={account.linked_provider}
+                        onChange={(e) => handleBankAccountChange(account.id, 'linked_provider', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                      >
+                        <option value="">Geen</option>
+                        <option value="rabobank">Rabobank</option>
+                        <option value="mollie">Mollie</option>
+                      </select>
+                      {isActiveProviderAccount && (
+                        <p className="mt-1 text-xs text-electric-cyan dark:text-cyan-300">
+                          Dit is nu de standaardrekening voor de actieve betalingsprovider.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div>
             <label htmlFor="payment_term_days" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
