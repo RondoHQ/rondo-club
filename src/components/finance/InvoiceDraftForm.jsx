@@ -64,6 +64,18 @@ function normalizeCustomFields(customFields = []) {
   return normalized;
 }
 
+function getDefaultPaymentAccountId(financeSettings) {
+  if (financeSettings?.default_payment_account_id) {
+    return financeSettings.default_payment_account_id;
+  }
+
+  if (Array.isArray(financeSettings?.bank_accounts) && financeSettings.bank_accounts.length > 0) {
+    return financeSettings.bank_accounts[0]?.id || '';
+  }
+
+  return '';
+}
+
 export default function InvoiceDraftForm({
   initialValues,
   formKey,
@@ -90,6 +102,7 @@ export default function InvoiceDraftForm({
   const [personSearch, setPersonSearch] = useState('');
   const [isPersonOpen, setIsPersonOpen] = useState(false);
   const [dueDate, setDueDate] = useState('');
+  const [paymentAccountId, setPaymentAccountId] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
   const [emailDefaultsHydrated, setEmailDefaultsHydrated] = useState(false);
@@ -133,6 +146,7 @@ export default function InvoiceDraftForm({
     setPersonSearch(initialValues?.personLabel || '');
     setIsPersonOpen(false);
     setDueDate(getInitialDueDate(initialValues?.dueDate));
+    setPaymentAccountId(initialValues?.paymentAccountId || '');
     setEmailSubject(initialValues?.emailSubject || '');
     setEmailBody(initialValues?.emailBody || '');
     setEmailDefaultsHydrated(false);
@@ -141,6 +155,10 @@ export default function InvoiceDraftForm({
     setLineItems(normalizeLineItems(initialValues?.lineItems));
     setLocalError('');
   }, [formKey, initialValues]);
+
+  useEffect(() => {
+    setPaymentAccountId((current) => current || initialValues?.paymentAccountId || getDefaultPaymentAccountId(financeSettings));
+  }, [financeSettings, initialValues?.paymentAccountId]);
 
   useEffect(() => {
     if (emailDefaultsHydrated || !financeSettings) {
@@ -225,6 +243,7 @@ export default function InvoiceDraftForm({
       customer_email: invoiceTarget === 'external' ? customerEmail : '',
       customer_address: invoiceTarget === 'external' ? customerAddress : '',
       payment_terms_due_date: dueDate ? dueDate.replaceAll('-', '') : '',
+      payment_account_id: paymentAccountId,
       email_subject: emailSubject === defaultEmailSubject ? '' : emailSubject,
       email_body_override: emailBody === defaultEmailBody ? '' : emailBody,
       custom_fields: customFields,
@@ -365,6 +384,19 @@ export default function InvoiceDraftForm({
         <label className="text-sm block max-w-sm">Vervaldatum
           <input type="date" className="input mt-1" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </label>
+
+        {Array.isArray(financeSettings?.bank_accounts) && financeSettings.bank_accounts.length > 0 && (
+          <label className="text-sm block max-w-sm">Bankrekening
+            <select className="input mt-1" value={paymentAccountId} onChange={(e) => setPaymentAccountId(e.target.value)}>
+              {financeSettings.bank_accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.internal_name} · {account.iban}
+                  {account.linked_provider === financeSettings?.active_payment_provider ? ' · standaard' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <div className="space-y-2">
           {!showCustomFields ? (

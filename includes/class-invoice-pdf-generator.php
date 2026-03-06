@@ -121,7 +121,10 @@ class InvoicePdfGenerator {
 		$org_name       = $finance_config->get_org_name();
 		$org_address    = $finance_config->get_org_address();
 		$contact_email  = $finance_config->get_contact_email();
-		$iban           = $finance_config->get_iban();
+		$payment_account = self::get_invoice_payment_account( $invoice_id, $finance_config );
+		$iban            = (string) ( $payment_account['iban'] ?? '' );
+		$account_holder  = (string) ( $payment_account['account_holder'] ?? $org_name );
+		$account_name    = (string) ( $payment_account['internal_name'] ?? '' );
 		$payment_clause = $finance_config->get_payment_clause();
 		$membership_payment_clause = $finance_config->get_membership_payment_clause();
 
@@ -173,6 +176,8 @@ class InvoicePdfGenerator {
 			$org_address,
 			$contact_email,
 			$iban,
+			$account_holder,
+			$account_name,
 			$payment_clause,
 			$logo_exists ? $logo_path : null,
 			$qr_code_abspath,
@@ -250,6 +255,8 @@ class InvoicePdfGenerator {
 	 * @param string      $org_address    Organization address.
 	 * @param string      $contact_email  Organization contact email.
 	 * @param string      $iban           Bank IBAN.
+	 * @param string      $account_holder Account holder name.
+	 * @param string      $account_name   Internal bank account label.
 	 * @param string      $payment_clause Payment clause text.
 	 * @param string|null $logo_path      Path to logo file (null if not exists).
 	 * @param string|null $qr_code_path   Absolute path to QR code PNG (null if not exists).
@@ -276,6 +283,8 @@ class InvoicePdfGenerator {
 		$org_address,
 		$contact_email,
 		$iban,
+		$account_holder,
+		$account_name,
 		$payment_clause,
 		$logo_path,
 		$qr_code_path = null,
@@ -581,7 +590,10 @@ table.line-items .total-row td {
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
 		<td style="border: none; vertical-align: top; padding: 0;">
-			' . ( ! empty( $membership_payment_clause ) ? '<p style="margin: 0; line-height: 1.6;">' . nl2br( esc_html( $membership_payment_clause ) ) . '</p>' : '' ) . '
+			' . ( '' !== $formatted_iban ? '<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>' : '' ) . '
+			' . ( '' !== $account_holder ? '<div>t.n.v. ' . esc_html( $account_holder ) . '</div>' : '' ) . '
+			' . ( '' !== $account_name ? '<div style="font-size: 9pt; color: #666; margin-top: 4px;">' . esc_html( $account_name ) . '</div>' : '' ) . '
+			' . ( ! empty( $membership_payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $membership_payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
 		<td style="border: none; text-align: center; vertical-align: top; width: 180px; padding: 0;">
@@ -595,7 +607,8 @@ table.line-items .total-row td {
 	<table style="width: 100%; border: none;"><tr>
 		<td style="border: none; vertical-align: top; padding: 0;">
 			<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>
-			<div>t.n.v. ' . esc_html( $org_name ) . '</div>
+			<div>t.n.v. ' . esc_html( $account_holder ?: $org_name ) . '</div>
+			' . ( '' !== $account_name ? '<div style="font-size: 9pt; color: #666; margin-top: 4px;">' . esc_html( $account_name ) . '</div>' : '' ) . '
 			' . ( ! empty( $payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
@@ -645,6 +658,44 @@ table.line-items .total-row td {
 		$month_name = $dutch_months[ $month ] ?? '';
 
 		return $day . ' ' . $month_name . ' ' . $year;
+	}
+
+	/**
+	 * Resolve the stored payment account snapshot for an invoice.
+	 *
+	 * @param int           $invoice_id Invoice post ID.
+	 * @param FinanceConfig $finance_config Finance config service.
+	 * @return array<string, string>
+	 */
+	private static function get_invoice_payment_account( int $invoice_id, FinanceConfig $finance_config ): array {
+		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
+		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
+		$iban            = (string) get_post_meta( $invoice_id, '_payment_account_iban', true );
+		$linked_provider = (string) get_post_meta( $invoice_id, '_payment_account_linked_provider', true );
+
+		if ( '' !== $account_id || '' !== $internal_name || '' !== $account_holder || '' !== $iban ) {
+			return [
+				'id'              => $account_id,
+				'internal_name'   => $internal_name,
+				'account_holder'  => $account_holder,
+				'iban'            => $iban,
+				'linked_provider' => $linked_provider,
+			];
+		}
+
+		$default = $finance_config->get_default_bank_account( $finance_config->get_active_payment_provider() );
+		if ( is_array( $default ) ) {
+			return $default;
+		}
+
+		return [
+			'id'              => '',
+			'internal_name'   => '',
+			'account_holder'  => $finance_config->get_org_name(),
+			'iban'            => $finance_config->get_iban(),
+			'linked_provider' => '',
+		];
 	}
 
 }

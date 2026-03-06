@@ -1111,6 +1111,12 @@ class Api extends Base {
 						'org_address'           => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
 						'contact_email'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
 						'iban'                  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'bank_accounts'         => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
 						'payment_term_days'     => [ 'required' => false, 'type' => 'integer' ],
 						'payment_clause'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
 						'membership_payment_clause' => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
@@ -5704,7 +5710,11 @@ class Api extends Base {
 	 */
 	public function update_finance_settings( $request ) {
 		$finance_config = new \Rondo\Config\FinanceConfig();
-		$finance_config->update_settings( $request->get_params() );
+		$result         = $finance_config->update_settings( $request->get_params() );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
 		return rest_ensure_response( $finance_config->get_all_settings() );
 	}
 
@@ -5756,7 +5766,10 @@ class Api extends Base {
 		}
 
 		if ( ! empty( $data ) ) {
-			$finance_config->update_settings( $data );
+			$result = $finance_config->update_settings( $data );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
 		}
 
 		return $this->get_finance_branding( $request );

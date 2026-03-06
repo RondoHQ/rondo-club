@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.37] - 2026-03-06
+
+### Added
+- Financieel instellingen ondersteunen nu meerdere bankrekeningen met per rekening een interne naam, tenaamstelling en IBAN.
+- Facturen hebben nu een expliciete bankrekeningkeuze; bij nieuwe conceptfacturen wordt standaard de rekening gekozen die aan de actieve betalingsprovider gekoppeld is.
+
+### Changed
+- Betaalgegevens op de factuur en in de factuurdetailweergave tonen nu de gekozen bankrekening in plaats van alleen een globale IBAN.
+- Rabobank-betaallinks gebruiken nu de op de factuur vastgelegde rekening, zodat providerkoppeling en factuurweergave dezelfde rekening blijven gebruiken.
+
 ## [31.6.36] - 2026-03-06
 
 ### Changed

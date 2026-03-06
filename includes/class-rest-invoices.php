@@ -1973,6 +1973,7 @@ class Invoices extends Base {
 			'sent_date'          => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
 			'due_date'           => get_post_meta( $post->ID, 'due_date', true ) ?: null,
 			'payment_link'       => $payment_link,
+			'payment_account'    => $this->get_invoice_payment_account( $post->ID ),
 			'created'            => $post->post_date,
 			'invoice_type'       => get_field( 'invoice_type', $post->ID ) ?: null,
 			'installment_plan'   => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
@@ -2074,9 +2075,11 @@ class Invoices extends Base {
 		$customer_email      = sanitize_email( (string) $request->get_param( 'customer_email' ) );
 		$customer_address    = sanitize_textarea_field( (string) $request->get_param( 'customer_address' ) );
 		$due_date_override   = preg_replace( '/[^0-9]/', '', (string) $request->get_param( 'payment_terms_due_date' ) );
+		$payment_account_id  = sanitize_key( (string) $request->get_param( 'payment_account_id' ) );
 		$email_subject       = sanitize_text_field( (string) $request->get_param( 'email_subject' ) );
 		$email_body_override = wp_kses_post( (string) $request->get_param( 'email_body_override' ) );
 		$custom_fields       = $request->get_param( 'custom_fields' );
+		$finance_config      = new FinanceConfig();
 
 		if ( empty( $line_items ) || ! is_array( $line_items ) ) {
 			return new \WP_Error(
@@ -2141,6 +2144,11 @@ class Invoices extends Base {
 			$invoice_type = $fallback_invoice_type;
 		}
 
+		$selected_payment_account = $this->resolve_payment_account_for_payload( $finance_config, $payment_account_id );
+		if ( is_wp_error( $selected_payment_account ) ) {
+			return $selected_payment_account;
+		}
+
 		$normalized_custom_fields = [];
 		if ( is_array( $custom_fields ) ) {
 			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
@@ -2164,6 +2172,7 @@ class Invoices extends Base {
 			'customer_email'      => $customer_email,
 			'customer_address'    => $customer_address,
 			'due_date_override'   => preg_match( '/^\d{8}$/', $due_date_override ) ? $due_date_override : '',
+			'payment_account'     => $selected_payment_account,
 			'email_subject'       => $email_subject,
 			'email_body_override' => $email_body_override,
 			'custom_fields'       => $normalized_custom_fields,
@@ -2191,9 +2200,87 @@ class Invoices extends Base {
 		update_post_meta( $invoice_id, '_customer_attention', $payload['customer_attention'] );
 		update_post_meta( $invoice_id, '_customer_email', $payload['customer_email'] );
 		update_post_meta( $invoice_id, '_customer_address', $payload['customer_address'] );
+		$payment_account = is_array( $payload['payment_account'] ?? null ) ? $payload['payment_account'] : [];
+		update_post_meta( $invoice_id, '_payment_account_id', (string) ( $payment_account['id'] ?? '' ) );
+		update_post_meta( $invoice_id, '_payment_account_internal_name', (string) ( $payment_account['internal_name'] ?? '' ) );
+		update_post_meta( $invoice_id, '_payment_account_account_holder', (string) ( $payment_account['account_holder'] ?? '' ) );
+		update_post_meta( $invoice_id, '_payment_account_iban', (string) ( $payment_account['iban'] ?? '' ) );
+		update_post_meta( $invoice_id, '_payment_account_linked_provider', (string) ( $payment_account['linked_provider'] ?? '' ) );
 		update_post_meta( $invoice_id, '_email_subject', $payload['email_subject'] );
 		update_post_meta( $invoice_id, '_email_body_override', $payload['email_body_override'] );
 		update_post_meta( $invoice_id, '_custom_fields', wp_json_encode( $payload['custom_fields'] ) );
+	}
+
+	/**
+	 * Resolve a payment account from request payload, defaulting to the provider-linked account.
+	 *
+	 * @param FinanceConfig $finance_config Finance config service.
+	 * @param string        $payment_account_id Requested account ID.
+	 * @return array<string, string>|\WP_Error
+	 */
+	private function resolve_payment_account_for_payload( FinanceConfig $finance_config, string $payment_account_id ) {
+		$account = '' !== $payment_account_id
+			? $finance_config->get_bank_account_by_id( $payment_account_id )
+			: $finance_config->get_default_bank_account( $finance_config->get_active_payment_provider() );
+
+		if ( '' !== $payment_account_id && ! is_array( $account ) ) {
+			return new \WP_Error(
+				'invalid_payment_account',
+				__( 'De gekozen bankrekening bestaat niet meer.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( ! is_array( $account ) ) {
+			return [
+				'id'              => '',
+				'internal_name'   => '',
+				'account_holder'  => $finance_config->get_org_name(),
+				'iban'            => $finance_config->get_iban(),
+				'linked_provider' => '',
+			];
+		}
+
+		return $account;
+	}
+
+	/**
+	 * Resolve the stored/snapshotted payment account for an invoice.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return array<string, string>
+	 */
+	private function get_invoice_payment_account( int $invoice_id ): array {
+		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
+		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
+		$iban            = (string) get_post_meta( $invoice_id, '_payment_account_iban', true );
+		$linked_provider = (string) get_post_meta( $invoice_id, '_payment_account_linked_provider', true );
+
+		if ( '' !== $account_id || '' !== $internal_name || '' !== $account_holder || '' !== $iban ) {
+			return [
+				'id'              => $account_id,
+				'internal_name'   => $internal_name,
+				'account_holder'  => $account_holder,
+				'iban'            => $iban,
+				'linked_provider' => $linked_provider,
+			];
+		}
+
+		$finance_config = new FinanceConfig();
+		$default        = $finance_config->get_default_bank_account( $finance_config->get_active_payment_provider() );
+
+		if ( is_array( $default ) ) {
+			return $default;
+		}
+
+		return [
+			'id'              => '',
+			'internal_name'   => '',
+			'account_holder'  => $finance_config->get_org_name(),
+			'iban'            => $finance_config->get_iban(),
+			'linked_provider' => '',
+		];
 	}
 
 	/**
