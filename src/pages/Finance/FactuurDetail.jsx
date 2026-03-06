@@ -793,17 +793,6 @@ export default function FactuurDetail() {
           {/* Draft status actions */}
           {invoice.status === 'draft' && (
             <>
-              <button
-                onClick={() => {
-                  setIsEditingDraft((current) => !current);
-                  setErrorMessage('');
-                }}
-                disabled={isPending && !isEditingDraft}
-                className="btn-secondary flex items-center gap-2"
-              >
-                <Pencil className="w-4 h-4" />
-                {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
-              </button>
               {invoice.invoice_type === 'membership' && (
                 <div className="w-full mb-2">
                   <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
