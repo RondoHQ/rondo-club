@@ -13,6 +13,7 @@
 namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
+use Rondo\Notifications\EmailTemplate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -264,6 +265,19 @@ class InstallmentEmailSender {
 				(string) $days_overdue,
 			],
 			$template
+		);
+
+		$email_body = EmailTemplate::render(
+			[
+				'brand_name'    => $org_name,
+				'preheader'     => sprintf( 'Termijn %d voor factuur %s', $installment_number, $invoice_number ),
+				'eyebrow'       => 'Contributie',
+				'heading'       => sprintf( 'Termijn %d van %d', $installment_number, $total_count ),
+				'body_html'     => $email_body,
+				'cta_url'       => $checkout_url,
+				'cta_label'     => 'Betaal nu',
+				'support_email' => $contact_email,
+			]
 		);
 
 		// Build email subject.

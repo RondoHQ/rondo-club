@@ -9,6 +9,8 @@
 
 namespace Rondo\VOG;
 
+use Rondo\Notifications\EmailTemplate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -355,8 +357,16 @@ class VOGEmail {
 		// Set content type to HTML
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-		// Convert newlines to <br> for HTML email
-		$html_message = nl2br( esc_html( $message ) );
+		$html_message = EmailTemplate::render(
+			[
+				'brand_name'    => $this->get_from_name(),
+				'preheader'     => $subject,
+				'eyebrow'       => 'VOG',
+				'heading'       => $subject,
+				'body_html'     => EmailTemplate::format_plain_text( $message ),
+				'support_email' => $this->get_from_email(),
+			]
+		);
 
 		// Send email
 		$result = wp_mail( $recipient_email, $subject, $html_message, $headers );
@@ -631,8 +641,16 @@ EOT;
 		// Set content type to HTML
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-		// Convert newlines to <br> for HTML email
-		$html_message = nl2br( esc_html( $message ) );
+		$html_message = EmailTemplate::render(
+			[
+				'brand_name'    => $this->get_from_name(),
+				'preheader'     => $subject,
+				'eyebrow'       => 'VOG',
+				'heading'       => $subject,
+				'body_html'     => EmailTemplate::format_plain_text( $message ),
+				'support_email' => $this->get_from_email(),
+			]
+		);
 
 		// Send email
 		$result = wp_mail( $recipient_email, $subject, $html_message, $headers );

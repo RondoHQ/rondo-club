@@ -5,6 +5,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\Notifications\EmailTemplate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -5387,8 +5389,20 @@ class Api extends Base {
 			]
 		);
 
+		$body    = EmailTemplate::render(
+			[
+				'brand_name' => 'Rondo Club',
+				'preheader'  => $subject,
+				'eyebrow'    => 'Lettermint',
+				'heading'    => 'Testmail',
+				'body_html'  => EmailTemplate::format_plain_text( $body ),
+				'cta_url'    => home_url( '/' ),
+				'cta_label'  => 'Open site',
+			]
+		);
+
 		$headers = [
-			'Content-Type: text/plain; charset=UTF-8',
+			'Content-Type: text/html; charset=UTF-8',
 			'X-Rondo-Email-Tag: lettermint-test',
 		];
 
@@ -5562,8 +5576,19 @@ class Api extends Base {
 			'source_person_id' => (int) $person_id,
 		];
 
+		$body    = EmailTemplate::render(
+			[
+				'brand_name'    => $club_name,
+				'preheader'     => $subject,
+				'eyebrow'       => 'Verificatie',
+				'heading'       => 'Controleer dit e-mailadres',
+				'body_html'     => EmailTemplate::format_plain_text( $body ),
+				'support_email' => $resolved_sender_email,
+			]
+		);
+
 		$headers = [
-			'Content-Type: text/plain; charset=UTF-8',
+			'Content-Type: text/html; charset=UTF-8',
 			'X-Rondo-Email-Tag: email-verification',
 			'X-Rondo-Metadata: ' . wp_json_encode( $metadata ),
 		];

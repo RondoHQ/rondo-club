@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.43] - 2026-03-06
+
+### Changed
+- Outbound emails now use a shared branded HTML wrapper with improved spacing, typography, footer treatment, and CTA buttons.
+- Finance emails, VOG emails, welcome emails, todo assignment emails, mention notifications, weekly digests, and Lettermint test/verification mails now render inside the same HTML layout while keeping their existing placeholders and business logic intact.
+
 ## [31.6.42] - 2026-03-06
 
 ### Fixed

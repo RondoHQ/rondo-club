@@ -8,6 +8,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\Notifications\EmailTemplate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -702,11 +704,23 @@ class Todos extends Base {
 		$description = $this->normalize_todo_description_for_email( $description );
 
 		$subject = sprintf( '[Rondo] Nieuwe taak: %s', $title );
-		$message = sprintf(
-			"%s heeft een taak aan jou toegewezen:\n\nTitel: %s\nBeschrijving:\n%s",
-			$assigner,
-			$title,
-			$description
+		$todo_url = home_url( '/todos' );
+		$message  = EmailTemplate::render(
+			[
+				'brand_name' => get_bloginfo( 'name' ),
+				'preheader'  => $subject,
+				'eyebrow'    => 'Taak',
+				'heading'    => $title,
+				'body_html'  => EmailTemplate::format_plain_text(
+					sprintf(
+						"%s heeft een taak aan jou toegewezen.\n\nBeschrijving:\n%s",
+						$assigner,
+						$description
+					)
+				),
+				'cta_url'    => $todo_url,
+				'cta_label'  => 'Open taken',
+			]
 		);
 
 		$sent = wp_mail(
@@ -714,7 +728,7 @@ class Todos extends Base {
 			$subject,
 			$message,
 			[
-				'Content-Type: text/plain; charset=UTF-8',
+				'Content-Type: text/html; charset=UTF-8',
 				'X-Rondo-Email-Tag: todo-assigned',
 			]
 		);

@@ -5,6 +5,8 @@
 
 namespace Rondo\Collaboration;
 
+use Rondo\Notifications\EmailTemplate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -76,13 +78,23 @@ class MentionNotifications {
 		$subject = sprintf( '%s mentioned you in a note about %s', $author_name, $post_title );
 		$content = wp_strip_all_tags( $comment->comment_content );
 		$preview = strlen( $content ) > 200 ? substr( $content, 0, 200 ) . '...' : $content;
+		$site_name = get_bloginfo( 'name' );
 
-		$message = sprintf(
-			"<p>%s mentioned you in a note:</p>\n<blockquote>%s</blockquote>\n<p><a href=\"%s\">View %s</a></p>",
-			esc_html( $author_name ),
-			esc_html( $preview ),
-			esc_url( $post_url ),
-			esc_html( $post_title )
+		$message = EmailTemplate::render(
+			[
+				'brand_name' => $site_name,
+				'preheader'  => $subject,
+				'eyebrow'    => 'Melding',
+				'heading'    => 'Je bent genoemd',
+				'body_html'  => sprintf(
+					'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%s</strong> noemde je in een notitie over <strong>%s</strong>.</p><blockquote style="margin:0;padding:16px 18px;border-left:4px solid #0f766e;background:#f8fafc;border-radius:0 16px 16px 0;color:#334155;">%s</blockquote>',
+					esc_html( $author_name ),
+					esc_html( $post_title ),
+					esc_html( $preview )
+				),
+				'cta_url'    => $post_url,
+				'cta_label'  => 'Bekijk notitie',
+			]
 		);
 
 		$host      = wp_parse_url( home_url(), PHP_URL_HOST );
@@ -90,7 +102,6 @@ class MentionNotifications {
 		$domain    = count( $parts ) >= 2
 			? implode( '.', array_slice( $parts, -2 ) )
 			: $host;
-		$site_name = get_bloginfo( 'name' );
 
 		wp_mail(
 			$user->user_email,

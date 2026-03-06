@@ -93,9 +93,8 @@ class EmailChannel extends Channel {
 			'rest_of_week' => [],
 		];
 
-		$html  = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
-		$html .= sprintf(
-			'<p>Hello %s,</p><p>Here are your birthdays and to-dos for this week:</p>',
+		$html  = sprintf(
+			'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">Hallo %s,</p><p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">Hier is je overzicht van verjaardagen, taken en teamactiviteit.</p>',
 			esc_html( $user->display_name )
 		);
 
@@ -131,7 +130,7 @@ class EmailChannel extends Channel {
 
 		// Mentions section
 		if ( ! empty( $digest_data['mentions'] ) ) {
-			$html .= '<h3 style="margin-top: 20px; margin-bottom: 10px; color: #2563eb;">You were mentioned</h3>';
+			$html .= '<h3 style="margin:24px 0 10px;color:#2563eb;font-size:18px;line-height:1.3;">Je bent genoemd</h3>';
 			foreach ( $digest_data['mentions'] as $mention ) {
 				$html .= sprintf(
 					'<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid #2563eb;"><strong>%s</strong> mentioned you on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
@@ -145,7 +144,7 @@ class EmailChannel extends Channel {
 
 		// Workspace activity section
 		if ( ! empty( $digest_data['workspace_activity'] ) ) {
-			$html .= '<h3 style="margin-top: 20px; margin-bottom: 10px; color: #059669;">Workspace Activity</h3>';
+			$html .= '<h3 style="margin:24px 0 10px;color:#059669;font-size:18px;line-height:1.3;">Teamactiviteit</h3>';
 			foreach ( $digest_data['workspace_activity'] as $activity ) {
 				$html .= sprintf(
 					'<p style="margin: 5px 0; padding-left: 10px; border-left: 3px solid #059669;"><strong>%s</strong> added a note on <a href="%s">%s</a>:<br><em style="color: #666;">%s</em></p>',
@@ -157,14 +156,17 @@ class EmailChannel extends Channel {
 			}
 		}
 
-		$html .= sprintf(
-			'<p style="margin-top: 20px;"><a href="%s">Visit Rondo</a> to see more details.</p>',
-			esc_url( $site_url )
+		return EmailTemplate::render(
+			[
+				'brand_name' => get_bloginfo( 'name' ),
+				'preheader'  => 'Je Rondo weekoverzicht staat klaar',
+				'eyebrow'    => 'Digest',
+				'heading'    => 'Je weekoverzicht',
+				'body_html'  => $html,
+				'cta_url'    => $site_url,
+				'cta_label'  => 'Open Rondo',
+			]
 		);
-
-		$html .= '</body></html>';
-
-		return $html;
 	}
 
 	/**
@@ -193,7 +195,7 @@ class EmailChannel extends Channel {
 			return '';
 		}
 
-		$html  = sprintf( '<h3 style="margin-top: 20px; margin-bottom: 10px;">%s</h3>', esc_html( $section_title ) );
+		$html  = sprintf( '<h3 style="margin:24px 0 10px;color:#0f172a;font-size:18px;line-height:1.3;">%s</h3>', esc_html( $section_title ) );
 		$html .= $this->render_date_items( $dates, $site_url, $date_format );
 		$html .= $this->render_todo_items( $todos, $site_url, $date_format, $check_overdue );
 
