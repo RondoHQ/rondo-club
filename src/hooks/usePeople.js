@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, formatPersonName } from '@/utils/formatters';
+import { decodeHtml, formatPersonName, isDutchMobilePhone } from '@/utils/formatters';
 import { trackNoteAdded } from '@/hooks/useEngagementTracking';
 
 // Query keys
@@ -236,10 +236,11 @@ export function useCreatePerson({ onSuccess } = {}) {
         });
       }
       if (data.phone) {
+        const isMobile = isDutchMobilePhone(data.phone) || (data.phone_type || 'mobile') === 'mobile';
         contactInfo.push({
-          contact_type: data.phone_type || 'mobile',
+          contact_type: isMobile ? 'mobile' : 'phone',
           contact_value: data.phone,
-          contact_label: data.phone_type === 'mobile' ? 'Mobile' : 'Phone',
+          contact_label: isMobile ? 'Mobile' : 'Phone',
         });
       }
 
