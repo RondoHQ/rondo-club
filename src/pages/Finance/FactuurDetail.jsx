@@ -497,16 +497,22 @@ export default function FactuurDetail() {
                 <p className="text-gray-700 dark:text-gray-300">{invoice.person?.name || invoice.customer_name || '-'}</p>
               )}
             </div>
+            {invoice.customer_attention && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ter attentie van</h3>
+                <p className="text-gray-700 dark:text-gray-300">T.a.v. {invoice.customer_attention}</p>
+              </div>
+            )}
+            {(invoice.customer_email || invoice.person?.email) && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.customer_email || invoice.person.email}</p>
+              </div>
+            )}
             {invoice.customer_address && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Adres</h3>
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{invoice.customer_address}</p>
-              </div>
-            )}
-            {invoice.person?.email && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h3>
-                <p className="text-gray-700 dark:text-gray-300">{invoice.person.email}</p>
               </div>
             )}
             <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-700">

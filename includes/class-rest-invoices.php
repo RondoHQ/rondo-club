@@ -814,6 +814,8 @@ class Invoices extends Base {
 		$invoice_kind        = $request->get_param( 'invoice_kind' ) === 'credit' ? 'credit' : 'normal';
 		$invoice_type        = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
 		$customer_name       = sanitize_text_field( (string) $request->get_param( 'customer_name' ) );
+		$customer_attention  = sanitize_text_field( (string) $request->get_param( 'customer_attention' ) );
+		$customer_email      = sanitize_email( (string) $request->get_param( 'customer_email' ) );
 		$customer_address    = sanitize_textarea_field( (string) $request->get_param( 'customer_address' ) );
 		$due_date_override   = preg_replace( '/[^0-9]/', '', (string) $request->get_param( 'payment_terms_due_date' ) );
 		$email_subject       = sanitize_text_field( (string) $request->get_param( 'email_subject' ) );
@@ -868,6 +870,14 @@ class Invoices extends Base {
 			);
 		}
 
+		if ( '' !== (string) $request->get_param( 'customer_email' ) && '' === $customer_email ) {
+			return new \WP_Error(
+				'rest_invalid_param',
+				__( 'Invalid customer email address.', 'rondo' ),
+				[ 'status' => 400, 'params' => [ 'customer_email' => 'Invalid email address' ] ]
+			);
+		}
+
 		if ( ! in_array( $invoice_type, [ 'discipline', 'membership', 'manual' ], true ) ) {
 			$invoice_type = 'manual';
 		}
@@ -899,6 +909,8 @@ class Invoices extends Base {
 
 		update_post_meta( $post_id, '_invoice_kind', $invoice_kind );
 		update_post_meta( $post_id, '_customer_name', $customer_name );
+		update_post_meta( $post_id, '_customer_attention', $customer_attention );
+		update_post_meta( $post_id, '_customer_email', $customer_email );
 		update_post_meta( $post_id, '_customer_address', $customer_address );
 		update_post_meta( $post_id, '_email_subject', $email_subject );
 		update_post_meta( $post_id, '_email_body_override', $email_body_override );
@@ -1990,6 +2002,8 @@ class Invoices extends Base {
 			'invoice_number'   => get_field( 'invoice_number', $post->ID ),
 			'person'           => $this->get_invoice_person_summary( $post->ID ),
 			'customer_name'    => (string) get_post_meta( $post->ID, '_customer_name', true ),
+			'customer_attention' => (string) get_post_meta( $post->ID, '_customer_attention', true ),
+			'customer_email'   => (string) get_post_meta( $post->ID, '_customer_email', true ),
 			'customer_address' => (string) get_post_meta( $post->ID, '_customer_address', true ),
 			'invoice_kind'     => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
 			'total_amount'     => (float) get_field( 'total_amount', $post->ID ),

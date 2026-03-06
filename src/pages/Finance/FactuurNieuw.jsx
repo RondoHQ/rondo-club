@@ -35,6 +35,8 @@ export default function FactuurNieuw() {
   const [invoiceKind, setInvoiceKind] = useState('normal');
   const [invoiceTarget, setInvoiceTarget] = useState('member');
   const [customerName, setCustomerName] = useState('');
+  const [customerAttention, setCustomerAttention] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [personId, setPersonId] = useState('');
   const [personSearch, setPersonSearch] = useState('');
@@ -79,6 +81,8 @@ export default function FactuurNieuw() {
   useEffect(() => {
     if (invoiceTarget === 'member') {
       setCustomerName('');
+      setCustomerAttention('');
+      setCustomerEmail('');
       setCustomerAddress('');
       return;
     }
@@ -147,6 +151,8 @@ export default function FactuurNieuw() {
         invoice_type: 'manual',
         invoice_kind: invoiceKind,
         customer_name: invoiceTarget === 'external' ? customerName : '',
+        customer_attention: invoiceTarget === 'external' ? customerAttention : '',
+        customer_email: invoiceTarget === 'external' ? customerEmail : '',
         customer_address: invoiceTarget === 'external' ? customerAddress : '',
         payment_terms_due_date: dueDate ? dueDate.replaceAll('-', '') : '',
         email_subject: emailSubject === defaultEmailSubject ? '' : emailSubject,
@@ -269,6 +275,12 @@ export default function FactuurNieuw() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="text-sm">Klantnaam
               <input className="input mt-1" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+            </label>
+            <label className="text-sm">Ter attentie van
+              <input className="input mt-1" value={customerAttention} onChange={(e) => setCustomerAttention(e.target.value)} />
+            </label>
+            <label className="text-sm md:col-span-2">E-mail
+              <input className="input mt-1" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
             </label>
             <label className="text-sm md:col-span-2">Adres
               <textarea className="input mt-1 min-h-20" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
