@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.32] - 2026-03-06
+
+### Changed
+- Facturenoverzicht gebruikt nu standaard een actieve statusfilter `Alle niet betaalde`.
+- Als die statusfilter wordt weggeklikt (of op `Alle` gezet), worden weer alle facturen getoond.
+
 ## [31.6.31] - 2026-03-06
 
 ### Changed
