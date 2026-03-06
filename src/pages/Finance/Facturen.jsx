@@ -9,6 +9,9 @@ import { formatCurrency } from '@/utils/formatters';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
+const STATUS_FILTER_UNPAID = 'unpaid';
+const STATUS_FILTER_ALL = 'all';
+
 // Status badge colors
 const statusColors = {
   draft: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
@@ -126,7 +129,14 @@ const COLUMNS = [
     cell: ({ row }) => <StatusBadge status={row.original.status} />,
     filterType: FILTER_TYPES.SELECT,
     filterLabel: 'Status',
+    getFilterLabel: (value) => (value === STATUS_FILTER_UNPAID ? 'Alle niet betaalde' : (statusLabels[value] || value)),
+    filterFn: (row, colId, value) => {
+      if (!value) return true;
+      if (value === STATUS_FILTER_UNPAID) return row.getValue(colId) !== 'paid';
+      return row.getValue(colId) === value;
+    },
     filterOptions: [
+      { value: STATUS_FILTER_UNPAID, label: 'Alle niet betaalde' },
       { value: 'draft', label: 'Concept' },
       { value: 'sent', label: 'Verstuurd' },
       { value: 'paid', label: 'Betaald' },
@@ -192,7 +202,12 @@ export default function Facturen() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo(() => ({
-    status: searchParams.get('status') || '',
+    status: (() => {
+      const rawStatus = searchParams.get('status');
+      if (rawStatus === null) return STATUS_FILTER_UNPAID;
+      if (rawStatus === STATUS_FILTER_ALL) return '';
+      return rawStatus;
+    })(),
     invoice_type: searchParams.get('invoice_type') || '',
     plan: searchParams.get('plan') || '',
     person_name: searchParams.get('person_name') || '',
@@ -203,8 +218,17 @@ export default function Facturen() {
   const handleFilterChange = useCallback((colId, value) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (!value) next.delete(colId);
-      else next.set(colId, value);
+      if (colId === 'status' && !value) {
+        next.set('status', STATUS_FILTER_ALL);
+        return next;
+      }
+
+      if (!value) {
+        next.delete(colId);
+      } else {
+        next.set(colId, value);
+      }
+
       return next;
     }, { replace: true });
   }, [setSearchParams]);
@@ -213,6 +237,7 @@ export default function Facturen() {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       ['status', 'invoice_type', 'plan', 'person_name', 'invoice_number', 'sent_by'].forEach((k) => next.delete(k));
+      next.set('status', STATUS_FILTER_ALL);
       return next;
     }, { replace: true });
   }, [setSearchParams]);
