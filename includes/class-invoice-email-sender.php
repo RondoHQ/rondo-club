@@ -176,8 +176,9 @@ class InvoiceEmailSender {
 		$pdf_path       = get_field( 'pdf_path', $invoice_id );
 
 		$person = $person_id ? get_post( $person_id ) : null;
-		$first_name = '';
-		$person_name = (string) get_post_meta( $invoice_id, '_customer_name', true );
+		$first_name       = '';
+		$person_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
+		$customer_email   = (string) get_post_meta( $invoice_id, '_customer_email', true );
 		$recipient_emails = [];
 
 		if ( $person && $person->post_type === 'person' ) {
@@ -190,9 +191,15 @@ class InvoiceEmailSender {
 			$recipient_emails = self::resolve_invoice_recipient_emails( (int) $person_id );
 		}
 
+		if ( is_email( $customer_email ) ) {
+			$recipient_emails[] = $customer_email;
+		}
+
 		if ( empty( $person_name ) ) {
 			$person_name = __( 'Relatie', 'rondo' );
 		}
+
+		$recipient_emails = array_values( array_unique( array_filter( $recipient_emails, 'is_email' ) ) );
 
 		// In test mode, redirect email to override address
 		$recipient_email = $options['override_email'] ?? '';

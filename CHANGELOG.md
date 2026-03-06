@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.34] - 2026-03-06
+
+### Added
+- Handmatige externe facturen hebben nu extra velden `Ter attentie van` en `E-mail` naast klantnaam en adres.
+
+### Changed
+- Het externe e-mailadres komt nu mee in de factuurweergave en op de PDF.
+- Handmatige externe facturen kunnen nu rechtstreeks naar het ingevulde externe e-mailadres worden verzonden.
+
 ## [31.6.33] - 2026-03-06
 
 ### Changed

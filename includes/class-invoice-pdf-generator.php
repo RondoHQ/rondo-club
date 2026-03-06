@@ -68,11 +68,12 @@ class InvoicePdfGenerator {
 		}
 
 		// Gather customer data (member-linked and/or custom invoice data)
-		$person_name    = (string) get_post_meta( $invoice_id, '_customer_name', true );
-		$person_street  = '';
-		$person_city    = '';
-		$person_email   = '';
-		$address_text   = (string) get_post_meta( $invoice_id, '_customer_address', true );
+		$person_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
+		$attention_of     = (string) get_post_meta( $invoice_id, '_customer_attention', true );
+		$person_street    = '';
+		$person_city      = '';
+		$person_email     = (string) get_post_meta( $invoice_id, '_customer_email', true );
+		$address_text     = (string) get_post_meta( $invoice_id, '_customer_address', true );
 
 		$person = $person_id ? get_post( $person_id ) : null;
 		if ( $person && $person->post_type === 'person' ) {
@@ -93,7 +94,7 @@ class InvoicePdfGenerator {
 			}
 
 			$contact_info = get_field( 'contact_info', $person_id );
-			if ( $contact_info && is_array( $contact_info ) ) {
+			if ( '' === trim( $person_email ) && $contact_info && is_array( $contact_info ) ) {
 				foreach ( $contact_info as $contact ) {
 					if ( isset( $contact['contact_type'] ) &&
 						 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
@@ -159,6 +160,7 @@ class InvoicePdfGenerator {
 			$sent_date,
 			$due_date,
 			$person_name,
+			$attention_of,
 			$person_street,
 			$person_city,
 			$person_email,
@@ -234,6 +236,7 @@ class InvoicePdfGenerator {
 	 * @param string      $invoice_date   Invoice date (Ymd format).
 	 * @param string      $due_date       Due date (Ymd format).
 	 * @param string      $person_name    Person's full name.
+	 * @param string      $attention_of   Optional attention line.
 	 * @param string      $person_street  Person's street address.
 	 * @param string      $person_city    Person's city.
 	 * @param string      $person_email   Person's email.
@@ -258,6 +261,7 @@ class InvoicePdfGenerator {
 		$invoice_date,
 		$due_date,
 		$person_name,
+		$attention_of,
 		$person_street,
 		$person_city,
 		$person_email,
@@ -503,9 +507,10 @@ table.line-items .total-row td {
 <div class="recipient">
 	<div class="label">Aan:</div>
 	<div>' . esc_html( $person_name ) . '</div>
+	' . ( ! empty( $attention_of ) ? '<div>T.a.v. ' . esc_html( $attention_of ) . '</div>' : '' ) . '
+	' . ( ! empty( $person_email ) ? '<div>' . esc_html( $person_email ) . '</div>' : '' ) . '
 	' . ( ! empty( $person_street ) ? '<div>' . esc_html( $person_street ) . '</div>' : '' ) . '
 	' . ( ! empty( $person_city ) ? '<div>' . esc_html( $person_city ) . '</div>' : '' ) . '
-	' . ( ! empty( $person_email ) ? '<div>' . esc_html( $person_email ) . '</div>' : '' ) . '
 </div>
 
 ' . ( $is_membership ? '
