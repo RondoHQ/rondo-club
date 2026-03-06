@@ -1224,14 +1224,14 @@ class Api extends Base {
 			]
 		);
 
-		// Sportlink individual sync (admin only)
+		// Sportlink individual sync (admin and toegangscontrole users)
 		register_rest_route(
 			'rondo/v1',
 			'/sportlink/sync-individual',
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'sync_individual_from_sportlink' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_admin_or_toegangscontrole_permission' ],
 				'args'                => [
 					'knvb_id' => [
 						'required'          => true,
