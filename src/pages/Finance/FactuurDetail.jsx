@@ -94,6 +94,25 @@ function getCurrentEntryDiscountPercent(invoice) {
   return Math.max(0, Math.min(100, parsed));
 }
 
+function normalizeAttentionValue(value) {
+  return String(value || '').replace(/^\s*(t\.?\s*a\.?\s*v\.?:?\s*)/i, '').trim();
+}
+
+function getDisplayCustomFields(customFields = []) {
+  if (!Array.isArray(customFields)) return [];
+  return customFields
+    .map((field) => {
+      const label = String(field?.label || '').trim();
+      const text = String(field?.text || '').trim();
+      if (!label && !text) return null;
+      return {
+        label,
+        text: /^ter attentie van$/i.test(label) ? normalizeAttentionValue(text) : text,
+      };
+    })
+    .filter(Boolean);
+}
+
 export default function FactuurDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -118,6 +137,8 @@ export default function FactuurDetail() {
   const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
   const [draftAdjustmentDescription, setDraftAdjustmentDescription] = useState('Correctie');
   const [draftAdjustmentAmount, setDraftAdjustmentAmount] = useState('');
+  const displayCustomFields = getDisplayCustomFields(invoice?.custom_fields);
+  const customerAttention = normalizeAttentionValue(invoice?.customer_attention);
 
   const isTestMode = (() => {
     if (!financeSettings) return false;
@@ -400,11 +421,24 @@ export default function FactuurDetail() {
 
       {/* Header */}
       <div className="card p-6">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-brand-gradient mb-2">
               {invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Credit' : ''}
             </h1>
+            {invoice.status === 'draft' && (
+              <button
+                onClick={() => {
+                  setIsEditingDraft((current) => !current);
+                  setErrorMessage('');
+                }}
+                disabled={isPending && !isEditingDraft}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
+              </button>
+            )}
           </div>
           <StatusBadge status={invoice.status} />
         </div>
@@ -494,6 +528,12 @@ export default function FactuurDetail() {
                   </p>
                 </div>
               )}
+              {displayCustomFields.map((field, index) => (
+                <div key={`${field.label}-${index}`}>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{field.label || `Extra veld ${index + 1}`}</h3>
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">{field.text || '-'}</p>
+                </div>
+              ))}
               {invoice.installment_plan && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalplan</h3>
@@ -559,10 +599,22 @@ export default function FactuurDetail() {
                 <p className="text-gray-700 dark:text-gray-300">T.a.v. {invoice.customer_attention}</p>
               </div>
             )}
-            {(invoice.customer_email || invoice.person?.email) && (
+            {customerAttention && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ter attentie van</h3>
+                <p className="text-gray-700 dark:text-gray-300">{customerAttention}</p>
+              </div>
+            )}
+            {invoice.customer_email && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Factuur e-mail</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.customer_email}</p>
+              </div>
+            )}
+            {invoice.person?.email && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</h3>
-                <p className="text-gray-700 dark:text-gray-300">{invoice.customer_email || invoice.person.email}</p>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.person.email}</p>
               </div>
             )}
             {invoice.customer_address && (

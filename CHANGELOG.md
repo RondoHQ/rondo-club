@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.36] - 2026-03-06
+
+### Changed
+- De knop `Bewerk concept` staat nu in de factuurheader bovenaan de detailpagina.
+- Op de factuurdetailpagina toont `Ter attentie van` nu alleen de naam, zonder dubbel `T.a.v.`-prefix.
+- De twee extra factuurvelden onder de vervaldatum worden nu ook in de factuur-PDF opgenomen.
 ## [31.6.35] - 2026-03-06
 
 ### Added
@@ -23,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Het externe e-mailadres komt nu mee in de factuurweergave en op de PDF.
 - Handmatige externe facturen kunnen nu rechtstreeks naar het ingevulde externe e-mailadres worden verzonden.
-
 ## [31.6.33] - 2026-03-06
 
 ### Changed
