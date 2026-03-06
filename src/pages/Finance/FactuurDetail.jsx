@@ -547,8 +547,7 @@ export default function FactuurDetail() {
               {invoice.payment_account?.iban && (
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bankrekening</h3>
-                  <p className="text-gray-700 dark:text-gray-300">{invoice.payment_account.internal_name || invoice.payment_account.iban}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{invoice.payment_account.iban}</p>
+                  <p className="text-gray-700 dark:text-gray-300">{invoice.payment_account.iban}</p>
                   {invoice.payment_account.account_holder && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">t.n.v. {invoice.payment_account.account_holder}</p>
                   )}
@@ -605,12 +604,6 @@ export default function FactuurDetail() {
                 <p className="text-gray-700 dark:text-gray-300">{invoice.person?.name || invoice.customer_name || '-'}</p>
               )}
             </div>
-            {invoice.customer_attention && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ter attentie van</h3>
-                <p className="text-gray-700 dark:text-gray-300">T.a.v. {invoice.customer_attention}</p>
-              </div>
-            )}
             {customerAttention && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ter attentie van</h3>
