@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.31] - 2026-03-06
+
+### Changed
+- Invoice emails now send to up to two email addresses on the invoice person record, instead of only the first email.
+- For minors (<18), invoice emails now also include up to two parent records and send to up to two email addresses per parent when available.
+- The same multi-recipient behavior now applies consistently to direct invoice sends, installment emails, and invoice reminders.
+
 ## [31.6.30] - 2026-03-05
 
 ### Fixed

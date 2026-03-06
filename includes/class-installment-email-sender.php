@@ -187,20 +187,10 @@ class InstallmentEmailSender {
 		$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
 		$person_name = implode( ' ', $name_parts );
 
-		// Get person email from contact_info repeater.
-		$contact_info = get_field( 'contact_info', $person_id );
-		$person_email = '';
-		if ( $contact_info && is_array( $contact_info ) ) {
-			foreach ( $contact_info as $contact ) {
-				if ( isset( $contact['contact_type'] ) &&
-				     ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
-					$person_email = $contact['contact_value'] ?? '';
-					break;
-				}
-			}
-		}
+		// Resolve all invoice recipients (person emails + parents if minor).
+		$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
 
-		if ( empty( $person_email ) ) {
+		if ( empty( $recipient_emails ) ) {
 			return new \WP_Error(
 				'no_email',
 				'Geen e-mailadres gevonden voor persoon ' . $person_id . '.'
@@ -294,7 +284,7 @@ class InstallmentEmailSender {
 		}
 
 		// Send email via wp_mail.
-		$result = wp_mail( $person_email, $subject, $email_body, $headers );
+		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers );
 
 		if ( ! $result ) {
 			return new \WP_Error(

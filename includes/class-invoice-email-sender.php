@@ -23,6 +23,130 @@ if ( ! defined( 'ABSPATH' ) ) {
 class InvoiceEmailSender {
 
 	/**
+	 * Resolve all recipient email addresses for an invoice.
+	 *
+	 * Rules:
+	 * - Always include up to two email addresses of the invoice person.
+	 * - If the person is a minor (<18), also include up to two parent persons.
+	 * - For each parent person, include up to two email addresses.
+	 * - Returned list is unique and validated.
+	 *
+	 * @param int $person_id Invoice person post ID.
+	 * @return array<int, string>
+	 */
+	public static function resolve_invoice_recipient_emails( int $person_id ): array {
+		$emails = self::get_person_email_addresses( $person_id );
+
+		if ( self::is_minor( $person_id ) ) {
+			$parent_ids = self::get_parent_person_ids( $person_id );
+			foreach ( $parent_ids as $parent_id ) {
+				$emails = array_merge( $emails, self::get_person_email_addresses( $parent_id ) );
+			}
+		}
+
+		$emails = array_values( array_unique( array_filter( $emails, 'is_email' ) ) );
+		return $emails;
+	}
+
+	/**
+	 * Get up to two email addresses from a person's contact_info repeater.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return array<int, string>
+	 */
+	public static function get_person_email_addresses( int $person_id ): array {
+		$contact_info = get_field( 'contact_info', $person_id );
+		if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
+			return [];
+		}
+
+		$emails = [];
+		foreach ( $contact_info as $contact ) {
+			$type  = strtolower( (string) ( $contact['contact_type'] ?? '' ) );
+			$email = trim( (string) ( $contact['contact_value'] ?? '' ) );
+
+			if ( 'email' !== $type || ! is_email( $email ) ) {
+				continue;
+			}
+
+			$emails[] = $email;
+			if ( count( array_unique( $emails ) ) >= 2 ) {
+				break;
+			}
+		}
+
+		return array_values( array_unique( $emails ) );
+	}
+
+	/**
+	 * Determine whether a person is younger than 18.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return bool
+	 */
+	public static function is_minor( int $person_id ): bool {
+		$birthdate = (string) get_field( 'birthdate', $person_id );
+		if ( '' === trim( $birthdate ) ) {
+			return false;
+		}
+
+		$birth_ts = strtotime( $birthdate );
+		if ( false === $birth_ts ) {
+			return false;
+		}
+
+		$today_ts = strtotime( current_time( 'Y-m-d' ) );
+		if ( false === $today_ts || $birth_ts > $today_ts ) {
+			return false;
+		}
+
+		$years = (int) date( 'Y', $today_ts ) - (int) date( 'Y', $birth_ts );
+		if ( (int) date( 'md', $today_ts ) < (int) date( 'md', $birth_ts ) ) {
+			$years--;
+		}
+
+		return $years < 18;
+	}
+
+	/**
+	 * Get up to two parent person IDs from relationships repeater.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return array<int, int>
+	 */
+	public static function get_parent_person_ids( int $person_id ): array {
+		$relationships = get_field( 'relationships', $person_id );
+		if ( empty( $relationships ) || ! is_array( $relationships ) ) {
+			return [];
+		}
+
+		$parents = [];
+		foreach ( $relationships as $relationship ) {
+			$related_person_id = (int) ( $relationship['related_person'] ?? 0 );
+			if ( $related_person_id <= 0 ) {
+				continue;
+			}
+
+			$relationship_type_id = (int) ( $relationship['relationship_type'] ?? 0 );
+			if ( $relationship_type_id <= 0 ) {
+				continue;
+			}
+
+			$term = get_term( $relationship_type_id, 'relationship_type' );
+			if ( ! $term || is_wp_error( $term ) || 'parent' !== $term->slug ) {
+				continue;
+			}
+
+			$parents[] = $related_person_id;
+			if ( count( array_unique( $parents ) ) >= 2 ) {
+				break;
+			}
+		}
+
+		return array_values( array_unique( $parents ) );
+	}
+
+	/**
 	 * Send invoice email with PDF attachment and QR code image
 	 *
 	 * @param int   $invoice_id The invoice post ID.
@@ -54,7 +178,7 @@ class InvoiceEmailSender {
 		$person = $person_id ? get_post( $person_id ) : null;
 		$first_name = '';
 		$person_name = (string) get_post_meta( $invoice_id, '_customer_name', true );
-		$person_email = '';
+		$recipient_emails = [];
 
 		if ( $person && $person->post_type === 'person' ) {
 			$first_name = (string) get_field( 'first_name', $person_id );
@@ -63,16 +187,7 @@ class InvoiceEmailSender {
 			$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
 			$person_name = implode( ' ', $name_parts );
 
-			$contact_info = get_field( 'contact_info', $person_id );
-			if ( $contact_info && is_array( $contact_info ) ) {
-				foreach ( $contact_info as $contact ) {
-					if ( isset( $contact['contact_type'] ) &&
-						 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
-						$person_email = $contact['contact_value'] ?? '';
-						break;
-					}
-				}
-			}
+			$recipient_emails = self::resolve_invoice_recipient_emails( (int) $person_id );
 		}
 
 		if ( empty( $person_name ) ) {
@@ -80,8 +195,12 @@ class InvoiceEmailSender {
 		}
 
 		// In test mode, redirect email to override address
-		$recipient_email = $options['override_email'] ?? $person_email;
-		if ( empty( $recipient_email ) ) {
+		$recipient_email = $options['override_email'] ?? '';
+		if ( ! empty( $recipient_email ) ) {
+			$recipient_emails = [ $recipient_email ];
+		}
+
+		if ( empty( $recipient_emails ) ) {
 			return new \WP_Error(
 				'no_email',
 				__( 'Geen e-mailadres gevonden voor deze factuur.', 'rondo' ),
@@ -291,7 +410,7 @@ class InvoiceEmailSender {
 		}
 
 		// Send email via wp_mail
-		$result = wp_mail( $recipient_email, $subject, $email_body, $headers, $attachments );
+		$result = wp_mail( $recipient_emails, $subject, $email_body, $headers, $attachments );
 
 		if ( ! $result ) {
 			return new \WP_Error(
