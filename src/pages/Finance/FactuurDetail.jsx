@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2 } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem } from '@/hooks/useInvoices';
+import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import { prmApi } from '@/api/client';
+import InvoiceDraftForm from '@/components/finance/InvoiceDraftForm';
 
 // Status badge colors (same as Facturen.jsx)
 const statusColors = {
@@ -108,9 +109,11 @@ export default function FactuurDetail() {
   const toggleInstallments = useToggleInstallments();
   const updateMembershipDiscount = useUpdateMembershipInvoiceDiscount();
   const addDraftLineItem = useAddDraftInvoiceLineItem();
+  const updateDraftInvoice = useUpdateDraftInvoice();
   const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [familyDiscountPercentInput, setFamilyDiscountPercentInput] = useState('');
   const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
   const [draftAdjustmentDescription, setDraftAdjustmentDescription] = useState('Correctie');
@@ -144,6 +147,12 @@ export default function FactuurDetail() {
     setFamilyDiscountPercentInput(String(getCurrentFamilyDiscountPercent(invoice)));
     setEntryDiscountPercentInput(String(getCurrentEntryDiscountPercent(invoice)));
   }, [invoice]);
+
+  useEffect(() => {
+    if (invoice?.status !== 'draft') {
+      setIsEditingDraft(false);
+    }
+  }, [invoice?.status]);
 
   const handleSend = async () => {
     if (!window.confirm('Weet je zeker dat je deze factuur wilt versturen?')) {
@@ -319,7 +328,18 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending;
+  const handleUpdateDraft = async (payload) => {
+    setErrorMessage('');
+    try {
+      await updateDraftInvoice.mutateAsync({ id, data: payload });
+      setIsEditingDraft(false);
+      setSuccessMessage('Conceptfactuur bijgewerkt.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het bijwerken van de conceptfactuur.');
+    }
+  };
+
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending;
 
   if (isLoading) {
     return (
@@ -389,6 +409,42 @@ export default function FactuurDetail() {
           <StatusBadge status={invoice.status} />
         </div>
       </div>
+
+      {invoice.status === 'draft' && isEditingDraft && (
+        <InvoiceDraftForm
+          formKey={`draft-${invoice.id}`}
+          initialValues={{
+            invoiceKind: invoice.invoice_kind || 'normal',
+            invoiceTarget: invoice.person?.id ? 'member' : 'external',
+            customerName: invoice.customer_name || '',
+            customerAttention: invoice.customer_attention || '',
+            customerEmail: invoice.customer_email || '',
+            customerAddress: invoice.customer_address || '',
+            personId: invoice.person?.id || null,
+            personLabel: invoice.person?.name || '',
+            dueDate: invoice.due_date || '',
+            emailSubject: invoice.email_subject || '',
+            emailBody: invoice.email_body_override || '',
+            customFields: invoice.custom_fields || [],
+            lineItems: (invoice.line_items || []).map((item) => ({
+              description: item.description || '',
+              amount: item.amount ?? '',
+              discipline_case_id: item.discipline_case?.id || null,
+            })),
+          }}
+          onSubmit={handleUpdateDraft}
+          submitLabel="Wijzigingen opslaan"
+          isSubmitting={updateDraftInvoice.isPending}
+          error={errorMessage}
+          onCancel={() => {
+            setIsEditingDraft(false);
+            setErrorMessage('');
+          }}
+          cancelLabel="Sluiten"
+          heading="Conceptfactuur bewerken"
+          description="Alle ingevulde velden van deze conceptfactuur kunnen hier worden aangepast."
+        />
+      )}
 
       {/* Info cards - two column layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -579,7 +635,7 @@ export default function FactuurDetail() {
             </tfoot>
           </table>
         </div>
-        {invoice.status === 'draft' && (
+        {invoice.status === 'draft' && !isEditingDraft && (
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Extra regel toevoegen</h3>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -667,6 +723,17 @@ export default function FactuurDetail() {
           {/* Draft status actions */}
           {invoice.status === 'draft' && (
             <>
+              <button
+                onClick={() => {
+                  setIsEditingDraft((current) => !current);
+                  setErrorMessage('');
+                }}
+                disabled={isPending && !isEditingDraft}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
+              </button>
               {invoice.invoice_type === 'membership' && (
                 <div className="w-full mb-2">
                   <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
