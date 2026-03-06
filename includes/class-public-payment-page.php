@@ -390,7 +390,7 @@ class PublicPaymentPage {
 	 */
 	private function get_club_branding(): array {
 		$config       = new FinanceConfig();
-		$name         = $config->get_org_name();
+		$name         = $config->get_display_name();
 		$accent_color = $config->get_accent_color();
 		$accent_background_color = $config->get_accent_background_color();
 		$logo_url     = '';

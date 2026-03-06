@@ -230,7 +230,7 @@ class InvoiceEmailSender {
 				$template = $config->get_email_template();
 			}
 		}
-		$org_name = $config->get_org_name();
+		$org_name = $config->get_display_name();
 
 		// Build discipline cases list as HTML table
 		$tuchtzaken_lijst = '';

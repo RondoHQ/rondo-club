@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.46] - 2026-03-06
+
+### Changed
+- Factuur-PDF's blijven de juridische naam uit de financiële instellingen gebruiken.
+- Overige finance-uitingen zoals factuurmails, herinneringen, de publieke betaalpagina en membership-pass branding gebruiken nu primair `Clubnaam`, met terugval op de juridische naam als `Clubnaam` leeg is.
+
 ## [31.6.45] - 2026-03-06
 
 ### Changed
