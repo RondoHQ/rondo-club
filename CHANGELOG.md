@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.47] - 2026-03-06
+
+### Changed
+- De per-factuur override voor `E-mail body` in het aanmaak-/bewerkformulier gebruikt nu ook de rich text editor in plaats van een plain textarea.
+
 ## [31.6.46] - 2026-03-06
 
 ### Changed
