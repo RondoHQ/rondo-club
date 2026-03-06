@@ -52,6 +52,15 @@ abstract class Base {
 	}
 
 	/**
+	 * Check if user is admin or has Toegangscontrole capability.
+	 *
+	 * @return bool True if user has manage_options or toegangscontrole capability.
+	 */
+	public function check_admin_or_toegangscontrole_permission() {
+		return current_user_can( 'manage_options' ) || current_user_can( 'toegangscontrole' );
+	}
+
+	/**
 	 * Check if the current user has the financieel capability.
 	 *
 	 * @return bool True if user has financieel capability.

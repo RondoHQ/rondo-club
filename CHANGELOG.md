@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.33] - 2026-03-06
+
+### Changed
+- De knop `Ververs uit Sportlink` op de persoon-detailpagina is nu zichtbaar voor gebruikers met `toegangscontrole` (waaronder `Rondo Bestuur`), naast admins.
+- De endpoint `POST /rondo/v1/sportlink/sync-individual` accepteert nu eveneens `toegangscontrole` gebruikers, zodat de knop voor Bestuur ook functioneel is.
+
 ## [31.6.32] - 2026-03-06
 
 ### Changed

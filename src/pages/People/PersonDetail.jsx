@@ -75,6 +75,8 @@ export default function PersonDetail() {
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
+  const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
+  const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
     enabled: canAccessClothing && !!id,
@@ -1030,7 +1032,7 @@ export default function PersonDetail() {
           <span className="hidden md:inline">Terug</span>
         </button>
         <div className="flex gap-2">
-          {config.isAdmin && acf['knvb-id'] && (
+          {canSyncFromSportlink && acf['knvb-id'] && (
             <button
               onClick={handleSyncFromSportlink}
               disabled={isSyncing}
