@@ -28,7 +28,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel, normalizeContactInfo } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks, SOCIAL_TYPES } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -164,8 +164,9 @@ export default function PersonDetail() {
   const handleSaveContacts = async (contacts) => {
     setIsSavingContacts(true);
     try {
+      const normalizedContacts = normalizeContactInfo(contacts);
       const acfData = sanitizePersonAcf(person.acf, {
-        contact_info: contacts,
+        contact_info: normalizedContacts,
       });
       
       await updatePerson.mutateAsync({
@@ -958,15 +959,16 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
+  const normalizedContactInfo = normalizeContactInfo(acf.contact_info || []);
 
   // Calculate VOG status
   const vogStatus = getVogStatus(acf);
 
   // Extract social links for header display
-  const socialLinks = acf.contact_info?.filter(contact => SOCIAL_TYPES.includes(contact.contact_type)) || [];
+  const socialLinks = normalizedContactInfo.filter(contact => SOCIAL_TYPES.includes(contact.contact_type));
 
   // Check if there's a mobile number for WhatsApp
-  const mobileContact = acf.contact_info?.find(contact => contact.contact_type === 'mobile');
+  const mobileContact = normalizedContactInfo.find(contact => contact.contact_type === 'mobile');
 
   // Sort social links by display order, and add WhatsApp, Sportlink, and Freescout if applicable
   const sortedSocialLinks = (() => {
@@ -1286,7 +1288,7 @@ export default function PersonDetail() {
                   <span className="hidden md:inline">Bewerken</span>
                 </button>
               </div>
-            {acf.contact_info?.filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack').length > 0 ? (
+            {normalizedContactInfo.filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack').length > 0 ? (
               <div className="space-y-2">
                 {(() => {
                   // Define display order for contact information
@@ -1300,7 +1302,7 @@ export default function PersonDetail() {
                   };
                   
                   // Filter and sort contact information
-                  const nonSocialContacts = acf.contact_info
+                  const nonSocialContacts = normalizedContactInfo
                     .filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack')
                     .map((contact, originalIndex) => ({ ...contact, originalIndex }))
                     .sort((a, b) => {
@@ -1975,7 +1977,7 @@ export default function PersonDetail() {
             onClose={() => setShowContactModal(false)}
             onSubmit={handleSaveContacts}
             isLoading={isSavingContacts}
-            contactInfo={(acf.contact_info || []).filter(contact => contact.contact_type !== 'slack')}
+            contactInfo={normalizedContactInfo.filter(contact => contact.contact_type !== 'slack')}
           />
 
           <RelationshipEditModal
