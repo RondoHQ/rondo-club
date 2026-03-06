@@ -1965,6 +1965,7 @@ class Invoices extends Base {
 			'customer_name'      => (string) get_post_meta( $post->ID, '_customer_name', true ),
 			'customer_attention' => (string) get_post_meta( $post->ID, '_customer_attention', true ),
 			'customer_email'     => (string) get_post_meta( $post->ID, '_customer_email', true ),
+			'customer_cc_email'  => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
 			'customer_address'   => (string) get_post_meta( $post->ID, '_customer_address', true ),
 			'invoice_kind'       => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
 			'total_amount'       => (float) get_field( 'total_amount', $post->ID ),
@@ -2073,6 +2074,7 @@ class Invoices extends Base {
 		$customer_name       = sanitize_text_field( (string) $request->get_param( 'customer_name' ) );
 		$customer_attention  = sanitize_text_field( (string) $request->get_param( 'customer_attention' ) );
 		$customer_email      = sanitize_email( (string) $request->get_param( 'customer_email' ) );
+		$customer_cc_email   = sanitize_email( (string) $request->get_param( 'customer_cc_email' ) );
 		$customer_address    = sanitize_textarea_field( (string) $request->get_param( 'customer_address' ) );
 		$due_date_override   = preg_replace( '/[^0-9]/', '', (string) $request->get_param( 'payment_terms_due_date' ) );
 		$payment_account_id  = sanitize_key( (string) $request->get_param( 'payment_account_id' ) );
@@ -2140,6 +2142,14 @@ class Invoices extends Base {
 			);
 		}
 
+		if ( '' !== (string) $request->get_param( 'customer_cc_email' ) && '' === $customer_cc_email ) {
+			return new \WP_Error(
+				'rest_invalid_param',
+				__( 'Invalid customer CC email address.', 'rondo' ),
+				[ 'status' => 400, 'params' => [ 'customer_cc_email' => 'Invalid email address' ] ]
+			);
+		}
+
 		if ( ! in_array( $invoice_type, [ 'discipline', 'membership', 'manual' ], true ) ) {
 			$invoice_type = $fallback_invoice_type;
 		}
@@ -2170,6 +2180,7 @@ class Invoices extends Base {
 			'customer_name'       => $customer_name,
 			'customer_attention'  => $customer_attention,
 			'customer_email'      => $customer_email,
+			'customer_cc_email'   => $customer_cc_email,
 			'customer_address'    => $customer_address,
 			'due_date_override'   => preg_match( '/^\d{8}$/', $due_date_override ) ? $due_date_override : '',
 			'payment_account'     => $selected_payment_account,
@@ -2199,6 +2210,7 @@ class Invoices extends Base {
 		update_post_meta( $invoice_id, '_customer_name', $payload['customer_name'] );
 		update_post_meta( $invoice_id, '_customer_attention', $payload['customer_attention'] );
 		update_post_meta( $invoice_id, '_customer_email', $payload['customer_email'] );
+		update_post_meta( $invoice_id, '_customer_cc_email', $payload['customer_cc_email'] );
 		update_post_meta( $invoice_id, '_customer_address', $payload['customer_address'] );
 		$payment_account = is_array( $payload['payment_account'] ?? null ) ? $payload['payment_account'] : [];
 		update_post_meta( $invoice_id, '_payment_account_id', (string) ( $payment_account['id'] ?? '' ) );
