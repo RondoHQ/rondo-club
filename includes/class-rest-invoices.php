@@ -305,6 +305,13 @@ class Invoices extends Base {
 								return is_numeric( $param );
 							},
 						],
+						'recipient' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_email',
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || is_email( $param );
+							},
+						],
 					],
 				],
 			]
@@ -323,6 +330,13 @@ class Invoices extends Base {
 						'id' => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
+							},
+						],
+						'recipient' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_email',
+							'validate_callback' => function ( $param ) {
+								return empty( $param ) || is_email( $param );
 							},
 						],
 					],
@@ -1253,6 +1267,8 @@ class Invoices extends Base {
 	 */
 	public function send_invoice( $request ) {
 		$invoice_id = (int) $request->get_param( 'id' );
+		$test_recipient = $this->get_test_email_recipient( $request );
+		$is_test_send   = '' !== $test_recipient;
 
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
@@ -1338,6 +1354,10 @@ class Invoices extends Base {
 				$email_options['skip_bcc']       = true;
 			}
 		}
+		if ( $is_test_send ) {
+			$email_options['override_email'] = $test_recipient;
+			$email_options['skip_bcc']       = true;
+		}
 
 		$custom_email_subject = (string) get_post_meta( $invoice_id, '_email_subject', true );
 		$custom_email_body    = (string) get_post_meta( $invoice_id, '_email_body_override', true );
@@ -1358,6 +1378,17 @@ class Invoices extends Base {
 		$email_result = InvoiceEmailSender::send( $invoice_id, $email_options );
 		if ( is_wp_error( $email_result ) ) {
 			return $email_result;
+		}
+
+		if ( $is_test_send ) {
+			return rest_ensure_response(
+				[
+					'success'   => true,
+					'test_send' => true,
+					'recipient' => $test_recipient,
+					'invoice'   => $this->format_invoice_detail( get_post( $invoice_id ) ),
+				]
+			);
 		}
 
 		// Transition status to Sent
@@ -1432,6 +1463,8 @@ class Invoices extends Base {
 	public function resend_invoice( $request ) {
 		$invoice_id = (int) $request->get_param( 'id' );
 		$sender_user_id = get_current_user_id();
+		$test_recipient = $this->get_test_email_recipient( $request );
+		$is_test_send   = '' !== $test_recipient;
 
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
@@ -1461,6 +1494,10 @@ class Invoices extends Base {
 				$email_options['skip_bcc']       = true;
 			}
 		}
+		if ( $is_test_send ) {
+			$email_options['override_email'] = $test_recipient;
+			$email_options['skip_bcc']       = true;
+		}
 
 		$custom_email_subject = (string) get_post_meta( $invoice_id, '_email_subject', true );
 		$custom_email_body    = (string) get_post_meta( $invoice_id, '_email_body_override', true );
@@ -1484,6 +1521,17 @@ class Invoices extends Base {
 			return $email_result;
 		}
 
+		if ( $is_test_send ) {
+			return rest_ensure_response(
+				[
+					'success'   => true,
+					'test_send' => true,
+					'recipient' => $test_recipient,
+					'invoice'   => $this->format_invoice_detail( get_post( $invoice_id ) ),
+				]
+			);
+		}
+
 		// Track who performed the resend.
 		if ( $sender_user_id > 0 ) {
 			if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
@@ -1495,6 +1543,17 @@ class Invoices extends Base {
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Resolve an optional test recipient from the request payload.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return string
+	 */
+	private function get_test_email_recipient( \WP_REST_Request $request ): string {
+		$recipient = sanitize_email( (string) $request->get_param( 'recipient' ) );
+		return is_email( $recipient ) ? $recipient : '';
 	}
 
 	/**

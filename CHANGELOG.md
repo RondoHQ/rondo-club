@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.44] - 2026-03-06
+
+### Added
+- Factuurdetailpagina ondersteunt nu een expliciete `Verstuur testmail` actie met vrij invulbaar testadres voor concept-, verstuurde en verlopen facturen.
+
+### Changed
+- Testverzending van een conceptfactuur gebruikt de bestaande factuurmailer met override-adres en `[TEST]` onderwerp, maar zet de factuur niet op `Verstuurd`.
+
 ## [31.6.43] - 2026-03-06
 
 ### Changed
