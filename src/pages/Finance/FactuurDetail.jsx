@@ -387,7 +387,7 @@ export default function FactuurDetail() {
   };
 
   const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending;
-  const canSendTestEmail = invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'overdue';
+  const canSendTestEmail = invoice?.status === 'draft' || invoice?.status === 'sent' || invoice?.status === 'overdue';
 
   if (isLoading) {
     return (
