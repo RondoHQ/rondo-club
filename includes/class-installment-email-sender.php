@@ -235,7 +235,7 @@ class InstallmentEmailSender {
 		// Get invoice number and org info.
 		$invoice_number = (string) get_field( 'invoice_number', $invoice_id );
 		$config         = new FinanceConfig();
-		$org_name       = $config->get_org_name();
+		$org_name       = $config->get_display_name();
 		$contact_email  = $config->get_contact_email();
 
 		// Replace template variables.

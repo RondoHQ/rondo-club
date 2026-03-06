@@ -464,7 +464,7 @@ class MembershipPassApple {
 		$config = new FinanceConfig();
 		$name   = $config->get_membership_pass_apple_organization_name();
 		if ( $name === '' ) {
-			$name = $config->get_org_name();
+			$name = $config->get_display_name();
 		}
 		return $name !== '' ? $name : get_bloginfo( 'name' );
 	}

@@ -11,6 +11,7 @@
 namespace Rondo\Config;
 
 use Rondo\Data\CredentialEncryption;
+use Rondo\Config\ClubConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -114,6 +115,27 @@ class FinanceConfig {
 	 */
 	public function get_org_name(): string {
 		return get_option( self::OPTION_ORG_NAME, self::DEFAULTS['org_name'] );
+	}
+
+	/**
+	 * Get the display name that should be shown in user-facing finance flows.
+	 *
+	 * Uses Clubnaam first, then falls back to the legal organization name.
+	 *
+	 * @return string
+	 */
+	public function get_display_name(): string {
+		$club_name = trim( ClubConfig::get_club_name() );
+		if ( '' !== $club_name ) {
+			return $club_name;
+		}
+
+		$org_name = trim( $this->get_org_name() );
+		if ( '' !== $org_name ) {
+			return $org_name;
+		}
+
+		return (string) get_bloginfo( 'name' );
 	}
 
 	/**

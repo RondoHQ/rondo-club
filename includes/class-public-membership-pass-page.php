@@ -537,7 +537,7 @@ class PublicMembershipPassPage {
 			}
 		}
 
-		$name = $config->get_org_name();
+		$name = $config->get_display_name();
 		if ( $name === '' ) {
 			$name = get_bloginfo( 'name' );
 		}

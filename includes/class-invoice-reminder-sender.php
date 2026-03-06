@@ -189,7 +189,7 @@ class InvoiceReminderSender {
 
 		// Get org info.
 		$config        = new FinanceConfig();
-		$org_name      = $config->get_org_name();
+		$org_name      = $config->get_display_name();
 		$contact_email = $config->get_contact_email();
 
 		// Replace template variables.
