@@ -60,6 +60,23 @@ export function useCreateInvoice() {
   });
 }
 
+export function useUpdateDraftInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const response = await prmApi.updateDraftInvoice(id, data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
+      queryClient.invalidateQueries({ queryKey: ['invoiced-case-ids'] });
+    },
+  });
+}
+
 
 /**
  * Get preview of the next invoice number

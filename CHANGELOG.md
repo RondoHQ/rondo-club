@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.35] - 2026-03-06
+
+### Added
+- Conceptfacturen hebben nu een volledige bewerkmodus waarmee alle invoervelden van de factuur opnieuw aangepast kunnen worden zolang de factuur nog op `Concept` staat.
+
+### Changed
+- Nieuwe handmatige facturen en het bewerken van conceptfacturen gebruiken nu hetzelfde conceptformulier, zodat velden en validatie consistent blijven.
+
 ## [31.6.34] - 2026-03-06
 
 ### Added

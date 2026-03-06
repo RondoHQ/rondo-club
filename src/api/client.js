@@ -334,6 +334,7 @@ export const prmApi = {
   getInvoices: (params = {}) => api.get('/rondo/v1/invoices', { params }),
   getInvoice: (id) => api.get(`/rondo/v1/invoices/${id}`),
   createInvoice: (data) => api.post('/rondo/v1/invoices', data),
+  updateDraftInvoice: (id, data) => api.post(`/rondo/v1/invoices/${id}/draft-details`, data),
   updateInvoiceStatus: (id, status) => api.post(`/rondo/v1/invoices/${id}/status`, { status }),
   addDraftInvoiceLineItem: (id, description, amount) => api.post(`/rondo/v1/invoices/${id}/draft-line-items`, {
     description,

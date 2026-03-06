@@ -231,6 +231,25 @@ class Invoices extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/draft-details',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_draft_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id' => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+					],
+				],
+			]
+		);
+
 		// Generate PDF for invoice
 		register_rest_route(
 			'rondo/v1',
@@ -809,80 +828,12 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response containing created invoice or error.
 	 */
 	public function create_invoice( $request ) {
-		$person_id           = (int) $request->get_param( 'person_id' );
-		$line_items          = $request->get_param( 'line_items' );
-		$invoice_kind        = $request->get_param( 'invoice_kind' ) === 'credit' ? 'credit' : 'normal';
-		$invoice_type        = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
-		$customer_name       = sanitize_text_field( (string) $request->get_param( 'customer_name' ) );
-		$customer_attention  = sanitize_text_field( (string) $request->get_param( 'customer_attention' ) );
-		$customer_email      = sanitize_email( (string) $request->get_param( 'customer_email' ) );
-		$customer_address    = sanitize_textarea_field( (string) $request->get_param( 'customer_address' ) );
-		$due_date_override   = preg_replace( '/[^0-9]/', '', (string) $request->get_param( 'payment_terms_due_date' ) );
-		$email_subject       = sanitize_text_field( (string) $request->get_param( 'email_subject' ) );
-		$email_body_override = wp_kses_post( (string) $request->get_param( 'email_body_override' ) );
-		$custom_fields       = $request->get_param( 'custom_fields' );
-
-		if ( empty( $line_items ) || ! is_array( $line_items ) ) {
-			return new \WP_Error(
-				'rest_missing_param',
-				__( 'Line items are required.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'line_items' => 'Line items are required' ] ]
-			);
+		$payload = $this->prepare_invoice_payload( $request, 'manual' );
+		if ( is_wp_error( $payload ) ) {
+			return $payload;
 		}
 
-		$rows = [];
-		$total_amount = 0.0;
-		foreach ( $line_items as $item ) {
-			$amount = (float) ( $item['amount'] ?? 0 );
-			$rows[] = [
-				'discipline_case' => ! empty( $item['discipline_case_id'] ) ? absint( $item['discipline_case_id'] ) : null,
-				'description'     => sanitize_text_field( $item['description'] ?? '' ),
-				'amount'          => $amount,
-			];
-			$total_amount += $amount;
-		}
-
-		if ( empty( $rows ) ) {
-			return new \WP_Error(
-				'rest_missing_param',
-				__( 'At least one line item is required.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		$person = null;
-		if ( $person_id > 0 ) {
-			$person = get_post( $person_id );
-			if ( ! $person || $person->post_type !== 'person' ) {
-				return new \WP_Error(
-					'rest_invalid_param',
-					__( 'Invalid person ID.', 'rondo' ),
-					[ 'status' => 400, 'params' => [ 'person_id' => 'Person does not exist' ] ]
-				);
-			}
-		}
-
-		if ( $person_id <= 0 && ( '' === $customer_name || '' === $customer_address ) ) {
-			return new \WP_Error(
-				'rest_missing_param',
-				__( 'Customer name and address are required when no member is linked.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		if ( '' !== (string) $request->get_param( 'customer_email' ) && '' === $customer_email ) {
-			return new \WP_Error(
-				'rest_invalid_param',
-				__( 'Invalid customer email address.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'customer_email' => 'Invalid email address' ] ]
-			);
-		}
-
-		if ( ! in_array( $invoice_type, [ 'discipline', 'membership', 'manual' ], true ) ) {
-			$invoice_type = 'manual';
-		}
-
-		$invoice_number = InvoiceNumbering::generate_next( $invoice_type );
+		$invoice_number = InvoiceNumbering::generate_next( $payload['invoice_type'] );
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => 'rondo_invoice',
@@ -901,39 +852,49 @@ class Invoices extends Base {
 		}
 
 		update_field( 'invoice_number', $invoice_number, $post_id );
-		update_field( 'person', $person_id > 0 ? $person_id : null, $post_id );
 		update_field( 'status', 'draft', $post_id );
-		update_field( 'invoice_type', $invoice_type, $post_id );
-		update_field( 'total_amount', $total_amount, $post_id );
-		update_field( 'line_items', $rows, $post_id );
-
-		update_post_meta( $post_id, '_invoice_kind', $invoice_kind );
-		update_post_meta( $post_id, '_customer_name', $customer_name );
-		update_post_meta( $post_id, '_customer_attention', $customer_attention );
-		update_post_meta( $post_id, '_customer_email', $customer_email );
-		update_post_meta( $post_id, '_customer_address', $customer_address );
-		update_post_meta( $post_id, '_email_subject', $email_subject );
-		update_post_meta( $post_id, '_email_body_override', $email_body_override );
-		if ( preg_match( '/^\d{8}$/', $due_date_override ) ) {
-			update_field( 'field_invoice_due_date', $due_date_override, $post_id );
-		}
-
-		if ( is_array( $custom_fields ) ) {
-			$normalized = [];
-			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
-				$label = sanitize_text_field( (string) ( $field['label'] ?? '' ) );
-				$text  = sanitize_textarea_field( (string) ( $field['text'] ?? '' ) );
-				if ( '' !== $label || '' !== $text ) {
-					$normalized[] = [
-						'label' => $label,
-						'text'  => $text,
-					];
-				}
-			}
-			update_post_meta( $post_id, '_custom_fields', wp_json_encode( $normalized ) );
-		}
+		$this->persist_invoice_payload( $post_id, $payload );
 
 		$invoice = get_post( $post_id );
+		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Update all editable details on a draft invoice.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_draft_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+		$invoice    = get_post( $invoice_id );
+
+		if ( ! $invoice || 'rondo_invoice' !== $invoice->post_type ) {
+			return new \WP_Error(
+				'rest_not_found',
+				__( 'Invoice not found.', 'rondo' ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		if ( 'rondo_draft' !== $invoice->post_status ) {
+			return new \WP_Error(
+				'invoice_not_draft',
+				__( 'Alleen conceptfacturen kunnen volledig worden bewerkt.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$payload      = $this->prepare_invoice_payload( $request, $invoice_type ?: 'manual' );
+		if ( is_wp_error( $payload ) ) {
+			return $payload;
+		}
+
+		$this->persist_invoice_payload( $invoice_id, $payload );
+		$this->clear_pdf( $invoice_id );
+
+		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
 	}
 
@@ -2094,6 +2055,145 @@ class Invoices extends Base {
 		$formatted = number_format( $value, 2, '.', '' );
 		$formatted = rtrim( rtrim( $formatted, '0' ), '.' );
 		return '' === $formatted ? '0' : $formatted;
+	}
+
+	/**
+	 * Validate and normalize editable invoice payload.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @param string           $fallback_invoice_type Invoice type fallback.
+	 * @return array|\WP_Error
+	 */
+	private function prepare_invoice_payload( $request, string $fallback_invoice_type ) {
+		$person_id           = (int) $request->get_param( 'person_id' );
+		$line_items          = $request->get_param( 'line_items' );
+		$invoice_kind        = $request->get_param( 'invoice_kind' ) === 'credit' ? 'credit' : 'normal';
+		$invoice_type        = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: $fallback_invoice_type ) );
+		$customer_name       = sanitize_text_field( (string) $request->get_param( 'customer_name' ) );
+		$customer_attention  = sanitize_text_field( (string) $request->get_param( 'customer_attention' ) );
+		$customer_email      = sanitize_email( (string) $request->get_param( 'customer_email' ) );
+		$customer_address    = sanitize_textarea_field( (string) $request->get_param( 'customer_address' ) );
+		$due_date_override   = preg_replace( '/[^0-9]/', '', (string) $request->get_param( 'payment_terms_due_date' ) );
+		$email_subject       = sanitize_text_field( (string) $request->get_param( 'email_subject' ) );
+		$email_body_override = wp_kses_post( (string) $request->get_param( 'email_body_override' ) );
+		$custom_fields       = $request->get_param( 'custom_fields' );
+
+		if ( empty( $line_items ) || ! is_array( $line_items ) ) {
+			return new \WP_Error(
+				'rest_missing_param',
+				__( 'Line items are required.', 'rondo' ),
+				[ 'status' => 400, 'params' => [ 'line_items' => 'Line items are required' ] ]
+			);
+		}
+
+		$rows         = [];
+		$total_amount = 0.0;
+		foreach ( $line_items as $item ) {
+			$amount             = (float) ( $item['amount'] ?? 0 );
+			$discipline_case_id = ! empty( $item['discipline_case_id'] )
+				? absint( $item['discipline_case_id'] )
+				: absint( $item['discipline_case']['id'] ?? 0 );
+
+			$rows[] = [
+				'discipline_case' => $discipline_case_id > 0 ? $discipline_case_id : null,
+				'description'     => sanitize_text_field( $item['description'] ?? '' ),
+				'amount'          => $amount,
+			];
+			$total_amount += $amount;
+		}
+
+		if ( empty( $rows ) ) {
+			return new \WP_Error(
+				'rest_missing_param',
+				__( 'At least one line item is required.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( $person_id > 0 ) {
+			$person = get_post( $person_id );
+			if ( ! $person || 'person' !== $person->post_type ) {
+				return new \WP_Error(
+					'rest_invalid_param',
+					__( 'Invalid person ID.', 'rondo' ),
+					[ 'status' => 400, 'params' => [ 'person_id' => 'Person does not exist' ] ]
+				);
+			}
+		}
+
+		if ( $person_id <= 0 && ( '' === $customer_name || '' === $customer_address ) ) {
+			return new \WP_Error(
+				'rest_missing_param',
+				__( 'Customer name and address are required when no member is linked.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( '' !== (string) $request->get_param( 'customer_email' ) && '' === $customer_email ) {
+			return new \WP_Error(
+				'rest_invalid_param',
+				__( 'Invalid customer email address.', 'rondo' ),
+				[ 'status' => 400, 'params' => [ 'customer_email' => 'Invalid email address' ] ]
+			);
+		}
+
+		if ( ! in_array( $invoice_type, [ 'discipline', 'membership', 'manual' ], true ) ) {
+			$invoice_type = $fallback_invoice_type;
+		}
+
+		$normalized_custom_fields = [];
+		if ( is_array( $custom_fields ) ) {
+			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
+				$label = sanitize_text_field( (string) ( $field['label'] ?? '' ) );
+				$text  = sanitize_textarea_field( (string) ( $field['text'] ?? '' ) );
+				if ( '' !== $label || '' !== $text ) {
+					$normalized_custom_fields[] = [
+						'label' => $label,
+						'text'  => $text,
+					];
+				}
+			}
+		}
+
+		return [
+			'person_id'           => $person_id > 0 ? $person_id : null,
+			'invoice_kind'        => $invoice_kind,
+			'invoice_type'        => $invoice_type,
+			'customer_name'       => $customer_name,
+			'customer_attention'  => $customer_attention,
+			'customer_email'      => $customer_email,
+			'customer_address'    => $customer_address,
+			'due_date_override'   => preg_match( '/^\d{8}$/', $due_date_override ) ? $due_date_override : '',
+			'email_subject'       => $email_subject,
+			'email_body_override' => $email_body_override,
+			'custom_fields'       => $normalized_custom_fields,
+			'line_items'          => $rows,
+			'total_amount'        => $total_amount,
+		];
+	}
+
+	/**
+	 * Persist normalized invoice payload to fields and post meta.
+	 *
+	 * @param int   $invoice_id Invoice post ID.
+	 * @param array $payload Normalized payload.
+	 * @return void
+	 */
+	private function persist_invoice_payload( int $invoice_id, array $payload ): void {
+		update_field( 'person', $payload['person_id'], $invoice_id );
+		update_field( 'invoice_type', $payload['invoice_type'], $invoice_id );
+		update_field( 'total_amount', $payload['total_amount'], $invoice_id );
+		update_field( 'line_items', $payload['line_items'], $invoice_id );
+		update_field( 'field_invoice_due_date', $payload['due_date_override'], $invoice_id );
+
+		update_post_meta( $invoice_id, '_invoice_kind', $payload['invoice_kind'] );
+		update_post_meta( $invoice_id, '_customer_name', $payload['customer_name'] );
+		update_post_meta( $invoice_id, '_customer_attention', $payload['customer_attention'] );
+		update_post_meta( $invoice_id, '_customer_email', $payload['customer_email'] );
+		update_post_meta( $invoice_id, '_customer_address', $payload['customer_address'] );
+		update_post_meta( $invoice_id, '_email_subject', $payload['email_subject'] );
+		update_post_meta( $invoice_id, '_email_body_override', $payload['email_body_override'] );
+		update_post_meta( $invoice_id, '_custom_fields', wp_json_encode( $payload['custom_fields'] ) );
 	}
 
 	/**
