@@ -640,7 +640,7 @@ class FinanceConfig {
 		}
 
 		if ( isset( $data['regular_invoice_email_body'] ) ) {
-			$success = update_option( self::OPTION_REGULAR_INVOICE_EMAIL_BODY, sanitize_textarea_field( $data['regular_invoice_email_body'] ) ) && $success;
+			$success = update_option( self::OPTION_REGULAR_INVOICE_EMAIL_BODY, wp_kses_post( $data['regular_invoice_email_body'] ) ) && $success;
 		}
 
 		if ( isset( $data['club_logo_id'] ) ) {

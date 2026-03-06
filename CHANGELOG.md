@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.45] - 2026-03-06
+
+### Changed
+- `Standaard e-mail voor gewone facturen` gebruikt nu dezelfde rich text editor als de andere finance e-mailsjablonen.
+- Gewone factuurmails accepteren nu HTML-opmaak in de standaard bodytemplate, terwijl bestaande platte-tekstsjablonen automatisch compatibel blijven.
+
 ## [31.6.44] - 2026-03-06
 
 ### Added
