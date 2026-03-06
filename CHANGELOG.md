@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.40] - 2026-03-06
+
+### Changed
+- De onderste `Bewerk concept` knop is verwijderd van de factuurdetailpagina; alleen de knop in de header blijft over.
+
 ## [31.6.39] - 2026-03-06
 
 ### Changed
