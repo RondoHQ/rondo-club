@@ -140,8 +140,9 @@ export function useSendInvoice() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id) => {
-      const response = await prmApi.sendInvoice(id);
+    mutationFn: async (input) => {
+      const payload = typeof input === 'object' && input !== null ? input : { id: input };
+      const response = await prmApi.sendInvoice(payload.id, payload.recipient ? { recipient: payload.recipient } : {});
       return response.data;
     },
     onSuccess: () => {
@@ -218,8 +219,9 @@ export function useResendInvoice() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id) => {
-      const response = await prmApi.resendInvoice(id);
+    mutationFn: async (input) => {
+      const payload = typeof input === 'object' && input !== null ? input : { id: input };
+      const response = await prmApi.resendInvoice(payload.id, payload.recipient ? { recipient: payload.recipient } : {});
       return response.data;
     },
     onSuccess: () => {
