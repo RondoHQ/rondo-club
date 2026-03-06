@@ -348,3 +348,48 @@ export function formatPhoneForTel(phone) {
   // Prepend + if it was at the start
   return hasPlus ? `+${cleaned}` : cleaned;
 }
+
+/**
+ * Check if a phone value should be treated as Dutch mobile.
+ *
+ * @param {string|null|undefined} phone - Phone number to inspect
+ * @returns {boolean} True when the number starts with +316 or 06
+ */
+export function isDutchMobilePhone(phone) {
+  if (!phone) return false;
+
+  const cleaned = String(phone)
+    .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '')
+    .trim()
+    .replace(/[^\d+]/g, '');
+
+  return cleaned.startsWith('+316') || cleaned.startsWith('06');
+}
+
+/**
+ * Normalizes contact rows and auto-classifies Dutch mobile numbers as `mobile`.
+ *
+ * @param {Array} contacts - Raw contact rows from ACF
+ * @returns {Array} Normalized contact rows
+ */
+export function normalizeContactInfo(contacts = []) {
+  return contacts.map((contact) => {
+    if (!contact || typeof contact !== 'object') {
+      return contact;
+    }
+
+    const normalized = { ...contact };
+    const contactType = String(normalized.contact_type || '').toLowerCase();
+
+    if ((contactType === 'phone' || contactType === 'mobile') && isDutchMobilePhone(normalized.contact_value)) {
+      normalized.contact_type = 'mobile';
+
+      const label = String(normalized.contact_label || '').trim().toLowerCase();
+      if (!label || label === 'phone' || label === 'telefoon') {
+        normalized.contact_label = 'Mobiel';
+      }
+    }
+
+    return normalized;
+  });
+}

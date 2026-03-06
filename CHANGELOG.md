@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.31] - 2026-03-06
+
+### Changed
+- Contact phone numbers that start with `+316` or `06` are now automatically classified as `mobile` during person creation and when saving profile contact details.
+- Person profile pages now normalize existing contact data at render time, so previously stored `phone` entries with Dutch mobile numbers are treated as mobile and automatically get a WhatsApp quick link.
+
 ## [31.6.30] - 2026-03-05
 
 ### Fixed
