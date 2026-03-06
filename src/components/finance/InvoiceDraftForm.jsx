@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, Plus, Search, Trash2, X } from 'lucide-react';
 import { useSearch } from '@/hooks/useDashboard';
 import { useFinanceSettings } from '@/hooks/useFinanceSettings';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const emptyLine = { description: '', amount: '', discipline_case_id: null };
 const DEFAULT_SUBJECT_TEMPLATE = 'Factuur {factuur_nummer} - {organisatie_naam}';
@@ -460,7 +461,9 @@ export default function InvoiceDraftForm({
           </label>
           <label className="text-sm">
             E-mail body (optioneel)
-            <textarea className="input min-h-24 mt-1" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
+            <div className="mt-1">
+              <RichTextEditor value={emailBody} onChange={setEmailBody} />
+            </div>
           </label>
           <p className="text-xs text-gray-500">
             Deze velden starten met de standaard uit <Link to="/settings/financieel" className="text-electric-cyan hover:underline">Financieel instellingen</Link>. Variabelen zoals <code>{'{factuur_nummer}'}</code> en <code>{'{organisatie_naam}'}</code> blijven werken.
