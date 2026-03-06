@@ -376,10 +376,10 @@ export default function InvoiceDraftForm({
             <label className="text-sm">Ter attentie van
               <input className="input mt-1" value={customerAttention} onChange={(e) => setCustomerAttention(e.target.value)} />
             </label>
-            <label className="text-sm md:col-span-2">E-mail
+            <label className="text-sm">E-mail
               <input className="input mt-1" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
             </label>
-            <label className="text-sm md:col-span-2">CC
+            <label className="text-sm">CC
               <input className="input mt-1" type="email" value={customerCcEmail} onChange={(e) => setCustomerCcEmail(e.target.value)} />
             </label>
             <label className="text-sm md:col-span-2">Adres
