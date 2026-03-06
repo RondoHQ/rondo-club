@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.42] - 2026-03-06
+
+### Fixed
+- De factuurdetailpagina toont `Ter attentie van` niet langer dubbel wanneer een opgeslagen waarde al met `T.a.v.` begon.
+
+## [31.6.41] - 2026-03-06
+
+### Fixed
+- De interne bankrekeningnaam wordt niet langer getoond in de betaalgegevens op facturen of in de factuurdetailweergave.
+
 ## [31.6.40] - 2026-03-06
 
 ### Changed
