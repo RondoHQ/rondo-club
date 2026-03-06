@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.39] - 2026-03-06
+
+### Changed
+- Op externe handmatige facturen staan de velden `E-mail` en `CC` nu naast elkaar in plaats van onder elkaar.
+
 ## [31.6.38] - 2026-03-06
 
 ### Added
