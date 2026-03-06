@@ -16,6 +16,7 @@
 namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
+use Rondo\Notifications\EmailTemplate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -214,6 +215,20 @@ class InvoiceReminderSender {
 				esc_html( $org_name ),
 			],
 			$template
+		);
+
+		$email_body = EmailTemplate::render(
+			[
+				'brand_name'    => $org_name,
+				'preheader'     => sprintf( 'Herinnering voor factuur %s', $invoice_number ),
+				'eyebrow'       => 'Herinnering',
+				'heading'       => 'Factuur ' . $invoice_number,
+				'body_html'     => $email_body,
+				'cta_url'       => $payment_link,
+				'cta_label'     => 'Open betaallink',
+				'support_email' => $contact_email,
+				'accent_color'  => $add_bcc ? '#b45309' : '#0f766e',
+			]
 		);
 
 		// Build email subject.

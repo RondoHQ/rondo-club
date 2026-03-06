@@ -11,6 +11,8 @@
 
 namespace Rondo\Users;
 
+use Rondo\Notifications\EmailTemplate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -275,8 +277,17 @@ class UserProvisioning {
 		$subject = $this->substitute_variables( $subject, $vars );
 		$body    = $this->substitute_variables( $body, $vars );
 
-		// Build HTML body.
-		$html_body = nl2br( esc_html( $body ) );
+		$html_body = EmailTemplate::render(
+			[
+				'brand_name' => $club_naam,
+				'preheader'  => $subject,
+				'eyebrow'    => 'Account',
+				'heading'    => $subject,
+				'body_html'  => EmailTemplate::format_plain_text( $body ),
+				'cta_url'    => $set_password_url,
+				'cta_label'  => 'Wachtwoord instellen',
+			]
+		);
 
 		// Store from address/name for filter callbacks.
 		$this->current_from_email = get_option( self::OPTION_FROM_EMAIL, '' );

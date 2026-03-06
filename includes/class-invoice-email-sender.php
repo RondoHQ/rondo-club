@@ -12,6 +12,7 @@
 namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
+use Rondo\Notifications\EmailTemplate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -353,6 +354,19 @@ class InvoiceEmailSender {
 				esc_html( $org_name ),
 			],
 			$template
+		);
+
+		$email_body = EmailTemplate::render(
+			[
+				'brand_name'    => $org_name,
+				'preheader'     => sprintf( 'Factuur %s van %s', $invoice_number, $org_name ),
+				'eyebrow'       => 'Factuur',
+				'heading'       => 'Factuur ' . $invoice_number,
+				'body_html'     => $email_body,
+				'cta_url'       => ! empty( $payment_link ) ? $payment_link : '',
+				'cta_label'     => ! empty( $payment_link ) ? 'Open betaallink' : '',
+				'support_email' => $config->get_contact_email(),
+			]
 		);
 
 		// Build email subject
