@@ -179,6 +179,7 @@ class InvoiceEmailSender {
 		$first_name       = '';
 		$person_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
 		$customer_email   = (string) get_post_meta( $invoice_id, '_customer_email', true );
+		$customer_cc_email = (string) get_post_meta( $invoice_id, '_customer_cc_email', true );
 		$recipient_emails = [];
 
 		if ( $person && $person->post_type === 'person' ) {
@@ -403,6 +404,10 @@ class InvoiceEmailSender {
 			if ( ! empty( $bcc_email ) ) {
 				$headers[] = 'Bcc: ' . $bcc_email;
 			}
+		}
+
+		if ( is_email( $customer_cc_email ) && empty( $options['override_email'] ) ) {
+			$headers[] = 'Cc: ' . $customer_cc_email;
 		}
 
 		// Build attachments (PDF only — QR code is embedded inline)

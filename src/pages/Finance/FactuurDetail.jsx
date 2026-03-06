@@ -453,6 +453,7 @@ export default function FactuurDetail() {
             customerName: invoice.customer_name || '',
             customerAttention: invoice.customer_attention || '',
             customerEmail: invoice.customer_email || '',
+            customerCcEmail: invoice.customer_cc_email || '',
             customerAddress: invoice.customer_address || '',
             personId: invoice.person?.id || null,
             personLabel: invoice.person?.name || '',
@@ -620,6 +621,12 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Factuur e-mail</h3>
                 <p className="text-gray-700 dark:text-gray-300">{invoice.customer_email}</p>
+              </div>
+            )}
+            {invoice.customer_cc_email && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">CC</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.customer_cc_email}</p>
               </div>
             )}
             {invoice.person?.email && (

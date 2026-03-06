@@ -97,6 +97,7 @@ export default function InvoiceDraftForm({
   const [customerName, setCustomerName] = useState('');
   const [customerAttention, setCustomerAttention] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [customerCcEmail, setCustomerCcEmail] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [personId, setPersonId] = useState('');
   const [personSearch, setPersonSearch] = useState('');
@@ -141,6 +142,7 @@ export default function InvoiceDraftForm({
     setCustomerName(initialValues?.customerName || '');
     setCustomerAttention(initialValues?.customerAttention || '');
     setCustomerEmail(initialValues?.customerEmail || '');
+    setCustomerCcEmail(initialValues?.customerCcEmail || '');
     setCustomerAddress(initialValues?.customerAddress || '');
     setPersonId(initialValues?.personId ? String(initialValues.personId) : '');
     setPersonSearch(initialValues?.personLabel || '');
@@ -199,6 +201,7 @@ export default function InvoiceDraftForm({
       setCustomerName('');
       setCustomerAttention('');
       setCustomerEmail('');
+      setCustomerCcEmail('');
       setCustomerAddress('');
       return;
     }
@@ -241,6 +244,7 @@ export default function InvoiceDraftForm({
       customer_name: invoiceTarget === 'external' ? customerName : '',
       customer_attention: invoiceTarget === 'external' ? customerAttention : '',
       customer_email: invoiceTarget === 'external' ? customerEmail : '',
+      customer_cc_email: invoiceTarget === 'external' ? customerCcEmail : '',
       customer_address: invoiceTarget === 'external' ? customerAddress : '',
       payment_terms_due_date: dueDate ? dueDate.replaceAll('-', '') : '',
       payment_account_id: paymentAccountId,
@@ -374,6 +378,9 @@ export default function InvoiceDraftForm({
             </label>
             <label className="text-sm md:col-span-2">E-mail
               <input className="input mt-1" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} />
+            </label>
+            <label className="text-sm md:col-span-2">CC
+              <input className="input mt-1" type="email" value={customerCcEmail} onChange={(e) => setCustomerCcEmail(e.target.value)} />
             </label>
             <label className="text-sm md:col-span-2">Adres
               <textarea className="input mt-1 min-h-20" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />

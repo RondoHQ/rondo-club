@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.38] - 2026-03-06
+
+### Added
+- Handmatige externe facturen hebben nu een apart `CC`-veld naast het hoofd-e-mailadres.
+
+### Changed
+- Het `CC`-adres wordt niet op de factuur of PDF getoond, maar wordt wel als echte cc-ontvanger meegenomen bij het verzenden van de factuurmail.
+
 ## [31.6.37] - 2026-03-06
 
 ### Added
