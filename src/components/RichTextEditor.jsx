@@ -13,6 +13,35 @@ import {
   Redo
 } from 'lucide-react';
 
+const containsHtmlMarkup = (value) => /<\s*[a-z!/][^>]*>/i.test(value);
+
+const escapeHtml = (value) => value
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#039;');
+
+const normalizeEditorContent = (value) => {
+  if (!value) {
+    return '';
+  }
+
+  if (containsHtmlMarkup(value)) {
+    return value;
+  }
+
+  const normalized = value.replace(/\r\n?/g, '\n').trim();
+  if (!normalized) {
+    return '';
+  }
+
+  return normalized
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+};
+
 const MenuButton = ({ onClick, isActive, disabled, children, title }) => (
   <button
     type="button"
@@ -148,7 +177,7 @@ export default function RichTextEditor({
         },
       }),
     ],
-    content: value,
+    content: normalizeEditorContent(value),
     editable: !disabled,
     autofocus: autoFocus,
     onUpdate: ({ editor }) => {
@@ -161,12 +190,13 @@ export default function RichTextEditor({
 
   // Update editor content when value prop changes (for edit mode)
   // Only update if editor exists and the content is different
-  if (editor && value !== editor.getHTML() && value !== '') {
+  const normalizedValue = normalizeEditorContent(value);
+  if (editor && normalizedValue !== editor.getHTML() && normalizedValue !== '') {
     // Avoid infinite loops by checking if content is truly different
     const currentContent = editor.getHTML();
     const isEmpty = currentContent === '<p></p>' || currentContent === '';
-    if (value && (isEmpty || value !== currentContent)) {
-      editor.commands.setContent(value, false);
+    if (normalizedValue && (isEmpty || normalizedValue !== currentContent)) {
+      editor.commands.setContent(normalizedValue, false);
     }
   }
 
@@ -222,5 +252,3 @@ export default function RichTextEditor({
     </div>
   );
 }
-
-
