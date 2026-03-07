@@ -192,6 +192,19 @@ class InvoiceReminderSender {
 		$org_name      = $config->get_display_name();
 		$contact_email = $config->get_contact_email();
 
+		// Build inline QR code HTML via public URL.
+		$qr_code_html = '';
+		$upload_dir    = wp_upload_dir();
+		$qr_code_path  = get_field( 'qr_code_path', $invoice_id );
+
+		if ( ! empty( $qr_code_path ) ) {
+			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
+			if ( file_exists( $qr_full_path ) ) {
+				$qr_url       = $upload_dir['baseurl'] . '/' . $qr_code_path;
+				$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
+			}
+		}
+
 		// Replace template variables.
 		$email_body = str_replace(
 			[
@@ -200,6 +213,7 @@ class InvoiceReminderSender {
 				'{factuur_nummer}',
 				'{totaal_bedrag}',
 				'{betaallink}',
+				'{qr_code}',
 				'{factuurdatum}',
 				'{dagen_sinds_factuur}',
 				'{organisatie_naam}',
@@ -210,6 +224,7 @@ class InvoiceReminderSender {
 				esc_html( $invoice_number ),
 				$totaal_bedrag,
 				$betaallink,
+				$qr_code_html,
 				esc_html( $factuurdatum ),
 				(string) $days_since,
 				esc_html( $org_name ),
