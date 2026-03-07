@@ -241,6 +241,14 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     invoice_reminder_2_email_template: '',
     regular_invoice_email_subject: '',
     regular_invoice_email_body: '',
+    regular_invoice_email_heading: '',
+    discipline_email_heading: '',
+    membership_email_heading: '',
+    installment_email_heading: '',
+    reminder_1_email_heading: '',
+    reminder_2_email_heading: '',
+    invoice_reminder_1_email_heading: '',
+    invoice_reminder_2_email_heading: '',
     bcc_email: '',
     admin_fee: 0,
     exempt_discipline_teams: [],
@@ -299,6 +307,14 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         invoice_reminder_2_email_template: settings.invoice_reminder_2_email_template || '',
         regular_invoice_email_subject: settings.regular_invoice_email_subject || '',
         regular_invoice_email_body: settings.regular_invoice_email_body || '',
+        regular_invoice_email_heading: settings.regular_invoice_email_heading || '',
+        discipline_email_heading: settings.discipline_email_heading || '',
+        membership_email_heading: settings.membership_email_heading || '',
+        installment_email_heading: settings.installment_email_heading || '',
+        reminder_1_email_heading: settings.reminder_1_email_heading || '',
+        reminder_2_email_heading: settings.reminder_2_email_heading || '',
+        invoice_reminder_1_email_heading: settings.invoice_reminder_1_email_heading || '',
+        invoice_reminder_2_email_heading: settings.invoice_reminder_2_email_heading || '',
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
         exempt_discipline_teams: [],
@@ -888,6 +904,19 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Titel in e-mail
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.regular_invoice_email_heading}
+                    onChange={(e) => setFormData(prev => ({ ...prev, regular_invoice_email_heading: e.target.value }))}
+                    placeholder="Factuur"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Onderwerp
                   </label>
                   <input
@@ -938,6 +967,19 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Titel in e-mail
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.discipline_email_heading}
+                    onChange={(e) => setFormData(prev => ({ ...prev, discipline_email_heading: e.target.value }))}
+                    placeholder="Factuur"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     E-mailtekst
                   </label>
                   <RichTextEditor
@@ -981,6 +1023,19 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Titel in e-mail
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.membership_email_heading}
+                    onChange={(e) => setFormData(prev => ({ ...prev, membership_email_heading: e.target.value }))}
+                    placeholder="Contributie"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     E-mailtekst
                   </label>
                   <RichTextEditor
@@ -1021,6 +1076,19 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 </p>
               </div>
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Titel in e-mail
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.installment_email_heading}
+                    onChange={(e) => setFormData(prev => ({ ...prev, installment_email_heading: e.target.value }))}
+                    placeholder="Termijnbetaling"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     E-mailtekst
@@ -1072,6 +1140,17 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                     Dit template wordt verstuurd 14 dagen na de vervaldatum.
                   </p>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titel in e-mail</label>
+                    <input
+                      type="text"
+                      value={formData.reminder_1_email_heading}
+                      onChange={(e) => setFormData(prev => ({ ...prev, reminder_1_email_heading: e.target.value }))}
+                      placeholder="Herinnering termijn"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                  </div>
                   <RichTextEditor
                     value={formData.reminder_1_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, reminder_1_email_template: html }))}
@@ -1089,6 +1168,17 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                     Dit template wordt verstuurd 21 dagen na de vervaldatum. De penningmeester ontvangt een BCC.
                   </p>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titel in e-mail</label>
+                    <input
+                      type="text"
+                      value={formData.reminder_2_email_heading}
+                      onChange={(e) => setFormData(prev => ({ ...prev, reminder_2_email_heading: e.target.value }))}
+                      placeholder="Tweede herinnering"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                  </div>
                   <RichTextEditor
                     value={formData.reminder_2_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, reminder_2_email_template: html }))}
@@ -1138,6 +1228,17 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                     Wordt verstuurd 2 weken na de factuurdatum.
                   </p>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titel in e-mail</label>
+                    <input
+                      type="text"
+                      value={formData.invoice_reminder_1_email_heading}
+                      onChange={(e) => setFormData(prev => ({ ...prev, invoice_reminder_1_email_heading: e.target.value }))}
+                      placeholder="Herinnering"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                  </div>
                   <RichTextEditor
                     value={formData.invoice_reminder_1_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, invoice_reminder_1_email_template: html }))}
@@ -1155,6 +1256,17 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                     Wordt verstuurd 4 weken na de factuurdatum. De penningmeester ontvangt een BCC.
                   </p>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titel in e-mail</label>
+                    <input
+                      type="text"
+                      value={formData.invoice_reminder_2_email_heading}
+                      onChange={(e) => setFormData(prev => ({ ...prev, invoice_reminder_2_email_heading: e.target.value }))}
+                      placeholder="Tweede herinnering"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                  </div>
                   <RichTextEditor
                     value={formData.invoice_reminder_2_email_template}
                     onChange={(html) => setFormData(prev => ({ ...prev, invoice_reminder_2_email_template: html }))}

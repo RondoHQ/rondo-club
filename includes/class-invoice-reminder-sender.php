@@ -74,7 +74,7 @@ class InvoiceReminderSender {
 
 		$subject_prefix = 'Herinnering';
 
-		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, false );
+		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, false, 'invoice_reminder_1' );
 	}
 
 	/**
@@ -98,7 +98,7 @@ class InvoiceReminderSender {
 
 		$subject_prefix = 'Tweede herinnering';
 
-		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, true );
+		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, true, 'invoice_reminder_2' );
 	}
 
 	/**
@@ -117,7 +117,8 @@ class InvoiceReminderSender {
 		int $invoice_id,
 		string $template,
 		string $subject_prefix,
-		bool $add_bcc
+		bool $add_bcc,
+		string $heading_type = 'invoice_reminder_1'
 	): true|\WP_Error {
 		// Resolve person from invoice.
 		$person_id = get_field( 'person', $invoice_id );
@@ -242,8 +243,8 @@ class InvoiceReminderSender {
 			[
 				'brand_name'    => $org_name,
 				'preheader'     => sprintf( 'Herinnering voor factuur %s', $invoice_number ),
-				'eyebrow'       => 'Herinnering',
-				'heading'       => 'Factuur ' . $invoice_number,
+				'eyebrow'       => 'Factuur ' . $invoice_number,
+				'heading'       => $config->get_email_heading( $heading_type ),
 				'body_html'     => $email_body,
 				'support_email' => $contact_email,
 				'accent_color'  => $accent_color,

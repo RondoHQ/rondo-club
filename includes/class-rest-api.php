@@ -1129,6 +1129,14 @@ class Api extends Base {
 						'reminder_2_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'regular_invoice_email_subject' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'regular_invoice_email_body'    => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
+						'regular_invoice_email_heading'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'discipline_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'membership_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'installment_email_heading'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'reminder_1_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'reminder_2_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'invoice_reminder_1_email_heading' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'invoice_reminder_2_email_heading' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
@@ -5507,51 +5515,39 @@ class Api extends Base {
 			'{dagen_sinds_factuur}' => '22',
 		];
 
+		$eyebrow = 'Factuur C-2025-0042';
+
 		// Select template and email wrapper args based on type.
 		switch ( $template_type ) {
 			case 'regular_invoice':
 				$template = $config->get_regular_invoice_email_body();
-				$eyebrow  = 'Factuur';
-				$heading  = 'Factuur C-2025-0042';
 				break;
 			case 'discipline':
 				$template = $config->get_email_template();
-				$eyebrow  = 'Factuur';
-				$heading  = 'Factuur C-2025-0042';
 				break;
 			case 'membership':
 				$template = $config->get_membership_email_template();
-				$eyebrow  = 'Factuur';
-				$heading  = 'Factuur C-2025-0042';
 				break;
 			case 'installment':
 				$template = $config->get_installment_email_template();
-				$eyebrow  = 'Contributie';
-				$heading  = 'Termijn 2 van 3';
 				break;
 			case 'reminder_1':
 				$template = $config->get_reminder_1_email_template();
-				$eyebrow  = 'Contributie';
-				$heading  = 'Termijn 2 van 3';
 				break;
 			case 'reminder_2':
 				$template = $config->get_reminder_2_email_template();
-				$eyebrow  = 'Contributie';
-				$heading  = 'Termijn 2 van 3';
 				break;
 			case 'invoice_reminder_1':
 				$template = $config->get_invoice_reminder_1_email_template();
-				$eyebrow  = 'Herinnering';
-				$heading  = 'Factuur C-2025-0042';
 				break;
 			case 'invoice_reminder_2':
 				$template = $config->get_invoice_reminder_2_email_template();
-				$eyebrow  = 'Herinnering';
-				$heading  = 'Factuur C-2025-0042';
 				break;
 			default:
 				return new \WP_Error( 'invalid_type', 'Ongeldig template type.', [ 'status' => 400 ] );
 		}
+
+		$heading = $config->get_email_heading( $template_type );
 
 		$email_body = str_replace( array_keys( $dummy ), array_values( $dummy ), $template );
 
