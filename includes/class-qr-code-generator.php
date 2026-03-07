@@ -43,6 +43,36 @@ class QrCodeGenerator {
 	 * @return string|\WP_Error Relative path (e.g. 'invoices/qr-F2025-001.png') on success, or WP_Error on failure.
 	 */
 	public static function generate( string $url, int $invoice_id ): string|\WP_Error {
+		$upload_dir   = wp_upload_dir();
+		$invoices_dir = $upload_dir['basedir'] . '/invoices';
+		wp_mkdir_p( $invoices_dir );
+
+		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		if ( empty( $invoice_number ) ) {
+			$invoice_number = $invoice_id;
+		}
+
+		$full_path = $invoices_dir . '/qr-' . $invoice_number . '.png';
+		$result    = self::generate_to_path( $url, $full_path );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$relative_path = 'invoices/qr-' . $invoice_number . '.png';
+		update_field( 'qr_code_path', $relative_path, $invoice_id );
+
+		return $relative_path;
+	}
+
+	/**
+	 * Generate a branded QR code PNG and save it to a specific file path.
+	 *
+	 * @param string $url       The URL to encode in the QR code.
+	 * @param string $full_path Absolute file path to save the PNG to.
+	 * @return true|\WP_Error True on success, or WP_Error on failure.
+	 */
+	public static function generate_to_path( string $url, string $full_path ): true|\WP_Error {
 		try {
 			$finance_config = new FinanceConfig();
 			$accent_hex     = $finance_config->get_accent_color();
@@ -116,28 +146,12 @@ class QrCodeGenerator {
 				return new \WP_Error( 'qr_generation_failed', 'Failed to capture PNG output.' );
 			}
 
-			// Save to uploads/invoices/.
-			$upload_dir  = wp_upload_dir();
-			$invoices_dir = $upload_dir['basedir'] . '/invoices';
-			wp_mkdir_p( $invoices_dir );
-
-			$invoice_number = get_field( 'invoice_number', $invoice_id );
-			if ( empty( $invoice_number ) ) {
-				$invoice_number = $invoice_id;
-			}
-
-			$filename  = 'qr-' . $invoice_number . '.png';
-			$full_path = $invoices_dir . '/' . $filename;
-
 			$bytes_written = file_put_contents( $full_path, $png_data );
 			if ( false === $bytes_written ) {
 				return new \WP_Error( 'qr_save_failed', 'Failed to save QR code PNG to disk.' );
 			}
 
-			$relative_path = 'invoices/' . $filename;
-			update_field( 'qr_code_path', $relative_path, $invoice_id );
-
-			return $relative_path;
+			return true;
 
 		} catch ( \Throwable $e ) {
 			return new \WP_Error(

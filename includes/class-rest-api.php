@@ -5472,38 +5472,19 @@ class Api extends Base {
 		$config   = new \Rondo\Config\FinanceConfig();
 		$org_name = $config->get_display_name();
 
-		// Generate a test QR code pointing to the finance settings page.
+		// Generate a test QR code the same way real invoices do: save PNG to uploads, reference via public URL.
 		$settings_url = admin_url( 'admin.php?page=rondo#/financien/instellingen' );
 		$qr_code_html = '';
+		$upload_dir   = wp_upload_dir();
+		$invoices_dir = $upload_dir['basedir'] . '/invoices';
+		wp_mkdir_p( $invoices_dir );
 
-		try {
-			$qr_options               = new \chillerlan\QRCode\QROptions();
-			$qr_options->outputType   = \chillerlan\QRCode\Output\QROutputInterface::GDIMAGE_PNG;
-			$qr_options->outputBase64 = true;
-			$qr_options->scale        = 10;
-			$qr_options->addQuietzone = true;
-			$qr_options->quietzoneSize = 4;
-			$qr_options->eccLevel     = \chillerlan\QRCode\Common\EccLevel::H;
+		$qr_test_path = $invoices_dir . '/qr-test.png';
+		$qr_result    = \Rondo\Finance\QrCodeGenerator::generate_to_path( $settings_url, $qr_test_path );
 
-			$accent_hex = $config->get_accent_color() ?: '#0891b2';
-			$hex        = ltrim( $accent_hex, '#' );
-			$rgb        = [ (int) hexdec( substr( $hex, 0, 2 ) ), (int) hexdec( substr( $hex, 2, 2 ) ), (int) hexdec( substr( $hex, 4, 2 ) ) ];
-
-			$qr_options->moduleValues = [
-				\chillerlan\QRCode\Data\QRMatrix::M_DARKMODULE       => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_DATA_DARK        => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_FINDER_DARK      => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_ALIGNMENT_DARK   => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_TIMING_DARK      => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_FORMAT_DARK      => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_VERSION_DARK     => $rgb,
-				\chillerlan\QRCode\Data\QRMatrix::M_FINDER_DOT       => $rgb,
-			];
-
-			$qr_base64    = ( new \chillerlan\QRCode\QRCode( $qr_options ) )->render( $settings_url );
-			$qr_code_html = '<img src="' . $qr_base64 . '" alt="QR Code betaallink" width="200" style="display:block;" />';
-		} catch ( \Throwable $e ) {
-			// Silently skip QR code on failure.
+		if ( ! is_wp_error( $qr_result ) ) {
+			$qr_url       = $upload_dir['baseurl'] . '/invoices/qr-test.png';
+			$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
 		}
 
 		// Dummy data for placeholder substitution.
