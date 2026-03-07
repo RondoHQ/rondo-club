@@ -5472,6 +5472,40 @@ class Api extends Base {
 		$config   = new \Rondo\Config\FinanceConfig();
 		$org_name = $config->get_display_name();
 
+		// Generate a test QR code pointing to the finance settings page.
+		$settings_url = admin_url( 'admin.php?page=rondo#/financien/instellingen' );
+		$qr_code_html = '';
+
+		try {
+			$qr_options               = new \chillerlan\QRCode\QROptions();
+			$qr_options->outputType   = \chillerlan\QRCode\Output\QROutputInterface::GDIMAGE_PNG;
+			$qr_options->outputBase64 = true;
+			$qr_options->scale        = 10;
+			$qr_options->addQuietzone = true;
+			$qr_options->quietzoneSize = 4;
+			$qr_options->eccLevel     = \chillerlan\QRCode\Common\EccLevel::H;
+
+			$accent_hex = $config->get_accent_color() ?: '#0891b2';
+			$hex        = ltrim( $accent_hex, '#' );
+			$rgb        = [ (int) hexdec( substr( $hex, 0, 2 ) ), (int) hexdec( substr( $hex, 2, 2 ) ), (int) hexdec( substr( $hex, 4, 2 ) ) ];
+
+			$qr_options->moduleValues = [
+				\chillerlan\QRCode\Data\QRMatrix::M_DARKMODULE       => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_DATA_DARK        => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_FINDER_DARK      => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_ALIGNMENT_DARK   => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_TIMING_DARK      => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_FORMAT_DARK      => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_VERSION_DARK     => $rgb,
+				\chillerlan\QRCode\Data\QRMatrix::M_FINDER_DOT       => $rgb,
+			];
+
+			$qr_base64    = ( new \chillerlan\QRCode\QRCode( $qr_options ) )->render( $settings_url );
+			$qr_code_html = '<img src="' . $qr_base64 . '" alt="QR Code betaallink" width="200" style="display:block;" />';
+		} catch ( \Throwable $e ) {
+			// Silently skip QR code on failure.
+		}
+
 		// Dummy data for placeholder substitution.
 		$dummy = [
 			'{naam}'               => 'Jan Jansen',
@@ -5480,7 +5514,7 @@ class Api extends Base {
 			'{totaal_bedrag}'      => '&euro; 230,00',
 			'{betaallink}'         => '<a href="https://example.com/betaling/test" style="color:#0891b2;text-decoration:underline;">https://example.com/betaling/test</a>',
 			'{betaalknop}'         => EmailTemplate::render_cta_button( 'https://example.com/betaling/test', 'Open betaallink' ),
-			'{qr_code}'            => '',
+			'{qr_code}'            => $qr_code_html,
 			'{organisatie_naam}'   => esc_html( $org_name ),
 			'{tuchtzaken_lijst}'   => '<table style="width:100%;border-collapse:collapse;font-size:14px;"><thead><tr style="background-color:#f3f4f6;"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Datum</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Wedstrijd</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Kaart</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid #d1d5db;">Bedrag</th></tr></thead><tbody><tr><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">01-03-2025</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Club A - Club B</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Geel</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">&euro; 15,00</td></tr></tbody></table>',
 			'{termijn_nummer}'     => '2',
