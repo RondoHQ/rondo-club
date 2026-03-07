@@ -862,6 +862,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                     <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                     <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                    <div><code>{'{qr_code}'}</code> - QR code voor de betaallink</div>
                     <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                   </div>
                 </div>
@@ -1106,6 +1107,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                   <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                   <div><code>{'{betaallink}'}</code> - Link naar betaalpagina</div>
+                  <div><code>{'{qr_code}'}</code> - QR code voor de betaallink</div>
                   <div><code>{'{factuurdatum}'}</code> - Datum van de originele factuur</div>
                   <div><code>{'{dagen_sinds_factuur}'}</code> - Aantal dagen sinds factuurdatum</div>
                   <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
