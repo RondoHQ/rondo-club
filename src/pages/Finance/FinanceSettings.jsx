@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Link2, Unlink, ExternalLink, Copy, Check, ShieldCheck, Send } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useFinanceSettings, useUpdateFinanceSettings, useRabobankStatus, useDisconnectRabobank } from '@/hooks/useFinanceSettings';
 import api, { prmApi, wpApi } from '@/api/client';
@@ -36,6 +36,60 @@ function createEmptyBankAccount() {
     iban: '',
     linked_provider: '',
   };
+}
+
+function TestEmailBlock({ templateType }) {
+  const [recipient, setRecipient] = useState('');
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleSend = async () => {
+    if (!recipient.trim()) return;
+    setSending(true);
+    setResult(null);
+    try {
+      await api.post('/finance/test-email', { template_type: templateType, recipient: recipient.trim() });
+      setResult({ type: 'success', message: `Testmail verstuurd naar ${recipient.trim()}.` });
+    } catch (err) {
+      setResult({ type: 'error', message: err.response?.data?.message || 'Versturen mislukt.' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-lg border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-800 dark:bg-cyan-900/20">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">Testmail versturen</h3>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <input
+          type="email"
+          className="input min-w-0 flex-1 sm:max-w-xs"
+          placeholder="test@voorbeeld.nl"
+          value={recipient}
+          onChange={(e) => { setRecipient(e.target.value); setResult(null); }}
+          disabled={sending}
+        />
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending || !recipient.trim()}
+          className="btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
+        >
+          {sending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+          Verstuur
+        </button>
+      </div>
+      {result && (
+        <p className={`mt-2 text-sm ${result.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {result.message}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function normalizeBankAccounts(accounts = []) {
@@ -867,6 +921,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                   </div>
                 </div>
+                <TestEmailBlock templateType="regular_invoice" />
               </div>
             </div>
           )}
@@ -909,6 +964,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
                 </p>
+                <TestEmailBlock templateType="discipline" />
               </div>
             </div>
           )}
@@ -950,6 +1006,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
                 </p>
+                <TestEmailBlock templateType="membership" />
               </div>
             </div>
           )}
@@ -993,6 +1050,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
                 </p>
+                <TestEmailBlock templateType="installment" />
               </div>
             </div>
           )}
@@ -1020,6 +1078,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     placeholder="Schrijf hier het template voor de eerste herinnering..."
                     minHeight="200px"
                   />
+                  <TestEmailBlock templateType="reminder_1" />
                 </div>
               </div>
 
@@ -1036,6 +1095,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     placeholder="Schrijf hier het template voor de tweede herinnering..."
                     minHeight="200px"
                   />
+                  <TestEmailBlock templateType="reminder_2" />
                 </div>
               </div>
 
@@ -1084,6 +1144,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     placeholder="Schrijf hier het template voor de eerste factuurherinnering..."
                     minHeight="200px"
                   />
+                  <TestEmailBlock templateType="invoice_reminder_1" />
                 </div>
               </div>
 
@@ -1100,6 +1161,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     placeholder="Schrijf hier het template voor de tweede factuurherinnering..."
                     minHeight="200px"
                   />
+                  <TestEmailBlock templateType="invoice_reminder_2" />
                 </div>
               </div>
 

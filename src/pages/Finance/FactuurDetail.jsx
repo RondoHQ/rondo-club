@@ -132,7 +132,7 @@ export default function FactuurDetail() {
   const { data: financeSettings } = useFinanceSettings();
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [testRecipient, setTestRecipient] = useState('');
+
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [familyDiscountPercentInput, setFamilyDiscountPercentInput] = useState('');
   const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
@@ -168,7 +168,6 @@ export default function FactuurDetail() {
     if (!invoice) return;
     setFamilyDiscountPercentInput(String(getCurrentFamilyDiscountPercent(invoice)));
     setEntryDiscountPercentInput(String(getCurrentEntryDiscountPercent(invoice)));
-    setTestRecipient('');
   }, [invoice]);
 
   useEffect(() => {
@@ -218,30 +217,6 @@ export default function FactuurDetail() {
       setSuccessMessage('Factuur opnieuw verstuurd!');
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het opnieuw versturen.');
-    }
-  };
-
-  const handleTestEmail = async () => {
-    const recipient = testRecipient.trim();
-    if (!recipient) {
-      setErrorMessage('Vul een e-mailadres in voor de testmail.');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
-      setErrorMessage('Vul een geldig e-mailadres in voor de testmail.');
-      return;
-    }
-
-    setErrorMessage('');
-    try {
-      if (invoice.status === 'draft') {
-        await sendInvoice.mutateAsync({ id, recipient });
-      } else {
-        await resendInvoice.mutateAsync({ id, recipient });
-      }
-      setSuccessMessage(`Testmail verstuurd naar ${recipient}.`);
-    } catch (err) {
-      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het versturen van de testmail.');
     }
   };
 
@@ -387,7 +362,6 @@ export default function FactuurDetail() {
   };
 
   const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending;
-  const canSendTestEmail = invoice?.status === 'draft' || invoice?.status === 'sent' || invoice?.status === 'overdue';
 
   if (isLoading) {
     return (
@@ -809,41 +783,6 @@ export default function FactuurDetail() {
 
       {/* Action buttons */}
       <div className="card p-6">
-        {canSendTestEmail && (
-          <div className="mb-5 rounded-xl border border-cyan-200 bg-cyan-50/70 p-4 dark:border-cyan-800 dark:bg-cyan-900/20">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Testmail</h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Verstuur deze factuur als test naar een opgegeven adres. De mail gaat alleen naar dat adres, krijgt een <code>[TEST]</code> prefix en houdt de factuur in concept wanneer je vanuit een concept verstuurt.
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
-                <input
-                  type="email"
-                  className="input min-w-0 sm:w-80"
-                  placeholder="test@voorbeeld.nl"
-                  value={testRecipient}
-                  onChange={(e) => setTestRecipient(e.target.value)}
-                  disabled={isPending}
-                />
-                <button
-                  type="button"
-                  onClick={handleTestEmail}
-                  disabled={isPending || !testRecipient.trim()}
-                  className="btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
-                >
-                  {(sendInvoice.isPending || resendInvoice.isPending) ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  Verstuur testmail
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         <div className="flex flex-wrap gap-3">
           {/* Draft status actions */}
           {invoice.status === 'draft' && (
