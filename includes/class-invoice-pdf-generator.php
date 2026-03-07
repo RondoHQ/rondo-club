@@ -124,7 +124,6 @@ class InvoicePdfGenerator {
 		$payment_account = self::get_invoice_payment_account( $invoice_id, $finance_config );
 		$iban            = (string) ( $payment_account['iban'] ?? '' );
 		$account_holder  = (string) ( $payment_account['account_holder'] ?? $org_name );
-		$account_name    = (string) ( $payment_account['internal_name'] ?? '' );
 		$payment_clause = $finance_config->get_payment_clause();
 		$membership_payment_clause = $finance_config->get_membership_payment_clause();
 
@@ -177,7 +176,6 @@ class InvoicePdfGenerator {
 			$contact_email,
 			$iban,
 			$account_holder,
-			$account_name,
 			$payment_clause,
 			$logo_exists ? $logo_path : null,
 			$qr_code_abspath,
@@ -256,7 +254,6 @@ class InvoicePdfGenerator {
 	 * @param string      $contact_email  Organization contact email.
 	 * @param string      $iban           Bank IBAN.
 	 * @param string      $account_holder Account holder name.
-	 * @param string      $account_name   Internal bank account label.
 	 * @param string      $payment_clause Payment clause text.
 	 * @param string|null $logo_path      Path to logo file (null if not exists).
 	 * @param string|null $qr_code_path   Absolute path to QR code PNG (null if not exists).
@@ -284,7 +281,6 @@ class InvoicePdfGenerator {
 		$contact_email,
 		$iban,
 		$account_holder,
-		$account_name,
 		$payment_clause,
 		$logo_path,
 		$qr_code_path = null,
@@ -592,7 +588,6 @@ table.line-items .total-row td {
 		<td style="border: none; vertical-align: top; padding: 0;">
 			' . ( '' !== $formatted_iban ? '<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>' : '' ) . '
 			' . ( '' !== $account_holder ? '<div>t.n.v. ' . esc_html( $account_holder ) . '</div>' : '' ) . '
-			' . ( '' !== $account_name ? '<div style="font-size: 9pt; color: #666; margin-top: 4px;">' . esc_html( $account_name ) . '</div>' : '' ) . '
 			' . ( ! empty( $membership_payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $membership_payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
@@ -608,7 +603,6 @@ table.line-items .total-row td {
 		<td style="border: none; vertical-align: top; padding: 0;">
 			<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>
 			<div>t.n.v. ' . esc_html( $account_holder ?: $org_name ) . '</div>
-			' . ( '' !== $account_name ? '<div style="font-size: 9pt; color: #666; margin-top: 4px;">' . esc_html( $account_name ) . '</div>' : '' ) . '
 			' . ( ! empty( $payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '

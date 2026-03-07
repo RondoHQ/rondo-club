@@ -862,6 +862,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                     <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                     <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                    <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
                     <div><code>{'{qr_code}'}</code> - QR code voor de betaallink</div>
                     <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                   </div>
@@ -900,6 +901,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     <div><code>{'{tuchtzaken_lijst}'}</code> - Overzicht van tuchtzaken</div>
                     <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                     <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                    <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
                     <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
                     <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                   </div>
@@ -940,6 +942,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                     <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                     <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                    <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
                     <div><code>{'{qr_code}'}</code> - QR-code afbeelding (betaallink)</div>
                     <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                   </div>
@@ -982,6 +985,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     <div><code>{'{totaal_termijnen}'}</code> - Totaal aantal termijnen</div>
                     <div><code>{'{termijn_bedrag}'}</code> - Bedrag van deze termijn</div>
                     <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                    <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
                     <div><code>{'{vervaldatum}'}</code> - Vervaldatum van de termijn</div>
                     <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
                   </div>
@@ -1045,6 +1049,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <div><code>{'{totaal_termijnen}'}</code> - Totaal aantal termijnen</div>
                   <div><code>{'{termijn_bedrag}'}</code> - Bedrag van deze termijn</div>
                   <div><code>{'{betaallink}'}</code> - Link naar betaalverzoek</div>
+                  <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
                   <div><code>{'{vervaldatum}'}</code> - Vervaldatum van de termijn</div>
                   <div><code>{'{dagen_te_laat}'}</code> - Aantal dagen te laat</div>
                   <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
@@ -1107,6 +1112,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                   <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                   <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                   <div><code>{'{betaallink}'}</code> - Link naar betaalpagina</div>
+                  <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
                   <div><code>{'{qr_code}'}</code> - QR code voor de betaallink</div>
                   <div><code>{'{factuurdatum}'}</code> - Datum van de originele factuur</div>
                   <div><code>{'{dagen_sinds_factuur}'}</code> - Aantal dagen sinds factuurdatum</div>

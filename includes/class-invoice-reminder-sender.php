@@ -160,6 +160,10 @@ class InvoiceReminderSender {
 		// Format betaallink as styled HTML anchor.
 		$betaallink = '<a href="' . esc_url( $payment_link ) . '" style="color:#0891b2;text-decoration:underline;">Betaal nu</a>';
 
+		// Build CTA button for {betaalknop} placeholder.
+		$accent_color = $add_bcc ? '#b45309' : '#0f766e';
+		$betaalknop   = EmailTemplate::render_cta_button( $payment_link, 'Open betaallink', $accent_color );
+
 		// Read invoice fields.
 		$total_amount   = (float) get_field( 'total_amount', $invoice_id );
 		$invoice_number = (string) get_field( 'invoice_number', $invoice_id );
@@ -213,6 +217,7 @@ class InvoiceReminderSender {
 				'{factuur_nummer}',
 				'{totaal_bedrag}',
 				'{betaallink}',
+				'{betaalknop}',
 				'{qr_code}',
 				'{factuurdatum}',
 				'{dagen_sinds_factuur}',
@@ -224,6 +229,7 @@ class InvoiceReminderSender {
 				esc_html( $invoice_number ),
 				$totaal_bedrag,
 				$betaallink,
+				$betaalknop,
 				$qr_code_html,
 				esc_html( $factuurdatum ),
 				(string) $days_since,
@@ -239,10 +245,8 @@ class InvoiceReminderSender {
 				'eyebrow'       => 'Herinnering',
 				'heading'       => 'Factuur ' . $invoice_number,
 				'body_html'     => $email_body,
-				'cta_url'       => $payment_link,
-				'cta_label'     => 'Open betaallink',
 				'support_email' => $contact_email,
-				'accent_color'  => $add_bcc ? '#b45309' : '#0f766e',
+				'accent_color'  => $accent_color,
 			]
 		);
 
