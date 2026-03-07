@@ -75,6 +75,14 @@ class FinanceConfig {
 	const OPTION_INVOICE_REMINDER_2_EMAIL_TEMPLATE = 'rondo_finance_invoice_reminder_2_email_template';
 	const OPTION_REGULAR_INVOICE_EMAIL_SUBJECT = 'rondo_finance_regular_invoice_email_subject';
 	const OPTION_REGULAR_INVOICE_EMAIL_BODY    = 'rondo_finance_regular_invoice_email_body';
+	const OPTION_REGULAR_INVOICE_EMAIL_HEADING    = 'rondo_finance_regular_invoice_email_heading';
+	const OPTION_DISCIPLINE_EMAIL_HEADING         = 'rondo_finance_discipline_email_heading';
+	const OPTION_MEMBERSHIP_EMAIL_HEADING         = 'rondo_finance_membership_email_heading';
+	const OPTION_INSTALLMENT_EMAIL_HEADING        = 'rondo_finance_installment_email_heading';
+	const OPTION_REMINDER_1_EMAIL_HEADING         = 'rondo_finance_reminder_1_email_heading';
+	const OPTION_REMINDER_2_EMAIL_HEADING         = 'rondo_finance_reminder_2_email_heading';
+	const OPTION_INVOICE_REMINDER_1_EMAIL_HEADING = 'rondo_finance_invoice_reminder_1_email_heading';
+	const OPTION_INVOICE_REMINDER_2_EMAIL_HEADING = 'rondo_finance_invoice_reminder_2_email_heading';
 
 	/**
 	 * Default configuration values
@@ -106,6 +114,14 @@ class FinanceConfig {
 		'invoice_reminder_2_email_template' => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {voornaam},</p><p>Dit is onze tweede en laatste herinnering voor factuur {factuur_nummer} voor uw contributie ter hoogte van <strong>{totaal_bedrag}</strong>, verstuurd op {factuurdatum}.</p><p>Het is nu {dagen_sinds_factuur} dagen geleden dat deze factuur is verstuurd en wij hebben nog geen betaling ontvangen.</p><p>Wij verzoeken u dringend zo spoedig mogelijk te betalen via:<br/>{betaallink}</p><p>Indien u niet reageert, zullen wij contact met u opnemen.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'regular_invoice_email_subject' => 'Factuur {factuur_nummer} - {organisatie_naam}',
 		'regular_invoice_email_body'    => "Beste {naam},\n\nBijgevoegd vindt u factuur {factuur_nummer}.\n\nHet totaalbedrag is {totaal_bedrag}.\nU kunt betalen via: {betaallink}\n\nMet vriendelijke groet,\n{organisatie_naam}",
+		'regular_invoice_email_heading'    => 'Factuur',
+		'discipline_email_heading'         => 'Factuur',
+		'membership_email_heading'         => 'Contributie',
+		'installment_email_heading'        => 'Termijnbetaling',
+		'reminder_1_email_heading'         => 'Herinnering termijn',
+		'reminder_2_email_heading'         => 'Tweede herinnering',
+		'invoice_reminder_1_email_heading' => 'Herinnering',
+		'invoice_reminder_2_email_heading' => 'Tweede herinnering',
 	];
 
 	/**
@@ -370,6 +386,27 @@ class FinanceConfig {
 		return get_option( self::OPTION_REGULAR_INVOICE_EMAIL_BODY, self::DEFAULTS['regular_invoice_email_body'] );
 	}
 
+	public function get_email_heading( string $type ): string {
+		$key    = $type . '_email_heading';
+		$option = match ( $type ) {
+			'regular_invoice'    => self::OPTION_REGULAR_INVOICE_EMAIL_HEADING,
+			'discipline'         => self::OPTION_DISCIPLINE_EMAIL_HEADING,
+			'membership'         => self::OPTION_MEMBERSHIP_EMAIL_HEADING,
+			'installment'        => self::OPTION_INSTALLMENT_EMAIL_HEADING,
+			'reminder_1'         => self::OPTION_REMINDER_1_EMAIL_HEADING,
+			'reminder_2'         => self::OPTION_REMINDER_2_EMAIL_HEADING,
+			'invoice_reminder_1' => self::OPTION_INVOICE_REMINDER_1_EMAIL_HEADING,
+			'invoice_reminder_2' => self::OPTION_INVOICE_REMINDER_2_EMAIL_HEADING,
+			default              => null,
+		};
+
+		if ( null === $option ) {
+			return '';
+		}
+
+		return get_option( $option, self::DEFAULTS[ $key ] ?? '' );
+	}
+
 	/**
 	 * Get club logo ID
 	 *
@@ -486,6 +523,14 @@ class FinanceConfig {
 			'invoice_reminder_2_email_template' => $this->get_invoice_reminder_2_email_template(),
 			'regular_invoice_email_subject' => $this->get_regular_invoice_email_subject(),
 			'regular_invoice_email_body'    => $this->get_regular_invoice_email_body(),
+			'regular_invoice_email_heading'    => $this->get_email_heading( 'regular_invoice' ),
+			'discipline_email_heading'         => $this->get_email_heading( 'discipline' ),
+			'membership_email_heading'         => $this->get_email_heading( 'membership' ),
+			'installment_email_heading'        => $this->get_email_heading( 'installment' ),
+			'reminder_1_email_heading'         => $this->get_email_heading( 'reminder_1' ),
+			'reminder_2_email_heading'         => $this->get_email_heading( 'reminder_2' ),
+			'invoice_reminder_1_email_heading' => $this->get_email_heading( 'invoice_reminder_1' ),
+			'invoice_reminder_2_email_heading' => $this->get_email_heading( 'invoice_reminder_2' ),
 			'club_logo_id'          => $club_logo_id,
 			'club_logo_url'         => $club_logo_url,
 			'accent_color'          => $this->get_accent_color(),
@@ -663,6 +708,23 @@ class FinanceConfig {
 
 		if ( isset( $data['regular_invoice_email_body'] ) ) {
 			$success = update_option( self::OPTION_REGULAR_INVOICE_EMAIL_BODY, wp_kses_post( $data['regular_invoice_email_body'] ) ) && $success;
+		}
+
+		$heading_fields = [
+			'regular_invoice_email_heading'    => self::OPTION_REGULAR_INVOICE_EMAIL_HEADING,
+			'discipline_email_heading'         => self::OPTION_DISCIPLINE_EMAIL_HEADING,
+			'membership_email_heading'         => self::OPTION_MEMBERSHIP_EMAIL_HEADING,
+			'installment_email_heading'        => self::OPTION_INSTALLMENT_EMAIL_HEADING,
+			'reminder_1_email_heading'         => self::OPTION_REMINDER_1_EMAIL_HEADING,
+			'reminder_2_email_heading'         => self::OPTION_REMINDER_2_EMAIL_HEADING,
+			'invoice_reminder_1_email_heading' => self::OPTION_INVOICE_REMINDER_1_EMAIL_HEADING,
+			'invoice_reminder_2_email_heading' => self::OPTION_INVOICE_REMINDER_2_EMAIL_HEADING,
+		];
+
+		foreach ( $heading_fields as $key => $option ) {
+			if ( isset( $data[ $key ] ) ) {
+				$success = update_option( $option, sanitize_text_field( $data[ $key ] ) ) && $success;
+			}
 		}
 
 		if ( isset( $data['club_logo_id'] ) ) {

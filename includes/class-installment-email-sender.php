@@ -84,7 +84,7 @@ class InstallmentEmailSender {
 
 		$subject_prefix = 'Termijn ' . $installment_number;
 
-		return self::resolve_and_send( $invoice_id, $installment_number, $template, $checkout_url, $subject_prefix, false );
+		return self::resolve_and_send( $invoice_id, $installment_number, $template, $checkout_url, $subject_prefix, false, 'installment' );
 	}
 
 	/**
@@ -114,7 +114,7 @@ class InstallmentEmailSender {
 
 		$subject_prefix = 'Herinnering termijn ' . $installment_number;
 
-		return self::resolve_and_send( $invoice_id, $installment_number, $template, $checkout_url, $subject_prefix, false );
+		return self::resolve_and_send( $invoice_id, $installment_number, $template, $checkout_url, $subject_prefix, false, 'reminder_1' );
 	}
 
 	/**
@@ -145,7 +145,7 @@ class InstallmentEmailSender {
 
 		$subject_prefix = 'Tweede herinnering termijn ' . $installment_number;
 
-		return self::resolve_and_send( $invoice_id, $installment_number, $template, $checkout_url, $subject_prefix, true );
+		return self::resolve_and_send( $invoice_id, $installment_number, $template, $checkout_url, $subject_prefix, true, 'reminder_2' );
 	}
 
 	/**
@@ -168,7 +168,8 @@ class InstallmentEmailSender {
 		string $template,
 		string $checkout_url,
 		string $subject_prefix,
-		bool $add_bcc
+		bool $add_bcc,
+		string $heading_type = 'installment'
 	): true|\WP_Error {
 		// Resolve person from invoice.
 		$person_id = get_field( 'person', $invoice_id );
@@ -276,8 +277,8 @@ class InstallmentEmailSender {
 			[
 				'brand_name'    => $org_name,
 				'preheader'     => sprintf( 'Termijn %d voor factuur %s', $installment_number, $invoice_number ),
-				'eyebrow'       => 'Contributie',
-				'heading'       => sprintf( 'Termijn %d van %d', $installment_number, $total_count ),
+				'eyebrow'       => 'Factuur ' . $invoice_number,
+				'heading'       => $config->get_email_heading( $heading_type ),
 				'body_html'     => $email_body,
 				'support_email' => $contact_email,
 			]

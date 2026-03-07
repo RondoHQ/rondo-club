@@ -361,12 +361,18 @@ class InvoiceEmailSender {
 			$template
 		);
 
+		$heading_type = match ( $invoice_type ) {
+			'membership' => 'membership',
+			'manual'     => 'regular_invoice',
+			default      => 'discipline',
+		};
+
 		$email_body = EmailTemplate::render(
 			[
 				'brand_name'    => $org_name,
 				'preheader'     => sprintf( 'Factuur %s van %s', $invoice_number, $org_name ),
-				'eyebrow'       => 'Factuur',
-				'heading'       => 'Factuur ' . $invoice_number,
+				'eyebrow'       => 'Factuur ' . $invoice_number,
+				'heading'       => $config->get_email_heading( $heading_type ),
 				'body_html'     => $email_body,
 				'support_email' => $config->get_contact_email(),
 			]
