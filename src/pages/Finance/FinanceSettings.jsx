@@ -48,7 +48,7 @@ function TestEmailBlock({ templateType }) {
     setSending(true);
     setResult(null);
     try {
-      await api.post('/finance/test-email', { template_type: templateType, recipient: recipient.trim() });
+      await api.post('/rondo/v1/finance/test-email', { template_type: templateType, recipient: recipient.trim() });
       setResult({ type: 'success', message: `Testmail verstuurd naar ${recipient.trim()}.` });
     } catch (err) {
       setResult({ type: 'error', message: err.response?.data?.message || 'Versturen mislukt.' });
