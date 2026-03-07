@@ -1160,6 +1160,42 @@ class Api extends Base {
 			]
 		);
 
+		// Finance template test email (financieel capability required)
+		register_rest_route(
+			'rondo/v1',
+			'/finance/test-email',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_finance_test_email' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
+				'args'                => [
+					'template_type' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $param ) {
+							return in_array( $param, [
+								'regular_invoice',
+								'discipline',
+								'membership',
+								'installment',
+								'reminder_1',
+								'reminder_2',
+								'invoice_reminder_1',
+								'invoice_reminder_2',
+							], true );
+						},
+					],
+					'recipient' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_email',
+						'validate_callback' => function ( $param ) {
+							return is_email( $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Finance branding settings (admin only)
 		register_rest_route(
 			'rondo/v1',
@@ -5411,6 +5447,123 @@ class Api extends Base {
 			return new \WP_Error(
 				'lettermint_test_failed',
 				'Testmail kon niet worden verzonden. Controleer Lettermint-instellingen en serverlogs.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		return rest_ensure_response(
+			[
+				'message'   => 'Testmail verzonden.',
+				'recipient' => $recipient,
+			]
+		);
+	}
+
+	/**
+	 * Send a finance template test email with dummy placeholder data.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function send_finance_test_email( $request ) {
+		$template_type = (string) $request->get_param( 'template_type' );
+		$recipient     = sanitize_email( (string) $request->get_param( 'recipient' ) );
+
+		$config   = new \Rondo\Config\FinanceConfig();
+		$org_name = $config->get_display_name();
+
+		// Dummy data for placeholder substitution.
+		$dummy = [
+			'{naam}'               => 'Jan Jansen',
+			'{voornaam}'           => 'Jan',
+			'{factuur_nummer}'     => 'C-2025-0042',
+			'{totaal_bedrag}'      => '&euro; 230,00',
+			'{betaallink}'         => '<a href="https://example.com/betaling/test" style="color:#0891b2;text-decoration:underline;">https://example.com/betaling/test</a>',
+			'{betaalknop}'         => EmailTemplate::render_cta_button( 'https://example.com/betaling/test', 'Open betaallink' ),
+			'{qr_code}'            => '',
+			'{organisatie_naam}'   => esc_html( $org_name ),
+			'{tuchtzaken_lijst}'   => '<table style="width:100%;border-collapse:collapse;font-size:14px;"><thead><tr style="background-color:#f3f4f6;"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Datum</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Wedstrijd</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Kaart</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid #d1d5db;">Bedrag</th></tr></thead><tbody><tr><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">01-03-2025</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Club A - Club B</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Geel</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">&euro; 15,00</td></tr></tbody></table>',
+			'{termijn_nummer}'     => '2',
+			'{totaal_termijnen}'   => '3',
+			'{termijn_bedrag}'     => '&euro; 76,67',
+			'{vervaldatum}'        => '25 maart 2025',
+			'{dagen_te_laat}'      => '14',
+			'{factuurdatum}'       => '1 februari 2025',
+			'{dagen_sinds_factuur}' => '22',
+		];
+
+		// Select template and email wrapper args based on type.
+		switch ( $template_type ) {
+			case 'regular_invoice':
+				$template = $config->get_regular_invoice_email_body();
+				$eyebrow  = 'Factuur';
+				$heading  = 'Factuur C-2025-0042';
+				break;
+			case 'discipline':
+				$template = $config->get_email_template();
+				$eyebrow  = 'Factuur';
+				$heading  = 'Factuur C-2025-0042';
+				break;
+			case 'membership':
+				$template = $config->get_membership_email_template();
+				$eyebrow  = 'Factuur';
+				$heading  = 'Factuur C-2025-0042';
+				break;
+			case 'installment':
+				$template = $config->get_installment_email_template();
+				$eyebrow  = 'Contributie';
+				$heading  = 'Termijn 2 van 3';
+				break;
+			case 'reminder_1':
+				$template = $config->get_reminder_1_email_template();
+				$eyebrow  = 'Contributie';
+				$heading  = 'Termijn 2 van 3';
+				break;
+			case 'reminder_2':
+				$template = $config->get_reminder_2_email_template();
+				$eyebrow  = 'Contributie';
+				$heading  = 'Termijn 2 van 3';
+				break;
+			case 'invoice_reminder_1':
+				$template = $config->get_invoice_reminder_1_email_template();
+				$eyebrow  = 'Herinnering';
+				$heading  = 'Factuur C-2025-0042';
+				break;
+			case 'invoice_reminder_2':
+				$template = $config->get_invoice_reminder_2_email_template();
+				$eyebrow  = 'Herinnering';
+				$heading  = 'Factuur C-2025-0042';
+				break;
+			default:
+				return new \WP_Error( 'invalid_type', 'Ongeldig template type.', [ 'status' => 400 ] );
+		}
+
+		$email_body = str_replace( array_keys( $dummy ), array_values( $dummy ), $template );
+
+		$email_body = EmailTemplate::render(
+			[
+				'brand_name'    => $org_name,
+				'preheader'     => '[TEST] ' . $heading,
+				'eyebrow'       => $eyebrow,
+				'heading'       => $heading,
+				'body_html'     => $email_body,
+				'support_email' => $config->get_contact_email(),
+			]
+		);
+
+		$subject = '[TEST] ' . $eyebrow . ' - ' . $heading . ' - ' . $org_name;
+
+		$headers = [
+			'Content-Type: text/html; charset=UTF-8',
+			'From: ' . $org_name . ' <' . $config->get_contact_email() . '>',
+		];
+
+		$sent = wp_mail( $recipient, $subject, $email_body, $headers );
+
+		if ( ! $sent ) {
+			return new \WP_Error(
+				'email_send_failed',
+				'Testmail kon niet worden verzonden.',
 				[ 'status' => 500 ]
 			);
 		}
