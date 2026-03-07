@@ -325,6 +325,11 @@ class InvoiceEmailSender {
 			}
 		}
 
+		// Build CTA button for {betaalknop} placeholder.
+		$betaalknop = ! empty( $payment_link )
+			? EmailTemplate::render_cta_button( $payment_link, 'Open betaallink' )
+			: '';
+
 		// Replace template variables
 		if ( 'manual' === $invoice_type && ! self::contains_html_markup( $template ) ) {
 			$template = nl2br( esc_html( $template ) );
@@ -338,6 +343,7 @@ class InvoiceEmailSender {
 				'{tuchtzaken_lijst}',
 				'{totaal_bedrag}',
 				'{betaallink}',
+				'{betaalknop}',
 				'{qr_code}',
 				'{organisatie_naam}',
 			],
@@ -348,6 +354,7 @@ class InvoiceEmailSender {
 				$tuchtzaken_lijst,
 				$formatted_total,
 				$betaallink_text,
+				$betaalknop,
 				$qr_code_html,
 				esc_html( $org_name ),
 			],
@@ -361,8 +368,6 @@ class InvoiceEmailSender {
 				'eyebrow'       => 'Factuur',
 				'heading'       => 'Factuur ' . $invoice_number,
 				'body_html'     => $email_body,
-				'cta_url'       => ! empty( $payment_link ) ? $payment_link : '',
-				'cta_label'     => ! empty( $payment_link ) ? 'Open betaallink' : '',
 				'support_email' => $config->get_contact_email(),
 			]
 		);

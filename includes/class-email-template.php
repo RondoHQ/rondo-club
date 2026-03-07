@@ -57,11 +57,7 @@ class EmailTemplate {
 		}
 
 		if ( '' === $footer_html ) {
-			$footer_html = sprintf(
-				'<p style="margin:0;color:#64748b;font-size:12px;line-height:1.7;">Verzonden door <a href="%1$s" style="color:#475569;text-decoration:none;">%2$s</a>.</p>',
-				esc_url( $brand_url ),
-				esc_html( $brand_name )
-			);
+			$footer_html = '&nbsp;';
 		}
 
 		return sprintf(
@@ -78,6 +74,30 @@ class EmailTemplate {
 			$cta_html,
 			$support_html,
 			$footer_html
+		);
+	}
+
+	/**
+	 * Render a standalone CTA button for use as a template placeholder.
+	 *
+	 * @param string $url          Button URL.
+	 * @param string $label        Button label text.
+	 * @param string $accent_color Hex color for the button background.
+	 * @return string HTML table element or empty string if URL/label missing.
+	 */
+	public static function render_cta_button( string $url, string $label, string $accent_color = '#0f766e' ): string {
+		$url   = trim( $url );
+		$label = trim( $label );
+
+		if ( '' === $url || '' === $label ) {
+			return '';
+		}
+
+		return sprintf(
+			'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
+			esc_attr( $accent_color ),
+			esc_url( $url ),
+			esc_html( $label )
 		);
 	}
 

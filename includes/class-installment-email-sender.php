@@ -232,6 +232,9 @@ class InstallmentEmailSender {
 		// Format betaallink as styled HTML anchor.
 		$betaallink = '<a href="' . esc_url( $checkout_url ) . '" style="color:#0891b2;text-decoration:underline;">Betaal nu</a>';
 
+		// Build CTA button for {betaalknop} placeholder.
+		$betaalknop = EmailTemplate::render_cta_button( $checkout_url, 'Betaal nu' );
+
 		// Get invoice number and org info.
 		$invoice_number = (string) get_field( 'invoice_number', $invoice_id );
 		$config         = new FinanceConfig();
@@ -248,6 +251,7 @@ class InstallmentEmailSender {
 				'{totaal_termijnen}',
 				'{termijn_bedrag}',
 				'{betaallink}',
+				'{betaalknop}',
 				'{vervaldatum}',
 				'{organisatie_naam}',
 				'{dagen_te_laat}',
@@ -260,6 +264,7 @@ class InstallmentEmailSender {
 				(string) $total_count,
 				$termijn_bedrag,
 				$betaallink,
+				$betaalknop,
 				esc_html( $vervaldatum ),
 				esc_html( $org_name ),
 				(string) $days_overdue,
@@ -274,8 +279,6 @@ class InstallmentEmailSender {
 				'eyebrow'       => 'Contributie',
 				'heading'       => sprintf( 'Termijn %d van %d', $installment_number, $total_count ),
 				'body_html'     => $email_body,
-				'cta_url'       => $checkout_url,
-				'cta_label'     => 'Betaal nu',
 				'support_email' => $contact_email,
 			]
 		);
