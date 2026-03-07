@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.6.48] - 2026-03-06
+
+### Fixed
+- De rich text editor behoudt nu bestaande regeleindes uit plain-text e-mailsjablonen en invoice body overrides bij het openen/bewerken.
+
 ## [31.6.47] - 2026-03-06
 
 ### Changed
