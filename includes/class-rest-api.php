@@ -1465,9 +1465,6 @@ class Api extends Base {
 		// Add VOG post meta fields to person REST API response
 		add_filter( 'rest_prepare_person', [ $this, 'add_vog_fields_to_person' ], 10, 3 );
 
-		// Build backward-compatible contact_info array from fixed fields
-		add_filter( 'rest_prepare_person', [ $this, 'add_contact_info_from_fixed_fields' ], 10, 3 );
-
 		// Add computed discipline case charging exception status based on settings.
 		add_filter( 'rest_prepare_discipline_case', [ $this, 'add_discipline_case_exception_status' ], 10, 3 );
 	}
@@ -1518,65 +1515,6 @@ class Api extends Base {
 		return $response;
 	}
 
-	/**
-	 * Build backward-compatible contact_info array from fixed fields.
-	 *
-	 * Ensures the REST API response includes a contact_info array built from
-	 * the fixed email/mobile/telephone fields, so the frontend continues
-	 * working without changes.
-	 *
-	 * @param \WP_REST_Response $response The response object.
-	 * @param \WP_Post          $post     The post object.
-	 * @param \WP_REST_Request  $request  The request object.
-	 * @return \WP_REST_Response Modified response with contact_info array.
-	 */
-	public function add_contact_info_from_fixed_fields( $response, $post, $request ) {
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		$data = $response->get_data();
-
-		if ( ! isset( $data['acf'] ) ) {
-			$data['acf'] = [];
-		}
-
-		$data['acf']['contact_info'] = self::build_contact_info_from_fixed_fields( $post->ID );
-
-		$response->set_data( $data );
-		return $response;
-	}
-
-	/**
-	 * Build backward-compatible contact_info array from fixed fields.
-	 *
-	 * @param int $post_id Person post ID.
-	 * @return array Contact info array in the legacy repeater format.
-	 */
-	public static function build_contact_info_from_fixed_fields( int $post_id ): array {
-		$contacts  = [];
-		$field_map = [
-			'email_1'     => 'email',
-			'email_2'     => 'email2',
-			'mobile_1'    => 'mobile',
-			'mobile_2'    => 'mobile',
-			'telephone_1' => 'phone',
-			'telephone_2' => 'phone',
-		];
-
-		foreach ( $field_map as $acf_field => $contact_type ) {
-			$value = get_field( $acf_field, $post_id );
-			if ( ! empty( $value ) ) {
-				$contacts[] = [
-					'contact_type'  => $contact_type,
-					'contact_value' => $value,
-					'contact_label' => '',
-				];
-			}
-		}
-
-		return $contacts;
-	}
 
 	/**
 	 * Add computed discipline case charging exception status to REST response.
