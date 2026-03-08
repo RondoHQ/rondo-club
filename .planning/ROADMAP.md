@@ -37,10 +37,11 @@ Plans:
   2. User can edit all 6 contact fields inline on the person detail page and save successfully
   3. When editing an email field, a warning is displayed that changes affect the member's voetbal.nl login
   4. Phone numbers entered in any Dutch format (06-12345678, 0612345678, etc.) are normalized to E.164 (+31612345678) on save but display in readable format
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 210-01: TBD
+- [ ] 210-01-PLAN.md — E.164 phone normalization on ACF save via PhoneNormalizer class
+- [ ] 210-02-PLAN.md — Readable phone display formatting and email change warning in UI
 
 ### Phase 211: Sync Update
 **Goal**: rondo-sync reads and writes the new fixed fields for both forward and reverse sync, with reverse sync cron active
@@ -63,5 +64,5 @@ Phases execute in numeric order: 209 -> 210 -> 211
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 209. Data Model Migration | 3/3 | Complete    | 2026-03-08 |
-| 210. Backend Normalization & UI | 0/? | Not started | - |
+| 210. Backend Normalization & UI | 0/2 | Not started | - |
 | 211. Sync Update | 0/? | Not started | - |
