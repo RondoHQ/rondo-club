@@ -9,9 +9,9 @@ Requirements for editable contact fields milestone. Each maps to roadmap phases.
 
 ### Data Model
 
-- [ ] **DATA-01**: Person records store contact info in 6 fixed ACF fields: email_1, email_2, mobile_1, mobile_2, telephone_1, telephone_2
+- [x] **DATA-01**: Person records store contact info in 6 fixed ACF fields: email_1, email_2, mobile_1, mobile_2, telephone_1, telephone_2
 - [ ] **DATA-02**: Phone numbers (mobile + telephone) are normalized to E.164 format on save
-- [ ] **DATA-03**: Existing contact_info repeater data is migrated to fixed fields
+- [x] **DATA-03**: Existing contact_info repeater data is migrated to fixed fields
 - [ ] **DATA-04**: Legacy contact_info repeater field and social link fields are removed after migration
 
 ### UI
@@ -46,9 +46,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 209 | Pending |
+| DATA-01 | Phase 209 | Complete |
 | DATA-02 | Phase 210 | Pending |
-| DATA-03 | Phase 209 | Pending |
+| DATA-03 | Phase 209 | Complete |
 | DATA-04 | Phase 209 | Pending |
 | UI-01 | Phase 210 | Pending |
 | UI-02 | Phase 210 | Pending |
