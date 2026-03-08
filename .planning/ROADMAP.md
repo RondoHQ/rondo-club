@@ -7,7 +7,7 @@ Replace the flexible-but-messy ACF contact_info repeater with 6 fixed contact fi
 ## Phases
 
 - [x] **Phase 209: Data Model Migration** - Register 6 fixed ACF fields, migrate repeater data, remove legacy fields (completed 2026-03-08)
-- [ ] **Phase 210: Backend Normalization & UI** - E.164 phone normalization on save, editable contact fields in person detail with email warning
+- [x] **Phase 210: Backend Normalization & UI** - E.164 phone normalization on save, editable contact fields in person detail with email warning (completed 2026-03-08)
 - [ ] **Phase 211: Sync Update** - Update rondo-sync forward + reverse sync for new fields, re-enable reverse sync cron
 
 ## Phase Details
@@ -37,7 +37,7 @@ Plans:
   2. User can edit all 6 contact fields inline on the person detail page and save successfully
   3. When editing an email field, a warning is displayed that changes affect the member's voetbal.nl login
   4. Phone numbers entered in any Dutch format (06-12345678, 0612345678, etc.) are normalized to E.164 (+31612345678) on save but display in readable format
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 210-01-PLAN.md — E.164 phone normalization on ACF save via PhoneNormalizer class
@@ -64,5 +64,5 @@ Phases execute in numeric order: 209 -> 210 -> 211
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 209. Data Model Migration | 3/3 | Complete    | 2026-03-08 |
-| 210. Backend Normalization & UI | 1/2 | In Progress|  |
+| 210. Backend Normalization & UI | 2/2 | Complete   | 2026-03-08 |
 | 211. Sync Update | 0/? | Not started | - |

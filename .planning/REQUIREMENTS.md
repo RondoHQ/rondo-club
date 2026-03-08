@@ -16,10 +16,10 @@ Requirements for editable contact fields milestone. Each maps to roadmap phases.
 
 ### UI
 
-- [ ] **UI-01**: Person detail page displays 6 fixed contact fields with tel:/mailto: links
-- [ ] **UI-02**: User can edit all 6 contact fields on person detail page
-- [ ] **UI-03**: Email fields show a warning that changes affect the member's voetbal.nl login
-- [ ] **UI-04**: Phone numbers display in readable format but store in E.164
+- [x] **UI-01**: Person detail page displays 6 fixed contact fields with tel:/mailto: links
+- [x] **UI-02**: User can edit all 6 contact fields on person detail page
+- [x] **UI-03**: Email fields show a warning that changes affect the member's voetbal.nl login
+- [x] **UI-04**: Phone numbers display in readable format but store in E.164
 
 ### Sync
 
@@ -50,10 +50,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 210 | Complete |
 | DATA-03 | Phase 209 | Complete |
 | DATA-04 | Phase 209 | Complete |
-| UI-01 | Phase 210 | Pending |
-| UI-02 | Phase 210 | Pending |
-| UI-03 | Phase 210 | Pending |
-| UI-04 | Phase 210 | Pending |
+| UI-01 | Phase 210 | Complete |
+| UI-02 | Phase 210 | Complete |
+| UI-03 | Phase 210 | Complete |
+| UI-04 | Phase 210 | Complete |
 | SYNC-01 | Phase 211 | Pending |
 | SYNC-02 | Phase 211 | Pending |
 | SYNC-03 | Phase 211 | Pending |
