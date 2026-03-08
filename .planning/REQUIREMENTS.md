@@ -25,7 +25,7 @@ Requirements for editable contact fields milestone. Each maps to roadmap phases.
 
 - [x] **SYNC-01**: rondo-sync forward sync maps Sportlink fields 1:1 to new fixed Rondo Club fields
 - [x] **SYNC-02**: Reverse sync change detection reads from fixed fields instead of contact_info repeater
-- [ ] **SYNC-03**: Reverse sync cron is re-enabled on the rondo-sync server
+- [x] **SYNC-03**: Reverse sync cron is re-enabled on the rondo-sync server
 
 ## Future Requirements
 
@@ -56,7 +56,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-04 | Phase 210 | Complete |
 | SYNC-01 | Phase 211 | Complete |
 | SYNC-02 | Phase 211 | Complete |
-| SYNC-03 | Phase 211 | Pending |
+| SYNC-03 | Phase 211 | Complete |
 
 **Coverage:**
 - v31.0 requirements: 11 total
