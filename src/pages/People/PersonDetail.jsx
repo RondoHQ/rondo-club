@@ -28,7 +28,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -1311,7 +1311,7 @@ export default function PersonDetail() {
                             href={linkHref}
                             className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
                           >
-                            {contact.value}
+                            {contact.type === 'email' ? contact.value : formatPhoneForDisplay(contact.value)}
                           </a>
                         </div>
                       </div>

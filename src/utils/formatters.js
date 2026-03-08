@@ -355,6 +355,49 @@ export function formatPhoneForTel(phone) {
  * @param {string|null|undefined} phone - Phone number to inspect
  * @returns {boolean} True when the number starts with +316 or 06
  */
+/**
+ * Format a phone number for readable display.
+ * Converts E.164 phone numbers to familiar Dutch format.
+ *
+ * @param {string|null|undefined} phone - Phone number (typically E.164)
+ * @returns {string} Readable phone number (e.g., 06-12345678, 020-1234567)
+ */
+export function formatPhoneForDisplay(phone) {
+  if (!phone) return '';
+  const cleaned = String(phone).trim();
+  if (!cleaned) return '';
+
+  // Dutch mobile: +316xxxxxxxx -> 06-xxxxxxxx
+  if (/^\+316\d{8}$/.test(cleaned)) {
+    return `06-${cleaned.slice(4)}`;
+  }
+
+  // Dutch landline: +31 followed by 9 national digits
+  if (/^\+31\d{9}$/.test(cleaned)) {
+    const national = cleaned.slice(3); // 9 digits after +31
+    const threeDigitAreas = [
+      '10','13','14','15','20','23','24','26','30','33','35','36','38',
+      '40','43','45','46','50','53','55','58','70','71','72','73','74',
+      '75','76','77','78','79','88',
+    ];
+    const areaPrefix = national.slice(0, 2);
+    if (threeDigitAreas.includes(areaPrefix)) {
+      // 3-digit area code (0xx): 0xx-xxxxxxx
+      return `0${national.slice(0, 2)}-${national.slice(2)}`;
+    }
+    // 4-digit area code (0xxx): 0xxx-xxxxxx
+    return `0${national.slice(0, 3)}-${national.slice(3)}`;
+  }
+
+  // Non-NL international: space after country code prefix
+  if (/^\+\d+$/.test(cleaned) && cleaned.length > 4) {
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+  }
+
+  // Fallback: return as-is
+  return cleaned;
+}
+
 export function isDutchMobilePhone(phone) {
   if (!phone) return false;
 

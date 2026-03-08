@@ -8,7 +8,7 @@ import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import { format } from '@/utils/dateFormat';
-import { formatPhoneForTel } from '@/utils/formatters';
+import { formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -125,7 +125,7 @@ function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection,
         <td className={`px-4 py-3 whitespace-nowrap text-sm ${isSelected ? 'text-gray-700 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
           {phone ? (
             <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
-              {phone}
+              {formatPhoneForDisplay(phone)}
             </a>
           ) : '-'}
         </td>

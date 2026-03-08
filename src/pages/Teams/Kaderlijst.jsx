@@ -7,7 +7,7 @@ import { prmApi, wpApi } from '@/api/client';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { decodeHtml, formatPhoneForTel, getTeamName } from '@/utils/formatters';
+import { decodeHtml, formatPhoneForTel, formatPhoneForDisplay, getTeamName } from '@/utils/formatters';
 
 const collator = new Intl.Collator('nl-NL', { numeric: true, sensitivity: 'base' });
 
@@ -510,7 +510,7 @@ export default function Kaderlijst() {
       accessorFn: (row) => row.mobile,
       cell: ({ row }) => (
         row.original.mobile
-          ? <a href={`tel:${formatPhoneForTel(row.original.mobile)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">{row.original.mobile}</a>
+          ? <a href={`tel:${formatPhoneForTel(row.original.mobile)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">{formatPhoneForDisplay(row.original.mobile)}</a>
           : ''
       ),
       filterType: FILTER_TYPES.TEXT,

@@ -8,7 +8,7 @@ import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
-import { getTeamName, formatPhoneForTel } from '@/utils/formatters';
+import { getTeamName, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
@@ -234,7 +234,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
             >
               {phone ? (
                 <a href={`tel:${formatPhoneForTel(phone)}`} className="hover:text-electric-cyan dark:hover:text-electric-cyan">
-                  {phone}
+                  {formatPhoneForDisplay(phone)}
                 </a>
               ) : '-'}
             </td>
