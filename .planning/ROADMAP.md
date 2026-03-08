@@ -8,7 +8,7 @@ Replace the flexible-but-messy ACF contact_info repeater with 6 fixed contact fi
 
 - [x] **Phase 209: Data Model Migration** - Register 6 fixed ACF fields, migrate repeater data, remove legacy fields (completed 2026-03-08)
 - [x] **Phase 210: Backend Normalization & UI** - E.164 phone normalization on save, editable contact fields in person detail with email warning (completed 2026-03-08)
-- [ ] **Phase 211: Sync Update** - Update rondo-sync forward + reverse sync for new fields, re-enable reverse sync cron
+- [x] **Phase 211: Sync Update** - Update rondo-sync forward + reverse sync for new fields, re-enable reverse sync cron (completed 2026-03-08)
 
 ## Phase Details
 
@@ -51,7 +51,7 @@ Plans:
   1. Forward sync from Sportlink maps email, email2, mobile, phone fields 1:1 to the new Rondo Club fixed fields
   2. Reverse sync change detection compares current fixed field values against Sportlink data using hash comparison
   3. Reverse sync cron job is running on the rondo-sync server on its scheduled interval
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 211-01-PLAN.md — Forward sync fixed fields, phone normalizer, reverse sync field map and DB migration
@@ -66,4 +66,4 @@ Phases execute in numeric order: 209 -> 210 -> 211
 |-------|----------------|--------|-----------|
 | 209. Data Model Migration | 3/3 | Complete    | 2026-03-08 |
 | 210. Backend Normalization & UI | 2/2 | Complete    | 2026-03-08 |
-| 211. Sync Update | 1/2 | In Progress|  |
+| 211. Sync Update | 2/2 | Complete   | 2026-03-08 |
