@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Milestone: v31.0 Editable Contact Fields
-Phase: 210 of 211 (Backend Normalization & UI)
-Plan: 2 of 3
+Phase: 211 of 211 (Sync Update)
+Plan: 1 of 1
 Status: In Progress
-Last activity: 2026-03-08 — Completed 210-02 (Frontend phone display & email warning)
+Last activity: 2026-03-08 — Completed 211-01 (Sync update - forward/reverse sync with fixed fields)
 
-Progress: [██████████] 80%
+Progress: [████████████] 90%
 
 ## Performance Metrics
 
@@ -65,6 +65,9 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 - 210-02: Dutch 3-digit area codes as static list for correct landline formatting
 - 210-02: Non-NL numbers formatted with space after 3-char country code prefix
 - 210-02: Email warning always visible below email_1, informational only
+- 211-01: Use EmailAlternative/MobileAlternative/TelephoneAlternative as correct Sportlink API field names
+- 211-01: Added mobile_2 and telephone_2 to TRACKED_FIELDS for complete bidirectional sync
+- 211-01: Old SQLite columns kept after migration (harmless, avoids table recreate)
 
 ### Pending Todos
 
@@ -78,11 +81,10 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 
 ## Session Continuity
 
-Last session: 2026-03-08T16:10:29.141Z
-Stopped at: Phase 211 context gathered
-Resume file: .planning/phases/211-sync-update/211-CONTEXT.md
+Last session: 2026-03-08T16:22:41Z
+Stopped at: Completed 211-01-PLAN.md
 
-**Next action:** Proceed with 210-03 plan if available, or Phase 211.
+**Next action:** Phase 211 plan 01 complete. All sync code updated and pushed.
 
 ---
 *State created: 2026-02-15*
