@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Milestone: v31.0 Editable Contact Fields
-Phase: 209 of 211 (Data Model Migration)
-Plan: 3 of 3
-Status: Complete
-Last activity: 2026-03-08 — Completed 209-03 (Frontend migration to fixed fields)
+Phase: 210 of 211 (Backend Normalization & UI)
+Plan: 2 of 3
+Status: In Progress
+Last activity: 2026-03-08 — Completed 210-02 (Frontend phone display & email warning)
 
-Progress: [██████████] 100%
+Progress: [██████████] 80%
 
 ## Performance Metrics
 
@@ -62,6 +62,9 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 - 209-03: ContactEditModal simplified to 6 fixed fields instead of dynamic repeater
 - 209-03: Version bumped to 31.7.0 for data model migration
 - [Phase 210]: PhoneNormalizer uses Rondo\Core namespace and acf/update_value hooks for E.164 normalization
+- 210-02: Dutch 3-digit area codes as static list for correct landline formatting
+- 210-02: Non-NL numbers formatted with space after 3-char country code prefix
+- 210-02: Email warning always visible below email_1, informational only
 
 ### Pending Todos
 
@@ -75,12 +78,12 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 
 ## Session Continuity
 
-Last session: 2026-03-08T15:52:08.530Z
-Stopped at: Completed 210-01-PLAN.md
+Last session: 2026-03-08T15:53:25Z
+Stopped at: Completed 210-02-PLAN.md
 Resume file: None
 
-**Next action:** Phase 209 complete. Proceed with Phase 210 or 211 if available.
+**Next action:** Proceed with 210-03 plan if available, or Phase 211.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-03-08 — 209-03 complete, Phase 209 done*
+*Last updated: 2026-03-08 — 210-02 complete*
