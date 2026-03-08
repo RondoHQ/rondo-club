@@ -46,23 +46,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| SYNC-01 | — | Pending |
-| SYNC-02 | — | Pending |
-| SYNC-03 | — | Pending |
+| DATA-01 | Phase 209 | Pending |
+| DATA-02 | Phase 210 | Pending |
+| DATA-03 | Phase 209 | Pending |
+| DATA-04 | Phase 209 | Pending |
+| UI-01 | Phase 210 | Pending |
+| UI-02 | Phase 210 | Pending |
+| UI-03 | Phase 210 | Pending |
+| UI-04 | Phase 210 | Pending |
+| SYNC-01 | Phase 211 | Pending |
+| SYNC-02 | Phase 211 | Pending |
+| SYNC-03 | Phase 211 | Pending |
 
 **Coverage:**
 - v31.0 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11 ⚠️
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-08*
-*Last updated: 2026-03-08 after initial definition*
+*Last updated: 2026-03-08 after roadmap creation*
