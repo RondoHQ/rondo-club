@@ -122,52 +122,36 @@ export function generateVCard(person, options = {}) {
     lines.push(`NICKNAME:${escapeVCardValue(acf.nickname)}`);
   }
   
-  // Contact information
-  if (acf.contact_info && Array.isArray(acf.contact_info)) {
-    acf.contact_info.forEach(contact => {
-      if (!contact.contact_value) return;
-      
-      const value = escapeVCardValue(contact.contact_value);
-      const label = contact.contact_label ? escapeVCardValue(contact.contact_label) : '';
-      
-      switch (contact.contact_type) {
-        case 'email':
-        case 'email2': {
-          // EMAIL;TYPE=INTERNET,WORK:email@example.com
-          const emailType = label ? `EMAIL;TYPE=INTERNET,${label.toUpperCase()}` : 'EMAIL;TYPE=INTERNET';
-          lines.push(`${emailType}:${value}`);
-          break;
-        }
-
-        case 'phone':
-        case 'mobile': {
-          // TEL;TYPE=CELL,VOICE:+1234567890
-          const phoneType = contact.contact_type === 'mobile' ? 'CELL' : 'VOICE';
-          const phoneLabel = label ? `TEL;TYPE=${phoneType},${label.toUpperCase()}` : `TEL;TYPE=${phoneType}`;
-          const formattedPhone = formatPhone(contact.contact_value);
-          if (formattedPhone) {
-            lines.push(`${phoneLabel}:${formattedPhone}`);
-          }
-          break;
-        }
-
-        case 'website':
-        case 'linkedin':
-        case 'twitter':
-        case 'instagram':
-        case 'facebook': {
-          // URL;TYPE=WORK:https://example.com
-          let url = contact.contact_value;
-          if (!url.match(/^https?:\/\//i)) {
-            url = `https://${url}`;
-          }
-          const urlType = contact.contact_type === 'linkedin' ? 'PROFILE' : 'WORK';
-          const urlLabel = label ? `URL;TYPE=${urlType},${label.toUpperCase()}` : `URL;TYPE=${urlType}`;
-          lines.push(`${urlLabel}:${escapeVCardValue(url)}`);
-          break;
-        }
-      }
-    });
+  // Contact information from fixed fields
+  if (acf.email_1) {
+    lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardValue(acf.email_1)}`);
+  }
+  if (acf.email_2) {
+    lines.push(`EMAIL;TYPE=INTERNET,HOME:${escapeVCardValue(acf.email_2)}`);
+  }
+  if (acf.mobile_1) {
+    const formattedPhone = formatPhone(acf.mobile_1);
+    if (formattedPhone) {
+      lines.push(`TEL;TYPE=CELL:${formattedPhone}`);
+    }
+  }
+  if (acf.mobile_2) {
+    const formattedPhone = formatPhone(acf.mobile_2);
+    if (formattedPhone) {
+      lines.push(`TEL;TYPE=CELL,HOME:${formattedPhone}`);
+    }
+  }
+  if (acf.telephone_1) {
+    const formattedPhone = formatPhone(acf.telephone_1);
+    if (formattedPhone) {
+      lines.push(`TEL;TYPE=VOICE:${formattedPhone}`);
+    }
+  }
+  if (acf.telephone_2) {
+    const formattedPhone = formatPhone(acf.telephone_2);
+    if (formattedPhone) {
+      lines.push(`TEL;TYPE=VOICE,HOME:${formattedPhone}`);
+    }
   }
   
   // Addresses (structured format)

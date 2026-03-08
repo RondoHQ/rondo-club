@@ -12,16 +12,12 @@ import { formatPhoneForTel } from '@/utils/formatters';
 import SortableHeader from '@/components/SortableHeader';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
-function getFirstContactByType(person, type) {
-  const contactInfo = person.acf?.contact_info || [];
-  const contact = contactInfo.find(c => c.contact_type === type);
-  return contact?.contact_value || null;
+function getFirstEmail(person) {
+  return person.acf?.email_1 || person.acf?.email_2 || null;
 }
 
 function getFirstPhone(person) {
-  const contactInfo = person.acf?.contact_info || [];
-  const contact = contactInfo.find(c => c.contact_type === 'phone' || c.contact_type === 'mobile');
-  return contact?.contact_value || null;
+  return person.acf?.mobile_1 || person.acf?.telephone_1 || person.acf?.mobile_2 || person.acf?.telephone_2 || null;
 }
 
 function VOGBadge({ person }) {
@@ -72,7 +68,7 @@ function VOGEmptyState() {
 }
 
 function VOGRow({ person, customFieldsMap, isOdd, isSelected, onToggleSelection, isColVisible }) {
-  const email = getFirstContactByType(person, 'email');
+  const email = getFirstEmail(person);
   const phone = getFirstPhone(person);
 
   return (
@@ -237,8 +233,8 @@ export default function VOGList() {
     }
     if (knvbIdFilter === 'heeft') result = result.filter(p => p.acf?.['knvb-id']);
     else if (knvbIdFilter === 'geen') result = result.filter(p => !p.acf?.['knvb-id']);
-    if (emailPresenceFilter === 'heeft') result = result.filter(p => getFirstContactByType(p, 'email'));
-    else if (emailPresenceFilter === 'geen') result = result.filter(p => !getFirstContactByType(p, 'email'));
+    if (emailPresenceFilter === 'heeft') result = result.filter(p => getFirstEmail(p));
+    else if (emailPresenceFilter === 'geen') result = result.filter(p => !getFirstEmail(p));
     return result;
   }, [allServerPeople, nameFilter, knvbIdFilter, emailPresenceFilter]);
 
@@ -271,7 +267,7 @@ export default function VOGList() {
 
   const emailPresenceCounts = useMemo(() => {
     const allPeople = allData?.people || [];
-    const heeft = allPeople.filter(p => getFirstContactByType(p, 'email')).length;
+    const heeft = allPeople.filter(p => getFirstEmail(p)).length;
     return { heeft, geen: allPeople.length - heeft };
   }, [allData?.people]);
 
@@ -504,7 +500,7 @@ export default function VOGList() {
     const rows = people.map(person => [
       [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
       person.acf?.['knvb-id'] || '',
-      getFirstContactByType(person, 'email') || '',
+      getFirstEmail(person) || '',
       getFirstPhone(person) || '',
       formatDate(person.acf?.['datum-vog']),
       person.acf?.['datum-vog'] ? 'Vernieuwing' : 'Nieuw',

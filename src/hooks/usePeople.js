@@ -226,25 +226,10 @@ export function useCreatePerson({ onSuccess } = {}) {
 
   return useMutation({
     mutationFn: async (data) => {
-      // Build contact_info array from individual fields
-      const contactInfo = [];
-      if (data.email) {
-        contactInfo.push({
-          contact_type: 'email',
-          contact_value: data.email,
-          contact_label: 'Email',
-        });
-      }
-      if (data.phone) {
-        const isMobile = isDutchMobilePhone(data.phone) || (data.phone_type || 'mobile') === 'mobile';
-        contactInfo.push({
-          contact_type: isMobile ? 'mobile' : 'phone',
-          contact_value: data.phone,
-          contact_label: isMobile ? 'Mobile' : 'Phone',
-        });
-      }
+      // Determine phone field based on type
+      const isMobile = isDutchMobilePhone(data.phone) || (data.phone_type || 'mobile') === 'mobile';
 
-      // Build the full payload
+      // Build the full payload with fixed contact fields
       const payload = {
         title: formatPersonName(data.first_name, data.infix, data.last_name),
         status: 'publish',
@@ -255,7 +240,9 @@ export function useCreatePerson({ onSuccess } = {}) {
           nickname: data.nickname,
           gender: data.gender || null,
           pronouns: data.pronouns || null,
-          contact_info: contactInfo,
+          email_1: data.email || '',
+          mobile_1: isMobile && data.phone ? data.phone : '',
+          telephone_1: !isMobile && data.phone ? data.phone : '',
         },
       };
 
@@ -300,8 +287,8 @@ export function useUpdatePerson() {
 }
 
 /**
- * Add email address to existing person's contact_info.
- * Fetches fresh person data, checks for duplicate, adds email, triggers calendar re-matching.
+ * Add email address to existing person's fixed email fields.
+ * Fetches fresh person data, checks for duplicate, writes to email_1 or email_2.
  *
  * @returns {Object} TanStack Query mutation object with mutate({ personId, email })
  */
@@ -310,37 +297,31 @@ export function useAddEmailToPerson() {
 
   return useMutation({
     mutationFn: async ({ personId, email }) => {
-      // Fetch fresh person data to get current contact_info
+      // Fetch fresh person data to get current emails
       const response = await wpApi.getPerson(personId, { _embed: true });
       const person = response.data;
 
-      const currentContacts = person.acf?.contact_info || [];
+      const email1 = (person.acf?.email_1 || '').toLowerCase();
+      const email2 = (person.acf?.email_2 || '').toLowerCase();
+      const normalizedEmail = email.toLowerCase();
 
       // Check if email already exists (case-insensitive)
-      const emailExists = currentContacts.some(
-        c => c.contact_type === 'email' &&
-             c.contact_value.toLowerCase() === email.toLowerCase()
-      );
-
-      if (emailExists) {
+      if (email1 === normalizedEmail || email2 === normalizedEmail) {
         return { alreadyExists: true, person: transformPerson(person) };
       }
 
-      // Add new email
-      const newContact = {
-        contact_type: 'email',
-        contact_value: email.toLowerCase(),
-        contact_label: 'Email',
-      };
-
-      await wpApi.updatePerson(personId, {
-        acf: {
-          first_name: person.acf?.first_name || '',
-          infix: person.acf?.infix || '',
-          last_name: person.acf?.last_name || '',
-          contact_info: [...currentContacts, newContact],
-        },
-      });
+      // Add to first available slot
+      const updateField = !email1 ? 'email_1' : !email2 ? 'email_2' : null;
+      if (!updateField) {
+        // Both slots full, overwrite email_2
+        await wpApi.updatePerson(personId, {
+          acf: { email_2: normalizedEmail },
+        });
+      } else {
+        await wpApi.updatePerson(personId, {
+          acf: { [updateField]: normalizedEmail },
+        });
+      }
 
       // Return updated person
       const updated = await wpApi.getPerson(personId, { _embed: true });

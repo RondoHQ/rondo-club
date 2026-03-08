@@ -1,75 +1,51 @@
 import { useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
-const CONTACT_TYPES = [
-  { value: 'email', label: 'Email' },
-  { value: 'email2', label: 'Email (2e)' },
-  { value: 'phone', label: 'Telefoon' },
-  { value: 'mobile', label: 'Mobiel' },
-  { value: 'website', label: 'Website' },
-  { value: 'calendar', label: 'Agenda link' },
-  { value: 'linkedin', label: 'LinkedIn' },
-  { value: 'twitter', label: 'Twitter' },
-  { value: 'bluesky', label: 'Bluesky' },
-  { value: 'threads', label: 'Threads' },
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'other', label: 'Overig' },
-];
-
-export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, contactInfo = [] }) {
+export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, email1 = '', email2 = '', mobile1 = '', mobile2 = '', telephone1 = '', telephone2 = '' }) {
   const isOnline = useOnlineStatus();
-  const { register, control, handleSubmit, reset } = useForm({
+  const { register, handleSubmit, reset } = useForm({
     defaultValues: {
-      contacts: contactInfo.length > 0 
-        ? contactInfo.map(c => ({
-            contact_type: c.contact_type || '',
-            contact_label: c.contact_label || '',
-            contact_value: c.contact_value || '',
-          }))
-        : [],
+      email_1: email1,
+      email_2: email2,
+      mobile_1: mobile1,
+      mobile_2: mobile2,
+      telephone_1: telephone1,
+      telephone_2: telephone2,
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'contacts',
-  });
-
-  // Reset form when modal opens with current contact info
+  // Reset form when modal opens with current values
   useEffect(() => {
     if (isOpen) {
       reset({
-        contacts: contactInfo.length > 0 
-          ? contactInfo.map(c => ({
-              contact_type: c.contact_type || '',
-              contact_label: c.contact_label || '',
-              contact_value: c.contact_value || '',
-            }))
-          : [],
+        email_1: email1,
+        email_2: email2,
+        mobile_1: mobile1,
+        mobile_2: mobile2,
+        telephone_1: telephone1,
+        telephone_2: telephone2,
       });
     }
-  }, [isOpen, contactInfo, reset]);
+  }, [isOpen, email1, email2, mobile1, mobile2, telephone1, telephone2, reset]);
 
   if (!isOpen) return null;
 
   const handleFormSubmit = (data) => {
-    // Filter out empty rows and submit
-    const validContacts = data.contacts.filter(
-      c => c.contact_type && c.contact_value
-    );
-    onSubmit(validContacts);
-  };
-
-  const handleAddRow = () => {
-    append({ contact_type: '', contact_label: '', contact_value: '' });
+    onSubmit({
+      email_1: data.email_1?.trim() || '',
+      email_2: data.email_2?.trim() || '',
+      mobile_1: data.mobile_1?.trim() || '',
+      mobile_2: data.mobile_2?.trim() || '',
+      telephone_1: data.telephone_1?.trim() || '',
+      telephone_2: data.telephone_2?.trim() || '',
+    });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">Contactgegevens bewerken</h2>
           <button
@@ -82,92 +58,78 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4">
-            {fields.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                Nog geen contactgegevens. Klik op &ldquo;Contactgegeven toevoegen&rdquo; om er een toe te voegen.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {/* Header row - visible on larger screens */}
-                <div className="hidden md:grid md:grid-cols-12 gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 px-1">
-                  <div className="col-span-3">Type</div>
-                  <div className="col-span-3">Label</div>
-                  <div className="col-span-5">Waarde</div>
-                  <div className="col-span-1"></div>
-                </div>
-
-                {fields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 md:p-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
-                  >
-                    {/* Type */}
-                    <div className="md:col-span-3">
-                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Type</label>
-                      <select
-                        {...register(`contacts.${index}.contact_type`, { required: true })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
-                        disabled={isLoading}
-                      >
-                        <option value="">Selecteer type...</option>
-                        {CONTACT_TYPES.map(type => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Label */}
-                    <div className="md:col-span-3">
-                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Label</label>
-                      <input
-                        {...register(`contacts.${index}.contact_label`)}
-                        placeholder="bijv. Werk"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    {/* Value */}
-                    <div className="md:col-span-5">
-                      <label className="md:hidden text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Waarde</label>
-                      <input
-                        {...register(`contacts.${index}.contact_value`, { required: true })}
-                        placeholder="bijv. jan@voorbeeld.nl"
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    {/* Delete button */}
-                    <div className="md:col-span-1 flex items-center justify-end md:justify-center">
-                      <button
-                        type="button"
-                        onClick={() => remove(index)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-                        title="Verwijderen"
-                        disabled={isLoading}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Email fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Email</label>
+                <input
+                  {...register('email_1')}
+                  type="email"
+                  placeholder="naam@voorbeeld.nl"
+                  className="input"
+                  disabled={isLoading}
+                />
               </div>
-            )}
+              <div>
+                <label className="label">Email (2e)</label>
+                <input
+                  {...register('email_2')}
+                  type="email"
+                  placeholder="naam@voorbeeld.nl"
+                  className="input"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
 
-            {/* Add button */}
-            <button
-              type="button"
-              onClick={handleAddRow}
-              className="mt-4 w-full py-2 px-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center justify-center gap-2"
-              disabled={isLoading}
-            >
-              <Plus className="w-4 h-4" />
-              Contactgegeven toevoegen
-            </button>
+            {/* Mobile fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Mobiel</label>
+                <input
+                  {...register('mobile_1')}
+                  type="tel"
+                  placeholder="+31 6 12345678"
+                  className="input"
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label className="label">Mobiel (2e)</label>
+                <input
+                  {...register('mobile_2')}
+                  type="tel"
+                  placeholder="+31 6 12345678"
+                  className="input"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            {/* Telephone fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="label">Telefoon</label>
+                <input
+                  {...register('telephone_1')}
+                  type="tel"
+                  placeholder="+31 20 1234567"
+                  className="input"
+                  disabled={isLoading}
+                />
+              </div>
+              <div>
+                <label className="label">Telefoon (2e)</label>
+                <input
+                  {...register('telephone_2')}
+                  type="tel"
+                  placeholder="+31 20 1234567"
+                  className="input"
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Footer */}

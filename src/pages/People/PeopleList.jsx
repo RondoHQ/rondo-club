@@ -16,18 +16,14 @@ import { useListPreferences } from '@/hooks/useListPreferences';
 import { useColumnResize } from '@/hooks/useColumnResize';
 import ColumnSettingsModal from './ColumnSettingsModal';
 
-// Helper function to get first contact value by type
-function getFirstContactByType(person, type) {
-  const contactInfo = person.acf?.contact_info || [];
-  const contact = contactInfo.find(c => c.contact_type === type);
-  return contact?.contact_value || null;
+// Helper function to get first email from fixed fields
+function getFirstEmail(person) {
+  return person.acf?.email_1 || person.acf?.email_2 || null;
 }
 
-// Helper function to get first phone (includes mobile)
+// Helper function to get first phone from fixed fields
 function getFirstPhone(person) {
-  const contactInfo = person.acf?.contact_info || [];
-  const contact = contactInfo.find(c => c.contact_type === 'phone' || c.contact_type === 'mobile');
-  return contact?.contact_value || null;
+  return person.acf?.mobile_1 || person.acf?.telephone_1 || person.acf?.mobile_2 || person.acf?.telephone_2 || null;
 }
 
 function formatBirthdateDisplay(birthdate) {
@@ -212,7 +208,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
         }
 
         if (colId === 'email') {
-          const email = getFirstContactByType(person, 'email');
+          const email = getFirstEmail(person);
           return (
             <td
               key={colId}
@@ -1057,7 +1053,7 @@ export default function PeopleList() {
       person.first_name || '',
       person.infix || '',
       person.last_name || '',
-      getFirstContactByType(person, 'email') || '',
+      getFirstEmail(person) || '',
       getFirstPhone(person) || '',
       personTeamMap[person.id] || '',
     ]);

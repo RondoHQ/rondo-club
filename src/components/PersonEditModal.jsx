@@ -70,12 +70,7 @@ export default function PersonEditModal({
       parseVcardMutation.reset();
 
       if (person) {
-        // Editing - populate with existing data
-        const emailContact = person.acf?.contact_info?.find(contact => contact.contact_type === 'email');
-        const phoneContact = person.acf?.contact_info?.find(contact =>
-          contact.contact_type === 'phone' || contact.contact_type === 'mobile'
-        );
-
+        // Editing - populate with existing data from fixed fields
         reset({
           first_name: person.acf?.first_name || '',
           infix: person.acf?.infix || '',
@@ -83,9 +78,9 @@ export default function PersonEditModal({
           nickname: person.acf?.nickname || '',
           gender: person.acf?.gender || '',
           pronouns: person.acf?.pronouns || '',
-          email: emailContact?.contact_value || '',
-          phone: phoneContact?.contact_value || '',
-          phone_type: phoneContact?.contact_type || 'mobile',
+          email: person.acf?.email_1 || '',
+          phone: person.acf?.mobile_1 || person.acf?.telephone_1 || '',
+          phone_type: person.acf?.mobile_1 ? 'mobile' : 'phone',
           birthday: '', // Birthday is stored separately
         });
       } else if (prefillData) {

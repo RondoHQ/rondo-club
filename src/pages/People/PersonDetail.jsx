@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
-  MapPin, Globe, Building2, Calendar, Plus, Pencil, MessageCircle, X, Camera, Download,
+  MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
@@ -28,9 +28,9 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel, normalizeContactInfo } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
-import { getSocialIcon, getSocialIconColor, sortSocialLinks, SOCIAL_TYPES } from '@/utils/socialIcons';
+import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
@@ -163,21 +163,18 @@ export default function PersonDetail() {
   const formattedLidTot = lidTotDate ? format(lidTotDate, 'd MMMM yyyy') : null;
 
   // Handle saving all contacts from modal
-  const handleSaveContacts = async (contacts) => {
+  const handleSaveContacts = async (contactFields) => {
     setIsSavingContacts(true);
     try {
-      const normalizedContacts = normalizeContactInfo(contacts);
-      const acfData = sanitizePersonAcf(person.acf, {
-        contact_info: normalizedContacts,
-      });
-      
+      const acfData = sanitizePersonAcf(person.acf, contactFields);
+
       await updatePerson.mutateAsync({
         id,
         data: {
           acf: acfData,
         },
       });
-      
+
       setShowContactModal(false);
     } catch {
       alert('Contacten konden niet worden opgeslagen. Probeer het opnieuw.');
@@ -961,26 +958,29 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
-  const normalizedContactInfo = normalizeContactInfo(acf.contact_info || []);
 
   // Calculate VOG status
   const vogStatus = getVogStatus(acf);
 
-  // Extract social links for header display
-  const socialLinks = normalizedContactInfo.filter(contact => SOCIAL_TYPES.includes(contact.contact_type));
+  // Build contact display items from fixed fields
+  const contactItems = [
+    acf.email_1 && { type: 'email', label: 'Email', value: acf.email_1 },
+    acf.email_2 && { type: 'email', label: 'Email (2e)', value: acf.email_2 },
+    acf.mobile_1 && { type: 'mobile', label: 'Mobiel', value: acf.mobile_1 },
+    acf.mobile_2 && { type: 'mobile', label: 'Mobiel (2e)', value: acf.mobile_2 },
+    acf.telephone_1 && { type: 'phone', label: 'Telefoon', value: acf.telephone_1 },
+    acf.telephone_2 && { type: 'phone', label: 'Telefoon (2e)', value: acf.telephone_2 },
+  ].filter(Boolean);
 
-  // Check if there's a mobile number for WhatsApp
-  const mobileContact = normalizedContactInfo.find(contact => contact.contact_type === 'mobile');
-
-  // Sort social links by display order, and add WhatsApp, Sportlink, and Freescout if applicable
+  // Build external links for header display (WhatsApp, Sportlink, FreeScout, Membership Pass)
   const sortedSocialLinks = (() => {
-    const links = [...socialLinks];
+    const links = [];
 
     // Add WhatsApp if there's a mobile number
-    if (mobileContact) {
+    if (acf.mobile_1) {
       links.push({
         contact_type: 'whatsapp',
-        contact_value: `https://wa.me/${formatPhoneForTel(mobileContact.contact_value)}`,
+        contact_value: `https://wa.me/${formatPhoneForTel(acf.mobile_1)}`,
       });
     }
 
@@ -1230,9 +1230,11 @@ export default function PersonDetail() {
                       );
                     }
 
-                    // Regular social icons
+                    // WhatsApp icon
                     const SocialIcon = getSocialIcon(contact.contact_type);
                     const iconColor = getSocialIconColor(contact.contact_type);
+
+                    if (!SocialIcon) return null;
 
                     return (
                       <a
@@ -1241,7 +1243,7 @@ export default function PersonDetail() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex-shrink-0 hover:opacity-80 transition-opacity ${iconColor}`}
-                        title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}: ${contact.contact_value}`}
+                        title={`${contact.contact_type.charAt(0).toUpperCase() + contact.contact_type.slice(1)}`}
                       >
                         <SocialIcon className="w-5 h-5" />
                       </a>
@@ -1290,77 +1292,32 @@ export default function PersonDetail() {
                   <span className="hidden md:inline">Bewerken</span>
                 </button>
               </div>
-            {normalizedContactInfo.filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack').length > 0 ? (
+            {contactItems.length > 0 ? (
               <div className="space-y-2">
-                {(() => {
-                  // Define display order for contact information
-                  const contactOrder = {
-                    'email': 1,
-                    'email2': 1,
-                    'phone': 2,
-                    'mobile': 2, // Phone numbers grouped together
-                    'calendar': 3,
-                    'other': 4,
-                  };
-                  
-                  // Filter and sort contact information
-                  const nonSocialContacts = normalizedContactInfo
-                    .filter(contact => !SOCIAL_TYPES.includes(contact.contact_type) && contact.contact_type !== 'slack')
-                    .map((contact, originalIndex) => ({ ...contact, originalIndex }))
-                    .sort((a, b) => {
-                      const orderA = contactOrder[a.contact_type] || 99;
-                      const orderB = contactOrder[b.contact_type] || 99;
-                      if (orderA !== orderB) {
-                        return orderA - orderB;
-                      }
-                      // If same order (e.g., multiple phone numbers), maintain original order
-                      return a.originalIndex - b.originalIndex;
-                    });
-                  
-                  return nonSocialContacts.map((contact) => {
-                        const Icon = contact.contact_type === 'email' || contact.contact_type === 'email2' ? Mail :
-                                     contact.contact_type === 'phone' || contact.contact_type === 'mobile' ? Phone :
-                                     contact.contact_type === 'calendar' ? Calendar : Globe;
+                {contactItems.map((contact, index) => {
+                  const Icon = contact.type === 'email' ? Mail : Phone;
+                  const isEmail = contact.type === 'email';
+                  const linkHref = isEmail
+                    ? `mailto:${contact.value}`
+                    : `tel:${formatPhoneForTel(contact.value)}`;
 
-                        const isEmail = contact.contact_type === 'email' || contact.contact_type === 'email2';
-                        const isPhone = contact.contact_type === 'phone' || contact.contact_type === 'mobile';
-                        const isCalendar = contact.contact_type === 'calendar';
-                        
-                        let linkHref = null;
-                        let linkTarget = null;
-                        
-                        if (isEmail) {
-                          linkHref = `mailto:${contact.contact_value}`;
-                        } else if (isPhone) {
-                          linkHref = `tel:${formatPhoneForTel(contact.contact_value)}`;
-                        } else if (isCalendar) {
-                          linkHref = contact.contact_value;
-                          linkTarget = '_blank';
-                        }
-
-                        return (
-                      <div key={contact.originalIndex}>
-                        <div className="flex items-center rounded-md -mx-2 px-2 py-1.5">
-                          <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
-                          <div className="flex-1 min-w-0 flex items-center gap-2">
-                            <span className="text-sm text-gray-500 dark:text-gray-400">{contact.contact_label || contact.contact_type}: </span>
-                            {linkHref ? (
-                              <a
-                                href={linkHref}
-                                target={linkTarget || undefined}
-                                rel={linkTarget === '_blank' ? 'noopener noreferrer' : undefined}
-                                className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
-                              >
-                                {contact.contact_value}
-                              </a>
-                            ) : (
-                              <span>{contact.contact_value}</span>
-                            )}
-                          </div>
+                  return (
+                    <div key={index}>
+                      <div className="flex items-center rounded-md -mx-2 px-2 py-1.5">
+                        <Icon className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                        <div className="flex-1 min-w-0 flex items-center gap-2">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">{contact.label}: </span>
+                          <a
+                            href={linkHref}
+                            className="text-electric-cyan dark:text-electric-cyan hover:text-bright-cobalt dark:hover:text-electric-cyan-light hover:underline"
+                          >
+                            {contact.value}
+                          </a>
                         </div>
                       </div>
-                    );
-                  })})()}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
@@ -1368,10 +1325,10 @@ export default function PersonDetail() {
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
-            {person.google_contact_id && acf.contact_info?.find(c => c.contact_type === 'email')?.contact_value && (
+            {person.google_contact_id && acf.email_1 && (
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <a
-                  href={`https://contacts.google.com/${acf.contact_info.find(c => c.contact_type === 'email').contact_value}`}
+                  href={`https://contacts.google.com/${acf.email_1}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan"
@@ -1979,7 +1936,12 @@ export default function PersonDetail() {
             onClose={() => setShowContactModal(false)}
             onSubmit={handleSaveContacts}
             isLoading={isSavingContacts}
-            contactInfo={normalizedContactInfo.filter(contact => contact.contact_type !== 'slack')}
+            email1={acf.email_1 || ''}
+            email2={acf.email_2 || ''}
+            mobile1={acf.mobile_1 || ''}
+            mobile2={acf.mobile_2 || ''}
+            telephone1={acf.telephone_1 || ''}
+            telephone2={acf.telephone_2 || ''}
           />
 
           <RelationshipEditModal

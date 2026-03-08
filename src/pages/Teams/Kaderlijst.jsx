@@ -59,18 +59,14 @@ function normalizeTeamNameForRoster(name) {
 }
 
 function getPrimaryContactByType(person, type) {
-  const contactInfo = person?.acf?.contact_info || [];
-  const contact = contactInfo.find((item) => item.contact_type === type && item.contact_value);
-  return contact?.contact_value || '';
+  if (type === 'email') return person?.acf?.email_1 || person?.acf?.email_2 || '';
+  if (type === 'mobile') return person?.acf?.mobile_1 || person?.acf?.mobile_2 || '';
+  if (type === 'phone') return person?.acf?.telephone_1 || person?.acf?.telephone_2 || '';
+  return '';
 }
 
 function getPrimaryPhone(person) {
-  const contactInfo = person?.acf?.contact_info || [];
-  const mobile = contactInfo.find((item) => item.contact_type === 'mobile' && item.contact_value);
-  if (mobile?.contact_value) return mobile.contact_value;
-
-  const phone = contactInfo.find((item) => item.contact_type === 'phone' && item.contact_value);
-  return phone?.contact_value || '';
+  return person?.acf?.mobile_1 || person?.acf?.telephone_1 || person?.acf?.mobile_2 || person?.acf?.telephone_2 || '';
 }
 
 function parseYearFromLabel(label) {

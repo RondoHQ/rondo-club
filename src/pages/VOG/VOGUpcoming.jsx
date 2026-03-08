@@ -7,11 +7,9 @@ import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { format } from '@/utils/dateFormat';
 import SortableHeader from '@/components/SortableHeader';
 
-// Helper function to get first contact value by type
-function getFirstContactByType(person, type) {
-  const contactInfo = person.acf?.contact_info || [];
-  const contact = contactInfo.find(c => c.contact_type === type);
-  return contact?.contact_value || null;
+// Helper function to get first email from fixed fields
+function getFirstEmail(person) {
+  return person.acf?.email_1 || person.acf?.email_2 || null;
 }
 
 // Calculate days until VOG expires (3 year validity)
@@ -46,7 +44,7 @@ function VOGUpcomingEmptyState() {
 
 // Row component
 function VOGUpcomingRow({ person, isOdd }) {
-  const email = getFirstContactByType(person, 'email');
+  const email = getFirstEmail(person);
   const vogDate = person.acf?.['datum-vog'];
   const days = daysUntilExpiry(vogDate);
 
