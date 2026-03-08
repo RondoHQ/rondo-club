@@ -305,7 +305,7 @@ class VOGEmail {
 			);
 		}
 
-		// Get person's email from contact_info ACF field
+		// Get person's email from fixed email field
 		$recipient_email = $this->get_person_email( $person_id );
 		if ( ! $recipient_email ) {
 			return new \WP_Error(
@@ -427,26 +427,20 @@ class VOGEmail {
 	}
 
 	/**
-	 * Get email address from person's contact_info ACF field
+	 * Get email address from person's fixed email fields.
 	 *
-	 * @param int $person_id Person post ID
-	 * @return string|null Email address or null if not found
+	 * @param int $person_id Person post ID.
+	 * @return string|null Email address or null if not found.
 	 */
 	private function get_person_email( int $person_id ): ?string {
-		$contact_info = get_field( 'contact_info', $person_id );
-
-		if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
-			return null;
+		$email = get_field( 'email_1', $person_id );
+		if ( is_email( $email ) ) {
+			return $email;
 		}
 
-		// Find first email type contact
-		foreach ( $contact_info as $contact ) {
-			if ( isset( $contact['contact_type'] ) && 'email' === $contact['contact_type'] ) {
-				$email = $contact['contact_value'] ?? '';
-				if ( is_email( $email ) ) {
-					return $email;
-				}
-			}
+		$email = get_field( 'email_2', $person_id );
+		if ( is_email( $email ) ) {
+			return $email;
 		}
 
 		return null;
@@ -571,7 +565,7 @@ EOT;
 			);
 		}
 
-		// Get person's email from contact_info ACF field
+		// Get person's email from fixed email field
 		$recipient_email = $this->get_person_email( $person_id );
 		if ( ! $recipient_email ) {
 			return new \WP_Error(

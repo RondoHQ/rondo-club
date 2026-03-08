@@ -28,7 +28,9 @@ class AutoTitle {
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
 
-		// Lowercase email addresses on save
+		// Lowercase email addresses on save (fixed fields + legacy repeater)
+		add_filter( 'acf/update_value/name=email_1', [ $this, 'maybe_lowercase_email' ], 10, 4 );
+		add_filter( 'acf/update_value/name=email_2', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/key=field_company_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 
@@ -151,7 +153,7 @@ class AutoTitle {
 	}
 
 	/**
-	 * Lowercase email addresses when saving contact_info repeater
+	 * Lowercase email addresses when saving email fields
 	 *
 	 * @param mixed $value The value to save
 	 * @param int $post_id The post ID

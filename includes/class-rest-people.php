@@ -1408,6 +1408,12 @@ class People extends Base {
 				$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
 			}
 
+			// Build backward-compatible contact_info from fixed fields
+			if ( ! isset( $person['acf'] ) ) {
+				$person['acf'] = [];
+			}
+			$person['acf']['contact_info'] = \Rondo\REST\Api::build_contact_info_from_fixed_fields( $row->ID );
+
 			$people[] = $person;
 		}
 
