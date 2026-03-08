@@ -353,6 +353,189 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 		}
 
+		/**
+		 * Migrate contact_info repeater data to fixed contact fields
+		 *
+		 * Reads the contact_info repeater for each person and maps entries
+		 * to the new fixed fields: email_1, email_2, mobile_1, mobile_2,
+		 * telephone_1, telephone_2. Skipped types: website, linkedin,
+		 * calendar, twitter, bluesky, threads, instagram, facebook, other.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without writing any data
+		 *
+		 * [--verbose]
+		 * : Show per-person migration details
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm migrate contact-fields
+		 *     wp prm migrate contact-fields --dry-run
+		 *     wp prm migrate contact-fields --dry-run --verbose
+		 *
+		 * @when after_wp_load
+		 */
+		public function contact_fields( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+			$verbose = isset( $assoc_args['verbose'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'DRY RUN MODE - No changes will be made' );
+			}
+
+			WP_CLI::log( 'Migrating contact_info repeater to fixed contact fields...' );
+
+			// Get all person posts.
+			$person_ids = get_posts( array(
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			) );
+
+			if ( empty( $person_ids ) ) {
+				WP_CLI::warning( 'No person posts found.' );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Found %d person(s) to process.', count( $person_ids ) ) );
+
+			// Field mapping: contact_type => fixed field name(s) in priority order.
+			$field_map = array(
+				'email'  => array( 'email_1', 'email_2' ),
+				'email2' => array( 'email_1', 'email_2' ),
+				'mobile' => array( 'mobile_1', 'mobile_2' ),
+				'phone'  => array( 'telephone_1', 'telephone_2' ),
+			);
+
+			$persons_processed = 0;
+			$persons_skipped   = 0;
+			$fields_migrated   = 0;
+			$skipped_types     = array();
+
+			foreach ( $person_ids as $person_id ) {
+				$contact_info = get_field( 'contact_info', $person_id );
+
+				if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
+					$persons_skipped++;
+					if ( $verbose ) {
+						WP_CLI::log( sprintf( '  [%d] %s — no contact_info, skipping', $person_id, get_the_title( $person_id ) ) );
+					}
+					continue;
+				}
+
+				// Track which fixed fields are already populated (for idempotency).
+				$current_values = array();
+				foreach ( array( 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ) as $field_name ) {
+					$current_values[ $field_name ] = get_field( $field_name, $person_id );
+				}
+
+				$person_fields_set = 0;
+
+				foreach ( $contact_info as $entry ) {
+					$type  = $entry['contact_type'] ?? '';
+					$value = trim( $entry['contact_value'] ?? '' );
+
+					if ( empty( $value ) ) {
+						continue;
+					}
+
+					// Check if this type is in our mapping.
+					if ( ! isset( $field_map[ $type ] ) ) {
+						// Track skipped types for dry-run reporting.
+						if ( ! isset( $skipped_types[ $type ] ) ) {
+							$skipped_types[ $type ] = 0;
+						}
+						$skipped_types[ $type ]++;
+						continue;
+					}
+
+					// Find first empty slot in the target fields.
+					$target_fields = $field_map[ $type ];
+					$written       = false;
+
+					foreach ( $target_fields as $target_field ) {
+						// Skip if already populated (idempotent).
+						if ( ! empty( $current_values[ $target_field ] ) ) {
+							continue;
+						}
+
+						if ( ! $dry_run ) {
+							update_field( $target_field, $value, $person_id );
+						}
+
+						// Mark as populated so subsequent entries go to the next slot.
+						$current_values[ $target_field ] = $value;
+						$person_fields_set++;
+						$fields_migrated++;
+						$written = true;
+
+						if ( $verbose ) {
+							WP_CLI::log( sprintf(
+								'  [%d] %s — %s → %s = "%s"%s',
+								$person_id,
+								get_the_title( $person_id ),
+								$type,
+								$target_field,
+								$value,
+								$dry_run ? ' (dry run)' : ''
+							) );
+						}
+
+						break;
+					}
+
+					if ( ! $written && $verbose ) {
+						WP_CLI::log( sprintf(
+							'  [%d] %s — %s: both slots full, skipping "%s"',
+							$person_id,
+							get_the_title( $person_id ),
+							$type,
+							$value
+						) );
+					}
+				}
+
+				if ( $person_fields_set > 0 ) {
+					$persons_processed++;
+				} else {
+					$persons_skipped++;
+					if ( $verbose ) {
+						WP_CLI::log( sprintf( '  [%d] %s — already migrated or no mappable contacts', $person_id, get_the_title( $person_id ) ) );
+					}
+				}
+			}
+
+			// Report skipped types.
+			if ( ! empty( $skipped_types ) ) {
+				WP_CLI::log( '' );
+				WP_CLI::log( 'Skipped contact types (intentionally dropped):' );
+				foreach ( $skipped_types as $type => $count ) {
+					WP_CLI::log( sprintf( '  - %s: %d entries', $type, $count ) );
+				}
+			}
+
+			WP_CLI::log( '' );
+
+			if ( $dry_run ) {
+				WP_CLI::success( sprintf(
+					'DRY RUN: Would migrate %d field(s) for %d person(s), %d person(s) skipped',
+					$fields_migrated,
+					$persons_processed,
+					$persons_skipped
+				) );
+			} else {
+				WP_CLI::success( sprintf(
+					'Migration complete: %d field(s) migrated for %d person(s), %d person(s) skipped',
+					$fields_migrated,
+					$persons_processed,
+					$persons_skipped
+				) );
+			}
+		}
+
 	}
 
 	/**
