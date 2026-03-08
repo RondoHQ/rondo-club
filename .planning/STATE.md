@@ -11,16 +11,16 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 
 Milestone: v31.0 Editable Contact Fields
 Phase: 209 of 211 (Data Model Migration)
-Plan: 2 of 3
-Status: Executing
-Last activity: 2026-03-08 — Completed 209-02 (Backend PHP migration to fixed fields)
+Plan: 3 of 3
+Status: Complete
+Last activity: 2026-03-08 — Completed 209-03 (Frontend migration to fixed fields)
 
-Progress: [██████░░░░] 67%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 215 plans across v1.0-v31.0
+- Total plans completed: 216 plans across v1.0-v31.0
 - Recent milestones:
   - v30.0: 8 plans, 2 days (2026-02-20 -> 2026-02-21)
   - v29.0: 8 plans, 1 day (2026-02-20)
@@ -42,6 +42,9 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 - 209-02: Static build_contact_info_from_fixed_fields() for REST API backward compatibility
 - 209-02: Email lookups use meta_query instead of full-table scan
 - 209-02: Teams/commissies keep their own contact_info repeaters
+- 209-03: Social link types dropped from person contacts, WhatsApp built from mobile_1
+- 209-03: ContactEditModal simplified to 6 fixed fields instead of dynamic repeater
+- 209-03: Version bumped to 31.7.0 for data model migration
 
 ### Pending Todos
 
@@ -56,11 +59,11 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 209-02-PLAN.md
+Stopped at: Completed 209-03-PLAN.md (Phase 209 complete)
 Resume file: None
 
-**Next action:** Execute 209-03 (Frontend migration to fixed fields)
+**Next action:** Phase 209 complete. Proceed with Phase 210 or 211 if available.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-03-08 — 209-02 complete*
+*Last updated: 2026-03-08 — 209-03 complete, Phase 209 done*
