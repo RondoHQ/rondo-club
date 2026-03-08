@@ -324,6 +324,48 @@ class DemoImport {
 	 * @param string      $format Date format ('Y-m-d', 'Ymd', 'Y-m-d H:i:s', 'c').
 	 * @return string|null Shifted date or null if input is null/empty.
 	 */
+	/**
+	 * Map legacy contact_info array to fixed contact fields.
+	 *
+	 * @param array $contact_info Legacy contact_info repeater data.
+	 * @param int   $post_id     Person post ID.
+	 */
+	private function write_contact_info_to_fixed_fields( array $contact_info, int $post_id ): void {
+		$email_index     = 1;
+		$mobile_index    = 1;
+		$telephone_index = 1;
+
+		foreach ( $contact_info as $contact ) {
+			$type  = $contact['contact_type'] ?? '';
+			$value = $contact['contact_value'] ?? '';
+			if ( empty( $value ) ) {
+				continue;
+			}
+
+			switch ( $type ) {
+				case 'email':
+				case 'email2':
+					if ( $email_index <= 2 ) {
+						update_field( "email_{$email_index}", $value, $post_id );
+						$email_index++;
+					}
+					break;
+				case 'mobile':
+					if ( $mobile_index <= 2 ) {
+						update_field( "mobile_{$mobile_index}", $value, $post_id );
+						$mobile_index++;
+					}
+					break;
+				case 'phone':
+					if ( $telephone_index <= 2 ) {
+						update_field( "telephone_{$telephone_index}", $value, $post_id );
+						$telephone_index++;
+					}
+					break;
+			}
+		}
+	}
+
 	private function shift_date( $date_string, $format = 'Y-m-d' ) {
 		if ( empty( $date_string ) ) {
 			return null;
@@ -581,8 +623,16 @@ class DemoImport {
 				update_field( 'website', $acf['website'], $post_id );
 			}
 
-			if ( isset( $acf['contact_info'] ) ) {
-				update_field( 'contact_info', $acf['contact_info'], $post_id );
+			// Write contact info from fixed fields or legacy contact_info array
+			if ( isset( $acf['email_1'] ) ) {
+				foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $cf ) {
+					if ( isset( $acf[ $cf ] ) ) {
+						update_field( $cf, $acf[ $cf ], $post_id );
+					}
+				}
+			} elseif ( isset( $acf['contact_info'] ) ) {
+				// Legacy format: map contact_info array to fixed fields
+				$this->write_contact_info_to_fixed_fields( $acf['contact_info'], $post_id );
 			}
 		}
 
@@ -654,8 +704,15 @@ class DemoImport {
 			update_field( 'lid-tot', $this->shift_date( $acf['lid-tot'] ?? null ), $post_id );
 			update_field( 'datum-overlijden', $this->shift_date( $acf['datum-overlijden'] ?? null ), $post_id );
 
-			// Contact Information
-			update_field( 'contact_info', $acf['contact_info'] ?? [], $post_id );
+			// Contact Information (fixed fields)
+			if ( isset( $acf['email_1'] ) ) {
+				foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $cf ) {
+					update_field( $cf, $acf[ $cf ] ?? '', $post_id );
+				}
+			} elseif ( isset( $acf['contact_info'] ) ) {
+				// Legacy format: map contact_info array to fixed fields
+				$this->write_contact_info_to_fixed_fields( $acf['contact_info'], $post_id );
+			}
 
 			// Addresses
 			update_field( 'addresses', $acf['addresses'] ?? [], $post_id );

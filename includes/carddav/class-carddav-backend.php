@@ -808,8 +808,16 @@ class CardDAVBackend extends AbstractBackend implements SyncSupport {
 			update_field( 'infix', $infix, $post_id );
 		}
 
-		$optional_fields = [ 'nickname', 'gender', 'pronouns', 'contact_info', 'addresses' ];
+		$optional_fields = [ 'nickname', 'gender', 'pronouns', 'addresses' ];
 		foreach ( $optional_fields as $field ) {
+			if ( $is_create ? ! empty( $parsed[ $field ] ) : isset( $parsed[ $field ] ) ) {
+				update_field( $field, $parsed[ $field ], $post_id );
+			}
+		}
+
+		// Write fixed contact fields
+		$contact_fields = [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ];
+		foreach ( $contact_fields as $field ) {
 			if ( $is_create ? ! empty( $parsed[ $field ] ) : isset( $parsed[ $field ] ) ) {
 				update_field( $field, $parsed[ $field ], $post_id );
 			}

@@ -1194,35 +1194,46 @@ class GoogleSheets extends Base {
 	}
 
 	/**
-	 * Get first contact value by type
+	 * Get first contact value by type from fixed fields.
 	 *
 	 * @param array  $person Person data.
-	 * @param string $type   Contact type.
+	 * @param string $type   Contact type (email, mobile, phone).
 	 * @return string Contact value.
 	 */
 	private function get_first_contact_by_type( array $person, string $type ): string {
-		$contact_info = $person['acf']['contact_info'] ?? [];
-		foreach ( $contact_info as $contact ) {
-			if ( $contact['contact_type'] === $type ) {
-				return $contact['contact_value'] ?? '';
+		$acf       = $person['acf'] ?? [];
+		$field_map = [
+			'email'  => [ 'email_1', 'email_2' ],
+			'mobile' => [ 'mobile_1', 'mobile_2' ],
+			'phone'  => [ 'telephone_1', 'telephone_2' ],
+		];
+
+		foreach ( $field_map[ $type ] ?? [] as $field ) {
+			$value = $acf[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				return $value;
 			}
 		}
+
 		return '';
 	}
 
 	/**
-	 * Get first phone (includes mobile)
+	 * Get first phone (includes mobile and telephone).
 	 *
 	 * @param array $person Person data.
 	 * @return string Phone number.
 	 */
 	private function get_first_phone( array $person ): string {
-		$contact_info = $person['acf']['contact_info'] ?? [];
-		foreach ( $contact_info as $contact ) {
-			if ( in_array( $contact['contact_type'], [ 'phone', 'mobile' ], true ) ) {
-				return $contact['contact_value'] ?? '';
+		$acf = $person['acf'] ?? [];
+
+		foreach ( [ 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $field ) {
+			$value = $acf[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				return $value;
 			}
 		}
+
 		return '';
 	}
 

@@ -659,15 +659,23 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( sprintf( 'Nickname: %s', $parsed['nickname'] ) );
 			}
 
-			if ( ! empty( $parsed['contact_info'] ) ) {
-				WP_CLI::log( '' );
-				WP_CLI::log( 'Contact Info:' );
-				foreach ( $parsed['contact_info'] as $contact ) {
-					$type    = $contact['contact_type'] ?? 'unknown';
-					$value   = $contact['contact_value'] ?? '';
-					$label   = $contact['contact_label'] ?? '';
-					$display = $label ? "{$type} ({$label})" : $type;
-					WP_CLI::log( sprintf( '  %s: %s', $display, $value ) );
+			$contact_fields = [
+				'email_1'     => 'Email 1',
+				'email_2'     => 'Email 2',
+				'mobile_1'    => 'Mobile 1',
+				'mobile_2'    => 'Mobile 2',
+				'telephone_1' => 'Telephone 1',
+				'telephone_2' => 'Telephone 2',
+			];
+			$has_contacts = false;
+			foreach ( $contact_fields as $field => $label ) {
+				if ( ! empty( $parsed[ $field ] ) ) {
+					if ( ! $has_contacts ) {
+						WP_CLI::log( '' );
+						WP_CLI::log( 'Contact Info:' );
+						$has_contacts = true;
+					}
+					WP_CLI::log( sprintf( '  %s: %s', $label, $parsed[ $field ] ) );
 				}
 			}
 
@@ -1276,11 +1284,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					$name_to_persons[ $name_key ][] = $person->ID;
 				}
 
-				// Collect emails for this person
-				$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
-				foreach ( $contact_info as $contact ) {
-					if ( 'email' === $contact['contact_type'] && ! empty( $contact['contact_value'] ) ) {
-						$email = strtolower( trim( $contact['contact_value'] ) );
+				// Collect emails from fixed fields
+				foreach ( [ 'email_1', 'email_2' ] as $email_field ) {
+					$email = strtolower( trim( (string) get_field( $email_field, $person->ID ) ) );
+					if ( ! empty( $email ) ) {
 						if ( ! isset( $email_to_persons[ $email ] ) ) {
 							$email_to_persons[ $email ] = [];
 						}
