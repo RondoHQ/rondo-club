@@ -21,10 +21,12 @@ Replace the flexible-but-messy ACF contact_info repeater with 6 fixed contact fi
   2. All existing contact_info repeater data has been migrated to the correct fixed fields with no data loss
   3. The legacy contact_info repeater field group and social link fields no longer appear in the system
   4. REST API responses for person records return the new fixed fields instead of the old repeater structure
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 209-01: TBD
+- [ ] 209-01-PLAN.md — Register 6 fixed ACF fields and migrate repeater data via WP-CLI
+- [ ] 209-02-PLAN.md — Update all PHP backend consumers to use fixed fields
+- [ ] 209-03-PLAN.md — Update frontend to use fixed fields and remove legacy ACF repeater
 
 ### Phase 210: Backend Normalization & UI
 **Goal**: Users can view and edit all 6 contact fields on person detail with phone normalization and email change warnings
@@ -60,6 +62,6 @@ Phases execute in numeric order: 209 -> 210 -> 211
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 209. Data Model Migration | 0/? | Not started | - |
+| 209. Data Model Migration | 0/3 | Not started | - |
 | 210. Backend Normalization & UI | 0/? | Not started | - |
 | 211. Sync Update | 0/? | Not started | - |
