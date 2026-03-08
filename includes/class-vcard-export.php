@@ -248,62 +248,30 @@ class VCard {
 			$lines[]  = "PRONOUNS:{$pronouns}";     // RFC 9554 standard
 		}
 
-		// Contact information
-		if ( ! empty( $acf['contact_info'] ) && is_array( $acf['contact_info'] ) ) {
-			foreach ( $acf['contact_info'] as $contact ) {
-				if ( empty( $contact['contact_value'] ) ) {
-					continue;
+		// Contact information from fixed fields
+		foreach ( [ 'email_1', 'email_2' ] as $field ) {
+			$value = $acf[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				$lines[] = 'EMAIL;TYPE=INTERNET:' . self::escape_value( $value );
+			}
+		}
+
+		foreach ( [ 'mobile_1', 'mobile_2' ] as $field ) {
+			$value = $acf[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				$formatted_phone = self::format_phone( $value );
+				if ( $formatted_phone ) {
+					$lines[] = "TEL;TYPE=CELL:{$formatted_phone}";
 				}
+			}
+		}
 
-				$value = self::escape_value( $contact['contact_value'] );
-				$label = ! empty( $contact['contact_label'] ) ? strtoupper( $contact['contact_label'] ) : '';
-
-				switch ( $contact['contact_type'] ) {
-					case 'email':
-					case 'email2':
-						$email_type = $label ? "EMAIL;TYPE=INTERNET,{$label}" : 'EMAIL;TYPE=INTERNET';
-						$lines[]    = "{$email_type}:{$value}";
-						break;
-
-					case 'phone':
-					case 'mobile':
-						$phone_type      = $contact['contact_type'] === 'mobile' ? 'CELL' : 'VOICE';
-						$phone_label     = $label ? "TEL;TYPE={$phone_type},{$label}" : "TEL;TYPE={$phone_type}";
-						$formatted_phone = self::format_phone( $contact['contact_value'] );
-						if ( $formatted_phone ) {
-							$lines[] = "{$phone_label}:{$formatted_phone}";
-						}
-						break;
-
-					case 'website':
-						$url = $contact['contact_value'];
-						if ( ! preg_match( '/^https?:\/\//i', $url ) ) {
-							$url = 'https://' . $url;
-						}
-						$url_label = $label ? "URL;TYPE=WORK,{$label}" : 'URL;TYPE=WORK';
-						$lines[]   = "{$url_label}:" . self::escape_value( $url );
-						break;
-
-					case 'linkedin':
-					case 'twitter':
-					case 'instagram':
-					case 'facebook':
-						// Use X-SOCIALPROFILE for better client compatibility
-						$url = $contact['contact_value'];
-						if ( ! preg_match( '/^https?:\/\//i', $url ) ) {
-							$url = 'https://' . $url;
-						}
-						$social_type = $contact['contact_type'];
-						$lines[]     = "X-SOCIALPROFILE;TYPE={$social_type}:" . self::escape_value( $url );
-						break;
-
-					case 'calendar':
-						$url = $contact['contact_value'];
-						if ( ! preg_match( '/^https?:\/\//i', $url ) ) {
-							$url = 'https://' . $url;
-						}
-						$lines[] = 'URL;TYPE=WORK:' . self::escape_value( $url );
-						break;
+		foreach ( [ 'telephone_1', 'telephone_2' ] as $field ) {
+			$value = $acf[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				$formatted_phone = self::format_phone( $value );
+				if ( $formatted_phone ) {
+					$lines[] = "TEL;TYPE=VOICE:{$formatted_phone}";
 				}
 			}
 		}
@@ -425,44 +393,30 @@ class VCard {
 			$lines[]  = "PRONOUNS:{$pronouns}";
 		}
 
-		// Contact info
-		if ( ! empty( $data['contact_info'] ) && is_array( $data['contact_info'] ) ) {
-			foreach ( $data['contact_info'] as $contact ) {
-				if ( empty( $contact['contact_value'] ) ) {
-					continue;
+		// Contact info from fixed fields
+		foreach ( [ 'email_1', 'email_2' ] as $field ) {
+			$value = $data[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				$lines[] = 'EMAIL;TYPE=INTERNET:' . self::escape_value( $value );
+			}
+		}
+
+		foreach ( [ 'mobile_1', 'mobile_2' ] as $field ) {
+			$value = $data[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				$formatted_phone = self::format_phone( $value );
+				if ( $formatted_phone ) {
+					$lines[] = "TEL;TYPE=CELL:{$formatted_phone}";
 				}
+			}
+		}
 
-				$value = self::escape_value( $contact['contact_value'] );
-
-				switch ( $contact['contact_type'] ) {
-					case 'email':
-						$lines[] = "EMAIL;TYPE=INTERNET:{$value}";
-						break;
-					case 'phone':
-						$lines[] = 'TEL;TYPE=VOICE:' . self::format_phone( $contact['contact_value'] );
-						break;
-					case 'mobile':
-						$lines[] = 'TEL;TYPE=CELL:' . self::format_phone( $contact['contact_value'] );
-						break;
-					case 'website':
-					case 'calendar':
-						$url = $contact['contact_value'];
-						if ( ! preg_match( '/^https?:\/\//i', $url ) ) {
-							$url = 'https://' . $url;
-						}
-						$lines[] = 'URL:' . self::escape_value( $url );
-						break;
-					case 'linkedin':
-					case 'twitter':
-					case 'instagram':
-					case 'facebook':
-						$url = $contact['contact_value'];
-						if ( ! preg_match( '/^https?:\/\//i', $url ) ) {
-							$url = 'https://' . $url;
-						}
-						$social_type = $contact['contact_type'];
-						$lines[]     = "X-SOCIALPROFILE;TYPE={$social_type}:" . self::escape_value( $url );
-						break;
+		foreach ( [ 'telephone_1', 'telephone_2' ] as $field ) {
+			$value = $data[ $field ] ?? '';
+			if ( ! empty( $value ) ) {
+				$formatted_phone = self::format_phone( $value );
+				if ( $formatted_phone ) {
+					$lines[] = "TEL;TYPE=VOICE:{$formatted_phone}";
 				}
 			}
 		}
@@ -557,7 +511,12 @@ class VCard {
 			'nickname'     => '',
 			'gender'       => '',
 			'pronouns'     => '',
-			'contact_info' => [],
+			'email_1'      => '',
+			'email_2'      => '',
+			'mobile_1'     => '',
+			'mobile_2'     => '',
+			'telephone_1'  => '',
+			'telephone_2'  => '',
 			'addresses'    => [],
 			'org'          => '',
 			'title'        => '',
@@ -590,86 +549,46 @@ class VCard {
 			$data['nickname'] = (string) $vcard->NICKNAME;
 		}
 
-		// Email
+		// Email — map to email_1, email_2 (first two only)
 		if ( isset( $vcard->EMAIL ) ) {
+			$email_index = 1;
 			foreach ( $vcard->EMAIL as $email ) {
-				$label      = '';
-				$type_param = $email['TYPE'];
-				if ( $type_param ) {
-					$types = is_array( $type_param ) ? $type_param : ( is_object( $type_param ) ? $type_param->getParts() : [ $type_param ] );
-					foreach ( $types as $t ) {
-						$t_upper = strtoupper( (string) $t );
-						if ( $t_upper === 'HOME' ) {
-							$label = 'Home';
-							break;
-						} elseif ( $t_upper === 'WORK' ) {
-							$label = 'Work';
-							break;
-						}
-					}
+				if ( $email_index > 2 ) {
+					break;
 				}
-				$data['contact_info'][] = [
-					'contact_type'  => 'email',
-					'contact_value' => (string) $email,
-					'contact_label' => $label,
-				];
+				$data[ "email_{$email_index}" ] = (string) $email;
+				$email_index++;
 			}
 		}
 
-		// Phone
+		// Phone — map CELL/MOBILE to mobile_1/mobile_2, others to telephone_1/telephone_2
 		if ( isset( $vcard->TEL ) ) {
+			$mobile_index    = 1;
+			$telephone_index = 1;
 			foreach ( $vcard->TEL as $tel ) {
-				$type       = 'phone';
-				$label      = '';
+				$is_mobile  = false;
 				$type_param = $tel['TYPE'];
 				if ( $type_param ) {
-					// Handle different ways TYPE can be returned (array, Parameter object, string)
 					$types = is_array( $type_param ) ? $type_param : ( is_object( $type_param ) ? $type_param->getParts() : [ $type_param ] );
 					foreach ( $types as $t ) {
 						$t_upper = strtoupper( (string) $t );
 						if ( $t_upper === 'CELL' || $t_upper === 'MOBILE' ) {
-							$type = 'mobile';
-						} elseif ( $t_upper === 'HOME' ) {
-							$label = 'Home';
-						} elseif ( $t_upper === 'WORK' ) {
-							$label = 'Work';
+							$is_mobile = true;
 						}
 					}
 				}
-				$data['contact_info'][] = [
-					'contact_type'  => $type,
-					'contact_value' => (string) $tel,
-					'contact_label' => $label,
-				];
-			}
-		}
 
-		// URL
-		if ( isset( $vcard->URL ) ) {
-			foreach ( $vcard->URL as $url ) {
-				$url_value = (string) $url;
-				$type      = 'website';
-
-				// Detect URL type
-				if ( stripos( $url_value, 'linkedin.com' ) !== false ) {
-					$type = 'linkedin';
-				} elseif ( stripos( $url_value, 'twitter.com' ) !== false || stripos( $url_value, 'x.com' ) !== false ) {
-					$type = 'twitter';
-				} elseif ( stripos( $url_value, 'instagram.com' ) !== false ) {
-					$type = 'instagram';
-				} elseif ( stripos( $url_value, 'facebook.com' ) !== false ) {
-					$type = 'facebook';
-				} elseif ( stripos( $url_value, 'calendly.com' ) !== false || stripos( $url_value, 'cal.com' ) !== false ) {
-					$type = 'calendar';
+				if ( $is_mobile && $mobile_index <= 2 ) {
+					$data[ "mobile_{$mobile_index}" ] = (string) $tel;
+					$mobile_index++;
+				} elseif ( ! $is_mobile && $telephone_index <= 2 ) {
+					$data[ "telephone_{$telephone_index}" ] = (string) $tel;
+					$telephone_index++;
 				}
-
-				$data['contact_info'][] = [
-					'contact_type'  => $type,
-					'contact_value' => $url_value,
-					'contact_label' => '',
-				];
 			}
 		}
+
+		// URL and social profiles are dropped per requirements (no fixed fields for these)
 
 		// Address
 		if ( isset( $vcard->ADR ) ) {
@@ -774,34 +693,7 @@ class VCard {
 			$data['pronouns'] = trim( (string) $vcard->PRONOUNS );
 		}
 
-		// X-SOCIALPROFILE (social networks)
-		$social_profile_key = 'X-SOCIALPROFILE';
-		if ( isset( $vcard->{$social_profile_key} ) ) {
-			foreach ( $vcard->{$social_profile_key} as $social ) {
-				$url        = (string) $social;
-				$type_param = $social['TYPE'];
-				$type       = '';
-				if ( $type_param ) {
-					$type = strtolower( is_object( $type_param ) ? (string) $type_param : $type_param );
-				}
-				// Map type or detect from URL
-				$type_map        = [
-					'linkedin'  => 'linkedin',
-					'twitter'   => 'twitter',
-					'x'         => 'twitter',
-					'instagram' => 'instagram',
-					'facebook'  => 'facebook',
-				];
-				$normalized_type = $type_map[ $type ] ?? self::detect_social_type( $url );
-				if ( $normalized_type ) {
-					$data['contact_info'][] = [
-						'contact_type'  => $normalized_type,
-						'contact_value' => $url,
-						'contact_label' => '',
-					];
-				}
-			}
-		}
+		// X-SOCIALPROFILE — dropped per requirements (no fixed fields for social links)
 
 		return $data;
 	}
@@ -843,7 +735,12 @@ class VCard {
 			'nickname'     => '',
 			'gender'       => '',
 			'pronouns'     => '',
-			'contact_info' => [],
+			'email_1'      => '',
+			'email_2'      => '',
+			'mobile_1'     => '',
+			'mobile_2'     => '',
+			'telephone_1'  => '',
+			'telephone_2'  => '',
 			'addresses'    => [],
 			'org'          => '',
 			'title'        => '',
@@ -852,6 +749,10 @@ class VCard {
 			'uid'          => '',
 			'notes'        => [],
 		];
+
+		$email_index     = 1;
+		$mobile_index    = 1;
+		$telephone_index = 1;
 
 		$lines = preg_split( '/\r\n|\r|\n/', $vcard_data );
 
@@ -887,43 +788,26 @@ class VCard {
 					break;
 
 				case 'EMAIL':
-					$label = '';
-					if ( stripos( $property, 'HOME' ) !== false ) {
-						$label = 'Home';
-					} elseif ( stripos( $property, 'WORK' ) !== false ) {
-						$label = 'Work';
+					if ( $email_index <= 2 ) {
+						$data[ "email_{$email_index}" ] = self::unescape_value( $value );
+						$email_index++;
 					}
-					$data['contact_info'][] = [
-						'contact_type'  => 'email',
-						'contact_value' => self::unescape_value( $value ),
-						'contact_label' => $label,
-					];
 					break;
 
 				case 'TEL':
-					$type  = 'phone';
-					$label = '';
-					if ( stripos( $property, 'CELL' ) !== false || stripos( $property, 'MOBILE' ) !== false ) {
-						$type = 'mobile';
+					$is_mobile = stripos( $property, 'CELL' ) !== false || stripos( $property, 'MOBILE' ) !== false;
+					if ( $is_mobile && $mobile_index <= 2 ) {
+						$data[ "mobile_{$mobile_index}" ] = self::unescape_value( $value );
+						$mobile_index++;
+					} elseif ( ! $is_mobile && $telephone_index <= 2 ) {
+						$data[ "telephone_{$telephone_index}" ] = self::unescape_value( $value );
+						$telephone_index++;
 					}
-					if ( stripos( $property, 'HOME' ) !== false ) {
-						$label = 'Home';
-					} elseif ( stripos( $property, 'WORK' ) !== false ) {
-						$label = 'Work';
-					}
-					$data['contact_info'][] = [
-						'contact_type'  => $type,
-						'contact_value' => self::unescape_value( $value ),
-						'contact_label' => $label,
-					];
 					break;
 
 				case 'URL':
-					$data['contact_info'][] = [
-						'contact_type'  => 'website',
-						'contact_value' => self::unescape_value( $value ),
-						'contact_label' => '',
-					];
+				case 'X-SOCIALPROFILE':
+					// URLs and social profiles dropped per requirements
 					break;
 
 				case 'ORG':
@@ -956,7 +840,6 @@ class VCard {
 
 				case 'GENDER':
 					$gender_value = self::unescape_value( $value );
-					// Handle full gender value (e.g., "M;Male" - only use first component)
 					if ( strpos( $gender_value, ';' ) !== false ) {
 						$gender_value = explode( ';', $gender_value )[0];
 					}
@@ -977,39 +860,10 @@ class VCard {
 					}
 					break;
 
-				case 'X-SOCIALPROFILE':
-					$url = self::unescape_value( $value );
-					// Try to get type from property string
-					$type = '';
-					if ( stripos( $property, 'TYPE=' ) !== false ) {
-						preg_match( '/TYPE=([^;:]+)/i', $property, $matches );
-						$type = strtolower( $matches[1] ?? '' );
-					}
-					// Map type or detect from URL
-					$type_map        = [
-						'linkedin'  => 'linkedin',
-						'twitter'   => 'twitter',
-						'x'         => 'twitter',
-						'instagram' => 'instagram',
-						'facebook'  => 'facebook',
-					];
-					$normalized_type = $type_map[ $type ] ?? self::detect_social_type( $url );
-					if ( $normalized_type ) {
-						$data['contact_info'][] = [
-							'contact_type'  => $normalized_type,
-							'contact_value' => $url,
-							'contact_label' => '',
-						];
-					}
-					break;
-
 				case 'PHOTO':
-					// Check if it's a URI or base64
 					if ( stripos( $property, 'VALUE=URI' ) !== false ) {
 						$data['photo_url'] = self::unescape_value( $value );
 					} else {
-						// Base64 encoded photo
-						// Get photo type from property string
 						$photo_type = 'jpeg';
 						if ( stripos( $property, 'TYPE=' ) !== false ) {
 							preg_match( '/TYPE=([^;:]+)/i', $property, $matches );
@@ -1017,7 +871,6 @@ class VCard {
 						}
 						$photo_type = str_replace( [ 'image/', 'IMAGE/' ], '', $photo_type );
 
-						// Remove whitespace and store
 						$data['photo_base64'] = preg_replace( '/\s+/', '', $value );
 						$data['photo_type']   = $photo_type;
 					}

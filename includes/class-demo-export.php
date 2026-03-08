@@ -240,7 +240,27 @@ class DemoExport {
 	}
 
 	/**
-	 * Export contact_info repeater field
+	 * Export fixed contact fields for person post type.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array Associative array of fixed contact field values.
+	 */
+	private function export_contact_fields( $post_id ) {
+		$fields   = [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ];
+		$exported = [];
+
+		foreach ( $fields as $field ) {
+			$value = get_field( $field, $post_id );
+			if ( ! empty( $value ) ) {
+				$exported[ $field ] = $value;
+			}
+		}
+
+		return $exported;
+	}
+
+	/**
+	 * Export contact_info repeater field (for teams/commissies).
 	 *
 	 * @param int $post_id Post ID.
 	 * @return array Array of contact info objects.
@@ -307,8 +327,8 @@ class DemoExport {
 					'lid-tot'           => $this->normalize_value( get_field( 'lid-tot', $post->ID ) ),
 					'datum-overlijden'  => $this->normalize_value( get_field( 'datum-overlijden', $post->ID ) ),
 
-					// Contact Information
-					'contact_info'      => $this->export_contact_info( $post->ID ),
+					// Contact Information (fixed fields)
+					...$this->export_contact_fields( $post->ID ),
 
 					// Addresses
 					'addresses'         => $this->export_addresses( $post->ID ),
@@ -518,8 +538,8 @@ class DemoExport {
 		$name_parts     = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 		$person['title'] = implode( ' ', $name_parts );
 
-		// Replace contact_info.
-		$person['acf']['contact_info'] = $this->anonymize_contact_info( $person['acf']['contact_info'], $identity );
+		// Replace contact fields with anonymized data.
+		$person['acf'] = $this->anonymize_contact_fields( $person['acf'], $identity );
 
 		// Replace addresses.
 		$person['acf']['addresses'] = $this->anonymize_addresses( $person['acf']['addresses'] );
@@ -538,75 +558,29 @@ class DemoExport {
 	}
 
 	/**
-	 * Anonymize contact_info array
+	 * Anonymize fixed contact fields in ACF array.
 	 *
-	 * @param array $contact_info Contact info array.
-	 * @param array $identity     Generated identity.
-	 * @return array Anonymized contact info array.
+	 * @param array $acf      ACF fields array.
+	 * @param array $identity Generated identity.
+	 * @return array ACF array with anonymized contact fields.
 	 */
-	private function anonymize_contact_info( $contact_info, $identity ) {
-		if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
-			return [];
+	private function anonymize_contact_fields( array $acf, array $identity ): array {
+		// Anonymize emails
+		if ( ! empty( $acf['email_1'] ) ) {
+			$acf['email_1'] = $identity['email'];
+		}
+		if ( ! empty( $acf['email_2'] ) ) {
+			$acf['email_2'] = str_replace( '@', '2@', $identity['email'] );
 		}
 
-		$anonymized  = [];
-		$email_count = 0;
-
-		foreach ( $contact_info as $row ) {
-			$contact_type  = $row['contact_type'] ?? '';
-			$contact_label = $row['contact_label'] ?? '';
-			$contact_value = $this->anonymize_contact_value( $contact_type, $identity, $email_count );
-
-			$anonymized[] = [
-				'contact_type'  => $contact_type,
-				'contact_label' => $contact_label,
-				'contact_value' => $contact_value,
-			];
+		// Anonymize phone numbers
+		foreach ( [ 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $field ) {
+			if ( ! empty( $acf[ $field ] ) ) {
+				$acf[ $field ] = $this->anonymizer->generate_phone();
+			}
 		}
 
-		return $anonymized;
-	}
-
-	/**
-	 * Anonymize a single contact value based on type
-	 *
-	 * @param string $contact_type Contact type.
-	 * @param array  $identity Generated identity.
-	 * @param int    &$email_count Email counter (passed by reference).
-	 * @return string|null Anonymized contact value.
-	 */
-	private function anonymize_contact_value( $contact_type, $identity, &$email_count ) {
-		// Normalize case for known types
-		$normalized_type = strtolower( $contact_type );
-
-		switch ( $normalized_type ) {
-			case 'email':
-				if ( 0 === $email_count ) {
-					$email_count++;
-					return $identity['email'];
-				} else {
-					return str_replace( '@', $email_count++ . '@', $identity['email'] );
-				}
-
-			case 'phone':
-			case 'mobile':
-				return $this->anonymizer->generate_phone();
-
-			case 'website':
-			case 'linkedin':
-			case 'twitter':
-			case 'bluesky':
-			case 'threads':
-			case 'instagram':
-			case 'facebook':
-			case 'other':
-			case 'calendar':
-				return null;
-
-			default:
-				// For unknown contact types, preserve type but null the value
-				return null;
-		}
+		return $acf;
 	}
 
 	/**
