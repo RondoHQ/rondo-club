@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { formatPhoneForDisplay } from '@/utils/formatters';
 
 export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading, email1 = '', email2 = '', mobile1 = '', mobile2 = '', telephone1 = '', telephone2 = '' }) {
   const isOnline = useOnlineStatus();
@@ -9,10 +10,10 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
     defaultValues: {
       email_1: email1,
       email_2: email2,
-      mobile_1: mobile1,
-      mobile_2: mobile2,
-      telephone_1: telephone1,
-      telephone_2: telephone2,
+      mobile_1: formatPhoneForDisplay(mobile1),
+      mobile_2: formatPhoneForDisplay(mobile2),
+      telephone_1: formatPhoneForDisplay(telephone1),
+      telephone_2: formatPhoneForDisplay(telephone2),
     },
   });
 
@@ -22,10 +23,10 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
       reset({
         email_1: email1,
         email_2: email2,
-        mobile_1: mobile1,
-        mobile_2: mobile2,
-        telephone_1: telephone1,
-        telephone_2: telephone2,
+        mobile_1: formatPhoneForDisplay(mobile1),
+        mobile_2: formatPhoneForDisplay(mobile2),
+        telephone_1: formatPhoneForDisplay(telephone1),
+        telephone_2: formatPhoneForDisplay(telephone2),
       });
     }
   }, [isOpen, email1, email2, mobile1, mobile2, telephone1, telephone2, reset]);
@@ -70,6 +71,9 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                   className="input"
                   disabled={isLoading}
                 />
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  &#9888;&#65039; Wijzigingen beinvloeden de voetbal.nl login
+                </p>
               </div>
               <div>
                 <label className="label">Email (2e)</label>
@@ -90,7 +94,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 <input
                   {...register('mobile_1')}
                   type="tel"
-                  placeholder="+31 6 12345678"
+                  placeholder="06-12345678"
                   className="input"
                   disabled={isLoading}
                 />
@@ -100,7 +104,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 <input
                   {...register('mobile_2')}
                   type="tel"
-                  placeholder="+31 6 12345678"
+                  placeholder="06-12345678"
                   className="input"
                   disabled={isLoading}
                 />
@@ -114,7 +118,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 <input
                   {...register('telephone_1')}
                   type="tel"
-                  placeholder="+31 20 1234567"
+                  placeholder="020-1234567"
                   className="input"
                   disabled={isLoading}
                 />
@@ -124,7 +128,7 @@ export default function ContactEditModal({ isOpen, onClose, onSubmit, isLoading,
                 <input
                   {...register('telephone_2')}
                   type="tel"
-                  placeholder="+31 20 1234567"
+                  placeholder="020-1234567"
                   className="input"
                   disabled={isLoading}
                 />
