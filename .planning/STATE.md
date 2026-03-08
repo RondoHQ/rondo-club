@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 
 Milestone: v31.0 Editable Contact Fields
 Phase: 209 of 211 (Data Model Migration)
-Plan: 1 of 3
+Plan: 2 of 3
 Status: Executing
-Last activity: 2026-03-08 — Completed 209-01 (ACF fields + migration)
+Last activity: 2026-03-08 — Completed 209-02 (Backend PHP migration to fixed fields)
 
-Progress: [███░░░░░░░] 33%
+Progress: [██████░░░░] 67%
 
 ## Performance Metrics
 
@@ -39,6 +39,9 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 - 209-01: Fixed ACF contact fields replace repeater for predictable data model
 - 209-01: WP-CLI migration command follows existing `wp prm migrate` pattern
 - 209-01: Social/web contact types intentionally dropped per requirements
+- 209-02: Static build_contact_info_from_fixed_fields() for REST API backward compatibility
+- 209-02: Email lookups use meta_query instead of full-table scan
+- 209-02: Teams/commissies keep their own contact_info repeaters
 
 ### Pending Todos
 
@@ -53,11 +56,11 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 209-01-PLAN.md
+Stopped at: Completed 209-02-PLAN.md
 Resume file: None
 
-**Next action:** Execute 209-02 (REST API + frontend updates)
+**Next action:** Execute 209-03 (Frontend migration to fixed fields)
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-03-08 — 209-01 complete*
+*Last updated: 2026-03-08 — 209-02 complete*
