@@ -108,28 +108,10 @@ class Matcher {
 		);
 
 		foreach ( $people as $person_id ) {
-			// Get contact_info repeater field
-			$contact_info = get_field( 'contact_info', $person_id );
-
-			if ( ! is_array( $contact_info ) ) {
-				continue;
-			}
-
-			foreach ( $contact_info as $contact ) {
-				// Only process email contacts
-				if ( empty( $contact['contact_type'] ) || $contact['contact_type'] !== 'email' ) {
-					continue;
-				}
-
-				if ( empty( $contact['contact_value'] ) ) {
-					continue;
-				}
-
-				// Normalize email: lowercase and trim
-				$email = strtolower( trim( $contact['contact_value'] ) );
-
-				// Store in lookup (first person wins if duplicate emails)
-				if ( ! isset( $lookup[ $email ] ) ) {
+			// Read fixed email fields.
+			foreach ( [ 'email_1', 'email_2' ] as $field ) {
+				$email = strtolower( trim( (string) get_field( $field, $person_id ) ) );
+				if ( $email !== '' && ! isset( $lookup[ $email ] ) ) {
 					$lookup[ $email ] = $person_id;
 				}
 			}

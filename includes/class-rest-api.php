@@ -1113,7 +1113,7 @@ class Api extends Base {
 						'org_address'           => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
 						'contact_email'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
 						'iban'                  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'bank_accounts'         => [
+						'mollie_accounts'       => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
 								return is_array( $param );
@@ -1140,8 +1140,10 @@ class Api extends Base {
 						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'mollie_api_key'          => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'mollie_redirect_url'     => [ 'required' => false, 'sanitize_callback' => 'esc_url_raw' ],
+						'mollie_default_membership_account_id' => [ 'required' => false, 'sanitize_callback' => 'sanitize_key' ],
+						'mollie_default_discipline_account_id' => [ 'required' => false, 'sanitize_callback' => 'sanitize_key' ],
+						'mollie_default_manual_account_id'     => [ 'required' => false, 'sanitize_callback' => 'sanitize_key' ],
 						'active_payment_provider' => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
@@ -1463,6 +1465,9 @@ class Api extends Base {
 		// Add VOG post meta fields to person REST API response
 		add_filter( 'rest_prepare_person', [ $this, 'add_vog_fields_to_person' ], 10, 3 );
 
+		// Build backward-compatible contact_info array from fixed fields
+		add_filter( 'rest_prepare_person', [ $this, 'add_contact_info_from_fixed_fields' ], 10, 3 );
+
 		// Add computed discipline case charging exception status based on settings.
 		add_filter( 'rest_prepare_discipline_case', [ $this, 'add_discipline_case_exception_status' ], 10, 3 );
 	}
@@ -1511,6 +1516,66 @@ class Api extends Base {
 
 		$response->set_data( $data );
 		return $response;
+	}
+
+	/**
+	 * Build backward-compatible contact_info array from fixed fields.
+	 *
+	 * Ensures the REST API response includes a contact_info array built from
+	 * the fixed email/mobile/telephone fields, so the frontend continues
+	 * working without changes.
+	 *
+	 * @param \WP_REST_Response $response The response object.
+	 * @param \WP_Post          $post     The post object.
+	 * @param \WP_REST_Request  $request  The request object.
+	 * @return \WP_REST_Response Modified response with contact_info array.
+	 */
+	public function add_contact_info_from_fixed_fields( $response, $post, $request ) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$data = $response->get_data();
+
+		if ( ! isset( $data['acf'] ) ) {
+			$data['acf'] = [];
+		}
+
+		$data['acf']['contact_info'] = self::build_contact_info_from_fixed_fields( $post->ID );
+
+		$response->set_data( $data );
+		return $response;
+	}
+
+	/**
+	 * Build backward-compatible contact_info array from fixed fields.
+	 *
+	 * @param int $post_id Person post ID.
+	 * @return array Contact info array in the legacy repeater format.
+	 */
+	public static function build_contact_info_from_fixed_fields( int $post_id ): array {
+		$contacts  = [];
+		$field_map = [
+			'email_1'     => 'email',
+			'email_2'     => 'email2',
+			'mobile_1'    => 'mobile',
+			'mobile_2'    => 'mobile',
+			'telephone_1' => 'phone',
+			'telephone_2' => 'phone',
+		];
+
+		foreach ( $field_map as $acf_field => $contact_type ) {
+			$value = get_field( $acf_field, $post_id );
+			if ( ! empty( $value ) ) {
+				$contacts[] = [
+					'contact_type'  => $contact_type,
+					'contact_value' => $value,
+					'contact_label' => '',
+				];
+			}
+		}
+
+		return $contacts;
 	}
 
 	/**
@@ -3017,7 +3082,7 @@ class Api extends Base {
 	/**
 	 * Find a person by email address (for sync deduplication)
 	 *
-	 * Searches all people for a matching email in contact_info.
+	 * Searches all people for a matching email in fixed fields.
 	 * Returns the person ID if found, null otherwise.
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -3030,26 +3095,26 @@ class Api extends Base {
 			return new \WP_REST_Response( [ 'id' => null ], 200 );
 		}
 
-		// Search all people (bypass access control for sync operations)
-		$people = get_posts(
-			[
-				'post_type'        => 'person',
-				'posts_per_page'   => -1,
-				'post_status'      => 'publish',
-				'suppress_filters' => true,
-			]
-		);
+		// Search by email_1 first, then email_2.
+		foreach ( [ 'email_1', 'email_2' ] as $field ) {
+			$matches = get_posts(
+				[
+					'post_type'        => 'person',
+					'posts_per_page'   => 1,
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+					'meta_query'       => [
+						[
+							'key'     => $field,
+							'value'   => $email,
+							'compare' => '=',
+						],
+					],
+				]
+			);
 
-		foreach ( $people as $person ) {
-			$contact_info = get_field( 'contact_info', $person->ID ) ?: [];
-
-			foreach ( $contact_info as $contact ) {
-				if ( 'email' === $contact['contact_type'] ) {
-					$person_email = strtolower( trim( $contact['contact_value'] ?? '' ) );
-					if ( $person_email === $email ) {
-						return new \WP_REST_Response( [ 'id' => $person->ID ], 200 );
-					}
-				}
+			if ( ! empty( $matches ) ) {
+				return new \WP_REST_Response( [ 'id' => $matches[0]->ID ], 200 );
 			}
 		}
 
@@ -3230,7 +3295,7 @@ class Api extends Base {
 				}
 			}
 
-			// Query 7: Contact email matches in contact_info repeater (score: 75)
+			// Query 7: Contact email matches in email_1/email_2 fields (score: 75)
 			if ( strpos( $query, '@' ) !== false || is_email( $query ) ) {
 				$email_matches = $this->find_people_by_contact_email_fragment( $query, 20 );
 
@@ -4061,19 +4126,13 @@ class Api extends Base {
 				continue;
 			}
 
-			// Find email in contact_info ACF repeater.
-			$contact_info = get_field( 'contact_info', $person_id );
-			$email        = null;
-			if ( is_array( $contact_info ) ) {
-				foreach ( $contact_info as $contact ) {
-					if ( isset( $contact['contact_type'] ) && 'email' === $contact['contact_type'] ) {
-						$value = $contact['contact_value'] ?? '';
-						if ( is_email( $value ) ) {
-							$email = $value;
-							break;
-						}
-					}
-				}
+			// Find email from fixed fields.
+			$email = get_field( 'email_1', $person_id );
+			if ( ! is_email( $email ) ) {
+				$email = get_field( 'email_2', $person_id );
+			}
+			if ( ! is_email( $email ) ) {
+				$email = null;
 			}
 
 			if ( ! $email ) {
@@ -4283,7 +4342,7 @@ class Api extends Base {
 	}
 
 	/**
-	 * Find people where contact_info contains an email matching the query fragment.
+	 * Find people where email_1 or email_2 matches the query fragment.
 	 *
 	 * @param string $query Search query.
 	 * @param int    $limit Max number of results.
@@ -4297,52 +4356,21 @@ class Api extends Base {
 			return [];
 		}
 
-		$meta_key_pattern = 'contact_info\\_%\\_contact_value';
-		$meta_like        = '%' . $wpdb->esc_like( $query_lower ) . '%';
-		$query_sql        = $wpdb->prepare(
+		$meta_like  = '%' . $wpdb->esc_like( $query_lower ) . '%';
+		$query_sql  = $wpdb->prepare(
 			"SELECT DISTINCT pm.post_id
 			 FROM {$wpdb->postmeta} pm
 			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-			 WHERE pm.meta_key LIKE %s
+			 WHERE pm.meta_key IN ('email_1', 'email_2')
 			   AND LOWER(pm.meta_value) LIKE %s
 			   AND p.post_type = 'person'
 			   AND p.post_status = 'publish'
 			 LIMIT %d",
-			$meta_key_pattern,
 			$meta_like,
 			$limit
 		);
 
-		$people_ids = array_map( 'intval', (array) $wpdb->get_col( $query_sql ) );
-		if ( empty( $people_ids ) ) {
-			return [];
-		}
-
-		$matched_ids = [];
-		foreach ( $people_ids as $person_id ) {
-			$contact_info = get_field( 'contact_info', (int) $person_id );
-			if ( ! is_array( $contact_info ) ) {
-				continue;
-			}
-
-			foreach ( $contact_info as $contact ) {
-				$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-				if ( ! in_array( $type, [ 'email', 'email2' ], true ) ) {
-					continue;
-				}
-
-				$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
-				if ( $value !== '' && strpos( $value, $query_lower ) !== false ) {
-					$matched_ids[] = (int) $person_id;
-					break;
-				}
-			}
-
-			if ( count( $matched_ids ) >= $limit ) {
-				break;
-			}
-		}
-
+		$matched_ids = array_map( 'intval', (array) $wpdb->get_col( $query_sql ) );
 		if ( empty( $matched_ids ) ) {
 			return [];
 		}
@@ -5785,27 +5813,20 @@ class Api extends Base {
 	}
 
 	/**
-	 * Get first email address from person contact_info.
+	 * Get first email address from person fixed fields.
 	 *
 	 * @param int $person_id Person post ID.
 	 * @return string
 	 */
 	private function get_person_email_address( int $person_id ): string {
-		$contact_info = get_field( 'contact_info', $person_id );
-		if ( ! is_array( $contact_info ) ) {
-			return '';
+		$email = sanitize_email( (string) get_field( 'email_1', $person_id ) );
+		if ( is_email( $email ) ) {
+			return $email;
 		}
 
-		foreach ( $contact_info as $contact ) {
-			$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-			if ( $type !== 'email' ) {
-				continue;
-			}
-
-			$email = sanitize_email( (string) ( $contact['contact_value'] ?? '' ) );
-			if ( is_email( $email ) ) {
-				return $email;
-			}
+		$email = sanitize_email( (string) get_field( 'email_2', $person_id ) );
+		if ( is_email( $email ) ) {
+			return $email;
 		}
 
 		return '';
@@ -5823,28 +5844,26 @@ class Api extends Base {
 			return 0;
 		}
 
-		$people = get_posts(
-			[
-				'post_type'        => 'person',
-				'posts_per_page'   => -1,
-				'post_status'      => 'publish',
-				'suppress_filters' => true,
-				'fields'           => 'ids',
-			]
-		);
+		foreach ( [ 'email_1', 'email_2' ] as $field ) {
+			$matches = get_posts(
+				[
+					'post_type'        => 'person',
+					'posts_per_page'   => 1,
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+					'fields'           => 'ids',
+					'meta_query'       => [
+						[
+							'key'     => $field,
+							'value'   => $email,
+							'compare' => '=',
+						],
+					],
+				]
+			);
 
-		foreach ( $people as $person_id ) {
-			$contact_info = get_field( 'contact_info', (int) $person_id ) ?: [];
-			if ( ! is_array( $contact_info ) ) {
-				continue;
-			}
-
-			foreach ( $contact_info as $contact ) {
-				$type  = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-				$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
-				if ( $type === 'email' && $value !== '' && $value === $email ) {
-					return (int) $person_id;
-				}
+			if ( ! empty( $matches ) ) {
+				return (int) $matches[0];
 			}
 		}
 

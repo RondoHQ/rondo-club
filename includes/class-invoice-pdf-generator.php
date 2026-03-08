@@ -95,15 +95,11 @@ class InvoicePdfGenerator {
 				$person_city = $first_address['city'] ?? '';
 			}
 
-			$contact_info = get_field( 'contact_info', $person_id );
-			if ( '' === trim( $person_email ) && $contact_info && is_array( $contact_info ) ) {
-				foreach ( $contact_info as $contact ) {
-					if ( isset( $contact['contact_type'] ) &&
-						 ( $contact['contact_type'] === 'email' || $contact['contact_type'] === 'Email' ) ) {
-						$person_email = $contact['contact_value'] ?? '';
-						break;
-					}
-				}
+			if ( '' === trim( $person_email ) ) {
+				$person_email = (string) get_field( 'email_1', $person_id );
+			}
+			if ( '' === trim( $person_email ) ) {
+				$person_email = (string) get_field( 'email_2', $person_id );
 			}
 		}
 
@@ -662,6 +658,7 @@ table.line-items .total-row td {
 	 * @return array<string, string>
 	 */
 	private static function get_invoice_payment_account( int $invoice_id, FinanceConfig $finance_config ): array {
+		$invoice_type     = (string) get_field( 'invoice_type', $invoice_id );
 		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
 		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
@@ -678,7 +675,7 @@ table.line-items .total-row td {
 			];
 		}
 
-		$default = $finance_config->get_default_bank_account( $finance_config->get_active_payment_provider() );
+		$default = $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
 		if ( is_array( $default ) ) {
 			return $default;
 		}

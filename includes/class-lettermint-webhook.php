@@ -566,6 +566,9 @@ class LettermintWebhook {
 	/**
 	 * Mark matching person contact email as inactive after verification bounce.
 	 *
+	 * Stores the inactive status in _rondo_inactive_emails post meta.
+	 * The email value in the fixed field is kept unchanged.
+	 *
 	 * @param int    $person_id  Person post ID.
 	 * @param string $recipient  Recipient email.
 	 * @param string $event_name Event name.
@@ -573,29 +576,12 @@ class LettermintWebhook {
 	 * @return void
 	 */
 	private function mark_person_email_inactive( int $person_id, string $recipient, string $event_name, string $event_id ): void {
-		$contact_info = get_field( 'contact_info', $person_id );
-		if ( ! is_array( $contact_info ) ) {
+		// Check if the recipient matches email_1 or email_2.
+		$email_1 = strtolower( trim( (string) get_field( 'email_1', $person_id ) ) );
+		$email_2 = strtolower( trim( (string) get_field( 'email_2', $person_id ) ) );
+
+		if ( $recipient !== $email_1 && $recipient !== $email_2 ) {
 			return;
-		}
-
-		$updated = false;
-		foreach ( $contact_info as &$contact ) {
-			$type  = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-			$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
-			if ( $type !== 'email' || $value !== $recipient ) {
-				continue;
-			}
-
-			$label = trim( (string) ( $contact['contact_label'] ?? '' ) );
-			if ( stripos( $label, 'inactief' ) === false ) {
-				$contact['contact_label'] = $label !== '' ? $label . ' (inactief)' : 'Inactief';
-				$updated                  = true;
-			}
-		}
-		unset( $contact );
-
-		if ( $updated ) {
-			update_field( 'contact_info', $contact_info, $person_id );
 		}
 
 		$inactive = get_post_meta( $person_id, '_rondo_inactive_emails', true );
@@ -647,35 +633,32 @@ class LettermintWebhook {
 	}
 
 	/**
-	 * Find person by email from contact_info repeater.
+	 * Find person by email from fixed email fields.
 	 *
 	 * @param string $email Email address.
 	 * @return int
 	 */
 	private function find_person_by_email( string $email ): int {
-		$people = get_posts(
-			[
-				'post_type'        => 'person',
-				'posts_per_page'   => -1,
-				'post_status'      => 'publish',
-				'suppress_filters' => true,
-				'fields'           => 'ids',
-			]
-		);
+		foreach ( [ 'email_1', 'email_2' ] as $field ) {
+			$matches = get_posts(
+				[
+					'post_type'        => 'person',
+					'posts_per_page'   => 1,
+					'post_status'      => 'publish',
+					'suppress_filters' => true,
+					'fields'           => 'ids',
+					'meta_query'       => [
+						[
+							'key'     => $field,
+							'value'   => $email,
+							'compare' => '=',
+						],
+					],
+				]
+			);
 
-		foreach ( $people as $person_id ) {
-			$contact_info = get_field( 'contact_info', (int) $person_id ) ?: [];
-			if ( ! is_array( $contact_info ) ) {
-				continue;
-			}
-
-			foreach ( $contact_info as $contact ) {
-				$type  = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-				$value = strtolower( trim( sanitize_email( (string) ( $contact['contact_value'] ?? '' ) ) ) );
-
-				if ( $type === 'email' && $value !== '' && $value === $email ) {
-					return (int) $person_id;
-				}
+			if ( ! empty( $matches ) ) {
+				return (int) $matches[0];
 			}
 		}
 

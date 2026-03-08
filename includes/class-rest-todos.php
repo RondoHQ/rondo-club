@@ -634,21 +634,14 @@ class Todos extends Base {
 	 */
 	private function find_first_email_from_persons( array $person_ids ): string {
 		foreach ( $person_ids as $person_id ) {
-			$contact_info = get_field( 'contact_info', (int) $person_id );
-			if ( ! is_array( $contact_info ) ) {
-				continue;
+			$email = sanitize_email( (string) get_field( 'email_1', (int) $person_id ) );
+			if ( is_email( $email ) ) {
+				return $email;
 			}
 
-			foreach ( $contact_info as $contact ) {
-				$type = strtolower( trim( (string) ( $contact['contact_type'] ?? '' ) ) );
-				if ( $type !== 'email' ) {
-					continue;
-				}
-
-				$email = sanitize_email( (string) ( $contact['contact_value'] ?? '' ) );
-				if ( is_email( $email ) ) {
-					return $email;
-				}
+			$email = sanitize_email( (string) get_field( 'email_2', (int) $person_id ) );
+			if ( is_email( $email ) ) {
+				return $email;
 			}
 		}
 

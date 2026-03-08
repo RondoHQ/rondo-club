@@ -50,33 +50,25 @@ class InvoiceEmailSender {
 	}
 
 	/**
-	 * Get up to two email addresses from a person's contact_info repeater.
+	 * Get up to two email addresses from a person's fixed email fields.
 	 *
 	 * @param int $person_id Person post ID.
 	 * @return array<int, string>
 	 */
 	public static function get_person_email_addresses( int $person_id ): array {
-		$contact_info = get_field( 'contact_info', $person_id );
-		if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
-			return [];
-		}
-
 		$emails = [];
-		foreach ( $contact_info as $contact ) {
-			$type  = strtolower( (string) ( $contact['contact_type'] ?? '' ) );
-			$email = trim( (string) ( $contact['contact_value'] ?? '' ) );
 
-			if ( 'email' !== $type || ! is_email( $email ) ) {
-				continue;
-			}
-
-			$emails[] = $email;
-			if ( count( array_unique( $emails ) ) >= 2 ) {
-				break;
-			}
+		$email_1 = trim( (string) get_field( 'email_1', $person_id ) );
+		if ( is_email( $email_1 ) ) {
+			$emails[] = $email_1;
 		}
 
-		return array_values( array_unique( $emails ) );
+		$email_2 = trim( (string) get_field( 'email_2', $person_id ) );
+		if ( is_email( $email_2 ) && $email_2 !== $email_1 ) {
+			$emails[] = $email_2;
+		}
+
+		return $emails;
 	}
 
 	/**
