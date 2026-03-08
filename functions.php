@@ -100,6 +100,7 @@ rondo_register_fallback_autoloader();
 use Rondo\Core\PostTypes;
 use Rondo\Core\Taxonomies;
 use Rondo\Core\AutoTitle;
+use Rondo\Core\PhoneNormalizer;
 use Rondo\Core\VolunteerStatus;
 use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
@@ -404,6 +405,7 @@ function rondo_init() {
 	// Classes needed for content creation/editing (admin, REST, or cron)
 	if ( $is_admin || $is_rest || $is_cron ) {
 		new AutoTitle();
+		new PhoneNormalizer();
 		new VolunteerStatus();
 		new InverseRelationships();
 		new CommentTypes();
