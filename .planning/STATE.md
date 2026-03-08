@@ -64,7 +64,7 @@ Recent decisions affecting v30.0:
 
 ### Pending Todos
 
-3 todo(s) in `.planning/todos/pending/`
+5 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
