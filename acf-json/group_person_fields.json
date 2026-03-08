@@ -200,6 +200,66 @@
             ]
         },
         {
+            "key": "field_email_1",
+            "label": "Email",
+            "name": "email_1",
+            "type": "text",
+            "placeholder": "naam@voorbeeld.nl",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_email_2",
+            "label": "Email (2e)",
+            "name": "email_2",
+            "type": "text",
+            "placeholder": "naam@voorbeeld.nl",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mobile_1",
+            "label": "Mobiel",
+            "name": "mobile_1",
+            "type": "text",
+            "placeholder": "+31612345678",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_mobile_2",
+            "label": "Mobiel (2e)",
+            "name": "mobile_2",
+            "type": "text",
+            "placeholder": "+31612345678",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_telephone_1",
+            "label": "Telefoon",
+            "name": "telephone_1",
+            "type": "text",
+            "placeholder": "+31201234567",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_telephone_2",
+            "label": "Telefoon (2e)",
+            "name": "telephone_2",
+            "type": "text",
+            "placeholder": "+31201234567",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_addresses",
             "label": "Addresses",
             "name": "addresses",
