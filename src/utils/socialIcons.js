@@ -1,81 +1,44 @@
 /**
- * Social icon configuration utilities.
- * Centralizes the mapping of social media types to their icons and colors.
+ * Social/external link icon configuration utilities.
+ * Centralizes the mapping of link types to their icons and colors.
  */
-import { Globe } from 'lucide-react';
-import { SiFacebook, SiInstagram, SiX, SiBluesky, SiThreads, SiWhatsapp } from '@icons-pack/react-simple-icons';
-import LinkedInIcon from '@/components/icons/LinkedInIcon.jsx';
+import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 
 /**
- * Configuration for social media icons.
- * Maps social type to icon component and brand color.
+ * Configuration for link icons.
+ * Maps type to icon component and brand color.
  */
 export const SOCIAL_CONFIG = {
-  facebook: {
-    icon: SiFacebook,
-    color: 'text-[#1877F2]',
-  },
-  linkedin: {
-    icon: LinkedInIcon,
-    color: 'text-[#0077B7]',
-  },
-  instagram: {
-    icon: SiInstagram,
-    color: 'text-[#E4405F]',
-  },
-  twitter: {
-    icon: SiX, // Twitter/X uses SiX in Simple Icons
-    color: 'text-[#000000] dark:text-white',
-  },
-  bluesky: {
-    icon: SiBluesky,
-    color: 'text-[#00A8E8]',
-  },
-  threads: {
-    icon: SiThreads,
-    color: 'text-[#000000] dark:text-white',
-  },
   whatsapp: {
     icon: SiWhatsapp,
     color: 'text-[#25D366]',
   },
-  website: {
-    icon: Globe,
-    color: 'text-gray-600',
-  },
 };
 
 /**
- * Display order for social icons in the UI.
+ * Display order for link icons in the UI.
  */
 export const SOCIAL_DISPLAY_ORDER = {
-  linkedin: 1,
-  twitter: 2,
-  bluesky: 3,
-  threads: 4,
-  instagram: 5,
-  facebook: 6,
-  whatsapp: 7,
-  website: 8,
-  sportlink: 9,
-  freescout: 10,
-  membership_pass: 11,
+  whatsapp: 1,
+  sportlink: 2,
+  freescout: 3,
+  membership_pass: 4,
 };
 
 /**
- * Get the icon component for a social media type.
+ * Get the icon component for a link type.
  *
- * @param {string} type - Social media type
- * @returns {React.ComponentType} Icon component
+ * @param {string} type - Link type
+ * @returns {React.ComponentType|null} Icon component or null
  */
 export function getSocialIcon(type) {
-  return SOCIAL_CONFIG[type]?.icon || Globe;
+  return SOCIAL_CONFIG[type]?.icon || null;
 }
 
 /**
- * Get the color class for a social media type.
+ * Get the color class for a link type.
  *
- * @param {string} type - Social media type
+ * @param {string} type - Link type
  * @returns {string} Tailwind color classes
  */
 export function getSocialIconColor(type) {
@@ -83,9 +46,9 @@ export function getSocialIconColor(type) {
 }
 
 /**
- * Sort social links by display order.
+ * Sort links by display order.
  *
- * @param {Array} links - Array of contact objects with contact_type
+ * @param {Array} links - Array of link objects with contact_type
  * @returns {Array} Sorted array
  */
 export function sortSocialLinks(links) {
@@ -95,8 +58,3 @@ export function sortSocialLinks(links) {
     return orderA - orderB;
   });
 }
-
-/**
- * Social media types that should be displayed as social icons (not contact info).
- */
-export const SOCIAL_TYPES = ['facebook', 'linkedin', 'instagram', 'twitter', 'bluesky', 'threads', 'website'];

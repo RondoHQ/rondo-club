@@ -177,7 +177,7 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
   const numericFields = ['freescout-id'];
 
   // Fields that are repeaters and should always be arrays
-  const repeaterFields = ['contact_info', 'addresses', 'work_history', 'relationships', 'photo_gallery'];
+  const repeaterFields = ['addresses', 'work_history', 'relationships', 'photo_gallery'];
   
   const sanitized = { ...acfData };
   
@@ -366,30 +366,3 @@ export function isDutchMobilePhone(phone) {
   return cleaned.startsWith('+316') || cleaned.startsWith('06');
 }
 
-/**
- * Normalizes contact rows and auto-classifies Dutch mobile numbers as `mobile`.
- *
- * @param {Array} contacts - Raw contact rows from ACF
- * @returns {Array} Normalized contact rows
- */
-export function normalizeContactInfo(contacts = []) {
-  return contacts.map((contact) => {
-    if (!contact || typeof contact !== 'object') {
-      return contact;
-    }
-
-    const normalized = { ...contact };
-    const contactType = String(normalized.contact_type || '').toLowerCase();
-
-    if ((contactType === 'phone' || contactType === 'mobile') && isDutchMobilePhone(normalized.contact_value)) {
-      normalized.contact_type = 'mobile';
-
-      const label = String(normalized.contact_label || '').trim().toLowerCase();
-      if (!label || label === 'phone' || label === 'telefoon') {
-        normalized.contact_label = 'Mobiel';
-      }
-    }
-
-    return normalized;
-  });
-}
