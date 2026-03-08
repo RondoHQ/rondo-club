@@ -489,6 +489,16 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
+## Current Milestone: v31.0 Editable Contact Fields
+
+**Goal:** Align email and phone fields with Sportlink's fixed structure, normalize phone numbers to E.164, make contact fields editable in the UI, and re-enable reverse sync so changes flow back to Sportlink.
+
+**Target features:**
+- Fixed contact field structure matching Sportlink (Email1/2, Mobile1/2, Telephone1/2)
+- Phone number normalization to E.164 format on save
+- Editable contact fields in person detail UI with voetbal.nl email warning
+- Reverse sync re-enabled so edits propagate back to Sportlink
+
 ### Out of Scope
 
 - Mobile app — future consideration
@@ -782,4 +792,4 @@ Club administrators can manage their members, teams, and club operations through
 | CAPS-05 manual override UI deferred | Backend mechanism (META_MANUAL_GRANTS) exists; admin can use WP admin user meta editor | Deferred |
 
 ---
-*Last updated: 2026-02-21 after v30.0 User Accounts & Profiles milestone*
+*Last updated: 2026-03-08 after v31.0 Editable Contact Fields milestone started*
