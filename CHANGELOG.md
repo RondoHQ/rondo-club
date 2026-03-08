@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.7.0] - 2026-03-08
+
+### Changed
+- Replaced contact_info repeater with 6 fixed contact fields (email_1, email_2, mobile_1, mobile_2, telephone_1, telephone_2)
+- ContactEditModal now uses simple fixed-field form instead of dynamic repeater
+- Removed social link types (LinkedIn, Twitter, Bluesky, etc.) from person contact fields
+- Removed backward-compatible contact_info array from REST API responses
+
+### Removed
+- Legacy contact_info repeater field group from ACF JSON
+- normalizeContactInfo utility function
+
+## [31.6.49] - 2026-03-07
+
+### Changed
+- Financieel instellingen beheren meerdere rekeningen nu uitsluitend in de `Mollie`-tab, met per rekening een eigen API-sleutel en standaardrekening per factuurtype (`contributie`, `tuchtzaken`, `handmatig`).
+- Alleen handmatige facturen tonen nog een rekeningkeuze, en alleen wanneer Mollie actief is en er meerdere bruikbare Mollie-rekeningen zijn.
+- Contributie- en tuchtzaakfacturen leggen nu automatisch de ingestelde standaard Mollie-rekening voor hun factuurtype vast.
+
+### Removed
+- De oude globale Mollie API-sleutel en legacy `tr_` webhook/payment-flow zijn verwijderd; Mollie werkt nu alleen nog met payment links per geselecteerde rekening.
+
 ## [31.6.48] - 2026-03-06
 
 ### Fixed
