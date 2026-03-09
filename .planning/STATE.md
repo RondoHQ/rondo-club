@@ -29,7 +29,7 @@ Milestone: v31.0 Editable Contact Fields
 Phase: 211 of 211 (Sync Update)
 Plan: 2 of 2 (complete)
 Status: Phase Complete
-Last activity: 2026-03-08 — Completed 211-02 (Server deployment and cron re-enable)
+Last activity: 2026-03-09 - Completed quick task 119: Restrict people editing to FairPlay/Bestuur/VOG/Financieel roles
 
 Progress: [██████████] 100%
 
@@ -79,6 +79,12 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 - Phase 195 cron: WP-Cron is visitor-triggered on SiteGround; manually registered event at 2026-02-20 00:00:00
 - Orphaned Google Sheets code: 4 dead client.js methods + 5 unreachable REST routes (tech debt from v29.0)
 - Reverse sync re-enabled on rondo-sync server (Phase 211 complete)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 119 | Restrict people editing to FairPlay/Bestuur/VOG/Financieel roles | 2026-03-09 | 38aa54b4 | [119-the-editing-functionality-on-people-shou](./quick/119-the-editing-functionality-on-people-shou/) |
 
 ## Session Continuity
 
