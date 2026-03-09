@@ -739,7 +739,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
 
       {/* Section: Discipline / Tuchtzaken */}
       {activeTab === 'discipline' && (
-        <div className="card p-6 overflow-visible">
+        <div className="card p-6" style={{ overflow: 'visible' }}>
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tuchtzaken</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
