@@ -174,7 +174,17 @@ export function sanitizePersonAcf(acfData, overrides = {}) {
   const enumFields = ['gender'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
-  const numericFields = ['freescout-id'];
+  const numericFields = [
+    'freescout-id',
+    '_nikki_2025_total',
+    '_nikki_2025_saldo',
+    '_nikki_2024_total',
+    '_nikki_2024_saldo',
+    '_nikki_2023_total',
+    '_nikki_2023_saldo',
+    '_nikki_2022_total',
+    '_nikki_2022_saldo',
+  ];
 
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['addresses', 'work_history', 'relationships', 'photo_gallery'];
