@@ -56,7 +56,7 @@ export default function Settings() {
   // Get active tab from URL or default to 'appearance'
   const activeTab = urlTab || 'appearance';
   // Get active subtab for tabs that support subtabs.
-  const activeSubtab = urlSubtab || (activeTab === 'admin' ? 'users' : activeTab === 'connections' ? 'carddav' : null);
+  const activeSubtab = urlSubtab || (activeTab === 'admin' ? 'users' : activeTab === 'connections' ? 'carddav' : activeTab === 'financieel' ? 'organization' : null);
 
   const setActiveTab = (tab, subtab = null) => {
     if (subtab) {
@@ -67,6 +67,9 @@ export default function Settings() {
     } else if (tab === 'admin') {
       // Default to users subtab when switching to admin
       navigate(`/settings/${tab}/users`);
+    } else if (tab === 'financieel') {
+      // Default to organization subtab when switching to financieel
+      navigate(`/settings/${tab}/organization`);
     } else {
       navigate(`/settings/${tab}`);
     }
@@ -468,7 +471,11 @@ export default function Settings() {
         />;
       case 'financieel':
         return canAccessFinancieel ? (
-          <FinanceSettings allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']} />
+          <FinanceSettings
+            allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']}
+            activeTab={activeSubtab}
+            onTabChange={(tabId) => navigate(`/settings/financieel/${tabId}`)}
+          />
         ) : null;
       case 'clothing':
         return canAccessClothing ? <ClothingSettingsTab /> : null;

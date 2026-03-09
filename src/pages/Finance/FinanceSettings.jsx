@@ -218,7 +218,7 @@ function CertificateSection() {
   );
 }
 
-export default function FinanceSettings({ initialTab = 'organization', allowedTabs = null }) {
+export default function FinanceSettings({ initialTab = 'organization', allowedTabs = null, activeTab: propActiveTab = null, onTabChange = null }) {
   const { data: settings, isLoading, error } = useFinanceSettings();
   const updateMutation = useUpdateFinanceSettings();
   const { data: rabobankStatus, isLoading: rabobankLoading } = useRabobankStatus();
@@ -279,19 +279,28 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
   const availableTabs = Array.isArray(allowedTabs) && allowedTabs.length > 0
     ? TABS.filter((tab) => allowedTabs.includes(tab.id))
     : TABS;
-  const [activeTab, setActiveTab] = useState(
+  // Controlled mode (URL-driven) vs uncontrolled mode (internal state)
+  const [internalTab, setInternalTab] = useState(
     availableTabs.some((tab) => tab.id === initialTab) ? initialTab : availableTabs[0]?.id || 'organization'
   );
+
+  const activeTab = propActiveTab && availableTabs.some((tab) => tab.id === propActiveTab)
+    ? propActiveTab
+    : propActiveTab ? (availableTabs[0]?.id || 'organization')  // propActiveTab invalid, fallback
+    : internalTab;  // uncontrolled mode
+
+  const handleTabChange = (tabId) => {
+    if (onTabChange) {
+      onTabChange(tabId);
+    } else {
+      setInternalTab(tabId);
+    }
+  };
+
   const [emailSubTab, setEmailSubTab] = useState('gewone_facturen');
   const [showSuccess, setShowSuccess] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [showMembershipPassHelp, setShowMembershipPassHelp] = useState(false);
-
-  useEffect(() => {
-    if (!availableTabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(availableTabs[0]?.id || 'organization');
-    }
-  }, [activeTab, availableTabs]);
 
   // Load settings into form state
   useEffect(() => {
@@ -603,7 +612,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               key={tab.id}
               label={label}
               isActive={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
             />
           );
         })}
