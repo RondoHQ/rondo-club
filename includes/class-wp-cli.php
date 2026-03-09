@@ -462,6 +462,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 							continue;
 						}
 
+						// Skip if this value already exists in another slot for the same type.
+						if ( in_array( $value, array_intersect_key( $current_values, array_flip( $target_fields ) ), true ) ) {
+							$written = true; // Prevent "both slots full" warning.
+							break;
+						}
+
 						if ( ! $dry_run ) {
 							update_field( $target_field, $value, $person_id );
 						}
@@ -1651,6 +1657,125 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			} else {
 				WP_CLI::log( sprintf( 'Would delete %d work_history meta entries.', $count ) );
 			}
+		}
+
+		/**
+		 * Normalize all phone numbers to E.164 and deduplicate
+		 *
+		 * Runs PhoneNormalizer logic on all existing phone field values.
+		 * Also clears duplicate values when two fields normalize to the same number.
+		 *
+		 * ## OPTIONS
+		 *
+		 * [--dry-run]
+		 * : Preview changes without saving.
+		 *
+		 * [--verbose]
+		 * : Show each change.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp prm people normalize_phones --dry-run
+		 *     wp prm people normalize_phones
+		 *     wp prm people normalize_phones --verbose
+		 *
+		 * @when after_wp_load
+		 */
+		public function normalize_phones( $args, $assoc_args ) {
+			$dry_run = isset( $assoc_args['dry-run'] );
+			$verbose = isset( $assoc_args['verbose'] );
+
+			if ( $dry_run ) {
+				WP_CLI::log( 'Dry run mode — no changes will be saved.' );
+			}
+
+			$normalizer = new \Rondo\Core\PhoneNormalizer();
+			$phone_fields = [ 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ];
+
+			global $wpdb;
+			$person_ids = $wpdb->get_col(
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND post_status = %s",
+					'person',
+					'publish'
+				)
+			);
+
+			$normalized_count = 0;
+			$dedup_count      = 0;
+			$total_persons    = count( $person_ids );
+
+			$progress = \WP_CLI\Utils\make_progress_bar( "Processing $total_persons persons", $total_persons );
+
+			foreach ( $person_ids as $pid ) {
+				$values = [];
+
+				// Phase 1: Normalize all phone values.
+				foreach ( $phone_fields as $field ) {
+					$raw = get_field( $field, $pid );
+
+					if ( empty( $raw ) ) {
+						$values[ $field ] = '';
+						continue;
+					}
+
+					// Use the same normalization logic as the ACF hook.
+					$normalized = $normalizer->normalize_phone_number( $raw, $pid, [ 'name' => $field ], $raw );
+
+					$values[ $field ] = $normalized;
+
+					if ( $normalized !== $raw ) {
+						$normalized_count++;
+
+						if ( $verbose ) {
+							WP_CLI::log( sprintf( '  [%d] %s: "%s" → "%s"', $pid, $field, $raw, $normalized ) );
+						}
+
+						if ( ! $dry_run ) {
+							update_field( $field, $normalized, $pid );
+						}
+					}
+				}
+
+				// Phase 2: Deduplicate — if two fields have the same normalized value, clear the secondary one.
+				$seen = [];
+				foreach ( $phone_fields as $field ) {
+					$val = $values[ $field ];
+
+					if ( empty( $val ) ) {
+						continue;
+					}
+
+					if ( isset( $seen[ $val ] ) ) {
+						$dedup_count++;
+
+						if ( $verbose ) {
+							WP_CLI::log( sprintf( '  [%d] %s duplicates %s ("%s") — clearing', $pid, $field, $seen[ $val ], $val ) );
+						}
+
+						if ( ! $dry_run ) {
+							update_field( $field, '', $pid );
+						}
+					} else {
+						$seen[ $val ] = $field;
+					}
+				}
+
+				$progress->tick();
+			}
+
+			$progress->finish();
+
+			WP_CLI::success(
+				sprintf(
+					'%s %d phone values normalized, %d duplicates %s across %d persons.',
+					$dry_run ? 'Would have:' : 'Done:',
+					$normalized_count,
+					$dedup_count,
+					$dry_run ? 'to clear' : 'cleared',
+					$total_persons
+				)
+			);
 		}
 	}
 
