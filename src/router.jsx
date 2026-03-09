@@ -270,6 +270,14 @@ const router = createBrowserRouter([
           { path: 'teams/:id', element: <TeamDetail /> },
           { path: 'kaderlijst', element: <Kaderlijst /> },
           {
+            path: 'kleding/:tab',
+            element: (
+              <ClothingRoute>
+                <ClothingPage />
+              </ClothingRoute>
+            ),
+          },
+          {
             path: 'kleding',
             element: (
               <ClothingRoute>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Plus, Shirt, RotateCcw, X, Undo2 } from 'lucide-react';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import TabButton from '@/components/TabButton';
 import { usePerson } from '@/hooks/usePeople';
@@ -17,6 +18,12 @@ import {
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
+const CLOTHING_TABS = [
+  { id: 'overview', label: 'Overzicht' },
+  { id: 'items', label: 'Items' },
+  { id: 'transactions', label: 'Transacties' },
+];
+
 export default function ClothingPage() {
   useDocumentTitle('Kleding');
 
@@ -29,7 +36,9 @@ export default function ClothingPage() {
   const deleteItem = useDeleteClothingItem();
   const createAssignment = useCreateClothingAssignment();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const { tab: urlTab } = useParams();
+  const navigate = useNavigate();
+  const activeTab = urlTab || 'overview';
 
   const [itemForm, setItemForm] = useState({
     name: '',
@@ -180,6 +189,12 @@ export default function ClothingPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Validate tab after all hooks
+  const isKnownTab = CLOTHING_TABS.some(t => t.id === activeTab);
+  if (!isKnownTab) {
+    return <Navigate to="/kleding/overview" replace />;
+  }
+
   const handleCreateItem = async (e) => {
     e.preventDefault();
     try {
@@ -287,9 +302,9 @@ export default function ClothingPage() {
     <div className="space-y-6">
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8" aria-label="Kleding tabs">
-          <TabButton label="Overzicht" isActive={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-          <TabButton label="Items" isActive={activeTab === 'items'} onClick={() => setActiveTab('items')} />
-          <TabButton label="Transacties" isActive={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
+          {CLOTHING_TABS.map((t) => (
+            <TabButton key={t.id} label={t.label} isActive={activeTab === t.id} onClick={() => navigate(`/kleding/${t.id}`)} />
+          ))}
         </nav>
       </div>
 
