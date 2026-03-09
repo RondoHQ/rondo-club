@@ -29,7 +29,7 @@ Milestone: v31.0 Editable Contact Fields
 Phase: 211 of 211 (Sync Update)
 Plan: 2 of 2 (complete)
 Status: Phase Complete
-Last activity: 2026-03-09 - Completed quick task 119: Restrict people editing to FairPlay/Bestuur/VOG/Financieel roles
+Last activity: 2026-03-09 - Completed quick task 120: Fix dropdown overflow on Tuchtzaken settings card
 
 Progress: [██████████] 100%
 
@@ -85,6 +85,7 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 119 | Restrict people editing to FairPlay/Bestuur/VOG/Financieel roles | 2026-03-09 | 38aa54b4 | [119-the-editing-functionality-on-people-shou](./quick/119-the-editing-functionality-on-people-shou/) |
+| 120 | Fix dropdown overflow on Tuchtzaken settings card | 2026-03-09 | e3be4392 | [120-fix-dropdown-overflow-on-teams-met-doorb](./quick/120-fix-dropdown-overflow-on-teams-met-doorb/) |
 
 ## Session Continuity
 
