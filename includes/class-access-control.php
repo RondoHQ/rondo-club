@@ -20,6 +20,9 @@ class AccessControl {
 	private const TODO_ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
 	public function __construct() {
+		// Block person editing for users without the right capabilities
+		add_filter( 'map_meta_cap', [ $this, 'restrict_person_editing' ], 10, 4 );
+
 		// Filter queries to block unapproved users
 		add_action( 'pre_get_posts', [ $this, 'filter_queries' ] );
 
@@ -36,6 +39,57 @@ class AccessControl {
 		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_rondo_clothing_item', [ $this, 'filter_rest_single_access' ], 10, 3 );
 		add_filter( 'rest_prepare_rondo_clothing_txn', [ $this, 'filter_rest_single_access' ], 10, 3 );
+	}
+
+	/**
+	 * Check if a user can edit people records.
+	 *
+	 * Users with fairplay, vog, financieel, or manage_options capabilities can edit people.
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return bool Whether the user can edit people.
+	 */
+	public static function can_edit_people( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, 'manage_options' )
+			|| user_can( $user_id, 'fairplay' )
+			|| user_can( $user_id, 'vog' )
+			|| user_can( $user_id, 'financieel' );
+	}
+
+	/**
+	 * Restrict person editing via map_meta_cap filter.
+	 *
+	 * When a user without can_edit_people() tries to edit a person post,
+	 * map the capability to 'do_not_allow'.
+	 *
+	 * @param string[] $caps    Required primitive capabilities.
+	 * @param string   $cap     Capability being checked.
+	 * @param int      $user_id User ID.
+	 * @param array    $args    Additional arguments (post ID at index 0 for edit_post).
+	 * @return string[] Modified capabilities.
+	 */
+	public function restrict_person_editing( $caps, $cap, $user_id, $args ) {
+		if ( 'edit_post' !== $cap || empty( $args[0] ) ) {
+			return $caps;
+		}
+
+		$post = get_post( $args[0] );
+
+		if ( ! $post || 'person' !== $post->post_type ) {
+			return $caps;
+		}
+
+		if ( ! self::can_edit_people( $user_id ) ) {
+			return [ 'do_not_allow' ];
+		}
+
+		return $caps;
 	}
 
 	/**

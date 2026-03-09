@@ -3933,6 +3933,7 @@ class Api extends Base {
 				'email'                 => $user->user_email,
 				'avatar_url'            => $avatar_url,
 				'is_admin'              => $is_admin,
+				'can_edit_people'       => \Rondo\Core\AccessControl::can_edit_people(),
 				'can_access_fairplay'   => current_user_can( 'fairplay' ),
 				'can_access_vog'        => current_user_can( 'vog' ),
 				'can_access_financieel' => current_user_can( 'financieel' ),

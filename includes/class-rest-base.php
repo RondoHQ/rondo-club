@@ -119,6 +119,11 @@ abstract class Base {
 			return false;
 		}
 
+		// Check if user has people-editing capability
+		if ( ! \Rondo\Core\AccessControl::can_edit_people() ) {
+			return false;
+		}
+
 		// Check if user can edit this person
 		return current_user_can( 'edit_post', $person_id );
 	}
