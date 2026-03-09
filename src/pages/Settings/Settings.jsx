@@ -8,6 +8,7 @@ import PersonAvatar from '@/components/PersonAvatar';
 import TabButton from '@/components/TabButton';
 import FinanceSettings from '@/pages/Finance/FinanceSettings';
 import VOGSettings from '@/pages/VOG/VOGSettings';
+import RichTextEditor from '@/components/RichTextEditor';
 import { useClothingSettings, useUpdateClothingSettings } from '@/hooks/useClothing';
 
 
@@ -3059,12 +3060,11 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Bericht
           </label>
-          <textarea
-            rows={12}
+          <RichTextEditor
             value={settings?.body || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, body: e.target.value }))}
-            className={`${inputClass} font-mono text-sm`}
+            onChange={(html) => setSettings(prev => ({ ...prev, body: html }))}
             placeholder="Hallo {first_name},..."
+            minHeight="200px"
           />
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
             Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{login}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{set_password_url}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>

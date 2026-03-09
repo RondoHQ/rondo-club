@@ -283,7 +283,7 @@ class UserProvisioning {
 				'preheader'  => $subject,
 				'eyebrow'    => 'Account',
 				'heading'    => $subject,
-				'body_html'  => EmailTemplate::format_plain_text( $body ),
+				'body_html'  => $this->is_html( $body ) ? wp_kses_post( $body ) : EmailTemplate::format_plain_text( $body ),
 				'cta_url'    => $set_password_url,
 				'cta_label'  => 'Wachtwoord instellen',
 			]
@@ -387,7 +387,7 @@ class UserProvisioning {
 		}
 
 		if ( isset( $settings['body'] ) ) {
-			update_option( self::OPTION_EMAIL_BODY, sanitize_textarea_field( $settings['body'] ) );
+			update_option( self::OPTION_EMAIL_BODY, wp_kses_post( $settings['body'] ) );
 		}
 
 		if ( isset( $settings['from_email'] ) ) {
@@ -500,6 +500,10 @@ EOT;
 	 * @param array  $vars     Array of variable => value pairs.
 	 * @return string Template with substituted values.
 	 */
+	private function is_html( string $text ): bool {
+		return (bool) preg_match( '/<[a-z][\s\S]*>/i', $text );
+	}
+
 	private function substitute_variables( string $template, array $vars ): string {
 		foreach ( $vars as $key => $value ) {
 			$template = str_replace( '{' . $key . '}', $value, $template );
