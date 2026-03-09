@@ -28,13 +28,15 @@ const EMAIL_SUB_TABS = [
   { id: 'factuur_herinneringen', label: 'Contributieherinneringen' },
 ];
 
-function createEmptyBankAccount() {
+function createEmptyMollieAccount() {
   return {
-    id: `bank-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `mollie-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     internal_name: '',
     account_holder: '',
     iban: '',
-    linked_provider: '',
+    has_api_key: false,
+    environment: '',
+    api_key: '',
   };
 }
 
@@ -92,17 +94,19 @@ function TestEmailBlock({ templateType }) {
   );
 }
 
-function normalizeBankAccounts(accounts = []) {
+function normalizeMollieAccounts(accounts = []) {
   if (!Array.isArray(accounts)) {
     return [];
   }
 
   return accounts.map((account, index) => ({
-    id: account?.id || `bank-${index}-${Math.random().toString(36).slice(2, 8)}`,
+    id: account?.id || `mollie-${index}-${Math.random().toString(36).slice(2, 8)}`,
     internal_name: account?.internal_name || '',
     account_holder: account?.account_holder || '',
     iban: account?.iban || '',
-    linked_provider: account?.linked_provider || '',
+    has_api_key: Boolean(account?.has_api_key),
+    environment: account?.environment || '',
+    api_key: '',
   }));
 }
 
@@ -228,7 +232,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     org_name: '',
     org_address: '',
     contact_email: '',
-    bank_accounts: [],
+    mollie_accounts: [],
     payment_term_days: 14,
     payment_clause: '',
     membership_payment_clause: '',
@@ -256,8 +260,10 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     rabobank_client_id: '',
     rabobank_client_secret: '',
     active_payment_provider: 'rabobank',
-    mollie_api_key: '',
     mollie_redirect_url: '',
+    mollie_default_membership_account_id: '',
+    mollie_default_discipline_account_id: '',
+    mollie_default_manual_account_id: '',
     membership_pass_apple_cert_attachment_id: 0,
     membership_pass_apple_cert_url: '',
     membership_pass_apple_cert_password: '',
@@ -294,7 +300,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         org_name: settings.org_name || '',
         org_address: settings.org_address || '',
         contact_email: settings.contact_email || '',
-        bank_accounts: normalizeBankAccounts(settings.bank_accounts || []),
+        mollie_accounts: normalizeMollieAccounts(settings.mollie_accounts || []),
         payment_term_days: settings.payment_term_days || 14,
         payment_clause: settings.payment_clause || '',
         membership_payment_clause: settings.membership_payment_clause || '',
@@ -323,9 +329,10 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         rabobank_client_id: '',
         rabobank_client_secret: '',
         active_payment_provider: settings.active_payment_provider || 'rabobank',
-        // Do NOT add mollie_api_key — key is never returned by API
-        mollie_api_key: '',
         mollie_redirect_url: settings.mollie_redirect_url || '',
+        mollie_default_membership_account_id: settings.mollie_default_membership_account_id || '',
+        mollie_default_discipline_account_id: settings.mollie_default_discipline_account_id || '',
+        mollie_default_manual_account_id: settings.mollie_default_manual_account_id || '',
         membership_pass_apple_cert_attachment_id: settings.membership_pass_apple_cert_attachment_id || 0,
         membership_pass_apple_cert_url: settings.membership_pass_apple_cert_url || '',
         membership_pass_apple_cert_password: '',
@@ -379,13 +386,10 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     }
   }, [searchParams, setSearchParams]);
 
-  const handleBankAccountChange = (accountId, key, value) => {
+  const handleMollieAccountChange = (accountId, key, value) => {
     setFormData((prev) => {
-      const nextAccounts = (prev.bank_accounts || []).map((account) => {
+      const nextAccounts = (prev.mollie_accounts || []).map((account) => {
         if (account.id !== accountId) {
-          if (key === 'linked_provider' && value && account.linked_provider === value) {
-            return { ...account, linked_provider: '' };
-          }
           return account;
         }
 
@@ -393,23 +397,46 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         return { ...account, [key]: nextValue };
       });
 
-      return { ...prev, bank_accounts: nextAccounts };
+      return { ...prev, mollie_accounts: nextAccounts };
     });
   };
 
-  const handleAddBankAccount = () => {
+  const handleAddMollieAccount = () => {
     setFormData((prev) => ({
       ...prev,
-      bank_accounts: [...(prev.bank_accounts || []), createEmptyBankAccount()],
+      mollie_accounts: [...(prev.mollie_accounts || []), createEmptyMollieAccount()],
     }));
   };
 
-  const handleRemoveBankAccount = (accountId) => {
+  const handleRemoveMollieAccount = (accountId) => {
     setFormData((prev) => ({
       ...prev,
-      bank_accounts: (prev.bank_accounts || []).filter((account) => account.id !== accountId),
+      mollie_accounts: (prev.mollie_accounts || []).filter((account) => account.id !== accountId),
+      mollie_default_membership_account_id: prev.mollie_default_membership_account_id === accountId ? '' : prev.mollie_default_membership_account_id,
+      mollie_default_discipline_account_id: prev.mollie_default_discipline_account_id === accountId ? '' : prev.mollie_default_discipline_account_id,
+      mollie_default_manual_account_id: prev.mollie_default_manual_account_id === accountId ? '' : prev.mollie_default_manual_account_id,
     }));
   };
+
+  const usableMollieAccounts = (formData.mollie_accounts || []).filter((account) => account.has_api_key || account.api_key.trim());
+
+  useEffect(() => {
+    if (usableMollieAccounts.length !== 1) {
+      return;
+    }
+
+    const onlyAccountId = usableMollieAccounts[0].id;
+    setFormData((prev) => ({
+      ...(prev.mollie_default_membership_account_id && prev.mollie_default_discipline_account_id && prev.mollie_default_manual_account_id
+        ? prev
+        : {
+            ...prev,
+            mollie_default_membership_account_id: prev.mollie_default_membership_account_id || onlyAccountId,
+            mollie_default_discipline_account_id: prev.mollie_default_discipline_account_id || onlyAccountId,
+            mollie_default_manual_account_id: prev.mollie_default_manual_account_id || onlyAccountId,
+          }),
+    }));
+  }, [usableMollieAccounts]);
 
   const handleMembershipFileUpload = async (event, type) => {
     const file = event.target.files?.[0];
@@ -455,12 +482,12 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         org_name: formData.org_name,
         org_address: formData.org_address,
         contact_email: formData.contact_email,
-        bank_accounts: (formData.bank_accounts || []).map((account) => ({
+        mollie_accounts: (formData.mollie_accounts || []).map((account) => ({
           id: account.id,
           internal_name: account.internal_name,
           account_holder: account.account_holder,
           iban: account.iban,
-          linked_provider: account.linked_provider,
+          ...(account.api_key.trim() ? { api_key: account.api_key.trim() } : {}),
         })),
         payment_term_days: parseInt(formData.payment_term_days, 10),
         payment_clause: formData.payment_clause,
@@ -474,10 +501,21 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         invoice_reminder_2_email_template: formData.invoice_reminder_2_email_template,
         regular_invoice_email_subject: formData.regular_invoice_email_subject,
         regular_invoice_email_body: formData.regular_invoice_email_body,
+        regular_invoice_email_heading: formData.regular_invoice_email_heading,
+        discipline_email_heading: formData.discipline_email_heading,
+        membership_email_heading: formData.membership_email_heading,
+        installment_email_heading: formData.installment_email_heading,
+        reminder_1_email_heading: formData.reminder_1_email_heading,
+        reminder_2_email_heading: formData.reminder_2_email_heading,
+        invoice_reminder_1_email_heading: formData.invoice_reminder_1_email_heading,
+        invoice_reminder_2_email_heading: formData.invoice_reminder_2_email_heading,
         bcc_email: formData.bcc_email,
         admin_fee: parseFloat(formData.admin_fee) || 0,
         rabobank_environment: formData.rabobank_environment,
         active_payment_provider: formData.active_payment_provider,
+        mollie_default_membership_account_id: formData.mollie_default_membership_account_id,
+        mollie_default_discipline_account_id: formData.mollie_default_discipline_account_id,
+        mollie_default_manual_account_id: formData.mollie_default_manual_account_id,
         membership_pass_apple_cert_attachment_id: formData.membership_pass_apple_cert_attachment_id,
         membership_pass_apple_pass_type_identifier: formData.membership_pass_apple_pass_type_identifier,
         membership_pass_apple_team_identifier: formData.membership_pass_apple_team_identifier,
@@ -493,9 +531,6 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
       }
       if (formData.rabobank_client_secret.trim()) {
         payload.rabobank_client_secret = formData.rabobank_client_secret;
-      }
-      if (formData.mollie_api_key.trim()) {
-        payload.mollie_api_key = formData.mollie_api_key;
       }
       if (formData.membership_pass_apple_cert_password.trim()) {
         payload.membership_pass_apple_cert_password = formData.membership_pass_apple_cert_password;
@@ -520,7 +555,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         ...prev,
         rabobank_client_id: '',
         rabobank_client_secret: '',
-        mollie_api_key: '',
+        mollie_accounts: (prev.mollie_accounts || []).map((account) => ({ ...account, api_key: '' })),
         membership_pass_apple_cert_password: '',
       }));
     } catch (err) {
@@ -646,113 +681,10 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Betaalgegevens</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Bankrekeningen, providerkoppeling en betalingsvoorwaarden voor facturen.
+            Betalingsprovider en betalingsvoorwaarden voor facturen.
           </p>
         </div>
         <div className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Bankrekeningen</h3>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Per rekening vul je een interne naam, tenaamstelling en IBAN in. Koppel maximaal één rekening aan Rabobank en maximaal één aan Mollie.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleAddBankAccount}
-                className="inline-flex items-center gap-2 px-3 py-2 bg-electric-cyan text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-              >
-                Bankrekening toevoegen
-              </button>
-            </div>
-
-            {(formData.bank_accounts || []).length === 0 && (
-              <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
-                Er zijn nog geen bankrekeningen toegevoegd.
-              </div>
-            )}
-
-            {(formData.bank_accounts || []).map((account, index) => {
-              const isActiveProviderAccount = account.linked_provider && account.linked_provider === formData.active_payment_provider;
-
-              return (
-                <div
-                  key={account.id}
-                  className={`rounded-lg border p-4 space-y-4 ${isActiveProviderAccount ? 'border-electric-cyan bg-cyan-50/40 dark:bg-cyan-900/10 dark:border-cyan-700' : 'border-gray-200 dark:border-gray-700'}`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Rekening {index + 1}</h4>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveBankAccount(account.id)}
-                      className="text-sm text-red-600 hover:underline"
-                    >
-                      Verwijderen
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Interne naam
-                      </label>
-                      <input
-                        type="text"
-                        value={account.internal_name}
-                        onChange={(e) => handleBankAccountChange(account.id, 'internal_name', e.target.value)}
-                        placeholder="Bijv. Hoofdrekening"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Tenaamstelling
-                      </label>
-                      <input
-                        type="text"
-                        value={account.account_holder}
-                        onChange={(e) => handleBankAccountChange(account.id, 'account_holder', e.target.value)}
-                        placeholder="Naam op de factuur"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        IBAN
-                      </label>
-                      <input
-                        type="text"
-                        value={account.iban}
-                        onChange={(e) => handleBankAccountChange(account.id, 'iban', e.target.value)}
-                        placeholder="NL00RABO0000000000"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Gekoppelde provider
-                      </label>
-                      <select
-                        value={account.linked_provider}
-                        onChange={(e) => handleBankAccountChange(account.id, 'linked_provider', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-                      >
-                        <option value="">Geen</option>
-                        <option value="rabobank">Rabobank</option>
-                        <option value="mollie">Mollie</option>
-                      </select>
-                      {isActiveProviderAccount && (
-                        <p className="mt-1 text-xs text-electric-cyan dark:text-cyan-300">
-                          Dit is nu de standaardrekening voor de actieve betalingsprovider.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
           <div>
             <label htmlFor="payment_term_days" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Betalingstermijn (dagen)
@@ -798,13 +730,16 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Kies welke provider wordt gebruikt voor betaallinks bij het versturen van facturen.
             </p>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Meerdere rekeningen en rekeningkeuzes per factuurtype beheer je onder <strong>Mollie</strong>.
+            </p>
           </div>
         </div>
       </div>}
 
       {/* Section: Discipline / Tuchtzaken */}
       {activeTab === 'discipline' && (
-        <div className="card p-6">
+        <div className="card p-6 overflow-visible">
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Tuchtzaken</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1492,50 +1427,187 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Mollie Koppeling</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            API-sleutel voor betalingen via Mollie.
+            Beheer hier je Mollie-rekeningen en kies welke rekening per factuurtype wordt gebruikt.
           </p>
         </div>
 
         <div className="space-y-4">
-          {settings?.mollie_has_api_key && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Omgeving:</span>
-              {settings.mollie_environment === 'live' ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                  Live
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
-                  Test
-                </span>
-              )}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Mollie-rekeningen</h3>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Elke rekening heeft een eigen API-sleutel. Handmatige facturen kunnen alleen tussen deze rekeningen schakelen.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddMollieAccount}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-electric-cyan text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Rekening toevoegen
+              </button>
             </div>
-          )}
 
-          {settings?.mollie_has_api_key && (
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-              <p className="text-sm text-green-700 dark:text-green-300">
-                API-sleutel opgeslagen. Laat het veld leeg om de huidige waarde te behouden.
-              </p>
-            </div>
-          )}
+            {(formData.mollie_accounts || []).length === 0 && (
+              <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
+                Er zijn nog geen Mollie-rekeningen toegevoegd.
+              </div>
+            )}
 
-          <div>
-            <label htmlFor="mollie_api_key" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              API-sleutel
-            </label>
-            <input
-              type="password"
-              id="mollie_api_key"
-              value={formData.mollie_api_key}
-              onChange={(e) => setFormData(prev => ({ ...prev, mollie_api_key: e.target.value }))}
-              placeholder={settings?.mollie_has_api_key ? '••••••••' : 'live_... of test_...'}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Gebruik een <code>live_</code> sleutel voor productie of <code>test_</code> voor sandbox. De omgeving wordt automatisch afgeleid.
-            </p>
+            {(formData.mollie_accounts || []).map((account, index) => {
+              const pendingApiKey = account.api_key.trim();
+              const effectiveEnvironment = pendingApiKey
+                ? (pendingApiKey.startsWith('live_') ? 'live' : 'test')
+                : account.environment;
+
+              return (
+              <div
+                key={account.id}
+                className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Rekening {index + 1}</h4>
+                    {(account.has_api_key || pendingApiKey) && (
+                      effectiveEnvironment === 'live' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                          Live
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                          Test
+                        </span>
+                      )
+                    )}
+                    {!account.has_api_key && pendingApiKey && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                        Wordt opgeslagen
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMollieAccount(account.id)}
+                    className="text-sm text-red-600 hover:underline"
+                  >
+                    Verwijderen
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Interne naam
+                    </label>
+                    <input
+                      type="text"
+                      value={account.internal_name}
+                      onChange={(e) => handleMollieAccountChange(account.id, 'internal_name', e.target.value)}
+                      placeholder="Bijv. Hoofdrekening"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Tenaamstelling
+                    </label>
+                    <input
+                      type="text"
+                      value={account.account_holder}
+                      onChange={(e) => handleMollieAccountChange(account.id, 'account_holder', e.target.value)}
+                      placeholder="Naam op de factuur"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      IBAN
+                    </label>
+                    <input
+                      type="text"
+                      value={account.iban}
+                      onChange={(e) => handleMollieAccountChange(account.id, 'iban', e.target.value)}
+                      placeholder="NL00RABO0000000000"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      API-sleutel
+                    </label>
+                    <input
+                      type="password"
+                      value={account.api_key}
+                      onChange={(e) => handleMollieAccountChange(account.id, 'api_key', e.target.value)}
+                      placeholder={account.has_api_key ? '••••••••' : 'live_... of test_...'}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Laat leeg om de huidige sleutel te behouden. Rekeningen zonder sleutel kun je niet gebruiken als standaardrekening.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )})}
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="mollie_default_membership_account_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Standaard voor contributie
+              </label>
+              <select
+                id="mollie_default_membership_account_id"
+                value={formData.mollie_default_membership_account_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, mollie_default_membership_account_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              >
+                <option value="">Kies een rekening</option>
+                {usableMollieAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.internal_name} · {account.iban}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="mollie_default_discipline_account_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Standaard voor tuchtzaken
+              </label>
+              <select
+                id="mollie_default_discipline_account_id"
+                value={formData.mollie_default_discipline_account_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, mollie_default_discipline_account_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              >
+                <option value="">Kies een rekening</option>
+                {usableMollieAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.internal_name} · {account.iban}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="mollie_default_manual_account_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Standaard voor handmatig
+              </label>
+              <select
+                id="mollie_default_manual_account_id"
+                value={formData.mollie_default_manual_account_id}
+                onChange={(e) => setFormData(prev => ({ ...prev, mollie_default_manual_account_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+              >
+                <option value="">Kies een rekening</option>
+                {usableMollieAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>{account.internal_name} · {account.iban}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {usableMollieAccounts.length === 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+              Voeg minimaal één Mollie-rekening met API-sleutel toe om contributie-, tuchtzaak- en handmatige facturen via Mollie te kunnen gebruiken.
+            </div>
+          )}
 
           <div>
             <label htmlFor="mollie_redirect_url" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
