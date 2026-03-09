@@ -76,6 +76,7 @@ export default function PersonDetail() {
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
+  const canEditPeople = currentUser?.can_edit_people ?? false;
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
@@ -1086,23 +1087,27 @@ export default function PersonDetail() {
               </div>
             )}
             {/* Upload overlay */}
-            <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
-                 onClick={() => fileInputRef.current?.click()}
-            >
-              {isUploadingPhoto ? (
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              ) : (
-                <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              className="hidden"
-              disabled={isUploadingPhoto}
-            />
+            {canEditPeople && (
+              <>
+                <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
+                     onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploadingPhoto ? (
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  ) : (
+                    <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  disabled={isUploadingPhoto}
+                />
+              </>
+            )}
           </div>
 
           <div className="flex-1 space-y-3">
@@ -1284,13 +1289,15 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-brand-gradient">Contactgegevens</h2>
-                <button
-                  onClick={() => setShowContactModal(true)}
-                  className="btn-secondary text-sm"
-                >
-                  <Pencil className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Bewerken</span>
-                </button>
+                {canEditPeople && (
+                  <button
+                    onClick={() => setShowContactModal(true)}
+                    className="btn-secondary text-sm"
+                  >
+                    <Pencil className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">Bewerken</span>
+                  </button>
+                )}
               </div>
             {contactItems.length > 0 ? (
               <div className="space-y-2">
@@ -1321,7 +1328,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen contactgegevens. <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button>
+                Nog geen contactgegevens.{canEditPeople && <> <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button></>}
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
@@ -1391,13 +1398,13 @@ export default function PersonDetail() {
               postType="person"
               postId={parseInt(id)}
               acfData={person?.acf}
-              onUpdate={(newAcfValues) => {
+              onUpdate={canEditPeople ? (newAcfValues) => {
                 const acfData = sanitizePersonAcf(person.acf, newAcfValues);
                 updatePerson.mutateAsync({
                   id,
                   data: { acf: acfData },
                 });
-              }}
+              } : undefined}
               isUpdating={updatePerson.isPending}
               excludeLabelPrefixes={['Nikki']}
             />
@@ -1412,19 +1419,21 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingRelationship(null);
-                      setEditingRelationshipIndex(null);
-                      setShowRelationshipModal(true);
-                    }}
-                    className="btn-secondary text-sm"
-                    title="Relatie toevoegen"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+                {canEditPeople && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingRelationship(null);
+                        setEditingRelationshipIndex(null);
+                        setShowRelationshipModal(true);
+                      }}
+                      className="btn-secondary text-sm"
+                      title="Relatie toevoegen"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
               {sortedRelationships?.length > 0 ? (
                 <div className="space-y-2">
@@ -1456,34 +1465,36 @@ export default function PersonDetail() {
                             <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
                           </div>
                         </Link>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                          <button
-                            onClick={() => {
-                              const relData = person?.acf?.relationships?.[originalIndex];
-                              setEditingRelationship(relData);
-                              setEditingRelationshipIndex(originalIndex);
-                              setShowRelationshipModal(true);
-                            }}
-                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Relatie bewerken"
-                          >
-                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRelationship(originalIndex)}
-                            className="p-1 hover:bg-red-50 rounded"
-                            title="Relatie verwijderen"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                          </button>
-                        </div>
+                        {canEditPeople && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                            <button
+                              onClick={() => {
+                                const relData = person?.acf?.relationships?.[originalIndex];
+                                setEditingRelationship(relData);
+                                setEditingRelationshipIndex(originalIndex);
+                                setShowRelationshipModal(true);
+                              }}
+                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                              title="Relatie bewerken"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRelationship(originalIndex)}
+                              className="p-1 hover:bg-red-50 rounded"
+                              title="Relatie verwijderen"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  Nog geen relaties. <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button>
+                  Nog geen relaties.{canEditPeople && <> <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
                 </p>
               )}
             </div>
@@ -1577,30 +1588,32 @@ export default function PersonDetail() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-brand-gradient">Tijdlijn</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowNoteModal(true)}
-                  className="btn-secondary text-sm"
-                  title="Notitie toevoegen"
-                >
-                  <StickyNote className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Notitie</span>
-                </button>
-                <button
-                  onClick={() => setShowActivityModal(true)}
-                  className="btn-secondary text-sm"
-                  title="Activiteit toevoegen"
-                >
-                  <MessageCircle className="w-4 h-4 md:mr-1" />
-                  <span className="hidden md:inline">Activiteit</span>
-                </button>
-              </div>
+              {canEditPeople && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowNoteModal(true)}
+                    className="btn-secondary text-sm"
+                    title="Notitie toevoegen"
+                  >
+                    <StickyNote className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">Notitie</span>
+                  </button>
+                  <button
+                    onClick={() => setShowActivityModal(true)}
+                    className="btn-secondary text-sm"
+                    title="Activiteit toevoegen"
+                  >
+                    <MessageCircle className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">Activiteit</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             <TimelineView
               timeline={timeline || []}
-              onEdit={handleEditTimelineItem}
-              onDelete={handleDeleteTimelineItem}
+              onEdit={canEditPeople ? handleEditTimelineItem : undefined}
+              onDelete={canEditPeople ? handleDeleteTimelineItem : undefined}
               onToggleTodo={handleToggleTodo}
               personId={id}
               allPeople={allPeople || []}
@@ -1747,16 +1760,18 @@ export default function PersonDetail() {
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingTodo(null);
-                    setShowTodoModal(true);
-                  }}
-                  className="btn-secondary text-sm"
-                  title="Taak toevoegen"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                {canEditPeople && (
+                  <button
+                    onClick={() => {
+                      setEditingTodo(null);
+                      setShowTodoModal(true);
+                    }}
+                    className="btn-secondary text-sm"
+                    title="Taak toevoegen"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               {sortedTodos.length > 0 ? (
                 <div className="space-y-2">
@@ -1766,11 +1781,11 @@ export default function PersonDetail() {
                       todo={todo}
                       currentPersonId={parseInt(id, 10)}
                       onToggle={handleToggleTodo}
-                      onEdit={(t) => {
+                      onEdit={canEditPeople ? (t) => {
                         setEditingTodo(t);
                         setShowTodoModal(true);
-                      }}
-                      onDelete={handleDeleteTodo}
+                      } : undefined}
+                      onDelete={canEditPeople ? handleDeleteTodo : undefined}
                       onSendVerificationEmail={handleSendVerificationEmail}
                       verificationEmailSending={verificationTodoId === todo.id}
                     />
@@ -1830,17 +1845,19 @@ export default function PersonDetail() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setEditingTodo(null);
-                    setShowTodoModal(true);
-                    setShowMobileTodos(false);
-                  }}
-                  className="btn-secondary text-sm"
-                  title="Taak toevoegen"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+                {canEditPeople && (
+                  <button
+                    onClick={() => {
+                      setEditingTodo(null);
+                      setShowTodoModal(true);
+                      setShowMobileTodos(false);
+                    }}
+                    className="btn-secondary text-sm"
+                    title="Taak toevoegen"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => setShowMobileTodos(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
@@ -1860,12 +1877,12 @@ export default function PersonDetail() {
                       todo={todo}
                       currentPersonId={parseInt(id, 10)}
                       onToggle={handleToggleTodo}
-                      onEdit={(t) => {
+                      onEdit={canEditPeople ? (t) => {
                         setEditingTodo(t);
                         setShowTodoModal(true);
                         setShowMobileTodos(false);
-                      }}
-                      onDelete={handleDeleteTodo}
+                      } : undefined}
+                      onDelete={canEditPeople ? handleDeleteTodo : undefined}
                       onSendVerificationEmail={handleSendVerificationEmail}
                       verificationEmailSending={verificationTodoId === todo.id}
                       showActionsAlways
@@ -1931,33 +1948,37 @@ export default function PersonDetail() {
             todo={editingTodo}
           />
           
-          <ContactEditModal
-            isOpen={showContactModal}
-            onClose={() => setShowContactModal(false)}
-            onSubmit={handleSaveContacts}
-            isLoading={isSavingContacts}
-            email1={acf.email_1 || ''}
-            email2={acf.email_2 || ''}
-            mobile1={acf.mobile_1 || ''}
-            mobile2={acf.mobile_2 || ''}
-            telephone1={acf.telephone_1 || ''}
-            telephone2={acf.telephone_2 || ''}
-          />
+          {canEditPeople && (
+            <ContactEditModal
+              isOpen={showContactModal}
+              onClose={() => setShowContactModal(false)}
+              onSubmit={handleSaveContacts}
+              isLoading={isSavingContacts}
+              email1={acf.email_1 || ''}
+              email2={acf.email_2 || ''}
+              mobile1={acf.mobile_1 || ''}
+              mobile2={acf.mobile_2 || ''}
+              telephone1={acf.telephone_1 || ''}
+              telephone2={acf.telephone_2 || ''}
+            />
+          )}
 
-          <RelationshipEditModal
-            isOpen={showRelationshipModal}
-            onClose={() => {
-              setShowRelationshipModal(false);
-              setEditingRelationship(null);
-              setEditingRelationshipIndex(null);
-            }}
-            onSubmit={handleSaveRelationship}
-            isLoading={isSavingRelationship}
-            relationship={editingRelationship}
-            personId={id}
-            allPeople={allPeople || []}
-            isPeopleLoading={isPeopleLoading}
-          />
+          {canEditPeople && (
+            <RelationshipEditModal
+              isOpen={showRelationshipModal}
+              onClose={() => {
+                setShowRelationshipModal(false);
+                setEditingRelationship(null);
+                setEditingRelationshipIndex(null);
+              }}
+              onSubmit={handleSaveRelationship}
+              isLoading={isSavingRelationship}
+              relationship={editingRelationship}
+              personId={id}
+              allPeople={allPeople || []}
+              isPeopleLoading={isPeopleLoading}
+            />
+          )}
 
       </div>
     </PullToRefreshWrapper>
