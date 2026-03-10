@@ -283,7 +283,7 @@ class VCard {
 					'ADR;TYPE=' . strtoupper( $address['address_label'] ) :
 					'ADR;TYPE=HOME';
 
-				$street      = self::escape_value( $address['street'] ?? '' );
+				$street      = self::escape_value( trim( ( $address['street_name'] ?? '' ) . ' ' . ( $address['house_number'] ?? '' ) . ' ' . ( $address['house_number_addition'] ?? '' ) ) );
 				$city        = self::escape_value( $address['city'] ?? '' );
 				$state       = self::escape_value( $address['state'] ?? '' );
 				$postal_code = self::escape_value( $address['postal_code'] ?? '' );
@@ -428,7 +428,7 @@ class VCard {
 					'ADR;TYPE=' . strtoupper( $address['address_label'] ) :
 					'ADR;TYPE=HOME';
 
-				$street      = self::escape_value( $address['street'] ?? '' );
+				$street      = self::escape_value( trim( ( $address['street_name'] ?? '' ) . ' ' . ( $address['house_number'] ?? '' ) . ' ' . ( $address['house_number_addition'] ?? '' ) ) );
 				$city        = self::escape_value( $address['city'] ?? '' );
 				$state       = self::escape_value( $address['state'] ?? '' );
 				$postal_code = self::escape_value( $address['postal_code'] ?? '' );
@@ -601,12 +601,14 @@ class VCard {
 				}
 
 				$data['addresses'][] = [
-					'address_label' => $label,
-					'street'        => $parts[2] ?? '',
-					'city'          => $parts[3] ?? '',
-					'state'         => $parts[4] ?? '',
-					'postal_code'   => $parts[5] ?? '',
-					'country'       => $parts[6] ?? '',
+					'address_label'        => $label,
+					'street_name'          => $parts[2] ?? '',
+					'house_number'         => '',
+					'house_number_addition' => '',
+					'city'                 => $parts[3] ?? '',
+					'state'                => $parts[4] ?? '',
+					'postal_code'          => $parts[5] ?? '',
+					'country'              => $parts[6] ?? '',
 				];
 			}
 		}

@@ -91,7 +91,7 @@ class InvoicePdfGenerator {
 			$addresses = get_field( 'addresses', $person_id );
 			if ( $addresses && is_array( $addresses ) && count( $addresses ) > 0 ) {
 				$first_address = $addresses[0];
-				$person_street = $first_address['street'] ?? '';
+				$person_street = trim( ( $first_address['street_name'] ?? '' ) . ' ' . ( $first_address['house_number'] ?? '' ) . ' ' . ( $first_address['house_number_addition'] ?? '' ) );
 				$person_city = $first_address['city'] ?? '';
 			}
 
