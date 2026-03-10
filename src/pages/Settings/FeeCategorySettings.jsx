@@ -506,6 +506,161 @@ function FamilyDiscountSection({ discountConfig, onSave, isSaving }) {
   );
 }
 
+const DEFAULT_ENTRY_DISCOUNT_PERIODS = [
+  { start_month: 7, end_month: 9, discount_percent: 0 },
+  { start_month: 10, end_month: 12, discount_percent: 25 },
+  { start_month: 1, end_month: 3, discount_percent: 50 },
+  { start_month: 4, end_month: 6, discount_percent: 75 },
+];
+
+const DUTCH_MONTHS = [
+  'Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni',
+  'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December',
+];
+
+// EntryDiscountSection component
+function EntryDiscountSection({ discountConfig, onSave, isSaving }) {
+  const [periods, setPeriods] = useState(discountConfig?.periods ?? DEFAULT_ENTRY_DISCOUNT_PERIODS);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // Sync with external data when season changes
+  useEffect(() => {
+    setPeriods(discountConfig?.periods ?? DEFAULT_ENTRY_DISCOUNT_PERIODS);
+    setIsDirty(false);
+  }, [discountConfig]);
+
+  const handlePeriodChange = (index, field, value) => {
+    setPeriods((prev) => prev.map((p, i) => i === index ? { ...p, [field]: value } : p));
+    setIsDirty(true);
+  };
+
+  const handleAddPeriod = () => {
+    setPeriods((prev) => [...prev, { start_month: 1, end_month: 1, discount_percent: 0 }]);
+    setIsDirty(true);
+  };
+
+  const handleRemovePeriod = (index) => {
+    setPeriods((prev) => prev.filter((_, i) => i !== index));
+    setIsDirty(true);
+  };
+
+  const handleSave = () => {
+    onSave({ periods: periods.map((p) => ({
+      start_month: parseInt(p.start_month, 10),
+      end_month: parseInt(p.end_month, 10),
+      discount_percent: parseFloat(p.discount_percent) || 0,
+    })) });
+    setIsDirty(false);
+  };
+
+  const handleReset = () => {
+    setPeriods(DEFAULT_ENTRY_DISCOUNT_PERIODS);
+    setIsDirty(true);
+  };
+
+  return (
+    <div className="card p-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+      <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">
+        Instapkorting
+      </h4>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        Leden die gedurende het seizoen instromen krijgen korting op basis van de instapperiode.
+        Configureer per periode de startmaand, eindmaand en het kortingspercentage.
+        Een korting van 75% betekent dat het lid 25% van de contributie betaalt.
+      </p>
+
+      <div className="space-y-3">
+        {periods.map((period, index) => (
+          <div key={index} className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Van</label>
+              <select
+                value={period.start_month}
+                onChange={(e) => handlePeriodChange(index, 'start_month', e.target.value)}
+                className="px-2 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
+              >
+                {DUTCH_MONTHS.map((name, i) => (
+                  <option key={i + 1} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">t/m</label>
+              <select
+                value={period.end_month}
+                onChange={(e) => handlePeriodChange(index, 'end_month', e.target.value)}
+                className="px-2 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
+              >
+                {DUTCH_MONTHS.map((name, i) => (
+                  <option key={i + 1} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Korting</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={period.discount_percent}
+                  onChange={(e) => handlePeriodChange(index, 'discount_percent', e.target.value)}
+                  className="w-20 pr-6 px-2 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm shadow-sm focus:border-electric-cyan focus:ring-electric-cyan"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">%</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleRemovePeriod(index)}
+              className="p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 focus:outline-none"
+              title="Periode verwijderen"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={handleAddPeriod}
+        className="mt-3 inline-flex items-center gap-1.5 text-sm text-electric-cyan hover:text-bright-cobalt font-medium focus:outline-none"
+      >
+        <Plus className="w-4 h-4" />
+        Periode toevoegen
+      </button>
+
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving || !isDirty}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Opslaan...
+            </>
+          ) : (
+            'Opslaan'
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={isSaving}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+        >
+          Herstel standaard
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Main FeeCategorySettings component
 export default function FeeCategorySettings({
   membershipPaymentClause = '',
@@ -664,6 +819,37 @@ export default function FeeCategorySettings({
     },
   });
 
+  // Entry discount mutation (separate to avoid sending categories when only entry discount changes)
+  const entryDiscountMutation = useMutation({
+    mutationFn: async ({ entry_discount, season }) => {
+      const response = await prmApi.updateMembershipFeeSettings({ entry_discount }, season);
+      return response.data;
+    },
+    onSuccess: (responseData) => {
+      queryClient.setQueryData(['membership-fee-settings'], responseData);
+      if (responseData.warnings && responseData.warnings.length > 0) {
+        setSaveWarnings(responseData.warnings);
+      } else {
+        setSaveWarnings([]);
+      }
+      setSaveErrors([]);
+      setSuccessMessage('Instapkorting opgeslagen');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    },
+    onError: (error) => {
+      const errorData = error.response?.data?.data;
+      if (errorData?.errors) {
+        setSaveErrors(errorData.errors);
+      } else {
+        setSaveErrors([{ field: 'general', message: error.message || 'Er is een fout opgetreden' }]);
+      }
+      setSaveWarnings([]);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['membership-fee-settings'] });
+    },
+  });
+
   // Copy season mutation
   const copyMutation = useMutation({
     mutationFn: async ({ from_season, to_season }) => {
@@ -752,6 +938,7 @@ export default function FeeCategorySettings({
 
   const categories = activeSeason?.categories || {};
   const activeDiscount = activeSeason?.family_discount || { second_child_percent: 25, third_child_percent: 50 };
+  const activeEntryDiscount = activeSeason?.entry_discount || { periods: DEFAULT_ENTRY_DISCOUNT_PERIODS };
 
   // Sort categories by sort_order
   const sortedCategorySlugs = Object.entries(categories)
@@ -863,6 +1050,12 @@ export default function FeeCategorySettings({
   const handleDiscountSave = (discountConfig) => {
     clearMessages();
     discountMutation.mutate({ family_discount: discountConfig, season: activeSeasonKey });
+  };
+
+  // Handle entry discount save
+  const handleEntryDiscountSave = (entryDiscountConfig) => {
+    clearMessages();
+    entryDiscountMutation.mutate({ entry_discount: entryDiscountConfig, season: activeSeasonKey });
   };
 
   if (isLoading) {
@@ -1083,6 +1276,13 @@ export default function FeeCategorySettings({
         discountConfig={activeDiscount}
         onSave={handleDiscountSave}
         isSaving={discountMutation.isPending}
+      />
+
+      {/* Entry discount (instapkorting) section */}
+      <EntryDiscountSection
+        discountConfig={activeEntryDiscount}
+        onSave={handleEntryDiscountSave}
+        isSaving={entryDiscountMutation.isPending}
       />
 
       {/* Recalculate button */}
