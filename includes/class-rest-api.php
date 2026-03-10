@@ -681,8 +681,9 @@ class Api extends Base {
 							},
 						],
 						'categories' => [
-							'required' => true,
+							'required' => false,
 							'type'     => 'object',
+							'default'  => null,
 						],
 					],
 				],
@@ -4488,8 +4489,10 @@ class Api extends Base {
 		$family_discount = $request->get_param( 'family_discount' );
 		$entry_discount  = $request->get_param( 'entry_discount' );
 
-		// Validate category structure
-		$validation = $this->validate_category_config( $categories );
+		// Validate category structure (if provided)
+		$validation = $categories !== null
+			? $this->validate_category_config( $categories )
+			: [ 'errors' => [], 'warnings' => [] ];
 
 		// Validate family discount config (if provided)
 		$discount_validation = $this->validate_family_discount_config( $family_discount );
@@ -4513,8 +4516,10 @@ class Api extends Base {
 			);
 		}
 
-		// Save categories for the specified season
-		$membership_fees->save_categories_for_season( $categories, $season );
+		// Save categories for the specified season (if provided)
+		if ( $categories !== null ) {
+			$membership_fees->save_categories_for_season( $categories, $season );
+		}
 
 		// Save family discount config (if provided)
 		if ( $family_discount !== null ) {
