@@ -12,7 +12,7 @@ Add support for invoice/billing-related fields on the Person CPT. These fields c
 
 ## Use Cases
 
-1. **Alternative Invoice Address**: Member's billing address differs from their residential address (e.g., employer address, partner's address)
+1. **Alternative Invoice Address**: Member's billing address differs from their residential address (e.g., employer address, partner's address). Rondo Sync stores this as an entry with label "Factuur" in the `addresses` repeater.
 2. **Invoice Email**: Dedicated email for invoice delivery (e.g., finance department email)
 3. **External Reference**: Custom invoice reference code for accounting systems
 
@@ -20,13 +20,13 @@ Add support for invoice/billing-related fields on the Person CPT. These fields c
 
 ## Field Definitions
 
-### New ACF Fields
+### ACF Fields
 
-Add the following fields to the Person field group:
+The following fields are on the Person field group:
 
 | Field Key | Label | Type | Description |
 |-----------|-------|------|-------------|
-| `factuur-adres` | Factuuradres | `textarea` | Formatted invoice address (only set when different from member address) |
+| `addresses` | Adressen | `repeater` | Address entries; entry with label "Factuur" is used as billing address |
 | `factuur-email` | Factuur e-mail | `email` | Dedicated email address for invoices |
 | `factuur-referentie` | Factuur referentie | `text` | External invoice code/reference for accounting |
 
@@ -34,15 +34,6 @@ Add the following fields to the Person field group:
 
 ```json
 {
-  "factuur-adres": {
-    "type": "textarea",
-    "label": "Factuuradres",
-    "instructions": "Alternatief adres voor facturen (automatisch gevuld vanuit Sportlink)",
-    "required": false,
-    "rows": 3,
-    "new_lines": "br",
-    "readonly": true
-  },
   "factuur-email": {
     "type": "email",
     "label": "Factuur e-mail",
@@ -114,7 +105,15 @@ Response includes:
     "first_name": "Jan",
     "infix": "",
     "last_name": "Jansen",
-    "factuur-adres": "Kerkstraat 42\n1234 AB Amsterdam",
+    "addresses": [
+      {
+        "address_label": "Factuur",
+        "street_name": "Kerkstraat",
+        "house_number": "42",
+        "house_number_addition": "",
+        "city": "Amsterdam"
+      }
+    ],
     "factuur-email": "finance@bedrijf.nl",
     "factuur-referentie": "PO-2024-1234"
   }
@@ -161,10 +160,9 @@ Data is extracted from Sportlink's `/financial` member page via two API endpoint
 
 ### Sync Behavior
 
-- **Address**: Only synced to `factuur-adres` when `IsDefault = false` (member has set a custom invoice address)
+- **Address**: When `IsDefault = false` (member has set a custom invoice address), Rondo Sync stores it as an entry in the `addresses` repeater with `address_label` set to `"Factuur"`. The invoice PDF generator looks for this entry first, falling back to the first/primary address when none exists.
 - **Email**: Always synced when present
 - **Reference**: Always synced when present
-- Formatted address combines: street + house number + addition, postal code + city, country (if not Netherlands)
 
 ---
 
@@ -188,7 +186,7 @@ No database migration required - fields use standard ACF post_meta storage.
 ```bash
 # After sync, check person has invoice data
 curl -u user:pass "https://rondo-club.example/wp-json/wp/v2/people/123" | jq '.acf | {
-  "factuur-adres": .["factuur-adres"],
+  "addresses": .addresses,
   "factuur-email": .["factuur-email"],
   "factuur-referentie": .["factuur-referentie"]
 }'
@@ -198,7 +196,15 @@ curl -u user:pass "https://rondo-club.example/wp-json/wp/v2/people/123" | jq '.a
 
 ```json
 {
-  "factuur-adres": "Kerkstraat 42\n1234 AB Amsterdam",
+  "addresses": [
+    {
+      "address_label": "Factuur",
+      "street_name": "Kerkstraat",
+      "house_number": "42",
+      "house_number_addition": "",
+      "city": "Amsterdam"
+    }
+  ],
   "factuur-email": "finance@bedrijf.nl",
   "factuur-referentie": "PO-2024-1234"
 }
