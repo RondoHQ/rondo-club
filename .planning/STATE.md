@@ -89,13 +89,14 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 | 121 | Add URL sub-routes for FinanceSettings and ClothingPage tabs | 2026-03-09 | 9e805101 | [121-add-sub-routes-for-financesettings-tabs-](./quick/121-add-sub-routes-for-financesettings-tabs-/) |
 | 122 | Make welkomstmail Bericht field rich text | 2026-03-09 | 94846a8b | [122-make-bericht-field-on-welkomstmail-setti](./quick/122-make-bericht-field-on-welkomstmail-setti/) |
 | 123 | Replace street field with street_name, house_number, house_number_addition | 2026-03-10 | c15e4066 | [123-replace-street-field-with-street-name-ho](./quick/123-replace-street-field-with-street-name-ho/) |
+| 124 | Remove factuur-adres field, use addresses repeater with Factuur label | 2026-03-10 | 252af5b0 | [124-remove-factuur-adres-field-use-address-w](./quick/124-remove-factuur-adres-field-use-address-w/) |
 
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Completed quick-123
+Stopped at: Completed quick-124
 
-**Next action:** Quick task 123 complete. Address fields split into street_name, house_number, house_number_addition across ACF, React, and PHP.
+**Next action:** Quick task 124 complete. Invoice PDF now uses Factuur-labeled address from addresses repeater.
 
 ---
 *State created: 2026-02-15*
