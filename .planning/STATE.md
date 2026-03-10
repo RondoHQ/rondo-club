@@ -72,7 +72,7 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 
 ### Pending Todos
 
-5 todo(s) in `.planning/todos/pending/` — 2 consumed by this milestone (contact field alignment, phone normalization)
+6 todo(s) in `.planning/todos/pending/` — 2 consumed by this milestone (contact field alignment, phone normalization)
 
 ### Blockers/Concerns
 
