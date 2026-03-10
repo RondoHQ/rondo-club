@@ -1517,6 +1517,22 @@ class Invoices extends Base {
 			$email_options['template'] = $config->get_membership_email_template();
 		}
 
+		// Ensure payment link and QR code exist before resending
+		$existing_payment_link = get_field( 'payment_link', $invoice_id );
+		if ( empty( $existing_payment_link ) ) {
+			$active_provider = ( new FinanceConfig() )->get_active_payment_provider();
+			if ( 'mollie' === $active_provider ) {
+				$mollie_payment = new MolliePayment();
+				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
+				if ( is_wp_error( $payment_result ) ) {
+					return $payment_result;
+				}
+				if ( ! empty( $payment_result ) ) {
+					\Rondo\Finance\QrCodeGenerator::generate( $payment_result, $invoice_id );
+				}
+			}
+		}
+
 		// Send email via InvoiceEmailSender
 		$email_result = InvoiceEmailSender::send( $invoice_id, $email_options );
 		if ( is_wp_error( $email_result ) ) {
