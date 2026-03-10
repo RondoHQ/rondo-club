@@ -382,12 +382,14 @@ class DemoExport {
 
 		foreach ( $addresses as $row ) {
 			$exported[] = [
-				'address_label' => $row['address_label'] ?? '',
-				'street'        => $row['street'] ?? '',
-				'postal_code'   => $row['postal_code'] ?? '',
-				'city'          => $row['city'] ?? '',
-				'state'         => $row['state'] ?? '',
-				'country'       => $row['country'] ?? '',
+				'address_label'        => $row['address_label'] ?? '',
+				'street_name'          => $row['street_name'] ?? '',
+				'house_number'         => $row['house_number'] ?? '',
+				'house_number_addition' => $row['house_number_addition'] ?? '',
+				'postal_code'          => $row['postal_code'] ?? '',
+				'city'                 => $row['city'] ?? '',
+				'state'                => $row['state'] ?? '',
+				'country'              => $row['country'] ?? '',
 			];
 		}
 
@@ -603,12 +605,14 @@ class DemoExport {
 			$fake_address = $this->anonymizer->generate_address();
 
 			$anonymized[] = [
-				'address_label' => $address_label,
-				'street'        => $fake_address['street'] . ' ' . $fake_address['house_number'],
-				'postal_code'   => $fake_address['postal_code'],
-				'city'          => $fake_address['city'],
-				'state'         => null,
-				'country'       => 'Nederland',
+				'address_label'        => $address_label,
+				'street_name'          => $fake_address['street'],
+				'house_number'         => $fake_address['house_number'],
+				'house_number_addition' => '',
+				'postal_code'          => $fake_address['postal_code'],
+				'city'                 => $fake_address['city'],
+				'state'                => null,
+				'country'              => 'Nederland',
 			];
 		}
 

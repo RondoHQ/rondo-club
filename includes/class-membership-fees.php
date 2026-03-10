@@ -1447,20 +1447,17 @@ class MembershipFees {
 		}
 
 		// Use first address as primary
-		$primary     = $addresses[0];
-		$postal_code = $primary['postal_code'] ?? '';
-		$street      = $primary['street'] ?? '';
+		$primary      = $addresses[0];
+		$postal_code  = $primary['postal_code'] ?? '';
+		$house_number = trim( ( $primary['house_number'] ?? '' ) . ( $primary['house_number_addition'] ?? '' ) );
 
-		// Require both postal code and street
-		if ( empty( $postal_code ) || empty( $street ) ) {
+		// Require both postal code and house number
+		if ( empty( $postal_code ) || empty( $house_number ) ) {
 			return null;
 		}
 
 		// Normalize postal code
 		$normalized_postal = $this->normalize_postal_code( $postal_code );
-
-		// Extract house number from street
-		$house_number = $this->extract_house_number( $street );
 
 		if ( $house_number === null ) {
 			return null;

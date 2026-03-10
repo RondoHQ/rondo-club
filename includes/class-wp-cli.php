@@ -308,12 +308,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					if ( isset( $item['contact_type'] ) && 'address' === $item['contact_type'] ) {
 						// Migrate to addresses field
 						$new_addresses[] = [
-							'address_label' => $item['contact_label'] ?? '',
-							'street'        => $item['contact_value'] ?? '', // Put full address in street
-							'postal_code'   => '',
-							'city'          => '',
-							'state'         => '',
-							'country'       => '',
+							'address_label'        => $item['contact_label'] ?? '',
+							'street_name'          => $item['contact_value'] ?? '', // Put full address in street_name
+							'house_number'         => '',
+							'house_number_addition' => '',
+							'postal_code'          => '',
+							'city'                 => '',
+							'state'                => '',
+							'country'              => '',
 						];
 						++$addresses_migrated;
 						WP_CLI::log( sprintf( '  → Moving: "%s" to addresses field', $item['contact_value'] ?? '' ) );
@@ -691,7 +693,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				foreach ( $parsed['addresses'] as $addr ) {
 					$parts = array_filter(
 						[
-							$addr['street'] ?? '',
+							trim( ( $addr['street_name'] ?? '' ) . ' ' . ( $addr['house_number'] ?? '' ) . ' ' . ( $addr['house_number_addition'] ?? '' ) ),
 							$addr['city'] ?? '',
 							$addr['state'] ?? '',
 							$addr['postal_code'] ?? '',
