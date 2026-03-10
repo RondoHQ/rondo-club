@@ -4459,11 +4459,13 @@ class Api extends Base {
 					'key'             => $current_season,
 					'categories'      => $membership_fees->get_categories_for_season( $current_season ),
 					'family_discount' => $membership_fees->get_family_discount_config( $current_season ),
+					'entry_discount'  => $membership_fees->get_entry_discount_config( $current_season ),
 				],
 				'next_season'    => [
 					'key'             => $next_season,
 					'categories'      => $membership_fees->get_categories_for_season( $next_season ),
 					'family_discount' => $membership_fees->get_family_discount_config( $next_season ),
+					'entry_discount'  => $membership_fees->get_entry_discount_config( $next_season ),
 				],
 			]
 		);
@@ -4484,6 +4486,7 @@ class Api extends Base {
 		$season          = $request->get_param( 'season' );
 		$categories      = $request->get_param( 'categories' );
 		$family_discount = $request->get_param( 'family_discount' );
+		$entry_discount  = $request->get_param( 'entry_discount' );
 
 		// Validate category structure
 		$validation = $this->validate_category_config( $categories );
@@ -4491,9 +4494,12 @@ class Api extends Base {
 		// Validate family discount config (if provided)
 		$discount_validation = $this->validate_family_discount_config( $family_discount );
 
+		// Validate entry discount config (if provided)
+		$entry_validation = $this->validate_entry_discount_config( $entry_discount );
+
 		// Merge all errors and warnings
-		$all_errors   = array_merge( $validation['errors'], $discount_validation['errors'] );
-		$all_warnings = array_merge( $validation['warnings'], $discount_validation['warnings'] );
+		$all_errors   = array_merge( $validation['errors'], $discount_validation['errors'], $entry_validation['errors'] );
+		$all_warnings = array_merge( $validation['warnings'], $discount_validation['warnings'], $entry_validation['warnings'] );
 
 		if ( ! empty( $all_errors ) ) {
 			return new \WP_Error(
@@ -4521,17 +4527,24 @@ class Api extends Base {
 			);
 		}
 
+		// Save entry discount config (if provided)
+		if ( $entry_discount !== null ) {
+			$membership_fees->save_entry_discount_config( $entry_discount, $season );
+		}
+
 		// Return updated settings for both seasons
 		$response = [
 			'current_season' => [
 				'key'             => $current_season,
 				'categories'      => $membership_fees->get_categories_for_season( $current_season ),
 				'family_discount' => $membership_fees->get_family_discount_config( $current_season ),
+				'entry_discount'  => $membership_fees->get_entry_discount_config( $current_season ),
 			],
 			'next_season'    => [
 				'key'             => $next_season,
 				'categories'      => $membership_fees->get_categories_for_season( $next_season ),
 				'family_discount' => $membership_fees->get_family_discount_config( $next_season ),
+				'entry_discount'  => $membership_fees->get_entry_discount_config( $next_season ),
 			],
 		];
 
@@ -4593,6 +4606,10 @@ class Api extends Base {
 		$source_discount = $membership_fees->get_family_discount_config( $from_season );
 		$membership_fees->save_family_discount_config( $source_discount, $to_season );
 
+		// Copy entry discount config
+		$source_entry_discount = $membership_fees->get_entry_discount_config( $from_season );
+		$membership_fees->save_entry_discount_config( $source_entry_discount, $to_season );
+
 		// Return updated settings for both seasons
 		$current_season = $membership_fees->get_season_key();
 		$next_season    = $membership_fees->get_next_season_key();
@@ -4603,11 +4620,13 @@ class Api extends Base {
 					'key'             => $current_season,
 					'categories'      => $membership_fees->get_categories_for_season( $current_season ),
 					'family_discount' => $membership_fees->get_family_discount_config( $current_season ),
+					'entry_discount'  => $membership_fees->get_entry_discount_config( $current_season ),
 				],
 				'next_season'    => [
 					'key'             => $next_season,
 					'categories'      => $membership_fees->get_categories_for_season( $next_season ),
 					'family_discount' => $membership_fees->get_family_discount_config( $next_season ),
+					'entry_discount'  => $membership_fees->get_entry_discount_config( $next_season ),
 				],
 			]
 		);
@@ -4801,6 +4820,101 @@ class Api extends Base {
 			$warnings[] = [
 				'field'   => 'family_discount',
 				'message' => 'Korting tweede kind is doorgaans lager dan korting derde kind',
+			];
+		}
+
+		return [ 'errors' => $errors, 'warnings' => $warnings ];
+	}
+
+	/**
+	 * Validate entry discount (instapkorting) configuration structure
+	 *
+	 * Checks for required fields and valid ranges. Each period must have
+	 * start_month (1-12), end_month (1-12), and discount_percent (0-100).
+	 * Returns both errors (block save) and warnings (informational).
+	 *
+	 * @param mixed $config The entry discount config to validate.
+	 * @return array Array with 'errors' and 'warnings' keys.
+	 */
+	private function validate_entry_discount_config( $config ) {
+		$errors   = [];
+		$warnings = [];
+
+		// Null/missing is valid (use defaults)
+		if ( $config === null ) {
+			return [ 'errors' => [], 'warnings' => [] ];
+		}
+
+		// Must be an array
+		if ( ! is_array( $config ) ) {
+			$errors[] = [
+				'field'   => 'entry_discount',
+				'message' => 'Instapkorting configuratie moet een object zijn',
+			];
+			return [ 'errors' => $errors, 'warnings' => $warnings ];
+		}
+
+		// Must have 'periods' key
+		if ( ! isset( $config['periods'] ) || ! is_array( $config['periods'] ) ) {
+			$errors[] = [
+				'field'   => 'entry_discount.periods',
+				'message' => 'Instapkorting configuratie moet een "periods" array bevatten',
+			];
+			return [ 'errors' => $errors, 'warnings' => $warnings ];
+		}
+
+		$covered_months = [];
+
+		foreach ( $config['periods'] as $index => $period ) {
+			$field_prefix = 'entry_discount.periods[' . $index . ']';
+
+			// Validate start_month
+			if ( ! isset( $period['start_month'] ) || ! is_numeric( $period['start_month'] ) || $period['start_month'] < 1 || $period['start_month'] > 12 ) {
+				$errors[] = [
+					'field'   => $field_prefix . '.start_month',
+					'message' => 'Startmaand moet een getal zijn tussen 1 en 12',
+				];
+			}
+
+			// Validate end_month
+			if ( ! isset( $period['end_month'] ) || ! is_numeric( $period['end_month'] ) || $period['end_month'] < 1 || $period['end_month'] > 12 ) {
+				$errors[] = [
+					'field'   => $field_prefix . '.end_month',
+					'message' => 'Eindmaand moet een getal zijn tussen 1 en 12',
+				];
+			}
+
+			// Validate discount_percent
+			if ( ! isset( $period['discount_percent'] ) || ! is_numeric( $period['discount_percent'] ) || $period['discount_percent'] < 0 || $period['discount_percent'] > 100 ) {
+				$errors[] = [
+					'field'   => $field_prefix . '.discount_percent',
+					'message' => 'Kortingspercentage moet een getal zijn tussen 0 en 100',
+				];
+			}
+
+			// Track covered months for overlap/gap detection (only if valid)
+			if ( empty( $errors ) && isset( $period['start_month'], $period['end_month'] ) && is_numeric( $period['start_month'] ) && is_numeric( $period['end_month'] ) ) {
+				$start = (int) $period['start_month'];
+				$end   = (int) $period['end_month'];
+
+				for ( $m = $start; $m <= $end; $m++ ) {
+					if ( isset( $covered_months[ $m ] ) ) {
+						$errors[] = [
+							'field'   => $field_prefix,
+							'message' => 'Periodes mogen niet overlappen (maand ' . $m . ' komt meerdere keren voor)',
+						];
+						break;
+					}
+					$covered_months[ $m ] = true;
+				}
+			}
+		}
+
+		// Warn if not all 12 months are covered
+		if ( empty( $errors ) && count( $covered_months ) < 12 ) {
+			$warnings[] = [
+				'field'   => 'entry_discount',
+				'message' => 'Niet alle maanden zijn gedekt door een instapkorting-periode. Leden die in een niet-gedekte maand instappen betalen het volledige tarief.',
 			];
 		}
 

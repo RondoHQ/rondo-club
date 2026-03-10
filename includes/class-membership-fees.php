@@ -1104,6 +1104,49 @@ class MembershipFees {
 	}
 
 	/**
+	 * Get entry discount (instapkorting) configuration for a season
+	 *
+	 * Returns configurable periods that define how much pro-rata discount applies
+	 * based on when a member joins. Stored in a separate WordPress option per season.
+	 * Falls back to default quarterly periods (matching previous hardcoded behavior)
+	 * if no config exists for the requested season.
+	 *
+	 * @param string|null $season Optional season key, defaults to current season.
+	 * @return array Array with 'periods' key containing array of period configs.
+	 */
+	public function get_entry_discount_config( ?string $season = null ): array {
+		$season   = $season ?: $this->get_season_key();
+		$defaults = [
+			'periods' => [
+				[ 'start_month' => 7, 'end_month' => 9, 'discount_percent' => 0 ],
+				[ 'start_month' => 10, 'end_month' => 12, 'discount_percent' => 25 ],
+				[ 'start_month' => 1, 'end_month' => 3, 'discount_percent' => 50 ],
+				[ 'start_month' => 4, 'end_month' => 6, 'discount_percent' => 75 ],
+			],
+		];
+
+		$config = get_option( 'rondo_entry_discount_' . $season, false );
+
+		if ( $config !== false && is_array( $config ) && isset( $config['periods'] ) ) {
+			return $config;
+		}
+
+		// Season option doesn't exist - return defaults (matches previous hardcoded quarterly behavior)
+		return $defaults;
+	}
+
+	/**
+	 * Save entry discount (instapkorting) configuration for a season
+	 *
+	 * @param array  $config Array with 'periods' key containing period configs.
+	 * @param string $season Season key in "YYYY-YYYY" format.
+	 * @return bool True on success, false on failure.
+	 */
+	public function save_entry_discount_config( array $config, string $season ): bool {
+		return update_option( 'rondo_entry_discount_' . $season, $config );
+	}
+
+	/**
 	 * Get the post meta key for storing fee snapshots
 	 *
 	 * @param string|null $season Optional season key, defaults to current season.
@@ -1805,15 +1848,14 @@ class MembershipFees {
 	 * Members who joined BEFORE the current season starts (before July 1 of season start year)
 	 * pay 100% - they were already members when the season began.
 	 *
-	 * Members who join DURING the current season get pro-rata based on quarter:
-	 * - Q1 (July-September): 100% - full season
-	 * - Q2 (October-December): 75% - 3/4 season
-	 * - Q3 (January-March): 50% - 1/2 season
-	 * - Q4 (April-June): 25% - 1/4 season
+	 * Members who join DURING the current season get pro-rata based on configurable periods
+	 * (stored via get_entry_discount_config). Each period defines a start_month, end_month,
+	 * and discount_percent (how much discount they GET, so 75% discount = 0.25 prorata).
+	 * Default periods match the previous hardcoded quarterly structure.
 	 *
 	 * @param string|null $registration_date Date in Y-m-d format (lid-sinds field), or null for 100%.
 	 * @param string|null $season            Optional season key (e.g., "2025-2026"), defaults to current season.
-	 * @return float Pro-rata percentage (0.25 to 1.0).
+	 * @return float Pro-rata percentage (0.0 to 1.0).
 	 */
 	public function get_prorata_percentage( ?string $registration_date, ?string $season = null ): float {
 		// Null date = full fee (100%)
@@ -1827,7 +1869,7 @@ class MembershipFees {
 		}
 
 		// Determine the season start date
-		$season           = $season ?: $this->get_season_key();
+		$season            = $season ?: $this->get_season_key();
 		$season_start_year = (int) substr( $season, 0, 4 );
 		$season_start_date = strtotime( $season_start_year . '-07-01' );
 
@@ -1836,23 +1878,22 @@ class MembershipFees {
 			return 1.0;
 		}
 
-		// Member joined during the current season - apply quarterly pro-rata
-		$month = (int) date( 'n', $timestamp );
+		// Member joined during the current season - find matching configured period
+		$month  = (int) date( 'n', $timestamp );
+		$config = $this->get_entry_discount_config( $season );
 
-		// Q1: July-September = 100%
-		if ( $month >= 7 && $month <= 9 ) {
-			return 1.0;
+		foreach ( $config['periods'] as $period ) {
+			$start = (int) ( $period['start_month'] ?? 0 );
+			$end   = (int) ( $period['end_month'] ?? 0 );
+
+			if ( $month >= $start && $month <= $end ) {
+				$discount_percent = (float) ( $period['discount_percent'] ?? 0 );
+				return ( 100.0 - $discount_percent ) / 100.0;
+			}
 		}
-		// Q2: October-December = 75%
-		if ( $month >= 10 && $month <= 12 ) {
-			return 0.75;
-		}
-		// Q3: January-March = 50%
-		if ( $month >= 1 && $month <= 3 ) {
-			return 0.50;
-		}
-		// Q4: April-June = 25%
-		return 0.25;
+
+		// No period matched - safe fallback: full fee
+		return 1.0;
 	}
 
 	/**
