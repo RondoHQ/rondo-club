@@ -225,12 +225,30 @@
                     }
                 },
                 {
-                    "key": "field_address_street",
-                    "label": "Street",
-                    "name": "street",
+                    "key": "field_address_street_name",
+                    "label": "Straatnaam",
+                    "name": "street_name",
                     "type": "text",
                     "wrapper": {
-                        "width": "100"
+                        "width": "50"
+                    }
+                },
+                {
+                    "key": "field_address_house_number",
+                    "label": "Huisnummer",
+                    "name": "house_number",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "25"
+                    }
+                },
+                {
+                    "key": "field_address_house_number_addition",
+                    "label": "Toevoeging",
+                    "name": "house_number_addition",
+                    "type": "text",
+                    "wrapper": {
+                        "width": "25"
                     }
                 },
                 {
