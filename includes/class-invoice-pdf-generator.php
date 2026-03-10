@@ -90,9 +90,27 @@ class InvoicePdfGenerator {
 
 			$addresses = get_field( 'addresses', $person_id );
 			if ( $addresses && is_array( $addresses ) && count( $addresses ) > 0 ) {
-				$first_address = $addresses[0];
-				$person_street = trim( ( $first_address['street_name'] ?? '' ) . ' ' . ( $first_address['house_number'] ?? '' ) . ' ' . ( $first_address['house_number_addition'] ?? '' ) );
-				$person_city = $first_address['city'] ?? '';
+				$format_address = function ( array $addr ): array {
+					return [
+						'street' => trim( ( $addr['street_name'] ?? '' ) . ' ' . ( $addr['house_number'] ?? '' ) . ' ' . ( $addr['house_number_addition'] ?? '' ) ),
+						'city'   => $addr['city'] ?? '',
+					];
+				};
+
+				$selected_address = null;
+				foreach ( $addresses as $addr ) {
+					if ( 0 === strcasecmp( $addr['address_label'] ?? '', 'Factuur' ) ) {
+						$selected_address = $addr;
+						break;
+					}
+				}
+				if ( null === $selected_address ) {
+					$selected_address = $addresses[0];
+				}
+
+				$formatted      = $format_address( $selected_address );
+				$person_street  = $formatted['street'];
+				$person_city    = $formatted['city'];
 			}
 
 			if ( '' === trim( $person_email ) ) {
