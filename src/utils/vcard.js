@@ -159,7 +159,7 @@ export function generateVCard(person, options = {}) {
     acf.addresses.forEach(address => {
       // ADR;TYPE=HOME:POBox;Extended;Street;City;State;PostalCode;Country
       const addrType = address.address_label ? `ADR;TYPE=${address.address_label.toUpperCase()}` : 'ADR;TYPE=HOME';
-      const street = escapeVCardValue(address.street || '');
+      const street = escapeVCardValue([address.street_name, address.house_number, address.house_number_addition].filter(Boolean).join(' '));
       const city = escapeVCardValue(address.city || '');
       const state = escapeVCardValue(address.state || '');
       const postalCode = escapeVCardValue(address.postal_code || '');
