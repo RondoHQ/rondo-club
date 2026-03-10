@@ -162,7 +162,9 @@ export default function AddressEditModal({
   const { register, handleSubmit, reset, control } = useForm({
     defaultValues: {
       address_label: '',
-      street: '',
+      street_name: '',
+      house_number: '',
+      house_number_addition: '',
       postal_code: '',
       city: '',
       state: '',
@@ -176,7 +178,9 @@ export default function AddressEditModal({
       if (address) {
         reset({
           address_label: address.address_label || '',
-          street: address.street || '',
+          street_name: address.street_name || '',
+          house_number: address.house_number || '',
+          house_number_addition: address.house_number_addition || '',
           postal_code: address.postal_code || '',
           city: address.city || '',
           state: address.state || '',
@@ -185,7 +189,9 @@ export default function AddressEditModal({
       } else {
         reset({
           address_label: '',
-          street: '',
+          street_name: '',
+          house_number: '',
+          house_number_addition: '',
           postal_code: '',
           city: '',
           state: '',
@@ -200,7 +206,9 @@ export default function AddressEditModal({
   const handleFormSubmit = (data) => {
     onSubmit({
       address_label: data.address_label || '',
-      street: data.street || '',
+      street_name: data.street_name || '',
+      house_number: data.house_number || '',
+      house_number_addition: data.house_number_addition || '',
       postal_code: data.postal_code || '',
       city: data.city || '',
       state: data.state || '',
@@ -235,15 +243,35 @@ export default function AddressEditModal({
               />
             </div>
 
-            {/* Street */}
-            <div>
-              <label className="label">Straat</label>
-              <input
-                {...register('street')}
-                className="input"
-                placeholder="bijv. Hoofdstraat 123"
-                disabled={isLoading}
-              />
+            {/* Street name, house number, addition */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-2">
+                <label className="label">Straatnaam</label>
+                <input
+                  {...register('street_name')}
+                  className="input"
+                  placeholder="bijv. Hoofdstraat"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="label">Huisnr.</label>
+                <input
+                  {...register('house_number')}
+                  className="input"
+                  placeholder="bijv. 123"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="label">Toev.</label>
+                <input
+                  {...register('house_number_addition')}
+                  className="input"
+                  placeholder="bijv. A"
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
             {/* City and Postal Code row */}

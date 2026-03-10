@@ -1356,7 +1356,7 @@ export default function PersonDetail() {
                   <div className="space-y-3">
                     {acf.addresses.map((address, index) => {
                       const addressLines = [
-                        address.street,
+                        [address.street_name, address.house_number, address.house_number_addition].filter(Boolean).join(' '),
                         [address.city, address.state, address.postal_code].filter(Boolean).join(', '),
                         address.country
                       ].filter(Boolean);
