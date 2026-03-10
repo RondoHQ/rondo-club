@@ -29,7 +29,7 @@ Milestone: v31.0 Editable Contact Fields
 Phase: 211 of 211 (Sync Update)
 Plan: 2 of 2 (complete)
 Status: Phase Complete
-Last activity: 2026-03-09 - Completed quick task 122: Make welkomstmail Bericht field rich text
+Last activity: 2026-03-10 - Completed quick task 123: Replace street field with street_name, house_number, house_number_addition
 
 Progress: [██████████] 100%
 
@@ -88,13 +88,14 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 | 120 | Fix dropdown overflow on Tuchtzaken settings card | 2026-03-09 | e3be4392 | [120-fix-dropdown-overflow-on-teams-met-doorb](./quick/120-fix-dropdown-overflow-on-teams-met-doorb/) |
 | 121 | Add URL sub-routes for FinanceSettings and ClothingPage tabs | 2026-03-09 | 9e805101 | [121-add-sub-routes-for-financesettings-tabs-](./quick/121-add-sub-routes-for-financesettings-tabs-/) |
 | 122 | Make welkomstmail Bericht field rich text | 2026-03-09 | 94846a8b | [122-make-bericht-field-on-welkomstmail-setti](./quick/122-make-bericht-field-on-welkomstmail-setti/) |
+| 123 | Replace street field with street_name, house_number, house_number_addition | 2026-03-10 | 93ee51bf | [123-replace-street-field-with-street-name-ho](./quick/123-replace-street-field-with-street-name-ho/) |
 
 ## Session Continuity
 
-Last session: 2026-03-08T16:54:32.783Z
-Stopped at: Completed 211-02-PLAN.md
+Last session: 2026-03-10
+Stopped at: Completed quick-123
 
-**Next action:** Phase 211 complete. All sync code deployed, reverse sync cron re-enabled. Milestone v31.0 ready for completion.
+**Next action:** Quick task 123 complete. Address fields split into street_name, house_number, house_number_addition across ACF, React, and PHP.
 
 ---
 *State created: 2026-02-15*
