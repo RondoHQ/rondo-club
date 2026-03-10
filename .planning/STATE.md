@@ -88,7 +88,7 @@ Decisions logged in PROJECT.md Key Decisions table (780+ entries).
 | 120 | Fix dropdown overflow on Tuchtzaken settings card | 2026-03-09 | e3be4392 | [120-fix-dropdown-overflow-on-teams-met-doorb](./quick/120-fix-dropdown-overflow-on-teams-met-doorb/) |
 | 121 | Add URL sub-routes for FinanceSettings and ClothingPage tabs | 2026-03-09 | 9e805101 | [121-add-sub-routes-for-financesettings-tabs-](./quick/121-add-sub-routes-for-financesettings-tabs-/) |
 | 122 | Make welkomstmail Bericht field rich text | 2026-03-09 | 94846a8b | [122-make-bericht-field-on-welkomstmail-setti](./quick/122-make-bericht-field-on-welkomstmail-setti/) |
-| 123 | Replace street field with street_name, house_number, house_number_addition | 2026-03-10 | 93ee51bf | [123-replace-street-field-with-street-name-ho](./quick/123-replace-street-field-with-street-name-ho/) |
+| 123 | Replace street field with street_name, house_number, house_number_addition | 2026-03-10 | c15e4066 | [123-replace-street-field-with-street-name-ho](./quick/123-replace-street-field-with-street-name-ho/) |
 
 ## Session Continuity
 
