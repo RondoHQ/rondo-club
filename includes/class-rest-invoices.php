@@ -1321,6 +1321,7 @@ class Invoices extends Base {
 				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 				if ( is_wp_error( $payment_result ) ) {
 					error_log( 'Mollie payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+					return $payment_result;
 				} elseif ( ! empty( $payment_result ) ) {
 					$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_result, $invoice_id );
 					if ( is_wp_error( $qr_result ) ) {
@@ -1334,6 +1335,7 @@ class Invoices extends Base {
 					$payment_result = $payment->create_payment_request( $invoice_id );
 					if ( is_wp_error( $payment_result ) ) {
 						error_log( 'Rabobank payment link creation failed for invoice ' . $invoice_id . ': ' . $payment_result->get_error_message() );
+						return $payment_result;
 					}
 				}
 			}
@@ -1347,7 +1349,7 @@ class Invoices extends Base {
 
 		// Build email options — redirect to current user in test mode
 		$email_options = [];
-		if ( $this->is_test_mode_active() ) {
+		if ( $this->is_test_mode_active( $invoice_id ) ) {
 			$current_user = wp_get_current_user();
 			if ( ! empty( $current_user->user_email ) ) {
 				$email_options['override_email'] = $current_user->user_email;
@@ -1487,7 +1489,7 @@ class Invoices extends Base {
 
 		// Build email options — redirect to current user in test mode
 		$email_options = [];
-		if ( $this->is_test_mode_active() ) {
+		if ( $this->is_test_mode_active( $invoice_id ) ) {
 			$current_user = wp_get_current_user();
 			if ( ! empty( $current_user->user_email ) ) {
 				$email_options['override_email'] = $current_user->user_email;
@@ -1863,13 +1865,27 @@ class Invoices extends Base {
 	 *
 	 * @return bool True if the active provider is in test/sandbox mode.
 	 */
-	private function is_test_mode_active(): bool {
+	private function is_test_mode_active( int $invoice_id = 0 ): bool {
 		$config   = new FinanceConfig();
 		$settings = $config->get_all_settings();
 		$provider = $settings['active_payment_provider'] ?? '';
 
 		if ( 'mollie' === $provider ) {
-			return ( $settings['mollie_environment'] ?? '' ) === 'test';
+			$account_id = $invoice_id > 0
+				? (string) get_post_meta( $invoice_id, '_payment_account_id', true )
+				: $config->get_default_mollie_account_id( 'manual' );
+
+			if ( '' === $account_id ) {
+				$default_account = $config->get_default_mollie_account( 'manual' );
+				$account_id = is_array( $default_account ) ? (string) ( $default_account['id'] ?? '' ) : '';
+			}
+
+			if ( '' === $account_id ) {
+				return false;
+			}
+
+			$account = $config->get_mollie_account_by_id( $account_id );
+			return is_array( $account ) && ( $account['environment'] ?? '' ) === 'test';
 		}
 
 		if ( 'rabobank' === $provider ) {
@@ -1903,7 +1919,7 @@ class Invoices extends Base {
 		}
 
 		// Guard: only available in test/sandbox mode
-		if ( ! $this->is_test_mode_active() ) {
+		if ( ! $this->is_test_mode_active( $invoice_id ) ) {
 			return new \WP_Error(
 				'test_mode_required',
 				__( 'Betaalstatus resetten is alleen beschikbaar in testmodus.', 'rondo' ),
@@ -2213,7 +2229,7 @@ class Invoices extends Base {
 			$invoice_type = $fallback_invoice_type;
 		}
 
-		$selected_payment_account = $this->resolve_payment_account_for_payload( $finance_config, $payment_account_id );
+		$selected_payment_account = $this->resolve_payment_account_for_payload( $finance_config, $invoice_type, $payment_account_id );
 		if ( is_wp_error( $selected_payment_account ) ) {
 			return $selected_payment_account;
 		}
@@ -2283,36 +2299,17 @@ class Invoices extends Base {
 	}
 
 	/**
-	 * Resolve a payment account from request payload, defaulting to the provider-linked account.
+	 * Resolve a payment-account snapshot from request payload and invoice type.
 	 *
 	 * @param FinanceConfig $finance_config Finance config service.
+	 * @param string        $invoice_type Invoice type slug.
 	 * @param string        $payment_account_id Requested account ID.
 	 * @return array<string, string>|\WP_Error
 	 */
-	private function resolve_payment_account_for_payload( FinanceConfig $finance_config, string $payment_account_id ) {
-		$account = '' !== $payment_account_id
-			? $finance_config->get_bank_account_by_id( $payment_account_id )
-			: $finance_config->get_default_bank_account( $finance_config->get_active_payment_provider() );
+	private function resolve_payment_account_for_payload( FinanceConfig $finance_config, string $invoice_type, string $payment_account_id ) {
+		$requested_account_id = 'manual' === $invoice_type ? $payment_account_id : '';
 
-		if ( '' !== $payment_account_id && ! is_array( $account ) ) {
-			return new \WP_Error(
-				'invalid_payment_account',
-				__( 'De gekozen bankrekening bestaat niet meer.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
-		}
-
-		if ( ! is_array( $account ) ) {
-			return [
-				'id'              => '',
-				'internal_name'   => '',
-				'account_holder'  => $finance_config->get_org_name(),
-				'iban'            => $finance_config->get_iban(),
-				'linked_provider' => '',
-			];
-		}
-
-		return $account;
+		return $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
 	}
 
 	/**
@@ -2322,6 +2319,7 @@ class Invoices extends Base {
 	 * @return array<string, string>
 	 */
 	private function get_invoice_payment_account( int $invoice_id ): array {
+		$invoice_type     = (string) get_field( 'invoice_type', $invoice_id );
 		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
 		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
@@ -2339,7 +2337,7 @@ class Invoices extends Base {
 		}
 
 		$finance_config = new FinanceConfig();
-		$default        = $finance_config->get_default_bank_account( $finance_config->get_active_payment_provider() );
+		$default        = $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
 
 		if ( is_array( $default ) ) {
 			return $default;
