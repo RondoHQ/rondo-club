@@ -22,7 +22,7 @@ const statusLabels = {
   draft: 'Concept',
   sent: 'Verstuurd',
   paid: 'Betaald',
-  overdue: 'Verlopen',
+  overdue: 'Achterstallig',
 };
 
 // Installment status badge colors
@@ -37,7 +37,7 @@ const installmentStatusLabels = {
   pending: 'Openstaand',
   sent: 'Verstuurd',
   betaald: 'Betaald',
-  overdue: 'Verlopen',
+  overdue: 'Achterstallig',
 };
 
 /**
@@ -144,7 +144,10 @@ export default function FactuurDetail() {
   const isTestMode = (() => {
     if (!financeSettings) return false;
     const provider = financeSettings.active_payment_provider;
-    if (provider === 'mollie') return financeSettings.mollie_environment === 'test';
+    if (provider === 'mollie') {
+      const matchingAccount = (financeSettings.mollie_accounts || []).find((account) => account.id === invoice?.payment_account?.id);
+      return matchingAccount?.environment === 'test';
+    }
     if (provider === 'rabobank') return financeSettings.rabobank_environment === 'sandbox';
     return false;
   })();
@@ -447,6 +450,7 @@ export default function FactuurDetail() {
 
       {invoice.status === 'draft' && isEditingDraft && (
         <InvoiceDraftForm
+          invoiceType={invoice.invoice_type || 'manual'}
           formKey={`draft-${invoice.id}`}
           initialValues={{
             invoiceKind: invoice.invoice_kind || 'normal',
@@ -549,6 +553,9 @@ export default function FactuurDetail() {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Bankrekening</h3>
                   <p className="text-gray-700 dark:text-gray-300">{invoice.payment_account.iban}</p>
+                  {invoice.payment_account.internal_name && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{invoice.payment_account.internal_name}</p>
+                  )}
                   {invoice.payment_account.account_holder && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">t.n.v. {invoice.payment_account.account_holder}</p>
                   )}
