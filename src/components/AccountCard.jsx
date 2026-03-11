@@ -159,7 +159,7 @@ export default function AccountCard({ personId, personData }) {
               <button
                 onClick={handleProvision}
                 disabled={provisioning || !hasEmail}
-                className={`btn-primary flex items-center gap-2 ${
+                className={`btn-primary gap-2 ${
                   !hasEmail ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >

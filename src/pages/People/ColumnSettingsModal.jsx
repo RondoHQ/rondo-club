@@ -309,7 +309,7 @@ export default function ColumnSettingsModal({ isOpen, onClose }) {
           </button>
           <button
             onClick={onClose}
-            className="btn-secondary"
+            className="btn-primary"
           >
             Sluiten
           </button>

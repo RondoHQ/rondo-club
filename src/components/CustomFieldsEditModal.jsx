@@ -167,7 +167,7 @@ function MediaInput({ value, onChange, type = 'image', onRemove }) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="btn-secondary text-sm inline-flex items-center gap-1"
+          className="btn-secondary text-sm gap-1"
         >
           <Upload className="w-4 h-4" />
           {isUploading ? 'Uploaden...' : value ? 'Vervangen' : 'Uploaden'}
