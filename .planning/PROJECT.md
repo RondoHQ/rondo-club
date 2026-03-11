@@ -489,15 +489,15 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-## Current Milestone: v31.0 Editable Contact Fields
+## Current Milestone: v32.0 Interface Touch-up
 
-**Goal:** Align email and phone fields with Sportlink's fixed structure, normalize phone numbers to E.164, make contact fields editable in the UI, and re-enable reverse sync so changes flow back to Sportlink.
+**Goal:** Establish a clear three-tier button hierarchy (primary → secondary → tertiary) with distinct destructive styling, and roll out consistently across all pages.
 
 **Target features:**
-- Fixed contact field structure matching Sportlink (Email1/2, Mobile1/2, Telephone1/2)
-- Phone number normalization to E.164 format on save
-- Editable contact fields in person detail UI with voetbal.nl email warning
-- Reverse sync re-enabled so edits propagate back to Sportlink
+- Three-tier button system: filled primary, outlined secondary, ghost tertiary
+- Visually distinct destructive buttons (red filled)
+- Consistent button hierarchy applied across all pages
+- Invoice page as reference implementation (Verstuur = primary, Markeer betaald = secondary, Genereer PDF/Betaallink = tertiary, Verwijder = destructive)
 
 ### Out of Scope
 
