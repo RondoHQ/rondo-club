@@ -24,12 +24,12 @@ const statusLabels = {
   draft: 'Concept',
   sent: 'Verstuurd',
   paid: 'Betaald',
-  overdue: 'Verlopen',
+  overdue: 'Achterstallig',
 };
 
 const typeLabels = {
   membership: 'Contributie',
-  discipline: 'Tuchtrecht',
+  discipline: 'Tuchtzaken',
   manual: 'Handmatig',
 };
 
@@ -71,8 +71,8 @@ const COLUMNS = [
   }),
   createColumn({
     id: 'person_name',
-    header: 'Lid',
-    accessorFn: (row) => row.person?.name || '',
+    header: 'Naam',
+    accessorFn: (row) => row.person?.name || row.customer_name || '',
     cell: ({ row }) =>
       row.original.person?.name ? (
         <Link
@@ -81,11 +81,13 @@ const COLUMNS = [
         >
           {row.original.person.name}
         </Link>
+      ) : row.original.customer_name ? (
+        <span className="text-gray-900 dark:text-gray-100">{row.original.customer_name}</span>
       ) : (
         <span className="text-gray-400">-</span>
       ),
     filterType: FILTER_TYPES.TEXT,
-    filterLabel: 'Lid',
+    filterLabel: 'Naam',
   }),
   createColumn({
     id: 'total_amount',
@@ -117,7 +119,7 @@ const COLUMNS = [
     filterLabel: 'Type',
     filterOptions: [
       { value: 'membership', label: 'Contributie' },
-      { value: 'discipline', label: 'Tuchtrecht' },
+      { value: 'discipline', label: 'Tuchtzaken' },
       { value: 'manual', label: 'Handmatig' },
     ],
     size: 130,
@@ -140,7 +142,7 @@ const COLUMNS = [
       { value: 'draft', label: 'Concept' },
       { value: 'sent', label: 'Verstuurd' },
       { value: 'paid', label: 'Betaald' },
-      { value: 'overdue', label: 'Verlopen' },
+      { value: 'overdue', label: 'Achterstallig' },
     ],
     size: 120,
   }),
@@ -277,7 +279,7 @@ export default function Facturen() {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           toolbarEnd={(
-            <Link to="/financien/facturen/nieuw" className="btn btn-primary inline-flex items-center gap-2">
+            <Link to="/financien/facturen/nieuw" className="btn-primary gap-2">
               <Plus className="w-4 h-4" /> Nieuwe factuur
             </Link>
           )}

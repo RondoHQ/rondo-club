@@ -25,7 +25,7 @@ function StatusBadge({ status }) {
     draft: 'Concept',
     sent: 'Verstuurd',
     paid: 'Betaald',
-    overdue: 'Verlopen',
+    overdue: 'Achterstallig',
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[status] || styles.draft}`}>
@@ -241,7 +241,7 @@ export default function FinancesCard({ personId }) {
               <button
                 onClick={() => createInvoice.mutate()}
                 disabled={createInvoice.isPending}
-                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-electric-cyan text-white hover:bg-electric-cyan/90 disabled:opacity-50 transition-colors"
+                className="btn-primary gap-1.5 text-xs px-2.5 py-1.5 rounded-md"
               >
                 {createInvoice.isPending ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

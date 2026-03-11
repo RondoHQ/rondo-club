@@ -65,19 +65,20 @@ function normalizeCustomFields(customFields = []) {
   return normalized;
 }
 
-function getDefaultPaymentAccountId(financeSettings) {
-  if (financeSettings?.default_payment_account_id) {
-    return financeSettings.default_payment_account_id;
+function getDefaultPaymentAccountId(financeSettings, invoiceType) {
+  if (invoiceType === 'membership') {
+    return financeSettings?.mollie_default_membership_account_id || '';
   }
 
-  if (Array.isArray(financeSettings?.bank_accounts) && financeSettings.bank_accounts.length > 0) {
-    return financeSettings.bank_accounts[0]?.id || '';
+  if (invoiceType === 'discipline') {
+    return financeSettings?.mollie_default_discipline_account_id || '';
   }
 
-  return '';
+  return financeSettings?.mollie_default_manual_account_id || '';
 }
 
 export default function InvoiceDraftForm({
+  invoiceType = 'manual',
   initialValues,
   formKey,
   onSubmit,
@@ -120,6 +121,12 @@ export default function InvoiceDraftForm({
   const memberOptions = (searchResults?.people || []).slice(0, 20);
   const defaultEmailSubject = financeSettings?.regular_invoice_email_subject || DEFAULT_SUBJECT_TEMPLATE;
   const defaultEmailBody = financeSettings?.regular_invoice_email_body || DEFAULT_BODY_TEMPLATE;
+  const usableMollieAccounts = Array.isArray(financeSettings?.mollie_accounts)
+    ? financeSettings.mollie_accounts.filter((account) => account?.has_api_key)
+    : [];
+  const showManualMollieAccountSelector = financeSettings?.active_payment_provider === 'mollie'
+    && invoiceType === 'manual'
+    && usableMollieAccounts.length > 1;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -160,8 +167,8 @@ export default function InvoiceDraftForm({
   }, [formKey, initialValues]);
 
   useEffect(() => {
-    setPaymentAccountId((current) => current || initialValues?.paymentAccountId || getDefaultPaymentAccountId(financeSettings));
-  }, [financeSettings, initialValues?.paymentAccountId]);
+    setPaymentAccountId((current) => current || initialValues?.paymentAccountId || getDefaultPaymentAccountId(financeSettings, invoiceType));
+  }, [financeSettings, initialValues?.paymentAccountId, invoiceType]);
 
   useEffect(() => {
     if (emailDefaultsHydrated || !financeSettings) {
@@ -393,13 +400,12 @@ export default function InvoiceDraftForm({
           <input type="date" className="input mt-1" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </label>
 
-        {Array.isArray(financeSettings?.bank_accounts) && financeSettings.bank_accounts.length > 0 && (
+        {showManualMollieAccountSelector && (
           <label className="text-sm block max-w-sm">Bankrekening
             <select className="input mt-1" value={paymentAccountId} onChange={(e) => setPaymentAccountId(e.target.value)}>
-              {financeSettings.bank_accounts.map((account) => (
+              {usableMollieAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.internal_name} · {account.iban}
-                  {account.linked_provider === financeSettings?.active_payment_provider ? ' · standaard' : ''}
                 </option>
               ))}
             </select>
@@ -443,12 +449,12 @@ export default function InvoiceDraftForm({
             <div key={index} className="grid grid-cols-12 gap-2 items-center">
               <input className="input col-span-8" placeholder="Omschrijving" value={item.description} onChange={(e) => updateLine(index, 'description', e.target.value)} />
               <input className="input col-span-3" type="number" step="0.01" placeholder="Bedrag" value={item.amount} onChange={(e) => updateLine(index, 'amount', e.target.value)} />
-              <button type="button" onClick={() => setLineItems((prev) => prev.filter((_, i) => i !== index))} className="btn btn-secondary col-span-1" disabled={lineItems.length === 1}>
+              <button type="button" onClick={() => setLineItems((prev) => prev.filter((_, i) => i !== index))} className="btn-danger col-span-1" disabled={lineItems.length === 1}>
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
           ))}
-          <button type="button" className="btn btn-secondary" onClick={() => setLineItems((prev) => [...prev, { ...emptyLine }])}>
+          <button type="button" className="btn-tertiary gap-2" onClick={() => setLineItems((prev) => [...prev, { ...emptyLine }])}>
             <Plus className="w-4 h-4" /> Regel toevoegen
           </button>
           <p className="text-sm text-gray-600">Totaal: <strong>{total.toFixed(2)}</strong></p>
@@ -471,9 +477,9 @@ export default function InvoiceDraftForm({
         </div>
 
         <div className="flex gap-2">
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>{submitLabel}</button>
+          <button type="submit" className="btn-primary" disabled={isSubmitting}>{submitLabel}</button>
           {onCancel && (
-            <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={isSubmitting}>
+            <button type="button" className="btn-secondary" onClick={onCancel} disabled={isSubmitting}>
               {cancelLabel}
             </button>
           )}
