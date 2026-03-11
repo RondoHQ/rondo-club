@@ -245,7 +245,7 @@ export default function RelationshipTypes() {
           }
         }}
         disabled={restoreDefaultsMutation.isPending}
-        className="btn-secondary flex items-center gap-2"
+        className="btn-secondary gap-2"
         title="Standaard omgekeerde koppelingen en geslachtsafhankelijke instellingen herstellen"
       >
         {restoreDefaultsMutation.isPending ? (
@@ -319,7 +319,7 @@ export default function RelationshipTypes() {
           <p className="text-gray-600 dark:text-gray-300 mb-6">
             Je hebt geen toestemming om relatietypes te beheren. Deze functie is alleen beschikbaar voor beheerders.
           </p>
-          <Link to="/settings" className="btn-primary">
+          <Link to="/settings" className="btn-tertiary">
             Terug naar Instellingen
           </Link>
         </div>
@@ -346,7 +346,7 @@ export default function RelationshipTypes() {
                 <RestoreDefaultsButton />
                 <button
                   onClick={() => setIsAdding(true)}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span className="hidden md:inline">Relatietype toevoegen</span>
@@ -387,7 +387,7 @@ export default function RelationshipTypes() {
                 <button
                   onClick={handleCreate}
                   disabled={createMutation.isPending}
-                  className="btn-primary flex items-center gap-2"
+                  className="btn-primary gap-2"
                 >
                   {createMutation.isPending ? (
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -462,7 +462,7 @@ export default function RelationshipTypes() {
                         <button
                           onClick={handleSave}
                           disabled={updateMutation.isPending}
-                          className="btn-primary flex items-center gap-2"
+                          className="btn-primary gap-2"
                         >
                           {updateMutation.isPending ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -473,7 +473,7 @@ export default function RelationshipTypes() {
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="btn-secondary flex items-center gap-2"
+                          className="btn-secondary gap-2"
                         >
                           <X className="w-4 h-4" />
                           <span className="hidden md:inline">Annuleren</span>

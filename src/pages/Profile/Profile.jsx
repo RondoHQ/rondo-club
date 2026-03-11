@@ -373,7 +373,7 @@ export default function Profile() {
             <button
               type="submit"
               disabled={changePassword.isPending}
-              className="btn btn-primary flex items-center gap-2"
+              className="btn-primary gap-2"
             >
               {changePassword.isPending && (
                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>

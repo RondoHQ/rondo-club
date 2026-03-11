@@ -1085,7 +1085,7 @@ function ConnectionsCardDAVSubtab({
                 />
                 <button
                   onClick={() => copyCarddavUrl(carddavUrls.addressbook)}
-                  className="btn-secondary text-xs px-2"
+                  className="btn-tertiary text-xs px-2"
                   title="URL kopiëren"
                 >
                   Kopiëren
@@ -1104,7 +1104,7 @@ function ConnectionsCardDAVSubtab({
                 />
                 <button
                   onClick={() => copyCarddavUrl(config.userLogin)}
-                  className="btn-secondary text-xs px-2"
+                  className="btn-tertiary text-xs px-2"
                   title="Gebruikersnaam kopiëren"
                 >
                   Kopiëren
@@ -1790,7 +1790,7 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
             type="button"
             onClick={handleSendTestEmail}
             disabled={!isAdmin || sendingTestEmail}
-            className="btn-secondary md:whitespace-nowrap"
+            className="btn-tertiary md:whitespace-nowrap"
           >
             {sendingTestEmail ? 'Testmail verzenden...' : 'Verstuur testmail'}
           </button>
@@ -1924,7 +1924,7 @@ function APIAccessTab({
                     />
                     <button
                       onClick={copyNewPassword}
-                      className="btn-primary flex items-center gap-2"
+                      className="btn-primary gap-2"
                     >
                       {passwordCopied ? (
                         <>
@@ -1941,7 +1941,7 @@ function APIAccessTab({
                   </div>
                   <button
                     onClick={() => setNewPassword(null)}
-                    className="btn-secondary w-full"
+                    className="btn-tertiary w-full"
                   >
                     Klaar
                   </button>
@@ -2519,7 +2519,7 @@ function AnniversariesTab({
           <button
             type="button"
             onClick={() => addCustomMilestone(category)}
-            className="btn-secondary md:w-auto"
+            className="btn-tertiary md:w-auto"
           >
             Mijlpaal toevoegen
           </button>
@@ -3076,7 +3076,7 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
           <button
             onClick={handleSave}
             disabled={saving || !settings}
-            className="btn-primary flex items-center gap-2 disabled:opacity-50"
+            className="btn-primary gap-2 disabled:opacity-50"
           >
             {saving ? (
               <>

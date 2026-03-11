@@ -179,12 +179,12 @@ export default function MembershipPassScanner() {
 
         <div className="flex flex-wrap gap-2">
           {!isCameraActive ? (
-            <button type="button" className="btn-primary inline-flex items-center gap-2" onClick={startCamera}>
+            <button type="button" className="btn-primary gap-2" onClick={startCamera}>
               <Camera className="w-4 h-4" />
               Start camera
             </button>
           ) : (
-            <button type="button" className="btn-secondary inline-flex items-center gap-2" onClick={stopCamera}>
+            <button type="button" className="btn-secondary gap-2" onClick={stopCamera}>
               <CameraOff className="w-4 h-4" />
               Stop camera
             </button>
@@ -235,7 +235,7 @@ export default function MembershipPassScanner() {
           </div>
 
           {result.person?.id ? (
-            <Link to={`/people/${result.person.id}`} className="btn-secondary inline-flex items-center gap-2">
+            <Link to={`/people/${result.person.id}`} className="btn-tertiary gap-2">
               Open lidprofiel
             </Link>
           ) : null}

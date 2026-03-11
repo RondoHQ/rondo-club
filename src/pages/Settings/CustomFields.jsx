@@ -242,7 +242,7 @@ export default function CustomFields() {
           <p className="text-gray-600 dark:text-gray-300 mb-6">
             Je hebt geen toestemming om aangepaste velden te beheren. Deze functie is alleen beschikbaar voor beheerders.
           </p>
-          <Link to="/settings" className="btn-primary">
+          <Link to="/settings" className="btn-tertiary">
             Terug naar Instellingen
           </Link>
         </div>
@@ -331,7 +331,7 @@ export default function CustomFields() {
           </h1>
           <button
             onClick={handleAddField}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary gap-2"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden md:inline">Veld toevoegen</span>
