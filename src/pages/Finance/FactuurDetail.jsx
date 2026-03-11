@@ -437,7 +437,7 @@ export default function FactuurDetail() {
                   setErrorMessage('');
                 }}
                 disabled={isPending && !isEditingDraft}
-                className="btn-secondary inline-flex items-center gap-2"
+                className="btn-tertiary gap-2"
               >
                 <Pencil className="w-4 h-4" />
                 {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
@@ -730,7 +730,7 @@ export default function FactuurDetail() {
               <button
                 type="button"
                 onClick={handleAddDraftLineItem}
-                className="btn btn-secondary md:col-span-2"
+                className="btn-tertiary md:col-span-2"
                 disabled={addDraftLineItem.isPending}
               >
                 {addDraftLineItem.isPending ? 'Toevoegen...' : 'Voeg regel toe'}
@@ -811,7 +811,7 @@ export default function FactuurDetail() {
               <button
                 onClick={handleSend}
                 disabled={isPending}
-                className="btn-primary flex items-center gap-2"
+                className="btn-primary gap-2"
               >
                 {sendInvoice.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -823,10 +823,10 @@ export default function FactuurDetail() {
               <button
                 onClick={() => handleMarkPaid({ fromDraft: true })}
                 disabled={isPending}
-                className="btn-secondary flex items-center gap-2 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                className="btn-secondary gap-2"
               >
                 {updateInvoiceStatus.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-700 dark:border-green-400"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                 ) : (
                   <CheckCircle className="w-4 h-4" />
                 )}
@@ -836,7 +836,7 @@ export default function FactuurDetail() {
                 <button
                   onClick={handleDownloadPdf}
                   disabled={isPending}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-tertiary gap-2"
                 >
                   <Download className="w-4 h-4" />
                   Download PDF
@@ -845,10 +845,10 @@ export default function FactuurDetail() {
                 <button
                   onClick={handleGeneratePdf}
                   disabled={isPending}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-tertiary gap-2"
                 >
                   {generatePdf.isPending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                   ) : (
                     <FileText className="w-4 h-4" />
                   )}
@@ -859,10 +859,10 @@ export default function FactuurDetail() {
                 <button
                   onClick={handleRegeneratePdf}
                   disabled={isPending}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-tertiary gap-2"
                 >
                   {generatePdf.isPending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                   ) : (
                     <RefreshCw className="w-4 h-4" />
                   )}
@@ -872,10 +872,10 @@ export default function FactuurDetail() {
               <button
                 onClick={handleDelete}
                 disabled={isPending}
-                className="btn-secondary flex items-center gap-2 border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="btn-danger gap-2"
               >
                 {deleteInvoice.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 dark:border-red-400"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                 ) : (
                   <Trash2 className="w-4 h-4" />
                 )}
@@ -923,10 +923,10 @@ export default function FactuurDetail() {
                     <button
                       onClick={handleUpdateMembershipDiscount}
                       disabled={isPending}
-                      className="btn-secondary flex items-center gap-2"
+                      className="btn-tertiary gap-2"
                     >
                       {updateMembershipDiscount.isPending ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                       ) : (
                         <RefreshCw className="w-4 h-4" />
                       )}
@@ -941,10 +941,10 @@ export default function FactuurDetail() {
               <button
                 onClick={handleMarkPaid}
                 disabled={isPending}
-                className="btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                className="btn-secondary gap-2"
               >
                 {updateInvoiceStatus.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                 ) : (
                   <CheckCircle className="w-4 h-4" />
                 )}
@@ -953,10 +953,10 @@ export default function FactuurDetail() {
               <button
                 onClick={handleResend}
                 disabled={isPending}
-                className="btn-secondary flex items-center gap-2"
+                className="btn-tertiary gap-2"
               >
                 {resendInvoice.isPending ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
@@ -965,7 +965,7 @@ export default function FactuurDetail() {
               <button
                 onClick={handleDownloadPdf}
                 disabled={!invoice.pdf_path || isPending}
-                className="btn-secondary flex items-center gap-2"
+                className="btn-tertiary gap-2"
               >
                 <Download className="w-4 h-4" />
                 Download PDF
@@ -974,10 +974,10 @@ export default function FactuurDetail() {
                 <button
                   onClick={handleRegeneratePdf}
                   disabled={isPending}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-tertiary gap-2"
                 >
                   {generatePdf.isPending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                   ) : (
                     <RefreshCw className="w-4 h-4" />
                   )}
@@ -992,10 +992,10 @@ export default function FactuurDetail() {
             <button
               onClick={handleCreatePaymentLink}
               disabled={isPending}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-tertiary gap-2"
             >
               {createPaymentLink.isPending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
               ) : (
                 <CreditCard className="w-4 h-4" />
               )}
@@ -1008,10 +1008,10 @@ export default function FactuurDetail() {
             <button
               onClick={handleRegeneratePaymentLink}
               disabled={isPending}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-tertiary gap-2"
             >
               {regeneratePaymentLink.isPending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
@@ -1027,7 +1027,7 @@ export default function FactuurDetail() {
                   <button
                     onClick={handleDownloadPdf}
                     disabled={isPending}
-                    className="btn-secondary flex items-center gap-2"
+                    className="btn-tertiary gap-2"
                   >
                     <Download className="w-4 h-4" />
                     Download PDF
@@ -1035,10 +1035,10 @@ export default function FactuurDetail() {
                   <button
                     onClick={handleRegeneratePdf}
                     disabled={isPending}
-                    className="btn-secondary flex items-center gap-2"
+                    className="btn-tertiary gap-2"
                   >
                     {generatePdf.isPending ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                     ) : (
                       <RefreshCw className="w-4 h-4" />
                     )}
@@ -1049,10 +1049,10 @@ export default function FactuurDetail() {
                 <button
                   onClick={handleGeneratePdf}
                   disabled={isPending}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-tertiary gap-2"
                 >
                   {generatePdf.isPending ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-400"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                   ) : (
                     <RefreshCw className="w-4 h-4" />
                   )}
@@ -1067,10 +1067,10 @@ export default function FactuurDetail() {
             <button
               onClick={handleResetPaymentState}
               disabled={isPending}
-              className="btn-secondary flex items-center gap-2 border-orange-300 dark:border-orange-700 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              className="btn-danger gap-2"
             >
               {resetPaymentState.isPending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 dark:border-orange-400"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
               ) : (
                 <RefreshCw className="w-4 h-4" />
               )}
