@@ -18,6 +18,7 @@ import TodoModal from '@/components/Timeline/TodoModal';
 import CompleteTodoModal from '@/components/Timeline/CompleteTodoModal';
 import ContactEditModal from '@/components/ContactEditModal';
 import RelationshipEditModal from '@/components/RelationshipEditModal';
+import AddressEditModal from '@/components/AddressEditModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import FinancesCard from '@/components/FinancesCard';
 import VOGCard from '@/components/VOGCard';
@@ -118,7 +119,11 @@ export default function PersonDetail() {
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
-  
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [editingAddressIndex, setEditingAddressIndex] = useState(null);
+
   // Complete todo flow states
   const [todoToComplete, setTodoToComplete] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -338,6 +343,37 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['person', relatedPersonId] });
     }
     queryClient.invalidateQueries({ queryKey: ['people'] });
+  };
+
+  // Handle saving an address from modal
+  const handleSaveAddress = async (data) => {
+    setIsSavingAddress(true);
+    try {
+      const addresses = [...(person.acf?.addresses || [])];
+      if (editingAddressIndex !== null) {
+        addresses[editingAddressIndex] = data;
+      } else {
+        addresses.push(data);
+      }
+      const acfData = sanitizePersonAcf(person.acf, { addresses });
+      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      setShowAddressModal(false);
+      setEditingAddress(null);
+      setEditingAddressIndex(null);
+    } catch (error) {
+      console.error('Failed to save address:', error);
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  // Handle deleting an address
+  const handleDeleteAddress = async (index) => {
+    if (!window.confirm('Weet je zeker dat je dit adres wilt verwijderen?')) return;
+    const addresses = [...(person.acf?.addresses || [])];
+    addresses.splice(index, 1);
+    const acfData = sanitizePersonAcf(person.acf, { addresses });
+    await updatePerson.mutateAsync({ id, data: { acf: acfData } });
   };
 
   // Handle deleting a note
@@ -1351,7 +1387,22 @@ export default function PersonDetail() {
             {/* Addresses - only show for living people */}
             {!isDeceased && (
               <div className="card p-6">
-                <h2 className="font-semibold text-brand-gradient mb-4">Adressen</h2>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-semibold text-brand-gradient">Adressen</h2>
+                  {canEditPeople && (
+                    <button
+                      onClick={() => {
+                        setEditingAddress(null);
+                        setEditingAddressIndex(null);
+                        setShowAddressModal(true);
+                      }}
+                      className="btn-tertiary text-sm"
+                      title="Adres toevoegen"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 {acf.addresses?.length > 0 ? (
                   <div className="space-y-3">
                     {acf.addresses.map((address, index) => {
@@ -1364,7 +1415,7 @@ export default function PersonDetail() {
                       const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(', '))}`;
 
                       return (
-                        <div key={index} className="flex items-start">
+                        <div key={index} className="flex items-start group">
                           <MapPin className="w-4 h-4 text-gray-400 mt-1 mr-3 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             {address.address_label && (
@@ -1381,13 +1432,35 @@ export default function PersonDetail() {
                               ))}
                             </a>
                           </div>
+                          {canEditPeople && (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                              <button
+                                onClick={() => {
+                                  setEditingAddress(acf.addresses[index]);
+                                  setEditingAddressIndex(index);
+                                  setShowAddressModal(true);
+                                }}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                                title="Adres bewerken"
+                              >
+                                <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAddress(index)}
+                                className="p-1 hover:bg-red-50 rounded"
+                                title="Adres verwijderen"
+                              >
+                                <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    Nog geen adressen.
+                    Nog geen adressen.{canEditPeople && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
                   </p>
                 )}
               </div>
@@ -1977,6 +2050,20 @@ export default function PersonDetail() {
               personId={id}
               allPeople={allPeople || []}
               isPeopleLoading={isPeopleLoading}
+            />
+          )}
+
+          {canEditPeople && (
+            <AddressEditModal
+              isOpen={showAddressModal}
+              onClose={() => {
+                setShowAddressModal(false);
+                setEditingAddress(null);
+                setEditingAddressIndex(null);
+              }}
+              onSubmit={handleSaveAddress}
+              isLoading={isSavingAddress}
+              address={editingAddress}
             />
           )}
 
