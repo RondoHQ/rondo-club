@@ -6,7 +6,7 @@ Establish a four-tier button hierarchy (filled primary, outlined secondary, ghos
 
 ## Phases
 
-- [ ] **Phase 212: Button CSS System** - Define all four button tiers and dark mode variants in src/index.css
+- [x] **Phase 212: Button CSS System** - Define all four button tiers and dark mode variants in src/index.css (completed 2026-03-11)
 - [ ] **Phase 213: Sitewide Rollout** - Apply correct tier hierarchy to every page, modal, and toolbar
 
 ## Phase Details
@@ -21,7 +21,7 @@ Establish a four-tier button hierarchy (filled primary, outlined secondary, ghos
   3. btn-tertiary renders as a ghost button with no border, text-only, and a subtle hover background
   4. btn-danger renders as a red filled button with white text, used for all destructive actions
   5. All four tiers have distinct and legible appearances in both light mode and dark mode
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 212-01-PLAN.md — Define four-tier button CSS system with DRY refactor
 
@@ -44,5 +44,5 @@ Phases execute in numeric order: 212 -> 213
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 212. Button CSS System | 0/1 | Not started | - |
+| 212. Button CSS System | 1/1 | Complete   | 2026-03-11 |
 | 213. Sitewide Rollout | 0/TBD | Not started | - |

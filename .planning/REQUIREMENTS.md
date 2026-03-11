@@ -9,11 +9,11 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Button System
 
-- [ ] **BTN-01**: btn-primary remains filled gradient (current styling preserved)
-- [ ] **BTN-02**: btn-secondary restyled to outlined (brand border + brand text, no fill)
-- [ ] **BTN-03**: btn-tertiary created as ghost style (text-only, subtle hover background)
-- [ ] **BTN-04**: btn-danger restyled to red filled (red bg, white text) and used for all destructive actions
-- [ ] **BTN-05**: All four button tiers have proper dark mode variants
+- [x] **BTN-01**: btn-primary remains filled gradient (current styling preserved)
+- [x] **BTN-02**: btn-secondary restyled to outlined (brand border + brand text, no fill)
+- [x] **BTN-03**: btn-tertiary created as ghost style (text-only, subtle hover background)
+- [x] **BTN-04**: btn-danger restyled to red filled (red bg, white text) and used for all destructive actions
+- [x] **BTN-05**: All four button tiers have proper dark mode variants
 
 ### Rollout
 
@@ -44,11 +44,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BTN-01 | Phase 212 | Pending |
-| BTN-02 | Phase 212 | Pending |
-| BTN-03 | Phase 212 | Pending |
-| BTN-04 | Phase 212 | Pending |
-| BTN-05 | Phase 212 | Pending |
+| BTN-01 | Phase 212 | Complete |
+| BTN-02 | Phase 212 | Complete |
+| BTN-03 | Phase 212 | Complete |
+| BTN-04 | Phase 212 | Complete |
+| BTN-05 | Phase 212 | Complete |
 | ROLL-01 | Phase 213 | Pending |
 | ROLL-02 | Phase 213 | Pending |
 | ROLL-03 | Phase 213 | Pending |
