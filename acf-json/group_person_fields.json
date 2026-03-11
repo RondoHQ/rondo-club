@@ -286,6 +286,17 @@
                     "wrapper": {
                         "width": "25"
                     }
+                },
+                {
+                    "key": "field_address_country_code",
+                    "label": "Country Code",
+                    "name": "country_code",
+                    "type": "text",
+                    "maxlength": 3,
+                    "placeholder": "e.g. NL",
+                    "wrapper": {
+                        "width": "25"
+                    }
                 }
             ]
         },
