@@ -60,7 +60,7 @@ export default function DataTableToolbar({
             <button
               ref={buttonRef}
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`btn-secondary ${
+              className={`btn-tertiary ${
                 hasActiveFilters
                   ? 'bg-cyan-50 text-bright-cobalt border-cyan-200 dark:bg-cyan-900/20 dark:text-electric-cyan dark:border-cyan-700'
                   : ''
@@ -109,7 +109,7 @@ export default function DataTableToolbar({
         )}
         <button
           onClick={onOpenColumnSettings}
-          className="btn-secondary"
+          className="btn-tertiary"
           title="Kolommen aanpassen"
           aria-label="Kolommen aanpassen"
         >
