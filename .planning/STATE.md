@@ -52,7 +52,7 @@ Recent v32.0 decisions:
 
 ### Pending Todos
 
-6 todo(s) in `.planning/todos/pending/`
+7 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
