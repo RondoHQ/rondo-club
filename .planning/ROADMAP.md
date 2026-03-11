@@ -35,7 +35,11 @@ Plans:
   3. On Finance list, settings, and draft-form pages all buttons follow the tier hierarchy
   4. On People, Teams, Commissies, Feedback, VOG, Contributie, Clothing, and Settings pages all buttons follow the tier hierarchy
   5. DataTable toolbar action buttons use tertiary for utility actions, with no unlabeled or incorrectly tiered buttons remaining
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 213-01-PLAN.md — Apply tier hierarchy to Finance pages and invoice detail
+- [ ] 213-02-PLAN.md — Apply tier hierarchy to modals, People/Teams/Commissies, and Settings pages
+- [ ] 213-03-PLAN.md — Apply tier hierarchy to Feedback/VOG/Contributie/Clothing/Todos and DataTable toolbar
 
 ## Progress
 
@@ -45,4 +49,4 @@ Phases execute in numeric order: 212 -> 213
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 212. Button CSS System | 1/1 | Complete    | 2026-03-11 |
-| 213. Sitewide Rollout | 0/TBD | Not started | - |
+| 213. Sitewide Rollout | 0/3 | Not started | - |
