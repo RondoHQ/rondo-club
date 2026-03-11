@@ -7,7 +7,7 @@ Establish a four-tier button hierarchy (filled primary, outlined secondary, ghos
 ## Phases
 
 - [x] **Phase 212: Button CSS System** - Define all four button tiers and dark mode variants in src/index.css (completed 2026-03-11)
-- [ ] **Phase 213: Sitewide Rollout** - Apply correct tier hierarchy to every page, modal, and toolbar
+- [x] **Phase 213: Sitewide Rollout** - Apply correct tier hierarchy to every page, modal, and toolbar (completed 2026-03-11)
 
 ## Phase Details
 
@@ -35,7 +35,7 @@ Plans:
   3. On Finance list, settings, and draft-form pages all buttons follow the tier hierarchy
   4. On People, Teams, Commissies, Feedback, VOG, Contributie, Clothing, and Settings pages all buttons follow the tier hierarchy
   5. DataTable toolbar action buttons use tertiary for utility actions, with no unlabeled or incorrectly tiered buttons remaining
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [ ] 213-01-PLAN.md — Apply tier hierarchy to Finance pages and invoice detail
 - [ ] 213-02-PLAN.md — Apply tier hierarchy to all modal dialogs
@@ -50,4 +50,4 @@ Phases execute in numeric order: 212 -> 213
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 212. Button CSS System | 1/1 | Complete    | 2026-03-11 |
-| 213. Sitewide Rollout | 3/4 | In Progress|  |
+| 213. Sitewide Rollout | 4/4 | Complete   | 2026-03-11 |

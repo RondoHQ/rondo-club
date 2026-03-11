@@ -17,9 +17,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Rollout
 
-- [ ] **ROLL-01**: Invoice detail page applies correct tier hierarchy (send=primary, mark paid=secondary, PDF/payment link=tertiary, delete=danger)
+- [x] **ROLL-01**: Invoice detail page applies correct tier hierarchy (send=primary, mark paid=secondary, PDF/payment link=tertiary, delete=danger)
 - [x] **ROLL-02**: All modal dialogs use correct tiers (Save/Submit=primary, Cancel=secondary)
-- [ ] **ROLL-03**: Finance pages (list, settings, draft form) use correct tiers
+- [x] **ROLL-03**: Finance pages (list, settings, draft form) use correct tiers
 - [x] **ROLL-04**: People, Teams, Commissies pages use correct tiers
 - [x] **ROLL-05**: Settings pages use correct tiers
 - [x] **ROLL-06**: Feedback, VOG, Contributie, Clothing pages use correct tiers
@@ -49,9 +49,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BTN-03 | Phase 212 | Complete |
 | BTN-04 | Phase 212 | Complete |
 | BTN-05 | Phase 212 | Complete |
-| ROLL-01 | Phase 213 | Pending |
+| ROLL-01 | Phase 213 | Complete |
 | ROLL-02 | Phase 213 | Complete |
-| ROLL-03 | Phase 213 | Pending |
+| ROLL-03 | Phase 213 | Complete |
 | ROLL-04 | Phase 213 | Complete |
 | ROLL-05 | Phase 213 | Complete |
 | ROLL-06 | Phase 213 | Complete |
