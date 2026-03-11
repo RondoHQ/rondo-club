@@ -169,6 +169,7 @@ export default function AddressEditModal({
       city: '',
       state: '',
       country: 'Netherlands',
+      country_code: '',
     },
   });
 
@@ -185,6 +186,7 @@ export default function AddressEditModal({
           city: address.city || '',
           state: address.state || '',
           country: address.country || 'Netherlands',
+          country_code: address.country_code || '',
         });
       } else {
         reset({
@@ -196,6 +198,7 @@ export default function AddressEditModal({
           city: '',
           state: '',
           country: 'Netherlands',
+          country_code: '',
         });
       }
     }
@@ -213,6 +216,7 @@ export default function AddressEditModal({
       city: data.city || '',
       state: data.state || '',
       country: data.country || '',
+      country_code: data.country_code || '',
     });
   };
 
@@ -297,8 +301,8 @@ export default function AddressEditModal({
               </div>
             </div>
 
-            {/* State and Country row */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* State, Country and Country Code row */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="label">Provincie</label>
                 <input
@@ -308,7 +312,7 @@ export default function AddressEditModal({
                   disabled={isLoading}
                 />
               </div>
-              
+
               <div>
                 <label className="label">Land</label>
                 <Controller
@@ -321,6 +325,17 @@ export default function AddressEditModal({
                       disabled={isLoading}
                     />
                   )}
+                />
+              </div>
+
+              <div>
+                <label className="label">Landcode</label>
+                <input
+                  {...register('country_code')}
+                  className="input"
+                  placeholder="bijv. NL"
+                  maxLength={3}
+                  disabled={isLoading}
                 />
               </div>
             </div>

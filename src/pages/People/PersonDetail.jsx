@@ -1358,7 +1358,7 @@ export default function PersonDetail() {
                       const addressLines = [
                         [address.street_name, address.house_number, address.house_number_addition].filter(Boolean).join(' '),
                         [address.city, address.state, address.postal_code].filter(Boolean).join(', '),
-                        address.country
+                        [address.country, address.country_code ? `(${address.country_code})` : null].filter(Boolean).join(' ')
                       ].filter(Boolean);
                       
                       const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLines.join(', '))}`;
