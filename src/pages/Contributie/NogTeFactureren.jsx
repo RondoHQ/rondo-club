@@ -19,7 +19,7 @@ function StatusBadge({ status }) {
     draft: 'Concept',
     sent: 'Verstuurd',
     paid: 'Betaald',
-    overdue: 'Verlopen',
+    overdue: 'Achterstallig',
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[status] || styles.draft}`}>
@@ -342,7 +342,7 @@ export function NogTeFactureren() {
           { value: 'draft', label: 'Concept' },
           { value: 'sent', label: 'Verstuurd' },
           { value: 'paid', label: 'Betaald' },
-          { value: 'overdue', label: 'Verlopen' },
+          { value: 'overdue', label: 'Achterstallig' },
         ],
         // Custom filterFn to handle null invoice_status (represented as 'none')
         filterFn: (row, _id, value) => {
@@ -372,7 +372,7 @@ export function NogTeFactureren() {
               type="button"
               onClick={() => handleCreateSingle(member.id)}
               disabled={bulkCreating || isCreatingThis}
-              className="btn-secondary inline-flex items-center gap-1.5 text-xs py-1 px-2 disabled:opacity-50"
+              className="btn-tertiary inline-flex items-center gap-1.5 text-xs py-1 px-2 disabled:opacity-50"
             >
               {isCreatingThis ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -415,7 +415,7 @@ export function NogTeFactureren() {
         <p className="text-red-600 dark:text-red-400 mb-4">
           Gegevens konden niet worden geladen.
         </p>
-        <button onClick={handleRefresh} className="btn-secondary inline-flex items-center gap-2">
+        <button onClick={handleRefresh} className="btn-tertiary inline-flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
           Opnieuw proberen
         </button>

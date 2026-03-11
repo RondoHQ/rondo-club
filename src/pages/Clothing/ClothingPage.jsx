@@ -427,7 +427,7 @@ export default function ClothingPage() {
                     <h3 className="font-semibold text-brand-gradient">Huidige kleding</h3>
                     <button
                       type="button"
-                      className="btn-secondary text-sm"
+                      className="btn-tertiary text-sm"
                       onClick={() => setShowIssueForm((prev) => !prev)}
                     >
                       <Plus className="w-4 h-4 mr-1" />
@@ -447,7 +447,7 @@ export default function ClothingPage() {
                           </div>
                           <button
                             type="button"
-                            className="btn-secondary text-xs"
+                            className="btn-tertiary text-xs"
                             onClick={() => handleReturnItem(row)}
                             disabled={createAssignment.isPending}
                           >
@@ -554,7 +554,7 @@ export default function ClothingPage() {
                               deleteItem.mutate(item.id);
                             }
                           }}
-                          className="btn-secondary text-xs"
+                          className="btn-tertiary text-xs"
                         >
                           Verwijder
                         </button>
@@ -571,7 +571,7 @@ export default function ClothingPage() {
       {activeTab === 'transactions' && (
         <div className="space-y-6">
           <div className="flex justify-end">
-            <button onClick={handleExport} className="btn-secondary text-sm">
+            <button onClick={handleExport} className="btn-tertiary text-sm">
               <Download className="w-4 h-4 mr-1" />
               Exporteer CSV
             </button>
