@@ -5,7 +5,7 @@ milestone_name: milestone
 status: planning
 stopped_at: Completed 213-01-PLAN.md
 last_updated: "2026-03-11T13:32:38.304Z"
-last_activity: 2026-03-11 — Roadmap created, 12/12 requirements mapped
+last_activity: 2026-03-11 - Completed quick task 126: Add CountryCode next to CountryName in address fields for easier syncing
 progress:
   total_phases: 2
   completed_phases: 2
@@ -71,6 +71,7 @@ Recent v32.0 decisions:
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 125 | Make instapkorting configurable per season | 2026-03-10 | 19076f0e | [125-make-instapkorting-configurable-per-seas](./quick/125-make-instapkorting-configurable-per-seas/) |
+| 126 | Add CountryCode next to CountryName in address fields for easier syncing | 2026-03-11 | 371d0597 | [126-add-countrycode-next-to-countryname-in-a](./quick/126-add-countrycode-next-to-countryname-in-a/) |
 | Phase 212-button-css-system P01 | 15 | 2 tasks | 1 files |
 | Phase 213-sitewide-rollout P02 | 15 | 1 tasks | 5 files |
 | Phase 213-sitewide-rollout P03 | 3 | 2 tasks | 9 files |
