@@ -564,7 +564,7 @@ export default function Kaderlijst() {
               }
             }}
             disabled={isFetching || isRefreshing}
-            className="btn-secondary inline-flex items-center"
+            className="btn-tertiary"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isFetching || isRefreshing ? 'animate-spin' : ''}`} />
             {isFetching || isRefreshing ? 'Verversen...' : 'Kaderlijst verversen'}

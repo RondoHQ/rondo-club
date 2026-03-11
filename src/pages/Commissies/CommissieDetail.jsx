@@ -87,7 +87,7 @@ export default function CommissieDetail() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600 dark:text-red-400">Commissie kon niet worden geladen.</p>
-        <Link to="/commissies" className="btn-secondary mt-4">Terug naar commissies</Link>
+        <Link to="/commissies" className="btn-tertiary mt-4">Terug naar commissies</Link>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function CommissieDetail() {
           <span className="hidden md:inline">Terug naar commissies</span>
         </Link>
         <div className="flex gap-2">
-          <button onClick={() => setShowShareModal(true)} className="btn-secondary" title="Delen">
+          <button onClick={() => setShowShareModal(true)} className="btn-tertiary" title="Delen">
             <Share2 className="w-4 h-4 mr-2" />
             Delen
           </button>
