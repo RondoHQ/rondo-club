@@ -4,10 +4,10 @@ milestone: v32.0
 milestone_name: Interface Touch-up
 status: not_started
 stopped_at: null
-last_updated: "2026-03-11T13:15:00.000Z"
-last_activity: 2026-03-11 — Milestone v32.0 started
+last_updated: "2026-03-11T13:30:00.000Z"
+last_activity: 2026-03-11 — Roadmap created for v32.0
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-11)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v32.0 Interface Touch-up — Button hierarchy system
+**Current focus:** v32.0 Interface Touch-up — Phase 212: Button CSS System
 
 ## Current Position
 
 Milestone: v32.0 Interface Touch-up
-Phase: Not started (defining requirements)
+Phase: 212 of 213 (Button CSS System)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-11 — Milestone v32.0 started
+Status: Ready to plan
+Last activity: 2026-03-11 — Roadmap created, 12/12 requirements mapped
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -47,6 +47,8 @@ Progress: [░░░░░░░░░░] 0%
 ### Decisions
 
 Decisions logged in PROJECT.md Key Decisions table (790+ entries).
+Recent v32.0 decisions:
+- No React Button component wrapper — CSS classes are sufficient, abstraction adds no clear benefit
 
 ### Pending Todos
 
@@ -60,21 +62,15 @@ Decisions logged in PROJECT.md Key Decisions table (790+ entries).
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 119 | Restrict people editing to FairPlay/Bestuur/VOG/Financieel roles | 2026-03-09 | 38aa54b4 | [119-the-editing-functionality-on-people-shou](./quick/119-the-editing-functionality-on-people-shou/) |
-| 120 | Fix dropdown overflow on Tuchtzaken settings card | 2026-03-09 | e3be4392 | [120-fix-dropdown-overflow-on-teams-met-doorb](./quick/120-fix-dropdown-overflow-on-teams-met-doorb/) |
-| 121 | Add URL sub-routes for FinanceSettings and ClothingPage tabs | 2026-03-09 | 9e805101 | [121-add-sub-routes-for-financesettings-tabs-](./quick/121-add-sub-routes-for-financesettings-tabs-/) |
-| 122 | Make welkomstmail Bericht field rich text | 2026-03-09 | 94846a8b | [122-make-bericht-field-on-welkomstmail-setti](./quick/122-make-bericht-field-on-welkomstmail-setti/) |
-| 123 | Replace street field with street_name, house_number, house_number_addition | 2026-03-10 | c15e4066 | [123-replace-street-field-with-street-name-ho](./quick/123-replace-street-field-with-street-name-ho/) |
-| 124 | Remove factuur-adres field, use addresses repeater with Factuur label | 2026-03-10 | 252af5b0 | [124-remove-factuur-adres-field-use-address-w](./quick/124-remove-factuur-adres-field-use-address-w/) |
 | 125 | Make instapkorting configurable per season | 2026-03-10 | 19076f0e | [125-make-instapkorting-configurable-per-seas](./quick/125-make-instapkorting-configurable-per-seas/) |
 
 ## Session Continuity
 
 Last session: 2026-03-11
-Stopped at: Starting milestone v32.0
+Stopped at: Roadmap created for v32.0 Interface Touch-up
 
-**Next action:** Define requirements for v32.0 Interface Touch-up
+**Next action:** Run `/gsd:plan-phase 212` to plan the Button CSS System phase
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-03-11 — Milestone v32.0 started*
+*Last updated: 2026-03-11 — Roadmap created for v32.0*

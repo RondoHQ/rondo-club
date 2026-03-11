@@ -44,24 +44,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BTN-01 | — | Pending |
-| BTN-02 | — | Pending |
-| BTN-03 | — | Pending |
-| BTN-04 | — | Pending |
-| BTN-05 | — | Pending |
-| ROLL-01 | — | Pending |
-| ROLL-02 | — | Pending |
-| ROLL-03 | — | Pending |
-| ROLL-04 | — | Pending |
-| ROLL-05 | — | Pending |
-| ROLL-06 | — | Pending |
-| ROLL-07 | — | Pending |
+| BTN-01 | Phase 212 | Pending |
+| BTN-02 | Phase 212 | Pending |
+| BTN-03 | Phase 212 | Pending |
+| BTN-04 | Phase 212 | Pending |
+| BTN-05 | Phase 212 | Pending |
+| ROLL-01 | Phase 213 | Pending |
+| ROLL-02 | Phase 213 | Pending |
+| ROLL-03 | Phase 213 | Pending |
+| ROLL-04 | Phase 213 | Pending |
+| ROLL-05 | Phase 213 | Pending |
+| ROLL-06 | Phase 213 | Pending |
+| ROLL-07 | Phase 213 | Pending |
 
 **Coverage:**
 - v32.0 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-11*
-*Last updated: 2026-03-11 after initial definition*
+*Last updated: 2026-03-11 — Traceability filled after roadmap creation*

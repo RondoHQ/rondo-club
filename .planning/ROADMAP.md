@@ -1,69 +1,46 @@
-# Roadmap: v31.0 Editable Contact Fields
+# Roadmap: v32.0 Interface Touch-up
 
 ## Overview
 
-Replace the flexible-but-messy ACF contact_info repeater with 6 fixed contact fields (email_1, email_2, mobile_1, mobile_2, telephone_1, telephone_2), migrate existing data, build editable UI with phone normalization and email warnings, then update rondo-sync to read/write the new fields and re-enable reverse sync cron.
+Establish a four-tier button hierarchy (filled primary, outlined secondary, ghost tertiary, destructive danger) in CSS, then roll out the correct tier assignments across all ~54 JSX files in the application. The result is a visually consistent UI where button prominence always signals action weight.
 
 ## Phases
 
-- [x] **Phase 209: Data Model Migration** - Register 6 fixed ACF fields, migrate repeater data, remove legacy fields (completed 2026-03-08)
-- [x] **Phase 210: Backend Normalization & UI** - E.164 phone normalization on save, editable contact fields in person detail with email warning (completed 2026-03-08)
-- [x] **Phase 211: Sync Update** - Update rondo-sync forward + reverse sync for new fields, re-enable reverse sync cron (completed 2026-03-08)
+- [ ] **Phase 212: Button CSS System** - Define all four button tiers and dark mode variants in src/index.css
+- [ ] **Phase 213: Sitewide Rollout** - Apply correct tier hierarchy to every page, modal, and toolbar
 
 ## Phase Details
 
-### Phase 209: Data Model Migration
-**Goal**: Person records store contact info in 6 fixed ACF fields with all existing data migrated
+### Phase 212: Button CSS System
+**Goal**: The four button tier classes are defined and visually correct across light and dark mode
 **Depends on**: Nothing (first phase)
-**Requirements**: DATA-01, DATA-03, DATA-04
+**Requirements**: BTN-01, BTN-02, BTN-03, BTN-04, BTN-05
 **Success Criteria** (what must be TRUE):
-  1. Every person record has 6 fixed contact fields (email_1, email_2, mobile_1, mobile_2, telephone_1, telephone_2) available in ACF
-  2. All existing contact_info repeater data has been migrated to the correct fixed fields with no data loss
-  3. The legacy contact_info repeater field group and social link fields no longer appear in the system
-  4. REST API responses for person records return the new fixed fields instead of the old repeater structure
-**Plans:** 3/3 plans complete
+  1. btn-primary renders as a filled gradient button, visually identical to the current primary style
+  2. btn-secondary renders as an outlined button with brand-colored border and text and no fill
+  3. btn-tertiary renders as a ghost button with no border, text-only, and a subtle hover background
+  4. btn-danger renders as a red filled button with white text, used for all destructive actions
+  5. All four tiers have distinct and legible appearances in both light mode and dark mode
+**Plans**: TBD
 
-Plans:
-- [ ] 209-01-PLAN.md — Register 6 fixed ACF fields and migrate repeater data via WP-CLI
-- [ ] 209-02-PLAN.md — Update all PHP backend consumers to use fixed fields
-- [ ] 209-03-PLAN.md — Update frontend to use fixed fields and remove legacy ACF repeater
-
-### Phase 210: Backend Normalization & UI
-**Goal**: Users can view and edit all 6 contact fields on person detail with phone normalization and email change warnings
-**Depends on**: Phase 209
-**Requirements**: DATA-02, UI-01, UI-02, UI-03, UI-04
+### Phase 213: Sitewide Rollout
+**Goal**: Every button in the application uses the correct tier for its action weight, with no rogue inline styles or unclassified buttons
+**Depends on**: Phase 212
+**Requirements**: ROLL-01, ROLL-02, ROLL-03, ROLL-04, ROLL-05, ROLL-06, ROLL-07
 **Success Criteria** (what must be TRUE):
-  1. Person detail page displays all 6 contact fields with clickable tel: and mailto: links
-  2. User can edit all 6 contact fields inline on the person detail page and save successfully
-  3. When editing an email field, a warning is displayed that changes affect the member's voetbal.nl login
-  4. Phone numbers entered in any Dutch format (06-12345678, 0612345678, etc.) are normalized to E.164 (+31612345678) on save but display in readable format
-**Plans:** 2/2 plans complete
-
-Plans:
-- [ ] 210-01-PLAN.md — E.164 phone normalization on ACF save via PhoneNormalizer class
-- [ ] 210-02-PLAN.md — Readable phone display formatting and email change warning in UI
-
-### Phase 211: Sync Update
-**Goal**: rondo-sync reads and writes the new fixed fields for both forward and reverse sync, with reverse sync cron active
-**Depends on**: Phase 210
-**Requirements**: SYNC-01, SYNC-02, SYNC-03
-**Success Criteria** (what must be TRUE):
-  1. Forward sync from Sportlink maps email, email2, mobile, phone fields 1:1 to the new Rondo Club fixed fields
-  2. Reverse sync change detection compares current fixed field values against Sportlink data using hash comparison
-  3. Reverse sync cron job is running on the rondo-sync server on its scheduled interval
-**Plans:** 2/2 plans complete
-
-Plans:
-- [ ] 211-01-PLAN.md — Forward sync fixed fields, phone normalizer, reverse sync field map and DB migration
-- [ ] 211-02-PLAN.md — Deploy to server, dry-run validation, re-enable reverse sync cron
+  1. On invoice detail pages, send action uses primary, mark-paid uses secondary, PDF/payment link actions use tertiary, and delete uses danger
+  2. In every modal dialog, the submit/save action uses primary and cancel uses secondary
+  3. On Finance list, settings, and draft-form pages all buttons follow the tier hierarchy
+  4. On People, Teams, Commissies, Feedback, VOG, Contributie, Clothing, and Settings pages all buttons follow the tier hierarchy
+  5. DataTable toolbar action buttons use tertiary for utility actions, with no unlabeled or incorrectly tiered buttons remaining
+**Plans**: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 209 -> 210 -> 211
+Phases execute in numeric order: 212 -> 213
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 209. Data Model Migration | 3/3 | Complete    | 2026-03-08 |
-| 210. Backend Normalization & UI | 2/2 | Complete    | 2026-03-08 |
-| 211. Sync Update | 2/2 | Complete    | 2026-03-08 |
+| 212. Button CSS System | 0/TBD | Not started | - |
+| 213. Sitewide Rollout | 0/TBD | Not started | - |
