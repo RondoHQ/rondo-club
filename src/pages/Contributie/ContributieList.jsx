@@ -443,7 +443,7 @@ export function ContributieList({ onlyMismatch = false }) {
         </p>
         <button
           onClick={handleRefresh}
-          className="btn-secondary inline-flex items-center gap-2"
+          className="btn-tertiary inline-flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
           Opnieuw proberen
@@ -483,7 +483,7 @@ export function ContributieList({ onlyMismatch = false }) {
               />
               <button
                 onClick={handleExportCsv}
-                className="btn-secondary"
+                className="btn-tertiary"
                 title="Downloaden als CSV"
                 disabled={!sortedMembers.length}
               >
@@ -504,7 +504,7 @@ export function ContributieList({ onlyMismatch = false }) {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Geen leden gevonden voor de geselecteerde filters.
               </p>
-              <button onClick={clearFilters} className="mt-3 btn-secondary text-sm">
+              <button onClick={clearFilters} className="mt-3 btn-tertiary text-sm">
                 Filters wissen
               </button>
             </div>

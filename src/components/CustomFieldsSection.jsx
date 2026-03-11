@@ -465,7 +465,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
           {hasEditableFields && (
             <button
               onClick={() => setShowModal(true)}
-              className="btn-secondary text-sm"
+              className="btn-tertiary text-sm"
             >
               <Pencil className="w-4 h-4 md:mr-1" />
               <span className="hidden md:inline">Bewerken</span>

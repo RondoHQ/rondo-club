@@ -181,7 +181,7 @@ export default function FeedbackDetail() {
           {canEditFeedback && (
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="btn-secondary flex items-center gap-2"
+              className="btn-tertiary flex items-center gap-2"
             >
               <Pencil className="w-4 h-4" />
               Edit

@@ -537,7 +537,7 @@ export default function VOGList() {
         </p>
         <button
           onClick={handleRefresh}
-          className="btn-secondary inline-flex items-center gap-2"
+          className="btn-tertiary inline-flex items-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
           Opnieuw proberen
@@ -624,7 +624,7 @@ export default function VOGList() {
           toolbarEnd={
             <button
               onClick={handleExportCsv}
-              className="btn-secondary"
+              className="btn-tertiary"
               title="Downloaden als CSV"
               disabled={!people.length}
             >
