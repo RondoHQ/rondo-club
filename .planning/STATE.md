@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v32.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 212-01-PLAN.md
-last_updated: "2026-03-11T13:00:04.678Z"
+stopped_at: Completed 213-02-PLAN.md
+last_updated: "2026-03-11T13:19:47.910Z"
 last_activity: 2026-03-11 — Roadmap created, 12/12 requirements mapped
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 5
+  completed_plans: 2
   percent: 0
 ---
 
@@ -50,6 +50,7 @@ Decisions logged in PROJECT.md Key Decisions table (790+ entries).
 Recent v32.0 decisions:
 - No React Button component wrapper — CSS classes are sufficient, abstraction adds no clear benefit
 - [Phase 212-button-css-system]: btn-secondary restyled to outlined, btn-tertiary created as ghost, btn-danger-outline and btn-glass removed; DRY @apply base extension pattern established for all button variants
+- [Phase 213-sitewide-rollout]: btn-danger adopted for DeleteFieldDialog permanent delete; inline red overrides removed
 
 ### Pending Todos
 
@@ -65,11 +66,12 @@ Recent v32.0 decisions:
 |---|-------------|------|--------|-----------|
 | 125 | Make instapkorting configurable per season | 2026-03-10 | 19076f0e | [125-make-instapkorting-configurable-per-seas](./quick/125-make-instapkorting-configurable-per-seas/) |
 | Phase 212-button-css-system P01 | 15 | 2 tasks | 1 files |
+| Phase 213-sitewide-rollout P02 | 15 | 1 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-11T12:56:39.496Z
-Stopped at: Completed 212-01-PLAN.md
+Last session: 2026-03-11T13:19:47.908Z
+Stopped at: Completed 213-02-PLAN.md
 
 **Next action:** Run `/gsd:plan-phase 212` to plan the Button CSS System phase
 
