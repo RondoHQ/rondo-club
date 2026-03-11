@@ -20,7 +20,7 @@ function FacturenStatusCard({ byStatus, href }) {
     { key: 'draft', label: 'Concept', count: byStatus.draft || 0 },
     { key: 'sent', label: 'Verstuurd', count: byStatus.sent || 0 },
     { key: 'paid', label: 'Betaald', count: byStatus.paid || 0 },
-    { key: 'overdue', label: 'Verlopen', count: byStatus.overdue || 0 },
+    { key: 'overdue', label: 'Achterstallig', count: byStatus.overdue || 0 },
   ].filter((item) => item.count > 0);
 
   const content = (

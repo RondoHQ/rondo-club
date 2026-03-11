@@ -75,7 +75,7 @@ function TestEmailBlock({ templateType }) {
           type="button"
           onClick={handleSend}
           disabled={sending || !recipient.trim()}
-          className="btn-secondary flex items-center justify-center gap-2 whitespace-nowrap"
+          className="btn-primary gap-2 whitespace-nowrap"
         >
           {sending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -167,7 +167,7 @@ function CertificateSection() {
         <button
           type="button"
           onClick={loadCertificate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+          className="btn-tertiary gap-2"
         >
           <ShieldCheck className="w-4 h-4" />
           Certificaat tonen
@@ -1298,7 +1298,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                       }
                     }}
                     disabled={disconnectMutation.isPending}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="btn-danger gap-2"
                   >
                     {disconnectMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1336,7 +1336,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                     }}
                     disabled={!settings?.rabobank_has_credentials}
                     title={!settings?.rabobank_has_credentials ? 'Sla eerst je Client ID en Client Secret op' : ''}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-electric-cyan hover:bg-electric-cyan/90 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary gap-2"
                   >
                     <ExternalLink className="w-4 h-4" />
                     Koppelen met Rabobank
@@ -1452,7 +1452,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <button
                 type="button"
                 onClick={handleAddMollieAccount}
-                className="inline-flex items-center gap-2 px-3 py-2 bg-electric-cyan text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                className="btn-secondary gap-2"
               >
                 Rekening toevoegen
               </button>
@@ -1648,7 +1648,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           <button
             type="button"
             onClick={() => setShowMembershipPassHelp(true)}
-            className="inline-flex items-center rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="btn-tertiary"
           >
             Hulp bij instellen
           </button>
@@ -1887,7 +1887,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           <button
             type="submit"
             disabled={updateMutation.isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-electric-cyan hover:bg-electric-cyan/90 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary gap-2"
           >
             {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
             Opslaan

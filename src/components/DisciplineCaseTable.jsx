@@ -269,7 +269,7 @@ export default function DisciplineCaseTable({
           <button
             onClick={onCreateInvoice}
             disabled={isCreatingInvoice}
-            className="btn-secondary bg-deep-midnight hover:bg-obsidian text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            className="btn-primary gap-2"
           >
             {isCreatingInvoice ? (
               <>

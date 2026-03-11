@@ -27,6 +27,7 @@ export default function FactuurNieuw() {
   return (
     <div className="max-w-4xl">
       <InvoiceDraftForm
+        invoiceType="manual"
         formKey="new"
         initialValues={{ invoiceTarget: 'member' }}
         onSubmit={handleSubmit}
