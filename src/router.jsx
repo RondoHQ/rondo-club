@@ -49,7 +49,7 @@ function AccessDenied() {
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="btn btn-secondary"
+            className="btn-tertiary"
           >
             Ga terug
           </button>

@@ -66,7 +66,7 @@ function AccessDenied() {
         <p className="text-gray-600 dark:text-gray-300 mb-6">
           Je hebt geen toestemming om feedback te beheren. Deze functie is alleen beschikbaar voor beheerders.
         </p>
-        <Link to="/settings" className="btn-primary">
+        <Link to="/settings" className="btn-tertiary">
           Terug naar Instellingen
         </Link>
       </div>
@@ -162,7 +162,7 @@ export default function FeedbackManagement() {
       <div className="flex items-center gap-4">
         <Link
           to="/settings"
-          className="btn-secondary flex items-center gap-2"
+          className="btn-tertiary gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden md:inline">Terug naar Instellingen</span>
