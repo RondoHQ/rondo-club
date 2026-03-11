@@ -948,7 +948,7 @@ export default function PersonDetail() {
     return (
       <div className="card p-6 text-center">
         <p className="text-red-600 dark:text-red-400">Lid kon niet worden geladen.</p>
-        <Link to="/people" className="btn-secondary mt-4">Terug naar leden</Link>
+        <Link to="/people" className="btn-tertiary mt-4">Terug naar leden</Link>
       </div>
     );
   }
@@ -1037,7 +1037,7 @@ export default function PersonDetail() {
             <button
               onClick={handleSyncFromSportlink}
               disabled={isSyncing}
-              className="btn-secondary"
+              className="btn-tertiary"
             >
               <RefreshCw className={`w-4 h-4 md:mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">
@@ -1045,7 +1045,7 @@ export default function PersonDetail() {
               </span>
             </button>
           )}
-          <button onClick={handleExportVCard} className="btn-secondary">
+          <button onClick={handleExportVCard} className="btn-tertiary">
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
           </button>
@@ -1292,7 +1292,7 @@ export default function PersonDetail() {
                 {canEditPeople && (
                   <button
                     onClick={() => setShowContactModal(true)}
-                    className="btn-secondary text-sm"
+                    className="btn-tertiary text-sm"
                   >
                     <Pencil className="w-4 h-4 md:mr-1" />
                     <span className="hidden md:inline">Bewerken</span>
@@ -1427,7 +1427,7 @@ export default function PersonDetail() {
                         setEditingRelationshipIndex(null);
                         setShowRelationshipModal(true);
                       }}
-                      className="btn-secondary text-sm"
+                      className="btn-tertiary text-sm"
                       title="Relatie toevoegen"
                     >
                       <Plus className="w-4 h-4" />
@@ -1592,7 +1592,7 @@ export default function PersonDetail() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowNoteModal(true)}
-                    className="btn-secondary text-sm"
+                    className="btn-tertiary text-sm"
                     title="Notitie toevoegen"
                   >
                     <StickyNote className="w-4 h-4 md:mr-1" />
@@ -1600,7 +1600,7 @@ export default function PersonDetail() {
                   </button>
                   <button
                     onClick={() => setShowActivityModal(true)}
-                    className="btn-secondary text-sm"
+                    className="btn-tertiary text-sm"
                     title="Activiteit toevoegen"
                   >
                     <MessageCircle className="w-4 h-4 md:mr-1" />
@@ -1766,7 +1766,7 @@ export default function PersonDetail() {
                       setEditingTodo(null);
                       setShowTodoModal(true);
                     }}
-                    className="btn-secondary text-sm"
+                    className="btn-tertiary text-sm"
                     title="Taak toevoegen"
                   >
                     <Plus className="w-4 h-4" />
@@ -1852,7 +1852,7 @@ export default function PersonDetail() {
                       setShowTodoModal(true);
                       setShowMobileTodos(false);
                     }}
-                    className="btn-secondary text-sm"
+                    className="btn-tertiary text-sm"
                     title="Taak toevoegen"
                   >
                     <Plus className="w-4 h-4" />

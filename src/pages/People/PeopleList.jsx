@@ -1076,7 +1076,7 @@ export default function PeopleList() {
           toolbarEnd={
             <button
               onClick={handleExportCsv}
-              className="btn-secondary"
+              className="btn-tertiary"
               title="Downloaden als CSV"
               disabled={!people.length}
             >
@@ -1205,7 +1205,7 @@ export default function PeopleList() {
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             Pas je filters aan om meer resultaten te zien.
           </p>
-          <button onClick={clearFilters} className="btn-secondary">
+          <button onClick={clearFilters} className="btn-tertiary">
             Filters wissen
           </button>
         </div>
