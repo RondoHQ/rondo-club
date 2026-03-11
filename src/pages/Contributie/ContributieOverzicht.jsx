@@ -87,7 +87,7 @@ export function ContributieOverzicht() {
           <button
             onClick={() => startBulkJob.mutate()}
             disabled={jobStatus?.status === 'running' || startBulkJob.isPending}
-            className="btn-primary inline-flex items-center gap-2"
+            className="btn-primary gap-2"
           >
             {(jobStatus?.status === 'running' || startBulkJob.isPending) ? (
               <Loader2 className="w-4 h-4 animate-spin" />

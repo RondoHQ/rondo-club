@@ -221,7 +221,7 @@ export default function TodosList() {
         <div className="flex justify-end">
           <button
             onClick={() => setShowGlobalTodoModal(true)}
-            className="btn-primary text-sm flex items-center gap-2"
+            className="btn-primary text-sm gap-2"
           >
             <Plus className="w-4 h-4" />
             Taak toevoegen
