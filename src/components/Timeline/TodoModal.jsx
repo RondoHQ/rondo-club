@@ -293,7 +293,7 @@ export default function TodoModal({ isOpen, onClose, onSubmit, isLoading, todo =
         <button
           type="button"
           onClick={() => setIsViewMode(false)}
-          className="btn-primary flex items-center gap-1"
+          className="btn-primary gap-1"
         >
           <Pencil className="w-4 h-4" />
           Bewerken

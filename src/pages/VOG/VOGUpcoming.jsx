@@ -137,7 +137,7 @@ export default function VOGUpcoming() {
         </p>
         <button
           onClick={handleRefresh}
-          className="btn-tertiary inline-flex items-center gap-2"
+          className="btn-tertiary gap-2"
         >
           <RefreshCw className="w-4 h-4" />
           Opnieuw proberen

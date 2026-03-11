@@ -372,7 +372,7 @@ export function NogTeFactureren() {
               type="button"
               onClick={() => handleCreateSingle(member.id)}
               disabled={bulkCreating || isCreatingThis}
-              className="btn-tertiary inline-flex items-center gap-1.5 text-xs py-1 px-2 disabled:opacity-50"
+              className="btn-tertiary gap-1.5 text-xs py-1 px-2 disabled:opacity-50"
             >
               {isCreatingThis ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -415,7 +415,7 @@ export function NogTeFactureren() {
         <p className="text-red-600 dark:text-red-400 mb-4">
           Gegevens konden niet worden geladen.
         </p>
-        <button onClick={handleRefresh} className="btn-tertiary inline-flex items-center gap-2">
+        <button onClick={handleRefresh} className="btn-tertiary gap-2">
           <RefreshCw className="w-4 h-4" />
           Opnieuw proberen
         </button>
@@ -473,7 +473,7 @@ export function NogTeFactureren() {
                 <button
                   onClick={handleBulkCreate}
                   disabled={bulkCreating}
-                  className="btn-primary inline-flex items-center gap-2"
+                  className="btn-primary gap-2"
                 >
                   {bulkCreating ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

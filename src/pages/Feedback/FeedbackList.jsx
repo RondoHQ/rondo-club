@@ -53,6 +53,7 @@ const projectColors = {
 };
 
 const statusOptions = [
+  { value: 'open', label: 'Open' },
   { value: 'new', label: 'Nieuw' },
   { value: 'approved', label: 'Goedgekeurd' },
   { value: 'in_progress', label: 'In behandeling' },
@@ -61,6 +62,8 @@ const statusOptions = [
   { value: 'resolved', label: 'Opgelost' },
   { value: 'declined', label: 'Afgewezen' },
 ];
+
+const closedStatuses = ['resolved', 'declined'];
 
 const statusSortOrder = {
   new: 0,
@@ -139,15 +142,20 @@ export default function FeedbackList() {
     type: searchParams.get('type') || '',
     project: searchParams.get('project') || '',
     author: searchParams.get('author') || '',
-    status: searchParams.get('status') || '',
+    status: searchParams.get('status') ?? 'open',
     priority: searchParams.get('priority') || '',
   }), [searchParams]);
 
   const handleFilterChange = useCallback((colId, value) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (!value) next.delete(colId);
-      else next.set(colId, value);
+      if (!value) {
+        // For status, set empty string so we can distinguish "show all" from "never set"
+        if (colId === 'status') next.set(colId, '');
+        else next.delete(colId);
+      } else {
+        next.set(colId, value);
+      }
       return next;
     }, { replace: true });
   }, [setSearchParams]);
@@ -274,6 +282,11 @@ export default function FeedbackList() {
       },
       filterType: FILTER_TYPES.SELECT,
       filterOptions: statusOptions,
+      filterFn: (row, colId, value) => {
+        if (!value) return true;
+        if (value === 'open') return !closedStatuses.includes(row.getValue(colId));
+        return row.getValue(colId) === value;
+      },
       size: 160,
     }),
     createColumn({
@@ -379,7 +392,7 @@ export default function FeedbackList() {
           toolbarEnd={(
             <button
               onClick={() => setShowModal(true)}
-              className="btn-primary text-sm flex items-center gap-2"
+              className="btn-primary text-sm gap-2"
             >
               <Plus className="w-4 h-4" />
               Submit feedback

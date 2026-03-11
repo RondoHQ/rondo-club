@@ -181,7 +181,7 @@ export default function FeedbackDetail() {
           {canEditFeedback && (
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="btn-tertiary flex items-center gap-2"
+              className="btn-tertiary gap-2"
             >
               <Pencil className="w-4 h-4" />
               Edit
@@ -370,7 +370,7 @@ export default function FeedbackDetail() {
               <button
                 type="submit"
                 disabled={!replyText.trim() || createComment.isPending}
-                className="btn-primary flex items-center gap-2"
+                className="btn-primary gap-2"
               >
                 <Send className="w-4 h-4" />
                 Reply
