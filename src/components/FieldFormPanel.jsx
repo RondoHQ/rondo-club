@@ -1326,7 +1326,7 @@ export default function FieldFormPanel({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn-primary inline-flex items-center gap-2"
+                className="btn-primary gap-2"
               >
                 {isSubmitting && (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

@@ -98,7 +98,7 @@ export default function DeleteFieldDialog({
                   <button
                     onClick={onArchive}
                     disabled={isDeleting}
-                    className="mt-3 btn-secondary inline-flex items-center gap-2"
+                    className="mt-3 btn-secondary gap-2"
                   >
                     {isDeleting && (
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -155,7 +155,7 @@ export default function DeleteFieldDialog({
                   <button
                     onClick={onDelete}
                     disabled={!canDelete || isDeleting}
-                    className="mt-3 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 transition-colors"
+                    className="mt-3 btn-danger gap-2"
                   >
                     {isDeleting && (
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
