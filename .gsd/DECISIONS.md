@@ -666,3 +666,6 @@
 - "[M005-S01] Reuse existing `tm` alias for team meta (already LEFT JOINed unconditionally) — no duplicate JOIN"
 - "[M005-S01] ACF field key `field_spelactiviteit` at index 29 (after leeftijdsgroep at 28), readonly=1"
 - "[M005-S01] Compound SQL filter: has spelactiviteit value AND (tm.meta_value IS NULL OR tm.meta_value = '') — finds unassigned players"
+- "[M006-S01] Manual-paid meta stored BEFORE artifact cleanup in update_invoice_status() — ensures meta is written even if cleanup has side effects"
+- "[M006-S01] Betaalgegevens card prioritizes Mollie data — when both mollie_payment_method and manually_marked_paid_at exist, only Mollie section renders"
+- "[M006-S01] Use post meta (not ACF) for _manually_marked_paid_at and _manually_marked_paid_by — consistent with _invoice_sent_by_user_id pattern"
