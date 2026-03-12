@@ -377,6 +377,11 @@ class AccessControl {
 			}
 		}
 
+		// Allow authenticated callers to suppress age-group filtering (e.g. Kaderlijst rebuild).
+		if ( $post_type === 'person' && $request->get_param( 'suppress_age_group' ) && is_user_logged_in() ) {
+			self::$suppress_age_group_filter = true;
+		}
+
 		// Age-group filtering for person post type
 		if ( $post_type === 'person' && ! self::$suppress_age_group_filter && $this->has_age_group_restriction() ) {
 			$permitted = self::get_permitted_age_groups();

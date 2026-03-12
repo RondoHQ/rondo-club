@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download } from 'lucide-react';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info } from 'lucide-react';
 import { DataTableToolbar, createColumn, FILTER_TYPES } from '@/components/DataTable';
 import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
 import { useListPreferences } from '@/hooks/useListPreferences';
 import { useColumnResize } from '@/hooks/useColumnResize';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import ColumnSettingsModal from './ColumnSettingsModal';
 
 // Helper function to get first email from fixed fields
@@ -542,6 +543,8 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
 }
 
 export default function PeopleList() {
+  const { data: currentUser } = useCurrentUser();
+
   // URL-based filter state for persistence on back navigation
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1093,6 +1096,14 @@ export default function PeopleList() {
             </button>
           }
         />
+
+      {/* Age-group restriction info banner */}
+      {Array.isArray(currentUser?.permitted_age_groups) && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+          <Info className="w-4 h-4 shrink-0" />
+          <span>Je ziet alleen leden uit de leeftijdsgroepen: {currentUser.permitted_age_groups.join(', ')}.</span>
+        </div>
+      )}
 
       {/* Loading state */}
       {(isLoading || prefsLoading) && (

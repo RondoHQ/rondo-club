@@ -980,6 +980,15 @@ export default function PersonDetail() {
     );
   }
 
+  if (error?.response?.status === 403 && error?.response?.data?.code === 'rest_forbidden_age_group') {
+    return (
+      <div className="card p-6 text-center bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+        <p className="text-amber-700 dark:text-amber-300">Je hebt geen toegang tot dit lid. Dit lid valt buiten je toegewezen leeftijdsgroepen.</p>
+        <Link to="/people" className="btn-tertiary mt-4">Terug naar leden</Link>
+      </div>
+    );
+  }
+
   if (error || !person) {
     return (
       <div className="card p-6 text-center">

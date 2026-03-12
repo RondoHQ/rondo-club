@@ -240,6 +240,7 @@ async function fetchAllPeople() {
   const params = {
     per_page: perPage,
     _fields: 'id,acf',
+    suppress_age_group: true,
   };
 
   const firstResponse = await wpApi.getPeople({ ...params, page: 1 });

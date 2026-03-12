@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.2.0] - 2026-03-12
+
+### Added
+- Age-group info banner on People list showing permitted leeftijdsgroepen for restricted users
+- Access-denied message on PersonDetail for age-group restricted persons (distinct from generic errors)
+- Kaderlijst bypass for age-group filtering — snapshot rebuild works correctly for all users
+
 ## [32.1.0] - 2026-03-12
 
 ### Added

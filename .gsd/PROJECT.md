@@ -550,6 +550,20 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ VOG status pill removed from person header (VOG info remains in VOGCard on profile tab) — v31.15.0
 - ✓ TabButton component gains optional count prop for reusable tab count display — v31.15.0
 
+**v32.0.0 Role-Capability Matrix & Age-Group Access (shipped 2026-03-12):**
+- ✓ Admin-configurable role×capability matrix UI in Settings → Beheer → Capabilities — v32.0.0
+- ✓ Matrix saves/loads directly to/from WordPress role definitions via add_cap()/remove_cap() — v32.0.0
+- ✓ All 6 hardcoded `current_user_can('administrator')` replaced with `current_user_can('manage_options')` — v32.0.0
+- ✓ register_role() fixed to not re-add capabilities to existing roles — v32.0.0
+- ✓ Age-group access stored in rondo_age_group_access wp_option with per-role leeftijdsgroep arrays — v32.1.0
+- ✓ Age-group filtering at 3 query points (WP_Query, REST, custom SQL) with management capability bypass — v32.1.0
+- ✓ "Ledendata" column in CapabilitiesTab with per-role multi-select for leeftijdsgroep values — v32.1.0
+- ✓ `/rondo/v1/user/me` extended with permitted_age_groups field — v32.1.0
+- ✓ Kaderlijst bypasses age-group filtering via suppress_age_group parameter — v32.2.0
+- ✓ PersonDetail shows distinct Dutch access-denied message for age-group restricted persons — v32.2.0
+- ✓ PeopleList shows blue info banner with permitted leeftijdsgroepen for restricted users — v32.2.0
+- ✓ 12 WPUnit tests for get_permitted_age_groups() — v32.1.0
+
 ### Active
 
 (No active milestone)
@@ -573,10 +587,12 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v31.15.0):**
+**Codebase State (post v32.2.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.15.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
-- Person detail page: conditional Relaties/Account card visibility, tab item counts, no VOG header pill
+- Version 32.2.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Admin-configurable role×capability matrix in Settings → Beheer → Capabilities (reads/writes WP roles directly)
+- Age-group-based member visibility: per-role leeftijdsgroep restrictions with management capability bypass, Kaderlijst exempt
+- Person detail page: conditional Relaties/Account card visibility, tab item counts, no VOG header pill, age-group access-denied message
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices, dedicated credit invoice email template
@@ -852,4 +868,4 @@ Club administrators can manage their members, teams, and club operations through
 | CAPS-05 manual override UI deferred | Backend mechanism (META_MANUAL_GRANTS) exists; admin can use WP admin user meta editor | Deferred |
 
 ---
-*Last updated: 2026-03-08 after v31.0 Editable Contact Fields milestone started*
+*Last updated: 2026-03-12 after M010 Role-Capability Matrix & Age-Group Access milestone completed*
