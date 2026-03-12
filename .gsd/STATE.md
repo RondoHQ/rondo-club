@@ -1,22 +1,20 @@
 # GSD State
 
 **Active Milestone:** M002 — Mollie Payment Details
-**Active Slice:** None
-**Phase:** planned
+**Active Slice:** S01 — Webhook payment detail extraction + REST API + Invoice detail UI
+**Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
 - 🔄 **M002:** Mollie Payment Details
+- ⬜ **M003:** Credit Invoice Improvements
 
 ## Recent Decisions
-- [M002] Single vertical slice — no real unknowns warrant separate slicing; risk retired by shipping the real feature
-- [M002] Flat meta keys + JSON blob for payment details storage
-- [M002] Extract details BEFORE status transition for idempotency
-- [M002] Non-blocking try/catch wrapper for detail extraction
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Execute S01 of M002.
+Plan slice S01 (Webhook payment detail extraction + REST API + Invoice detail UI).
