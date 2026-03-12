@@ -2,7 +2,7 @@
 
 **Active Milestone:** M006 — Markeer als betaald
 **Active Slice:** S01 — Manual paid audit trail + display
-**Phase:** executing
+**Phase:** slice-complete
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T02: Display manual-paid info in Betaalgegevens card, bump version, deploy in slice S01.
+S01 complete — all tasks done (T01, T02). Slice needs UAT verification on production. Then complete M006.
