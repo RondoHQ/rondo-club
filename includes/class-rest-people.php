@@ -1023,6 +1023,18 @@ class People extends Base {
 			$where_clauses[] = "(vog_hv.meta_value = '1')";
 		}
 
+		// Age-group access filtering
+		if ( ! \Rondo\Core\AccessControl::$suppress_age_group_filter ) {
+			$permitted_age_groups = \Rondo\Core\AccessControl::get_permitted_age_groups( $current_user_id );
+
+			if ( $permitted_age_groups !== null ) {
+				$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
+				$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";
+				$where_clauses[] = "ag.meta_value IN ($ag_placeholders)";
+				$prepare_values  = array_merge( $prepare_values, $permitted_age_groups );
+			}
+		}
+
 		// Ownership filter
 		if ( $ownership === 'mine' ) {
 			$where_clauses[]  = 'p.post_author = %d';

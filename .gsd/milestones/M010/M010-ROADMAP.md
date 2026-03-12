@@ -44,7 +44,7 @@ This milestone is complete only when all are true:
 - [x] **S01: Role-capability matrix backend & UI** `risk:high` `depends:[]`
   > After this: admin can open Settings → Beheer → Capabilities, see the matrix of all roles × capabilities, toggle them, save, and the WordPress role definitions update accordingly. Also fixes the 6 role-name checks. The matrix replaces the hardcoded ROLES constant for capability assignments.
 
-- [ ] **S02: Age-group access filtering** `risk:high` `depends:[S01]`
+- [x] **S02: Age-group access filtering** `risk:high` `depends:[S01]`
   > After this: the matrix UI has a "Ledendata" column with a leeftijdsgroep multi-select per role. Users with age-group-restricted roles (and no management capabilities) see only members matching their permitted leeftijdsgroep values. The Kaderlijst is unaffected — all volunteers remain visible there. The `/rondo/v1/me` endpoint exposes the user's permitted age groups to the frontend.
 
 - [ ] **S03: Frontend age-group filtering** `risk:medium` `depends:[S02]`

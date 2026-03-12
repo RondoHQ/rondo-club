@@ -1480,6 +1480,32 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Age-group access (admin only — per-role leeftijdsgroep restrictions)
+		register_rest_route(
+			'rondo/v1',
+			'/settings/age-group-access',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_age_group_access' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_age_group_access' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'roles' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -3969,6 +3995,7 @@ class Api extends Base {
 				'can_access_financieel' => current_user_can( 'financieel' ),
 				'can_access_toegangscontrole' => current_user_can( 'toegangscontrole' ),
 				'can_access_clothing'   => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
+				'permitted_age_groups'  => \Rondo\Core\AccessControl::get_permitted_age_groups(),
 				'profile_url'           => $profile_url,
 				'admin_url'             => $admin_url,
 				'linked_person_name'    => $linked_person_name,
@@ -7237,6 +7264,104 @@ class Api extends Base {
 
 		// Return fresh matrix state.
 		return $this->get_capability_matrix();
+	}
+
+	/**
+	 * Get age-group access configuration.
+	 *
+	 * Returns the per-role age-group restrictions and the list of available
+	 * leeftijdsgroep values currently in use across person records.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	public function get_age_group_access() {
+		global $wpdb;
+
+		// Current per-role config (default: empty = no restrictions).
+		$raw = get_option( 'rondo_age_group_access', [] );
+		if ( is_string( $raw ) ) {
+			$raw = json_decode( $raw, true );
+		}
+		if ( ! is_array( $raw ) ) {
+			$raw = [];
+		}
+
+		// Query distinct leeftijdsgroep values in use.
+		$rows = $wpdb->get_col(
+			"SELECT DISTINCT pm.meta_value
+			 FROM {$wpdb->postmeta} pm
+			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE pm.meta_key = 'leeftijdsgroep'
+			   AND pm.meta_value != ''
+			   AND p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			 ORDER BY pm.meta_value ASC"
+		);
+
+		// Sort age groups naturally (Onder 6, Onder 7, …, Onder 19, Senioren).
+		usort( $rows, function ( $a, $b ) {
+			$num_a = preg_match( '/(\d+)/', $a, $m ) ? (int) $m[1] : 999;
+			$num_b = preg_match( '/(\d+)/', $b, $m ) ? (int) $m[1] : 999;
+			return $num_a - $num_b;
+		} );
+
+		return rest_ensure_response( [
+			'roles'                => (object) $raw,
+			'available_age_groups' => array_values( $rows ),
+		] );
+	}
+
+	/**
+	 * Update age-group access configuration.
+	 *
+	 * Accepts per-role arrays of permitted leeftijdsgroep values. Empty arrays
+	 * are removed (empty = no restriction for that role).
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function update_age_group_access( $request ) {
+		$submitted_roles = $request->get_param( 'roles' );
+
+		if ( ! is_array( $submitted_roles ) ) {
+			return new \WP_Error(
+				'invalid_data',
+				'The roles parameter must be an object of role slugs.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::ROLES );
+		$valid_slugs[] = 'administrator';
+
+		$config = [];
+
+		foreach ( $submitted_roles as $slug => $age_groups ) {
+			if ( ! in_array( $slug, $valid_slugs, true ) ) {
+				return new \WP_Error(
+					'invalid_role_slug',
+					sprintf( 'Invalid role slug: %s', $slug ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			if ( ! is_array( $age_groups ) ) {
+				continue;
+			}
+
+			// Sanitize values.
+			$sanitized = array_values( array_filter( array_map( 'sanitize_text_field', $age_groups ) ) );
+
+			// Only store non-empty arrays (empty = no restriction).
+			if ( ! empty( $sanitized ) ) {
+				$config[ $slug ] = $sanitized;
+			}
+		}
+
+		update_option( 'rondo_age_group_access', $config );
+
+		// Return fresh state.
+		return $this->get_age_group_access();
 	}
 
 	/**

@@ -292,6 +292,8 @@ export const prmApi = {
   updateCommissieCapabilityMap: (data) => api.post('/rondo/v1/commissie-capability-map', data),
   getCapabilityMatrix: () => api.get('/rondo/v1/settings/capability-matrix'),
   updateCapabilityMatrix: (data) => api.post('/rondo/v1/settings/capability-matrix', data),
+  getAgeGroupAccess: () => api.get('/rondo/v1/settings/age-group-access'),
+  updateAgeGroupAccess: (data) => api.post('/rondo/v1/settings/age-group-access', data),
   syncAllCapabilities: () => api.post('/rondo/v1/capability-sync/all'),
   syncPersonCapabilities: (personId) => api.post(`/rondo/v1/people/${personId}/capability-sync`),
 

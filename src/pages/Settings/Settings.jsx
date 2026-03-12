@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
@@ -160,6 +160,11 @@ export default function Settings() {
   const [capabilityMatrixSaving, setCapabilityMatrixSaving] = useState(false);
   const [capabilityMatrixMessage, setCapabilityMatrixMessage] = useState('');
 
+  // Age-group access state (admin only, fetched alongside capability matrix)
+  const [ageGroupAccess, setAgeGroupAccess] = useState({});
+  const [availableAgeGroups, setAvailableAgeGroups] = useState([]);
+  const [ageGroupAccessLoading, setAgeGroupAccessLoading] = useState(false);
+
   // Fetch Applicatiewachtwoorden on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
@@ -230,18 +235,27 @@ export default function Settings() {
     }
   }, [activeTab, activeSubtab, isAdmin, anniversarySettings]);
 
-  // Fetch capability matrix when capabilities subtab is active (lazy load)
+  // Fetch capability matrix and age-group access when capabilities subtab is active (lazy load)
   useEffect(() => {
     if (activeTab === 'admin' && activeSubtab === 'capabilities' && isAdmin && Object.keys(capabilityMatrix).length === 0) {
       setCapabilityMatrixLoading(true);
+      setAgeGroupAccessLoading(true);
       setCapabilityMatrixMessage('');
-      prmApi.getCapabilityMatrix()
-        .then((res) => {
-          setCapabilityMatrix(res.data?.roles || {});
-          setCapabilityLabels(res.data?.capability_labels || {});
+      Promise.all([
+        prmApi.getCapabilityMatrix(),
+        prmApi.getAgeGroupAccess(),
+      ])
+        .then(([matrixRes, ageGroupRes]) => {
+          setCapabilityMatrix(matrixRes.data?.roles || {});
+          setCapabilityLabels(matrixRes.data?.capability_labels || {});
+          setAgeGroupAccess(ageGroupRes.data?.roles || {});
+          setAvailableAgeGroups(ageGroupRes.data?.available_age_groups || []);
         })
         .catch((error) => setCapabilityMatrixMessage(error.response?.data?.message || 'Kon capability-matrix niet laden.'))
-        .finally(() => setCapabilityMatrixLoading(false));
+        .finally(() => {
+          setCapabilityMatrixLoading(false);
+          setAgeGroupAccessLoading(false);
+        });
     }
   }, [activeTab, activeSubtab, isAdmin, capabilityMatrix]);
 
@@ -336,15 +350,23 @@ export default function Settings() {
     }
   };
 
-  // Handle capability matrix save
+  // Handle capability matrix + age-group access save (sequential)
   const handleCapabilityMatrixSave = async () => {
     setCapabilityMatrixSaving(true);
     setCapabilityMatrixMessage('');
     try {
-      const response = await prmApi.updateCapabilityMatrix({ roles: capabilityMatrix });
-      setCapabilityMatrix(response.data?.roles || capabilityMatrix);
-      setCapabilityLabels(response.data?.capability_labels || capabilityLabels);
-      setCapabilityMatrixMessage('Capability-matrix opgeslagen.');
+      const matrixResponse = await prmApi.updateCapabilityMatrix({ roles: capabilityMatrix });
+      setCapabilityMatrix(matrixResponse.data?.roles || capabilityMatrix);
+      setCapabilityLabels(matrixResponse.data?.capability_labels || capabilityLabels);
+
+      // Save age-group access config alongside
+      const ageGroupResponse = await prmApi.updateAgeGroupAccess({ roles: ageGroupAccess });
+      setAgeGroupAccess(ageGroupResponse.data?.roles || ageGroupAccess);
+      if (ageGroupResponse.data?.available_age_groups) {
+        setAvailableAgeGroups(ageGroupResponse.data.available_age_groups);
+      }
+
+      setCapabilityMatrixMessage('Capability-matrix en ledendata-toegang opgeslagen.');
     } catch (error) {
       setCapabilityMatrixMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
@@ -549,6 +571,10 @@ export default function Settings() {
             capabilityMatrixSaving={capabilityMatrixSaving}
             capabilityMatrixMessage={capabilityMatrixMessage}
             handleCapabilityMatrixSave={handleCapabilityMatrixSave}
+            ageGroupAccess={ageGroupAccess}
+            setAgeGroupAccess={setAgeGroupAccess}
+            availableAgeGroups={availableAgeGroups}
+            ageGroupAccessLoading={ageGroupAccessLoading}
             welcomeSettings={welcomeSettings}
             setWelcomeSettings={setWelcomeSettings}
             welcomeSettingsLoading={welcomeSettingsLoading}
@@ -1989,6 +2015,10 @@ function AdminTabWithSubtabs({
   capabilityMatrixSaving,
   capabilityMatrixMessage,
   handleCapabilityMatrixSave,
+  ageGroupAccess,
+  setAgeGroupAccess,
+  availableAgeGroups,
+  ageGroupAccessLoading,
   welcomeSettings,
   setWelcomeSettings,
   welcomeSettingsLoading,
@@ -2066,6 +2096,10 @@ function AdminTabWithSubtabs({
             saving={capabilityMatrixSaving}
             message={capabilityMatrixMessage}
             handleSave={handleCapabilityMatrixSave}
+            ageGroupAccess={ageGroupAccess}
+            setAgeGroupAccess={setAgeGroupAccess}
+            availableAgeGroups={availableAgeGroups}
+            ageGroupAccessLoading={ageGroupAccessLoading}
           />
         </div>
       ) : activeSubtab === 'welkomstmail' ? (
@@ -2956,8 +2990,25 @@ function FunctiesTab({
 }
 
 // Capabilities Tab Component - Role × Capability matrix
-function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave }) {
+function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading }) {
   const roleEntries = Object.entries(matrixState);
+  const [openDropdownRole, setOpenDropdownRole] = useState(null);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!openDropdownRole) return;
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenDropdownRole(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdownRole]);
+
+  // Management capabilities that bypass age-group filtering (mirrors AGE_GROUP_BYPASS_CAPS in PHP)
+  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing'];
 
   const handleCheckboxChange = (roleSlug, capSlug, checked) => {
     setMatrixState(prev => ({
@@ -2970,6 +3021,42 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
         },
       },
     }));
+
+    // If adding a management capability, auto-clear age-group restriction for that role
+    if (checked && MANAGEMENT_CAPS.includes(capSlug)) {
+      setAgeGroupAccess(prev => {
+        const next = { ...prev };
+        delete next[roleSlug];
+        return next;
+      });
+    }
+  };
+
+  // Check if a role has any management capability (bypasses age-group filtering)
+  const roleHasManagementCap = (roleData) => {
+    return MANAGEMENT_CAPS.some(cap => roleData.capabilities?.[cap]);
+  };
+
+  // Handle age-group checkbox toggle for a role
+  const handleAgeGroupToggle = (roleSlug, ageGroup, checked) => {
+    setAgeGroupAccess(prev => {
+      const currentGroups = prev[roleSlug] || [];
+      const newGroups = checked
+        ? [...currentGroups, ageGroup]
+        : currentGroups.filter(g => g !== ageGroup);
+      return {
+        ...prev,
+        [roleSlug]: newGroups,
+      };
+    });
+  };
+
+  // Format selected age groups for display in cell
+  const formatSelectedGroups = (roleSlug) => {
+    const selected = ageGroupAccess[roleSlug] || [];
+    if (selected.length === 0) return 'Alle leden';
+    if (selected.length <= 3) return selected.join(', ');
+    return `${selected.length} groepen`;
   };
 
   // Get capability slugs from capabilityLabels or first role entry
@@ -2982,11 +3069,11 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
           Capabilities
         </h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. Wijzigingen worden direct in WordPress-rollen opgeslagen.
+          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. De kolom &quot;Ledendata&quot; bepaalt welke leeftijdsgroepen zichtbaar zijn voor die rol.
         </p>
       </div>
 
-      {loading ? (
+      {loading || ageGroupAccessLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
         </div>
@@ -2999,7 +3086,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
           <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
             <div className="max-h-96 overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 z-10">
                   <tr>
                     <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
                       Rol
@@ -3009,32 +3096,84 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
                         {capabilityLabels[cap] || cap}
                       </th>
                     ))}
+                    <th className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 w-48">
+                      Ledendata
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {roleEntries.map(([roleSlug, roleData]) => (
-                    <tr key={roleSlug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-2.5 align-middle">
-                        <span className="text-sm text-gray-900 dark:text-gray-100">{roleData.label}</span>
-                      </td>
-                      {capSlugs.map(cap => {
-                        const isProtected = roleSlug === 'administrator' && cap === 'manage_options';
-                        return (
-                          <td key={cap} className="px-4 py-2.5 w-24 text-center align-middle">
-                            <label className="flex items-center justify-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={!!(roleData.capabilities?.[cap])}
-                                onChange={(e) => handleCheckboxChange(roleSlug, cap, e.target.checked)}
-                                disabled={isProtected}
-                                className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300 disabled:opacity-50"
-                              />
-                            </label>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
+                  {roleEntries.map(([roleSlug, roleData]) => {
+                    const hasMgmtCap = roleHasManagementCap(roleData);
+                    const isDropdownOpen = openDropdownRole === roleSlug;
+                    const selectedGroups = ageGroupAccess[roleSlug] || [];
+
+                    return (
+                      <tr key={roleSlug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-4 py-2.5 align-middle">
+                          <span className="text-sm text-gray-900 dark:text-gray-100">{roleData.label}</span>
+                        </td>
+                        {capSlugs.map(cap => {
+                          const isProtected = roleSlug === 'administrator' && cap === 'manage_options';
+                          return (
+                            <td key={cap} className="px-4 py-2.5 w-24 text-center align-middle">
+                              <label className="flex items-center justify-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={!!(roleData.capabilities?.[cap])}
+                                  onChange={(e) => handleCheckboxChange(roleSlug, cap, e.target.checked)}
+                                  disabled={isProtected}
+                                  className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300 disabled:opacity-50"
+                                />
+                              </label>
+                            </td>
+                          );
+                        })}
+                        <td className="px-4 py-2.5 w-48 text-center align-middle">
+                          {hasMgmtCap ? (
+                            <span className="text-sm text-gray-400 dark:text-gray-500 italic">Alle leden</span>
+                          ) : (
+                            <div className="relative inline-block text-left" ref={isDropdownOpen ? dropdownRef : undefined}>
+                              <button
+                                type="button"
+                                onClick={() => setOpenDropdownRole(isDropdownOpen ? null : roleSlug)}
+                                className="inline-flex items-center justify-between w-full max-w-[11rem] px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-electric-cyan"
+                              >
+                                <span className="truncate">{formatSelectedGroups(roleSlug)}</span>
+                                <svg className={`ml-1.5 h-4 w-4 shrink-0 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                              </button>
+                              {isDropdownOpen && (
+                                <div className="absolute right-0 z-20 mt-1 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 ring-1 ring-black/5">
+                                  <div className="py-1 max-h-60 overflow-y-auto">
+                                    {availableAgeGroups.length === 0 ? (
+                                      <div className="px-3 py-2 text-sm text-gray-400 dark:text-gray-500">Geen leeftijdsgroepen beschikbaar</div>
+                                    ) : (
+                                      availableAgeGroups.map(group => (
+                                        <label
+                                          key={group}
+                                          className="flex items-center px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedGroups.includes(group)}
+                                            onChange={(e) => handleAgeGroupToggle(roleSlug, group, e.target.checked)}
+                                            className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300"
+                                          />
+                                          <span className="ml-2 text-sm text-gray-700 dark:text-gray-200">{group}</span>
+                                        </label>
+                                      ))
+                                    )}
+                                  </div>
+                                  <div className="border-t border-gray-200 dark:border-gray-600 px-3 py-1.5">
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">Geen selectie = alle leden</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
