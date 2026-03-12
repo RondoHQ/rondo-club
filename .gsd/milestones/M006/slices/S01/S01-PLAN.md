@@ -40,7 +40,7 @@
 
 ## Tasks
 
-- [ ] **T01: Store manual-paid audit meta and return in REST response** `est:20m`
+- [x] **T01: Store manual-paid audit meta and return in REST response** `est:20m`
   - Why: Backend must store who marked the invoice paid and when, and surface these fields via the REST API so the frontend can display them
   - Files: `includes/class-rest-invoices.php`
   - Do: (1) In `update_invoice_status()`, add `update_post_meta` calls for `_manually_marked_paid_at` (using `current_time('mysql')`) and `_manually_marked_paid_by` (using `get_current_user_id()`) inside the `$status === 'paid'` block, BEFORE the artifact cleanup. (2) In `format_invoice_detail()`, add `manually_marked_paid_at` and `manually_marked_paid_by` fields — timestamp as string-or-null, user via `get_user_summary_by_id()`.

@@ -1040,8 +1040,15 @@ class Invoices extends Base {
 				update_field( 'field_invoice_due_date', $due_date, $invoice_id );
 			}
 
-			// If transitioning to paid, remove payment artifacts (link/QR/provider IDs).
+			// If transitioning to paid, store audit trail for manual payment marking.
 			if ( $status === 'paid' ) {
+				update_post_meta( $invoice_id, '_manually_marked_paid_at', current_time( 'mysql' ) );
+				$current_user_id = get_current_user_id();
+				if ( $current_user_id > 0 ) {
+					update_post_meta( $invoice_id, '_manually_marked_paid_by', $current_user_id );
+				}
+
+				// Remove payment artifacts (link/QR/provider IDs).
 				update_field( 'payment_link', '', $invoice_id );
 				delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 				delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
@@ -2466,6 +2473,10 @@ class Invoices extends Base {
 		$invoice['mollie_dashboard_url']   = (string) get_post_meta( $post->ID, '_mollie_dashboard_url', true ) ?: null;
 		$invoice['mollie_consumer_name']   = (string) get_post_meta( $post->ID, '_mollie_consumer_name', true ) ?: null;
 		$invoice['mollie_consumer_account'] = (string) get_post_meta( $post->ID, '_mollie_consumer_account', true ) ?: null;
+
+		// Manual payment audit trail.
+		$invoice['manually_marked_paid_at'] = (string) get_post_meta( $post->ID, '_manually_marked_paid_at', true ) ?: null;
+		$invoice['manually_marked_paid_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_manually_marked_paid_by', true ) );
 
 		return $invoice;
 	}
