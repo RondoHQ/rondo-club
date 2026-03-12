@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T01: Add ACF field and wire SportlinkCard display in slice S01.
+Execute T02: Add REST API filter and frontend filter column, deploy to production in slice S01.
