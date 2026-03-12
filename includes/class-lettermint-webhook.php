@@ -10,6 +10,8 @@
 
 namespace Rondo\Notifications;
 
+use Rondo\Core\RoleFinder;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -203,7 +205,7 @@ class LettermintWebhook {
 		if ( $flow === self::FLOW_EMAIL_VERIFICATION && $sender_user_id > 0 ) {
 			$owners = [ $sender_user_id ];
 		} else {
-			$owners = $this->get_secretaris_user_ids();
+			$owners = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 		}
 
 		if ( empty( $owners ) ) {
@@ -663,110 +665,6 @@ class LettermintWebhook {
 		}
 
 		return 0;
-	}
-
-	/**
-	 * Resolve users that should receive bounce/complaint tasks.
-	 *
-	 * Prefers users whose linked person currently has a functie containing
-	 * "secretaris". Falls back to administrators.
-	 *
-	 * @return int[]
-	 */
-	private function get_secretaris_user_ids(): array {
-		$user_ids = get_users(
-			[
-				'fields'   => 'ids',
-				'meta_key' => 'rondo_linked_person_id',
-			]
-		);
-
-		$owners = [];
-		foreach ( $user_ids as $user_id ) {
-			$person_id = (int) get_user_meta( (int) $user_id, 'rondo_linked_person_id', true );
-			if ( $person_id <= 0 ) {
-				continue;
-			}
-			if ( $this->person_has_current_secretaris_role( $person_id ) ) {
-				$owners[] = (int) $user_id;
-			}
-		}
-
-		$owners = array_values( array_unique( $owners ) );
-		if ( ! empty( $owners ) ) {
-			return $owners;
-		}
-
-		$admins = get_users(
-			[
-				'role'   => 'administrator',
-				'fields' => 'ids',
-			]
-		);
-
-		return array_values( array_unique( array_map( 'intval', $admins ) ) );
-	}
-
-	/**
-	 * Check whether person has a current "secretaris" functie.
-	 *
-	 * @param int $person_id Person post ID.
-	 * @return bool
-	 */
-	private function person_has_current_secretaris_role( int $person_id ): bool {
-		$work_history = get_field( 'work_history', $person_id );
-		if ( ! is_array( $work_history ) ) {
-			return false;
-		}
-
-		foreach ( $work_history as $entry ) {
-			if ( ! is_array( $entry ) ) {
-				continue;
-			}
-
-			$job_title = trim( (string) ( $entry['job_title'] ?? '' ) );
-			if ( $job_title === '' || stripos( $job_title, 'secretaris' ) === false ) {
-				continue;
-			}
-
-			if ( $this->is_current_work_history_entry( $entry ) ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Determine whether a work_history row is currently active.
-	 *
-	 * @param array $entry Work history row.
-	 * @return bool
-	 */
-	private function is_current_work_history_entry( array $entry ): bool {
-		if ( ! empty( $entry['is_current'] ) ) {
-			return true;
-		}
-
-		$today_ts = strtotime( current_time( 'Y-m-d' ) );
-		if ( $today_ts === false ) {
-			return false;
-		}
-
-		$start_raw = trim( (string) ( $entry['start_date'] ?? '' ) );
-		$end_raw   = trim( (string) ( $entry['end_date'] ?? '' ) );
-
-		$start_ts = $start_raw !== '' ? strtotime( $start_raw ) : false;
-		$end_ts   = $end_raw !== '' ? strtotime( $end_raw ) : false;
-
-		if ( $start_ts !== false && $start_ts > $today_ts ) {
-			return false;
-		}
-		if ( $end_ts !== false && $end_ts < $today_ts ) {
-			return false;
-		}
-
-		return true;
 	}
 
 	/**
