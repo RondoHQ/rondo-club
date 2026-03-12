@@ -75,7 +75,7 @@
   - Verify: `npm run lint` passes with zero errors; `npm run build` succeeds; browser verification on production confirms card appears for paid Mollie invoices and is absent for non-Mollie invoices
   - Done when: "Betaalgegevens" card renders correctly for paid invoices with Mollie data; installment table shows method and dashboard link per paid installment; section absent for non-Mollie invoices; no ESLint errors
 
-- [ ] **T04: Deploy, verify with Mollie test payment, version bump** `est:30m`
+- [x] **T04: Deploy, verify with Mollie test payment, version bump** `est:30m`
   - Why: The full integration must be proven with a real Mollie test-mode payment on production; version and changelog must be updated per project rules
   - Files: `style.css`, `package.json`, `CHANGELOG.md`
   - Do: Bump version (patch increment). Add changelog entry under new version. Build, deploy via `bin/deploy.sh`. On production, trigger a Mollie test-mode payment. Verify meta stored via WP-CLI. Verify REST API returns payment details. Verify invoice detail page shows "Betaalgegevens" card. Verify existing paid invoices without Mollie data show no section. Verify duplicate webhook is a silent no-op.

@@ -7,17 +7,17 @@
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
-- 🔄 **M002:** Mollie Payment Details
+- ✅ **M002:** Mollie Payment Details (v31.9.0 deployed, all slice tasks complete)
 - ⬜ **M003:** Credit Invoice Improvements
 - ⬜ **M004:** Contributie Exclusion Improvements
 - ⬜ **M005:** Spelactiviteit Field
-- ⬜ **M005:** M005
 
 ## Recent Decisions
-- None recorded
+- Backfill script uses one-time PHP script (not WP-CLI command) per user preference
+- Version 31.9.0 (minor bump for new feature, not patch)
 
 ## Blockers
 - None
 
 ## Next Action
-Execute T04: Deploy, verify with Mollie test payment, version bump in slice S01.
+S01 complete — all 4 tasks done. Merge slice branch to main and proceed to next milestone.
