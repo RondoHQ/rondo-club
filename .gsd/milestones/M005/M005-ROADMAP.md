@@ -31,7 +31,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Spelactiviteit field, display, and filter** `risk:low` `depends:[]`
+- [x] **S01: Spelactiviteit field, display, and filter** `risk:low` `depends:[]`
   > After this: spelactiviteit shows in Sportlink card on person profiles, and "Spelactiviteit zonder team" filter works on /people — deployed to production
 
 ## Boundary Map
