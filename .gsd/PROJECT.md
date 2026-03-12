@@ -23,8 +23,6 @@ Club administrators can manage their members, teams, and club operations through
 - Export to vCard and Google CSV — existing
 - User-scoped data isolation — existing (will be extended)
 - Email and Slack notification channels — existing
-- iCal feed generation — existing
-
 **v1.0 Tech Debt Cleanup (shipped 2026-01-13):**
 - Split `class-rest-api.php` into domain-specific classes — v1.0
 - Remove 48 `console.error()` calls from production code — v1.0
@@ -355,7 +353,7 @@ Club administrators can manage their members, teams, and club operations through
 - Dashboard birthday widget queries person birthdate meta directly — v19.0
 - Important Dates CPT, date_type taxonomy completely removed — v19.0
 - Datums navigation, DatesList page, ImportantDateModal removed — v19.0
-- Reminders and iCal systems generate from person birthdate field — v19.0
+- Reminders system generates from person birthdate field — v19.0
 - Data model reduced from 3 CPTs to 2 (person, team) — v19.0
 
 **v20.0 Configurable Roles (shipped 2026-02-08):**
@@ -534,6 +532,12 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Betaalgegevens card renders for both Mollie-paid and manually-paid invoices — v31.13.0
 - ✓ Manual-paid section shows "Handmatig gemarkeerd als betaald" with date/time and user name — v31.13.0
 
+**v31.13.1 Remove iCal Feed (shipped 2026-03-12):**
+- ✓ `includes/class-ical-feed.php` deleted (531 lines of dead iCal feed code) — v31.13.1
+- ✓ All iCal references removed from `functions.php` (use statement, class_alias, helper function, instantiations) — v31.13.1
+- ✓ `getIcalUrl` removed from `src/api/client.js` — v31.13.1
+- ✓ Developer docs iCal page deleted, all iCal references removed from docs site (7 files) — v31.13.1
+
 ### Active
 
 (No active milestone)
@@ -557,9 +561,9 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v31.12.0):**
+**Codebase State (post v31.13.1):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.12.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.13.1 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices, dedicated credit invoice email template
