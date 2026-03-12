@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.1.0] - 2026-03-12
+
+### Added
+- Age-group access filtering — per-role leeftijdsgroep restrictions for member data visibility
+- "Ledendata" column in Settings → Beheer → Capabilities with multi-select per role
+- REST endpoints `GET/POST /rondo/v1/settings/age-group-access` for age-group access configuration
+- `permitted_age_groups` field in `/rondo/v1/user/me` response
+- Users with management capabilities (manage_options, fairplay, vog, financieel, toegangscontrole, manage_clothing) bypass age-group filtering automatically
+
 ## [32.0.0] - 2026-03-12
 
 ### Added

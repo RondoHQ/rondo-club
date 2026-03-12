@@ -19,6 +19,25 @@ class AccessControl {
 	private $controlled_post_types = [ 'person', 'team', 'rondo_todo', 'rondo_clothing_item', 'rondo_clothing_txn' ];
 	private const TODO_ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
+	/**
+	 * When true, age-group filtering is suppressed (used by Kaderlijst).
+	 *
+	 * @var bool
+	 */
+	public static $suppress_age_group_filter = false;
+
+	/**
+	 * Management capabilities that bypass age-group filtering.
+	 */
+	private const AGE_GROUP_BYPASS_CAPS = [
+		'manage_options',
+		'fairplay',
+		'vog',
+		'financieel',
+		'toegangscontrole',
+		'manage_clothing',
+	];
+
 	public function __construct() {
 		// Block person editing for users without the right capabilities
 		add_filter( 'map_meta_cap', [ $this, 'restrict_person_editing' ], 10, 4 );
@@ -143,6 +162,108 @@ class AccessControl {
 	}
 
 	/**
+	 * Get permitted age groups for a user based on the rondo_age_group_access option.
+	 *
+	 * Returns null if the user has no age-group restriction (management capability,
+	 * no config, or all roles have empty config). Returns an array of permitted
+	 * leeftijdsgroep values when restricted.
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return string[]|null Array of permitted age groups, or null if unrestricted.
+	 */
+	public static function get_permitted_age_groups( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return null;
+		}
+
+		// Users with any management capability bypass age-group filtering entirely.
+		foreach ( self::AGE_GROUP_BYPASS_CAPS as $cap ) {
+			if ( user_can( $user_id, $cap ) ) {
+				return null;
+			}
+		}
+
+		// Read the per-role age-group config.
+		$raw = get_option( 'rondo_age_group_access' );
+
+		if ( ! $raw ) {
+			return null;
+		}
+
+		$config = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
+
+		if ( ! is_array( $config ) || empty( $config ) ) {
+			return null;
+		}
+
+		$user = get_user_by( 'id', $user_id );
+
+		if ( ! $user ) {
+			return null;
+		}
+
+		// Collect permitted age groups across all user roles.
+		$permitted   = [];
+		$has_config  = false;
+
+		foreach ( $user->roles as $role ) {
+			if ( ! isset( $config[ $role ] ) ) {
+				continue;
+			}
+
+			$role_groups = $config[ $role ];
+
+			if ( ! is_array( $role_groups ) ) {
+				continue;
+			}
+
+			if ( ! empty( $role_groups ) ) {
+				$has_config = true;
+				$permitted  = array_merge( $permitted, $role_groups );
+			}
+		}
+
+		// No roles have non-empty age-group config → no restriction.
+		if ( ! $has_config ) {
+			return null;
+		}
+
+		return array_values( array_unique( $permitted ) );
+	}
+
+	/**
+	 * Check if the current user has age-group restrictions.
+	 *
+	 * @return bool True if the user is restricted to specific age groups.
+	 */
+	private function has_age_group_restriction() {
+		return self::get_permitted_age_groups() !== null;
+	}
+
+	/**
+	 * Apply age-group filter to a WP_Query (limit to permitted leeftijdsgroep values).
+	 *
+	 * @param \WP_Query $query Query object to modify.
+	 */
+	private function apply_age_group_filter( $query ) {
+		$permitted = self::get_permitted_age_groups();
+
+		if ( $permitted === null ) {
+			return;
+		}
+
+		$meta_query   = $query->get( 'meta_query' ) ?: [];
+		$meta_query[] = [
+			'key'     => 'leeftijdsgroep',
+			'value'   => $permitted,
+			'compare' => 'IN',
+		];
+		$query->set( 'meta_query', $meta_query );
+	}
+
+	/**
 	 * Check if a user can access a post
 	 *
 	 * All logged-in users can access all posts. Only trashed posts are hidden.
@@ -219,6 +340,11 @@ class AccessControl {
 		if ( $post_type === 'person' && $this->is_vog_only_user() ) {
 			$this->apply_vog_filter( $query );
 		}
+
+		// Age-group filtering for person post type
+		if ( $post_type === 'person' && ! self::$suppress_age_group_filter && $this->has_age_group_restriction() ) {
+			$this->apply_age_group_filter( $query );
+		}
 	}
 
 	/**
@@ -248,6 +374,21 @@ class AccessControl {
 		if ( in_array( $post_type, [ 'rondo_clothing_item', 'rondo_clothing_txn' ], true ) ) {
 			if ( ! current_user_can( 'manage_clothing' ) && ! current_user_can( 'manage_options' ) ) {
 				$args['post__in'] = [ 0 ];
+			}
+		}
+
+		// Age-group filtering for person post type
+		if ( $post_type === 'person' && ! self::$suppress_age_group_filter && $this->has_age_group_restriction() ) {
+			$permitted = self::get_permitted_age_groups();
+
+			if ( $permitted !== null ) {
+				$meta_query   = $args['meta_query'] ?? [];
+				$meta_query[] = [
+					'key'     => 'leeftijdsgroep',
+					'value'   => $permitted,
+					'compare' => 'IN',
+				];
+				$args['meta_query'] = $meta_query;
 			}
 		}
 
@@ -316,6 +457,23 @@ class AccessControl {
 				__( 'This item has been deleted.', 'rondo' ),
 				[ 'status' => 404 ]
 			);
+		}
+
+		// Age-group filtering for person post type
+		if ( $post->post_type === 'person' && ! self::$suppress_age_group_filter ) {
+			$permitted = self::get_permitted_age_groups();
+
+			if ( $permitted !== null ) {
+				$person_age_group = get_post_meta( $post->ID, 'leeftijdsgroep', true );
+
+				if ( ! in_array( $person_age_group, $permitted, true ) ) {
+					return new \WP_Error(
+						'rest_forbidden_age_group',
+						__( 'You do not have permission to view this person.', 'rondo' ),
+						[ 'status' => 403 ]
+					);
+				}
+			}
 		}
 
 		return $response;
