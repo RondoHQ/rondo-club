@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.12.0] - 2026-03-12
+
+### Added
+- Spelactiviteit field displayed in Sportlink card on person profiles
+- "Spelactiviteit zonder team" filter in People list to find people with a spelactiviteit but no team assigned
+
 ## [31.11.0] - 2026-03-12
 
 ### Added

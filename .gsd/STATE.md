@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M005 — Spelactiviteit Field
-**Active Slice:** S01 — Spelactiviteit field, display, and filter
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Spelactiviteit field, display, and filter).
+All slices complete in M005. Write milestone summary.

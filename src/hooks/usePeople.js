@@ -142,6 +142,7 @@ export function useFilteredPeople(filters = {}, options = {}) {
     vog_reminder_status: filters.vogReminderStatus || null,
     include_former: filters.includeFormer || null,
     lid_tot_future: filters.lidTotFuture || null,
+    spelactiviteit_no_team: filters.spelactiviteitNoTeam || null,
   };
 
   return useQuery({

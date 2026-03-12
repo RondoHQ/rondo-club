@@ -341,6 +341,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'spelactiviteit_no_team' => [
+						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 				],
 			]
 		);
@@ -948,6 +957,7 @@ class People extends Base {
 		$vog_reminder_status  = $request->get_param( 'vog_reminder_status' );
 		$include_former       = $request->get_param( 'include_former' );
 		$lid_tot_future       = $request->get_param( 'lid_tot_future' );
+		$spelactiviteit_no_team = $request->get_param( 'spelactiviteit_no_team' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1173,6 +1183,14 @@ class People extends Base {
 			$today            = gmdate( 'Y-m-d' );
 			$where_clauses[]  = "(lt.meta_value IS NOT NULL AND lt.meta_value != '' AND lt.meta_value >= %s)";
 			$prepare_values[] = $today;
+		}
+
+		// Spelactiviteit without team filter
+		// Shows people who have a spelactiviteit value but no team assigned.
+		// The `tm` alias (team meta) is already joined unconditionally above.
+		if ( $spelactiviteit_no_team === '1' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sa ON p.ID = sa.post_id AND sa.meta_key = 'spelactiviteit'";
+			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND (tm.meta_value IS NULL OR tm.meta_value = ''))";
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)

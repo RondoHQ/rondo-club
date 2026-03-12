@@ -662,3 +662,7 @@
 - "[M004-S01] window.confirm() for exclusion toggle — consistent with 20+ existing usages across the app"
 - "[M004-S01] Use feeKeys.person(personId, {}) not feeKeys.person(personId) for invalidation — second arg defaults to undefined which doesn't match the actual query key's {} params, breaking TanStack Query cache invalidation"
 - "[M004-S01] RoleFinder uses case-sensitive strpos (not stripos) — 'Secretaris' must not match 'Wedstrijdsecretaris'; callers pass title-case keywords matching stored work_history data"
+- "[M005-S01] spelactiviteit is a boolean filter (not select/dynamic) — follows foto_missing/include_former pattern, NOT added to get_dynamic_filter_config()"
+- "[M005-S01] Reuse existing `tm` alias for team meta (already LEFT JOINed unconditionally) — no duplicate JOIN"
+- "[M005-S01] ACF field key `field_spelactiviteit` at index 29 (after leeftijdsgroep at 28), readonly=1"
+- "[M005-S01] Compound SQL filter: has spelactiviteit value AND (tm.meta_value IS NULL OR tm.meta_value = '') — finds unassigned players"
