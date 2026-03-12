@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** None
+**Active Milestone:** M010 — Role-Capability Matrix & Age-Group Access
 **Active Slice:** None
-**Phase:** idle
+**Phase:** complete
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -24,4 +24,4 @@
 - None
 
 ## Next Action
-All milestones complete. Awaiting next milestone.
+All milestones complete.
