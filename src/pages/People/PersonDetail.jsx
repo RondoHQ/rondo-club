@@ -29,7 +29,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, getVogStatus, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -996,9 +996,6 @@ export default function PersonDetail() {
   
   const acf = person.acf || {};
 
-  // Calculate VOG status
-  const vogStatus = getVogStatus(acf);
-
   // Build contact display items from fixed fields
   const contactItems = [
     acf.email_1 && { type: 'email', label: 'Email', value: acf.email_1 },
@@ -1093,20 +1090,7 @@ export default function PersonDetail() {
       
       {/* Profile header */}
       <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
-        {/* VOG Status Badge */}
-        {vogStatus && (
-          <div className="absolute top-4 right-4">
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-              vogStatus.color === 'green'
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                : vogStatus.color === 'orange'
-                ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-            }`}>
-              {vogStatus.label}
-            </span>
-          </div>
-        )}
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative group">
             {person.thumbnail ? (
@@ -1301,12 +1285,12 @@ export default function PersonDetail() {
         <nav className="flex gap-8">
           <TabButton label="Profiel" isActive={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
           {canAccessClothing && (
-            <TabButton label="Kleding" isActive={activeTab === 'clothing'} onClick={() => setActiveTab('clothing')} />
+            <TabButton label="Kleding" isActive={activeTab === 'clothing'} onClick={() => setActiveTab('clothing')} count={clothingProfile?.current_items?.length || 0} />
           )}
-          <TabButton label="Tijdlijn" isActive={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
-          <TabButton label="Rollen" isActive={activeTab === 'work'} onClick={() => setActiveTab('work')} />
+          <TabButton label="Tijdlijn" isActive={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} count={timeline?.length || 0} />
+          <TabButton label="Rollen" isActive={activeTab === 'work'} onClick={() => setActiveTab('work')} count={sortedWorkHistory?.length || 0} />
           {canAccessFairplay && hasDisciplineCases && (
-            <TabButton label="Tuchtzaken" isActive={activeTab === 'discipline'} onClick={() => setActiveTab('discipline')} />
+            <TabButton label="Tuchtzaken" isActive={activeTab === 'discipline'} onClick={() => setActiveTab('discipline')} count={disciplineCases?.length || 0} />
           )}
         </nav>
       </div>
@@ -1488,7 +1472,8 @@ export default function PersonDetail() {
             {/* Sportlink Card */}
             <SportlinkCard acfData={person?.acf} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
-            {/* Relationships */}
+            {/* Relationships - only show when relationships exist */}
+            {sortedRelationships?.length > 0 && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>
@@ -1508,69 +1493,64 @@ export default function PersonDetail() {
                   </div>
                 )}
               </div>
-              {sortedRelationships?.length > 0 ? (
-                <div className="space-y-2">
-                  {sortedRelationships.map((rel, index) => {
-                    const originalIndex = person?.acf?.relationships?.findIndex(
-                      r => r.related_person === rel.related_person && 
-                           r.relationship_type === rel.relationship_type
-                    ) ?? index;
-                    
-                    return (
-                      <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
-                        <Link
-                          to={`/people/${rel.related_person}`}
-                          className="flex items-center flex-1 min-w-0"
-                        >
-                          <PersonAvatar
-                            thumbnail={rel.person_thumbnail}
-                            name={decodeHtml(rel.person_name)}
-                            size="md"
-                            className="mr-2"
-                          />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
-                              {personDeceasedMap[rel.related_person] && (
-                                <span className="text-gray-400 ml-1" title="Overleden">†</span>
-                              )}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
-                          </div>
-                        </Link>
-                        {canEditPeople && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                            <button
-                              onClick={() => {
-                                const relData = person?.acf?.relationships?.[originalIndex];
-                                setEditingRelationship(relData);
-                                setEditingRelationshipIndex(originalIndex);
-                                setShowRelationshipModal(true);
-                              }}
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                              title="Relatie bewerken"
-                            >
-                              <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteRelationship(originalIndex)}
-                              className="p-1 hover:bg-red-50 rounded"
-                              title="Relatie verwijderen"
-                            >
-                              <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  Nog geen relaties.{canEditPeople && <> <button onClick={() => { setEditingRelationship(null); setEditingRelationshipIndex(null); setShowRelationshipModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
-                </p>
-              )}
+              <div className="space-y-2">
+                {sortedRelationships.map((rel, index) => {
+                  const originalIndex = person?.acf?.relationships?.findIndex(
+                    r => r.related_person === rel.related_person && 
+                         r.relationship_type === rel.relationship_type
+                  ) ?? index;
+                  
+                  return (
+                    <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
+                      <Link
+                        to={`/people/${rel.related_person}`}
+                        className="flex items-center flex-1 min-w-0"
+                      >
+                        <PersonAvatar
+                          thumbnail={rel.person_thumbnail}
+                          name={decodeHtml(rel.person_name)}
+                          size="md"
+                          className="mr-2"
+                        />
+                        <div>
+                          <p className="text-sm font-medium">
+                            {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
+                            {personDeceasedMap[rel.related_person] && (
+                              <span className="text-gray-400 ml-1" title="Overleden">†</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{decodeHtml(rel.relationship_name || rel.relationship_label)}</p>
+                        </div>
+                      </Link>
+                      {canEditPeople && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                          <button
+                            onClick={() => {
+                              const relData = person?.acf?.relationships?.[originalIndex];
+                              setEditingRelationship(relData);
+                              setEditingRelationshipIndex(originalIndex);
+                              setShowRelationshipModal(true);
+                            }}
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            title="Relatie bewerken"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteRelationship(originalIndex)}
+                            className="p-1 hover:bg-red-50 rounded"
+                            title="Relatie verwijderen"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-600" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+            )}
 
             {/* VOG Card */}
             <VOGCard
@@ -1871,8 +1851,8 @@ export default function PersonDetail() {
               )}
             </div>
 
-            {/* Account Card (admin only, volunteers only) */}
-            {config.isAdmin && acf['huidig-vrijwilliger'] && (
+            {/* Account Card (admin only, when account exists) */}
+            {config.isAdmin && person?.linked_user_id && (
               <AccountCard personId={id} personData={person} />
             )}
           </div>

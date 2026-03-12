@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.15.0] - 2026-03-12
+
+### Changed
+- Person detail page: hide Relaties card when person has no relationships
+- Person detail page: show Account card only when person has a linked WordPress account (instead of for all volunteers)
+- Person detail page: tab labels now show item counts (Tijdlijn, Rollen, Kleding, Tuchtzaken)
+
+### Removed
+- Person detail page: VOG status pill removed from person header (VOG info still available in VOG card on profile tab)
+
 ## [31.14.0] - 2026-03-12
 
 ### Added

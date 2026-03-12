@@ -9,14 +9,16 @@
  * @property {string} label - Text label for the tab
  * @property {boolean} isActive - Whether this tab is currently active
  * @property {Function} onClick - Click handler for the tab
+ * @property {number} [count] - Optional item count to display after the label
  */
 
 /**
  * TabButton component displays a navigation tab with consistent styling.
+ * Optionally shows an item count badge after the label.
  *
  * @param {TabButtonProps} props
  */
-export default function TabButton({ label, isActive, onClick }) {
+export default function TabButton({ label, isActive, onClick, count }) {
   return (
     <button
       type="button"
@@ -28,6 +30,11 @@ export default function TabButton({ label, isActive, onClick }) {
       }`}
     >
       {label}
+      {count > 0 && (
+        <span className="ml-1.5 text-xs text-gray-400 dark:text-gray-500">
+          ({count})
+        </span>
+      )}
     </button>
   );
 }
