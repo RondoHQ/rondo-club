@@ -51,7 +51,7 @@
   - Verify: `npm run lint` passes, `npm run build` succeeds, visual inspection of SportlinkCard code confirms field entry
   - Done when: ACF JSON has spelactiviteit field at index 29, SportlinkCard renders it when populated and hides when empty
 
-- [ ] **T02: Add REST API filter and frontend filter column, deploy to production** `est:30m`
+- [x] **T02: Add REST API filter and frontend filter column, deploy to production** `est:30m`
   - Why: The compound filter (has spelactiviteit + no team) is the core feature for finding unassigned players, and the frontend must expose it as a toggle
   - Files: `includes/class-rest-people.php`, `src/hooks/usePeople.js`, `src/pages/People/PeopleList.jsx`, `style.css`, `package.json`, `CHANGELOG.md`
   - Do: Register `spelactiviteit_no_team` boolean param in route args (validate: `['', '1']`). Extract param in `get_filtered_people()`. Add compound SQL filter: JOIN `sa` alias for `spelactiviteit` meta, WHERE `sa.meta_value IS NOT NULL AND sa.meta_value != '' AND (tm.meta_value IS NULL OR tm.meta_value = '')`. In `usePeople.js`, map `spelactiviteitNoTeam` → `spelactiviteit_no_team`. In `PeopleList.jsx`: read URL param `spelactiviteitZonderTeam`, add setter, add boolean filterColumn, add to filterValues, add setFilter case. Bump version to 31.12.0, update changelog. Build and deploy to production.
