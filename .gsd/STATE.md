@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M004 — Contributie Exclusion Improvements
-**Active Slice:** S01 — Confirmation, Refresh & Email Notification
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -13,6 +13,7 @@
 - ⬜ **M005:** Spelactiviteit Field
 - ⬜ **M006:** Markeer als betaald
 - ⬜ **M007:** Remove iCal Feed
+- ⬜ **M008:** M008
 
 ## Recent Decisions
 - None recorded
@@ -21,4 +22,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Confirmation, Refresh & Email Notification).
+All slices complete in M004. Write milestone summary.

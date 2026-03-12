@@ -10,6 +10,9 @@
 
 namespace Rondo\Fees;
 
+use Rondo\Core\RoleFinder;
+use Rondo\Notifications\EmailTemplate;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -231,6 +234,97 @@ class FeeCacheInvalidator {
 		update_comment_meta( $comment_id, 'activity_type', 'contributie_exclusion_toggle' );
 		update_comment_meta( $comment_id, 'activity_date', current_time( 'Y-m-d' ) );
 		update_comment_meta( $comment_id, 'activity_time', current_time( 'H:i' ) );
+
+		$this->send_exclusion_notification_email( (int) $post_id, $is_excluded, $actor_name );
+	}
+
+	/**
+	 * Send email notification to Secretaris and Penningmeester about an exclusion toggle.
+	 *
+	 * Falls back to administrator emails when no Secretaris/Penningmeester users are found.
+	 * Failure is logged but never blocks the toggle action.
+	 *
+	 * @param int    $post_id    Person post ID.
+	 * @param bool   $is_excluded Whether the person is now excluded.
+	 * @param string $actor_name Display name of the user who triggered the toggle.
+	 */
+	private function send_exclusion_notification_email( int $post_id, bool $is_excluded, string $actor_name ): void {
+		try {
+			// Collect recipient user IDs from Secretaris and Penningmeester roles.
+			$user_ids = array_unique(
+				array_merge(
+					RoleFinder::get_user_ids_by_role( 'Secretaris' ),
+					RoleFinder::get_user_ids_by_role( 'Penningmeester' )
+				)
+			);
+
+			// Resolve email addresses, skipping users without a valid email.
+			$emails = [];
+			foreach ( $user_ids as $uid ) {
+				$user = get_userdata( $uid );
+				if ( $user && is_email( $user->user_email ) ) {
+					$emails[] = $user->user_email;
+				}
+			}
+			$emails = array_unique( $emails );
+
+			if ( empty( $emails ) ) {
+				return;
+			}
+
+			$person_name = get_the_title( $post_id );
+			$timestamp   = current_time( 'd-m-Y H:i' );
+
+			$subject = $is_excluded
+				? sprintf( '%s uitgesloten van contributiebetaling', $person_name )
+				: sprintf( '%s opgenomen in contributiebetaling', $person_name );
+
+			$heading = $subject;
+
+			$body_html = $is_excluded
+				? sprintf(
+					'<p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%s</strong> is door <strong>%s</strong> uitgesloten van de contributiebetaling op %s.</p>',
+					esc_html( $person_name ),
+					esc_html( $actor_name ),
+					esc_html( $timestamp )
+				)
+				: sprintf(
+					'<p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;"><strong>%s</strong> is door <strong>%s</strong> opnieuw opgenomen in de contributiebetaling op %s.</p>',
+					esc_html( $person_name ),
+					esc_html( $actor_name ),
+					esc_html( $timestamp )
+				);
+
+			$message = EmailTemplate::render(
+				[
+					'eyebrow'   => 'Contributie',
+					'heading'   => $heading,
+					'body_html' => $body_html,
+					'cta_url'   => home_url( '/people/' . $post_id ),
+					'cta_label' => 'Bekijk lid',
+				]
+			);
+
+			$site_name = get_bloginfo( 'name' );
+			$host      = wp_parse_url( home_url(), PHP_URL_HOST );
+			$parts     = explode( '.', $host );
+			$domain    = count( $parts ) >= 2
+				? implode( '.', array_slice( $parts, -2 ) )
+				: $host;
+
+			$headers = [
+				'Content-Type: text/html; charset=UTF-8',
+				'From: ' . $site_name . ' <notifications@' . $domain . '>',
+			];
+
+			wp_mail( $emails, $subject, $message, $headers );
+		} catch ( \Throwable $e ) {
+			error_log( sprintf(
+				'[Rondo Contributie] Failed to send exclusion notification for person %d: %s',
+				$post_id,
+				$e->getMessage()
+			) );
+		}
 	}
 
 	/**

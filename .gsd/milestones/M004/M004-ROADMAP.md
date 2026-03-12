@@ -31,5 +31,5 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Confirmation, Refresh & Email Notification** `risk:low` `depends:[]`
+- [x] **S01: Confirmation, Refresh & Email Notification** `risk:low` `depends:[]`
   > After this: Exclusion toggle confirms, refreshes immediately, and sends notification emails to Secretaris and Penningmeester
