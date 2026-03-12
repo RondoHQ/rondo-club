@@ -54,7 +54,7 @@
 
 ## Tasks
 
-- [ ] **T01: Extract and store Mollie payment details in webhook handler** `est:45m`
+- [x] **T01: Extract and store Mollie payment details in webhook handler** `est:45m`
   - Why: The webhook must fetch payment details from Mollie's Payment object and persist them as post meta before the status transition, for both full-payment (Path 0b) and installment (Path 0a) flows
   - Files: `includes/class-mollie-webhook.php`
   - Do: Add `extract_payment_details($payment_link, $invoice_id)` private method that calls `$payment_link->payments()`, finds the last `isPaid()` payment, stores `_mollie_payment_method`, `_mollie_paid_at`, `_mollie_dashboard_url`, `_mollie_consumer_name`, `_mollie_consumer_account`, `_mollie_payment_details` as flat meta. Add `extract_installment_payment_details($payment_link, $invoice_id, $n)` that stores per-installment `_installment_N_mollie_method`, `_installment_N_mollie_paid_at`, `_installment_N_mollie_dashboard_url`. Call invoice-level extraction in Path 0b before `wp_update_post`. Pass `$payment_link` to `handle_installment_paid()` and call installment extraction before marking `betaald`. Wrap all extraction in try/catch.
