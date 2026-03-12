@@ -31,12 +31,14 @@ const typeLabels = {
   membership: 'Contributie',
   discipline: 'Tuchtzaken',
   manual: 'Handmatig',
+  credit: 'Credit',
 };
 
 const typeColors = {
   membership: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   discipline: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   manual: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
+  credit: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
 function StatusBadge({ status }) {
@@ -107,20 +109,29 @@ const COLUMNS = [
     id: 'invoice_type',
     header: 'Type',
     accessorKey: 'invoice_type',
-    cell: ({ row }) =>
-      row.original.invoice_type ? (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[row.original.invoice_type] || ''}`}>
-          {typeLabels[row.original.invoice_type] || row.original.invoice_type}
+    cell: ({ row }) => {
+      const effectiveType = row.original.invoice_kind === 'credit' ? 'credit' : row.original.invoice_type;
+      return effectiveType ? (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[effectiveType] || ''}`}>
+          {typeLabels[effectiveType] || effectiveType}
         </span>
       ) : (
         <span className="text-gray-400">-</span>
-      ),
+      );
+    },
     filterType: FILTER_TYPES.SELECT,
     filterLabel: 'Type',
+    filterFn: (row, colId, value) => {
+      if (!value) return true;
+      if (value === 'credit') return row.original.invoice_kind === 'credit';
+      if (value === 'manual') return row.original.invoice_type === 'manual' && row.original.invoice_kind !== 'credit';
+      return row.getValue(colId) === value;
+    },
     filterOptions: [
       { value: 'membership', label: 'Contributie' },
       { value: 'discipline', label: 'Tuchtzaken' },
       { value: 'manual', label: 'Handmatig' },
+      { value: 'credit', label: 'Credit' },
     ],
     size: 130,
   }),

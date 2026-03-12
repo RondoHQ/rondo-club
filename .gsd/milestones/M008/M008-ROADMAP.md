@@ -43,7 +43,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Credit badge and filter on Facturen list** `risk:low` `depends:[]`
+- [x] **S01: Credit badge and filter on Facturen list** `risk:low` `depends:[]`
   > After this: credit invoices show "Credit" rose badge on the production Facturen page, the Type filter includes "Credit" as an option that correctly filters credit invoices, and "Handmatig" excludes credit invoices — verified live at https://rondo.svawc.nl/financien/facturen
 
 ## Boundary Map
