@@ -41,3 +41,26 @@ certs/
 
 # Local demo export artifact
 fixtures/demo-fixture.json
+
+# ── GSD baseline (auto-generated) ──
+.gsd/activity/
+.gsd/runtime/
+.gsd/worktrees/
+.gsd/auto.lock
+.gsd/metrics.json
+.gsd/STATE.md
+*.swp
+*.swo
+*~
+*.code-workspace
+.env.*
+!.env.example
+.next/
+build/
+__pycache__/
+*.pyc
+.venv/
+venv/
+target/
+.cache/
+tmp/
