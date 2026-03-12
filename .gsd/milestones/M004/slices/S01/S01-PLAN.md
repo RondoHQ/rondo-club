@@ -43,7 +43,7 @@
 
 ## Tasks
 
-- [ ] **T01: Extract RoleFinder helper and add unit tests** `est:45m`
+- [x] **T01: Extract RoleFinder helper and add unit tests** `est:45m`
   - Why: The role-finding logic for Secretaris is duplicated in LettermintWebhook as private methods. Extracting to a shared helper enables reuse for both Secretaris and Penningmeester email recipients, and provides a testable unit.
   - Files: `includes/class-role-finder.php`, `includes/class-lettermint-webhook.php`, `tests/Wpunit/RoleFinderTest.php`
   - Do: Create `Rondo\Core\RoleFinder` with static `get_user_ids_by_role(string $keyword)` and supporting `person_has_current_role()` / `is_current_work_history_entry()` methods. Refactor LettermintWebhook to call `RoleFinder::get_user_ids_by_role('secretaris')`. Write Codeception unit test for RoleFinder covering: users with matching role found, fallback to administrators, no users at all.
