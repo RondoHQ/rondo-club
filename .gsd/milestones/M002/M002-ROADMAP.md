@@ -48,7 +48,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Webhook payment detail extraction + REST API + Invoice detail UI** `risk:medium` `depends:[]`
+- [x] **S01: Webhook payment detail extraction + REST API + Invoice detail UI** `risk:medium` `depends:[]`
   > After this: A Mollie payment triggers the webhook, payment details (method, paidAt, dashboard URL, consumer details) are stored as post meta, returned by the REST API, and displayed in a "Betaalgegevens" section on the invoice detail page — including per-installment details in the installment timeline table. Verified on production with a real Mollie test-mode payment.
 
 ## Boundary Map

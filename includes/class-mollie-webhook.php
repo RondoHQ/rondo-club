@@ -165,13 +165,17 @@ class MollieWebhook {
 		}
 
 		if ( $installment_number > 0 ) {
-			return $this->handle_installment_paid( $invoice_id, $installment_number, $payment_link_id );
+			return $this->handle_installment_paid( $invoice_id, $installment_number, $payment_link_id, $payment_link );
 		}
 
 		$invoice = get_post( $invoice_id );
 		if ( ! $invoice || 'rondo_paid' === $invoice->post_status ) {
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
+
+		// Extract payment details BEFORE status transition so duplicate webhooks
+		// (which exit early on the idempotency check above) already have details stored.
+		$this->extract_payment_details( $payment_link, $invoice_id );
 
 		// Transition invoice to paid.
 		wp_update_post(
@@ -197,14 +201,19 @@ class MollieWebhook {
 	 * @param int    $invoice_id          Invoice post ID.
 	 * @param int    $n                   Installment number that was just paid (1-based).
 	 * @param string $payment_id          Mollie payment ID (for logging).
+	 * @param object $payment_link        Mollie PaymentLink object for detail extraction.
 	 * @return \WP_REST_Response Response with ok:true (always 200).
 	 */
-	private function handle_installment_paid( int $invoice_id, int $n, string $payment_id ): \WP_REST_Response {
+	private function handle_installment_paid( int $invoice_id, int $n, string $payment_id, $payment_link ): \WP_REST_Response {
 		// 1. Idempotency check: already marked betaald — no-op.
 		$current_status = get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
 		if ( 'betaald' === $current_status ) {
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
+
+		// Extract installment payment details BEFORE marking as betaald so duplicate
+		// webhooks (which exit early on the idempotency check above) already have details stored.
+		$this->extract_installment_payment_details( $payment_link, $invoice_id, $n );
 
 		// 2. Mark this installment as paid.
 		update_post_meta( $invoice_id, '_installment_' . $n . '_status', 'betaald' );
@@ -255,5 +264,95 @@ class MollieWebhook {
 
 		// 6. Return success.
 		return rest_ensure_response( [ 'ok' => true ] );
+	}
+
+	/**
+	 * Extract and store invoice-level payment details from a paid payment link.
+	 *
+	 * Fetches the underlying Payment object from the PaymentLink, extracts method,
+	 * paidAt, dashboard URL, and consumer details, then stores them as flat post meta.
+	 *
+	 * Wrapped in try/catch to never block the webhook HTTP 200 response.
+	 *
+	 * @param object $payment_link Mollie PaymentLink object.
+	 * @param int    $invoice_id   Invoice post ID.
+	 */
+	private function extract_payment_details( $payment_link, int $invoice_id ): void {
+		try {
+			$payments = $payment_link->payments();
+			$paid_payment = null;
+
+			foreach ( $payments as $payment ) {
+				if ( $payment->isPaid() ) {
+					$paid_payment = $payment;
+				}
+			}
+
+			if ( null === $paid_payment ) {
+				return;
+			}
+
+			update_post_meta( $invoice_id, '_mollie_payment_method', $paid_payment->method ?? '' );
+			update_post_meta( $invoice_id, '_mollie_paid_at', $paid_payment->paidAt ?? '' );
+
+			$dashboard_url = $paid_payment->_links->dashboard->href ?? null;
+			if ( null !== $dashboard_url ) {
+				update_post_meta( $invoice_id, '_mollie_dashboard_url', $dashboard_url );
+			}
+
+			$consumer_name = $paid_payment->details->consumerName ?? null;
+			if ( null !== $consumer_name ) {
+				update_post_meta( $invoice_id, '_mollie_consumer_name', $consumer_name );
+			}
+
+			$consumer_account = $paid_payment->details->consumerAccount ?? null;
+			if ( null !== $consumer_account ) {
+				update_post_meta( $invoice_id, '_mollie_consumer_account', $consumer_account );
+			}
+
+			if ( null !== $paid_payment->details ) {
+				update_post_meta( $invoice_id, '_mollie_payment_details', wp_json_encode( $paid_payment->details ) );
+			}
+		} catch ( \Throwable $e ) {
+			error_log( 'Mollie webhook: failed to extract payment details for invoice ' . $invoice_id . ': ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Extract and store per-installment payment details from a paid payment link.
+	 *
+	 * Stores method, paidAt, and dashboard URL using the `_installment_N_*` meta pattern.
+	 *
+	 * Wrapped in try/catch to never block the webhook HTTP 200 response.
+	 *
+	 * @param object $payment_link Mollie PaymentLink object.
+	 * @param int    $invoice_id   Invoice post ID.
+	 * @param int    $n            Installment number (1-based).
+	 */
+	private function extract_installment_payment_details( $payment_link, int $invoice_id, int $n ): void {
+		try {
+			$payments = $payment_link->payments();
+			$paid_payment = null;
+
+			foreach ( $payments as $payment ) {
+				if ( $payment->isPaid() ) {
+					$paid_payment = $payment;
+				}
+			}
+
+			if ( null === $paid_payment ) {
+				return;
+			}
+
+			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_method', $paid_payment->method ?? '' );
+			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_paid_at', $paid_payment->paidAt ?? '' );
+
+			$dashboard_url = $paid_payment->_links->dashboard->href ?? null;
+			if ( null !== $dashboard_url ) {
+				update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_dashboard_url', $dashboard_url );
+			}
+		} catch ( \Throwable $e ) {
+			error_log( 'Mollie webhook: failed to extract installment ' . $n . ' payment details for invoice ' . $invoice_id . ': ' . $e->getMessage() );
+		}
 	}
 }

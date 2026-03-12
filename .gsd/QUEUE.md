@@ -35,10 +35,48 @@ Removed 6 PHP files, 1 Composer dependency (sabre/dav), CardDAV subtab from Sett
 - The admin manually marks them as paid (via existing "Markeer als betaald" button) after completing the bank transfer
 - No payment link/QR code is created (this already works correctly)
 
+### 3. Credit invoices should show "Credit" label instead of "Handmatig" on invoice list
+
+**Problem:** On `/financien/facturen`, credit invoices show the type badge "Handmatig" (cyan) because their `invoice_type` is `manual`. There's no way to distinguish them from regular manual invoices.
+
+**Solution:**
+- In `Facturen.jsx`, check `invoice_kind === 'credit'` and override the type badge to show "Credit" with a distinct color (e.g. rose/pink to visually contrast with cyan "Handmatig")
+- The `invoice_kind` field is already returned by the REST API — no backend changes needed
+- Add "Credit" to the type filter options so users can filter for credit invoices specifically
+
 ### Files affected
 
 - `includes/class-finance-config.php` — new template option + default + getter
 - `includes/class-rest-invoices.php` — credit template selection + remove auto-paid transition
 - `includes/class-invoice-email-sender.php` — credit template selection in `send()` (or passed via options)
 - `src/pages/Finance/FinanceSettings.jsx` (or equivalent) — credit email template editor
+- `src/pages/Finance/Facturen.jsx` — credit type badge + filter option
 - Frontend: may need to handle credit invoices in `rondo_sent` status (verify "Markeer als betaald" works)
+
+## Q003: Spelactiviteit Field
+
+**Priority:** After Q002 (M004)
+**Scope:** Add `spelactiviteit` (Sportlink KernelGameActivities) to person profiles and people list filter
+
+### 1. ACF field + Sportlink card display
+
+- Add ACF text field `spelactiviteit` in the Sportlink tab of `group_person_fields.json`
+- Display in `SportlinkCard.jsx` — text type, label "Spelactiviteit"
+- Hidden when empty (consistent with other Sportlink fields)
+
+### 2. People list filter: "Spelactiviteit zonder team"
+
+- Add compound filter: people who have a `spelactiviteit` meta value but are NOT in any team
+- Backend: new `spelactiviteit_no_team` filter parameter in `class-rest-people.php`
+- Frontend: boolean filter in `PeopleList.jsx` filter columns
+
+### Context
+
+Rondo Sync is being updated separately to import `KernelGameActivities` from Sportlink as `spelactiviteit`. This milestone makes Rondo Club ready to receive, display, and filter on that data.
+
+### Files affected
+
+- `acf-json/group_person_fields.json` — new field in Sportlink tab
+- `src/components/SportlinkCard.jsx` — add to fields array
+- `includes/class-rest-people.php` — new filter parameter + SQL clause
+- `src/pages/People/PeopleList.jsx` — new filter column + state

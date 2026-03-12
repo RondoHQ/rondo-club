@@ -644,3 +644,8 @@
 - "[M002] Dutch method labels mapped in frontend — Mollie returns slug (ideal, creditcard, banktransfer); frontend maps to readable Dutch labels"
 - "[M002] Betaalgegevens section absent (not empty) for non-Mollie payments — conditional render on presence of mollie_payment_method"
 - "[M002] Dashboard link opens in new tab — standard UX for external links (target=_blank, rel=noopener noreferrer)"
+- "[M002-S01] Two separate extraction methods: extract_payment_details (invoice-level) and extract_installment_payment_details (per-installment) — clean separation of concerns for the two webhook paths"
+- "[M002-S01] handle_installment_paid receives $payment_link as 4th parameter — cleaner than re-fetching since the object is already available in the caller; safe because it's a private method"
+- "[M002-S01] Betaalgegevens card placed after installment timeline section — payment details are supplementary info, not primary invoice data"
+- "[M002-S01] Installment table adds Methode and Mollie columns — keeps per-installment payment info visible in the timeline context where it's most useful"
+- "[M002-S01] getMollieMethodLabel helper with fallback — capitalizes unknown method strings instead of showing 'Onbekend' to handle future Mollie methods gracefully"
