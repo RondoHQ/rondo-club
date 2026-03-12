@@ -21,4 +21,4 @@
 - None
 
 ## Next Action
-Execute T02: Route credit invoices to credit template and remove auto-paid transition in slice S01.
+Execute T03: Add Creditfacturen sub-tab to Finance Settings UI, build, deploy, and verify in slice S01.
