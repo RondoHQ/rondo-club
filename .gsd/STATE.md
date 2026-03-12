@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Execute T03: Render payment details UI on invoice detail page in slice S01.
+Execute T04: Deploy, verify with Mollie test payment, version bump in slice S01.
