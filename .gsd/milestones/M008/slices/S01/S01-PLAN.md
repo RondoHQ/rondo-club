@@ -42,7 +42,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add Credit badge, filter option, and custom filterFn to Facturen.jsx** `est:20m`
+- [x] **T01: Add Credit badge, filter option, and custom filterFn to Facturen.jsx** `est:20m`
   - Why: This is the entire slice — add credit type display and filtering to the Facturen list page
   - Files: `src/pages/Finance/Facturen.jsx`
   - Do: (1) Add `credit: 'Credit'` to `typeLabels` and `credit: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'` to `typeColors`. (2) In the type column cell renderer, compute `effectiveType = row.original.invoice_kind === 'credit' ? 'credit' : row.original.invoice_type` and use it for label/color lookup. (3) Add `{ value: 'credit', label: 'Credit' }` to type column `filterOptions`. (4) Add custom `filterFn` to type column: when value is `'credit'`, check `row.original.invoice_kind === 'credit'`; when value is `'manual'`, check `invoice_type === 'manual' && invoice_kind !== 'credit'`; otherwise default exact match on `invoice_type`.
