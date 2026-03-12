@@ -57,7 +57,7 @@
   - Verify: `npm run build` passes; `npm run lint` passes; manual test on production confirms all three behaviors
   - Done when: Confirmation dialog shows on both exclude/include; FinancesCard refreshes immediately; email arrives at Secretaris and Penningmeester
 
-- [ ] **T03: Version bump, changelog, docs, deploy, and verify** `est:30m`
+- [x] **T03: Version bump, changelog, docs, deploy, and verify** `est:30m`
   - Why: Every milestone requires version update, changelog entry, documentation update, production deployment, and verification per project rules.
   - Files: `style.css`, `package.json`, `CHANGELOG.md`, `../developer/src/content/docs/features/membership-fees.md`
   - Do: Bump version to 31.11.0 (minor — new feature). Add changelog entry under [31.11.0] with Added section for confirmation, refresh, and email notification. Update developer docs membership-fees page to document the exclusion notification behavior. Git commit and push. Deploy to production via `bin/deploy.sh`. Verify on production: toggle exclusion, confirm dialog, UI refresh, email delivery.

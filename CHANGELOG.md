@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Extracted `RoleFinder` helper from `LettermintWebhook` for reusable role-based user lookup
+- RoleFinder uses case-sensitive matching to exclude "Wedstrijdsecretaris" when searching for "Secretaris"
 
 ## [31.10.0] - 2026-03-12
 

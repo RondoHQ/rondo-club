@@ -661,3 +661,4 @@
 - "[M004-S01] Email send wrapped in try/catch — notification failure must never block the toggle action"
 - "[M004-S01] window.confirm() for exclusion toggle — consistent with 20+ existing usages across the app"
 - "[M004-S01] Use feeKeys.person(personId, {}) not feeKeys.person(personId) for invalidation — second arg defaults to undefined which doesn't match the actual query key's {} params, breaking TanStack Query cache invalidation"
+- "[M004-S01] RoleFinder uses case-sensitive strpos (not stripos) — 'Secretaris' must not match 'Wedstrijdsecretaris'; callers pass title-case keywords matching stored work_history data"
