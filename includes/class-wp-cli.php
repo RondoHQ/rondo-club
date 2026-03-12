@@ -11,7 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 use Rondo\Collaboration\Reminders;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Calendar\Matcher;
-use Rondo\Calendar\CalDAVProvider;
 use Rondo\Export\VCard;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Demo\DemoExport;
@@ -552,7 +551,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	class RONDO_VCard_CLI_Command {
 
 		/**
-		 * Get the vCard for a person (as CardDAV would serve it)
+		 * Get the vCard for a person
 		 *
 		 * ## OPTIONS
 		 *
@@ -589,7 +588,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				return;
 			}
 
-			// Generate vCard using the same method CardDAV uses
+			// Generate vCard
 			$vcard = VCard::generate( $person );
 
 			if ( empty( $vcard ) ) {
@@ -707,100 +706,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			WP_CLI::log( '' );
 			WP_CLI::success( 'vCard parsed successfully.' );
-		}
-	}
-
-	/**
-	 * CardDAV WP-CLI Commands
-	 */
-	class RONDO_CardDAV_CLI_Command {
-
-		/**
-		 * Reset CardDAV sync token to force a full resync
-		 *
-		 * This clears the sync token for a user, causing the next sync
-		 * request from their CardDAV client to receive all contacts as "added".
-		 *
-		 * ## OPTIONS
-		 *
-		 * [--user=<user_id>]
-		 * : User ID to reset sync for. If not specified, resets for all users.
-		 *
-		 * ## EXAMPLES
-		 *
-		 *     wp prm carddav reset-sync
-		 *     wp prm carddav reset-sync --user=1
-		 *
-		 * @when after_wp_load
-		 */
-		public function reset_sync( $args, $assoc_args ) {
-			$user_id = isset( $assoc_args['user'] ) ? (int) $assoc_args['user'] : null;
-
-			if ( $user_id ) {
-				$users = [ get_user_by( 'ID', $user_id ) ];
-				if ( ! $users[0] ) {
-					WP_CLI::error( sprintf( 'User with ID %d not found.', $user_id ) );
-					return;
-				}
-			} else {
-				// Get all users
-				$users = get_users( [ 'fields' => 'all' ] );
-			}
-
-			$changes        = get_option( 'rondo_carddav_changes', [] );
-			$tokens         = get_option( 'rondo_carddav_sync_tokens', [] );
-			$now            = time();
-			$total_contacts = 0;
-
-			global $wpdb;
-
-			foreach ( $users as $user ) {
-				$uid = $user->ID;
-
-				// Get all persons for this user (bypass access control filters)
-				$persons = $wpdb->get_col(
-					$wpdb->prepare(
-						"SELECT ID FROM {$wpdb->posts}
-                     WHERE post_type = 'person'
-                     AND post_status = 'publish'
-                     AND post_author = %d",
-						$uid
-					)
-				);
-
-				if ( empty( $persons ) ) {
-					WP_CLI::log( sprintf( 'User %s (ID: %d) has no contacts to sync.', $user->display_name, $uid ) );
-					continue;
-				}
-
-				// Add all contacts to change log as "added"
-				if ( ! isset( $changes[ $uid ] ) ) {
-					$changes[ $uid ] = [];
-				}
-
-				foreach ( $persons as $person_id ) {
-					$uri                           = get_post_meta( $person_id, '_carddav_uri', true ) ?: $person_id . '.vcf';
-					$changes[ $uid ][ $person_id ] = [
-						'type'      => 'added',
-						'timestamp' => $now,
-						'uri'       => $uri,
-					];
-				}
-
-				// Update sync token
-				$tokens[ $uid ] = $now;
-
-				$count           = count( $persons );
-				$total_contacts += $count;
-				WP_CLI::log( sprintf( 'Queued %d contact(s) for resync for user %s (ID: %d)', $count, $user->display_name, $uid ) );
-			}
-
-			update_option( 'rondo_carddav_changes', $changes );
-			update_option( 'rondo_carddav_sync_tokens', $tokens );
-
-			WP_CLI::success( sprintf( 'Queued %d contact(s) for resync. Next sync will pull all contacts.', $total_contacts ) );
-			WP_CLI::log( '' );
-			WP_CLI::log( 'To trigger the resync, open your CardDAV client (iPhone Contacts, etc.) and pull down to refresh.' );
 		}
 	}
 
@@ -2367,7 +2272,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm reminders', 'RONDO_Reminders_CLI_Command' );
 	WP_CLI::add_command( 'prm migrate', 'RONDO_Migration_CLI_Command' );
 	WP_CLI::add_command( 'prm vcard', 'RONDO_VCard_CLI_Command' );
-	WP_CLI::add_command( 'prm carddav', 'RONDO_CardDAV_CLI_Command' );
 	WP_CLI::add_command( 'prm todos', 'RONDO_Todos_CLI_Command' );
 	WP_CLI::add_command( 'prm calendar', 'RONDO_Calendar_CLI_Command' );
 	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );

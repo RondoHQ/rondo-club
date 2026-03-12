@@ -220,8 +220,7 @@ export const prmApi = {
     });
   },
   
-  // CardDAV & Application Passwords
-  getCardDAVUrls: () => api.get('/rondo/v1/carddav/urls'),
+  // Application Passwords
   getAppPasswords: (userId) => api.get(`/wp/v2/users/${userId}/application-passwords`),
   createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name }),
   deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),

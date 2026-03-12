@@ -357,7 +357,7 @@ class PostTypes {
 	/**
 	 * Register Calendar Event CPT
 	 *
-	 * Used for caching calendar events synced from external calendars (Google, CalDAV).
+	 * Used for caching calendar events synced from external calendars.
 	 * Not exposed via standard wp/v2 REST - uses custom endpoints only.
 	 * No admin UI needed - events are managed via sync process.
 	 */
