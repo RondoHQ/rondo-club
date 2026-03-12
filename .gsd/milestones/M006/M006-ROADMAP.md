@@ -33,7 +33,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Manual paid audit trail + display** `risk:low` `depends:[]`
+- [x] **S01: Manual paid audit trail + display** `risk:low` `depends:[]`
   > After this: marking an invoice as paid shows who did it and when in the Betaalgegevens card — deployed to production
 
 ## Boundary Map

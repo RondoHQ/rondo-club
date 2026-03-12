@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.13.0] - 2026-03-12
+
+### Added
+- Audit trail bij handmatig betaald markeren — toont wie en wanneer in de Betaalgegevens kaart
+
 ## [31.12.0] - 2026-03-12
 
 ### Added

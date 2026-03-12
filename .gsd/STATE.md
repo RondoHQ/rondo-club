@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M006 — Markeer als betaald
-**Active Slice:** S01 — Manual paid audit trail + display
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Manual paid audit trail + display).
+All slices complete in M006. Write milestone summary.
