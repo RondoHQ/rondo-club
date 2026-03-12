@@ -100,3 +100,28 @@ When a user clicks "Markeer als betaald" on an invoice, the status changes to pa
 
 - `includes/class-rest-invoices.php` — store meta on paid transition + return in `format_invoice_detail()`
 - `src/pages/Finance/FactuurDetail.jsx` — expand Betaalgegevens card condition and add manual-paid display
+
+## Q005: Remove iCal Feed
+
+**Priority:** After Q004 (M006)
+**Scope:** Remove the unused iCal feed functionality
+
+The iCal feed is no longer needed. The frontend `getIcalUrl` API method is defined but never called. Removal is straightforward — similar to the CardDAV removal (Q001).
+
+### Files to delete
+
+- `includes/class-ical-feed.php` (531 lines)
+- `../developer/src/content/docs/integrations/ical-feed.md` (348 lines)
+
+### Files to edit
+
+- `functions.php` — remove `use Rondo\Export\ICalFeed`, `class_alias`, `rondo_is_ical_request()` helper, both `new ICalFeed()` instantiations
+- `src/api/client.js` — remove `getIcalUrl` method
+- `../developer/src/content/docs/index.mdx` — remove iCal mention and link
+- `../developer/src/content/docs/architecture.md` — remove `IcalFeed` row from class table
+- `../developer/src/content/docs/architecture/php-autoloading.md` — remove iCal loading strategy, helper function, optimization note
+- `../developer/astro.config.mjs` — remove iCal Feed sidebar entry
+
+### Post-deploy
+
+- Flush rewrite rules (`wp rewrite flush`)
