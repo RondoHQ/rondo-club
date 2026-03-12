@@ -660,3 +660,4 @@
 - "[M004-S01] Email notification sent from FeeCacheInvalidator::log_contributie_exclusion_toggle() — already has all required context (post_id, is_excluded, actor_name)"
 - "[M004-S01] Email send wrapped in try/catch — notification failure must never block the toggle action"
 - "[M004-S01] window.confirm() for exclusion toggle — consistent with 20+ existing usages across the app"
+- "[M004-S01] Use feeKeys.person(personId, {}) not feeKeys.person(personId) for invalidation — second arg defaults to undefined which doesn't match the actual query key's {} params, breaking TanStack Query cache invalidation"

@@ -5,7 +5,7 @@ import { usePersonFee, feeKeys } from '@/hooks/useFees';
 import { usePersonDisciplineCases } from '@/hooks/useDisciplineCases';
 import { usePersonInvoices } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useUpdatePerson } from '@/hooks/usePeople';
+import { useUpdatePerson, peopleKeys } from '@/hooks/usePeople';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { prmApi } from '@/api/client';
 import { formatCurrency, formatPercentage } from '@/utils/formatters';
@@ -71,11 +71,20 @@ export default function FinancesCard({ personId }) {
   const isExcluded = feeData?.reason === 'manually_excluded';
 
   const handleToggleExclusion = () => {
+    const confirmMessage = isExcluded
+      ? 'Weet je zeker dat je dit lid weer wilt opnemen in de contributiebetaling?'
+      : 'Weet je zeker dat je dit lid wilt uitsluiten van contributie?';
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
     updatePerson.mutate(
       { id: personId, data: { meta: { _exclude_from_contributie: !isExcluded } } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: feeKeys.person(personId) });
+          queryClient.invalidateQueries({ queryKey: feeKeys.person(personId, {}) });
+          queryClient.invalidateQueries({ queryKey: peopleKeys.detail(personId) });
         },
       }
     );

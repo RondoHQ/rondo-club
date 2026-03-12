@@ -50,7 +50,7 @@
   - Verify: `vendor/bin/codecept run Wpunit RoleFinderTest` passes; `npm run build` still succeeds
   - Done when: RoleFinder class exists with tests passing, LettermintWebhook uses it instead of private methods
 
-- [ ] **T02: Add confirmation dialog, query refresh, and email notification** `est:45m`
+- [x] **T02: Add confirmation dialog, query refresh, and email notification** `est:45m`
   - Why: This is the core feature — the three user-facing changes: confirmation before toggle, immediate UI refresh, and email notification to board members.
   - Files: `src/components/FinancesCard.jsx`, `includes/class-fee-cache-invalidator.php`
   - Do: (1) In FinancesCard.jsx, add `window.confirm()` guard in `handleToggleExclusion()` with Dutch messages ("Weet je zeker dat je dit lid wilt uitsluiten van contributie?" / "Weet je zeker dat je dit lid weer wilt opnemen in de contributiebetaling?"); also add `peopleKeys.detail(personId)` invalidation in `onSuccess`. (2) In FeeCacheInvalidator, add `send_exclusion_notification_email()` method called from `log_contributie_exclusion_toggle()` after the timeline comment. Use `RoleFinder::get_user_ids_by_role('secretaris')` and `RoleFinder::get_user_ids_by_role('penningmeester')` to find recipients. Use `EmailTemplate::render()` with CTA link to person page and `wp_mail()` with HTML content type. Wrap in try/catch with error_log on failure.
