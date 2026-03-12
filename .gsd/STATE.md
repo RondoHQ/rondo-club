@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** None
+**Active Milestone:** M008 — M008
 **Active Slice:** None
-**Phase:** idle
+**Phase:** pre-planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -13,13 +13,13 @@
 - ✅ **M005:** Spelactiviteit Field
 - ✅ **M006:** Markeer als betaald
 - ✅ **M007:** Remove iCal Feed
-- ⬜ **M008:** M008
+- 🔄 **M008:** M008
 
 ## Recent Decisions
-- [M007-S01] Replace empty Integrations sidebar with Demo Data entry — section should not be empty after iCal removal
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Idle — ready for next milestone.
+Plan milestone M008.
