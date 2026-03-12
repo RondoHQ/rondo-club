@@ -68,7 +68,7 @@
   - Verify: `php -l includes/class-rest-invoices.php` passes; code review confirms all 5 invoice-level fields added, 3 per-installment fields added, and reset clears all keys
   - Done when: REST response includes payment details at both levels; reset_payment_state clears all Mollie payment detail meta
 
-- [ ] **T03: Render payment details UI on invoice detail page** `est:45m`
+- [x] **T03: Render payment details UI on invoice detail page** `est:45m`
   - Why: Admins need to see how an invoice was paid, with a direct link to the Mollie Dashboard — both in the "Betaalgegevens" card and the installment timeline table
   - Files: `src/pages/Finance/FactuurDetail.jsx`
   - Do: Add a Dutch method label mapping object (`ideal` → `iDEAL`, `creditcard` → `Creditcard`, etc.) with fallback to capitalized raw string. Add a "Betaalgegevens" card section (conditionally rendered when `invoice.mollie_payment_method` is truthy) showing: payment method label, paid-at timestamp (formatted with `format(new Date(...), 'd MMM yyyy HH:mm')`), consumer name and IBAN when available, and a "Bekijk in Mollie" external link. Enhance the installment timeline table with two new columns: "Methode" (method label for paid installments) and "Mollie" (external link icon linking to dashboard URL). Place the Betaalgegevens card after the installment timeline section.
