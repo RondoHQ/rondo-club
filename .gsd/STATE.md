@@ -2,7 +2,7 @@
 
 **Active Milestone:** M007 — Remove iCal Feed
 **Active Slice:** S01 — Remove iCal feed
-**Phase:** planning
+**Phase:** executing
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -16,10 +16,10 @@
 - ⬜ **M008:** M008
 
 ## Recent Decisions
-- None recorded
+- [M007-S01] Replace empty Integrations sidebar with Demo Data entry — section should not be empty after iCal removal
 
 ## Blockers
 - None
 
 ## Next Action
-Plan slice S01 (Remove iCal feed).
+Execute T01 of S01 (delete iCal class, remove all PHP/JS references).
