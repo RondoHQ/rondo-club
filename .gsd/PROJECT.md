@@ -515,6 +515,13 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Credit template routing in both send and resend paths, with invoice_kind precedence over invoice_type — v31.10.0
 - ✓ Test email support for credit template via Finance Settings — v31.10.0
 
+**v31.11.0 Contributie Exclusion Improvements (shipped 2026-03-12):**
+- ✓ Confirmation dialog before toggling contributie exclusion/inclusion with Dutch messages — v31.11.0
+- ✓ Immediate FinancesCard refresh after exclusion toggle (no page reload required) — v31.11.0
+- ✓ Email notification to Secretaris and Penningmeester on contributie exclusion toggle — v31.11.0
+- ✓ Reusable RoleFinder helper class extracted from LettermintWebhook for role-based user lookup — v31.11.0
+- ✓ Case-sensitive role matching to prevent Wedstrijdsecretaris false matches — v31.11.0
+
 ### Active
 
 (No active milestone)
@@ -538,12 +545,14 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v31.10.0):**
+**Codebase State (post v31.11.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.10.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.11.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices, dedicated credit invoice email template
+- Contributie exclusion toggle with confirmation, immediate UI refresh, and email notification to Secretaris/Penningmeester
+- RoleFinder helper class for reusable role-based user lookup across the codebase
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
 - CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced
