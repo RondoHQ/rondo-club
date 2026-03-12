@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** None
-**Active Slice:** None
-**Phase:** idle
+**Active Milestone:** M006 — Markeer als betaald
+**Active Slice:** S01 — Manual paid audit trail + display
+**Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -11,7 +11,7 @@
 - ✅ **M003:** Credit Invoice Improvements
 - ✅ **M004:** Contributie Exclusion Improvements
 - ✅ **M005:** Spelactiviteit Field
-- ⬜ **M006:** Markeer als betaald
+- 🔄 **M006:** Markeer als betaald
 - ⬜ **M007:** Remove iCal Feed
 - ⬜ **M008:** M008
 
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Ready for next milestone.
+Plan slice S01 (Manual paid audit trail + display).
