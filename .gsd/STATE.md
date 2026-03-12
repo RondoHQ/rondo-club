@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** M007 — Remove iCal Feed
+**Active Milestone:** None
 **Active Slice:** None
-**Phase:** completing-milestone
+**Phase:** idle
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -12,14 +12,14 @@
 - ✅ **M004:** Contributie Exclusion Improvements
 - ✅ **M005:** Spelactiviteit Field
 - ✅ **M006:** Markeer als betaald
-- 🔄 **M007:** Remove iCal Feed
+- ✅ **M007:** Remove iCal Feed
 - ⬜ **M008:** M008
 
 ## Recent Decisions
-- None recorded
+- [M007-S01] Replace empty Integrations sidebar with Demo Data entry — section should not be empty after iCal removal
 
 ## Blockers
 - None
 
 ## Next Action
-All slices complete in M007. Write milestone summary.
+Idle — ready for next milestone.
