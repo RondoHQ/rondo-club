@@ -243,7 +243,7 @@ class VOGEmail {
 	 * @return bool True on success
 	 */
 	public function update_template_new( string $template ): bool {
-		$sanitized = sanitize_textarea_field( $template );
+		$sanitized = wp_kses_post( $template );
 		return update_option( self::OPTION_TEMPLATE_NEW, $sanitized );
 	}
 
@@ -254,7 +254,7 @@ class VOGEmail {
 	 * @return bool True on success
 	 */
 	public function update_template_renewal( string $template ): bool {
-		$sanitized = sanitize_textarea_field( $template );
+		$sanitized = wp_kses_post( $template );
 		return update_option( self::OPTION_TEMPLATE_RENEWAL, $sanitized );
 	}
 
@@ -265,7 +265,7 @@ class VOGEmail {
 	 * @return bool True on success
 	 */
 	public function update_reminder_template_new( string $template ): bool {
-		$sanitized = sanitize_textarea_field( $template );
+		$sanitized = wp_kses_post( $template );
 		return update_option( self::OPTION_REMINDER_TEMPLATE_NEW, $sanitized );
 	}
 
@@ -276,7 +276,7 @@ class VOGEmail {
 	 * @return bool True on success
 	 */
 	public function update_reminder_template_renewal( string $template ): bool {
-		$sanitized = sanitize_textarea_field( $template );
+		$sanitized = wp_kses_post( $template );
 		return update_option( self::OPTION_REMINDER_TEMPLATE_RENEWAL, $sanitized );
 	}
 
@@ -363,7 +363,7 @@ class VOGEmail {
 				'preheader'     => $subject,
 				'eyebrow'       => 'VOG',
 				'heading'       => $subject,
-				'body_html'     => EmailTemplate::format_plain_text( $message ),
+				'body_html'     => self::prepare_body_html( $message ),
 				'support_email' => $this->get_from_email(),
 			]
 		);
@@ -427,6 +427,57 @@ class VOGEmail {
 	}
 
 	/**
+	 * Prepare template content as HTML for the email body.
+	 *
+	 * If the content already contains HTML markup (from the rich text editor), it is
+	 * used directly with inline styles added for email clients. Plain-text legacy
+	 * templates are converted via EmailTemplate::format_plain_text().
+	 *
+	 * @param string $content Template content (HTML or plain text).
+	 * @return string HTML ready for the email body.
+	 */
+	private static function prepare_body_html( string $content ): string {
+		$content = trim( $content );
+		if ( '' === $content ) {
+			return '';
+		}
+
+		// Detect HTML: if it contains tags like <p>, <ul>, <ol>, <br>, <strong>, <em>, <a>
+		if ( preg_match( '/<\s*(?:p|ul|ol|li|br|strong|em|a|h[1-6])\b/i', $content ) ) {
+			// Already HTML — add inline styles for email clients.
+			$styled = preg_replace(
+				'/<p(?:\s[^>]*)?>/',
+				'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">',
+				$content
+			);
+			$styled = preg_replace(
+				'/<ul(?:\s[^>]*)?>/',
+				'<ul style="margin:0 0 16px;padding-left:1.5em;color:#0f172a;font-size:16px;line-height:1.7;">',
+				$styled
+			);
+			$styled = preg_replace(
+				'/<ol(?:\s[^>]*)?>/',
+				'<ol style="margin:0 0 16px;padding-left:1.5em;color:#0f172a;font-size:16px;line-height:1.7;">',
+				$styled
+			);
+			$styled = preg_replace(
+				'/<li(?:\s[^>]*)?>/',
+				'<li style="margin:0 0 4px;">',
+				$styled
+			);
+			$styled = preg_replace(
+				'/<a\s/',
+				'<a style="color:#0f766e;text-decoration:underline;" ',
+				$styled
+			);
+			return $styled;
+		}
+
+		// Plain text — fall back to the paragraph converter.
+		return EmailTemplate::format_plain_text( $content );
+	}
+
+	/**
 	 * Get email address from person's fixed email fields.
 	 *
 	 * @param int $person_id Person post ID.
@@ -466,18 +517,7 @@ class VOGEmail {
 	 * @return string Default Dutch template
 	 */
 	private function get_default_template_new(): string {
-		return <<<EOT
-Beste {first_name},
-
-Als vrijwilliger bij onze vereniging vragen wij je om een Verklaring Omtrent Gedrag (VOG) aan te vragen.
-
-Dit is een wettelijke vereiste voor iedereen die werkt met minderjarigen.
-
-Je kunt de VOG gratis aanvragen via de KNVB. Meer informatie ontvang je van onze VOG-coordinator.
-
-Met sportieve groet,
-De vereniging
-EOT;
+		return '<p>Beste {first_name},</p><p>Als vrijwilliger bij onze vereniging vragen wij je om een Verklaring Omtrent Gedrag (VOG) aan te vragen.</p><p>Dit is een wettelijke vereiste voor iedereen die werkt met minderjarigen.</p><p>Je kunt de VOG gratis aanvragen via de KNVB. Meer informatie ontvang je van onze VOG-coordinator.</p><p>Met sportieve groet,<br>De vereniging</p>';
 	}
 
 	/**
@@ -486,16 +526,7 @@ EOT;
 	 * @return string Default Dutch template
 	 */
 	private function get_default_template_renewal(): string {
-		return <<<EOT
-Beste {first_name},
-
-Je huidige VOG-verklaring (van {previous_vog_date}) is ouder dan 3 jaar en moet vernieuwd worden.
-
-Wij verzoeken je vriendelijk om een nieuwe VOG aan te vragen.
-
-Met sportieve groet,
-De vereniging
-EOT;
+		return '<p>Beste {first_name},</p><p>Je huidige VOG-verklaring (van {previous_vog_date}) is ouder dan 3 jaar en moet vernieuwd worden.</p><p>Wij verzoeken je vriendelijk om een nieuwe VOG aan te vragen.</p><p>Met sportieve groet,<br>De vereniging</p>';
 	}
 
 	/**
@@ -504,18 +535,7 @@ EOT;
 	 * @return string Default Dutch template
 	 */
 	private function get_default_reminder_template_new(): string {
-		return <<<EOT
-Beste {first_name},
-
-Op {email_sent_date} hebben wij je gevraagd om een VOG aan te vragen. Je hebt deze op {justis_date} bij Justis ingediend.
-
-We willen je erop wijzen dat je de VOG nog moet uploaden in ons systeem zodra je deze hebt ontvangen.
-
-Mocht je vragen hebben, neem dan gerust contact met ons op.
-
-Met sportieve groet,
-De vereniging
-EOT;
+		return '<p>Beste {first_name},</p><p>Op {email_sent_date} hebben wij je gevraagd om een VOG aan te vragen. Je hebt deze op {justis_date} bij Justis ingediend.</p><p>We willen je erop wijzen dat je de VOG nog moet uploaden in ons systeem zodra je deze hebt ontvangen.</p><p>Mocht je vragen hebben, neem dan gerust contact met ons op.</p><p>Met sportieve groet,<br>De vereniging</p>';
 	}
 
 	/**
@@ -524,18 +544,7 @@ EOT;
 	 * @return string Default Dutch template
 	 */
 	private function get_default_reminder_template_renewal(): string {
-		return <<<EOT
-Beste {first_name},
-
-Op {email_sent_date} hebben wij je gevraagd om je VOG (van {previous_vog_date}) te vernieuwen. Je hebt deze op {justis_date} bij Justis ingediend.
-
-We willen je erop wijzen dat je de nieuwe VOG nog moet uploaden in ons systeem zodra je deze hebt ontvangen.
-
-Mocht je vragen hebben, neem dan gerust contact met ons op.
-
-Met sportieve groet,
-De vereniging
-EOT;
+		return '<p>Beste {first_name},</p><p>Op {email_sent_date} hebben wij je gevraagd om je VOG (van {previous_vog_date}) te vernieuwen. Je hebt deze op {justis_date} bij Justis ingediend.</p><p>We willen je erop wijzen dat je de nieuwe VOG nog moet uploaden in ons systeem zodra je deze hebt ontvangen.</p><p>Mocht je vragen hebben, neem dan gerust contact met ons op.</p><p>Met sportieve groet,<br>De vereniging</p>';
 	}
 
 	/**
@@ -641,7 +650,7 @@ EOT;
 				'preheader'     => $subject,
 				'eyebrow'       => 'VOG',
 				'heading'       => $subject,
-				'body_html'     => EmailTemplate::format_plain_text( $message ),
+				'body_html'     => self::prepare_body_html( $message ),
 				'support_email' => $this->get_from_email(),
 			]
 		);

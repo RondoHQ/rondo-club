@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
 import SearchableMultiSelect from '@/components/SearchableMultiSelect';
+import RichTextEditor from '@/components/RichTextEditor';
 
 export default function VOGSettings() {
   const [vogSettings, setVogSettings] = useState({
@@ -113,15 +114,14 @@ export default function VOGSettings() {
 
           {/* Template for new volunteers */}
           <div>
-            <label htmlFor="vog-template-new" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Template nieuwe vrijwilliger
             </label>
-            <textarea
-              id="vog-template-new"
-              rows={8}
+            <RichTextEditor
               value={vogSettings.template_new}
-              onChange={(e) => setVogSettings(prev => ({ ...prev, template_new: e.target.value }))}
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
+              onChange={(html) => setVogSettings(prev => ({ ...prev, template_new: html }))}
+              placeholder="Schrijf de e-mail template voor nieuwe vrijwilligers..."
+              minHeight="160px"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}
@@ -130,15 +130,14 @@ export default function VOGSettings() {
 
           {/* Template for renewals */}
           <div>
-            <label htmlFor="vog-template-renewal" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Template verlenging
             </label>
-            <textarea
-              id="vog-template-renewal"
-              rows={8}
+            <RichTextEditor
               value={vogSettings.template_renewal}
-              onChange={(e) => setVogSettings(prev => ({ ...prev, template_renewal: e.target.value }))}
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
+              onChange={(html) => setVogSettings(prev => ({ ...prev, template_renewal: html }))}
+              placeholder="Schrijf de e-mail template voor verlengingen..."
+              minHeight="160px"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{previous_vog_date}'}
@@ -157,15 +156,14 @@ export default function VOGSettings() {
 
           {/* Reminder template for new volunteers */}
           <div>
-            <label htmlFor="vog-reminder-template-new" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Herinnering template nieuwe vrijwilliger
             </label>
-            <textarea
-              id="vog-reminder-template-new"
-              rows={8}
+            <RichTextEditor
               value={vogSettings.reminder_template_new}
-              onChange={(e) => setVogSettings(prev => ({ ...prev, reminder_template_new: e.target.value }))}
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
+              onChange={(html) => setVogSettings(prev => ({ ...prev, reminder_template_new: html }))}
+              placeholder="Schrijf de herinnering template voor nieuwe vrijwilligers..."
+              minHeight="160px"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{email_sent_date}'}, {'{justis_date}'}
@@ -174,15 +172,14 @@ export default function VOGSettings() {
 
           {/* Reminder template for renewals */}
           <div>
-            <label htmlFor="vog-reminder-template-renewal" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Herinnering template verlenging
             </label>
-            <textarea
-              id="vog-reminder-template-renewal"
-              rows={8}
+            <RichTextEditor
               value={vogSettings.reminder_template_renewal}
-              onChange={(e) => setVogSettings(prev => ({ ...prev, reminder_template_renewal: e.target.value }))}
-              className="mt-1 block w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-electric-cyan focus:ring-electric-cyan sm:text-sm font-mono"
+              onChange={(html) => setVogSettings(prev => ({ ...prev, reminder_template_renewal: html }))}
+              placeholder="Schrijf de herinnering template voor verlengingen..."
+              minHeight="160px"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Beschikbare variabelen: {'{first_name}'}, {'{email_sent_date}'}, {'{justis_date}'}, {'{previous_vog_date}'}
