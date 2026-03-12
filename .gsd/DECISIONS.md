@@ -688,3 +688,8 @@
 - "[M010-S02] Empty array in age-group config = no restriction for that role — only non-empty arrays restrict; missing entries also mean no restriction"
 - "[M010-S02] Separate REST endpoint for age-group access (not merged into capability-matrix endpoint) — different storage mechanism (option vs WP roles), cleaner separation"
 - "[M010-S02] Version 32.1.0 (MINOR) — new backward-compatible feature, no breaking changes"
+- "[M010-S03] suppress_age_group REST query parameter recognized only in filter_rest_query for person queries from authenticated users — sets static $suppress_age_group_filter flag before age-group check runs"
+- "[M010-S03] Kaderlijst bypass is safe because volunteer roster data (names, roles, contact) is already public to all authenticated users — age-group filtering is for People management, not volunteer visibility"
+- "[M010-S03] PersonDetail differentiates rest_forbidden_age_group 403 from generic errors — shows distinct Dutch access-denied message with amber styling"
+- "[M010-S03] People list info banner uses existing blue info pattern (bg-blue-50 dark:bg-blue-900/20) — consistent with FeeCategorySettings and FinanceSettings"
+- "[M010-S03] Version 32.2.0 (MINOR) — frontend UX improvements for existing age-group filtering feature"

@@ -47,7 +47,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Age-group access filtering** `risk:high` `depends:[S01]`
   > After this: the matrix UI has a "Ledendata" column with a leeftijdsgroep multi-select per role. Users with age-group-restricted roles (and no management capabilities) see only members matching their permitted leeftijdsgroep values. The Kaderlijst is unaffected — all volunteers remain visible there. The `/rondo/v1/me` endpoint exposes the user's permitted age groups to the frontend.
 
-- [ ] **S03: Frontend age-group filtering** `risk:medium` `depends:[S02]`
+- [x] **S03: Frontend age-group filtering** `risk:medium` `depends:[S02]`
   > After this: the People list automatically filters to show only permitted members when the user has age-group restrictions. Person detail pages for non-permitted members show an access denied message. The Kaderlijst page works normally for all users. The system is fully end-to-end functional.
 
 ## Boundary Map

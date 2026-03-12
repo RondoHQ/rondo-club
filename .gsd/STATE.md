@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** M010 — Role-Capability Matrix & Age-Group Access
-**Active Slice:** S03 — Frontend age-group filtering
-**Phase:** planning
+**Active Milestone:** None
+**Active Slice:** None
+**Phase:** idle
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -15,7 +15,7 @@
 - ✅ **M007:** Remove iCal Feed
 - ✅ **M008:** Credit Invoice Type Badge
 - ✅ **M009:** Person Detail Page Improvements
-- 🔄 **M010:** Role-Capability Matrix & Age-Group Access
+- ✅ **M010:** Role-Capability Matrix & Age-Group Access
 
 ## Recent Decisions
 - None recorded
@@ -24,4 +24,4 @@
 - None
 
 ## Next Action
-Plan slice S03 (Frontend age-group filtering).
+All milestones complete. Awaiting next milestone.
