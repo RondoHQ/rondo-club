@@ -538,6 +538,11 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ `getIcalUrl` removed from `src/api/client.js` — v31.13.1
 - ✓ Developer docs iCal page deleted, all iCal references removed from docs site (7 files) — v31.13.1
 
+**v31.14.0 Credit Invoice Type Badge (shipped 2026-03-12):**
+- ✓ Credit invoices on Facturen list display rose "Credit" badge instead of cyan "Handmatig" — v31.14.0
+- ✓ "Credit" filter option in Type filter dropdown on Facturen list — v31.14.0
+- ✓ Custom filterFn separates credit from manual invoices (credit excluded from "Handmatig" filter) — v31.14.0
+
 ### Active
 
 (No active milestone)
@@ -561,9 +566,9 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v31.13.1):**
+**Codebase State (post v31.14.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.13.1 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.14.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices, dedicated credit invoice email template
