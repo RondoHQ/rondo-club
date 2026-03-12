@@ -16,10 +16,10 @@
 - ⬜ **M008:** M008
 
 ## Recent Decisions
-- [M007-S01] Replace empty Integrations sidebar with Demo Data entry — section should not be empty after iCal removal
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Execute T01 of S01 (delete iCal class, remove all PHP/JS references).
+Execute T01: Delete iCal class and remove all PHP/JS references in slice S01.
