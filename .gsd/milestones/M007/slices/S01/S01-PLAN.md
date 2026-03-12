@@ -51,7 +51,7 @@
   - Verify: `grep -rn 'ICalFeed\|ical_feed\|getIcalUrl\|rondo_is_ical_request\|RONDO_ICal_Feed\|prm-ical' includes/ functions.php src/` returns zero; `npm run build` succeeds; `npm run lint` succeeds
   - Done when: All iCal references gone from source, build and lint pass
 
-- [ ] **T02: Clean developer docs, bump version, deploy** `est:20m`
+- [x] **T02: Clean developer docs, bump version, deploy** `est:20m`
   - Why: Remove all iCal references from developer docs, update changelog/version, deploy to production and flush rewrite rules
   - Files: `../developer/src/content/docs/integrations/ical-feed.md`, `../developer/src/content/docs/index.mdx`, `../developer/src/content/docs/architecture.md`, `../developer/src/content/docs/architecture/php-autoloading.md`, `../developer/src/content/docs/architecture/relationship-system.md`, `../developer/src/content/docs/features/reminders.md`, `../developer/astro.config.mjs`, `style.css`, `package.json`, `CHANGELOG.md`
   - Do: Delete ical-feed.md. Update index.mdx Integrations card (description + link to demo-data). Remove IcalFeed row from architecture.md. Remove all 4 iCal references from php-autoloading.md. Remove iCal link from relationship-system.md and reminders.md. Replace iCal sidebar entry with demo-data in astro.config.mjs. Bump version to 31.13.1. Update changelog. Commit, push, deploy, flush rewrite rules.
