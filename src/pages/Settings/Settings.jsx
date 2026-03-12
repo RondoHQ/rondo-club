@@ -37,6 +37,7 @@ const ADMIN_SUBTABS = [
   { id: 'users', label: 'Gebruikers', icon: Users },
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
+  { id: 'capabilities', label: 'Capabilities' },
   { id: 'welkomstmail', label: 'Welkomstmail' },
   { id: 'anniversaries', label: 'Jubilarissen', icon: Award },
   { id: 'systeem', label: 'Systeem', icon: Wrench },
@@ -152,6 +153,13 @@ export default function Settings() {
   const [commissieSaving, setCommissieSaving] = useState(false);
   const [commissieMessage, setCommissieMessage] = useState('');
 
+  // Capability matrix state (admin only)
+  const [capabilityMatrix, setCapabilityMatrix] = useState({});
+  const [capabilityLabels, setCapabilityLabels] = useState({});
+  const [capabilityMatrixLoading, setCapabilityMatrixLoading] = useState(false);
+  const [capabilityMatrixSaving, setCapabilityMatrixSaving] = useState(false);
+  const [capabilityMatrixMessage, setCapabilityMatrixMessage] = useState('');
+
   // Fetch Applicatiewachtwoorden on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
@@ -221,6 +229,21 @@ export default function Settings() {
         .finally(() => setAnniversarySettingsLoading(false));
     }
   }, [activeTab, activeSubtab, isAdmin, anniversarySettings]);
+
+  // Fetch capability matrix when capabilities subtab is active (lazy load)
+  useEffect(() => {
+    if (activeTab === 'admin' && activeSubtab === 'capabilities' && isAdmin && Object.keys(capabilityMatrix).length === 0) {
+      setCapabilityMatrixLoading(true);
+      setCapabilityMatrixMessage('');
+      prmApi.getCapabilityMatrix()
+        .then((res) => {
+          setCapabilityMatrix(res.data?.roles || {});
+          setCapabilityLabels(res.data?.capability_labels || {});
+        })
+        .catch((error) => setCapabilityMatrixMessage(error.response?.data?.message || 'Kon capability-matrix niet laden.'))
+        .finally(() => setCapabilityMatrixLoading(false));
+    }
+  }, [activeTab, activeSubtab, isAdmin, capabilityMatrix]);
 
   // Fetch functie-to-role mapping on mount (admin only)
   useEffect(() => {
@@ -310,6 +333,22 @@ export default function Settings() {
       setCommissieMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
     } finally {
       setCommissieSaving(false);
+    }
+  };
+
+  // Handle capability matrix save
+  const handleCapabilityMatrixSave = async () => {
+    setCapabilityMatrixSaving(true);
+    setCapabilityMatrixMessage('');
+    try {
+      const response = await prmApi.updateCapabilityMatrix({ roles: capabilityMatrix });
+      setCapabilityMatrix(response.data?.roles || capabilityMatrix);
+      setCapabilityLabels(response.data?.capability_labels || capabilityLabels);
+      setCapabilityMatrixMessage('Capability-matrix opgeslagen.');
+    } catch (error) {
+      setCapabilityMatrixMessage('Fout bij opslaan: ' + (error.response?.data?.message || 'Onbekende fout'));
+    } finally {
+      setCapabilityMatrixSaving(false);
     }
   };
 
@@ -503,6 +542,13 @@ export default function Settings() {
             handleSyncCapabilities={handleSyncCapabilities}
             syncingCapabilities={syncingCapabilities}
             capabilitySyncMessage={capabilitySyncMessage}
+            capabilityMatrix={capabilityMatrix}
+            setCapabilityMatrix={setCapabilityMatrix}
+            capabilityLabels={capabilityLabels}
+            capabilityMatrixLoading={capabilityMatrixLoading}
+            capabilityMatrixSaving={capabilityMatrixSaving}
+            capabilityMatrixMessage={capabilityMatrixMessage}
+            handleCapabilityMatrixSave={handleCapabilityMatrixSave}
             welcomeSettings={welcomeSettings}
             setWelcomeSettings={setWelcomeSettings}
             welcomeSettingsLoading={welcomeSettingsLoading}
@@ -1936,6 +1982,13 @@ function AdminTabWithSubtabs({
   handleSyncCapabilities,
   syncingCapabilities,
   capabilitySyncMessage,
+  capabilityMatrix,
+  setCapabilityMatrix,
+  capabilityLabels,
+  capabilityMatrixLoading,
+  capabilityMatrixSaving,
+  capabilityMatrixMessage,
+  handleCapabilityMatrixSave,
   welcomeSettings,
   setWelcomeSettings,
   welcomeSettingsLoading,
@@ -2001,6 +2054,18 @@ function AdminTabWithSubtabs({
             handleSyncCapabilities={handleSyncCapabilities}
             syncingCapabilities={syncingCapabilities}
             capabilitySyncMessage={capabilitySyncMessage}
+          />
+        </div>
+      ) : activeSubtab === 'capabilities' ? (
+        <div className="card p-6">
+          <CapabilitiesTab
+            matrixState={capabilityMatrix}
+            setMatrixState={setCapabilityMatrix}
+            capabilityLabels={capabilityLabels}
+            loading={capabilityMatrixLoading}
+            saving={capabilityMatrixSaving}
+            message={capabilityMatrixMessage}
+            handleSave={handleCapabilityMatrixSave}
           />
         </div>
       ) : activeSubtab === 'welkomstmail' ? (
@@ -2883,6 +2948,118 @@ function FunctiesTab({
                 </span>
               )}
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Capabilities Tab Component - Role × Capability matrix
+function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave }) {
+  const roleEntries = Object.entries(matrixState);
+
+  const handleCheckboxChange = (roleSlug, capSlug, checked) => {
+    setMatrixState(prev => ({
+      ...prev,
+      [roleSlug]: {
+        ...prev[roleSlug],
+        capabilities: {
+          ...prev[roleSlug].capabilities,
+          [capSlug]: checked,
+        },
+      },
+    }));
+  };
+
+  // Get capability slugs from capabilityLabels or first role entry
+  const capSlugs = Object.keys(capabilityLabels || {});
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+          Capabilities
+        </h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Beheer welke Rondo-capabilities aan elke rol zijn toegekend. Wijzigingen worden direct in WordPress-rollen opgeslagen.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+        </div>
+      ) : roleEntries.length === 0 ? (
+        <div className="text-sm text-gray-500 dark:text-gray-400 py-4">
+          Geen rollen gevonden.
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                  <tr>
+                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
+                      Rol
+                    </th>
+                    {capSlugs.map(cap => (
+                      <th key={cap} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 w-24">
+                        {capabilityLabels[cap] || cap}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {roleEntries.map(([roleSlug, roleData]) => (
+                    <tr key={roleSlug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td className="px-4 py-2.5 align-middle">
+                        <span className="text-sm text-gray-900 dark:text-gray-100">{roleData.label}</span>
+                      </td>
+                      {capSlugs.map(cap => {
+                        const isProtected = roleSlug === 'administrator' && cap === 'manage_options';
+                        return (
+                          <td key={cap} className="px-4 py-2.5 w-24 text-center align-middle">
+                            <label className="flex items-center justify-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={!!(roleData.capabilities?.[cap])}
+                                onChange={(e) => handleCheckboxChange(roleSlug, cap, e.target.checked)}
+                                disabled={isProtected}
+                                className="h-4 w-4 rounded text-electric-cyan focus:ring-electric-cyan border-gray-300 disabled:opacity-50"
+                              />
+                            </label>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Opslaan...
+                </>
+              ) : (
+                'Opslaan'
+              )}
+            </button>
+            {message && (
+              <span className={`text-sm ${message.includes('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                {message}
+              </span>
+            )}
           </div>
         </div>
       )}

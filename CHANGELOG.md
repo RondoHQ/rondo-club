@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.0.0] - 2026-03-12
+
+### Added
+- Role-capability matrix UI in Settings → Beheer → Capabilities subtab — admin can view and toggle 5 custom Rondo capabilities (fairplay, vog, financieel, toegangscontrole, manage_clothing) per role
+- REST endpoints `GET/POST /rondo/v1/settings/capability-matrix` for reading and updating role capabilities
+
+### Changed
+- All 6 `current_user_can('administrator')` checks replaced with `current_user_can('manage_options')` for proper capability-based authorization
+- Role capability system changed from hardcoded constants to admin-configurable matrix via WordPress role definitions
+
+### Fixed
+- `register_role()` no longer re-adds capabilities to existing roles, allowing matrix changes to persist across page loads
+
 ## [31.15.0] - 2026-03-12
 
 ### Changed

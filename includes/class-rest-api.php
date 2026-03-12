@@ -1454,6 +1454,32 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Capability matrix (admin only — manage role×capability assignments)
+		register_rest_route(
+			'rondo/v1',
+			'/settings/capability-matrix',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_capability_matrix' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_capability_matrix' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'args'                => [
+						'roles' => [
+							'required'          => true,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -7099,6 +7125,118 @@ class Api extends Base {
 
 		// Re-fetch full response (reuse GET handler logic).
 		return $this->get_commissie_capability_map( $request );
+	}
+
+	/**
+	 * Get the role × capability matrix for all Rondo roles + administrator.
+	 *
+	 * @return \WP_REST_Response Matrix of roles and their custom capabilities.
+	 */
+	public function get_capability_matrix() {
+		$capability_labels = [
+			'fairplay'          => 'FairPlay',
+			'vog'               => 'VOG',
+			'financieel'        => 'Financieel',
+			'toegangscontrole'  => 'Toegangscontrole',
+			'manage_clothing'   => 'Kledingbeheer',
+		];
+
+		$wp_roles   = wp_roles();
+		$role_slugs = array_keys( \Rondo\Core\UserRoles::ROLES );
+		$role_slugs[] = 'administrator';
+
+		$roles = [];
+		foreach ( $role_slugs as $slug ) {
+			$role_obj = $wp_roles->get_role( $slug );
+			if ( ! $role_obj ) {
+				continue;
+			}
+
+			if ( 'administrator' === $slug ) {
+				$label = 'Administrator';
+			} else {
+				$label = \Rondo\Core\UserRoles::ROLES[ $slug ][0] ?? $slug;
+			}
+
+			$caps = [];
+			foreach ( array_keys( $capability_labels ) as $cap ) {
+				$caps[ $cap ] = ! empty( $role_obj->capabilities[ $cap ] );
+			}
+
+			$roles[ $slug ] = [
+				'label'        => $label,
+				'capabilities' => $caps,
+			];
+		}
+
+		return new \WP_REST_Response( [
+			'roles'             => $roles,
+			'capability_labels' => $capability_labels,
+		] );
+	}
+
+	/**
+	 * Update the role × capability matrix.
+	 *
+	 * Accepts { roles: { slug: { capabilities: { cap: bool } } } }.
+	 * Diffs each role's desired capabilities against current state and applies changes.
+	 * Administrator's manage_options capability is never removable.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error Updated matrix or error.
+	 */
+	public function update_capability_matrix( $request ) {
+		$submitted_roles = $request->get_param( 'roles' );
+
+		if ( ! is_array( $submitted_roles ) ) {
+			return new \WP_Error(
+				'invalid_data',
+				'The roles parameter must be an object of role slugs.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$allowed_caps = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ];
+		$valid_slugs  = array_keys( \Rondo\Core\UserRoles::ROLES );
+		$valid_slugs[] = 'administrator';
+
+		foreach ( $submitted_roles as $slug => $role_data ) {
+			if ( ! in_array( $slug, $valid_slugs, true ) ) {
+				continue;
+			}
+
+			$role_obj = get_role( $slug );
+			if ( ! $role_obj ) {
+				continue;
+			}
+
+			$desired_caps = $role_data['capabilities'] ?? [];
+			if ( ! is_array( $desired_caps ) ) {
+				continue;
+			}
+
+			foreach ( $desired_caps as $cap => $enabled ) {
+				if ( ! in_array( $cap, $allowed_caps, true ) ) {
+					continue;
+				}
+
+				// Never remove manage_options from administrator.
+				if ( 'administrator' === $slug && 'manage_options' === $cap && ! $enabled ) {
+					continue;
+				}
+
+				$has_cap = ! empty( $role_obj->capabilities[ $cap ] );
+
+				if ( $enabled && ! $has_cap ) {
+					$role_obj->add_cap( $cap );
+				} elseif ( ! $enabled && $has_cap ) {
+					$role_obj->remove_cap( $cap );
+				}
+			}
+		}
+
+		// Return fresh matrix state.
+		return $this->get_capability_matrix();
 	}
 
 	/**

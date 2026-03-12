@@ -251,7 +251,7 @@ class Commissies extends Base {
 		}
 
 		// Check if user can edit this commissie
-		return (int) $commissie->post_author === get_current_user_id() || current_user_can( 'administrator' );
+		return (int) $commissie->post_author === get_current_user_id() || current_user_can( 'manage_options' );
 	}
 
 	/**
@@ -375,7 +375,7 @@ class Commissies extends Base {
 			return false;
 		}
 
-		return (int) $post->post_author === get_current_user_id() || current_user_can( 'administrator' );
+		return (int) $post->post_author === get_current_user_id() || current_user_can( 'manage_options' );
 	}
 
 	/**

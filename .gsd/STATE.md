@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M010 — Role-Capability Matrix & Age-Group Access
-**Active Slice:** S01 — Role-capability matrix backend & UI
+**Active Slice:** S02 — Age-group access filtering
 **Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
@@ -24,4 +24,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Role-capability matrix backend & UI).
+Plan slice S02 (Age-group access filtering).
