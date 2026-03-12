@@ -1,14 +1,16 @@
 # GSD State
 
 **Active Milestone:** M002 — Mollie Payment Details
-**Active Slice:** S01 — Webhook payment detail extraction + REST API + Invoice detail UI
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
 - 🔄 **M002:** Mollie Payment Details
 - ⬜ **M003:** Credit Invoice Improvements
+- ⬜ **M004:** Contributie Exclusion Improvements
+- ⬜ **M005:** Spelactiviteit Field
 
 ## Recent Decisions
 - None recorded
@@ -17,4 +19,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Webhook payment detail extraction + REST API + Invoice detail UI).
+All slices complete in M002. Write milestone summary.

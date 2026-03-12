@@ -40,6 +40,27 @@ const installmentStatusLabels = {
   overdue: 'Achterstallig',
 };
 
+// Mollie payment method display labels (Dutch)
+const mollieMethodLabels = {
+  ideal: 'iDEAL',
+  creditcard: 'Creditcard',
+  bancontact: 'Bancontact',
+  sofort: 'SOFORT',
+  banktransfer: 'Bankoverschrijving',
+  eps: 'EPS',
+  giropay: 'Giropay',
+  przelewy24: 'Przelewy24',
+  kbc: 'KBC',
+  belfius: 'Belfius',
+  paypal: 'PayPal',
+  applepay: 'Apple Pay',
+  in3: 'iDEAL in3',
+  klarna: 'Klarna',
+  twint: 'TWINT',
+};
+
+const getMollieMethodLabel = (method) => mollieMethodLabels[method] || method?.charAt(0).toUpperCase() + method?.slice(1) || 'Onbekend';
+
 /**
  * Get a human-readable label for a payment plan.
  * Uses actual installment_count when available (dynamic plans may have fewer than 8).
@@ -762,6 +783,8 @@ export default function FactuurDetail() {
                   <th className="px-4 py-3 text-right text-sm font-medium text-gray-500 dark:text-gray-400">Bedrag</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Methode</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -780,10 +803,76 @@ export default function FactuurDetail() {
                     <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                       {inst.paid_at ? format(new Date(inst.paid_at), 'd MMM yyyy') : '-'}
                     </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {inst.mollie_method ? getMollieMethodLabel(inst.mollie_method) : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {inst.mollie_dashboard_url ? (
+                        <a
+                          href={inst.mollie_dashboard_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-electric-cyan dark:text-electric-cyan hover:text-cyan-600 dark:hover:text-cyan-300"
+                          title="Bekijk in Mollie"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      ) : '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Betaalgegevens (payment details) - only for invoices with Mollie payment data */}
+      {invoice.mollie_payment_method && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Betaalgegevens
+          </h2>
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalmethode</h3>
+              <p className="text-gray-700 dark:text-gray-300">{getMollieMethodLabel(invoice.mollie_payment_method)}</p>
+            </div>
+            {invoice.mollie_paid_at && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {format(new Date(invoice.mollie_paid_at), 'd MMM yyyy HH:mm')}
+                </p>
+              </div>
+            )}
+            {invoice.mollie_consumer_name && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Naam betaler</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.mollie_consumer_name}</p>
+              </div>
+            )}
+            {invoice.mollie_consumer_account && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">IBAN betaler</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.mollie_consumer_account}</p>
+              </div>
+            )}
+            {invoice.mollie_dashboard_url && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Mollie</h3>
+                <a
+                  href={invoice.mollie_dashboard_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-electric-cyan dark:text-electric-cyan hover:underline text-sm inline-flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Bekijk in Mollie
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}
