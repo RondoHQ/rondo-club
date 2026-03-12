@@ -2,7 +2,7 @@
 /**
  * vCard Export Class
  *
- * Generates vCard 3.0 format from person data for CardDAV server.
+ * Generates vCard 3.0 format from person data.
  *
  * @package Rondo
  */
@@ -338,7 +338,7 @@ class VCard {
 	}
 
 	/**
-	 * Generate vCard from array data (used by CardDAV backend)
+	 * Generate vCard from array data
 	 *
 	 * @param array $data Person data array with ACF fields
 	 * @return string vCard content

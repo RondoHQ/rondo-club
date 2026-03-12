@@ -1,6 +1,6 @@
 {
     "name": "rondohq/rondo-club",
-    "description": "Rondo Club management theme with CardDAV support",
+    "description": "Rondo Club management theme",
     "type": "wordpress-theme",
     "license": "GPL-2.0-or-later",
     "require": {
@@ -10,8 +10,7 @@
         "lettermint/lettermint-php": "^1.0",
         "mollie/mollie-api-php": "^3.9",
         "mpdf/mpdf": "^8.2",
-        "pkpass/pkpass": "^2.4",
-        "sabre/dav": "^4.6"
+        "pkpass/pkpass": "^2.4"
     },
     "autoload": {
         "psr-4": {

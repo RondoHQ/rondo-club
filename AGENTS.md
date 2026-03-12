@@ -44,14 +44,14 @@ Entry point: `functions.php`
 - Loads classes from `includes/` conditionally on `after_setup_theme` and `plugins_loaded`
 - Core classes (PostTypes, Taxonomies, AccessControl, UserRoles, DemoProtection) load on every request
 - REST API classes load only for REST requests; Reminders only for admin/cron
-- iCal and CardDAV requests get early returns after loading only their specific classes
+- iCal requests get early returns after loading only their specific class
 - ~50 class files in `includes/`, organized by function
 
 **Key class groups:**
 - **Core:** PostTypes, Taxonomies, AccessControl, UserRoles, AutoTitle, VolunteerStatus
 - **REST controllers:** Api (dashboard/search/timeline), People, Teams, Commissies, Todos, Feedback, Calendar, GoogleContacts, GoogleSheets, CustomFields, ImportExport
 - **Collaboration:** CommentTypes (notes/activities), Mentions, MentionNotifications
-- **Integrations:** CalendarSync, GoogleContactsSync, GoogleContactsExport, GoogleOAuth, CardDAVServer, ICalFeed
+- **Integrations:** GoogleOAuth, ICalFeed
 - **Other:** Reminders, MembershipFees, FeeCacheInvalidator, VogEmail, DemoProtection, ClubConfig
 
 **ACF field groups** are stored as JSON in `acf-json/` for version control.
@@ -294,7 +294,7 @@ Developer documentation lives in the **developer docs site** at `../developer/sr
 When making changes, update the relevant docs there. Each doc file requires Starlight frontmatter (`title:` in YAML front matter). The docs are organized as:
 - `api/` — Rondo Club REST API reference
 - `features/` — Feature documentation (access control, relationships, etc.)
-- `integrations/` — CardDAV, iCal, import
+- `integrations/` — iCal, import
 - `architecture/` — Frontend, PHP autoloading, relationship system
 
 PRDs and product specs still live in `docs/prd/` within this repo.

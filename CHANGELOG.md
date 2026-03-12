@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.8.0] - 2026-03-12
+
+### Removed
+- CardDAV server and all related backend code (server, backends, REST endpoint, WP-CLI command, rewrite rules)
+- CalDAV provider class (unused since Google Calendar sync removal in v29.0)
+- `sabre/dav` Composer dependency
+- CardDAV subtab from Settings > Connections UI
+- CardDAV URL API endpoint and frontend method
+
 ## [31.7.0] - 2026-03-08
 
 ### Changed

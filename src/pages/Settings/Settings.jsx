@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, Database, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -25,7 +25,6 @@ const TABS = [
 
 // Connections subtabs configuration
 const CONNECTION_SUBTABS = [
-  { id: 'carddav', label: 'CardDAV', icon: Database },
   { id: 'api-access', label: 'API-toegang', icon: Key },
   { id: 'freescout', label: 'FreeScout', icon: LinkIcon },
   { id: 'lettermint', label: 'Lettermint', icon: Mail },
@@ -57,14 +56,14 @@ export default function Settings() {
   // Get active tab from URL or default to 'appearance'
   const activeTab = urlTab || 'appearance';
   // Get active subtab for tabs that support subtabs.
-  const activeSubtab = urlSubtab || (activeTab === 'admin' ? 'users' : activeTab === 'connections' ? 'carddav' : activeTab === 'financieel' ? 'organization' : null);
+  const activeSubtab = urlSubtab || (activeTab === 'admin' ? 'users' : activeTab === 'connections' ? 'api-access' : activeTab === 'financieel' ? 'organization' : null);
 
   const setActiveTab = (tab, subtab = null) => {
     if (subtab) {
       navigate(`/settings/${tab}/${subtab}`);
     } else if (tab === 'connections') {
-      // Default to carddav subtab when switching to connections
-      navigate(`/settings/${tab}/carddav`);
+      // Default to api-access subtab when switching to connections
+      navigate(`/settings/${tab}/api-access`);
     } else if (tab === 'admin') {
       // Default to users subtab when switching to admin
       navigate(`/settings/${tab}/users`);
@@ -110,7 +109,6 @@ export default function Settings() {
   const [creatingPassword, setCreatingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState(null);
   const [passwordCopied, setPasswordCopied] = useState(false);
-  const [carddavUrls, setCarddavUrls] = useState(null);
   const [clubConfig, setClubConfig] = useState(null);
   const [clubConfigLoading, setClubConfigLoading] = useState(true);
   
@@ -154,17 +152,15 @@ export default function Settings() {
   const [commissieSaving, setCommissieSaving] = useState(false);
   const [commissieMessage, setCommissieMessage] = useState('');
 
-  // Fetch Applicatiewachtwoorden and CardDAV URLs on mount
+  // Fetch Applicatiewachtwoorden on mount
   useEffect(() => {
     const fetchAppPasswords = async () => {
       try {
-        const [passwordsResponse, urlsResponse, configResponse] = await Promise.all([
+        const [passwordsResponse, configResponse] = await Promise.all([
           prmApi.getAppPasswords(userId),
-          prmApi.getCardDAVUrls(),
           prmApi.getClubConfig(),
         ]);
         setAppPasswords(passwordsResponse.data || []);
-        setCarddavUrls(urlsResponse.data);
         setClubConfig(configResponse.data || null);
       } catch {
         // App passwords fetch failed silently
@@ -399,14 +395,6 @@ export default function Settings() {
     }
   };
   
-  const copyCarddavUrl = async (url) => {
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // Copy failed silently
-    }
-  };
-  
   const formatDate = (dateString) => {
     if (!dateString) return 'Nooit';
     const date = new Date(dateString);
@@ -444,14 +432,10 @@ export default function Settings() {
         return <ConnectionsTab
           activeSubtab={activeSubtab}
           setActiveSubtab={setActiveSubtab}
-          setActiveTab={setActiveTab}
           isAdmin={isAdmin}
           canAccessFinancieel={canAccessFinancieel}
           currentUserEmail={currentUser?.email || ''}
-          // CardDAV props
-          carddavUrls={carddavUrls}
           config={config}
-          copyCarddavUrl={copyCarddavUrl}
           // Club config props
           clubConfig={clubConfig}
           setClubConfig={setClubConfig}
@@ -968,12 +952,11 @@ function AppearanceTab() {
   );
 }
 
-// ConnectionsTab Component - Container for CardDAV and API subtabs
+// ConnectionsTab Component - Container for connection subtabs
 function ConnectionsTab({
-  activeSubtab, setActiveSubtab, setActiveTab,
+  activeSubtab, setActiveSubtab,
   isAdmin, canAccessFinancieel, currentUserEmail,
-  // CardDAV props
-  carddavUrls, config, copyCarddavUrl,
+  config,
   // Club config props
   clubConfig, setClubConfig, clubConfigLoading,
   // API Access props
@@ -1006,14 +989,6 @@ function ConnectionsTab({
       </div>
 
       {/* Subtab content */}
-      {activeSubtab === 'carddav' && (
-        <ConnectionsCardDAVSubtab
-          carddavUrls={carddavUrls}
-          config={config}
-          copyCarddavUrl={copyCarddavUrl}
-          setActiveTab={setActiveTab}
-        />
-      )}
       {activeSubtab === 'api-access' && (
         <APIAccessTab
           appPasswords={appPasswords}
@@ -1053,81 +1028,6 @@ function ConnectionsTab({
       )}
       {activeSubtab === 'wallets' && (
         <WalletsSubtab canAccessFinancieel={canAccessFinancieel} />
-      )}
-    </div>
-  );
-}
-
-// ConnectionsCardDAVSubtab - CardDAV-synchronisatie configuration (URLs only, passwords managed in API Access tab)
-function ConnectionsCardDAVSubtab({
-  carddavUrls, config, copyCarddavUrl, setActiveTab,
-}) {
-  return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold text-brand-gradient mb-4">CardDAV-synchronisatie</h2>
-      <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
-        Synchroniseer je contacten met apps zoals Apple Contacten, Android Contacten of Thunderbird via CardDAV.
-      </p>
-
-      {carddavUrls ? (
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-3">
-            <h3 className="font-medium text-sm dark:text-gray-200">Verbindingsdetails</h3>
-            <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">Server-URL (voor de meeste apps)</label>
-              <div className="flex gap-2 mt-1">
-                <input
-                  type="text"
-                  readOnly
-                  value={carddavUrls.addressbook}
-                  className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
-                  onClick={(e) => e.target.select()}
-                />
-                <button
-                  onClick={() => copyCarddavUrl(carddavUrls.addressbook)}
-                  className="btn-tertiary text-xs px-2"
-                  title="URL kopiëren"
-                >
-                  Kopiëren
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">Gebruikersnaam</label>
-              <div className="flex gap-2 mt-1">
-                <input
-                  type="text"
-                  readOnly
-                  value={config.userLogin || ''}
-                  className="input flex-1 text-xs font-mono bg-white dark:bg-gray-700"
-                  onClick={(e) => e.target.select()}
-                />
-                <button
-                  onClick={() => copyCarddavUrl(config.userLogin)}
-                  className="btn-tertiary text-xs px-2"
-                  title="Gebruikersnaam kopiëren"
-                >
-                  Kopiëren
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Applicatiewachtwoorden voor CardDAV worden beheerd in{' '}
-            <button
-              onClick={() => setActiveTab('connections', 'api-access')}
-              className="text-electric-cyan dark:text-electric-cyan hover:underline"
-            >
-              Instellingen &gt; API-toegang
-            </button>
-            .
-          </p>
-        </div>
-      ) : (
-        <div className="animate-pulse">
-          <div className="h-24 bg-gray-200 rounded dark:bg-gray-700"></div>
-        </div>
       )}
     </div>
   );
@@ -1877,7 +1777,6 @@ function APIAccessTab({
         <h2 className="text-lg font-semibold text-brand-gradient mb-4">Applicatiewachtwoorden</h2>
         <p className="text-sm text-gray-600 mb-4 dark:text-gray-400">
           Maak applicatiewachtwoorden aan voor API-toegang vanuit externe tools en scripts.
-          Deze wachtwoorden werken met de REST API en CardDAV-synchronisatie.
         </p>
 
         {appPasswordsLoading ? (

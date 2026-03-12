@@ -20,7 +20,7 @@ if ( ! isset( $_SERVER['HTTP_AUTHORIZATION'] ) && isset( $_SERVER['PHP_AUTH_USER
 	$_SERVER['HTTP_AUTHORIZATION'] = 'Basic ' . base64_encode( $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] );
 }
 
-// Load Composer autoloader for PSR-4 classes and CardDAV support
+// Load Composer autoloader for PSR-4 classes
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 	require_once __DIR__ . '/vendor/autoload.php';
 }
@@ -109,14 +109,12 @@ use Rondo\REST\People;
 use Rondo\REST\Teams;
 use Rondo\REST\Commissies;
 use Rondo\REST\Todos;
-use Rondo\REST\ImportExport;
 use Rondo\REST\GoogleSheets as RESTGoogleSheets;
 use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\REST\MembershipPasses as RESTMembershipPasses;
 use Rondo\REST\Clothing as RESTClothing;
 use Rondo\Calendar\Matcher;
-use Rondo\Calendar\CalDAVProvider;
 use Rondo\Sheets\GoogleOAuth;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Notifications\LettermintMailer;
@@ -127,7 +125,6 @@ use Rondo\Collaboration\Reminders;
 use Rondo\Export\VCard as VCardExport;
 use Rondo\Export\ICalFeed;
 use Rondo\Sheets\GoogleSheetsConnection;
-use Rondo\CardDAV\Server as CardDAVServer;
 use Rondo\Data\InverseRelationships;
 use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
@@ -238,9 +235,6 @@ if ( ! class_exists( 'RONDO_REST_Commissies' ) ) {
 if ( ! class_exists( 'RONDO_REST_Todos' ) ) {
 	class_alias( Todos::class, 'RONDO_REST_Todos' );
 }
-if ( ! class_exists( 'RONDO_REST_Import_Export' ) ) {
-	class_alias( ImportExport::class, 'RONDO_REST_Import_Export' );
-}
 if ( ! class_exists( 'RONDO_REST_Feedback' ) ) {
 	class_alias( RESTFeedback::class, 'RONDO_REST_Feedback' );
 }
@@ -251,9 +245,6 @@ if ( ! class_exists( 'RONDO_REST_Clothing' ) ) {
 // Calendar classes
 if ( ! class_exists( 'RONDO_Calendar_Matcher' ) ) {
 	class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
-}
-if ( ! class_exists( 'RONDO_CalDAV_Provider' ) ) {
-	class_alias( CalDAVProvider::class, 'RONDO_CalDAV_Provider' );
 }
 if ( ! class_exists( 'RONDO_Google_OAuth' ) ) {
 	class_alias( GoogleOAuth::class, 'RONDO_Google_OAuth' );
@@ -293,11 +284,6 @@ if ( ! class_exists( 'RONDO_VCard_Export' ) ) {
 if ( ! class_exists( 'RONDO_ICal_Feed' ) ) {
 	class_alias( ICalFeed::class, 'RONDO_ICal_Feed' );
 }
-// CardDAV class
-if ( ! class_exists( 'RONDO_CardDAV_Server' ) ) {
-	class_alias( CardDAVServer::class, 'RONDO_CardDAV_Server' );
-}
-
 // Data classes
 if ( ! class_exists( 'RONDO_Inverse_Relationships' ) ) {
 	class_alias( InverseRelationships::class, 'RONDO_Inverse_Relationships' );
@@ -328,14 +314,6 @@ if ( ! class_exists( 'RONDO_VOG_Email' ) ) {
 // Club Config classes
 if ( ! class_exists( 'RONDO_Club_Config' ) ) {
 	class_alias( ClubConfig::class, 'RONDO_Club_Config' );
-}
-
-/**
- * Check if current request is a CardDAV request
- */
-function rondo_is_carddav_request() {
-	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
-	return strpos( $request_uri, '/carddav' ) === 0;
 }
 
 /**
@@ -390,13 +368,6 @@ function rondo_init() {
 		return; // iCal requests don't need other functionality
 	}
 
-	// CardDAV server - only load for CardDAV requests
-	if ( rondo_is_carddav_request() ) {
-		new CardDAVServer();
-		$initialized = true;
-		return; // CardDAV requests don't need other functionality
-	}
-
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
 	$is_rest  = rondo_is_rest_request();
@@ -425,7 +396,6 @@ function rondo_init() {
 		new Teams();
 		new Commissies();
 		new Todos();
-		new ImportExport();
 		new RESTGoogleSheets();
 		new RESTCustomFields();
 		new RESTFeedback();
@@ -449,11 +419,6 @@ function rondo_init() {
 		new ICalFeed();
 	}
 
-	// CardDAV server - initialize for rewrite rule registration
-	if ( ! rondo_is_carddav_request() ) {
-		new CardDAVServer();
-	}
-
 	// Bulk invoice creator — registers WP-Cron hook for batch processing
 	new BulkInvoiceCreator();
 
@@ -468,10 +433,6 @@ function rondo_init() {
 
 	// Invoice reminder scheduler — daily cron sweeper for membership and discipline invoice reminders
 	new InvoiceReminderScheduler();
-
-	// Initialize CardDAV sync hooks to track changes made via web UI
-	// This must run on all requests, not just CardDAV requests
-	\Rondo\CardDAV\CardDAVBackend::init_hooks();
 
 	$initialized = true;
 }
@@ -1014,10 +975,6 @@ function rondo_theme_activation() {
 
 	// Also handle theme-specific rewrite rules
 	rondo_theme_rewrite_rules();
-
-	// Initialize CardDAV server rewrite rules
-	$carddav = new CardDAVServer();
-	$carddav->register_rewrite_rules();
 
 	// Register public payment page rewrite rules
 	$payment_page = new PublicPaymentPage();

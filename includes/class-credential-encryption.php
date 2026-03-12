@@ -2,7 +2,7 @@
 /**
  * Credential Encryption Class
  *
- * Provides secure encryption/decryption for OAuth tokens and CalDAV credentials
+ * Provides secure encryption/decryption for OAuth tokens and API credentials
  * using sodium encryption (available via WordPress/PHP).
  */
 
