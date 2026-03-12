@@ -61,7 +61,7 @@
   - Verify: `php -l includes/class-mollie-webhook.php` passes; code review confirms try/catch wrapping, extraction before status transition, and `$payment_link` passed to installment handler
   - Done when: Webhook handler stores payment details for both full and installment paths, extraction never blocks 200 response, idempotency preserved
 
-- [ ] **T02: Expose payment details via REST API and clear on reset** `est:30m`
+- [x] **T02: Expose payment details via REST API and clear on reset** `est:30m`
   - Why: The frontend needs payment detail data from the API, and test-mode reset must clean up all new meta keys
   - Files: `includes/class-rest-invoices.php`
   - Do: In `format_invoice_detail()`, add invoice-level reads: `mollie_payment_method`, `mollie_paid_at`, `mollie_dashboard_url`, `mollie_consumer_name`, `mollie_consumer_account` from post meta. In the installment loop, add `mollie_method`, `mollie_paid_at`, `mollie_dashboard_url` per installment. In `reset_payment_state()`, add `delete_post_meta()` calls for all 6 invoice-level meta keys and loop through installments to clear per-installment Mollie meta.

@@ -1947,6 +1947,22 @@ class Invoices extends Base {
 		delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 		update_field( 'payment_link', '', $invoice_id );
 
+		// Clear Mollie payment detail meta (stored by webhook on payment confirmation)
+		delete_post_meta( $invoice_id, '_mollie_payment_method' );
+		delete_post_meta( $invoice_id, '_mollie_paid_at' );
+		delete_post_meta( $invoice_id, '_mollie_dashboard_url' );
+		delete_post_meta( $invoice_id, '_mollie_consumer_name' );
+		delete_post_meta( $invoice_id, '_mollie_consumer_account' );
+		delete_post_meta( $invoice_id, '_mollie_payment_details' );
+
+		// Clear per-installment Mollie payment detail meta
+		$installment_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		for ( $n = 1; $n <= $installment_count; $n++ ) {
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_mollie_method' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_mollie_paid_at' );
+			delete_post_meta( $invoice_id, '_installment_' . $n . '_mollie_dashboard_url' );
+		}
+
 		// Clear Rabobank payment data (also clear payment_link — idempotent)
 		delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 
@@ -2428,12 +2444,15 @@ class Invoices extends Base {
 				$amount    = (float) get_post_meta( $post->ID, '_installment_' . $n . '_amount', true );
 				$admin_fee = (float) get_post_meta( $post->ID, '_installment_' . $n . '_admin_fee', true );
 				$installments[] = [
-					'number'   => $n,
-					'amount'   => $amount + $admin_fee,
-					'status'   => (string) get_post_meta( $post->ID, '_installment_' . $n . '_status', true ) ?: 'pending',
-					'due_date' => (string) get_post_meta( $post->ID, '_installment_' . $n . '_due_date', true ) ?: null,
-					'paid_at'  => (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null,
-					'sent_at'  => (string) get_post_meta( $post->ID, '_installment_' . $n . '_sent_at', true ) ?: null,
+					'number'            => $n,
+					'amount'            => $amount + $admin_fee,
+					'status'            => (string) get_post_meta( $post->ID, '_installment_' . $n . '_status', true ) ?: 'pending',
+					'due_date'          => (string) get_post_meta( $post->ID, '_installment_' . $n . '_due_date', true ) ?: null,
+					'paid_at'           => (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null,
+					'sent_at'           => (string) get_post_meta( $post->ID, '_installment_' . $n . '_sent_at', true ) ?: null,
+					'mollie_method'     => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_method', true ) ?: null,
+					'mollie_paid_at'    => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_paid_at', true ) ?: null,
+					'mollie_dashboard_url' => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_dashboard_url', true ) ?: null,
 				];
 			}
 		}
@@ -2442,6 +2461,13 @@ class Invoices extends Base {
 		$invoice['installment_count']   = $count;
 		$invoice['installments']        = $installments;
 		$invoice['disable_installments'] = (bool) get_post_meta( $post->ID, '_disable_installments', true );
+
+		// Mollie payment details (stored by webhook on payment confirmation)
+		$invoice['mollie_payment_method']  = (string) get_post_meta( $post->ID, '_mollie_payment_method', true ) ?: null;
+		$invoice['mollie_paid_at']         = (string) get_post_meta( $post->ID, '_mollie_paid_at', true ) ?: null;
+		$invoice['mollie_dashboard_url']   = (string) get_post_meta( $post->ID, '_mollie_dashboard_url', true ) ?: null;
+		$invoice['mollie_consumer_name']   = (string) get_post_meta( $post->ID, '_mollie_consumer_name', true ) ?: null;
+		$invoice['mollie_consumer_account'] = (string) get_post_meta( $post->ID, '_mollie_consumer_account', true ) ?: null;
 
 		return $invoice;
 	}
