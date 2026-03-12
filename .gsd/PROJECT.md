@@ -528,6 +528,12 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Compound REST API filter `spelactiviteit_no_team=1` on `/rondo/v1/people/filtered` — v31.12.0
 - ✓ "Spelactiviteit zonder team" boolean toggle filter in People list — v31.12.0
 
+**v31.13.0 Manual Payment Audit Trail (shipped 2026-03-12):**
+- ✓ Audit trail meta (`_manually_marked_paid_at`, `_manually_marked_paid_by`) stored on manual paid transition — v31.13.0
+- ✓ REST API returns `manually_marked_paid_at` and `manually_marked_paid_by` in invoice detail response — v31.13.0
+- ✓ Betaalgegevens card renders for both Mollie-paid and manually-paid invoices — v31.13.0
+- ✓ Manual-paid section shows "Handmatig gemarkeerd als betaald" with date/time and user name — v31.13.0
+
 ### Active
 
 (No active milestone)
