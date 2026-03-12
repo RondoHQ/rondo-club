@@ -11,8 +11,6 @@
 namespace Rondo\Finance;
 
 use Mollie\Api\MollieApiClient;
-use Rondo\Config\FinanceConfig;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -35,15 +33,12 @@ class MollieClient {
 	/**
 	 * Constructor
 	 *
-	 * Creates a FinanceConfig, reads the stored Mollie API key, and initialises
-	 * a configured MollieApiClient.
+	 * Initialises a configured MollieApiClient.
 	 *
+	 * @param string $api_key Mollie API key for the target account.
 	 * @throws \Mollie\Api\Exceptions\ApiException If the API key is invalid or rejected by Mollie.
 	 */
-	public function __construct() {
-		$config  = new FinanceConfig();
-		$api_key = $config->get_mollie_api_key();
-
+	public function __construct( string $api_key ) {
 		$this->client = new MollieApiClient();
 		$this->client->setApiKey( $api_key );
 	}

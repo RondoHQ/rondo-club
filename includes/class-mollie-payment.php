@@ -58,13 +58,14 @@ class MolliePayment {
 			// Payment link ID exists but URL is missing — fall through to create a new link.
 		}
 
-		// 3. Guard: API key configured
+		// 3. Guard: account API key configured
 		$config  = new FinanceConfig();
-		$api_key = $config->get_mollie_api_key();
+		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		$api_key    = $config->get_mollie_api_key_for_account( $account_id );
 		if ( empty( $api_key ) ) {
 			return new \WP_Error(
 				'mollie_not_configured',
-				__( 'Mollie API-sleutel niet geconfigureerd.', 'rondo' ),
+				__( 'Voor deze factuur is geen Mollie API-sleutel geconfigureerd.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -100,7 +101,7 @@ class MolliePayment {
 
 		// 9. Call Mollie Payment Links API — creates a persistent link (no expiry by default).
 		try {
-			$mollie_client = new MollieClient();
+			$mollie_client = new MollieClient( $api_key );
 			$mollie        = $mollie_client->get();
 			$payment_link  = $mollie->paymentLinks->create( $payload );
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {

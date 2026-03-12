@@ -1,11 +1,11 @@
 {
   "mode": "interactive",
-  "depth": "standard",
   "model_profile": "balanced",
   "workflow": {
-    "research": true,
+    "research": false,
     "plan_check": true,
-    "verifier": true
+    "verifier": true,
+    "_auto_chain_active": false
   },
   "git": {
     "branching_strategy": "none"
@@ -31,5 +31,6 @@
   "safety": {
     "always_confirm_destructive": true,
     "always_confirm_external_services": true
-  }
+  },
+  "granularity": "standard"
 }

@@ -44,7 +44,7 @@ class FinanceConfig {
 	const OPTION_ORG_ADDRESS           = 'rondo_finance_org_address';
 	const OPTION_CONTACT_EMAIL         = 'rondo_finance_contact_email';
 	const OPTION_IBAN                  = 'rondo_finance_iban';
-	const OPTION_BANK_ACCOUNTS         = 'rondo_finance_bank_accounts';
+	const OPTION_MOLLIE_ACCOUNTS       = 'rondo_finance_mollie_accounts';
 	const OPTION_PAYMENT_TERM_DAYS     = 'rondo_finance_payment_term_days';
 	const OPTION_PAYMENT_CLAUSE        = 'rondo_finance_payment_clause';
 	const OPTION_EMAIL_TEMPLATE        = 'rondo_finance_email_template';
@@ -53,8 +53,10 @@ class FinanceConfig {
 	const OPTION_ACCENT_COLOR          = 'rondo_finance_accent_color';
 	const OPTION_ACCENT_BACKGROUND_COLOR = 'rondo_finance_accent_background_color';
 	const OPTION_BCC_EMAIL             = 'rondo_finance_bcc_email';
-	const OPTION_MOLLIE_API_KEY        = 'rondo_finance_mollie_api_key';
 	const OPTION_MOLLIE_REDIRECT_URL   = 'rondo_finance_mollie_redirect_url';
+	const OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID = 'rondo_finance_mollie_default_membership_account_id';
+	const OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID = 'rondo_finance_mollie_default_discipline_account_id';
+	const OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID     = 'rondo_finance_mollie_default_manual_account_id';
 	const OPTION_ACTIVE_PAYMENT_PROVIDER = 'rondo_finance_active_payment_provider';
 	const OPTION_ADMIN_FEE               = 'rondo_finance_admin_fee';
 	const OPTION_INSTALLMENT_ADMIN_FEE   = 'rondo_finance_installment_admin_fee';
@@ -94,7 +96,7 @@ class FinanceConfig {
 		'org_address'        => '',
 		'contact_email'      => '',
 		'iban'               => '',
-		'bank_accounts'      => [],
+		'mollie_accounts'    => [],
 		'payment_term_days'  => 14,
 		'payment_clause'     => '',
 		'club_logo_id'       => 0,
@@ -122,6 +124,9 @@ class FinanceConfig {
 		'reminder_2_email_heading'         => 'Tweede herinnering',
 		'invoice_reminder_1_email_heading' => 'Herinnering',
 		'invoice_reminder_2_email_heading' => 'Tweede herinnering',
+		'mollie_default_membership_account_id' => '',
+		'mollie_default_discipline_account_id' => '',
+		'mollie_default_manual_account_id'     => '',
 	];
 
 	/**
@@ -178,7 +183,10 @@ class FinanceConfig {
 	 * @return string The IBAN (empty string if not configured)
 	 */
 	public function get_iban(): string {
-		$default_account = $this->get_default_bank_account();
+		$default_account = 'mollie' === $this->get_active_payment_provider()
+			? $this->get_default_mollie_account( 'manual' )
+			: null;
+
 		if ( is_array( $default_account ) && ! empty( $default_account['iban'] ) ) {
 			return (string) $default_account['iban'];
 		}
@@ -187,50 +195,48 @@ class FinanceConfig {
 	}
 
 	/**
-	 * Get configured bank accounts.
-	 *
-	 * Falls back to the legacy single-IBAN setting when no structured accounts
-	 * have been stored yet, so existing installations keep working.
+	 * Get configured Mollie accounts without exposing API keys.
 	 *
 	 * @return array<int, array<string, string>>
 	 */
-	public function get_bank_accounts(): array {
-		$stored_accounts = get_option( self::OPTION_BANK_ACCOUNTS, null );
-		$normalized      = $this->normalize_bank_accounts_for_storage( is_array( $stored_accounts ) ? $stored_accounts : [] );
+	public function get_mollie_accounts(): array {
+		$stored_accounts = get_option( self::OPTION_MOLLIE_ACCOUNTS, [] );
+		$normalized      = $this->normalize_mollie_accounts_for_storage( is_array( $stored_accounts ) ? $stored_accounts : [] );
 
-		if ( ! is_wp_error( $normalized ) && ! empty( $normalized ) ) {
-			return $normalized;
-		}
-
-		$legacy_iban = strtoupper( str_replace( ' ', '', (string) get_option( self::OPTION_IBAN, self::DEFAULTS['iban'] ) ) );
-		if ( '' === $legacy_iban ) {
+		if ( is_wp_error( $normalized ) ) {
 			return [];
 		}
 
-		return [
-			[
-				'id'              => 'legacy-default',
-				'internal_name'   => 'Standaardrekening',
-				'account_holder'  => $this->get_org_name(),
-				'iban'            => $legacy_iban,
-				'linked_provider' => $this->get_active_payment_provider(),
-			],
-		];
+		return array_map(
+			function ( array $account ): array {
+				$api_key = $this->decrypt_mollie_account_api_key( $account );
+
+				return [
+					'id'           => (string) ( $account['id'] ?? '' ),
+					'internal_name' => (string) ( $account['internal_name'] ?? '' ),
+					'account_holder' => (string) ( $account['account_holder'] ?? '' ),
+					'iban'         => (string) ( $account['iban'] ?? '' ),
+					'has_api_key'  => '' !== $api_key,
+					'environment'  => $this->derive_mollie_environment( $api_key ),
+				];
+			},
+			$normalized
+		);
 	}
 
 	/**
-	 * Get a configured bank account by ID.
+	 * Get a configured Mollie account by ID without exposing its API key.
 	 *
-	 * @param string $account_id Bank account ID.
+	 * @param string $account_id Mollie account ID.
 	 * @return array<string, string>|null
 	 */
-	public function get_bank_account_by_id( string $account_id ): ?array {
+	public function get_mollie_account_by_id( string $account_id ): ?array {
 		$account_id = sanitize_key( $account_id );
 		if ( '' === $account_id ) {
 			return null;
 		}
 
-		foreach ( $this->get_bank_accounts() as $account ) {
+		foreach ( $this->get_mollie_accounts() as $account ) {
 			if ( ( $account['id'] ?? '' ) === $account_id ) {
 				return $account;
 			}
@@ -240,25 +246,148 @@ class FinanceConfig {
 	}
 
 	/**
-	 * Get the default bank account for a provider, or the first configured one.
+	 * Get a configured Mollie account by ID including its decrypted API key.
 	 *
-	 * @param string|null $provider Provider slug.
+	 * @param string $account_id Mollie account ID.
 	 * @return array<string, string>|null
 	 */
-	public function get_default_bank_account( ?string $provider = null ): ?array {
-		$accounts = $this->get_bank_accounts();
-		if ( empty( $accounts ) ) {
+	private function get_mollie_account_record_by_id( string $account_id ): ?array {
+		$account_id = sanitize_key( $account_id );
+		if ( '' === $account_id ) {
 			return null;
 		}
 
-		$provider = in_array( $provider, [ 'rabobank', 'mollie' ], true ) ? $provider : $this->get_active_payment_provider();
-		foreach ( $accounts as $account ) {
-			if ( ( $account['linked_provider'] ?? '' ) === $provider ) {
+		$stored_accounts = get_option( self::OPTION_MOLLIE_ACCOUNTS, [] );
+		$normalized      = $this->normalize_mollie_accounts_for_storage( is_array( $stored_accounts ) ? $stored_accounts : [] );
+		if ( is_wp_error( $normalized ) ) {
+			return null;
+		}
+
+		foreach ( $normalized as $account ) {
+			if ( ( $account['id'] ?? '' ) === $account_id ) {
 				return $account;
 			}
 		}
 
-		return $accounts[0];
+		return null;
+	}
+
+	/**
+	 * Get the decrypted Mollie API key for an account.
+	 *
+	 * @param string $account_id Mollie account ID.
+	 * @return string
+	 */
+	public function get_mollie_api_key_for_account( string $account_id ): string {
+		$account = $this->get_mollie_account_record_by_id( $account_id );
+		if ( ! is_array( $account ) ) {
+			return '';
+		}
+
+		return $this->decrypt_mollie_account_api_key( $account );
+	}
+
+	/**
+	 * Get Mollie accounts that have an API key configured.
+	 *
+	 * @return array<int, array<string, string>>
+	 */
+	public function get_usable_mollie_accounts(): array {
+		return array_values(
+			array_filter(
+				$this->get_mollie_accounts(),
+				static fn( array $account ): bool => ! empty( $account['has_api_key'] )
+			)
+		);
+	}
+
+	/**
+	 * Get the configured default Mollie account ID for an invoice type.
+	 *
+	 * @param string $invoice_type Invoice type slug.
+	 * @return string
+	 */
+	public function get_default_mollie_account_id( string $invoice_type ): string {
+		return match ( $invoice_type ) {
+			'membership' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID, self::DEFAULTS['mollie_default_membership_account_id'] ),
+			'discipline' => (string) get_option( self::OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID, self::DEFAULTS['mollie_default_discipline_account_id'] ),
+			default => (string) get_option( self::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID, self::DEFAULTS['mollie_default_manual_account_id'] ),
+		};
+	}
+
+	/**
+	 * Get the default Mollie account for an invoice type.
+	 *
+	 * @param string $invoice_type Invoice type slug.
+	 * @return array<string, string>|null
+	 */
+	public function get_default_mollie_account( string $invoice_type ): ?array {
+		$account_id = $this->get_default_mollie_account_id( $invoice_type );
+		if ( '' !== $account_id ) {
+			$account = $this->get_mollie_account_by_id( $account_id );
+			if ( is_array( $account ) && ! empty( $account['has_api_key'] ) ) {
+				return $account;
+			}
+		}
+
+		$usable_accounts = $this->get_usable_mollie_accounts();
+		if ( 1 === count( $usable_accounts ) ) {
+			return $usable_accounts[0];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Build a payment-account snapshot for the given invoice type.
+	 *
+	 * @param string $invoice_type Invoice type slug.
+	 * @param string $requested_account_id Optional override account ID for manual invoices.
+	 * @return array<string, string>|\WP_Error
+	 */
+	public function get_payment_account_snapshot_for_invoice_type( string $invoice_type, string $requested_account_id = '' ) {
+		$provider = $this->get_active_payment_provider();
+		if ( 'mollie' !== $provider ) {
+			return [
+				'id'              => '',
+				'internal_name'   => '',
+				'account_holder'  => $this->get_org_name(),
+				'iban'            => $this->get_iban(),
+				'linked_provider' => $provider,
+			];
+		}
+
+		$account = null;
+		if ( 'manual' === $invoice_type && '' !== $requested_account_id ) {
+			$account = $this->get_mollie_account_by_id( $requested_account_id );
+			if ( ! is_array( $account ) || empty( $account['has_api_key'] ) ) {
+				return new \WP_Error(
+					'invalid_payment_account',
+					__( 'De gekozen Mollie-rekening bestaat niet of heeft geen API-sleutel.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+		}
+
+		if ( ! is_array( $account ) ) {
+			$account = $this->get_default_mollie_account( $invoice_type );
+		}
+
+		if ( ! is_array( $account ) ) {
+			return new \WP_Error(
+				'mollie_account_not_configured',
+				__( 'Er is geen standaard Mollie-rekening ingesteld voor dit factuurtype.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		return [
+			'id'              => (string) ( $account['id'] ?? '' ),
+			'internal_name'   => (string) ( $account['internal_name'] ?? '' ),
+			'account_holder'  => (string) ( $account['account_holder'] ?? '' ),
+			'iban'            => (string) ( $account['iban'] ?? '' ),
+			'linked_provider' => 'mollie',
+		];
 	}
 
 	/**
@@ -499,7 +628,6 @@ class FinanceConfig {
 			}
 		}
 
-		$mollie_api_key = $this->get_mollie_api_key();
 		$apple_cert_id  = $this->get_membership_pass_apple_cert_attachment_id();
 		$google_sa_id   = $this->get_membership_pass_google_service_account_attachment_id();
 		$apple_cert_url = $apple_cert_id > 0 ? ( wp_get_attachment_url( $apple_cert_id ) ?: '' ) : '';
@@ -510,7 +638,7 @@ class FinanceConfig {
 			'org_address'           => $this->get_org_address(),
 			'contact_email'         => $this->get_contact_email(),
 			'iban'                  => $this->get_iban(),
-			'bank_accounts'         => $this->get_bank_accounts(),
+			'mollie_accounts'       => $this->get_mollie_accounts(),
 			'payment_term_days'     => $this->get_payment_term_days(),
 			'payment_clause'        => $this->get_payment_clause(),
 			'membership_payment_clause' => $this->get_membership_payment_clause(),
@@ -540,11 +668,11 @@ class FinanceConfig {
 			'installment_admin_fee' => $this->get_installment_admin_fee(),
 			'rabobank_has_credentials' => $rabobank_creds !== null,
 			'rabobank_environment'  => $rabobank_creds['environment'] ?? '',
-			'mollie_has_api_key'    => ! empty( $mollie_api_key ),
-			'mollie_environment'    => $this->derive_mollie_environment( $mollie_api_key ),
 			'mollie_redirect_url'   => $this->get_mollie_redirect_url(),
+			'mollie_default_membership_account_id' => $this->get_default_mollie_account_id( 'membership' ),
+			'mollie_default_discipline_account_id' => $this->get_default_mollie_account_id( 'discipline' ),
+			'mollie_default_manual_account_id'     => $this->get_default_mollie_account_id( 'manual' ),
 			'active_payment_provider' => $this->get_active_payment_provider(),
-			'default_payment_account_id' => $this->get_default_bank_account( $this->get_active_payment_provider() )['id'] ?? '',
 			'membership_pass_apple_cert_attachment_id' => $apple_cert_id,
 			'membership_pass_apple_cert_url'           => $apple_cert_url,
 			'membership_pass_apple_has_cert_password'  => '' !== $this->get_membership_pass_apple_cert_password(),
@@ -574,8 +702,8 @@ class FinanceConfig {
 				return $this->get_contact_email();
 			case 'iban':
 				return $this->get_iban();
-			case 'bank_accounts':
-				return $this->get_bank_accounts();
+			case 'mollie_accounts':
+				return $this->get_mollie_accounts();
 			case 'payment_term_days':
 				return $this->get_payment_term_days();
 			case 'payment_clause':
@@ -645,16 +773,17 @@ class FinanceConfig {
 			$success = update_option( self::OPTION_IBAN, $iban ) && $success;
 		}
 
-		if ( isset( $data['bank_accounts'] ) ) {
-			$normalized_accounts = $this->normalize_bank_accounts_for_storage( is_array( $data['bank_accounts'] ) ? $data['bank_accounts'] : [] );
-			if ( is_wp_error( $normalized_accounts ) ) {
-				return $normalized_accounts;
+		$resolved_mollie_accounts = null;
+		if ( isset( $data['mollie_accounts'] ) ) {
+			$resolved_mollie_accounts = $this->normalize_mollie_accounts_for_storage( is_array( $data['mollie_accounts'] ) ? $data['mollie_accounts'] : [] );
+			if ( is_wp_error( $resolved_mollie_accounts ) ) {
+				return $resolved_mollie_accounts;
 			}
 
-			$success = update_option( self::OPTION_BANK_ACCOUNTS, $normalized_accounts ) && $success;
+			$success = update_option( self::OPTION_MOLLIE_ACCOUNTS, $resolved_mollie_accounts ) && $success;
 
-			if ( ! empty( $normalized_accounts ) ) {
-				$default_iban = (string) ( $normalized_accounts[0]['iban'] ?? '' );
+			if ( ! empty( $resolved_mollie_accounts ) ) {
+				$default_iban = (string) ( $resolved_mollie_accounts[0]['iban'] ?? '' );
 				if ( '' !== $default_iban ) {
 					$success = update_option( self::OPTION_IBAN, $default_iban ) && $success;
 				}
@@ -833,11 +962,46 @@ class FinanceConfig {
 			$success = update_option( self::OPTION_MOLLIE_REDIRECT_URL, esc_url_raw( $data['mollie_redirect_url'] ) ) && $success;
 		}
 
-		// Handle Mollie API key with encryption
-		if ( isset( $data['mollie_api_key'] ) ) {
-			$success = $this->update_mollie_api_key(
-				sanitize_text_field( $data['mollie_api_key'] )
-			) && $success;
+		$current_mollie_accounts = is_array( $resolved_mollie_accounts )
+			? $this->build_safe_mollie_accounts_from_storage( $resolved_mollie_accounts )
+			: $this->get_mollie_accounts();
+
+		$default_keys = [
+			'mollie_default_membership_account_id' => self::OPTION_MOLLIE_DEFAULT_MEMBERSHIP_ACCOUNT_ID,
+			'mollie_default_discipline_account_id' => self::OPTION_MOLLIE_DEFAULT_DISCIPLINE_ACCOUNT_ID,
+			'mollie_default_manual_account_id'     => self::OPTION_MOLLIE_DEFAULT_MANUAL_ACCOUNT_ID,
+		];
+
+		$usable_account_ids = array_map(
+			static fn( array $account ): string => (string) $account['id'],
+			array_filter(
+				$current_mollie_accounts,
+				static fn( array $account ): bool => ! empty( $account['has_api_key'] )
+			)
+		);
+
+		foreach ( $default_keys as $key => $option ) {
+			if ( isset( $data[ $key ] ) ) {
+				$next_value = sanitize_key( (string) $data[ $key ] );
+			} else {
+				$next_value = (string) get_option( $option, self::DEFAULTS[ $key ] );
+			}
+
+			if ( '' !== $next_value && ! in_array( $next_value, $usable_account_ids, true ) ) {
+				return new \WP_Error(
+					'invalid_mollie_default_account',
+					__( 'Een standaard Mollie-rekening moet een bestaande rekening met API-sleutel zijn.', 'rondo' ),
+					[ 'status' => 400 ]
+				);
+			}
+
+			if ( '' === $next_value && 1 === count( $usable_account_ids ) ) {
+				$next_value = $usable_account_ids[0];
+			}
+
+			if ( isset( $data[ $key ] ) || null !== $resolved_mollie_accounts ) {
+				$success = update_option( $option, $next_value ) && $success;
+			}
 		}
 
 		// Handle active payment provider
@@ -851,14 +1015,23 @@ class FinanceConfig {
 	}
 
 	/**
-	 * Normalize and validate bank accounts before storage.
+	 * Normalize and validate Mollie accounts before storage.
 	 *
 	 * @param array $accounts Raw bank accounts payload.
 	 * @return array<int, array<string, string>>|\WP_Error
 	 */
-	private function normalize_bank_accounts_for_storage( array $accounts ) {
-		$normalized       = [];
-		$linked_providers = [];
+	private function normalize_mollie_accounts_for_storage( array $accounts ) {
+		$normalized        = [];
+		$existing_accounts = get_option( self::OPTION_MOLLIE_ACCOUNTS, [] );
+		$existing_by_id    = [];
+
+		if ( is_array( $existing_accounts ) ) {
+			foreach ( $existing_accounts as $existing_account ) {
+				if ( is_array( $existing_account ) && ! empty( $existing_account['id'] ) ) {
+					$existing_by_id[ sanitize_key( (string) $existing_account['id'] ) ] = $existing_account;
+				}
+			}
+		}
 
 		foreach ( $accounts as $index => $account ) {
 			if ( ! is_array( $account ) ) {
@@ -868,51 +1041,64 @@ class FinanceConfig {
 			$internal_name  = sanitize_text_field( (string) ( $account['internal_name'] ?? '' ) );
 			$account_holder = sanitize_text_field( (string) ( $account['account_holder'] ?? '' ) );
 			$iban           = strtoupper( str_replace( ' ', '', sanitize_text_field( (string) ( $account['iban'] ?? '' ) ) ) );
-			$linked_provider = sanitize_key( (string) ( $account['linked_provider'] ?? '' ) );
 			$account_id      = sanitize_key( (string) ( $account['id'] ?? '' ) );
+			$api_key         = sanitize_text_field( (string) ( $account['api_key'] ?? '' ) );
 
-			if ( '' === $internal_name && '' === $account_holder && '' === $iban && '' === $linked_provider ) {
+			if ( '' === $internal_name && '' === $account_holder && '' === $iban && '' === $api_key ) {
 				continue;
 			}
 
 			if ( '' === $internal_name || '' === $account_holder || '' === $iban ) {
 				return new \WP_Error(
-					'invalid_bank_account',
-					sprintf( __( 'Bankrekening %d is onvolledig. Vul interne naam, tenaamstelling en IBAN in.', 'rondo' ), (int) $index + 1 ),
+					'invalid_mollie_account',
+					sprintf( __( 'Mollie-rekening %d is onvolledig. Vul interne naam, tenaamstelling en IBAN in.', 'rondo' ), (int) $index + 1 ),
 					[ 'status' => 400 ]
 				);
 			}
 
-			if ( ! in_array( $linked_provider, [ '', 'rabobank', 'mollie' ], true ) ) {
-				$linked_provider = '';
-			}
-
-			if ( '' !== $linked_provider ) {
-				if ( isset( $linked_providers[ $linked_provider ] ) ) {
-					return new \WP_Error(
-						'duplicate_linked_provider',
-						sprintf( __( 'Er kan maar één bankrekening aan %s gekoppeld zijn.', 'rondo' ), $linked_provider ),
-						[ 'status' => 400 ]
-					);
-				}
-
-				$linked_providers[ $linked_provider ] = true;
-			}
-
 			if ( '' === $account_id ) {
-				$account_id = 'bank-' . sanitize_key( wp_generate_uuid4() );
+				$account_id = 'mollie-' . sanitize_key( wp_generate_uuid4() );
+			}
+
+			$encrypted_api_key = (string) ( $existing_by_id[ $account_id ]['api_key_encrypted'] ?? '' );
+			if ( '' !== $api_key ) {
+				$encrypted_api_key = CredentialEncryption::encrypt( [ 'api_key' => $api_key ] );
 			}
 
 			$normalized[] = [
-				'id'              => $account_id,
-				'internal_name'   => $internal_name,
-				'account_holder'  => $account_holder,
-				'iban'            => $iban,
-				'linked_provider' => $linked_provider,
+				'id'                => $account_id,
+				'internal_name'     => $internal_name,
+				'account_holder'    => $account_holder,
+				'iban'              => $iban,
+				'api_key_encrypted' => $encrypted_api_key,
 			];
 		}
 
 		return array_values( $normalized );
+	}
+
+	/**
+	 * Convert stored Mollie accounts into their safe API representation.
+	 *
+	 * @param array<int, array<string, string>> $accounts Stored Mollie accounts.
+	 * @return array<int, array<string, string|bool>>
+	 */
+	private function build_safe_mollie_accounts_from_storage( array $accounts ): array {
+		return array_map(
+			function ( array $account ): array {
+				$api_key = $this->decrypt_mollie_account_api_key( $account );
+
+				return [
+					'id'           => (string) ( $account['id'] ?? '' ),
+					'internal_name' => (string) ( $account['internal_name'] ?? '' ),
+					'account_holder' => (string) ( $account['account_holder'] ?? '' ),
+					'iban'         => (string) ( $account['iban'] ?? '' ),
+					'has_api_key'  => '' !== $api_key,
+					'environment'  => $this->derive_mollie_environment( $api_key ),
+				];
+			},
+			$accounts
+		);
 	}
 
 	/**
@@ -1012,38 +1198,19 @@ class FinanceConfig {
 	}
 
 	/**
-	 * Get Mollie API key (decrypted, internal use only)
+	 * Decrypt the stored API key for a Mollie account.
 	 *
-	 * @return string Decrypted API key, or empty string if not configured
+	 * @param array<string, string> $account Stored Mollie account record.
+	 * @return string
 	 */
-	public function get_mollie_api_key(): string {
-		$encrypted = get_option( self::OPTION_MOLLIE_API_KEY, '' );
-
-		if ( empty( $encrypted ) ) {
+	private function decrypt_mollie_account_api_key( array $account ): string {
+		$encrypted = (string) ( $account['api_key_encrypted'] ?? '' );
+		if ( '' === $encrypted ) {
 			return '';
 		}
 
 		$data = CredentialEncryption::decrypt( $encrypted );
-
-		return $data['api_key'] ?? '';
-	}
-
-	/**
-	 * Update Mollie API key (encrypts and stores)
-	 *
-	 * Passing an empty string removes the stored key.
-	 *
-	 * @param string $api_key Mollie API key (live_ or test_ prefix)
-	 * @return bool True on success
-	 */
-	public function update_mollie_api_key( string $api_key ): bool {
-		if ( empty( $api_key ) ) {
-			return (bool) delete_option( self::OPTION_MOLLIE_API_KEY );
-		}
-
-		$encrypted = CredentialEncryption::encrypt( [ 'api_key' => $api_key ] );
-
-		return update_option( self::OPTION_MOLLIE_API_KEY, $encrypted );
+		return (string) ( $data['api_key'] ?? '' );
 	}
 
 	/**
