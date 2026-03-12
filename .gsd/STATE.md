@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** M008 — Credit Invoice Type Badge
+**Active Milestone:** None
 **Active Slice:** None
-**Phase:** completing-milestone
+**Phase:** idle
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -13,7 +13,7 @@
 - ✅ **M005:** Spelactiviteit Field
 - ✅ **M006:** Markeer als betaald
 - ✅ **M007:** Remove iCal Feed
-- 🔄 **M008:** Credit Invoice Type Badge
+- ✅ **M008:** Credit Invoice Type Badge
 
 ## Recent Decisions
 - None recorded
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-All slices complete in M008. Write milestone summary.
+Idle — awaiting next milestone.
