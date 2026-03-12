@@ -670,3 +670,7 @@
 - "[M006-S01] Betaalgegevens card prioritizes Mollie data — when both mollie_payment_method and manually_marked_paid_at exist, only Mollie section renders"
 - "[M006-S01] Use post meta (not ACF) for _manually_marked_paid_at and _manually_marked_paid_by — consistent with _invoice_sent_by_user_id pattern"
 - "[M007-S01] Replace empty Integrations sidebar with Demo Data entry — section should not be empty after iCal removal"
+- "[M008-S01] Single slice — ~15 lines in one file (Facturen.jsx), no backend changes, no unknowns; splitting would add overhead with zero risk reduction"
+- "[M008-S01] Custom filterFn on type column follows status column's filterFn pattern — intercept synthetic 'credit' value, check invoice_kind instead of invoice_type"
+- "[M008-S01] 'Handmatig' filter must exclude credit invoices — even though credit invoices have invoice_type='manual', they should only appear under 'Credit' filter"
+- "[M008-S01] Rose color for Credit badge — visually distinct from existing purple (contributie), amber (tuchtzaken), cyan (handmatig)"
