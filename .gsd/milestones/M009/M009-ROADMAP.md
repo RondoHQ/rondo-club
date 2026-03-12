@@ -32,5 +32,5 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Person detail page cleanup** `risk:low` `depends:[]`
+- [x] **S01: Person detail page cleanup** `risk:low` `depends:[]`
   > After this: person detail page hides empty cards, shows tab counts, and has no VOG header pill

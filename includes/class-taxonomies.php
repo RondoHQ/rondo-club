@@ -105,9 +105,9 @@ class Taxonomies {
 	 */
 	private function add_default_relationship_types() {
 		$defaults = [
-			'parent'  => __( 'Parent', 'rondo' ),
-			'child'   => __( 'Child', 'rondo' ),
-			'sibling' => __( 'Sibling', 'rondo' ),
+			'parent'  => 'Ouder / Verzorger',
+			'child'   => 'Kind',
+			'sibling' => 'Broer / Zus',
 		];
 
 		foreach ( $defaults as $slug => $name ) {
