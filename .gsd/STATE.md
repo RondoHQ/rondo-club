@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** M009 — Person Detail Page Improvements
+**Active Milestone:** M010 — Role-Capability Matrix & Age-Group Access
 **Active Slice:** None
-**Phase:** complete
+**Phase:** planned
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
@@ -14,9 +14,10 @@
 - ✅ **M007:** Remove iCal Feed
 - ✅ **M008:** Credit Invoice Type Badge
 - ✅ **M009:** Person Detail Page Improvements
+- 🔄 **M010:** Role-Capability Matrix & Age-Group Access
 
 ## Blockers
 - None
 
 ## Next Action
-All milestones complete.
+Start S01: Role-capability matrix backend & UI
