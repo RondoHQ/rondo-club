@@ -23,11 +23,11 @@ class RoleFinder {
 	 *
 	 * Searches all users with a `rondo_linked_person_id` user meta value,
 	 * then checks whether their linked person has a current work_history
-	 * entry whose job_title contains the keyword (case-insensitive).
+	 * entry whose job_title contains the keyword (case-sensitive).
 	 *
 	 * Falls back to administrator user IDs when no matching users are found.
 	 *
-	 * @param string $keyword Job title keyword to match (e.g. "secretaris", "penningmeester").
+	 * @param string $keyword Job title keyword to match, case-sensitive (e.g. "Secretaris", "Penningmeester").
 	 * @return int[] User IDs.
 	 */
 	public static function get_user_ids_by_role( string $keyword ): array {
@@ -84,7 +84,7 @@ class RoleFinder {
 			}
 
 			$job_title = trim( (string) ( $entry['job_title'] ?? '' ) );
-			if ( $job_title === '' || stripos( $job_title, $keyword ) === false ) {
+			if ( $job_title === '' || strpos( $job_title, $keyword ) === false ) {
 				continue;
 			}
 

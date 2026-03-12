@@ -37,15 +37,15 @@ class RoleFinderTest extends RondoTestCase {
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 
-		$result = RoleFinder::get_user_ids_by_role( 'secretaris' );
+		$result = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 
 		$this->assertContains( $user_id, $result );
 	}
 
 	/**
-	 * Test that case-insensitive matching works.
+	 * Test that case-sensitive matching excludes wrong casing.
 	 */
-	public function test_case_insensitive_matching(): void {
+	public function test_case_sensitive_matching(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Piet Penningmeester' ] );
 		update_field(
 			'work_history',
@@ -63,13 +63,44 @@ class RoleFinderTest extends RondoTestCase {
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 
-		// Search with lowercase — should match "Penningmeester" in work_history.
-		$result = RoleFinder::get_user_ids_by_role( 'penningmeester' );
+		// Search with correct casing — should match.
+		$result = RoleFinder::get_user_ids_by_role( 'Penningmeester' );
 		$this->assertContains( $user_id, $result );
 
-		// Search with uppercase — should also match.
-		$result_upper = RoleFinder::get_user_ids_by_role( 'PENNINGMEESTER' );
-		$this->assertContains( $user_id, $result_upper );
+		// Search with wrong casing — should NOT match (falls back to admins).
+		$admin_id     = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$result_lower = RoleFinder::get_user_ids_by_role( 'penningmeester' );
+		$this->assertNotContains( $user_id, $result_lower );
+		$this->assertContains( $admin_id, $result_lower );
+	}
+
+	/**
+	 * Test that substring matching does not match unrelated roles.
+	 */
+	public function test_does_not_match_wedstrijdsecretaris(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Wedstrijdsecretaris' ] );
+		update_field(
+			'work_history',
+			[
+				[
+					'job_title'  => 'Wedstrijdsecretaris algemeen',
+					'is_current' => true,
+					'start_date' => '',
+					'end_date'   => '',
+				],
+			],
+			$person_id
+		);
+
+		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+
+		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+
+		// "Secretaris" should NOT match "Wedstrijdsecretaris" (case-sensitive, "s" != "S").
+		$result = RoleFinder::get_user_ids_by_role( 'Secretaris' );
+		$this->assertNotContains( $user_id, $result );
+		$this->assertContains( $admin_id, $result );
 	}
 
 	/**
@@ -96,7 +127,7 @@ class RoleFinderTest extends RondoTestCase {
 		// Create an admin so the fallback works.
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
-		$result = RoleFinder::get_user_ids_by_role( 'secretaris' );
+		$result = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 
 		// Should NOT contain the user with expired role.
 		$this->assertNotContains( $user_id, $result );
@@ -111,13 +142,13 @@ class RoleFinderTest extends RondoTestCase {
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
 		// No users with linked persons having the requested role.
-		$result = RoleFinder::get_user_ids_by_role( 'secretaris' );
+		$result = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 
 		$this->assertContains( $admin_id, $result );
 	}
 
 	/**
-	 * Test that a different keyword (penningmeester) works for role lookup.
+	 * Test that a different keyword (Penningmeester) works for role lookup.
 	 */
 	public function test_different_keyword_works(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Klaas Geld' ] );
@@ -137,12 +168,12 @@ class RoleFinderTest extends RondoTestCase {
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 
-		$result = RoleFinder::get_user_ids_by_role( 'penningmeester' );
+		$result = RoleFinder::get_user_ids_by_role( 'Penningmeester' );
 		$this->assertContains( $user_id, $result );
 
 		// The same user should NOT appear for a different keyword.
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		$result2  = RoleFinder::get_user_ids_by_role( 'secretaris' );
+		$result2  = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 		$this->assertNotContains( $user_id, $result2 );
 		$this->assertContains( $admin_id, $result2 );
 	}
@@ -157,7 +188,7 @@ class RoleFinderTest extends RondoTestCase {
 
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
-		$result = RoleFinder::get_user_ids_by_role( 'secretaris' );
+		$result = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 
 		$this->assertNotContains( $user_id, $result );
 		$this->assertContains( $admin_id, $result );
@@ -184,7 +215,7 @@ class RoleFinderTest extends RondoTestCase {
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 
-		$result = RoleFinder::get_user_ids_by_role( 'secretaris' );
+		$result = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 
 		$this->assertContains( $user_id, $result );
 	}
