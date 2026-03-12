@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M009 — Person Detail Page Improvements
-**Active Slice:** S01 — Person detail page cleanup
-**Phase:** executing T01
+**Active Slice:** None
+**Phase:** complete
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
@@ -13,10 +13,10 @@
 - ✅ **M006:** Markeer als betaald
 - ✅ **M007:** Remove iCal Feed
 - ✅ **M008:** Credit Invoice Type Badge
-- 🔄 **M009:** Person Detail Page Improvements
+- ✅ **M009:** Person Detail Page Improvements
 
 ## Blockers
 - None
 
 ## Next Action
-Implementing T01: all four UI changes
+All milestones complete.
