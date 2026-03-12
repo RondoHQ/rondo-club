@@ -2070,6 +2070,15 @@ class Invoices extends Base {
 			$reminder_sent_at = $reminder_1_sent_at;
 		}
 
+		// Count how many reminders have been sent (0, 1, or 2).
+		$reminder_count = 0;
+		if ( $reminder_1_sent_at ) {
+			$reminder_count++;
+		}
+		if ( $reminder_2_sent_at ) {
+			$reminder_count++;
+		}
+
 		return [
 			'id'                 => $post->ID,
 			'invoice_number'     => get_field( 'invoice_number', $post->ID ),
@@ -2091,6 +2100,7 @@ class Invoices extends Base {
 			'invoice_type'       => get_field( 'invoice_type', $post->ID ) ?: null,
 			'installment_plan'   => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
 			'reminder_sent_at'   => $reminder_sent_at,
+			'reminder_count'     => $reminder_count,
 			'sent_by'            => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
 		];
 	}

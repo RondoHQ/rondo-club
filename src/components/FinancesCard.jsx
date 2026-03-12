@@ -14,12 +14,13 @@ import { isDoorbelastException } from '@/utils/disciplineCases';
 /**
  * Status badge component for invoices
  */
-function StatusBadge({ status }) {
+function StatusBadge({ status, reminderCount = 0 }) {
   const styles = {
     draft: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
     sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   };
   const labels = {
     draft: 'Concept',
@@ -27,9 +28,23 @@ function StatusBadge({ status }) {
     paid: 'Betaald',
     overdue: 'Achterstallig',
   };
+
+  let colorKey = status;
+  let label = labels[status] || status;
+
+  if (status === 'overdue' && reminderCount > 0) {
+    if (reminderCount >= 2) {
+      label = '2e herinnering';
+      colorKey = 'overdue'; // red
+    } else {
+      label = '1e herinnering';
+      colorKey = 'overdue_warning'; // amber/warning
+    }
+  }
+
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[status] || styles.draft}`}>
-      {labels[status] || status}
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[colorKey] || styles.draft}`}>
+      {label}
     </span>
   );
 }
@@ -324,7 +339,7 @@ export default function FinancesCard({ personId }) {
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600 dark:text-gray-400">{invoice.invoice_number}</span>
-                      <StatusBadge status={invoice.status} />
+                      <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
                     </div>
                     <span className="font-medium">{formatCurrency(invoice.total_amount, 2)}</span>
                   </Link>

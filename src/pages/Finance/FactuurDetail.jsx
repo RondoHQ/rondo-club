@@ -15,6 +15,7 @@ const statusColors = {
   sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
 // Status display labels
@@ -76,10 +77,23 @@ function getPlanLabel(plan, installmentCount) {
 /**
  * Status badge component
  */
-function StatusBadge({ status }) {
+function StatusBadge({ status, reminderCount = 0 }) {
+  let colorKey = status;
+  let label = statusLabels[status] || status;
+
+  if (status === 'overdue' && reminderCount > 0) {
+    if (reminderCount >= 2) {
+      label = '2e herinnering';
+      colorKey = 'overdue'; // red
+    } else {
+      label = '1e herinnering';
+      colorKey = 'overdue_warning'; // amber/warning
+    }
+  }
+
   return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${statusColors[status] || statusColors.draft}`}>
-      {statusLabels[status] || status}
+    <span className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${statusColors[colorKey] || statusColors.draft}`}>
+      {label}
     </span>
   );
 }
@@ -465,7 +479,7 @@ export default function FactuurDetail() {
               </button>
             )}
           </div>
-          <StatusBadge status={invoice.status} />
+          <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
         </div>
       </div>
 
@@ -525,7 +539,7 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
                 <div className="mt-1">
-                  <StatusBadge status={invoice.status} />
+                  <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
                 </div>
               </div>
               <div>

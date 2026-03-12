@@ -18,6 +18,7 @@ const statusColors = {
   sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
 const statusLabels = {
@@ -41,10 +42,23 @@ const typeColors = {
   credit: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, reminderCount = 0 }) {
+  let colorKey = status;
+  let label = statusLabels[status] || status;
+
+  if (status === 'overdue' && reminderCount > 0) {
+    if (reminderCount >= 2) {
+      label = '2e herinnering';
+      colorKey = 'overdue'; // red
+    } else {
+      label = '1e herinnering';
+      colorKey = 'overdue_warning'; // amber/warning
+    }
+  }
+
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || statusColors.draft}`}>
-      {statusLabels[status] || status}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[colorKey] || statusColors.draft}`}>
+      {label}
     </span>
   );
 }
@@ -139,7 +153,7 @@ const COLUMNS = [
     id: 'status',
     header: 'Status',
     accessorKey: 'status',
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} reminderCount={row.original.reminder_count || 0} />,
     filterType: FILTER_TYPES.SELECT,
     filterLabel: 'Status',
     getFilterLabel: (value) => (value === STATUS_FILTER_UNPAID ? 'Alle niet betaalde' : (statusLabels[value] || value)),
