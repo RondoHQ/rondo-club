@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.11.0] - 2026-03-12
+
+### Added
+- Confirmation dialog before toggling contributie exclusion/inclusion with Dutch messages
+- Immediate FinancesCard refresh after exclusion toggle (no page reload required)
+- Email notification to Secretaris and Penningmeester on contributie exclusion toggle
+
+### Changed
+- Extracted `RoleFinder` helper from `LettermintWebhook` for reusable role-based user lookup
+
 ## [31.10.0] - 2026-03-12
 
 ### Added
