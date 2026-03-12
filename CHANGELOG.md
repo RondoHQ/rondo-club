@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.14.0] - 2026-03-12
+
+### Added
+- Credit badge (rose) and "Credit" filter option on the Facturen list page — credit invoices now display a distinct rose "Credit" badge instead of cyan "Handmatig", and can be filtered separately via the Type filter
+
 ## [31.13.1] - 2026-03-12
 
 ### Removed
