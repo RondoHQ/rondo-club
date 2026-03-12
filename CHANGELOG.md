@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.9.0] - 2026-03-12
+
+### Added
+- Mollie payment details (method, paid-at, dashboard URL, consumer info) extracted and stored when webhook confirms payment
+- "Betaalgegevens" section on invoice detail page showing payment method, timestamp, and Mollie Dashboard link
+- Per-installment payment method and Mollie Dashboard link in installment timeline table
+- Consumer name and IBAN displayed for iDEAL payments
+- One-time backfill script (`bin/backfill-mollie-details.php`) to populate payment details for already-paid invoices
+
 ## [31.8.1] - 2026-03-12
 
 ### Changed
