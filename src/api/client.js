@@ -225,9 +225,6 @@ export const prmApi = {
   createAppPassword: (userId, name) => api.post(`/wp/v2/users/${userId}/application-passwords`, { name }),
   deleteAppPassword: (userId, uuid) => api.delete(`/wp/v2/users/${userId}/application-passwords/${uuid}`),
 
-  // iCal feed
-  getIcalUrl: () => api.get('/rondo/v1/user/ical-url'),
-
   // Dashboard settings
   getDashboardSettings: () => api.get('/rondo/v1/user/dashboard-settings'),
   updateDashboardSettings: (settings) => api.patch('/rondo/v1/user/dashboard-settings', settings),

@@ -44,7 +44,7 @@
 
 ## Tasks
 
-- [ ] **T01: Delete iCal class and remove all PHP/JS references** `est:20m`
+- [x] **T01: Delete iCal class and remove all PHP/JS references** `est:20m`
   - Why: Remove the dead iCal feed code from the application — the core of this slice
   - Files: `includes/class-ical-feed.php`, `functions.php`, `src/api/client.js`
   - Do: Delete the class file. Remove the `use` statement (line 126), `class_alias` block (lines 284–286), helper function `rondo_is_ical_request()` (lines 335–340), early-return block (lines 365–368), and second instantiation block (lines 416–420) from functions.php. Remove `getIcalUrl` lines from client.js. Verify surrounding code remains intact.
