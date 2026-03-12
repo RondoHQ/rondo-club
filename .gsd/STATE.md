@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T01: Extract RoleFinder helper and add unit tests in slice S01.
+Execute T02: Add confirmation dialog, query refresh, and email notification in slice S01.
