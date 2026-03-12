@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Execute T01: Extract and store Mollie payment details in webhook handler in slice S01.
+Execute T02: Expose payment details via REST API and clear on reset in slice S01.
