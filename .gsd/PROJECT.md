@@ -522,6 +522,12 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Reusable RoleFinder helper class extracted from LettermintWebhook for role-based user lookup — v31.11.0
 - ✓ Case-sensitive role matching to prevent Wedstrijdsecretaris false matches — v31.11.0
 
+**v31.12.0 Spelactiviteit Field (shipped 2026-03-12):**
+- ✓ ACF text field `spelactiviteit` (readonly) in Sportlink tab of person field group — v31.12.0
+- ✓ Spelactiviteit displayed in SportlinkCard on person profiles (hidden when empty) — v31.12.0
+- ✓ Compound REST API filter `spelactiviteit_no_team=1` on `/rondo/v1/people/filtered` — v31.12.0
+- ✓ "Spelactiviteit zonder team" boolean toggle filter in People list — v31.12.0
+
 ### Active
 
 (No active milestone)
@@ -545,13 +551,14 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v31.11.0):**
+**Codebase State (post v31.12.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.11.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.12.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices, dedicated credit invoice email template
 - Contributie exclusion toggle with confirmation, immediate UI refresh, and email notification to Secretaris/Penningmeester
+- Spelactiviteit field displayed in Sportlink card with "zonder team" compound filter on People list
 - RoleFinder helper class for reusable role-based user lookup across the codebase
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
 - CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
