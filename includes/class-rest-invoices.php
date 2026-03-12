@@ -1370,7 +1370,11 @@ class Invoices extends Base {
 			$email_options['template'] = $custom_email_body;
 		}
 
-		// Select email template based on invoice type
+		// Select email template based on invoice kind (credit first) then invoice type
+		if ( 'credit' === $invoice_kind && empty( $email_options['template'] ) ) {
+			$email_options['template'] = $finance_config->get_credit_email_template();
+		}
+
 		$invoice_type = get_field( 'invoice_type', $invoice_id );
 		if ( 'membership' === $invoice_type && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $finance_config->get_membership_email_template();
@@ -1437,17 +1441,6 @@ class Invoices extends Base {
 			}
 		}
 
-		if ( 'credit' === $invoice_kind ) {
-			wp_update_post(
-				[
-					'ID'          => $invoice_id,
-					'post_status' => 'rondo_paid',
-				]
-			);
-			update_field( 'status', 'paid', $invoice_id );
-			update_post_meta( $invoice_id, '_credit_payment_adjustment_recorded_at', current_time( 'mysql' ) );
-		}
-
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
@@ -1510,17 +1503,22 @@ class Invoices extends Base {
 			$email_options['template'] = $custom_email_body;
 		}
 
-		// Select email template based on invoice type
+		// Select email template based on invoice kind (credit first) then invoice type
+		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
 		$invoice_type = get_field( 'invoice_type', $invoice_id );
-		if ( 'membership' === $invoice_type ) {
-			$config = new FinanceConfig();
+		$config       = new FinanceConfig();
+
+		if ( 'credit' === $invoice_kind && empty( $email_options['template'] ) ) {
+			$email_options['template'] = $config->get_credit_email_template();
+		}
+		if ( 'membership' === $invoice_type && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $config->get_membership_email_template();
 		}
 
 		// Ensure payment link and QR code exist before resending
 		$existing_payment_link = get_field( 'payment_link', $invoice_id );
 		if ( empty( $existing_payment_link ) ) {
-			$active_provider = ( new FinanceConfig() )->get_active_payment_provider();
+			$active_provider = $config->get_active_payment_provider();
 			if ( 'mollie' === $active_provider ) {
 				$mollie_payment = new MolliePayment();
 				$payment_result = $mollie_payment->create_payment_link( $invoice_id );

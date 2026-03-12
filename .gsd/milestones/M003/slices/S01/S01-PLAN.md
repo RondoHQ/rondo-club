@@ -55,7 +55,7 @@
   - Verify: `grep -c 'OPTION_CREDIT_EMAIL_TEMPLATE' includes/class-finance-config.php` returns ≥ 3 AND `grep "'credit'" includes/class-rest-api.php` shows presence in validator and switch
   - Done when: Credit template is stored/retrieved/exposed via REST, test email switch handles credit type
 
-- [ ] **T02: Route credit invoices to credit template and remove auto-paid transition** `est:25m`
+- [x] **T02: Route credit invoices to credit template and remove auto-paid transition** `est:25m`
   - Why: This is the core behavioral fix — credit invoices must use the credit template and stay in "Verstuurd" status
   - Files: `includes/class-rest-invoices.php`, `includes/class-invoice-email-sender.php`
   - Do: In `send_invoice()`, after the custom `_email_body_override` check but before the `invoice_type`-based template selection (~line 1376), add: if `invoice_kind === 'credit'` and `email_options['template']` is still empty, set it to `$finance_config->get_credit_email_template()`. Remove the auto-paid `if ('credit' === $invoice_kind)` block at ~line 1440 (the `wp_update_post` to `rondo_paid`, `update_field` to 'paid', and `_credit_payment_adjustment_recorded_at` meta write). In `InvoiceEmailSender::send()`, update the `heading_type` match to check `invoice_kind` first: if the invoice has `_invoice_kind` = 'credit', use 'credit' as the heading_type regardless of `invoice_type`. Pass `invoice_kind` to InvoiceEmailSender via `$options` or read it from post meta inside `send()`.

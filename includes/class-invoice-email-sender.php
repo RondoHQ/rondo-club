@@ -353,7 +353,8 @@ class InvoiceEmailSender {
 			$template
 		);
 
-		$heading_type = match ( $invoice_type ) {
+		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
+		$heading_type = 'credit' === $invoice_kind ? 'credit' : match ( $invoice_type ) {
 			'membership' => 'membership',
 			'manual'     => 'regular_invoice',
 			default      => 'discipline',
