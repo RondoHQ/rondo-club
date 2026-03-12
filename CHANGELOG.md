@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.10.0] - 2026-03-12
+
+### Added
+- Credit invoice email template configurable in Finance Settings (E-mail > Creditfacturen)
+
+### Changed
+- Credit invoices now stay in "Verstuurd" status after sending (no longer auto-marked as paid)
+
 ## [31.9.0] - 2026-03-12
 
 ### Added

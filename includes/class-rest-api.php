@@ -1128,6 +1128,7 @@ class Api extends Base {
 						'installment_email_template' => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'reminder_1_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'reminder_2_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
+						'credit_email_template'      => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'regular_invoice_email_subject' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'regular_invoice_email_body'    => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
 						'regular_invoice_email_heading'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
@@ -1138,6 +1139,7 @@ class Api extends Base {
 						'reminder_2_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'invoice_reminder_1_email_heading' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'invoice_reminder_2_email_heading' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'credit_email_heading'             => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
 						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
@@ -1193,6 +1195,7 @@ class Api extends Base {
 								'reminder_2',
 								'invoice_reminder_1',
 								'invoice_reminder_2',
+								'credit',
 							], true );
 						},
 					],
@@ -5628,6 +5631,9 @@ class Api extends Base {
 				break;
 			case 'invoice_reminder_2':
 				$template = $config->get_invoice_reminder_2_email_template();
+				break;
+			case 'credit':
+				$template = $config->get_credit_email_template();
 				break;
 			default:
 				return new \WP_Error( 'invalid_type', 'Ongeldig template type.', [ 'status' => 400 ] );

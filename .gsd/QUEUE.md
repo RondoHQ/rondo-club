@@ -80,3 +80,48 @@ Rondo Sync is being updated separately to import `KernelGameActivities` from Spo
 - `src/components/SportlinkCard.jsx` — add to fields array
 - `includes/class-rest-people.php` — new filter parameter + SQL clause
 - `src/pages/People/PeopleList.jsx` — new filter column + state
+
+## Q004: Markeer als betaald
+
+**Priority:** After Q003 (M005)
+**Scope:** Record and display who manually marked an invoice as paid and when
+
+### Problem
+
+When a user clicks "Markeer als betaald" on an invoice, the status changes to paid but no audit trail is kept. The Betaalgegevens card only shows for Mollie-paid invoices. For manually-paid invoices, there's no record of who marked it or when.
+
+### Solution
+
+- In `update_invoice_status()`: when transitioning to `paid`, store `_manually_marked_paid_at` (datetime) and `_manually_marked_paid_by` (user ID) as post meta
+- In `format_invoice_detail()`: return these fields (with user display name resolved)
+- In `FactuurDetail.jsx`: show Betaalgegevens card for manually-paid invoices too, displaying "Handmatig gemarkeerd als betaald op {date} door {user}"
+
+### Files affected
+
+- `includes/class-rest-invoices.php` — store meta on paid transition + return in `format_invoice_detail()`
+- `src/pages/Finance/FactuurDetail.jsx` — expand Betaalgegevens card condition and add manual-paid display
+
+## Q005: Remove iCal Feed
+
+**Priority:** After Q004 (M006)
+**Scope:** Remove the unused iCal feed functionality
+
+The iCal feed is no longer needed. The frontend `getIcalUrl` API method is defined but never called. Removal is straightforward — similar to the CardDAV removal (Q001).
+
+### Files to delete
+
+- `includes/class-ical-feed.php` (531 lines)
+- `../developer/src/content/docs/integrations/ical-feed.md` (348 lines)
+
+### Files to edit
+
+- `functions.php` — remove `use Rondo\Export\ICalFeed`, `class_alias`, `rondo_is_ical_request()` helper, both `new ICalFeed()` instantiations
+- `src/api/client.js` — remove `getIcalUrl` method
+- `../developer/src/content/docs/index.mdx` — remove iCal mention and link
+- `../developer/src/content/docs/architecture.md` — remove `IcalFeed` row from class table
+- `../developer/src/content/docs/architecture/php-autoloading.md` — remove iCal loading strategy, helper function, optimization note
+- `../developer/astro.config.mjs` — remove iCal Feed sidebar entry
+
+### Post-deploy
+
+- Flush rewrite rules (`wp rewrite flush`)
