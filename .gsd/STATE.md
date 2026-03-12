@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T02: Add confirmation dialog, query refresh, and email notification in slice S01.
+Execute T03: Version bump, changelog, docs, deploy, and verify in slice S01.
