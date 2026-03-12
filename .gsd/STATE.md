@@ -2,7 +2,7 @@
 
 **Active Milestone:** M005 — Spelactiviteit Field
 **Active Slice:** S01 — Spelactiviteit field, display, and filter
-**Phase:** planning
+**Phase:** planned
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -16,10 +16,13 @@
 - ⬜ **M008:** M008
 
 ## Recent Decisions
-- None recorded
+- [M005-S01] spelactiviteit is boolean filter (not select/dynamic)
+- [M005-S01] Reuse existing `tm` alias for team meta
+- [M005-S01] ACF field at index 29, readonly=1
+- [M005-S01] Compound SQL: has spelactiviteit AND no team
 
 ## Blockers
 - None
 
 ## Next Action
-Plan slice S01 (Spelactiviteit field, display, and filter).
+Execute T01: Add ACF field and wire SportlinkCard display.
