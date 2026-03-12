@@ -1,8 +1,9 @@
 # GSD State
 
 **Active Milestone:** M010 — Role-Capability Matrix & Age-Group Access
-**Active Slice:** None
-**Phase:** planned
+**Active Slice:** S01 — Role-capability matrix backend & UI
+**Phase:** planning
+**Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
@@ -16,8 +17,11 @@
 - ✅ **M009:** Person Detail Page Improvements
 - 🔄 **M010:** Role-Capability Matrix & Age-Group Access
 
+## Recent Decisions
+- None recorded
+
 ## Blockers
 - None
 
 ## Next Action
-Start S01: Role-capability matrix backend & UI
+Plan slice S01 (Role-capability matrix backend & UI).
