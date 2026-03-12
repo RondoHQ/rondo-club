@@ -12,7 +12,6 @@
 - ⬜ **M004:** Contributie Exclusion Improvements
 - ⬜ **M005:** Spelactiviteit Field
 - ⬜ **M006:** Markeer als betaald
-- ⬜ **M006:** Markeer als betaald
 
 ## Recent Decisions
 - None recorded
