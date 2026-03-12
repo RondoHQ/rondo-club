@@ -47,7 +47,7 @@
   - Verify: `npm run lint` passes; grep the file for the new meta keys to confirm correct placement
   - Done when: Both meta keys stored on paid transition and both fields present in detail response
 
-- [ ] **T02: Display manual-paid info in Betaalgegevens card, bump version, deploy** `est:25m`
+- [x] **T02: Display manual-paid info in Betaalgegevens card, bump version, deploy** `est:25m`
   - Why: The UI must show the audit trail to users, and the change must be deployed for UAT
   - Files: `src/pages/Finance/FactuurDetail.jsx`, `style.css`, `package.json`, `CHANGELOG.md`
   - Do: (1) Widen the Betaalgegevens card condition from `invoice.mollie_payment_method` to `(invoice.mollie_payment_method || invoice.manually_marked_paid_at)`. (2) Add a section for manually-paid display (when no Mollie data) showing "Handmatig gemarkeerd als betaald" with formatted date/time and user name. (3) Bump version to 31.13.0 in style.css and package.json. (4) Add changelog entry. (5) `npm run build` + `npm run lint`. (6) Git commit & push. (7) Deploy to production via `bin/deploy.sh`.
