@@ -21,4 +21,4 @@
 - None
 
 ## Next Action
-Execute T01: Add credit email template to FinanceConfig and wire REST API in slice S01.
+Execute T02: Route credit invoices to credit template and remove auto-paid transition in slice S01.
