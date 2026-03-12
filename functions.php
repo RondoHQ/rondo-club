@@ -123,7 +123,6 @@ use Rondo\Collaboration\CommentTypes;
 use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
 use Rondo\Export\VCard as VCardExport;
-use Rondo\Export\ICalFeed;
 use Rondo\Sheets\GoogleSheetsConnection;
 use Rondo\Data\InverseRelationships;
 use Rondo\Data\TodoMigration;
@@ -281,9 +280,6 @@ if ( ! class_exists( 'RONDO_Reminders' ) ) {
 if ( ! class_exists( 'RONDO_VCard_Export' ) ) {
 	class_alias( VCardExport::class, 'RONDO_VCard_Export' );
 }
-if ( ! class_exists( 'RONDO_ICal_Feed' ) ) {
-	class_alias( ICalFeed::class, 'RONDO_ICal_Feed' );
-}
 // Data classes
 if ( ! class_exists( 'RONDO_Inverse_Relationships' ) ) {
 	class_alias( InverseRelationships::class, 'RONDO_Inverse_Relationships' );
@@ -332,14 +328,6 @@ function rondo_is_rest_request() {
 }
 
 /**
- * Check if current request is for the iCal feed
- */
-function rondo_is_ical_request() {
-	$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '';
-	return strpos( $request_uri, '/prm-ical/' ) !== false || strpos( $request_uri, 'prm-ical' ) !== false;
-}
-
-/**
  * Initialize the CRM functionality with conditional class loading
  */
 function rondo_init() {
@@ -360,13 +348,6 @@ function rondo_init() {
 	new UserRoles();
 	new LettermintMailer();
 	new DemoProtection();
-
-	// iCal feed - only load for iCal requests
-	if ( rondo_is_ical_request() ) {
-		new ICalFeed();
-		$initialized = true;
-		return; // iCal requests don't need other functionality
-	}
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
@@ -411,12 +392,6 @@ function rondo_init() {
 	// Reminders - only for admin or cron
 	if ( $is_admin || $is_cron ) {
 		new Reminders();
-	}
-
-	// iCal feed - also initialize on non-iCal requests for hook registration
-	// but we check for its specific request above for early return optimization
-	if ( ! rondo_is_ical_request() ) {
-		new ICalFeed();
 	}
 
 	// Bulk invoice creator — registers WP-Cron hook for batch processing
