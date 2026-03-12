@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T01: Add Credit badge, filter option, and custom filterFn to Facturen.jsx in slice S01.
+Execute T02: Deploy to production and verify in slice S01.
