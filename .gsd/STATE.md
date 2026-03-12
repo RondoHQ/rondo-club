@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M008 — Credit Invoice Type Badge
-**Active Slice:** S01 — Credit badge and filter on Facturen list
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Credit badge and filter on Facturen list).
+All slices complete in M008. Write milestone summary.
