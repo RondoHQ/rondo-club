@@ -320,7 +320,10 @@
                     "label": "Team / Commissie",
                     "name": "team",
                     "type": "post_object",
-                    "post_type": ["team", "commissie"],
+                    "post_type": [
+                        "team",
+                        "commissie"
+                    ],
                     "return_format": "id",
                     "allow_null": 1,
                     "wrapper": {
@@ -409,7 +412,9 @@
                     "label": "Person",
                     "name": "related_person",
                     "type": "post_object",
-                    "post_type": ["person"],
+                    "post_type": [
+                        "person"
+                    ],
                     "return_format": "id",
                     "wrapper": {
                         "width": "40"
@@ -487,6 +492,16 @@
             }
         },
         {
+            "key": "field_spelactiviteit",
+            "label": "Spelactiviteit",
+            "name": "spelactiviteit",
+            "type": "text",
+            "readonly": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
             "key": "field_lid_sinds",
             "label": "Lid sinds",
             "name": "lid-sinds",
@@ -545,7 +560,7 @@
         },
         {
             "key": "field_financiele_blokkade",
-            "label": "Financi\u00eble blokkade",
+            "label": "Financiële blokkade",
             "name": "financiele-blokkade",
             "type": "true_false",
             "default_value": 0,
@@ -722,5 +737,6 @@
         "author"
     ],
     "active": true,
-    "show_in_rest": 1
+    "show_in_rest": 1,
+    "modified": 1773327234
 }
