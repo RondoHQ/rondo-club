@@ -10,6 +10,7 @@
 
 namespace Rondo\Finance;
 
+use Rondo\Config\FinanceConfig;
 use Rondo\Fees\MembershipFees;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -292,6 +293,20 @@ class BulkInvoiceCreator {
 		}
 
 		update_field( 'line_items', $line_items, $post_id );
+
+		$finance_config   = new FinanceConfig();
+		$payment_account  = $finance_config->get_payment_account_snapshot_for_invoice_type( 'membership' );
+		if ( is_wp_error( $payment_account ) ) {
+			error_log( 'Membership invoice account resolution failed for person ' . $person_id . ': ' . $payment_account->get_error_message() );
+			wp_delete_post( $post_id, true );
+			return 'error';
+		}
+
+		update_post_meta( $post_id, '_payment_account_id', (string) ( $payment_account['id'] ?? '' ) );
+		update_post_meta( $post_id, '_payment_account_internal_name', (string) ( $payment_account['internal_name'] ?? '' ) );
+		update_post_meta( $post_id, '_payment_account_account_holder', (string) ( $payment_account['account_holder'] ?? '' ) );
+		update_post_meta( $post_id, '_payment_account_iban', (string) ( $payment_account['iban'] ?? '' ) );
+		update_post_meta( $post_id, '_payment_account_linked_provider', (string) ( $payment_account['linked_provider'] ?? '' ) );
 
 		// Store season meta.
 		update_post_meta( $post_id, '_invoice_season', $season );

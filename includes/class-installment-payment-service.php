@@ -50,10 +50,14 @@ class InstallmentPaymentService {
 	 */
 	public static function create_payment( int $invoice_id, int $installment_number ): string|\WP_Error {
 		// Guard: Mollie API key must be configured.
-		$config  = new FinanceConfig();
-		$api_key = $config->get_mollie_api_key();
+		$config     = new FinanceConfig();
+		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		if ( '' === $account_id ) {
+			$account_id = $config->get_default_mollie_account_id( 'membership' );
+		}
+		$api_key = $config->get_mollie_api_key_for_account( $account_id );
 		if ( empty( $api_key ) ) {
-			return new \WP_Error( 'mollie_not_configured', 'Mollie API-sleutel niet geconfigureerd.' );
+			return new \WP_Error( 'mollie_not_configured', 'Voor deze contributiefactuur is geen Mollie API-sleutel geconfigureerd.' );
 		}
 
 		// Read plan meta (raw WP meta, not ACF).
@@ -100,7 +104,7 @@ class InstallmentPaymentService {
 
 		// Create payment link via Mollie Payment Links API (persistent, no expiry).
 		try {
-			$mollie_client = new MollieClient();
+			$mollie_client = new MollieClient( $api_key );
 			$mollie        = $mollie_client->get();
 			$payment_link  = $mollie->paymentLinks->create( $payload );
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
