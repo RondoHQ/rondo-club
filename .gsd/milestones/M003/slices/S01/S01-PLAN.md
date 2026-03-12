@@ -48,7 +48,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add credit email template to FinanceConfig and wire REST API** `est:30m`
+- [x] **T01: Add credit email template to FinanceConfig and wire REST API** `est:30m`
   - Why: Backend storage, retrieval, and REST API registration are the foundation — everything else depends on these being in place
   - Files: `includes/class-finance-config.php`, `includes/class-rest-api.php`
   - Do: Add `OPTION_CREDIT_EMAIL_TEMPLATE`, `OPTION_CREDIT_EMAIL_HEADING` constants; add defaults (credit template without `{betaallink}`/`{qr_code}`/`{betaalknop}`, heading 'Creditfactuur'); add `get_credit_email_template()` getter; add `'credit'` case to `get_email_heading()` match; expose in `get_all_settings()` and `get_setting()`; handle in `update_settings()` with `wp_kses_post`; register `credit_email_template` and `credit_email_heading` as REST args on finance/settings POST; add `'credit'` to test-email validator whitelist; add `case 'credit'` to `send_finance_test_email()` switch
