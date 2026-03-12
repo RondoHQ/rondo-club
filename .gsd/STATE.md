@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T01: Delete iCal class and remove all PHP/JS references in slice S01.
+Execute T02: Clean developer docs, bump version, deploy in slice S01.
