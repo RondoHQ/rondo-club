@@ -674,3 +674,4 @@
 - "[M008-S01] Custom filterFn on type column follows status column's filterFn pattern — intercept synthetic 'credit' value, check invoice_kind instead of invoice_type"
 - "[M008-S01] 'Handmatig' filter must exclude credit invoices — even though credit invoices have invoice_type='manual', they should only appear under 'Credit' filter"
 - "[M008-S01] Rose color for Credit badge — visually distinct from existing purple (contributie), amber (tuchtzaken), cyan (handmatig)"
+- "[M008-S01] Two tasks: T01 implements all code in single file (Facturen.jsx), T02 handles version bump, changelog, deploy — no test files needed for ~15-line presentational change verified by build+lint+visual inspection"

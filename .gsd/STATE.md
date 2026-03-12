@@ -2,7 +2,7 @@
 
 **Active Milestone:** M008 — Credit Invoice Type Badge
 **Active Slice:** S01 — Credit badge and filter on Facturen list
-**Phase:** planning
+**Phase:** executing
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Credit badge and filter on Facturen list).
+Execute T01 of slice S01 (add Credit badge, filter option, and custom filterFn to Facturen.jsx).
