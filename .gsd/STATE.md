@@ -2,7 +2,7 @@
 
 **Active Milestone:** M004 — Contributie Exclusion Improvements
 **Active Slice:** S01 — Confirmation, Refresh & Email Notification
-**Phase:** planned
+**Phase:** executing
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -13,15 +13,13 @@
 - ⬜ **M005:** Spelactiviteit Field
 - ⬜ **M006:** Markeer als betaald
 - ⬜ **M007:** Remove iCal Feed
+- ⬜ **M008:** M008
 
 ## Recent Decisions
-- [M004-S01] RoleFinder in Rondo\Core namespace, static methods
-- [M004-S01] LettermintWebhook refactored to use shared RoleFinder
-- [M004-S01] Email sent from FeeCacheInvalidator, wrapped in try/catch
-- [M004-S01] window.confirm() for exclusion toggle
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Execute T01 of S01 (Extract RoleFinder helper and add unit tests).
+Execute T01: Extract RoleFinder helper and add unit tests in slice S01.
