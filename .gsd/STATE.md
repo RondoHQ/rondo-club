@@ -10,6 +10,7 @@
 - 🔄 **M002:** Mollie Payment Details
 - ⬜ **M003:** Credit Invoice Improvements
 - ⬜ **M004:** Contributie Exclusion Improvements
+- ⬜ **M005:** M005
 
 ## Recent Decisions
 - None recorded
