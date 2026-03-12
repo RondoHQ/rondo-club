@@ -44,7 +44,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add ACF field and wire SportlinkCard display** `est:20m`
+- [x] **T01: Add ACF field and wire SportlinkCard display** `est:20m`
   - Why: The spelactiviteit field must exist in ACF and render in the Sportlink card — this is the data foundation and the simplest user-visible change
   - Files: `acf-json/group_person_fields.json`, `src/components/SportlinkCard.jsx`
   - Do: Add `spelactiviteit` text field at index 29 in ACF JSON (copy leeftijdsgroep pattern, readonly=1, wrapper width 33). In SportlinkCard, extract `acfData?.spelactiviteit`, add to `hasData` check, add entry to `fields` array after leeftijdsgroep. Update ACF JSON `modified` timestamp.

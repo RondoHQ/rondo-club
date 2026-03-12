@@ -14,6 +14,7 @@ export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
   const vrijwilligerSinds = metaData?.['vrijwilliger-sinds'] || acfData?.['vrijwilliger-sinds'];
   const lidTot = acfData?.['lid-tot'];
   const leeftijdsgroep = acfData?.leeftijdsgroep;
+  const spelactiviteit = acfData?.spelactiviteit;
   const typeLid = acfData?.['type-lid'];
   const datumFoto = acfData?.['datum-foto'];
   const isParent = acfData?.isparent;
@@ -21,7 +22,7 @@ export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
   const teamId = primaryTeam?.id || null;
 
   // Check if at least one field (other than isparent alone) is populated
-  const hasData = knvbId || lidSinds || vrijwilligerSinds || lidTot || leeftijdsgroep || typeLid || datumFoto || teamName;
+  const hasData = knvbId || lidSinds || vrijwilligerSinds || lidTot || leeftijdsgroep || spelactiviteit || typeLid || datumFoto || teamName;
 
   // Hide card if no Sportlink data
   if (!hasData) {
@@ -35,6 +36,7 @@ export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
     { key: 'vrijwilliger-sinds', label: 'Vrijwilliger sinds', value: vrijwilligerSinds, type: 'date', showWhenEmpty: true },
     { key: 'lid-tot', label: 'Lid tot', value: lidTot, type: 'date' },
     { key: 'leeftijdsgroep', label: 'Leeftijdsgroep', value: leeftijdsgroep, type: 'text' },
+    { key: 'spelactiviteit', label: 'Spelactiviteit', value: spelactiviteit, type: 'text' },
     { key: 'type-lid', label: 'Type lid', value: typeLid, type: 'text' },
     { key: 'datum-foto', label: 'Datum foto', value: datumFoto, type: 'date' },
     {
