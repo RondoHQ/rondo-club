@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T01: Store manual-paid audit meta and return in REST response in slice S01.
+Execute T02: Display manual-paid info in Betaalgegevens card, bump version, deploy in slice S01.
