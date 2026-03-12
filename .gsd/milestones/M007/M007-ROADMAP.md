@@ -33,7 +33,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Remove iCal feed** `risk:low` `depends:[]`
+- [x] **S01: Remove iCal feed** `risk:low` `depends:[]`
   > After this: iCal feed code is fully removed — deployed to production
 
 ## Boundary Map
