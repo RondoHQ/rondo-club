@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -827,51 +827,78 @@ export default function FactuurDetail() {
         </div>
       )}
 
-      {/* Betaalgegevens (payment details) - only for invoices with Mollie payment data */}
-      {invoice.mollie_payment_method && (
+      {/* Betaalgegevens (payment details) - for Mollie-paid or manually-paid invoices */}
+      {(invoice.mollie_payment_method || invoice.manually_marked_paid_at) && (
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
             Betaalgegevens
           </h2>
           <div className="space-y-3">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalmethode</h3>
-              <p className="text-gray-700 dark:text-gray-300">{getMollieMethodLabel(invoice.mollie_payment_method)}</p>
-            </div>
-            {invoice.mollie_paid_at && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {format(new Date(invoice.mollie_paid_at), 'd MMM yyyy HH:mm')}
-                </p>
-              </div>
+            {invoice.mollie_payment_method && (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaalmethode</h3>
+                  <p className="text-gray-700 dark:text-gray-300">{getMollieMethodLabel(invoice.mollie_payment_method)}</p>
+                </div>
+                {invoice.mollie_paid_at && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {format(new Date(invoice.mollie_paid_at), 'd MMM yyyy HH:mm')}
+                    </p>
+                  </div>
+                )}
+                {invoice.mollie_consumer_name && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Naam betaler</h3>
+                    <p className="text-gray-700 dark:text-gray-300">{invoice.mollie_consumer_name}</p>
+                  </div>
+                )}
+                {invoice.mollie_consumer_account && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">IBAN betaler</h3>
+                    <p className="text-gray-700 dark:text-gray-300">{invoice.mollie_consumer_account}</p>
+                  </div>
+                )}
+                {invoice.mollie_dashboard_url && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Mollie</h3>
+                    <a
+                      href={invoice.mollie_dashboard_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-electric-cyan dark:text-electric-cyan hover:underline text-sm inline-flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Bekijk in Mollie
+                    </a>
+                  </div>
+                )}
+              </>
             )}
-            {invoice.mollie_consumer_name && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Naam betaler</h3>
-                <p className="text-gray-700 dark:text-gray-300">{invoice.mollie_consumer_name}</p>
-              </div>
-            )}
-            {invoice.mollie_consumer_account && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">IBAN betaler</h3>
-                <p className="text-gray-700 dark:text-gray-300">{invoice.mollie_consumer_account}</p>
-              </div>
-            )}
-            {invoice.mollie_dashboard_url && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Mollie</h3>
-                <a
-                  href={invoice.mollie_dashboard_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-electric-cyan dark:text-electric-cyan hover:underline text-sm inline-flex items-center gap-1"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  Bekijk in Mollie
-                </a>
-              </div>
+            {!invoice.mollie_payment_method && invoice.manually_marked_paid_at && (
+              <>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
+                  <p className="text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    Handmatig gemarkeerd als betaald
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Betaald op</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {format(new Date(invoice.manually_marked_paid_at), 'd MMM yyyy HH:mm')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Gemarkeerd door</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {invoice.manually_marked_paid_by?.name || 'Onbekend'}
+                  </p>
+                </div>
+              </>
             )}
           </div>
         </div>
