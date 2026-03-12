@@ -18,4 +18,4 @@
 - None
 
 ## Next Action
-Execute T02: Expose payment details via REST API and clear on reset in slice S01.
+Execute T03: Render payment details UI on invoice detail page in slice S01.
