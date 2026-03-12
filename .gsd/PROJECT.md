@@ -499,6 +499,15 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Redundant inline-flex/items-center classes cleaned from 14 files — v32.0
 - ✓ Double btn-prefix bugs fixed in Profile.jsx and router.jsx — v32.0
 
+**v31.9.0 Mollie Payment Details (shipped 2026-03-12):**
+- ✓ Mollie payment details (method, paidAt, dashboard URL, consumer info) extracted and stored on webhook payment confirmation — v31.9.0
+- ✓ "Betaalgegevens" section on invoice detail page with payment method, timestamp, and Mollie Dashboard link — v31.9.0
+- ✓ Per-installment payment method and Mollie Dashboard link in installment timeline table — v31.9.0
+- ✓ Consumer name and IBAN displayed for iDEAL payments, graceful fallback for other methods — v31.9.0
+- ✓ Section absent (not empty) for invoices without Mollie payment data — v31.9.0
+- ✓ Non-blocking extraction: try/catch ensures webhook 200 response is never blocked — v31.9.0
+- ✓ Backfill script for already-paid invoices (`bin/backfill-mollie-details.php`) — v31.9.0
+
 ### Active
 
 (No active milestone)
@@ -522,12 +531,12 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v32.0):**
+**Codebase State (post v31.9.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.8.1 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.9.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
-- Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management
+- Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
 - CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced

@@ -1,13 +1,13 @@
 # GSD State
 
-**Active Milestone:** M002 — Mollie Payment Details
+**Active Milestone:** None
 **Active Slice:** None
-**Phase:** completing-milestone
+**Phase:** idle
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
-- 🔄 **M002:** Mollie Payment Details
+- ✅ **M002:** Mollie Payment Details
 - ⬜ **M003:** Credit Invoice Improvements
 - ⬜ **M004:** Contributie Exclusion Improvements
 - ⬜ **M005:** Spelactiviteit Field
@@ -19,4 +19,4 @@
 - None
 
 ## Next Action
-All slices complete in M002. Write milestone summary.
+M002 complete. Ready for next milestone.
