@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** None
-**Active Slice:** None
-**Phase:** idle
+**Active Milestone:** M007 — Remove iCal Feed
+**Active Slice:** S01 — Remove iCal feed
+**Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -12,7 +12,7 @@
 - ✅ **M004:** Contributie Exclusion Improvements
 - ✅ **M005:** Spelactiviteit Field
 - ✅ **M006:** Markeer als betaald
-- ⬜ **M007:** Remove iCal Feed
+- 🔄 **M007:** Remove iCal Feed
 - ⬜ **M008:** M008
 
 ## Recent Decisions
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Idle — no active milestone.
+Plan slice S01 (Remove iCal feed).
