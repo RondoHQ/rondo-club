@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** None
-**Active Slice:** None
-**Phase:** idle
+**Active Milestone:** M005 — Spelactiviteit Field
+**Active Slice:** S01 — Spelactiviteit field, display, and filter
+**Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -10,17 +10,16 @@
 - ✅ **M002:** Mollie Payment Details
 - ✅ **M003:** Credit Invoice Improvements
 - ✅ **M004:** Contributie Exclusion Improvements
-- ⬜ **M005:** Spelactiviteit Field
+- 🔄 **M005:** Spelactiviteit Field
 - ⬜ **M006:** Markeer als betaald
 - ⬜ **M007:** Remove iCal Feed
 - ⬜ **M008:** M008
 
 ## Recent Decisions
-- RoleFinder uses case-sensitive strpos — 'Secretaris' must not match 'Wedstrijdsecretaris'
-- feeKeys.person(personId, {}) for correct TanStack Query cache invalidation
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Idle — ready for next milestone.
+Plan slice S01 (Spelactiviteit field, display, and filter).
