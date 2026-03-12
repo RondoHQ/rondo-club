@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M007 — Remove iCal Feed
-**Active Slice:** S01 — Remove iCal feed
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Remove iCal feed).
+All slices complete in M007. Write milestone summary.

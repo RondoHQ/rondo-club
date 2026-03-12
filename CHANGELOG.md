@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.13.1] - 2026-03-12
+
+### Removed
+- iCal feed feature — deleted `ICalFeed` class, all PHP/JS references, and developer documentation
+
 ## [31.13.0] - 2026-03-12
 
 ### Added
