@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M003 — Credit Invoice Improvements
-**Active Slice:** S01 — Credit Invoice Email Template & Status Fix
-**Phase:** planning
+**Active Slice:** None
+**Phase:** completing-milestone
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -12,6 +12,7 @@
 - ⬜ **M004:** Contributie Exclusion Improvements
 - ⬜ **M005:** Spelactiviteit Field
 - ⬜ **M006:** Markeer als betaald
+- ⬜ **M007:** Remove iCal Feed
 
 ## Recent Decisions
 - None recorded
@@ -20,4 +21,4 @@
 - None
 
 ## Next Action
-Plan slice S01 (Credit Invoice Email Template & Status Fix).
+All slices complete in M003. Write milestone summary.

@@ -32,5 +32,5 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Credit Invoice Email Template & Status Fix** `risk:low` `depends:[]`
+- [x] **S01: Credit Invoice Email Template & Status Fix** `risk:low` `depends:[]`
   > After this: Credit invoices use their own email, stay in "Verstuurd" status, and the template is configurable in Settings

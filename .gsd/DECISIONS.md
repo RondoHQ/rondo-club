@@ -649,3 +649,8 @@
 - "[M002-S01] Betaalgegevens card placed after installment timeline section — payment details are supplementary info, not primary invoice data"
 - "[M002-S01] Installment table adds Methode and Mollie columns — keeps per-installment payment info visible in the timeline context where it's most useful"
 - "[M002-S01] getMollieMethodLabel helper with fallback — capitalizes unknown method strings instead of showing 'Onbekend' to handle future Mollie methods gracefully"
+- "[M003-S01] Credit email template follows exact same OPTION/DEFAULTS/getter/heading/get_all_settings/update_settings pattern as existing 8 templates — no new patterns introduced"
+- "[M003-S01] Credit template variables exclude {betaallink}, {qr_code}, {betaalknop} — credit invoices clear these in send_invoice() so they would be empty"
+- "[M003-S01] invoice_kind checked BEFORE invoice_type in template routing — credit status (stored in _invoice_kind meta) overrides the invoice type (discipline/membership/manual)"
+- "[M003-S01] Auto-paid transition fully removed for credit invoices — they stay in rondo_sent like all other invoices; manual mark-as-paid is required"
+- "[M003-S01] InvoiceEmailSender reads _invoice_kind from post meta inside send() — avoids requiring callers to pass invoice_kind, same pattern as invoice_type which is read from ACF"
