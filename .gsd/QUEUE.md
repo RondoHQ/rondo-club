@@ -125,3 +125,20 @@ The iCal feed is no longer needed. The frontend `getIcalUrl` API method is defin
 ### Post-deploy
 
 - Flush rewrite rules (`wp rewrite flush`)
+
+## Q006: Credit Invoice Type Badge
+
+**Priority:** After M003 (follow-up)
+**Scope:** Show "Credit" badge instead of "Handmatig" for credit invoices on `/financien/facturen`
+
+This was scoped as item 3 of Q002 / M003 but was not included in the M003 S01 plan. Pure frontend change.
+
+### Solution
+
+- In `Facturen.jsx` type column cell renderer, check `row.original.invoice_kind === 'credit'` and override label to "Credit" with rose/pink badge color
+- Add "Credit" to type filter dropdown options with custom `filterFn` to match `invoice_kind`
+- No backend changes — `invoice_kind` is already in the REST response
+
+### Files affected
+
+- `src/pages/Finance/Facturen.jsx` — type badge override + filter option
