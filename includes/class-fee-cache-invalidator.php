@@ -253,8 +253,8 @@ class FeeCacheInvalidator {
 			// Collect recipient user IDs from Secretaris and Penningmeester roles.
 			$user_ids = array_unique(
 				array_merge(
-					RoleFinder::get_user_ids_by_role( 'secretaris' ),
-					RoleFinder::get_user_ids_by_role( 'penningmeester' )
+					RoleFinder::get_user_ids_by_role( 'Secretaris' ),
+					RoleFinder::get_user_ids_by_role( 'Penningmeester' )
 				)
 			);
 

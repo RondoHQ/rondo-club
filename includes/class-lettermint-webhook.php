@@ -205,7 +205,7 @@ class LettermintWebhook {
 		if ( $flow === self::FLOW_EMAIL_VERIFICATION && $sender_user_id > 0 ) {
 			$owners = [ $sender_user_id ];
 		} else {
-			$owners = RoleFinder::get_user_ids_by_role( 'secretaris' );
+			$owners = RoleFinder::get_user_ids_by_role( 'Secretaris' );
 		}
 
 		if ( empty( $owners ) ) {
