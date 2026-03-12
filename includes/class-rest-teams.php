@@ -483,7 +483,7 @@ class Teams extends Base {
 		}
 
 		// Must be post author or admin
-		return (int) $post->post_author === get_current_user_id() || current_user_can( 'administrator' );
+		return (int) $post->post_author === get_current_user_id() || current_user_can( 'manage_options' );
 	}
 
 	/**

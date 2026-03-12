@@ -73,14 +73,6 @@ class UserRoles {
 				$capabilities[ $cap ] = true;
 			}
 			add_role( $slug, $display_name, $capabilities );
-
-			// Ensure existing roles are updated with current capabilities.
-			$role = get_role( $slug );
-			if ( $role ) {
-				foreach ( array_keys( $capabilities ) as $cap_name ) {
-					$role->add_cap( $cap_name );
-				}
-			}
 		}
 
 		// Add app-specific capabilities to administrator role

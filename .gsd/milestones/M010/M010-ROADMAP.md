@@ -41,7 +41,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Role-capability matrix backend & UI** `risk:high` `depends:[]`
+- [x] **S01: Role-capability matrix backend & UI** `risk:high` `depends:[]`
   > After this: admin can open Settings → Beheer → Capabilities, see the matrix of all roles × capabilities, toggle them, save, and the WordPress role definitions update accordingly. Also fixes the 6 role-name checks. The matrix replaces the hardcoded ROLES constant for capability assignments.
 
 - [ ] **S02: Age-group access filtering** `risk:high` `depends:[S01]`

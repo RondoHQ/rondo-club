@@ -290,6 +290,8 @@ export const prmApi = {
   updateFunctieCapabilityMap: (data) => api.post('/rondo/v1/functie-capability-map', data),
   getCommissieCapabilityMap: () => api.get('/rondo/v1/commissie-capability-map'),
   updateCommissieCapabilityMap: (data) => api.post('/rondo/v1/commissie-capability-map', data),
+  getCapabilityMatrix: () => api.get('/rondo/v1/settings/capability-matrix'),
+  updateCapabilityMatrix: (data) => api.post('/rondo/v1/settings/capability-matrix', data),
   syncAllCapabilities: () => api.post('/rondo/v1/capability-sync/all'),
   syncPersonCapabilities: (personId) => api.post(`/rondo/v1/people/${personId}/capability-sync`),
 

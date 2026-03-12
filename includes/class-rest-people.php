@@ -591,7 +591,7 @@ class People extends Base {
 		$data['welcome_email_sent_at'] = get_post_meta( $post->ID, '_welcome_email_sent_at', true ) ?: null;
 
 		// Expose linked user roles for admin AccountCard.
-		if ( $data['linked_user_id'] && current_user_can( 'administrator' ) ) {
+		if ( $data['linked_user_id'] && current_user_can( 'manage_options' ) ) {
 			$user = get_user_by( 'ID', $data['linked_user_id'] );
 			if ( $user ) {
 				$data['linked_user_roles'] = array_values(
@@ -627,7 +627,7 @@ class People extends Base {
 		}
 
 		// Must be post author or admin
-		return (int) $post->post_author === get_current_user_id() || current_user_can( 'administrator' );
+		return (int) $post->post_author === get_current_user_id() || current_user_can( 'manage_options' );
 	}
 
 	/**
@@ -760,7 +760,7 @@ class People extends Base {
 
 		$ids             = $request->get_param( 'ids' );
 		$current_user_id = get_current_user_id();
-		$is_admin        = current_user_can( 'administrator' );
+		$is_admin        = current_user_can( 'manage_options' );
 
 		foreach ( $ids as $post_id ) {
 			$post = get_post( $post_id );
