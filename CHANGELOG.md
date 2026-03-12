@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [31.8.1] - 2026-03-12
+
+### Changed
+- VOG email templates now use rich text editor (Tiptap) instead of plain textareas
+- Backend stores HTML content via `wp_kses_post()` instead of stripping tags with `sanitize_textarea_field()`
+- Email sending applies inline styles to HTML templates for email client compatibility
+- Legacy plain-text templates are still supported via automatic detection and conversion
+
 ## [31.8.0] - 2026-03-12
 
 ### Removed
