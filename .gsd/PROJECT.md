@@ -487,17 +487,21 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Commissie-to-role mapping alongside Functie mapping — v30.0
 - ✓ rondo_financieel role for independent financial access — v30.0
 
+**v32.0 Button Tier System (shipped 2026-03-12):**
+- ✓ Four-tier CSS button system: btn-primary (gradient fill), btn-secondary (outlined), btn-tertiary (ghost), btn-danger (red fill) — v32.0
+- ✓ DRY button base class with @apply btn extension pattern — v32.0
+- ✓ Finance pages migrated: FactuurDetail, FinanceSettings, InvoiceDraftForm, FinancesCard, DisciplineCaseTable — v32.0
+- ✓ 22 modal/dialog files audited and 5 fixed for correct tier hierarchy — v32.0
+- ✓ People, Teams, Commissies pages with correct btn-tertiary for back/share/filter/edit utilities — v32.0
+- ✓ Settings sub-pages with back navigation corrected from btn-primary to btn-tertiary — v32.0
+- ✓ Feedback, VOG, Contributie, Clothing, DataTable toolbar migrated — v32.0
+- ✓ Removed unused btn-danger-outline and btn-glass CSS classes — v32.0
+- ✓ Redundant inline-flex/items-center classes cleaned from 14 files — v32.0
+- ✓ Double btn-prefix bugs fixed in Profile.jsx and router.jsx — v32.0
+
 ### Active
 
-## Current Milestone: v32.0 Interface Touch-up
-
-**Goal:** Establish a clear three-tier button hierarchy (primary → secondary → tertiary) with distinct destructive styling, and roll out consistently across all pages.
-
-**Target features:**
-- Three-tier button system: filled primary, outlined secondary, ghost tertiary
-- Visually distinct destructive buttons (red filled)
-- Consistent button hierarchy applied across all pages
-- Invoice page as reference implementation (Verstuur = primary, Markeer betaald = secondary, Genereer PDF/Betaallink = tertiary, Verwijder = destructive)
+(No active milestone)
 
 ### Out of Scope
 
@@ -518,9 +522,10 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v30.0):**
+**Codebase State (post v32.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 30.0.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.8.1 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
