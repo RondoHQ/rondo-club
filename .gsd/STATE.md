@@ -2,7 +2,7 @@
 
 **Active Milestone:** M007 — Remove iCal Feed
 **Active Slice:** S01 — Remove iCal feed
-**Phase:** executing
+**Phase:** slice-complete
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Execute T02: Clean developer docs, bump version, deploy in slice S01.
+S01 complete — all tasks done, all verification checks pass. Ready for milestone completion.
