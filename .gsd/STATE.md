@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** None
+**Active Milestone:** M008 — Credit Invoice Type Badge
 **Active Slice:** None
-**Phase:** idle
+**Phase:** complete
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -22,4 +22,4 @@
 - None
 
 ## Next Action
-Idle — awaiting next milestone.
+All milestones complete.
