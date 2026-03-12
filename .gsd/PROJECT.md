@@ -543,6 +543,13 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ "Credit" filter option in Type filter dropdown on Facturen list — v31.14.0
 - ✓ Custom filterFn separates credit from manual invoices (credit excluded from "Handmatig" filter) — v31.14.0
 
+**v31.15.0 Person Detail Page Improvements (shipped 2026-03-12):**
+- ✓ Relaties card hidden when person has no relationships — v31.15.0
+- ✓ Account card shown only when person has a linked WordPress account (not just for all volunteers) — v31.15.0
+- ✓ Tab labels show item counts in parentheses (Tijdlijn, Rollen, Kleding, Tuchtzaken) — v31.15.0
+- ✓ VOG status pill removed from person header (VOG info remains in VOGCard on profile tab) — v31.15.0
+- ✓ TabButton component gains optional count prop for reusable tab count display — v31.15.0
+
 ### Active
 
 (No active milestone)
@@ -566,9 +573,10 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v31.14.0):**
+**Codebase State (post v31.15.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 31.14.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 31.15.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Person detail page: conditional Relaties/Account card visibility, tab item counts, no VOG header pill
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management, Mollie payment details on invoices, dedicated credit invoice email template
