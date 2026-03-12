@@ -1186,11 +1186,39 @@ class People extends Base {
 		}
 
 		// Spelactiviteit without team filter
-		// Shows people who have a spelactiviteit value but no team assigned.
-		// The `tm` alias (team meta) is already joined unconditionally above.
+		// Shows people who have a spelactiviteit value but no current PLAYER role in a team.
+		// Volunteer/staff roles in teams should NOT exclude a person from this filter.
 		if ( $spelactiviteit_no_team === '1' ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sa ON p.ID = sa.post_id AND sa.meta_key = 'spelactiviteit'";
-			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND (tm.meta_value IS NULL OR tm.meta_value = ''))";
+
+			// Build the list of player roles for the SQL IN clause.
+			$player_roles       = \Rondo\Core\VolunteerStatus::get_player_roles();
+			$role_placeholders  = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
+
+			// Subquery: person has at least one current work_history entry that is
+			// (a) linked to a team (post_type = 'team'), and (b) has a player job_title.
+			// ACF repeater rows are stored as work_history_{N}_job_title, work_history_{N}_team, etc.
+			$player_team_subquery = $wpdb->prepare(
+				"SELECT 1
+				 FROM {$wpdb->postmeta} wh_jt
+				 JOIN {$wpdb->postmeta} wh_tm
+				   ON wh_jt.post_id = wh_tm.post_id
+				   AND REPLACE(wh_jt.meta_key, '_job_title', '_team') = wh_tm.meta_key
+				 JOIN {$wpdb->postmeta} wh_ic
+				   ON wh_jt.post_id = wh_ic.post_id
+				   AND REPLACE(wh_jt.meta_key, '_job_title', '_is_current') = wh_ic.meta_key
+				 JOIN {$wpdb->posts} linked_team
+				   ON wh_tm.meta_value = linked_team.ID
+				 WHERE wh_jt.post_id = p.ID
+				   AND wh_jt.meta_key REGEXP '^work_history_[0-9]+_job_title$'
+				   AND wh_ic.meta_value = '1'
+				   AND linked_team.post_type = 'team'
+				   AND wh_jt.meta_value IN ($role_placeholders)
+				 LIMIT 1",
+				...$player_roles
+			);
+
+			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)
