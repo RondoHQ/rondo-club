@@ -16,10 +16,10 @@
 - 🔄 **M008:** Credit Invoice Type Badge
 
 ## Recent Decisions
-- None recorded
+- Bumped minor version (31.14.0) for credit badge feature
 
 ## Blockers
 - None
 
 ## Next Action
-Execute T02: Deploy to production and verify in slice S01.
+S01 all tasks complete (T01 ✅, T02 ✅). Deployed to production v31.14.0. Awaiting UAT verification on https://rondo.svawc.nl/financien/facturen.

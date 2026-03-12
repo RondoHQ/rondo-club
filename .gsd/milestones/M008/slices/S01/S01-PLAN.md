@@ -49,7 +49,7 @@
   - Verify: `npm run build && npm run lint` both exit 0
   - Done when: Build and lint pass cleanly with zero errors/warnings
 
-- [ ] **T02: Deploy to production and verify** `est:10m`
+- [x] **T02: Deploy to production and verify** `est:10m`
   - Why: Milestone requires production deployment and visual verification
   - Files: `style.css`, `package.json`, `CHANGELOG.md`, `bin/deploy.sh`
   - Do: Bump patch version in `style.css` and `package.json`. Add changelog entry for Credit badge. Run `bin/deploy.sh` to deploy. Visually verify on production.
