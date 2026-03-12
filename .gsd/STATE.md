@@ -1,8 +1,8 @@
 # GSD State
 
 **Active Milestone:** M008 — Credit Invoice Type Badge
-**Active Slice:** None
-**Phase:** planned
+**Active Slice:** S01 — Credit badge and filter on Facturen list
+**Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -16,13 +16,10 @@
 - 🔄 **M008:** Credit Invoice Type Badge
 
 ## Recent Decisions
-- [M008-S01] Single slice, ~15 lines in Facturen.jsx, no backend changes
-- [M008-S01] Custom filterFn follows status column pattern
-- [M008-S01] Handmatig filter excludes credit invoices
-- [M008-S01] Rose color for Credit badge (distinct from purple/amber/cyan)
+- None recorded
 
 ## Blockers
 - None
 
 ## Next Action
-Execute slice S01 of M008.
+Plan slice S01 (Credit badge and filter on Facturen list).
