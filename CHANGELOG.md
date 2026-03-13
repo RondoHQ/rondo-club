@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.5.0] - 2026-03-13
+
+### Added
+- Invoice detail: "Markeer als onbetaald" button on paid invoices to revert status back to "Verstuurd"
+- Backend audit trail for marking invoices as unpaid (`_manually_marked_unpaid_at`, `_manually_marked_unpaid_by`)
+- Unpaid audit trail fields included in invoice detail API response
+
+### Changed
+- Marking an invoice as unpaid preserves the original sent date and due date instead of overwriting them
+
 ## [32.4.0] - 2026-03-12
 
 ### Added

@@ -1021,8 +1021,10 @@ class Invoices extends Base {
 		// Update ACF status field
 		update_field( 'status', $status, $invoice_id );
 
-			// If transitioning to "sent", set sent_date and calculate due_date
-			if ( $status === 'sent' ) {
+			// If transitioning to "sent", set sent_date and calculate due_date.
+			// Skip when reverting from paid → sent (marking unpaid) to preserve original dates.
+			$is_reverting_from_paid = ( 'rondo_paid' === $invoice->post_status && 'sent' === $status );
+			if ( $status === 'sent' && ! $is_reverting_from_paid ) {
 				$sent_date = current_time( 'Ymd' );
 				update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
 				$sender_user_id = get_current_user_id();
@@ -1048,11 +1050,28 @@ class Invoices extends Base {
 					update_post_meta( $invoice_id, '_manually_marked_paid_by', $current_user_id );
 				}
 
+				// Clear any previous "marked unpaid" audit trail.
+				delete_post_meta( $invoice_id, '_manually_marked_unpaid_at' );
+				delete_post_meta( $invoice_id, '_manually_marked_unpaid_by' );
+
 				// Remove payment artifacts (link/QR/provider IDs).
 				update_field( 'payment_link', '', $invoice_id );
 				delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 				delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 				$this->clear_qr_code( $invoice_id );
+			}
+
+			// If transitioning from paid to sent/overdue (marking as unpaid), store audit trail.
+			if ( in_array( $status, [ 'sent', 'overdue' ], true ) && 'rondo_paid' === $invoice->post_status ) {
+				update_post_meta( $invoice_id, '_manually_marked_unpaid_at', current_time( 'mysql' ) );
+				$current_user_id = get_current_user_id();
+				if ( $current_user_id > 0 ) {
+					update_post_meta( $invoice_id, '_manually_marked_unpaid_by', $current_user_id );
+				}
+
+				// Clear the "marked paid" audit trail since the invoice is no longer paid.
+				delete_post_meta( $invoice_id, '_manually_marked_paid_at' );
+				delete_post_meta( $invoice_id, '_manually_marked_paid_by' );
 			}
 
 			// Return updated invoice
@@ -2487,6 +2506,10 @@ class Invoices extends Base {
 		// Manual payment audit trail.
 		$invoice['manually_marked_paid_at'] = (string) get_post_meta( $post->ID, '_manually_marked_paid_at', true ) ?: null;
 		$invoice['manually_marked_paid_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_manually_marked_paid_by', true ) );
+
+		// Manual "unpaid" audit trail.
+		$invoice['manually_marked_unpaid_at'] = (string) get_post_meta( $post->ID, '_manually_marked_unpaid_at', true ) ?: null;
+		$invoice['manually_marked_unpaid_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_manually_marked_unpaid_by', true ) );
 
 		return $invoice;
 	}

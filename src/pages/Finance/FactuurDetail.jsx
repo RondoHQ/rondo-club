@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -242,6 +242,19 @@ export default function FactuurDetail() {
         : 'Factuur gemarkeerd als betaald!');
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het markeren als betaald.');
+    }
+  };
+
+  const handleMarkUnpaid = async () => {
+    if (!window.confirm('Weet je zeker dat je deze factuur als onbetaald wilt markeren? De status wordt teruggezet naar "Verstuurd".')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await updateInvoiceStatus.mutateAsync({ id, status: 'sent' });
+      setSuccessMessage('Factuur gemarkeerd als onbetaald.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het markeren als onbetaald.');
     }
   };
 
@@ -1152,6 +1165,18 @@ export default function FactuurDetail() {
           {/* Paid status actions */}
           {invoice.status === 'paid' && (
             <>
+              <button
+                onClick={handleMarkUnpaid}
+                disabled={isPending}
+                className="btn-secondary gap-2"
+              >
+                {updateInvoiceStatus.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <XCircle className="w-4 h-4" />
+                )}
+                Markeer als onbetaald
+              </button>
               {invoice.pdf_path ? (
                 <>
                   <button
