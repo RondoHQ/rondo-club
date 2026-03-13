@@ -563,6 +563,18 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ PersonDetail shows distinct Dutch access-denied message for age-group restricted persons — v32.2.0
 - ✓ PeopleList shows blue info banner with permitted leeftijdsgroepen for restricted users — v32.2.0
 - ✓ 12 WPUnit tests for get_permitted_age_groups() — v32.1.0
+**v32.3–32.4 Roles & Capability Expansion (shipped 2026-03-12):**
+- ✓ ROLES → BASE_ROLES, dynamic get_all_roles() merges base + custom from rondo_custom_roles wp_option — v32.3.0
+- ✓ Custom role CRUD via REST endpoints (POST /rondo/v1/settings/roles, DELETE /rondo/v1/settings/roles/{slug}) — v32.3.0
+- ✓ Ledendata default inverted: unconfigured non-management roles see zero members — v32.3.0
+- ✓ Empty array SQL safety guards at all 3 query filter points — v32.3.0
+- ✓ CapabilitySync includes custom roles in syncable set — v32.3.0
+- ✓ "Rol toevoegen" UI on CapabilitiesTab with name input and create button — v32.4.0
+- ✓ Delete button per custom role with confirmation dialog (base roles protected) — v32.4.0
+- ✓ is_custom flag in capability matrix API response — v32.4.0
+- ✓ Ledendata hint text corrected to "Geen selectie = geen leden" — v32.4.0
+- ✓ Sticky first columns + horizontal scroll on Capabilities, Functies, Commissie mapping tables — v32.4.0
+- ✓ 3 coordinator roles on production with age-group access configured — v32.4.0
 
 ### Active
 
@@ -587,11 +599,15 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v32.2.0):**
+**Codebase State (post v32.4.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 32.2.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
-- Admin-configurable role×capability matrix in Settings → Beheer → Capabilities (reads/writes WP roles directly)
+- Version 32.4.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Admin-creatable custom roles via REST API + "Rol toevoegen" UI; stored in rondo_custom_roles wp_option, registered as real WP roles
+- Admin-configurable role×capability matrix in Settings → Beheer → Capabilities with custom role deletion support
+- Secure-by-default Ledendata: unconfigured non-management roles see zero members (empty array, not null)
 - Age-group-based member visibility: per-role leeftijdsgroep restrictions with management capability bypass, Kaderlijst exempt
+- 3 coordinator roles on production: Coördinator Pupillen (O6–O11), Junioren (O12–O19), Senioren
+- Sticky first columns + horizontal scroll on Capabilities, Functies, and Commissie mapping tables
 - Person detail page: conditional Relaties/Account card visibility, tab item counts, no VOG header pill, age-group access-denied message
 - Four-tier button system (btn-primary/secondary/tertiary/danger) applied across ~40 files; 14 buttons in 6 files still use inline brand colors (tech debt)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
