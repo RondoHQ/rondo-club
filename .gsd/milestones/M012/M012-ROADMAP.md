@@ -46,7 +46,7 @@ This milestone is complete only when all are true:
 - [x] **S02: Extract Reminders, VOG & Fees controllers** `risk:medium` `depends:[S01]`
   > After this: Reminders/anniversaries, VOG bulk operations, and membership fee settings/list are served from `class-rest-reminders.php`, `class-rest-vog.php`, and `class-rest-fees.php` — verified on production
 
-- [ ] **S03: Extract Lettermint, Finance Settings & Capability Matrix controllers** `risk:medium` `depends:[S01]`
+- [x] **S03: Extract Lettermint, Finance Settings & Capability Matrix controllers** `risk:medium` `depends:[S01]`
   > After this: Email integration, finance settings/branding, billing settings, and the capability matrix/role management are served from `class-rest-lettermint.php`, `class-rest-finance-settings.php`, and `class-rest-capabilities.php` — verified on production
 
 - [ ] **S04: DRY extraction — sharing code, logo uploads, and Base class improvements** `risk:medium` `depends:[S01]`
