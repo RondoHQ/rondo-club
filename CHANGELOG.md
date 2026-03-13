@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.3.0] - 2026-03-12
+
+### Added
+- Custom role management — admin can create and delete custom roles via REST API (`POST/DELETE /rondo/v1/settings/roles`)
+- Dynamic role system — `UserRoles::get_all_roles()` merges built-in base roles with admin-created custom roles from wp_option
+- Custom roles automatically appear in capability matrix, Functies mapping, and Commissie mapping
+- Custom roles included in CapabilitySync (syncable from Sportlink functies)
+- API client methods `createCustomRole()` and `deleteCustomRole()` for frontend
+
+### Changed
+- **BREAKING (security):** Ledendata default inverted — roles without age-group config and without management capabilities now see **zero members** instead of all members. Management-capability users (fairplay, vog, financieel, etc.) are unaffected.
+- `UserRoles::ROLES` renamed to `UserRoles::BASE_ROLES` — all consumers updated to use `get_all_roles()` for dynamic role resolution
+- Empty age-group arrays in filter queries use safe SQL (`1 = 0` or impossible match) instead of invalid `IN ()` syntax
+
 ## [32.2.0] - 2026-03-12
 
 ### Added
