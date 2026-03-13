@@ -14,6 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Commissies extends Base {
 
 	/**
+	 * Post type for sharing permission checks.
+	 */
+	protected $sharing_post_type = 'commissie';
+
+	/**
 	 * Constructor
 	 *
 	 * Register routes for commissie endpoints.
@@ -357,129 +362,4 @@ class Commissies extends Base {
 		);
 	}
 
-	/**
-	 * Check if current user owns this post
-	 *
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return bool True if user owns the post or is admin.
-	 */
-	public function check_post_owner( $request ) {
-		if ( ! is_user_logged_in() ) {
-			return false;
-		}
-
-		$post_id = $request->get_param( 'id' );
-		$post    = get_post( $post_id );
-
-		if ( ! $post || $post->post_type !== 'commissie' ) {
-			return false;
-		}
-
-		return (int) $post->post_author === get_current_user_id() || current_user_can( 'manage_options' );
-	}
-
-	/**
-	 * Get list of users this post is shared with
-	 *
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return WP_REST_Response Response containing share list.
-	 */
-	public function get_shares( $request ) {
-		$post_id = $request->get_param( 'id' );
-		$shares  = get_field( '_shared_with', $post_id ) ?: [];
-
-		$result = [];
-		foreach ( $shares as $share ) {
-			$user = get_user_by( 'ID', $share['user_id'] );
-			if ( $user ) {
-				$result[] = [
-					'user_id'      => (int) $share['user_id'],
-					'display_name' => $user->display_name,
-					'email'        => $user->user_email,
-					'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
-					'permission'   => $share['permission'],
-				];
-			}
-		}
-
-		return rest_ensure_response( $result );
-	}
-
-	/**
-	 * Share post with a user
-	 *
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return WP_REST_Response|WP_Error Response with success or error.
-	 */
-	public function add_share( $request ) {
-		$post_id    = $request->get_param( 'id' );
-		$user_id    = (int) $request->get_param( 'user_id' );
-		$permission = $request->get_param( 'permission' ) ?: 'view';
-
-		$user = get_user_by( 'ID', $user_id );
-		if ( ! $user ) {
-			return new \WP_Error( 'invalid_user', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
-		}
-
-		if ( $user_id === get_current_user_id() ) {
-			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'rondo' ), [ 'status' => 400 ] );
-		}
-
-		$shares = get_field( '_shared_with', $post_id ) ?: [];
-
-		foreach ( $shares as $key => $share ) {
-			if ( (int) $share['user_id'] === $user_id ) {
-				$shares[ $key ]['permission'] = $permission;
-				update_field( '_shared_with', $shares, $post_id );
-				return rest_ensure_response(
-					[
-						'success' => true,
-						'message' => __( 'Share updated.', 'rondo' ),
-					]
-				);
-			}
-		}
-
-		$shares[] = [
-			'user_id'    => $user_id,
-			'permission' => $permission,
-		];
-		update_field( '_shared_with', $shares, $post_id );
-
-		return rest_ensure_response(
-			[
-				'success' => true,
-				'message' => __( 'Shared successfully.', 'rondo' ),
-			]
-		);
-	}
-
-	/**
-	 * Remove share from a user
-	 *
-	 * @param WP_REST_Request $request The REST request object.
-	 * @return WP_REST_Response Response with success status.
-	 */
-	public function remove_share( $request ) {
-		$post_id = $request->get_param( 'id' );
-		$user_id = (int) $request->get_param( 'user_id' );
-
-		$shares = get_field( '_shared_with', $post_id ) ?: [];
-		$shares = array_filter(
-			$shares,
-			function ( $share ) use ( $user_id ) {
-				return (int) $share['user_id'] !== $user_id;
-			}
-		);
-		$shares = array_values( $shares );
-
-		update_field( '_shared_with', $shares, $post_id );
-
-		return rest_ensure_response(
-			[
-				'success' => true,
-				'message' => __( 'Share removed.', 'rondo' ),
-			]
-		);
-	}
 }

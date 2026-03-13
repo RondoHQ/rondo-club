@@ -203,122 +203,31 @@ function rondo_check_dependencies() {
 /**
  * Backward compatibility class aliases.
  *
- * These allow code using old RONDO_* class names to continue working
- * while the codebase transitions to PSR-4 namespaced classes.
+ * Only aliases that are still referenced in production code or tests are kept.
+ * Unused aliases were removed in v32.6.0.
  */
-// Core classes
-if ( ! class_exists( 'RONDO_Post_Types' ) ) {
-	class_alias( PostTypes::class, 'RONDO_Post_Types' );
-}
-if ( ! class_exists( 'RONDO_Taxonomies' ) ) {
-	class_alias( Taxonomies::class, 'RONDO_Taxonomies' );
-}
-if ( ! class_exists( 'RONDO_Auto_Title' ) ) {
-	class_alias( AutoTitle::class, 'RONDO_Auto_Title' );
-}
-if ( ! class_exists( 'RONDO_Access_Control' ) ) {
-	class_alias( AccessControl::class, 'RONDO_Access_Control' );
-}
-if ( ! class_exists( 'RONDO_User_Roles' ) ) {
-	class_alias( UserRoles::class, 'RONDO_User_Roles' );
-}
+// Core classes — used in tests and production code
+class_alias( PostTypes::class, 'RONDO_Post_Types' );
+class_alias( Taxonomies::class, 'RONDO_Taxonomies' );
+class_alias( AccessControl::class, 'RONDO_Access_Control' );
+class_alias( UserRoles::class, 'RONDO_User_Roles' );
 
-// REST classes
-if ( ! class_exists( 'RONDO_REST_API' ) ) {
-	class_alias( Api::class, 'RONDO_REST_API' );
-}
-if ( ! class_exists( 'RONDO_REST_Base' ) ) {
-	class_alias( \Rondo\REST\Base::class, 'RONDO_REST_Base' );
-}
-if ( ! class_exists( 'RONDO_REST_People' ) ) {
-	class_alias( People::class, 'RONDO_REST_People' );
-}
-if ( ! class_exists( 'RONDO_REST_Teams' ) ) {
-	class_alias( Teams::class, 'RONDO_REST_Teams' );
-}
-if ( ! class_exists( 'RONDO_REST_Commissies' ) ) {
-	class_alias( Commissies::class, 'RONDO_REST_Commissies' );
-}
-if ( ! class_exists( 'RONDO_REST_Todos' ) ) {
-	class_alias( Todos::class, 'RONDO_REST_Todos' );
-}
-if ( ! class_exists( 'RONDO_REST_Feedback' ) ) {
-	class_alias( RESTFeedback::class, 'RONDO_REST_Feedback' );
-}
-if ( ! class_exists( 'RONDO_REST_Clothing' ) ) {
-	class_alias( RESTClothing::class, 'RONDO_REST_Clothing' );
-}
+// REST classes — used in tests
+class_alias( Api::class, 'RONDO_REST_API' );
+class_alias( People::class, 'RONDO_REST_People' );
+class_alias( Teams::class, 'RONDO_REST_Teams' );
+class_alias( Todos::class, 'RONDO_REST_Todos' );
 
-// Calendar classes
-if ( ! class_exists( 'RONDO_Calendar_Matcher' ) ) {
-	class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
-}
-if ( ! class_exists( 'RONDO_Google_OAuth' ) ) {
-	class_alias( GoogleOAuth::class, 'RONDO_Google_OAuth' );
-}
+// Calendar — used in class-calendar-matcher.php
+class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
 
-// Google Sheets class
-if ( ! class_exists( 'RONDO_Google_Sheets_Connection' ) ) {
-	class_alias( GoogleSheetsConnection::class, 'RONDO_Google_Sheets_Connection' );
-}
+// Notifications — used in class-reminders.php
+class_alias( EmailChannel::class, 'RONDO_Email_Channel' );
+class_alias( MentionNotifications::class, 'RONDO_Mention_Notifications' );
+class_alias( Reminders::class, 'RONDO_Reminders' );
 
-// Notification classes
-if ( ! class_exists( 'RONDO_Notification_Channel' ) ) {
-	class_alias( \Rondo\Notifications\Channel::class, 'RONDO_Notification_Channel' );
-}
-if ( ! class_exists( 'RONDO_Email_Channel' ) ) {
-	class_alias( EmailChannel::class, 'RONDO_Email_Channel' );
-}
-
-// Collaboration classes
-if ( ! class_exists( 'RONDO_Comment_Types' ) ) {
-	class_alias( CommentTypes::class, 'RONDO_Comment_Types' );
-}
-if ( ! class_exists( 'RONDO_Mentions' ) ) {
-	class_alias( \Rondo\Collaboration\Mentions::class, 'RONDO_Mentions' );
-}
-if ( ! class_exists( 'RONDO_Mention_Notifications' ) ) {
-	class_alias( MentionNotifications::class, 'RONDO_Mention_Notifications' );
-}
-if ( ! class_exists( 'RONDO_Reminders' ) ) {
-	class_alias( Reminders::class, 'RONDO_Reminders' );
-}
-
-// Export classes
-if ( ! class_exists( 'RONDO_VCard_Export' ) ) {
-	class_alias( VCardExport::class, 'RONDO_VCard_Export' );
-}
-// Data classes
-if ( ! class_exists( 'RONDO_Inverse_Relationships' ) ) {
-	class_alias( InverseRelationships::class, 'RONDO_Inverse_Relationships' );
-}
-if ( ! class_exists( 'RONDO_Todo_Migration' ) ) {
-	class_alias( TodoMigration::class, 'RONDO_Todo_Migration' );
-}
-if ( ! class_exists( 'RONDO_Credential_Encryption' ) ) {
-	class_alias( \Rondo\Data\CredentialEncryption::class, 'RONDO_Credential_Encryption' );
-}
-
-// CustomFields classes
-if ( ! class_exists( 'RONDO_Custom_Fields_Manager' ) ) {
-	class_alias( CustomFieldsManager::class, 'RONDO_Custom_Fields_Manager' );
-}
-if ( ! class_exists( 'RONDO_Custom_Fields_Validation' ) ) {
-	class_alias( CustomFieldsValidation::class, 'RONDO_Custom_Fields_Validation' );
-}
-if ( ! class_exists( 'RONDO_REST_Custom_Fields' ) ) {
-	class_alias( RESTCustomFields::class, 'RONDO_REST_Custom_Fields' );
-}
-
-// VOG classes
-if ( ! class_exists( 'RONDO_VOG_Email' ) ) {
-	class_alias( VOGEmail::class, 'RONDO_VOG_Email' );
-}
-
-// Club Config classes
-if ( ! class_exists( 'RONDO_Club_Config' ) ) {
-	class_alias( ClubConfig::class, 'RONDO_Club_Config' );
-}
+// Collaboration — used in class-comment-types.php
+class_alias( \Rondo\Collaboration\Mentions::class, 'RONDO_Mentions' );
 
 /**
  * Check if current request is a REST API request
@@ -483,15 +392,7 @@ function rondo_membership_pass_upload_mimes( $mimes ) {
 }
 add_filter( 'upload_mimes', 'rondo_membership_pass_upload_mimes' );
 
-// Clear orphaned Google Contacts sync cron hook (removed in v29.0)
-if ( wp_next_scheduled( 'rondo_google_contacts_sync' ) ) {
-	wp_clear_scheduled_hook( 'rondo_google_contacts_sync' );
-}
 
-// Clear orphaned Calendar sync cron hook (removed in v29.0)
-if ( wp_next_scheduled( 'rondo_calendar_sync' ) ) {
-	wp_clear_scheduled_hook( 'rondo_calendar_sync' );
-}
 
 /**
  * Migrate WordPress options from stadion_ prefix to rondo_ prefix.

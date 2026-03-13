@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced `class-rest-api.php` from 7,854 to 3,566 lines (-4,288 lines, 55% reduction)
 - Updated `class-rest-custom-fields.php` to reference `UserSettings::get_sportlink_fields()`
 - Replaced `\RONDO_Reminders` alias usage with proper `\Rondo\Collaboration\Reminders` in extracted controllers
+- Extracted `/lettermint/*` REST endpoints into new `Rondo\REST\Lettermint` controller
+- Extracted `/finance/settings`, `/finance/branding` into new `Rondo\REST\FinanceSettings` controller
+- Extracted capability matrix, age-group access, volunteer roles, werkfuncties, custom roles into `Rondo\REST\Capabilities` controller
+- Extracted shared post-sharing code (check_post_owner, get_shares, add_share, remove_share) to `Base` class, eliminating ~390 duplicated lines across People/Teams/Commissies
+- Added shared `upload_entity_logo` and `set_entity_logo` helper methods to `Base` class
+- Removed 18 unused backward-compatibility class aliases from `functions.php` (kept 13 that are still referenced)
+- Removed orphaned cron cleanup code for hooks removed in v29.0
+- Final `class-rest-api.php` size: 1,620 lines (79% reduction from 7,854)
 
 ## [32.5.0] - 2026-03-13
 
