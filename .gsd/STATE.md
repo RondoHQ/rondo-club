@@ -1,9 +1,8 @@
 # GSD State
 
-**Active Milestone:** M011 — Roles & Capability Expansion
-**Active Slice:** S02 (next)
-**Phase:** executing
-**Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
+**Active Milestone:** none (M011 complete)
+**Phase:** idle
+**Requirements Status:** 0 active · 15 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
 - ✅ **M001:** Button Tier System & Sitewide Rollout
@@ -16,16 +15,17 @@
 - ✅ **M008:** Credit Invoice Type Badge
 - ✅ **M009:** Person Detail Page Improvements
 - ✅ **M010:** Role-Capability Matrix & Age-Group Access
-- 🔄 **M011:** Roles & Capability Expansion (S01 ✅, S02 next)
+- ✅ **M011:** Roles & Capability Expansion (v32.4.0)
 
 ## Recent Decisions
-- ROLES → BASE_ROLES, dynamic get_all_roles() merges base + custom from wp_option
-- Ledendata default inverted: no config = see nobody (not see everyone)
-- Custom roles stored in rondo_custom_roles option as slug→label
-- Empty age-group arrays use `1 = 0` or impossible match for safe SQL
+- Custom role UI: "Rol toevoegen" input + delete button per custom role
+- is_custom flag in API response for frontend gating
+- Sticky first column with border-r separator on all mapping tables
+- Ledendata hint corrected to "Geen selectie = geen leden"
+- 3 coordinator roles created on production with age-group access
 
 ## Blockers
 - None
 
-## Next Action
-Plan and execute S02 (UI for custom role management & mapping table usability).
+## Current Version
+32.4.0 deployed to production
