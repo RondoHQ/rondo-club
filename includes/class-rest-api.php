@@ -7197,9 +7197,10 @@ class Api extends Base {
 			'manage_clothing'   => 'Kledingbeheer',
 		];
 
-		$wp_roles   = wp_roles();
-		$all_roles  = \Rondo\Core\UserRoles::get_all_roles();
-		$role_slugs = array_keys( $all_roles );
+		$wp_roles     = wp_roles();
+		$all_roles    = \Rondo\Core\UserRoles::get_all_roles();
+		$custom_slugs = array_keys( \Rondo\Core\UserRoles::get_custom_roles() );
+		$role_slugs   = array_keys( $all_roles );
 		$role_slugs[] = 'administrator';
 
 		$roles = [];
@@ -7223,6 +7224,7 @@ class Api extends Base {
 			$roles[ $slug ] = [
 				'label'        => $label,
 				'capabilities' => $caps,
+				'is_custom'    => in_array( $slug, $custom_slugs, true ),
 			];
 		}
 

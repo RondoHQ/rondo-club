@@ -41,7 +41,7 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Dynamic roles backend & default inversion** `risk:high` `depends:[]`
+- [x] **S01: Dynamic roles backend & default inversion** `risk:high` `depends:[]`
   > After this: `UserRoles::ROLES` replaced with `get_all_roles()` merging base + custom roles from wp_option. `get_permitted_age_groups()` returns empty array (not null) for unconfigured non-management roles, meaning they see zero members. REST endpoints for creating/deleting custom roles work. Custom roles registered as WP roles. CapabilitySync includes custom roles. Build/lint pass.
 
 - [ ] **S02: UI for custom role management & mapping table usability** `risk:medium` `depends:[S01]`

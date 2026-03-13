@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.4.0] - 2026-03-12
+
+### Added
+- "Rol toevoegen" input on Capabilities tab — admin can create custom roles from the UI
+- Delete button (trash icon) per custom role on Capabilities tab with confirmation dialog
+- `is_custom` flag in capability matrix API response to distinguish base vs custom roles
+
+### Changed
+- Ledendata hint text corrected from "Geen selectie = alle leden" to "Geen selectie = geen leden"
+- Ledendata display shows "Geen leden" (not "Alle leden") for roles without age-group config
+- Capabilities matrix table: sticky first column with horizontal scroll for many-column support
+- Functies mapping table: sticky first column with horizontal scroll
+- Commissie mapping table: sticky first column with horizontal scroll
+
 ## [32.3.0] - 2026-03-12
 
 ### Added

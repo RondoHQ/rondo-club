@@ -53,7 +53,7 @@
 
 ## Tasks
 
-- [ ] **T01: Replace ROLES constant with dynamic get_all_roles() and add custom role CRUD** `est:20m`
+- [x] **T01: Replace ROLES constant with dynamic get_all_roles() and add custom role CRUD** `est:20m`
   - Why: The `ROLES` constant is the core blocker — it's hardcoded and referenced everywhere. This task makes roles dynamic and adds the storage/registration methods for custom roles.
   - Files: `includes/class-user-roles.php`
   - Do:
@@ -70,7 +70,7 @@
   - Verify: `php -l includes/class-user-roles.php` passes; `grep -c "const ROLES " includes/class-user-roles.php` returns 0; `grep -c "BASE_ROLES" includes/class-user-roles.php` ≥ 2
   - Done when: `BASE_ROLES` replaces `ROLES`, `get_all_roles()` exists and merges both sources, CRUD methods exist
 
-- [ ] **T02: Update all ROLES reference sites and add REST endpoints** `est:20m`
+- [x] **T02: Update all ROLES reference sites and add REST endpoints** `est:20m`
   - Why: All downstream PHP code that reads `UserRoles::ROLES` must switch to `get_all_roles()`. REST endpoints needed for frontend to create/delete roles.
   - Files: `includes/class-rest-api.php`, `includes/class-capability-sync.php`
   - Do:
@@ -84,7 +84,7 @@
   - Verify: `php -l includes/class-rest-api.php` + `php -l includes/class-capability-sync.php` pass; `grep -c "UserRoles::ROLES[^_]" includes/class-rest-api.php` returns 0; `grep "settings/roles" includes/class-rest-api.php` finds route registrations
   - Done when: zero references to `UserRoles::ROLES` (only `BASE_ROLES`), REST endpoints for role CRUD registered
 
-- [ ] **T03: Invert Ledendata default and add API client methods** `est:15m`
+- [x] **T03: Invert Ledendata default and add API client methods** `est:15m`
   - Why: The default "see all" behavior is a security issue. API client methods needed for S02 frontend.
   - Files: `includes/class-access-control.php`, `src/api/client.js`
   - Do:
@@ -94,7 +94,7 @@
   - Verify: `php -l includes/class-access-control.php` passes; `npm run build` + `npm run lint` pass; `grep "return \[\]" includes/class-access-control.php` finds the new default returns
   - Done when: non-management users with no age-group config get `[]` (not `null`) from `get_permitted_age_groups()`
 
-- [ ] **T04: Version bump, changelog, deploy, and production verification** `est:15m`
+- [x] **T04: Version bump, changelog, deploy, and production verification** `est:15m`
   - Why: Ship the backend changes. Verify default inversion and custom role CRUD on production.
   - Files: `style.css`, `package.json`, `CHANGELOG.md`
   - Do:

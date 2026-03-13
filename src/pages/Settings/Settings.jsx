@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X } from 'lucide-react';
+import { Check, Users, Search, Link as LinkIcon, Loader2, Key, Copy, UserPlus, Wrench, AlertCircle, Wallet, Award, Mail, X, Plus, Trash2 } from 'lucide-react';
 import { APP_NAME } from '@/constants/app';
 import api, { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -235,27 +235,32 @@ export default function Settings() {
     }
   }, [activeTab, activeSubtab, isAdmin, anniversarySettings]);
 
-  // Fetch capability matrix and age-group access when capabilities subtab is active (lazy load)
-  useEffect(() => {
-    if (activeTab === 'admin' && activeSubtab === 'capabilities' && isAdmin && Object.keys(capabilityMatrix).length === 0) {
-      setCapabilityMatrixLoading(true);
-      setAgeGroupAccessLoading(true);
-      setCapabilityMatrixMessage('');
-      Promise.all([
+  // Fetch capability matrix and age-group access
+  const fetchCapabilityData = async () => {
+    setCapabilityMatrixLoading(true);
+    setAgeGroupAccessLoading(true);
+    setCapabilityMatrixMessage('');
+    try {
+      const [matrixRes, ageGroupRes] = await Promise.all([
         prmApi.getCapabilityMatrix(),
         prmApi.getAgeGroupAccess(),
-      ])
-        .then(([matrixRes, ageGroupRes]) => {
-          setCapabilityMatrix(matrixRes.data?.roles || {});
-          setCapabilityLabels(matrixRes.data?.capability_labels || {});
-          setAgeGroupAccess(ageGroupRes.data?.roles || {});
-          setAvailableAgeGroups(ageGroupRes.data?.available_age_groups || []);
-        })
-        .catch((error) => setCapabilityMatrixMessage(error.response?.data?.message || 'Kon capability-matrix niet laden.'))
-        .finally(() => {
-          setCapabilityMatrixLoading(false);
-          setAgeGroupAccessLoading(false);
-        });
+      ]);
+      setCapabilityMatrix(matrixRes.data?.roles || {});
+      setCapabilityLabels(matrixRes.data?.capability_labels || {});
+      setAgeGroupAccess(ageGroupRes.data?.roles || {});
+      setAvailableAgeGroups(ageGroupRes.data?.available_age_groups || []);
+    } catch (error) {
+      setCapabilityMatrixMessage(error.response?.data?.message || 'Kon capability-matrix niet laden.');
+    } finally {
+      setCapabilityMatrixLoading(false);
+      setAgeGroupAccessLoading(false);
+    }
+  };
+
+  // Lazy load on subtab activation
+  useEffect(() => {
+    if (activeTab === 'admin' && activeSubtab === 'capabilities' && isAdmin && Object.keys(capabilityMatrix).length === 0) {
+      fetchCapabilityData();
     }
   }, [activeTab, activeSubtab, isAdmin, capabilityMatrix]);
 
@@ -575,6 +580,7 @@ export default function Settings() {
             setAgeGroupAccess={setAgeGroupAccess}
             availableAgeGroups={availableAgeGroups}
             ageGroupAccessLoading={ageGroupAccessLoading}
+            fetchCapabilityData={fetchCapabilityData}
             welcomeSettings={welcomeSettings}
             setWelcomeSettings={setWelcomeSettings}
             welcomeSettingsLoading={welcomeSettingsLoading}
@@ -2019,6 +2025,7 @@ function AdminTabWithSubtabs({
   setAgeGroupAccess,
   availableAgeGroups,
   ageGroupAccessLoading,
+  fetchCapabilityData,
   welcomeSettings,
   setWelcomeSettings,
   welcomeSettingsLoading,
@@ -2100,6 +2107,7 @@ function AdminTabWithSubtabs({
             setAgeGroupAccess={setAgeGroupAccess}
             availableAgeGroups={availableAgeGroups}
             ageGroupAccessLoading={ageGroupAccessLoading}
+            refetchData={fetchCapabilityData}
           />
         </div>
       ) : activeSubtab === 'welkomstmail' ? (
@@ -2809,11 +2817,11 @@ function FunctiesTab({
         <div className="space-y-6">
           {/* Functie-to-role mapping table */}
           <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
-            <div className="max-h-96 overflow-y-auto">
-              <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+            <div className="max-h-96 overflow-auto">
+              <table className="w-full border-collapse min-w-max">
+                <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 z-10">
                   <tr>
-                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
+                    <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 min-w-[14rem] border-r border-gray-200 dark:border-gray-700">
                       Functie
                     </th>
                     {roles.map(role => (
@@ -2828,7 +2836,7 @@ function FunctiesTab({
                     const isStale = !availableFuncties.includes(functie);
                     return (
                       <tr key={functie} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-4 py-2.5 align-middle">
+                        <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-4 py-2.5 align-middle border-r border-gray-200 dark:border-gray-700">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-sm text-gray-900 dark:text-gray-100 truncate">{functie}</span>
                             {isStale && (
@@ -2891,11 +2899,11 @@ function FunctiesTab({
             {commissieList.length > 0 && (
               <>
                 <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
-                  <div className="max-h-96 overflow-y-auto">
-                    <table className="w-full border-collapse">
-                      <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600">
+                  <div className="max-h-96 overflow-auto">
+                    <table className="w-full border-collapse min-w-max">
+                      <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 z-10">
                         <tr>
-                          <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
+                          <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 min-w-[14rem] border-r border-gray-200 dark:border-gray-700">
                             Commissie
                           </th>
                           {roles.map(role => (
@@ -2908,7 +2916,7 @@ function FunctiesTab({
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {commissieList.map(c => (
                           <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                            <td className="px-4 py-2.5 align-middle">
+                            <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-4 py-2.5 align-middle border-r border-gray-200 dark:border-gray-700">
                               <span className="text-sm text-gray-900 dark:text-gray-100">{c.name}</span>
                             </td>
                             {roles.map(role => (
@@ -2990,9 +2998,13 @@ function FunctiesTab({
 }
 
 // Capabilities Tab Component - Role × Capability matrix
-function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading }) {
+function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
   const roleEntries = Object.entries(matrixState);
   const [openDropdownRole, setOpenDropdownRole] = useState(null);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [creatingRole, setCreatingRole] = useState(false);
+  const [deletingRole, setDeletingRole] = useState(null);
+  const [roleActionMessage, setRoleActionMessage] = useState('');
   const dropdownRef = useRef(null);
 
   // Close dropdown on click outside
@@ -3054,9 +3066,41 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
   // Format selected age groups for display in cell
   const formatSelectedGroups = (roleSlug) => {
     const selected = ageGroupAccess[roleSlug] || [];
-    if (selected.length === 0) return 'Alle leden';
+    if (selected.length === 0) return 'Geen leden';
     if (selected.length <= 3) return selected.join(', ');
     return `${selected.length} groepen`;
+  };
+
+  const handleCreateRole = async () => {
+    const label = newRoleName.trim();
+    if (!label) return;
+    setCreatingRole(true);
+    setRoleActionMessage('');
+    try {
+      await prmApi.createCustomRole({ label });
+      setNewRoleName('');
+      await refetchData();
+      setRoleActionMessage(`Rol "${label}" aangemaakt.`);
+    } catch (error) {
+      setRoleActionMessage(`Fout: ${error.response?.data?.message || 'Kon rol niet aanmaken.'}`);
+    } finally {
+      setCreatingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (roleSlug, roleLabel) => {
+    if (!confirm(`Weet je zeker dat je de rol "${roleLabel}" wilt verwijderen? Gebruikers met deze rol verliezen deze.`)) return;
+    setDeletingRole(roleSlug);
+    setRoleActionMessage('');
+    try {
+      await prmApi.deleteCustomRole(roleSlug);
+      await refetchData();
+      setRoleActionMessage(`Rol "${roleLabel}" verwijderd.`);
+    } catch (error) {
+      setRoleActionMessage(`Fout: ${error.response?.data?.message || 'Kon rol niet verwijderen.'}`);
+    } finally {
+      setDeletingRole(null);
+    }
   };
 
   // Get capability slugs from capabilityLabels or first role entry
@@ -3073,6 +3117,30 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
         </p>
       </div>
 
+      {/* Add custom role */}
+      <div className="flex items-center gap-3">
+        <input
+          type="text"
+          value={newRoleName}
+          onChange={(e) => setNewRoleName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreateRole()}
+          placeholder="Nieuwe rolnaam..."
+          className="flex-1 max-w-xs rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan"
+        />
+        <button
+          onClick={handleCreateRole}
+          disabled={creatingRole || !newRoleName.trim()}
+          className="btn-secondary text-sm px-3 py-1.5"
+        >
+          {creatingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" /> Rol toevoegen</>}
+        </button>
+        {roleActionMessage && (
+          <span className={`text-sm ${roleActionMessage.startsWith('Fout') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+            {roleActionMessage}
+          </span>
+        )}
+      </div>
+
       {loading || ageGroupAccessLoading ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
@@ -3084,11 +3152,11 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
       ) : (
         <div className="space-y-6">
           <div className="border rounded-md border-gray-300 dark:border-gray-600 overflow-hidden">
-            <div className="max-h-96 overflow-y-auto">
-              <table className="w-full border-collapse">
+            <div className="max-h-[32rem] overflow-auto">
+              <table className="w-full border-collapse min-w-max">
                 <thead className="sticky top-0 bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 z-10">
                   <tr>
-                    <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2">
+                    <th className="sticky left-0 z-20 bg-gray-50 dark:bg-gray-800 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-4 py-2 min-w-[12rem] border-r border-gray-200 dark:border-gray-700">
                       Rol
                     </th>
                     {capSlugs.map(cap => (
@@ -3106,11 +3174,24 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
                     const hasMgmtCap = roleHasManagementCap(roleData);
                     const isDropdownOpen = openDropdownRole === roleSlug;
                     const selectedGroups = ageGroupAccess[roleSlug] || [];
+                    const isCustom = roleData.is_custom;
 
                     return (
                       <tr key={roleSlug} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-4 py-2.5 align-middle">
-                          <span className="text-sm text-gray-900 dark:text-gray-100">{roleData.label}</span>
+                        <td className="sticky left-0 z-10 bg-white dark:bg-gray-900 px-4 py-2.5 align-middle border-r border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{roleData.label}</span>
+                            {isCustom && (
+                              <button
+                                onClick={() => handleDeleteRole(roleSlug, roleData.label)}
+                                disabled={deletingRole === roleSlug}
+                                className="text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                title="Rol verwijderen"
+                              >
+                                {deletingRole === roleSlug ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                              </button>
+                            )}
+                          </div>
                         </td>
                         {capSlugs.map(cap => {
                           const isProtected = roleSlug === 'administrator' && cap === 'manage_options';
@@ -3164,7 +3245,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
                                     )}
                                   </div>
                                   <div className="border-t border-gray-200 dark:border-gray-600 px-3 py-1.5">
-                                    <span className="text-xs text-gray-400 dark:text-gray-500">Geen selectie = alle leden</span>
+                                    <span className="text-xs text-gray-400 dark:text-gray-500">Geen selectie = geen leden</span>
                                   </div>
                                 </div>
                               )}
