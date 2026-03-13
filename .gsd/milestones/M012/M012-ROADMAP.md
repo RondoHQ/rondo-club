@@ -40,10 +40,10 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Extract User Settings & User Management controllers** `risk:high` `depends:[]`
+- [x] **S01: Extract User Settings & User Management controllers** `risk:high` `depends:[]`
   > After this: User preferences, notification channels, dashboard settings, user provisioning, and password changes are served from dedicated `class-rest-user-settings.php` and `class-rest-users.php` — verified by deploying to production and confirming the settings page and user management work
 
-- [ ] **S02: Extract Reminders, VOG & Fees controllers** `risk:medium` `depends:[S01]`
+- [x] **S02: Extract Reminders, VOG & Fees controllers** `risk:medium` `depends:[S01]`
   > After this: Reminders/anniversaries, VOG bulk operations, and membership fee settings/list are served from `class-rest-reminders.php`, `class-rest-vog.php`, and `class-rest-fees.php` — verified on production
 
 - [ ] **S03: Extract Lettermint, Finance Settings & Capability Matrix controllers** `risk:medium` `depends:[S01]`
