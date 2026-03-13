@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [32.6.0] - 2026-03-13
 
 ### Changed
-- Extracted `/user/*` REST endpoints into new `Rondo\REST\UserSettings` controller (notification channels, dashboard settings, list preferences, linked person, current user info, password change)
-- Extracted `/users/*` REST endpoints into new `Rondo\REST\Users` controller (user management, provisioning, user search)
+- Extracted `/user/*` REST endpoints into new `Rondo\REST\UserSettings` controller
+- Extracted `/users/*` REST endpoints into new `Rondo\REST\Users` controller
+- Extracted `/reminders/*` and `/anniversaries/*` REST endpoints into new `Rondo\REST\Reminders` controller
+- Extracted `/vog/*` REST endpoints and person/discipline-case response filters into new `Rondo\REST\Vog` controller
+- Extracted `/fees/*`, `/membership-fees/*`, `/current-season`, and billing settings into new `Rondo\REST\Fees` controller
 - Moved `get_sportlink_fields()` static method from `Api` to `UserSettings` class
-- Reduced `class-rest-api.php` from 7,854 to 6,322 lines (-1,532 lines)
-- Updated `class-rest-custom-fields.php` to reference `UserSettings::get_sportlink_fields()` instead of `Api::get_sportlink_fields()`
+- Reduced `class-rest-api.php` from 7,854 to 3,566 lines (-4,288 lines, 55% reduction)
+- Updated `class-rest-custom-fields.php` to reference `UserSettings::get_sportlink_fields()`
+- Replaced `\RONDO_Reminders` alias usage with proper `\Rondo\Collaboration\Reminders` in extracted controllers
 
 ## [32.5.0] - 2026-03-13
 
