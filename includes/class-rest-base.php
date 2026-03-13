@@ -242,4 +242,250 @@ abstract class Base {
 		];
 	}
 
+	// ----------------------------------------------------------------
+	// Shared post sharing methods
+	// ----------------------------------------------------------------
+
+	/**
+	 * Check if current user is the post owner or admin.
+	 *
+	 * Permission callback for sharing endpoints. Child classes should set
+	 * $this->sharing_post_type to specify which post type to validate against.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return bool True if user can manage shares.
+	 */
+	public function check_post_owner( $request ) {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		$post_id = $request->get_param( 'id' );
+		$post    = get_post( $post_id );
+
+		if ( ! $post || ( isset( $this->sharing_post_type ) && $post->post_type !== $this->sharing_post_type ) ) {
+			return false;
+		}
+
+		return (int) $post->post_author === get_current_user_id() || current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Get list of users a post is shared with.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response containing share list.
+	 */
+	public function get_shares( $request ) {
+		$post_id = $request->get_param( 'id' );
+		$shares  = get_field( '_shared_with', $post_id ) ?: [];
+
+		$result = [];
+		foreach ( $shares as $share ) {
+			$user = get_user_by( 'ID', $share['user_id'] );
+			if ( $user ) {
+				$result[] = [
+					'user_id'      => (int) $share['user_id'],
+					'display_name' => $user->display_name,
+					'email'        => $user->user_email,
+					'avatar_url'   => get_avatar_url( $user->ID, [ 'size' => 48 ] ),
+					'permission'   => $share['permission'],
+				];
+			}
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
+	 * Share a post with a user.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error Response with success or error.
+	 */
+	public function add_share( $request ) {
+		$post_id    = $request->get_param( 'id' );
+		$user_id    = (int) $request->get_param( 'user_id' );
+		$permission = $request->get_param( 'permission' ) ?: 'view';
+
+		$user = get_user_by( 'ID', $user_id );
+		if ( ! $user ) {
+			return new \WP_Error( 'invalid_user', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		if ( $user_id === get_current_user_id() ) {
+			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		$shares = get_field( '_shared_with', $post_id ) ?: [];
+
+		foreach ( $shares as $key => $share ) {
+			if ( (int) $share['user_id'] === $user_id ) {
+				$shares[ $key ]['permission'] = $permission;
+				update_field( '_shared_with', $shares, $post_id );
+				return rest_ensure_response(
+					[
+						'success' => true,
+						'message' => __( 'Share updated.', 'rondo' ),
+					]
+				);
+			}
+		}
+
+		$shares[] = [
+			'user_id'    => $user_id,
+			'permission' => $permission,
+		];
+		update_field( '_shared_with', $shares, $post_id );
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'message' => __( 'Shared successfully.', 'rondo' ),
+			]
+		);
+	}
+
+	/**
+	 * Remove a share from a user.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response Response with success status.
+	 */
+	public function remove_share( $request ) {
+		$post_id = $request->get_param( 'id' );
+		$user_id = (int) $request->get_param( 'user_id' );
+
+		$shares = get_field( '_shared_with', $post_id ) ?: [];
+		$shares = array_filter(
+			$shares,
+			function ( $share ) use ( $user_id ) {
+				return (int) $share['user_id'] !== $user_id;
+			}
+		);
+		$shares = array_values( $shares );
+
+		update_field( '_shared_with', $shares, $post_id );
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'message' => __( 'Share removed.', 'rondo' ),
+			]
+		);
+	}
+
+	// ----------------------------------------------------------------
+	// Shared logo upload methods
+	// ----------------------------------------------------------------
+
+	/**
+	 * Upload a logo image for an entity (team or commissie).
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @param string           $label   Label for error messages (e.g. 'team', 'commissie').
+	 * @return \WP_REST_Response|\WP_Error Response with attachment ID and URL, or error.
+	 */
+	protected function upload_entity_logo( $request, string $label = 'entity' ) {
+		$files = $request->get_file_params();
+
+		if ( empty( $files['logo'] ) ) {
+			return new \WP_Error(
+				'no_file',
+				__( 'No file uploaded.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$file = $files['logo'];
+
+		// Validate file type
+		$allowed_types = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
+		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
+			return new \WP_Error(
+				'invalid_file_type',
+				__( 'Only JPEG, PNG, GIF, WebP, and SVG files are allowed.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Validate file size (max 5MB)
+		if ( $file['size'] > 5 * 1024 * 1024 ) {
+			return new \WP_Error(
+				'file_too_large',
+				__( 'File size must be less than 5MB.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+
+		// Generate a clean filename
+		$ext       = pathinfo( $file['name'], PATHINFO_EXTENSION );
+		$post_id   = $request->get_param( 'id' ) ?: $request->get_param( 'team_id' ) ?: $request->get_param( 'commissie_id' ) ?: 0;
+		$file_name = sanitize_file_name( $label . '-logo-' . $post_id . '.' . $ext );
+
+		$_FILES['logo'] = $file;
+		$_FILES['logo']['name'] = $file_name;
+
+		$attachment_id = media_handle_upload( 'logo', $post_id );
+
+		if ( is_wp_error( $attachment_id ) ) {
+			return $attachment_id;
+		}
+
+		$attachment_url = wp_get_attachment_url( $attachment_id );
+
+		return rest_ensure_response(
+			[
+				'success'       => true,
+				'attachment_id' => $attachment_id,
+				'url'           => $attachment_url,
+			]
+		);
+	}
+
+	/**
+	 * Set or clear the logo for an entity.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @param string           $acf_field_name ACF field name for the logo (e.g. 'company_logo', 'commissie_logo').
+	 * @return \WP_REST_Response|\WP_Error Response with success or error.
+	 */
+	protected function set_entity_logo( $request, string $acf_field_name ) {
+		$post_id       = $request->get_param( 'id' ) ?: $request->get_param( 'team_id' ) ?: $request->get_param( 'commissie_id' ) ?: 0;
+		$attachment_id = $request->get_param( 'attachment_id' );
+
+		if ( $attachment_id === null || $attachment_id === '' ) {
+			// Clear the logo
+			update_field( $acf_field_name, '', $post_id );
+			return rest_ensure_response(
+				[
+					'success' => true,
+					'message' => __( 'Logo removed.', 'rondo' ),
+				]
+			);
+		}
+
+		$attachment_id = (int) $attachment_id;
+		if ( ! wp_get_attachment_url( $attachment_id ) ) {
+			return new \WP_Error(
+				'invalid_attachment',
+				__( 'Invalid attachment ID.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		update_field( $acf_field_name, $attachment_id, $post_id );
+
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'url'     => wp_get_attachment_url( $attachment_id ),
+			]
+		);
+	}
+
 }

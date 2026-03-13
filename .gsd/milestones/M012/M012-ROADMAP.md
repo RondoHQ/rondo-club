@@ -49,10 +49,10 @@ This milestone is complete only when all are true:
 - [x] **S03: Extract Lettermint, Finance Settings & Capability Matrix controllers** `risk:medium` `depends:[S01]`
   > After this: Email integration, finance settings/branding, billing settings, and the capability matrix/role management are served from `class-rest-lettermint.php`, `class-rest-finance-settings.php`, and `class-rest-capabilities.php` — verified on production
 
-- [ ] **S04: DRY extraction — sharing code, logo uploads, and Base class improvements** `risk:medium` `depends:[S01]`
+- [x] **S04: DRY extraction — sharing code, logo uploads, and Base class improvements** `risk:medium` `depends:[S01]`
   > After this: Sharing and logo upload code lives in Base, eliminating ~470 duplicated lines across People/Teams/Commissies controllers
 
-- [ ] **S05: functions.php cleanup — login class, dead aliases, legacy code removal** `risk:low` `depends:[S01]`
+- [x] **S05: functions.php cleanup — dead aliases, legacy code removal** `risk:low` `depends:[S01]`
   > After this: Login customization is a proper class, dead class aliases removed, legacy migration code removed, orphaned cron cleanup removed — functions.php reduced by ~500 lines
 
 ## Boundary Map
