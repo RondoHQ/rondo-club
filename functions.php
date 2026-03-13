@@ -129,6 +129,8 @@ use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
 use Rondo\CustomFields\Validation as CustomFieldsValidation;
 use Rondo\REST\CustomFields as RESTCustomFields;
+use Rondo\REST\UserSettings as RESTUserSettings;
+use Rondo\REST\Users as RESTUsers;
 use Rondo\VOG\VOGEmail;
 use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
@@ -383,6 +385,8 @@ function rondo_init() {
 		new RESTInvoices();
 		new RESTMembershipPasses();
 		new RESTClothing();
+		new RESTUserSettings();
+		new RESTUsers();
 		new RabobankOAuth();
 		new RabobankPayment();
 		new MollieWebhook();

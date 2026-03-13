@@ -1,7 +1,7 @@
 # GSD State
 
-**Active Milestone:** none (M011 complete)
-**Phase:** idle
+**Active Milestone:** M012 — PHP Code Quality Refactor
+**Phase:** planning → S01
 **Requirements Status:** 0 active · 15 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -16,13 +16,14 @@
 - ✅ **M009:** Person Detail Page Improvements
 - ✅ **M010:** Role-Capability Matrix & Age-Group Access
 - ✅ **M011:** Roles & Capability Expansion (v32.4.0)
+- 🔵 **M012:** PHP Code Quality Refactor
 
 ## Recent Decisions
-- Custom role UI: "Rol toevoegen" input + delete button per custom role
-- is_custom flag in API response for frontend gating
-- Sticky first column with border-r separator on all mapping tables
-- Ledendata hint corrected to "Geen selectie = geen leden"
-- 3 coordinator roles created on production with age-group access
+- Split class-rest-api.php (7,854 lines) into ~10 focused controllers
+- Extract duplicated sharing/logo code to Base class
+- Extract login customization from functions.php to a class
+- Remove ~33 dead class aliases
+- Full GSD milestone approach chosen over incremental quick-wins
 
 ## Blockers
 - None

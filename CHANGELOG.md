@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.6.0] - 2026-03-13
+
+### Changed
+- Extracted `/user/*` REST endpoints into new `Rondo\REST\UserSettings` controller (notification channels, dashboard settings, list preferences, linked person, current user info, password change)
+- Extracted `/users/*` REST endpoints into new `Rondo\REST\Users` controller (user management, provisioning, user search)
+- Moved `get_sportlink_fields()` static method from `Api` to `UserSettings` class
+- Reduced `class-rest-api.php` from 7,854 to 6,322 lines (-1,532 lines)
+- Updated `class-rest-custom-fields.php` to reference `UserSettings::get_sportlink_fields()` instead of `Api::get_sportlink_fields()`
+
 ## [32.5.0] - 2026-03-13
 
 ### Added
