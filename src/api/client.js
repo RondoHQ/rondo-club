@@ -294,6 +294,8 @@ export const prmApi = {
   updateCapabilityMatrix: (data) => api.post('/rondo/v1/settings/capability-matrix', data),
   getAgeGroupAccess: () => api.get('/rondo/v1/settings/age-group-access'),
   updateAgeGroupAccess: (data) => api.post('/rondo/v1/settings/age-group-access', data),
+  createCustomRole: (data) => api.post('/rondo/v1/settings/roles', data),
+  deleteCustomRole: (slug) => api.delete(`/rondo/v1/settings/roles/${slug}`),
   syncAllCapabilities: () => api.post('/rondo/v1/capability-sync/all'),
   syncPersonCapabilities: (personId) => api.post(`/rondo/v1/people/${personId}/capability-sync`),
 

@@ -1,8 +1,8 @@
 # GSD State
 
-**Active Milestone:** M010 — Role-Capability Matrix & Age-Group Access
+**Active Milestone:** M011 — Roles & Capability Expansion
 **Active Slice:** None
-**Phase:** complete
+**Phase:** planning
 **Requirements Status:** 0 active · 12 validated · 0 deferred · 0 out of scope
 
 ## Milestone Registry
@@ -16,6 +16,7 @@
 - ✅ **M008:** Credit Invoice Type Badge
 - ✅ **M009:** Person Detail Page Improvements
 - ✅ **M010:** Role-Capability Matrix & Age-Group Access
+- 🔄 **M011:** Roles & Capability Expansion
 
 ## Recent Decisions
 - None recorded
@@ -24,4 +25,4 @@
 - None
 
 ## Next Action
-All milestones complete.
+Plan S01 for M011 (Dynamic roles backend & default inversion).

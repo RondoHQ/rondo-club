@@ -185,28 +185,30 @@ class AccessControl {
 			}
 		}
 
+		// Non-management users default to "see nobody" unless explicitly configured.
 		// Read the per-role age-group config.
 		$raw = get_option( 'rondo_age_group_access' );
 
 		if ( ! $raw ) {
-			return null;
+			// No config at all → non-management user sees nobody.
+			return [];
 		}
 
 		$config = is_string( $raw ) ? json_decode( $raw, true ) : $raw;
 
 		if ( ! is_array( $config ) || empty( $config ) ) {
-			return null;
+			// Empty or invalid config → non-management user sees nobody.
+			return [];
 		}
 
 		$user = get_user_by( 'id', $user_id );
 
 		if ( ! $user ) {
-			return null;
+			return [];
 		}
 
 		// Collect permitted age groups across all user roles.
-		$permitted   = [];
-		$has_config  = false;
+		$permitted = [];
 
 		foreach ( $user->roles as $role ) {
 			if ( ! isset( $config[ $role ] ) ) {
@@ -215,19 +217,16 @@ class AccessControl {
 
 			$role_groups = $config[ $role ];
 
-			if ( ! is_array( $role_groups ) ) {
+			if ( ! is_array( $role_groups ) || empty( $role_groups ) ) {
 				continue;
 			}
 
-			if ( ! empty( $role_groups ) ) {
-				$has_config = true;
-				$permitted  = array_merge( $permitted, $role_groups );
-			}
+			$permitted = array_merge( $permitted, $role_groups );
 		}
 
-		// No roles have non-empty age-group config → no restriction.
-		if ( ! $has_config ) {
-			return null;
+		// If no roles have age-group entries → non-management user sees nobody.
+		if ( empty( $permitted ) ) {
+			return [];
 		}
 
 		return array_values( array_unique( $permitted ) );
@@ -254,12 +253,23 @@ class AccessControl {
 			return;
 		}
 
-		$meta_query   = $query->get( 'meta_query' ) ?: [];
-		$meta_query[] = [
-			'key'     => 'leeftijdsgroep',
-			'value'   => $permitted,
-			'compare' => 'IN',
-		];
+		$meta_query = $query->get( 'meta_query' ) ?: [];
+
+		if ( empty( $permitted ) ) {
+			// Empty array = see nobody. Use an impossible condition.
+			$meta_query[] = [
+				'key'     => 'leeftijdsgroep',
+				'value'   => '___impossible___',
+				'compare' => '=',
+			];
+		} else {
+			$meta_query[] = [
+				'key'     => 'leeftijdsgroep',
+				'value'   => $permitted,
+				'compare' => 'IN',
+			];
+		}
+
 		$query->set( 'meta_query', $meta_query );
 	}
 
@@ -387,12 +397,23 @@ class AccessControl {
 			$permitted = self::get_permitted_age_groups();
 
 			if ( $permitted !== null ) {
-				$meta_query   = $args['meta_query'] ?? [];
-				$meta_query[] = [
-					'key'     => 'leeftijdsgroep',
-					'value'   => $permitted,
-					'compare' => 'IN',
-				];
+				$meta_query = $args['meta_query'] ?? [];
+
+				if ( empty( $permitted ) ) {
+					// Empty array = see nobody. Use an impossible condition.
+					$meta_query[] = [
+						'key'     => 'leeftijdsgroep',
+						'value'   => '___impossible___',
+						'compare' => '=',
+					];
+				} else {
+					$meta_query[] = [
+						'key'     => 'leeftijdsgroep',
+						'value'   => $permitted,
+						'compare' => 'IN',
+					];
+				}
+
 				$args['meta_query'] = $meta_query;
 			}
 		}

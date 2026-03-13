@@ -1506,6 +1506,35 @@ class Api extends Base {
 				],
 			]
 		);
+
+		// Custom role management (admin only — create/delete custom roles)
+		register_rest_route(
+			'rondo/v1',
+			'/settings/roles',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'create_custom_role' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'label' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							return is_string( $param ) && ! empty( trim( $param ) );
+						},
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/settings/roles/(?P<slug>[a-z0-9_]+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'delete_custom_role' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+			]
+		);
 	}
 
 	/**
@@ -7036,7 +7065,7 @@ class Api extends Base {
 	 */
 	private function get_rondo_roles_list(): array {
 		$roles = [];
-		foreach ( \Rondo\Core\UserRoles::ROLES as $slug => $data ) {
+		foreach ( \Rondo\Core\UserRoles::get_all_roles() as $slug => $data ) {
 			$roles[] = [ 'slug' => $slug, 'label' => $data[0] ];
 		}
 		return $roles;
@@ -7169,7 +7198,8 @@ class Api extends Base {
 		];
 
 		$wp_roles   = wp_roles();
-		$role_slugs = array_keys( \Rondo\Core\UserRoles::ROLES );
+		$all_roles  = \Rondo\Core\UserRoles::get_all_roles();
+		$role_slugs = array_keys( $all_roles );
 		$role_slugs[] = 'administrator';
 
 		$roles = [];
@@ -7182,7 +7212,7 @@ class Api extends Base {
 			if ( 'administrator' === $slug ) {
 				$label = 'Administrator';
 			} else {
-				$label = \Rondo\Core\UserRoles::ROLES[ $slug ][0] ?? $slug;
+				$label = $all_roles[ $slug ][0] ?? $slug;
 			}
 
 			$caps = [];
@@ -7224,7 +7254,7 @@ class Api extends Base {
 		}
 
 		$allowed_caps = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ];
-		$valid_slugs  = array_keys( \Rondo\Core\UserRoles::ROLES );
+		$valid_slugs  = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 
 		foreach ( $submitted_roles as $slug => $role_data ) {
@@ -7331,7 +7361,7 @@ class Api extends Base {
 			);
 		}
 
-		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::ROLES );
+		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 
 		$config = [];
@@ -7362,6 +7392,51 @@ class Api extends Base {
 
 		// Return fresh state.
 		return $this->get_age_group_access();
+	}
+
+	/**
+	 * Create a custom role.
+	 *
+	 * @param \WP_REST_Request $request The request object with 'label' param.
+	 * @return \WP_REST_Response|\WP_Error Created role data or error.
+	 */
+	public function create_custom_role( $request ) {
+		$label  = sanitize_text_field( $request->get_param( 'label' ) );
+		$result = \Rondo\Core\UserRoles::add_custom_role( $label );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new \WP_REST_Response(
+			[
+				'slug'  => $result,
+				'label' => $label,
+			],
+			201
+		);
+	}
+
+	/**
+	 * Delete a custom role.
+	 *
+	 * @param \WP_REST_Request $request The request object with 'slug' URL param.
+	 * @return \WP_REST_Response|\WP_Error Success response or error.
+	 */
+	public function delete_custom_role( $request ) {
+		$slug   = $request->get_param( 'slug' );
+		$result = \Rondo\Core\UserRoles::remove_custom_role( $slug );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new \WP_REST_Response(
+			[
+				'deleted' => true,
+				'slug'    => $slug,
+			]
+		);
 	}
 
 	/**

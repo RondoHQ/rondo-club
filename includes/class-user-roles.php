@@ -2,7 +2,8 @@
 /**
  * User Roles for Rondo
  *
- * Registers custom user role for Rondo users with minimal permissions
+ * Registers custom user roles for Rondo users with minimal permissions.
+ * Base roles are hardcoded; custom roles are admin-created and stored in a wp_option.
  */
 
 namespace Rondo\Core;
@@ -22,10 +23,17 @@ class UserRoles {
 	const CLOTHING_CAPABILITY    = 'manage_clothing';
 
 	/**
-	 * All Rondo roles: slug => [ display_name, extra capabilities ]
-	 * Each role gets the base rondo_user capabilities plus the listed extras.
+	 * WordPress option key for admin-created custom roles.
+	 * Stored as [ slug => label ] associative array.
 	 */
-	const ROLES = [
+	const CUSTOM_ROLES_OPTION = 'rondo_custom_roles';
+
+	/**
+	 * Built-in Rondo roles: slug => [ display_name, extra capabilities ]
+	 * Each role gets the base rondo_user capabilities plus the listed extras.
+	 * Custom roles are stored separately in the rondo_custom_roles wp_option.
+	 */
+	const BASE_ROLES = [
 		'rondo_user'       => [ 'Rondo User', [] ],
 		'rondo_fairplay'   => [ 'Rondo FairPlay', [ 'fairplay' ] ],
 		'rondo_vog'        => [ 'Rondo VOG', [ 'vog' ] ],
@@ -50,10 +58,144 @@ class UserRoles {
 	}
 
 	/**
+	 * Get all Rondo roles: base + custom.
+	 *
+	 * Returns the same shape as BASE_ROLES: slug => [ display_name, extra_capabilities ].
+	 * Custom roles always have empty extra capabilities (managed via capability matrix).
+	 *
+	 * @return array<string, array{0: string, 1: string[]}> All roles.
+	 */
+	public static function get_all_roles(): array {
+		$roles = self::BASE_ROLES;
+
+		foreach ( self::get_custom_roles() as $slug => $label ) {
+			$roles[ $slug ] = [ $label, [] ];
+		}
+
+		return $roles;
+	}
+
+	/**
+	 * Get admin-created custom roles from wp_option.
+	 *
+	 * @return array<string, string> Slug => label pairs. Empty array if none.
+	 */
+	public static function get_custom_roles(): array {
+		$custom = get_option( self::CUSTOM_ROLES_OPTION, [] );
+		return is_array( $custom ) ? $custom : [];
+	}
+
+	/**
+	 * Create a new custom role.
+	 *
+	 * Generates a slug from the label with rondo_ prefix, registers the WP role
+	 * with base capabilities, and stores it in the custom roles option.
+	 *
+	 * @param string $label Human-readable role name (e.g. "Coördinator Pupillen").
+	 * @return string|\WP_Error The role slug on success, or WP_Error on failure.
+	 */
+	public static function add_custom_role( string $label ): string|\WP_Error {
+		$label = trim( $label );
+
+		if ( empty( $label ) ) {
+			return new \WP_Error(
+				'empty_label',
+				'Role label cannot be empty.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		// Generate slug: rondo_ prefix + sanitized label.
+		$slug = 'rondo_' . sanitize_title( $label );
+
+		// Ensure no conflict with existing WP roles (base + custom + core).
+		if ( get_role( $slug ) ) {
+			return new \WP_Error(
+				'role_exists',
+				sprintf( 'A role with slug "%s" already exists.', $slug ),
+				[ 'status' => 409 ]
+			);
+		}
+
+		// Base capabilities — same as rondo_user.
+		$capabilities = [
+			'read'                   => true,
+			'edit_posts'             => true,
+			'publish_posts'          => true,
+			'delete_posts'           => true,
+			'edit_published_posts'   => true,
+			'delete_published_posts' => true,
+			'upload_files'           => true,
+		];
+
+		$result = add_role( $slug, $label, $capabilities );
+
+		if ( ! $result ) {
+			return new \WP_Error(
+				'role_creation_failed',
+				'WordPress add_role() failed.',
+				[ 'status' => 500 ]
+			);
+		}
+
+		// Persist in custom roles option.
+		$custom          = self::get_custom_roles();
+		$custom[ $slug ] = $label;
+		update_option( self::CUSTOM_ROLES_OPTION, $custom );
+
+		return $slug;
+	}
+
+	/**
+	 * Delete a custom role.
+	 *
+	 * Removes the WP role, strips it from all users who have it, and removes
+	 * it from the custom roles option. Base roles cannot be deleted.
+	 *
+	 * @param string $slug Role slug to remove.
+	 * @return true|\WP_Error True on success, or WP_Error on failure.
+	 */
+	public static function remove_custom_role( string $slug ): true|\WP_Error {
+		// Prevent deleting base roles.
+		if ( isset( self::BASE_ROLES[ $slug ] ) || 'administrator' === $slug ) {
+			return new \WP_Error(
+				'base_role_protected',
+				sprintf( 'Cannot delete built-in role "%s".', $slug ),
+				[ 'status' => 403 ]
+			);
+		}
+
+		$custom = self::get_custom_roles();
+
+		if ( ! isset( $custom[ $slug ] ) ) {
+			return new \WP_Error(
+				'role_not_found',
+				sprintf( 'Custom role "%s" not found.', $slug ),
+				[ 'status' => 404 ]
+			);
+		}
+
+		// Remove the role from all users who have it.
+		$users = get_users( [ 'role' => $slug ] );
+		foreach ( $users as $user ) {
+			$user->remove_role( $slug );
+		}
+
+		// Remove the WP role definition.
+		remove_role( $slug );
+
+		// Remove from stored custom roles.
+		unset( $custom[ $slug ] );
+		update_option( self::CUSTOM_ROLES_OPTION, $custom );
+
+		return true;
+	}
+
+	/**
 	 * Ensure all roles exist (for themes already active)
 	 */
 	public function ensure_role_exists() {
-		foreach ( self::ROLES as $slug => $_ ) {
+		foreach ( self::get_all_roles() as $slug => $_ ) {
 			if ( ! get_role( $slug ) ) {
 				$this->register_role();
 				return;
@@ -62,12 +204,12 @@ class UserRoles {
 	}
 
 	/**
-	 * Register all Rondo roles
+	 * Register all Rondo roles (base + custom)
 	 */
 	public function register_role() {
 		$base_capabilities = $this->get_role_capabilities();
 
-		foreach ( self::ROLES as $slug => [ $display_name, $extra_caps ] ) {
+		foreach ( self::get_all_roles() as $slug => [ $display_name, $extra_caps ] ) {
 			$capabilities = $base_capabilities;
 			foreach ( $extra_caps as $cap ) {
 				$capabilities[ $cap ] = true;
@@ -87,7 +229,7 @@ class UserRoles {
 	}
 
 	/**
-	 * Remove all Rondo roles
+	 * Remove all Rondo roles (base + custom) on theme deactivation
 	 */
 	public function remove_role() {
 		// Remove app-specific capabilities from administrator role
@@ -100,7 +242,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 		}
 
-		foreach ( self::ROLES as $slug => $_ ) {
+		foreach ( self::get_all_roles() as $slug => $_ ) {
 			// Reassign users to subscriber before removing role
 			$users = get_users( [ 'role' => $slug ] );
 			foreach ( $users as $user ) {
@@ -144,16 +286,16 @@ class UserRoles {
 
 
 	/**
-	 * Get all Rondo role slugs
+	 * Get all Rondo role slugs (base + custom)
 	 *
 	 * @return string[] Array of role slugs.
 	 */
 	public static function get_role_slugs() {
-		return array_keys( self::ROLES );
+		return array_keys( self::get_all_roles() );
 	}
 
 	/**
-	 * Check if a user has any Rondo role
+	 * Check if a user has any Rondo role (base or custom)
 	 *
 	 * @param \WP_User $user User to check.
 	 * @return bool True if user has any Rondo role.

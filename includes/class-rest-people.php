@@ -1028,10 +1028,15 @@ class People extends Base {
 			$permitted_age_groups = \Rondo\Core\AccessControl::get_permitted_age_groups( $current_user_id );
 
 			if ( $permitted_age_groups !== null ) {
-				$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
-				$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";
-				$where_clauses[] = "ag.meta_value IN ($ag_placeholders)";
-				$prepare_values  = array_merge( $prepare_values, $permitted_age_groups );
+				if ( empty( $permitted_age_groups ) ) {
+					// Empty array = see nobody. Force zero results.
+					$where_clauses[] = '1 = 0';
+				} else {
+					$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
+					$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";
+					$where_clauses[] = "ag.meta_value IN ($ag_placeholders)";
+					$prepare_values  = array_merge( $prepare_values, $permitted_age_groups );
+				}
 			}
 		}
 
