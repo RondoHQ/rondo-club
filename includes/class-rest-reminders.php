@@ -341,7 +341,7 @@ class Reminders extends Base {
 	 * @param int $days_back  Number of days back to include.
 	 * @return array
 	 */
-	private function get_upcoming_anniversaries_data( int $days_ahead, int $limit, int $days_back = 0 ): array {
+	public function get_upcoming_anniversaries_data( int $days_ahead, int $limit, int $days_back = 0 ): array {
 		$today      = new \DateTimeImmutable( 'today', wp_timezone() );
 		$window_start = $today->modify( '-' . max( 0, $days_back ) . ' days' );
 		$cutoff       = $today->modify( '+' . max( 0, $days_ahead ) . ' days' );
