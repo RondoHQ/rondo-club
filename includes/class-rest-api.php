@@ -895,7 +895,8 @@ class Api extends Base {
 		// Upcoming reminders
 		$reminders_handler  = new \RONDO_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
-		$upcoming_anniversaries = $this->get_upcoming_anniversaries_data( 365, 20 );
+		$reminders_rest         = new Reminders();
+		$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
 
 		// Get open todos count
 		$open_todos_count = $this->count_open_todos();
