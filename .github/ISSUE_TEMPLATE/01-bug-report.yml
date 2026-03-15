@@ -1,0 +1,68 @@
+name: Bug report
+description: Report a reproducible bug in Rondo Club
+title: "[Bug]: "
+labels:
+  - bug
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please provide enough detail to reproduce it.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A concise description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Frontend / React SPA
+        - WordPress REST API
+        - Finance
+        - Membership passes
+        - Integrations / sync
+        - Build / CI
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: wordpress
+    attributes:
+      label: WordPress version
+      placeholder: e.g. 6.8.1
+  - type: input
+    id: php
+    attributes:
+      label: PHP version
+      placeholder: e.g. 8.2
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / device
+      placeholder: e.g. Safari on iPhone 16, Chrome 135 on macOS
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots
+      description: Paste stack traces, API responses, console errors, or screenshots if available.
