@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest an improvement or new feature
+title: "[Feature]: "
+labels:
+  - enhancement
+  - triage
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the workflow or limitation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the change you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe other options or workarounds you considered.
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact area
+      options:
+        - Members / CRM
+        - Teams / committees
+        - Finance
+        - Access / permissions
+        - Integrations
+        - Developer experience
+        - Documentation
+        - Other
