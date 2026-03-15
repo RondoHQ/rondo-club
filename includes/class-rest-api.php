@@ -1618,4 +1618,59 @@ class Api extends Base {
 
 		return rest_ensure_response( $result );
 	}
+
+	/**
+	 * Get searchable custom field names for a post type.
+	 *
+	 * @param string $post_type Post type to get fields for.
+	 * @return array Array of field names.
+	 */
+	private function get_searchable_custom_fields( string $post_type ): array {
+		$manager = new \Rondo\CustomFields\Manager();
+		$fields  = $manager->get_fields( $post_type, false ); // Active only.
+
+		$searchable_types = array(
+			'text',
+			'textarea',
+			'email',
+			'url',
+			'number',
+			'select',
+			'checkbox',
+		);
+
+		$field_names = array();
+		foreach ( $fields as $field ) {
+			if ( in_array( $field['type'], $searchable_types, true ) ) {
+				$field_names[] = $field['name'];
+			}
+		}
+
+		return $field_names;
+	}
+
+	/**
+	 * Build meta_query array for custom field search.
+	 *
+	 * @param array  $field_names Array of field names to search.
+	 * @param string $query       Search query string.
+	 * @return array Meta query array for get_posts().
+	 */
+	private function build_custom_field_meta_query( array $field_names, string $query ): array {
+		if ( empty( $field_names ) ) {
+			return array();
+		}
+
+		$meta_query = array( 'relation' => 'OR' );
+
+		foreach ( $field_names as $field_name ) {
+			$meta_query[] = array(
+				'key'     => $field_name,
+				'value'   => $query,
+				'compare' => 'LIKE',
+			);
+		}
+
+		return $meta_query;
+	}
 }
