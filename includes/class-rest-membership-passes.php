@@ -183,8 +183,8 @@ class MembershipPasses extends Base {
 
 		$knvb_id = (string) ( get_field( 'knvb-id', $post->ID ) ?: get_post_meta( $post->ID, 'knvb-id', true ) ?: '' );
 
-		$person['knvb_id'] = $knvb_id;
-		$person['knvb-id'] = $knvb_id;
+		$person['knvb_id']         = $knvb_id;
+		$person['knvb-id']         = $knvb_id;
 		$person['photo_thumbnail'] = $person['thumbnail'] ?? '';
 
 		return $person;
@@ -202,8 +202,8 @@ class MembershipPasses extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id'            => $person_id,
-				'membership_pass_url'  => $url !== '' ? $url : null,
+				'person_id'           => $person_id,
+				'membership_pass_url' => $url !== '' ? $url : null,
 			]
 		);
 	}

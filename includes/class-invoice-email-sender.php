@@ -79,23 +79,23 @@ class InvoiceEmailSender {
 	 */
 	public static function is_minor( int $person_id ): bool {
 		$birthdate = (string) get_field( 'birthdate', $person_id );
-		if ( '' === trim( $birthdate ) ) {
+		if ( trim( $birthdate ) === '' ) {
 			return false;
 		}
 
 		$birth_ts = strtotime( $birthdate );
-		if ( false === $birth_ts ) {
+		if ( $birth_ts === false ) {
 			return false;
 		}
 
 		$today_ts = strtotime( current_time( 'Y-m-d' ) );
-		if ( false === $today_ts || $birth_ts > $today_ts ) {
+		if ( $today_ts === false || $birth_ts > $today_ts ) {
 			return false;
 		}
 
 		$years = (int) date( 'Y', $today_ts ) - (int) date( 'Y', $birth_ts );
 		if ( (int) date( 'md', $today_ts ) < (int) date( 'md', $birth_ts ) ) {
-			$years--;
+			--$years;
 		}
 
 		return $years < 18;
@@ -126,7 +126,7 @@ class InvoiceEmailSender {
 			}
 
 			$term = get_term( $relationship_type_id, 'relationship_type' );
-			if ( ! $term || is_wp_error( $term ) || 'parent' !== $term->slug ) {
+			if ( ! $term || is_wp_error( $term ) || $term->slug !== 'parent' ) {
 				continue;
 			}
 
@@ -168,18 +168,18 @@ class InvoiceEmailSender {
 		$payment_link   = get_field( 'payment_link', $invoice_id );
 		$pdf_path       = get_field( 'pdf_path', $invoice_id );
 
-		$person = $person_id ? get_post( $person_id ) : null;
-		$first_name       = '';
-		$person_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
-		$customer_email   = (string) get_post_meta( $invoice_id, '_customer_email', true );
+		$person            = $person_id ? get_post( $person_id ) : null;
+		$first_name        = '';
+		$person_name       = (string) get_post_meta( $invoice_id, '_customer_name', true );
+		$customer_email    = (string) get_post_meta( $invoice_id, '_customer_email', true );
 		$customer_cc_email = (string) get_post_meta( $invoice_id, '_customer_cc_email', true );
-		$recipient_emails = [];
+		$recipient_emails  = [];
 
 		if ( $person && $person->post_type === 'person' ) {
-			$first_name = (string) get_field( 'first_name', $person_id );
-			$infix      = (string) get_field( 'infix', $person_id );
-			$last_name  = (string) get_field( 'last_name', $person_id );
-			$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
+			$first_name  = (string) get_field( 'first_name', $person_id );
+			$infix       = (string) get_field( 'infix', $person_id );
+			$last_name   = (string) get_field( 'last_name', $person_id );
+			$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
 			$person_name = implode( ' ', $name_parts );
 
 			$recipient_emails = self::resolve_invoice_recipient_emails( (int) $person_id );
@@ -210,13 +210,13 @@ class InvoiceEmailSender {
 		}
 
 		// Get finance configuration
-		$config = new FinanceConfig();
+		$config       = new FinanceConfig();
 		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
 		$template     = (string) ( $options['template'] ?? '' );
-		if ( '' === trim( $template ) ) {
-			if ( 'membership' === $invoice_type ) {
+		if ( trim( $template ) === '' ) {
+			if ( $invoice_type === 'membership' ) {
 				$template = $config->get_membership_email_template();
-			} elseif ( 'manual' === $invoice_type ) {
+			} elseif ( $invoice_type === 'manual' ) {
 				$template = $config->get_regular_invoice_email_body();
 			} else {
 				$template = $config->get_email_template();
@@ -230,14 +230,14 @@ class InvoiceEmailSender {
 			$table_rows = [];
 			$row_index  = 0;
 			foreach ( $line_items as $item ) {
-				$row_bg = ( $row_index % 2 === 1 ) ? ' background-color:#f9fafb;' : '';
+				$row_bg   = ( $row_index % 2 === 1 ) ? ' background-color:#f9fafb;' : '';
 				$td_style = 'padding:8px 12px;border-bottom:1px solid #e5e7eb;';
 
 				if ( ! empty( $item['discipline_case'] ) ) {
-					$case_id    = $item['discipline_case'];
-					$match_date = get_field( 'match_date', $case_id );
-					$match_desc = esc_html( get_field( 'match_description', $case_id ) ?: '-' );
-					$amount     = (float) ( $item['amount'] ?? 0 );
+					$case_id          = $item['discipline_case'];
+					$match_date       = get_field( 'match_date', $case_id );
+					$match_desc       = esc_html( get_field( 'match_description', $case_id ) ?: '-' );
+					$amount           = (float) ( $item['amount'] ?? 0 );
 					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
 
 					// Format date from Ymd to d-m-Y
@@ -280,10 +280,10 @@ class InvoiceEmailSender {
 						. '<td style="' . $td_style . 'text-align:right;">' . $formatted_amount . '</td>'
 						. '</tr>';
 				}
-				$row_index++;
+				++$row_index;
 			}
 			if ( ! empty( $table_rows ) ) {
-				$th_style = 'padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;';
+				$th_style         = 'padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;';
 				$tuchtzaken_lijst = '<table style="width:100%;border-collapse:collapse;font-size:14px;">'
 					. '<thead><tr style="background-color:#f3f4f6;">'
 					. '<th style="' . $th_style . '">Datum</th>'
@@ -306,13 +306,13 @@ class InvoiceEmailSender {
 
 		// Build inline QR code HTML via public URL (CID images are blocked by most email clients)
 		$qr_code_html = '';
-		$upload_dir    = wp_upload_dir();
-		$qr_code_path  = get_field( 'qr_code_path', $invoice_id );
+		$upload_dir   = wp_upload_dir();
+		$qr_code_path = get_field( 'qr_code_path', $invoice_id );
 
 		if ( ! empty( $qr_code_path ) ) {
 			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
 			if ( file_exists( $qr_full_path ) ) {
-				$qr_url = $upload_dir['baseurl'] . '/' . $qr_code_path;
+				$qr_url       = $upload_dir['baseurl'] . '/' . $qr_code_path;
 				$qr_code_html = '<img src="' . esc_url( $qr_url ) . '" alt="QR Code betaallink" width="200" style="display:block;" />';
 			}
 		}
@@ -323,7 +323,7 @@ class InvoiceEmailSender {
 			: '';
 
 		// Replace template variables
-		if ( 'manual' === $invoice_type && ! self::contains_html_markup( $template ) ) {
+		if ( $invoice_type === 'manual' && ! self::contains_html_markup( $template ) ) {
 			$template = nl2br( esc_html( $template ) );
 		}
 
@@ -354,7 +354,7 @@ class InvoiceEmailSender {
 		);
 
 		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
-		$heading_type = 'credit' === $invoice_kind ? 'credit' : match ( $invoice_type ) {
+		$heading_type = $invoice_kind === 'credit' ? 'credit' : match ( $invoice_type ) {
 			'membership' => 'membership',
 			'manual'     => 'regular_invoice',
 			default      => 'discipline',
@@ -373,10 +373,10 @@ class InvoiceEmailSender {
 
 		// Build email subject
 		$subject = (string) ( $options['subject'] ?? '' );
-		if ( '' === trim( $subject ) ) {
-			if ( 'manual' === $invoice_type ) {
+		if ( trim( $subject ) === '' ) {
+			if ( $invoice_type === 'manual' ) {
 				$subject = $config->get_regular_invoice_email_subject();
-				if ( '' === trim( $subject ) ) {
+				if ( trim( $subject ) === '' ) {
 					$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
 				}
 			} else {
@@ -409,7 +409,7 @@ class InvoiceEmailSender {
 
 		// Build headers with From address and HTML content type
 		$contact_email = $config->get_contact_email();
-		$headers = [
+		$headers       = [
 			'Content-Type: text/html; charset=UTF-8',
 			'From: ' . $org_name . ' <' . $contact_email . '>',
 		];

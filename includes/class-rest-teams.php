@@ -59,12 +59,12 @@ class Teams extends Base {
 				'callback'            => [ $this, 'set_company_logo' ],
 				'permission_callback' => [ $this, 'check_company_edit_permission' ],
 				'args'                => [
-					'team_id' => [
+					'team_id'  => [
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
 						},
 					],
-					'media_id'   => [
+					'media_id' => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
@@ -129,7 +129,7 @@ class Teams extends Base {
 	 */
 	public function get_people_by_company( $request ) {
 		$team_id = (int) $request->get_param( 'team_id' );
-		$user_id    = get_current_user_id();
+		$user_id = get_current_user_id();
 
 		// Check if user can access this team
 		$access_control = new \Rondo\Core\AccessControl();
@@ -254,8 +254,8 @@ class Teams extends Base {
 	 * @return WP_REST_Response|WP_Error Response with logo info or error.
 	 */
 	public function set_company_logo( $request ) {
-		$team_id = (int) $request->get_param( 'team_id' );
-		$media_id   = (int) $request->get_param( 'media_id' );
+		$team_id  = (int) $request->get_param( 'team_id' );
+		$media_id = (int) $request->get_param( 'media_id' );
 
 		// Verify team exists
 		$team = get_post( $team_id );
@@ -311,13 +311,13 @@ class Teams extends Base {
 
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
-		if ( ! in_array( $file['type'], $allowed_types ) ) {
+		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
 			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
 		// Get company name for filename
 		$team_name = $team->post_title;
-		$name_slug    = sanitize_title( strtolower( trim( $team_name ) ) );
+		$name_slug = sanitize_title( strtolower( trim( $team_name ) ) );
 
 		// Get file extension
 		$extension = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
@@ -459,7 +459,11 @@ class Teams extends Base {
 	public function add_member_count_to_response( $response, $post, $request ) {
 		$counts = self::get_all_member_counts();
 		$data   = $response->get_data();
-		$entry  = $counts[ $post->ID ] ?? [ 'total' => 0, 'players' => 0, 'staff' => 0 ];
+		$entry  = $counts[ $post->ID ] ?? [
+			'total'   => 0,
+			'players' => 0,
+			'staff'   => 0,
+		];
 
 		$data['player_count'] = $entry['players'];
 		$data['staff_count']  = $entry['staff'];
@@ -468,5 +472,4 @@ class Teams extends Base {
 
 		return $response;
 	}
-
 }

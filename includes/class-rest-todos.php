@@ -208,11 +208,11 @@ class Todos extends Base {
 	 * @return WP_REST_Response|WP_Error Response containing created todo or error.
 	 */
 	public function create_person_todo( $request ) {
-		$person_id = (int) $request->get_param( 'person_id' );
-		$content   = sanitize_textarea_field( $request->get_param( 'content' ) );
-		$due_date  = sanitize_text_field( $request->get_param( 'due_date' ) );
-		$status    = $request->get_param( 'status' );
-		$notes     = $request->get_param( 'notes' );
+		$person_id        = (int) $request->get_param( 'person_id' );
+		$content          = sanitize_textarea_field( $request->get_param( 'content' ) );
+		$due_date         = sanitize_text_field( $request->get_param( 'due_date' ) );
+		$status           = $request->get_param( 'status' );
+		$notes            = $request->get_param( 'notes' );
 		$assigned_user_id = $this->sanitize_assigned_user_id( $request->get_param( 'assigned_user_id' ) );
 
 		// Accept person_ids array for multi-person support, fallback to URL person_id
@@ -385,13 +385,13 @@ class Todos extends Base {
 	 * @return WP_REST_Response|WP_Error Response containing updated todo or error.
 	 */
 	public function update_todo( $request ) {
-		$todo_id    = (int) $request->get_param( 'id' );
-		$content    = $request->get_param( 'content' );
-		$due_date   = $request->get_param( 'due_date' );
-		$status     = $request->get_param( 'status' );
-		$person_ids = $request->get_param( 'person_ids' );
-		$notes      = $request->get_param( 'notes' );
-		$assigned_user_param = $request->get_param( 'assigned_user_id' );
+		$todo_id                   = (int) $request->get_param( 'id' );
+		$content                   = $request->get_param( 'content' );
+		$due_date                  = $request->get_param( 'due_date' );
+		$status                    = $request->get_param( 'status' );
+		$person_ids                = $request->get_param( 'person_ids' );
+		$notes                     = $request->get_param( 'notes' );
+		$assigned_user_param       = $request->get_param( 'assigned_user_id' );
 		$previous_assigned_user_id = (int) get_post_meta( $todo_id, self::ASSIGNED_USER_META_KEY, true );
 		$new_assigned_user_id      = $previous_assigned_user_id;
 
@@ -488,7 +488,7 @@ class Todos extends Base {
 			'rondo_open'      => 'open',
 			'rondo_awaiting'  => 'awaiting',
 			'rondo_completed' => 'completed',
-			'publish'       => 'open', // Legacy fallback
+			'publish'         => 'open', // Legacy fallback
 		];
 
 		return $status_map[ $post->post_status ] ?? 'open';
@@ -540,10 +540,10 @@ class Todos extends Base {
 			];
 		}
 
-		$status         = $this->get_todo_status( $post );
-		$due_date       = get_field( 'due_date', $post->ID );
-		$awaiting_since = get_field( 'awaiting_since', $post->ID );
-		$notes          = get_field( 'notes', $post->ID );
+		$status           = $this->get_todo_status( $post );
+		$due_date         = get_field( 'due_date', $post->ID );
+		$awaiting_since   = get_field( 'awaiting_since', $post->ID );
+		$notes            = get_field( 'notes', $post->ID );
 		$assigned_user_id = (int) get_post_meta( $post->ID, self::ASSIGNED_USER_META_KEY, true );
 		$assignee         = null;
 		if ( $assigned_user_id > 0 ) {
@@ -561,39 +561,39 @@ class Todos extends Base {
 		$lettermint_event_name = sanitize_text_field(
 			(string) get_post_meta( $post->ID, \Rondo\Notifications\LettermintWebhook::META_EVENT_NAME, true )
 		);
-		$lettermint_recipient = sanitize_email(
+		$lettermint_recipient  = sanitize_email(
 			(string) get_post_meta( $post->ID, \Rondo\Notifications\LettermintWebhook::META_RECIPIENT, true )
 		);
-		$lettermint_flow = sanitize_text_field(
+		$lettermint_flow       = sanitize_text_field(
 			(string) get_post_meta( $post->ID, \Rondo\Notifications\LettermintWebhook::META_FLOW, true )
 		);
-		$candidate_recipient = $lettermint_recipient !== '' ? $lettermint_recipient : $this->find_first_email_from_persons( $person_ids );
-		$contains_bounce     = stripos( $post->post_title, 'bounce' ) !== false;
-		$can_verify_email    = $candidate_recipient !== '' && ( $lettermint_event_name !== '' || $contains_bounce );
+		$candidate_recipient   = $lettermint_recipient !== '' ? $lettermint_recipient : $this->find_first_email_from_persons( $person_ids );
+		$contains_bounce       = stripos( $post->post_title, 'bounce' ) !== false;
+		$can_verify_email      = $candidate_recipient !== '' && ( $lettermint_event_name !== '' || $contains_bounce );
 
 		return [
-			'id'               => $post->ID,
-			'type'             => 'todo',
-			'content'          => $this->sanitize_text( $post->post_title ),
+			'id'                 => $post->ID,
+			'type'               => 'todo',
+			'content'            => $this->sanitize_text( $post->post_title ),
 			// Deprecated fields for backward compatibility (first person only)
-			'person_id'        => $persons[0]['id'] ?? null,
-			'person_name'      => $persons[0]['name'] ?? '',
-			'person_thumbnail' => $persons[0]['thumbnail'] ?? '',
+			'person_id'          => $persons[0]['id'] ?? null,
+			'person_name'        => $persons[0]['name'] ?? '',
+			'person_thumbnail'   => $persons[0]['thumbnail'] ?? '',
 			// New multi-person format
-			'persons'          => $persons,
-			'notes'            => $notes ?: null,
-			'author_id'        => (int) $post->post_author,
-			'assigned_user_id' => $assigned_user_id > 0 ? $assigned_user_id : null,
-			'assignee'         => $assignee,
-			'created'          => $post->post_date,
-			'status'           => $status,
-			'due_date'         => $due_date ?: null,
-			'awaiting_since'   => $awaiting_since ?: null,
-			'lettermint'       => [
-				'event_name'          => $lettermint_event_name !== '' ? $lettermint_event_name : null,
-				'recipient'           => $lettermint_recipient !== '' ? $lettermint_recipient : null,
-				'flow'                => $lettermint_flow !== '' ? $lettermint_flow : null,
-				'is_actionable_bounce'=> $lettermint_event_name !== '' ? in_array( $lettermint_event_name, \Rondo\Notifications\LettermintWebhook::ACTIONABLE_EVENTS, true ) : false,
+			'persons'            => $persons,
+			'notes'              => $notes ?: null,
+			'author_id'          => (int) $post->post_author,
+			'assigned_user_id'   => $assigned_user_id > 0 ? $assigned_user_id : null,
+			'assignee'           => $assignee,
+			'created'            => $post->post_date,
+			'status'             => $status,
+			'due_date'           => $due_date ?: null,
+			'awaiting_since'     => $awaiting_since ?: null,
+			'lettermint'         => [
+				'event_name'           => $lettermint_event_name !== '' ? $lettermint_event_name : null,
+				'recipient'            => $lettermint_recipient !== '' ? $lettermint_recipient : null,
+				'flow'                 => $lettermint_flow !== '' ? $lettermint_flow : null,
+				'is_actionable_bounce' => $lettermint_event_name !== '' ? in_array( $lettermint_event_name, \Rondo\Notifications\LettermintWebhook::ACTIONABLE_EVENTS, true ) : false,
 			],
 			'email_verification' => [
 				'can_send'  => $can_verify_email,
@@ -696,7 +696,7 @@ class Todos extends Base {
 		$description = $fallback_description !== null ? $fallback_description : (string) get_field( 'notes', $todo_id );
 		$description = $this->normalize_todo_description_for_email( $description );
 
-		$subject = sprintf( '[Rondo] Nieuwe taak: %s', $title );
+		$subject  = sprintf( '[Rondo] Nieuwe taak: %s', $title );
 		$todo_url = home_url( '/todos' );
 		$message  = EmailTemplate::render(
 			[

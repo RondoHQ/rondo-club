@@ -85,15 +85,15 @@ class QrCodeGenerator {
 			$accent_rgb = self::hex_to_rgb( $accent_hex );
 
 			// Build QR options.
-			$options                  = new QROptions();
-			$options->outputType      = QROutputInterface::GDIMAGE_PNG;
-			$options->outputBase64    = false;
-			$options->returnResource  = true; // Return GdImage for logo overlay.
-			$options->scale           = 10;   // 10px per module → ~330×330px output.
-			$options->addQuietzone    = true;
-			$options->quietzoneSize   = 4;
+			$options                   = new QROptions();
+			$options->outputType       = QROutputInterface::GDIMAGE_PNG;
+			$options->outputBase64     = false;
+			$options->returnResource   = true; // Return GdImage for logo overlay.
+			$options->scale            = 10;   // 10px per module → ~330×330px output.
+			$options->addQuietzone     = true;
+			$options->quietzoneSize    = 4;
 			$options->imageTransparent = false;
-			$options->bgColor         = [ 255, 255, 255 ];
+			$options->bgColor          = [ 255, 255, 255 ];
 
 			// Use H (30%) error correction level to allow logo overlay up to ~30% of surface.
 			$options->eccLevel = EccLevel::H;
@@ -147,7 +147,7 @@ class QrCodeGenerator {
 			}
 
 			$bytes_written = file_put_contents( $full_path, $png_data );
-			if ( false === $bytes_written ) {
+			if ( $bytes_written === false ) {
 				return new \WP_Error( 'qr_save_failed', 'Failed to save QR code PNG to disk.' );
 			}
 
@@ -206,10 +206,10 @@ class QrCodeGenerator {
 			return $qr_image;
 		}
 
-		$qr_size     = imagesx( $qr_image );
-		$logo_area   = (int) round( $qr_size * 0.20 ); // Logo area = 20% of QR size.
-		$logo_src_w  = imagesx( $logo_image );
-		$logo_src_h  = imagesy( $logo_image );
+		$qr_size    = imagesx( $qr_image );
+		$logo_area  = (int) round( $qr_size * 0.20 ); // Logo area = 20% of QR size.
+		$logo_src_w = imagesx( $logo_image );
+		$logo_src_h = imagesy( $logo_image );
 
 		// Scale logo to fit within logo_area while preserving aspect ratio.
 		$scale_factor = min( $logo_area / $logo_src_w, $logo_area / $logo_src_h );
@@ -239,8 +239,10 @@ class QrCodeGenerator {
 		imagecopyresampled(
 			$resized_logo,
 			$logo_image,
-			0, 0,
-			0, 0,
+			0,
+			0,
+			0,
+			0,
 			$logo_dst_w,
 			$logo_dst_h,
 			$logo_src_w,

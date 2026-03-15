@@ -200,14 +200,14 @@ class VOGEmail {
 	 */
 	public function get_all_settings(): array {
 		return [
-			'from_email'              => $this->get_from_email(),
-			'from_name'               => $this->get_from_name(),
-			'template_new'            => $this->get_template_new(),
-			'template_renewal'        => $this->get_template_renewal(),
-			'reminder_template_new'   => $this->get_reminder_template_new(),
+			'from_email'                => $this->get_from_email(),
+			'from_name'                 => $this->get_from_name(),
+			'template_new'              => $this->get_template_new(),
+			'template_renewal'          => $this->get_template_renewal(),
+			'reminder_template_new'     => $this->get_reminder_template_new(),
 			'reminder_template_renewal' => $this->get_reminder_template_renewal(),
-			'exempt_commissies'       => $this->get_exempt_commissies(),
-			'exempt_discipline_teams' => $this->get_exempt_discipline_teams(),
+			'exempt_commissies'         => $this->get_exempt_commissies(),
+			'exempt_discipline_teams'   => $this->get_exempt_discipline_teams(),
 		];
 	}
 
@@ -298,7 +298,7 @@ class VOGEmail {
 
 		// Get person post
 		$person = get_post( $person_id );
-		if ( ! $person || 'person' !== $person->post_type ) {
+		if ( ! $person || $person->post_type !== 'person' ) {
 			return new \WP_Error(
 				'invalid_person',
 				__( 'Invalid person ID.', 'rondo' )
@@ -326,7 +326,7 @@ class VOGEmail {
 		];
 
 		// For renewal, get previous VOG date
-		if ( 'renewal' === $template_type ) {
+		if ( $template_type === 'renewal' ) {
 			$previous_vog_date = get_field( 'datum-vog', $person_id );
 			if ( $previous_vog_date ) {
 				// Format date for display (ACF returns Y-m-d format)
@@ -337,13 +337,13 @@ class VOGEmail {
 		}
 
 		// Get template
-		$template = 'new' === $template_type ? $this->get_template_new() : $this->get_template_renewal();
+		$template = $template_type === 'new' ? $this->get_template_new() : $this->get_template_renewal();
 
 		// Substitute variables
 		$message = $this->substitute_variables( $template, $vars );
 
 		// Build subject
-		$subject = 'new' === $template_type
+		$subject = $template_type === 'new'
 			? __( 'VOG aanvraag', 'rondo' )
 			: __( 'VOG vernieuwing', 'rondo' );
 
@@ -438,7 +438,7 @@ class VOGEmail {
 	 */
 	private static function prepare_body_html( string $content ): string {
 		$content = trim( $content );
-		if ( '' === $content ) {
+		if ( $content === '' ) {
 			return '';
 		}
 
@@ -567,7 +567,7 @@ class VOGEmail {
 
 		// Get person post
 		$person = get_post( $person_id );
-		if ( ! $person || 'person' !== $person->post_type ) {
+		if ( ! $person || $person->post_type !== 'person' ) {
 			return new \WP_Error(
 				'invalid_person',
 				__( 'Invalid person ID.', 'rondo' )
@@ -613,7 +613,7 @@ class VOGEmail {
 		];
 
 		// For renewal, get previous VOG date
-		if ( 'reminder_renewal' === $template_type ) {
+		if ( $template_type === 'reminder_renewal' ) {
 			$previous_vog_date = get_field( 'datum-vog', $person_id );
 			if ( $previous_vog_date ) {
 				// Format date for display (ACF returns Y-m-d format)
@@ -624,13 +624,13 @@ class VOGEmail {
 		}
 
 		// Get template
-		$template = 'reminder_new' === $template_type ? $this->get_reminder_template_new() : $this->get_reminder_template_renewal();
+		$template = $template_type === 'reminder_new' ? $this->get_reminder_template_new() : $this->get_reminder_template_renewal();
 
 		// Substitute variables
 		$message = $this->substitute_variables( $template, $vars );
 
 		// Build subject
-		$subject = 'reminder_new' === $template_type
+		$subject = $template_type === 'reminder_new'
 			? __( 'VOG herinnering', 'rondo' )
 			: __( 'VOG herinnering - vernieuwing', 'rondo' );
 
@@ -689,5 +689,4 @@ class VOGEmail {
 
 		return true;
 	}
-
 }

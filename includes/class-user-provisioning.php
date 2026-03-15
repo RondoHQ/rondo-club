@@ -86,7 +86,7 @@ class UserProvisioning {
 	public function provision( int $person_id ): array|\WP_Error {
 		// Validate the person post.
 		$person = get_post( $person_id );
-		if ( ! $person || 'person' !== $person->post_type || 'publish' !== $person->post_status ) {
+		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
 			return new \WP_Error(
 				'invalid_person',
 				'Persoon niet gevonden of niet gepubliceerd.',
@@ -203,12 +203,14 @@ class UserProvisioning {
 		$email_result = $this->send_welcome_email( $person_id, $user_id, $reset_key );
 		if ( is_wp_error( $email_result ) ) {
 			// Log the failure but do not rollback.
-			error_log( sprintf(
-				'[Rondo] UserProvisioning: welcome email failed for user %d (person %d): %s',
-				$user_id,
-				$person_id,
-				$email_result->get_error_message()
-			) );
+			error_log(
+				sprintf(
+					'[Rondo] UserProvisioning: welcome email failed for user %d (person %d): %s',
+					$user_id,
+					$person_id,
+					$email_result->get_error_message()
+				)
+			);
 		}
 
 		return [
@@ -349,7 +351,7 @@ class UserProvisioning {
 		$i     = 1;
 		while ( username_exists( $login ) ) {
 			$login = $base . $i;
-			$i++;
+			++$i;
 		}
 
 		return $login;
@@ -419,7 +421,7 @@ class UserProvisioning {
 	 * @return string Default Dutch body template.
 	 */
 	public function get_default_body(): string {
-		return <<<EOT
+		return <<<'EOT'
 Beste {first_name},
 
 Je hebt een account gekregen voor {club_naam}.

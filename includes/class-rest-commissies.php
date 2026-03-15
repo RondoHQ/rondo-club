@@ -64,7 +64,7 @@ class Commissies extends Base {
 							return is_numeric( $param );
 						},
 					],
-					'media_id'   => [
+					'media_id'     => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param );
@@ -183,8 +183,8 @@ class Commissies extends Base {
 
 					if ( ! empty( $job['is_current'] ) ) {
 						if ( ! empty( $job['end_date'] ) ) {
-							$end_date = strtotime( $job['end_date'] );
-							$today    = strtotime( 'today' );
+							$end_date   = strtotime( $job['end_date'] );
+							$today      = strtotime( 'today' );
 							$is_current = ( $end_date >= $today );
 						} else {
 							$is_current = true;
@@ -317,7 +317,7 @@ class Commissies extends Base {
 		$file = $files['file'];
 
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
-		if ( ! in_array( $file['type'], $allowed_types ) ) {
+		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
 			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
@@ -361,5 +361,4 @@ class Commissies extends Base {
 			]
 		);
 	}
-
 }

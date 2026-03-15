@@ -113,7 +113,8 @@ class LettermintMailer {
 				}
 
 				$filename = wp_basename( $path );
-				$content  = file_get_contents( $path );
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				$content = file_get_contents( $path );
 				if ( $content === false ) {
 					continue;
 				}
@@ -169,15 +170,15 @@ class LettermintMailer {
 	 */
 	private function parse_headers( $headers ): array {
 		$parsed = [
-			'from'              => '',
-			'cc'                => [],
-			'bcc'               => [],
-			'reply_to'          => [],
-			'content_type'      => '',
-			'x_rondo_email_tag' => '',
-			'x_rondo_metadata'  => [],
-			'x_lettermint_route'=> '',
-			'custom'            => [],
+			'from'               => '',
+			'cc'                 => [],
+			'bcc'                => [],
+			'reply_to'           => [],
+			'content_type'       => '',
+			'x_rondo_email_tag'  => '',
+			'x_rondo_metadata'   => [],
+			'x_lettermint_route' => '',
+			'custom'             => [],
 		];
 
 		$header_lines = [];

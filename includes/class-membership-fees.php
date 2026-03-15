@@ -194,9 +194,12 @@ class MembershipFees {
 		}
 
 		// Sort by sort_order so lowest sort_order wins on overlap
-		uasort( $categories, function ( $a, $b ) {
-			return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
-		} );
+		uasort(
+			$categories,
+			function ( $a, $b ) {
+				return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
+			}
+		);
 
 		$catch_all_slug = null;
 
@@ -465,7 +468,7 @@ class MembershipFees {
 	 */
 	public function is_former_member_in_season( int $person_id, ?string $season = null ): bool {
 		// Only applies to former members
-		$is_former = ( get_field( 'former_member', $person_id ) == true );
+		$is_former = (bool) get_field( 'former_member', $person_id );
 		if ( ! $is_former ) {
 			return false;
 		}
@@ -585,9 +588,12 @@ class MembershipFees {
 		}
 
 		// Sort by sort_order (lowest first)
-		uasort( $categories, function ( $a, $b ) {
-			return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
-		} );
+		uasort(
+			$categories,
+			function ( $a, $b ) {
+				return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
+			}
+		);
 
 		foreach ( $categories as $slug => $category ) {
 			$matching_teams = $category['matching_teams'] ?? [];
@@ -635,9 +641,12 @@ class MembershipFees {
 		}
 
 		// Sort by sort_order (lowest first)
-		uasort( $categories, function ( $a, $b ) {
-			return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
-		} );
+		uasort(
+			$categories,
+			function ( $a, $b ) {
+				return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
+			}
+		);
 
 		foreach ( $categories as $slug => $category ) {
 			$matching_werkfuncties = $category['matching_werkfuncties'] ?? [];
@@ -685,7 +694,7 @@ class MembershipFees {
 		}
 
 		// Get leeftijdsgroep from person
-		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
+		$leeftijdsgroep     = get_field( 'leeftijdsgroep', $person_id );
 		$age_class_category = null;
 
 		// Parse age group if available
@@ -851,7 +860,7 @@ class MembershipFees {
 	 * @return float Administration fee per installment (default: legacy global value, else 0.00).
 	 */
 	public function get_installment_admin_fee( ?string $season = null ): float {
-		$season = $season ?? $this->get_season_key();
+		$season         = $season ?? $this->get_season_key();
 		$legacy_default = (float) get_option( 'rondo_finance_installment_admin_fee', 0 );
 		return (float) get_option( 'rondo_installment_admin_fee_' . $season, $legacy_default );
 	}
@@ -934,7 +943,7 @@ class MembershipFees {
 		foreach ( $categories as $slug => $category ) {
 			// Detect old format: has age_min or age_max but no age_classes
 			if ( ( isset( $category['age_min'] ) || isset( $category['age_max'] ) )
-				 && ! isset( $category['age_classes'] ) ) {
+				&& ! isset( $category['age_classes'] ) ) {
 				$needs_migration = true;
 
 				// Set age_classes to empty array (catch-all) since we cannot
@@ -1118,10 +1127,26 @@ class MembershipFees {
 		$season   = $season ?: $this->get_season_key();
 		$defaults = [
 			'periods' => [
-				[ 'start_month' => 7, 'end_month' => 9, 'discount_percent' => 0 ],
-				[ 'start_month' => 10, 'end_month' => 12, 'discount_percent' => 25 ],
-				[ 'start_month' => 1, 'end_month' => 3, 'discount_percent' => 50 ],
-				[ 'start_month' => 4, 'end_month' => 6, 'discount_percent' => 75 ],
+				[
+					'start_month'      => 7,
+					'end_month'        => 9,
+					'discount_percent' => 0,
+				],
+				[
+					'start_month'      => 10,
+					'end_month'        => 12,
+					'discount_percent' => 25,
+				],
+				[
+					'start_month'      => 1,
+					'end_month'        => 3,
+					'discount_percent' => 50,
+				],
+				[
+					'start_month'      => 4,
+					'end_month'        => 6,
+					'discount_percent' => 75,
+				],
 			],
 		];
 
@@ -1296,7 +1321,7 @@ class MembershipFees {
 		if ( ! empty( $query->posts ) ) {
 			foreach ( $query->posts as $person_id ) {
 				if ( delete_post_meta( $person_id, $meta_key ) ) {
-					$deleted++;
+					++$deleted;
 				}
 			}
 		}
@@ -1366,7 +1391,7 @@ class MembershipFees {
 		}
 
 		// Add former member flag for diagnostics
-		$is_former               = ( get_field( 'former_member', $person_id ) == true );
+		$is_former                  = (bool) get_field( 'former_member', $person_id );
 		$result['is_former_member'] = $is_former;
 
 		// Save to cache
@@ -1414,7 +1439,7 @@ class MembershipFees {
 		if ( ! empty( $query->posts ) ) {
 			foreach ( $query->posts as $person_id ) {
 				if ( delete_post_meta( $person_id, $meta_key ) ) {
-					$cleared++;
+					++$cleared;
 				}
 			}
 		}
@@ -1433,8 +1458,8 @@ class MembershipFees {
 	 */
 	public function normalize_postal_code( string $postal_code ): string {
 		// Trim, remove all whitespace, and convert to uppercase
-		$trimmed    = trim( $postal_code );
-		$no_spaces  = preg_replace( '/\s+/', '', $trimmed );
+		$trimmed   = trim( $postal_code );
+		$no_spaces = preg_replace( '/\s+/', '', $trimmed );
 
 		return strtoupper( $no_spaces );
 	}
@@ -1551,7 +1576,7 @@ class MembershipFees {
 
 		foreach ( $query->posts as $person_id ) {
 			// Skip former members not eligible for this season's fee list
-			$is_former = ( get_field( 'former_member', $person_id ) == true );
+			$is_former = (bool) get_field( 'former_member', $person_id );
 			if ( $is_former && ! $this->is_former_member_in_season( $person_id, $season ) ) {
 				continue; // Skip former members not in this season
 			}
@@ -1648,7 +1673,7 @@ class MembershipFees {
 					update_post_meta( $member_id, '_family_discount_rate', '0' );
 					update_post_meta( $member_id, '_family_discount_position', '1' );
 					$processed_ids[] = $member_id;
-					$updated++;
+					++$updated;
 				}
 				continue;
 			}
@@ -1661,7 +1686,7 @@ class MembershipFees {
 				update_post_meta( $member_id, '_family_discount_rate', (string) $discount_rate );
 				update_post_meta( $member_id, '_family_discount_position', (string) $position );
 				$processed_ids[] = $member_id;
-				$updated++;
+				++$updated;
 			}
 		}
 
@@ -1680,7 +1705,7 @@ class MembershipFees {
 			if ( ! in_array( (int) $person_id, $processed_ids, true ) ) {
 				update_post_meta( $person_id, '_family_discount_rate', '0' );
 				update_post_meta( $person_id, '_family_discount_position', '' );
-				$updated++;
+				++$updated;
 			}
 		}
 
@@ -1726,7 +1751,7 @@ class MembershipFees {
 			$pid = (int) $pid;
 
 			// Skip former members not in season
-			$is_former = ( get_field( 'former_member', $pid ) == true );
+			$is_former = ( get_field( 'former_member', $pid ) === true );
 			if ( $is_former && ! $this->is_former_member_in_season( $pid, $season ) ) {
 				continue;
 			}
@@ -1771,7 +1796,7 @@ class MembershipFees {
 			foreach ( $family_members as $member ) {
 				update_post_meta( $member['person_id'], '_family_discount_rate', '0' );
 				update_post_meta( $member['person_id'], '_family_discount_position', '1' );
-				$updated++;
+				++$updated;
 			}
 			return $updated;
 		}
@@ -1783,7 +1808,7 @@ class MembershipFees {
 
 			update_post_meta( $member['person_id'], '_family_discount_rate', (string) $discount_rate );
 			update_post_meta( $member['person_id'], '_family_discount_position', (string) $position );
-			$updated++;
+			++$updated;
 		}
 
 		return $updated;
@@ -1811,7 +1836,7 @@ class MembershipFees {
 		foreach ( $query->posts as $person_id ) {
 			delete_post_meta( $person_id, '_family_discount_rate' );
 			delete_post_meta( $person_id, '_family_discount_position' );
-			$cleared++;
+			++$cleared;
 		}
 
 		return $cleared;
@@ -1925,17 +1950,17 @@ class MembershipFees {
 		$prorata_amount     = round( $fee_after_discount * $prorata_percentage, 2 );
 
 		// Add former member flag for diagnostics
-		$is_former = ( get_field( 'former_member', $person_id ) == true );
+		$is_former = (bool) get_field( 'former_member', $person_id );
 
 		// Add pro-rata fields to result
 		return array_merge(
 			$fee_data,
 			[
-				'registration_date'   => $registration_date,
-				'prorata_percentage'  => $prorata_percentage,
-				'fee_after_discount'  => $fee_after_discount,
-				'final_fee'           => $prorata_amount,  // Override final_fee with pro-rata amount
-				'is_former_member'    => $is_former,
+				'registration_date'  => $registration_date,
+				'prorata_percentage' => $prorata_percentage,
+				'fee_after_discount' => $fee_after_discount,
+				'final_fee'          => $prorata_amount,  // Override final_fee with pro-rata amount
+				'is_former_member'   => $is_former,
 			]
 		);
 	}
@@ -2140,7 +2165,7 @@ class MembershipFees {
 		$fee_result     = $this->calculate_fee( $person_id );
 
 		// Check former member status
-		$is_former               = ( get_field( 'former_member', $person_id ) == true );
+		$is_former               = (bool) get_field( 'former_member', $person_id );
 		$former_member_in_season = $is_former ? $this->is_former_member_in_season( $person_id ) : false;
 
 		// Determine reason if not calculable

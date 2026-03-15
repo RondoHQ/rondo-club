@@ -35,21 +35,22 @@ if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 function rondo_register_fallback_autoloader() {
 	spl_autoload_register(
 		static function ( $class ) {
-			if ( 0 !== strpos( $class, 'Rondo\\' ) ) {
+			if ( strpos( $class, 'Rondo\\' ) !== 0 ) {
 				return;
 			}
 
 			static $classmap = null;
-			if ( null === $classmap ) {
+			if ( $classmap === null ) {
 				$classmap = [];
 				$files    = glob( __DIR__ . '/includes/class-*.php' );
-				if ( false === $files ) {
+				if ( $files === false ) {
 					$files = [];
 				}
 
 				foreach ( $files as $file ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 					$contents = file_get_contents( $file );
-					if ( false === $contents ) {
+					if ( $contents === false ) {
 						continue;
 					}
 
@@ -58,7 +59,7 @@ function rondo_register_fallback_autoloader() {
 					}
 
 					$namespace = trim( $namespace_match[1] );
-					if ( 'Rondo' !== $namespace && 0 !== strpos( $namespace, 'Rondo\\' ) ) {
+					if ( $namespace !== 'Rondo' && strpos( $namespace, 'Rondo\\' ) !== 0 ) {
 						continue;
 					}
 
@@ -384,7 +385,7 @@ function rondo_track_user_last_active() {
 		return;
 	}
 
-	$now_ts      = current_time( 'timestamp', true );
+	$now_ts       = time();
 	$last_seen_ts = (int) get_user_meta( $user_id, 'rondo_last_active_ts', true );
 
 	// Update at most once every 5 minutes per user.
@@ -427,21 +428,21 @@ function rondo_migrate_options() {
 	}
 
 	$option_map = [
-		'stadion_vog_from_email'       => 'rondo_vog_from_email',
-		'stadion_vog_from_name'        => 'rondo_vog_from_name',
-		'stadion_vog_template_new'     => 'rondo_vog_template_new',
-		'stadion_vog_template_renewal' => 'rondo_vog_template_renewal',
+		'stadion_vog_from_email'        => 'rondo_vog_from_email',
+		'stadion_vog_from_name'         => 'rondo_vog_from_name',
+		'stadion_vog_template_new'      => 'rondo_vog_template_new',
+		'stadion_vog_template_renewal'  => 'rondo_vog_template_renewal',
 		'stadion_vog_exempt_commissies' => 'rondo_vog_exempt_commissies',
-		'stadion_club_name'            => 'rondo_club_name',
-		'stadion_freescout_url'        => 'rondo_freescout_url',
+		'stadion_club_name'             => 'rondo_club_name',
+		'stadion_freescout_url'         => 'rondo_freescout_url',
 	];
 
 	foreach ( $option_map as $old_key => $new_key ) {
 		$old_value = get_option( $old_key );
-		if ( false !== $old_value ) {
+		if ( $old_value !== false ) {
 			// Only copy if the new option doesn't already have a value.
 			$new_value = get_option( $new_key );
-			if ( false === $new_value || '' === $new_value ) {
+			if ( $new_value === false || $new_value === '' ) {
 				update_option( $new_key, $old_value );
 			}
 			delete_option( $old_key );
@@ -450,15 +451,15 @@ function rondo_migrate_options() {
 
 	// Migrate user meta keys from stadion_ to rondo_.
 	$user_meta_keys = [
-		'stadion_linked_person_id'         => 'rondo_linked_person_id',
-		'stadion_notification_channels'    => 'rondo_notification_channels',
-		'stadion_notification_time'        => 'rondo_notification_time',
-		'stadion_mention_notifications'    => 'rondo_mention_notifications',
-		'stadion_color_scheme'             => 'rondo_color_scheme',
-		'stadion_dashboard_visible_cards'  => 'rondo_dashboard_visible_cards',
-		'stadion_dashboard_card_order'     => 'rondo_dashboard_card_order',
-		'stadion_people_list_preferences'  => 'rondo_people_list_preferences',
-		'stadion_people_list_column_order' => 'rondo_people_list_column_order',
+		'stadion_linked_person_id'          => 'rondo_linked_person_id',
+		'stadion_notification_channels'     => 'rondo_notification_channels',
+		'stadion_notification_time'         => 'rondo_notification_time',
+		'stadion_mention_notifications'     => 'rondo_mention_notifications',
+		'stadion_color_scheme'              => 'rondo_color_scheme',
+		'stadion_dashboard_visible_cards'   => 'rondo_dashboard_visible_cards',
+		'stadion_dashboard_card_order'      => 'rondo_dashboard_card_order',
+		'stadion_people_list_preferences'   => 'rondo_people_list_preferences',
+		'stadion_people_list_column_order'  => 'rondo_people_list_column_order',
 		'stadion_people_list_column_widths' => 'rondo_people_list_column_widths',
 	];
 
@@ -466,9 +467,9 @@ function rondo_migrate_options() {
 	foreach ( $user_ids as $uid ) {
 		foreach ( $user_meta_keys as $old_meta => $new_meta ) {
 			$old_value = get_user_meta( $uid, $old_meta, true );
-			if ( '' !== $old_value && false !== $old_value ) {
+			if ( $old_value !== '' && $old_value !== false ) {
 				$new_value = get_user_meta( $uid, $new_meta, true );
-				if ( '' === $new_value || false === $new_value ) {
+				if ( $new_value === '' || $new_value === false ) {
 					update_user_meta( $uid, $new_meta, $old_value );
 				}
 				delete_user_meta( $uid, $old_meta );
@@ -560,6 +561,7 @@ function rondo_theme_enqueue_assets() {
 	}
 
 	if ( file_exists( $manifest_path ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$manifest = json_decode( file_get_contents( $manifest_path ), true );
 
 		// Enqueue the main JS file
@@ -658,7 +660,7 @@ function rondo_get_js_config() {
 		'clubName'            => $club_settings['club_name'],
 		'freescoutUrl'        => $club_settings['freescout_url'],
 		'isDemo'              => (bool) get_option( 'rondo_is_demo_site', false ),
-		'isDemoUser'          => (bool) get_option( 'rondo_is_demo_site', false ) && $user && 'demo' === $user->user_login,
+		'isDemoUser'          => (bool) get_option( 'rondo_is_demo_site', false ) && $user && $user->user_login === 'demo',
 	];
 }
 
@@ -758,13 +760,15 @@ add_action( 'admin_init', 'rondo_block_wp_admin' );
  */
 function rondo_redirect_backend_urls() {
 	// Don't redirect admin, login, or API requests.
-	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
+	if ( is_admin() || $GLOBALS['pagenow'] === 'wp-login.php' ) {
 		return;
 	}
 
 	// Check for post_type and p query parameters (WordPress backend URL format)
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$post_type = isset( $_GET['post_type'] ) ? sanitize_key( $_GET['post_type'] ) : '';
-	$post_id   = isset( $_GET['p'] ) ? absint( $_GET['p'] ) : 0;
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$post_id = isset( $_GET['p'] ) ? absint( $_GET['p'] ) : 0;
 
 	if ( ! $post_type || ! $post_id ) {
 		return;
@@ -796,7 +800,7 @@ add_action( 'template_redirect', 'rondo_redirect_backend_urls', 0 ); // Priority
  */
 function rondo_theme_template_redirect() {
 	// Don't redirect admin, login, or API requests.
-	if ( is_admin() || 'wp-login.php' === $GLOBALS['pagenow'] ) {
+	if ( is_admin() || $GLOBALS['pagenow'] === 'wp-login.php' ) {
 		return;
 	}
 
@@ -830,13 +834,13 @@ function rondo_theme_template_redirect() {
 	$is_app_route = false;
 
 	// Check if it's the root path.
-	if ( empty( $path ) || '/' === $path ) {
+	if ( empty( $path ) || $path === '/' ) {
 		$is_app_route = true;
 	}
 
 	// Check if it starts with any of our app route prefixes.
 	foreach ( $app_routes as $route ) {
-		if ( $route === $path || 0 === strpos( $path, $route . '/' ) ) {
+		if ( $route === $path || strpos( $path, $route . '/' ) === 0 ) {
 			$is_app_route = true;
 			break;
 		}
@@ -932,7 +936,7 @@ add_action( 'delete_user', 'rondo_user_deleted' );
  * @return string Modified script tag.
  */
 function rondo_theme_script_type( $tag, $handle, $src ) {
-	if ( 'prm-theme-script' === $handle ) {
+	if ( $handle === 'prm-theme-script' ) {
 		// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- Modifying enqueued script tag.
 		return '<script type="module" src="' . esc_url( $src ) . '"></script>';
 	}
@@ -1034,11 +1038,11 @@ function rondo_login_styles() {
 	$brand_color = '#0891b2';
 
 	// Pre-calculated color variants
-	$brand_color_dark    = '#0e7490';  // Darker shade
-	$brand_color_darkest = '#155e75';  // Darkest shade
-	$brand_color_light   = '#67e8f9';  // Light tint
+	$brand_color_dark     = '#0e7490';  // Darker shade
+	$brand_color_darkest  = '#155e75';  // Darkest shade
+	$brand_color_light    = '#67e8f9';  // Light tint
 	$brand_color_lightest = '#cffafe'; // Very light tint for backgrounds
-	$brand_color_border  = '#a5f3fc';  // Medium light tint for borders
+	$brand_color_border   = '#a5f3fc';  // Medium light tint for borders
 
 	// Use club name if configured, otherwise site name
 	$display_name = ! empty( $club_name ) ? $club_name : $site_name;
@@ -1238,6 +1242,7 @@ add_filter( 'login_headertext', 'rondo_login_logo_title' );
  */
 function rondo_login_redirect( $redirect_to, $request, $user ) {
 	// Only redirect if no specific redirect was requested
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	if ( isset( $_GET['redirect_to'] ) && ! empty( $_GET['redirect_to'] ) ) {
 		return $redirect_to;
 	}
@@ -1264,12 +1269,12 @@ remove_action( 'admin_color_scheme_picker', 'admin_color_scheme_picker' );
 function rondo_registration_message_filter( $translated_text, $text, $domain ) {
 	// Only filter on login/registration pages.
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking URL context only.
-	$is_register  = isset( $_GET['action'] ) && 'register' === $_GET['action'];
+	$is_register = isset( $_GET['action'] ) && $_GET['action'] === 'register';
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Checking URL context only.
-	$is_confirmed = isset( $_GET['checkemail'] ) && 'registered' === $_GET['checkemail'];
+	$is_confirmed = isset( $_GET['checkemail'] ) && $_GET['checkemail'] === 'registered';
 
 	if ( ! is_admin() && ( $is_register || $is_confirmed ) ) {
-		if ( 'Registration confirmation will be emailed to you.' === $text ) {
+		if ( $text === 'Registration confirmation will be emailed to you.' ) {
 			return 'Registration confirmation will be emailed to you. Your account is then subject to approval.';
 		}
 	}
@@ -1286,7 +1291,7 @@ add_filter( 'gettext', 'rondo_registration_message_filter', 20, 3 );
  * @return string Modified text.
  */
 function rondo_change_register_notice_text( $translated_text, $text, $domain ) {
-	if ( 'Register For This Site' === $text ) {
+	if ( $text === 'Register For This Site' ) {
 		return 'Register for Rondo Club';
 	}
 	return $translated_text;
@@ -1364,32 +1369,32 @@ add_action( 'login_footer', 'rondo_login_page_titles' );
  */
 add_action( 'rondo_rotate_debug_log', 'rondo_rotate_debug_log' );
 function rondo_rotate_debug_log() {
-    $log_dir  = WP_CONTENT_DIR;
-    $log_file = $log_dir . '/debug.log';
-    $date     = date( 'Y-m-d' );
+	$log_dir  = WP_CONTENT_DIR;
+	$log_file = $log_dir . '/debug.log';
+	$date     = date( 'Y-m-d' );
 
-    // Only rotate if log exists and has content
-    if ( file_exists( $log_file ) && filesize( $log_file ) > 0 ) {
-        // Rotate current log
-        $rotated = $log_dir . '/debug-' . $date . '.log';
-        rename( $log_file, $rotated );
+	// Only rotate if log exists and has content
+	if ( file_exists( $log_file ) && filesize( $log_file ) > 0 ) {
+		// Rotate current log
+		$rotated = $log_dir . '/debug-' . $date . '.log';
+		rename( $log_file, $rotated );
 
-        // Create fresh empty log
-        touch( $log_file );
-        chmod( $log_file, 0644 );
+		// Create fresh empty log
+		touch( $log_file );
+		chmod( $log_file, 0644 );
 
-        // Delete logs older than 7 days
-        $files = glob( $log_dir . '/debug-*.log' );
-        $now   = time();
-        foreach ( $files as $file ) {
-            if ( $now - filemtime( $file ) > 7 * DAY_IN_SECONDS ) {
-                unlink( $file );
-            }
-        }
-    }
+		// Delete logs older than 7 days
+		$files = glob( $log_dir . '/debug-*.log' );
+		$now   = time();
+		foreach ( $files as $file ) {
+			if ( $now - filemtime( $file ) > 7 * DAY_IN_SECONDS ) {
+				unlink( $file );
+			}
+		}
+	}
 }
 
 // Schedule daily rotation if not already scheduled
 if ( ! wp_next_scheduled( 'rondo_rotate_debug_log' ) ) {
-    wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'rondo_rotate_debug_log' );
+	wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'rondo_rotate_debug_log' );
 }

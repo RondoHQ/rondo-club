@@ -245,5 +245,4 @@ class Matcher {
 
 		return null;
 	}
-
 }

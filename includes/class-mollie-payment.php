@@ -59,7 +59,7 @@ class MolliePayment {
 		}
 
 		// 3. Guard: account API key configured
-		$config  = new FinanceConfig();
+		$config     = new FinanceConfig();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$api_key    = $config->get_mollie_api_key_for_account( $account_id );
 		if ( empty( $api_key ) ) {
@@ -95,7 +95,7 @@ class MolliePayment {
 
 		// 8. Conditionally add webhookUrl — omit on localhost and .local environments.
 		$site_url = get_site_url();
-		if ( false === strpos( $site_url, 'localhost' ) && false === strpos( $site_url, '.local' ) ) {
+		if ( strpos( $site_url, 'localhost' ) === false && strpos( $site_url, '.local' ) === false ) {
 			$payload['webhookUrl'] = rest_url( 'rondo/v1/mollie/webhook' );
 		}
 
@@ -108,7 +108,8 @@ class MolliePayment {
 			error_log( 'Mollie API exception: ' . $e->getMessage() );
 			return new \WP_Error(
 				'mollie_api_error',
-				sprintf( __( 'Mollie betaallink aanmaken mislukt: %s', 'rondo' ), $e->getMessage() ),
+				// translators: %s is the Mollie API error message.
+			sprintf( __( 'Mollie betaallink aanmaken mislukt: %s', 'rondo' ), $e->getMessage() ),
 				[ 'status' => 502 ]
 			);
 		}

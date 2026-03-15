@@ -16,7 +16,7 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types = [ 'person', 'team', 'rondo_todo', 'rondo_clothing_item', 'rondo_clothing_txn' ];
+	private $controlled_post_types            = [ 'person', 'team', 'rondo_todo', 'rondo_clothing_item', 'rondo_clothing_txn' ];
 	private const TODO_ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
 	/**
@@ -94,13 +94,13 @@ class AccessControl {
 	 * @return string[] Modified capabilities.
 	 */
 	public function restrict_person_editing( $caps, $cap, $user_id, $args ) {
-		if ( 'edit_post' !== $cap || empty( $args[0] ) ) {
+		if ( $cap !== 'edit_post' || empty( $args[0] ) ) {
 			return $caps;
 		}
 
 		$post = get_post( $args[0] );
 
-		if ( ! $post || 'person' !== $post->post_type ) {
+		if ( ! $post || $post->post_type !== 'person' ) {
 			return $caps;
 		}
 
@@ -296,7 +296,7 @@ class AccessControl {
 		}
 
 		// Not a controlled post type - allow access
-		if ( ! in_array( $post->post_type, $this->controlled_post_types ) ) {
+		if ( ! in_array( $post->post_type, $this->controlled_post_types, true ) ) {
 			return true;
 		}
 
@@ -322,7 +322,7 @@ class AccessControl {
 		// Only filter our controlled post types
 		$post_type = $query->get( 'post_type' );
 
-		if ( ! $post_type || ! in_array( $post_type, $this->controlled_post_types ) ) {
+		if ( ! $post_type || ! in_array( $post_type, $this->controlled_post_types, true ) ) {
 			return;
 		}
 

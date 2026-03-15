@@ -28,7 +28,7 @@ class Manager {
 	/**
 	 * Supported post types for custom fields.
 	 */
-	const SUPPORTED_POST_TYPES = array( 'person', 'team', 'commissie' );
+	const SUPPORTED_POST_TYPES = [ 'person', 'team', 'commissie' ];
 
 	/**
 	 * Map Rondo field types to ACF field types.
@@ -38,9 +38,9 @@ class Manager {
 	 *
 	 * @var array
 	 */
-	private const TYPE_MAP = array(
+	private const TYPE_MAP = [
 		'date' => 'date_picker',
-	);
+	];
 
 	/**
 	 * Properties that can be updated on existing fields.
@@ -48,7 +48,7 @@ class Manager {
 	 *
 	 * @var array
 	 */
-	private const UPDATABLE_PROPERTIES = array(
+	private const UPDATABLE_PROPERTIES = [
 		// Core properties.
 		'label',
 		'name',
@@ -102,7 +102,7 @@ class Manager {
 		'unique',
 		// UI visibility.
 		'editable_in_ui',
-	);
+	];
 
 	/**
 	 * Constructor.
@@ -144,19 +144,19 @@ class Manager {
 		}
 
 		// Create new field group.
-		$field_group = array(
+		$field_group = [
 			'key'                   => $group_key,
 			'title'                 => 'Custom Fields',
-			'fields'                => array(),
-			'location'              => array(
-				array(
-					array(
+			'fields'                => [],
+			'location'              => [
+				[
+					[
 						'param'    => 'post_type',
 						'operator' => '==',
 						'value'    => $post_type,
-					),
-				),
-			),
+					],
+				],
+			],
 			'menu_order'            => 100, // After built-in groups.
 			'position'              => 'normal',
 			'style'                 => 'default',
@@ -164,7 +164,7 @@ class Manager {
 			'instruction_placement' => 'label',
 			'active'                => true,
 			'show_in_rest'          => 1,
-		);
+		];
 
 		$result = acf_import_field_group( $field_group );
 
@@ -253,7 +253,7 @@ class Manager {
 		$acf_type = $this->map_type_to_acf( $field_config['type'] );
 
 		// Build field array.
-		$field = array(
+		$field = [
 			'key'          => $field_key,
 			'label'        => $field_config['label'],
 			'name'         => $field_name,
@@ -261,14 +261,14 @@ class Manager {
 			'parent'       => $group['ID'], // Must be post ID, not key.
 			'instructions' => $field_config['instructions'] ?? '',
 			'required'     => $field_config['required'] ?? 0,
-		);
+		];
 
 		// Add optional properties from UPDATABLE_PROPERTIES.
 		// These include type-specific settings (min, max, choices, etc.)
 		// that ACF handles based on the field type.
 		foreach ( self::UPDATABLE_PROPERTIES as $prop ) {
 			// Skip properties already set in core array.
-			if ( in_array( $prop, array( 'label', 'name', 'instructions', 'required' ), true ) ) {
+			if ( in_array( $prop, [ 'label', 'name', 'instructions', 'required' ], true ) ) {
 				continue;
 			}
 			if ( isset( $field_config[ $prop ] ) ) {
@@ -277,7 +277,7 @@ class Manager {
 		}
 
 		// Enforce Y-m-d format for date fields (ensures consistent sorting and JS parsing).
-		if ( 'date' === $acf_type ) {
+		if ( $acf_type === 'date' ) {
 			$field['return_format']  = 'Y-m-d';
 			$field['display_format'] = 'Y-m-d';
 		}
@@ -324,7 +324,7 @@ class Manager {
 		}
 
 		// Enforce Y-m-d format for date fields (ensures consistent sorting and JS parsing).
-		if ( 'date' === $field['type'] ) {
+		if ( $field['type'] === 'date' ) {
 			$field['return_format']  = 'Y-m-d';
 			$field['display_format'] = 'Y-m-d';
 		}
@@ -423,7 +423,7 @@ class Manager {
 	public function get_fields( string $post_type, bool $include_inactive = false ): array {
 		// Validate post type.
 		if ( ! $this->is_valid_post_type( $post_type ) ) {
-			return array();
+			return [];
 		}
 
 		$group_key = $this->get_group_key( $post_type );
@@ -433,7 +433,7 @@ class Manager {
 		// the group is also loaded from JSON (which takes precedence).
 		$group_post = get_page_by_path( $group_key, OBJECT, 'acf-field-group' );
 		if ( ! $group_post ) {
-			return array();
+			return [];
 		}
 
 		// Get all fields in the group by post ID.
@@ -441,7 +441,7 @@ class Manager {
 
 		// Handle false return (no fields).
 		if ( ! $fields ) {
-			return array();
+			return [];
 		}
 
 		// Filter out inactive fields unless requested.

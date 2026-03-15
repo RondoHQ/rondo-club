@@ -110,50 +110,52 @@ class InvoiceReminderScheduler {
 	 *    identified via Mollie payment link meta
 	 */
 	private function process_invoices(): void {
-		$invoice_ids = get_posts( [
-			'post_type'        => 'rondo_invoice',
-			'post_status'      => 'rondo_sent',
-			'posts_per_page'   => -1,
-			'fields'           => 'ids',
-			'no_found_rows'    => true,
-			'suppress_filters' => true,
-			'meta_query'       => [
-				'relation' => 'OR',
-				[
-					'relation' => 'AND',
+		$invoice_ids = get_posts(
+			[
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'rondo_sent',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					'relation' => 'OR',
 					[
-						'key'     => '_installment_plan',
-						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'   => 'invoice_type',
-						'value' => 'membership',
-					],
-				],
-				[
-					'relation' => 'AND',
-					[
-						'key'     => '_mollie_payment_link_id',
-						'compare' => 'EXISTS',
-					],
-					[
-						'relation' => 'OR',
+						'relation' => 'AND',
 						[
-							'key'   => 'invoice_type',
-							'value' => 'discipline',
-						],
-						[
-							'key'     => 'invoice_type',
+							'key'     => '_installment_plan',
 							'compare' => 'NOT EXISTS',
 						],
 						[
 							'key'   => 'invoice_type',
-							'value' => '',
+							'value' => 'membership',
+						],
+					],
+					[
+						'relation' => 'AND',
+						[
+							'key'     => '_mollie_payment_link_id',
+							'compare' => 'EXISTS',
+						],
+						[
+							'relation' => 'OR',
+							[
+								'key'   => 'invoice_type',
+								'value' => 'discipline',
+							],
+							[
+								'key'     => 'invoice_type',
+								'compare' => 'NOT EXISTS',
+							],
+							[
+								'key'   => 'invoice_type',
+								'value' => '',
+							],
 						],
 					],
 				],
-			],
-		] );
+			]
+		);
 
 		if ( empty( $invoice_ids ) ) {
 			return;
@@ -181,27 +183,31 @@ class InvoiceReminderScheduler {
 		$sent_date = (string) get_field( 'sent_date', $invoice_id );
 
 		if ( empty( $sent_date ) ) {
-			error_log( sprintf(
-				'[InvoiceReminderScheduler] Invoice %d: missing sent_date — skipping.',
-				$invoice_id
-			) );
+			error_log(
+				sprintf(
+					'[InvoiceReminderScheduler] Invoice %d: missing sent_date — skipping.',
+					$invoice_id
+				)
+			);
 			return;
 		}
 
 		// Parse sent_date (Ymd format) to timestamp.
 		$sent_ts = strtotime( $sent_date );
 		if ( $sent_ts === false ) {
-			error_log( sprintf(
-				'[InvoiceReminderScheduler] Invoice %d: could not parse sent_date "%s" — skipping.',
-				$invoice_id,
-				$sent_date
-			) );
+			error_log(
+				sprintf(
+					'[InvoiceReminderScheduler] Invoice %d: could not parse sent_date "%s" — skipping.',
+					$invoice_id,
+					$sent_date
+				)
+			);
 			return;
 		}
 
 		// Calculate days since sent.
-		$today_ts    = strtotime( current_time( 'Y-m-d' ) );
-		$days_since  = ( $today_ts !== false )
+		$today_ts   = strtotime( current_time( 'Y-m-d' ) );
+		$days_since = ( $today_ts !== false )
 			? (int) floor( ( $today_ts - $sent_ts ) / DAY_IN_SECONDS )
 			: 0;
 
@@ -212,24 +218,30 @@ class InvoiceReminderScheduler {
 				try {
 					$result = InvoiceReminderSender::send_reminder_2( $invoice_id );
 					if ( is_wp_error( $result ) ) {
-						error_log( sprintf(
-							'[InvoiceReminderScheduler] Invoice %d: reminder 2 failed — %s',
-							$invoice_id,
-							$result->get_error_message()
-						) );
+						error_log(
+							sprintf(
+								'[InvoiceReminderScheduler] Invoice %d: reminder 2 failed — %s',
+								$invoice_id,
+								$result->get_error_message()
+							)
+						);
 					} else {
-						error_log( sprintf(
-							'[InvoiceReminderScheduler] Invoice %d: reminder 2 sent (%d days since sent).',
-							$invoice_id,
-							$days_since
-						) );
+						error_log(
+							sprintf(
+								'[InvoiceReminderScheduler] Invoice %d: reminder 2 sent (%d days since sent).',
+								$invoice_id,
+								$days_since
+							)
+						);
 					}
 				} catch ( \Throwable $e ) {
-					error_log( sprintf(
-						'[InvoiceReminderScheduler] Invoice %d: exception during reminder 2 — %s',
-						$invoice_id,
-						$e->getMessage()
-					) );
+					error_log(
+						sprintf(
+							'[InvoiceReminderScheduler] Invoice %d: exception during reminder 2 — %s',
+							$invoice_id,
+							$e->getMessage()
+						)
+					);
 				}
 			}
 			return;
@@ -241,24 +253,30 @@ class InvoiceReminderScheduler {
 				try {
 					$result = InvoiceReminderSender::send_reminder_1( $invoice_id );
 					if ( is_wp_error( $result ) ) {
-						error_log( sprintf(
-							'[InvoiceReminderScheduler] Invoice %d: reminder 1 failed — %s',
-							$invoice_id,
-							$result->get_error_message()
-						) );
+						error_log(
+							sprintf(
+								'[InvoiceReminderScheduler] Invoice %d: reminder 1 failed — %s',
+								$invoice_id,
+								$result->get_error_message()
+							)
+						);
 					} else {
-						error_log( sprintf(
-							'[InvoiceReminderScheduler] Invoice %d: reminder 1 sent (%d days since sent).',
-							$invoice_id,
-							$days_since
-						) );
+						error_log(
+							sprintf(
+								'[InvoiceReminderScheduler] Invoice %d: reminder 1 sent (%d days since sent).',
+								$invoice_id,
+								$days_since
+							)
+						);
 					}
 				} catch ( \Throwable $e ) {
-					error_log( sprintf(
-						'[InvoiceReminderScheduler] Invoice %d: exception during reminder 1 — %s',
-						$invoice_id,
-						$e->getMessage()
-					) );
+					error_log(
+						sprintf(
+							'[InvoiceReminderScheduler] Invoice %d: exception during reminder 1 — %s',
+							$invoice_id,
+							$e->getMessage()
+						)
+					);
 				}
 			}
 		}

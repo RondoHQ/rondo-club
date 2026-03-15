@@ -54,12 +54,12 @@ class PhoneNormalizer {
 		$value = trim( $value );
 
 		// If empty after cleaning, return empty string.
-		if ( '' === $value ) {
+		if ( $value === '' ) {
 			return '';
 		}
 
 		// Already international format: starts with +.
-		if ( '+' === $value[0] ) {
+		if ( $value[0] === '+' ) {
 			// Keep leading +, strip everything except digits from the rest.
 			return '+' . preg_replace( '/[^0-9]/', '', substr( $value, 1 ) );
 		}
@@ -71,7 +71,7 @@ class PhoneNormalizer {
 		}
 
 		// Dutch local number starting with 0 (e.g., 06-12345678, 020-1234567).
-		if ( '0' === $value[0] ) {
+		if ( $value[0] === '0' ) {
 			$digits = preg_replace( '/[^0-9]/', '', substr( $value, 1 ) );
 			return '+31' . $digits;
 		}

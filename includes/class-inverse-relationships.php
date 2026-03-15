@@ -197,14 +197,14 @@ class InverseRelationships {
 			// Find matching previous relationship
 			$previous_rel = null;
 			foreach ( $previous_normalized as $prev_rel ) {
-				if ( $prev_rel['related_person'] == $related_person_id ) {
+				if ( (int) $prev_rel['related_person'] === (int) $related_person_id ) {
 					$previous_rel = $prev_rel;
 					break;
 				}
 			}
 
 			// Check if this is new or updated
-			if ( ! $previous_rel || $previous_rel['relationship_type'] != $relationship_type_id ) {
+			if ( ! $previous_rel || (int) $previous_rel['relationship_type'] !== (int) $relationship_type_id ) {
 				// New or updated relationship - sync inverse
 				$this->sync_single_inverse_relationship(
 					$post_id,
@@ -214,7 +214,7 @@ class InverseRelationships {
 				);
 
 				// If type changed, remove old inverse
-				if ( $previous_rel && $previous_rel['relationship_type'] != $relationship_type_id ) {
+				if ( $previous_rel && (int) $previous_rel['relationship_type'] !== (int) $relationship_type_id ) {
 					$this->remove_inverse_relationship(
 						$related_person_id,
 						$post_id,
@@ -236,7 +236,7 @@ class InverseRelationships {
 			// Check if this relationship still exists
 			$still_exists = false;
 			foreach ( $current_normalized as $current_rel ) {
-				if ( $current_rel['related_person'] == $related_person_id ) {
+				if ( (int) $current_rel['related_person'] === (int) $related_person_id ) {
 					$still_exists = true;
 					break;
 				}
@@ -253,12 +253,12 @@ class InverseRelationships {
 				// If this was a parent-child relationship, handle sibling cleanup
 				// TYPE_PARENT = "Parent" means "the related person is my parent"
 				// So post_id is the child, related_person_id is the parent
-				if ( $relationship_type_id == self::TYPE_PARENT ) {
+				if ( $relationship_type_id === self::TYPE_PARENT ) {
 					$this->remove_siblings_on_parent_removal( $post_id, $related_person_id );
 				}
 				// TYPE_CHILD = "Child" means "the related person is my child"
 				// So post_id is the parent, related_person_id is the child
-				elseif ( $relationship_type_id == self::TYPE_CHILD ) {
+				elseif ( $relationship_type_id === self::TYPE_CHILD ) {
 					$this->remove_siblings_on_parent_removal( $related_person_id, $post_id );
 				}
 			}
@@ -344,7 +344,7 @@ class InverseRelationships {
 			$term_slug       = $term->slug ?? '';
 			$symmetric_types = [ 'sibling' ];
 
-			if ( in_array( $term_slug, $symmetric_types ) ) {
+			if ( in_array( $term_slug, $symmetric_types, true ) ) {
 				// For symmetric relationships, inverse is the same type
 				$inverse_type_id = $relationship_type_id;
 			} else {
@@ -404,7 +404,7 @@ class InverseRelationships {
 				}
 			}
 
-			if ( $rel_person_id == $from_person_id ) {
+			if ( $rel_person_id === $from_person_id ) {
 				$inverse_exists = true;
 				$inverse_index  = $index;
 				break;
@@ -437,15 +437,15 @@ class InverseRelationships {
 
 		// After creating a parent-child or child-parent inverse relationship, sync siblings
 		// Check if this is a parent-child relationship
-		if ( $relationship_type_id == self::TYPE_PARENT || $relationship_type_id == self::TYPE_CHILD ) {
+		if ( $relationship_type_id === self::TYPE_PARENT || $relationship_type_id === self::TYPE_CHILD ) {
 			// TYPE_PARENT = "Parent" means "the related person is my parent"
 			// So from_person_id is the child, to_person_id is the parent
-			if ( $relationship_type_id == self::TYPE_PARENT ) {
+			if ( $relationship_type_id === self::TYPE_PARENT ) {
 				$this->sync_siblings_from_parent( $from_person_id, $to_person_id );
 			}
 			// TYPE_CHILD = "Child" means "the related person is my child"
 			// So from_person_id is the parent, to_person_id is the child
-			elseif ( $relationship_type_id == self::TYPE_CHILD ) {
+			elseif ( $relationship_type_id === self::TYPE_CHILD ) {
 				$this->sync_siblings_from_parent( $to_person_id, $from_person_id );
 			}
 		}
@@ -480,7 +480,7 @@ class InverseRelationships {
 			$term_slug       = $term->slug ?? '';
 			$symmetric_types = [ 'sibling' ];
 
-			if ( in_array( $term_slug, $symmetric_types ) ) {
+			if ( in_array( $term_slug, $symmetric_types, true ) ) {
 				// For symmetric relationships, inverse is the same type
 				$inverse_type_id = $relationship_type_id;
 			} else {
@@ -549,7 +549,7 @@ class InverseRelationships {
 				}
 			}
 
-			if ( $rel_person_id == $to_person_id && $rel_type_id == $inverse_type_id ) {
+			if ( $rel_person_id === $to_person_id && $rel_type_id === $inverse_type_id ) {
 				// Found the inverse relationship - remove it
 				unset( $related_person_relationships[ $index ] );
 				$found = true;
@@ -622,7 +622,7 @@ class InverseRelationships {
 		// Check each person's relationships for Child (type 9) pointing to this parent
 		foreach ( $people as $person_id ) {
 			// Skip the excluded child
-			if ( $exclude_child_id && $person_id == $exclude_child_id ) {
+			if ( $exclude_child_id && $person_id === $exclude_child_id ) {
 				continue;
 			}
 
@@ -655,7 +655,7 @@ class InverseRelationships {
 
 				// Check if this is a Parent relationship pointing to our parent
 				// TYPE_PARENT means "the related person is my parent"
-				if ( $relationship_type_id == self::TYPE_PARENT && $related_person_id == $parent_id ) {
+				if ( $relationship_type_id === self::TYPE_PARENT && $related_person_id === $parent_id ) {
 					$children[] = $person_id;
 					break; // Found relationship to parent, no need to check other relationships
 				}
@@ -727,7 +727,7 @@ class InverseRelationships {
 				}
 			}
 
-			if ( $related_person_id == $to_person_id && $relationship_type_id == $sibling_type_id ) {
+			if ( $related_person_id === $to_person_id && $relationship_type_id === $sibling_type_id ) {
 				$sibling_exists = true;
 				break;
 			}
@@ -783,7 +783,7 @@ class InverseRelationships {
 
 			// Check if this is a Parent relationship
 			// TYPE_PARENT means "the related person is my parent"
-			if ( $relationship_type_id == self::TYPE_PARENT ) {
+			if ( $relationship_type_id === self::TYPE_PARENT ) {
 				$has_parent = true;
 				break;
 			}
@@ -818,7 +818,7 @@ class InverseRelationships {
 				}
 			}
 
-			if ( $relationship_type_id == $sibling_type_id ) {
+			if ( $relationship_type_id === $sibling_type_id ) {
 				// This is a sibling relationship - don't keep it
 				// But track the sibling so we can remove the inverse
 				$related_person_id = null;
@@ -839,7 +839,7 @@ class InverseRelationships {
 		}
 
 		// Update child's relationships (removing siblings)
-		if ( count( $updated_relationships ) != count( $relationships ) ) {
+		if ( count( $updated_relationships ) !== count( $relationships ) ) {
 			$this->processing[ $child_id ] = true;
 			update_field( 'relationships', $updated_relationships, $child_id );
 			unset( $this->processing[ $child_id ] );
@@ -877,7 +877,7 @@ class InverseRelationships {
 				}
 
 				// If this is a sibling relationship pointing back to our child, skip it
-				if ( $relationship_type_id == $sibling_type_id && $related_person_id == $child_id ) {
+				if ( $relationship_type_id === $sibling_type_id && $related_person_id === $child_id ) {
 					$needs_update = true;
 					continue;
 				}

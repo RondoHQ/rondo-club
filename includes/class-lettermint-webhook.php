@@ -282,7 +282,7 @@ class LettermintWebhook {
 			return $existing;
 		}
 
-		$person_name  = $this->resolve_person_name( $person_id, $recipient );
+		$person_name = $this->resolve_person_name( $person_id, $recipient );
 		if ( $flow === self::FLOW_EMAIL_VERIFICATION ) {
 			$title = sprintf( 'Het email adres van %s werkt niet meer.', $person_name );
 		} else {

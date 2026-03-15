@@ -52,7 +52,7 @@ class InvoicePdfGenerator {
 		$invoice_status = get_field( 'status', $invoice_id ) ?: str_replace( 'rondo_', '', (string) $invoice->post_status );
 		$is_paid        = ( $invoice_status === 'paid' || $invoice->post_status === 'rondo_paid' );
 		$invoice_kind   = (string) get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
-		$is_credit      = ( 'credit' === $invoice_kind );
+		$is_credit      = ( $invoice_kind === 'credit' );
 
 		// Use current date as invoice date if not sent yet (draft preview)
 		if ( empty( $sent_date ) ) {
@@ -61,10 +61,10 @@ class InvoicePdfGenerator {
 
 		// Calculate due date if not set
 		if ( empty( $due_date ) ) {
-			$finance_config = new FinanceConfig();
+			$finance_config    = new FinanceConfig();
 			$payment_term_days = $finance_config->get_payment_term_days();
 			$invoice_timestamp = strtotime( substr( $sent_date, 0, 4 ) . '-' . substr( $sent_date, 4, 2 ) . '-' . substr( $sent_date, 6, 2 ) );
-			$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days", $invoice_timestamp ) );
+			$due_date          = date( 'Ymd', strtotime( "+{$payment_term_days} days", $invoice_timestamp ) );
 		}
 
 		// Gather customer data (member-linked and/or custom invoice data)
@@ -79,12 +79,12 @@ class InvoicePdfGenerator {
 
 		$person = $person_id ? get_post( $person_id ) : null;
 		if ( $person && $person->post_type === 'person' ) {
-			$first_name = get_field( 'first_name', $person_id );
-			$infix      = get_field( 'infix', $person_id );
-			$last_name  = get_field( 'last_name', $person_id );
-			$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
+			$first_name  = get_field( 'first_name', $person_id );
+			$infix       = get_field( 'infix', $person_id );
+			$last_name   = get_field( 'last_name', $person_id );
+			$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
 			$member_name = implode( ' ', $name_parts );
-			if ( '' === $person_name ) {
+			if ( $person_name === '' ) {
 				$person_name = $member_name;
 			}
 
@@ -99,46 +99,46 @@ class InvoicePdfGenerator {
 
 				$selected_address = null;
 				foreach ( $addresses as $addr ) {
-					if ( 0 === strcasecmp( $addr['address_label'] ?? '', 'Factuur' ) ) {
+					if ( strcasecmp( $addr['address_label'] ?? '', 'Factuur' ) === 0 ) {
 						$selected_address = $addr;
 						break;
 					}
 				}
-				if ( null === $selected_address ) {
+				if ( $selected_address === null ) {
 					$selected_address = $addresses[0];
 				}
 
-				$formatted      = $format_address( $selected_address );
-				$person_street  = $formatted['street'];
-				$person_city    = $formatted['city'];
+				$formatted     = $format_address( $selected_address );
+				$person_street = $formatted['street'];
+				$person_city   = $formatted['city'];
 			}
 
-			if ( '' === trim( $person_email ) ) {
+			if ( trim( $person_email ) === '' ) {
 				$person_email = (string) get_field( 'email_1', $person_id );
 			}
-			if ( '' === trim( $person_email ) ) {
+			if ( trim( $person_email ) === '' ) {
 				$person_email = (string) get_field( 'email_2', $person_id );
 			}
 		}
 
-		if ( '' !== trim( $address_text ) ) {
+		if ( trim( $address_text ) !== '' ) {
 			$address_lines = preg_split( '/\r\n|\r|\n/', $address_text );
 			$person_street = $address_lines[0] ?? '';
 			$person_city   = implode( ' ', array_filter( array_slice( $address_lines, 1 ) ) );
 		}
-		if ( '' === $person_name ) {
+		if ( $person_name === '' ) {
 			$person_name = __( 'Relatie', 'rondo' );
 		}
 
 		// Gather finance settings
-		$finance_config = new FinanceConfig();
-		$org_name       = $finance_config->get_org_name();
-		$org_address    = $finance_config->get_org_address();
-		$contact_email  = $finance_config->get_contact_email();
-		$payment_account = self::get_invoice_payment_account( $invoice_id, $finance_config );
-		$iban            = (string) ( $payment_account['iban'] ?? '' );
-		$account_holder  = (string) ( $payment_account['account_holder'] ?? $org_name );
-		$payment_clause = $finance_config->get_payment_clause();
+		$finance_config            = new FinanceConfig();
+		$org_name                  = $finance_config->get_org_name();
+		$org_address               = $finance_config->get_org_address();
+		$contact_email             = $finance_config->get_contact_email();
+		$payment_account           = self::get_invoice_payment_account( $invoice_id, $finance_config );
+		$iban                      = (string) ( $payment_account['iban'] ?? '' );
+		$account_holder            = (string) ( $payment_account['account_holder'] ?? $org_name );
+		$payment_clause            = $finance_config->get_payment_clause();
 		$membership_payment_clause = $finance_config->get_membership_payment_clause();
 
 		// Get accent color with fallback
@@ -150,10 +150,10 @@ class InvoicePdfGenerator {
 		// Get club logo with fallback to Rondo logo
 		$club_logo_id = $finance_config->get_club_logo_id();
 		if ( $club_logo_id > 0 ) {
-			$logo_path = get_attached_file( $club_logo_id );
+			$logo_path   = get_attached_file( $club_logo_id );
 			$logo_exists = $logo_path && file_exists( $logo_path );
 		} else {
-			$logo_path = get_template_directory() . '/public/icons/rondo-logo.png';
+			$logo_path   = get_template_directory() . '/public/icons/rondo-logo.png';
 			$logo_exists = file_exists( $logo_path );
 		}
 
@@ -161,8 +161,8 @@ class InvoicePdfGenerator {
 		$qr_code_path    = get_field( 'qr_code_path', $invoice_id );
 		$qr_code_abspath = null;
 		if ( ! empty( $qr_code_path ) ) {
-			$upload_dir      = wp_upload_dir();
-			$qr_full_path    = $upload_dir['basedir'] . '/' . $qr_code_path;
+			$upload_dir   = wp_upload_dir();
+			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;
 			if ( file_exists( $qr_full_path ) ) {
 				$qr_code_abspath = $qr_full_path;
 			}
@@ -202,16 +202,18 @@ class InvoicePdfGenerator {
 
 		// Generate PDF with mPDF
 		try {
-			$mpdf = new \Mpdf\Mpdf([
-				'mode'              => 'utf-8',
-				'format'            => 'A4',
-				'default_font_size' => 10,
-				'default_font'      => 'dejavusans',
-				'margin_left'       => 20,
-				'margin_right'      => 20,
-				'margin_top'        => 15,
-				'margin_bottom'     => 15,
-			]);
+			$mpdf = new \Mpdf\Mpdf(
+				[
+					'mode'              => 'utf-8',
+					'format'            => 'A4',
+					'default_font_size' => 10,
+					'default_font'      => 'dejavusans',
+					'margin_left'       => 20,
+					'margin_right'      => 20,
+					'margin_top'        => 15,
+					'margin_bottom'     => 15,
+				]
+			);
 			if ( $is_credit || $is_paid ) {
 				// Use mPDF native watermark so angle and opacity are applied reliably.
 				$watermark_text = $is_credit ? 'CREDIT' : 'BETAALD';
@@ -221,7 +223,7 @@ class InvoicePdfGenerator {
 			$mpdf->WriteHTML( $html );
 
 			// Save PDF to WordPress uploads
-			$upload_dir = wp_upload_dir();
+			$upload_dir   = wp_upload_dir();
 			$invoices_dir = $upload_dir['basedir'] . '/invoices';
 
 			// Create invoices directory if it doesn't exist
@@ -229,8 +231,8 @@ class InvoicePdfGenerator {
 				wp_mkdir_p( $invoices_dir );
 			}
 
-			$filename = 'factuur-' . $invoice_number . '.pdf';
-			$full_path = $invoices_dir . '/' . $filename;
+			$filename      = 'factuur-' . $invoice_number . '.pdf';
+			$full_path     = $invoices_dir . '/' . $filename;
 			$relative_path = 'invoices/' . $filename;
 
 			$mpdf->Output( $full_path, \Mpdf\Output\Destination::FILE );
@@ -321,15 +323,15 @@ class InvoicePdfGenerator {
 		}
 
 		// Build line items table rows
-		$is_membership   = ( $invoice_type === 'membership' );
-		$line_items_html = '';
+		$is_membership      = ( $invoice_type === 'membership' );
+		$line_items_html    = '';
 		$custom_fields_html = '';
 
 		if ( is_array( $custom_fields ) ) {
 			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
 				$label = trim( (string) ( $field['label'] ?? '' ) );
 				$text  = trim( (string) ( $field['text'] ?? '' ) );
-				if ( '' === $label && '' === $text ) {
+				if ( $label === '' && $text === '' ) {
 					continue;
 				}
 
@@ -355,7 +357,7 @@ class InvoicePdfGenerator {
 
 				if ( $is_membership ) {
 					// Membership: 2-column layout (description + amount).
-					$description = $item['description'] ?? '';
+					$description      = $item['description'] ?? '';
 					$line_items_html .= '<tr>';
 					$line_items_html .= '<td>' . esc_html( $description ) . '</td>';
 					$line_items_html .= '<td style="text-align: right;">' . $formatted_amount . '</td>';
@@ -600,8 +602,8 @@ table.line-items .total-row td {
 	<h2>Betaalgegevens</h2>
 	<table style="width: 100%; border: none;"><tr>
 		<td style="border: none; vertical-align: top; padding: 0;">
-			' . ( '' !== $formatted_iban ? '<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>' : '' ) . '
-			' . ( '' !== $account_holder ? '<div>t.n.v. ' . esc_html( $account_holder ) . '</div>' : '' ) . '
+			' . ( $formatted_iban !== '' ? '<div class="iban">IBAN: ' . esc_html( $formatted_iban ) . '</div>' : '' ) . '
+			' . ( $account_holder !== '' ? '<div>t.n.v. ' . esc_html( $account_holder ) . '</div>' : '' ) . '
 			' . ( ! empty( $membership_payment_clause ) ? '<div class="payment-clause">' . nl2br( esc_html( $membership_payment_clause ) ) . '</div>' : '' ) . '
 		</td>'
 		. ( $qr_code_path ? '
@@ -676,14 +678,14 @@ table.line-items .total-row td {
 	 * @return array<string, string>
 	 */
 	private static function get_invoice_payment_account( int $invoice_id, FinanceConfig $finance_config ): array {
-		$invoice_type     = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type    = (string) get_field( 'invoice_type', $invoice_id );
 		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
 		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
 		$iban            = (string) get_post_meta( $invoice_id, '_payment_account_iban', true );
 		$linked_provider = (string) get_post_meta( $invoice_id, '_payment_account_linked_provider', true );
 
-		if ( '' !== $account_id || '' !== $internal_name || '' !== $account_holder || '' !== $iban ) {
+		if ( $account_id !== '' || $internal_name !== '' || $account_holder !== '' || $iban !== '' ) {
 			return [
 				'id'              => $account_id,
 				'internal_name'   => $internal_name,
@@ -706,5 +708,4 @@ table.line-items .total-row td {
 			'linked_provider' => '',
 		];
 	}
-
 }

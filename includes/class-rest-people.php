@@ -171,27 +171,27 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filtered_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
-					'page'                 => [
+					'page'                     => [
 						'default'           => 1,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'per_page'             => [
+					'per_page'                 => [
 						'default'           => 100,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'ownership'            => [
+					'ownership'                => [
 						'default'           => 'all',
 						'validate_callback' => function ( $param ) {
 							return in_array( $param, [ 'mine', 'shared', 'all' ], true );
 						},
 					],
-					'modified_days'        => [
+					'modified_days'            => [
 						'default'           => null,
 						'validate_callback' => function ( $param ) {
 							return $param === null || $param === '' || ( is_numeric( $param ) && (int) $param > 0 );
@@ -200,11 +200,11 @@ class People extends Base {
 							return $param === null || $param === '' ? null : absint( $param );
 						},
 					],
-					'orderby'              => [
+					'orderby'                  => [
 						'default'           => 'first_name',
 						'validate_callback' => [ $this, 'validate_orderby_param' ],
 					],
-					'order'                => [
+					'order'                    => [
 						'default'           => 'asc',
 						'validate_callback' => function ( $param ) {
 							return in_array( strtolower( $param ), [ 'asc', 'desc' ], true );
@@ -213,7 +213,7 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
-					'birth_year_from'      => [
+					'birth_year_from'          => [
 						'description'       => 'Filter by birth year (minimum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -221,7 +221,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_year_to'        => [
+					'birth_year_to'            => [
 						'description'       => 'Filter by birth year (maximum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -229,7 +229,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_month'          => [
+					'birth_month'              => [
 						'description'       => 'Filter by birth month (1-12)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -238,7 +238,7 @@ class People extends Base {
 						},
 					],
 					// Custom field filters
-					'huidig_vrijwilliger'  => [
+					'huidig_vrijwilliger'      => [
 						'description'       => 'Filter by current volunteer status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -246,7 +246,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'financiele_blokkade'  => [
+					'financiele_blokkade'      => [
 						'description'       => 'Filter by financial block status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -254,12 +254,12 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'type_lid'             => [
+					'type_lid'                 => [
 						'description'       => 'Filter by member type',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'foto_missing'         => [
+					'foto_missing'             => [
 						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -267,7 +267,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_missing'          => [
+					'vog_missing'              => [
 						'description'       => 'Filter for people without VOG date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -275,7 +275,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_older_than_years' => [
+					'vog_older_than_years'     => [
 						'description'       => 'Filter for VOG older than N years',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -283,7 +283,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 10;
 						},
 					],
-					'vog_email_status'     => [
+					'vog_email_status'         => [
 						'description'       => 'Filter by VOG email status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -291,7 +291,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'vog_type'             => [
+					'vog_type'                 => [
 						'description'       => 'Filter by VOG type (nieuw=no VOG, vernieuwing=expired VOG)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -299,7 +299,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'nieuw', 'vernieuwing' ], true );
 						},
 					],
-					'leeftijdsgroep'       => [
+					'leeftijdsgroep'           => [
 						'description'       => 'Filter by age group',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -312,7 +312,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 365;
 						},
 					],
-					'vog_justis_status'    => [
+					'vog_justis_status'        => [
 						'description'       => 'Filter by VOG Justis status (submitted, not_submitted, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -320,7 +320,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'submitted', 'not_submitted' ], true );
 						},
 					],
-					'vog_reminder_status'  => [
+					'vog_reminder_status'      => [
 						'description'       => 'Filter by VOG reminder status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -328,7 +328,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'include_former'       => [
+					'include_former'           => [
 						'description'       => 'Include former members in results (1=include, empty=exclude)',
 						'type'              => 'string',
 						'default'           => '',
@@ -337,7 +337,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'lid_tot_future'       => [
+					'lid_tot_future'           => [
 						'description'       => 'Filter for people with lid-tot date in the future (1=future only, empty=all)',
 						'type'              => 'string',
 						'default'           => '',
@@ -346,7 +346,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'spelactiviteit_no_team' => [
+					'spelactiviteit_no_team'   => [
 						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
 						'type'              => 'string',
 						'default'           => '',
@@ -396,7 +396,7 @@ class People extends Base {
 
 		// Validate file type
 		$allowed_types = [ 'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp' ];
-		if ( ! in_array( $file['type'], $allowed_types ) ) {
+		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
 			return new \WP_Error( 'invalid_type', __( 'Invalid file type. Please upload an image.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
@@ -640,7 +640,8 @@ class People extends Base {
 			if ( ! $post || $post->post_type !== 'person' ) {
 				return new \WP_Error(
 					'rest_invalid_id',
-					sprintf( __( 'Person with ID %d not found.', 'rondo' ), $post_id ),
+					// translators: %d is the person post ID.
+				sprintf( __( 'Person with ID %d not found.', 'rondo' ), $post_id ),
 					[ 'status' => 404 ]
 				);
 			}
@@ -649,7 +650,8 @@ class People extends Base {
 			if ( (int) $post->post_author !== $current_user_id && ! $is_admin ) {
 				return new \WP_Error(
 					'rest_forbidden',
-					sprintf( __( 'You do not have permission to update person with ID %d.', 'rondo' ), $post_id ),
+					// translators: %d is the person post ID.
+				sprintf( __( 'You do not have permission to update person with ID %d.', 'rondo' ), $post_id ),
 					[ 'status' => 403 ]
 				);
 			}
@@ -695,8 +697,8 @@ class People extends Base {
 						// Check if team already exists in work history
 						$found = false;
 						foreach ( $work_history as &$job ) {
-							$job['is_current'] = ( $job['team'] == $org_id );
-							if ( $job['team'] == $org_id ) {
+							$job['is_current'] = ( (int) $job['team'] === (int) $org_id );
+							if ( (int) $job['team'] === (int) $org_id ) {
 								$found = true;
 							}
 						}
@@ -815,21 +817,21 @@ class People extends Base {
 		$order           = strtoupper( $request->get_param( 'order' ) );
 
 		// Custom field filter parameters
-		$huidig_vrijwilliger  = $request->get_param( 'huidig_vrijwilliger' );
-		$financiele_blokkade  = $request->get_param( 'financiele_blokkade' );
-		$type_lid             = $request->get_param( 'type_lid' );
-		$foto_missing         = $request->get_param( 'foto_missing' );
-		$vog_missing          = $request->get_param( 'vog_missing' );
-		$vog_older_than_years    = $request->get_param( 'vog_older_than_years' );
+		$huidig_vrijwilliger      = $request->get_param( 'huidig_vrijwilliger' );
+		$financiele_blokkade      = $request->get_param( 'financiele_blokkade' );
+		$type_lid                 = $request->get_param( 'type_lid' );
+		$foto_missing             = $request->get_param( 'foto_missing' );
+		$vog_missing              = $request->get_param( 'vog_missing' );
+		$vog_older_than_years     = $request->get_param( 'vog_older_than_years' );
 		$vog_expiring_within_days = $request->get_param( 'vog_expiring_within_days' );
-		$vog_email_status        = $request->get_param( 'vog_email_status' );
-		$vog_type             = $request->get_param( 'vog_type' );
-		$leeftijdsgroep       = $request->get_param( 'leeftijdsgroep' );
-		$vog_justis_status    = $request->get_param( 'vog_justis_status' );
-		$vog_reminder_status  = $request->get_param( 'vog_reminder_status' );
-		$include_former       = $request->get_param( 'include_former' );
-		$lid_tot_future       = $request->get_param( 'lid_tot_future' );
-		$spelactiviteit_no_team = $request->get_param( 'spelactiviteit_no_team' );
+		$vog_email_status         = $request->get_param( 'vog_email_status' );
+		$vog_type                 = $request->get_param( 'vog_type' );
+		$leeftijdsgroep           = $request->get_param( 'leeftijdsgroep' );
+		$vog_justis_status        = $request->get_param( 'vog_justis_status' );
+		$vog_reminder_status      = $request->get_param( 'vog_reminder_status' );
+		$include_former           = $request->get_param( 'include_former' );
+		$lid_tot_future           = $request->get_param( 'lid_tot_future' );
+		$spelactiviteit_no_team   = $request->get_param( 'spelactiviteit_no_team' );
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -875,16 +877,16 @@ class People extends Base {
 		$select_fields .= ', fn.meta_value AS first_name, ix.meta_value AS infix, ln.meta_value AS last_name';
 		$select_fields .= ', tm.meta_value AS team_id';
 
-		$has_birthdate_join = false;
-		$birthdate_value_sql = "CASE
+		$has_birthdate_join    = false;
+		$birthdate_value_sql   = "CASE
 			WHEN br.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' OR br.meta_value REGEXP '^[0-9]{8}$' THEN br.meta_value
 			WHEN bd.meta_value REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' OR bd.meta_value REGEXP '^[0-9]{8}$' THEN bd.meta_value
 			ELSE NULL
 		END";
 		$ensure_birthdate_join = static function () use ( &$has_birthdate_join, &$join_clauses, $wpdb ) {
 			if ( ! $has_birthdate_join ) {
-				$join_clauses[]      = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
-				$join_clauses[]      = "LEFT JOIN {$wpdb->postmeta} br ON p.ID = br.post_id AND br.meta_key = 'birthdate'";
+				$join_clauses[]     = "LEFT JOIN {$wpdb->postmeta} bd ON p.ID = bd.post_id AND bd.meta_key = '_birthdate'";
+				$join_clauses[]     = "LEFT JOIN {$wpdb->postmeta} br ON p.ID = br.post_id AND br.meta_key = 'birthdate'";
 				$has_birthdate_join = true;
 			}
 		};
@@ -1078,11 +1080,11 @@ class People extends Base {
 		// Shows people who have a spelactiviteit value but no current PLAYER role in a team.
 		// Volunteer/staff roles in teams should NOT exclude a person from this filter.
 		if ( $spelactiviteit_no_team === '1' ) {
-			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sa ON p.ID = sa.post_id AND sa.meta_key = 'spelactiviteit'";
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} sa ON p.ID = sa.post_id AND sa.meta_key = 'spelactiviteit'";
 
 			// Build the list of player roles for the SQL IN clause.
-			$player_roles       = \Rondo\Core\VolunteerStatus::get_player_roles();
-			$role_placeholders  = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
+			$player_roles      = \Rondo\Core\VolunteerStatus::get_player_roles();
+			$role_placeholders = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
 
 			// Subquery: person has at least one current work_history entry that is
 			// (a) linked to a team (post_type = 'team'), and (b) has a player job_title.
@@ -1123,7 +1125,7 @@ class People extends Base {
 				$order_clause = "ORDER BY p.post_modified $order";
 				break;
 			case 'organization':
-				$order_clause   = "ORDER BY
+				$order_clause = "ORDER BY
 					(tm.meta_value IS NULL OR tm.meta_value = '') ASC,
 					tm.meta_value $order,
 					fn.meta_value ASC";
@@ -1149,7 +1151,7 @@ class People extends Base {
 				if ( ! $has_dv_join ) {
 					$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'";
 				}
-				$order_clause   = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
+				$order_clause = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
 			case 'custom_lid-sinds':
 			case 'custom_vrijwilliger-sinds':
@@ -1200,7 +1202,7 @@ class People extends Base {
 					$field_name
 				);
 				// Custom sort for leeftijdsgroep: Onder 6 < Onder 7 < ... < Onder 19 < Senioren
-				$order_clause   = "ORDER BY
+				$order_clause = "ORDER BY
 					CASE
 						WHEN cf.meta_value LIKE 'Onder %' THEN CAST(SUBSTRING(cf.meta_value, 7) AS UNSIGNED)
 						WHEN cf.meta_value LIKE 'Senioren%' THEN 99

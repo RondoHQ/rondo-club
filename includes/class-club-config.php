@@ -99,21 +99,21 @@ class ClubConfig {
 	 * @var array<string, string>
 	 */
 	const DEFAULTS = [
-		'club_name'     => '',
-		'freescout_url' => '',
-		'freescout_api_key' => '',
-		'lettermint_api_token' => '',
-		'lettermint_team_api_token' => '',
-		'lettermint_project_id' => '',
-		'lettermint_route_id' => '',
-		'lettermint_from_email' => '',
-		'lettermint_from_name' => '',
-		'lettermint_webhook_secret' => '',
-		'lettermint_webhook_id' => '',
+		'club_name'                             => '',
+		'freescout_url'                         => '',
+		'freescout_api_key'                     => '',
+		'lettermint_api_token'                  => '',
+		'lettermint_team_api_token'             => '',
+		'lettermint_project_id'                 => '',
+		'lettermint_route_id'                   => '',
+		'lettermint_from_email'                 => '',
+		'lettermint_from_name'                  => '',
+		'lettermint_webhook_secret'             => '',
+		'lettermint_webhook_id'                 => '',
 		'lettermint_verification_email_subject' => '[Rondo Club] Controle e-mailadres',
-		'lettermint_verification_email_body' => "Beste {name},\n\nWe krijgen een foutmelding op e-mails naar {email}.\nWil je controleren of dit e-mailadres nog klopt en op deze mail reageren?\n\nAlvast bedankt,\n{sender_name}",
-		'lettermint_verification_from_email' => '',
-		'lettermint_verification_from_name' => '',
+		'lettermint_verification_email_body'    => "Beste {name},\n\nWe krijgen een foutmelding op e-mails naar {email}.\nWil je controleren of dit e-mailadres nog klopt en op deze mail reageren?\n\nAlvast bedankt,\n{sender_name}",
+		'lettermint_verification_from_email'    => '',
+		'lettermint_verification_from_name'     => '',
 	];
 
 	/**
@@ -287,22 +287,22 @@ class ClubConfig {
 		$webhook_path = 'rondo/v1/lettermint/webhook';
 
 		return [
-			'club_name'     => self::get_club_name(),
-			'freescout_url' => self::get_freescout_url(),
-			'freescout_has_api_key' => self::has_freescout_api_key(),
-			'lettermint_project_id' => self::get_lettermint_project_id(),
-			'lettermint_route_id' => self::get_lettermint_route_id(),
-			'lettermint_from_email' => self::get_lettermint_from_email(),
-			'lettermint_from_name' => self::get_lettermint_from_name(),
-			'lettermint_webhook_id' => self::get_lettermint_webhook_id(),
+			'club_name'                             => self::get_club_name(),
+			'freescout_url'                         => self::get_freescout_url(),
+			'freescout_has_api_key'                 => self::has_freescout_api_key(),
+			'lettermint_project_id'                 => self::get_lettermint_project_id(),
+			'lettermint_route_id'                   => self::get_lettermint_route_id(),
+			'lettermint_from_email'                 => self::get_lettermint_from_email(),
+			'lettermint_from_name'                  => self::get_lettermint_from_name(),
+			'lettermint_webhook_id'                 => self::get_lettermint_webhook_id(),
 			'lettermint_verification_email_subject' => self::get_lettermint_verification_email_subject(),
-			'lettermint_verification_email_body' => self::get_lettermint_verification_email_body(),
-			'lettermint_verification_from_email' => self::get_lettermint_verification_from_email(),
-			'lettermint_verification_from_name' => self::get_lettermint_verification_from_name(),
-			'lettermint_has_api_token' => self::has_lettermint_api_token(),
-			'lettermint_has_team_api_token' => self::has_lettermint_team_api_token(),
-			'lettermint_has_webhook_secret' => self::has_lettermint_webhook_secret(),
-			'lettermint_webhook_url' => rest_url( $webhook_path ),
+			'lettermint_verification_email_body'    => self::get_lettermint_verification_email_body(),
+			'lettermint_verification_from_email'    => self::get_lettermint_verification_from_email(),
+			'lettermint_verification_from_name'     => self::get_lettermint_verification_from_name(),
+			'lettermint_has_api_token'              => self::has_lettermint_api_token(),
+			'lettermint_has_team_api_token'         => self::has_lettermint_team_api_token(),
+			'lettermint_has_webhook_secret'         => self::has_lettermint_webhook_secret(),
+			'lettermint_webhook_url'                => rest_url( $webhook_path ),
 		];
 	}
 

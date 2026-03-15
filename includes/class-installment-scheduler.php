@@ -104,21 +104,23 @@ class InstallmentScheduler {
 	 * is not 'full' (i.e. quarterly_3 or monthly_8).
 	 */
 	private function process_invoices(): void {
-		$invoice_ids = get_posts( [
-			'post_type'        => 'rondo_invoice',
-			'post_status'      => 'rondo_sent',
-			'posts_per_page'   => -1,
-			'fields'           => 'ids',
-			'no_found_rows'    => true,
-			'suppress_filters' => true,
-			'meta_query'       => [
-				[
-					'key'     => '_installment_plan',
-					'value'   => 'full',
-					'compare' => '!=',
+		$invoice_ids = get_posts(
+			[
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'rondo_sent',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					[
+						'key'     => '_installment_plan',
+						'value'   => 'full',
+						'compare' => '!=',
+					],
 				],
-			],
-		] );
+			]
+		);
 
 		if ( empty( $invoice_ids ) ) {
 			return;
@@ -157,11 +159,13 @@ class InstallmentScheduler {
 
 			// Skip installments with missing due date.
 			if ( empty( $due_date ) ) {
-				error_log( sprintf(
-					'[InstallmentScheduler] Invoice %d installment %d: missing due date — skipping.',
-					$invoice_id,
-					$n
-				) );
+				error_log(
+					sprintf(
+						'[InstallmentScheduler] Invoice %d installment %d: missing due date — skipping.',
+						$invoice_id,
+						$n
+					)
+				);
 				continue;
 			}
 
@@ -171,8 +175,8 @@ class InstallmentScheduler {
 			}
 
 			// Calculate days overdue (negative = not yet due).
-			$today_ts    = strtotime( $today );
-			$due_ts      = strtotime( $due_date );
+			$today_ts     = strtotime( $today );
+			$due_ts       = strtotime( $due_date );
 			$days_overdue = ( $today_ts !== false && $due_ts !== false )
 				? (int) floor( ( $today_ts - $due_ts ) / DAY_IN_SECONDS )
 				: 0;
@@ -182,26 +186,32 @@ class InstallmentScheduler {
 				try {
 					$result = InstallmentEmailSender::send_installment_email( $invoice_id, $n );
 					if ( is_wp_error( $result ) ) {
-						error_log( sprintf(
-							'[InstallmentScheduler] Invoice %d installment %d: initial email failed — %s',
-							$invoice_id,
-							$n,
-							$result->get_error_message()
-						) );
+						error_log(
+							sprintf(
+								'[InstallmentScheduler] Invoice %d installment %d: initial email failed — %s',
+								$invoice_id,
+								$n,
+								$result->get_error_message()
+							)
+						);
 					} else {
-						error_log( sprintf(
-							'[InstallmentScheduler] Invoice %d installment %d: initial email sent.',
-							$invoice_id,
-							$n
-						) );
+						error_log(
+							sprintf(
+								'[InstallmentScheduler] Invoice %d installment %d: initial email sent.',
+								$invoice_id,
+								$n
+							)
+						);
 					}
 				} catch ( \Throwable $e ) {
-					error_log( sprintf(
-						'[InstallmentScheduler] Invoice %d installment %d: exception during initial send — %s',
-						$invoice_id,
-						$n,
-						$e->getMessage()
-					) );
+					error_log(
+						sprintf(
+							'[InstallmentScheduler] Invoice %d installment %d: exception during initial send — %s',
+							$invoice_id,
+							$n,
+							$e->getMessage()
+						)
+					);
 				}
 				continue;
 			}
@@ -215,27 +225,33 @@ class InstallmentScheduler {
 						try {
 							$result = InstallmentEmailSender::send_reminder_2( $invoice_id, $n );
 							if ( is_wp_error( $result ) ) {
-								error_log( sprintf(
-									'[InstallmentScheduler] Invoice %d installment %d: reminder 2 failed — %s',
-									$invoice_id,
-									$n,
-									$result->get_error_message()
-								) );
+								error_log(
+									sprintf(
+										'[InstallmentScheduler] Invoice %d installment %d: reminder 2 failed — %s',
+										$invoice_id,
+										$n,
+										$result->get_error_message()
+									)
+								);
 							} else {
-								error_log( sprintf(
-									'[InstallmentScheduler] Invoice %d installment %d: reminder 2 sent (%d days overdue).',
-									$invoice_id,
-									$n,
-									$days_overdue
-								) );
+								error_log(
+									sprintf(
+										'[InstallmentScheduler] Invoice %d installment %d: reminder 2 sent (%d days overdue).',
+										$invoice_id,
+										$n,
+										$days_overdue
+									)
+								);
 							}
 						} catch ( \Throwable $e ) {
-							error_log( sprintf(
-								'[InstallmentScheduler] Invoice %d installment %d: exception during reminder 2 — %s',
-								$invoice_id,
-								$n,
-								$e->getMessage()
-							) );
+							error_log(
+								sprintf(
+									'[InstallmentScheduler] Invoice %d installment %d: exception during reminder 2 — %s',
+									$invoice_id,
+									$n,
+									$e->getMessage()
+								)
+							);
 						}
 					}
 					continue;
@@ -247,27 +263,33 @@ class InstallmentScheduler {
 						try {
 							$result = InstallmentEmailSender::send_reminder_1( $invoice_id, $n );
 							if ( is_wp_error( $result ) ) {
-								error_log( sprintf(
-									'[InstallmentScheduler] Invoice %d installment %d: reminder 1 failed — %s',
-									$invoice_id,
-									$n,
-									$result->get_error_message()
-								) );
+								error_log(
+									sprintf(
+										'[InstallmentScheduler] Invoice %d installment %d: reminder 1 failed — %s',
+										$invoice_id,
+										$n,
+										$result->get_error_message()
+									)
+								);
 							} else {
-								error_log( sprintf(
-									'[InstallmentScheduler] Invoice %d installment %d: reminder 1 sent (%d days overdue).',
-									$invoice_id,
-									$n,
-									$days_overdue
-								) );
+								error_log(
+									sprintf(
+										'[InstallmentScheduler] Invoice %d installment %d: reminder 1 sent (%d days overdue).',
+										$invoice_id,
+										$n,
+										$days_overdue
+									)
+								);
 							}
 						} catch ( \Throwable $e ) {
-							error_log( sprintf(
-								'[InstallmentScheduler] Invoice %d installment %d: exception during reminder 1 — %s',
-								$invoice_id,
-								$n,
-								$e->getMessage()
-							) );
+							error_log(
+								sprintf(
+									'[InstallmentScheduler] Invoice %d installment %d: exception during reminder 1 — %s',
+									$invoice_id,
+									$n,
+									$e->getMessage()
+								)
+							);
 						}
 					}
 				}

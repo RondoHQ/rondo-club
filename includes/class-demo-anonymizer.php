@@ -30,55 +30,199 @@ class DemoAnonymizer {
 	 *
 	 * @var array
 	 */
-	private $identities = array();
+	private $identities = [];
 
 	/**
 	 * Dutch male first names
 	 *
 	 * @var array
 	 */
-	private static $male_first_names = array(
-		'Jan', 'Pieter', 'Willem', 'Daan', 'Sem', 'Lucas', 'Levi', 'Finn', 'Luuk', 'Milan',
-		'Bram', 'Lars', 'Jesse', 'Thomas', 'Tim', 'Stijn', 'Ruben', 'Thijs', 'Max', 'Sven',
-		'Niels', 'Joost', 'Jeroen', 'Mark', 'Erik', 'Peter', 'Kees', 'Henk', 'Bert', 'Rob',
-		'Martijn', 'Wouter', 'Jasper', 'Bas', 'Rick', 'Dennis', 'Stefan', 'Marcel', 'Arjan', 'Gerrit',
-		'Dirk', 'Frank', 'Hans', 'Michiel', 'Sander', 'Kevin', 'Jelle', 'Dave', 'Floris', 'Hugo',
-		'Maarten', 'Gijs', 'Casper', 'Timo', 'Niek', 'Bart', 'Freek', 'Wim', 'Anton', 'Paul',
-		'Jaap', 'Simon', 'David', 'Tom', 'Rens', 'Job', 'Sam', 'Arie', 'Cor', 'Piet',
-		'Frits', 'Guus', 'Johan', 'Marco', 'Raymond', 'Patrick', 'Vincent', 'Edwin', 'Gerard', 'Ben',
-	);
+	private static $male_first_names = [
+		'Jan',
+		'Pieter',
+		'Willem',
+		'Daan',
+		'Sem',
+		'Lucas',
+		'Levi',
+		'Finn',
+		'Luuk',
+		'Milan',
+		'Bram',
+		'Lars',
+		'Jesse',
+		'Thomas',
+		'Tim',
+		'Stijn',
+		'Ruben',
+		'Thijs',
+		'Max',
+		'Sven',
+		'Niels',
+		'Joost',
+		'Jeroen',
+		'Mark',
+		'Erik',
+		'Peter',
+		'Kees',
+		'Henk',
+		'Bert',
+		'Rob',
+		'Martijn',
+		'Wouter',
+		'Jasper',
+		'Bas',
+		'Rick',
+		'Dennis',
+		'Stefan',
+		'Marcel',
+		'Arjan',
+		'Gerrit',
+		'Dirk',
+		'Frank',
+		'Hans',
+		'Michiel',
+		'Sander',
+		'Kevin',
+		'Jelle',
+		'Dave',
+		'Floris',
+		'Hugo',
+		'Maarten',
+		'Gijs',
+		'Casper',
+		'Timo',
+		'Niek',
+		'Bart',
+		'Freek',
+		'Wim',
+		'Anton',
+		'Paul',
+		'Jaap',
+		'Simon',
+		'David',
+		'Tom',
+		'Rens',
+		'Job',
+		'Sam',
+		'Arie',
+		'Cor',
+		'Piet',
+		'Frits',
+		'Guus',
+		'Johan',
+		'Marco',
+		'Raymond',
+		'Patrick',
+		'Vincent',
+		'Edwin',
+		'Gerard',
+		'Ben',
+	];
 
 	/**
 	 * Dutch female first names
 	 *
 	 * @var array
 	 */
-	private static $female_first_names = array(
-		'Anna', 'Emma', 'Sophie', 'Julia', 'Sara', 'Eva', 'Lisa', 'Noa', 'Lotte', 'Fleur',
-		'Iris', 'Isa', 'Sanne', 'Femke', 'Mila', 'Eline', 'Roos', 'Vera', 'Lynn', 'Hanna',
-		'Linda', 'Monique', 'Sandra', 'Annemiek', 'Ingrid', 'Petra', 'Marieke', 'Esther', 'Ellen', 'Nicole',
-		'Miranda', 'Wendy', 'Birgit', 'Marloes', 'Anke', 'Anouk', 'Demi', 'Tess', 'Fenna', 'Nina',
-		'Maud', 'Amy', 'Yara', 'Lieke', 'Britt', 'Kim', 'Denise', 'Manon', 'Chantal', 'Diana',
-		'Ilse', 'Rianne', 'Wilma', 'Joke', 'Marian', 'Anja', 'Claudia', 'Astrid', 'Tineke', 'Greetje',
-		'Liesbeth', 'Hanneke', 'Janneke', 'Marjolein', 'Corina', 'Renate', 'Suzanne', 'Judith', 'Joyce', 'Silvia',
-		'Miriam', 'Simone', 'Pauline', 'Nienke', 'Elise', 'Merel', 'Renee', 'Daphne', 'Elisa', 'Amber',
-	);
+	private static $female_first_names = [
+		'Anna',
+		'Emma',
+		'Sophie',
+		'Julia',
+		'Sara',
+		'Eva',
+		'Lisa',
+		'Noa',
+		'Lotte',
+		'Fleur',
+		'Iris',
+		'Isa',
+		'Sanne',
+		'Femke',
+		'Mila',
+		'Eline',
+		'Roos',
+		'Vera',
+		'Lynn',
+		'Hanna',
+		'Linda',
+		'Monique',
+		'Sandra',
+		'Annemiek',
+		'Ingrid',
+		'Petra',
+		'Marieke',
+		'Esther',
+		'Ellen',
+		'Nicole',
+		'Miranda',
+		'Wendy',
+		'Birgit',
+		'Marloes',
+		'Anke',
+		'Anouk',
+		'Demi',
+		'Tess',
+		'Fenna',
+		'Nina',
+		'Maud',
+		'Amy',
+		'Yara',
+		'Lieke',
+		'Britt',
+		'Kim',
+		'Denise',
+		'Manon',
+		'Chantal',
+		'Diana',
+		'Ilse',
+		'Rianne',
+		'Wilma',
+		'Joke',
+		'Marian',
+		'Anja',
+		'Claudia',
+		'Astrid',
+		'Tineke',
+		'Greetje',
+		'Liesbeth',
+		'Hanneke',
+		'Janneke',
+		'Marjolein',
+		'Corina',
+		'Renate',
+		'Suzanne',
+		'Judith',
+		'Joyce',
+		'Silvia',
+		'Miriam',
+		'Simone',
+		'Pauline',
+		'Nienke',
+		'Elise',
+		'Merel',
+		'Renee',
+		'Daphne',
+		'Elisa',
+		'Amber',
+	];
 
 	/**
 	 * Dutch infixes (tussenvoegsel) with weights
 	 *
 	 * @var array
 	 */
-	private static $infixes = array(
-		'van'        => 30,
-		'de'         => 20,
-		'van de'     => 15,
-		'van der'    => 15,
-		'van den'    => 10,
-		'den'        => 5,
-		'ter'        => 3,
-		'te'         => 2,
-	);
+	private static $infixes = [
+		'van'     => 30,
+		'de'      => 20,
+		'van de'  => 15,
+		'van der' => 15,
+		'van den' => 10,
+		'den'     => 5,
+		'ter'     => 3,
+		'te'      => 2,
+	];
 
 	/**
 	 * Total weight of infixes (pre-computed)
@@ -92,56 +236,245 @@ class DemoAnonymizer {
 	 *
 	 * @var array
 	 */
-	private static $last_names = array(
-		'Jansen', 'Vries', 'Berg', 'Dijk', 'Bakker', 'Janssen', 'Visser', 'Smit', 'Meijer', 'Boer',
-		'Mulder', 'Groot', 'Bos', 'Vos', 'Peters', 'Hendriks', 'Leeuwen', 'Dekker', 'Brouwer', 'Wit',
-		'Dijkstra', 'Smeets', 'Graaf', 'Meer', 'Linden', 'Willems', 'Jong', 'Maas', 'Vermeer', 'Heijden',
-		'Scholten', 'Veen', 'Post', 'Kuijpers', 'Jacobs', 'Heuvel', 'Wal', 'Hoekstra', 'Hermans', 'Bosman',
-		'Wolters', 'Sanders', 'Bruin', 'Kok', 'Gerritsen', 'Wijk', 'Schouten', 'Beek', 'Haan', 'Timmermans',
-		'Groen', 'Peeters', 'Koster', 'Blom', 'Beumer', 'Dam', 'Schipper', 'Klein', 'Huisman', 'Jonker',
-		'Loon', 'Es', 'Prins', 'Vliet', 'Verhoeven', 'Pol', 'Boom', 'Steen', 'Hofman', 'Admiraal',
-		'Kuiper', 'Evers', 'Horst', 'Koopman', 'Houten', 'Berends', 'Molenaar', 'Vink', 'Ruiter', 'Schaik',
-		'Aarts', 'Zanden', 'Reijnen', 'Driessen', 'Renssen', 'Ridder', 'Claessen', 'Martens', 'Gelderen', 'Vonk',
-		'Rutten', 'Poel', 'Boogaard', 'Tol', 'Rijn', 'Akkerman', 'Simons', 'Verhagen', 'Holterman', 'Otten',
-	);
+	private static $last_names = [
+		'Jansen',
+		'Vries',
+		'Berg',
+		'Dijk',
+		'Bakker',
+		'Janssen',
+		'Visser',
+		'Smit',
+		'Meijer',
+		'Boer',
+		'Mulder',
+		'Groot',
+		'Bos',
+		'Vos',
+		'Peters',
+		'Hendriks',
+		'Leeuwen',
+		'Dekker',
+		'Brouwer',
+		'Wit',
+		'Dijkstra',
+		'Smeets',
+		'Graaf',
+		'Meer',
+		'Linden',
+		'Willems',
+		'Jong',
+		'Maas',
+		'Vermeer',
+		'Heijden',
+		'Scholten',
+		'Veen',
+		'Post',
+		'Kuijpers',
+		'Jacobs',
+		'Heuvel',
+		'Wal',
+		'Hoekstra',
+		'Hermans',
+		'Bosman',
+		'Wolters',
+		'Sanders',
+		'Bruin',
+		'Kok',
+		'Gerritsen',
+		'Wijk',
+		'Schouten',
+		'Beek',
+		'Haan',
+		'Timmermans',
+		'Groen',
+		'Peeters',
+		'Koster',
+		'Blom',
+		'Beumer',
+		'Dam',
+		'Schipper',
+		'Klein',
+		'Huisman',
+		'Jonker',
+		'Loon',
+		'Es',
+		'Prins',
+		'Vliet',
+		'Verhoeven',
+		'Pol',
+		'Boom',
+		'Steen',
+		'Hofman',
+		'Admiraal',
+		'Kuiper',
+		'Evers',
+		'Horst',
+		'Koopman',
+		'Houten',
+		'Berends',
+		'Molenaar',
+		'Vink',
+		'Ruiter',
+		'Schaik',
+		'Aarts',
+		'Zanden',
+		'Reijnen',
+		'Driessen',
+		'Renssen',
+		'Ridder',
+		'Claessen',
+		'Martens',
+		'Gelderen',
+		'Vonk',
+		'Rutten',
+		'Poel',
+		'Boogaard',
+		'Tol',
+		'Rijn',
+		'Akkerman',
+		'Simons',
+		'Verhagen',
+		'Holterman',
+		'Otten',
+	];
 
 	/**
 	 * Dutch street names
 	 *
 	 * @var array
 	 */
-	private static $streets = array(
-		'Kerkstraat', 'Dorpsstraat', 'Schoolstraat', 'Molenweg', 'Stationsweg', 'Hoofdstraat', 'Kastanjelaan', 'Lindenlaan', 'Berkenlaan', 'Eikenlaan',
-		'Beukenlaan', 'Populierenlaan', 'Wilgenlaan', 'Rozenlaan', 'Tulpenlaan', 'Julianastraat', 'Beatrixlaan', 'Wilhelminastraat', 'Oranjestraat', 'Nassaulaan',
-		'Marktplein', 'Raadhuisstraat', 'Kloosterstraat', 'Brinkstraat', 'Grotestraat', 'Nieuwstraat', 'Langestraat', 'Kortestraat', 'Hoogstraat', 'Achterstraat',
-		'Voorstraat', 'Torenstraat', 'Havenstraat', 'Dijkstraat', 'Kanaalweg', 'Lageweg', 'Hogeweg', 'Veldweg', 'Bosweg', 'Heideweg',
-		'Duinweg', 'Polderweg', 'Rivierweg', 'Parkstraat', 'Sportlaan', 'Industrieweg', 'Ambachtstraat', 'Handelsweg', 'Burgemeester Jansenlaan', 'Professor de Vriesstraat',
-	);
+	private static $streets = [
+		'Kerkstraat',
+		'Dorpsstraat',
+		'Schoolstraat',
+		'Molenweg',
+		'Stationsweg',
+		'Hoofdstraat',
+		'Kastanjelaan',
+		'Lindenlaan',
+		'Berkenlaan',
+		'Eikenlaan',
+		'Beukenlaan',
+		'Populierenlaan',
+		'Wilgenlaan',
+		'Rozenlaan',
+		'Tulpenlaan',
+		'Julianastraat',
+		'Beatrixlaan',
+		'Wilhelminastraat',
+		'Oranjestraat',
+		'Nassaulaan',
+		'Marktplein',
+		'Raadhuisstraat',
+		'Kloosterstraat',
+		'Brinkstraat',
+		'Grotestraat',
+		'Nieuwstraat',
+		'Langestraat',
+		'Kortestraat',
+		'Hoogstraat',
+		'Achterstraat',
+		'Voorstraat',
+		'Torenstraat',
+		'Havenstraat',
+		'Dijkstraat',
+		'Kanaalweg',
+		'Lageweg',
+		'Hogeweg',
+		'Veldweg',
+		'Bosweg',
+		'Heideweg',
+		'Duinweg',
+		'Polderweg',
+		'Rivierweg',
+		'Parkstraat',
+		'Sportlaan',
+		'Industrieweg',
+		'Ambachtstraat',
+		'Handelsweg',
+		'Burgemeester Jansenlaan',
+		'Professor de Vriesstraat',
+	];
 
 	/**
 	 * Dutch cities
 	 *
 	 * @var array
 	 */
-	private static $cities = array(
-		'Amsterdam', 'Rotterdam', 'Den Haag', 'Utrecht', 'Eindhoven', 'Groningen', 'Tilburg', 'Almere', 'Breda', 'Nijmegen',
-		'Apeldoorn', 'Haarlem', 'Arnhem', 'Zaanstad', 'Amersfoort', 'Haarlemmermeer', 'Den Bosch', 'Zoetermeer', 'Zwolle', 'Leiden',
-		'Maastricht', 'Dordrecht', 'Ede', 'Leeuwarden', 'Alphen aan den Rijn', 'Emmen', 'Westland', 'Delft', 'Deventer', 'Helmond',
-		'Hilversum', 'Oss', 'Sittard', 'Schiedam', 'Amstelveen', 'Gouda', 'Spijkenisse', 'Veenendaal', 'Zeist', 'Hardenberg',
-		'Assen', 'Purmerend', 'Roosendaal', 'Vlaardingen', 'Hoorn', 'Bergen op Zoom', 'Katwijk', 'Wageningen', 'Baarn', 'Bussum',
-		'Doetinchem', 'Middelburg', 'Goes', 'Kampen', 'Meppel', 'Steenwijk', 'Waalwijk', 'Weert', 'Venlo', 'Heerlen',
-	);
+	private static $cities = [
+		'Amsterdam',
+		'Rotterdam',
+		'Den Haag',
+		'Utrecht',
+		'Eindhoven',
+		'Groningen',
+		'Tilburg',
+		'Almere',
+		'Breda',
+		'Nijmegen',
+		'Apeldoorn',
+		'Haarlem',
+		'Arnhem',
+		'Zaanstad',
+		'Amersfoort',
+		'Haarlemmermeer',
+		'Den Bosch',
+		'Zoetermeer',
+		'Zwolle',
+		'Leiden',
+		'Maastricht',
+		'Dordrecht',
+		'Ede',
+		'Leeuwarden',
+		'Alphen aan den Rijn',
+		'Emmen',
+		'Westland',
+		'Delft',
+		'Deventer',
+		'Helmond',
+		'Hilversum',
+		'Oss',
+		'Sittard',
+		'Schiedam',
+		'Amstelveen',
+		'Gouda',
+		'Spijkenisse',
+		'Veenendaal',
+		'Zeist',
+		'Hardenberg',
+		'Assen',
+		'Purmerend',
+		'Roosendaal',
+		'Vlaardingen',
+		'Hoorn',
+		'Bergen op Zoom',
+		'Katwijk',
+		'Wageningen',
+		'Baarn',
+		'Bussum',
+		'Doetinchem',
+		'Middelburg',
+		'Goes',
+		'Kampen',
+		'Meppel',
+		'Steenwijk',
+		'Waalwijk',
+		'Weert',
+		'Venlo',
+		'Heerlen',
+	];
 
 	/**
 	 * Email domains (obviously fake)
 	 *
 	 * @var array
 	 */
-	private static $email_domains = array(
+	private static $email_domains = [
 		'example.com',
 		'rondo-demo.nl',
 		'voorbeeld.nl',
-	);
+	];
 
 	/**
 	 * Constructor
@@ -150,7 +483,6 @@ class DemoAnonymizer {
 	 */
 	public function __construct( int $seed = 42 ) {
 		$this->seed = $seed;
-		mt_srand( $seed );
 	}
 
 	/**
@@ -167,8 +499,8 @@ class DemoAnonymizer {
 		}
 
 		// Determine gender.
-		if ( ! in_array( $gender, array( 'male', 'female' ), true ) ) {
-			$gender = mt_rand( 0, 1 ) === 0 ? 'male' : 'female';
+		if ( ! in_array( $gender, [ 'male', 'female' ], true ) ) {
+			$gender = wp_rand( 0, 1 ) === 0 ? 'male' : 'female';
 		}
 
 		// Generate name components.
@@ -182,14 +514,14 @@ class DemoAnonymizer {
 		$address = $this->generate_address();
 
 		// Build identity.
-		$identity = array(
+		$identity = [
 			'first_name' => $first_name,
 			'infix'      => $infix,
 			'last_name'  => $last_name,
 			'email'      => $email,
 			'phone'      => $phone,
 			'address'    => $address,
-		);
+		];
 
 		// Cache and return.
 		$this->identities[ $ref ] = $identity;
@@ -214,12 +546,12 @@ class DemoAnonymizer {
 	 */
 	public function generate_infix(): ?string {
 		// 40% chance of having an infix.
-		if ( mt_rand( 1, 100 ) > 40 ) {
+		if ( wp_rand( 1, 100 ) > 40 ) {
 			return null;
 		}
 
 		// Weighted selection.
-		$random            = mt_rand( 1, self::INFIX_TOTAL_WEIGHT );
+		$random            = wp_rand( 1, self::INFIX_TOTAL_WEIGHT );
 		$cumulative_weight = 0;
 
 		foreach ( self::$infixes as $infix => $weight ) {
@@ -248,7 +580,7 @@ class DemoAnonymizer {
 	 */
 	public function generate_phone(): string {
 		// 70% mobile, 30% landline.
-		if ( mt_rand( 1, 100 ) <= 70 ) {
+		if ( wp_rand( 1, 100 ) <= 70 ) {
 			return $this->generate_mobile_phone();
 		}
 
@@ -269,7 +601,7 @@ class DemoAnonymizer {
 		$last  = $this->normalize_for_email( $last_name );
 
 		// Pick email format.
-		$email_format_variant = mt_rand( 1, 4 );
+		$email_format_variant = wp_rand( 1, 4 );
 		switch ( $email_format_variant ) {
 			case 1:
 				$email_local_part = "{$first}.{$last}";
@@ -302,16 +634,16 @@ class DemoAnonymizer {
 	 */
 	public function generate_address(): array {
 		$street       = $this->random_array_element( self::$streets );
-		$house_number = (string) mt_rand( 1, 250 );
-		$postal_code  = mt_rand( 1000, 9999 ) . ' ' . chr( mt_rand( 65, 90 ) ) . chr( mt_rand( 65, 90 ) );
+		$house_number = (string) wp_rand( 1, 250 );
+		$postal_code  = wp_rand( 1000, 9999 ) . ' ' . chr( wp_rand( 65, 90 ) ) . chr( wp_rand( 65, 90 ) );
 		$city         = $this->random_array_element( self::$cities );
 
-		return array(
+		return [
 			'street'       => $street,
 			'house_number' => $house_number,
 			'postal_code'  => $postal_code,
 			'city'         => $city,
-		);
+		];
 	}
 
 	/**
@@ -320,7 +652,7 @@ class DemoAnonymizer {
 	 * @return string 7-digit KNVB ID.
 	 */
 	public function generate_knvb_id(): string {
-		return str_pad( (string) mt_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
+		return str_pad( (string) wp_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
 	}
 
 	/**
@@ -352,7 +684,7 @@ class DemoAnonymizer {
 		if ( empty( $array ) ) {
 			return null;
 		}
-		return $array[ mt_rand( 0, count( $array ) - 1 ) ];
+		return $array[ wp_rand( 0, count( $array ) - 1 ) ];
 	}
 
 	/**
@@ -361,7 +693,7 @@ class DemoAnonymizer {
 	 * @return string Mobile phone number (06-XXXXXXXX).
 	 */
 	private function generate_mobile_phone(): string {
-		return '06-' . str_pad( (string) mt_rand( 10000000, 99999999 ), 8, '0', STR_PAD_LEFT );
+		return '06-' . str_pad( (string) wp_rand( 10000000, 99999999 ), 8, '0', STR_PAD_LEFT );
 	}
 
 	/**
@@ -370,8 +702,8 @@ class DemoAnonymizer {
 	 * @return string Landline phone number (0XX-XXXXXXX).
 	 */
 	private function generate_landline_phone(): string {
-		$area_code = str_pad( (string) mt_rand( 10, 88 ), 2, '0', STR_PAD_LEFT );
-		$number    = str_pad( (string) mt_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
+		$area_code = str_pad( (string) wp_rand( 10, 88 ), 2, '0', STR_PAD_LEFT );
+		$number    = str_pad( (string) wp_rand( 1000000, 9999999 ), 7, '0', STR_PAD_LEFT );
 		return "0{$area_code}-{$number}";
 	}
 }
