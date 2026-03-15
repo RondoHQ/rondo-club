@@ -42,6 +42,7 @@ export function useTodos(status = 'open') {
       const response = await prmApi.getAllTodos(status);
       return response.data;
     },
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -98,6 +99,7 @@ export function useDashboardSettings() {
       const response = await prmApi.getDashboardSettings();
       return response.data;
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 

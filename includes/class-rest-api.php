@@ -71,6 +71,46 @@ class Api extends Base {
 		add_action( 'rest_api_init', [ $this, 'register_acf_fields' ] );
 		// NOTE: save_post_person hook for volunteer start date cache invalidation
 		// moved to Rondo\REST\Reminders constructor
+
+		// Dashboard cache invalidation hooks.
+		$post_types = [ 'person', 'team', 'commissie', 'rondo_todo', 'rondo_feedback' ];
+		foreach ( $post_types as $post_type ) {
+			add_action( 'save_post_' . $post_type, [ $this, 'invalidate_dashboard_cache' ] );
+		}
+		add_action( 'wp_insert_comment', [ $this, 'maybe_invalidate_dashboard_on_comment' ], 10, 2 );
+		add_action( 'edit_comment', [ $this, 'maybe_invalidate_dashboard_on_comment' ], 10, 2 );
+	}
+
+	/**
+	 * Invalidate all dashboard transient caches.
+	 */
+	public function invalidate_dashboard_cache() {
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_rondo_dashboard_%' OR option_name LIKE '_transient_timeout_rondo_dashboard_%'" );
+	}
+
+	/**
+	 * Conditionally invalidate dashboard cache when a rondo_activity comment is saved.
+	 *
+	 * @param int               $comment_id The comment ID.
+	 * @param \WP_Comment|array $comment    The comment object or data array.
+	 */
+	public function maybe_invalidate_dashboard_on_comment( $comment_id, $comment ) {
+		$comment_type = '';
+		if ( $comment instanceof \WP_Comment ) {
+			$comment_type = $comment->comment_type;
+		} elseif ( is_array( $comment ) && isset( $comment['comment_type'] ) ) {
+			$comment_type = $comment['comment_type'];
+		} else {
+			$comment_obj = get_comment( $comment_id );
+			if ( $comment_obj ) {
+				$comment_type = $comment_obj->comment_type;
+			}
+		}
+
+		if ( 'rondo_activity' === $comment_type ) {
+			$this->invalidate_dashboard_cache();
+		}
 	}
 
 	/**
@@ -842,6 +882,13 @@ class Api extends Base {
 	public function get_dashboard_summary( $request ) {
 		$user_id = get_current_user_id();
 
+		// Check transient cache.
+		$cache_key = 'rondo_dashboard_' . $user_id;
+		$cached    = get_transient( $cache_key );
+		if ( false !== $cached ) {
+			return rest_ensure_response( $cached );
+		}
+
 		// Get post counts (all approved users see all data)
 		// Access control is already applied via WP_Query filters
 		// Exclude former members from people count
@@ -872,12 +919,14 @@ class Api extends Base {
 		// Recent people (exclude former members)
 		$recent_people = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 5,
-				'post_status'    => 'publish',
-				'orderby'        => 'modified',
-				'order'          => 'DESC',
-				'meta_query'     => [
+				'post_type'              => 'person',
+				'posts_per_page'         => 5,
+				'post_status'            => 'publish',
+				'orderby'                => 'modified',
+				'order'                  => 'DESC',
+				'update_post_meta_cache' => true,
+				'no_found_rows'          => true,
+				'meta_query'             => [
 					'relation' => 'OR',
 					[
 						'key'     => 'former_member',
@@ -913,23 +962,25 @@ class Api extends Base {
 		// Recently contacted (people with most recent activities)
 		$recently_contacted = $this->get_recently_contacted_people( 5 );
 
-		return rest_ensure_response(
-			[
-				'stats'                  => [
-					'total_people'         => $total_people,
-					'total_teams'          => $total_teams,
-					'total_commissies'     => $total_commissies,
-					'open_todos_count'     => $open_todos_count,
-					'awaiting_todos_count' => $awaiting_todos_count,
-					'total_volunteers'     => $total_volunteers,
-					'open_feedback_count'  => $open_feedback_count,
-				],
-				'recent_people'          => array_map( [ $this, 'format_person_summary' ], $recent_people ),
-				'upcoming_reminders'     => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
-				'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
-				'recently_contacted'     => $recently_contacted,
-			]
-		);
+		$response_data = [
+			'stats'                  => [
+				'total_people'         => $total_people,
+				'total_teams'          => $total_teams,
+				'total_commissies'     => $total_commissies,
+				'open_todos_count'     => $open_todos_count,
+				'awaiting_todos_count' => $awaiting_todos_count,
+				'total_volunteers'     => $total_volunteers,
+				'open_feedback_count'  => $open_feedback_count,
+			],
+			'recent_people'          => array_map( [ $this, 'format_person_summary' ], $recent_people ),
+			'upcoming_reminders'     => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
+			'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
+			'recently_contacted'     => $recently_contacted,
+		];
+
+		set_transient( $cache_key, $response_data, 5 * MINUTE_IN_SECONDS );
+
+		return rest_ensure_response( $response_data );
 	}
 
 	/**
@@ -1195,11 +1246,35 @@ class Api extends Base {
 			return [];
 		}
 
+		$person_ids = array_map(
+			function ( $row ) {
+				return (int) $row->person_id;
+			},
+			$results
+		);
+
+		// Single query with meta cache warmup.
+		$people = get_posts(
+			[
+				'post__in'               => $person_ids,
+				'post_type'              => 'person',
+				'post_status'            => 'publish',
+				'posts_per_page'         => count( $person_ids ),
+				'orderby'                => 'post__in',
+				'update_post_meta_cache' => true,
+				'no_found_rows'          => true,
+			]
+		);
+
+		$people_by_id = [];
+		foreach ( $people as $person ) {
+			$people_by_id[ $person->ID ] = $person;
+		}
+
 		$recently_contacted = [];
 		foreach ( $results as $row ) {
-			$person = get_post( $row->person_id );
-			if ( $person && $person->post_status === 'publish' ) {
-				$summary                       = $this->format_person_summary( $person );
+			if ( isset( $people_by_id[ (int) $row->person_id ] ) ) {
+				$summary                       = $this->format_person_summary( $people_by_id[ (int) $row->person_id ] );
 				$summary['last_activity_date'] = $row->last_activity_date;
 				$recently_contacted[]          = $summary;
 			}

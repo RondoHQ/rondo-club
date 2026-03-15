@@ -357,6 +357,18 @@ class Reminders extends Base {
 				'no_found_rows'          => true,
 				'update_post_meta_cache' => true,
 				'update_post_term_cache' => false,
+				'meta_query'             => [
+					'relation' => 'OR',
+					[
+						'key'     => 'former_member',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'     => 'former_member',
+						'value'   => '1',
+						'compare' => '!=',
+					],
+				],
 			]
 		);
 
@@ -377,9 +389,6 @@ class Reminders extends Base {
 
 		foreach ( $people as $person ) {
 			$person_id = (int) $person->ID;
-			if ( ! empty( get_post_meta( $person_id, 'former_member', true ) ) ) {
-				continue;
-			}
 			$person_summary    = $this->format_anniversary_person_summary( $person );
 			$member_since      = get_post_meta( $person_id, 'lid-sinds', true );
 			$member_start_date = null;
