@@ -105,7 +105,7 @@ class Reminders extends Base {
 							return is_numeric( $param ) && $param >= 0 && $param <= 730;
 						},
 					],
-					'limit'     => [
+					'limit'      => [
 						'default'           => 100,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && $param > 0 && $param <= 500;
@@ -150,9 +150,9 @@ class Reminders extends Base {
 	 * Get upcoming anniversaries (jubilarissen).
 	 */
 	public function get_upcoming_anniversaries( $request ) {
-		$days_ahead    = (int) $request->get_param( 'days_ahead' );
-		$days_back     = (int) $request->get_param( 'days_back' );
-		$limit         = (int) $request->get_param( 'limit' );
+		$days_ahead = (int) $request->get_param( 'days_ahead' );
+		$days_back  = (int) $request->get_param( 'days_back' );
+		$limit      = (int) $request->get_param( 'limit' );
 		if ( $days_ahead <= 0 && $days_back <= 0 ) {
 			$days_ahead = 365;
 		}
@@ -254,6 +254,7 @@ class Reminders extends Base {
 			[
 				'success'            => true,
 				'message'            => sprintf(
+					// translators: %1$d is the number of users processed, %2$d is the number of notifications sent.
 					__( 'Processed %1$d user(s), sent %2$d notification(s).', 'rondo' ),
 					$users_processed,
 					$notifications_sent
@@ -306,7 +307,7 @@ class Reminders extends Base {
 				'users'                 => $scheduled_users,
 				'current_time'          => gmdate( 'Y-m-d H:i:s', time() ),
 				'current_timestamp'     => time(),
-				'legacy_cron_scheduled' => false !== $legacy_scheduled,
+				'legacy_cron_scheduled' => $legacy_scheduled !== false,
 				'legacy_next_run'       => $legacy_scheduled ? gmdate( 'Y-m-d H:i:s', $legacy_scheduled ) : null,
 			]
 		);
@@ -325,6 +326,7 @@ class Reminders extends Base {
 			[
 				'success'         => true,
 				'message'         => sprintf(
+					// translators: %d is the number of users whose reminder cron jobs were rescheduled.
 					__( 'Successfully rescheduled reminder cron jobs for %d user(s).', 'rondo' ),
 					$scheduled_count
 				),
@@ -342,24 +344,24 @@ class Reminders extends Base {
 	 * @return array
 	 */
 	public function get_upcoming_anniversaries_data( int $days_ahead, int $limit, int $days_back = 0 ): array {
-		$today      = new \DateTimeImmutable( 'today', wp_timezone() );
+		$today        = new \DateTimeImmutable( 'today', wp_timezone() );
 		$window_start = $today->modify( '-' . max( 0, $days_back ) . ' days' );
 		$cutoff       = $today->modify( '+' . max( 0, $days_ahead ) . ' days' );
-		$milestones = $this->get_anniversary_milestones();
+		$milestones   = $this->get_anniversary_milestones();
 
 		$people = get_posts(
 			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'no_found_rows'  => true,
+				'post_type'              => 'person',
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'no_found_rows'          => true,
 				'update_post_meta_cache' => true,
 				'update_post_term_cache' => false,
 			]
 		);
 
-		$results = [];
-		$person_ids = array_map(
+		$results       = [];
+		$person_ids    = array_map(
 			static function ( $person ) {
 				return (int) $person->ID;
 			},
@@ -374,11 +376,11 @@ class Reminders extends Base {
 		$volunteer_start_dates = $this->get_cached_volunteer_start_dates_for_people( $volunteer_ids );
 
 		foreach ( $people as $person ) {
-			$person_id    = (int) $person->ID;
+			$person_id = (int) $person->ID;
 			if ( ! empty( get_post_meta( $person_id, 'former_member', true ) ) ) {
 				continue;
 			}
-			$person_summary = $this->format_anniversary_person_summary( $person );
+			$person_summary    = $this->format_anniversary_person_summary( $person );
 			$member_since      = get_post_meta( $person_id, 'lid-sinds', true );
 			$member_start_date = null;
 			if ( ! empty( $member_since ) ) {
@@ -417,11 +419,11 @@ class Reminders extends Base {
 			$results,
 			static function ( array $a, array $b ): int {
 				$date_cmp = strcmp( $a['anniversary_date'], $b['anniversary_date'] );
-				if ( 0 !== $date_cmp ) {
+				if ( $date_cmp !== 0 ) {
 					return $date_cmp;
 				}
 				$years_cmp = $a['milestone_years'] <=> $b['milestone_years'];
-				if ( 0 !== $years_cmp ) {
+				if ( $years_cmp !== 0 ) {
 					return $years_cmp;
 				}
 				return strcasecmp( $a['person']['name'], $b['person']['name'] );
@@ -465,17 +467,17 @@ class Reminders extends Base {
 
 		$interval = $today->diff( $anniversary_date );
 		$days     = (int) $interval->format( '%a' );
-		if ( 1 === (int) $interval->invert ) {
+		if ( (int) $interval->invert === 1 ) {
 			$days = -$days;
 		}
-		$label    = $this->format_milestone_years( $milestone_years );
+		$label = $this->format_milestone_years( $milestone_years );
 
 		return [
 			'id'               => sprintf( '%d-%s-%s', $person->ID, $type, str_replace( '.', '_', (string) $milestone_years ) ),
 			'type'             => $type,
 			'milestone_years'  => $milestone_years,
 			'milestone_label'  => $label . ' jaar',
-			'title'            => 'member' === $type ? $label . ' jaar lid' : $label . ' jaar vrijwilliger',
+			'title'            => $type === 'member' ? $label . ' jaar lid' : $label . ' jaar vrijwilliger',
 			'anniversary_date' => $anniversary_date->format( 'Y-m-d' ),
 			'days_until'       => $days,
 			'person'           => $person_summary,
@@ -492,12 +494,12 @@ class Reminders extends Base {
 		$person_id = (int) $person->ID;
 
 		return [
-			'id'                 => $person_id,
-			'name'               => $this->sanitize_text( $person->post_title ),
-			'first_name'         => $this->sanitize_text( (string) get_post_meta( $person_id, 'first_name', true ) ),
-			'last_name'          => $this->sanitize_text( (string) get_post_meta( $person_id, 'last_name', true ) ),
-			'thumbnail'          => $this->sanitize_url( get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ),
-			'former_member'      => ! empty( get_post_meta( $person_id, 'former_member', true ) ),
+			'id'                  => $person_id,
+			'name'                => $this->sanitize_text( $person->post_title ),
+			'first_name'          => $this->sanitize_text( (string) get_post_meta( $person_id, 'first_name', true ) ),
+			'last_name'           => $this->sanitize_text( (string) get_post_meta( $person_id, 'last_name', true ) ),
+			'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ),
+			'former_member'       => ! empty( get_post_meta( $person_id, 'former_member', true ) ),
 			'huidig_vrijwilliger' => ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ),
 		];
 	}
@@ -510,13 +512,13 @@ class Reminders extends Base {
 		$fraction    = round( $milestone_years - $whole_years, 2 );
 
 		$date = $start_date->modify( '+' . $whole_years . ' years' );
-		if ( false === $date ) {
+		if ( $date === false ) {
 			return null;
 		}
 
-		if ( 0.5 === $fraction ) {
+		if ( $fraction === 0.5 ) {
 			$date = $date->modify( '+6 months' );
-			if ( false === $date ) {
+			if ( $date === false ) {
 				return null;
 			}
 		}
@@ -544,18 +546,18 @@ class Reminders extends Base {
 			}
 
 			foreach ( $all_meta as $meta_key => $meta_values ) {
-				if ( 1 !== preg_match( '/^work_history_[0-9]+_start_date$/', (string) $meta_key ) ) {
+				if ( preg_match( '/^work_history_[0-9]+_start_date$/', (string) $meta_key ) !== 1 ) {
 					continue;
 				}
 
 				foreach ( (array) $meta_values as $meta_value ) {
 					$normalized_date = $this->normalize_iso_date_string( (string) $meta_value );
-					if ( null === $normalized_date ) {
+					if ( $normalized_date === null ) {
 						continue;
 					}
 
 					$existing = $oldest_by_person[ $person_id ] ?? null;
-					if ( null === $existing || $normalized_date < $existing ) {
+					if ( $existing === null || $normalized_date < $existing ) {
 						$oldest_by_person[ $person_id ] = $normalized_date;
 					}
 				}
@@ -584,9 +586,9 @@ class Reminders extends Base {
 		foreach ( $person_ids as $person_id ) {
 			$manual_raw  = trim( (string) get_post_meta( $person_id, 'vrijwilliger-sinds', true ) );
 			$manual_date = $this->normalize_iso_date_string( $manual_raw );
-			$cached_raw = trim( (string) get_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, true ) );
+			$cached_raw  = trim( (string) get_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, true ) );
 			if ( self::VOLUNTEER_START_DATE_NONE === $cached_raw ) {
-				if ( null !== $manual_date ) {
+				if ( $manual_date !== null ) {
 					$cached[ $person_id ] = $manual_date;
 					update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $manual_date );
 				}
@@ -594,9 +596,9 @@ class Reminders extends Base {
 			}
 
 			$start_date = $this->normalize_iso_date_string( $cached_raw );
-			if ( null !== $start_date ) {
+			if ( $start_date !== null ) {
 				$best_date = $start_date;
-				if ( null !== $manual_date && $manual_date < $best_date ) {
+				if ( $manual_date !== null && $manual_date < $best_date ) {
 					$best_date = $manual_date;
 				}
 				$cached[ $person_id ] = $best_date;
@@ -606,7 +608,7 @@ class Reminders extends Base {
 				continue;
 			}
 
-			if ( null !== $manual_date ) {
+			if ( $manual_date !== null ) {
 				$cached[ $person_id ] = $manual_date;
 				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $manual_date );
 				continue;
@@ -625,7 +627,7 @@ class Reminders extends Base {
 				$work_history_date = $calculated[ $person_id ];
 				$manual_date       = $this->normalize_iso_date_string( (string) get_post_meta( $person_id, 'vrijwilliger-sinds', true ) );
 				$best_date         = $work_history_date;
-				if ( null !== $manual_date && $manual_date < $best_date ) {
+				if ( $manual_date !== null && $manual_date < $best_date ) {
 					$best_date = $manual_date;
 				}
 				$cached[ $person_id ] = $best_date;
@@ -634,7 +636,7 @@ class Reminders extends Base {
 			}
 
 			$manual_date = $this->normalize_iso_date_string( (string) get_post_meta( $person_id, 'vrijwilliger-sinds', true ) );
-			if ( null !== $manual_date ) {
+			if ( $manual_date !== null ) {
 				$cached[ $person_id ] = $manual_date;
 				update_post_meta( $person_id, self::VOLUNTEER_START_DATE_META_KEY, $manual_date );
 				continue;
@@ -656,7 +658,7 @@ class Reminders extends Base {
 	 */
 	private function normalize_iso_date_string( string $raw_date ): ?string {
 		$raw_date = trim( $raw_date );
-		if ( '' === $raw_date ) {
+		if ( $raw_date === '' ) {
 			return null;
 		}
 
@@ -685,7 +687,7 @@ class Reminders extends Base {
 	public function invalidate_cached_volunteer_start_date( int $post_id, \WP_Post $post, bool $update ): void {
 		unset( $update );
 
-		if ( 'person' !== $post->post_type || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+		if ( $post->post_type !== 'person' || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
 		}
 
@@ -770,8 +772,8 @@ class Reminders extends Base {
 	public function limit_items_with_all_today( array $items, int $limit ): array {
 		$today_count = 0;
 		foreach ( $items as $item ) {
-			if ( 0 === (int) ( $item['days_until'] ?? -1 ) ) {
-				$today_count++;
+			if ( (int) ( $item['days_until'] ?? -1 ) === 0 ) {
+				++$today_count;
 			} else {
 				break; // Reminders are sorted by date, so no more today entries after this.
 			}

@@ -141,7 +141,7 @@ class Users extends Base {
 			$linked_person_name = null;
 			if ( $linked_person_id ) {
 				$person = get_post( $linked_person_id );
-				if ( $person && 'person' === $person->post_type ) {
+				if ( $person && $person->post_type === 'person' ) {
 					$first              = get_field( 'first_name', $linked_person_id ) ?: '';
 					$infix              = get_field( 'infix', $linked_person_id ) ?: '';
 					$last               = get_field( 'last_name', $linked_person_id ) ?: '';
@@ -178,29 +178,31 @@ class Users extends Base {
 
 		$meta_key = \Rondo\Users\UserProvisioning::META_USER_ID;
 
-		$people = get_posts( [
-			'post_type'      => 'person',
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			's'              => $search,
-			'meta_query'     => [
-				'relation' => 'AND',
-				[
-					'key'     => $meta_key,
-					'compare' => 'NOT EXISTS',
+		$people = get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				's'              => $search,
+				'meta_query'     => [
+					'relation' => 'AND',
+					[
+						'key'     => $meta_key,
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'     => 'knvb-id',
+						'compare' => '!=',
+						'value'   => '',
+					],
 				],
-				[
-					'key'     => 'knvb-id',
-					'compare' => '!=',
-					'value'   => '',
-				],
-			],
-			'fields'         => 'ids',
-		] );
+				'fields'         => 'ids',
+			]
+		);
 
 		$result = [];
 		foreach ( $people as $person_id ) {
-			if ( get_field( 'former_member', $person_id ) == true ) {
+			if ( get_field( 'former_member', $person_id ) === true ) {
 				continue;
 			}
 

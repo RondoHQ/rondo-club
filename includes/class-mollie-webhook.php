@@ -94,7 +94,7 @@ class MollieWebhook {
 	 * @return \WP_REST_Response Response with ok:true (always 200).
 	 */
 	private function handle_payment_link_webhook( string $payment_link_id ): \WP_REST_Response {
-		$invoice_id = 0;
+		$invoice_id         = 0;
 		$installment_number = 0;
 
 		$installment_posts = get_posts(
@@ -146,7 +146,7 @@ class MollieWebhook {
 		$config     = new \Rondo\Config\FinanceConfig();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$api_key    = $config->get_mollie_api_key_for_account( $account_id );
-		if ( '' === $api_key ) {
+		if ( $api_key === '' ) {
 			error_log( 'Mollie webhook: missing API key for invoice ' . $invoice_id . ' and payment link ' . $payment_link_id );
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
@@ -169,7 +169,7 @@ class MollieWebhook {
 		}
 
 		$invoice = get_post( $invoice_id );
-		if ( ! $invoice || 'rondo_paid' === $invoice->post_status ) {
+		if ( ! $invoice || $invoice->post_status === 'rondo_paid' ) {
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
 
@@ -207,7 +207,7 @@ class MollieWebhook {
 	private function handle_installment_paid( int $invoice_id, int $n, string $payment_id, $payment_link ): \WP_REST_Response {
 		// 1. Idempotency check: already marked betaald — no-op.
 		$current_status = get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
-		if ( 'betaald' === $current_status ) {
+		if ( $current_status === 'betaald' ) {
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
 
@@ -225,7 +225,7 @@ class MollieWebhook {
 		$all_paid = true;
 		for ( $i = 1; $i <= $count; $i++ ) {
 			$status = get_post_meta( $invoice_id, '_installment_' . $i . '_status', true );
-			if ( 'betaald' !== $status ) {
+			if ( $status !== 'betaald' ) {
 				$all_paid = false;
 				break;
 			}
@@ -279,7 +279,7 @@ class MollieWebhook {
 	 */
 	private function extract_payment_details( $payment_link, int $invoice_id ): void {
 		try {
-			$payments = $payment_link->payments();
+			$payments     = $payment_link->payments();
 			$paid_payment = null;
 
 			foreach ( $payments as $payment ) {
@@ -288,7 +288,7 @@ class MollieWebhook {
 				}
 			}
 
-			if ( null === $paid_payment ) {
+			if ( $paid_payment === null ) {
 				return;
 			}
 
@@ -296,21 +296,21 @@ class MollieWebhook {
 			update_post_meta( $invoice_id, '_mollie_paid_at', $paid_payment->paidAt ?? '' );
 
 			$dashboard_url = $paid_payment->_links->dashboard->href ?? null;
-			if ( null !== $dashboard_url ) {
+			if ( $dashboard_url !== null ) {
 				update_post_meta( $invoice_id, '_mollie_dashboard_url', $dashboard_url );
 			}
 
 			$consumer_name = $paid_payment->details->consumerName ?? null;
-			if ( null !== $consumer_name ) {
+			if ( $consumer_name !== null ) {
 				update_post_meta( $invoice_id, '_mollie_consumer_name', $consumer_name );
 			}
 
 			$consumer_account = $paid_payment->details->consumerAccount ?? null;
-			if ( null !== $consumer_account ) {
+			if ( $consumer_account !== null ) {
 				update_post_meta( $invoice_id, '_mollie_consumer_account', $consumer_account );
 			}
 
-			if ( null !== $paid_payment->details ) {
+			if ( $paid_payment->details !== null ) {
 				update_post_meta( $invoice_id, '_mollie_payment_details', wp_json_encode( $paid_payment->details ) );
 			}
 		} catch ( \Throwable $e ) {
@@ -331,7 +331,7 @@ class MollieWebhook {
 	 */
 	private function extract_installment_payment_details( $payment_link, int $invoice_id, int $n ): void {
 		try {
-			$payments = $payment_link->payments();
+			$payments     = $payment_link->payments();
 			$paid_payment = null;
 
 			foreach ( $payments as $payment ) {
@@ -340,7 +340,7 @@ class MollieWebhook {
 				}
 			}
 
-			if ( null === $paid_payment ) {
+			if ( $paid_payment === null ) {
 				return;
 			}
 
@@ -348,7 +348,7 @@ class MollieWebhook {
 			update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_paid_at', $paid_payment->paidAt ?? '' );
 
 			$dashboard_url = $paid_payment->_links->dashboard->href ?? null;
-			if ( null !== $dashboard_url ) {
+			if ( $dashboard_url !== null ) {
 				update_post_meta( $invoice_id, '_installment_' . $n . '_mollie_dashboard_url', $dashboard_url );
 			}
 		} catch ( \Throwable $e ) {

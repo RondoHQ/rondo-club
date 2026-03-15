@@ -47,7 +47,7 @@ class MembershipPassApple {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
-		$knvb_id = (string) get_field( 'knvb-id', $person_id );
+		$knvb_id     = (string) get_field( 'knvb-id', $person_id );
 		$member_tier = $this->get_member_tier( $person_id );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
@@ -111,16 +111,16 @@ class MembershipPassApple {
 				'auxiliaryFields' => array_values(
 					array_filter(
 						[
-					[
-						'key'   => 'functions',
-						'label' => 'FUNCTIES',
-						'value' => $functions,
-					],
-					[
-						'key'   => 'knvb_id',
-						'label' => 'KNVB ID',
-						'value' => ( $member_tier === 'bondslid' && $knvb_id !== '' ) ? $knvb_id : null,
-					],
+							[
+								'key'   => 'functions',
+								'label' => 'FUNCTIES',
+								'value' => $functions,
+							],
+							[
+								'key'   => 'knvb_id',
+								'label' => 'KNVB ID',
+								'value' => ( $member_tier === 'bondslid' && $knvb_id !== '' ) ? $knvb_id : null,
+							],
 						],
 						static function ( $field ) {
 							return isset( $field['value'] ) && $field['value'] !== null && $field['value'] !== '';
@@ -225,6 +225,7 @@ class MembershipPassApple {
 	 * @return string|null
 	 */
 	private function read_file_bytes( string $path ): ?string {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$contents = @file_get_contents( $path );
 		if ( ! is_string( $contents ) || $contents === '' ) {
 			return null;
@@ -348,7 +349,7 @@ class MembershipPassApple {
 
 			$job_title = isset( $entry['job_title'] ) ? trim( (string) $entry['job_title'] ) : '';
 			$team_name = '';
-			$team_id    = isset( $entry['team'] ) ? (int) $entry['team'] : 0;
+			$team_id   = isset( $entry['team'] ) ? (int) $entry['team'] : 0;
 			if ( $team_id > 0 ) {
 				$title = get_the_title( $team_id );
 				if ( is_string( $title ) && $title !== '' ) {

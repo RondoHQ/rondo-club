@@ -114,20 +114,20 @@ class Invoices extends Base {
 					'callback'            => [ $this, 'get_invoice_list' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
-						'status'    => [
+						'status'       => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
 								return empty( $param ) || in_array( $param, [ 'draft', 'sent', 'paid', 'overdue' ], true );
 							},
 						],
-						'person_id' => [
+						'person_id'    => [
 							'default'           => 0,
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
 							'sanitize_callback' => 'absint',
 						],
-						'type'      => [
+						'type'         => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
 								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual' ], true );
@@ -211,7 +211,7 @@ class Invoices extends Base {
 					'callback'            => [ $this, 'add_draft_line_item' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
-						'id' => [
+						'id'          => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
@@ -220,7 +220,7 @@ class Invoices extends Base {
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'amount' => [
+						'amount'      => [
 							'required'          => true,
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
@@ -300,7 +300,7 @@ class Invoices extends Base {
 					'callback'            => [ $this, 'send_invoice' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
-						'id' => [
+						'id'        => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
@@ -327,7 +327,7 @@ class Invoices extends Base {
 					'callback'            => [ $this, 'resend_invoice' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
-						'id' => [
+						'id'        => [
 							'validate_callback' => function ( $param ) {
 								return is_numeric( $param );
 							},
@@ -406,21 +406,21 @@ class Invoices extends Base {
 			register_rest_route(
 				'rondo/v1',
 				'/invoices/(?P<id>\d+)/toggle-installments',
-			[
 				[
-					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'toggle_installments' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
-					'args'                => [
-						'id' => [
-							'validate_callback' => fn( $p ) => is_numeric( $p ),
+					[
+						'methods'             => \WP_REST_Server::CREATABLE,
+						'callback'            => [ $this, 'toggle_installments' ],
+						'permission_callback' => [ $this, 'check_financieel_permission' ],
+						'args'                => [
+							'id'       => [
+								'validate_callback' => fn( $p ) => is_numeric( $p ),
+							],
+							'disabled' => [
+								'required'          => true,
+								'type'              => 'boolean',
+								'sanitize_callback' => 'rest_sanitize_boolean',
+							],
 						],
-						'disabled' => [
-							'required'          => true,
-							'type'              => 'boolean',
-							'sanitize_callback' => 'rest_sanitize_boolean',
-						],
-					],
 					],
 				]
 			);
@@ -435,14 +435,14 @@ class Invoices extends Base {
 						'callback'            => [ $this, 'update_membership_discount' ],
 						'permission_callback' => [ $this, 'check_financieel_permission' ],
 						'args'                => [
-							'id' => [
+							'id'                      => [
 								'validate_callback' => fn( $p ) => is_numeric( $p ),
 							],
 							'family_discount_percent' => [
 								'required'          => false,
 								'validate_callback' => fn( $p ) => is_numeric( $p ),
 							],
-							'entry_discount_percent' => [
+							'entry_discount_percent'  => [
 								'required'          => false,
 								'validate_callback' => fn( $p ) => is_numeric( $p ),
 							],
@@ -450,7 +450,7 @@ class Invoices extends Base {
 					],
 				]
 			);
-		}
+	}
 
 	/**
 	 * Check if user has financieel capability
@@ -686,17 +686,17 @@ class Invoices extends Base {
 
 		// Fallback: match by team_name text when home/away team IDs are missing.
 		$team_name = get_field( 'team_name', $case_id );
-		if ( ! is_string( $team_name ) || '' === trim( $team_name ) ) {
+		if ( ! is_string( $team_name ) || trim( $team_name ) === '' ) {
 			return false;
 		}
 		$team_name = trim( wp_strip_all_tags( $team_name ) );
 
 		foreach ( $exempt_teams as $exempt_team_id ) {
 			$title = get_the_title( (int) $exempt_team_id );
-			if ( ! is_string( $title ) || '' === $title ) {
+			if ( ! is_string( $title ) || $title === '' ) {
 				continue;
 			}
-			if ( 0 === strcasecmp( trim( $title ), $team_name ) ) {
+			if ( strcasecmp( trim( $title ), $team_name ) === 0 ) {
 				return true;
 			}
 		}
@@ -716,9 +716,11 @@ class Invoices extends Base {
 			$invoice_type = 'manual';
 		}
 
-		return rest_ensure_response( [
-			'invoice_number' => InvoiceNumbering::generate_next( $invoice_type ),
-		] );
+		return rest_ensure_response(
+			[
+				'invoice_number' => InvoiceNumbering::generate_next( $invoice_type ),
+			]
+		);
 	}
 
 	/**
@@ -763,7 +765,7 @@ class Invoices extends Base {
 		// Filter by invoice type if provided
 		$type = $request->get_param( 'type' );
 		if ( ! empty( $type ) ) {
-			if ( 'discipline' === $type ) {
+			if ( $type === 'discipline' ) {
 				// Include null/empty invoice_type for legacy discipline invoices
 				$args['meta_query'][] = [
 					'relation' => 'OR',
@@ -848,7 +850,7 @@ class Invoices extends Base {
 		}
 
 		$invoice_number = InvoiceNumbering::generate_next( $payload['invoice_type'] );
-		$post_id = wp_insert_post(
+		$post_id        = wp_insert_post(
 			[
 				'post_type'   => 'rondo_invoice',
 				'post_title'  => $invoice_number,
@@ -883,7 +885,7 @@ class Invoices extends Base {
 		$invoice_id = (int) $request->get_param( 'id' );
 		$invoice    = get_post( $invoice_id );
 
-		if ( ! $invoice || 'rondo_invoice' !== $invoice->post_type ) {
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
 			return new \WP_Error(
 				'rest_not_found',
 				__( 'Invoice not found.', 'rondo' ),
@@ -891,7 +893,7 @@ class Invoices extends Base {
 			);
 		}
 
-		if ( 'rondo_draft' !== $invoice->post_status ) {
+		if ( $invoice->post_status !== 'rondo_draft' ) {
 			return new \WP_Error(
 				'invoice_not_draft',
 				__( 'Alleen conceptfacturen kunnen volledig worden bewerkt.', 'rondo' ),
@@ -967,7 +969,12 @@ class Invoices extends Base {
 		// Force delete (skip trash) so the invoice number is freed for generate_next()
 		wp_delete_post( $invoice_id, true );
 
-		return rest_ensure_response( [ 'deleted' => true, 'id' => $invoice_id ] );
+		return rest_ensure_response(
+			[
+				'deleted' => true,
+				'id'      => $invoice_id,
+			]
+		);
 	}
 
 	/**
@@ -995,7 +1002,10 @@ class Invoices extends Base {
 			return new \WP_Error(
 				'rest_missing_param',
 				__( 'Status is required.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'status' => 'Status is required' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'status' => 'Status is required' ],
+				]
 			);
 		}
 
@@ -1003,7 +1013,10 @@ class Invoices extends Base {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'status' => 'Must be "draft", "sent", "paid", or "overdue"' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'status' => 'Must be "draft", "sent", "paid", or "overdue"' ],
+				]
 			);
 		}
 
@@ -1023,61 +1036,61 @@ class Invoices extends Base {
 
 			// If transitioning to "sent", set sent_date and calculate due_date.
 			// Skip when reverting from paid → sent (marking unpaid) to preserve original dates.
-			$is_reverting_from_paid = ( 'rondo_paid' === $invoice->post_status && 'sent' === $status );
-			if ( $status === 'sent' && ! $is_reverting_from_paid ) {
-				$sent_date = current_time( 'Ymd' );
-				update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
-				$sender_user_id = get_current_user_id();
-				if ( $sender_user_id > 0 ) {
-					if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
-						update_post_meta( $invoice_id, '_invoice_sent_by_user_id', $sender_user_id );
-					}
-					update_post_meta( $invoice_id, '_invoice_last_sent_by_user_id', $sender_user_id );
+			$is_reverting_from_paid = ( $invoice->post_status === 'rondo_paid' && $status === 'sent' );
+		if ( $status === 'sent' && ! $is_reverting_from_paid ) {
+			$sent_date = current_time( 'Ymd' );
+			update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
+			$sender_user_id = get_current_user_id();
+			if ( $sender_user_id > 0 ) {
+				if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
+					update_post_meta( $invoice_id, '_invoice_sent_by_user_id', $sender_user_id );
 				}
+				update_post_meta( $invoice_id, '_invoice_last_sent_by_user_id', $sender_user_id );
+			}
 
 			// Calculate due date
-			$finance_config   = new FinanceConfig();
+			$finance_config    = new FinanceConfig();
 			$payment_term_days = $finance_config->get_payment_term_days();
-				$due_date         = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
-				update_field( 'field_invoice_due_date', $due_date, $invoice_id );
-			}
+			$due_date          = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
+			update_field( 'field_invoice_due_date', $due_date, $invoice_id );
+		}
 
 			// If transitioning to paid, store audit trail for manual payment marking.
-			if ( $status === 'paid' ) {
-				update_post_meta( $invoice_id, '_manually_marked_paid_at', current_time( 'mysql' ) );
-				$current_user_id = get_current_user_id();
-				if ( $current_user_id > 0 ) {
-					update_post_meta( $invoice_id, '_manually_marked_paid_by', $current_user_id );
-				}
-
-				// Clear any previous "marked unpaid" audit trail.
-				delete_post_meta( $invoice_id, '_manually_marked_unpaid_at' );
-				delete_post_meta( $invoice_id, '_manually_marked_unpaid_by' );
-
-				// Remove payment artifacts (link/QR/provider IDs).
-				update_field( 'payment_link', '', $invoice_id );
-				delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
-				delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
-				$this->clear_qr_code( $invoice_id );
+		if ( $status === 'paid' ) {
+			update_post_meta( $invoice_id, '_manually_marked_paid_at', current_time( 'mysql' ) );
+			$current_user_id = get_current_user_id();
+			if ( $current_user_id > 0 ) {
+				update_post_meta( $invoice_id, '_manually_marked_paid_by', $current_user_id );
 			}
+
+			// Clear any previous "marked unpaid" audit trail.
+			delete_post_meta( $invoice_id, '_manually_marked_unpaid_at' );
+			delete_post_meta( $invoice_id, '_manually_marked_unpaid_by' );
+
+			// Remove payment artifacts (link/QR/provider IDs).
+			update_field( 'payment_link', '', $invoice_id );
+			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
+			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+			$this->clear_qr_code( $invoice_id );
+		}
 
 			// If transitioning from paid to sent/overdue (marking as unpaid), store audit trail.
-			if ( in_array( $status, [ 'sent', 'overdue' ], true ) && 'rondo_paid' === $invoice->post_status ) {
-				update_post_meta( $invoice_id, '_manually_marked_unpaid_at', current_time( 'mysql' ) );
-				$current_user_id = get_current_user_id();
-				if ( $current_user_id > 0 ) {
-					update_post_meta( $invoice_id, '_manually_marked_unpaid_by', $current_user_id );
-				}
-
-				// Clear the "marked paid" audit trail since the invoice is no longer paid.
-				delete_post_meta( $invoice_id, '_manually_marked_paid_at' );
-				delete_post_meta( $invoice_id, '_manually_marked_paid_by' );
+		if ( in_array( $status, [ 'sent', 'overdue' ], true ) && $invoice->post_status === 'rondo_paid' ) {
+			update_post_meta( $invoice_id, '_manually_marked_unpaid_at', current_time( 'mysql' ) );
+			$current_user_id = get_current_user_id();
+			if ( $current_user_id > 0 ) {
+				update_post_meta( $invoice_id, '_manually_marked_unpaid_by', $current_user_id );
 			}
+
+			// Clear the "marked paid" audit trail since the invoice is no longer paid.
+			delete_post_meta( $invoice_id, '_manually_marked_paid_at' );
+			delete_post_meta( $invoice_id, '_manually_marked_paid_by' );
+		}
 
 			// Return updated invoice
 			$invoice = get_post( $invoice_id );
 			return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
-		}
+	}
 
 	/**
 	 * Add a manual line item to a draft invoice.
@@ -1102,7 +1115,7 @@ class Invoices extends Base {
 			);
 		}
 
-		if ( 'rondo_draft' !== $invoice->post_status ) {
+		if ( $invoice->post_status !== 'rondo_draft' ) {
 			return new \WP_Error(
 				'invoice_not_draft',
 				__( 'Alleen conceptfacturen kunnen worden aangepast.', 'rondo' ),
@@ -1110,7 +1123,7 @@ class Invoices extends Base {
 			);
 		}
 
-		if ( '' === trim( $description ) ) {
+		if ( trim( $description ) === '' ) {
 			return new \WP_Error(
 				'invalid_description',
 				__( 'Omschrijving is verplicht.', 'rondo' ),
@@ -1224,7 +1237,7 @@ class Invoices extends Base {
 
 		// Get invoice number for filename
 		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$filename = 'factuur-' . $invoice_number . '.pdf';
+		$filename       = 'factuur-' . $invoice_number . '.pdf';
 
 		// Serve PDF file directly
 		header( 'Content-Type: application/pdf' );
@@ -1292,9 +1305,9 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
 	 */
 	public function send_invoice( $request ) {
-		$invoice_id = (int) $request->get_param( 'id' );
+		$invoice_id     = (int) $request->get_param( 'id' );
 		$test_recipient = $this->get_test_email_recipient( $request );
-		$is_test_send   = '' !== $test_recipient;
+		$is_test_send   = $test_recipient !== '';
 
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
@@ -1323,13 +1336,13 @@ class Invoices extends Base {
 		$invoice_kind   = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
 		$sender_user_id = get_current_user_id();
 
-		if ( 'credit' === $invoice_kind ) {
+		if ( $invoice_kind === 'credit' ) {
 			// Credit invoices should not create payment links; they represent a financial adjustment.
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 			update_field( 'payment_link', '', $invoice_id );
 			$this->clear_qr_code( $invoice_id );
-		} elseif ( 'membership' === $invoice_type ) {
+		} elseif ( $invoice_type === 'membership' ) {
 			// Membership invoices: QR points to /betaling/{token} plan selection page.
 			$payment_url = get_field( 'payment_link', $invoice_id );
 			if ( ! empty( $payment_url ) ) {
@@ -1342,7 +1355,7 @@ class Invoices extends Base {
 			// Discipline/other invoices: create direct Mollie/Rabobank payment link + QR.
 			$active_provider = $finance_config->get_active_payment_provider();
 
-			if ( 'mollie' === $active_provider ) {
+			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
 				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 				if ( is_wp_error( $payment_result ) ) {
@@ -1389,20 +1402,20 @@ class Invoices extends Base {
 
 		$custom_email_subject = (string) get_post_meta( $invoice_id, '_email_subject', true );
 		$custom_email_body    = (string) get_post_meta( $invoice_id, '_email_body_override', true );
-		if ( '' !== trim( $custom_email_subject ) ) {
+		if ( trim( $custom_email_subject ) !== '' ) {
 			$email_options['subject'] = $custom_email_subject;
 		}
-		if ( '' !== trim( $custom_email_body ) ) {
+		if ( trim( $custom_email_body ) !== '' ) {
 			$email_options['template'] = $custom_email_body;
 		}
 
 		// Select email template based on invoice kind (credit first) then invoice type
-		if ( 'credit' === $invoice_kind && empty( $email_options['template'] ) ) {
+		if ( $invoice_kind === 'credit' && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $finance_config->get_credit_email_template();
 		}
 
 		$invoice_type = get_field( 'invoice_type', $invoice_id );
-		if ( 'membership' === $invoice_type && empty( $email_options['template'] ) ) {
+		if ( $invoice_type === 'membership' && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $finance_config->get_membership_email_template();
 		}
 
@@ -1451,9 +1464,9 @@ class Invoices extends Base {
 		if ( preg_match( '/^\d{8}$/', $due_date_override ) ) {
 			$due_date = $due_date_override;
 		} else {
-			$config = new FinanceConfig();
+			$config            = new FinanceConfig();
 			$payment_term_days = $config->get_payment_term_days();
-			$due_date = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
+			$due_date          = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
 		}
 		update_field( 'field_invoice_due_date', $due_date, $invoice_id );
 
@@ -1482,10 +1495,10 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response containing updated invoice or error.
 	 */
 	public function resend_invoice( $request ) {
-		$invoice_id = (int) $request->get_param( 'id' );
+		$invoice_id     = (int) $request->get_param( 'id' );
 		$sender_user_id = get_current_user_id();
 		$test_recipient = $this->get_test_email_recipient( $request );
-		$is_test_send   = '' !== $test_recipient;
+		$is_test_send   = $test_recipient !== '';
 
 		// Validate invoice exists
 		$invoice = get_post( $invoice_id );
@@ -1522,10 +1535,10 @@ class Invoices extends Base {
 
 		$custom_email_subject = (string) get_post_meta( $invoice_id, '_email_subject', true );
 		$custom_email_body    = (string) get_post_meta( $invoice_id, '_email_body_override', true );
-		if ( '' !== trim( $custom_email_subject ) ) {
+		if ( trim( $custom_email_subject ) !== '' ) {
 			$email_options['subject'] = $custom_email_subject;
 		}
-		if ( '' !== trim( $custom_email_body ) ) {
+		if ( trim( $custom_email_body ) !== '' ) {
 			$email_options['template'] = $custom_email_body;
 		}
 
@@ -1534,10 +1547,10 @@ class Invoices extends Base {
 		$invoice_type = get_field( 'invoice_type', $invoice_id );
 		$config       = new FinanceConfig();
 
-		if ( 'credit' === $invoice_kind && empty( $email_options['template'] ) ) {
+		if ( $invoice_kind === 'credit' && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $config->get_credit_email_template();
 		}
-		if ( 'membership' === $invoice_type && empty( $email_options['template'] ) ) {
+		if ( $invoice_type === 'membership' && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $config->get_membership_email_template();
 		}
 
@@ -1545,7 +1558,7 @@ class Invoices extends Base {
 		$existing_payment_link = get_field( 'payment_link', $invoice_id );
 		if ( empty( $existing_payment_link ) ) {
 			$active_provider = $config->get_active_payment_provider();
-			if ( 'mollie' === $active_provider ) {
+			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
 				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
 				if ( is_wp_error( $payment_result ) ) {
@@ -1633,7 +1646,7 @@ class Invoices extends Base {
 		$finance_config  = new FinanceConfig();
 		$active_provider = $finance_config->get_active_payment_provider();
 
-		if ( 'mollie' === $active_provider ) {
+		if ( $active_provider === 'mollie' ) {
 			// Clear Mollie payment link ID to bypass idempotency and force a new payment link
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			update_field( 'payment_link', '', $invoice_id );
@@ -1721,9 +1734,9 @@ class Invoices extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response or error.
 	 */
 	public function update_membership_discount( \WP_REST_Request $request ) {
-		$invoice_id             = (int) $request->get_param( 'id' );
-		$has_family_param       = null !== $request->get_param( 'family_discount_percent' );
-		$has_entry_param        = null !== $request->get_param( 'entry_discount_percent' );
+		$invoice_id              = (int) $request->get_param( 'id' );
+		$has_family_param        = $request->get_param !== null( 'family_discount_percent' );
+		$has_entry_param         = $request->get_param !== null( 'entry_discount_percent' );
 		$family_discount_percent = $has_family_param ? round( (float) $request->get_param( 'family_discount_percent' ), 2 ) : null;
 		$entry_discount_percent  = $has_entry_param ? round( (float) $request->get_param( 'entry_discount_percent' ), 2 ) : null;
 
@@ -1733,7 +1746,7 @@ class Invoices extends Base {
 		}
 
 		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
-		if ( 'membership' !== $invoice_type ) {
+		if ( $invoice_type !== 'membership' ) {
 			return new \WP_Error(
 				'invalid_invoice_type',
 				__( 'Alleen contributiefacturen kunnen hier worden aangepast.', 'rondo' ),
@@ -1773,9 +1786,10 @@ class Invoices extends Base {
 		}
 
 		$installment_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
-		for ( $n = 1; $n <= max( $installment_count, 8 ); $n++ ) {
+		$check_up_to       = max( $installment_count, 8 );
+		for ( $n = 1; $n <= $check_up_to; $n++ ) {
 			$installment_status = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_status', true );
-			if ( 'betaald' === $installment_status ) {
+			if ( $installment_status === 'betaald' ) {
 				return new \WP_Error(
 					'installment_paid',
 					__( 'Deze factuur heeft al betaalde termijn(en) en kan niet meer worden aangepast.', 'rondo' ),
@@ -1784,7 +1798,7 @@ class Invoices extends Base {
 			}
 
 			$issued_payment_link_id = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
-			if ( '' !== $issued_payment_link_id ) {
+			if ( $issued_payment_link_id !== '' ) {
 				return new \WP_Error(
 					'installment_link_issued',
 					__( 'Deze factuur heeft al een actieve termijnbetaallink. Pas eerst het betaalplan aan via de publieke betaalpagina.', 'rondo' ),
@@ -1798,8 +1812,8 @@ class Invoices extends Base {
 			return new \WP_Error( 'missing_line_items', __( 'Factuurregels ontbreken.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$family_line_index          = -1;
-		$entry_line_index           = -1;
+		$family_line_index           = -1;
+		$entry_line_index            = -1;
 		$current_family_rate_percent = 0.0;
 		$current_family_discount_abs = 0.0;
 		$current_entry_rate_percent  = 0.0;
@@ -1811,30 +1825,30 @@ class Invoices extends Base {
 			$description = (string) ( $item['description'] ?? '' );
 			$amount      = (float) ( $item['amount'] ?? 0 );
 
-			if ( $base_line_index < 0 && $amount > 0 && 0 === stripos( trim( $description ), 'Contributie ' ) ) {
+			if ( $base_line_index < 0 && $amount > 0 && stripos( trim( $description ), 'Contributie ' ) === 0 ) {
 				$base_line_index = (int) $index;
 				$base_amount     = $amount;
 			}
 
-				if ( preg_match( '/^Gezinskorting\s*\(([\d\.,]+)%\)/i', trim( $description ), $matches ) ) {
-					$family_line_index           = (int) $index;
-					$current_family_discount_abs = abs( $amount );
-					$current_family_rate_percent = (float) str_replace( ',', '.', $matches[1] );
-				}
-
-				if ( preg_match( '/^Instapkorting\s*\(([\d\.,]+)%\)/i', trim( $description ), $matches ) ) {
-					$entry_line_index           = (int) $index;
-					$current_entry_discount_abs = abs( $amount );
-					$current_entry_rate_percent = (float) str_replace( ',', '.', $matches[1] );
-				}
+			if ( preg_match( '/^Gezinskorting\s*\(([\d\.,]+)%\)/i', trim( $description ), $matches ) ) {
+				$family_line_index           = (int) $index;
+				$current_family_discount_abs = abs( $amount );
+				$current_family_rate_percent = (float) str_replace( ',', '.', $matches[1] );
 			}
 
-			if ( $base_amount <= 0 && $current_family_discount_abs > 0 && $current_family_rate_percent > 0 ) {
-				$base_amount = round( $current_family_discount_abs / ( $current_family_rate_percent / 100 ), 2 );
+			if ( preg_match( '/^Instapkorting\s*\(([\d\.,]+)%\)/i', trim( $description ), $matches ) ) {
+				$entry_line_index           = (int) $index;
+				$current_entry_discount_abs = abs( $amount );
+				$current_entry_rate_percent = (float) str_replace( ',', '.', $matches[1] );
 			}
-			if ( $base_amount <= 0 && $current_entry_discount_abs > 0 && $current_entry_rate_percent > 0 ) {
-				$base_amount = round( $current_entry_discount_abs / ( $current_entry_rate_percent / 100 ), 2 );
-			}
+		}
+
+		if ( $base_amount <= 0 && $current_family_discount_abs > 0 && $current_family_rate_percent > 0 ) {
+			$base_amount = round( $current_family_discount_abs / ( $current_family_rate_percent / 100 ), 2 );
+		}
+		if ( $base_amount <= 0 && $current_entry_discount_abs > 0 && $current_entry_rate_percent > 0 ) {
+			$base_amount = round( $current_entry_discount_abs / ( $current_entry_rate_percent / 100 ), 2 );
+		}
 
 		if ( $base_amount <= 0 ) {
 			return new \WP_Error(
@@ -1861,17 +1875,17 @@ class Invoices extends Base {
 
 		$insert_index = $base_line_index >= 0 ? $base_line_index + 1 : count( $updated_line_items );
 		if ( $family_discount_abs > 0 ) {
-			$family_label     = 'Gezinskorting (' . $this->format_percentage_label( $effective_family_percent ) . '%)';
+			$family_label        = 'Gezinskorting (' . $this->format_percentage_label( $effective_family_percent ) . '%)';
 			$family_discount_row = [
 				'discipline_case' => null,
 				'description'     => $family_label,
 				'amount'          => -$family_discount_abs,
 			];
 			array_splice( $updated_line_items, $insert_index, 0, [ $family_discount_row ] );
-			$insert_index++;
+			++$insert_index;
 		}
 		if ( $entry_discount_abs > 0 ) {
-			$entry_label      = 'Instapkorting (' . $this->format_percentage_label( $effective_entry_percent ) . '%) - omdat je later in het seizoen start';
+			$entry_label        = 'Instapkorting (' . $this->format_percentage_label( $effective_entry_percent ) . '%) - omdat je later in het seizoen start';
 			$entry_discount_row = [
 				'discipline_case' => null,
 				'description'     => $entry_label,
@@ -1910,17 +1924,17 @@ class Invoices extends Base {
 		$settings = $config->get_all_settings();
 		$provider = $settings['active_payment_provider'] ?? '';
 
-		if ( 'mollie' === $provider ) {
+		if ( $provider === 'mollie' ) {
 			$account_id = $invoice_id > 0
 				? (string) get_post_meta( $invoice_id, '_payment_account_id', true )
 				: $config->get_default_mollie_account_id( 'manual' );
 
-			if ( '' === $account_id ) {
+			if ( $account_id === '' ) {
 				$default_account = $config->get_default_mollie_account( 'manual' );
-				$account_id = is_array( $default_account ) ? (string) ( $default_account['id'] ?? '' ) : '';
+				$account_id      = is_array( $default_account ) ? (string) ( $default_account['id'] ?? '' ) : '';
 			}
 
-			if ( '' === $account_id ) {
+			if ( $account_id === '' ) {
 				return false;
 			}
 
@@ -1928,7 +1942,7 @@ class Invoices extends Base {
 			return is_array( $account ) && ( $account['environment'] ?? '' ) === 'test';
 		}
 
-		if ( 'rabobank' === $provider ) {
+		if ( $provider === 'rabobank' ) {
 			return ( $settings['rabobank_environment'] ?? '' ) === 'sandbox';
 		}
 
@@ -2072,14 +2086,14 @@ class Invoices extends Base {
 	 * @return array Formatted invoice data.
 	 */
 	private function format_invoice( $post ) {
-		$status          = get_field( 'status', $post->ID );
-		$raw_payment_link = get_field( 'payment_link', $post->ID ) ?: null;
-		$payment_link     = ( 'paid' === $status ) ? null : $raw_payment_link;
-		$reminder_1_sent_at = (string) get_post_meta( $post->ID, '_invoice_reminder_1_sent_at', true ) ?: null;
-		$reminder_2_sent_at = (string) get_post_meta( $post->ID, '_invoice_reminder_2_sent_at', true ) ?: null;
-		$sent_by_user_id    = (int) get_post_meta( $post->ID, '_invoice_sent_by_user_id', true );
+		$status               = get_field( 'status', $post->ID );
+		$raw_payment_link     = get_field( 'payment_link', $post->ID ) ?: null;
+		$payment_link         = ( $status === 'paid' ) ? null : $raw_payment_link;
+		$reminder_1_sent_at   = (string) get_post_meta( $post->ID, '_invoice_reminder_1_sent_at', true ) ?: null;
+		$reminder_2_sent_at   = (string) get_post_meta( $post->ID, '_invoice_reminder_2_sent_at', true ) ?: null;
+		$sent_by_user_id      = (int) get_post_meta( $post->ID, '_invoice_sent_by_user_id', true );
 		$last_sent_by_user_id = (int) get_post_meta( $post->ID, '_invoice_last_sent_by_user_id', true );
-		$reminder_sent_at   = null;
+		$reminder_sent_at     = null;
 
 		if ( $reminder_1_sent_at && $reminder_2_sent_at ) {
 			$reminder_sent_at = ( strtotime( $reminder_2_sent_at ) >= strtotime( $reminder_1_sent_at ) ) ? $reminder_2_sent_at : $reminder_1_sent_at;
@@ -2092,10 +2106,10 @@ class Invoices extends Base {
 		// Count how many reminders have been sent (0, 1, or 2).
 		$reminder_count = 0;
 		if ( $reminder_1_sent_at ) {
-			$reminder_count++;
+			++$reminder_count;
 		}
 		if ( $reminder_2_sent_at ) {
-			$reminder_count++;
+			++$reminder_count;
 		}
 
 		return [
@@ -2197,7 +2211,7 @@ class Invoices extends Base {
 	private function format_percentage_label( float $value ): string {
 		$formatted = number_format( $value, 2, '.', '' );
 		$formatted = rtrim( rtrim( $formatted, '0' ), '.' );
-		return '' === $formatted ? '0' : $formatted;
+		return $formatted === '' ? '0' : $formatted;
 	}
 
 	/**
@@ -2228,7 +2242,10 @@ class Invoices extends Base {
 			return new \WP_Error(
 				'rest_missing_param',
 				__( 'Line items are required.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'line_items' => 'Line items are required' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'line_items' => 'Line items are required' ],
+				]
 			);
 		}
 
@@ -2240,7 +2257,7 @@ class Invoices extends Base {
 				? absint( $item['discipline_case_id'] )
 				: absint( $item['discipline_case']['id'] ?? 0 );
 
-			$rows[] = [
+			$rows[]        = [
 				'discipline_case' => $discipline_case_id > 0 ? $discipline_case_id : null,
 				'description'     => sanitize_text_field( $item['description'] ?? '' ),
 				'amount'          => $amount,
@@ -2258,16 +2275,19 @@ class Invoices extends Base {
 
 		if ( $person_id > 0 ) {
 			$person = get_post( $person_id );
-			if ( ! $person || 'person' !== $person->post_type ) {
+			if ( ! $person || $person->post_type !== 'person' ) {
 				return new \WP_Error(
 					'rest_invalid_param',
 					__( 'Invalid person ID.', 'rondo' ),
-					[ 'status' => 400, 'params' => [ 'person_id' => 'Person does not exist' ] ]
+					[
+						'status' => 400,
+						'params' => [ 'person_id' => 'Person does not exist' ],
+					]
 				);
 			}
 		}
 
-		if ( $person_id <= 0 && ( '' === $customer_name || '' === $customer_address ) ) {
+		if ( $person_id <= 0 && ( $customer_name === '' || $customer_address === '' ) ) {
 			return new \WP_Error(
 				'rest_missing_param',
 				__( 'Customer name and address are required when no member is linked.', 'rondo' ),
@@ -2275,19 +2295,25 @@ class Invoices extends Base {
 			);
 		}
 
-		if ( '' !== (string) $request->get_param( 'customer_email' ) && '' === $customer_email ) {
+		if ( (string) $request->get_param( 'customer_email' ) !== '' && $customer_email === '' ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid customer email address.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'customer_email' => 'Invalid email address' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'customer_email' => 'Invalid email address' ],
+				]
 			);
 		}
 
-		if ( '' !== (string) $request->get_param( 'customer_cc_email' ) && '' === $customer_cc_email ) {
+		if ( (string) $request->get_param( 'customer_cc_email' ) !== '' && $customer_cc_email === '' ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid customer CC email address.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'customer_cc_email' => 'Invalid email address' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'customer_cc_email' => 'Invalid email address' ],
+				]
 			);
 		}
 
@@ -2305,7 +2331,7 @@ class Invoices extends Base {
 			foreach ( array_slice( $custom_fields, 0, 2 ) as $field ) {
 				$label = sanitize_text_field( (string) ( $field['label'] ?? '' ) );
 				$text  = sanitize_textarea_field( (string) ( $field['text'] ?? '' ) );
-				if ( '' !== $label || '' !== $text ) {
+				if ( $label !== '' || $text !== '' ) {
 					$normalized_custom_fields[] = [
 						'label' => $label,
 						'text'  => $text,
@@ -2373,7 +2399,7 @@ class Invoices extends Base {
 	 * @return array<string, string>|\WP_Error
 	 */
 	private function resolve_payment_account_for_payload( FinanceConfig $finance_config, string $invoice_type, string $payment_account_id ) {
-		$requested_account_id = 'manual' === $invoice_type ? $payment_account_id : '';
+		$requested_account_id = $invoice_type === 'manual' ? $payment_account_id : '';
 
 		return $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
 	}
@@ -2385,14 +2411,14 @@ class Invoices extends Base {
 	 * @return array<string, string>
 	 */
 	private function get_invoice_payment_account( int $invoice_id ): array {
-		$invoice_type     = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type    = (string) get_field( 'invoice_type', $invoice_id );
 		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
 		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
 		$iban            = (string) get_post_meta( $invoice_id, '_payment_account_iban', true );
 		$linked_provider = (string) get_post_meta( $invoice_id, '_payment_account_linked_provider', true );
 
-		if ( '' !== $account_id || '' !== $internal_name || '' !== $account_holder || '' !== $iban ) {
+		if ( $account_id !== '' || $internal_name !== '' || $account_holder !== '' || $iban !== '' ) {
 			return [
 				'id'              => $account_id,
 				'internal_name'   => $internal_name,
@@ -2426,7 +2452,7 @@ class Invoices extends Base {
 		$invoice = $this->format_invoice( $post );
 
 		// Add line items with discipline case details
-		$line_items = get_field( 'line_items', $post->ID );
+		$line_items      = get_field( 'line_items', $post->ID );
 		$formatted_items = [];
 
 		if ( $line_items && is_array( $line_items ) ) {
@@ -2441,11 +2467,11 @@ class Invoices extends Base {
 					$case = get_post( $item['discipline_case'] );
 					if ( $case && $case->post_type === 'discipline_case' ) {
 						$formatted_item['discipline_case'] = [
-							'id'                    => $case->ID,
-							'dossier_id'            => get_field( 'dossier_id', $case->ID ) ?: '',
-							'match_description'     => get_field( 'match_description', $case->ID ) ?: '',
-							'charge_description'    => get_field( 'charge_description', $case->ID ) ?: '',
-							'sanction_description'  => get_field( 'sanction_description', $case->ID ) ?: '',
+							'id'                   => $case->ID,
+							'dossier_id'           => get_field( 'dossier_id', $case->ID ) ?: '',
+							'match_description'    => get_field( 'match_description', $case->ID ) ?: '',
+							'charge_description'   => get_field( 'charge_description', $case->ID ) ?: '',
+							'sanction_description' => get_field( 'sanction_description', $case->ID ) ?: '',
 						];
 					} else {
 						$formatted_item['discipline_case'] = null;
@@ -2464,9 +2490,9 @@ class Invoices extends Base {
 		$invoice['email_subject']       = (string) get_post_meta( $post->ID, '_email_subject', true );
 		$invoice['email_body_override'] = (string) get_post_meta( $post->ID, '_email_body_override', true );
 		$invoice['payment_adjusted_at'] = (string) get_post_meta( $post->ID, '_credit_payment_adjustment_recorded_at', true ) ?: null;
-		$custom_fields_raw = (string) get_post_meta( $post->ID, '_custom_fields', true );
-		$custom_fields = json_decode( $custom_fields_raw, true );
-		$invoice['custom_fields'] = is_array( $custom_fields ) ? $custom_fields : [];
+		$custom_fields_raw              = (string) get_post_meta( $post->ID, '_custom_fields', true );
+		$custom_fields                  = json_decode( $custom_fields_raw, true );
+		$invoice['custom_fields']       = is_array( $custom_fields ) ? $custom_fields : [];
 
 		// Add installment data for multi-installment invoices
 		$plan  = get_post_meta( $post->ID, '_installment_plan', true ) ?: null;
@@ -2475,32 +2501,32 @@ class Invoices extends Base {
 		$installments = [];
 		if ( $count >= 1 && $plan && $plan !== 'full' ) {
 			for ( $n = 1; $n <= $count; $n++ ) {
-				$amount    = (float) get_post_meta( $post->ID, '_installment_' . $n . '_amount', true );
-				$admin_fee = (float) get_post_meta( $post->ID, '_installment_' . $n . '_admin_fee', true );
+				$amount         = (float) get_post_meta( $post->ID, '_installment_' . $n . '_amount', true );
+				$admin_fee      = (float) get_post_meta( $post->ID, '_installment_' . $n . '_admin_fee', true );
 				$installments[] = [
-					'number'            => $n,
-					'amount'            => $amount + $admin_fee,
-					'status'            => (string) get_post_meta( $post->ID, '_installment_' . $n . '_status', true ) ?: 'pending',
-					'due_date'          => (string) get_post_meta( $post->ID, '_installment_' . $n . '_due_date', true ) ?: null,
-					'paid_at'           => (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null,
-					'sent_at'           => (string) get_post_meta( $post->ID, '_installment_' . $n . '_sent_at', true ) ?: null,
-					'mollie_method'     => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_method', true ) ?: null,
-					'mollie_paid_at'    => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_paid_at', true ) ?: null,
+					'number'               => $n,
+					'amount'               => $amount + $admin_fee,
+					'status'               => (string) get_post_meta( $post->ID, '_installment_' . $n . '_status', true ) ?: 'pending',
+					'due_date'             => (string) get_post_meta( $post->ID, '_installment_' . $n . '_due_date', true ) ?: null,
+					'paid_at'              => (string) get_post_meta( $post->ID, '_installment_' . $n . '_paid_at', true ) ?: null,
+					'sent_at'              => (string) get_post_meta( $post->ID, '_installment_' . $n . '_sent_at', true ) ?: null,
+					'mollie_method'        => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_method', true ) ?: null,
+					'mollie_paid_at'       => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_paid_at', true ) ?: null,
 					'mollie_dashboard_url' => (string) get_post_meta( $post->ID, '_installment_' . $n . '_mollie_dashboard_url', true ) ?: null,
 				];
 			}
 		}
 
-		$invoice['installment_plan']    = $plan;
-		$invoice['installment_count']   = $count;
-		$invoice['installments']        = $installments;
+		$invoice['installment_plan']     = $plan;
+		$invoice['installment_count']    = $count;
+		$invoice['installments']         = $installments;
 		$invoice['disable_installments'] = (bool) get_post_meta( $post->ID, '_disable_installments', true );
 
 		// Mollie payment details (stored by webhook on payment confirmation)
-		$invoice['mollie_payment_method']  = (string) get_post_meta( $post->ID, '_mollie_payment_method', true ) ?: null;
-		$invoice['mollie_paid_at']         = (string) get_post_meta( $post->ID, '_mollie_paid_at', true ) ?: null;
-		$invoice['mollie_dashboard_url']   = (string) get_post_meta( $post->ID, '_mollie_dashboard_url', true ) ?: null;
-		$invoice['mollie_consumer_name']   = (string) get_post_meta( $post->ID, '_mollie_consumer_name', true ) ?: null;
+		$invoice['mollie_payment_method']   = (string) get_post_meta( $post->ID, '_mollie_payment_method', true ) ?: null;
+		$invoice['mollie_paid_at']          = (string) get_post_meta( $post->ID, '_mollie_paid_at', true ) ?: null;
+		$invoice['mollie_dashboard_url']    = (string) get_post_meta( $post->ID, '_mollie_dashboard_url', true ) ?: null;
+		$invoice['mollie_consumer_name']    = (string) get_post_meta( $post->ID, '_mollie_consumer_name', true ) ?: null;
 		$invoice['mollie_consumer_account'] = (string) get_post_meta( $post->ID, '_mollie_consumer_account', true ) ?: null;
 
 		// Manual payment audit trail.

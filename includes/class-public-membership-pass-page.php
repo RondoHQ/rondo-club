@@ -105,7 +105,7 @@ class PublicMembershipPassPage {
 			return;
 		}
 
-		$token    = sanitize_key( $token );
+		$token     = sanitize_key( $token );
 		$person_id = self::get_person_by_token( $token );
 		if ( $person_id === null ) {
 			$this->render_error( 'Ledenpas-link niet gevonden of verlopen.' );
@@ -118,7 +118,9 @@ class PublicMembershipPassPage {
 			exit;
 		}
 
-		$wallet        = sanitize_key( wp_unslash( $_GET['wallet'] ?? '' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$wallet = sanitize_key( wp_unslash( $_GET['wallet'] ?? '' ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$selected_work = sanitize_text_field( wp_unslash( $_GET['role'] ?? '' ) );
 		$apple_service = new MembershipPassApple();
 		$work_options  = $apple_service->get_work_options_for_person( $person_id );
@@ -300,12 +302,12 @@ class PublicMembershipPassPage {
 	 * @param string $selected_work Selected work option key.
 	 */
 	private function render_page( int $person_id, string $token, string $selected_work = '' ) {
-		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
-		$infix      = (string) ( get_field( 'infix', $person_id ) ?: '' );
-		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
-		$name       = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-		$knvb_id    = (string) get_field( 'knvb-id', $person_id );
-		$member_tier = self::get_person_member_tier( $person_id );
+		$first_name   = (string) ( get_field( 'first_name', $person_id ) ?: '' );
+		$infix        = (string) ( get_field( 'infix', $person_id ) ?: '' );
+		$last_name    = (string) ( get_field( 'last_name', $person_id ) ?: '' );
+		$name         = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		$knvb_id      = (string) get_field( 'knvb-id', $person_id );
+		$member_tier  = self::get_person_member_tier( $person_id );
 		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
 
 		$fees   = new \Rondo\Fees\MembershipFees();
@@ -317,14 +319,14 @@ class PublicMembershipPassPage {
 		$apple_available  = $apple_service->is_configured();
 		$google_available = $google_service->is_configured();
 
-		$work_options = $apple_service->get_work_options_for_person( $person_id );
-		$selected_work   = $this->resolve_selected_work( $selected_work, $work_options );
-		$must_select_work = count( $work_options ) > 1 && $selected_work === '';
-		$apple_url        = $this->build_wallet_url( $token, 'apple', $selected_work );
-		$google_url       = $this->build_wallet_url( $token, 'google', $selected_work );
-		$user_agent   = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
-		$is_android   = strpos( $user_agent, 'android' ) !== false;
-		$is_ios       = strpos( $user_agent, 'iphone' ) !== false
+		$work_options       = $apple_service->get_work_options_for_person( $person_id );
+		$selected_work      = $this->resolve_selected_work( $selected_work, $work_options );
+		$must_select_work   = count( $work_options ) > 1 && $selected_work === '';
+		$apple_url          = $this->build_wallet_url( $token, 'apple', $selected_work );
+		$google_url         = $this->build_wallet_url( $token, 'google', $selected_work );
+		$user_agent         = strtolower( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
+		$is_android         = strpos( $user_agent, 'android' ) !== false;
+		$is_ios             = strpos( $user_agent, 'iphone' ) !== false
 			|| strpos( $user_agent, 'ipad' ) !== false
 			|| strpos( $user_agent, 'ipod' ) !== false
 			|| ( strpos( $user_agent, 'macintosh' ) !== false && strpos( $user_agent, 'mobile' ) !== false );
@@ -390,7 +392,7 @@ class PublicMembershipPassPage {
 			<div class="hint">Kies eerst precies één rol om je wallet-knoppen te activeren.</div>
 		<?php else : ?>
 		<div class="wallet-actions">
-		<?php if ( $show_apple_wallet && $apple_available ) : ?>
+			<?php if ( $show_apple_wallet && $apple_available ) : ?>
 			<a href="<?php echo esc_url( $apple_url ); ?>" class="wallet-badge wallet-badge-apple" aria-label="Add to Apple Wallet">
 				<img
 					src="<?php echo esc_url( get_template_directory_uri() . '/public/icons/NL_Add_to_Apple_Wallet_RGB_101921.svg' ); ?>"
@@ -404,7 +406,7 @@ class PublicMembershipPassPage {
 			<div class="hint">Apple Wallet is nog niet geconfigureerd.</div>
 		<?php endif; ?>
 
-		<?php if ( $show_google_wallet && $google_available ) : ?>
+			<?php if ( $show_google_wallet && $google_available ) : ?>
 			<a href="<?php echo esc_url( $google_url ); ?>" class="wallet-badge wallet-badge-google" aria-label="Add to Google Wallet">
 				<img
 					src="<?php echo esc_url( get_template_directory_uri() . '/public/icons/nl_add_to_google_wallet_add-wallet-badge.svg' ); ?>"
@@ -552,9 +554,9 @@ class PublicMembershipPassPage {
 		}
 
 		return [
-			'name'         => $name,
-			'logo_url'     => $logo_url,
-			'accent_color' => $accent,
+			'name'                    => $name,
+			'logo_url'                => $logo_url,
+			'accent_color'            => $accent,
 			'accent_background_color' => $accent_background,
 		];
 	}
@@ -575,7 +577,7 @@ class PublicMembershipPassPage {
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title><?php echo esc_html( $title ); ?></title>
-	<?php if ( $favicon_url !== '' ) : ?>
+		<?php if ( $favicon_url !== '' ) : ?>
 		<link rel="icon" href="<?php echo esc_url( $favicon_url ); ?>" sizes="any">
 		<link rel="apple-touch-icon" href="<?php echo esc_url( $favicon_url ); ?>">
 	<?php endif; ?>

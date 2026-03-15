@@ -318,7 +318,7 @@ class CommentTypes {
 	public function create_note( $request ) {
 		$person_id = $request->get_param( 'person_id' );
 		// Use wp_kses_post to allow safe HTML (bold, italic, lists, links, etc.)
-		$content   = wp_kses_post( $request->get_param( 'content' ) );
+		$content    = wp_kses_post( $request->get_param( 'content' ) );
 		$visibility = $this->sanitize_visibility( $request->get_param( 'visibility' ) );
 
 		if ( empty( $content ) ) {
@@ -360,7 +360,7 @@ class CommentTypes {
 		}
 
 		// Update visibility if provided.
-		if ( null !== $visibility ) {
+		if ( $visibility !== null ) {
 			update_comment_meta( $comment_id, '_note_visibility', $this->sanitize_visibility( $visibility ) );
 		}
 
@@ -415,8 +415,8 @@ class CommentTypes {
 	 * Create an activity
 	 */
 	public function create_activity( $request ) {
-		$person_id = $request->get_param( 'person_id' );
-		$content   = wp_kses_post( $request->get_param( 'content' ) );
+		$person_id     = $request->get_param( 'person_id' );
+		$content       = wp_kses_post( $request->get_param( 'content' ) );
 		$activity_type = sanitize_text_field( $request->get_param( 'activity_type' ) );
 		$activity_date = sanitize_text_field( $request->get_param( 'activity_date' ) );
 		$activity_time = sanitize_text_field( $request->get_param( 'activity_time' ) );
@@ -452,8 +452,8 @@ class CommentTypes {
 	 * Update an activity
 	 */
 	public function update_activity( $request ) {
-		$comment_id = $request->get_param( 'id' );
-		$content    = wp_kses_post( $request->get_param( 'content' ) );
+		$comment_id    = $request->get_param( 'id' );
+		$content       = wp_kses_post( $request->get_param( 'content' ) );
 		$activity_type = sanitize_text_field( $request->get_param( 'activity_type' ) );
 		$activity_date = sanitize_text_field( $request->get_param( 'activity_date' ) );
 		$activity_time = sanitize_text_field( $request->get_param( 'activity_time' ) );
@@ -466,7 +466,7 @@ class CommentTypes {
 		}
 
 		// wp_update_comment returns false on failure, 0 if no changes, 1 if updated.
-		if ( false === $result || is_wp_error( $result ) ) {
+		if ( $result === false || is_wp_error( $result ) ) {
 			return new \WP_Error( 'update_failed', __( 'Failed to update activity.', 'rondo' ), [ 'status' => 500 ] );
 		}
 
@@ -477,7 +477,7 @@ class CommentTypes {
 				'activity_type' => $activity_type,
 				'activity_date' => $activity_date,
 				'activity_time' => $activity_time,
-				'participants'  => null !== $participants ? array_map( 'intval', $participants ) : null,
+				'participants'  => $participants !== null ? array_map( 'intval', $participants ) : null,
 			]
 		);
 
@@ -557,7 +557,7 @@ class CommentTypes {
 				'persons'        => $persons,
 				'notes'          => get_field( 'notes', $todo->ID ) ?: null,
 				'status'         => self::STATUS_MAP[ $todo->post_status ] ?? 'open',
-				'is_completed'   => 'rondo_completed' === $todo->post_status,
+				'is_completed'   => $todo->post_status === 'rondo_completed',
 				'due_date'       => get_field( 'due_date', $todo->ID ) ?: null,
 				'awaiting_since' => get_field( 'awaiting_since', $todo->ID ) ?: null,
 			];
@@ -590,7 +590,7 @@ class CommentTypes {
 	 */
 	private function format_comment( $comment, $type ) {
 		// Process content for activities and notes
-		$content = ( 'activity' === $type || 'note' === $type )
+		$content = ( $type === 'activity' || $type === 'note' )
 			? $this->process_content_for_display( $comment->comment_content )
 			: $comment->comment_content;
 
@@ -605,15 +605,15 @@ class CommentTypes {
 		];
 
 		// Add type-specific meta fields
-		if ( 'activity' === $type ) {
+		if ( $type === 'activity' ) {
 			$meta_fields = [ 'activity_type', 'activity_date', 'activity_time', 'participants' ];
 			foreach ( $meta_fields as $field ) {
-				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true ) ?: ( 'participants' === $field ? [] : '' );
+				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true ) ?: ( $field === 'participants' ? [] : '' );
 			}
-		} elseif ( 'note' === $type ) {
-			$visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
+		} elseif ( $type === 'note' ) {
+			$visibility         = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
 			$data['visibility'] = $visibility ?: 'private';
-		} elseif ( 'email' === $type ) {
+		} elseif ( $type === 'email' ) {
 			$email_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
 			foreach ( $email_fields as $field ) {
 				$data[ $field ] = get_comment_meta( $comment->comment_ID, $field, true );
@@ -659,7 +659,7 @@ class CommentTypes {
 				}
 
 				// Shared notes are visible to anyone who can see the contact.
-				return 'shared' === $visibility;
+				return $visibility === 'shared';
 			}
 		);
 	}
@@ -687,11 +687,11 @@ class CommentTypes {
 	 */
 	private function update_meta_if_provided( $comment_id, $meta_map ) {
 		foreach ( $meta_map as $key => $value ) {
-			if ( null === $value ) {
+			if ( $value === null ) {
 				continue;
 			}
 
-			if ( '' === $value ) {
+			if ( $value === '' ) {
 				delete_comment_meta( $comment_id, $key );
 				continue;
 			}
@@ -751,9 +751,9 @@ class CommentTypes {
 		$this->update_meta_if_provided(
 			$comment_id,
 			[
-				'email_template_type'   => $data['template_type'],
-				'email_recipient'       => $data['recipient'],
-				'email_subject'         => $data['subject'],
+				'email_template_type'    => $data['template_type'],
+				'email_recipient'        => $data['recipient'],
+				'email_subject'          => $data['subject'],
 				'email_content_snapshot' => $data['content'],
 			]
 		);
@@ -802,7 +802,7 @@ class CommentTypes {
 			]
 		);
 
-		if ( false === $result || is_wp_error( $result ) ) {
+		if ( $result === false || is_wp_error( $result ) ) {
 			return new \WP_Error( 'update_failed', __( 'Failed to update comment.', 'rondo' ), [ 'status' => 500 ] );
 		}
 

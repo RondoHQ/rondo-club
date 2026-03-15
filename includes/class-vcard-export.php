@@ -109,7 +109,7 @@ class VCard {
 		);
 
 		if ( ! empty( $work_history[0] ) ) {
-			$job          = $work_history[0];
+			$job       = $work_history[0];
 			$team_name = '';
 			if ( ! empty( $job['team'] ) ) {
 				$team = get_post( $job['team'] );
@@ -170,6 +170,7 @@ class VCard {
 		}
 
 		// Read and encode the file
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$file_contents = file_get_contents( $file_path );
 		if ( $file_contents === false ) {
 			return null;
@@ -504,26 +505,26 @@ class VCard {
 	 */
 	private static function vobject_to_array( $vcard ) {
 		$data = [
-			'first_name'   => '',
-			'infix'        => '',
-			'last_name'    => '',
-			'full_name'    => '',
-			'nickname'     => '',
-			'gender'       => '',
-			'pronouns'     => '',
-			'email_1'      => '',
-			'email_2'      => '',
-			'mobile_1'     => '',
-			'mobile_2'     => '',
-			'telephone_1'  => '',
-			'telephone_2'  => '',
-			'addresses'    => [],
-			'org'          => '',
-			'title'        => '',
-			'birthday'     => '',
-			'photo_url'    => '',
-			'uid'          => '',
-			'notes'        => [],
+			'first_name'  => '',
+			'infix'       => '',
+			'last_name'   => '',
+			'full_name'   => '',
+			'nickname'    => '',
+			'gender'      => '',
+			'pronouns'    => '',
+			'email_1'     => '',
+			'email_2'     => '',
+			'mobile_1'    => '',
+			'mobile_2'    => '',
+			'telephone_1' => '',
+			'telephone_2' => '',
+			'addresses'   => [],
+			'org'         => '',
+			'title'       => '',
+			'birthday'    => '',
+			'photo_url'   => '',
+			'uid'         => '',
+			'notes'       => [],
 		];
 
 		// UID
@@ -557,7 +558,7 @@ class VCard {
 					break;
 				}
 				$data[ "email_{$email_index}" ] = (string) $email;
-				$email_index++;
+				++$email_index;
 			}
 		}
 
@@ -580,10 +581,10 @@ class VCard {
 
 				if ( $is_mobile && $mobile_index <= 2 ) {
 					$data[ "mobile_{$mobile_index}" ] = (string) $tel;
-					$mobile_index++;
+					++$mobile_index;
 				} elseif ( ! $is_mobile && $telephone_index <= 2 ) {
 					$data[ "telephone_{$telephone_index}" ] = (string) $tel;
-					$telephone_index++;
+					++$telephone_index;
 				}
 			}
 		}
@@ -601,14 +602,14 @@ class VCard {
 				}
 
 				$data['addresses'][] = [
-					'address_label'        => $label,
-					'street_name'          => $parts[2] ?? '',
-					'house_number'         => '',
+					'address_label'         => $label,
+					'street_name'           => $parts[2] ?? '',
+					'house_number'          => '',
 					'house_number_addition' => '',
-					'city'                 => $parts[3] ?? '',
-					'state'                => $parts[4] ?? '',
-					'postal_code'          => $parts[5] ?? '',
-					'country'              => $parts[6] ?? '',
+					'city'                  => $parts[3] ?? '',
+					'state'                 => $parts[4] ?? '',
+					'postal_code'           => $parts[5] ?? '',
+					'country'               => $parts[6] ?? '',
 				];
 			}
 		}
@@ -730,26 +731,26 @@ class VCard {
 	 */
 	private static function manual_parse( $vcard_data ) {
 		$data = [
-			'first_name'   => '',
-			'infix'        => '',
-			'last_name'    => '',
-			'full_name'    => '',
-			'nickname'     => '',
-			'gender'       => '',
-			'pronouns'     => '',
-			'email_1'      => '',
-			'email_2'      => '',
-			'mobile_1'     => '',
-			'mobile_2'     => '',
-			'telephone_1'  => '',
-			'telephone_2'  => '',
-			'addresses'    => [],
-			'org'          => '',
-			'title'        => '',
-			'birthday'     => '',
-			'photo_url'    => '',
-			'uid'          => '',
-			'notes'        => [],
+			'first_name'  => '',
+			'infix'       => '',
+			'last_name'   => '',
+			'full_name'   => '',
+			'nickname'    => '',
+			'gender'      => '',
+			'pronouns'    => '',
+			'email_1'     => '',
+			'email_2'     => '',
+			'mobile_1'    => '',
+			'mobile_2'    => '',
+			'telephone_1' => '',
+			'telephone_2' => '',
+			'addresses'   => [],
+			'org'         => '',
+			'title'       => '',
+			'birthday'    => '',
+			'photo_url'   => '',
+			'uid'         => '',
+			'notes'       => [],
 		];
 
 		$email_index     = 1;
@@ -792,7 +793,7 @@ class VCard {
 				case 'EMAIL':
 					if ( $email_index <= 2 ) {
 						$data[ "email_{$email_index}" ] = self::unescape_value( $value );
-						$email_index++;
+						++$email_index;
 					}
 					break;
 
@@ -800,10 +801,10 @@ class VCard {
 					$is_mobile = stripos( $property, 'CELL' ) !== false || stripos( $property, 'MOBILE' ) !== false;
 					if ( $is_mobile && $mobile_index <= 2 ) {
 						$data[ "mobile_{$mobile_index}" ] = self::unescape_value( $value );
-						$mobile_index++;
+						++$mobile_index;
 					} elseif ( ! $is_mobile && $telephone_index <= 2 ) {
 						$data[ "telephone_{$telephone_index}" ] = self::unescape_value( $value );
-						$telephone_index++;
+						++$telephone_index;
 					}
 					break;
 

@@ -53,7 +53,7 @@ class DemoProtection {
 	public function block_profile_page() {
 		global $pagenow;
 
-		if ( 'profile.php' === $pagenow && $this->is_demo_user() ) {
+		if ( $pagenow === 'profile.php' && $this->is_demo_user() ) {
 			wp_safe_redirect( home_url() );
 			exit;
 		}

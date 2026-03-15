@@ -335,7 +335,10 @@ class Capabilities extends Base {
 	private function get_rondo_roles_list(): array {
 		$roles = [];
 		foreach ( \Rondo\Core\UserRoles::get_all_roles() as $slug => $data ) {
-			$roles[] = [ 'slug' => $slug, 'label' => $data[0] ];
+			$roles[] = [
+				'slug'  => $slug,
+				'label' => $data[0],
+			];
 		}
 		return $roles;
 	}
@@ -459,11 +462,11 @@ class Capabilities extends Base {
 	 */
 	public function get_capability_matrix() {
 		$capability_labels = [
-			'fairplay'          => 'FairPlay',
-			'vog'               => 'VOG',
-			'financieel'        => 'Financieel',
-			'toegangscontrole'  => 'Toegangscontrole',
-			'manage_clothing'   => 'Kledingbeheer',
+			'fairplay'         => 'FairPlay',
+			'vog'              => 'VOG',
+			'financieel'       => 'Financieel',
+			'toegangscontrole' => 'Toegangscontrole',
+			'manage_clothing'  => 'Kledingbeheer',
 		];
 
 		$wp_roles     = wp_roles();
@@ -479,7 +482,7 @@ class Capabilities extends Base {
 				continue;
 			}
 
-			if ( 'administrator' === $slug ) {
+			if ( $slug === 'administrator' ) {
 				$label = 'Administrator';
 			} else {
 				$label = $all_roles[ $slug ][0] ?? $slug;
@@ -497,10 +500,12 @@ class Capabilities extends Base {
 			];
 		}
 
-		return new \WP_REST_Response( [
-			'roles'             => $roles,
-			'capability_labels' => $capability_labels,
-		] );
+		return new \WP_REST_Response(
+			[
+				'roles'             => $roles,
+				'capability_labels' => $capability_labels,
+			]
+		);
 	}
 
 	/**
@@ -524,8 +529,8 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ];
-		$valid_slugs  = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
+		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ];
+		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 
 		foreach ( $submitted_roles as $slug => $role_data ) {
@@ -549,7 +554,7 @@ class Capabilities extends Base {
 				}
 
 				// Never remove manage_options from administrator.
-				if ( 'administrator' === $slug && 'manage_options' === $cap && ! $enabled ) {
+				if ( $slug === 'administrator' && $cap === 'manage_options' && ! $enabled ) {
 					continue;
 				}
 
@@ -600,16 +605,21 @@ class Capabilities extends Base {
 		);
 
 		// Sort age groups naturally (Onder 6, Onder 7, …, Onder 19, Senioren).
-		usort( $rows, function ( $a, $b ) {
-			$num_a = preg_match( '/(\d+)/', $a, $m ) ? (int) $m[1] : 999;
-			$num_b = preg_match( '/(\d+)/', $b, $m ) ? (int) $m[1] : 999;
-			return $num_a - $num_b;
-		} );
+		usort(
+			$rows,
+			function ( $a, $b ) {
+				$num_a = preg_match( '/(\d+)/', $a, $m ) ? (int) $m[1] : 999;
+				$num_b = preg_match( '/(\d+)/', $b, $m ) ? (int) $m[1] : 999;
+				return $num_a - $num_b;
+			}
+		);
 
-		return rest_ensure_response( [
-			'roles'                => (object) $raw,
-			'available_age_groups' => array_values( $rows ),
-		] );
+		return rest_ensure_response(
+			[
+				'roles'                => (object) $raw,
+				'available_age_groups' => array_values( $rows ),
+			]
+		);
 	}
 
 	/**

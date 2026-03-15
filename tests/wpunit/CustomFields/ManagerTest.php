@@ -46,7 +46,7 @@ class ManagerTest extends RondoTestCase {
 	 * Remove test field groups.
 	 */
 	private function cleanup_test_fields(): void {
-		foreach ( array( 'person', 'team' ) as $post_type ) {
+		foreach ( [ 'person', 'team' ] as $post_type ) {
 			$group = acf_get_field_group( 'group_custom_fields_' . $post_type );
 			if ( $group ) {
 				acf_delete_field_group( $group['ID'] );
@@ -115,10 +115,10 @@ class ManagerTest extends RondoTestCase {
 		$this->manager->ensure_field_group( 'person' );
 		$this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Duplicate Test',
 				'type'  => 'text',
-			)
+			]
 		);
 
 		// Generate key for same label.
@@ -135,11 +135,11 @@ class ManagerTest extends RondoTestCase {
 	public function test_create_field_success(): void {
 		$field = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label'        => 'Nickname',
 				'type'         => 'text',
 				'instructions' => 'Enter a nickname',
-			)
+			]
 		);
 
 		$this->assertIsArray( $field );
@@ -159,9 +159,9 @@ class ManagerTest extends RondoTestCase {
 	public function test_create_field_requires_label(): void {
 		$result = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'type' => 'text',
-			)
+			]
 		);
 
 		$this->assertInstanceOf( WP_Error::class, $result );
@@ -174,9 +174,9 @@ class ManagerTest extends RondoTestCase {
 	public function test_create_field_requires_type(): void {
 		$result = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Test Field',
-			)
+			]
 		);
 
 		$this->assertInstanceOf( WP_Error::class, $result );
@@ -190,16 +190,16 @@ class ManagerTest extends RondoTestCase {
 		// Create a field.
 		$field = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Original Label',
 				'type'  => 'text',
-			)
+			]
 		);
 
 		// Update the label.
 		$updated = $this->manager->update_field(
 			$field['key'],
-			array( 'label' => 'New Label' )
+			[ 'label' => 'New Label' ]
 		);
 
 		$this->assertIsArray( $updated );
@@ -215,19 +215,19 @@ class ManagerTest extends RondoTestCase {
 	 */
 	public function test_update_field_preserves_key(): void {
 		// Create a field.
-		$field = $this->manager->create_field(
+		$field        = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Test Field',
 				'type'  => 'text',
-			)
+			]
 		);
 		$original_key = $field['key'];
 
 		// Attempt to change the key via update.
 		$updated = $this->manager->update_field(
 			$field['key'],
-			array( 'key' => 'field_new_key' )
+			[ 'key' => 'field_new_key' ]
 		);
 
 		// Key should remain unchanged.
@@ -240,7 +240,7 @@ class ManagerTest extends RondoTestCase {
 	public function test_update_field_returns_error_for_missing_field(): void {
 		$result = $this->manager->update_field(
 			'field_does_not_exist',
-			array( 'label' => 'New Label' )
+			[ 'label' => 'New Label' ]
 		);
 
 		$this->assertInstanceOf( WP_Error::class, $result );
@@ -254,10 +254,10 @@ class ManagerTest extends RondoTestCase {
 		// Create a field.
 		$field = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Test Field',
 				'type'  => 'text',
-			)
+			]
 		);
 
 		// Deactivate it.
@@ -278,10 +278,10 @@ class ManagerTest extends RondoTestCase {
 		// Create and deactivate a field.
 		$field = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Test Field',
 				'type'  => 'text',
-			)
+			]
 		);
 		$this->manager->deactivate_field( $field['key'] );
 
@@ -303,17 +303,17 @@ class ManagerTest extends RondoTestCase {
 		// Create two fields.
 		$field1 = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Active Field',
 				'type'  => 'text',
-			)
+			]
 		);
 		$field2 = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Inactive Field',
 				'type'  => 'text',
-			)
+			]
 		);
 
 		// Deactivate one.
@@ -333,17 +333,17 @@ class ManagerTest extends RondoTestCase {
 		// Create two fields.
 		$field1 = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Active Field',
 				'type'  => 'text',
-			)
+			]
 		);
 		$field2 = $this->manager->create_field(
 			'person',
-			array(
+			[
 				'label' => 'Inactive Field',
 				'type'  => 'text',
-			)
+			]
 		);
 
 		// Deactivate one.

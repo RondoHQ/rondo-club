@@ -13,8 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Api extends Base {
 
-	private const KADERLIJST_SNAPSHOT_OPTION  = 'rondo_kaderlijst_snapshot';
-	private const KADERLIJST_UPDATED_OPTION = 'rondo_kaderlijst_snapshot_updated_at';
+	private const KADERLIJST_SNAPSHOT_OPTION = 'rondo_kaderlijst_snapshot';
+	private const KADERLIJST_UPDATED_OPTION  = 'rondo_kaderlijst_snapshot_updated_at';
 
 	/**
 	 * Get persisted kaderlijst snapshot from WordPress options.
@@ -111,7 +111,7 @@ class Api extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'find_person_by_email' ],
-				'permission_callback' => function() {
+				'permission_callback' => function () {
 					return is_user_logged_in();
 				},
 				'args'                => [
@@ -236,19 +236,19 @@ class Api extends Base {
 					'callback'            => [ $this, 'update_club_config' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'club_name'     => [
+						'club_name'                 => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'freescout_url' => [
+						'freescout_url'             => [
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
 						],
-						'freescout_api_key' => [
+						'freescout_api_key'         => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_api_token' => [
+						'lettermint_api_token'      => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -256,22 +256,22 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_project_id' => [
+						'lettermint_project_id'     => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_route_id' => [
+						'lettermint_route_id'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_from_email' => [
+						'lettermint_from_email'     => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_email',
 							'validate_callback' => function ( $param ) {
 								return $param === null || $param === '' || is_email( $param );
 							},
 						],
-						'lettermint_from_name' => [
+						'lettermint_from_name'      => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -312,7 +312,7 @@ class Api extends Base {
 				'callback'            => [ $this, 'sync_user_capabilities' ],
 				'permission_callback' => [ $this, 'check_admin_permission' ],
 				'args'                => [
-					'knvb_id' => [
+					'knvb_id'  => [
 						'required'          => true,
 						'validate_callback' => function ( $param ) {
 							return is_string( $param ) && ! empty( $param );
@@ -587,8 +587,8 @@ class Api extends Base {
 
 			// Query 5: Custom field matches (score: 30)
 			$custom_field_names = $this->get_searchable_custom_fields( 'person' );
-			if ( ! empty( $custom_field_names ) ) {
-				$custom_meta_query = $this->build_custom_field_meta_query( $custom_field_names, $query );
+		if ( ! empty( $custom_field_names ) ) {
+			$custom_meta_query = $this->build_custom_field_meta_query( $custom_field_names, $query );
 
 			$custom_field_matches = get_posts(
 				[
@@ -599,15 +599,15 @@ class Api extends Base {
 				]
 			);
 
-				foreach ( $custom_field_matches as $person ) {
-					if ( ! isset( $people_results[ $person->ID ] ) ) {
-						$people_results[ $person->ID ] = [
-							'person' => $person,
-							'score'  => 30,
-						];
-					}
+			foreach ( $custom_field_matches as $person ) {
+				if ( ! isset( $people_results[ $person->ID ] ) ) {
+					$people_results[ $person->ID ] = [
+						'person' => $person,
+						'score'  => 30,
+					];
 				}
 			}
+		}
 
 			// Query 6: KNVB ID matches (score: 70)
 			$knvb_matches = get_posts(
@@ -631,28 +631,28 @@ class Api extends Base {
 				]
 			);
 
-			foreach ( $knvb_matches as $person ) {
+		foreach ( $knvb_matches as $person ) {
+			if ( ! isset( $people_results[ $person->ID ] ) ) {
+				$people_results[ $person->ID ] = [
+					'person' => $person,
+					'score'  => 70,
+				];
+			}
+		}
+
+			// Query 7: Contact email matches in email_1/email_2 fields (score: 75)
+		if ( strpos( $query, '@' ) !== false || is_email( $query ) ) {
+			$email_matches = $this->find_people_by_contact_email_fragment( $query, 20 );
+
+			foreach ( $email_matches as $person ) {
 				if ( ! isset( $people_results[ $person->ID ] ) ) {
 					$people_results[ $person->ID ] = [
 						'person' => $person,
-						'score'  => 70,
+						'score'  => 75,
 					];
 				}
 			}
-
-			// Query 7: Contact email matches in email_1/email_2 fields (score: 75)
-			if ( strpos( $query, '@' ) !== false || is_email( $query ) ) {
-				$email_matches = $this->find_people_by_contact_email_fragment( $query, 20 );
-
-				foreach ( $email_matches as $person ) {
-					if ( ! isset( $people_results[ $person->ID ] ) ) {
-						$people_results[ $person->ID ] = [
-							'person' => $person,
-							'score'  => 75,
-						];
-					}
-				}
-			}
+		}
 
 		// Apply former member penalty to prioritize current members
 		foreach ( $people_results as $person_id => &$item ) {
@@ -697,8 +697,8 @@ class Api extends Base {
 
 		foreach ( $name_matches as $team ) {
 			$team_results[ $team->ID ] = [
-				'team' => $team,
-				'score'   => 60,
+				'team'  => $team,
+				'score' => 60,
 			];
 		}
 
@@ -715,8 +715,8 @@ class Api extends Base {
 		foreach ( $general_company_matches as $team ) {
 			if ( ! isset( $team_results[ $team->ID ] ) ) {
 				$team_results[ $team->ID ] = [
-					'team' => $team,
-					'score'   => 20,
+					'team'  => $team,
+					'score' => 20,
 				];
 			}
 		}
@@ -738,8 +738,8 @@ class Api extends Base {
 			foreach ( $team_custom_matches as $team ) {
 				if ( ! isset( $team_results[ $team->ID ] ) ) {
 					$team_results[ $team->ID ] = [
-						'team' => $team,
-						'score'   => 30,
+						'team'  => $team,
+						'score' => 30,
 					];
 				}
 			}
@@ -845,7 +845,7 @@ class Api extends Base {
 		// Get post counts (all approved users see all data)
 		// Access control is already applied via WP_Query filters
 		// Exclude former members from people count
-		$people_query = new \WP_Query(
+		$people_query     = new \WP_Query(
 			[
 				'post_type'      => 'person',
 				'post_status'    => 'publish',
@@ -893,8 +893,8 @@ class Api extends Base {
 		);
 
 		// Upcoming reminders
-		$reminders_handler  = new \RONDO_Reminders();
-		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
+		$reminders_handler      = new \RONDO_Reminders();
+		$upcoming_reminders     = $reminders_handler->get_upcoming_reminders( 14 );
 		$reminders_rest         = new Reminders();
 		$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
 
@@ -915,7 +915,7 @@ class Api extends Base {
 
 		return rest_ensure_response(
 			[
-				'stats'              => [
+				'stats'                  => [
 					'total_people'         => $total_people,
 					'total_teams'          => $total_teams,
 					'total_commissies'     => $total_commissies,
@@ -924,10 +924,10 @@ class Api extends Base {
 					'total_volunteers'     => $total_volunteers,
 					'open_feedback_count'  => $open_feedback_count,
 				],
-				'recent_people'      => array_map( [ $this, 'format_person_summary' ], $recent_people ),
-				'upcoming_reminders' => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
+				'recent_people'          => array_map( [ $this, 'format_person_summary' ], $recent_people ),
+				'upcoming_reminders'     => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
 				'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
-				'recently_contacted' => $recently_contacted,
+				'recently_contacted'     => $recently_contacted,
 			]
 		);
 	}
@@ -945,8 +945,8 @@ class Api extends Base {
 	private function limit_items_with_all_today( array $items, int $limit ): array {
 		$today_count = 0;
 		foreach ( $items as $item ) {
-			if ( 0 === (int) ( $item['days_until'] ?? -1 ) ) {
-				$today_count++;
+			if ( (int) ( $item['days_until'] ?? -1 ) === 0 ) {
+				++$today_count;
 			} else {
 				break; // Reminders are sorted by date, so no more today entries after this.
 			}
@@ -1029,8 +1029,8 @@ class Api extends Base {
 		// Add featured image if available
 		$thumbnail_id = get_post_thumbnail_id( $post->ID );
 		if ( $thumbnail_id ) {
-			$thumbnail_url = wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' );
-			$full_url      = wp_get_attachment_image_url( $thumbnail_id, 'full' );
+			$thumbnail_url         = wp_get_attachment_image_url( $thumbnail_id, 'thumbnail' );
+			$full_url              = wp_get_attachment_image_url( $thumbnail_id, 'full' );
 			$response['_embedded'] = [
 				'wp:featuredmedia' => [
 					[
@@ -1247,11 +1247,11 @@ class Api extends Base {
 		);
 
 		// Merge and dedupe
-		$all_entities   = array_merge( $entities, $entities_serialized );
-		$seen_ids       = [];
+		$all_entities    = array_merge( $entities, $entities_serialized );
+		$seen_ids        = [];
 		$unique_entities = [];
 		foreach ( $all_entities as $entity ) {
-			if ( ! in_array( $entity->ID, $seen_ids ) ) {
+			if ( ! in_array( $entity->ID, $seen_ids, true ) ) {
 				$seen_ids[]        = $entity->ID;
 				$unique_entities[] = $entity;
 			}
@@ -1411,9 +1411,9 @@ class Api extends Base {
 
 		if ( is_wp_error( $response ) ) {
 			$error_message = $response->get_error_message();
-			$is_timeout    = false !== stripos( $error_message, 'timed out' )
-				|| false !== stripos( $error_message, 'cURL error 28' )
-				|| false !== stripos( $error_message, 'operation timeout' );
+			$is_timeout    = stripos( $error_message, 'timed out' ) !== false
+				|| stripos( $error_message, 'cURL error 28' ) !== false
+				|| stripos( $error_message, 'operation timeout' ) !== false;
 
 			return new \WP_Error(
 				'sync_request_failed',
@@ -1629,7 +1629,7 @@ class Api extends Base {
 		$manager = new \Rondo\CustomFields\Manager();
 		$fields  = $manager->get_fields( $post_type, false ); // Active only.
 
-		$searchable_types = array(
+		$searchable_types = [
 			'text',
 			'textarea',
 			'email',
@@ -1637,9 +1637,9 @@ class Api extends Base {
 			'number',
 			'select',
 			'checkbox',
-		);
+		];
 
-		$field_names = array();
+		$field_names = [];
 		foreach ( $fields as $field ) {
 			if ( in_array( $field['type'], $searchable_types, true ) ) {
 				$field_names[] = $field['name'];
@@ -1658,17 +1658,17 @@ class Api extends Base {
 	 */
 	private function build_custom_field_meta_query( array $field_names, string $query ): array {
 		if ( empty( $field_names ) ) {
-			return array();
+			return [];
 		}
 
-		$meta_query = array( 'relation' => 'OR' );
+		$meta_query = [ 'relation' => 'OR' ];
 
 		foreach ( $field_names as $field_name ) {
-			$meta_query[] = array(
+			$meta_query[] = [
 				'key'     => $field_name,
 				'value'   => $query,
 				'compare' => 'LIKE',
-			);
+			];
 		}
 
 		return $meta_query;

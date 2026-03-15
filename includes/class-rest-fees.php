@@ -202,31 +202,31 @@ class Fees extends Base {
 					'callback'            => [ $this, 'update_billing_settings' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'season'                      => [
+						'season'                     => [
 							'required'          => true,
 							'sanitize_callback' => 'sanitize_text_field',
 							'validate_callback' => function ( $param ) {
 								return preg_match( '/^\d{4}-\d{4}$/', $param );
 							},
 						],
-						'billing_method'              => [
+						'billing_method'             => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 							'validate_callback' => function ( $param ) {
 								return in_array( $param, [ 'nikki', 'rondo' ], true );
 							},
 						],
-						'installment_plan_3_enabled'  => [
-							'required'          => false,
-							'type'              => 'boolean',
+						'installment_plan_3_enabled' => [
+							'required' => false,
+							'type'     => 'boolean',
 						],
-						'installment_plan_8_enabled'  => [
-							'required'          => false,
-							'type'              => 'boolean',
+						'installment_plan_8_enabled' => [
+							'required' => false,
+							'type'     => 'boolean',
 						],
 						'installment_admin_fee'      => [
-							'required'          => false,
-							'type'              => 'number',
+							'required' => false,
+							'type'     => 'number',
 						],
 					],
 				],
@@ -353,7 +353,10 @@ class Fees extends Base {
 		// Validate category structure (if provided)
 		$validation = $categories !== null
 			? $this->validate_category_config( $categories )
-			: [ 'errors' => [], 'warnings' => [] ];
+			: [
+				'errors'   => [],
+				'warnings' => [],
+			];
 
 		// Validate family discount config (if provided)
 		$discount_validation = $this->validate_family_discount_config( $family_discount );
@@ -694,7 +697,7 @@ class Fees extends Base {
 
 			// Enrich results with invoice data.
 			foreach ( $results as &$result ) {
-				$inv = $invoice_map[ $result['id'] ] ?? null;
+				$inv                      = $invoice_map[ $result['id'] ] ?? null;
 				$result['invoice_id']     = $inv ? $inv['id'] : null;
 				$result['invoice_status'] = $inv ? $inv['status'] : null;
 			}
@@ -731,14 +734,14 @@ class Fees extends Base {
 
 		return rest_ensure_response(
 			[
-				'season'                      => $season,
-				'forecast'                    => (bool) $forecast,
-				'total'                       => count( $results ),
-				'members'                     => $results,
-				'categories'                  => $categories_meta,
-				'billing_method'              => $billing_method,
-				'installment_plan_3_enabled'  => $installment_plan_3_enabled,
-				'installment_plan_8_enabled'  => $installment_plan_8_enabled,
+				'season'                     => $season,
+				'forecast'                   => (bool) $forecast,
+				'total'                      => count( $results ),
+				'members'                    => $results,
+				'categories'                 => $categories_meta,
+				'billing_method'             => $billing_method,
+				'installment_plan_3_enabled' => $installment_plan_3_enabled,
+				'installment_plan_8_enabled' => $installment_plan_8_enabled,
 			]
 		);
 	}
@@ -851,45 +854,59 @@ class Fees extends Base {
 				$final_fee       = $base_fee - $discount_amount;
 
 				if ( ! isset( $aggregates[ $cat ] ) ) {
-					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'fee_after_discount' => 0, 'prorata_amount' => 0, 'final_fee' => 0 ];
+					$aggregates[ $cat ] = [
+						'count'              => 0,
+						'base_fee'           => 0,
+						'family_discount'    => 0,
+						'fee_after_discount' => 0,
+						'prorata_amount'     => 0,
+						'final_fee'          => 0,
+					];
 				}
-				$aggregates[ $cat ]['count']++;
-				$aggregates[ $cat ]['base_fee']        += $base_fee;
-				$aggregates[ $cat ]['family_discount'] += $discount_amount;
+				++$aggregates[ $cat ]['count'];
+				$aggregates[ $cat ]['base_fee']           += $base_fee;
+				$aggregates[ $cat ]['family_discount']    += $discount_amount;
 				$aggregates[ $cat ]['fee_after_discount'] += $final_fee; // Forecast assumes full season
 				$aggregates[ $cat ]['prorata_amount']     += 0; // No pro-rata in forecast
-				$aggregates[ $cat ]['final_fee']        += $final_fee;
+				$aggregates[ $cat ]['final_fee']          += $final_fee;
 			} else {
 				$cat = $fee_data['category'];
 				if ( ! isset( $aggregates[ $cat ] ) ) {
-					$aggregates[ $cat ] = [ 'count' => 0, 'base_fee' => 0, 'family_discount' => 0, 'fee_after_discount' => 0, 'prorata_amount' => 0, 'final_fee' => 0 ];
+					$aggregates[ $cat ] = [
+						'count'              => 0,
+						'base_fee'           => 0,
+						'family_discount'    => 0,
+						'fee_after_discount' => 0,
+						'prorata_amount'     => 0,
+						'final_fee'          => 0,
+					];
 				}
-				$aggregates[ $cat ]['count']++;
+				++$aggregates[ $cat ]['count'];
 				$aggregates[ $cat ]['base_fee']        += $fee_data['base_fee'] ?? 0;
 				$aggregates[ $cat ]['family_discount'] += $fee_data['family_discount_amount'] ?? 0;
 
 				// fee_after_discount exists in cache since calculate_full_fee (line 1702 in class-membership-fees.php)
 				// Fallback calculation for older caches
-				$fee_after_discount = $fee_data['fee_after_discount'] ?? ( $fee_data['base_fee'] - $fee_data['family_discount_amount'] );
+				$fee_after_discount                        = $fee_data['fee_after_discount'] ?? ( $fee_data['base_fee'] - $fee_data['family_discount_amount'] );
 				$aggregates[ $cat ]['fee_after_discount'] += $fee_after_discount;
 
 				// prorata_amount = fee_after_discount - final_fee
-				$final_fee     = $fee_data['final_fee'] ?? 0;
-				$prorata_amount = $fee_after_discount - $final_fee;
+				$final_fee                             = $fee_data['final_fee'] ?? 0;
+				$prorata_amount                        = $fee_after_discount - $final_fee;
 				$aggregates[ $cat ]['prorata_amount'] += $prorata_amount;
 
-				$aggregates[ $cat ]['final_fee']        += $final_fee;
+				$aggregates[ $cat ]['final_fee'] += $final_fee;
 			}
-			$total_members++;
+			++$total_members;
 		}
 
 		// Round aggregated values to avoid floating point artifacts
 		foreach ( $aggregates as &$agg ) {
-			$agg['base_fee']          = round( $agg['base_fee'], 2 );
-			$agg['family_discount']   = round( $agg['family_discount'], 2 );
+			$agg['base_fee']           = round( $agg['base_fee'], 2 );
+			$agg['family_discount']    = round( $agg['family_discount'], 2 );
 			$agg['fee_after_discount'] = round( $agg['fee_after_discount'], 2 );
-			$agg['prorata_amount']    = round( $agg['prorata_amount'], 2 );
-			$agg['final_fee']         = round( $agg['final_fee'], 2 );
+			$agg['prorata_amount']     = round( $agg['prorata_amount'], 2 );
+			$agg['final_fee']          = round( $agg['final_fee'], 2 );
 		}
 		unset( $agg );
 
@@ -910,14 +927,14 @@ class Fees extends Base {
 
 		return rest_ensure_response(
 			[
-				'season'                      => $season,
-				'forecast'                    => false,
-				'total'                       => $total_members,
-				'aggregates'                  => $aggregates,
-				'categories'                  => $categories_meta,
-				'billing_method'              => $billing_method,
-				'installment_plan_3_enabled'  => $installment_plan_3_enabled,
-				'installment_plan_8_enabled'  => $installment_plan_8_enabled,
+				'season'                     => $season,
+				'forecast'                   => false,
+				'total'                      => $total_members,
+				'aggregates'                 => $aggregates,
+				'categories'                 => $categories_meta,
+				'billing_method'             => $billing_method,
+				'installment_plan_3_enabled' => $installment_plan_3_enabled,
+				'installment_plan_8_enabled' => $installment_plan_8_enabled,
 			]
 		);
 	}
@@ -958,7 +975,7 @@ class Fees extends Base {
 		}
 
 		// Check if person is a former member not in the requested season
-		$is_former = ( get_field( 'former_member', $person_id ) == true );
+		$is_former = ( get_field( 'former_member', $person_id ) === true );
 		if ( $is_former && ! $fees->is_former_member_in_season( $person_id, $season ) ) {
 			return rest_ensure_response(
 				[
@@ -1250,14 +1267,14 @@ class Fees extends Base {
 		// Created: find the new invoice.
 		$invoices = get_posts(
 			[
-				'post_type'      => 'rondo_invoice',
-				'post_status'    => 'any',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'orderby'        => 'date',
-				'order'          => 'DESC',
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'any',
+				'posts_per_page'   => 1,
+				'fields'           => 'ids',
+				'orderby'          => 'date',
+				'order'            => 'DESC',
 				'suppress_filters' => true,
-				'meta_query'     => [
+				'meta_query'       => [
 					'relation' => 'AND',
 					[
 						'key'   => 'person',
@@ -1327,13 +1344,22 @@ class Fees extends Base {
 
 		// Must be an array/object
 		if ( ! is_array( $categories ) ) {
-			$errors[] = [ 'field' => 'categories', 'message' => 'Categories must be an object' ];
-			return [ 'errors' => $errors, 'warnings' => $warnings ];
+			$errors[] = [
+				'field'   => 'categories',
+				'message' => 'Categories must be an object',
+			];
+			return [
+				'errors'   => $errors,
+				'warnings' => $warnings,
+			];
 		}
 
 		// Empty array is valid (per Phase 156 pattern: silent for missing config)
 		if ( empty( $categories ) ) {
-			return [ 'errors' => [], 'warnings' => [] ];
+			return [
+				'errors'   => [],
+				'warnings' => [],
+			];
 		}
 
 		$seen_slugs    = [];
@@ -1342,7 +1368,10 @@ class Fees extends Base {
 		foreach ( $categories as $slug => $category ) {
 			// Validate slug is not empty
 			if ( empty( $slug ) || ! is_string( $slug ) ) {
-				$errors[] = [ 'field' => 'slug', 'message' => 'Category slug is required and must be a string' ];
+				$errors[] = [
+					'field'   => 'slug',
+					'message' => 'Category slug is required and must be a string',
+				];
 				continue;
 			}
 
@@ -1441,7 +1470,10 @@ class Fees extends Base {
 			}
 		}
 
-		return [ 'errors' => $errors, 'warnings' => $warnings ];
+		return [
+			'errors'   => $errors,
+			'warnings' => $warnings,
+		];
 	}
 
 	/**
@@ -1459,7 +1491,10 @@ class Fees extends Base {
 
 		// Null/missing is valid (use defaults)
 		if ( $config === null ) {
-			return [ 'errors' => [], 'warnings' => [] ];
+			return [
+				'errors'   => [],
+				'warnings' => [],
+			];
 		}
 
 		// Must be an array
@@ -1468,7 +1503,10 @@ class Fees extends Base {
 				'field'   => 'family_discount',
 				'message' => 'Familiekorting configuratie moet een object zijn',
 			];
-			return [ 'errors' => $errors, 'warnings' => $warnings ];
+			return [
+				'errors'   => $errors,
+				'warnings' => $warnings,
+			];
 		}
 
 		// Validate second_child_percent
@@ -1503,7 +1541,10 @@ class Fees extends Base {
 			];
 		}
 
-		return [ 'errors' => $errors, 'warnings' => $warnings ];
+		return [
+			'errors'   => $errors,
+			'warnings' => $warnings,
+		];
 	}
 
 	/**
@@ -1522,7 +1563,10 @@ class Fees extends Base {
 
 		// Null/missing is valid (use defaults)
 		if ( $config === null ) {
-			return [ 'errors' => [], 'warnings' => [] ];
+			return [
+				'errors'   => [],
+				'warnings' => [],
+			];
 		}
 
 		// Must be an array
@@ -1531,7 +1575,10 @@ class Fees extends Base {
 				'field'   => 'entry_discount',
 				'message' => 'Instapkorting configuratie moet een object zijn',
 			];
-			return [ 'errors' => $errors, 'warnings' => $warnings ];
+			return [
+				'errors'   => $errors,
+				'warnings' => $warnings,
+			];
 		}
 
 		// Must have 'periods' key
@@ -1540,7 +1587,10 @@ class Fees extends Base {
 				'field'   => 'entry_discount.periods',
 				'message' => 'Instapkorting configuratie moet een "periods" array bevatten',
 			];
-			return [ 'errors' => $errors, 'warnings' => $warnings ];
+			return [
+				'errors'   => $errors,
+				'warnings' => $warnings,
+			];
 		}
 
 		$covered_months = [];
@@ -1598,6 +1648,9 @@ class Fees extends Base {
 			];
 		}
 
-		return [ 'errors' => $errors, 'warnings' => $warnings ];
+		return [
+			'errors'   => $errors,
+			'warnings' => $warnings,
+		];
 	}
 }

@@ -185,7 +185,7 @@ class InvoiceReminderSender {
 				$year         = (int) date( 'Y', $sent_ts );
 				$factuurdatum = $day . ' ' . ( self::$dutch_months[ $month ] ?? '' ) . ' ' . $year;
 
-				$today_ts   = strtotime( current_time( 'Y-m-d' ) );
+				$today_ts = strtotime( current_time( 'Y-m-d' ) );
 				if ( $today_ts !== false ) {
 					$days_since = max( 0, (int) floor( ( $today_ts - $sent_ts ) / DAY_IN_SECONDS ) );
 				}
@@ -199,8 +199,8 @@ class InvoiceReminderSender {
 
 		// Build inline QR code HTML via public URL.
 		$qr_code_html = '';
-		$upload_dir    = wp_upload_dir();
-		$qr_code_path  = get_field( 'qr_code_path', $invoice_id );
+		$upload_dir   = wp_upload_dir();
+		$qr_code_path = get_field( 'qr_code_path', $invoice_id );
 
 		if ( ! empty( $qr_code_path ) ) {
 			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;

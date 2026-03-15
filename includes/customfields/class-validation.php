@@ -26,7 +26,7 @@ class Validation {
 	 * Registers ACF validation hooks.
 	 */
 	public function __construct() {
-		add_filter( 'acf/validate_value', array( $this, 'validate_unique' ), 10, 4 );
+		add_filter( 'acf/validate_value', [ $this, 'validate_unique' ], 10, 4 );
 	}
 
 	/**
@@ -83,23 +83,23 @@ class Validation {
 		}
 
 		// Query for existing posts with same value (same user, same post type).
-		$query_args = array(
+		$query_args = [
 			'post_type'      => $post_type,
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
 			'author'         => get_current_user_id(),
-			'meta_query'     => array(
-				array(
+			'meta_query'     => [
+				[
 					'key'     => $field['name'],
 					'value'   => $value,
 					'compare' => '=',
-				),
-			),
-		);
+				],
+			],
+		];
 
 		// Exclude current post if editing.
 		if ( $post_id ) {
-			$query_args['post__not_in'] = array( $post_id );
+			$query_args['post__not_in'] = [ $post_id ];
 		}
 
 		$existing = get_posts( $query_args );
