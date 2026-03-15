@@ -312,6 +312,27 @@ function rondo_init() {
 		new RabobankPayment();
 		new MollieWebhook();
 		new LettermintWebhook();
+
+		// Log REST API errors to debug.log
+		add_filter(
+			'rest_request_after_callbacks',
+			function ( $response, $handler, $request ) {
+				if ( is_wp_error( $response ) ) {
+					error_log(
+						sprintf(
+							'REST API error: %s %s — %s (code: %s)',
+							$request->get_method(),
+							$request->get_route(),
+							$response->get_error_message(),
+							$response->get_error_code()
+						)
+					);
+				}
+				return $response;
+			},
+			10,
+			3
+		);
 	}
 
 	// Reminders - only for admin or cron
