@@ -2133,10 +2133,33 @@ class Invoices extends Base {
 			'invoice_type'       => get_field( 'invoice_type', $post->ID ) ?: null,
 			'installment_plan'   => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
 			'installment_count'  => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
+			'paid_installments'  => $this->count_paid_installments( $post->ID ),
 			'reminder_sent_at'   => $reminder_sent_at,
 			'reminder_count'     => $reminder_count,
 			'sent_by'            => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
 		];
+	}
+
+	/**
+	 * Count how many installments are marked as paid for an invoice.
+	 *
+	 * @param int $post_id Invoice post ID.
+	 * @return int Number of paid installments (0 if no installment plan).
+	 */
+	private function count_paid_installments( int $post_id ): int {
+		$count = (int) get_post_meta( $post_id, '_installment_count', true );
+		if ( $count <= 0 ) {
+			return 0;
+		}
+
+		$paid = 0;
+		for ( $n = 1; $n <= $count; $n++ ) {
+			if ( get_post_meta( $post_id, '_installment_' . $n . '_status', true ) === 'betaald' ) {
+				++$paid;
+			}
+		}
+
+		return $paid;
 	}
 
 	/**
