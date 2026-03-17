@@ -66,7 +66,7 @@ function StatusBadge({ status, reminderCount = 0 }) {
 const PLAN_OPTIONS = [
   { value: 'full', label: 'Volledig' },
   { value: 'quarterly_3', label: '3 termijnen' },
-  { value: 'monthly_8', label: 'Meerdere termijnen' },
+  { value: 'monthly_8', label: '8 termijnen' },
 ];
 
 const COLUMNS = [
@@ -175,10 +175,14 @@ const COLUMNS = [
     id: 'plan',
     header: 'Betaalplan',
     accessorKey: 'installment_plan',
-    cell: ({ getValue }) => {
+    cell: ({ row, getValue }) => {
       const plan = getValue();
+      if (!plan) return <span className="text-gray-400">-</span>;
+      if (plan === 'full') return 'Volledig';
+      const count = row.original.installment_count;
+      if (count) return `${count} termijnen`;
       const found = PLAN_OPTIONS.find((o) => o.value === plan);
-      return found ? found.label : plan ? plan : <span className="text-gray-400">-</span>;
+      return found ? found.label : plan;
     },
     filterType: FILTER_TYPES.SELECT,
     filterLabel: 'Betaalplan',
