@@ -174,7 +174,7 @@ const COLUMNS = [
   createColumn({
     id: 'plan',
     header: 'Betaalplan',
-    accessorKey: 'payment_plan',
+    accessorKey: 'installment_plan',
     cell: ({ getValue }) => {
       const plan = getValue();
       const found = PLAN_OPTIONS.find((o) => o.value === plan);
