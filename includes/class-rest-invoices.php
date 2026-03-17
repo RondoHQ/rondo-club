@@ -2132,6 +2132,7 @@ class Invoices extends Base {
 			'created'            => $post->post_date,
 			'invoice_type'       => get_field( 'invoice_type', $post->ID ) ?: null,
 			'installment_plan'   => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
+			'installment_count'  => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
 			'reminder_sent_at'   => $reminder_sent_at,
 			'reminder_count'     => $reminder_count,
 			'sent_by'            => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
