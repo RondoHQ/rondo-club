@@ -106,7 +106,7 @@ export function formatTimelineDate(dateString) {
 
     // Otherwise show formatted date with optional time (Dutch format: day month year)
     return format(date, hasTime ? "d MMM yyyy 'om' HH:mm" : 'd MMM yyyy');
-  } catch (error) {
+  } catch {
     return dateString;
   }
 }
@@ -173,7 +173,7 @@ export function isTodoOverdue(todo) {
     dueDate.setHours(0, 0, 0, 0);
 
     return dueDate < today;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
