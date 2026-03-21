@@ -95,7 +95,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
-          utils: ['date-fns', 'clsx', 'zustand', 'axios', 'react-hook-form'],
+          utils: ['date-fns', 'clsx', 'axios', 'react-hook-form'],
         },
       },
     },
