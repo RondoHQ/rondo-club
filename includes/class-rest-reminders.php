@@ -388,7 +388,7 @@ class Reminders extends Base {
 		$volunteer_start_dates = $this->get_cached_volunteer_start_dates_for_people( $volunteer_ids );
 
 		foreach ( $people as $person ) {
-			$person_id = (int) $person->ID;
+			$person_id         = (int) $person->ID;
 			$person_summary    = $this->format_anniversary_person_summary( $person );
 			$member_since      = get_post_meta( $person_id, 'lid-sinds', true );
 			$member_start_date = null;
