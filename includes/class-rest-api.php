@@ -108,7 +108,7 @@ class Api extends Base {
 			}
 		}
 
-		if ( 'rondo_activity' === $comment_type ) {
+		if ( $comment_type === 'rondo_activity' ) {
 			$this->invalidate_dashboard_cache();
 		}
 	}
@@ -885,7 +885,7 @@ class Api extends Base {
 		// Check transient cache.
 		$cache_key = 'rondo_dashboard_' . $user_id;
 		$cached    = get_transient( $cache_key );
-		if ( false !== $cached ) {
+		if ( $cached !== false ) {
 			return rest_ensure_response( $cached );
 		}
 
