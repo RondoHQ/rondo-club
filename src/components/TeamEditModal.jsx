@@ -16,9 +16,7 @@ export default function TeamEditModal({
   const isEditing = !!team;
   const isOnline = useOnlineStatus();
   
-  // State for parent team dropdown
-  const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
-  const [parentSearchQuery, setParentSearchQuery] = useState('');
+  // Parent team ID (dropdown UI removed, but value still submitted)
   const [selectedParentId, setSelectedParentId] = useState('');
   
   // State for investors dropdown
@@ -27,7 +25,6 @@ export default function TeamEditModal({
   const [debouncedInvestorsQuery, setDebouncedInvestorsQuery] = useState('');
   const [selectedInvestors, setSelectedInvestors] = useState([]);
 
-  const parentDropdownRef = useRef(null);
   const investorsDropdownRef = useRef(null);
   
   // Fetch all teams for parent selection and investors
@@ -75,35 +72,6 @@ export default function TeamEditModal({
     },
   });
 
-  // Filter teams for parent dropdown (exclude self and children)
-  const availableParentTeams = useMemo(() => {
-    const query = parentSearchQuery.toLowerCase().trim();
-    let filtered = allTeams.filter(c => {
-      // Exclude self
-      if (isEditing && c.id === team?.id) return false;
-      // Exclude teams that have this team as parent (prevents circular references)
-      if (isEditing && c.parent === team?.id) return false;
-      return true;
-    });
-    
-    if (query) {
-      filtered = filtered.filter(c => 
-        getTeamName(c)?.toLowerCase().includes(query)
-      );
-    }
-    
-    // Sort alphabetically
-    return [...filtered].sort((a, b) => 
-      (getTeamName(a) || '').localeCompare(getTeamName(b) || '')
-    );
-  }, [allTeams, parentSearchQuery, team, isEditing]);
-  
-  // Get selected parent team details
-  const selectedParent = useMemo(() => 
-    allTeams.find(c => c.id === parseInt(selectedParentId)),
-    [allTeams, selectedParentId]
-  );
-  
   // Combined list of people and teams for investor selection (excluding self)
   const availableInvestors = useMemo(() => {
     const query = investorsSearchQuery.toLowerCase().trim();
@@ -169,9 +137,7 @@ export default function TeamEditModal({
   useEffect(() => {
     if (isOpen) {
       // Reset dropdowns
-      setIsParentDropdownOpen(false);
       setIsInvestorsDropdownOpen(false);
-      setParentSearchQuery('');
       setInvestorsSearchQuery('');
 
       if (team) {
@@ -248,20 +214,6 @@ export default function TeamEditModal({
     }
   }, [isOpen, team, investorsLoaded, existingInvestors, investorIds.length]);
   
-  // Close parent dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (parentDropdownRef.current && !parentDropdownRef.current.contains(event.target)) {
-        setIsParentDropdownOpen(false);
-      }
-    };
-    
-    if (isParentDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isParentDropdownOpen]);
-  
   // Close investors dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -329,115 +281,6 @@ export default function TeamEditModal({
               />
             </div>
 
-            {/* Parent team selection - HIDDEN per CONTEXT.md */}
-            {false && (
-            <div>
-              <label className="label">Hoofdteam</label>
-              <div className="relative" ref={parentDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-left focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
-                  disabled={isLoadingTeams || isLoading}
-                >
-                  {selectedParent ? (
-                    <div className="flex items-center gap-2">
-                      {selectedParent._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-                        <img
-                          src={selectedParent._embedded['wp:featuredmedia'][0].source_url}
-                          alt={getTeamName(selectedParent)}
-                          className="w-6 h-6 rounded object-contain dark:bg-gray-600"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                        </div>
-                      )}
-                      <span className="text-gray-900 dark:text-gray-50">{getTeamName(selectedParent)}</span>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 dark:text-gray-500">Geen hoofdteam</span>
-                  )}
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isParentDropdownOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                    {/* Search input */}
-                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          value={parentSearchQuery}
-                          onChange={(e) => setParentSearchQuery(e.target.value)}
-                          placeholder="Teams zoeken..."
-                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 focus:outline-none focus:ring-1 focus:ring-electric-cyan"
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-
-                    {/* "None" option */}
-                    <div className="overflow-y-auto max-h-48">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedParentId('');
-                          setIsParentDropdownOpen(false);
-                          setParentSearchQuery('');
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                          !selectedParentId ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
-                        }`}
-                      >
-                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">Geen hoofdteam</span>
-                      </button>
-
-                      {/* Teams list */}
-                      {isLoadingTeams ? (
-                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          Laden...
-                        </div>
-                      ) : availableParentTeams.length > 0 ? (
-                        availableParentTeams.map((c) => (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedParentId(String(c.id));
-                              setIsParentDropdownOpen(false);
-                              setParentSearchQuery('');
-                            }}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                              selectedParentId === String(c.id) ? 'bg-cyan-50 dark:bg-deep-midnight' : ''
-                            }`}
-                          >
-                            {c._embedded?.['wp:featuredmedia']?.[0]?.source_url ? (
-                              <img
-                                src={c._embedded['wp:featuredmedia'][0].source_url}
-                                alt={getTeamName(c)}
-                                className="w-6 h-6 rounded object-contain"
-                              />
-                            ) : (
-                              <div className="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
-                                <Building2 className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                              </div>
-                            )}
-                            <span className="text-sm text-gray-900 dark:text-gray-50 truncate">{getTeamName(c)}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                          Geen teams gevonden
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            )}
 
             {/* Sponsors selection */}
             <div>

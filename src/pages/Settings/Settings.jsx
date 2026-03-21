@@ -779,7 +779,7 @@ function AppearanceTab() {
 
       setClubConfigSaved(true);
       setTimeout(() => setClubConfigSaved(false), 3000);
-    } catch (error) {
+    } catch {
       alert('Kan clubconfiguratie niet opslaan. Probeer het opnieuw.');
     } finally {
       setSavingClubConfig(false);
