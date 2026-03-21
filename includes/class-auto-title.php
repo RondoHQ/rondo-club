@@ -36,7 +36,6 @@ class AutoTitle {
 
 		// Inject title into REST API requests for person creation (runs very early)
 		add_filter( 'rest_pre_dispatch', [ $this, 'inject_title_for_person_creation' ], 10, 3 );
-
 	}
 
 	/**
@@ -120,11 +119,16 @@ class AutoTitle {
 	 * @param int $post_id Person post ID.
 	 */
 	private function update_person_title( int $post_id ): void {
-		$full_name = implode( ' ', array_filter( [
-			get_field( 'first_name', $post_id ),
-			get_field( 'infix', $post_id ),
-			get_field( 'last_name', $post_id ),
-		] ) );
+		$full_name = implode(
+			' ',
+			array_filter(
+				[
+					get_field( 'first_name', $post_id ),
+					get_field( 'infix', $post_id ),
+					get_field( 'last_name', $post_id ),
+				]
+			)
+		);
 
 		if ( empty( $full_name ) ) {
 			$full_name = __( 'Unnamed Person', 'rondo' );
@@ -243,5 +247,4 @@ class AutoTitle {
 	public function handle_async_calendar_rematch( int $post_id ): void {
 		\Rondo\Calendar\Matcher::on_person_saved( $post_id );
 	}
-
 }

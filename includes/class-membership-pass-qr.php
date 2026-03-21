@@ -178,17 +178,17 @@ class MembershipPassQr {
 		$knvb_id = get_field( 'knvb-id', $person_id );
 
 		return [
-			'id'             => $person_id,
-			'name'           => $full_name,
-			'first_name'     => $first_name,
-			'last_name'      => $last_name,
-			'knvb_id'        => ! empty( $knvb_id ) ? (string) $knvb_id : null,
-			'team'           => $this->get_current_team_name( $person_id ),
-			'season'         => $season,
-			'status'         => $status['status'],
-			'former_member'  => $status['former_member'],
-			'lid_tot'        => $status['lid_tot'],
-			'season_end'     => $status['season_end'],
+			'id'              => $person_id,
+			'name'            => $full_name,
+			'first_name'      => $first_name,
+			'last_name'       => $last_name,
+			'knvb_id'         => ! empty( $knvb_id ) ? (string) $knvb_id : null,
+			'team'            => $this->get_current_team_name( $person_id ),
+			'season'          => $season,
+			'status'          => $status['status'],
+			'former_member'   => $status['former_member'],
+			'lid_tot'         => $status['lid_tot'],
+			'season_end'      => $status['season_end'],
 			'photo_thumbnail' => get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: '',
 		];
 	}
@@ -205,7 +205,7 @@ class MembershipPassQr {
 			return $secret;
 		}
 
-		$header = [
+		$header          = [
 			'alg' => 'HS256',
 			'typ' => 'JWT',
 		];

@@ -134,12 +134,15 @@ class RabobankPayment {
 			);
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$cert_content = file_get_contents( $cert );
 
-		return rest_ensure_response( [
-			'certificate' => $cert_content,
-			'has_key'     => file_exists( $key ),
-		] );
+		return rest_ensure_response(
+			[
+				'certificate' => $cert_content,
+				'has_key'     => file_exists( $key ),
+			]
+		);
 	}
 
 	/**
@@ -337,6 +340,7 @@ class RabobankPayment {
 		$signature      = '';
 
 		if ( file_exists( $key_path ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			$private_key = openssl_pkey_get_private( file_get_contents( $key_path ) );
 			if ( $private_key ) {
 				openssl_sign( $signing_string, $raw_sig, $private_key, OPENSSL_ALGO_SHA256 );
@@ -344,6 +348,7 @@ class RabobankPayment {
 			}
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$cert_content = file_exists( $cert_path ) ? file_get_contents( $cert_path ) : '';
 
 		// Build headers per Rabobank API spec
@@ -364,7 +369,7 @@ class RabobankPayment {
 
 		// Make API request (enable mTLS for this request)
 		$this->inject_mtls = true;
-		$response = wp_remote_post(
+		$response          = wp_remote_post(
 			$api_url,
 			[
 				'headers' => $headers,
@@ -378,7 +383,8 @@ class RabobankPayment {
 			error_log( 'Rabobank payment request error: ' . $response->get_error_message() );
 			return new \WP_Error(
 				'api_request_failed',
-				sprintf( __( 'API request mislukt: %s', 'rondo' ), $response->get_error_message() ),
+				// translators: %s is the API error message.
+			sprintf( __( 'API request mislukt: %s', 'rondo' ), $response->get_error_message() ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -396,7 +402,8 @@ class RabobankPayment {
 
 			return new \WP_Error(
 				'payment_request_failed',
-				sprintf( __( 'Betaalverzoek aanmaken mislukt: %s', 'rondo' ), $error_message ),
+				// translators: %s is the Rabobank API error message.
+			sprintf( __( 'Betaalverzoek aanmaken mislukt: %s', 'rondo' ), $error_message ),
 				[ 'status' => 502 ] // Always return 502 for upstream Rabobank errors (never pass through 401/403)
 			);
 		}
@@ -513,7 +520,7 @@ class RabobankPayment {
 
 		// Make API request with mTLS
 		$this->inject_mtls = true;
-		$response = wp_remote_get(
+		$response          = wp_remote_get(
 			$api_url,
 			[
 				'headers' => $headers,
@@ -525,7 +532,8 @@ class RabobankPayment {
 		if ( is_wp_error( $response ) ) {
 			return new \WP_Error(
 				'qr_api_failed',
-				sprintf( __( 'QR code ophalen mislukt: %s', 'rondo' ), $response->get_error_message() ),
+				// translators: %s is the API error message.
+			sprintf( __( 'QR code ophalen mislukt: %s', 'rondo' ), $response->get_error_message() ),
 				[ 'status' => 500 ]
 			);
 		}
@@ -536,7 +544,8 @@ class RabobankPayment {
 			error_log( sprintf( 'Rabobank QR code request failed (HTTP %d): %s', $status_code, $body ) );
 			return new \WP_Error(
 				'qr_request_failed',
-				sprintf( __( 'QR code ophalen mislukt (HTTP %d).', 'rondo' ), $status_code ),
+				// translators: %d is the HTTP status code from the Rabobank QR API.
+			sprintf( __( 'QR code ophalen mislukt (HTTP %d).', 'rondo' ), $status_code ),
 				[ 'status' => 502 ]
 			);
 		}
@@ -563,7 +572,7 @@ class RabobankPayment {
 		$relative_path  = 'invoices/' . $filename;
 
 		$written = file_put_contents( $full_path, $png_data );
-		if ( false === $written ) {
+		if ( $written === false ) {
 			return new \WP_Error(
 				'qr_save_failed',
 				__( 'Kon QR code niet opslaan.', 'rondo' ),

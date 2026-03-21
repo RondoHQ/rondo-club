@@ -36,9 +36,12 @@ class AgeGroupAccessTest extends RondoTestCase {
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
 		// Even with config present, admin bypasses.
-		update_option( 'rondo_age_group_access', [
-			'rondo_user' => [ 'senioren' ],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_user' => [ 'senioren' ],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $admin_id );
 		$this->assertNull( $result, 'Admin user should bypass age-group filtering' );
@@ -50,9 +53,12 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_returns_null_for_fairplay_user(): void {
 		$user_id = self::factory()->user->create( [ 'role' => 'rondo_fairplay' ] );
 
-		update_option( 'rondo_age_group_access', [
-			'rondo_fairplay' => [ 'senioren' ],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_fairplay' => [ 'senioren' ],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertNull( $result, 'User with fairplay capability should bypass filtering' );
@@ -104,9 +110,12 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_returns_null_for_bestuur_user(): void {
 		$user_id = self::factory()->user->create( [ 'role' => 'rondo_bestuur' ] );
 
-		update_option( 'rondo_age_group_access', [
-			'rondo_bestuur' => [ 'senioren' ],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_bestuur' => [ 'senioren' ],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertNull( $result, 'Bestuur user should bypass filtering (has management caps)' );
@@ -128,9 +137,12 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_returns_null_when_role_has_empty_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'empty_config_user' ] );
 
-		update_option( 'rondo_age_group_access', [
-			'rondo_user' => [],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_user' => [],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertNull( $result, 'Should return null when role has empty array config' );
@@ -142,9 +154,12 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_returns_array_when_role_has_configured_age_groups(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'restricted_user' ] );
 
-		update_option( 'rondo_age_group_access', [
-			'rondo_user' => [ 'senioren', 'junioren-a' ],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_user' => [ 'senioren', 'junioren-a' ],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertIsArray( $result );
@@ -168,10 +183,13 @@ class AgeGroupAccessTest extends RondoTestCase {
 		add_role( $custom_role, 'Test Role', [ 'read' => true ] );
 		$user->add_role( $custom_role );
 
-		update_option( 'rondo_age_group_access', [
-			'rondo_user'     => [ 'senioren', 'junioren-a' ],
-			$custom_role     => [ 'junioren-a', 'junioren-b' ],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_user' => [ 'senioren', 'junioren-a' ],
+				$custom_role => [ 'junioren-a', 'junioren-b' ],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertIsArray( $result );
@@ -191,9 +209,14 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_handles_json_string_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'json_config_user' ] );
 
-		update_option( 'rondo_age_group_access', json_encode( [
-			'rondo_user' => [ 'senioren' ],
-		] ) );
+		update_option(
+			'rondo_age_group_access',
+			json_encode(
+				[
+					'rondo_user' => [ 'senioren' ],
+				]
+			)
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertIsArray( $result );
@@ -206,9 +229,12 @@ class AgeGroupAccessTest extends RondoTestCase {
 	public function test_returns_null_when_role_not_in_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'unconfigured_role_user' ] );
 
-		update_option( 'rondo_age_group_access', [
-			'some_other_role' => [ 'senioren' ],
-		] );
+		update_option(
+			'rondo_age_group_access',
+			[
+				'some_other_role' => [ 'senioren' ],
+			]
+		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
 		$this->assertNull( $result, 'Should return null when user role is not in config' );

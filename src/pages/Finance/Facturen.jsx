@@ -16,6 +16,7 @@ const STATUS_FILTER_ALL = 'all';
 const statusColors = {
   draft: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
   sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  partially_paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
@@ -24,6 +25,7 @@ const statusColors = {
 const statusLabels = {
   draft: 'Concept',
   sent: 'Verstuurd',
+  partially_paid: 'Deels betaald',
   paid: 'Betaald',
   overdue: 'Achterstallig',
 };
@@ -42,11 +44,15 @@ const typeColors = {
   credit: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
-function StatusBadge({ status, reminderCount = 0 }) {
+function StatusBadge({ status, reminderCount = 0, paidInstallments = 0, installmentCount = 0 }) {
   let colorKey = status;
   let label = statusLabels[status] || status;
 
-  if (status === 'overdue' && reminderCount > 0) {
+  // Derive partially paid status when some (but not all) installments are paid.
+  if (status !== 'paid' && paidInstallments > 0 && paidInstallments < installmentCount) {
+    colorKey = 'partially_paid';
+    label = `Deels betaald (${paidInstallments}/${installmentCount})`;
+  } else if (status === 'overdue' && reminderCount > 0) {
     if (reminderCount >= 2) {
       label = '2e herinnering';
       colorKey = 'overdue'; // red
@@ -66,7 +72,7 @@ function StatusBadge({ status, reminderCount = 0 }) {
 const PLAN_OPTIONS = [
   { value: 'full', label: 'Volledig' },
   { value: 'quarterly_3', label: '3 termijnen' },
-  { value: 'monthly_8', label: 'Meerdere termijnen' },
+  { value: 'monthly_8', label: '8 termijnen' },
 ];
 
 const COLUMNS = [
@@ -153,7 +159,14 @@ const COLUMNS = [
     id: 'status',
     header: 'Status',
     accessorKey: 'status',
-    cell: ({ row }) => <StatusBadge status={row.original.status} reminderCount={row.original.reminder_count || 0} />,
+    cell: ({ row }) => (
+      <StatusBadge
+        status={row.original.status}
+        reminderCount={row.original.reminder_count || 0}
+        paidInstallments={row.original.paid_installments || 0}
+        installmentCount={row.original.installment_count || 0}
+      />
+    ),
     filterType: FILTER_TYPES.SELECT,
     filterLabel: 'Status',
     getFilterLabel: (value) => (value === STATUS_FILTER_UNPAID ? 'Alle niet betaalde' : (statusLabels[value] || value)),
@@ -174,11 +187,15 @@ const COLUMNS = [
   createColumn({
     id: 'plan',
     header: 'Betaalplan',
-    accessorKey: 'payment_plan',
-    cell: ({ getValue }) => {
+    accessorKey: 'installment_plan',
+    cell: ({ row, getValue }) => {
       const plan = getValue();
+      if (!plan) return <span className="text-gray-400">-</span>;
+      if (plan === 'full') return 'Volledig';
+      const count = row.original.installment_count;
+      if (count) return `${count} termijnen`;
       const found = PLAN_OPTIONS.find((o) => o.value === plan);
-      return found ? found.label : plan ? plan : <span className="text-gray-400">-</span>;
+      return found ? found.label : plan;
     },
     filterType: FILTER_TYPES.SELECT,
     filterLabel: 'Betaalplan',

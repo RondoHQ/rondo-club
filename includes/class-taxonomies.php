@@ -315,9 +315,13 @@ class Taxonomies {
 
 		// Get current post ID from various sources
 		$post_id = 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['post_ID'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$post_id = intval( $_POST['post_ID'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		} elseif ( isset( $_POST['post_id'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$post_id = intval( $_POST['post_id'] );
 		}
 

@@ -76,7 +76,8 @@ class Reminders {
 		if ( $scheduled === false ) {
 			return new \WP_Error(
 				'cron_schedule_failed',
-				sprintf( __( 'Failed to schedule reminder cron for user %d.', 'rondo' ), $user_id )
+				// translators: %d is the WordPress user ID.
+			sprintf( __( 'Failed to schedule reminder cron for user %d.', 'rondo' ), $user_id )
 			);
 		}
 
@@ -169,7 +170,7 @@ class Reminders {
 		// Update expired work history (only once per day, not per user)
 		// Use a transient to ensure this only runs once per day
 		$transient_key = 'rondo_work_history_updated_' . gmdate( 'Y-m-d' );
-		if ( false === get_transient( $transient_key ) ) {
+		if ( get_transient( $transient_key ) === false ) {
 			$this->update_expired_work_history();
 			set_transient( $transient_key, true, DAY_IN_SECONDS );
 		}

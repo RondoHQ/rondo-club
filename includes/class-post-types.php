@@ -81,25 +81,33 @@ class PostTypes {
 			'team',
 		];
 		foreach ( $person_string_meta as $key ) {
-			register_post_meta( 'person', $key, [
-				'type'              => 'string',
-				'single'            => true,
-				'show_in_rest'      => true,
-				'sanitize_callback' => 'sanitize_text_field',
-			] );
+			register_post_meta(
+				'person',
+				$key,
+				[
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
 		}
 
 		// Contributie exclusion: boolean, write gated by 'financieel'.
-		register_post_meta( 'person', '_exclude_from_contributie', [
-			'type'              => 'boolean',
-			'single'            => true,
-			'show_in_rest'      => true,
-			'default'           => false,
-			'sanitize_callback' => 'rest_sanitize_boolean',
-			'auth_callback'     => function () {
-				return current_user_can( 'financieel' );
-			},
-		] );
+		register_post_meta(
+			'person',
+			'_exclude_from_contributie',
+			[
+				'type'              => 'boolean',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'auth_callback'     => function () {
+					return current_user_can( 'financieel' );
+				},
+			]
+		);
 	}
 
 	/**
@@ -281,6 +289,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of open todos.
 				'label_count'               => _n_noop( 'Open <span class="count">(%s)</span>', 'Open <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
@@ -293,6 +302,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of todos awaiting response.
 				'label_count'               => _n_noop( 'Awaiting <span class="count">(%s)</span>', 'Awaiting <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
@@ -305,6 +315,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of completed todos.
 				'label_count'               => _n_noop( 'Completed <span class="count">(%s)</span>', 'Completed <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
@@ -497,6 +508,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of draft invoices.
 				'label_count'               => _n_noop( 'Concept <span class="count">(%s)</span>', 'Concept <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
@@ -509,6 +521,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of sent invoices.
 				'label_count'               => _n_noop( 'Verstuurd <span class="count">(%s)</span>', 'Verstuurd <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
@@ -521,6 +534,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of paid invoices.
 				'label_count'               => _n_noop( 'Betaald <span class="count">(%s)</span>', 'Betaald <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
@@ -533,6 +547,7 @@ class PostTypes {
 				'exclude_from_search'       => false,
 				'show_in_admin_all_list'    => true,
 				'show_in_admin_status_list' => true,
+				// translators: %s is the number of overdue invoices.
 				'label_count'               => _n_noop( 'Verlopen <span class="count">(%s)</span>', 'Verlopen <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);

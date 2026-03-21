@@ -71,7 +71,7 @@ For production, `npm run build` generates optimized assets in `dist/`.
 | **Backend** | WordPress, PHP 8.0+, ACF Pro |
 | **Build** | Vite 5.0 |
 | **Payments** | Mollie (Payment Links API) |
-| **Sync** | [Rondo Sync](https://github.com/jdevalk/sportlink-sync) (Sportlink integration) |
+| **Sync** | [Rondo Sync](https://github.com/RondoHQ/rondo-sync) (Sportlink integration) |
 
 ## Configuration
 

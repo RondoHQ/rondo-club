@@ -30,7 +30,7 @@ class EmailChannel extends Channel {
 			// Default to enabled for email if not set
 			return true;
 		}
-		return in_array( 'email', $channels );
+		return in_array( 'email', $channels, true );
 	}
 
 	public function get_user_config( $user_id ) {
@@ -59,9 +59,13 @@ class EmailChannel extends Channel {
 		$site_name       = get_bloginfo( 'name' );
 		$today_formatted = date_i18n( get_option( 'date_format' ) );
 
-		$subject = $has_collab
-			? sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'rondo' ), $site_name, $today_formatted )
-			: sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'rondo' ), $site_name, $today_formatted );
+		if ( $has_collab ) {
+			// translators: %1$s is the site name, %2$s is the formatted date.
+			$subject = sprintf( __( '[%1$s] Your digest (including team activity) - %2$s', 'rondo' ), $site_name, $today_formatted );
+		} else {
+			// translators: %1$s is the site name, %2$s is the formatted date.
+			$subject = sprintf( __( '[%1$s] Your Reminders & Todos - %2$s', 'rondo' ), $site_name, $today_formatted );
+		}
 
 		$message = $this->format_email_message( $user, $digest_data );
 
@@ -93,7 +97,7 @@ class EmailChannel extends Channel {
 			'rest_of_week' => [],
 		];
 
-		$html  = sprintf(
+		$html = sprintf(
 			'<p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">Hallo %s,</p><p style="margin:0 0 16px;color:#0f172a;font-size:16px;line-height:1.7;">Hier is je overzicht van verjaardagen, taken en teamactiviteit.</p>',
 			esc_html( $user->display_name )
 		);
@@ -219,14 +223,14 @@ class EmailChannel extends Channel {
 				$title_with_link      = $this->replace_name_in_title_email( $date['title'], $person_in_title, $site_url );
 				$safe_title_with_link = wp_kses(
 					$title_with_link,
-					array(
-						'a' => array(
+					[
+						'a' => [
 							'href'   => true,
 							'title'  => true,
 							'target' => true,
 							'rel'    => true,
-						),
-					)
+						],
+					]
 				);
 				$html                .= sprintf(
 					'<p style="margin: 5px 0;">• <strong>%s</strong> - %s</p>',

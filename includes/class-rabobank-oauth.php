@@ -97,13 +97,13 @@ class RabobankOAuth {
 	 */
 	private function set_environment_urls() {
 		if ( $this->environment === 'production' ) {
-			$this->base_url       = 'https://api.rabobank.nl';
-			$this->authorize_url  = 'https://oauth.rabobank.nl/openapi/oauth2-premium/authorize';
-			$this->token_url      = 'https://oauth.rabobank.nl/openapi/oauth2-premium/token';
+			$this->base_url      = 'https://api.rabobank.nl';
+			$this->authorize_url = 'https://oauth.rabobank.nl/openapi/oauth2-premium/authorize';
+			$this->token_url     = 'https://oauth.rabobank.nl/openapi/oauth2-premium/token';
 		} else {
-			$this->base_url       = 'https://api-sandbox.rabobank.nl';
-			$this->authorize_url  = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/authorize';
-			$this->token_url      = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/token';
+			$this->base_url      = 'https://api-sandbox.rabobank.nl';
+			$this->authorize_url = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/authorize';
+			$this->token_url     = 'https://oauth-sandbox.rabobank.nl/openapi/sandbox/oauth2-premium/token';
 		}
 	}
 
@@ -195,7 +195,7 @@ class RabobankOAuth {
 		// Check for OAuth error response
 		if ( $error ) {
 			$error_description = $request->get_param( 'error_description' );
-			$redirect_url = home_url( '/financien/instellingen?rabobank=error&message=' . urlencode( $error_description ?: $error ) );
+			$redirect_url      = home_url( '/financien/instellingen?rabobank=error&message=' . urlencode( $error_description ?: $error ) );
 			wp_redirect( $redirect_url );
 			exit;
 		}
@@ -333,7 +333,8 @@ class RabobankOAuth {
 			error_log( 'Rabobank token exchange URL: ' . $this->token_url );
 			return new \WP_Error(
 				'token_exchange_failed',
-				sprintf( __( 'Token exchange mislukt: %s', 'rondo' ), $error_message )
+				// translators: %s is the token exchange error message.
+			sprintf( __( 'Token exchange mislukt: %s', 'rondo' ), $error_message )
 			);
 		}
 

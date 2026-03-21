@@ -62,7 +62,7 @@ class CustomFields extends WP_REST_Controller {
 	 */
 	public function __construct() {
 		$this->manager = new Manager();
-		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
 
 	/**
@@ -77,20 +77,20 @@ class CustomFields extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<post_type>person|team|commissie)',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( $this, 'get_items_permissions_check' ),
+					'callback'            => [ $this, 'get_items' ],
+					'permission_callback' => [ $this, 'get_items_permissions_check' ],
 					'args'                => $this->get_collection_params(),
-				),
-				array(
+				],
+				[
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => array( $this, 'create_item' ),
-					'permission_callback' => array( $this, 'create_item_permissions_check' ),
+					'callback'            => [ $this, 'create_item' ],
+					'permission_callback' => [ $this, 'create_item_permissions_check' ],
 					'args'                => $this->get_create_params(),
-				),
-			)
+				],
+			]
 		);
 
 		// Read-only metadata route for non-admin users (detail view display).
@@ -99,58 +99,58 @@ class CustomFields extends WP_REST_Controller {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<post_type>person|team|commissie)/metadata',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_field_metadata' ),
-					'permission_callback' => array( $this, 'get_field_metadata_permissions_check' ),
-				),
-			)
+					'callback'            => [ $this, 'get_field_metadata' ],
+					'permission_callback' => [ $this, 'get_field_metadata_permissions_check' ],
+				],
+			]
 		);
 
 		// Reorder fields route.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<post_type>person|team|commissie)/order',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'reorder_items' ),
-					'permission_callback' => array( $this, 'update_item_permissions_check' ),
-					'args'                => array(
-						'order' => array(
+					'callback'            => [ $this, 'reorder_items' ],
+					'permission_callback' => [ $this, 'update_item_permissions_check' ],
+					'args'                => [
+						'order' => [
 							'type'        => 'array',
-							'items'       => array( 'type' => 'string' ),
+							'items'       => [ 'type' => 'string' ],
 							'required'    => true,
 							'description' => 'Array of field keys in desired order',
-						),
-					),
-				),
-			)
+						],
+					],
+				],
+			]
 		);
 
 		// Single item route: get, update, delete.
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base . '/(?P<post_type>person|team|commissie)/(?P<field_key>[a-z0-9_-]+)',
-			array(
-				array(
+			[
+				[
 					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_item' ),
-					'permission_callback' => array( $this, 'get_item_permissions_check' ),
-				),
-				array(
+					'callback'            => [ $this, 'get_item' ],
+					'permission_callback' => [ $this, 'get_item_permissions_check' ],
+				],
+				[
 					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_item' ),
-					'permission_callback' => array( $this, 'update_item_permissions_check' ),
+					'callback'            => [ $this, 'update_item' ],
+					'permission_callback' => [ $this, 'update_item_permissions_check' ],
 					'args'                => $this->get_update_params(),
-				),
-				array(
+				],
+				[
 					'methods'             => WP_REST_Server::DELETABLE,
-					'callback'            => array( $this, 'delete_item' ),
-					'permission_callback' => array( $this, 'delete_item_permissions_check' ),
-				),
-			)
+					'callback'            => [ $this, 'delete_item' ],
+					'permission_callback' => [ $this, 'delete_item_permissions_check' ],
+				],
+			]
 		);
 	}
 
@@ -248,13 +248,13 @@ class CustomFields extends WP_REST_Controller {
 		// Extract only display-relevant properties.
 		$metadata = array_map(
 			function ( $field ) {
-				$display_props = array(
+				$display_props = [
 					'key'          => $field['key'],
 					'name'         => $field['name'],
 					'label'        => $field['label'],
 					'type'         => $field['type'],
 					'instructions' => $field['instructions'] ?? '',
-				);
+				];
 
 				// Add type-specific display properties.
 				// Select, Checkbox, Radio fields.
@@ -281,7 +281,7 @@ class CustomFields extends WP_REST_Controller {
 				}
 
 				// Relationship fields - what post types it links to.
-				if ( isset( $field['post_type'] ) && 'relationship' === $field['type'] ) {
+				if ( isset( $field['post_type'] ) && $field['type'] === 'relationship' ) {
 					$display_props['post_type'] = $field['post_type'];
 				}
 
@@ -302,10 +302,10 @@ class CustomFields extends WP_REST_Controller {
 		);
 
 		// Add Sportlink fields for person post type (read-only, synced from external system).
-		if ( 'person' === $post_type ) {
+		if ( $post_type === 'person' ) {
 			$sportlink_fields = \Rondo\REST\UserSettings::get_sportlink_fields();
 			foreach ( $sportlink_fields as $field ) {
-				$entry = array(
+				$entry = [
 					'key'            => $field['id'],
 					'name'           => $field['id'],
 					'label'          => $field['label'],
@@ -313,10 +313,10 @@ class CustomFields extends WP_REST_Controller {
 					'instructions'   => '',
 					'editable_in_ui' => false,
 					'source'         => 'sportlink',
-				);
+				];
 
 				// Include localized on/off labels for true_false fields.
-				if ( 'true_false' === $field['type'] ) {
+				if ( $field['type'] === 'true_false' ) {
 					$acf_field = acf_get_field( $field['id'] );
 					if ( $acf_field ) {
 						$entry['ui_on_text']  = $acf_field['ui_on_text'] ?? '';
@@ -339,39 +339,65 @@ class CustomFields extends WP_REST_Controller {
 	 */
 	public function create_item( $request ) {
 		// Use URL params explicitly to avoid conflict with body param 'post_type' (relationship field option).
-		$url_params = $request->get_url_params();
-		$post_type  = $url_params['post_type'];
-		$field_config = array(
+		$url_params   = $request->get_url_params();
+		$post_type    = $url_params['post_type'];
+		$field_config = [
 			'label' => $request->get_param( 'label' ),
 			'type'  => $request->get_param( 'type' ),
-		);
+		];
 
 		// Add optional params if present.
-		$optional_params = array(
+		$optional_params = [
 			// Core options.
-			'name', 'instructions', 'required', 'choices', 'default_value', 'placeholder',
+			'name',
+			'instructions',
+			'required',
+			'choices',
+			'default_value',
+			'placeholder',
 			// Number field options.
-			'min', 'max', 'step', 'prepend', 'append',
+			'min',
+			'max',
+			'step',
+			'prepend',
+			'append',
 			// Date field options.
-			'display_format', 'return_format', 'first_day',
+			'display_format',
+			'return_format',
+			'first_day',
 			// Select/Checkbox options.
-			'allow_null', 'multiple', 'ui', 'layout', 'toggle', 'allow_custom', 'save_custom',
+			'allow_null',
+			'multiple',
+			'ui',
+			'layout',
+			'toggle',
+			'allow_custom',
+			'save_custom',
 			// Text/Textarea options.
 			'maxlength',
 			// True/False options.
-			'ui_on_text', 'ui_off_text',
+			'ui_on_text',
+			'ui_off_text',
 			// Image/File field options.
-			'preview_size', 'library', 'min_width', 'max_width', 'min_height', 'max_height',
-			'min_size', 'max_size', 'mime_types',
+			'preview_size',
+			'library',
+			'min_width',
+			'max_width',
+			'min_height',
+			'max_height',
+			'min_size',
+			'max_size',
+			'mime_types',
 			// Relationship field options (uses 'relation_post_types' to avoid conflict with URL param).
-			'relation_post_types', 'filters',
+			'relation_post_types',
+			'filters',
 			// Color picker options.
 			'enable_opacity',
 			// Unique validation.
 			'unique',
 			// UI editability.
 			'editable_in_ui',
-		);
+		];
 		foreach ( $optional_params as $param ) {
 			if ( $request->has_param( $param ) ) {
 				$field_config[ $param ] = $request->get_param( $param );
@@ -387,7 +413,7 @@ class CustomFields extends WP_REST_Controller {
 		$result = $this->manager->create_field( $post_type, $field_config );
 
 		if ( is_wp_error( $result ) ) {
-			$result->add_data( array( 'status' => 400 ) );
+			$result->add_data( [ 'status' => 400 ] );
 			return $result;
 		}
 
@@ -408,7 +434,7 @@ class CustomFields extends WP_REST_Controller {
 			return new WP_Error(
 				'not_found',
 				'Field not found',
-				array( 'status' => 404 )
+				[ 'status' => 404 ]
 			);
 		}
 
@@ -423,34 +449,61 @@ class CustomFields extends WP_REST_Controller {
 	 */
 	public function update_item( $request ) {
 		$field_key = $request->get_param( 'field_key' );
-		$updates   = array();
+		$updates   = [];
 
 		// Collect provided update params.
-		$updatable_params = array(
+		$updatable_params = [
 			// Core options.
-			'label', 'name', 'instructions', 'required', 'choices', 'default_value', 'placeholder',
+			'label',
+			'name',
+			'instructions',
+			'required',
+			'choices',
+			'default_value',
+			'placeholder',
 			// Number field options.
-			'min', 'max', 'step', 'prepend', 'append',
+			'min',
+			'max',
+			'step',
+			'prepend',
+			'append',
 			// Date field options.
-			'display_format', 'return_format', 'first_day',
+			'display_format',
+			'return_format',
+			'first_day',
 			// Select/Checkbox options.
-			'allow_null', 'multiple', 'ui', 'layout', 'toggle', 'allow_custom', 'save_custom',
+			'allow_null',
+			'multiple',
+			'ui',
+			'layout',
+			'toggle',
+			'allow_custom',
+			'save_custom',
 			// Text/Textarea options.
 			'maxlength',
 			// True/False options.
-			'ui_on_text', 'ui_off_text',
+			'ui_on_text',
+			'ui_off_text',
 			// Image/File field options.
-			'preview_size', 'library', 'min_width', 'max_width', 'min_height', 'max_height',
-			'min_size', 'max_size', 'mime_types',
+			'preview_size',
+			'library',
+			'min_width',
+			'max_width',
+			'min_height',
+			'max_height',
+			'min_size',
+			'max_size',
+			'mime_types',
 			// Relationship field options (uses 'relation_post_types' to avoid conflict with URL param).
-			'relation_post_types', 'filters',
+			'relation_post_types',
+			'filters',
 			// Color picker options.
 			'enable_opacity',
 			// Unique validation.
 			'unique',
 			// UI editability.
 			'editable_in_ui',
-		);
+		];
 		foreach ( $updatable_params as $param ) {
 			if ( $request->has_param( $param ) ) {
 				$updates[ $param ] = $request->get_param( $param );
@@ -466,7 +519,7 @@ class CustomFields extends WP_REST_Controller {
 		$result = $this->manager->update_field( $field_key, $updates );
 
 		if ( is_wp_error( $result ) ) {
-			$error_data = array( 'status' => 400 );
+			$error_data = [ 'status' => 400 ];
 			if ( $result->get_error_code() === 'field_not_found' ) {
 				$error_data['status'] = 404;
 			}
@@ -491,7 +544,7 @@ class CustomFields extends WP_REST_Controller {
 		$result    = $this->manager->deactivate_field( $field_key );
 
 		if ( is_wp_error( $result ) ) {
-			$error_data = array( 'status' => 400 );
+			$error_data = [ 'status' => 400 ];
 			if ( $result->get_error_code() === 'field_not_found' ) {
 				$error_data['status'] = 404;
 			}
@@ -500,10 +553,10 @@ class CustomFields extends WP_REST_Controller {
 		}
 
 		return rest_ensure_response(
-			array(
+			[
 				'success' => true,
 				'field'   => $result,
-			)
+			]
 		);
 	}
 
@@ -520,11 +573,11 @@ class CustomFields extends WP_REST_Controller {
 		$result = $this->manager->reorder_fields( $post_type, $order );
 
 		if ( is_wp_error( $result ) ) {
-			$result->add_data( array( 'status' => 400 ) );
+			$result->add_data( [ 'status' => 400 ] );
 			return $result;
 		}
 
-		return rest_ensure_response( array( 'success' => true ) );
+		return rest_ensure_response( [ 'success' => true ] );
 	}
 
 	/**
@@ -533,13 +586,13 @@ class CustomFields extends WP_REST_Controller {
 	 * @return array Parameter definitions.
 	 */
 	public function get_collection_params(): array {
-		return array(
-			'include_inactive' => array(
+		return [
+			'include_inactive' => [
 				'type'        => 'boolean',
 				'default'     => false,
 				'description' => 'Include deactivated fields in response',
-			),
-		);
+			],
+		];
 	}
 
 	/**
@@ -548,186 +601,186 @@ class CustomFields extends WP_REST_Controller {
 	 * @return array Parameter definitions.
 	 */
 	protected function get_create_params(): array {
-		return array(
+		return [
 			// Required parameters.
-			'label'          => array(
+			'label'               => [
 				'type'        => 'string',
 				'required'    => true,
 				'description' => 'Field label displayed to users',
-			),
-			'type'           => array(
+			],
+			'type'                => [
 				'type'        => 'string',
 				'required'    => true,
 				'description' => 'ACF field type (text, textarea, number, url, email, select, checkbox, radio, true_false, date)',
-			),
+			],
 			// Core optional parameters.
-			'name'           => array(
+			'name'                => [
 				'type'        => 'string',
 				'description' => 'Field name (defaults to sanitized label)',
-			),
-			'instructions'   => array(
+			],
+			'instructions'        => [
 				'type'        => 'string',
 				'description' => 'Help text displayed below field',
-			),
-			'required'       => array(
+			],
+			'required'            => [
 				'type'        => 'boolean',
 				'default'     => false,
 				'description' => 'Whether field is required',
-			),
-			'choices'        => array(
+			],
+			'choices'             => [
 				'type'        => 'object',
 				'description' => 'Choices for select/checkbox/radio fields',
-			),
-			'default_value'  => array(
+			],
+			'default_value'       => [
 				'description' => 'Default value for new posts',
-			),
-			'placeholder'    => array(
+			],
+			'placeholder'         => [
 				'type'        => 'string',
 				'description' => 'Placeholder text for empty field',
-			),
+			],
 			// Number field options.
-			'min'            => array(
+			'min'                 => [
 				'type'        => 'number',
 				'description' => 'Minimum allowed value (Number field)',
-			),
-			'max'            => array(
+			],
+			'max'                 => [
 				'type'        => 'number',
 				'description' => 'Maximum allowed value (Number field)',
-			),
-			'step'           => array(
+			],
+			'step'                => [
 				'type'        => 'number',
 				'description' => 'Step increment (Number field)',
-			),
-			'prepend'        => array(
+			],
+			'prepend'             => [
 				'type'        => 'string',
 				'description' => 'Text displayed before input',
-			),
-			'append'         => array(
+			],
+			'append'              => [
 				'type'        => 'string',
 				'description' => 'Text displayed after input',
-			),
+			],
 			// Date field options.
-			'display_format' => array(
+			'display_format'      => [
 				'type'        => 'string',
 				'description' => 'Date display format (Date field)',
-			),
-			'return_format'  => array(
+			],
+			'return_format'       => [
 				'type'        => 'string',
 				'description' => 'Date/Select/Checkbox return format',
-			),
-			'first_day'      => array(
+			],
+			'first_day'           => [
 				'type'        => 'integer',
 				'description' => 'First day of week: 0=Sunday, 1=Monday (Date field)',
-			),
+			],
 			// Select/Checkbox options.
-			'allow_null'     => array(
+			'allow_null'          => [
 				'type'        => 'boolean',
 				'description' => 'Allow empty selection (Select field)',
-			),
-			'multiple'       => array(
+			],
+			'multiple'            => [
 				'type'        => 'boolean',
 				'description' => 'Allow multiple selections (Select field)',
-			),
-			'ui'             => array(
+			],
+			'ui'                  => [
 				'type'        => 'boolean',
 				'description' => 'Use enhanced UI (Select/True_False field)',
-			),
-			'layout'         => array(
+			],
+			'layout'              => [
 				'type'        => 'string',
 				'description' => 'Layout: vertical or horizontal (Checkbox field)',
-			),
-			'toggle'         => array(
+			],
+			'toggle'              => [
 				'type'        => 'boolean',
 				'description' => 'Show toggle all checkbox (Checkbox field)',
-			),
-			'allow_custom'   => array(
+			],
+			'allow_custom'        => [
 				'type'        => 'boolean',
 				'description' => 'Allow custom values (Checkbox field)',
-			),
-			'save_custom'    => array(
+			],
+			'save_custom'         => [
 				'type'        => 'boolean',
 				'description' => 'Save custom values to choices (Checkbox field)',
-			),
+			],
 			// Text/Textarea options.
-			'maxlength'      => array(
+			'maxlength'           => [
 				'type'        => 'integer',
 				'description' => 'Maximum character length (Text/Textarea field)',
-			),
+			],
 			// True/False options.
-			'ui_on_text'     => array(
+			'ui_on_text'          => [
 				'type'        => 'string',
 				'description' => 'Text for ON state (True/False field)',
-			),
-			'ui_off_text'    => array(
+			],
+			'ui_off_text'         => [
 				'type'        => 'string',
 				'description' => 'Text for OFF state (True/False field)',
-			),
+			],
 			// Image field options.
-			'preview_size'   => array(
+			'preview_size'        => [
 				'type'        => 'string',
 				'description' => 'Preview size in admin: thumbnail, medium, large (Image field)',
-			),
-			'library'        => array(
+			],
+			'library'             => [
 				'type'        => 'string',
 				'description' => 'Media library filter: all or uploadedTo (Image/File field)',
-			),
-			'min_width'      => array(
+			],
+			'min_width'           => [
 				'type'        => 'integer',
 				'description' => 'Minimum image width in pixels (Image field)',
-			),
-			'max_width'      => array(
+			],
+			'max_width'           => [
 				'type'        => 'integer',
 				'description' => 'Maximum image width in pixels (Image field)',
-			),
-			'min_height'     => array(
+			],
+			'min_height'          => [
 				'type'        => 'integer',
 				'description' => 'Minimum image height in pixels (Image field)',
-			),
-			'max_height'     => array(
+			],
+			'max_height'          => [
 				'type'        => 'integer',
 				'description' => 'Maximum image height in pixels (Image field)',
-			),
-			'min_size'       => array(
+			],
+			'min_size'            => [
 				'type'        => 'string',
 				'description' => 'Minimum file size e.g. 1MB (Image/File field)',
-			),
-			'max_size'       => array(
+			],
+			'max_size'            => [
 				'type'        => 'string',
 				'description' => 'Maximum file size e.g. 5MB (Image/File field)',
-			),
-			'mime_types'     => array(
+			],
+			'mime_types'          => [
 				'type'        => 'string',
 				'description' => 'Allowed mime types comma-separated (Image/File field)',
-			),
+			],
 			// Relationship field options (uses 'relation_post_types' to avoid conflict with URL param 'post_type').
-			'relation_post_types' => array(
+			'relation_post_types' => [
 				'type'        => 'array',
 				'description' => 'Allowed post types for relationship (Relationship field)',
-				'items'       => array( 'type' => 'string' ),
-			),
-			'filters'        => array(
+				'items'       => [ 'type' => 'string' ],
+			],
+			'filters'             => [
 				'type'        => 'array',
 				'description' => 'Search filters to display (Relationship field)',
-				'items'       => array( 'type' => 'string' ),
-			),
+				'items'       => [ 'type' => 'string' ],
+			],
 			// Color picker options.
-			'enable_opacity' => array(
+			'enable_opacity'      => [
 				'type'        => 'boolean',
 				'description' => 'Enable opacity/alpha slider (Color field)',
-			),
+			],
 			// Unique validation.
-			'unique' => array(
+			'unique'              => [
 				'type'        => 'boolean',
 				'default'     => false,
 				'description' => 'Enforce unique values per post type',
-			),
+			],
 			// UI editability.
-			'editable_in_ui' => array(
+			'editable_in_ui'      => [
 				'type'        => 'boolean',
 				'default'     => true,
 				'description' => 'Whether field can be edited in UI (API access unaffected)',
-			),
-		);
+			],
+		];
 	}
 
 	/**

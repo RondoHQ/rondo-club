@@ -94,19 +94,20 @@ class PublicPaymentPage {
 
 		// Look up the invoice by token.
 		$invoice_id = self::get_invoice_by_token( $token );
-		if ( null === $invoice_id ) {
+		if ( $invoice_id === null ) {
 			$this->render_error( 'Betaallink niet gevonden of verlopen.' );
 			exit;
 		}
 
 		// Show success page if Mollie redirected back with ?betaald=1.
-		if ( isset( $_GET['betaald'] ) && '1' === $_GET['betaald'] ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['betaald'] ) && $_GET['betaald'] === '1' ) {
 			$this->render_success_page( $invoice_id );
 			exit;
 		}
 
 		// Handle form submission (plan selection).
-		if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+		if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 			$this->handle_plan_selection( $invoice_id, $token );
 			return; // handle_plan_selection manages its own exit.
 		}
@@ -140,18 +141,20 @@ class PublicPaymentPage {
 	 * @return int|null Invoice post ID, or null if not found.
 	 */
 	public static function get_invoice_by_token( string $token ): ?int {
-		$posts = get_posts( [
-			'post_type'      => 'rondo_invoice',
-			'post_status'    => 'any',
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-			'meta_query'     => [
-				[
-					'key'   => self::TOKEN_META_KEY,
-					'value' => $token,
+		$posts = get_posts(
+			[
+				'post_type'      => 'rondo_invoice',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => [
+					[
+						'key'   => self::TOKEN_META_KEY,
+						'value' => $token,
+					],
 				],
-			],
-		] );
+			]
+		);
 
 		return $posts[0] ?? null;
 	}
@@ -178,7 +181,7 @@ class PublicPaymentPage {
 		$season          = $membership_fees->get_season_key( $invoice_date );
 
 		// Read installment admin fee.
-		$admin_fee  = $membership_fees->get_installment_admin_fee( $season );
+		$admin_fee = $membership_fees->get_installment_admin_fee( $season );
 
 		// Read installment plan toggles for this season.
 		$plan_3_enabled = $membership_fees->get_installment_plan_3_enabled( $season );
@@ -200,11 +203,11 @@ class PublicPaymentPage {
 
 		$large_count = min( 8, $max_installments );
 		// Keep existing behavior (4..8 dynamic) and additionally allow a late-season 2-installment fallback.
-		$large_plan_visible = $plan_8_enabled && ( $large_count > 3 || 2 === $large_count );
+		$large_plan_visible = $plan_8_enabled && ( $large_count > 3 || $large_count === 2 );
 
 		// Calculate per-plan amounts.
-		$amount_3  = round( $total_amount / 3, 2 ) + $admin_fee;
-		$total_3   = round( $total_amount / 3, 2 ) * 3 + $admin_fee * 3;
+		$amount_3 = round( $total_amount / 3, 2 ) + $admin_fee;
+		$total_3  = round( $total_amount / 3, 2 ) * 3 + $admin_fee * 3;
 
 		$amount_large = $large_plan_visible ? round( $total_amount / $large_count, 2 ) + $admin_fee : 0;
 		$total_large  = $large_plan_visible ? round( $total_amount / $large_count, 2 ) * $large_count + $admin_fee * $large_count : 0;
@@ -225,7 +228,7 @@ class PublicPaymentPage {
 
 <div class="container">
 	<!-- Header -->
-	<?php $this->render_header_card( 'Contributie betalen' ); ?>
+		<?php $this->render_header_card( 'Contributie betalen' ); ?>
 
 	<!-- Invoice summary -->
 	<div class="card">
@@ -346,7 +349,7 @@ class PublicPaymentPage {
 
 <div class="container">
 	<!-- Header -->
-	<?php $this->render_header_card( 'Betaling' ); ?>
+		<?php $this->render_header_card( 'Betaling' ); ?>
 
 	<!-- Success message -->
 	<div class="card success-card">
@@ -389,12 +392,12 @@ class PublicPaymentPage {
 	 * @return array{name: string, logo_url: string, accent_color: string, accent_background_color: string} Club branding.
 	 */
 	private function get_club_branding(): array {
-		$config       = new FinanceConfig();
-		$name         = $config->get_display_name();
-		$accent_color = $config->get_accent_color();
+		$config                  = new FinanceConfig();
+		$name                    = $config->get_display_name();
+		$accent_color            = $config->get_accent_color();
 		$accent_background_color = $config->get_accent_background_color();
-		$logo_url     = '';
-		$logo_id      = $config->get_club_logo_id();
+		$logo_url                = '';
+		$logo_id                 = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
 			$url = wp_get_attachment_url( $logo_id );
 			if ( $url ) {
@@ -402,9 +405,9 @@ class PublicPaymentPage {
 			}
 		}
 		return [
-			'name'         => $name ?: get_bloginfo( 'name' ),
-			'logo_url'     => $logo_url,
-			'accent_color' => $accent_color ?: '#0891b2',
+			'name'                    => $name ?: get_bloginfo( 'name' ),
+			'logo_url'                => $logo_url,
+			'accent_color'            => $accent_color ?: '#0891b2',
 			'accent_background_color' => $accent_background_color ?: '#f8fafc',
 		];
 	}
@@ -448,7 +451,7 @@ class PublicPaymentPage {
 		?>
 
 <div class="container">
-	<?php $this->render_header_card( 'Betaling' ); ?>
+		<?php $this->render_header_card( 'Betaling' ); ?>
 	<div class="card error-card">
 		<h2>Betaallink niet gevonden</h2>
 		<p><?php echo esc_html( $message ); ?></p>
@@ -471,6 +474,7 @@ class PublicPaymentPage {
 	 */
 	private function handle_plan_selection( int $invoice_id, string $token ) {
 		// CSRF check: submitted token must match URL token.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$submitted_token = sanitize_key( $_POST['token'] ?? '' );
 		if ( $submitted_token !== $token ) {
 			$this->render_error( 'Ongeldige aanvraag.' );
@@ -478,6 +482,7 @@ class PublicPaymentPage {
 		}
 
 		// Validate plan.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$plan          = sanitize_key( $_POST['plan'] ?? '' );
 		$allowed_plans = [ 'full', 'quarterly_3', 'monthly_8' ];
 		if ( ! in_array( $plan, $allowed_plans, true ) ) {
@@ -492,25 +497,25 @@ class PublicPaymentPage {
 		$max_installments = count( $available_dates );
 
 		// Check if selected installment plan is enabled and currently available.
-		if ( 'quarterly_3' === $plan || 'monthly_8' === $plan ) {
-			if ( 'quarterly_3' === $plan && ! $fees_service->get_installment_plan_3_enabled( $invoice_season ) ) {
+		if ( $plan === 'quarterly_3' || $plan === 'monthly_8' ) {
+			if ( $plan === 'quarterly_3' && ! $fees_service->get_installment_plan_3_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
 
-			if ( 'monthly_8' === $plan && ! $fees_service->get_installment_plan_8_enabled( $invoice_season ) ) {
+			if ( $plan === 'monthly_8' && ! $fees_service->get_installment_plan_8_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
 
-			if ( 'quarterly_3' === $plan && $max_installments < 3 ) {
+			if ( $plan === 'quarterly_3' && $max_installments < 3 ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
 
-			if ( 'monthly_8' === $plan ) {
+			if ( $plan === 'monthly_8' ) {
 				$large_count = min( 8, $max_installments );
-				if ( ! ( $large_count > 3 || 2 === $large_count ) ) {
+				if ( ! ( $large_count > 3 || $large_count === 2 ) ) {
 					$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 					exit;
 				}
@@ -518,20 +523,20 @@ class PublicPaymentPage {
 		}
 
 		// Per-invoice override: reject installment plan if disabled for this invoice.
-		if ( ( 'quarterly_3' === $plan || 'monthly_8' === $plan ) && get_post_meta( $invoice_id, '_disable_installments', true ) ) {
+		if ( ( $plan === 'quarterly_3' || $plan === 'monthly_8' ) && get_post_meta( $invoice_id, '_disable_installments', true ) ) {
 			$this->render_error( 'Termijnbetaling is niet beschikbaar voor deze factuur.' );
 			exit;
 		}
 
 		// Guard: if invoice is already paid, show a success page instead of creating a new payment.
-		if ( 'rondo_paid' === get_post_status( $invoice_id ) ) {
+		if ( get_post_status( $invoice_id ) === 'rondo_paid' ) {
 			$this->render_success_page( $invoice_id );
 			exit;
 		}
 
 		// Guard: if installment 1 is already confirmed paid, redirect to success page.
 		// This prevents creating a duplicate payment for a member who already paid installment 1.
-		if ( 'betaald' === get_post_meta( $invoice_id, '_installment_1_status', true ) ) {
+		if ( get_post_meta( $invoice_id, '_installment_1_status', true ) === 'betaald' ) {
 			$this->render_success_page( $invoice_id );
 			exit;
 		}
@@ -539,11 +544,40 @@ class PublicPaymentPage {
 		// Clear all previous installment data before writing new plan.
 		// A member may change their plan selection on a return visit (e.g. quarterly → full),
 		// so we must remove stale amounts, Mollie links, and reverse-lookup keys.
-		$old_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
-		for ( $n = 1; $n <= max( $old_count, 8 ); $n++ ) {
+		// Archive old Mollie payment links so they become unpayable — otherwise the old
+		// links remain valid and payments through them can't be routed back to the invoice.
+		$old_count   = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		$clear_up_to = max( $old_count, 8 );
+
+		// Build Mollie client once for archiving old payment links.
+		$mollie_for_archive = null;
+		$config             = new \Rondo\Config\FinanceConfig();
+		$account_id         = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		if ( $account_id === '' ) {
+			$account_id = $config->get_default_mollie_account_id( 'membership' );
+		}
+		$archive_api_key = $config->get_mollie_api_key_for_account( $account_id );
+		if ( $archive_api_key !== '' ) {
+			try {
+				$mollie_for_archive = ( new MollieClient( $archive_api_key ) )->get();
+			} catch ( \Throwable $e ) {
+				// Non-blocking — continue with cleanup even if archiving fails.
+			}
+		}
+
+		for ( $n = 1; $n <= $clear_up_to; $n++ ) {
 			$old_mollie_id = get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
 			if ( $old_mollie_id ) {
 				delete_post_meta( $invoice_id, '_mollie_pid_' . $old_mollie_id );
+
+				// Archive the old payment link in Mollie so it becomes unpayable.
+				if ( $mollie_for_archive !== null ) {
+					try {
+						$mollie_for_archive->paymentLinks->delete( $old_mollie_id );
+					} catch ( \Throwable $e ) {
+						// Non-blocking — old link may already be archived or paid.
+					}
+				}
 			}
 			delete_post_meta( $invoice_id, '_installment_' . $n . '_amount' );
 			delete_post_meta( $invoice_id, '_installment_' . $n . '_admin_fee' );
@@ -560,18 +594,18 @@ class PublicPaymentPage {
 		// Store plan meta and write installment breakdown.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );
 
-		if ( 'full' === $plan ) {
+		if ( $plan === 'full' ) {
 			update_post_meta( $invoice_id, '_installment_count', 1 );
 			update_post_meta( $invoice_id, '_installment_1_amount', $total );
 			update_post_meta( $invoice_id, '_installment_1_admin_fee', 0 );
 			update_post_meta( $invoice_id, '_installment_1_status', 'pending' );
-		} elseif ( 'quarterly_3' === $plan ) {
-			$due_dates       = self::calculate_installment_due_dates( 3, $available_dates, true );
+		} elseif ( $plan === 'quarterly_3' ) {
+			$due_dates = self::calculate_installment_due_dates( 3, $available_dates, true );
 			update_post_meta( $invoice_id, '_installment_count', 3 );
 			$this->write_installment_meta( $invoice_id, 3, $total, $admin_fee, $due_dates );
 		} else { // monthly_8 — actual count capped at available dates.
-			$actual_count    = min( 8, count( $available_dates ) );
-			$due_dates       = self::calculate_installment_due_dates( $actual_count, $available_dates );
+			$actual_count = min( 8, count( $available_dates ) );
+			$due_dates    = self::calculate_installment_due_dates( $actual_count, $available_dates );
 			update_post_meta( $invoice_id, '_installment_count', $actual_count );
 			$this->write_installment_meta( $invoice_id, $actual_count, $total, $admin_fee, $due_dates );
 		}
@@ -612,7 +646,7 @@ class PublicPaymentPage {
 				// Last installment: use remainder to avoid rounding drift.
 				$amount = round( $total - $accumulated, 2 );
 			} else {
-				$amount = $base_amount;
+				$amount       = $base_amount;
 				$accumulated += $amount;
 			}
 
@@ -653,7 +687,7 @@ class PublicPaymentPage {
 			$year  = $from_year;
 			if ( $month > 12 ) {
 				$month = 1;
-				$year++;
+				++$year;
 			}
 		}
 
@@ -664,10 +698,10 @@ class PublicPaymentPage {
 				break;
 			}
 			$dates[] = $date;
-			$month++;
+			++$month;
 			if ( $month > 12 ) {
 				$month = 1;
-				$year++;
+				++$year;
 			}
 		}
 
@@ -687,7 +721,7 @@ class PublicPaymentPage {
 	 */
 	private static function calculate_installment_due_dates( int $count, array $available_dates, bool $evenly_spaced = false ): array {
 		$total_available = count( $available_dates );
-		if ( 0 === $total_available || $count < 1 ) {
+		if ( $total_available === 0 || $count < 1 ) {
 			return [];
 		}
 
@@ -695,11 +729,12 @@ class PublicPaymentPage {
 
 		if ( $evenly_spaced && $count < $total_available ) {
 			for ( $i = 0; $i < $count; $i++ ) {
-				$index             = ( 1 === $count ) ? 0 : (int) round( $i * ( $total_available - 1 ) / ( $count - 1 ) );
+				$index               = ( $count === 1 ) ? 0 : (int) round( $i * ( $total_available - 1 ) / ( $count - 1 ) );
 				$due_dates[ $i + 1 ] = $available_dates[ $index ];
 			}
 		} else {
-			for ( $i = 0; $i < min( $count, $total_available ); $i++ ) {
+			$max_dates = min( $count, $total_available );
+			for ( $i = 0; $i < $max_dates; $i++ ) {
 				$due_dates[ $i + 1 ] = $available_dates[ $i ];
 			}
 		}
@@ -731,7 +766,7 @@ class PublicPaymentPage {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo esc_html( $title ); ?></title>
-	<?php if ( $logo_url ) : ?>
+		<?php if ( $logo_url ) : ?>
 	<link rel="icon" href="<?php echo esc_url( $logo_url ); ?>">
 	<?php endif; ?>
 	<style>

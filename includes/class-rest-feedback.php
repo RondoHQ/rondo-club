@@ -324,7 +324,10 @@ class Feedback extends Base {
 			return new \WP_Error(
 				'rest_missing_param',
 				__( 'Title is required.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'title' => 'Title is required' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'title' => 'Title is required' ],
+				]
 			);
 		}
 
@@ -332,7 +335,10 @@ class Feedback extends Base {
 			return new \WP_Error(
 				'rest_missing_param',
 				__( 'Feedback type is required.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'feedback_type' => 'Feedback type is required' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'feedback_type' => 'Feedback type is required' ],
+				]
 			);
 		}
 
@@ -341,7 +347,10 @@ class Feedback extends Base {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid feedback type.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ],
+				]
 			);
 		}
 
@@ -470,7 +479,7 @@ class Feedback extends Base {
 			);
 		}
 
-		$is_admin = current_user_can( 'manage_options' );
+		$is_admin       = current_user_can( 'manage_options' );
 		$current_status = get_field( 'status', $feedback_id ) ?: 'new';
 
 		// Check field-level permissions for status and priority
@@ -498,7 +507,10 @@ class Feedback extends Base {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid feedback type.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'feedback_type' => 'Must be "bug" or "feature_request"' ],
+				]
 			);
 		}
 
@@ -506,7 +518,10 @@ class Feedback extends Base {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "in_review", "resolved", "declined", or "needs_info"' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'status' => 'Must be "new", "approved", "in_progress", "in_review", "resolved", "declined", or "needs_info"' ],
+				]
 			);
 		}
 
@@ -514,7 +529,10 @@ class Feedback extends Base {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid priority.', 'rondo' ),
-				[ 'status' => 400, 'params' => [ 'priority' => 'Must be "low", "medium", "high", or "critical"' ] ]
+				[
+					'status' => 400,
+					'params' => [ 'priority' => 'Must be "low", "medium", "high", or "critical"' ],
+				]
 			);
 		}
 
@@ -600,7 +618,10 @@ class Feedback extends Base {
 				return new \WP_Error(
 					'rest_invalid_param',
 					__( 'Invalid project.', 'rondo' ),
-					[ 'status' => 400, 'params' => [ 'project' => 'Must be "rondo-club", "rondo-sync", or "website"' ] ]
+					[
+						'status' => 400,
+						'params' => [ 'project' => 'Must be "rondo-club", "rondo-sync", or "website"' ],
+					]
 				);
 			}
 		}
@@ -654,7 +675,12 @@ class Feedback extends Base {
 			);
 		}
 
-		return rest_ensure_response( [ 'deleted' => true, 'id' => $feedback_id ] );
+		return rest_ensure_response(
+			[
+				'deleted' => true,
+				'id'      => $feedback_id,
+			]
+		);
 	}
 
 	/**
@@ -799,12 +825,12 @@ class Feedback extends Base {
 				'steps_to_reproduce' => $this->sanitize_text( get_field( 'steps_to_reproduce', $post->ID ) ?: '' ),
 				'expected_behavior'  => $this->sanitize_text( get_field( 'expected_behavior', $post->ID ) ?: '' ),
 				'actual_behavior'    => $this->sanitize_text( get_field( 'actual_behavior', $post->ID ) ?: '' ),
-					'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
-					'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
-					'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
-					'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
-					'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
-					'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',
+				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
+				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
+				'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
+				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
+				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
+				'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',
 			],
 		];
 	}

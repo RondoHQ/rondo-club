@@ -52,7 +52,7 @@ class InstallmentPaymentService {
 		// Guard: Mollie API key must be configured.
 		$config     = new FinanceConfig();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
-		if ( '' === $account_id ) {
+		if ( $account_id === '' ) {
 			$account_id = $config->get_default_mollie_account_id( 'membership' );
 		}
 		$api_key = $config->get_mollie_api_key_for_account( $account_id );
@@ -70,7 +70,7 @@ class InstallmentPaymentService {
 		// For multi-installment plans, use stored per-installment amounts.
 		// For the full plan, use ACF total_amount (no admin fee for full plan).
 		$installment_amount = get_post_meta( $invoice_id, '_installment_' . $installment_number . '_amount', true );
-		if ( '' !== $installment_amount && false !== $installment_amount ) {
+		if ( $installment_amount !== '' && $installment_amount !== false ) {
 			$admin_fee = (float) get_post_meta( $invoice_id, '_installment_' . $installment_number . '_admin_fee', true );
 			$amount    = (float) $installment_amount + $admin_fee;
 		} else {
@@ -80,7 +80,7 @@ class InstallmentPaymentService {
 
 		// Build description.
 		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		if ( 'full' === $plan ) {
+		if ( $plan === 'full' ) {
 			$description = 'Factuur ' . $invoice_number;
 		} else {
 			$description = 'Termijn ' . $installment_number . '/' . $count . ' - Factuur ' . $invoice_number;
@@ -98,7 +98,7 @@ class InstallmentPaymentService {
 
 		// Conditionally add webhookUrl — omit on localhost/.local environments.
 		$site_url = get_site_url();
-		if ( false === strpos( $site_url, 'localhost' ) && false === strpos( $site_url, '.local' ) ) {
+		if ( strpos( $site_url, 'localhost' ) === false && strpos( $site_url, '.local' ) === false ) {
 			$payload['webhookUrl'] = rest_url( 'rondo/v1/mollie/webhook' );
 		}
 

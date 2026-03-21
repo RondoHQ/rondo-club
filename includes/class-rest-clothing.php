@@ -136,8 +136,8 @@ class Clothing extends Base {
 	private function get_clothing_settings() {
 		$defaults = [
 			'eligibility_enabled' => true,
-			'cooldown_seasons' => 3,
-			'current_season'   => $this->guess_current_season(),
+			'cooldown_seasons'    => 3,
+			'current_season'      => $this->guess_current_season(),
 		];
 
 		$saved = get_option( 'rondo_clothing_settings', [] );
@@ -145,10 +145,10 @@ class Clothing extends Base {
 			$saved = [];
 		}
 
-		$settings                      = wp_parse_args( $saved, $defaults );
+		$settings                        = wp_parse_args( $saved, $defaults );
 		$settings['eligibility_enabled'] = rest_sanitize_boolean( $settings['eligibility_enabled'] );
-		$settings['cooldown_seasons'] = max( 1, (int) $settings['cooldown_seasons'] );
-		$settings['current_season']   = sanitize_text_field( $settings['current_season'] );
+		$settings['cooldown_seasons']    = max( 1, (int) $settings['cooldown_seasons'] );
+		$settings['current_season']      = sanitize_text_field( $settings['current_season'] );
 
 		return $settings;
 	}
@@ -216,7 +216,7 @@ class Clothing extends Base {
 	 */
 	private function format_item( $item_id ) {
 		$post = get_post( $item_id );
-		if ( ! $post || 'rondo_clothing_item' !== $post->post_type ) {
+		if ( ! $post || $post->post_type !== 'rondo_clothing_item' ) {
 			return [];
 		}
 
@@ -231,16 +231,16 @@ class Clothing extends Base {
 		}
 
 		return [
-			'id'             => $item_id,
-			'name'           => $this->sanitize_text( $post->post_title ),
-			'brand'          => sanitize_text_field( (string) get_post_meta( $item_id, '_clothing_brand', true ) ),
-			'category'       => $category_terms,
+			'id'              => $item_id,
+			'name'            => $this->sanitize_text( $post->post_title ),
+			'brand'           => sanitize_text_field( (string) get_post_meta( $item_id, '_clothing_brand', true ) ),
+			'category'        => $category_terms,
 			'available_sizes' => array_values( $sizes ),
-			'color'          => sanitize_text_field( (string) get_post_meta( $item_id, '_clothing_color', true ) ),
-			'season'         => sanitize_text_field( (string) get_post_meta( $item_id, '_clothing_season', true ) ),
-			'unit_cost'      => (float) get_post_meta( $item_id, '_clothing_unit_cost', true ),
-			'deposit_amount' => (float) get_post_meta( $item_id, '_clothing_deposit_amount', true ),
-			'active'         => (bool) get_post_meta( $item_id, '_clothing_active', true ),
+			'color'           => sanitize_text_field( (string) get_post_meta( $item_id, '_clothing_color', true ) ),
+			'season'          => sanitize_text_field( (string) get_post_meta( $item_id, '_clothing_season', true ) ),
+			'unit_cost'       => (float) get_post_meta( $item_id, '_clothing_unit_cost', true ),
+			'deposit_amount'  => (float) get_post_meta( $item_id, '_clothing_deposit_amount', true ),
+			'active'          => (bool) get_post_meta( $item_id, '_clothing_active', true ),
 		];
 	}
 
@@ -320,7 +320,7 @@ class Clothing extends Base {
 	 */
 	public function create_item( $request ) {
 		$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
-		if ( '' === $name ) {
+		if ( $name === '' ) {
 			return new \WP_Error( 'missing_name', __( 'Name is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
@@ -351,12 +351,12 @@ class Clothing extends Base {
 		$item_id = (int) $request->get_param( 'id' );
 		$post    = get_post( $item_id );
 
-		if ( ! $post || 'rondo_clothing_item' !== $post->post_type ) {
+		if ( ! $post || $post->post_type !== 'rondo_clothing_item' ) {
 			return new \WP_Error( 'item_not_found', __( 'Clothing item not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
 		$name = $request->get_param( 'name' );
-		if ( null !== $name ) {
+		if ( $name !== null ) {
 			wp_update_post(
 				[
 					'ID'         => $item_id,
@@ -380,7 +380,7 @@ class Clothing extends Base {
 		$item_id = (int) $request->get_param( 'id' );
 		$post    = get_post( $item_id );
 
-		if ( ! $post || 'rondo_clothing_item' !== $post->post_type ) {
+		if ( ! $post || $post->post_type !== 'rondo_clothing_item' ) {
 			return new \WP_Error( 'item_not_found', __( 'Clothing item not found.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
@@ -397,7 +397,7 @@ class Clothing extends Base {
 	 */
 	private function format_assignment( $assignment_id ) {
 		$post = get_post( $assignment_id );
-		if ( ! $post || 'rondo_clothing_txn' !== $post->post_type ) {
+		if ( ! $post || $post->post_type !== 'rondo_clothing_txn' ) {
 			return [];
 		}
 
@@ -449,7 +449,7 @@ class Clothing extends Base {
 				'value' => $item_id,
 			];
 		}
-		if ( '' !== $season ) {
+		if ( $season !== '' ) {
 			$meta_query[] = [
 				'key'   => '_clothing_season',
 				'value' => $season,
@@ -468,7 +468,7 @@ class Clothing extends Base {
 			$args['meta_query'] = $meta_query;
 		}
 
-		$rows  = get_posts( $args );
+		$rows = get_posts( $args );
 		$data = array_map(
 			function ( $row ) {
 				return $this->format_assignment( $row->ID );
@@ -497,7 +497,7 @@ class Clothing extends Base {
 			];
 		}
 
-		if ( '' !== trim( (string) $override_reason ) ) {
+		if ( trim( (string) $override_reason ) !== '' ) {
 			return [
 				'eligible' => true,
 				'reason'   => 'Handmatige override door beheerder.',
@@ -580,13 +580,13 @@ class Clothing extends Base {
 		$notes     = sanitize_textarea_field( (string) $request->get_param( 'notes' ) );
 		$season    = sanitize_text_field( (string) $request->get_param( 'season' ) );
 
-		if ( ! get_post( $person_id ) || 'person' !== get_post_type( $person_id ) ) {
+		if ( ! get_post( $person_id ) || get_post_type( $person_id ) !== 'person' ) {
 			return new \WP_Error( 'invalid_person', __( 'Invalid person.', 'rondo' ), [ 'status' => 400 ] );
 		}
-		if ( ! get_post( $item_id ) || 'rondo_clothing_item' !== get_post_type( $item_id ) ) {
+		if ( ! get_post( $item_id ) || get_post_type( $item_id ) !== 'rondo_clothing_item' ) {
 			return new \WP_Error( 'invalid_item', __( 'Invalid clothing item.', 'rondo' ), [ 'status' => 400 ] );
 		}
-		if ( '' === $size ) {
+		if ( $size === '' ) {
 			return new \WP_Error( 'missing_size', __( 'Size is required.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
@@ -598,18 +598,18 @@ class Clothing extends Base {
 			return new \WP_Error( 'invalid_size_for_item', __( 'Selected size is not available for this item.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		if ( '' === $date ) {
+		if ( $date === '' ) {
 			$date = gmdate( 'Y-m-d' );
 		}
 		if ( ! in_array( $in_or_out, [ 'in', 'out' ], true ) ) {
 			return new \WP_Error( 'invalid_direction', __( 'in_or_out must be in or out.', 'rondo' ), [ 'status' => 400 ] );
 		}
-		if ( '' === $season ) {
+		if ( $season === '' ) {
 			$season = $this->get_clothing_settings()['current_season'];
 		}
 
 		$override_reason = sanitize_textarea_field( (string) $request->get_param( 'override_reason' ) );
-		if ( 'out' === $in_or_out ) {
+		if ( $in_or_out === 'out' ) {
 			$eligibility = $this->evaluate_eligibility( $person_id, $item_id, $season, $override_reason );
 			if ( ! $eligibility['eligible'] ) {
 				return new \WP_Error( 'not_eligible', $eligibility['reason'], [ 'status' => 409 ] );
@@ -661,12 +661,12 @@ class Clothing extends Base {
 		$ordered = array_reverse( $assignments );
 		foreach ( $ordered as $row ) {
 			$key = sprintf( '%d|%s', (int) $row['item_id'], (string) $row['size'] );
-			if ( 'out' === $row['in_or_out'] ) {
+			if ( $row['in_or_out'] === 'out' ) {
 				if ( ! isset( $current[ $key ] ) ) {
 					$current[ $key ] = [];
 				}
 				$current[ $key ][] = $row;
-			} elseif ( 'in' === $row['in_or_out'] && ! empty( $current[ $key ] ) ) {
+			} elseif ( $row['in_or_out'] === 'in' && ! empty( $current[ $key ] ) ) {
 				array_shift( $current[ $key ] );
 			}
 		}
@@ -689,11 +689,11 @@ class Clothing extends Base {
 	 */
 	public function get_person_profile( $request ) {
 		$person_id = (int) $request->get_param( 'person_id' );
-		if ( ! get_post( $person_id ) || 'person' !== get_post_type( $person_id ) ) {
+		if ( ! get_post( $person_id ) || get_post_type( $person_id ) !== 'person' ) {
 			return new \WP_Error( 'invalid_person', __( 'Invalid person.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
-		$rows = get_posts(
+		$rows    = get_posts(
 			[
 				'post_type'        => 'rondo_clothing_txn',
 				'post_status'      => 'publish',
@@ -721,7 +721,7 @@ class Clothing extends Base {
 		$outstanding_deposit = 0.0;
 		foreach ( $current_items as $item_row ) {
 			if ( ! empty( $item_row['deposit_paid'] ) && empty( $item_row['deposit_returned'] ) ) {
-				$item_deposit        = (float) get_post_meta( (int) $item_row['item_id'], '_clothing_deposit_amount', true );
+				$item_deposit         = (float) get_post_meta( (int) $item_row['item_id'], '_clothing_deposit_amount', true );
 				$outstanding_deposit += $item_deposit;
 			}
 		}
@@ -729,11 +729,11 @@ class Clothing extends Base {
 		$settings = $this->get_clothing_settings();
 		return rest_ensure_response(
 			[
-				'person_id'            => $person_id,
-				'current_items'        => array_values( $current_items ),
-				'history'              => $history,
-				'outstanding_deposit'  => round( $outstanding_deposit, 2 ),
-				'eligibility'          => [
+				'person_id'           => $person_id,
+				'current_items'       => array_values( $current_items ),
+				'history'             => $history,
+				'outstanding_deposit' => round( $outstanding_deposit, 2 ),
+				'eligibility'         => [
 					'eligible' => true,
 					'reason'   => sprintf( 'Standaard cooldown: %d seizoenen.', (int) $settings['cooldown_seasons'] ),
 				],
@@ -763,11 +763,11 @@ class Clothing extends Base {
 
 		foreach ( $rows as $row ) {
 			$direction = (string) get_post_meta( $row->ID, '_clothing_in_or_out', true );
-			if ( 'out' === $direction ) {
-				$distributed++;
+			if ( $direction === 'out' ) {
+				++$distributed;
 			}
-			if ( 'in' === $direction ) {
-				$returned++;
+			if ( $direction === 'in' ) {
+				++$returned;
 			}
 		}
 
@@ -782,10 +782,10 @@ class Clothing extends Base {
 
 		return rest_ensure_response(
 			[
-				'total_items'  => count( $items ),
-				'distributed'  => $distributed,
-				'returned'     => $returned,
-				'outstanding'  => max( 0, $distributed - $returned ),
+				'total_items' => count( $items ),
+				'distributed' => $distributed,
+				'returned'    => $returned,
+				'outstanding' => max( 0, $distributed - $returned ),
 			]
 		);
 	}
@@ -853,13 +853,13 @@ class Clothing extends Base {
 		$current = $this->get_clothing_settings();
 		$next    = $current;
 
-		if ( null !== $request->get_param( 'eligibility_enabled' ) ) {
+		if ( $request->get_param !== null( 'eligibility_enabled' ) ) {
 			$next['eligibility_enabled'] = rest_sanitize_boolean( $request->get_param( 'eligibility_enabled' ) );
 		}
-		if ( null !== $request->get_param( 'cooldown_seasons' ) ) {
+		if ( $request->get_param !== null( 'cooldown_seasons' ) ) {
 			$next['cooldown_seasons'] = max( 1, (int) $request->get_param( 'cooldown_seasons' ) );
 		}
-		if ( null !== $request->get_param( 'current_season' ) ) {
+		if ( $request->get_param !== null( 'current_season' ) ) {
 			$next['current_season'] = sanitize_text_field( (string) $request->get_param( 'current_season' ) );
 		}
 

@@ -75,9 +75,9 @@ class MentionNotifications {
 		$post_title = $post->post_title;
 		$post_url   = home_url( '/people/' . $post->ID );
 
-		$subject = sprintf( '%s mentioned you in a note about %s', $author_name, $post_title );
-		$content = wp_strip_all_tags( $comment->comment_content );
-		$preview = strlen( $content ) > 200 ? substr( $content, 0, 200 ) . '...' : $content;
+		$subject   = sprintf( '%s mentioned you in a note about %s', $author_name, $post_title );
+		$content   = wp_strip_all_tags( $comment->comment_content );
+		$preview   = strlen( $content ) > 200 ? substr( $content, 0, 200 ) . '...' : $content;
 		$site_name = get_bloginfo( 'name' );
 
 		$message = EmailTemplate::render(
@@ -97,9 +97,9 @@ class MentionNotifications {
 			]
 		);
 
-		$host      = wp_parse_url( home_url(), PHP_URL_HOST );
-		$parts     = explode( '.', $host );
-		$domain    = count( $parts ) >= 2
+		$host   = wp_parse_url( home_url(), PHP_URL_HOST );
+		$parts  = explode( '.', $host );
+		$domain = count( $parts ) >= 2
 			? implode( '.', array_slice( $parts, -2 ) )
 			: $host;
 
@@ -124,7 +124,7 @@ class MentionNotifications {
 		}
 
 		// Add to queue if not already present
-		if ( ! in_array( $comment_id, $queued ) ) {
+		if ( ! in_array( $comment_id, $queued, true ) ) {
 			$queued[] = $comment_id;
 			update_user_meta( $user_id, '_queued_mention_notifications', $queued );
 		}
