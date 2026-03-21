@@ -544,12 +544,40 @@ class PublicPaymentPage {
 		// Clear all previous installment data before writing new plan.
 		// A member may change their plan selection on a return visit (e.g. quarterly → full),
 		// so we must remove stale amounts, Mollie links, and reverse-lookup keys.
+		// Archive old Mollie payment links so they become unpayable — otherwise the old
+		// links remain valid and payments through them can't be routed back to the invoice.
 		$old_count   = (int) get_post_meta( $invoice_id, '_installment_count', true );
 		$clear_up_to = max( $old_count, 8 );
+
+		// Build Mollie client once for archiving old payment links.
+		$mollie_for_archive = null;
+		$config             = new \Rondo\Config\FinanceConfig();
+		$account_id         = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		if ( $account_id === '' ) {
+			$account_id = $config->get_default_mollie_account_id( 'membership' );
+		}
+		$archive_api_key = $config->get_mollie_api_key_for_account( $account_id );
+		if ( $archive_api_key !== '' ) {
+			try {
+				$mollie_for_archive = ( new MollieClient( $archive_api_key ) )->get();
+			} catch ( \Throwable $e ) {
+				// Non-blocking — continue with cleanup even if archiving fails.
+			}
+		}
+
 		for ( $n = 1; $n <= $clear_up_to; $n++ ) {
 			$old_mollie_id = get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
 			if ( $old_mollie_id ) {
 				delete_post_meta( $invoice_id, '_mollie_pid_' . $old_mollie_id );
+
+				// Archive the old payment link in Mollie so it becomes unpayable.
+				if ( $mollie_for_archive !== null ) {
+					try {
+						$mollie_for_archive->paymentLinks->delete( $old_mollie_id );
+					} catch ( \Throwable $e ) {
+						// Non-blocking — old link may already be archived or paid.
+					}
+				}
 			}
 			delete_post_meta( $invoice_id, '_installment_' . $n . '_amount' );
 			delete_post_meta( $invoice_id, '_installment_' . $n . '_admin_fee' );

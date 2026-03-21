@@ -146,6 +146,19 @@ class MollieWebhook {
 		$config     = new \Rondo\Config\FinanceConfig();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$api_key    = $config->get_mollie_api_key_for_account( $account_id );
+
+		// Fallback: if no account ID stored (legacy invoices from before multi-account),
+		// try all configured Mollie accounts to find the one that owns this payment link.
+		if ( $api_key === '' ) {
+			$resolved = $this->resolve_api_key_by_payment_link( $config, $payment_link_id );
+			if ( $resolved !== null ) {
+				$api_key    = $resolved['api_key'];
+				$account_id = $resolved['account_id'];
+				// Backfill the missing account ID so future webhooks resolve immediately.
+				update_post_meta( $invoice_id, '_payment_account_id', $account_id );
+			}
+		}
+
 		if ( $api_key === '' ) {
 			error_log( 'Mollie webhook: missing API key for invoice ' . $invoice_id . ' and payment link ' . $payment_link_id );
 			return rest_ensure_response( [ 'ok' => true ] );
@@ -354,5 +367,42 @@ class MollieWebhook {
 		} catch ( \Throwable $e ) {
 			error_log( 'Mollie webhook: failed to extract installment ' . $n . ' payment details for invoice ' . $invoice_id . ': ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Try all configured Mollie accounts to find which one owns a payment link.
+	 *
+	 * Used as a fallback when `_payment_account_id` is missing on legacy invoices
+	 * created before the multi-account system was introduced.
+	 *
+	 * @param \Rondo\Config\FinanceConfig $config         Finance config instance.
+	 * @param string                      $payment_link_id Mollie payment link ID (pl_xxx).
+	 * @return array{api_key: string, account_id: string}|null Resolved key and account, or null.
+	 */
+	private function resolve_api_key_by_payment_link( \Rondo\Config\FinanceConfig $config, string $payment_link_id ): ?array {
+		$accounts = $config->get_mollie_accounts();
+
+		foreach ( $accounts as $account ) {
+			$key = $config->get_mollie_api_key_for_account( $account['id'] ?? '' );
+			if ( $key === '' ) {
+				continue;
+			}
+
+			try {
+				$client = new MollieClient( $key );
+				$client->get()->paymentLinks->get( $payment_link_id );
+
+				// If we reach here, this account owns the payment link.
+				return [
+					'api_key'    => $key,
+					'account_id' => $account['id'],
+				];
+			} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
+				// Not on this account — try next.
+				continue;
+			}
+		}
+
+		return null;
 	}
 }
