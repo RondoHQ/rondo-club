@@ -77,5 +77,4 @@ abstract class RondoTestCase extends WPTestCase {
 		$defaults = [ 'role' => 'rondo_user' ];
 		return self::factory()->user->create( array_merge( $defaults, $args ) );
 	}
-
 }

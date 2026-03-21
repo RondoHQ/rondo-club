@@ -29,28 +29,92 @@ class UserSettings extends Base {
 	 * Core columns (non-custom-field columns).
 	 */
 	private const CORE_LIST_COLUMNS = [
-		[ 'id' => 'email', 'label' => 'E-mail', 'type' => 'core' ],
-		[ 'id' => 'phone', 'label' => 'Telefoon', 'type' => 'core' ],
-		[ 'id' => 'team', 'label' => 'Team', 'type' => 'core' ],
-		[ 'id' => 'birthdate', 'label' => 'Verjaardag', 'type' => 'core' ],
-		[ 'id' => 'modified', 'label' => 'Laatst gewijzigd', 'type' => 'core' ],
+		[
+			'id'    => 'email',
+			'label' => 'E-mail',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'phone',
+			'label' => 'Telefoon',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'team',
+			'label' => 'Team',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'birthdate',
+			'label' => 'Verjaardag',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'modified',
+			'label' => 'Laatst gewijzigd',
+			'type'  => 'core',
+		],
 	];
 
 	/**
 	 * Sportlink fields (ACF fields from the person field group synced from Sportlink).
 	 */
 	private const SPORTLINK_FIELDS = [
-		[ 'id' => 'knvb-id', 'label' => 'KNVB ID', 'type' => 'text' ],
-		[ 'id' => 'type-lid', 'label' => 'Type lid', 'type' => 'text' ],
-		[ 'id' => 'leeftijdsgroep', 'label' => 'Leeftijdsgroep', 'type' => 'text' ],
-		[ 'id' => 'lid-sinds', 'label' => 'Lid sinds', 'type' => 'date' ],
-		[ 'id' => 'vrijwilliger-sinds', 'label' => 'Vrijwilliger sinds', 'type' => 'date' ],
-		[ 'id' => 'datum-foto', 'label' => 'Datum foto', 'type' => 'date' ],
-		[ 'id' => 'datum-vog', 'label' => 'Datum VOG', 'type' => 'date' ],
-		[ 'id' => 'isparent', 'label' => 'Is ouder', 'type' => 'true_false' ],
-		[ 'id' => 'huidig-vrijwilliger', 'label' => 'Huidig vrijwilliger', 'type' => 'true_false' ],
-		[ 'id' => 'financiele-blokkade', 'label' => 'Financiële blokkade', 'type' => 'true_false' ],
-		[ 'id' => 'freescout-id', 'label' => 'FreeScout ID', 'type' => 'number' ],
+		[
+			'id'    => 'knvb-id',
+			'label' => 'KNVB ID',
+			'type'  => 'text',
+		],
+		[
+			'id'    => 'type-lid',
+			'label' => 'Type lid',
+			'type'  => 'text',
+		],
+		[
+			'id'    => 'leeftijdsgroep',
+			'label' => 'Leeftijdsgroep',
+			'type'  => 'text',
+		],
+		[
+			'id'    => 'lid-sinds',
+			'label' => 'Lid sinds',
+			'type'  => 'date',
+		],
+		[
+			'id'    => 'vrijwilliger-sinds',
+			'label' => 'Vrijwilliger sinds',
+			'type'  => 'date',
+		],
+		[
+			'id'    => 'datum-foto',
+			'label' => 'Datum foto',
+			'type'  => 'date',
+		],
+		[
+			'id'    => 'datum-vog',
+			'label' => 'Datum VOG',
+			'type'  => 'date',
+		],
+		[
+			'id'    => 'isparent',
+			'label' => 'Is ouder',
+			'type'  => 'true_false',
+		],
+		[
+			'id'    => 'huidig-vrijwilliger',
+			'label' => 'Huidig vrijwilliger',
+			'type'  => 'true_false',
+		],
+		[
+			'id'    => 'financiele-blokkade',
+			'label' => 'Financiële blokkade',
+			'type'  => 'true_false',
+		],
+		[
+			'id'    => 'freescout-id',
+			'label' => 'FreeScout ID',
+			'type'  => 'number',
+		],
 	];
 
 	/**
@@ -856,7 +920,7 @@ class UserSettings extends Base {
 			);
 		}
 
-		if ( $person->post_author != $user_id && ! current_user_can( 'manage_options' ) ) {
+		if ( (int) $person->post_author !== $user_id && ! current_user_can( 'manage_options' ) ) {
 			return new \WP_Error(
 				'permission_denied',
 				__( 'You can only link to your own person records.', 'rondo' ),
@@ -913,7 +977,7 @@ class UserSettings extends Base {
 		$active_functies     = [];
 		if ( $person_id ) {
 			$person = get_post( $person_id );
-			if ( $person && 'person' === $person->post_type ) {
+			if ( $person && $person->post_type === 'person' ) {
 				$first               = get_field( 'first_name', $person_id ) ?: '';
 				$infix               = get_field( 'infix', $person_id ) ?: '';
 				$last                = get_field( 'last_name', $person_id ) ?: '';
@@ -978,6 +1042,11 @@ class UserSettings extends Base {
 		$sessions = \WP_Session_Tokens::get_instance( $user_id );
 		$sessions->destroy_all();
 
-		return rest_ensure_response( [ 'success' => true, 'message' => 'Wachtwoord succesvol gewijzigd. Log opnieuw in.' ] );
+		return rest_ensure_response(
+			[
+				'success' => true,
+				'message' => 'Wachtwoord succesvol gewijzigd. Log opnieuw in.',
+			]
+		);
 	}
 }

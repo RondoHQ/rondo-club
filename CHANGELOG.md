@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.6.1] - 2026-03-15
+
+### Changed
+- Dashboard REST endpoint now uses transient caching (5-minute TTL per user) with automatic invalidation on post/comment changes
+- Fixed N+1 query in `get_recently_contacted_people()` — single batched query with meta cache warmup instead of individual `get_post()` calls
+- Pre-filter former members in anniversary query at database level instead of per-row PHP checks
+- Added `update_post_meta_cache` to recent people query to reduce ACF field lookups
+- Added `staleTime` to `useDashboardSettings()`, `useTodos()`, `useCurrentSeason()`, and discipline case count queries to prevent unnecessary refetches
+
 ## [32.6.0] - 2026-03-13
 
 ### Changed

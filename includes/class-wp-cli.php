@@ -174,7 +174,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					}
 				}
 
-				if ( 0 === $user_notifications_sent ) {
+				if ( $user_notifications_sent === 0 ) {
 					WP_CLI::log( sprintf( '  ⚠ No notification channels enabled for user %s', $user->display_name ) );
 				}
 
@@ -280,7 +280,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$address_entries = array_filter(
 					$contact_info,
 					function ( $item ) {
-						return isset( $item['contact_type'] ) && 'address' === $item['contact_type'];
+						return isset( $item['contact_type'] ) && $item['contact_type'] === 'address';
 					}
 				);
 
@@ -304,17 +304,17 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$updated_contact_info = [];
 
 				foreach ( $contact_info as $item ) {
-					if ( isset( $item['contact_type'] ) && 'address' === $item['contact_type'] ) {
+					if ( isset( $item['contact_type'] ) && $item['contact_type'] === 'address' ) {
 						// Migrate to addresses field
 						$new_addresses[] = [
-							'address_label'        => $item['contact_label'] ?? '',
-							'street_name'          => $item['contact_value'] ?? '', // Put full address in street_name
-							'house_number'         => '',
+							'address_label'         => $item['contact_label'] ?? '',
+							'street_name'           => $item['contact_value'] ?? '', // Put full address in street_name
+							'house_number'          => '',
 							'house_number_addition' => '',
-							'postal_code'          => '',
-							'city'                 => '',
-							'state'                => '',
-							'country'              => '',
+							'postal_code'           => '',
+							'city'                  => '',
+							'state'                 => '',
+							'country'               => '',
 						];
 						++$addresses_migrated;
 						WP_CLI::log( sprintf( '  → Moving: "%s" to addresses field', $item['contact_value'] ?? '' ) );
@@ -389,12 +389,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( 'Migrating contact_info repeater to fixed contact fields...' );
 
 			// Get all person posts.
-			$person_ids = get_posts( array(
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-			) );
+			$person_ids = get_posts(
+				[
+					'post_type'      => 'person',
+					'post_status'    => 'publish',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+				]
+			);
 
 			if ( empty( $person_ids ) ) {
 				WP_CLI::warning( 'No person posts found.' );
@@ -404,23 +406,23 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( sprintf( 'Found %d person(s) to process.', count( $person_ids ) ) );
 
 			// Field mapping: contact_type => fixed field name(s) in priority order.
-			$field_map = array(
-				'email'  => array( 'email_1', 'email_2' ),
-				'email2' => array( 'email_1', 'email_2' ),
-				'mobile' => array( 'mobile_1', 'mobile_2' ),
-				'phone'  => array( 'telephone_1', 'telephone_2' ),
-			);
+			$field_map = [
+				'email'  => [ 'email_1', 'email_2' ],
+				'email2' => [ 'email_1', 'email_2' ],
+				'mobile' => [ 'mobile_1', 'mobile_2' ],
+				'phone'  => [ 'telephone_1', 'telephone_2' ],
+			];
 
 			$persons_processed = 0;
 			$persons_skipped   = 0;
 			$fields_migrated   = 0;
-			$skipped_types     = array();
+			$skipped_types     = [];
 
 			foreach ( $person_ids as $person_id ) {
 				$contact_info = get_field( 'contact_info', $person_id );
 
 				if ( empty( $contact_info ) || ! is_array( $contact_info ) ) {
-					$persons_skipped++;
+					++$persons_skipped;
 					if ( $verbose ) {
 						WP_CLI::log( sprintf( '  [%d] %s — no contact_info, skipping', $person_id, get_the_title( $person_id ) ) );
 					}
@@ -428,8 +430,8 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 
 				// Track which fixed fields are already populated (for idempotency).
-				$current_values = array();
-				foreach ( array( 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ) as $field_name ) {
+				$current_values = [];
+				foreach ( [ 'email_1', 'email_2', 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ] as $field_name ) {
 					$current_values[ $field_name ] = get_field( $field_name, $person_id );
 				}
 
@@ -449,7 +451,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						if ( ! isset( $skipped_types[ $type ] ) ) {
 							$skipped_types[ $type ] = 0;
 						}
-						$skipped_types[ $type ]++;
+						++$skipped_types[ $type ];
 						continue;
 					}
 
@@ -475,40 +477,44 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 						// Mark as populated so subsequent entries go to the next slot.
 						$current_values[ $target_field ] = $value;
-						$person_fields_set++;
-						$fields_migrated++;
+						++$person_fields_set;
+						++$fields_migrated;
 						$written = true;
 
 						if ( $verbose ) {
-							WP_CLI::log( sprintf(
-								'  [%d] %s — %s → %s = "%s"%s',
-								$person_id,
-								get_the_title( $person_id ),
-								$type,
-								$target_field,
-								$value,
-								$dry_run ? ' (dry run)' : ''
-							) );
+							WP_CLI::log(
+								sprintf(
+									'  [%d] %s — %s → %s = "%s"%s',
+									$person_id,
+									get_the_title( $person_id ),
+									$type,
+									$target_field,
+									$value,
+									$dry_run ? ' (dry run)' : ''
+								)
+							);
 						}
 
 						break;
 					}
 
 					if ( ! $written && $verbose ) {
-						WP_CLI::log( sprintf(
-							'  [%d] %s — %s: both slots full, skipping "%s"',
-							$person_id,
-							get_the_title( $person_id ),
-							$type,
-							$value
-						) );
+						WP_CLI::log(
+							sprintf(
+								'  [%d] %s — %s: both slots full, skipping "%s"',
+								$person_id,
+								get_the_title( $person_id ),
+								$type,
+								$value
+							)
+						);
 					}
 				}
 
 				if ( $person_fields_set > 0 ) {
-					$persons_processed++;
+					++$persons_processed;
 				} else {
-					$persons_skipped++;
+					++$persons_skipped;
 					if ( $verbose ) {
 						WP_CLI::log( sprintf( '  [%d] %s — already migrated or no mappable contacts', $person_id, get_the_title( $person_id ) ) );
 					}
@@ -527,22 +533,25 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 
 			if ( $dry_run ) {
-				WP_CLI::success( sprintf(
-					'DRY RUN: Would migrate %d field(s) for %d person(s), %d person(s) skipped',
-					$fields_migrated,
-					$persons_processed,
-					$persons_skipped
-				) );
+				WP_CLI::success(
+					sprintf(
+						'DRY RUN: Would migrate %d field(s) for %d person(s), %d person(s) skipped',
+						$fields_migrated,
+						$persons_processed,
+						$persons_skipped
+					)
+				);
 			} else {
-				WP_CLI::success( sprintf(
-					'Migration complete: %d field(s) migrated for %d person(s), %d person(s) skipped',
-					$fields_migrated,
-					$persons_processed,
-					$persons_skipped
-				) );
+				WP_CLI::success(
+					sprintf(
+						'Migration complete: %d field(s) migrated for %d person(s), %d person(s) skipped',
+						$fields_migrated,
+						$persons_processed,
+						$persons_skipped
+					)
+				);
 			}
 		}
-
 	}
 
 	/**
@@ -583,7 +592,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				return;
 			}
 
-			if ( 'person' !== $person->post_type ) {
+			if ( $person->post_type !== 'person' ) {
 				WP_CLI::error( sprintf( 'Post ID %d is not a person (it is a %s).', $person_id, $person->post_type ) );
 				return;
 			}
@@ -601,7 +610,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$file_path = $assoc_args['output'];
 				$result    = file_put_contents( $file_path, $vcard );
 
-				if ( false === $result ) {
+				if ( $result === false ) {
 					WP_CLI::error( sprintf( 'Failed to write to file: %s', $file_path ) );
 					return;
 				}
@@ -635,6 +644,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				return;
 			}
 
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			$vcard_data = file_get_contents( $file_path );
 
 			if ( empty( $vcard_data ) ) {
@@ -674,7 +684,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				'telephone_1' => 'Telephone 1',
 				'telephone_2' => 'Telephone 2',
 			];
-			$has_contacts = false;
+			$has_contacts   = false;
 			foreach ( $contact_fields as $field => $label ) {
 				if ( ! empty( $parsed[ $field ] ) ) {
 					if ( ! $has_contacts ) {
@@ -776,7 +786,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$person_id = (int) $todo->comment_post_ID;
 				$person    = get_post( $person_id );
 
-				if ( ! $person || 'person' !== $person->post_type ) {
+				if ( ! $person || $person->post_type !== 'person' ) {
 					WP_CLI::warning(
 						sprintf(
 							'Skipping todo ID %d: linked to non-person post ID %d',
@@ -1106,10 +1116,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				if ( $dry_run ) {
 					WP_CLI::log( sprintf( '[WOULD UPDATE] #%d: "%s" -> "%s"', $event->ID, $original_title, $decoded_title ) );
 				} else {
-					wp_update_post( [
-						'ID'         => $event->ID,
-						'post_title' => $decoded_title,
-					] );
+					wp_update_post(
+						[
+							'ID'         => $event->ID,
+							'post_title' => $decoded_title,
+						]
+					);
 					WP_CLI::log( sprintf( '[UPDATED] #%d: "%s" -> "%s"', $event->ID, $original_title, $decoded_title ) );
 				}
 
@@ -1235,7 +1247,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				foreach ( $name_groups as $name_key => $group_ids ) {
 					if ( count( $group_ids ) > 1 ) {
 						sort( $group_ids ); // Lowest ID first (original)
-						$key = 'email+name:' . $email . '|' . $name_key;
+						$key                    = 'email+name:' . $email . '|' . $name_key;
 						$duplicate_sets[ $key ] = $group_ids;
 					}
 				}
@@ -1254,7 +1266,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				// Check if already covered by email+name match
 				$already_covered = false;
 				foreach ( $duplicate_sets as $existing_key => $existing_ids ) {
-					if ( $unique_ids == $existing_ids ) {
+					if ( $unique_ids === $existing_ids ) {
 						$already_covered = true;
 						break;
 					}
@@ -1265,34 +1277,50 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 			}
 
-			$email_name_count = count( array_filter( array_keys( $duplicate_sets ), function( $k ) { return strpos( $k, 'email+name:' ) === 0; } ) );
-			$name_count       = count( array_filter( array_keys( $duplicate_sets ), function( $k ) { return strpos( $k, 'name:' ) === 0; } ) );
+			$email_name_count = count(
+				array_filter(
+					array_keys( $duplicate_sets ),
+					function ( $k ) {
+						return strpos( $k, 'email+name:' ) === 0;
+					}
+				)
+			);
+			$name_count       = count(
+				array_filter(
+					array_keys( $duplicate_sets ),
+					function ( $k ) {
+						return strpos( $k, 'name:' ) === 0;
+					}
+				)
+			);
 			WP_CLI::log( sprintf( 'Found %d email+name and %d name-only duplicate set(s).', $email_name_count, $name_count ) );
 
 			$merged  = 0;
 			$skipped = 0;
 
 			foreach ( $duplicate_sets as $match_key => $person_ids ) {
-				$original_id = array_shift( $person_ids ); // Keep the lowest ID
+				$original_id    = array_shift( $person_ids ); // Keep the lowest ID
 				$original_title = get_the_title( $original_id );
 
 				foreach ( $person_ids as $duplicate_id ) {
 					$duplicate_title = get_the_title( $duplicate_id );
 
-					WP_CLI::log( sprintf(
-						'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d) [%s]',
-						$duplicate_title,
-						$duplicate_id,
-						$original_title,
-						$original_id,
-						$match_key
-					) );
+					WP_CLI::log(
+						sprintf(
+							'[MERGE] "%s" (ID: %d) -> "%s" (ID: %d) [%s]',
+							$duplicate_title,
+							$duplicate_id,
+							$original_title,
+							$original_id,
+							$match_key
+						)
+					);
 
 					if ( ! $dry_run ) {
 						$this->merge_person( $duplicate_id, $original_id );
 					}
 
-					$merged++;
+					++$merged;
 				}
 			}
 
@@ -1385,7 +1413,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				if ( $changed ) {
 					update_field( 'relationships', $relationships, $person->ID );
-					$updated++;
+					++$updated;
 				}
 			}
 
@@ -1439,9 +1467,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				)
 			);
 
-			$total   = count( $person_ids );
-			$updated = 0;
-			$skipped = 0;
+			$total     = count( $person_ids );
+			$updated   = 0;
+			$skipped   = 0;
 			$set_true  = 0;
 			$set_false = 0;
 
@@ -1472,27 +1500,29 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 						// Use update_field() to properly set ACF reference key
 						update_field( 'field_custom_person_huidig-vrijwilliger', $new_value, $person_id );
 					}
-					$updated++;
+					++$updated;
 
 					if ( $is_volunteer ) {
-						$set_true++;
+						++$set_true;
 					} else {
-						$set_false++;
+						++$set_false;
 					}
 
 					// Only log actual changes (not force-updates with same value)
 					if ( $current_value !== $new_value ) {
 						$name = get_the_title( $person_id );
-						WP_CLI::log( sprintf(
-							'  %s (ID: %d): %s -> %s',
-							$name,
-							$person_id,
-							$current_value === '' ? '(empty)' : ( $current_value === '1' ? 'true' : 'false' ),
-							$is_volunteer ? 'true' : 'false'
-						) );
+						WP_CLI::log(
+							sprintf(
+								'  %s (ID: %d): %s -> %s',
+								$name,
+								$person_id,
+								$current_value === '' ? '(empty)' : ( $current_value === '1' ? 'true' : 'false' ),
+								$is_volunteer ? 'true' : 'false'
+							)
+						);
 					}
 				} else {
-					$skipped++;
+					++$skipped;
 				}
 
 				$progress->tick();
@@ -1501,21 +1531,25 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$progress->finish();
 
 			if ( $dry_run ) {
-				WP_CLI::success( sprintf(
-					'Would update %d people (%d set to true, %d set to false), %d already correct.',
-					$updated,
-					$set_true,
-					$set_false,
-					$skipped
-				) );
+				WP_CLI::success(
+					sprintf(
+						'Would update %d people (%d set to true, %d set to false), %d already correct.',
+						$updated,
+						$set_true,
+						$set_false,
+						$skipped
+					)
+				);
 			} else {
-				WP_CLI::success( sprintf(
-					'Updated %d people (%d set to true, %d set to false), %d already correct.',
-					$updated,
-					$set_true,
-					$set_false,
-					$skipped
-				) );
+				WP_CLI::success(
+					sprintf(
+						'Updated %d people (%d set to true, %d set to false), %d already correct.',
+						$updated,
+						$set_true,
+						$set_false,
+						$skipped
+					)
+				);
 			}
 		}
 
@@ -1596,7 +1630,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::log( 'Dry run mode — no changes will be saved.' );
 			}
 
-			$normalizer = new \Rondo\Core\PhoneNormalizer();
+			$normalizer   = new \Rondo\Core\PhoneNormalizer();
 			$phone_fields = [ 'mobile_1', 'mobile_2', 'telephone_1', 'telephone_2' ];
 
 			global $wpdb;
@@ -1632,7 +1666,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					$values[ $field ] = $normalized;
 
 					if ( $normalized !== $raw ) {
-						$normalized_count++;
+						++$normalized_count;
 
 						if ( $verbose ) {
 							WP_CLI::log( sprintf( '  [%d] %s: "%s" → "%s"', $pid, $field, $raw, $normalized ) );
@@ -1654,7 +1688,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					}
 
 					if ( isset( $seen[ $val ] ) ) {
-						$dedup_count++;
+						++$dedup_count;
 
 						if ( $verbose ) {
 							WP_CLI::log( sprintf( '  [%d] %s duplicates %s ("%s") — clearing', $pid, $field, $seen[ $val ], $val ) );
@@ -1774,7 +1808,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 					// Check if this is a Parent relationship (type 8)
 					// Type 8 means "the related person is my parent"
-					if ( $relationship_type_id == 8 && $related_person_id ) {
+					if ( $relationship_type_id === 8 && $related_person_id ) {
 						// person->ID is the child, related_person_id is the parent
 						if ( ! isset( $parent_children_map[ $related_person_id ] ) ) {
 							$parent_children_map[ $related_person_id ] = [];
@@ -1785,28 +1819,29 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Count parents with multiple children
-			$families_count     = 0;
-			$total_siblings     = 0;
-			$created_count      = 0;
-			$already_exist      = 0;
+			$families_count = 0;
+			$total_siblings = 0;
+			$created_count  = 0;
+			$already_exist  = 0;
 
 			foreach ( $parent_children_map as $parent_id => $children ) {
 				if ( count( $children ) < 2 ) {
 					continue; // Skip parents with only one child
 				}
 
-				$families_count++;
-				$parent = get_post( $parent_id );
+				++$families_count;
+				$parent      = get_post( $parent_id );
 				$parent_name = $parent ? $parent->post_title : "ID $parent_id";
 
 				WP_CLI::log( sprintf( 'Family: %s (%d children)', $parent_name, count( $children ) ) );
 
 				// Create sibling relationships between all pairs of children
-				for ( $i = 0; $i < count( $children ); $i++ ) {
-					for ( $j = $i + 1; $j < count( $children ); $j++ ) {
+				$children_count = count( $children );
+				for ( $i = 0; $i < $children_count; $i++ ) {
+					for ( $j = $i + 1; $j < $children_count; $j++ ) {
 						$child_a = $children[ $i ];
 						$child_b = $children[ $j ];
-						$total_siblings++;
+						++$total_siblings;
 
 						// Check if A -> B sibling relationship exists
 						$a_to_b_exists = $this->has_sibling_relationship( $child_a, $child_b, $sibling_type_id );
@@ -1825,9 +1860,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 								$this->add_sibling_relationship( $child_a, $child_b, $sibling_type_id );
 								WP_CLI::log( sprintf( '  Created: %s -> %s', $child_a_name, $child_b_name ) );
 							}
-							$created_count++;
+							++$created_count;
 						} else {
-							$already_exist++;
+							++$already_exist;
 						}
 
 						if ( ! $b_to_a_exists ) {
@@ -1837,9 +1872,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 								$this->add_sibling_relationship( $child_b, $child_a, $sibling_type_id );
 								WP_CLI::log( sprintf( '  Created: %s -> %s', $child_b_name, $child_a_name ) );
 							}
-							$created_count++;
+							++$created_count;
 						} else {
-							$already_exist++;
+							++$already_exist;
 						}
 					}
 				}
@@ -1897,7 +1932,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					}
 				}
 
-				if ( $related_person_id == $to_person_id && $relationship_type_id == $sibling_type_id ) {
+				if ( $related_person_id === $to_person_id && $relationship_type_id === $sibling_type_id ) {
 					return true;
 				}
 			}
@@ -1972,12 +2007,14 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( '' );
 
 			// Query all rondo_todo posts, bypass access control
-			$todos = get_posts( [
-				'post_type'        => 'rondo_todo',
-				'posts_per_page'   => -1,
-				'post_status'      => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed', 'publish' ],
-				'suppress_filters' => true,
-			] );
+			$todos = get_posts(
+				[
+					'post_type'        => 'rondo_todo',
+					'posts_per_page'   => -1,
+					'post_status'      => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed', 'publish' ],
+					'suppress_filters' => true,
+				]
+			);
 
 			if ( empty( $todos ) ) {
 				WP_CLI::success( 'No tasks found in the system.' );
@@ -2000,17 +2037,20 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					if ( ! $verify && ! $dry_run ) {
 						// Silent in fix mode for valid tasks
 					} else {
-						WP_CLI::log( sprintf( '  ✓ Task #%d: %s (author: %s, ID: %d)',
-							$todo->ID,
-							wp_trim_words( $todo->post_title, 8 ),
-							$user->user_login,
-							$author_id
-						) );
+						WP_CLI::log(
+							sprintf(
+								'  ✓ Task #%d: %s (author: %s, ID: %d)',
+								$todo->ID,
+								wp_trim_words( $todo->post_title, 8 ),
+								$user->user_login,
+								$author_id
+							)
+						);
 					}
-					$valid++;
+					++$valid;
 				} else {
 					WP_CLI::warning( sprintf( '  ✗ Task #%d has invalid author ID: %d', $todo->ID, $author_id ) );
-					$invalid++;
+					++$invalid;
 
 					if ( ! $verify ) {
 						// Attempt to determine correct author from related_persons
@@ -2021,7 +2061,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 						if ( empty( $person_ids ) ) {
 							WP_CLI::warning( sprintf( '    Cannot fix: No related persons found' ) );
-							$failed++;
+							++$failed;
 							continue;
 						}
 
@@ -2031,7 +2071,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 						if ( ! $person ) {
 							WP_CLI::warning( sprintf( '    Cannot fix: Related person #%d not found', $person_id ) );
-							$failed++;
+							++$failed;
 							continue;
 						}
 
@@ -2040,20 +2080,22 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 						if ( ! $new_user ) {
 							WP_CLI::warning( sprintf( '    Cannot fix: Person #%d has invalid author ID: %d', $person_id, $new_author_id ) );
-							$failed++;
+							++$failed;
 							continue;
 						}
 
 						if ( $dry_run ) {
 							WP_CLI::log( sprintf( '    Would set author to: %s (ID: %d)', $new_user->user_login, $new_author_id ) );
-							$fixed++;
+							++$fixed;
 						} else {
-							wp_update_post( [
-								'ID'          => $todo->ID,
-								'post_author' => $new_author_id,
-							] );
+							wp_update_post(
+								[
+									'ID'          => $todo->ID,
+									'post_author' => $new_author_id,
+								]
+							);
 							WP_CLI::log( sprintf( '    Fixed: Set author to %s (ID: %d)', $new_user->user_login, $new_author_id ) );
-							$fixed++;
+							++$fixed;
 						}
 					}
 				}
@@ -2109,7 +2151,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 */
 		public function export( $args, $assoc_args ) {
 			$default_path = RONDO_THEME_DIR . '/fixtures/demo-fixture.json';
-			$output_path = isset( $assoc_args['output'] ) ? $assoc_args['output'] : $default_path;
+			$output_path  = isset( $assoc_args['output'] ) ? $assoc_args['output'] : $default_path;
 
 			// Ensure output directory exists
 			$dir = dirname( $output_path );
@@ -2120,18 +2162,20 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::log( sprintf( 'Exporting demo data to: %s', $output_path ) );
 
 			$exporter = new DemoExport( $output_path );
-			$fixture = $exporter->export();
+			$fixture  = $exporter->export();
 
-			WP_CLI::success( sprintf(
-				'Export complete! %d people, %d teams, %d commissies, %d discipline cases, %d todos, %d comments exported to %s',
-				$fixture['meta']['record_counts']['people'],
-				$fixture['meta']['record_counts']['teams'],
-				$fixture['meta']['record_counts']['commissies'],
-				$fixture['meta']['record_counts']['discipline_cases'],
-				$fixture['meta']['record_counts']['todos'],
-				$fixture['meta']['record_counts']['comments'],
-				$output_path
-			));
+			WP_CLI::success(
+				sprintf(
+					'Export complete! %d people, %d teams, %d commissies, %d discipline cases, %d todos, %d comments exported to %s',
+					$fixture['meta']['record_counts']['people'],
+					$fixture['meta']['record_counts']['teams'],
+					$fixture['meta']['record_counts']['commissies'],
+					$fixture['meta']['record_counts']['discipline_cases'],
+					$fixture['meta']['record_counts']['todos'],
+					$fixture['meta']['record_counts']['comments'],
+					$output_path
+				)
+			);
 		}
 
 		/**
@@ -2156,7 +2200,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 */
 		public function import( $args, $assoc_args ) {
 			$default_path = RONDO_THEME_DIR . '/fixtures/demo-fixture.json';
-			$input_path = isset( $assoc_args['input'] ) ? $assoc_args['input'] : $default_path;
+			$input_path   = isset( $assoc_args['input'] ) ? $assoc_args['input'] : $default_path;
 
 			// Validate file exists and is readable
 			if ( ! file_exists( $input_path ) ) {
@@ -2171,11 +2215,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 			$importer = new DemoImport( $input_path );
 
-		if ( isset( $assoc_args['clean'] ) && $assoc_args['clean'] ) {
-			WP_CLI::log( 'Cleaning existing data...' );
-			$importer->clean();
-			WP_CLI::log( '' );
-		}
+			if ( isset( $assoc_args['clean'] ) && $assoc_args['clean'] ) {
+				WP_CLI::log( 'Cleaning existing data...' );
+				$importer->clean();
+				WP_CLI::log( '' );
+			}
 			$importer->import();
 
 			WP_CLI::success( 'Import complete!' );
@@ -2214,13 +2258,15 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			}
 
 			// Query all rondo_invoice posts (any status)
-			$invoices = get_posts( [
-				'post_type'        => 'rondo_invoice',
-				'post_status'      => 'any',
-				'posts_per_page'   => -1,
-				'fields'           => 'ids',
-				'suppress_filters' => true,
-			] );
+			$invoices = get_posts(
+				[
+					'post_type'        => 'rondo_invoice',
+					'post_status'      => 'any',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'suppress_filters' => true,
+				]
+			);
 
 			$total   = count( $invoices );
 			$updated = 0;
@@ -2240,7 +2286,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 				// Skip if already set
 				if ( ! empty( $current ) ) {
-					$skipped++;
+					++$skipped;
 					$progress->tick();
 					continue;
 				}
@@ -2249,19 +2295,21 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					update_field( 'invoice_type', 'discipline', $invoice_id );
 				}
 
-				$updated++;
+				++$updated;
 				$progress->tick();
 			}
 
 			$progress->finish();
 
-			\WP_CLI::success( sprintf(
-				'Done. Updated: %d, Skipped (already set): %d, Total: %d%s',
-				$updated,
-				$skipped,
-				$total,
-				$dry_run ? ' (dry run)' : ''
-			) );
+			\WP_CLI::success(
+				sprintf(
+					'Done. Updated: %d, Skipped (already set): %d, Total: %d%s',
+					$updated,
+					$skipped,
+					$total,
+					$dry_run ? ' (dry run)' : ''
+				)
+			);
 		}
 	}
 

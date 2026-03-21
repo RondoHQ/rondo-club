@@ -1,6 +1,6 @@
 {
   "name": "rondo-club-theme",
-  "version": "32.6.0",
+  "version": "32.6.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -20,7 +20,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-query": "^5.17.0",
     "@tanstack/react-table": "^8.21.3",
-    "@tiptap/extension-link": "^3.15.3",
+    "@tiptap/extension-link": "^3.20.2",
     "@tiptap/extension-placeholder": "^3.15.3",
     "@tiptap/react": "^3.15.3",
     "@tiptap/starter-kit": "^3.15.3",

@@ -41,7 +41,7 @@ class Lettermint extends Base {
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'route_id' => [
+					'route_id'   => [
 						'required'          => false,
 						'sanitize_callback' => 'sanitize_text_field',
 					],
@@ -93,20 +93,24 @@ class Lettermint extends Base {
 						'required'          => true,
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => function ( $param ) {
-							return in_array( $param, [
-								'regular_invoice',
-								'discipline',
-								'membership',
-								'installment',
-								'reminder_1',
-								'reminder_2',
-								'invoice_reminder_1',
-								'invoice_reminder_2',
-								'credit',
-							], true );
+							return in_array(
+								$param,
+								[
+									'regular_invoice',
+									'discipline',
+									'membership',
+									'installment',
+									'reminder_1',
+									'reminder_2',
+									'invoice_reminder_1',
+									'invoice_reminder_2',
+									'credit',
+								],
+								true
+							);
 						},
 					],
-					'recipient' => [
+					'recipient'     => [
 						'required'          => true,
 						'sanitize_callback' => 'sanitize_email',
 						'validate_callback' => function ( $param ) {
@@ -126,7 +130,7 @@ class Lettermint extends Base {
 				'callback'            => [ $this, 'send_lettermint_verification_email' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
-					'todo_id' => [
+					'todo_id'   => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 						'validate_callback' => function ( $param ) {
@@ -195,13 +199,13 @@ class Lettermint extends Base {
 			}
 
 			$results[] = [
-				'id'                => $project_id,
-				'name'              => $project_name,
-				'is_default'        => isset( $project['is_default'] ) ? rest_sanitize_boolean( $project['is_default'] ) : false,
-				'default_route_id'  => $default_route_id,
-				'default_route_name'=> $default_route_name,
-				'route_count'       => $route_count,
-				'route_error'       => $route_error,
+				'id'                 => $project_id,
+				'name'               => $project_name,
+				'is_default'         => isset( $project['is_default'] ) ? rest_sanitize_boolean( $project['is_default'] ) : false,
+				'default_route_id'   => $default_route_id,
+				'default_route_name' => $default_route_name,
+				'route_count'        => $route_count,
+				'route_error'        => $route_error,
 			];
 		}
 
@@ -290,17 +294,17 @@ class Lettermint extends Base {
 
 		return rest_ensure_response(
 			[
-				'message' => $secret !== ''
+				'message'      => $secret !== ''
 					? 'Lettermint-webhook aangemaakt. Geheim automatisch opgeslagen.'
 					: 'Lettermint-webhook aangemaakt, maar het geheim is niet meegeleverd door de API.',
-				'webhook' => [
-					'id'       => $webhook_id,
-					'url'      => $resolved_url,
-					'project_id' => $project_id,
+				'webhook'      => [
+					'id'           => $webhook_id,
+					'url'          => $resolved_url,
+					'project_id'   => $project_id,
 					'project_name' => $project_name,
-					'route_id' => $resolved_route_id,
-					'route_name' => $route_name,
-					'events'   => $resolved_events,
+					'route_id'     => $resolved_route_id,
+					'route_name'   => $route_name,
+					'events'       => $resolved_events,
 				],
 				'secret_saved' => $secret !== '',
 				'config'       => \Rondo\Config\ClubConfig::get_all_settings(),
@@ -345,13 +349,13 @@ class Lettermint extends Base {
 			);
 		}
 
-		$subject = sprintf( '[Rondo Club] Lettermint testmail - %s', wp_date( 'Y-m-d H:i:s' ) );
+		$subject        = sprintf( '[Rondo Club] Lettermint testmail - %s', wp_date( 'Y-m-d H:i:s' ) );
 		$route_override = \Rondo\Notifications\LettermintConfig::get_route_id();
 		$project_id     = \Rondo\Config\ClubConfig::get_lettermint_project_id();
 		$route_label    = $route_override !== ''
 			? sprintf( '%s (handmatige override)', $route_override )
 			: 'automatisch via project default route';
-		$body    = implode(
+		$body           = implode(
 			"\n",
 			[
 				'Dit is een testmail vanuit Rondo Club.',
@@ -365,7 +369,7 @@ class Lettermint extends Base {
 			]
 		);
 
-		$body    = EmailTemplate::render(
+		$body = EmailTemplate::render(
 			[
 				'brand_name' => 'Rondo Club',
 				'preheader'  => $subject,
@@ -429,21 +433,21 @@ class Lettermint extends Base {
 
 		// Dummy data for placeholder substitution.
 		$dummy = [
-			'{naam}'               => 'Jan Jansen',
-			'{voornaam}'           => 'Jan',
-			'{factuur_nummer}'     => 'C-2025-0042',
-			'{totaal_bedrag}'      => '&euro; 230,00',
-			'{betaallink}'         => '<a href="https://example.com/betaling/test" style="color:#0891b2;text-decoration:underline;">https://example.com/betaling/test</a>',
-			'{betaalknop}'         => EmailTemplate::render_cta_button( 'https://example.com/betaling/test', 'Open betaallink' ),
-			'{qr_code}'            => $qr_code_html,
-			'{organisatie_naam}'   => esc_html( $org_name ),
-			'{tuchtzaken_lijst}'   => '<table style="width:100%;border-collapse:collapse;font-size:14px;"><thead><tr style="background-color:#f3f4f6;"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Datum</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Wedstrijd</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Kaart</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid #d1d5db;">Bedrag</th></tr></thead><tbody><tr><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">01-03-2025</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Club A - Club B</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Geel</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">&euro; 15,00</td></tr></tbody></table>',
-			'{termijn_nummer}'     => '2',
-			'{totaal_termijnen}'   => '3',
-			'{termijn_bedrag}'     => '&euro; 76,67',
-			'{vervaldatum}'        => '25 maart 2025',
-			'{dagen_te_laat}'      => '14',
-			'{factuurdatum}'       => '1 februari 2025',
+			'{naam}'                => 'Jan Jansen',
+			'{voornaam}'            => 'Jan',
+			'{factuur_nummer}'      => 'C-2025-0042',
+			'{totaal_bedrag}'       => '&euro; 230,00',
+			'{betaallink}'          => '<a href="https://example.com/betaling/test" style="color:#0891b2;text-decoration:underline;">https://example.com/betaling/test</a>',
+			'{betaalknop}'          => EmailTemplate::render_cta_button( 'https://example.com/betaling/test', 'Open betaallink' ),
+			'{qr_code}'             => $qr_code_html,
+			'{organisatie_naam}'    => esc_html( $org_name ),
+			'{tuchtzaken_lijst}'    => '<table style="width:100%;border-collapse:collapse;font-size:14px;"><thead><tr style="background-color:#f3f4f6;"><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Datum</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Wedstrijd</th><th style="padding:8px 12px;text-align:left;border-bottom:2px solid #d1d5db;">Kaart</th><th style="padding:8px 12px;text-align:right;border-bottom:2px solid #d1d5db;">Bedrag</th></tr></thead><tbody><tr><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">01-03-2025</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Club A - Club B</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;">Geel</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;text-align:right;">&euro; 15,00</td></tr></tbody></table>',
+			'{termijn_nummer}'      => '2',
+			'{totaal_termijnen}'    => '3',
+			'{termijn_bedrag}'      => '&euro; 76,67',
+			'{vervaldatum}'         => '25 maart 2025',
+			'{dagen_te_laat}'       => '14',
+			'{factuurdatum}'        => '1 februari 2025',
 			'{dagen_sinds_factuur}' => '22',
 		];
 
@@ -558,7 +562,7 @@ class Lettermint extends Base {
 			);
 		}
 
-		$current_user_id = get_current_user_id();
+		$current_user_id  = get_current_user_id();
 		$assigned_user_id = (int) get_post_meta( $todo_id, 'assigned_user_id', true );
 		if ( (int) $todo->post_author !== $current_user_id && $assigned_user_id !== $current_user_id && ! current_user_can( 'manage_options' ) ) {
 			return new \WP_Error(
@@ -573,7 +577,7 @@ class Lettermint extends Base {
 			$recipient = sanitize_email( (string) get_post_meta( $todo_id, \Rondo\Notifications\LettermintWebhook::META_RECIPIENT, true ) );
 		}
 
-		$person_id = 0;
+		$person_id       = 0;
 		$related_persons = get_field( 'related_persons', $todo_id );
 		if ( is_array( $related_persons ) && ! empty( $related_persons ) ) {
 			$person_id = (int) $related_persons[0];
@@ -605,23 +609,23 @@ class Lettermint extends Base {
 
 		$person_name = '';
 		if ( $person_id > 0 ) {
-			$first_name = trim( (string) get_field( 'first_name', $person_id ) );
-			$last_name  = trim( (string) get_field( 'last_name', $person_id ) );
+			$first_name  = trim( (string) get_field( 'first_name', $person_id ) );
+			$last_name   = trim( (string) get_field( 'last_name', $person_id ) );
 			$person_name = trim( $first_name . ' ' . $last_name );
 		}
 		if ( $person_name === '' ) {
 			$person_name = $recipient;
 		}
 
-		$current_user                 = wp_get_current_user();
-		$verification_from_email      = \Rondo\Config\ClubConfig::get_lettermint_verification_from_email();
-		$verification_from_name       = \Rondo\Config\ClubConfig::get_lettermint_verification_from_name();
-		$default_from_email           = \Rondo\Config\ClubConfig::get_lettermint_from_email();
-		$default_from_name            = \Rondo\Config\ClubConfig::get_lettermint_from_name();
-		$current_user_sender_name     = sanitize_text_field( (string) ( $current_user->display_name ?? '' ) );
-		$current_user_sender_email    = sanitize_email( (string) ( $current_user->user_email ?? '' ) );
-		$resolved_sender_email        = '';
-		$resolved_sender_name         = '';
+		$current_user              = wp_get_current_user();
+		$verification_from_email   = \Rondo\Config\ClubConfig::get_lettermint_verification_from_email();
+		$verification_from_name    = \Rondo\Config\ClubConfig::get_lettermint_verification_from_name();
+		$default_from_email        = \Rondo\Config\ClubConfig::get_lettermint_from_email();
+		$default_from_name         = \Rondo\Config\ClubConfig::get_lettermint_from_name();
+		$current_user_sender_name  = sanitize_text_field( (string) ( $current_user->display_name ?? '' ) );
+		$current_user_sender_email = sanitize_email( (string) ( $current_user->user_email ?? '' ) );
+		$resolved_sender_email     = '';
+		$resolved_sender_name      = '';
 
 		if ( is_email( $verification_from_email ) ) {
 			$resolved_sender_email = $verification_from_email;
@@ -669,13 +673,13 @@ class Lettermint extends Base {
 		}
 
 		$metadata = [
-			'flow'           => 'email_verification',
-			'sender_user_id' => (int) $current_user_id,
-			'source_todo_id' => (int) $todo_id,
+			'flow'             => 'email_verification',
+			'sender_user_id'   => (int) $current_user_id,
+			'source_todo_id'   => (int) $todo_id,
 			'source_person_id' => (int) $person_id,
 		];
 
-		$body    = EmailTemplate::render(
+		$body = EmailTemplate::render(
 			[
 				'brand_name'    => $club_name,
 				'preheader'     => $subject,
@@ -739,7 +743,7 @@ class Lettermint extends Base {
 		string $route_override = ''
 	) {
 		$project_override = sanitize_text_field( $project_override );
-		$route_override = sanitize_text_field( $route_override );
+		$route_override   = sanitize_text_field( $route_override );
 		if ( $route_override !== '' ) {
 			return [
 				'project_id'   => $project_override ?: \Rondo\Config\ClubConfig::get_lettermint_project_id(),
@@ -788,7 +792,7 @@ class Lettermint extends Base {
 		}
 
 		if ( $project_id === '' && count( $projects_by_id ) > 1 ) {
-			$project_names = array_values(
+			$project_names        = array_values(
 				array_filter(
 					array_map(
 						static function ( array $project ): string {
@@ -870,7 +874,7 @@ class Lettermint extends Base {
 			}
 		}
 
-		if ( null === $default_route && $route_count === 1 && is_array( $routes[0] ?? null ) ) {
+		if ( $default_route === null && $route_count === 1 && is_array( $routes[0] ?? null ) ) {
 			$default_route = $routes[0];
 		}
 

@@ -215,13 +215,13 @@ abstract class Base {
 	 */
 	protected function format_person_summary( $post ) {
 		return [
-			'id'             => $post->ID,
-			'name'           => $this->sanitize_text( $post->post_title ),
-			'first_name'     => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
-			'last_name'      => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
-			'thumbnail'      => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-			'former_member'  => ( get_field( 'former_member', $post->ID ) == true ),
-			'huidig_vrijwilliger' => ( get_field( 'huidig-vrijwilliger', $post->ID ) == true ),
+			'id'                  => $post->ID,
+			'name'                => $this->sanitize_text( $post->post_title ),
+			'first_name'          => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
+			'last_name'           => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
+			'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
+			'former_member'       => ( get_field( 'former_member', $post->ID ) === true ),
+			'huidig_vrijwilliger' => ( get_field( 'huidig-vrijwilliger', $post->ID ) === true ),
 		];
 	}
 
@@ -427,7 +427,7 @@ abstract class Base {
 		$post_id   = $request->get_param( 'id' ) ?: $request->get_param( 'team_id' ) ?: $request->get_param( 'commissie_id' ) ?: 0;
 		$file_name = sanitize_file_name( $label . '-logo-' . $post_id . '.' . $ext );
 
-		$_FILES['logo'] = $file;
+		$_FILES['logo']         = $file;
 		$_FILES['logo']['name'] = $file_name;
 
 		$attachment_id = media_handle_upload( 'logo', $post_id );
@@ -487,5 +487,4 @@ abstract class Base {
 			]
 		);
 	}
-
 }

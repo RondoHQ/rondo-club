@@ -38,34 +38,34 @@ class Vog extends Base {
 					'callback'            => [ $this, 'update_vog_settings' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'from_email'       => [
+						'from_email'                => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
 								return empty( $param ) || is_email( $param );
 							},
 						],
-						'from_name'        => [
+						'from_name'                 => [
 							'required' => false,
 						],
-						'template_new'     => [
+						'template_new'              => [
 							'required' => false,
 						],
-						'template_renewal' => [
+						'template_renewal'          => [
 							'required' => false,
 						],
-						'reminder_template_new' => [
+						'reminder_template_new'     => [
 							'required' => false,
 						],
 						'reminder_template_renewal' => [
 							'required' => false,
 						],
-						'exempt_commissies' => [
+						'exempt_commissies'         => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
 								return is_array( $param );
 							},
 						],
-						'exempt_discipline_teams' => [
+						'exempt_discipline_teams'   => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
 								return is_array( $param );
@@ -165,14 +165,14 @@ class Vog extends Base {
 	public function update_vog_settings( $request ) {
 		$vog_email = new \Rondo\VOG\VOGEmail();
 
-		$from_email              = $request->get_param( 'from_email' );
-		$from_name               = $request->get_param( 'from_name' );
-		$template_new            = $request->get_param( 'template_new' );
-		$template_renewal        = $request->get_param( 'template_renewal' );
-		$reminder_template_new   = $request->get_param( 'reminder_template_new' );
+		$from_email                = $request->get_param( 'from_email' );
+		$from_name                 = $request->get_param( 'from_name' );
+		$template_new              = $request->get_param( 'template_new' );
+		$template_renewal          = $request->get_param( 'template_renewal' );
+		$reminder_template_new     = $request->get_param( 'reminder_template_new' );
 		$reminder_template_renewal = $request->get_param( 'reminder_template_renewal' );
-		$exempt_commissies       = $request->get_param( 'exempt_commissies' );
-		$exempt_discipline_teams = $request->get_param( 'exempt_discipline_teams' );
+		$exempt_commissies         = $request->get_param( 'exempt_commissies' );
+		$exempt_discipline_teams   = $request->get_param( 'exempt_discipline_teams' );
 
 		// Update provided settings
 		if ( $from_email !== null ) {
@@ -296,7 +296,7 @@ class Vog extends Base {
 		foreach ( $ids as $person_id ) {
 			$person = get_post( (int) $person_id );
 
-			if ( ! $person || 'person' !== $person->post_type ) {
+			if ( ! $person || $person->post_type !== 'person' ) {
 				++$failed;
 				$results[] = [
 					'id'      => $person_id,
@@ -438,8 +438,8 @@ class Vog extends Base {
 			return $response;
 		}
 
-		$vog_email     = new \Rondo\VOG\VOGEmail();
-		$exempt_teams  = $vog_email->get_exempt_discipline_teams();
+		$vog_email    = new \Rondo\VOG\VOGEmail();
+		$exempt_teams = $vog_email->get_exempt_discipline_teams();
 		if ( empty( $exempt_teams ) ) {
 			return $response;
 		}
@@ -500,17 +500,17 @@ class Vog extends Base {
 
 		// Fallback: match by team_name text when home/away team IDs are missing.
 		$team_name = get_field( 'team_name', $case_id );
-		if ( ! is_string( $team_name ) || '' === trim( $team_name ) ) {
+		if ( ! is_string( $team_name ) || trim( $team_name ) === '' ) {
 			return false;
 		}
 		$team_name = trim( wp_strip_all_tags( $team_name ) );
 
 		foreach ( $exempt_teams as $exempt_team_id ) {
 			$title = get_the_title( (int) $exempt_team_id );
-			if ( ! is_string( $title ) || '' === $title ) {
+			if ( ! is_string( $title ) || $title === '' ) {
 				continue;
 			}
-			if ( 0 === strcasecmp( trim( $title ), $team_name ) ) {
+			if ( strcasecmp( trim( $title ), $team_name ) === 0 ) {
 				return true;
 			}
 		}

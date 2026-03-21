@@ -33,12 +33,12 @@ class EmailTemplate {
 		$accent_color  = trim( (string) ( $args['accent_color'] ?? '#0f766e' ) );
 		$support_email = trim( (string) ( $args['support_email'] ?? '' ) );
 
-		if ( '' === $body_html ) {
+		if ( $body_html === '' ) {
 			$body_html = '<p style="margin:0;color:#0f172a;font-size:16px;line-height:1.7;">&nbsp;</p>';
 		}
 
 		$cta_html = '';
-		if ( '' !== $cta_url && '' !== $cta_label ) {
+		if ( $cta_url !== '' && $cta_label !== '' ) {
 			$cta_html = sprintf(
 				'<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px 0 0;"><tr><td style="border-radius:999px;background:%1$s;"><a href="%2$s" style="display:inline-block;padding:14px 22px;font-size:15px;font-weight:700;line-height:1;text-decoration:none;color:#ffffff;">%3$s</a></td></tr></table>',
 				esc_attr( $accent_color ),
@@ -48,7 +48,7 @@ class EmailTemplate {
 		}
 
 		$support_html = '';
-		if ( '' !== $support_email && is_email( $support_email ) ) {
+		if ( $support_email !== '' && is_email( $support_email ) ) {
 			$support_html = sprintf(
 				'<p style="margin:16px 0 0;color:#475569;font-size:13px;line-height:1.6;">Vragen? Reageer op deze mail of neem contact op via <a href="mailto:%1$s" style="color:%2$s;text-decoration:none;">%1$s</a>.</p>',
 				esc_html( $support_email ),
@@ -56,7 +56,7 @@ class EmailTemplate {
 			);
 		}
 
-		if ( '' === $footer_html ) {
+		if ( $footer_html === '' ) {
 			$footer_html = '&nbsp;';
 		}
 
@@ -89,7 +89,7 @@ class EmailTemplate {
 		$url   = trim( $url );
 		$label = trim( $label );
 
-		if ( '' === $url || '' === $label ) {
+		if ( $url === '' || $label === '' ) {
 			return '';
 		}
 
@@ -109,7 +109,7 @@ class EmailTemplate {
 	 */
 	public static function format_plain_text( string $text ): string {
 		$text = str_replace( [ "\r\n", "\r" ], "\n", trim( $text ) );
-		if ( '' === $text ) {
+		if ( $text === '' ) {
 			return '';
 		}
 
@@ -118,7 +118,7 @@ class EmailTemplate {
 
 		foreach ( $paragraphs as $paragraph ) {
 			$paragraph = trim( $paragraph );
-			if ( '' === $paragraph ) {
+			if ( $paragraph === '' ) {
 				continue;
 			}
 

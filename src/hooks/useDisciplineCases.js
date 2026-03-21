@@ -90,6 +90,7 @@ export function useCurrentSeason() {
       const response = await prmApi.getCurrentSeason();
       return response.data;
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -118,6 +119,7 @@ export function useDisciplineCasesCount() {
       return parseInt(response.headers?.['x-wp-total'] || '0', 10) || 0;
     },
     enabled: seasonResolved,
+    staleTime: 5 * 60 * 1000,
   });
 
   return {

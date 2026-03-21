@@ -183,10 +183,10 @@ class InstallmentEmailSender {
 		}
 
 		// Build person name.
-		$first_name = (string) get_field( 'first_name', $person_id );
-		$infix      = (string) get_field( 'infix', $person_id );
-		$last_name  = (string) get_field( 'last_name', $person_id );
-		$name_parts = array_filter( [ $first_name, $infix, $last_name ] );
+		$first_name  = (string) get_field( 'first_name', $person_id );
+		$infix       = (string) get_field( 'infix', $person_id );
+		$last_name   = (string) get_field( 'last_name', $person_id );
+		$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
 		$person_name = implode( ' ', $name_parts );
 
 		// Resolve all invoice recipients (person emails + parents if minor).
@@ -213,9 +213,9 @@ class InstallmentEmailSender {
 		if ( ! empty( $due_date ) ) {
 			$ts = strtotime( $due_date );
 			if ( $ts !== false ) {
-				$day   = (int) date( 'j', $ts );
-				$month = (int) date( 'n', $ts );
-				$year  = (int) date( 'Y', $ts );
+				$day         = (int) date( 'j', $ts );
+				$month       = (int) date( 'n', $ts );
+				$year        = (int) date( 'Y', $ts );
 				$vervaldatum = $day . ' ' . ( self::$dutch_months[ $month ] ?? '' ) . ' ' . $year;
 			}
 		}
@@ -223,8 +223,8 @@ class InstallmentEmailSender {
 		// Calculate dagen_te_laat.
 		$days_overdue = 0;
 		if ( ! empty( $due_date ) ) {
-			$today_ts    = strtotime( current_time( 'Y-m-d' ) );
-			$due_ts      = strtotime( $due_date );
+			$today_ts = strtotime( current_time( 'Y-m-d' ) );
+			$due_ts   = strtotime( $due_date );
 			if ( $today_ts !== false && $due_ts !== false ) {
 				$days_overdue = max( 0, (int) floor( ( $today_ts - $due_ts ) / DAY_IN_SECONDS ) );
 			}

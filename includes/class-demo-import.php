@@ -94,58 +94,64 @@ class DemoImport {
 	 * Does NOT remove user accounts or WordPress core data.
 	 */
 	public function clean() {
-		WP_CLI::log( "Cleaning existing Rondo data..." );
+		WP_CLI::log( 'Cleaning existing Rondo data...' );
 
 		// 1. Delete all comments of custom types first (before posts to avoid FK issues)
-		$comment_types = [ "rondo_note", "rondo_activity", "rondo_email" ];
-		$comments = get_comments( [
-			"type__in" => $comment_types,
-			"number"   => 0,
-		] );
+		$comment_types = [ 'rondo_note', 'rondo_activity', 'rondo_email' ];
+		$comments      = get_comments(
+			[
+				'type__in' => $comment_types,
+				'number'   => 0,
+			]
+		);
 
 		foreach ( $comments as $comment ) {
 			wp_delete_comment( $comment->comment_ID, true ); // force delete, skip trash
 		}
 
-		WP_CLI::log( sprintf( "  Deleted %d comments", count( $comments ) ) );
+		WP_CLI::log( sprintf( '  Deleted %d comments', count( $comments ) ) );
 
 		// 2. Delete all posts for each CPT (force delete, skip trash)
-		$post_types = [ "rondo_invoice", "rondo_todo", "discipline_case", "person", "team", "commissie" ];
+		$post_types  = [ 'rondo_invoice', 'rondo_todo', 'discipline_case', 'person', 'team', 'commissie' ];
 		$total_posts = 0;
 
 		foreach ( $post_types as $post_type ) {
-			$posts = get_posts( [
-				"post_type"      => $post_type,
-				"numberposts"    => -1,
-				"post_status"    => "any",
-				"fields"         => "ids",
-			] );
+			$posts = get_posts(
+				[
+					'post_type'   => $post_type,
+					'numberposts' => -1,
+					'post_status' => 'any',
+					'fields'      => 'ids',
+				]
+			);
 
 			foreach ( $posts as $post_id ) {
 				wp_delete_post( $post_id, true ); // force delete, bypass trash
 			}
 
-			WP_CLI::log( sprintf( "  Deleted %d %s posts", count( $posts ), $post_type ) );
+			WP_CLI::log( sprintf( '  Deleted %d %s posts', count( $posts ), $post_type ) );
 			$total_posts += count( $posts );
 		}
 
 		// 3. Delete taxonomy terms
-		$taxonomies = [ "relationship_type", "seizoen" ];
+		$taxonomies  = [ 'relationship_type', 'seizoen' ];
 		$total_terms = 0;
 
 		foreach ( $taxonomies as $taxonomy ) {
-			$terms = get_terms( [
-				"taxonomy"   => $taxonomy,
-				"hide_empty" => false,
-				"fields"     => "ids",
-			] );
+			$terms = get_terms(
+				[
+					'taxonomy'   => $taxonomy,
+					'hide_empty' => false,
+					'fields'     => 'ids',
+				]
+			);
 
 			if ( ! is_wp_error( $terms ) ) {
 				foreach ( $terms as $term_id ) {
 					wp_delete_term( $term_id, $taxonomy );
 				}
 
-				WP_CLI::log( sprintf( "  Deleted %d %s terms", count( $terms ), $taxonomy ) );
+				WP_CLI::log( sprintf( '  Deleted %d %s terms', count( $terms ), $taxonomy ) );
 				$total_terms += count( $terms );
 			}
 		}
@@ -153,19 +159,19 @@ class DemoImport {
 		// 4. Delete Rondo-specific WordPress options
 		// Static option keys
 		$option_keys = [
-			"rondo_club_name",
-			"rondo_player_roles",
-			"rondo_excluded_roles",
-			"rondo_anniversary_milestones",
-			"rondo_vog_from_email",
-			"rondo_vog_from_name",
-			"rondo_vog_template_new",
-			"rondo_vog_template_renewal",
-			"rondo_vog_reminder_template_new",
-			"rondo_vog_reminder_template_renewal",
-			"rondo_vog_exempt_commissies",
-			"rondo_functie_capability_map",
-			"rondo_commissie_capability_map",
+			'rondo_club_name',
+			'rondo_player_roles',
+			'rondo_excluded_roles',
+			'rondo_anniversary_milestones',
+			'rondo_vog_from_email',
+			'rondo_vog_from_name',
+			'rondo_vog_template_new',
+			'rondo_vog_template_renewal',
+			'rondo_vog_reminder_template_new',
+			'rondo_vog_reminder_template_renewal',
+			'rondo_vog_exempt_commissies',
+			'rondo_functie_capability_map',
+			'rondo_commissie_capability_map',
 		];
 
 		foreach ( $option_keys as $key ) {
@@ -186,9 +192,9 @@ class DemoImport {
 			delete_option( $option_name );
 		}
 
-		WP_CLI::log( sprintf( "  Deleted %d options", count( $option_keys ) + count( $dynamic_options ) ) );
+		WP_CLI::log( sprintf( '  Deleted %d options', count( $option_keys ) + count( $dynamic_options ) ) );
 
-		WP_CLI::log( "Clean complete." );
+		WP_CLI::log( 'Clean complete.' );
 	}
 
 
@@ -205,12 +211,12 @@ class DemoImport {
 		$this->read_fixture();
 
 		// Calculate date shift offset
-		$export_date = new \DateTime( $this->fixture['meta']['exported_at'] );
-		$today = new \DateTime( 'today', wp_timezone() );
+		$export_date       = new \DateTime( $this->fixture['meta']['exported_at'] );
+		$today             = new \DateTime( 'today', wp_timezone() );
 		$this->date_offset = $today->diff( $export_date );
 		$this->export_year = (int) $export_date->format( 'Y' );
 		$this->import_year = (int) $today->format( 'Y' );
-		$this->year_shift = $this->import_year - $this->export_year;
+		$this->year_shift  = $this->import_year - $this->export_year;
 
 		WP_CLI::log(
 			sprintf(
@@ -266,15 +272,16 @@ class DemoImport {
 			WP_CLI::error( sprintf( 'Fixture file not readable: %s', $this->fixture_path ) );
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$json = file_get_contents( $this->fixture_path );
 
-		if ( false === $json ) {
+		if ( $json === false ) {
 			WP_CLI::error( sprintf( 'Failed to read fixture file: %s', $this->fixture_path ) );
 		}
 
 		$this->fixture = json_decode( $json, true );
 
-		if ( null === $this->fixture ) {
+		if ( $this->fixture === null ) {
 			WP_CLI::error( 'Failed to decode fixture JSON: ' . json_last_error_msg() );
 		}
 
@@ -283,7 +290,7 @@ class DemoImport {
 			WP_CLI::error( 'Invalid fixture: missing meta.version' );
 		}
 
-		if ( '1.0' !== $this->fixture['meta']['version'] ) {
+		if ( $this->fixture['meta']['version'] !== '1.0' ) {
 			WP_CLI::error( sprintf( 'Unsupported fixture version: %s', $this->fixture['meta']['version'] ) );
 		}
 
@@ -296,15 +303,18 @@ class DemoImport {
 		}
 
 		WP_CLI::log( sprintf( 'Fixture loaded: version %s, exported %s', $this->fixture['meta']['version'], $this->fixture['meta']['exported_at'] ) );
-		WP_CLI::log( sprintf( 'Record counts: %d people, %d teams, %d commissies, %d discipline cases, %d invoices, %d todos, %d comments',
-			$this->fixture['meta']['record_counts']['people'] ?? 0,
-			$this->fixture['meta']['record_counts']['teams'] ?? 0,
-			$this->fixture['meta']['record_counts']['commissies'] ?? 0,
-			$this->fixture['meta']['record_counts']['discipline_cases'] ?? 0,
-			$this->fixture['meta']['record_counts']['invoices'] ?? 0,
-			$this->fixture['meta']['record_counts']['todos'] ?? 0,
-			$this->fixture['meta']['record_counts']['comments'] ?? 0
-		) );
+		WP_CLI::log(
+			sprintf(
+				'Record counts: %d people, %d teams, %d commissies, %d discipline cases, %d invoices, %d todos, %d comments',
+				$this->fixture['meta']['record_counts']['people'] ?? 0,
+				$this->fixture['meta']['record_counts']['teams'] ?? 0,
+				$this->fixture['meta']['record_counts']['commissies'] ?? 0,
+				$this->fixture['meta']['record_counts']['discipline_cases'] ?? 0,
+				$this->fixture['meta']['record_counts']['invoices'] ?? 0,
+				$this->fixture['meta']['record_counts']['todos'] ?? 0,
+				$this->fixture['meta']['record_counts']['comments'] ?? 0
+			)
+		);
 	}
 
 	/**
@@ -347,19 +357,19 @@ class DemoImport {
 				case 'email2':
 					if ( $email_index <= 2 ) {
 						update_field( "email_{$email_index}", $value, $post_id );
-						$email_index++;
+						++$email_index;
 					}
 					break;
 				case 'mobile':
 					if ( $mobile_index <= 2 ) {
 						update_field( "mobile_{$mobile_index}", $value, $post_id );
-						$mobile_index++;
+						++$mobile_index;
 					}
 					break;
 				case 'phone':
 					if ( $telephone_index <= 2 ) {
 						update_field( "telephone_{$telephone_index}", $value, $post_id );
-						$telephone_index++;
+						++$telephone_index;
 					}
 					break;
 			}
@@ -376,7 +386,7 @@ class DemoImport {
 			$date->add( $this->date_offset );
 
 			// Return in the requested format
-			if ( 'c' === $format ) {
+			if ( $format === 'c' ) {
 				// ISO 8601 format
 				return $date->format( 'Y-m-d\TH:i:s' );
 			}
@@ -403,11 +413,11 @@ class DemoImport {
 
 			// Shift by full years only to preserve age accuracy
 			$new_year = (int) $date->format( 'Y' ) + $this->year_shift;
-			$month = $date->format( 'm' );
-			$day = $date->format( 'd' );
+			$month    = $date->format( 'm' );
+			$day      = $date->format( 'd' );
 
 			// Handle leap year edge case (Feb 29 -> Feb 28 in non-leap years)
-			if ( '02' === $month && '29' === $day && ! checkdate( 2, 29, $new_year ) ) {
+			if ( $month === '02' && $day === '29' && ! checkdate( 2, 29, $new_year ) ) {
 				$day = '28';
 			}
 
@@ -432,7 +442,7 @@ class DemoImport {
 		// Parse season slug like "2025-2026"
 		if ( preg_match( '/^(\d{4})-(\d{4})$/', $slug, $matches ) ) {
 			$start_year = (int) $matches[1] + $this->year_shift;
-			$end_year = (int) $matches[2] + $this->year_shift;
+			$end_year   = (int) $matches[2] + $this->year_shift;
 			return sprintf( '%04d-%04d', $start_year, $end_year );
 		}
 
@@ -447,7 +457,7 @@ class DemoImport {
 		$taxonomies = $this->fixture['taxonomies'] ?? [];
 
 		// Import relationship types
-		$relationship_types = $taxonomies['relationship_types'] ?? [];
+		$relationship_types      = $taxonomies['relationship_types'] ?? [];
 		$relationship_type_count = 0;
 
 		foreach ( $relationship_types as $rel_type ) {
@@ -463,16 +473,16 @@ class DemoImport {
 
 			// Store ref mapping
 			$this->ref_map[ $ref ] = $term_id;
-			$relationship_type_count++;
+			++$relationship_type_count;
 		}
 
 		// Second pass: set inverse relationship types
 		foreach ( $relationship_types as $rel_type ) {
-			$ref = $rel_type['_ref'];
+			$ref         = $rel_type['_ref'];
 			$inverse_ref = $rel_type['acf']['inverse_relationship_type'] ?? null;
 
 			if ( $inverse_ref ) {
-				$term_id = $this->resolve_ref( $ref );
+				$term_id         = $this->resolve_ref( $ref );
 				$inverse_term_id = $this->resolve_ref( $inverse_ref );
 
 				if ( $term_id && $inverse_term_id ) {
@@ -484,12 +494,12 @@ class DemoImport {
 		WP_CLI::log( sprintf( '  Imported %d relationship types', $relationship_type_count ) );
 
 		// Import seizoenen
-		$seizoenen = $taxonomies['seizoenen'] ?? [];
+		$seizoenen     = $taxonomies['seizoenen'] ?? [];
 		$seizoen_count = 0;
 
 		foreach ( $seizoenen as $seizoen ) {
-			$name = $this->shift_season_slug( $seizoen['name'] );
-			$slug = $this->shift_season_slug( $seizoen['slug'] );
+			$name       = $this->shift_season_slug( $seizoen['name'] );
+			$slug       = $this->shift_season_slug( $seizoen['slug'] );
 			$is_current = $seizoen['is_current'] ?? false;
 
 			$term_id = $this->insert_or_get_term( $name, $slug, 'seizoen' );
@@ -501,7 +511,7 @@ class DemoImport {
 			// Set is_current_season term meta
 			update_term_meta( $term_id, 'is_current_season', $is_current ? '1' : '0' );
 
-			$seizoen_count++;
+			++$seizoen_count;
 		}
 
 		WP_CLI::log( sprintf( '  Imported %d seizoenen', $seizoen_count ) );
@@ -519,7 +529,7 @@ class DemoImport {
 		$term = wp_insert_term( $name, $taxonomy, [ 'slug' => $slug ] );
 
 		if ( is_wp_error( $term ) ) {
-			if ( 'term_exists' === $term->get_error_code() ) {
+			if ( $term->get_error_code === 'term_exists'() ) {
 				// Prefer the existing term ID provided by wp_insert_term() error data.
 				$error_data = $term->get_error_data();
 
@@ -554,7 +564,7 @@ class DemoImport {
 		$resolved = [];
 
 		foreach ( $rows as $row ) {
-			$team_ref = $row['team'] ?? null;
+			$team_ref         = $row['team'] ?? null;
 			$resolved_team_id = $team_ref ? $this->resolve_ref( $team_ref ) : null;
 
 			$resolved[] = [
@@ -601,12 +611,15 @@ class DemoImport {
 			$content = $entity['content'] ?? '';
 			$status  = $entity['status'];
 
-			$post_id = wp_insert_post( [
-				'post_type'    => $post_type,
-				'post_title'   => $title,
-				'post_content' => $content,
-				'post_status'  => $status,
-			], true );
+			$post_id = wp_insert_post(
+				[
+					'post_type'    => $post_type,
+					'post_title'   => $title,
+					'post_content' => $content,
+					'post_status'  => $status,
+				],
+				true
+			);
 
 			if ( is_wp_error( $post_id ) ) {
 				WP_CLI::warning( sprintf( 'Failed to create %s "%s": %s', $post_type, $title, $post_id->get_error_message() ) );
@@ -638,18 +651,20 @@ class DemoImport {
 
 		// Pass 2: Resolve parent references
 		foreach ( $entities as $entity ) {
-			$ref = $entity['_ref'];
+			$ref        = $entity['_ref'];
 			$parent_ref = $entity['parent'] ?? null;
 
 			if ( $parent_ref ) {
-				$post_id = $this->resolve_ref( $ref );
+				$post_id   = $this->resolve_ref( $ref );
 				$parent_id = $this->resolve_ref( $parent_ref );
 
 				if ( $post_id && $parent_id ) {
-					wp_update_post( [
-						'ID'          => $post_id,
-						'post_parent' => $parent_id,
-					] );
+					wp_update_post(
+						[
+							'ID'          => $post_id,
+							'post_parent' => $parent_id,
+						]
+					);
 				}
 			}
 		}
@@ -662,12 +677,12 @@ class DemoImport {
 	 */
 	private function import_people() {
 		$people = $this->fixture['people'] ?? [];
-		$total = count( $people );
+		$total  = count( $people );
 
 		// Pass 1: Create all person posts with simple ACF fields
 		foreach ( $people as $i => $person ) {
 			// Progress logging every 100 people
-			if ( 0 === ( $i + 1 ) % 100 ) {
+			if ( ( $i + 1 ) % 100 === 0 ) {
 				WP_CLI::log( sprintf( '  Pass 1: Created %d / %d people...', $i + 1, $total ) );
 			}
 
@@ -675,11 +690,14 @@ class DemoImport {
 			$title  = $person['title'];
 			$status = $person['status'];
 
-			$post_id = wp_insert_post( [
-				'post_type'   => 'person',
-				'post_title'  => $title,
-				'post_status' => $status,
-			], true );
+			$post_id = wp_insert_post(
+				[
+					'post_type'   => 'person',
+					'post_title'  => $title,
+					'post_status' => $status,
+				],
+				true
+			);
 
 			if ( is_wp_error( $post_id ) ) {
 				WP_CLI::warning( sprintf( 'Failed to create person "%s": %s', $title, $post_id->get_error_message() ) );
@@ -732,7 +750,7 @@ class DemoImport {
 			// Set post_meta directly (non-ACF fields)
 			$post_meta = $person['post_meta'] ?? [];
 			foreach ( $post_meta as $meta_key => $meta_value ) {
-				if ( null !== $meta_value ) {
+				if ( $meta_value !== null ) {
 					// Shift year in _nikki_YEAR_* keys
 					if ( preg_match( '/^_nikki_(\d{4})_/', $meta_key, $matches ) ) {
 						$old_year = (int) $matches[1];
@@ -742,10 +760,10 @@ class DemoImport {
 
 					// Shift season in _fee_snapshot_SEASON and _fee_forecast_SEASON keys
 					if ( preg_match( '/^_fee_(snapshot|forecast)_(.+)$/', $meta_key, $matches ) ) {
-						$type = $matches[1];
-						$season = $matches[2];
+						$type           = $matches[1];
+						$season         = $matches[2];
 						$shifted_season = $this->shift_season_slug( $season );
-						$meta_key = '_fee_' . $type . '_' . $shifted_season;
+						$meta_key       = '_fee_' . $type . '_' . $shifted_season;
 					}
 
 					// Shift VOG tracking dates
@@ -765,11 +783,11 @@ class DemoImport {
 
 		foreach ( $people as $i => $person ) {
 			// Progress logging every 100 people
-			if ( 0 === ( $i + 1 ) % 100 ) {
+			if ( ( $i + 1 ) % 100 === 0 ) {
 				WP_CLI::log( sprintf( '  Pass 2: Resolved %d / %d people...', $i + 1, $total ) );
 			}
 
-			$ref = $person['_ref'];
+			$ref     = $person['_ref'];
 			$post_id = $this->resolve_ref( $ref );
 
 			if ( ! $post_id ) {
@@ -785,15 +803,15 @@ class DemoImport {
 			}
 
 			// Resolve relationships refs
-			$relationships = $acf['relationships'] ?? [];
+			$relationships          = $acf['relationships'] ?? [];
 			$resolved_relationships = [];
 
 			foreach ( $relationships as $row ) {
-				$related_person_ref = $row['related_person'] ?? null;
+				$related_person_ref    = $row['related_person'] ?? null;
 				$relationship_type_ref = $row['relationship_type'] ?? null;
 
 				$resolved_person_id = $related_person_ref ? $this->resolve_ref( $related_person_ref ) : null;
-				$resolved_type_id = $relationship_type_ref ? $this->resolve_ref( $relationship_type_ref ) : null;
+				$resolved_type_id   = $relationship_type_ref ? $this->resolve_ref( $relationship_type_ref ) : null;
 
 				if ( $resolved_person_id && $resolved_type_id ) {
 					$resolved_relationships[] = [
@@ -824,11 +842,14 @@ class DemoImport {
 			$title  = $case['title'];
 			$status = $case['status'];
 
-			$post_id = wp_insert_post( [
-				'post_type'   => 'discipline_case',
-				'post_title'  => $title,
-				'post_status' => $status,
-			], true );
+			$post_id = wp_insert_post(
+				[
+					'post_type'   => 'discipline_case',
+					'post_title'  => $title,
+					'post_status' => $status,
+				],
+				true
+			);
 
 			if ( is_wp_error( $post_id ) ) {
 				WP_CLI::warning( sprintf( 'Failed to create discipline case "%s": %s', $title, $post_id->get_error_message() ) );
@@ -884,11 +905,14 @@ class DemoImport {
 			$title  = $invoice['title'];
 			$status = $invoice['status'];
 
-			$post_id = wp_insert_post( [
-				'post_type'   => 'rondo_invoice',
-				'post_title'  => $title,
-				'post_status' => $status,
-			], true );
+			$post_id = wp_insert_post(
+				[
+					'post_type'   => 'rondo_invoice',
+					'post_title'  => $title,
+					'post_status' => $status,
+				],
+				true
+			);
 
 			if ( is_wp_error( $post_id ) ) {
 				WP_CLI::warning( sprintf( 'Failed to create invoice "%s": %s', $title, $post_id->get_error_message() ) );
@@ -921,7 +945,7 @@ class DemoImport {
 			}
 
 			// Resolve line items
-			$raw_line_items    = $acf['line_items'] ?? [];
+			$raw_line_items      = $acf['line_items'] ?? [];
 			$resolved_line_items = [];
 
 			foreach ( $raw_line_items as $item ) {
@@ -991,13 +1015,16 @@ class DemoImport {
 			$status  = $todo['status'];
 			$date    = $this->shift_date( $todo['date'], 'c' );
 
-			$post_id = wp_insert_post( [
-				'post_type'    => 'rondo_todo',
-				'post_title'   => $title,
-				'post_content' => $content,
-				'post_status'  => $status,
-				'post_date'    => $date,
-			], true );
+			$post_id = wp_insert_post(
+				[
+					'post_type'    => 'rondo_todo',
+					'post_title'   => $title,
+					'post_content' => $content,
+					'post_status'  => $status,
+					'post_date'    => $date,
+				],
+				true
+			);
 
 			if ( is_wp_error( $post_id ) ) {
 				WP_CLI::warning( sprintf( 'Failed to create todo "%s": %s', $title, $post_id->get_error_message() ) );
@@ -1012,7 +1039,7 @@ class DemoImport {
 
 			// Resolve related_persons refs
 			$related_persons_refs = $acf['related_persons'] ?? [];
-			$resolved_person_ids = [];
+			$resolved_person_ids  = [];
 
 			foreach ( $related_persons_refs as $person_ref ) {
 				$person_id = $this->resolve_ref( $person_ref );
@@ -1035,8 +1062,8 @@ class DemoImport {
 	 */
 	private function import_comments() {
 		$comments = $this->fixture['comments'] ?? [];
-		$total = count( $comments );
-		$counts = [];
+		$total    = count( $comments );
+		$counts   = [];
 
 		foreach ( $comments as $comment ) {
 			$type       = $comment['type'];
@@ -1054,15 +1081,17 @@ class DemoImport {
 			}
 
 			// Insert comment
-			$comment_id = wp_insert_comment( [
-				'comment_post_ID'  => $post_id,
-				'comment_type'     => $type,
-				'comment_content'  => $content,
-				'comment_date'     => $date,
-				'comment_date_gmt' => get_gmt_from_date( $date ),
-				'user_id'          => $author_id,
-				'comment_approved' => 1,
-			] );
+			$comment_id = wp_insert_comment(
+				[
+					'comment_post_ID'  => $post_id,
+					'comment_type'     => $type,
+					'comment_content'  => $content,
+					'comment_date'     => $date,
+					'comment_date_gmt' => get_gmt_from_date( $date ),
+					'user_id'          => $author_id,
+					'comment_approved' => 1,
+				]
+			);
 
 			if ( ! $comment_id || is_wp_error( $comment_id ) ) {
 				WP_CLI::warning( sprintf( 'Failed to create comment on post %d', $post_id ) );
@@ -1098,12 +1127,12 @@ class DemoImport {
 		// Initialize handlers once and cache for reuse
 		if ( ! isset( $this->comment_meta_handlers ) ) {
 			$this->comment_meta_handlers = [
-				'rondo_note' => function( $comment_id, $meta ) {
+				'rondo_note'     => function ( $comment_id, $meta ) {
 					if ( isset( $meta['_note_visibility'] ) ) {
 						update_comment_meta( $comment_id, '_note_visibility', $meta['_note_visibility'] );
 					}
 				},
-				'rondo_activity' => function( $comment_id, $meta ) {
+				'rondo_activity' => function ( $comment_id, $meta ) {
 					if ( isset( $meta['activity_type'] ) ) {
 						update_comment_meta( $comment_id, 'activity_type', $meta['activity_type'] );
 					}
@@ -1115,7 +1144,7 @@ class DemoImport {
 					}
 
 					// Resolve participants refs
-					$participants_refs = $meta['participants'] ?? [];
+					$participants_refs     = $meta['participants'] ?? [];
 					$resolved_participants = [];
 
 					foreach ( $participants_refs as $participant_ref ) {
@@ -1129,7 +1158,7 @@ class DemoImport {
 						update_comment_meta( $comment_id, 'participants', $resolved_participants );
 					}
 				},
-				'rondo_email' => function( $comment_id, $meta ) {
+				'rondo_email'    => function ( $comment_id, $meta ) {
 					$email_meta_fields = [ 'email_template_type', 'email_recipient', 'email_subject', 'email_content_snapshot' ];
 					foreach ( $email_meta_fields as $field ) {
 						if ( isset( $meta[ $field ] ) ) {
@@ -1150,11 +1179,11 @@ class DemoImport {
 	 */
 	private function import_settings() {
 		$settings = $this->fixture['settings'] ?? [];
-		$count = 0;
+		$count    = 0;
 
 		foreach ( $settings as $key => $value ) {
 			// Special handling for VOG exempt commissies - resolve refs to post IDs
-			if ( 'rondo_vog_exempt_commissies' === $key && is_array( $value ) ) {
+			if ( $key === 'rondo_vog_exempt_commissies' && is_array( $value ) ) {
 				$resolved_ids = [];
 				foreach ( $value as $commissie_ref ) {
 					$commissie_id = $this->resolve_ref( $commissie_ref );
@@ -1167,14 +1196,14 @@ class DemoImport {
 
 			// Shift season in option keys (rondo_membership_fees_{season} and rondo_family_discount_{season})
 			if ( preg_match( '/^(rondo_membership_fees|rondo_family_discount)_(.+)$/', $key, $matches ) ) {
-				$prefix = $matches[1];
-				$season = $matches[2];
+				$prefix         = $matches[1];
+				$season         = $matches[2];
 				$shifted_season = $this->shift_season_slug( $season );
-				$key = $prefix . '_' . $shifted_season;
+				$key            = $prefix . '_' . $shifted_season;
 			}
 
 			update_option( $key, $value );
-			$count++;
+			++$count;
 		}
 
 		WP_CLI::log( sprintf( '  Imported %d settings', $count ) );

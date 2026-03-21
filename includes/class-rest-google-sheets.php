@@ -430,8 +430,8 @@ class GoogleSheets extends Base {
 			$requests[] = [
 				'updateSheetProperties' => [
 					'properties' => [
-						'sheetId'          => $sheet_id,
-						'gridProperties'   => [
+						'sheetId'        => $sheet_id,
+						'gridProperties' => [
 							'frozenRowCount' => 1,
 						],
 					],
@@ -440,7 +440,8 @@ class GoogleSheets extends Base {
 			];
 
 			// 3. Auto-resize columns
-			for ( $i = 0; $i < count( $columns ); $i++ ) {
+			$column_count = count( $columns );
+			for ( $i = 0; $i < $column_count; $i++ ) {
 				$requests[] = [
 					'autoResizeDimensions' => [
 						'dimensions' => [
@@ -874,7 +875,7 @@ class GoogleSheets extends Base {
 		$results = [];
 
 		foreach ( $query->posts as $person ) {
-			$is_former = ( get_field( 'former_member', $person->ID ) == true );
+			$is_former = ( get_field( 'former_member', $person->ID ) === true );
 
 			// Former members: only include if in current season, exclude from forecast
 			if ( $is_former ) {
@@ -985,7 +986,7 @@ class GoogleSheets extends Base {
 		// Header row with Dutch labels (conditional Nikki columns)
 		$headers = [
 			'Naam',
-				'KNVB ID',
+			'KNVB ID',
 			'Categorie',
 			'Leeftijdsgroep',
 			'Basis',
@@ -1014,7 +1015,7 @@ class GoogleSheets extends Base {
 		foreach ( $fee_data['members'] as $member ) {
 			$row = [
 				$member['name'],
-					$member['knvb-id'] ?: '',
+				$member['knvb-id'] ?: '',
 				$category_labels[ $member['category'] ] ?? $member['category'],
 				$member['leeftijdsgroep'] ?: '',
 				$member['base_fee'],

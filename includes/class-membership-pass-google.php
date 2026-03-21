@@ -56,6 +56,7 @@ class MembershipPassGoogle {
 			return new \WP_Error( 'membership_pass_google_not_configured', 'Google Wallet is nog niet geconfigureerd.' );
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$service_account = json_decode( (string) file_get_contents( $json_path ), true );
 		if ( ! is_array( $service_account ) || empty( $service_account['client_email'] ) || empty( $service_account['private_key'] ) ) {
 			return new \WP_Error( 'membership_pass_google_invalid_service_account', 'Google service-account JSON is ongeldig.' );
@@ -208,39 +209,39 @@ class MembershipPassGoogle {
 
 		$object = new GenericObject(
 			[
-				'id'             => $object_id,
-				'classId'        => $class_id,
-				'state'          => 'ACTIVE',
-				'cardTitle'      => [
+				'id'                 => $object_id,
+				'classId'            => $class_id,
+				'state'              => 'ACTIVE',
+				'cardTitle'          => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
 						'value'    => $card_title,
 					],
 				],
-				'header'         => [
+				'header'             => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
 						'value'    => $person_name,
 					],
 				],
-				'subheader'      => [
+				'subheader'          => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
 						'value'    => $member_type,
 					],
 				],
-				'barcode'        => new Barcode(
+				'barcode'            => new Barcode(
 					[
 						'type'          => 'QR_CODE',
 						'value'         => $qr_payload,
 						'alternateText' => '',
 					]
 				),
-				'textModulesData'   => $text_modules,
+				'textModulesData'    => $text_modules,
 				'hexBackgroundColor' => $this->get_hex_background_color(),
 			]
 		);
-		$logo  = $this->get_logo_image_url();
+		$logo   = $this->get_logo_image_url();
 		if ( $logo !== '' ) {
 			$object->setLogo(
 				$this->build_logo_image( $logo )
@@ -263,7 +264,10 @@ class MembershipPassGoogle {
 	 * @return string|\WP_Error
 	 */
 	private function create_rs256_jwt( array $claims, string $private_key ) {
-		$header  = [ 'alg' => 'RS256', 'typ' => 'JWT' ];
+		$header          = [
+			'alg' => 'RS256',
+			'typ' => 'JWT',
+		];
 		$encoded_header  = $this->base64url_encode( wp_json_encode( $header ) );
 		$encoded_payload = $this->base64url_encode( wp_json_encode( $claims ) );
 		$signing_input   = $encoded_header . '.' . $encoded_payload;
@@ -432,7 +436,7 @@ class MembershipPassGoogle {
 
 			$job_title = isset( $entry['job_title'] ) ? trim( (string) $entry['job_title'] ) : '';
 			$team_name = '';
-			$team_id    = isset( $entry['team'] ) ? (int) $entry['team'] : 0;
+			$team_id   = isset( $entry['team'] ) ? (int) $entry['team'] : 0;
 			if ( $team_id > 0 ) {
 				$title = get_the_title( $team_id );
 				if ( is_string( $title ) && $title !== '' ) {
@@ -506,7 +510,7 @@ class MembershipPassGoogle {
 	private function build_logo_image( string $logo_url ): Image {
 		return new Image(
 			[
-				'sourceUri' => new ImageUri( [ 'uri' => $logo_url ] ),
+				'sourceUri'          => new ImageUri( [ 'uri' => $logo_url ] ),
 				'contentDescription' => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
@@ -557,6 +561,7 @@ class MembershipPassGoogle {
 			return '';
 		}
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$source_data = file_get_contents( $path );
 		if ( ! is_string( $source_data ) || $source_data === '' ) {
 			return '';

@@ -50,8 +50,8 @@ class RelationshipsSharesTest extends RondoTestCase {
 		$this->access_control = new RONDO_Access_Control();
 
 		// Manually initialize REST API classes for testing
-		$this->rest_people    = new RONDO_REST_People();
-		$this->rest_teams = new RONDO_REST_Teams();
+		$this->rest_people = new RONDO_REST_People();
+		$this->rest_teams  = new RONDO_REST_Teams();
 
 		// Initialize the REST server and register routes
 		global $wp_rest_server;
@@ -167,7 +167,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 		// Set work_history to link person to team
 		$work_history = [
 			[
-				'team'    => $team_id,
+				'team'       => $team_id,
 				'job_title'  => 'Engineer',
 				'start_date' => '2020-01-01',
 				'end_date'   => '',
@@ -217,7 +217,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 			'work_history',
 			[
 				[
-					'team'    => $team_id,
+					'team'       => $team_id,
 					'job_title'  => 'Developer',
 					'start_date' => '2023-01-01',
 					'end_date'   => '',
@@ -238,7 +238,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 			'work_history',
 			[
 				[
-					'team'    => $team_id,
+					'team'       => $team_id,
 					'job_title'  => 'Manager',
 					'start_date' => '2020-01-01',
 					'end_date'   => '2022-12-31',

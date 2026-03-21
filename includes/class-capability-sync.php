@@ -219,10 +219,10 @@ class CapabilitySync {
 					'knvb_id' => $knvb_id ?: '',
 					'message' => $sync_result->get_error_message(),
 				];
-			} elseif ( isset( $sync_result['status'] ) && 'skipped' === $sync_result['status'] ) {
-				$result['skipped']++;
+			} elseif ( isset( $sync_result['status'] ) && $sync_result['status'] === 'skipped' ) {
+				++$result['skipped'];
 			} else {
-				$result['synced']++;
+				++$result['synced'];
 			}
 
 			$result['details'][] = [
@@ -303,12 +303,18 @@ class CapabilitySync {
 	private function derive_from_work_history( int $user_id ): array {
 		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		if ( ! $person_id ) {
-			return [ 'functies' => [], 'commissie_ids' => [] ];
+			return [
+				'functies'      => [],
+				'commissie_ids' => [],
+			];
 		}
 
 		$work_history = get_field( 'work_history', $person_id );
 		if ( ! is_array( $work_history ) ) {
-			return [ 'functies' => [], 'commissie_ids' => [] ];
+			return [
+				'functies'      => [],
+				'commissie_ids' => [],
+			];
 		}
 
 		$functies      = [];

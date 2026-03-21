@@ -37,64 +37,199 @@ class FinanceSettings extends Base {
 					'callback'            => [ $this, 'update_finance_settings' ],
 					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
-						'org_name'              => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'org_address'           => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
-						'contact_email'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
-						'iban'                  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'mollie_accounts'       => [
+						'org_name'                         => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'org_address'                      => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'contact_email'                    => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_email',
+						],
+						'iban'                             => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'mollie_accounts'                  => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
 								return is_array( $param );
 							},
 						],
-						'payment_term_days'     => [ 'required' => false, 'type' => 'integer' ],
-						'payment_clause'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
-						'membership_payment_clause' => [ 'required' => false, 'sanitize_callback' => 'sanitize_textarea_field' ],
-						'email_template'             => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'membership_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'installment_email_template' => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'reminder_1_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'reminder_2_email_template'  => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'credit_email_template'      => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'regular_invoice_email_subject' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'regular_invoice_email_body'    => [ 'required' => false, 'sanitize_callback' => 'wp_kses_post' ],
-						'regular_invoice_email_heading'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'discipline_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'membership_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'installment_email_heading'        => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'reminder_1_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'reminder_2_email_heading'         => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'invoice_reminder_1_email_heading' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'invoice_reminder_2_email_heading' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'credit_email_heading'             => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'rabobank_client_id'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'rabobank_client_secret' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'rabobank_environment'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'mollie_redirect_url'     => [ 'required' => false, 'sanitize_callback' => 'esc_url_raw' ],
-						'mollie_default_membership_account_id' => [ 'required' => false, 'sanitize_callback' => 'sanitize_key' ],
-						'mollie_default_discipline_account_id' => [ 'required' => false, 'sanitize_callback' => 'sanitize_key' ],
-						'mollie_default_manual_account_id'     => [ 'required' => false, 'sanitize_callback' => 'sanitize_key' ],
-						'active_payment_provider' => [
+						'payment_term_days'                => [
+							'required' => false,
+							'type'     => 'integer',
+						],
+						'payment_clause'                   => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'membership_payment_clause'        => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'email_template'                   => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'membership_email_template'        => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'installment_email_template'       => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'reminder_1_email_template'        => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'reminder_2_email_template'        => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'credit_email_template'            => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'regular_invoice_email_subject'    => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
-							'validate_callback' => function( $param ) {
+						],
+						'regular_invoice_email_body'       => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'regular_invoice_email_heading'    => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'discipline_email_heading'         => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'membership_email_heading'         => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'installment_email_heading'        => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'reminder_1_email_heading'         => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'reminder_2_email_heading'         => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'invoice_reminder_1_email_heading' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'invoice_reminder_2_email_heading' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'credit_email_heading'             => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'rabobank_client_id'               => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'rabobank_client_secret'           => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'rabobank_environment'             => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'mollie_redirect_url'              => [
+							'required'          => false,
+							'sanitize_callback' => 'esc_url_raw',
+						],
+						'mollie_default_membership_account_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_key',
+						],
+						'mollie_default_discipline_account_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_key',
+						],
+						'mollie_default_manual_account_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_key',
+						],
+						'active_payment_provider'          => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => function ( $param ) {
 								return in_array( $param, [ 'rabobank', 'mollie' ], true );
 							},
 						],
-						'club_logo_id'  => [ 'required' => false, 'type' => 'integer' ],
-						'accent_color'  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'accent_background_color' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'bcc_email'     => [ 'required' => false, 'sanitize_callback' => 'sanitize_email' ],
-						'admin_fee'              => [ 'required' => false, 'type' => 'number' ],
-						'installment_admin_fee'  => [ 'required' => false, 'type' => 'number' ],
-						'membership_pass_apple_cert_attachment_id' => [ 'required' => false, 'type' => 'integer' ],
-						'membership_pass_apple_cert_password'      => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'membership_pass_apple_pass_type_identifier' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'membership_pass_apple_team_identifier'      => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'membership_pass_apple_organization_name'    => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'membership_pass_google_service_account_attachment_id' => [ 'required' => false, 'type' => 'integer' ],
-						'membership_pass_google_issuer_id'                     => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'membership_pass_google_class_suffix'                  => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'club_logo_id'                     => [
+							'required' => false,
+							'type'     => 'integer',
+						],
+						'accent_color'                     => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'accent_background_color'          => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'bcc_email'                        => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_email',
+						],
+						'admin_fee'                        => [
+							'required' => false,
+							'type'     => 'number',
+						],
+						'installment_admin_fee'            => [
+							'required' => false,
+							'type'     => 'number',
+						],
+						'membership_pass_apple_cert_attachment_id' => [
+							'required' => false,
+							'type'     => 'integer',
+						],
+						'membership_pass_apple_cert_password' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'membership_pass_apple_pass_type_identifier' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'membership_pass_apple_team_identifier' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'membership_pass_apple_organization_name' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'membership_pass_google_service_account_attachment_id' => [
+							'required' => false,
+							'type'     => 'integer',
+						],
+						'membership_pass_google_issuer_id' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'membership_pass_google_class_suffix' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 					],
 				],
 			]
@@ -115,9 +250,18 @@ class FinanceSettings extends Base {
 					'callback'            => [ $this, 'update_finance_branding' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'club_logo_id' => [ 'required' => false, 'type' => 'integer' ],
-						'accent_color' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
-						'accent_background_color' => [ 'required' => false, 'sanitize_callback' => 'sanitize_text_field' ],
+						'club_logo_id'            => [
+							'required' => false,
+							'type'     => 'integer',
+						],
+						'accent_color'            => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'accent_background_color' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
 					],
 				],
 			]
@@ -166,9 +310,9 @@ class FinanceSettings extends Base {
 
 		return rest_ensure_response(
 			[
-				'club_logo_id'  => (int) ( $settings['club_logo_id'] ?? 0 ),
-				'club_logo_url' => isset( $settings['club_logo_url'] ) ? (string) $settings['club_logo_url'] : '',
-				'accent_color'  => isset( $settings['accent_color'] ) ? (string) $settings['accent_color'] : '',
+				'club_logo_id'            => (int) ( $settings['club_logo_id'] ?? 0 ),
+				'club_logo_url'           => isset( $settings['club_logo_url'] ) ? (string) $settings['club_logo_url'] : '',
+				'accent_color'            => isset( $settings['accent_color'] ) ? (string) $settings['accent_color'] : '',
 				'accent_background_color' => isset( $settings['accent_background_color'] ) ? (string) $settings['accent_background_color'] : '',
 			]
 		);
@@ -187,17 +331,17 @@ class FinanceSettings extends Base {
 		$data           = [];
 
 		$club_logo_id = $request->get_param( 'club_logo_id' );
-		if ( null !== $club_logo_id ) {
+		if ( $club_logo_id !== null ) {
 			$data['club_logo_id'] = (int) $club_logo_id;
 		}
 
 		$accent_color = $request->get_param( 'accent_color' );
-		if ( null !== $accent_color ) {
+		if ( $accent_color !== null ) {
 			$data['accent_color'] = (string) $accent_color;
 		}
 
 		$accent_background_color = $request->get_param( 'accent_background_color' );
-		if ( null !== $accent_background_color ) {
+		if ( $accent_background_color !== null ) {
 			$data['accent_background_color'] = (string) $accent_background_color;
 		}
 

@@ -194,11 +194,11 @@ class FeeCacheInvalidator {
 	public function log_contributie_exclusion_toggle( $meta_id, $post_id, $meta_key, $meta_value ) {
 		unset( $meta_id, $meta_value );
 
-		if ( '_exclude_from_contributie' !== $meta_key ) {
+		if ( $meta_key !== '_exclude_from_contributie' ) {
 			return;
 		}
 
-		if ( 'person' !== get_post_type( $post_id ) ) {
+		if ( get_post_type( $post_id ) !== 'person' ) {
 			return;
 		}
 
@@ -213,9 +213,13 @@ class FeeCacheInvalidator {
 			}
 		}
 
-		$message = $is_excluded
-			? sprintf( __( 'Contributie uitgesloten door %s.', 'rondo' ), $actor_name )
-			: sprintf( __( 'Contributie opnieuw opgenomen door %s.', 'rondo' ), $actor_name );
+		if ( $is_excluded ) {
+			// translators: %s is the name of the user who excluded the member from fees.
+			$message = sprintf( __( 'Contributie uitgesloten door %s.', 'rondo' ), $actor_name );
+		} else {
+			// translators: %s is the name of the user who re-included the member for fees.
+			$message = sprintf( __( 'Contributie opnieuw opgenomen door %s.', 'rondo' ), $actor_name );
+		}
 
 		$comment_id = wp_insert_comment(
 			[
@@ -319,11 +323,13 @@ class FeeCacheInvalidator {
 
 			wp_mail( $emails, $subject, $message, $headers );
 		} catch ( \Throwable $e ) {
-			error_log( sprintf(
-				'[Rondo Contributie] Failed to send exclusion notification for person %d: %s',
-				$post_id,
-				$e->getMessage()
-			) );
+			error_log(
+				sprintf(
+					'[Rondo Contributie] Failed to send exclusion notification for person %d: %s',
+					$post_id,
+					$e->getMessage()
+				)
+			);
 		}
 	}
 
@@ -359,11 +365,13 @@ class FeeCacheInvalidator {
 		}
 
 		// Log for debugging
-		error_log( sprintf(
-			'[Rondo Fee Cache] Settings changed: cleared %d caches for season %s, recalculation scheduled',
-			$cleared,
-			$season
-		) );
+		error_log(
+			sprintf(
+				'[Rondo Fee Cache] Settings changed: cleared %d caches for season %s, recalculation scheduled',
+				$cleared,
+				$season
+			)
+		);
 	}
 
 	/**
@@ -378,11 +386,13 @@ class FeeCacheInvalidator {
 		// Recalculate all family positions first (single pass over all persons)
 		$positions_updated = $this->fees->recalculate_all_family_positions( $season );
 
-		error_log( sprintf(
-			'[Rondo Fee Cache] Family positions recalculated: %d persons updated for season %s',
-			$positions_updated,
-			$season
-		) );
+		error_log(
+			sprintf(
+				'[Rondo Fee Cache] Family positions recalculated: %d persons updated for season %s',
+				$positions_updated,
+				$season
+			)
+		);
 
 		// Now recalculate individual fees (which read stored meta instead of rebuilding groups)
 		$query = new \WP_Query(
@@ -405,17 +415,19 @@ class FeeCacheInvalidator {
 			$result = $this->fees->get_fee_for_person_cached( (int) $person_id, $season );
 
 			if ( $result !== null ) {
-				$calculated++;
+				++$calculated;
 			} else {
-				$skipped++;
+				++$skipped;
 			}
 		}
 
-		error_log( sprintf(
-			'[Rondo Fee Cache] Bulk recalculation complete: %d calculated, %d skipped for season %s',
-			$calculated,
-			$skipped,
-			$season
-		) );
+		error_log(
+			sprintf(
+				'[Rondo Fee Cache] Bulk recalculation complete: %d calculated, %d skipped for season %s',
+				$calculated,
+				$skipped,
+				$season
+			)
+		);
 	}
 }

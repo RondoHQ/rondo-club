@@ -138,13 +138,13 @@ class DemoExport {
 		WP_CLI::log( sprintf( 'Writing fixture to: %s', $this->output_path ) );
 		$json = wp_json_encode( $fixture, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 
-		if ( false === $json ) {
+		if ( $json === false ) {
 			WP_CLI::error( 'Failed to encode fixture to JSON' );
 		}
 
 		$result = file_put_contents( $this->output_path, $json );
 
-		if ( false === $result ) {
+		if ( $result === false ) {
 			WP_CLI::error( sprintf( 'Failed to write fixture to %s', $this->output_path ) );
 		}
 
@@ -191,13 +191,13 @@ class DemoExport {
 
 		$post_ids = get_posts(
 			[
-				'post_type'      => $post_type,
-				'numberposts'    => -1,
-				'post_status'    => $post_statuses,
-				'fields'         => 'ids',
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
-				'no_found_rows'  => true,
+				'post_type'              => $post_type,
+				'numberposts'            => -1,
+				'post_status'            => $post_statuses,
+				'fields'                 => 'ids',
+				'orderby'                => 'ID',
+				'order'                  => 'ASC',
+				'no_found_rows'          => true,
 				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
 			]
@@ -230,10 +230,10 @@ class DemoExport {
 	 * @return mixed The normalized value (null if empty).
 	 */
 	private function normalize_value( $value ) {
-		if ( is_string( $value ) && '' === $value ) {
+		if ( is_string( $value ) && $value === '' ) {
 			return null;
 		}
-		if ( false === $value || ( is_array( $value ) && empty( $value ) ) ) {
+		if ( $value === false || ( is_array( $value ) && empty( $value ) ) ) {
 			return null;
 		}
 		return $value;
@@ -293,11 +293,11 @@ class DemoExport {
 	protected function export_people() {
 		$posts = get_posts(
 			[
-				'post_type'    => 'person',
-				'numberposts'  => -1,
-				'post_status'  => 'any',
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
+				'post_type'   => 'person',
+				'numberposts' => -1,
+				'post_status' => 'any',
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
 			]
 		);
 
@@ -306,51 +306,51 @@ class DemoExport {
 
 		foreach ( $posts as $i => $post ) {
 			// Progress logging every 100 people
-			if ( 0 === ( $i + 1 ) % 100 ) {
+			if ( ( $i + 1 ) % 100 === 0 ) {
 				WP_CLI::log( sprintf( '  Exported %d / %d people...', $i + 1, $total ) );
 			}
 
 			$person = [
-				'_ref'   => $this->get_ref( $post->ID, 'person' ),
-				'title'  => $post->post_title,
-				'status' => $post->post_status,
-				'acf'    => [
+				'_ref'      => $this->get_ref( $post->ID, 'person' ),
+				'title'     => $post->post_title,
+				'status'    => $post->post_status,
+				'acf'       => [
 					// Basic Information
-					'first_name'        => get_field( 'first_name', $post->ID ),
-					'infix'             => $this->normalize_value( get_field( 'infix', $post->ID ) ),
-					'last_name'         => get_field( 'last_name', $post->ID ),
-					'nickname'          => $this->normalize_value( get_field( 'nickname', $post->ID ) ),
-					'gender'            => $this->normalize_value( get_field( 'gender', $post->ID ) ),
-					'pronouns'          => $this->normalize_value( get_field( 'pronouns', $post->ID ) ),
-					'birthdate'         => get_field( 'birthdate', $post->ID ),
-					'former_member'     => (bool) get_field( 'former_member', $post->ID ),
-					'lid-tot'           => $this->normalize_value( get_field( 'lid-tot', $post->ID ) ),
-					'datum-overlijden'  => $this->normalize_value( get_field( 'datum-overlijden', $post->ID ) ),
+					'first_name'          => get_field( 'first_name', $post->ID ),
+					'infix'               => $this->normalize_value( get_field( 'infix', $post->ID ) ),
+					'last_name'           => get_field( 'last_name', $post->ID ),
+					'nickname'            => $this->normalize_value( get_field( 'nickname', $post->ID ) ),
+					'gender'              => $this->normalize_value( get_field( 'gender', $post->ID ) ),
+					'pronouns'            => $this->normalize_value( get_field( 'pronouns', $post->ID ) ),
+					'birthdate'           => get_field( 'birthdate', $post->ID ),
+					'former_member'       => (bool) get_field( 'former_member', $post->ID ),
+					'lid-tot'             => $this->normalize_value( get_field( 'lid-tot', $post->ID ) ),
+					'datum-overlijden'    => $this->normalize_value( get_field( 'datum-overlijden', $post->ID ) ),
 
 					// Contact Information (fixed fields)
 					...$this->export_contact_fields( $post->ID ),
 
 					// Addresses
-					'addresses'         => $this->export_addresses( $post->ID ),
+					'addresses'           => $this->export_addresses( $post->ID ),
 
 					// Work History
-					'work_history'      => $this->export_work_history( $post->ID ),
+					'work_history'        => $this->export_work_history( $post->ID ),
 
 					// Relationships
-					'relationships'     => $this->export_relationships( $post->ID ),
+					'relationships'       => $this->export_relationships( $post->ID ),
 
 					// Sportlink-Synced Fields
-					'lid-sinds'         => $this->normalize_value( get_field( 'lid-sinds', $post->ID ) ),
-					'vrijwilliger-sinds' => $this->normalize_value( get_field( 'vrijwilliger-sinds', $post->ID ) ),
-					'leeftijdsgroep'    => $this->normalize_value( get_field( 'leeftijdsgroep', $post->ID ) ),
-					'datum-vog'         => $this->normalize_value( get_field( 'datum-vog', $post->ID ) ),
-					'datum-foto'        => $this->normalize_value( get_field( 'datum-foto', $post->ID ) ),
-					'type-lid'          => $this->normalize_value( get_field( 'type-lid', $post->ID ) ),
+					'lid-sinds'           => $this->normalize_value( get_field( 'lid-sinds', $post->ID ) ),
+					'vrijwilliger-sinds'  => $this->normalize_value( get_field( 'vrijwilliger-sinds', $post->ID ) ),
+					'leeftijdsgroep'      => $this->normalize_value( get_field( 'leeftijdsgroep', $post->ID ) ),
+					'datum-vog'           => $this->normalize_value( get_field( 'datum-vog', $post->ID ) ),
+					'datum-foto'          => $this->normalize_value( get_field( 'datum-foto', $post->ID ) ),
+					'type-lid'            => $this->normalize_value( get_field( 'type-lid', $post->ID ) ),
 					'huidig-vrijwilliger' => $this->normalize_value( get_field( 'huidig-vrijwilliger', $post->ID ) ),
 					'financiele-blokkade' => (bool) get_field( 'financiele-blokkade', $post->ID ),
-					'knvb-id'           => $this->normalize_value( get_field( 'knvb-id', $post->ID ) ),
-					'freescout-id'      => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
-					],
+					'knvb-id'             => $this->normalize_value( get_field( 'knvb-id', $post->ID ) ),
+					'freescout-id'        => $this->normalize_value( get_field( 'freescout-id', $post->ID ) ),
+				],
 				'post_meta' => $this->export_person_post_meta( $post->ID ),
 			];
 
@@ -382,14 +382,14 @@ class DemoExport {
 
 		foreach ( $addresses as $row ) {
 			$exported[] = [
-				'address_label'        => $row['address_label'] ?? '',
-				'street_name'          => $row['street_name'] ?? '',
-				'house_number'         => $row['house_number'] ?? '',
+				'address_label'         => $row['address_label'] ?? '',
+				'street_name'           => $row['street_name'] ?? '',
+				'house_number'          => $row['house_number'] ?? '',
 				'house_number_addition' => $row['house_number_addition'] ?? '',
-				'postal_code'          => $row['postal_code'] ?? '',
-				'city'                 => $row['city'] ?? '',
-				'state'                => $row['state'] ?? '',
-				'country'              => $row['country'] ?? '',
+				'postal_code'           => $row['postal_code'] ?? '',
+				'city'                  => $row['city'] ?? '',
+				'state'                 => $row['state'] ?? '',
+				'country'               => $row['country'] ?? '',
 			];
 		}
 
@@ -452,7 +452,7 @@ class DemoExport {
 		$exported = [];
 
 		foreach ( $relationships as $row ) {
-			$related_person_id = $row['related_person'] ?? null;
+			$related_person_id    = $row['related_person'] ?? null;
 			$relationship_type_id = $row['relationship_type'] ?? null;
 
 			// Skip if related person is not in the ref map
@@ -495,10 +495,10 @@ class DemoExport {
 		$exclude_from_contributie = get_post_meta( $post_id, '_exclude_from_contributie', true );
 
 		$post_meta = [
-			'vog_email_sent_date'        => $this->normalize_value( get_post_meta( $post_id, 'vog_email_sent_date', true ) ),
-			'vog_justis_submitted_date'  => $this->normalize_value( get_post_meta( $post_id, 'vog_justis_submitted_date', true ) ),
-			'vog_reminder_sent_date'     => $this->normalize_value( get_post_meta( $post_id, 'vog_reminder_sent_date', true ) ),
-			'_exclude_from_contributie'  => '' !== $exclude_from_contributie ? (bool) $exclude_from_contributie : null,
+			'vog_email_sent_date'       => $this->normalize_value( get_post_meta( $post_id, 'vog_email_sent_date', true ) ),
+			'vog_justis_submitted_date' => $this->normalize_value( get_post_meta( $post_id, 'vog_justis_submitted_date', true ) ),
+			'vog_reminder_sent_date'    => $this->normalize_value( get_post_meta( $post_id, 'vog_reminder_sent_date', true ) ),
+			'_exclude_from_contributie' => $exclude_from_contributie !== '' ? (bool) $exclude_from_contributie : null,
 		];
 
 		// Scan for dynamic meta keys (nikki, fee snapshots/forecasts).
@@ -509,7 +509,7 @@ class DemoExport {
 			// Match _nikki_*_total, _nikki_*_saldo, _fee_snapshot_*, _fee_forecast_*
 			if ( preg_match( '/^_nikki_(\d+)_(total|saldo)$/', $meta_key ) ||
 				preg_match( '/^_fee_(snapshot|forecast)_/', $meta_key ) ) {
-				$value = $meta_values[0] ?? null;
+				$value                  = $meta_values[0] ?? null;
 				$post_meta[ $meta_key ] = $this->normalize_value( $value );
 			}
 		}
@@ -537,7 +537,7 @@ class DemoExport {
 		$person['acf']['nickname']   = null; // Strip nicknames.
 
 		// Rebuild title from fake name.
-		$name_parts     = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
+		$name_parts      = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 		$person['title'] = implode( ' ', $name_parts );
 
 		// Replace contact fields with anonymized data.
@@ -605,14 +605,14 @@ class DemoExport {
 			$fake_address = $this->anonymizer->generate_address();
 
 			$anonymized[] = [
-				'address_label'        => $address_label,
-				'street_name'          => $fake_address['street'],
-				'house_number'         => $fake_address['house_number'],
+				'address_label'         => $address_label,
+				'street_name'           => $fake_address['street'],
+				'house_number'          => $fake_address['house_number'],
 				'house_number_addition' => '',
-				'postal_code'          => $fake_address['postal_code'],
-				'city'                 => $fake_address['city'],
-				'state'                => null,
-				'country'              => 'Nederland',
+				'postal_code'           => $fake_address['postal_code'],
+				'city'                  => $fake_address['city'],
+				'state'                 => null,
+				'country'               => 'Nederland',
 			];
 		}
 
@@ -651,11 +651,11 @@ class DemoExport {
 	 * @return string Random total as string.
 	 */
 	private function random_nikki_total() {
-		$rand = mt_rand( 1, 100 );
+		$rand = wp_rand( 1, 100 );
 		if ( $rand <= 70 ) {
-			return (string) mt_rand( 100, 300 );
+			return (string) wp_rand( 100, 300 );
 		} elseif ( $rand <= 90 ) {
-			return (string) mt_rand( 50, 100 );
+			return (string) wp_rand( 50, 100 );
 		} else {
 			return '0';
 		}
@@ -667,13 +667,13 @@ class DemoExport {
 	 * @return string Random saldo as string.
 	 */
 	private function random_nikki_saldo() {
-		$rand = mt_rand( 1, 100 );
+		$rand = wp_rand( 1, 100 );
 		if ( $rand <= 80 ) {
 			return '0';
 		} elseif ( $rand <= 95 ) {
-			return (string) mt_rand( 10, 100 );
+			return (string) wp_rand( 10, 100 );
 		} else {
-			return (string) ( -1 * mt_rand( 10, 50 ) );
+			return (string) ( -1 * wp_rand( 10, 50 ) );
 		}
 	}
 
@@ -684,11 +684,11 @@ class DemoExport {
 	 */
 	private function random_fee_data() {
 		$fake_data = [
-			'category'          => 'demo',
-			'base_amount'       => mt_rand( 50, 300 ),
-			'pro_rata_factor'   => 1.0,
-			'family_discount'   => 0,
-			'final_amount'      => mt_rand( 50, 300 ),
+			'category'        => 'demo',
+			'base_amount'     => wp_rand( 50, 300 ),
+			'pro_rata_factor' => 1.0,
+			'family_discount' => 0,
+			'final_amount'    => wp_rand( 50, 300 ),
 		];
 		return serialize( $fake_data );
 	}
@@ -753,7 +753,7 @@ class DemoExport {
 
 		// Rebuild title with fake name if person ref exists.
 		if ( $person_ref ) {
-			$identity = $this->anonymizer->generate_identity( $person_ref );
+			$identity   = $this->anonymizer->generate_identity( $person_ref );
 			$name_parts = array_filter( [ $identity['first_name'], $identity['infix'], $identity['last_name'] ] );
 			$fake_name  = implode( ' ', $name_parts );
 
@@ -764,11 +764,11 @@ class DemoExport {
 		}
 
 		// Randomize dossier_id (7 digits + ".0").
-		$case['acf']['dossier_id'] = sprintf( '%d.0', mt_rand( 1000000, 9999999 ) );
+		$case['acf']['dossier_id'] = sprintf( '%d.0', wp_rand( 1000000, 9999999 ) );
 
 		// Randomize administrative fee (typical values: 10.00, 19.60, 30.00, 40.60, 50.00).
-		$base = mt_rand( 1, 5 ) * 10;
-		$cents = mt_rand( 0, 1 ) * 0.60;
+		$base                              = wp_rand( 1, 5 ) * 10;
+		$cents                             = wp_rand( 0, 1 ) * 0.60;
 		$case['acf']['administrative_fee'] = $base + $cents;
 
 		return $case;
@@ -788,7 +788,7 @@ class DemoExport {
 				// Replace email recipient with fake email from person's identity.
 				$person_ref = $comment['person'] ?? null;
 				if ( $person_ref && isset( $comment['meta'] ) ) {
-					$identity = $this->anonymizer->generate_identity( $person_ref );
+					$identity                           = $this->anonymizer->generate_identity( $person_ref );
 					$comment['meta']['email_recipient'] = $identity['email'];
 					// Replace email content snapshot with placeholder.
 					$comment['meta']['email_content_snapshot'] = 'Demo email content';
@@ -831,14 +831,14 @@ class DemoExport {
 		];
 
 		// Pick a title based on seeded random using todo ref.
-		$ref = $todo['_ref'] ?? '';
-		$hash = crc32( $ref );
+		$ref   = $todo['_ref'] ?? '';
+		$hash  = crc32( $ref );
 		$index = abs( $hash ) % count( $generic_titles );
 
 		$todo['title'] = $generic_titles[ $index ];
 
 		// Strip content and notes (may contain PII).
-		$todo['content'] = null;
+		$todo['content']      = null;
 		$todo['acf']['notes'] = null;
 
 		return $todo;
@@ -852,11 +852,11 @@ class DemoExport {
 	protected function export_teams() {
 		$posts = get_posts(
 			[
-				'post_type'    => 'team',
-				'numberposts'  => -1,
-				'post_status'  => [ 'publish', 'draft', 'private' ],
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
+				'post_type'   => 'team',
+				'numberposts' => -1,
+				'post_status' => [ 'publish', 'draft', 'private' ],
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
 			]
 		);
 
@@ -891,11 +891,11 @@ class DemoExport {
 	protected function export_commissies() {
 		$posts = get_posts(
 			[
-				'post_type'    => 'commissie',
-				'numberposts'  => -1,
-				'post_status'  => [ 'publish', 'draft', 'private' ],
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
+				'post_type'   => 'commissie',
+				'numberposts' => -1,
+				'post_status' => [ 'publish', 'draft', 'private' ],
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
 			]
 		);
 
@@ -931,11 +931,11 @@ class DemoExport {
 	protected function export_discipline_cases() {
 		$posts = get_posts(
 			[
-				'post_type'    => 'discipline_case',
-				'numberposts'  => -1,
-				'post_status'  => 'any',
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
+				'post_type'   => 'discipline_case',
+				'numberposts' => -1,
+				'post_status' => 'any',
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
 			]
 		);
 
@@ -953,28 +953,28 @@ class DemoExport {
 			$person_ref = $person_id ? $this->get_ref( $person_id, 'person' ) : null;
 
 			// Get seizoen (taxonomy term)
-			$seizoen      = null;
+			$seizoen       = null;
 			$seizoen_terms = wp_get_post_terms( $post->ID, 'seizoen' );
 			if ( ! empty( $seizoen_terms ) && ! is_wp_error( $seizoen_terms ) ) {
 				$seizoen = $seizoen_terms[0]->slug;
 			}
 
 			$case = [
-				'_ref'   => $this->get_ref( $post->ID, 'discipline_case' ),
-				'title'  => $post->post_title,
-				'status' => $post->post_status,
-				'acf'    => [
-					'dossier_id'            => get_field( 'dossier_id', $post->ID ),
-					'person'                => $person_ref,
-					'match_date'            => $this->normalize_value( get_field( 'match_date', $post->ID ) ),
-					'processing_date'       => $this->normalize_value( get_field( 'processing_date', $post->ID ) ),
-					'match_description'     => $this->normalize_value( get_field( 'match_description', $post->ID ) ),
-					'team_name'             => $this->normalize_value( get_field( 'team_name', $post->ID ) ),
-					'charge_codes'          => $this->normalize_value( get_field( 'charge_codes', $post->ID ) ),
-					'charge_description'    => $this->normalize_value( get_field( 'charge_description', $post->ID ) ),
-					'sanction_description'  => $this->normalize_value( get_field( 'sanction_description', $post->ID ) ),
-					'administrative_fee'    => $this->normalize_value( (float) get_field( 'administrative_fee', $post->ID ) ),
-					'is_charged'            => (bool) get_field( 'is_charged', $post->ID ),
+				'_ref'    => $this->get_ref( $post->ID, 'discipline_case' ),
+				'title'   => $post->post_title,
+				'status'  => $post->post_status,
+				'acf'     => [
+					'dossier_id'           => get_field( 'dossier_id', $post->ID ),
+					'person'               => $person_ref,
+					'match_date'           => $this->normalize_value( get_field( 'match_date', $post->ID ) ),
+					'processing_date'      => $this->normalize_value( get_field( 'processing_date', $post->ID ) ),
+					'match_description'    => $this->normalize_value( get_field( 'match_description', $post->ID ) ),
+					'team_name'            => $this->normalize_value( get_field( 'team_name', $post->ID ) ),
+					'charge_codes'         => $this->normalize_value( get_field( 'charge_codes', $post->ID ) ),
+					'charge_description'   => $this->normalize_value( get_field( 'charge_description', $post->ID ) ),
+					'sanction_description' => $this->normalize_value( get_field( 'sanction_description', $post->ID ) ),
+					'administrative_fee'   => $this->normalize_value( (float) get_field( 'administrative_fee', $post->ID ) ),
+					'is_charged'           => (bool) get_field( 'is_charged', $post->ID ),
 				],
 				'seizoen' => $seizoen,
 			];
@@ -998,11 +998,11 @@ class DemoExport {
 	protected function export_invoices() {
 		$posts = get_posts(
 			[
-				'post_type'    => 'rondo_invoice',
-				'numberposts'  => -1,
-				'post_status'  => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
+				'post_type'   => 'rondo_invoice',
+				'numberposts' => -1,
+				'post_status' => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
 			]
 		);
 
@@ -1038,7 +1038,7 @@ class DemoExport {
 					$dc_ref = $dc_id ? $this->get_ref( $dc_id, 'discipline_case' ) : null;
 
 					// Skip line items whose discipline_case cannot be resolved
-					if ( null === $dc_ref && $dc_id ) {
+					if ( $dc_ref === null && $dc_id ) {
 						continue;
 					}
 
@@ -1051,10 +1051,10 @@ class DemoExport {
 			}
 
 			// Anonymize total_amount to realistic range
-			if ( 'membership' === $invoice_type ) {
-				$total_amount = (float) mt_rand( 50, 300 );
+			if ( $invoice_type === 'membership' ) {
+				$total_amount = (float) wp_rand( 50, 300 );
 			} else {
-				$total_amount = (float) mt_rand( 10, 100 );
+				$total_amount = (float) wp_rand( 10, 100 );
 			}
 
 			// Get seizoen taxonomy term slug
@@ -1085,14 +1085,14 @@ class DemoExport {
 			}
 
 			// Demo invoice number (DEMO-YEAR-SEQ)
-			$year         = gmdate( 'Y' );
+			$year           = gmdate( 'Y' );
 			$invoice_number = sprintf( 'DEMO-%d-%04d', $year, $seq++ );
 
 			$invoice = [
-				'_ref'           => $this->get_ref( $post->ID, 'invoice' ),
-				'title'          => $invoice_number,
-				'status'         => $post->post_status,
-				'acf'            => [
+				'_ref'      => $this->get_ref( $post->ID, 'invoice' ),
+				'title'     => $invoice_number,
+				'status'    => $post->post_status,
+				'acf'       => [
 					'invoice_number' => $invoice_number,
 					'invoice_type'   => $invoice_type,
 					'person'         => $person_ref,
@@ -1105,13 +1105,13 @@ class DemoExport {
 					'pdf_path'       => null,
 					'qr_code_path'   => null,
 				],
-				'post_meta'      => [
+				'post_meta' => [
 					'_installment_plan'  => $this->normalize_value( $installment_plan ),
 					'_installment_count' => $installment_count > 0 ? $installment_count : null,
 					'_invoice_season'    => $this->normalize_value( $invoice_season ),
 					'_installments'      => $installments,
 				],
-				'seizoen'        => $seizoen,
+				'seizoen'   => $seizoen,
 			];
 
 			$invoices[] = $invoice;
@@ -1130,11 +1130,11 @@ class DemoExport {
 	protected function export_todos() {
 		$posts = get_posts(
 			[
-				'post_type'    => 'rondo_todo',
-				'numberposts'  => -1,
-				'post_status'  => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ],
-				'orderby'      => 'ID',
-				'order'        => 'ASC',
+				'post_type'   => 'rondo_todo',
+				'numberposts' => -1,
+				'post_status' => [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ],
+				'orderby'     => 'ID',
+				'order'       => 'ASC',
 			]
 		);
 
@@ -1234,7 +1234,7 @@ class DemoExport {
 
 			switch ( $comment->comment_type ) {
 				case 'rondo_note':
-					$note_visibility = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
+					$note_visibility          = get_comment_meta( $comment->comment_ID, '_note_visibility', true );
 					$meta['_note_visibility'] = ! empty( $note_visibility ) ? $note_visibility : 'shared';
 					break;
 
@@ -1274,7 +1274,7 @@ class DemoExport {
 			$exported_comment = $this->anonymize_comment( $exported_comment );
 
 			$exported[] = $exported_comment;
-			$counts[ $comment->comment_type ]++;
+			++$counts[ $comment->comment_type ];
 		}
 
 		WP_CLI::log(
@@ -1413,7 +1413,7 @@ class DemoExport {
 			]
 		);
 
-		$fee_config_count = 0;
+		$fee_config_count      = 0;
 		$discount_config_count = 0;
 
 		if ( ! is_wp_error( $seasons ) ) {
@@ -1422,24 +1422,24 @@ class DemoExport {
 
 				// Membership fees for this season
 				$fee_option_key = "rondo_membership_fees_{$season_slug}";
-				$fee_config = get_option( $fee_option_key );
+				$fee_config     = get_option( $fee_option_key );
 				if ( $fee_config ) {
 					$settings[ $fee_option_key ] = $fee_config;
-					$fee_config_count++;
+					++$fee_config_count;
 				}
 
 				// Family discount for this season
 				$discount_option_key = "rondo_family_discount_{$season_slug}";
-				$discount_config = get_option( $discount_option_key );
+				$discount_config     = get_option( $discount_option_key );
 				if ( $discount_config ) {
 					$settings[ $discount_option_key ] = $discount_config;
-					$discount_config_count++;
+					++$discount_config_count;
 				}
 			}
 		}
 
 		// Player roles and excluded roles
-		$settings['rondo_player_roles'] = get_option( 'rondo_player_roles', [] );
+		$settings['rondo_player_roles']   = get_option( 'rondo_player_roles', [] );
 		$settings['rondo_excluded_roles'] = get_option( 'rondo_excluded_roles', [] );
 
 		// Anniversary milestone settings.
@@ -1450,16 +1450,16 @@ class DemoExport {
 
 		// VOG email settings (nullable)
 		$settings['rondo_vog_from_email'] = $this->normalize_value( get_option( 'rondo_vog_from_email', '' ) );
-		$settings['rondo_vog_from_name'] = $this->normalize_value( get_option( 'rondo_vog_from_name', '' ) );
+		$settings['rondo_vog_from_name']  = $this->normalize_value( get_option( 'rondo_vog_from_name', '' ) );
 
 		// VOG email templates (nullable, HTML)
-		$settings['rondo_vog_template_new'] = $this->normalize_value( get_option( 'rondo_vog_template_new', '' ) );
-		$settings['rondo_vog_template_renewal'] = $this->normalize_value( get_option( 'rondo_vog_template_renewal', '' ) );
-		$settings['rondo_vog_reminder_template_new'] = $this->normalize_value( get_option( 'rondo_vog_reminder_template_new', '' ) );
+		$settings['rondo_vog_template_new']              = $this->normalize_value( get_option( 'rondo_vog_template_new', '' ) );
+		$settings['rondo_vog_template_renewal']          = $this->normalize_value( get_option( 'rondo_vog_template_renewal', '' ) );
+		$settings['rondo_vog_reminder_template_new']     = $this->normalize_value( get_option( 'rondo_vog_reminder_template_new', '' ) );
 		$settings['rondo_vog_reminder_template_renewal'] = $this->normalize_value( get_option( 'rondo_vog_reminder_template_renewal', '' ) );
 
 		// VOG exempt commissies (convert post IDs to fixture refs)
-		$exempt_commissies = get_option( 'rondo_vog_exempt_commissies', [] );
+		$exempt_commissies      = get_option( 'rondo_vog_exempt_commissies', [] );
 		$exempt_commissies_refs = [];
 
 		if ( is_array( $exempt_commissies ) ) {
@@ -1475,7 +1475,7 @@ class DemoExport {
 
 		// Anonymize VOG email settings.
 		$settings['rondo_vog_from_email'] = 'vog@rondo-demo.nl';
-		$settings['rondo_vog_from_name'] = $settings['rondo_club_name'] ?: 'Demo Club';
+		$settings['rondo_vog_from_name']  = $settings['rondo_club_name'] ?: 'Demo Club';
 
 		// Replace VOG email templates with demo placeholders.
 		if ( ! empty( $settings['rondo_vog_template_new'] ) ) {
@@ -1499,46 +1499,46 @@ class DemoExport {
 		$settings['rondo_finance_iban']          = 'NL00DEMO0000000000';
 
 		$payment_term_days = get_option( 'rondo_finance_payment_term_days' );
-		if ( false !== $payment_term_days ) {
+		if ( $payment_term_days !== false ) {
 			$settings['rondo_finance_payment_term_days'] = (int) $payment_term_days;
 		}
 
 		$payment_clause = get_option( 'rondo_finance_payment_clause' );
-		if ( false !== $payment_clause ) {
+		if ( $payment_clause !== false ) {
 			$settings['rondo_finance_payment_clause'] = $payment_clause;
 		}
 
 		$membership_payment_clause = get_option( 'rondo_finance_membership_payment_clause' );
-		if ( false !== $membership_payment_clause ) {
+		if ( $membership_payment_clause !== false ) {
 			$settings['rondo_finance_membership_payment_clause'] = $membership_payment_clause;
 		}
 
 		// Email templates: replace with demo placeholders
-		$settings['rondo_finance_email_template']              = '<p>Dit is een demo e-mailtemplate voor facturen.</p>';
-		$settings['rondo_finance_membership_email_template']   = '<p>Dit is een demo e-mailtemplate voor contributie.</p>';
-		$settings['rondo_finance_installment_email_template']  = '<p>Dit is een demo e-mailtemplate voor termijnen.</p>';
-		$settings['rondo_finance_reminder_1_email_template']   = '<p>Dit is een demo herinnering.</p>';
-		$settings['rondo_finance_reminder_2_email_template']   = '<p>Dit is een demo tweede herinnering.</p>';
+		$settings['rondo_finance_email_template']                    = '<p>Dit is een demo e-mailtemplate voor facturen.</p>';
+		$settings['rondo_finance_membership_email_template']         = '<p>Dit is een demo e-mailtemplate voor contributie.</p>';
+		$settings['rondo_finance_installment_email_template']        = '<p>Dit is een demo e-mailtemplate voor termijnen.</p>';
+		$settings['rondo_finance_reminder_1_email_template']         = '<p>Dit is een demo herinnering.</p>';
+		$settings['rondo_finance_reminder_2_email_template']         = '<p>Dit is een demo tweede herinnering.</p>';
 		$settings['rondo_finance_invoice_reminder_1_email_template'] = '<p>Dit is een demo factuurherinnering.</p>';
 		$settings['rondo_finance_invoice_reminder_2_email_template'] = '<p>Dit is een demo tweede factuurherinnering.</p>';
 
 		$accent_color = get_option( 'rondo_finance_accent_color' );
-		if ( false !== $accent_color ) {
+		if ( $accent_color !== false ) {
 			$settings['rondo_finance_accent_color'] = $accent_color;
 		}
 
 		$accent_background_color = get_option( 'rondo_finance_accent_background_color' );
-		if ( false !== $accent_background_color ) {
+		if ( $accent_background_color !== false ) {
 			$settings['rondo_finance_accent_background_color'] = $accent_background_color;
 		}
 
 		$admin_fee = get_option( 'rondo_finance_admin_fee' );
-		if ( false !== $admin_fee ) {
+		if ( $admin_fee !== false ) {
 			$settings['rondo_finance_admin_fee'] = (float) $admin_fee;
 		}
 
 		$installment_admin_fee = get_option( 'rondo_finance_installment_admin_fee' );
-		if ( false !== $installment_admin_fee ) {
+		if ( $installment_admin_fee !== false ) {
 			$settings['rondo_finance_installment_admin_fee'] = (float) $installment_admin_fee;
 		}
 
@@ -1546,28 +1546,28 @@ class DemoExport {
 		$settings['rondo_finance_active_payment_provider'] = 'mollie';
 
 		// Membership pass configuration (portable values only; no credentials/files).
-		$settings['rondo_membership_pass_apple_cert_attachment_id'] = 0;
-		$settings['rondo_membership_pass_apple_cert_password']      = '';
-		$settings['rondo_membership_pass_apple_pass_type_identifier'] = 'pass.nl.rondo.demo.membership';
-		$settings['rondo_membership_pass_apple_team_identifier']      = 'DEMO123456';
-		$settings['rondo_membership_pass_apple_organization_name']    = 'Demo Club';
+		$settings['rondo_membership_pass_apple_cert_attachment_id']             = 0;
+		$settings['rondo_membership_pass_apple_cert_password']                  = '';
+		$settings['rondo_membership_pass_apple_pass_type_identifier']           = 'pass.nl.rondo.demo.membership';
+		$settings['rondo_membership_pass_apple_team_identifier']                = 'DEMO123456';
+		$settings['rondo_membership_pass_apple_organization_name']              = 'Demo Club';
 		$settings['rondo_membership_pass_google_service_account_attachment_id'] = 0;
-		$settings['rondo_membership_pass_google_issuer_id']                    = '3388000000022952745';
+		$settings['rondo_membership_pass_google_issuer_id']                     = '3388000000022952745';
 
-		$google_class_suffix = get_option( 'rondo_membership_pass_google_class_suffix' );
-		$settings['rondo_membership_pass_google_class_suffix'] = is_string( $google_class_suffix ) && '' !== $google_class_suffix
+		$google_class_suffix                                   = get_option( 'rondo_membership_pass_google_class_suffix' );
+		$settings['rondo_membership_pass_google_class_suffix'] = is_string( $google_class_suffix ) && $google_class_suffix !== ''
 			? sanitize_key( $google_class_suffix )
 			: 'rondo_membership';
 
 		// Capability maps
-		$functie_map  = get_option( 'rondo_functie_capability_map' );
+		$functie_map   = get_option( 'rondo_functie_capability_map' );
 		$commissie_map = get_option( 'rondo_commissie_capability_map' );
 
-		if ( false !== $functie_map ) {
+		if ( $functie_map !== false ) {
 			$settings['rondo_functie_capability_map'] = $functie_map;
 		}
 
-		if ( false !== $commissie_map ) {
+		if ( $commissie_map !== false ) {
 			$settings['rondo_commissie_capability_map'] = $commissie_map;
 		}
 

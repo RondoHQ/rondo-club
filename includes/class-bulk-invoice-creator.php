@@ -84,16 +84,16 @@ class BulkInvoiceCreator {
 
 		// Build job state.
 		$state = [
-			'season'     => $season,
-			'status'     => 'running',
-			'total'      => $total,
-			'offset'     => 0,
-			'created'    => 0,
-			'skipped'    => 0,
-			'errors'     => 0,
-			'started_at' => current_time( 'Y-m-d H:i:s' ),
+			'season'      => $season,
+			'status'      => 'running',
+			'total'       => $total,
+			'offset'      => 0,
+			'created'     => 0,
+			'skipped'     => 0,
+			'errors'      => 0,
+			'started_at'  => current_time( 'Y-m-d H:i:s' ),
 			'finished_at' => null,
-			'person_ids' => $person_ids,
+			'person_ids'  => $person_ids,
 		];
 
 		// Save state (autoload=false — this can be large).
@@ -134,17 +134,17 @@ class BulkInvoiceCreator {
 			$result = $this->create_membership_invoice( $person_id, $season );
 
 			if ( $result === 'created' ) {
-				$state['created']++;
+				++$state['created'];
 			} elseif ( $result === 'skipped' ) {
-				$state['skipped']++;
+				++$state['skipped'];
 			} else {
-				$state['errors']++;
+				++$state['errors'];
 			}
 		}
 
 		// Advance offset.
-		$new_offset        = $offset + count( $batch );
-		$state['offset']   = $new_offset;
+		$new_offset      = $offset + count( $batch );
+		$state['offset'] = $new_offset;
 
 		if ( $new_offset >= $total ) {
 			// All persons processed.
@@ -179,7 +179,7 @@ class BulkInvoiceCreator {
 		}
 
 		// Check former member eligibility.
-		$is_former = ( get_field( 'former_member', $person_id ) == true );
+		$is_former = ( get_field( 'former_member', $person_id ) === true );
 		if ( $is_former ) {
 			$lid_sinds = get_field( 'lid-sinds', $person_id );
 			if ( empty( $lid_sinds ) ) {
@@ -202,12 +202,12 @@ class BulkInvoiceCreator {
 		// Idempotency: check if invoice already exists for this person+season.
 		$existing = get_posts(
 			[
-				'post_type'      => 'rondo_invoice',
-				'post_status'    => 'any',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'any',
+				'posts_per_page'   => 1,
+				'fields'           => 'ids',
 				'suppress_filters' => true,
-				'meta_query'     => [
+				'meta_query'       => [
 					'relation' => 'AND',
 					[
 						'key'   => 'person',
@@ -272,7 +272,7 @@ class BulkInvoiceCreator {
 		$family_discount_amount = $fee_data['family_discount_amount'] ?? 0;
 		if ( $family_discount_amount > 0 ) {
 			$family_rate_pct = round( ( $fee_data['family_discount_rate'] ?? 0 ) * 100 );
-			$line_items[] = [
+			$line_items[]    = [
 				'discipline_case' => null,
 				'description'     => 'Gezinskorting (' . $family_rate_pct . '%)',
 				'amount'          => -$family_discount_amount,
@@ -285,7 +285,7 @@ class BulkInvoiceCreator {
 			$prorata_discount_pct = round( ( 1 - $prorata_percentage ) * 100 );
 			$fee_after_discount   = $fee_data['fee_after_discount'] ?? $fee_data['base_fee'];
 			$prorata_discount_amt = round( $fee_after_discount - $final_fee, 2 );
-			$line_items[] = [
+			$line_items[]         = [
 				'discipline_case' => null,
 				'description'     => 'Instapkorting (' . $prorata_discount_pct . '%) - omdat je later in het seizoen start',
 				'amount'          => -$prorata_discount_amt,
@@ -294,8 +294,8 @@ class BulkInvoiceCreator {
 
 		update_field( 'line_items', $line_items, $post_id );
 
-		$finance_config   = new FinanceConfig();
-		$payment_account  = $finance_config->get_payment_account_snapshot_for_invoice_type( 'membership' );
+		$finance_config  = new FinanceConfig();
+		$payment_account = $finance_config->get_payment_account_snapshot_for_invoice_type( 'membership' );
 		if ( is_wp_error( $payment_account ) ) {
 			error_log( 'Membership invoice account resolution failed for person ' . $person_id . ': ' . $payment_account->get_error_message() );
 			wp_delete_post( $post_id, true );
