@@ -18,7 +18,7 @@ export default [
         ...globals.browser,
       },
     },
-    settings: { react: { version: '18.2' } },
+    settings: { react: { version: '19.0' } },
   },
 
   {
