@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell, CalendarDays } from 'lucide-react';
 import { format } from '@/utils/dateFormat';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -30,6 +31,14 @@ function calculateVogStatus(vogDate) {
  */
 function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdating, personId, isAcf = false }) {
   const hasValue = !!(value && isValidDate(value));
+  const inputRef = useRef(null);
+
+  const save = () => {
+    const val = inputRef.current?.value;
+    if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000 && val !== (value || '')) {
+      onUpdateField(fieldName, val, isAcf ? { isAcf: true } : undefined);
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -38,16 +47,14 @@ function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdat
         {label}
       </span>
       <input
+        ref={inputRef}
         type="date"
-        value={value || ''}
+        key={value || ''}
+        defaultValue={value || ''}
         className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 max-w-[160px]"
         disabled={isUpdating || !personId}
-        onChange={(e) => {
-          const val = e.target.value;
-          if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
-            onUpdateField(fieldName, val, isAcf ? { isAcf: true } : undefined);
-          }
-        }}
+        onChange={save}
+        onBlur={save}
       />
     </div>
   );
