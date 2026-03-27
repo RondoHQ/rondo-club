@@ -29,21 +29,21 @@ function calculateVogStatus(vogDate) {
  * Inline editable date field — always shows an <input type="date">.
  * Saves on change when a valid date is selected.
  */
-function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdating, personId, isAcf = false }) {
+function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdating, personId }) {
   const hasValue = !!(value && isValidDate(value));
   const inputRef = useRef(null);
 
   const save = () => {
     const val = inputRef.current?.value;
     if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000 && val !== (value || '')) {
-      onUpdateField(fieldName, val, isAcf ? { isAcf: true } : undefined);
+      onUpdateField(fieldName, val);
     }
   };
 
   return (
     <div className="flex items-center gap-2">
       <Icon className={`w-4 h-4 flex-shrink-0 ${hasValue ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
-      <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
+      <span className="text-gray-600 dark:text-gray-400 whitespace-nowrap flex-1">
         {label}
       </span>
       <input
@@ -51,7 +51,7 @@ function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdat
         type="date"
         key={value || ''}
         defaultValue={value || ''}
-        className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 max-w-[160px]"
+        className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-gray-100 w-[160px] shrink-0"
         disabled={isUpdating || !personId}
         onChange={save}
         onBlur={save}
@@ -142,7 +142,6 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
           onUpdateField={onUpdateField}
           isUpdating={isUpdating}
           personId={personId}
-          isAcf
         />
       </div>
 

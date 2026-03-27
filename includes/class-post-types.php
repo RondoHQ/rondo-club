@@ -74,6 +74,7 @@ class PostTypes {
 
 		// Person meta: string fields exposed in REST (VOG, Sportlink, primary team).
 		$person_string_meta = [
+			'datum-vog',
 			'vog_email_sent_date',
 			'vog_justis_submitted_date',
 			'vog_reminder_sent_date',
