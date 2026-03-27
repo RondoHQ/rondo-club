@@ -120,31 +120,36 @@ class InvoiceReminderSender {
 		bool $add_bcc,
 		string $heading_type = 'invoice_reminder_1'
 	): true|\WP_Error {
-		// Resolve person from invoice.
+		// Resolve person from invoice, or fall back to customer fields for manual invoices.
 		$person_id = get_field( 'person', $invoice_id );
 		$person    = $person_id ? get_post( $person_id ) : null;
 
-		if ( ! $person || $person->post_type !== 'person' ) {
-			return new \WP_Error(
-				'invalid_person',
-				'Persoon niet gevonden voor factuur ' . $invoice_id . '.'
-			);
+		if ( $person && $person->post_type === 'person' ) {
+			// Build person name.
+			$first_name  = (string) get_field( 'first_name', $person_id );
+			$infix       = (string) get_field( 'infix', $person_id );
+			$last_name   = (string) get_field( 'last_name', $person_id );
+			$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
+			$person_name = implode( ' ', $name_parts );
+
+			// Resolve all invoice recipients (person emails + parents if minor).
+			$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
+		} else {
+			// Manual invoice without a linked person — use customer fields.
+			$customer_attention = (string) get_post_meta( $invoice_id, '_customer_attention', true );
+			$customer_name      = (string) get_post_meta( $invoice_id, '_customer_name', true );
+			$first_name         = $customer_attention ?: $customer_name;
+			$person_name        = $customer_attention ?: $customer_name;
+
+			$customer_email    = (string) get_post_meta( $invoice_id, '_customer_email', true );
+			$customer_cc_email = (string) get_post_meta( $invoice_id, '_customer_cc_email', true );
+			$recipient_emails  = array_filter( [ $customer_email, $customer_cc_email ] );
 		}
-
-		// Build person name.
-		$first_name  = (string) get_field( 'first_name', $person_id );
-		$infix       = (string) get_field( 'infix', $person_id );
-		$last_name   = (string) get_field( 'last_name', $person_id );
-		$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
-		$person_name = implode( ' ', $name_parts );
-
-		// Resolve all invoice recipients (person emails + parents if minor).
-		$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
 
 		if ( empty( $recipient_emails ) ) {
 			return new \WP_Error(
 				'no_email',
-				'Geen e-mailadres gevonden voor persoon ' . $person_id . '.'
+				'Geen e-mailadres gevonden voor factuur ' . $invoice_id . '.'
 			);
 		}
 
