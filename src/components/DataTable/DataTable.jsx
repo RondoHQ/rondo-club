@@ -67,6 +67,8 @@ export default function DataTable({
   filters: controlledFilters,
   onFilterChange: controlledOnFilterChange,
   onClearFilters: controlledOnClearFilters,
+  // Optional row className function: (rowData, index) => string
+  rowClassName,
 }) {
   const isControlled = controlledFilters !== undefined;
 
@@ -229,13 +231,15 @@ export default function DataTable({
               ))}
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {rows.map((row, index) => (
+              {rows.map((row, index) => {
+                const extraClass = rowClassName ? rowClassName(row.original, index) : '';
+                return (
                 <tr
                   key={row.id}
                   className={`hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                    index % 2 === 1
+                    extraClass || (index % 2 === 1
                       ? 'bg-gray-50 dark:bg-gray-800/50'
-                      : 'bg-white dark:bg-gray-800'
+                      : 'bg-white dark:bg-gray-800')
                   }`}
                 >
                   {row.getVisibleCells().map((cell) => {
@@ -253,7 +257,8 @@ export default function DataTable({
                     );
                   })}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
             {footer}
           </table>

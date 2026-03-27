@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Receipt } from 'lucide-react';
+import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useInvoices } from '@/hooks/useInvoices';
+import { useInvoices, useSendInvoice } from '@/hooks/useInvoices';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
@@ -75,172 +75,27 @@ const PLAN_OPTIONS = [
   { value: 'monthly_8', label: '8 termijnen' },
 ];
 
-const COLUMNS = [
-  createColumn({
-    id: 'invoice_number',
-    header: 'Factuurnummer',
-    accessorKey: 'invoice_number',
-    cell: ({ row }) => (
-      <Link
-        to={`/financien/facturen/${row.original.id}`}
-        className="text-electric-cyan dark:text-electric-cyan hover:underline font-medium"
-      >
-        {row.original.invoice_number}
-      </Link>
-    ),
-    filterType: FILTER_TYPES.TEXT,
-    size: 160,
-  }),
-  createColumn({
-    id: 'person_name',
-    header: 'Naam',
-    accessorFn: (row) => row.person?.name || row.customer_name || '',
-    cell: ({ row }) =>
-      row.original.person?.name ? (
-        <Link
-          to={`/people/${row.original.person.id}`}
-          className="text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan"
-        >
-          {row.original.person.name}
-        </Link>
-      ) : row.original.customer_name ? (
-        <span className="text-gray-900 dark:text-gray-100">{row.original.customer_name}</span>
-      ) : (
-        <span className="text-gray-400">-</span>
-      ),
-    filterType: FILTER_TYPES.TEXT,
-    filterLabel: 'Naam',
-  }),
-  createColumn({
-    id: 'total_amount',
-    header: 'Bedrag',
-    accessorFn: (row) => parseFloat(row.total_amount) || 0,
-    cell: ({ row }) => (
-      <span className="font-medium text-gray-900 dark:text-gray-100">
-        {formatCurrency(row.original.total_amount, 2)}
-      </span>
-    ),
-    filterType: null,
-    headerClassName: 'text-right',
-    className: 'text-right',
-    size: 110,
-  }),
-  createColumn({
-    id: 'invoice_type',
-    header: 'Type',
-    accessorKey: 'invoice_type',
-    cell: ({ row }) => {
-      const effectiveType = row.original.invoice_kind === 'credit' ? 'credit' : row.original.invoice_type;
-      return effectiveType ? (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[effectiveType] || ''}`}>
-          {typeLabels[effectiveType] || effectiveType}
-        </span>
-      ) : (
-        <span className="text-gray-400">-</span>
-      );
-    },
-    filterType: FILTER_TYPES.SELECT,
-    filterLabel: 'Type',
-    filterFn: (row, colId, value) => {
-      if (!value) return true;
-      if (value === 'credit') return row.original.invoice_kind === 'credit';
-      if (value === 'manual') return row.original.invoice_type === 'manual' && row.original.invoice_kind !== 'credit';
-      return row.getValue(colId) === value;
-    },
-    filterOptions: [
-      { value: 'membership', label: 'Contributie' },
-      { value: 'discipline', label: 'Tuchtzaken' },
-      { value: 'manual', label: 'Handmatig' },
-      { value: 'credit', label: 'Credit' },
-    ],
-    size: 130,
-  }),
-  createColumn({
-    id: 'status',
-    header: 'Status',
-    accessorKey: 'status',
-    cell: ({ row }) => (
-      <StatusBadge
-        status={row.original.status}
-        reminderCount={row.original.reminder_count || 0}
-        paidInstallments={row.original.paid_installments || 0}
-        installmentCount={row.original.installment_count || 0}
-      />
-    ),
-    filterType: FILTER_TYPES.SELECT,
-    filterLabel: 'Status',
-    getFilterLabel: (value) => (value === STATUS_FILTER_UNPAID ? 'Alle niet betaalde' : (statusLabels[value] || value)),
-    filterFn: (row, colId, value) => {
-      if (!value) return true;
-      if (value === STATUS_FILTER_UNPAID) return row.getValue(colId) !== 'paid';
-      return row.getValue(colId) === value;
-    },
-    filterOptions: [
-      { value: STATUS_FILTER_UNPAID, label: 'Alle niet betaalde' },
-      { value: 'draft', label: 'Concept' },
-      { value: 'sent', label: 'Verstuurd' },
-      { value: 'paid', label: 'Betaald' },
-      { value: 'overdue', label: 'Achterstallig' },
-    ],
-    size: 120,
-  }),
-  createColumn({
-    id: 'plan',
-    header: 'Betaalplan',
-    accessorKey: 'installment_plan',
-    cell: ({ row, getValue }) => {
-      const plan = getValue();
-      if (!plan) return <span className="text-gray-400">-</span>;
-      if (plan === 'full') return 'Volledig';
-      const count = row.original.installment_count;
-      if (count) return `${count} termijnen`;
-      const found = PLAN_OPTIONS.find((o) => o.value === plan);
-      return found ? found.label : plan;
-    },
-    filterType: FILTER_TYPES.SELECT,
-    filterLabel: 'Betaalplan',
-    filterOptions: PLAN_OPTIONS,
-    defaultHidden: true,
-  }),
-  createColumn({
-    id: 'sent_date',
-    header: 'Verstuurd',
-    accessorFn: (row) => (row.sent_date ? parseYmd(row.sent_date).getTime() : 0),
-    cell: ({ row }) =>
-      row.original.sent_date ? format(parseYmd(row.original.sent_date), 'd MMM yyyy') : '-',
-    filterType: null,
-    size: 130,
-  }),
-  createColumn({
-    id: 'reminder_sent_at',
-    header: 'Herinnering',
-    accessorFn: (row) => (row.reminder_sent_at ? new Date(row.reminder_sent_at).getTime() : 0),
-    cell: ({ row }) =>
-      row.original.reminder_sent_at ? format(new Date(row.original.reminder_sent_at), 'd MMM yyyy') : '-',
-    filterType: null,
-    size: 130,
-  }),
-  createColumn({
-    id: 'sent_by',
-    header: 'Verstuurd door',
-    accessorFn: (row) => row.sent_by?.name || '',
-    cell: ({ row }) => row.original.sent_by?.name || '-',
-    filterType: FILTER_TYPES.TEXT,
-    filterLabel: 'Verstuurd door',
-    size: 170,
-  }),
-  createColumn({
-    id: 'created',
-    header: 'Aangemaakt',
-    accessorFn: (row) => new Date(row.created).getTime(),
-    cell: ({ row }) => format(new Date(row.original.created), 'd MMM yyyy'),
-    filterType: null,
-    size: 130,
-  }),
-];
-
 export default function Facturen() {
   useDocumentTitle('Facturen');
+
+  // Selection state for bulk actions
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkSending, setBulkSending] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ sent: 0, total: 0, errors: [] });
+
+  const sendInvoice = useSendInvoice();
+
+  const toggleSelect = useCallback((id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   // URL-based filters for persistence (controlled mode)
   const [searchParams, setSearchParams] = useSearchParams();
@@ -292,9 +147,268 @@ export default function Facturen() {
   // refetchOnMount ensures fresh data when navigating back after create/send actions
   const { data: invoices, isLoading, error } = useInvoices({}, { refetchOnMount: 'always' });
 
+  const handleSelectAll = useCallback((visibleDraftIds) => {
+    setSelectedIds((prev) => {
+      const allSelected = visibleDraftIds.every((id) => prev.has(id));
+      if (allSelected) {
+        // Deselect all visible drafts
+        const next = new Set(prev);
+        visibleDraftIds.forEach((id) => next.delete(id));
+        return next;
+      }
+      // Select all visible drafts
+      return new Set([...prev, ...visibleDraftIds]);
+    });
+  }, []);
+
+  const handleBulkSend = async () => {
+    const ids = Array.from(selectedIds);
+    setBulkSending(true);
+    setBulkProgress({ sent: 0, total: ids.length, errors: [] });
+
+    const errors = [];
+    for (let i = 0; i < ids.length; i++) {
+      try {
+        await sendInvoice.mutateAsync(ids[i]);
+      } catch (err) {
+        errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
+      }
+      setBulkProgress({ sent: i + 1, total: ids.length, errors: [...errors] });
+    }
+
+    setBulkSending(false);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+  };
+
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['invoices'] });
   };
+
+  // Build columns with checkbox column prepended
+  const columns = useMemo(() => {
+    const checkboxCol = {
+      id: '_select',
+      header: ({ table }) => {
+        const visibleDraftIds = table.getFilteredRowModel().rows
+          .filter((row) => row.original.status === 'draft')
+          .map((row) => row.original.id);
+
+        if (visibleDraftIds.length === 0) return null;
+
+        const allSelected = visibleDraftIds.every((id) => selectedIds.has(id));
+        const someSelected = visibleDraftIds.some((id) => selectedIds.has(id));
+
+        return (
+          <button
+            onClick={() => handleSelectAll(visibleDraftIds)}
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            {allSelected ? (
+              <CheckSquare className="w-5 h-5 text-electric-cyan" />
+            ) : someSelected ? (
+              <MinusSquare className="w-5 h-5 text-electric-cyan" />
+            ) : (
+              <Square className="w-5 h-5" />
+            )}
+          </button>
+        );
+      },
+      cell: ({ row }) => {
+        if (row.original.status !== 'draft') return null;
+        const isSelected = selectedIds.has(row.original.id);
+        return (
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(row.original.id); }}
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            {isSelected ? (
+              <CheckSquare className="w-5 h-5 text-electric-cyan" />
+            ) : (
+              <Square className="w-5 h-5" />
+            )}
+          </button>
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+      enableColumnFilter: false,
+      size: 44,
+      meta: { className: 'w-10 !px-2' },
+    };
+
+    return [
+      checkboxCol,
+      createColumn({
+        id: 'invoice_number',
+        header: 'Factuurnummer',
+        accessorKey: 'invoice_number',
+        cell: ({ row }) => (
+          <Link
+            to={`/financien/facturen/${row.original.id}`}
+            className="text-electric-cyan dark:text-electric-cyan hover:underline font-medium"
+          >
+            {row.original.invoice_number}
+          </Link>
+        ),
+        filterType: FILTER_TYPES.TEXT,
+        size: 160,
+      }),
+      createColumn({
+        id: 'person_name',
+        header: 'Naam',
+        accessorFn: (row) => row.person?.name || row.customer_name || '',
+        cell: ({ row }) =>
+          row.original.person?.name ? (
+            <Link
+              to={`/people/${row.original.person.id}`}
+              className="text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan"
+            >
+              {row.original.person.name}
+            </Link>
+          ) : row.original.customer_name ? (
+            <span className="text-gray-900 dark:text-gray-100">{row.original.customer_name}</span>
+          ) : (
+            <span className="text-gray-400">-</span>
+          ),
+        filterType: FILTER_TYPES.TEXT,
+        filterLabel: 'Naam',
+      }),
+      createColumn({
+        id: 'total_amount',
+        header: 'Bedrag',
+        accessorFn: (row) => parseFloat(row.total_amount) || 0,
+        cell: ({ row }) => (
+          <span className="font-medium text-gray-900 dark:text-gray-100">
+            {formatCurrency(row.original.total_amount, 2)}
+          </span>
+        ),
+        filterType: null,
+        headerClassName: 'text-right',
+        className: 'text-right',
+        size: 110,
+      }),
+      createColumn({
+        id: 'invoice_type',
+        header: 'Type',
+        accessorKey: 'invoice_type',
+        cell: ({ row }) => {
+          const effectiveType = row.original.invoice_kind === 'credit' ? 'credit' : row.original.invoice_type;
+          return effectiveType ? (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${typeColors[effectiveType] || ''}`}>
+              {typeLabels[effectiveType] || effectiveType}
+            </span>
+          ) : (
+            <span className="text-gray-400">-</span>
+          );
+        },
+        filterType: FILTER_TYPES.SELECT,
+        filterLabel: 'Type',
+        filterFn: (row, colId, value) => {
+          if (!value) return true;
+          if (value === 'credit') return row.original.invoice_kind === 'credit';
+          if (value === 'manual') return row.original.invoice_type === 'manual' && row.original.invoice_kind !== 'credit';
+          return row.getValue(colId) === value;
+        },
+        filterOptions: [
+          { value: 'membership', label: 'Contributie' },
+          { value: 'discipline', label: 'Tuchtzaken' },
+          { value: 'manual', label: 'Handmatig' },
+          { value: 'credit', label: 'Credit' },
+        ],
+        size: 130,
+      }),
+      createColumn({
+        id: 'status',
+        header: 'Status',
+        accessorKey: 'status',
+        cell: ({ row }) => (
+          <StatusBadge
+            status={row.original.status}
+            reminderCount={row.original.reminder_count || 0}
+            paidInstallments={row.original.paid_installments || 0}
+            installmentCount={row.original.installment_count || 0}
+          />
+        ),
+        filterType: FILTER_TYPES.SELECT,
+        filterLabel: 'Status',
+        getFilterLabel: (value) => (value === STATUS_FILTER_UNPAID ? 'Alle niet betaalde' : (statusLabels[value] || value)),
+        filterFn: (row, colId, value) => {
+          if (!value) return true;
+          if (value === STATUS_FILTER_UNPAID) return row.getValue(colId) !== 'paid';
+          return row.getValue(colId) === value;
+        },
+        filterOptions: [
+          { value: STATUS_FILTER_UNPAID, label: 'Alle niet betaalde' },
+          { value: 'draft', label: 'Concept' },
+          { value: 'sent', label: 'Verstuurd' },
+          { value: 'paid', label: 'Betaald' },
+          { value: 'overdue', label: 'Achterstallig' },
+        ],
+        size: 120,
+      }),
+      createColumn({
+        id: 'plan',
+        header: 'Betaalplan',
+        accessorKey: 'installment_plan',
+        cell: ({ row, getValue }) => {
+          const plan = getValue();
+          if (!plan) return <span className="text-gray-400">-</span>;
+          if (plan === 'full') return 'Volledig';
+          const count = row.original.installment_count;
+          if (count) return `${count} termijnen`;
+          const found = PLAN_OPTIONS.find((o) => o.value === plan);
+          return found ? found.label : plan;
+        },
+        filterType: FILTER_TYPES.SELECT,
+        filterLabel: 'Betaalplan',
+        filterOptions: PLAN_OPTIONS,
+        defaultHidden: true,
+      }),
+      createColumn({
+        id: 'sent_date',
+        header: 'Verstuurd',
+        accessorFn: (row) => (row.sent_date ? parseYmd(row.sent_date).getTime() : 0),
+        cell: ({ row }) =>
+          row.original.sent_date ? format(parseYmd(row.original.sent_date), 'd MMM yyyy') : '-',
+        filterType: null,
+        size: 130,
+      }),
+      createColumn({
+        id: 'reminder_sent_at',
+        header: 'Herinnering',
+        accessorFn: (row) => (row.reminder_sent_at ? new Date(row.reminder_sent_at).getTime() : 0),
+        cell: ({ row }) =>
+          row.original.reminder_sent_at ? format(new Date(row.original.reminder_sent_at), 'd MMM yyyy') : '-',
+        filterType: null,
+        size: 130,
+      }),
+      createColumn({
+        id: 'sent_by',
+        header: 'Verstuurd door',
+        accessorFn: (row) => row.sent_by?.name || '',
+        cell: ({ row }) => row.original.sent_by?.name || '-',
+        filterType: FILTER_TYPES.TEXT,
+        filterLabel: 'Verstuurd door',
+        size: 170,
+      }),
+      createColumn({
+        id: 'created',
+        header: 'Aangemaakt',
+        accessorFn: (row) => new Date(row.created).getTime(),
+        cell: ({ row }) => format(new Date(row.original.created), 'd MMM yyyy'),
+        filterType: null,
+        size: 130,
+      }),
+    ];
+  }, [selectedIds, toggleSelect, handleSelectAll]);
+
+  const rowClassName = useCallback((rowData) => {
+    if (selectedIds.has(rowData.id)) {
+      return 'bg-cyan-50 dark:bg-obsidian/30';
+    }
+    return '';
+  }, [selectedIds]);
 
   if (error) {
     return (
@@ -309,10 +423,69 @@ export default function Facturen() {
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
       <div>
+        {/* Bulk action toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg bg-electric-cyan/10 dark:bg-electric-cyan/5 border border-electric-cyan/20 px-4 py-3">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {selectedIds.size} {selectedIds.size === 1 ? 'factuur' : 'facturen'} geselecteerd
+            </span>
+            <button
+              onClick={handleBulkSend}
+              disabled={bulkSending}
+              className="btn-primary gap-2 text-sm py-1.5 px-3"
+            >
+              {bulkSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Versturen ({bulkProgress.sent}/{bulkProgress.total})...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Verstuur {selectedIds.size === 1 ? 'factuur' : 'alle'}
+                </>
+              )}
+            </button>
+            {!bulkSending && (
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                Deselecteer
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Bulk send result feedback */}
+        {!bulkSending && bulkProgress.total > 0 && (
+          <div className={`mb-4 rounded-lg px-4 py-3 text-sm ${
+            bulkProgress.errors.length > 0
+              ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
+              : 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800'
+          }`}>
+            <p className="font-medium text-gray-900 dark:text-gray-100">
+              {bulkProgress.sent - bulkProgress.errors.length} van {bulkProgress.total} {bulkProgress.total === 1 ? 'factuur' : 'facturen'} verstuurd
+              {bulkProgress.errors.length > 0 && `, ${bulkProgress.errors.length} mislukt`}
+            </p>
+            {bulkProgress.errors.map((err) => (
+              <p key={err.id} className="mt-1 text-red-600 dark:text-red-400">
+                Factuur {err.id}: {err.message}
+              </p>
+            ))}
+            <button
+              onClick={() => setBulkProgress({ sent: 0, total: 0, errors: [] })}
+              className="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
+            >
+              Sluiten
+            </button>
+          </div>
+        )}
+
         <DataTable
           storageKey="facturen"
           data={invoices || []}
-          columns={COLUMNS}
+          columns={columns}
           isLoading={isLoading}
           emptyIcon={<Receipt className="w-8 h-8 text-gray-400 dark:text-gray-500" />}
           emptyTitle="Geen facturen gevonden"
@@ -320,6 +493,7 @@ export default function Facturen() {
           filters={filters}
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
+          rowClassName={rowClassName}
           toolbarEnd={(
             <Link to="/financien/facturen/nieuw" className="btn-primary gap-2">
               <Plus className="w-4 h-4" /> Nieuwe factuur
