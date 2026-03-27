@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, ShieldX, Mail, FileCheck, Bell, CalendarDays } from 'lucide-react';
 import { format } from '@/utils/dateFormat';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { isValidDate } from '@/utils/formatters';
@@ -100,10 +100,40 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
           <span className={`font-medium ${statusColorClass}`}>
             {vogStatus.label}
           </span>
-          {hasValidVogDate && (
-            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
-              ({formatSafeDate(vogDate)})
-            </span>
+        </div>
+      </div>
+
+      {/* VOG Date (editable) */}
+      <div className="space-y-2 text-sm mb-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays className={`w-4 h-4 ${hasValidVogDate ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`} />
+          <span className="text-gray-600 dark:text-gray-400">
+            Datum VOG:
+          </span>
+          {editingField === 'datum-vog' ? (
+            <input
+              type="date"
+              defaultValue={vogDate || ''}
+              className="px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
+              autoFocus
+              disabled={isUpdating}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val && /^\d{4}-\d{2}-\d{2}$/.test(val) && new Date(val).getFullYear() > 2000) {
+                  onUpdateField('datum-vog', val, { isAcf: true });
+                  setEditingField(null);
+                }
+              }}
+              onBlur={() => setEditingField(null)}
+            />
+          ) : (
+            <button
+              onClick={() => setEditingField('datum-vog')}
+              disabled={isUpdating || !personId}
+              className="text-gray-900 dark:text-gray-100 hover:text-brand-primary dark:hover:text-brand-secondary underline decoration-dotted disabled:opacity-50"
+            >
+              {formatSafeDate(vogDate) || 'Niet ingesteld'}
+            </button>
           )}
         </div>
       </div>
@@ -212,9 +242,9 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
         </div>
       )}
 
-      {/* Show valid VOG details */}
+      {/* Show expiry date when valid */}
       {vogStatus.status === 'valid' && hasValidVogDate && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
           <span>Geldig tot: </span>
           <span className="text-gray-900 dark:text-gray-100">
             {format(new Date(new Date(vogDate).setFullYear(new Date(vogDate).getFullYear() + 3)), 'd MMM yyyy')}
