@@ -1565,11 +1565,11 @@ export default function PersonDetail() {
             <VOGCard
               acfData={person?.acf}
               personId={parseInt(id)}
-              onUpdateField={(fieldName, value, { isAcf = false } = {}) => {
-                const data = isAcf
-                  ? { acf: { [fieldName]: value } }
-                  : { meta: { [fieldName]: value } };
-                updatePerson.mutateAsync({ id, data });
+              onUpdateField={(fieldName, value) => {
+                updatePerson.mutateAsync({
+                  id,
+                  data: { meta: { [fieldName]: value } },
+                });
               }}
               isUpdating={updatePerson.isPending}
             />
