@@ -17,7 +17,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useDashboard,
-  useDashboardSettings,
   useUpdateDashboardSettings,
   DEFAULT_DASHBOARD_CARDS,
 } from '@/hooks/useDashboard.js';
@@ -406,7 +405,6 @@ function StatsRow({ stats }) {
 
 export default function Dashboard() {
   const { data, isLoading, error } = useDashboard();
-  const { data: dashboardSettings } = useDashboardSettings();
   const updateDashboardSettings = useUpdateDashboardSettings();
   const queryClient = useQueryClient();
 
@@ -444,7 +442,7 @@ export default function Dashboard() {
     return <DashboardError error={error} />;
   }
 
-  const { stats, recent_people, upcoming_reminders, upcoming_anniversaries, recently_contacted, open_todos: openTodos } = data || {};
+  const { stats, recent_people, upcoming_reminders, upcoming_anniversaries, recently_contacted, open_todos: openTodos, dashboard_settings: dashboardSettings } = data || {};
   const totalItems = (stats?.total_people || 0) + (stats?.total_teams || 0) + (stats?.total_dates || 0);
   const isEmpty = totalItems === 0;
 

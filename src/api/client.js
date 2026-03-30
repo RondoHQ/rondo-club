@@ -96,8 +96,23 @@ export const prmApi = {
   // Current season helper
   getCurrentSeason: () => api.get('/rondo/v1/current-season'),
   
-  // Dashboard
-  getDashboard: () => api.get('/rondo/v1/dashboard'),
+  // Dashboard — uses preloaded fetch from wp_head if available
+  getDashboard: async () => {
+    if (window.__dashboardPreload) {
+      try {
+        const preloaded = window.__dashboardPreload;
+        window.__dashboardPreload = null; // Use only once
+        const response = await preloaded;
+        if (response.ok) {
+          const data = await response.json();
+          return { data };
+        }
+      } catch {
+        // Preload failed, fall through to normal fetch
+      }
+    }
+    return api.get('/rondo/v1/dashboard');
+  },
 
   // Kaderlijst snapshot (database-backed cache)
   getKaderlijstSnapshot: () => api.get('/rondo/v1/kaderlijst/snapshot'),

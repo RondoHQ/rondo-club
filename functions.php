@@ -674,6 +674,24 @@ function rondo_theme_add_config_to_head() {
 add_action( 'wp_head', 'rondo_theme_add_config_to_head', 0 );
 
 /**
+ * Preload the dashboard API endpoint so the browser starts fetching before JS boots.
+ *
+ * Uses <link rel="preload"> with fetch destination and the WP REST nonce cookie
+ * to ensure the request is authenticated and reusable by the React app.
+ */
+function rondo_preload_dashboard_api() {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+	$dashboard_url = rest_url( 'rondo/v1/dashboard' );
+	$nonce         = wp_create_nonce( 'wp_rest' );
+	// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+	echo '<link rel="preload" href="' . esc_url( $dashboard_url ) . '" as="fetch" crossorigin="anonymous">' . "\n";
+	echo '<script>window.__dashboardPreload = fetch(' . wp_json_encode( $dashboard_url ) . ', { headers: { "X-WP-Nonce": ' . wp_json_encode( $nonce ) . ' } });</script>' . "\n";
+}
+add_action( 'wp_head', 'rondo_preload_dashboard_api', 1 );
+
+/**
  * Output PWA meta tags for iOS and Android support
  *
  * vite-plugin-pwa handles manifest generation, but we need to manually
@@ -868,6 +886,7 @@ function rondo_theme_rewrite_rules() {
 	add_rewrite_rule( '^app/(.+)/?', 'index.php', 'top' );
 }
 add_action( 'init', 'rondo_theme_rewrite_rules' );
+add_action( 'init', 'rondo_maybe_add_postmeta_indexes' );
 
 /**
  * Theme activation - includes CRM initialization
@@ -896,8 +915,50 @@ function rondo_theme_activation() {
 	// Register public payment page rewrite rules
 	$payment_page = new PublicPaymentPage();
 	$payment_page->register_rewrite_rules();
+
+	// Add custom postmeta indexes for dashboard performance.
+	rondo_maybe_add_postmeta_indexes();
 }
 add_action( 'after_switch_theme', 'rondo_theme_activation' );
+
+/**
+ * Add composite indexes to wp_postmeta for frequently queried meta keys.
+ *
+ * WordPress only has (meta_id, post_id, meta_key) indexes on postmeta. Dashboard
+ * queries that filter by meta_key + meta_value benefit from a composite index.
+ * Runs once per version bump via an option check, and on theme activation.
+ */
+function rondo_maybe_add_postmeta_indexes() {
+	$index_version = '1';
+	if ( get_option( 'rondo_postmeta_index_version' ) === $index_version ) {
+		return;
+	}
+
+	global $wpdb;
+
+	$indexes = [
+		'rondo_meta_key_value' => "ALTER TABLE {$wpdb->postmeta} ADD INDEX rondo_meta_key_value (meta_key(40), meta_value(20))",
+	];
+
+	foreach ( $indexes as $name => $sql ) {
+		// Check if index already exists.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$existing = $wpdb->get_var(
+			$wpdb->prepare(
+				'SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = %s AND index_name = %s',
+				$wpdb->postmeta,
+				$name
+			)
+		);
+
+		if ( ! $existing ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $sql );
+		}
+	}
+
+	update_option( 'rondo_postmeta_index_version', $index_version, true );
+}
 
 /**
  * Theme deactivation - cleanup CRM functionality

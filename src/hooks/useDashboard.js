@@ -12,11 +12,23 @@ export const DEFAULT_DASHBOARD_CARDS = [
 ];
 
 export function useDashboard() {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
       const response = await prmApi.getDashboard();
-      return response.data;
+      const data = response.data;
+
+      // Seed related caches so other components don't need separate API calls
+      if (data.current_user) {
+        queryClient.setQueryData(['current-user'], data.current_user);
+      }
+      if (data.dashboard_settings) {
+        queryClient.setQueryData(['dashboardSettings'], data.dashboard_settings);
+      }
+
+      return data;
     },
     staleTime: 15 * 60 * 1000, // 15 minutes (matches server-side transient cache)
     refetchOnMount: false,
@@ -108,6 +120,7 @@ export function useUpdateDashboardSettings() {
     mutationFn: (settings) => prmApi.updateDashboardSettings(settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboardSettings'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 }
