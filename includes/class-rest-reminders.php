@@ -349,13 +349,15 @@ class Reminders extends Base {
 		$cutoff       = $today->modify( '+' . max( 0, $days_ahead ) . ' days' );
 		$milestones   = $this->get_anniversary_milestones();
 
-		$people = get_posts(
+		// Phase 1: Get only person IDs (not full WP_Post objects)
+		$person_ids = get_posts(
 			[
 				'post_type'              => 'person',
 				'post_status'            => 'publish',
 				'posts_per_page'         => -1,
 				'no_found_rows'          => true,
-				'update_post_meta_cache' => true,
+				'fields'                 => 'ids',
+				'update_post_meta_cache' => false,
 				'update_post_term_cache' => false,
 				'meta_query'             => [
 					'relation' => 'OR',
@@ -372,25 +374,46 @@ class Reminders extends Base {
 			]
 		);
 
-		$results       = [];
-		$person_ids    = array_map(
-			static function ( $person ) {
-				return (int) $person->ID;
-			},
-			$people
+		if ( empty( $person_ids ) ) {
+			return [];
+		}
+
+		// Phase 2: Batch-fetch only the meta we need for date math
+		global $wpdb;
+		$id_placeholders = implode( ',', array_fill( 0, count( $person_ids ), '%d' ) );
+		// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$meta_rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id, meta_key, meta_value
+				FROM {$wpdb->postmeta}
+				WHERE post_id IN ($id_placeholders)
+				AND meta_key IN ('lid-sinds', 'huidig-vrijwilliger')",
+				...$person_ids
+			)
 		);
+		// phpcs:enable
+
+		$meta_map = [];
+		foreach ( $meta_rows as $row ) {
+			$meta_map[ (int) $row->post_id ][ $row->meta_key ] = $row->meta_value;
+		}
+
+		// Phase 3: Do date math on meta values only — identify matching person IDs
+		$matched_ids = [];
+		$results     = [];
+
 		$volunteer_ids = [];
 		foreach ( $person_ids as $person_id ) {
-			if ( ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ) ) {
+			if ( ! empty( $meta_map[ $person_id ]['huidig-vrijwilliger'] ) ) {
 				$volunteer_ids[] = $person_id;
 			}
 		}
 		$volunteer_start_dates = $this->get_cached_volunteer_start_dates_for_people( $volunteer_ids );
 
-		foreach ( $people as $person ) {
-			$person_id         = (int) $person->ID;
-			$person_summary    = $this->format_anniversary_person_summary( $person );
-			$member_since      = get_post_meta( $person_id, 'lid-sinds', true );
+		// Collect preliminary results with just IDs (no WP_Post loading yet)
+		$preliminary = [];
+		foreach ( $person_ids as $person_id ) {
+			$member_since      = $meta_map[ $person_id ]['lid-sinds'] ?? '';
 			$member_start_date = null;
 			if ( ! empty( $member_since ) ) {
 				$member_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $member_since, wp_timezone() );
@@ -398,29 +421,88 @@ class Reminders extends Base {
 
 			if ( $member_start_date ) {
 				foreach ( $milestones['member'] as $milestone_years ) {
-					$item = $this->build_anniversary_item( $person, $person_summary, 'member', $milestone_years, $member_start_date, $today, $window_start, $cutoff );
-					if ( $item ) {
-						$results[] = $item;
+					$anniversary_date = $this->calculate_anniversary_date( $member_start_date, $milestone_years );
+					if ( $anniversary_date && $anniversary_date >= $window_start && $anniversary_date <= $cutoff ) {
+						$matched_ids[ $person_id ] = true;
+						$preliminary[]             = [
+							'person_id'       => $person_id,
+							'type'            => 'member',
+							'milestone_years' => $milestone_years,
+							'start_date'      => $member_start_date,
+						];
 					}
 				}
 			}
 
-			if ( ! empty( get_post_meta( $person_id, 'huidig-vrijwilliger', true ) ) ) {
-				$volunteer_start_date = null;
-				if ( ! empty( $volunteer_start_dates[ $person_id ] ) ) {
-					$volunteer_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $volunteer_start_dates[ $person_id ], wp_timezone() );
-				}
-
-				if ( ! $volunteer_start_date ) {
-					continue;
-				}
-
-				foreach ( $milestones['volunteer'] as $milestone_years ) {
-					$item = $this->build_anniversary_item( $person, $person_summary, 'volunteer', $milestone_years, $volunteer_start_date, $today, $window_start, $cutoff );
-					if ( $item ) {
-						$results[] = $item;
+			if ( ! empty( $meta_map[ $person_id ]['huidig-vrijwilliger'] ) ) {
+				$vol_start = $volunteer_start_dates[ $person_id ] ?? '';
+				if ( ! empty( $vol_start ) ) {
+					$volunteer_start_date = \DateTimeImmutable::createFromFormat( 'Y-m-d', $vol_start, wp_timezone() );
+					if ( $volunteer_start_date ) {
+						foreach ( $milestones['volunteer'] as $milestone_years ) {
+							$anniversary_date = $this->calculate_anniversary_date( $volunteer_start_date, $milestone_years );
+							if ( $anniversary_date && $anniversary_date >= $window_start && $anniversary_date <= $cutoff ) {
+								$matched_ids[ $person_id ] = true;
+								$preliminary[]             = [
+									'person_id'       => $person_id,
+									'type'            => 'volunteer',
+									'milestone_years' => $milestone_years,
+									'start_date'      => $volunteer_start_date,
+								];
+							}
+						}
 					}
 				}
+			}
+		}
+
+		if ( empty( $preliminary ) ) {
+			return [];
+		}
+
+		// Phase 4: Load full WP_Post objects only for matched people
+		$matched_id_list = array_keys( $matched_ids );
+		$people          = get_posts(
+			[
+				'post_type'              => 'person',
+				'post_status'            => 'publish',
+				'posts_per_page'         => count( $matched_id_list ),
+				'post__in'               => $matched_id_list,
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => true,
+				'update_post_term_cache' => false,
+			]
+		);
+
+		$people_by_id = [];
+		foreach ( $people as $person ) {
+			$people_by_id[ $person->ID ] = $person;
+		}
+
+		// Phase 5: Build final results with person summaries
+		$summary_cache = [];
+		foreach ( $preliminary as $entry ) {
+			$person = $people_by_id[ $entry['person_id'] ] ?? null;
+			if ( ! $person ) {
+				continue;
+			}
+
+			if ( ! isset( $summary_cache[ $entry['person_id'] ] ) ) {
+				$summary_cache[ $entry['person_id'] ] = $this->format_anniversary_person_summary( $person );
+			}
+
+			$item = $this->build_anniversary_item(
+				$person,
+				$summary_cache[ $entry['person_id'] ],
+				$entry['type'],
+				$entry['milestone_years'],
+				$entry['start_date'],
+				$today,
+				$window_start,
+				$cutoff
+			);
+			if ( $item ) {
+				$results[] = $item;
 			}
 		}
 

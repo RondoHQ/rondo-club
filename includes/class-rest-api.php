@@ -73,7 +73,7 @@ class Api extends Base {
 		// moved to Rondo\REST\Reminders constructor
 
 		// Dashboard cache invalidation hooks.
-		$post_types = [ 'person', 'team', 'commissie', 'rondo_todo', 'rondo_feedback' ];
+		$post_types = [ 'person', 'team', 'commissie', 'rondo_todo', 'rondo_feedback', 'discipline_case' ];
 		foreach ( $post_types as $post_type ) {
 			add_action( 'save_post_' . $post_type, [ $this, 'invalidate_dashboard_cache' ] );
 		}
@@ -889,32 +889,13 @@ class Api extends Base {
 			return rest_ensure_response( $cached );
 		}
 
-		// Get post counts (all approved users see all data)
-		// Access control is already applied via WP_Query filters
-		// Exclude former members from people count
-		$people_query     = new \WP_Query(
-			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'OR',
-					[
-						'key'     => 'former_member',
-						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'     => 'former_member',
-						'value'   => '1',
-						'compare' => '!=',
-					],
-				],
-			]
-		);
-		$total_people     = $people_query->found_posts;
-		$total_teams      = wp_count_posts( 'team' )->publish;
-		$total_commissies = wp_count_posts( 'commissie' )->publish;
+		// Consolidated counts: people, volunteers, and open feedback in a single query.
+		$counts              = $this->get_dashboard_counts();
+		$total_people        = (int) $counts->total_people;
+		$total_volunteers    = (int) $counts->total_volunteers;
+		$open_feedback_count = (int) $counts->open_feedback_count;
+		$total_teams         = wp_count_posts( 'team' )->publish;
+		$total_commissies    = wp_count_posts( 'commissie' )->publish;
 
 		// Recent people (exclude former members)
 		$recent_people = get_posts(
@@ -947,38 +928,48 @@ class Api extends Base {
 		$reminders_rest         = new Reminders();
 		$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
 
-		// Get open todos count
-		$open_todos_count = $this->count_open_todos();
-
-		// Get awaiting todos count
+		// Get open/awaiting todos count (user-specific, can't consolidate)
+		$open_todos_count     = $this->count_open_todos();
 		$awaiting_todos_count = $this->count_awaiting_todos();
-
-		// Get total volunteers count
-		$total_volunteers = $this->count_volunteers();
-
-		// Get open feedback count
-		$open_feedback_count = $this->count_open_feedback();
 
 		// Recently contacted (people with most recent activities)
 		$recently_contacted = $this->get_recently_contacted_people( 5 );
 
+		// VOG counts (conditional on capability)
+		$vog_counts = null;
+		if ( current_user_can( 'vog' ) ) {
+			$vog_counts = $this->get_vog_counts();
+		}
+
+		// Discipline case count (conditional on capability)
+		$discipline_case_count = null;
+		if ( current_user_can( 'fairplay' ) ) {
+			$discipline_case_count = $this->get_discipline_case_count();
+		}
+
+		// Open todos for dashboard display (limited to 5)
+		$open_todos = $this->get_dashboard_todos( 5 );
+
 		$response_data = [
 			'stats'                  => [
-				'total_people'         => $total_people,
-				'total_teams'          => $total_teams,
-				'total_commissies'     => $total_commissies,
-				'open_todos_count'     => $open_todos_count,
-				'awaiting_todos_count' => $awaiting_todos_count,
-				'total_volunteers'     => $total_volunteers,
-				'open_feedback_count'  => $open_feedback_count,
+				'total_people'          => $total_people,
+				'total_teams'           => $total_teams,
+				'total_commissies'      => $total_commissies,
+				'open_todos_count'      => $open_todos_count,
+				'awaiting_todos_count'  => $awaiting_todos_count,
+				'total_volunteers'      => $total_volunteers,
+				'open_feedback_count'   => $open_feedback_count,
+				'vog_counts'            => $vog_counts,
+				'discipline_case_count' => $discipline_case_count,
 			],
 			'recent_people'          => array_map( [ $this, 'format_person_summary' ], $recent_people ),
 			'upcoming_reminders'     => $this->limit_items_with_all_today( $upcoming_reminders, 5 ),
 			'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
 			'recently_contacted'     => $recently_contacted,
+			'open_todos'             => $open_todos,
 		];
 
-		set_transient( $cache_key, $response_data, 5 * MINUTE_IN_SECONDS );
+		set_transient( $cache_key, $response_data, 15 * MINUTE_IN_SECONDS );
 
 		return rest_ensure_response( $response_data );
 	}
@@ -1145,65 +1136,206 @@ class Api extends Base {
 	 * Counts published person posts with huidig-vrijwilliger meta set to true,
 	 * excluding former members.
 	 */
-	private function count_volunteers() {
-		$query = new \WP_Query(
-			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'AND',
-					[
-						'key'   => 'huidig-vrijwilliger',
-						'value' => '1',
-					],
-					[
-						'relation' => 'OR',
-						[
-							'key'     => 'former_member',
-							'compare' => 'NOT EXISTS',
-						],
-						[
-							'key'     => 'former_member',
-							'value'   => '1',
-							'compare' => '!=',
-						],
-					],
-				],
-			]
+	/**
+	 * Get people, volunteer, and open feedback counts in a single query.
+	 *
+	 * Replaces three separate WP_Query calls with one raw SQL query.
+	 *
+	 * @return object Object with total_people, total_volunteers, open_feedback_count.
+	 */
+	private function get_dashboard_counts() {
+		global $wpdb;
+
+		return $wpdb->get_row(
+			"SELECT
+				SUM(CASE WHEN p.post_type = 'person'
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+					THEN 1 ELSE 0 END) AS total_people,
+				SUM(CASE WHEN p.post_type = 'person'
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+					AND hv.meta_value = '1'
+					THEN 1 ELSE 0 END) AS total_volunteers,
+				SUM(CASE WHEN p.post_type = 'rondo_feedback'
+					AND (fs.meta_value IS NULL OR fs.meta_value NOT IN ('resolved','declined'))
+					THEN 1 ELSE 0 END) AS open_feedback_count
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+			LEFT JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger'
+			LEFT JOIN {$wpdb->postmeta} fs ON p.ID = fs.post_id AND fs.meta_key = 'status'
+			WHERE p.post_status = 'publish'
+			AND p.post_type IN ('person', 'rondo_feedback')"
 		);
+	}
+
+	/**
+	 * Get VOG counts for the dashboard in a single query.
+	 *
+	 * Returns three counts:
+	 * - not_submitted_to_justis: volunteers needing VOG who have NOT been submitted
+	 * - submitted_to_justis: volunteers needing VOG who HAVE been submitted
+	 * - expiring_soon: volunteers whose VOG expires within 30 days
+	 *
+	 * @return array Associative array with the three counts.
+	 */
+	private function get_vog_counts() {
+		global $wpdb;
+
+		$cutoff_date   = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
+		$expired_date  = gmdate( 'Y-m-d', strtotime( '-3 years' ) );
+		$expiring_date = gmdate( 'Y-m-d', strtotime( '+30 days -3 years' ) );
+
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT
+					SUM(CASE WHEN needs_vog = 1 AND (vjs.meta_value IS NULL OR vjs.meta_value = '') THEN 1 ELSE 0 END) AS not_submitted_to_justis,
+					SUM(CASE WHEN needs_vog = 1 AND (vjs.meta_value IS NOT NULL AND vjs.meta_value != '') THEN 1 ELSE 0 END) AS submitted_to_justis,
+					SUM(CASE WHEN expiring_soon = 1 THEN 1 ELSE 0 END) AS expiring_soon
+				FROM (
+					SELECT p.ID,
+						CASE WHEN (dv.meta_value IS NULL OR dv.meta_value = '' OR dv.meta_value <= %s) THEN 1 ELSE 0 END AS needs_vog,
+						CASE WHEN (dv.meta_value IS NOT NULL AND dv.meta_value != '' AND dv.meta_value > %s AND dv.meta_value <= %s) THEN 1 ELSE 0 END AS expiring_soon
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger' AND hv.meta_value = '1'
+					LEFT JOIN {$wpdb->postmeta} fm ON p.ID = fm.post_id AND fm.meta_key = 'former_member'
+					LEFT JOIN {$wpdb->postmeta} dv ON p.ID = dv.post_id AND dv.meta_key = 'datum-vog'
+					WHERE p.post_type = 'person'
+					AND p.post_status = 'publish'
+					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
+				) AS volunteers
+				LEFT JOIN {$wpdb->postmeta} vjs ON volunteers.ID = vjs.post_id AND vjs.meta_key = 'vog_justis_submitted_date'",
+				$cutoff_date,
+				$expired_date,
+				$expiring_date
+			)
+		);
+
+		return [
+			'not_submitted_to_justis' => (int) ( $row->not_submitted_to_justis ?? 0 ),
+			'submitted_to_justis'     => (int) ( $row->submitted_to_justis ?? 0 ),
+			'expiring_soon'           => (int) ( $row->expiring_soon ?? 0 ),
+		];
+	}
+
+	/**
+	 * Get discipline case count for the current season.
+	 *
+	 * @return int Number of discipline cases in the current season.
+	 */
+	private function get_discipline_case_count() {
+		$taxonomies     = new \RONDO_Taxonomies();
+		$current_season = $taxonomies->get_current_season();
+
+		$args = [
+			'post_type'      => 'discipline_case',
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'no_found_rows'  => false,
+		];
+
+		if ( $current_season ) {
+			$args['tax_query'] = [
+				[
+					'taxonomy' => 'seizoen',
+					'terms'    => $current_season->term_id,
+				],
+			];
+		}
+
+		$query = new \WP_Query( $args );
 		return $query->found_posts;
 	}
 
 	/**
-	 * Count open feedback items.
+	 * Get open todos for dashboard display.
 	 *
-	 * Counts published feedback posts with status NOT IN ('resolved', 'declined').
-	 * Also includes posts without a status field (which default to 'new').
+	 * Returns formatted todos visible to the current user, sorted by due date.
+	 *
+	 * @param int $limit Maximum number of todos to return.
+	 * @return array Formatted todo items.
 	 */
-	private function count_open_feedback() {
-		$query = new \WP_Query(
+	private function get_dashboard_todos( $limit = 5 ) {
+		$current_user_id = get_current_user_id();
+
+		$todos = get_posts(
 			[
-				'post_type'      => 'rondo_feedback',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'meta_query'     => [
-					'relation' => 'OR',
-					[
-						'key'     => 'status',
-						'value'   => [ 'resolved', 'declined' ],
-						'compare' => 'NOT IN',
-					],
-					[
-						'key'     => 'status',
-						'compare' => 'NOT EXISTS',
-					],
-				],
+				'post_type'        => 'rondo_todo',
+				'posts_per_page'   => $limit * 2, // Fetch extra to account for access filtering
+				'post_status'      => 'rondo_open',
+				'suppress_filters' => false,
+				'orderby'          => 'date',
+				'order'            => 'DESC',
 			]
 		);
-		return $query->found_posts;
+
+		$formatted = [];
+		foreach ( $todos as $todo ) {
+			// Access check: user must be author or assigned user
+			$assigned_user = (int) get_post_meta( $todo->ID, 'assigned_user_id', true );
+			if ( (int) $todo->post_author !== $current_user_id && $assigned_user !== $current_user_id ) {
+				continue;
+			}
+
+			$person_ids = get_field( 'related_persons', $todo->ID ) ?: [];
+			if ( ! is_array( $person_ids ) ) {
+				$person_ids = $person_ids ? [ $person_ids ] : [];
+			}
+
+			$persons = [];
+			foreach ( $person_ids as $pid ) {
+				$persons[] = [
+					'id'        => (int) $pid,
+					'name'      => html_entity_decode( get_the_title( $pid ), ENT_QUOTES, 'UTF-8' ),
+					'thumbnail' => get_the_post_thumbnail_url( $pid, 'thumbnail' ) ?: '',
+				];
+			}
+
+			$status_map = [
+				'rondo_open'      => 'open',
+				'rondo_awaiting'  => 'awaiting',
+				'rondo_completed' => 'completed',
+				'publish'         => 'open',
+			];
+
+			$formatted[] = [
+				'id'               => $todo->ID,
+				'type'             => 'todo',
+				'content'          => html_entity_decode( $todo->post_title, ENT_QUOTES, 'UTF-8' ),
+				'person_id'        => $persons[0]['id'] ?? null,
+				'person_name'      => $persons[0]['name'] ?? '',
+				'person_thumbnail' => $persons[0]['thumbnail'] ?? '',
+				'persons'          => $persons,
+				'author_id'        => (int) $todo->post_author,
+				'assigned_user_id' => $assigned_user > 0 ? $assigned_user : null,
+				'created'          => $todo->post_date,
+				'status'           => $status_map[ $todo->post_status ] ?? 'open',
+				'due_date'         => get_field( 'due_date', $todo->ID ) ?: null,
+				'awaiting_since'   => get_field( 'awaiting_since', $todo->ID ) ?: null,
+			];
+
+			if ( count( $formatted ) >= $limit ) {
+				break;
+			}
+		}
+
+		// Sort by due date (earliest first), nulls last
+		usort(
+			$formatted,
+			function ( $a, $b ) {
+				if ( $a['due_date'] && $b['due_date'] ) {
+					return strtotime( $a['due_date'] ) - strtotime( $b['due_date'] );
+				}
+				if ( $a['due_date'] && ! $b['due_date'] ) {
+					return -1;
+				}
+				if ( ! $a['due_date'] && $b['due_date'] ) {
+					return 1;
+				}
+				return strtotime( $b['created'] ) - strtotime( $a['created'] );
+			}
+		);
+
+		return $formatted;
 	}
 
 	/**

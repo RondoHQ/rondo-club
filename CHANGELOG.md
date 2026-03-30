@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [32.7.0] - 2026-03-30
+
+### Changed
+- Dashboard API calls reduced from 10 to 3 by consolidating VOG counts, discipline case count, and open todos into the main dashboard endpoint
+- Replaced 3 separate WP_Query count queries (people, volunteers, open feedback) with a single SQL query
+- VOG counts computed server-side in one SQL query instead of 3 separate filtered people API calls
+- Anniversary query optimized: loads only person IDs first, does date math on raw meta, then loads full objects only for matches
+- Transient cache TTL increased from 5 to 15 minutes (with same invalidation triggers)
+- Frontend staleTime aligned to 15 minutes to match server cache
+- Removed debug console.log from useDashboard hook
+
 ## [32.6.1] - 2026-03-15
 
 ### Changed

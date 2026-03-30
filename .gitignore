@@ -46,6 +46,7 @@ fixtures/demo-fixture.json
 .gsd/activity/
 .gsd/runtime/
 .gsd/worktrees/
+.claude/worktrees/
 .gsd/auto.lock
 .gsd/metrics.json
 .gsd/STATE.md
