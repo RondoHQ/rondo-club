@@ -1459,3 +1459,22 @@ function rondo_rotate_debug_log() {
 if ( ! wp_next_scheduled( 'rondo_rotate_debug_log' ) ) {
 	wp_schedule_event( strtotime( 'tomorrow midnight' ), 'daily', 'rondo_rotate_debug_log' );
 }
+
+/**
+ * Warm the anniversary data cache daily at 00:01.
+ *
+ * Rebuilds the shared transient so the first dashboard load of the day
+ * doesn't have to compute anniversary data on the fly.
+ */
+function rondo_warm_anniversary_cache() {
+	$reminders_rest = new \Rondo\REST\Reminders();
+	$data           = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+	set_transient( 'rondo_anniversaries_365', $data, DAY_IN_SECONDS );
+}
+add_action( 'rondo_warm_anniversary_cache', 'rondo_warm_anniversary_cache' );
+
+if ( ! wp_next_scheduled( 'rondo_warm_anniversary_cache' ) ) {
+	// Schedule for 00:01 local time tomorrow.
+	$rondo_tomorrow = new DateTimeImmutable( 'tomorrow 00:01', wp_timezone() );
+	wp_schedule_event( $rondo_tomorrow->getTimestamp(), 'daily', 'rondo_warm_anniversary_cache' );
+}
