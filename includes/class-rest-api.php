@@ -87,6 +87,7 @@ class Api extends Base {
 	public function invalidate_dashboard_cache() {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_rondo_dashboard_%' OR option_name LIKE '_transient_timeout_rondo_dashboard_%'" );
+		delete_transient( 'rondo_anniversaries_365' );
 	}
 
 	/**
@@ -922,11 +923,18 @@ class Api extends Base {
 			]
 		);
 
-		// Upcoming reminders
-		$reminders_handler      = new \RONDO_Reminders();
-		$upcoming_reminders     = $reminders_handler->get_upcoming_reminders( 14 );
-		$reminders_rest         = new Reminders();
-		$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+		// Upcoming reminders (birthday query now filtered in SQL)
+		$reminders_handler  = new \RONDO_Reminders();
+		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
+
+		// Anniversaries: shared cache (not per-user, data is the same for everyone)
+		$anniversary_cache_key  = 'rondo_anniversaries_365';
+		$upcoming_anniversaries = get_transient( $anniversary_cache_key );
+		if ( $upcoming_anniversaries === false ) {
+			$reminders_rest         = new Reminders();
+			$upcoming_anniversaries = $reminders_rest->get_upcoming_anniversaries_data( 365, 20 );
+			set_transient( $anniversary_cache_key, $upcoming_anniversaries, DAY_IN_SECONDS );
+		}
 
 		// Get open/awaiting todos count (user-specific, can't consolidate)
 		$open_todos_count     = $this->count_open_todos();
@@ -950,6 +958,11 @@ class Api extends Base {
 		// Open todos for dashboard display (limited to 5)
 		$open_todos = $this->get_dashboard_todos( 5 );
 
+		// User settings (avoids separate API calls)
+		$user_settings      = new \Rondo\REST\UserSettings();
+		$dashboard_settings = $user_settings->get_dashboard_settings_data( $user_id );
+		$current_user_data  = $user_settings->get_current_user_data( $user_id );
+
 		$response_data = [
 			'stats'                  => [
 				'total_people'          => $total_people,
@@ -967,6 +980,8 @@ class Api extends Base {
 			'upcoming_anniversaries' => $this->limit_items_with_all_today( $upcoming_anniversaries, 5 ),
 			'recently_contacted'     => $recently_contacted,
 			'open_todos'             => $open_todos,
+			'dashboard_settings'     => $dashboard_settings,
+			'current_user'           => $current_user_data,
 		];
 
 		set_transient( $cache_key, $response_data, 15 * MINUTE_IN_SECONDS );

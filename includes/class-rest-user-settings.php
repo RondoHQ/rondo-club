@@ -541,9 +541,13 @@ class UserSettings extends Base {
 	 *
 	 * @return \WP_REST_Response
 	 */
-	public function get_dashboard_settings() {
-		$user_id = get_current_user_id();
-
+	/**
+	 * Get dashboard settings data for a user.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return array Dashboard settings array.
+	 */
+	public function get_dashboard_settings_data( $user_id ) {
 		$visible_cards = get_user_meta( $user_id, 'rondo_dashboard_visible_cards', true );
 		if ( empty( $visible_cards ) || ! is_array( $visible_cards ) ) {
 			$visible_cards = self::DEFAULT_DASHBOARD_ORDER;
@@ -554,12 +558,17 @@ class UserSettings extends Base {
 			$card_order = self::DEFAULT_DASHBOARD_ORDER;
 		}
 
-		return rest_ensure_response(
-			[
-				'visible_cards' => $visible_cards,
-				'card_order'    => $card_order,
-			]
-		);
+		return [
+			'visible_cards' => $visible_cards,
+			'card_order'    => $card_order,
+		];
+	}
+
+	/**
+	 * REST callback for getting dashboard settings.
+	 */
+	public function get_dashboard_settings() {
+		return rest_ensure_response( $this->get_dashboard_settings_data( get_current_user_id() ) );
 	}
 
 	/**
@@ -955,17 +964,17 @@ class UserSettings extends Base {
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response|\WP_Error
 	 */
-	public function get_current_user( $request ) {
-		$user_id = get_current_user_id();
-
-		if ( ! $user_id ) {
-			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'rondo' ), [ 'status' => 401 ] );
-		}
-
+	/**
+	 * Get current user data as an array.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return array|null User data array, or null if user not found.
+	 */
+	public function get_current_user_data( $user_id ) {
 		$user = get_userdata( $user_id );
 
 		if ( ! $user ) {
-			return new \WP_Error( 'user_not_found', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
+			return null;
 		}
 
 		$avatar_url = get_avatar_url( $user_id, [ 'size' => 96 ] );
@@ -993,27 +1002,46 @@ class UserSettings extends Base {
 			}
 		}
 
-		return rest_ensure_response(
-			[
-				'id'                          => $user_id,
-				'name'                        => $user->display_name,
-				'email'                       => $user->user_email,
-				'avatar_url'                  => $avatar_url,
-				'is_admin'                    => $is_admin,
-				'can_edit_people'             => \Rondo\Core\AccessControl::can_edit_people(),
-				'can_access_fairplay'         => current_user_can( 'fairplay' ),
-				'can_access_vog'              => current_user_can( 'vog' ),
-				'can_access_financieel'       => current_user_can( 'financieel' ),
-				'can_access_toegangscontrole' => current_user_can( 'toegangscontrole' ),
-				'can_access_clothing'         => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
-				'permitted_age_groups'        => \Rondo\Core\AccessControl::get_permitted_age_groups(),
-				'profile_url'                 => admin_url( 'profile.php' ),
-				'admin_url'                   => admin_url(),
-				'linked_person_name'          => $linked_person_name,
-				'active_functies'             => $active_functies,
-				'linked_person_photo'         => $linked_person_photo,
-			]
-		);
+		return [
+			'id'                          => $user_id,
+			'name'                        => $user->display_name,
+			'email'                       => $user->user_email,
+			'avatar_url'                  => $avatar_url,
+			'is_admin'                    => $is_admin,
+			'can_edit_people'             => \Rondo\Core\AccessControl::can_edit_people(),
+			'can_access_fairplay'         => current_user_can( 'fairplay' ),
+			'can_access_vog'              => current_user_can( 'vog' ),
+			'can_access_financieel'       => current_user_can( 'financieel' ),
+			'can_access_toegangscontrole' => current_user_can( 'toegangscontrole' ),
+			'can_access_clothing'         => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
+			'permitted_age_groups'        => \Rondo\Core\AccessControl::get_permitted_age_groups(),
+			'profile_url'                 => admin_url( 'profile.php' ),
+			'admin_url'                   => admin_url(),
+			'linked_person_name'          => $linked_person_name,
+			'active_functies'             => $active_functies,
+			'linked_person_photo'         => $linked_person_photo,
+		];
+	}
+
+	/**
+	 * REST callback for getting current user.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 */
+	public function get_current_user( $request ) {
+		$user_id = get_current_user_id();
+
+		if ( ! $user_id ) {
+			return new \WP_Error( 'not_logged_in', __( 'User is not logged in.', 'rondo' ), [ 'status' => 401 ] );
+		}
+
+		$data = $this->get_current_user_data( $user_id );
+
+		if ( ! $data ) {
+			return new \WP_Error( 'user_not_found', __( 'User not found.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		return rest_ensure_response( $data );
 	}
 
 	/**
