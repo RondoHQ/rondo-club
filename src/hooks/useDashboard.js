@@ -15,12 +15,10 @@ export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
-      console.log('[useDashboard] Fetching at', new Date().toISOString());
       const response = await prmApi.getDashboard();
       return response.data;
     },
-    // Explicitly set to ensure these options are applied
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes (matches server-side transient cache)
     refetchOnMount: false,
   });
 }
