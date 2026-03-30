@@ -288,7 +288,7 @@ button, [role="tab"], [role="button"], summary {
 }
 
 .card {
-  @apply rounded-xl overflow-hidden dark:bg-gray-800 dark:border-gray-700;
+  @apply overflow-hidden dark:bg-gray-800 dark:border-gray-700;
   background: #fff;
   border: 1px solid #d8e3ee;
   position: relative;
