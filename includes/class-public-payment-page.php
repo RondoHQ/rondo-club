@@ -15,6 +15,7 @@ namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
 use Rondo\Fees\MembershipFees;
+use Rondo\Fees\SeasonKey;
 use Rondo\Finance\InstallmentPaymentService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -178,7 +179,7 @@ class PublicPaymentPage {
 		// Derive season from invoice creation date.
 		$membership_fees = new MembershipFees();
 		$invoice_date    = get_the_date( 'Y-m-d', $invoice_id );
-		$season          = $membership_fees->get_season_key( $invoice_date );
+		$season          = SeasonKey::current( $invoice_date );
 
 		// Read installment admin fee.
 		$admin_fee = $membership_fees->get_installment_admin_fee( $season );
@@ -331,7 +332,7 @@ class PublicPaymentPage {
 
 		$membership_fees = new MembershipFees();
 		$invoice_date    = get_the_date( 'Y-m-d', $invoice_id );
-		$season          = $membership_fees->get_season_key( $invoice_date );
+		$season          = SeasonKey::current( $invoice_date );
 
 		$branding = $this->get_club_branding();
 
@@ -492,7 +493,7 @@ class PublicPaymentPage {
 
 		$fees_service     = new MembershipFees();
 		$invoice_date     = get_the_date( 'Y-m-d', $invoice_id );
-		$invoice_season   = $fees_service->get_season_key( $invoice_date );
+		$invoice_season   = SeasonKey::current( $invoice_date );
 		$available_dates  = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
 		$max_installments = count( $available_dates );
 

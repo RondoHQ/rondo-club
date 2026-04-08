@@ -14,7 +14,7 @@ use Google\Service\Walletobjects\Image;
 use Google\Service\Walletobjects\ImageUri;
 use Google\Service\Walletobjects\TextModuleData;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\SeasonKey;
 use Rondo\Config\ClubConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -70,8 +70,7 @@ class MembershipPassGoogle {
 
 		$class_suffix = $this->get_class_suffix();
 		$class_id     = $issuer_id . '.' . $class_suffix;
-		$fees         = new MembershipFees();
-		$season       = $fees->get_season_key();
+		$season       = SeasonKey::current();
 
 		$qr_service = new MembershipPassQr();
 		$qr_result  = $qr_service->issue_for_person( $person_id );

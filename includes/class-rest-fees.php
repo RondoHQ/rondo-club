@@ -8,6 +8,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\Fees\SeasonKey;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -42,7 +44,7 @@ class Fees extends Base {
 							'type'              => 'string',
 							'validate_callback' => function ( $param, $request, $key ) {
 								$membership_fees = new \Rondo\Fees\MembershipFees();
-								$valid           = [ $membership_fees->get_season_key(), $membership_fees->get_next_season_key() ];
+								$valid           = [ SeasonKey::current(), SeasonKey::next() ];
 								return in_array( $param, $valid, true );
 							},
 						],
@@ -312,8 +314,8 @@ class Fees extends Base {
 	 */
 	public function get_membership_fee_settings( $request ) {
 		$membership_fees = new \Rondo\Fees\MembershipFees();
-		$current_season  = $membership_fees->get_season_key();
-		$next_season     = $membership_fees->get_next_season_key();
+		$current_season  = SeasonKey::current();
+		$next_season     = SeasonKey::next();
 
 		return rest_ensure_response(
 			[
@@ -343,8 +345,8 @@ class Fees extends Base {
 	 */
 	public function update_membership_fee_settings( $request ) {
 		$membership_fees = new \Rondo\Fees\MembershipFees();
-		$current_season  = $membership_fees->get_season_key();
-		$next_season     = $membership_fees->get_next_season_key();
+		$current_season  = SeasonKey::current();
+		$next_season     = SeasonKey::next();
 		$season          = $request->get_param( 'season' );
 		$categories      = $request->get_param( 'categories' );
 		$family_discount = $request->get_param( 'family_discount' );
@@ -480,8 +482,8 @@ class Fees extends Base {
 		$membership_fees->save_entry_discount_config( $source_entry_discount, $to_season );
 
 		// Return updated settings for both seasons
-		$current_season = $membership_fees->get_season_key();
-		$next_season    = $membership_fees->get_next_season_key();
+		$current_season = SeasonKey::current();
+		$next_season    = SeasonKey::next();
 
 		return rest_ensure_response(
 			[
@@ -516,11 +518,11 @@ class Fees extends Base {
 
 		// Determine season
 		if ( $forecast ) {
-			$season = $fees->get_next_season_key();
+			$season = SeasonKey::next();
 		} else {
 			$season = $request->get_param( 'season' );
 			if ( $season === null ) {
-				$season = $fees->get_season_key();
+				$season = SeasonKey::current();
 			}
 		}
 
@@ -763,18 +765,18 @@ class Fees extends Base {
 		$fees     = new \Rondo\Fees\MembershipFees();
 
 		if ( $forecast ) {
-			$season = $fees->get_next_season_key();
+			$season = SeasonKey::next();
 		} else {
 			$season = $request->get_param( 'season' );
 			if ( $season === null ) {
-				$season = $fees->get_season_key();
+				$season = SeasonKey::current();
 			}
 		}
 
 		// Single SQL query to read only the fee cache meta values.
 		// For forecast, we use the current season's cache but treat fee_after_discount
 		// as final_fee (100% pro-rata) and exclude former members.
-		$cache_season  = $forecast ? $fees->get_season_key() : $season;
+		$cache_season  = $forecast ? SeasonKey::current() : $season;
 		$fee_cache_key = $fees->get_fee_cache_meta_key( $cache_season );
 
 		if ( $forecast ) {
@@ -816,7 +818,7 @@ class Fees extends Base {
 		$total_members = 0;
 
 		// Pre-load youth slugs for forecast reclassification (only youth members age up)
-		$current_youth_slugs = $forecast ? $fees->get_youth_category_slugs( $fees->get_season_key() ) : [];
+		$current_youth_slugs = $forecast ? $fees->get_youth_category_slugs( SeasonKey::current() ) : [];
 
 		foreach ( $rows as $row ) {
 			$fee_data = maybe_unserialize( $row->meta_value );
@@ -958,7 +960,7 @@ class Fees extends Base {
 		$fees = new \Rondo\Fees\MembershipFees();
 
 		if ( $season === null ) {
-			$season = $fees->get_season_key();
+			$season = SeasonKey::current();
 		}
 
 		// Check if person is manually excluded from contributie
@@ -1090,7 +1092,7 @@ class Fees extends Base {
 		$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
-			$season = $fees->get_season_key();
+			$season = SeasonKey::current();
 		}
 
 		// Clear all caches and family discount meta
@@ -1126,7 +1128,7 @@ class Fees extends Base {
 		$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
-			$season = $fees->get_season_key();
+			$season = SeasonKey::current();
 		}
 
 		return rest_ensure_response(
@@ -1192,7 +1194,7 @@ class Fees extends Base {
 		$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
-			$season = $fees->get_season_key();
+			$season = SeasonKey::current();
 		}
 
 		$result = \Rondo\Finance\BulkInvoiceCreator::start_job( $season );
@@ -1226,7 +1228,7 @@ class Fees extends Base {
 		$season    = $request->get_param( 'season' );
 
 		if ( $season === null ) {
-			$season = $fees->get_season_key();
+			$season = SeasonKey::current();
 		}
 
 		// Verify person exists.

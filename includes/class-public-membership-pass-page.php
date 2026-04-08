@@ -9,6 +9,7 @@
 namespace Rondo\Passes;
 
 use Rondo\Config\FinanceConfig;
+use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -310,8 +311,7 @@ class PublicMembershipPassPage {
 		$member_tier  = self::get_person_member_tier( $person_id );
 		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
 
-		$fees   = new \Rondo\Fees\MembershipFees();
-		$season = $fees->get_season_key();
+		$season = SeasonKey::current();
 
 		$apple_service  = new MembershipPassApple();
 		$google_service = new MembershipPassGoogle();
