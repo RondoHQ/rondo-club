@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v32.0
-milestone_name: milestone
+milestone: v33.0
+milestone_name: Fee Service Decomposition
 status: planning
-stopped_at: Completed 213-01-PLAN.md
-last_updated: "2026-03-11T14:00:00.000Z"
-last_activity: 2026-03-11 - Completed quick task 127: Make person address editable in the frontend
+stopped_at: v32.0 Interface Touch-up archived
+last_updated: "2026-04-08T23:55:00.000Z"
+last_activity: 2026-04-08 — v32.0 milestone archived, ready to activate v33.0 drafts
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -18,45 +18,48 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-11)
+See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v32.0 Interface Touch-up — Phase 212: Button CSS System
+**Current focus:** v33.0 Fee Service Decomposition — drafts committed at `.planning/milestones/v33.0-*`, need to be promoted to active `.planning/ROADMAP.md` + `.planning/REQUIREMENTS.md` before planning Phase 214
 
 ## Current Position
 
-Milestone: v32.0 Interface Touch-up
-Phase: 212 of 213 (Button CSS System)
+Milestone: v33.0 Fee Service Decomposition (drafted, not yet activated)
+Phase: 214 (FeeCategoryResolver + Snapshot Infrastructure) — awaiting activation
 Plan: —
-Status: Ready to plan
-Last activity: 2026-03-11 — Roadmap created, 12/12 requirements mapped
+Status: Drafts committed, need to copy to active ROADMAP/REQUIREMENTS before `/gsd:plan-phase 214`
+Last activity: 2026-04-08 — v32.0 archived, phase 213.1 gap closure shipped
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 216 plans across v1.0-v31.0
+- Total plans completed: 221 plans across v1.0-v32.0 (216 + 5 in v32.0)
 - Recent milestones:
-  - v31.0: 7 plans, 3 phases (2026-03-08)
-  - v30.0: 8 plans, 2 days (2026-02-20 -> 2026-02-21)
-  - v29.0: 8 plans, 1 day (2026-02-20)
+  - v32.0 Interface Touch-up: 3 phases, 6 plans (212 + 213 + 213.1 gap closure) — 2026-03-11 to 2026-04-08
+  - v31.0 Editable Contact Fields: 7 plans, 3 phases (2026-03-08)
+  - v30.0 User Accounts & Profiles: 8 plans, 2 days (2026-02-20 → 2026-02-21)
+  - v29.0 Made in Europe: 8 plans, 1 day (2026-02-20)
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions logged in PROJECT.md Key Decisions table (790+ entries).
-Recent v32.0 decisions:
-- No React Button component wrapper — CSS classes are sufficient, abstraction adds no clear benefit
-- [Phase 212-button-css-system]: btn-secondary restyled to outlined, btn-tertiary created as ghost, btn-danger-outline and btn-glass removed; DRY @apply base extension pattern established for all button variants
-- [Phase 213-sitewide-rollout]: btn-danger adopted for DeleteFieldDialog permanent delete; inline red overrides removed
-- [Phase 213-sitewide-rollout]: Retry/error-state buttons use btn-tertiary (utility tier, not btn-secondary)
-- [Phase 213-sitewide-rollout]: SeasonSelector hover overrides removed since btn-tertiary has no lift by design
-- [Phase 213-sitewide-rollout]: ColumnSettingsPanel Sluiten stays btn-secondary (dismiss action on settings panel)
-- [Phase 213-sitewide-rollout]: Sync button in PersonDetail is utility (btn-tertiary); Webhook aanmaken stays btn-secondary next to Save
-- [Phase 213-01]: Spinner color uses border-b-2 border-current for all btn variants instead of hardcoded color
-- [Phase 213-01]: FinancesCard Maak factuur keeps size overrides (text-xs px-2.5 py-1.5 rounded-md) for compact card context
+Decisions logged in PROJECT.md Key Decisions table.
+
+**v32.0 decisions** (now archived — see `.planning/milestones/v32.0-phases/`):
+- Four-tier button hierarchy (btn-primary/secondary/tertiary/danger)
+- DRY btn-* via CSS selector lists (Tailwind v4 compat)
+- Audit-driven gap closure via decimal phases (213.1)
+- No React Button component wrapper (CSS classes sufficient)
+
+**v33.0 decisions** (pre-kickoff):
+- SeasonKey helper extraction pattern validated before milestone kickoff (commit e25cef7b)
+- Lightweight scoping chosen over full `/gsd:new-milestone` ceremony
+- WP-CLI fee snapshot script for regression testing, built as Phase 214 Plan 01
+- Phase 218 (Retire MembershipFees) decides between delete vs shrink-to-200-lines
 
 ### Pending Todos
 
@@ -81,11 +84,11 @@ Recent v32.0 decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-11T13:23:59.952Z
-Stopped at: Completed 213-01-PLAN.md
+Last session: 2026-04-08T23:55:00Z
+Stopped at: v32.0 milestone archived; v33.0 drafts ready to activate
 
-**Next action:** Run `/gsd:plan-phase 212` to plan the Button CSS System phase
+**Next action:** Promote `.planning/milestones/v33.0-ROADMAP.md` → `.planning/ROADMAP.md` and `.planning/milestones/v33.0-REQUIREMENTS.md` → `.planning/REQUIREMENTS.md`, then run `/gsd:plan-phase 214` to plan Phase 214 (FeeCategoryResolver + Snapshot Infrastructure).
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-03-11 — Roadmap created for v32.0*
+*Last updated: 2026-04-08 — v32.0 milestone archived after phase 213.1 gap closure*
