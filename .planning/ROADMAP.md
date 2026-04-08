@@ -8,6 +8,7 @@ Establish a four-tier button hierarchy (filled primary, outlined secondary, ghos
 
 - [x] **Phase 212: Button CSS System** - Define all four button tiers and dark mode variants in src/index.css (completed 2026-03-11)
 - [x] **Phase 213: Sitewide Rollout** - Apply correct tier hierarchy to every page, modal, and toolbar (completed 2026-03-11)
+- [ ] **Phase 213.1: Button Rollout Closure** - Close gaps from v32.0 milestone audit: convert ~16 legacy inline-styled buttons across 7 files, fix deferred tech debt (gap-closure phase, inserted 2026-04-08)
 
 ## Phase Details
 
@@ -42,12 +43,27 @@ Plans:
 - [ ] 213-03-PLAN.md — Apply tier hierarchy to Feedback/VOG/Contributie/Clothing/Todos and DataTable toolbar
 - [ ] 213-04-PLAN.md — Apply tier hierarchy to People/Teams/Commissies, Settings, and remaining pages
 
+### Phase 213.1: Button Rollout Closure
+**Goal**: Every button flagged by the v32.0 milestone audit uses the correct btn-* tier class, and the deferred tech debt items from the audit are resolved.
+**Depends on**: Phases 212, 213
+**Requirements**: ROLL-02, ROLL-05, ROLL-06 (reset from satisfied to pending; gap closure)
+**Type**: Gap-closure phase (decimal insertion; does not shift v33.0 numbering)
+**Success Criteria** (what must be TRUE):
+  1. `src/pages/Settings/Settings.jsx`, `src/pages/Settings/FeeCategorySettings.jsx`, and `src/pages/VOG/VOGSettings.jsx` contain zero inline `bg-electric-cyan hover:bg-bright-cobalt` button styles — all save/cancel actions use `btn-primary`/`btn-secondary`
+  2. The 3 bulk-action modals embedded in `src/pages/VOG/VOGList.jsx` (send-emails, mark-justis, send-reminders, lines 718-863) use `btn-primary`/`btn-secondary` instead of inline styles
+  3. `src/components/InstallPrompt.jsx:63` uses `btn-primary` for the install button
+  4. The 12 redundant `flex items-center` / `inline-flex items-center` classes alongside `btn-*` (from Phase 213 VERIFICATION) are cleaned up across TodoModal, VOGUpcoming, VOGList, FeedbackList, FeedbackDetail, ContributieList, NogTeFactureren, ContributieOverzicht, TodosList
+  5. `src/index.css` btn-* variants extend via `@apply btn` instead of each duplicating the full base @apply chain (Phase 212 DRY anti-pattern fix)
+  6. `213-02-SUMMARY.md` and `213-03-SUMMARY.md` have correct `requirements-completed:` frontmatter
+  7. Re-running `/gsd:audit-milestone v32.0` returns status `passed` with 12/12 satisfied
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 212 -> 213
+Phases execute in numeric order: 212 -> 213 -> 213.1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 212. Button CSS System | 1/1 | Complete    | 2026-03-11 |
 | 213. Sitewide Rollout | 4/4 | Complete    | 2026-03-11 |
+| 213.1. Button Rollout Closure | 0/1 | In Progress | — |
