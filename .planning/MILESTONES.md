@@ -1,5 +1,38 @@
 # Project Milestones: Rondo Club
 
+## v32.0 Interface Touch-up (Shipped: 2026-04-08)
+
+**Delivered:** Established a four-tier button hierarchy (filled primary, outlined secondary, ghost tertiary, destructive danger) in CSS, then rolled it out across ~54 JSX files covering Finance, People, Teams, Commissies, Feedback, VOG, Contributie, Clothing, Settings, modals, and DataTable toolbar. Audit-driven gap closure caught and fixed 21 missed buttons across Settings sub-pages, VOG bulk modals, and InstallPrompt in a decimal-inserted phase 213.1.
+
+**Phases completed:** 212-213.1 (3 phases, 6 plans including gap closure)
+
+- Phase 212: Button CSS System (1 plan)
+- Phase 213: Sitewide Rollout (4 plans)
+- Phase 213.1: Button Rollout Closure (1 plan, decimal-inserted gap closure from milestone audit)
+
+**Key accomplishments:**
+
+- Four-tier button CSS system defined with light/dark mode variants: btn-primary (filled gradient), btn-secondary (outlined), btn-tertiary (ghost), btn-danger (red filled)
+- Rolled out semantic tier hierarchy across all major subsystems, replacing ad-hoc inline color overrides with consistent class names
+- Established audit-driven refactor discipline: initial audit found 3 partial requirements, planned as gap-closure phase 213.1, executed and re-audited to passed status
+- Fixed Phase 212 DRY anti-pattern in src/index.css via CSS selector lists (idiomatic for Tailwind v4 CSS-first mode where @apply cannot extend custom class names)
+- Validated the pattern that prompted v33.0 Fee Service Decomposition: small focused refactors, direct execution, immediate deploy + audit
+
+**Stats:**
+
+- 3 phases, 5 original plans + 1 gap closure plan
+- Phase 213.1 alone: 8 files modified, 21 buttons converted
+- Audit score: 12/12 requirements satisfied, 12/12 integration verified, 3/3 critical flows intact
+- Code version: 32.8.0 (package.json, style.css)
+
+**Git range:** Phase 213 work 2026-03-11 → Phase 213.1 closure 2026-04-08 (commit `53b31894`)
+
+**Known tech debt:** Nyquist VALIDATION.md missing for both phases 212 and 213 (consistent with v31.0 audit pattern, where phases 209-211 also lacked VALIDATION.md). Decision to backfill deferred — simple UI refactor phases arguably don't benefit from formal Nyquist validation.
+
+**What's next:** v33.0 Fee Service Decomposition — break the 2,204-line Rondo\Fees\MembershipFees god class into focused services (FeeCategoryResolver, FamilyGroupingService, FeeCalculator, MembershipFeeSettings). 5 phases drafted at `.planning/milestones/v33.0-ROADMAP.md`, precedent set by the SeasonKey extraction (commit `e25cef7b`).
+
+---
+
 ## v20.0 Configurable Roles (Shipped: 2026-02-08)
 
 **Delivered:** Replaced hardcoded club-specific arrays with database-driven settings and dynamic queries so any sports club can use Rondo Club without code changes. Filter options are now dynamic, role classifications are configurable, and sync layer has no default fallbacks.

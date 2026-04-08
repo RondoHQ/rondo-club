@@ -487,17 +487,30 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ Commissie-to-role mapping alongside Functie mapping — v30.0
 - ✓ rondo_financieel role for independent financial access — v30.0
 
+**v32.0 Interface Touch-up (shipped 2026-04-08):**
+- ✓ Four-tier button CSS system: btn-primary (filled gradient), btn-secondary (outlined brand), btn-tertiary (ghost), btn-danger (red filled) — v32.0
+- ✓ All four tiers have light and dark mode variants with design-intent lift (primary/secondary lift on hover; tertiary/danger no lift) — v32.0
+- ✓ Tier hierarchy rolled out across Finance, People, Teams, Commissies, Feedback, VOG, Contributie, Clothing, Settings, all modals, DataTable toolbar (~54 JSX files) — v32.0
+- ✓ Invoice detail page as reference implementation (send=primary, mark-paid=secondary, PDF/payment link=tertiary, delete=danger) — v32.0
+- ✓ DRY CSS refactor via selector lists (Tailwind v4 CSS-first compatible) — v32.0
+- ✓ Audit-driven gap closure discipline: post-rollout audit identified 21 missed buttons, fixed in decimal-inserted phase 213.1 — v32.0
+
 ### Active
 
-## Current Milestone: v32.0 Interface Touch-up
+## Current Milestone: v33.0 Fee Service Decomposition
 
-**Goal:** Establish a clear three-tier button hierarchy (primary → secondary → tertiary) with distinct destructive styling, and roll out consistently across all pages.
+**Goal:** Break the 2,204-line `Rondo\Fees\MembershipFees` god class (66 graph edges, cohesion 0.08, #1 god node) into focused services with clear responsibilities. Zero user-facing behavior changes — pure internal refactor.
 
-**Target features:**
-- Three-tier button system: filled primary, outlined secondary, ghost tertiary
-- Visually distinct destructive buttons (red filled)
-- Consistent button hierarchy applied across all pages
-- Invoice page as reference implementation (Verstuur = primary, Markeer betaald = secondary, Genereer PDF/Betaallink = tertiary, Verwijder = destructive)
+**Target phases** (5 phases, drafted at `.planning/milestones/v33.0-ROADMAP.md`):
+- Phase 214: FeeCategoryResolver + WP-CLI fee snapshot infrastructure
+- Phase 215: FamilyGroupingService (cleans up FeeCacheInvalidator coupling smell)
+- Phase 216: FeeCalculator (depends on 214+215)
+- Phase 217: MembershipFeeSettings (~45 CRUD methods)
+- Phase 218: Retire MembershipFees — delete or shrink to <200 lines
+
+**Precedent set:** SeasonKey helper extraction (commit `e25cef7b`, 2026-04-08) validated the refactor pattern on 3 methods across 10 files with zero fee regressions. Four wallet-pass classes (MembershipPass{Apple,Google,Qr} + PublicMembershipPassPage) dropped their dependency on MembershipFees as part of the SeasonKey work.
+
+**Regression strategy:** WP-CLI `bin/fee-snapshot.sh` (built in Phase 214 Plan 01) captures production fee values for ≥20 known persons; every subsequent phase validates that the diff is empty.
 
 ### Out of Scope
 
@@ -518,18 +531,26 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v30.0):**
+**Codebase State (post v32.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 30.0.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 32.8.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management
+- Four-tier button CSS system (v32.0): btn-primary, btn-secondary, btn-tertiary, btn-danger with light/dark mode variants and DRY base via CSS selector lists
+- SeasonKey helper extracted from MembershipFees (2026-04-08, commit e25cef7b) — proves the refactor pattern for v33.0 Fee Service Decomposition
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
 - CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced
 - ESLint clean (0 errors/warnings), pre-commit lint enforcement via husky + lint-staged
+- Graphify knowledge graph integration (`graphify-out/` excluded from git and deploy) — AGENTS.md section instructs future sessions to consult the graph before answering architecture questions
 - Demo site at demo.rondo.club with anonymized fixture data
 - Developer docs at developer.rondo.club
-- Tech debt: orphaned Google Sheets backend (4 dead client.js methods, 5 unreachable REST routes), CAPS-05 manual capability override UI deferred
+- Tech debt carried into v33.0:
+  - `MembershipFees` god class: 2,204 lines, 65 methods, cohesion 0.08 — target of v33.0 decomposition
+  - Orphaned Google Sheets backend (4 dead client.js methods, 5 unreachable REST routes)
+  - CAPS-05 manual capability override UI deferred (from v30.0)
+  - 3 active debug sessions: filter-dropdown-cutoff, invoice-email-missing-qr-and-payment-link, membership-fee-non-player-assignment
+  - Missing Nyquist VALIDATION.md for v31.0 and v32.0 phases (consistent project pattern; decision to backfill deferred)
 
 **Key Finance Files:**
 - `includes/class-finance-config.php` — FinanceConfig with settings, Rabobank/Mollie credentials, email templates
@@ -790,6 +811,13 @@ Club administrators can manage their members, teams, and club operations through
 | Demo guard in backend for password endpoint | Returns 403 regardless of frontend state; consistent with DemoProtection pattern | ✓ Good |
 | get_the_post_thumbnail_url() ?: null | Returns false (not null) when no thumbnail — use ?: not ?? | ✓ Good |
 | CAPS-05 manual override UI deferred | Backend mechanism (META_MANUAL_GRANTS) exists; admin can use WP admin user meta editor | Deferred |
+| Four-tier button hierarchy (v32.0) | btn-primary/secondary/tertiary/danger semantic tiers; primary+secondary lift on hover, tertiary+danger don't; destructive always red filled | ✓ Good |
+| No React Button component wrapper (v32.0) | CSS classes sufficient; abstraction adds no clear benefit for ~54 consumer files | ✓ Good |
+| DRY btn-* via CSS selector lists (v32.0) | Tailwind v4 CSS-first rejects `@apply btn` on custom classes; selector list is the idiomatic approach | ✓ Good |
+| Audit-driven gap closure discipline (v32.0) | Phase 213 shipped; audit found ~16 missed buttons; decimal-inserted phase 213.1 closed gaps via direct execution before milestone archive | ✓ Good |
+| Decimal phase numbering (v32.0, 213.1) | Gap closure and urgent insertions use N.M format to preserve downstream milestone numbering; matches `/gsd:insert-phase` convention | ✓ Good |
+| SeasonKey helper extracted from MembershipFees | Stateless season arithmetic (get/next/previous_season_key) moved to standalone Rondo\Fees\SeasonKey; four wallet-pass classes dropped MembershipFees dependency | ✓ Good |
+| Graphify knowledge graph integration | graphify-out/ excluded from git + deploy; AGENTS.md section instructs sessions to consult GRAPH_REPORT.md before answering architecture questions; v32.0 work identified MembershipFees as the #1 god node prompting v33.0 | ✓ Good |
 
 ---
-*Last updated: 2026-03-08 after v31.0 Editable Contact Fields milestone started*
+*Last updated: 2026-04-08 after v32.0 Interface Touch-up shipped*
