@@ -32,6 +32,7 @@ metrics:
   completed_date: "2026-03-11"
   tasks: 2
   files_modified: 9
+requirements-completed: [ROLL-06, ROLL-07]
 ---
 
 # Phase 213 Plan 03: Feedback, VOG, Contributie, Clothing, Todos & DataTable Toolbar Button Tiers Summary

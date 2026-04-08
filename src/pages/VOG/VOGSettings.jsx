@@ -208,7 +208,7 @@ export default function VOGSettings() {
             <button
               onClick={handleVogSave}
               disabled={vogSaving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {vogSaving ? (
                 <>

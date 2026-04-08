@@ -2341,7 +2341,7 @@ function GebruikersTab() {
                         <button
                           onClick={() => handleProvision(person.id, person.name)}
                           disabled={provisioning === person.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md text-white bg-electric-cyan hover:bg-bright-cobalt disabled:opacity-50 transition-colors"
+                          className="btn-primary gap-1.5 text-sm px-3 py-1.5 disabled:opacity-50"
                         >
                           {provisioning === person.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2725,7 +2725,7 @@ function RollenTab({
             <button
               onClick={handleRolesSave}
               disabled={rolesSaving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {rolesSaving ? (
                 <>
@@ -2869,7 +2869,7 @@ function FunctiesTab({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -2942,7 +2942,7 @@ function FunctiesTab({
                   <button
                     onClick={handleCommissieSave}
                     disabled={commissieSaving}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+                    className="btn-primary disabled:opacity-50"
                   >
                     {commissieSaving ? (
                       <>
@@ -3264,7 +3264,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-electric-cyan hover:bg-bright-cobalt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-electric-cyan disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {saving ? (
                 <>
