@@ -735,15 +735,15 @@ export default function VOGList() {
               </div>
               <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
                 {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
+                  <button onClick={handleCloseModal} className="btn-primary">
                     Sluiten
                   </button>
                 ) : (
                   <>
-                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="btn-secondary">
                       Annuleren
                     </button>
-                    <button onClick={handleSendEmails} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
+                    <button onClick={handleSendEmails} disabled={bulkActionLoading} className="btn-primary disabled:opacity-50">
                       {bulkActionLoading ? 'Verzenden...' : `Verstuur naar ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
@@ -788,15 +788,15 @@ export default function VOGList() {
               </div>
               <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
                 {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
+                  <button onClick={handleCloseModal} className="btn-primary">
                     Sluiten
                   </button>
                 ) : (
                   <>
-                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="btn-secondary">
                       Annuleren
                     </button>
-                    <button onClick={handleMarkJustis} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
+                    <button onClick={handleMarkJustis} disabled={bulkActionLoading} className="btn-primary disabled:opacity-50">
                       {bulkActionLoading ? 'Markeren...' : `Markeer ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>
@@ -844,15 +844,15 @@ export default function VOGList() {
               </div>
               <div className="flex justify-end gap-2 p-4 border-t dark:border-gray-700">
                 {bulkActionResult ? (
-                  <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md">
+                  <button onClick={handleCloseModal} className="btn-primary">
                     Sluiten
                   </button>
                 ) : (
                   <>
-                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md">
+                    <button onClick={handleCloseModal} disabled={bulkActionLoading} className="btn-secondary">
                       Annuleren
                     </button>
-                    <button onClick={handleSendReminders} disabled={bulkActionLoading} className="px-4 py-2 text-sm font-medium text-white bg-electric-cyan hover:bg-bright-cobalt rounded-md disabled:opacity-50">
+                    <button onClick={handleSendReminders} disabled={bulkActionLoading} className="btn-primary disabled:opacity-50">
                       {bulkActionLoading ? 'Verzenden...' : `Verstuur naar ${selectedIds.size} vrijwilliger${selectedIds.size > 1 ? 's' : ''}`}
                     </button>
                   </>

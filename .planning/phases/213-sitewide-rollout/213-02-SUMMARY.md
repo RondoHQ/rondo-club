@@ -27,6 +27,7 @@ metrics:
   completed: 2026-03-11T13:19:10Z
   tasks_completed: 1
   files_modified: 5
+requirements-completed: [ROLL-02]
 ---
 
 # Phase 213 Plan 02: Modal Button Tier Hierarchy Summary
