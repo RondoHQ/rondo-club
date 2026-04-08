@@ -92,7 +92,7 @@ class MembershipFees {
 	 */
 	public function get_all_settings(): array {
 		// Use current season settings for backward compatibility
-		return $this->get_settings_for_season( $this->get_season_key() );
+		return $this->get_settings_for_season( SeasonKey::current() );
 	}
 
 	/**
@@ -105,7 +105,7 @@ class MembershipFees {
 	 * @return int The fee amount in euros, or 0 if category not found.
 	 */
 	public function get_fee( string $type, ?string $season = null ): int {
-		$season   = $season ?? $this->get_season_key();
+		$season   = $season ?? SeasonKey::current();
 		$category = $this->get_category( $type, $season );
 
 		if ( $category === null || ! isset( $category['amount'] ) ) {
@@ -123,7 +123,7 @@ class MembershipFees {
 	 */
 	public function update_settings( array $fees ): bool {
 		// Use current season for backward compatibility
-		return $this->update_settings_for_season( $fees, $this->get_season_key() );
+		return $this->update_settings_for_season( $fees, SeasonKey::current() );
 	}
 
 	/**
@@ -178,7 +178,7 @@ class MembershipFees {
 	 * @return string|null Category slug or null if no match and no catch-all exists.
 	 */
 	public function get_category_by_age_class( string $leeftijdsgroep, ?string $season = null ): ?string {
-		$season     = $season ?? $this->get_season_key();
+		$season     = $season ?? SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		// Empty config = no categories defined (silent per CONTEXT.md)
@@ -242,7 +242,7 @@ class MembershipFees {
 	 * @return array<string> Array of category slugs.
 	 */
 	public function get_valid_category_slugs( ?string $season = null ): array {
-		$season     = $season ?? $this->get_season_key();
+		$season     = $season ?? SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		return array_keys( $categories );
@@ -258,7 +258,7 @@ class MembershipFees {
 	 * @return array<string> Array of youth category slugs.
 	 */
 	public function get_youth_category_slugs( ?string $season = null ): array {
-		$season     = $season ?? $this->get_season_key();
+		$season     = $season ?? SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		return array_keys(
@@ -281,7 +281,7 @@ class MembershipFees {
 	 * @return array<string, int> Map of category slug => sort_order.
 	 */
 	public function get_category_sort_order( ?string $season = null ): array {
-		$season     = $season ?? $this->get_season_key();
+		$season     = $season ?? SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		$order = [];
@@ -481,7 +481,7 @@ class MembershipFees {
 		}
 
 		// Calculate season end date (July 1 of season's end year)
-		$season          = $season ?? $this->get_season_key();
+		$season          = $season ?? SeasonKey::current();
 		$season_end_year = (int) substr( $season, 5, 4 );
 		$season_end_date = strtotime( $season_end_year . '-07-01' );
 
@@ -580,7 +580,7 @@ class MembershipFees {
 			return null;
 		}
 
-		$season     = $season ?? $this->get_season_key();
+		$season     = $season ?? SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		if ( empty( $categories ) ) {
@@ -633,7 +633,7 @@ class MembershipFees {
 			return null;
 		}
 
-		$season     = $season ?? $this->get_season_key();
+		$season     = $season ?? SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		if ( empty( $categories ) ) {
@@ -758,27 +758,6 @@ class MembershipFees {
 	}
 
 	/**
-	 * Get the season key for a given date
-	 *
-	 * Season starts July 1 (month 7). Returns format "YYYY-YYYY" (e.g., "2025-2026").
-	 * If date is July or later, season is current year to next year.
-	 * If date is before July, season is previous year to current year.
-	 *
-	 * @param string|null $date Optional date string (parseable by strtotime), defaults to current date.
-	 * @return string Season key in "YYYY-YYYY" format.
-	 */
-	public function get_season_key( ?string $date = null ): string {
-		$timestamp = $date ? strtotime( $date ) : time();
-		$month     = (int) date( 'n', $timestamp );
-		$year      = (int) date( 'Y', $timestamp );
-
-		// Season starts July 1: if month >= 7, season is current year to next year
-		$season_start_year = $month >= 7 ? $year : $year - 1;
-
-		return $season_start_year . '-' . ( $season_start_year + 1 );
-	}
-
-	/**
 	 * Get the billing method for a season.
 	 *
 	 * Determines whether membership fees for the given season are billed
@@ -788,7 +767,7 @@ class MembershipFees {
 	 * @return string 'nikki' or 'rondo'. Defaults to 'nikki' if not set.
 	 */
 	public function get_billing_method( ?string $season = null ): string {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		return get_option( 'rondo_billing_method_' . $season, 'nikki' );
 	}
 
@@ -800,7 +779,7 @@ class MembershipFees {
 	 * @return bool True on success, false on invalid method.
 	 */
 	public function set_billing_method( string $method, ?string $season = null ): bool {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		if ( ! in_array( $method, [ 'nikki', 'rondo' ], true ) ) {
 			return false;
 		}
@@ -814,7 +793,7 @@ class MembershipFees {
 	 * @return bool True if plan is enabled (default: true).
 	 */
 	public function get_installment_plan_3_enabled( ?string $season = null ): bool {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		return (bool) get_option( 'rondo_installment_plan_3_enabled_' . $season, true );
 	}
 
@@ -826,7 +805,7 @@ class MembershipFees {
 	 * @return bool True on success, false on failure.
 	 */
 	public function set_installment_plan_3_enabled( bool $enabled, ?string $season = null ): bool {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		return update_option( 'rondo_installment_plan_3_enabled_' . $season, $enabled );
 	}
 
@@ -837,7 +816,7 @@ class MembershipFees {
 	 * @return bool True if plan is enabled (default: true).
 	 */
 	public function get_installment_plan_8_enabled( ?string $season = null ): bool {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		return (bool) get_option( 'rondo_installment_plan_8_enabled_' . $season, true );
 	}
 
@@ -849,7 +828,7 @@ class MembershipFees {
 	 * @return bool True on success, false on failure.
 	 */
 	public function set_installment_plan_8_enabled( bool $enabled, ?string $season = null ): bool {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		return update_option( 'rondo_installment_plan_8_enabled_' . $season, $enabled );
 	}
 
@@ -860,7 +839,7 @@ class MembershipFees {
 	 * @return float Administration fee per installment (default: legacy global value, else 0.00).
 	 */
 	public function get_installment_admin_fee( ?string $season = null ): float {
-		$season         = $season ?? $this->get_season_key();
+		$season         = $season ?? SeasonKey::current();
 		$legacy_default = (float) get_option( 'rondo_finance_installment_admin_fee', 0 );
 		return (float) get_option( 'rondo_installment_admin_fee_' . $season, $legacy_default );
 	}
@@ -873,54 +852,8 @@ class MembershipFees {
 	 * @return bool True on success, false on failure.
 	 */
 	public function set_installment_admin_fee( float $fee, ?string $season = null ): bool {
-		$season = $season ?? $this->get_season_key();
+		$season = $season ?? SeasonKey::current();
 		return update_option( 'rondo_installment_admin_fee_' . $season, max( 0.0, $fee ) );
-	}
-
-	/**
-	 * Get the next season key (one year ahead of current/specified season)
-	 *
-	 * Takes a season key in "YYYY-YYYY" format and returns the next season.
-	 * Example: "2025-2026" returns "2026-2027"
-	 *
-	 * @param string|null $current_season Optional season key, defaults to current season.
-	 * @return string Next season key in "YYYY-YYYY" format.
-	 */
-	public function get_next_season_key( ?string $current_season = null ): string {
-		if ( $current_season === null ) {
-			$current_season = $this->get_season_key();
-		}
-
-		// Extract start year from "YYYY-YYYY" format
-		$season_start_year = (int) substr( $current_season, 0, 4 );
-
-		// Next season is +1 year
-		$next_start_year = $season_start_year + 1;
-
-		return $next_start_year . '-' . ( $next_start_year + 1 );
-	}
-
-	/**
-	 * Get the previous season key (one year behind current/specified season)
-	 *
-	 * Takes a season key in "YYYY-YYYY" format and returns the previous season.
-	 * Example: "2025-2026" returns "2024-2025"
-	 *
-	 * @param string $season Season key in "YYYY-YYYY" format (e.g., "2025-2026").
-	 * @return string|null Previous season key in "YYYY-YYYY" format, or null if format is invalid.
-	 */
-	public function get_previous_season_key( string $season ): ?string {
-		// Validate format: "YYYY-YYYY"
-		if ( ! preg_match( '/^(\d{4})-(\d{4})$/', $season, $matches ) ) {
-			return null;
-		}
-
-		$season_start_year = (int) $matches[1];
-
-		// Previous season is -1 year
-		$prev_start_year = $season_start_year - 1;
-
-		return $prev_start_year . '-' . $season_start_year;
 	}
 
 	/**
@@ -1063,7 +996,7 @@ class MembershipFees {
 	 * @return array|null Category object or null if not found.
 	 */
 	public function get_category( string $slug, ?string $season = null ): ?array {
-		$season     = $season ?: $this->get_season_key();
+		$season     = $season ?: SeasonKey::current();
 		$categories = $this->get_categories_for_season( $season );
 
 		return $categories[ $slug ] ?? null;
@@ -1081,7 +1014,7 @@ class MembershipFees {
 	 * @return array Array with 'second_child_percent' and 'third_child_percent' keys.
 	 */
 	public function get_family_discount_config( ?string $season = null ): array {
-		$season   = $season ?: $this->get_season_key();
+		$season   = $season ?: SeasonKey::current();
 		$defaults = [
 			'second_child_percent' => 25,
 			'third_child_percent'  => 50,
@@ -1124,7 +1057,7 @@ class MembershipFees {
 	 * @return array Array with 'periods' key containing array of period configs.
 	 */
 	public function get_entry_discount_config( ?string $season = null ): array {
-		$season   = $season ?: $this->get_season_key();
+		$season   = $season ?: SeasonKey::current();
 		$defaults = [
 			'periods' => [
 				[
@@ -1178,7 +1111,7 @@ class MembershipFees {
 	 * @return string Meta key for fee snapshot storage.
 	 */
 	public function get_snapshot_meta_key( ?string $season = null ): string {
-		return 'fee_snapshot_' . ( $season ?: $this->get_season_key() );
+		return 'fee_snapshot_' . ( $season ?: SeasonKey::current() );
 	}
 
 	/**
@@ -1258,7 +1191,7 @@ class MembershipFees {
 		// Parse options with defaults
 		$use_cache         = $options['use_cache'] ?? true;
 		$save_snapshot     = $options['save_snapshot'] ?? true;
-		$season            = $options['season'] ?? $this->get_season_key();
+		$season            = $options['season'] ?? SeasonKey::current();
 		$force_recalculate = $options['force_recalculate'] ?? false;
 
 		// Check cache first (unless force recalculate)
@@ -1336,7 +1269,7 @@ class MembershipFees {
 	 * @return string Meta key for fee cache storage.
 	 */
 	public function get_fee_cache_meta_key( ?string $season = null ): string {
-		return 'rondo_fee_cache_' . ( $season ?: $this->get_season_key() );
+		return 'rondo_fee_cache_' . ( $season ?: SeasonKey::current() );
 	}
 
 	/**
@@ -1355,7 +1288,7 @@ class MembershipFees {
 
 		// Add metadata
 		$fee_data['calculated_at'] = current_time( 'Y-m-d H:i:s' );
-		$fee_data['season']        = $season ?: $this->get_season_key();
+		$fee_data['season']        = $season ?: SeasonKey::current();
 
 		return (bool) update_post_meta( $person_id, $meta_key, $fee_data );
 	}
@@ -1371,7 +1304,7 @@ class MembershipFees {
 	 * @return array|null Fee data with cache info, or null if not calculable.
 	 */
 	public function get_fee_for_person_cached( int $person_id, ?string $season = null ): ?array {
-		$season   = $season ?: $this->get_season_key();
+		$season   = $season ?: SeasonKey::current();
 		$meta_key = $this->get_fee_cache_meta_key( $season );
 
 		// Try cache first
@@ -1555,7 +1488,7 @@ class MembershipFees {
 	 */
 	public function build_family_groups( ?string $season = null ): array {
 		// Resolve season for consistent usage
-		$season = $season ?: $this->get_season_key();
+		$season = $season ?: SeasonKey::current();
 
 		// Query all person posts (suppress_filters to bypass access control in CLI/cron contexts)
 		$query = new \WP_Query(
@@ -1655,7 +1588,7 @@ class MembershipFees {
 	 * @return int Number of persons updated.
 	 */
 	public function recalculate_all_family_positions( ?string $season = null ): int {
-		$season = $season ?: $this->get_season_key();
+		$season = $season ?: SeasonKey::current();
 		$groups = $this->build_family_groups( $season );
 
 		$families    = $groups['families'];
@@ -1723,7 +1656,7 @@ class MembershipFees {
 	 * @return int Number of persons updated.
 	 */
 	public function recalculate_family_positions_for_person( int $person_id, ?string $season = null ): int {
-		$season     = $season ?: $this->get_season_key();
+		$season     = $season ?: SeasonKey::current();
 		$family_key = $this->get_family_key( $person_id );
 
 		// No valid address: clear this person's meta and return
@@ -1894,7 +1827,7 @@ class MembershipFees {
 		}
 
 		// Determine the season start date
-		$season            = $season ?: $this->get_season_key();
+		$season            = $season ?: SeasonKey::current();
 		$season_start_year = (int) substr( $season, 0, 4 );
 		$season_start_date = strtotime( $season_start_year . '-07-01' );
 
@@ -1942,7 +1875,7 @@ class MembershipFees {
 		}
 
 		// Get pro-rata percentage (pass season to compare against season start date)
-		$season             = $season ?: $this->get_season_key();
+		$season             = $season ?: SeasonKey::current();
 		$prorata_percentage = $this->get_prorata_percentage( $registration_date, $season );
 
 		// Calculate pro-rata amount (applied to fee after family discount)
@@ -1981,7 +1914,7 @@ class MembershipFees {
 	 */
 	public function calculate_fee_with_family_discount( int $person_id, ?string $season = null ): ?array {
 		// Resolve season for consistent usage
-		$season = $season ?: $this->get_season_key();
+		$season = $season ?: SeasonKey::current();
 
 		// Get base fee using calculate_fee with season
 		$fee_data = $this->calculate_fee( $person_id, $season );

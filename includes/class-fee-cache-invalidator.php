@@ -340,7 +340,7 @@ class FeeCacheInvalidator {
 	 * @return int Number of caches cleared.
 	 */
 	public function invalidate_all_caches( ?string $season = null ): int {
-		$season = $season ?: $this->fees->get_season_key();
+		$season = $season ?: SeasonKey::current();
 		return $this->fees->clear_all_fee_caches( $season );
 	}
 
@@ -353,7 +353,7 @@ class FeeCacheInvalidator {
 	 * @param mixed $new_value The new option value.
 	 */
 	public function schedule_bulk_recalculation( $old_value, $new_value ) {
-		$season = $this->fees->get_season_key();
+		$season = SeasonKey::current();
 
 		// Clear all caches and family discount meta immediately
 		$cleared = $this->fees->clear_all_fee_caches( $season );

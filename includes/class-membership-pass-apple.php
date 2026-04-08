@@ -7,7 +7,7 @@ namespace Rondo\Passes;
 
 use PKPass\PKPass;
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -66,8 +66,7 @@ class MembershipPassApple {
 			return $qr_result;
 		}
 
-		$fees   = new MembershipFees();
-		$season = $fees->get_season_key();
+		$season = SeasonKey::current();
 
 		$person_name = $this->get_person_full_name( $person_id );
 		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );

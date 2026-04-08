@@ -12,6 +12,7 @@
 
 namespace Rondo\REST;
 
+use Rondo\Fees\SeasonKey;
 use Rondo\Sheets\GoogleOAuth;
 use Rondo\Sheets\GoogleSheetsConnection;
 
@@ -854,8 +855,8 @@ class GoogleSheets extends Base {
 
 		// Use next season for forecast
 		$season = $forecast
-			? $fees->get_next_season_key()
-			: $fees->get_season_key();
+			? SeasonKey::next()
+			: SeasonKey::current();
 
 		// Nikki year = first 4 chars of season (2025-2026 => 2025)
 		$nikki_year = substr( $season, 0, 4 );
