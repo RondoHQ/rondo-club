@@ -130,6 +130,7 @@ if [ "$INCLUDE_NODE_MODULES" = true ]; then
     rsync -avz \
         --exclude='.git' \
         --exclude='dist' \
+        --exclude='graphify-out' \
         -e "ssh -p $DEPLOY_SSH_PORT" \
         "$PROJECT_ROOT/" \
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
@@ -138,6 +139,7 @@ else
         --exclude='.git' \
         --exclude='node_modules' \
         --exclude='dist' \
+        --exclude='graphify-out' \
         -e "ssh -p $DEPLOY_SSH_PORT" \
         "$PROJECT_ROOT/" \
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
