@@ -18,11 +18,11 @@ Requirements for this milestone. Each maps to roadmap phases.
 ### Rollout
 
 - [x] **ROLL-01**: Invoice detail page applies correct tier hierarchy (send=primary, mark paid=secondary, PDF/payment link=tertiary, delete=danger)
-- [x] **ROLL-02**: All modal dialogs use correct tiers (Save/Submit=primary, Cancel=secondary)
+- [ ] **ROLL-02**: All modal dialogs use correct tiers (Save/Submit=primary, Cancel=secondary)
 - [x] **ROLL-03**: Finance pages (list, settings, draft form) use correct tiers
 - [x] **ROLL-04**: People, Teams, Commissies pages use correct tiers
-- [x] **ROLL-05**: Settings pages use correct tiers
-- [x] **ROLL-06**: Feedback, VOG, Contributie, Clothing pages use correct tiers
+- [ ] **ROLL-05**: Settings pages use correct tiers
+- [ ] **ROLL-06**: Feedback, VOG, Contributie, Clothing pages use correct tiers
 - [x] **ROLL-07**: DataTable toolbar and utility buttons use tertiary where appropriate
 
 ## Future Requirements
@@ -50,16 +50,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BTN-04 | Phase 212 | Complete |
 | BTN-05 | Phase 212 | Complete |
 | ROLL-01 | Phase 213 | Complete |
-| ROLL-02 | Phase 213 | Complete |
+| ROLL-02 | Phase 213.1 | Pending (downgraded from Complete after v32.0 audit) |
 | ROLL-03 | Phase 213 | Complete |
 | ROLL-04 | Phase 213 | Complete |
-| ROLL-05 | Phase 213 | Complete |
-| ROLL-06 | Phase 213 | Complete |
+| ROLL-05 | Phase 213.1 | Pending (downgraded from Complete after v32.0 audit) |
+| ROLL-06 | Phase 213.1 | Pending (downgraded from Complete after v32.0 audit) |
 | ROLL-07 | Phase 213 | Complete |
 
 **Coverage:**
 - v32.0 requirements: 12 total
 - Mapped to phases: 12
+- Satisfied: 9
+- Pending (in gap closure phase 213.1): 3
 - Unmapped: 0 ✓
 
 ---
