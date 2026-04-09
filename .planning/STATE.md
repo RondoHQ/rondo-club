@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v33.0
 milestone_name: Fee Service Decomposition
-status: in_progress
-stopped_at: phase 217 shipped, settings extracted, option keys + fee snapshot stable
-last_updated: "2026-04-09T09:15:00.000Z"
-last_activity: 2026-04-09 — phase 217 (MembershipFeeSettings) shipped, triple-clean diff (baseline + pre-phase + option list)
+status: shipped
+stopped_at: phase 218 shipped, MembershipFees god class deleted, milestone complete
+last_updated: "2026-04-09T10:00:00.000Z"
+last_activity: 2026-04-09 — v33.0 MILESTONE COMPLETE. All 5 phases shipped direct-style. MembershipFees deleted.
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v33.0 Fee Service Decomposition — Phases 214 + 215 + 216 + 217 shipped. MembershipFees down 1,417 lines (66%). Next: Phase 218 (Retire MembershipFees) — final phase.
+**Current focus:** v33.0 Fee Service Decomposition SHIPPED (2026-04-09). MembershipFees god class deleted entirely. Fee system is now 7 focused classes + SeasonKey helper. Next: archive milestone, audit, and start v34.0 planning.
 
 ## Current Position
 
-Milestone: v33.0 Fee Service Decomposition (active)
-Phase: 217 (MembershipFeeSettings) — shipped 2026-04-09
+Milestone: v33.0 Fee Service Decomposition ✅ **SHIPPED** 2026-04-09
+Phase: 218 (Retire MembershipFees) — shipped 2026-04-09 — FINAL
 Plan: —
-Status: Phases 214 + 215 + 216 + 217 shipped direct-style. MembershipFees god class: 2,137 → 720 lines (−1,417, −66%), 45 methods moved. Fee snapshot diff + wp option list diff both clean after each phase. Ready for Phase 218 (Retire MembershipFees) — the final phase.
-Last activity: 2026-04-09 — phase 217 (MembershipFeeSettings) extraction, triple-clean diff validation (baseline + pre-phase + 101 option keys)
+Status: All 5 phases shipped direct-style. MembershipFees god class deleted entirely (Option A). Fee system is now 7 focused classes + SeasonKey helper (2,692 total lines vs 2,137 original god class). Every phase validated with fee snapshot diff; phases 217+218 additionally validated with wp option list diff. Zero regressions across 4,021 active members throughout the milestone.
+Last activity: 2026-04-09 — phase 218 (Retire MembershipFees) deletion, triple-clean diff validation, milestone complete
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100% ✅
 
 ## Performance Metrics
 
@@ -84,11 +84,11 @@ Decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T09:15:00Z
-Stopped at: Phase 217 shipped — MembershipFeeSettings live on prod, 26 methods extracted, 101 rondo_* option keys unchanged, fee snapshot diff clean. MembershipFees is now 720 lines.
+Last session: 2026-04-09T10:00:00Z
+Stopped at: v33.0 **MILESTONE COMPLETE**. MembershipFees god class deleted. Fee system refactored into 7 focused classes.
 
-**Next action:** Phase 218 — retire MembershipFees. Audit what remains (4 lazy accessors, 5 person-data helpers, 10 cache/snapshot methods, 1 diagnostic = ~20 methods) and decide: (A) delete MembershipFees entirely, moving cache methods to a new `FeeCache` class, person helpers to a `Person` helper, and the diagnostic to a sensible home; OR (B) reduce MembershipFees to a <200-line shell with a single clear purpose (likely the facade / lazy accessors pattern). Per roadmap STRU-01 + QUAL-01/02/03. Before starting: `bin/fee-snapshot.sh --output .planning/phases/218-retire-membershipfees/pre-phase-218.json` and rebuild graphify to verify MembershipFees has already dropped out of the god-node top 10.
+**Next action:** Archive v33.0 milestone (`/gsd:audit-milestone` + `/gsd:complete-milestone`), rebuild graphify to confirm MembershipFees is gone from the god-node report, bump theme version to 33.0.0 in `package.json` and `style.css`, update CHANGELOG.md with the summary, then start v34.0 planning.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-04-09 — phase 217 MembershipFeeSettings extraction shipped, 86% milestone complete*
+*Last updated: 2026-04-09 — v33.0 Fee Service Decomposition milestone complete*
