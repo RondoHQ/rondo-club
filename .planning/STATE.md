@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v33.0
 milestone_name: Fee Service Decomposition
 status: in_progress
-stopped_at: phase 215 shipped, FamilyGroupingService extracted, FeeCacheInvalidator coupling fixed
-last_updated: "2026-04-09T07:30:00.000Z"
-last_activity: 2026-04-09 — phase 215 (FamilyGroupingService) shipped, fee diff clean against baseline + pre-phase
+stopped_at: phase 216 shipped, FeeCalculator extracted, fee math lives in its own service
+last_updated: "2026-04-09T08:15:00.000Z"
+last_activity: 2026-04-09 — phase 216 (FeeCalculator) shipped, fee diff clean against baseline + pre-phase
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v33.0 Fee Service Decomposition — Phases 214 + 215 shipped. Next: Phase 216 (FeeCalculator) — the most sensitive extraction in the milestone.
+**Current focus:** v33.0 Fee Service Decomposition — Phases 214 + 215 + 216 shipped. MembershipFees down 929 lines (43%). Next: Phase 217 (MembershipFeeSettings) — biggest volume, ~45 settings methods.
 
 ## Current Position
 
 Milestone: v33.0 Fee Service Decomposition (active)
-Phase: 215 (FamilyGroupingService) — shipped 2026-04-09
+Phase: 216 (FeeCalculator) — shipped 2026-04-09
 Plan: —
-Status: Phases 214 + 215 shipped direct-style. MembershipFees god class has shed 617 lines (29%) and 15 methods. Fee snapshot diff clean against baseline after each phase. Ready for Phase 216 (FeeCalculator).
-Last activity: 2026-04-09 — phase 215 extraction + FeeCacheInvalidator coupling fix, 4,021-row diff passed
+Status: Phases 214 + 215 + 216 shipped direct-style. MembershipFees god class: 2,137 → 1,208 lines (−929, −43%), 19 methods moved. Fee snapshot diff clean against baseline after each phase. Ready for Phase 217 (MembershipFeeSettings).
+Last activity: 2026-04-09 — phase 216 (FeeCalculator) extraction, deferred-closure cycle break, 4,021-row diff passed
 
-Progress: [████░░░░░░] 43%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
@@ -84,11 +84,11 @@ Decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T07:30:00Z
-Stopped at: Phase 215 shipped — FamilyGroupingService live on prod, `FeeCacheInvalidator` coupling fixed (STRU-04), fee diff clean against baseline + pre-phase snapshots
+Last session: 2026-04-09T08:15:00Z
+Stopped at: Phase 216 shipped — FeeCalculator live on prod, the most sensitive extraction in the milestone, fee diff clean against baseline + pre-phase snapshots
 
-**Next action:** Phase 216 — extract `FeeCalculator` (4 methods: `calculate_fee`, `calculate_full_fee`, `calculate_fee_with_family_discount`, `get_prorata_percentage`). Per roadmap: `FeeCalculator` takes `FeeCategoryResolver` and `FamilyGroupingService` as explicit collaborators (constructor injection). This is the most sensitive extraction in the milestone — the actual fee math. External callers to update: `class-rest-fees.php`, `class-rest-google-sheets.php`, `class-bulk-invoice-creator.php`, `class-fee-cache-invalidator.php`. Before starting: run `bin/fee-snapshot.sh --output .planning/phases/216-feecalculator/pre-phase-216.json`.
+**Next action:** Phase 217 — extract `MembershipFeeSettings` (~45 storage methods: billing method, installment plans/fees, categories per season, family discount config, entry discount config, get_all_settings, update_settings, get_category_sort_order, get_youth_category_slugs, get_valid_category_slugs, plus migrations). Per roadmap: biggest volume of the milestone but lowest conceptual risk. Extra validation: `wp option list --fields=option_name | grep rondo | sort` must diff empty before/after. Also check REST responses for `/rondo/v1/membership-fees/settings`, `/rondo/v1/fees/list`, `/rondo/v1/fees/summary` are byte-identical. Before starting: `bin/fee-snapshot.sh --output .planning/phases/217-membershipfeesettings/pre-phase-217.json`.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-04-09 — phase 215 FamilyGroupingService + FeeCacheInvalidator coupling fix shipped*
+*Last updated: 2026-04-09 — phase 216 FeeCalculator extraction shipped*
