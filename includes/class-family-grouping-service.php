@@ -30,23 +30,56 @@ class FamilyGroupingService {
 	/**
 	 * MembershipFees instance.
 	 *
-	 * Temporary collaborator: provides calculate_fee(), get_youth_category_slugs(),
-	 * is_former_member_in_season() and get_family_discount_rate() that still live
-	 * on MembershipFees in Phase 215. Phase 216 (FeeCalculator) and Phase 217
-	 * (MembershipFeeSettings) will replace this dependency with more focused
-	 * service collaborators.
+	 * Interim collaborator: provides get_youth_category_slugs(),
+	 * is_former_member_in_season() and get_family_discount_rate() that
+	 * still live on MembershipFees. Phase 217 (MembershipFeeSettings)
+	 * will replace this dependency with a focused settings service.
+	 *
+	 * As of Phase 216, calculate_fee() is no longer on MembershipFees —
+	 * it moved to FeeCalculator. This service reaches it via the
+	 * {@see self::$fee_calculator} closure to avoid a typed circular
+	 * dependency (FeeCalculator needs FamilyGroupingService for
+	 * family-discount calculation).
 	 *
 	 * @var MembershipFees
 	 */
 	private MembershipFees $fees;
 
 	/**
+	 * Deferred base-fee calculator callable.
+	 *
+	 * Signature: (int $person_id, ?string $season): ?array
+	 *
+	 * Wired in Phase 216 to point at
+	 * FeeCalculator::calculate_fee(), via a closure that resolves the
+	 * MembershipFees::fee_calculator() lazy accessor at invocation time
+	 * (not construction time). This breaks the circular dependency with
+	 * FeeCalculator.
+	 *
+	 * @var callable
+	 */
+	private $fee_calculator;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param MembershipFees $fees MembershipFees collaborator for fee calculation & settings.
+	 * @param MembershipFees $fees           MembershipFees collaborator (settings helpers).
+	 * @param callable       $fee_calculator Deferred base-fee calculator: (int, ?string) => ?array.
 	 */
-	public function __construct( MembershipFees $fees ) {
-		$this->fees = $fees;
+	public function __construct( MembershipFees $fees, callable $fee_calculator ) {
+		$this->fees           = $fees;
+		$this->fee_calculator = $fee_calculator;
+	}
+
+	/**
+	 * Invoke the deferred base-fee calculator.
+	 *
+	 * @param int         $person_id The person post ID.
+	 * @param string|null $season    Optional season key, defaults to current season.
+	 * @return array|null Fee data array or null if not calculable.
+	 */
+	private function calculate_base_fee( int $person_id, ?string $season = null ): ?array {
+		return ( $this->fee_calculator )( $person_id, $season );
 	}
 
 	/**
@@ -184,7 +217,7 @@ class FamilyGroupingService {
 			}
 
 			// Calculate fee for this person using season-specific rates
-			$fee_data = $this->fees->calculate_fee( $person_id, $season );
+			$fee_data = $this->calculate_base_fee( $person_id, $season );
 
 			// Skip if not calculable
 			if ( $fee_data === null ) {
@@ -365,7 +398,7 @@ class FamilyGroupingService {
 			}
 
 			// Check if youth category
-			$fee_data = $this->fees->calculate_fee( $pid, $season );
+			$fee_data = $this->calculate_base_fee( $pid, $season );
 			if ( $fee_data === null || ! in_array( $fee_data['category'], $youth_categories, true ) ) {
 				// Not youth: clear meta
 				update_post_meta( $pid, '_family_discount_rate', '0' );

@@ -895,7 +895,7 @@ class GoogleSheets extends Base {
 
 			if ( $forecast ) {
 				// Calculate with 100% pro-rata for forecast
-				$fee_data = $fees->calculate_fee_with_family_discount( $person->ID, $season );
+				$fee_data = $fees->fee_calculator()->calculate_fee_with_family_discount( $person->ID, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
