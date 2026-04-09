@@ -87,6 +87,7 @@ class FinanceConfig {
 	const OPTION_INVOICE_REMINDER_2_EMAIL_HEADING                     = 'rondo_finance_invoice_reminder_2_email_heading';
 	const OPTION_CREDIT_EMAIL_TEMPLATE                                = 'rondo_finance_credit_email_template';
 	const OPTION_CREDIT_EMAIL_HEADING                                 = 'rondo_finance_credit_email_heading';
+	const OPTION_CREDIT_EMAIL_SUBJECT                                 = 'rondo_finance_credit_email_subject';
 
 	/**
 	 * Default configuration values
@@ -128,6 +129,7 @@ class FinanceConfig {
 		'invoice_reminder_2_email_heading'     => 'Tweede herinnering',
 		'credit_email_template'                => '<div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#333;"><p>Beste {naam},</p><p>Bijgevoegd vindt u de creditfactuur {factuur_nummer}.</p>{tuchtzaken_lijst}<p>Het totaal creditbedrag is <strong>{totaal_bedrag}</strong>.</p><p>Dit bedrag wordt verrekend met een openstaande factuur of aan u terugbetaald.</p><p>Met vriendelijke groet,<br/>{organisatie_naam}</p></div>',
 		'credit_email_heading'                 => 'Creditfactuur',
+		'credit_email_subject'                 => 'Creditfactuur {factuur_nummer} - {organisatie_naam}',
 		'mollie_default_membership_account_id' => '',
 		'mollie_default_discipline_account_id' => '',
 		'mollie_default_manual_account_id'     => '',
@@ -514,6 +516,15 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get credit invoice email subject template
+	 *
+	 * @return string Subject template for credit invoices.
+	 */
+	public function get_credit_email_subject(): string {
+		return get_option( self::OPTION_CREDIT_EMAIL_SUBJECT, self::DEFAULTS['credit_email_subject'] );
+	}
+
+	/**
 	 * Get regular invoice email subject template
 	 *
 	 * @return string Subject template for manual/regular invoices.
@@ -667,6 +678,7 @@ class FinanceConfig {
 			'invoice_reminder_1_email_template'          => $this->get_invoice_reminder_1_email_template(),
 			'invoice_reminder_2_email_template'          => $this->get_invoice_reminder_2_email_template(),
 			'credit_email_template'                      => $this->get_credit_email_template(),
+			'credit_email_subject'                       => $this->get_credit_email_subject(),
 			'regular_invoice_email_subject'              => $this->get_regular_invoice_email_subject(),
 			'regular_invoice_email_body'                 => $this->get_regular_invoice_email_body(),
 			'regular_invoice_email_heading'              => $this->get_email_heading( 'regular_invoice' ),
@@ -745,6 +757,8 @@ class FinanceConfig {
 				return $this->get_invoice_reminder_2_email_template();
 			case 'credit_email_template':
 				return $this->get_credit_email_template();
+			case 'credit_email_subject':
+				return $this->get_credit_email_subject();
 			case 'regular_invoice_email_subject':
 				return $this->get_regular_invoice_email_subject();
 			case 'regular_invoice_email_body':
@@ -854,6 +868,10 @@ class FinanceConfig {
 
 		if ( isset( $data['credit_email_template'] ) ) {
 			$success = update_option( self::OPTION_CREDIT_EMAIL_TEMPLATE, wp_kses_post( $data['credit_email_template'] ) ) && $success;
+		}
+
+		if ( isset( $data['credit_email_subject'] ) ) {
+			$success = update_option( self::OPTION_CREDIT_EMAIL_SUBJECT, sanitize_text_field( $data['credit_email_subject'] ) ) && $success;
 		}
 
 		if ( isset( $data['regular_invoice_email_subject'] ) ) {
