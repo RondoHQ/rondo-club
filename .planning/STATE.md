@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v33.0
 milestone_name: Fee Service Decomposition
 status: in_progress
-stopped_at: phase 216 shipped, FeeCalculator extracted, fee math lives in its own service
-last_updated: "2026-04-09T08:15:00.000Z"
-last_activity: 2026-04-09 — phase 216 (FeeCalculator) shipped, fee diff clean against baseline + pre-phase
+stopped_at: phase 217 shipped, settings extracted, option keys + fee snapshot stable
+last_updated: "2026-04-09T09:15:00.000Z"
+last_activity: 2026-04-09 — phase 217 (MembershipFeeSettings) shipped, triple-clean diff (baseline + pre-phase + option list)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 7
-  completed_plans: 4
-  percent: 57
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v33.0 Fee Service Decomposition — Phases 214 + 215 + 216 shipped. MembershipFees down 929 lines (43%). Next: Phase 217 (MembershipFeeSettings) — biggest volume, ~45 settings methods.
+**Current focus:** v33.0 Fee Service Decomposition — Phases 214 + 215 + 216 + 217 shipped. MembershipFees down 1,417 lines (66%). Next: Phase 218 (Retire MembershipFees) — final phase.
 
 ## Current Position
 
 Milestone: v33.0 Fee Service Decomposition (active)
-Phase: 216 (FeeCalculator) — shipped 2026-04-09
+Phase: 217 (MembershipFeeSettings) — shipped 2026-04-09
 Plan: —
-Status: Phases 214 + 215 + 216 shipped direct-style. MembershipFees god class: 2,137 → 1,208 lines (−929, −43%), 19 methods moved. Fee snapshot diff clean against baseline after each phase. Ready for Phase 217 (MembershipFeeSettings).
-Last activity: 2026-04-09 — phase 216 (FeeCalculator) extraction, deferred-closure cycle break, 4,021-row diff passed
+Status: Phases 214 + 215 + 216 + 217 shipped direct-style. MembershipFees god class: 2,137 → 720 lines (−1,417, −66%), 45 methods moved. Fee snapshot diff + wp option list diff both clean after each phase. Ready for Phase 218 (Retire MembershipFees) — the final phase.
+Last activity: 2026-04-09 — phase 217 (MembershipFeeSettings) extraction, triple-clean diff validation (baseline + pre-phase + 101 option keys)
 
-Progress: [██████░░░░] 57%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -84,11 +84,11 @@ Decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-09T08:15:00Z
-Stopped at: Phase 216 shipped — FeeCalculator live on prod, the most sensitive extraction in the milestone, fee diff clean against baseline + pre-phase snapshots
+Last session: 2026-04-09T09:15:00Z
+Stopped at: Phase 217 shipped — MembershipFeeSettings live on prod, 26 methods extracted, 101 rondo_* option keys unchanged, fee snapshot diff clean. MembershipFees is now 720 lines.
 
-**Next action:** Phase 217 — extract `MembershipFeeSettings` (~45 storage methods: billing method, installment plans/fees, categories per season, family discount config, entry discount config, get_all_settings, update_settings, get_category_sort_order, get_youth_category_slugs, get_valid_category_slugs, plus migrations). Per roadmap: biggest volume of the milestone but lowest conceptual risk. Extra validation: `wp option list --fields=option_name | grep rondo | sort` must diff empty before/after. Also check REST responses for `/rondo/v1/membership-fees/settings`, `/rondo/v1/fees/list`, `/rondo/v1/fees/summary` are byte-identical. Before starting: `bin/fee-snapshot.sh --output .planning/phases/217-membershipfeesettings/pre-phase-217.json`.
+**Next action:** Phase 218 — retire MembershipFees. Audit what remains (4 lazy accessors, 5 person-data helpers, 10 cache/snapshot methods, 1 diagnostic = ~20 methods) and decide: (A) delete MembershipFees entirely, moving cache methods to a new `FeeCache` class, person helpers to a `Person` helper, and the diagnostic to a sensible home; OR (B) reduce MembershipFees to a <200-line shell with a single clear purpose (likely the facade / lazy accessors pattern). Per roadmap STRU-01 + QUAL-01/02/03. Before starting: `bin/fee-snapshot.sh --output .planning/phases/218-retire-membershipfees/pre-phase-218.json` and rebuild graphify to verify MembershipFees has already dropped out of the god-node top 10.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-04-09 — phase 216 FeeCalculator extraction shipped*
+*Last updated: 2026-04-09 — phase 217 MembershipFeeSettings extraction shipped, 86% milestone complete*
