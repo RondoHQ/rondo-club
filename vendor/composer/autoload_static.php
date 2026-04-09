@@ -36479,6 +36479,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Demo\\DemoImport' => __DIR__ . '/../..' . '/includes/class-demo-import.php',
         'Rondo\\Demo\\DemoProtection' => __DIR__ . '/../..' . '/includes/class-demo-protection.php',
         'Rondo\\Export\\VCard' => __DIR__ . '/../..' . '/includes/class-vcard-export.php',
+        'Rondo\\Fees\\FamilyGroupingService' => __DIR__ . '/../..' . '/includes/class-family-grouping-service.php',
         'Rondo\\Fees\\FeeCacheInvalidator' => __DIR__ . '/../..' . '/includes/class-fee-cache-invalidator.php',
         'Rondo\\Fees\\FeeCategoryResolver' => __DIR__ . '/../..' . '/includes/class-fee-category-resolver.php',
         'Rondo\\Fees\\MembershipFees' => __DIR__ . '/../..' . '/includes/class-membership-fees.php',
