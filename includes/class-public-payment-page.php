@@ -182,11 +182,11 @@ class PublicPaymentPage {
 		$season          = SeasonKey::current( $invoice_date );
 
 		// Read installment admin fee.
-		$admin_fee = $membership_fees->get_installment_admin_fee( $season );
+		$admin_fee = $membership_fees->settings()->get_installment_admin_fee( $season );
 
 		// Read installment plan toggles for this season.
-		$plan_3_enabled = $membership_fees->get_installment_plan_3_enabled( $season );
-		$plan_8_enabled = $membership_fees->get_installment_plan_8_enabled( $season );
+		$plan_3_enabled = $membership_fees->settings()->get_installment_plan_3_enabled( $season );
+		$plan_8_enabled = $membership_fees->settings()->get_installment_plan_8_enabled( $season );
 
 		// Per-invoice override: if installments disabled, hide both plans.
 		if ( get_post_meta( $invoice_id, '_disable_installments', true ) ) {
@@ -499,12 +499,12 @@ class PublicPaymentPage {
 
 		// Check if selected installment plan is enabled and currently available.
 		if ( $plan === 'quarterly_3' || $plan === 'monthly_8' ) {
-			if ( $plan === 'quarterly_3' && ! $fees_service->get_installment_plan_3_enabled( $invoice_season ) ) {
+			if ( $plan === 'quarterly_3' && ! $fees_service->settings()->get_installment_plan_3_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
 
-			if ( $plan === 'monthly_8' && ! $fees_service->get_installment_plan_8_enabled( $invoice_season ) ) {
+			if ( $plan === 'monthly_8' && ! $fees_service->settings()->get_installment_plan_8_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
@@ -590,7 +590,7 @@ class PublicPaymentPage {
 
 		// Read amounts.
 		$total     = (float) get_field( 'total_amount', $invoice_id );
-		$admin_fee = $fees_service->get_installment_admin_fee( $invoice_season );
+		$admin_fee = $fees_service->settings()->get_installment_admin_fee( $invoice_season );
 
 		// Store plan meta and write installment breakdown.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );

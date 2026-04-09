@@ -51,13 +51,23 @@ class FeeCalculator {
 	private FamilyGroupingService $family_grouping;
 
 	/**
-	 * MembershipFees reference for helpers not yet extracted.
+	 * Settings repository collaborator (Phase 217).
 	 *
-	 * Phase 217 will move the settings reads (get_youth_category_slugs,
-	 * get_entry_discount_config, get_family_discount_rate, get_fee) to
-	 * MembershipFeeSettings. The person-data helpers (get_current_teams,
-	 * get_effective_werkfuncties, normalize_werkfuncties_for_fee_match)
-	 * stay on MembershipFees until Phase 218 retires the class.
+	 * Owns all fee-settings reads: get_youth_category_slugs, get_fee,
+	 * get_entry_discount_config, get_family_discount_rate. Before Phase
+	 * 217 these were reached via `$this->fees->X()`; now they are on an
+	 * explicit typed dependency.
+	 *
+	 * @var MembershipFeeSettings
+	 */
+	private MembershipFeeSettings $settings;
+
+	/**
+	 * MembershipFees reference for person-data helpers.
+	 *
+	 * Provides get_current_teams, get_effective_werkfuncties, and
+	 * normalize_werkfuncties_for_fee_match. These person-data helpers
+	 * stay on MembershipFees until Phase 218 decides where they end up.
 	 *
 	 * @var MembershipFees
 	 */
@@ -66,17 +76,20 @@ class FeeCalculator {
 	/**
 	 * Constructor.
 	 *
-	 * @param FeeCategoryResolver   $category_resolver Category resolver collaborator.
-	 * @param FamilyGroupingService $family_grouping   Family grouping collaborator.
-	 * @param MembershipFees        $fees              MembershipFees (helpers + settings, interim).
+	 * @param FeeCategoryResolver   $category_resolver Category resolver collaborator (Phase 214).
+	 * @param FamilyGroupingService $family_grouping   Family grouping collaborator (Phase 215).
+	 * @param MembershipFeeSettings $settings          Settings repository (Phase 217).
+	 * @param MembershipFees        $fees              Person-data helper facade.
 	 */
 	public function __construct(
 		FeeCategoryResolver $category_resolver,
 		FamilyGroupingService $family_grouping,
+		MembershipFeeSettings $settings,
 		MembershipFees $fees
 	) {
 		$this->category_resolver = $category_resolver;
 		$this->family_grouping   = $family_grouping;
+		$this->settings          = $settings;
 		$this->fees              = $fees;
 	}
 
@@ -113,11 +126,11 @@ class FeeCalculator {
 		}
 
 		// Youth categories: Return immediately (priority over everything)
-		$youth_categories = $this->fees->get_youth_category_slugs( $season );
+		$youth_categories = $this->settings->get_youth_category_slugs( $season );
 		if ( $age_class_category && in_array( $age_class_category, $youth_categories, true ) ) {
 			return [
 				'category'       => $age_class_category,
-				'base_fee'       => $this->fees->get_fee( $age_class_category, $season ),
+				'base_fee'       => $this->settings->get_fee( $age_class_category, $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
@@ -130,7 +143,7 @@ class FeeCalculator {
 			if ( $team_matched_category !== null ) {
 				return [
 					'category'       => $team_matched_category,
-					'base_fee'       => $this->fees->get_fee( $team_matched_category, $season ),
+					'base_fee'       => $this->settings->get_fee( $team_matched_category, $season ),
 					'leeftijdsgroep' => $leeftijdsgroep,
 					'person_id'      => $person_id,
 				];
@@ -146,7 +159,7 @@ class FeeCalculator {
 			if ( $werkfunctie_matched_category !== null ) {
 				return [
 					'category'       => $werkfunctie_matched_category,
-					'base_fee'       => $this->fees->get_fee( $werkfunctie_matched_category, $season ),
+					'base_fee'       => $this->settings->get_fee( $werkfunctie_matched_category, $season ),
 					'leeftijdsgroep' => $leeftijdsgroep,
 					'person_id'      => $person_id,
 				];
@@ -157,7 +170,7 @@ class FeeCalculator {
 		if ( $age_class_category !== null ) {
 			return [
 				'category'       => $age_class_category,
-				'base_fee'       => $this->fees->get_fee( $age_class_category, $season ),
+				'base_fee'       => $this->settings->get_fee( $age_class_category, $season ),
 				'leeftijdsgroep' => $leeftijdsgroep,
 				'person_id'      => $person_id,
 			];
@@ -193,7 +206,7 @@ class FeeCalculator {
 		}
 
 		// Youth categories eligible for family discount
-		$youth_categories = $this->fees->get_youth_category_slugs( $season );
+		$youth_categories = $this->settings->get_youth_category_slugs( $season );
 
 		// Non-youth: no family discount eligible
 		if ( ! in_array( $fee_data['category'], $youth_categories, true ) ) {
@@ -306,7 +319,7 @@ class FeeCalculator {
 		}
 
 		// Calculate discount
-		$discount_rate   = $this->fees->get_family_discount_rate( $position, $season );
+		$discount_rate   = $this->settings->get_family_discount_rate( $position, $season );
 		$discount_amount = round( $fee_data['base_fee'] * $discount_rate, 2 );
 		$final_fee       = $fee_data['base_fee'] - $discount_amount;
 
@@ -423,7 +436,7 @@ class FeeCalculator {
 
 		// Member joined during the current season - find matching configured period
 		$month  = (int) date( 'n', $timestamp );
-		$config = $this->fees->get_entry_discount_config( $season );
+		$config = $this->settings->get_entry_discount_config( $season );
 
 		foreach ( $config['periods'] as $period ) {
 			$start = (int) ( $period['start_month'] ?? 0 );

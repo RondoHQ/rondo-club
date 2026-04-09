@@ -935,7 +935,7 @@ class GoogleSheets extends Base {
 		}
 
 		// Sort results based on sort_field and sort_order
-		$category_order = $fees->get_category_sort_order( $season );
+		$category_order = $fees->settings()->get_category_sort_order( $season );
 
 		usort(
 			$results,

@@ -255,7 +255,7 @@ class BulkInvoiceCreator {
 		update_field( 'total_amount', $final_fee, $post_id );
 
 		// Look up category label for line item description.
-		$categories     = $fees->get_categories_for_season( $season );
+		$categories     = $fees->settings()->get_categories_for_season( $season );
 		$category_slug  = $fee_data['category'] ?? '';
 		$category_label = $categories[ $category_slug ]['label'] ?? $category_slug;
 

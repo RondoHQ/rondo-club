@@ -30,20 +30,26 @@ class FamilyGroupingService {
 	/**
 	 * MembershipFees instance.
 	 *
-	 * Interim collaborator: provides get_youth_category_slugs(),
-	 * is_former_member_in_season() and get_family_discount_rate() that
-	 * still live on MembershipFees. Phase 217 (MembershipFeeSettings)
-	 * will replace this dependency with a focused settings service.
-	 *
-	 * As of Phase 216, calculate_fee() is no longer on MembershipFees —
-	 * it moved to FeeCalculator. This service reaches it via the
-	 * {@see self::$fee_calculator} closure to avoid a typed circular
-	 * dependency (FeeCalculator needs FamilyGroupingService for
-	 * family-discount calculation).
+	 * Person-data collaborator: provides is_former_member_in_season()
+	 * which reads ACF fields and compares timestamps. This helper stays
+	 * on MembershipFees until Phase 218 decides where person-data
+	 * helpers end up.
 	 *
 	 * @var MembershipFees
 	 */
 	private MembershipFees $fees;
+
+	/**
+	 * Membership fee settings repository (Phase 217).
+	 *
+	 * Provides `get_youth_category_slugs()` and `get_family_discount_rate()`.
+	 * Before Phase 217 these were reached via `$this->fees->X()` which
+	 * contributed to the MembershipFees god class coupling. Now they are
+	 * on an explicit typed collaborator.
+	 *
+	 * @var MembershipFeeSettings
+	 */
+	private MembershipFeeSettings $settings;
 
 	/**
 	 * Deferred base-fee calculator callable.
@@ -63,11 +69,13 @@ class FamilyGroupingService {
 	/**
 	 * Constructor.
 	 *
-	 * @param MembershipFees $fees           MembershipFees collaborator (settings helpers).
-	 * @param callable       $fee_calculator Deferred base-fee calculator: (int, ?string) => ?array.
+	 * @param MembershipFees        $fees           MembershipFees collaborator (person-data helper).
+	 * @param MembershipFeeSettings $settings       Settings repository (Phase 217).
+	 * @param callable              $fee_calculator Deferred base-fee calculator: (int, ?string) => ?array.
 	 */
-	public function __construct( MembershipFees $fees, callable $fee_calculator ) {
+	public function __construct( MembershipFees $fees, MembershipFeeSettings $settings, callable $fee_calculator ) {
 		$this->fees           = $fees;
+		$this->settings       = $settings;
 		$this->fee_calculator = $fee_calculator;
 	}
 
@@ -207,7 +215,7 @@ class FamilyGroupingService {
 		$person_data = [];
 
 		// Youth categories eligible for family discount
-		$youth_categories = $this->fees->get_youth_category_slugs( $season );
+		$youth_categories = $this->settings->get_youth_category_slugs( $season );
 
 		foreach ( $query->posts as $person_id ) {
 			// Skip former members not eligible for this season's fee list
@@ -316,7 +324,7 @@ class FamilyGroupingService {
 			// Multi-member family: members are already sorted by fee descending
 			foreach ( $members as $index => $member_id ) {
 				$position      = $index + 1;
-				$discount_rate = $this->fees->get_family_discount_rate( $position, $season );
+				$discount_rate = $this->settings->get_family_discount_rate( $position, $season );
 
 				update_post_meta( $member_id, '_family_discount_rate', (string) $discount_rate );
 				update_post_meta( $member_id, '_family_discount_position', (string) $position );
@@ -369,7 +377,7 @@ class FamilyGroupingService {
 		}
 
 		// Find all youth members at the same family key
-		$youth_categories = $this->fees->get_youth_category_slugs( $season );
+		$youth_categories = $this->settings->get_youth_category_slugs( $season );
 		$all_persons      = new \WP_Query(
 			[
 				'post_type'        => 'person',
@@ -439,7 +447,7 @@ class FamilyGroupingService {
 		// Multi-member: assign positions
 		foreach ( $family_members as $index => $member ) {
 			$position      = $index + 1;
-			$discount_rate = $this->fees->get_family_discount_rate( $position, $season );
+			$discount_rate = $this->settings->get_family_discount_rate( $position, $season );
 
 			update_post_meta( $member['person_id'], '_family_discount_rate', (string) $discount_rate );
 			update_post_meta( $member['person_id'], '_family_discount_position', (string) $position );
