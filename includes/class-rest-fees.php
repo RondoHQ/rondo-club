@@ -1017,7 +1017,7 @@ class Fees extends Base {
 
 		if ( $family_key !== null && empty( $family_members ) && ( $fee_data['family_position'] ?? 0 ) > 0 ) {
 			// Derive siblings from family_key: find other youth persons at same address
-			$groups         = $fees->build_family_groups( $season );
+			$groups         = $fees->family_grouping()->build_family_groups( $season );
 			$group_families = $groups['families'];
 			$group_members  = $group_families[ $family_key ] ?? [];
 
@@ -1098,7 +1098,7 @@ class Fees extends Base {
 
 		// Clear all caches and family discount meta
 		$cleared = $fees->clear_all_fee_caches( $season );
-		$fees->clear_all_family_discount_meta();
+		$fees->family_grouping()->clear_all_family_discount_meta();
 
 		// Run recalculation synchronously
 		$invalidator = new \Rondo\Fees\FeeCacheInvalidator();

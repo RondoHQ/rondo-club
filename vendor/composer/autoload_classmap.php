@@ -36090,6 +36090,7 @@ return array(
     'Rondo\\Demo\\DemoImport' => $baseDir . '/includes/class-demo-import.php',
     'Rondo\\Demo\\DemoProtection' => $baseDir . '/includes/class-demo-protection.php',
     'Rondo\\Export\\VCard' => $baseDir . '/includes/class-vcard-export.php',
+    'Rondo\\Fees\\FamilyGroupingService' => $baseDir . '/includes/class-family-grouping-service.php',
     'Rondo\\Fees\\FeeCacheInvalidator' => $baseDir . '/includes/class-fee-cache-invalidator.php',
     'Rondo\\Fees\\FeeCategoryResolver' => $baseDir . '/includes/class-fee-category-resolver.php',
     'Rondo\\Fees\\MembershipFees' => $baseDir . '/includes/class-membership-fees.php',
