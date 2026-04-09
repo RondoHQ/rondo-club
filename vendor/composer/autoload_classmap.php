@@ -36094,6 +36094,7 @@ return array(
     'Rondo\\Fees\\FeeCacheInvalidator' => $baseDir . '/includes/class-fee-cache-invalidator.php',
     'Rondo\\Fees\\FeeCalculator' => $baseDir . '/includes/class-fee-calculator.php',
     'Rondo\\Fees\\FeeCategoryResolver' => $baseDir . '/includes/class-fee-category-resolver.php',
+    'Rondo\\Fees\\MembershipFeeSettings' => $baseDir . '/includes/class-membership-fee-settings.php',
     'Rondo\\Fees\\MembershipFees' => $baseDir . '/includes/class-membership-fees.php',
     'Rondo\\Fees\\SeasonKey' => $baseDir . '/includes/class-season-key.php',
     'Rondo\\Finance\\BulkInvoiceCreator' => $baseDir . '/includes/class-bulk-invoice-creator.php',
