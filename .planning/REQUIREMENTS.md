@@ -10,7 +10,7 @@ Every requirement below is validated by: (a) a clean `bin/finance-settings-snaps
 
 ### Regression Harness
 
-- [ ] **FIN-01**: `bin/finance-settings-snapshot.sh` + `bin/finance-settings-snapshot.php` WP-CLI-backed harness exists and captures (a) all 48 `rondo_finance_*` option values and (b) the full `/rondo/v1/finance-settings` REST response as pretty-printed JSON, suitable for `jq -S` byte-for-byte diff. Analog to `bin/fee-snapshot.sh` from v33.0. Must be buildable before Phase 219 Plan 02 extraction work begins.
+- [x] **FIN-01**: `bin/finance-settings-snapshot.sh` + `bin/finance-settings-snapshot.php` WP-CLI-backed harness exists and captures (a) all 48 `rondo_finance_*` option values and (b) the full `/rondo/v1/finance-settings` REST response as pretty-printed JSON, suitable for `jq -S` byte-for-byte diff. Analog to `bin/fee-snapshot.sh` from v33.0. Must be buildable before Phase 219 Plan 02 extraction work begins.
 
 ### Mollie Configuration Service
 
@@ -80,7 +80,7 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIN-01 | Phase 219 | Pending |
+| FIN-01 | Phase 219 | Complete |
 | FIN-02 | Phase 220 | Pending |
 | FIN-03 | Phase 220 | Pending |
 | FIN-04 | Phase 221 | Pending |

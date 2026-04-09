@@ -30,7 +30,7 @@
 1. A clean `bin/finance-settings-snapshot.sh` pre/post diff recorded in its `SUMMARY.md` — zero drift across all 48 `rondo_finance_*` option keys + `/rondo/v1/finance-settings` REST response. (FIN-12)
 2. `class-rest-finance-settings.php` continues to serve the same flat settings object to `FinanceSettings.jsx` — no changes to the REST response shape. (FIN-11)
 
-- [ ] **Phase 219: Finance Settings Snapshot Harness** — Build the regression harness that gates the entire milestone
+- [x] **Phase 219: Finance Settings Snapshot Harness** — Build the regression harness that gates the entire milestone (completed 2026-04-09)
 - [ ] **Phase 220: Extract MollieConfig** — Extract the biggest and scariest subsystem first (encrypted API keys, webhook plumbing)
 - [ ] **Phase 221: Extract EmailTemplates** — Extract email template/heading/subject getters + central dispatch
 - [ ] **Phase 222: Extract MembershipPassConfig** — Extract Apple + Google wallet pass configuration
@@ -49,7 +49,7 @@
   2. The snapshot captures all 48 `rondo_finance_*` option values (verified by counting keys in the output) and the full `/rondo/v1/finance-settings` REST response as pretty-printed JSON
   3. Running the harness twice against an unchanged database produces a `jq -S` byte-for-byte identical diff (zero drift — the harness is deterministic and order-stable)
   4. A baseline snapshot is recorded in the phase's `SUMMARY.md` and committed alongside the harness, establishing the golden-state reference all subsequent phases will diff against
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 219-01-PLAN.md — Build finance-settings-snapshot.{sh,php} harness (48-key allowlist + get_all_settings() REST capture), prove run-twice-diff-empty determinism, commit v34.0 baseline
 
@@ -117,7 +117,7 @@ Plans:
 | 216. FeeCalculator | v33.0 | 1/1 | Complete | 2026-04-09 |
 | 217. MembershipFeeSettings | v33.0 | 2/2 | Complete | 2026-04-09 |
 | 218. Retire MembershipFees | v33.0 | 1/1 | Complete | 2026-04-09 |
-| 219. Finance Settings Snapshot Harness | v34.0 | 0/1 | Planned | — |
+| 219. Finance Settings Snapshot Harness | 1/1 | Complete   | 2026-04-09 | — |
 | 220. Extract MollieConfig | v34.0 | 0/0 | Not started | — |
 | 221. Extract EmailTemplates | v34.0 | 0/0 | Not started | — |
 | 222. Extract MembershipPassConfig | v34.0 | 0/0 | Not started | — |
