@@ -839,8 +839,9 @@ class Fees extends Base {
 				if ( in_array( $current_cat, $current_youth_slugs, true ) ) {
 					$leeftijdsgroep = $fee_data['leeftijdsgroep'] ?? '';
 					if ( ! empty( $leeftijdsgroep ) ) {
-						$next_age_class = $fees->predict_next_season_age_class( $leeftijdsgroep );
-						$next_cat       = $fees->get_category_by_age_class( $next_age_class, $season );
+						$category_resolver = $fees->category_resolver();
+						$next_age_class    = $category_resolver->predict_next_season_age_class( $leeftijdsgroep );
+						$next_cat          = $category_resolver->get_category_by_age_class( $next_age_class, $season );
 					} else {
 						$next_cat = null;
 					}

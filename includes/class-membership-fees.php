@@ -23,6 +23,42 @@ class MembershipFees {
 	 */
 	const OPTION_KEY = 'rondo_membership_fees';
 
+	/**
+	 * Lazily instantiated category resolver.
+	 *
+	 * Extracted from this class in Phase 214 of the v33.0 Fee Service
+	 * Decomposition milestone. Accessed via {@see self::category_resolver()}
+	 * to avoid circular construction (the resolver calls back into
+	 * $this->get_categories_for_season through its provider).
+	 *
+	 * @var FeeCategoryResolver|null
+	 */
+	private ?FeeCategoryResolver $category_resolver = null;
+
+	/**
+	 * Get the lazy-initialized category resolver.
+	 *
+	 * The resolver reads season categories via a callable provider pointing
+	 * back at $this->get_categories_for_season(). External callers (e.g. the
+	 * REST fees controller) use this accessor to reach the resolver without
+	 * needing to know how it is wired.
+	 *
+	 * In Phase 217 the provider will swap to MembershipFeeSettings and this
+	 * accessor becomes a thin pass-through (or is replaced outright by
+	 * direct DI of FeeCategoryResolver at the call sites).
+	 *
+	 * @return FeeCategoryResolver
+	 */
+	public function category_resolver(): FeeCategoryResolver {
+		if ( $this->category_resolver === null ) {
+			$this->category_resolver = new FeeCategoryResolver(
+				fn( string $season ): array => $this->get_categories_for_season( $season )
+			);
+		}
+
+		return $this->category_resolver;
+	}
+
 
 	/**
 	 * Get the option key for a specific season
@@ -106,7 +142,7 @@ class MembershipFees {
 	 */
 	public function get_fee( string $type, ?string $season = null ): int {
 		$season   = $season ?? SeasonKey::current();
-		$category = $this->get_category( $type, $season );
+		$category = $this->category_resolver()->get_category( $type, $season );
 
 		if ( $category === null || ! isset( $category['amount'] ) ) {
 			return 0;
@@ -124,112 +160,6 @@ class MembershipFees {
 	public function update_settings( array $fees ): bool {
 		// Use current season for backward compatibility
 		return $this->update_settings_for_season( $fees, SeasonKey::current() );
-	}
-
-	/**
-	 * Predict next season's Sportlink age class from current age class
-	 *
-	 * KNVB age classes follow the pattern "Onder N" where N is based on birth year.
-	 * Each season, every youth player moves up one year: "Onder 10" becomes "Onder 11".
-	 * The highest youth class "Onder 19" promotes to "Senioren".
-	 * Gender suffixes (" Meiden", " Vrouwen") are preserved.
-	 *
-	 * @param string $current_age_class Sportlink AgeClassDescription (e.g., "Onder 10", "Onder 15 Meiden").
-	 * @return string Predicted age class for next season.
-	 */
-	public function predict_next_season_age_class( string $current_age_class ): string {
-		// Extract gender suffix if present
-		$suffix = '';
-		if ( preg_match( '/(\s+(Meiden|Vrouwen))$/i', $current_age_class, $matches ) ) {
-			$suffix = $matches[1];
-		}
-
-		// Match "Onder N" pattern
-		if ( preg_match( '/^Onder\s+(\d+)/i', $current_age_class, $matches ) ) {
-			$age = (int) $matches[1];
-
-			// Onder 19 promotes to Senioren (with appropriate suffix)
-			if ( $age >= 19 ) {
-				return 'Senioren' . ( $suffix === ' Meiden' ? ' Vrouwen' : $suffix );
-			}
-
-			return 'Onder ' . ( $age + 1 ) . $suffix;
-		}
-
-		// Non-youth classes (Senioren, etc.) stay the same
-		return $current_age_class;
-	}
-
-	/**
-	 * Find fee category by matching Sportlink age class against season config
-	 *
-	 * Replaces the former parse_age_group() method. Instead of hardcoded age ranges,
-	 * matches the member's Sportlink AgeClassDescription against the age_classes arrays
-	 * stored in the season's category configuration.
-	 *
-	 * Normalizes input by stripping " Meiden" and " Vrouwen" suffixes (Sportlink
-	 * appends these for girls' teams).
-	 *
-	 * If a class appears in multiple categories, the category with the lowest sort_order wins.
-	 * A category with null/empty age_classes acts as a catch-all for unmatched classes.
-	 *
-	 * @param string      $leeftijdsgroep Sportlink AgeClassDescription (e.g., "Onder 10", "Senioren").
-	 * @param string|null $season         Optional season key, defaults to current season.
-	 * @return string|null Category slug or null if no match and no catch-all exists.
-	 */
-	public function get_category_by_age_class( string $leeftijdsgroep, ?string $season = null ): ?string {
-		$season     = $season ?? SeasonKey::current();
-		$categories = $this->get_categories_for_season( $season );
-
-		// Empty config = no categories defined (silent per CONTEXT.md)
-		if ( empty( $categories ) ) {
-			return null;
-		}
-
-		// Normalize: strip " Meiden" and " Vrouwen" suffixes
-		$normalized = preg_replace( '/\s+(Meiden|Vrouwen)$/i', '', trim( $leeftijdsgroep ) );
-
-		if ( empty( $normalized ) ) {
-			return null;
-		}
-
-		// Sort by sort_order so lowest sort_order wins on overlap
-		uasort(
-			$categories,
-			function ( $a, $b ) {
-				return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
-			}
-		);
-
-		$catch_all_slug = null;
-
-		foreach ( $categories as $slug => $category ) {
-			// Validate required field (fail loudly per CONTEXT.md)
-			if ( ! isset( $category['amount'] ) ) {
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( "Rondo fee category '{$slug}' missing 'amount' for season {$season}" );
-				return null;
-			}
-
-			$age_classes = $category['age_classes'] ?? null;
-
-			// Null/empty age_classes = catch-all
-			if ( $age_classes === null || ( is_array( $age_classes ) && empty( $age_classes ) ) ) {
-				if ( $catch_all_slug === null ) {
-					$catch_all_slug = $slug;
-				}
-				continue;
-			}
-
-			// Exact string match (case-insensitive)
-			foreach ( (array) $age_classes as $age_class ) {
-				if ( strcasecmp( $normalized, trim( $age_class ) ) === 0 ) {
-					return $slug;
-				}
-			}
-		}
-
-		return $catch_all_slug;
 	}
 
 	/**
@@ -496,181 +426,6 @@ class MembershipFees {
 	}
 
 	/**
-	 * Check if a team is a recreational team
-	 *
-	 * Recreational teams have "recreant" or "walking football" or "walking voetbal" in their name.
-	 *
-	 * @deprecated Used only by migration logic. Config-driven matching replaces this.
-	 * @param int $team_id The team post ID.
-	 * @return bool True if the team is recreational.
-	 */
-	private function is_recreational_team( int $team_id ): bool {
-		$team = get_post( $team_id );
-
-		if ( ! $team || $team->post_type !== 'team' ) {
-			return false;
-		}
-
-		$title = strtolower( $team->post_title );
-
-		return ( stripos( $title, 'recreant' ) !== false || stripos( $title, 'walking football' ) !== false || stripos( $title, 'walking voetbal' ) !== false );
-	}
-
-	/**
-	 * Check if a person is a donateur (donor) only
-	 *
-	 * Returns true only if the person has exactly one werkfunctie and it is "Donateur".
-	 *
-	 * @deprecated Used only by migration logic. Config-driven matching replaces this.
-	 * @param int $person_id The person post ID.
-	 * @return bool True if the person is a donateur only.
-	 */
-	private function is_donateur( int $person_id ): bool {
-		$werkfuncties = $this->get_effective_werkfuncties( $person_id );
-
-		if ( empty( $werkfuncties ) ) {
-			return false;
-		}
-
-		// True only if exactly one function and it's "Donateur"
-		return ( count( $werkfuncties ) === 1 && in_array( 'Donateur', $werkfuncties, true ) );
-	}
-
-	/**
-	 * Find all recreational team IDs from the database
-	 *
-	 * Used by migration logic to populate matching_teams for 'recreant' category.
-	 * Queries all teams and filters using the deprecated is_recreational_team() method.
-	 *
-	 * @return array<int> Array of team post IDs that match recreational criteria.
-	 */
-	private function find_recreational_team_ids(): array {
-		$query = new \WP_Query(
-			[
-				'post_type'      => 'team',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'post_status'    => 'publish',
-				'no_found_rows'  => true,
-			]
-		);
-
-		$recreational_ids = [];
-		foreach ( $query->posts as $team_id ) {
-			if ( $this->is_recreational_team( $team_id ) ) {
-				$recreational_ids[] = $team_id;
-			}
-		}
-
-		return $recreational_ids;
-	}
-
-	/**
-	 * Get category by team matching
-	 *
-	 * Finds the first category (by sort_order) whose matching_teams array contains
-	 * any of the provided team IDs. Filters out deleted teams (non-publish status).
-	 *
-	 * @param array<int>  $team_ids Array of team post IDs to match against.
-	 * @param string|null $season   Optional season key, defaults to current season.
-	 * @return string|null Category slug or null if no match.
-	 */
-	private function get_category_by_team_match( array $team_ids, ?string $season = null ): ?string {
-		if ( empty( $team_ids ) ) {
-			return null;
-		}
-
-		$season     = $season ?? SeasonKey::current();
-		$categories = $this->get_categories_for_season( $season );
-
-		if ( empty( $categories ) ) {
-			return null;
-		}
-
-		// Sort by sort_order (lowest first)
-		uasort(
-			$categories,
-			function ( $a, $b ) {
-				return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
-			}
-		);
-
-		foreach ( $categories as $slug => $category ) {
-			$matching_teams = $category['matching_teams'] ?? [];
-
-			if ( empty( $matching_teams ) || ! is_array( $matching_teams ) ) {
-				continue;
-			}
-
-			// Check if any of person's teams are in this category's matching_teams
-			foreach ( $team_ids as $team_id ) {
-				// Filter out deleted teams
-				if ( get_post_status( $team_id ) !== 'publish' ) {
-					continue;
-				}
-
-				if ( in_array( $team_id, $matching_teams, true ) ) {
-					return $slug;
-				}
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get category by werkfunctie matching
-	 *
-	 * Finds the first category (by sort_order) whose matching_werkfuncties array contains
-	 * any of the provided werkfuncties. Uses case-insensitive comparison with trimming.
-	 *
-	 * @param array<string> $werkfuncties Array of werkfunctie strings to match against.
-	 * @param string|null   $season       Optional season key, defaults to current season.
-	 * @return string|null Category slug or null if no match.
-	 */
-	private function get_category_by_werkfunctie_match( array $werkfuncties, ?string $season = null ): ?string {
-		if ( empty( $werkfuncties ) ) {
-			return null;
-		}
-
-		$season     = $season ?? SeasonKey::current();
-		$categories = $this->get_categories_for_season( $season );
-
-		if ( empty( $categories ) ) {
-			return null;
-		}
-
-		// Sort by sort_order (lowest first)
-		uasort(
-			$categories,
-			function ( $a, $b ) {
-				return ( $a['sort_order'] ?? 999 ) <=> ( $b['sort_order'] ?? 999 );
-			}
-		);
-
-		foreach ( $categories as $slug => $category ) {
-			$matching_werkfuncties = $category['matching_werkfuncties'] ?? [];
-
-			if ( empty( $matching_werkfuncties ) || ! is_array( $matching_werkfuncties ) ) {
-				continue;
-			}
-
-			// Check if any of person's werkfuncties match (case-insensitive)
-			foreach ( $werkfuncties as $person_wf ) {
-				$person_wf_trimmed = trim( $person_wf );
-
-				foreach ( $matching_werkfuncties as $category_wf ) {
-					if ( strcasecmp( $person_wf_trimmed, trim( $category_wf ) ) === 0 ) {
-						return $slug;
-					}
-				}
-			}
-		}
-
-		return null;
-	}
-
-	/**
 	 * Calculate the fee for a person
 	 *
 	 * Determines the correct fee category and amount based on the person's
@@ -693,13 +448,15 @@ class MembershipFees {
 			return null;
 		}
 
+		$category_resolver = $this->category_resolver();
+
 		// Get leeftijdsgroep from person
 		$leeftijdsgroep     = get_field( 'leeftijdsgroep', $person_id );
 		$age_class_category = null;
 
 		// Parse age group if available
 		if ( ! empty( $leeftijdsgroep ) ) {
-			$age_class_category = $this->get_category_by_age_class( $leeftijdsgroep, $season );
+			$age_class_category = $category_resolver->get_category_by_age_class( $leeftijdsgroep, $season );
 		}
 
 		// Youth categories: Return immediately (priority over everything)
@@ -716,7 +473,7 @@ class MembershipFees {
 		// Check team matching (config-driven, player roles only)
 		$teams = $this->get_current_teams( $person_id );
 		if ( ! empty( $teams ) ) {
-			$team_matched_category = $this->get_category_by_team_match( $teams, $season );
+			$team_matched_category = $category_resolver->get_category_by_team_match( $teams, $season );
 			if ( $team_matched_category !== null ) {
 				return [
 					'category'       => $team_matched_category,
@@ -732,7 +489,7 @@ class MembershipFees {
 			$this->get_effective_werkfuncties( $person_id )
 		);
 		if ( ! empty( $werkfuncties ) ) {
-			$werkfunctie_matched_category = $this->get_category_by_werkfunctie_match( $werkfuncties, $season );
+			$werkfunctie_matched_category = $category_resolver->get_category_by_werkfunctie_match( $werkfuncties, $season );
 			if ( $werkfunctie_matched_category !== null ) {
 				return [
 					'category'       => $werkfunctie_matched_category,
@@ -917,7 +674,7 @@ class MembershipFees {
 
 				if ( $slug === 'recreant' ) {
 					// Populate with current recreational team IDs
-					$categories[ $slug ]['matching_teams'] = $this->find_recreational_team_ids();
+					$categories[ $slug ]['matching_teams'] = $this->category_resolver()->find_recreational_team_ids();
 				} else {
 					$categories[ $slug ]['matching_teams'] = [];
 				}
@@ -986,20 +743,6 @@ class MembershipFees {
 	public function save_categories_for_season( array $categories, string $season ): bool {
 		$season_key = $this->get_option_key_for_season( $season );
 		return update_option( $season_key, $categories );
-	}
-
-	/**
-	 * Get a single fee category by slug for a specific season
-	 *
-	 * @param string      $slug   The category slug (e.g., "senior", "junior").
-	 * @param string|null $season Optional season key, defaults to current season.
-	 * @return array|null Category object or null if not found.
-	 */
-	public function get_category( string $slug, ?string $season = null ): ?array {
-		$season     = $season ?: SeasonKey::current();
-		$categories = $this->get_categories_for_season( $season );
-
-		return $categories[ $slug ] ?? null;
 	}
 
 	/**
@@ -2091,10 +1834,12 @@ class MembershipFees {
 	 * } Diagnostic information array.
 	 */
 	public function get_calculation_status( int $person_id ): array {
+		$category_resolver = $this->category_resolver();
+
 		$leeftijdsgroep = get_field( 'leeftijdsgroep', $person_id );
-		$parsed         = ! empty( $leeftijdsgroep ) ? $this->get_category_by_age_class( $leeftijdsgroep ) : null;
+		$parsed         = ! empty( $leeftijdsgroep ) ? $category_resolver->get_category_by_age_class( $leeftijdsgroep ) : null;
 		$teams          = $this->get_current_teams( $person_id );
-		$is_donateur    = $this->is_donateur( $person_id );
+		$is_donateur    = $category_resolver->is_donateur( $this->get_effective_werkfuncties( $person_id ) );
 		$fee_result     = $this->calculate_fee( $person_id );
 
 		// Check former member status
