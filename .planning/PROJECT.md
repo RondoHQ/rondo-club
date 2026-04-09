@@ -495,22 +495,24 @@ Club administrators can manage their members, teams, and club operations through
 - ✓ DRY CSS refactor via selector lists (Tailwind v4 CSS-first compatible) — v32.0
 - ✓ Audit-driven gap closure discipline: post-rollout audit identified 21 missed buttons, fixed in decimal-inserted phase 213.1 — v32.0
 
+**v33.0 Fee Service Decomposition (shipped 2026-04-09):**
+- ✓ `Rondo\Fees\MembershipFees` god class deleted — 2,137 lines, 65 methods, #1 graphify god node — gone — v33.0
+- ✓ `Rondo\Fees\FeeCategoryResolver` (362 lines, 8 methods) — category matching (age class, team, werkfunctie, donateur, recreant) — v33.0
+- ✓ `Rondo\Fees\FamilyGroupingService` (483 lines, 7 methods) — family-key derivation + position recalculation — v33.0
+- ✓ `Rondo\Fees\FeeCalculator` (454 lines, 4 methods) — base fee, family discount, pro-rata math — v33.0
+- ✓ `Rondo\Fees\MembershipFeeSettings` (590 lines, 26 methods + 2 migrations) — pure WordPress Options API storage, zero constructor deps — v33.0
+- ✓ `Rondo\Fees\FeeCache` (277 lines, 10 methods) — cache + snapshot post-meta storage — v33.0
+- ✓ `Rondo\Fees\PersonFeeContext` (244 lines, 4 public helpers) — team / werkfunctie / former-member helpers, zero constructor deps — v33.0
+- ✓ `Rondo\Fees\FeeServices` (193 lines, 0 methods of its own) — static lazy locator for the fee service graph; replaces MembershipFees as the ergonomic entry point — v33.0
+- ✓ `bin/fee-snapshot.sh` + `bin/fee-snapshot.php` — WP-CLI regression harness for every v33.0 phase; 4,021 active members captured; 5 clean snapshot diffs across the milestone — v33.0
+- ✓ `FeeCalculator ↔ FamilyGroupingService` circular dependency broken with deferred closure pattern; same pattern used for `FeeCache ↔ FeeCalculator` — v33.0
+- ✓ `FeeCacheInvalidator` STRU-04 coupling smell fixed — no longer reaches through a MembershipFees god-object reference; holds typed `FeeCache` + `FamilyGroupingService` properties — v33.0
+- ✓ All 42 fee-settings call sites + 17 `new MembershipFees()` instantiations across `class-rest-fees.php`, `class-public-payment-page.php`, `class-bulk-invoice-creator.php`, `class-rest-google-sheets.php`, `bin/fee-snapshot.php` rewired to use `FeeServices::accessor()->X()` — v33.0
+- ✓ 13/13 requirements satisfied in milestone audit; zero fee regressions across 4,021 persons and zero WordPress option-key drift across 101 `rondo_*` keys — v33.0
+
 ### Active
 
-## Current Milestone: v33.0 Fee Service Decomposition
-
-**Goal:** Break the 2,204-line `Rondo\Fees\MembershipFees` god class (66 graph edges, cohesion 0.08, #1 god node) into focused services with clear responsibilities. Zero user-facing behavior changes — pure internal refactor.
-
-**Target phases** (5 phases, drafted at `.planning/milestones/v33.0-ROADMAP.md`):
-- Phase 214: FeeCategoryResolver + WP-CLI fee snapshot infrastructure
-- Phase 215: FamilyGroupingService (cleans up FeeCacheInvalidator coupling smell)
-- Phase 216: FeeCalculator (depends on 214+215)
-- Phase 217: MembershipFeeSettings (~45 CRUD methods)
-- Phase 218: Retire MembershipFees — delete or shrink to <200 lines
-
-**Precedent set:** SeasonKey helper extraction (commit `e25cef7b`, 2026-04-08) validated the refactor pattern on 3 methods across 10 files with zero fee regressions. Four wallet-pass classes (MembershipPass{Apple,Google,Qr} + PublicMembershipPassPage) dropped their dependency on MembershipFees as part of the SeasonKey work.
-
-**Regression strategy:** WP-CLI `bin/fee-snapshot.sh` (built in Phase 214 Plan 01) captures production fee values for ≥20 known persons; every subsequent phase validates that the diff is empty.
+(None — v34.0 to be scoped.)
 
 ### Out of Scope
 
@@ -531,13 +533,14 @@ Club administrators can manage their members, teams, and club operations through
 
 ## Context
 
-**Codebase State (post v32.0):**
+**Codebase State (post v33.0):**
 - WordPress theme (PHP 8.0+) with React 18 SPA, Tailwind CSS v4 with OKLCH brand tokens
-- Version 32.8.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
+- Version 33.0.0 — data model: 2 main CPTs (person, team), 4 supporting CPTs (rondo_todo, discipline_case, calendar_event, rondo_invoice), 2 taxonomies (relationship_type, seizoen)
 - Full user management: provisioning from Sportlink person records, Functie/commissie-to-role capability mapping, automatic sync via rondo-sync Step 5, in-app profile page
 - Complete invoicing system: discipline case + membership fee invoicing, PDF generation (mPDF), dual payment providers (Rabobank + Mollie), email delivery via Lettermint (EU), webhook status updates, installment payment management
 - Four-tier button CSS system (v32.0): btn-primary, btn-secondary, btn-tertiary, btn-danger with light/dark mode variants and DRY base via CSS selector lists
-- SeasonKey helper extracted from MembershipFees (2026-04-08, commit e25cef7b) — proves the refactor pattern for v33.0 Fee Service Decomposition
+- **Fee system fully decomposed (v33.0):** `MembershipFees` god class deleted entirely; replaced with 8 focused classes totalling 2,692 lines (`FeeServices` static locator + `SeasonKey` + `MembershipFeeSettings` + `PersonFeeContext` + `FeeCategoryResolver` + `FamilyGroupingService` + `FeeCalculator` + `FeeCache`). No class over 600 lines. Every collaboration is an explicit typed constructor dependency or a deferred closure for cycle-breaking.
+- **`bin/fee-snapshot.sh` regression harness** — WP-CLI-backed JSON snapshot of every active member's fee data. Used as the regression net for v33.0 and available for any future fee-touching work.
 - No non-European service dependencies: Google sync removed, Gravatar removed, email via Lettermint (EU)
 - CSV export on People, VOG, and Contributie pages (local alternative to Google Sheets)
 - REST API split into domain-specific classes, security hardened, PSR-4 namespaced
@@ -545,12 +548,13 @@ Club administrators can manage their members, teams, and club operations through
 - Graphify knowledge graph integration (`graphify-out/` excluded from git and deploy) — AGENTS.md section instructs future sessions to consult the graph before answering architecture questions
 - Demo site at demo.rondo.club with anonymized fixture data
 - Developer docs at developer.rondo.club
-- Tech debt carried into v33.0:
-  - `MembershipFees` god class: 2,204 lines, 65 methods, cohesion 0.08 — target of v33.0 decomposition
-  - Orphaned Google Sheets backend (4 dead client.js methods, 5 unreachable REST routes)
+- Tech debt carried forward:
+  - Orphaned Google Sheets backend (4 dead client.js methods, 5 unreachable REST routes) — pre-existing v29.0 debt
   - CAPS-05 manual capability override UI deferred (from v30.0)
   - 3 active debug sessions: filter-dropdown-cutoff, invoice-email-missing-qr-and-payment-link, membership-fee-non-player-assignment
-  - Missing Nyquist VALIDATION.md for v31.0 and v32.0 phases (consistent project pattern; decision to backfill deferred)
+  - Missing Nyquist VALIDATION.md for v31.0-v33.0 phases (consistent project pattern; v33.0 was direct-style by design)
+  - `bin/deploy.sh` doesn't `--delete` theme files — Phase 218 required a manual `ssh + rm` to clear the deleted `class-membership-fees.php` from prod (recipe in `.planning/milestones/v33.0-phases/218-retire-membershipfees/NOTES.md`)
+  - Cosmetic stale doc-comment references to MembershipFees in `FeeCalculator` and `FamilyGroupingService` (code references are all correct; only docblocks mention the deleted class)
 
 **Key Finance Files:**
 - `includes/class-finance-config.php` — FinanceConfig with settings, Rabobank/Mollie credentials, email templates
@@ -818,6 +822,12 @@ Club administrators can manage their members, teams, and club operations through
 | Decimal phase numbering (v32.0, 213.1) | Gap closure and urgent insertions use N.M format to preserve downstream milestone numbering; matches `/gsd:insert-phase` convention | ✓ Good |
 | SeasonKey helper extracted from MembershipFees | Stateless season arithmetic (get/next/previous_season_key) moved to standalone Rondo\Fees\SeasonKey; four wallet-pass classes dropped MembershipFees dependency | ✓ Good |
 | Graphify knowledge graph integration | graphify-out/ excluded from git + deploy; AGENTS.md section instructs sessions to consult GRAPH_REPORT.md before answering architecture questions; v32.0 work identified MembershipFees as the #1 god node prompting v33.0 | ✓ Good |
+| Direct-style phase execution for v33.0 | All 5 v33.0 phases shipped without `/gsd:plan-phase` or `/gsd:execute-phase` ceremony — pure research → code → commit → deploy → snapshot-diff → push loop inside the same session. Works well when the refactor pattern is mechanical (extract + rewire + verify) and the regression net (fee snapshot) catches semantic drift. | ✓ Good |
+| Fee snapshot as v33.0 regression net (v33.0) | `bin/fee-snapshot.sh` captures `{person_id, category, base_fee, family_discount, final_fee}` for every active person via WP-CLI; 5 clean diffs × 4,021 rows validated the milestone end-to-end in lieu of unit tests. Cheaper to build than test backfill, equally effective for preventing regressions. | ✓ Good |
+| Option A for retiring MembershipFees (v33.0, phase 218) | Full deletion + service locator rather than shrinking to a <200-line facade. Creates `FeeServices` as a static locator with zero methods of its own, giving external callers the same ergonomics without keeping a mini god class around. | ✓ Good |
+| Deferred-closure pattern for cycle-breaking (v33.0, phases 215, 216, 218) | Circular dependencies (FeeCalculator ↔ FamilyGroupingService, FeeCache ↔ FeeCalculator) are broken by passing a `callable` in the constructor instead of a typed property. The closure resolves to a `FeeServices::accessor()->method()` call at invocation time, so neither service triggers the other at construction. | ✓ Good |
+| Inline WP_Query duplication over service dependency (v33.0, phase 217) | `MembershipFeeSettings::maybe_migrate_matching_rules` inlines a 15-line recreational-team query instead of depending on `FeeCategoryResolver::find_recreational_team_ids()` — keeps the settings repository free of any service dependencies and avoids a settings↔resolver circular coupling. Migration runs at most once per season, so the duplication has no runtime cost. | ✓ Good |
+| `FeeCacheInvalidator` construction via `FeeServices` (v33.0, phase 218) | FeeCacheInvalidator's `__construct()` pulls its `FeeCache` and `FamilyGroupingService` properties from `FeeServices::fee_cache()` + `FeeServices::family_grouping()` instead of constructing its own collaborators. The locator guarantees a single shared graph across the request and keeps the invalidator free of wiring boilerplate. | ✓ Good |
 
 ---
-*Last updated: 2026-04-08 after v32.0 Interface Touch-up shipped*
+*Last updated: 2026-04-09 after v33.0 Fee Service Decomposition shipped*

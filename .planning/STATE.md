@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v33.0
-milestone_name: Fee Service Decomposition
-status: shipped
-stopped_at: phase 218 shipped, MembershipFees god class deleted, milestone complete
-last_updated: "2026-04-09T10:00:00.000Z"
-last_activity: 2026-04-09 — v33.0 MILESTONE COMPLETE. All 5 phases shipped direct-style. MembershipFees deleted.
+milestone: "(between milestones)"
+milestone_name: "(planning next)"
+status: ready_for_next_milestone
+stopped_at: v33.0 Fee Service Decomposition shipped and archived 2026-04-09
+last_updated: "2026-04-09T10:15:00.000Z"
+last_activity: 2026-04-09 — v33.0 archived, phase directories moved to milestones/v33.0-phases/, ready for v34.0 scoping
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State

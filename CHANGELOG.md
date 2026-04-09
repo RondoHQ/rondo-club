@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.0.0] - 2026-04-09
+
+### Changed
+- **Fee system god class retired.** `Rondo\Fees\MembershipFees` (2,137 lines, 65 methods) has been decomposed into 8 focused classes across 5 direct-style phases (214–218) of the v33.0 Fee Service Decomposition milestone. No user-visible behaviour changes — this is a pure internal refactor, validated at every phase with a production fee snapshot diff (4,021 active members) and (for phases 217–218) a `wp option list` byte-for-byte diff of all 101 `rondo_*` option keys.
+- Phase 214: Extracted `Rondo\Fees\FeeCategoryResolver` (362 lines) with 8 category-matching methods (`predict_next_season_age_class`, `get_category_by_age_class`, `get_category`, `get_category_by_team_match`, `get_category_by_werkfunctie_match`, `is_recreational_team`, `is_donateur`, `find_recreational_team_ids`). Added the `bin/fee-snapshot.sh` / `bin/fee-snapshot.php` regression harness used by every subsequent phase. `is_donateur` signature changed from `int $person_id` to `array $werkfuncties` so the resolver stays stateless.
+- Phase 215: Extracted `Rondo\Fees\FamilyGroupingService` (487 lines) with 7 family-discount methods (`build_family_groups`, `get_family_key`, `recalculate_all_family_positions`, `recalculate_family_positions_for_person`, `clear_all_family_discount_meta`, `normalize_postal_code`, `extract_house_number`). Fixed the STRU-04 coupling smell in `FeeCacheInvalidator`: it now holds a typed `FamilyGroupingService` property instead of reaching through a god-object reference.
+- Phase 216: Extracted `Rondo\Fees\FeeCalculator` (454 lines) with the 4 fee-math methods (`calculate_fee`, `calculate_fee_with_family_discount`, `calculate_full_fee`, `get_prorata_percentage`). Explicit typed constructor collaborators per STRU-02. The `FeeCalculator ↔ FamilyGroupingService` cycle is broken with a deferred callable on `FamilyGroupingService`. `get_effective_werkfuncties` and `normalize_werkfuncties_for_fee_match` promoted from private to public.
+- Phase 217: Extracted `Rondo\Fees\MembershipFeeSettings` (590 lines) with 26 Options API storage methods + 2 legacy payload migrations (`maybe_migrate_age_classes`, `maybe_migrate_matching_rules`). Zero constructor dependencies. The matching-rules migration inlines its own recreational-team lookup to avoid coupling the settings repository to `FeeCategoryResolver`. 42 call sites across 4 files (`class-rest-fees.php`, `class-public-payment-page.php`, `class-bulk-invoice-creator.php`, `class-rest-google-sheets.php`) rewired to go through `$fees->settings()->X()`.
+- Phase 218: **Deleted `includes/class-membership-fees.php` entirely** (Option A from the roadmap). Remaining methods distributed into three new focused classes: `Rondo\Fees\FeeCache` (277 lines, 10 cache/snapshot storage methods), `Rondo\Fees\PersonFeeContext` (244 lines, 4 person-data helpers with zero dependencies), and `Rondo\Fees\FeeServices` (193 lines, static service locator with 6 lazy accessors and zero methods of its own). 17 `new MembershipFees()` instantiations deleted and ~74 method calls rewired to `FeeServices::accessor()->X()` across 5 files.
+- `FeeCacheInvalidator` constructor now pulls its `FeeCache` and `FamilyGroupingService` references from `FeeServices` instead of constructing its own `MembershipFees` instance.
+
+### Fixed
+- `bin/deploy.sh` wrinkle documented: rsync doesn't `--delete` theme files, so Phase 218's deleted `class-membership-fees.php` required a manual `ssh + rm + composer dump-autoload -o --quiet + wp cache flush` to clear the orphan on production. See `.planning/phases/218-retire-membershipfees/NOTES.md` for the recipe.
+
+### Removed
+- `includes/class-membership-fees.php` — the god class is gone.
+- `MembershipFees::get_fee_for_person()` (non-cached variant) — dead code, no callers.
+- `MembershipFees::get_calculation_status()` — dead diagnostic, never wired into any REST endpoint or UI.
+
 ## [32.8.0] - 2026-03-30
 
 ### Changed

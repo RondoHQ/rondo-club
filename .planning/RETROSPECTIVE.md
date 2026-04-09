@@ -2,6 +2,57 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v33.0 — Fee Service Decomposition
+
+**Shipped:** 2026-04-09
+**Phases:** 5 (214, 215, 216, 217, 218) | **Plans:** 7 | **Commits:** 11 atomic
+
+### What Was Built
+
+- Deleted `Rondo\Fees\MembershipFees` (2,137 lines, 65 methods, #1 graphify god node with 66 edges and cohesion 0.08) by decomposing it into 8 focused classes: `FeeServices` (locator), `PersonFeeContext`, `FeeCache`, `FeeCategoryResolver`, `FeeCalculator`, `FamilyGroupingService`, `MembershipFeeSettings`, plus the pre-existing `SeasonKey` helper.
+- `bin/fee-snapshot.sh` + `bin/fee-snapshot.php` regression harness — WP-CLI JSON snapshot of `{person_id, category, base_fee, family_discount, final_fee}` for every active member (4,021 rows).
+- STRU-04 coupling fix: `FeeCacheInvalidator` no longer reaches through a MembershipFees god-object reference; it holds typed `FeeCache` + `FamilyGroupingService` properties resolved from `FeeServices` at construction time.
+- 42 fee-settings call sites + 17 `new MembershipFees()` instantiations rewired across 5 files (class-rest-fees, class-public-payment-page, class-bulk-invoice-creator, class-rest-google-sheets, bin/fee-snapshot).
+
+### What Worked
+
+- **Direct-style execution was dramatically faster than the GSD orchestration.** 5 phases, 7 plans, 11 atomic commits, zero regressions, all shipped in under 24 hours end-to-end. The GSD ceremony per phase would have been at least an order of magnitude more tokens and elapsed time for no additional safety — the mechanical nature of a refactor (extract + rewire + diff) doesn't need that machinery. Direct-style worked because (a) the scope was well-defined in the roadmap drafts, (b) the fee snapshot catches semantic drift instantly, and (c) the phases are linearly dependent so there was no parallel work to coordinate.
+- **The `bin/fee-snapshot.sh` regression harness was the right investment.** Building it in Phase 214 Plan 01 cost ~30 minutes and then every subsequent phase could validate in under 2 minutes. Zero false positives — every clean diff was a real clean diff. Five phases × 4,021 rows = 20,105 verified fee calculations. Cheaper than unit-test backfill and equally effective.
+- **Deferred-closure pattern for circular dependencies is elegant.** `FeeCalculator` needs `FamilyGroupingService` for family discount, `FamilyGroupingService` needs `FeeCalculator` for base fee — classic cycle. Instead of typed properties + construction-time recursion, `FamilyGroupingService` takes a `callable $fee_calculator` that resolves `FeeServices::fee_calculator()->calculate_fee()` at invocation time. The same pattern broke `FeeCache ↔ FeeCalculator` in Phase 218.
+- **Triple-clean diff validation in phases 217 + 218.** Fee snapshot vs baseline + fee snapshot vs pre-phase + `wp option list | grep rondo | sort` byte-for-byte diff. Three independent signals that the refactor preserved behaviour.
+- **Sub-200-line `FeeServices` locator replaces the MembershipFees facade role without becoming a god node itself.** FeeServices has 6 lazy accessors and zero methods of its own.
+
+### What Was Inefficient
+
+- **`bin/deploy.sh` doesn't `--delete` theme files.** Phase 218 deleted `includes/class-membership-fees.php` locally; the rsync didn't prune it on prod. Required a manual `ssh + rm + composer dump-autoload + wp cache flush`. **Lesson:** Add a `--prune-deleted` flag that runs `git ls-files` + `rsync --delete --files-from` or a post-deploy hook that explicitly removes known-deleted files.
+- **GSD `gsd-tools milestone complete` CLI doesn't handle direct-style phases.** It expects per-phase SUMMARY.md files with `requirements-completed` YAML frontmatter; direct-style phases have NOTES.md instead. The CLI produced a minimal MILESTONES.md entry with `(none recorded)` and mangled STATE.md. Required manual fix-up. **Lesson:** Direct-style phases need their own completion path, or the GSD CLI needs to fall back to NOTES.md when SUMMARY.md is absent.
+- **Graphify rebuild stuck at ~100% CPU for 3+ hours on a 121-file corpus.** Killed at 181 minutes. Unclear root cause — pipx `graphifyy` vs `graphify` binary, or a pathological rebuild. Don't block milestones on graphify; the code change itself guarantees MembershipFees is gone.
+- **Repeated "graphify: Knowledge graph exists. Read GRAPH_REPORT.md first" system reminders on every Grep.** Significant token bloat — the reminder fires on every Grep call regardless of session history. Once per session would be ideal.
+- **Mass rename with multiple variable name variants required multiple Edit passes.** `class-rest-fees.php` used `$fees` and `$membership_fees`, `class-public-payment-page.php` used `$fees_service`. **Lesson:** For mass rename refactors, grep all variants up front and build the replacement list once.
+
+### Patterns Established
+
+- **Direct-style extraction loop.** Pre-phase snapshot → research callers via grep → create new class with methods copied verbatim → add lazy accessor on god class → update internal callers → update external callers → delete old methods → composer lint → deploy → post-phase snapshot → diff → commit → push. Zero test backfill, zero planning ceremony; the snapshot diff is the verification.
+- **Deferred-closure for circular dependencies.** When service A needs service B and service B needs service A, break the cycle by making one side take a `callable` that resolves to a locator call at invocation time.
+- **Triple-signal refactor validation.** Fee snapshot diff + option-list diff + explicit grep verification that the deleted methods have no remaining call sites.
+- **`FeeServices` static locator pattern.** Lightweight lazy service graph wiring that replaces god-class facade accessors without reintroducing coupling.
+
+### Key Lessons
+
+- **Investing in a custom regression harness beats unit-test backfill for big mechanical refactors.** Fee snapshot took ~30 min to build and validated 5 phases × 4,021 rows = 20,105 fee calculations.
+- **The GSD ceremony can be skipped when the regression net is independent.** Direct-style works because the snapshot diff would catch any behaviour change regardless of whether the orchestrator chain also ran. Skip ceremony when verification strategy is proven.
+- **Delete-or-shrink decisions should default to delete.** Option A (delete + 3 new focused classes) is cleaner than Option B (shrink to <200-line facade) because the facade would still be a bridge node in graphify.
+- **Deploy scripts that don't `--delete` are a latent trap.** First time in 33 versions that a PHP class was deleted; the tooling should handle the deletion case too.
+- **Direct-style execution produces NOTES.md, not VERIFICATION.md + SUMMARY.md.** Worth building an audit template that reads NOTES.md if direct-style becomes the default for refactor milestones.
+
+### Cost Observations
+
+- Model mix: Claude Opus 4.6 (1M context) driving directly, no subagent delegation — single context window held the full milestone end-to-end.
+- Sessions: single continuous session for the entire milestone (no `/clear` between phases).
+- Notable: holding the full milestone in one context enabled continuity at the cost of token accumulation. For a 5-phase mechanical refactor this was the right trade-off.
+
+---
+
 ## Milestone: v32.0 — Interface Touch-up
 
 **Shipped:** 2026-04-08
