@@ -117,7 +117,7 @@ Plans:
 | 216. FeeCalculator | v33.0 | 1/1 | Complete | 2026-04-09 |
 | 217. MembershipFeeSettings | v33.0 | 2/2 | Complete | 2026-04-09 |
 | 218. Retire MembershipFees | v33.0 | 1/1 | Complete | 2026-04-09 |
-| 219. Finance Settings Snapshot Harness | 1/1 | Complete   | 2026-04-09 | — |
+| 219. Finance Settings Snapshot Harness | 1/1 | Complete    | 2026-04-09 | — |
 | 220. Extract MollieConfig | v34.0 | 0/0 | Not started | — |
 | 221. Extract EmailTemplates | v34.0 | 0/0 | Not started | — |
 | 222. Extract MembershipPassConfig | v34.0 | 0/0 | Not started | — |
