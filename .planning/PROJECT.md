@@ -8,6 +8,34 @@ A React-powered WordPress theme for sports club management. Administrators manag
 
 Club administrators can manage their members, teams, and club operations through a single integrated system.
 
+## Current Milestone: v34.0 Finance Service Decomposition
+
+**Goal:** Retire the 1,308-line `Rondo\Finance\FinanceConfig` god class (48 `OPTION_` constants, ~45 public methods, 18 direct dependents) by decomposing it into focused services. Pure internal refactor — zero user-visible behaviour changes.
+
+**Why now:** With `MembershipFees` deleted in v33.0, `FinanceConfig` is now the top god node in graphify (54 edges, cohesion 0.1). It has the same shape problem MembershipFees had: one class holding unrelated concern groups (Mollie/Rabobank credentials, email templates, Apple/Google wallet pass config, org info, payment terms). Recently touched in the credit-email-template fix and still growing.
+
+**Strategy — Hard Replacement (Option C):** Delete `FinanceConfig` entirely by the end of the milestone, mirroring v33.0 Phase 218's final retirement of `MembershipFees`. No thin facade. All 18 callers get rewired phase-by-phase as each subsystem comes out.
+
+**Target service graph (final state):**
+
+| New class | Lines | Responsibility |
+|---|---|---|
+| `MollieConfig` | ~400 | Mollie account list (encrypted API keys), defaults per invoice type, snapshots, normalization, redirect URL, active provider, env derivation |
+| `EmailTemplates` | ~130 | ~15 template/heading/subject getters + central `get_email_heading( $type )` dispatch |
+| `MembershipPassConfig` | ~80 | Apple cert/password/identifiers, Google service account/issuer/class suffix |
+| `OrgInfo` + `PaymentTerms` + `RabobankConfig` | ~200 | Smaller fragments bundled into final phase |
+| `FinanceServices` | ~200 | Static lazy service locator (mirror of `FeeServices` from v33.0); zero business logic |
+
+**Validation harness:** New `bin/finance-settings-snapshot.sh` (analog to `bin/fee-snapshot.sh`) dumping all 48 `rondo_finance_*` option values + the full `/rondo/v1/finance-settings` REST response as byte-for-byte JSON. Run before/after each phase, any diff fails the phase. Plus `FinanceSettings.jsx` form round-trip: load → submit unchanged → verify DB bytes identical. The Mollie phase gets an extra integration test: real test-mode Mollie webhook roundtrip.
+
+**Target features:**
+- Decompose Mollie configuration into `MollieConfig` service
+- Decompose email template configuration into `EmailTemplates` service
+- Decompose wallet pass configuration into `MembershipPassConfig` service
+- Decompose remaining config (org/payment-terms/Rabobank) into focused services
+- Delete `FinanceConfig` entirely, introduce `FinanceServices` locator
+- Build `bin/finance-settings-snapshot.sh` regression harness
+
 ## Requirements
 
 ### Validated
@@ -512,7 +540,17 @@ Club administrators can manage their members, teams, and club operations through
 
 ### Active
 
-(None — v34.0 to be scoped.)
+**v34.0 Finance Service Decomposition:**
+- [ ] **FIN-01**: `bin/finance-settings-snapshot.sh` + `.php` regression harness captures all 48 `rondo_finance_*` option values + `/rondo/v1/finance-settings` REST response as byte-for-byte JSON, suitable for pre/post-phase diff
+- [ ] **FIN-02**: `Rondo\Finance\MollieConfig` service owns Mollie account list (encrypted API keys), API key resolution, defaults per invoice type, payment account snapshots, account normalization, checkout redirect URL, active provider, and env derivation — zero code remains in `FinanceConfig` for any of these concerns
+- [ ] **FIN-03**: Mollie webhook integration verified end-to-end with a test-mode roundtrip before the Mollie phase merges (Mollie is the scariest subsystem — real test flight required, not just snapshot diff)
+- [ ] **FIN-04**: `Rondo\Finance\EmailTemplates` service owns all email template/heading/subject getters and the central `get_email_heading( $type )` dispatch — `FinanceConfig` loses every `get_X_email_Y()` method
+- [ ] **FIN-05**: `Rondo\Finance\MembershipPassConfig` service owns all Apple (cert, password, pass type identifier, team identifier, organization name) and Google (service account, issuer, class suffix) wallet pass settings
+- [ ] **FIN-06**: `Rondo\Finance\OrgInfo`, `Rondo\Finance\PaymentTerms`, and `Rondo\Finance\RabobankConfig` services own the remaining config fragments (org name/address/email/iban/logo/accent colors/bcc, payment term days + clauses + admin fees, Rabobank credentials + update flow)
+- [ ] **FIN-07**: `FinanceConfig` class deleted from `includes/` — zero references remain across the 18 original dependents
+- [ ] **FIN-08**: `Rondo\Finance\FinanceServices` static locator provides lazy accessors for every extracted service, mirroring the `FeeServices` pattern — external callers use `FinanceServices::mollie()->X()`, `::email_templates()->X()`, etc.
+- [ ] **FIN-09**: `class-rest-finance-settings.php` continues to serve the same flat settings object to `FinanceSettings.jsx` — frontend form round-trip (load → submit unchanged → DB bytes identical) verified at every phase
+- [ ] **FIN-10**: Every phase validated with a clean `bin/finance-settings-snapshot.sh` diff (zero drift across all 48 option keys + REST response) before being committed to main
 
 ### Out of Scope
 
@@ -830,4 +868,4 @@ Club administrators can manage their members, teams, and club operations through
 | `FeeCacheInvalidator` construction via `FeeServices` (v33.0, phase 218) | FeeCacheInvalidator's `__construct()` pulls its `FeeCache` and `FamilyGroupingService` properties from `FeeServices::fee_cache()` + `FeeServices::family_grouping()` instead of constructing its own collaborators. The locator guarantees a single shared graph across the request and keeps the invalidator free of wiring boilerplate. | ✓ Good |
 
 ---
-*Last updated: 2026-04-09 after v33.0 Fee Service Decomposition shipped*
+*Last updated: 2026-04-09 after v34.0 Finance Service Decomposition milestone kickoff*
