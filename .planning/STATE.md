@@ -63,7 +63,7 @@ Decisions logged in PROJECT.md Key Decisions table.
 
 ### Pending Todos
 
-2 todo(s) in `.planning/todos/pending/`
+1 todo(s) in `.planning/todos/pending/`
 
 ### Blockers/Concerns
 
