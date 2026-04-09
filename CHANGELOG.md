@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Credit invoice emails now use the dedicated credit template body and subject instead of the regular payment-request template. `InvoiceEmailSender::send()` now detects `_invoice_kind === 'credit'` before template selection and pulls `FinanceConfig::get_credit_email_template()` and `get_credit_email_subject()`. Previously only the heading was swapped, so credit invoices still went out with "pay this amount" body copy + QR code + betaallink placeholders.
+
+### Added
+- `rondo_finance_credit_email_subject` option + settings UI field for configuring the credit invoice email subject (default: `Creditfactuur {factuur_nummer} - {organisatie_naam}`).
+
 ## [33.0.0] - 2026-04-09
 
 ### Changed

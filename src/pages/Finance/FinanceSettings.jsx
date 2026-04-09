@@ -256,6 +256,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     invoice_reminder_2_email_heading: '',
     credit_email_template: '',
     credit_email_heading: '',
+    credit_email_subject: '',
     bcc_email: '',
     admin_fee: 0,
     exempt_discipline_teams: [],
@@ -335,6 +336,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         invoice_reminder_2_email_heading: settings.invoice_reminder_2_email_heading || '',
         credit_email_template: settings.credit_email_template || '',
         credit_email_heading: settings.credit_email_heading || '',
+        credit_email_subject: settings.credit_email_subject || '',
         bcc_email: settings.bcc_email || '',
         admin_fee: settings.admin_fee || 0,
         exempt_discipline_teams: [],
@@ -525,6 +527,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         invoice_reminder_2_email_heading: formData.invoice_reminder_2_email_heading,
         credit_email_template: formData.credit_email_template,
         credit_email_heading: formData.credit_email_heading,
+        credit_email_subject: formData.credit_email_subject,
         bcc_email: formData.bcc_email,
         admin_fee: parseFloat(formData.admin_fee) || 0,
         rabobank_environment: formData.rabobank_environment,
@@ -1260,6 +1263,19 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 </p>
               </div>
               <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Onderwerp e-mail
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.credit_email_subject}
+                    onChange={(e) => setFormData(prev => ({ ...prev, credit_email_subject: e.target.value }))}
+                    placeholder="Creditfactuur {factuur_nummer} - {organisatie_naam}"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Het onderwerp van de e-mail. Ondersteunt dezelfde variabelen als de tekst.</p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Titel in e-mail

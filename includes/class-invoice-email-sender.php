@@ -212,9 +212,13 @@ class InvoiceEmailSender {
 		// Get finance configuration
 		$config       = new FinanceConfig();
 		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
+		$is_credit    = $invoice_kind === 'credit';
 		$template     = (string) ( $options['template'] ?? '' );
 		if ( trim( $template ) === '' ) {
-			if ( $invoice_type === 'membership' ) {
+			if ( $is_credit ) {
+				$template = $config->get_credit_email_template();
+			} elseif ( $invoice_type === 'membership' ) {
 				$template = $config->get_membership_email_template();
 			} elseif ( $invoice_type === 'manual' ) {
 				$template = $config->get_regular_invoice_email_body();
@@ -353,8 +357,7 @@ class InvoiceEmailSender {
 			$template
 		);
 
-		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
-		$heading_type = $invoice_kind === 'credit' ? 'credit' : match ( $invoice_type ) {
+		$heading_type = $is_credit ? 'credit' : match ( $invoice_type ) {
 			'membership' => 'membership',
 			'manual'     => 'regular_invoice',
 			default      => 'discipline',
@@ -374,7 +377,12 @@ class InvoiceEmailSender {
 		// Build email subject
 		$subject = (string) ( $options['subject'] ?? '' );
 		if ( trim( $subject ) === '' ) {
-			if ( $invoice_type === 'manual' ) {
+			if ( $is_credit ) {
+				$subject = $config->get_credit_email_subject();
+				if ( trim( $subject ) === '' ) {
+					$subject = 'Creditfactuur ' . $invoice_number . ' - ' . $org_name;
+				}
+			} elseif ( $invoice_type === 'manual' ) {
 				$subject = $config->get_regular_invoice_email_subject();
 				if ( trim( $subject ) === '' ) {
 					$subject = 'Factuur ' . $invoice_number . ' - ' . $org_name;
