@@ -2,7 +2,7 @@
 
 **Drafted:** 2026-04-08
 **Activated:** 2026-04-08
-**Status:** Active — Phase 214 in progress
+**Status:** ✅ Shipped — all 5 phases complete (2026-04-09)
 **Type:** Internal refactor (no user-facing changes)
 
 ## Overview
@@ -17,7 +17,7 @@ Post-milestone, the codebase should have four or five focused services (FeeCateg
 - [x] **Phase 215: FamilyGroupingService** — Extract 7 family-discount methods, clean up FeeCacheInvalidator coupling smell *(shipped 2026-04-09)*
 - [x] **Phase 216: FeeCalculator** — Extract 4 fee calculation methods (depends on 214 + 215) *(shipped 2026-04-09)*
 - [x] **Phase 217: MembershipFeeSettings** — Extract ~45 settings CRUD methods (biggest volume, lowest conceptual risk) *(shipped 2026-04-09)*
-- [ ] **Phase 218: Retire MembershipFees** — Decide the fate of what remains; delete or shrink to <200 lines
+- [x] **Phase 218: Retire MembershipFees** — Decide the fate of what remains; delete or shrink to <200 lines *(shipped 2026-04-09 — Option A, class deleted entirely)*
 
 ## Phase Details
 
@@ -121,9 +121,9 @@ Plans:
 | 215 | 1/1 | Shipped | 2026-04-09 |
 | 216 | 1/1 | Shipped | 2026-04-09 |
 | 217 | 2/2 | Shipped | 2026-04-09 |
-| 218 | 0/1 | Planned | — |
+| 218 | 1/1 | Shipped | 2026-04-09 |
 
-**Total:** 6/7 plans across 5 phases
+**Total:** 7/7 plans across 5 phases ✅ **MILESTONE COMPLETE**
 
 ## Execution notes
 
