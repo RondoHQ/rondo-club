@@ -62,7 +62,11 @@ Plans:
   2. Every Mollie-touching caller is rewired through `FinanceServices::mollie()->X()` — verified by grepping the codebase: `MolliePayment`, `MollieWebhook`, `InstallmentPaymentService`, `PublicPaymentPage`, `RestInvoices`, and any other consumer show zero remaining references to `FinanceConfig` for Mollie-related calls
   3. `bin/finance-settings-snapshot.sh` pre/post diff is byte-for-byte clean across all 48 option keys + REST response, recorded in phase `SUMMARY.md`
   4. End-to-end Mollie test-mode webhook roundtrip verified: test-mode API key → test payment link created → test payment completed → webhook fires → invoice transitions to `rondo_paid` → reverse-lookup `_mollie_pid_{pl_xxx}` meta is found → status email sent. Evidence captured in phase `SUMMARY.md`.
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 220-01-PLAN.md — Scaffold MollieConfig class + FinanceServices locator + rewire FinanceConfig internals to delegate (Wave 1)
+- [ ] 220-02-PLAN.md — Rewire 7 Mollie consumer files to FinanceServices::mollie() and delete FinanceConfig Mollie forwarders (Wave 2)
+- [ ] 220-03-PLAN.md — Live test-mode Mollie webhook roundtrip + phase SUMMARY (Wave 3, checkpointed)
 
 ### Phase 221: Extract EmailTemplates
 **Goal**: All email template/heading/subject getters and the central `get_email_heading($type)` dispatch (9 heading types) live in a dedicated `Rondo\Finance\EmailTemplates` class, and all three email senders are rewired to the new service.
