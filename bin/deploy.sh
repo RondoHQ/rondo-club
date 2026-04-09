@@ -65,6 +65,14 @@ done
 # Parse arguments
 INCLUDE_NODE_MODULES=false
 SKIP_CACHE_CLEAR=false
+PRUNE_DELETED=false
+
+# Directories whose entire contents are git-tracked locally. `--prune` runs a
+# targeted `rsync --delete` on each of these so files deleted locally (PHP
+# classes, scripts, etc.) are also removed from prod. The rest of the theme
+# directory stays untouched — prod-only files like acf-json/*.json, logs,
+# README.md, php_errorlog etc. are never considered for deletion.
+PRUNE_DIRS=(includes bin src)
 
 for arg in "$@"; do
     case $arg in
@@ -76,6 +84,10 @@ for arg in "$@"; do
             SKIP_CACHE_CLEAR=true
             shift
             ;;
+        --prune)
+            PRUNE_DELETED=true
+            shift
+            ;;
         --help|-h)
             echo "Rondo Club Deployment Script"
             echo ""
@@ -84,6 +96,11 @@ for arg in "$@"; do
             echo "Options:"
             echo "  --with-node-modules  Include node_modules in sync"
             echo "  --skip-cache         Skip cache clearing after deploy"
+            echo "  --prune              Delete files on prod that have been removed"
+            echo "                       locally. Surgical: only applies to fully"
+            echo "                       git-tracked directories (${PRUNE_DIRS[*]})."
+            echo "                       Use this whenever a deploy removes PHP classes"
+            echo "                       or tooling scripts."
             echo "  --help, -h           Show this help message"
             echo ""
             echo "Environment variables (set in .env):"
@@ -143,6 +160,28 @@ else
         -e "ssh -p $DEPLOY_SSH_PORT" \
         "$PROJECT_ROOT/" \
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
+fi
+
+# Step 3b: Prune deleted files (opt-in via --prune)
+# The main Step 3 rsync doesn't use --delete because prod has legitimate files
+# that don't exist locally (acf-json/*.json written by the WP admin, logs,
+# README.md, php_errorlog, etc.). When a deploy removes a PHP class or tooling
+# script, the deleted file stays orphaned on prod until someone cleans it up
+# manually. `--prune` fixes that by running a targeted `rsync --delete` on each
+# directory whose contents are fully git-tracked.
+if [ "$PRUNE_DELETED" = true ]; then
+    echo -e "${YELLOW}Step 3b: Pruning deleted files from ${PRUNE_DIRS[*]}...${NC}"
+    for dir in "${PRUNE_DIRS[@]}"; do
+        if [ ! -d "$PROJECT_ROOT/$dir" ]; then
+            echo "  (skipping ${dir}/ — not present locally)"
+            continue
+        fi
+        echo "  ${dir}/"
+        rsync -az --delete \
+            -e "ssh -p $DEPLOY_SSH_PORT" \
+            "$PROJECT_ROOT/$dir/" \
+            "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/$dir/"
+    done
 fi
 
 # Step 4: Regenerate composer autoloader (for new PHP classes)
