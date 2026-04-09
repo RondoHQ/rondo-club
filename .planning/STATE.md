@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v33.0
 milestone_name: Fee Service Decomposition
-status: planning
-stopped_at: v32.0 Interface Touch-up archived
-last_updated: "2026-04-08T23:55:00.000Z"
-last_activity: 2026-04-08 — v32.0 milestone archived, ready to activate v33.0 drafts
+status: in_progress
+stopped_at: phase 214 shipped, fee snapshot baseline + post-phase diff clean
+last_updated: "2026-04-09T06:55:00.000Z"
+last_activity: 2026-04-09 — phase 214 (FeeCategoryResolver + snapshot infra) shipped to prod, diff clean
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 7
+  completed_plans: 2
+  percent: 29
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v33.0 Fee Service Decomposition — drafts committed at `.planning/milestones/v33.0-*`, need to be promoted to active `.planning/ROADMAP.md` + `.planning/REQUIREMENTS.md` before planning Phase 214
+**Current focus:** v33.0 Fee Service Decomposition — Phase 214 shipped (FeeCategoryResolver + fee snapshot infrastructure). Next: Phase 215 (FamilyGroupingService).
 
 ## Current Position
 
-Milestone: v33.0 Fee Service Decomposition (drafted, not yet activated)
-Phase: 214 (FeeCategoryResolver + Snapshot Infrastructure) — awaiting activation
+Milestone: v33.0 Fee Service Decomposition (active)
+Phase: 214 (FeeCategoryResolver + Snapshot Infrastructure) — shipped 2026-04-09
 Plan: —
-Status: Drafts committed, need to copy to active ROADMAP/REQUIREMENTS before `/gsd:plan-phase 214`
-Last activity: 2026-04-08 — v32.0 archived, phase 213.1 gap closure shipped
+Status: Phase 214 deployed to prod, post-phase snapshot diff clean against baseline. Ready for Phase 215 (FamilyGroupingService).
+Last activity: 2026-04-09 — phase 214 direct-style execution (no /gsd:plan-phase), 2 atomic commits, 4,021-row fee snapshot diff passed
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 29%
 
 ## Performance Metrics
 
@@ -84,11 +84,11 @@ Decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-04-08T23:55:00Z
-Stopped at: v32.0 milestone archived; v33.0 drafts ready to activate
+Last session: 2026-04-09T06:55:00Z
+Stopped at: Phase 214 shipped — FeeCategoryResolver live on prod, baseline + post-phase snapshots in `.planning/phases/214-feecategoryresolver/`, fee diff clean
 
-**Next action:** Promote `.planning/milestones/v33.0-ROADMAP.md` → `.planning/ROADMAP.md` and `.planning/milestones/v33.0-REQUIREMENTS.md` → `.planning/REQUIREMENTS.md`, then run `/gsd:plan-phase 214` to plan Phase 214 (FeeCategoryResolver + Snapshot Infrastructure).
+**Next action:** Phase 215 — extract `FamilyGroupingService` from MembershipFees (7 methods: `build_family_groups`, `get_family_key`, `recalculate_all_family_positions`, `recalculate_family_positions_for_person`, `clear_all_family_discount_meta`, `normalize_postal_code`, `extract_house_number`). Clean up the `FeeCacheInvalidator` coupling smell so it depends on `FamilyGroupingService` directly instead of reaching into MembershipFees. Before starting: run `bin/fee-snapshot.sh --output .planning/phases/215-familygrouping/pre-phase-215.json` for the pre/post diff.
 
 ---
 *State created: 2026-02-15*
-*Last updated: 2026-04-08 — v32.0 milestone archived after phase 213.1 gap closure*
+*Last updated: 2026-04-09 — phase 214 FeeCategoryResolver extraction shipped, baseline + diff clean*

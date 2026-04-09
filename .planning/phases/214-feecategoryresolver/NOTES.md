@@ -102,11 +102,21 @@ Grep-verified: only one external file calls any of the 8 methods.
 
 - [x] `bin/fee-snapshot.sh` exists and emits a JSON file with the required
   fields for all active members
-- [ ] A baseline snapshot captured before any class changes and saved as
-  `v33.0-baseline.json` in this directory
-- [ ] `Rondo\Fees\FeeCategoryResolver` class exists with the 8 extracted
+- [x] A baseline snapshot captured before any class changes and saved as
+  `v33.0-baseline.json` in this directory (4,021 persons, 844 resolvable
+  across 7 categories, 2026-04-09)
+- [x] `Rondo\Fees\FeeCategoryResolver` class exists with the 8 extracted
   methods
-- [ ] Post-extraction fee snapshot diffs cleanly against the baseline — zero
-  person has a different category or final fee
-- [ ] `MembershipFees` no longer contains any of the 8 extracted methods
-- [ ] `composer lint` clean
+- [x] Post-extraction fee snapshot diffs cleanly against the baseline — zero
+  person has a different category or final fee (verified 2026-04-09:
+  `diff <(jq -S .rows v33.0-baseline.json) <(jq -S .rows post-phase-214.json)`
+  returns empty)
+- [x] `MembershipFees` no longer contains any of the 8 extracted methods
+  (file shrunk 2,137 → 1,882 lines)
+- [x] `composer lint` clean
+
+## Outcome
+
+Phase 214 shipped 2026-04-09. MembershipFees god node count should drop
+from 66 edges (next graphify rebuild). Baseline and post-phase snapshots
+are preserved in this directory as reference files for phases 215-217.
