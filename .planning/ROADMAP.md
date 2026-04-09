@@ -16,7 +16,7 @@ Post-milestone, the codebase should have four or five focused services (FeeCateg
 - [x] **Phase 214: FeeCategoryResolver + Snapshot Infrastructure** — Create WP-CLI snapshot script, extract 8 category-matching methods *(shipped 2026-04-09)*
 - [x] **Phase 215: FamilyGroupingService** — Extract 7 family-discount methods, clean up FeeCacheInvalidator coupling smell *(shipped 2026-04-09)*
 - [x] **Phase 216: FeeCalculator** — Extract 4 fee calculation methods (depends on 214 + 215) *(shipped 2026-04-09)*
-- [ ] **Phase 217: MembershipFeeSettings** — Extract ~45 settings CRUD methods (biggest volume, lowest conceptual risk)
+- [x] **Phase 217: MembershipFeeSettings** — Extract ~45 settings CRUD methods (biggest volume, lowest conceptual risk) *(shipped 2026-04-09)*
 - [ ] **Phase 218: Retire MembershipFees** — Decide the fate of what remains; delete or shrink to <200 lines
 
 ## Phase Details
@@ -120,10 +120,10 @@ Plans:
 | 214 | 2/2 | Shipped | 2026-04-09 |
 | 215 | 1/1 | Shipped | 2026-04-09 |
 | 216 | 1/1 | Shipped | 2026-04-09 |
-| 217 | 0/2 | Planned | — |
+| 217 | 2/2 | Shipped | 2026-04-09 |
 | 218 | 0/1 | Planned | — |
 
-**Total:** 4/7 plans across 5 phases
+**Total:** 6/7 plans across 5 phases
 
 ## Execution notes
 
