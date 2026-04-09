@@ -90,14 +90,15 @@ Explicitly excluded. Documented to prevent scope creep.
 | FIN-08 | Phase 223 | Pending |
 | FIN-09 | Phase 224 | Pending |
 | FIN-10 | Phase 224 | Pending |
-| FIN-11 | Phase 219 + all subsequent | Pending |
-| FIN-12 | Phase 219 + all subsequent | Pending |
+| FIN-11 | Phase 219 + all subsequent (standing) | Pending |
+| FIN-12 | Phase 219 + all subsequent (standing) | Pending |
 
 **Coverage:**
 - v34.0 requirements: 12 total
-- Mapped to phases: 12 (pending roadmapper confirmation)
+- Mapped to phases: 12 ✓ (confirmed by roadmap 2026-04-09)
 - Unmapped: 0 ✓
+- Standing requirements: 2 (FIN-11, FIN-12) — validated at every phase from 219 onward
 
 ---
 *Requirements defined: 2026-04-09*
-*Last updated: 2026-04-09 after v34.0 milestone kickoff*
+*Last updated: 2026-04-09 after v34.0 roadmap confirmation (6 phases, 219-224)*
