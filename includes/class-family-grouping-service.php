@@ -7,11 +7,11 @@
  * family key generation, building the full family-groups map, and the bulk
  * and per-person position recalculation flows.
  *
- * Extracted from {@see MembershipFees} in Phase 215 of the v33.0 Fee Service
- * Decomposition milestone. The service still calls back into MembershipFees
- * for fee calculation, season settings, and former-member checks — those
- * responsibilities move to FeeCalculator / MembershipFeeSettings in phases
- * 216-217, at which point this class's collaborators get rewired.
+ * Extracted from MembershipFees in Phase 215 of the v33.0 Fee Service
+ * Decomposition milestone. Phase 216 rewired the base-fee call through a
+ * deferred closure pointing at FeeCalculator; Phase 217 swapped the
+ * settings reads for MembershipFeeSettings; Phase 218 replaced the final
+ * MembershipFees reference with PersonFeeContext, retiring the god class.
  *
  * @package Rondo\Fees
  */
@@ -28,24 +28,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 class FamilyGroupingService {
 
 	/**
-	 * MembershipFees instance.
+	 * Person fee context collaborator (Phase 218).
 	 *
-	 * Person-data collaborator: provides is_former_member_in_season()
-	 * which reads ACF fields and compares timestamps. This helper stays
-	 * on MembershipFees until Phase 218 decides where person-data
-	 * helpers end up.
+	 * Provides `is_former_member_in_season()` — reads ACF fields and
+	 * compares timestamps. Before Phase 218 this was reached via a
+	 * MembershipFees god-class reference; now it's on an explicit typed
+	 * service with zero dependencies.
 	 *
-	 * @var MembershipFees
+	 * @var PersonFeeContext
 	 */
-	private MembershipFees $fees;
+	private PersonFeeContext $person_context;
 
 	/**
 	 * Membership fee settings repository (Phase 217).
 	 *
 	 * Provides `get_youth_category_slugs()` and `get_family_discount_rate()`.
-	 * Before Phase 217 these were reached via `$this->fees->X()` which
-	 * contributed to the MembershipFees god class coupling. Now they are
-	 * on an explicit typed collaborator.
 	 *
 	 * @var MembershipFeeSettings
 	 */
@@ -56,11 +53,10 @@ class FamilyGroupingService {
 	 *
 	 * Signature: (int $person_id, ?string $season): ?array
 	 *
-	 * Wired in Phase 216 to point at
-	 * FeeCalculator::calculate_fee(), via a closure that resolves the
-	 * MembershipFees::fee_calculator() lazy accessor at invocation time
-	 * (not construction time). This breaks the circular dependency with
-	 * FeeCalculator.
+	 * Wired in Phase 216 to point at FeeCalculator::calculate_fee(), via
+	 * a closure that resolves the shared FeeCalculator instance at
+	 * invocation time (not construction time). This breaks the circular
+	 * dependency with FeeCalculator.
 	 *
 	 * @var callable
 	 */
@@ -69,12 +65,12 @@ class FamilyGroupingService {
 	/**
 	 * Constructor.
 	 *
-	 * @param MembershipFees        $fees           MembershipFees collaborator (person-data helper).
+	 * @param PersonFeeContext      $person_context Person-data helper (Phase 218).
 	 * @param MembershipFeeSettings $settings       Settings repository (Phase 217).
 	 * @param callable              $fee_calculator Deferred base-fee calculator: (int, ?string) => ?array.
 	 */
-	public function __construct( MembershipFees $fees, MembershipFeeSettings $settings, callable $fee_calculator ) {
-		$this->fees           = $fees;
+	public function __construct( PersonFeeContext $person_context, MembershipFeeSettings $settings, callable $fee_calculator ) {
+		$this->person_context = $person_context;
 		$this->settings       = $settings;
 		$this->fee_calculator = $fee_calculator;
 	}
@@ -220,7 +216,7 @@ class FamilyGroupingService {
 		foreach ( $query->posts as $person_id ) {
 			// Skip former members not eligible for this season's fee list
 			$is_former = (bool) get_field( 'former_member', $person_id );
-			if ( $is_former && ! $this->fees->is_former_member_in_season( $person_id, $season ) ) {
+			if ( $is_former && ! $this->person_context->is_former_member_in_season( $person_id, $season ) ) {
 				continue; // Skip former members not in this season
 			}
 
@@ -395,7 +391,7 @@ class FamilyGroupingService {
 
 			// Skip former members not in season
 			$is_former = ( get_field( 'former_member', $pid ) === true );
-			if ( $is_former && ! $this->fees->is_former_member_in_season( $pid, $season ) ) {
+			if ( $is_former && ! $this->person_context->is_former_member_in_season( $pid, $season ) ) {
 				continue;
 			}
 

@@ -14,7 +14,7 @@
 namespace Rondo\Finance;
 
 use Rondo\Config\FinanceConfig;
-use Rondo\Fees\MembershipFees;
+use Rondo\Fees\FeeServices;
 use Rondo\Fees\SeasonKey;
 use Rondo\Finance\InstallmentPaymentService;
 
@@ -177,16 +177,15 @@ class PublicPaymentPage {
 		$person_name    = $person_id ? get_the_title( $person_id ) : '';
 
 		// Derive season from invoice creation date.
-		$membership_fees = new MembershipFees();
-		$invoice_date    = get_the_date( 'Y-m-d', $invoice_id );
-		$season          = SeasonKey::current( $invoice_date );
+		$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
+		$season       = SeasonKey::current( $invoice_date );
 
 		// Read installment admin fee.
-		$admin_fee = $membership_fees->settings()->get_installment_admin_fee( $season );
+		$admin_fee = FeeServices::settings()->get_installment_admin_fee( $season );
 
 		// Read installment plan toggles for this season.
-		$plan_3_enabled = $membership_fees->settings()->get_installment_plan_3_enabled( $season );
-		$plan_8_enabled = $membership_fees->settings()->get_installment_plan_8_enabled( $season );
+		$plan_3_enabled = FeeServices::settings()->get_installment_plan_3_enabled( $season );
+		$plan_8_enabled = FeeServices::settings()->get_installment_plan_8_enabled( $season );
 
 		// Per-invoice override: if installments disabled, hide both plans.
 		if ( get_post_meta( $invoice_id, '_disable_installments', true ) ) {
@@ -330,9 +329,8 @@ class PublicPaymentPage {
 		$person_id      = get_field( 'person', $invoice_id );
 		$person_name    = $person_id ? get_the_title( $person_id ) : '';
 
-		$membership_fees = new MembershipFees();
-		$invoice_date    = get_the_date( 'Y-m-d', $invoice_id );
-		$season          = SeasonKey::current( $invoice_date );
+		$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
+		$season       = SeasonKey::current( $invoice_date );
 
 		$branding = $this->get_club_branding();
 
@@ -491,7 +489,6 @@ class PublicPaymentPage {
 			exit;
 		}
 
-		$fees_service     = new MembershipFees();
 		$invoice_date     = get_the_date( 'Y-m-d', $invoice_id );
 		$invoice_season   = SeasonKey::current( $invoice_date );
 		$available_dates  = self::get_available_payment_dates( current_time( 'Y-m-d' ), $invoice_season );
@@ -499,12 +496,12 @@ class PublicPaymentPage {
 
 		// Check if selected installment plan is enabled and currently available.
 		if ( $plan === 'quarterly_3' || $plan === 'monthly_8' ) {
-			if ( $plan === 'quarterly_3' && ! $fees_service->settings()->get_installment_plan_3_enabled( $invoice_season ) ) {
+			if ( $plan === 'quarterly_3' && ! FeeServices::settings()->get_installment_plan_3_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
 
-			if ( $plan === 'monthly_8' && ! $fees_service->settings()->get_installment_plan_8_enabled( $invoice_season ) ) {
+			if ( $plan === 'monthly_8' && ! FeeServices::settings()->get_installment_plan_8_enabled( $invoice_season ) ) {
 				$this->render_error( 'Dit betalingsplan is niet beschikbaar.' );
 				exit;
 			}
@@ -590,7 +587,7 @@ class PublicPaymentPage {
 
 		// Read amounts.
 		$total     = (float) get_field( 'total_amount', $invoice_id );
-		$admin_fee = $fees_service->settings()->get_installment_admin_fee( $invoice_season );
+		$admin_fee = FeeServices::settings()->get_installment_admin_fee( $invoice_season );
 
 		// Store plan meta and write installment breakdown.
 		update_post_meta( $invoice_id, '_installment_plan', $plan );

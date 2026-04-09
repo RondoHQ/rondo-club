@@ -12,6 +12,7 @@
 
 namespace Rondo\REST;
 
+use Rondo\Fees\FeeServices;
 use Rondo\Fees\SeasonKey;
 use Rondo\Sheets\GoogleOAuth;
 use Rondo\Sheets\GoogleSheetsConnection;
@@ -851,7 +852,6 @@ class GoogleSheets extends Base {
 	 * @return array Fee data with season and members.
 	 */
 	private function fetch_fee_data( string $sort_field, string $sort_order, bool $forecast = false ): array {
-		$fees = new \Rondo\Fees\MembershipFees();
 
 		// Use next season for forecast
 		$season = $forecast
@@ -880,7 +880,7 @@ class GoogleSheets extends Base {
 
 			// Former members: only include if in current season, exclude from forecast
 			if ( $is_former ) {
-				if ( $forecast || ! $fees->is_former_member_in_season( $person->ID, $season ) ) {
+				if ( $forecast || ! FeeServices::person_context()->is_former_member_in_season( $person->ID, $season ) ) {
 					continue;
 				}
 			}
@@ -895,7 +895,7 @@ class GoogleSheets extends Base {
 
 			if ( $forecast ) {
 				// Calculate with 100% pro-rata for forecast
-				$fee_data = $fees->fee_calculator()->calculate_fee_with_family_discount( $person->ID, $season );
+				$fee_data = FeeServices::fee_calculator()->calculate_fee_with_family_discount( $person->ID, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
@@ -903,7 +903,7 @@ class GoogleSheets extends Base {
 				$fee_data['final_fee']          = $fee_data['fee_after_discount'] ?? $fee_data['final_fee'];
 			} else {
 				// Use cached calculation for current season
-				$fee_data = $fees->get_fee_for_person_cached( $person->ID, $season );
+				$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person->ID, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
@@ -935,7 +935,7 @@ class GoogleSheets extends Base {
 		}
 
 		// Sort results based on sort_field and sort_order
-		$category_order = $fees->settings()->get_category_sort_order( $season );
+		$category_order = FeeServices::settings()->get_category_sort_order( $season );
 
 		usort(
 			$results,

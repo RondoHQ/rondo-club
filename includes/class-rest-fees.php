@@ -8,6 +8,7 @@
 
 namespace Rondo\REST;
 
+use Rondo\Fees\FeeServices;
 use Rondo\Fees\SeasonKey;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -43,8 +44,7 @@ class Fees extends Base {
 							'required'          => true,
 							'type'              => 'string',
 							'validate_callback' => function ( $param, $request, $key ) {
-								$membership_fees = new \Rondo\Fees\MembershipFees();
-								$valid           = [ SeasonKey::current(), SeasonKey::next() ];
+																$valid = [ SeasonKey::current(), SeasonKey::next() ];
 								return in_array( $param, $valid, true );
 							},
 						],
@@ -313,23 +313,22 @@ class Fees extends Base {
 	 * @return \WP_REST_Response Response with membership fee settings for both seasons.
 	 */
 	public function get_membership_fee_settings( $request ) {
-		$membership_fees = new \Rondo\Fees\MembershipFees();
-		$current_season  = SeasonKey::current();
-		$next_season     = SeasonKey::next();
+				$current_season = SeasonKey::current();
+		$next_season            = SeasonKey::next();
 
 		return rest_ensure_response(
 			[
 				'current_season' => [
 					'key'             => $current_season,
-					'categories'      => $membership_fees->settings()->get_categories_for_season( $current_season ),
-					'family_discount' => $membership_fees->settings()->get_family_discount_config( $current_season ),
-					'entry_discount'  => $membership_fees->settings()->get_entry_discount_config( $current_season ),
+					'categories'      => FeeServices::settings()->get_categories_for_season( $current_season ),
+					'family_discount' => FeeServices::settings()->get_family_discount_config( $current_season ),
+					'entry_discount'  => FeeServices::settings()->get_entry_discount_config( $current_season ),
 				],
 				'next_season'    => [
 					'key'             => $next_season,
-					'categories'      => $membership_fees->settings()->get_categories_for_season( $next_season ),
-					'family_discount' => $membership_fees->settings()->get_family_discount_config( $next_season ),
-					'entry_discount'  => $membership_fees->settings()->get_entry_discount_config( $next_season ),
+					'categories'      => FeeServices::settings()->get_categories_for_season( $next_season ),
+					'family_discount' => FeeServices::settings()->get_family_discount_config( $next_season ),
+					'entry_discount'  => FeeServices::settings()->get_entry_discount_config( $next_season ),
 				],
 			]
 		);
@@ -344,13 +343,12 @@ class Fees extends Base {
 	 * @return \WP_REST_Response Response with updated membership fee settings for both seasons.
 	 */
 	public function update_membership_fee_settings( $request ) {
-		$membership_fees = new \Rondo\Fees\MembershipFees();
-		$current_season  = SeasonKey::current();
-		$next_season     = SeasonKey::next();
-		$season          = $request->get_param( 'season' );
-		$categories      = $request->get_param( 'categories' );
-		$family_discount = $request->get_param( 'family_discount' );
-		$entry_discount  = $request->get_param( 'entry_discount' );
+				$current_season = SeasonKey::current();
+		$next_season            = SeasonKey::next();
+		$season                 = $request->get_param( 'season' );
+		$categories             = $request->get_param( 'categories' );
+		$family_discount        = $request->get_param( 'family_discount' );
+		$entry_discount         = $request->get_param( 'entry_discount' );
 
 		// Validate category structure (if provided)
 		$validation = $categories !== null
@@ -384,12 +382,12 @@ class Fees extends Base {
 
 		// Save categories for the specified season (if provided)
 		if ( $categories !== null ) {
-			$membership_fees->settings()->save_categories_for_season( $categories, $season );
+			FeeServices::settings()->save_categories_for_season( $categories, $season );
 		}
 
 		// Save family discount config (if provided)
 		if ( $family_discount !== null ) {
-			$membership_fees->settings()->save_family_discount_config(
+			FeeServices::settings()->save_family_discount_config(
 				[
 					'second_child_percent' => (float) ( $family_discount['second_child_percent'] ?? 25 ),
 					'third_child_percent'  => (float) ( $family_discount['third_child_percent'] ?? 50 ),
@@ -400,22 +398,22 @@ class Fees extends Base {
 
 		// Save entry discount config (if provided)
 		if ( $entry_discount !== null ) {
-			$membership_fees->settings()->save_entry_discount_config( $entry_discount, $season );
+			FeeServices::settings()->save_entry_discount_config( $entry_discount, $season );
 		}
 
 		// Return updated settings for both seasons
 		$response = [
 			'current_season' => [
 				'key'             => $current_season,
-				'categories'      => $membership_fees->settings()->get_categories_for_season( $current_season ),
-				'family_discount' => $membership_fees->settings()->get_family_discount_config( $current_season ),
-				'entry_discount'  => $membership_fees->settings()->get_entry_discount_config( $current_season ),
+				'categories'      => FeeServices::settings()->get_categories_for_season( $current_season ),
+				'family_discount' => FeeServices::settings()->get_family_discount_config( $current_season ),
+				'entry_discount'  => FeeServices::settings()->get_entry_discount_config( $current_season ),
 			],
 			'next_season'    => [
 				'key'             => $next_season,
-				'categories'      => $membership_fees->settings()->get_categories_for_season( $next_season ),
-				'family_discount' => $membership_fees->settings()->get_family_discount_config( $next_season ),
-				'entry_discount'  => $membership_fees->settings()->get_entry_discount_config( $next_season ),
+				'categories'      => FeeServices::settings()->get_categories_for_season( $next_season ),
+				'family_discount' => FeeServices::settings()->get_family_discount_config( $next_season ),
+				'entry_discount'  => FeeServices::settings()->get_entry_discount_config( $next_season ),
 			],
 		];
 
@@ -437,9 +435,8 @@ class Fees extends Base {
 	 * @return \WP_REST_Response|\WP_Error Response with updated settings or error.
 	 */
 	public function copy_season_categories( $request ) {
-		$membership_fees = new \Rondo\Fees\MembershipFees();
-		$from_season     = $request->get_param( 'from_season' );
-		$to_season       = $request->get_param( 'to_season' );
+				$from_season = $request->get_param( 'from_season' );
+		$to_season           = $request->get_param( 'to_season' );
 
 		// Validate seasons are different
 		if ( $from_season === $to_season ) {
@@ -451,7 +448,7 @@ class Fees extends Base {
 		}
 
 		// Check if destination season already has categories
-		$existing_categories = $membership_fees->settings()->get_categories_for_season( $to_season );
+		$existing_categories = FeeServices::settings()->get_categories_for_season( $to_season );
 		if ( ! empty( $existing_categories ) ) {
 			return new \WP_Error(
 				'destination_not_empty',
@@ -461,7 +458,7 @@ class Fees extends Base {
 		}
 
 		// Get source season data
-		$source_categories = $membership_fees->settings()->get_categories_for_season( $from_season );
+		$source_categories = FeeServices::settings()->get_categories_for_season( $from_season );
 		if ( empty( $source_categories ) ) {
 			return new \WP_Error(
 				'source_empty',
@@ -471,15 +468,15 @@ class Fees extends Base {
 		}
 
 		// Copy categories
-		$membership_fees->settings()->save_categories_for_season( $source_categories, $to_season );
+		FeeServices::settings()->save_categories_for_season( $source_categories, $to_season );
 
 		// Copy family discount config
-		$source_discount = $membership_fees->settings()->get_family_discount_config( $from_season );
-		$membership_fees->settings()->save_family_discount_config( $source_discount, $to_season );
+		$source_discount = FeeServices::settings()->get_family_discount_config( $from_season );
+		FeeServices::settings()->save_family_discount_config( $source_discount, $to_season );
 
 		// Copy entry discount config
-		$source_entry_discount = $membership_fees->settings()->get_entry_discount_config( $from_season );
-		$membership_fees->settings()->save_entry_discount_config( $source_entry_discount, $to_season );
+		$source_entry_discount = FeeServices::settings()->get_entry_discount_config( $from_season );
+		FeeServices::settings()->save_entry_discount_config( $source_entry_discount, $to_season );
 
 		// Return updated settings for both seasons
 		$current_season = SeasonKey::current();
@@ -489,15 +486,15 @@ class Fees extends Base {
 			[
 				'current_season' => [
 					'key'             => $current_season,
-					'categories'      => $membership_fees->settings()->get_categories_for_season( $current_season ),
-					'family_discount' => $membership_fees->settings()->get_family_discount_config( $current_season ),
-					'entry_discount'  => $membership_fees->settings()->get_entry_discount_config( $current_season ),
+					'categories'      => FeeServices::settings()->get_categories_for_season( $current_season ),
+					'family_discount' => FeeServices::settings()->get_family_discount_config( $current_season ),
+					'entry_discount'  => FeeServices::settings()->get_entry_discount_config( $current_season ),
 				],
 				'next_season'    => [
 					'key'             => $next_season,
-					'categories'      => $membership_fees->settings()->get_categories_for_season( $next_season ),
-					'family_discount' => $membership_fees->settings()->get_family_discount_config( $next_season ),
-					'entry_discount'  => $membership_fees->settings()->get_entry_discount_config( $next_season ),
+					'categories'      => FeeServices::settings()->get_categories_for_season( $next_season ),
+					'family_discount' => FeeServices::settings()->get_family_discount_config( $next_season ),
+					'entry_discount'  => FeeServices::settings()->get_entry_discount_config( $next_season ),
 				],
 			]
 		);
@@ -514,7 +511,6 @@ class Fees extends Base {
 	 */
 	public function get_fee_list( $request ) {
 		$forecast = $request->get_param( 'forecast' );
-		$fees     = new \Rondo\Fees\MembershipFees();
 
 		// Determine season
 		if ( $forecast ) {
@@ -526,7 +522,7 @@ class Fees extends Base {
 			}
 		}
 
-		$fee_cache_key = $fees->get_fee_cache_meta_key( $season );
+		$fee_cache_key = FeeServices::fee_cache()->get_fee_cache_meta_key( $season );
 		$nikki_year    = substr( $season, 0, 4 );
 
 		// Use fields => 'ids' for a lightweight query, then prime the meta cache
@@ -612,7 +608,7 @@ class Fees extends Base {
 		// Fallback: calculate fees for uncached members (rare after background recalculation)
 		foreach ( $uncached_ids as $person_id ) {
 			if ( $forecast ) {
-				$fee_data = $fees->fee_calculator()->calculate_fee_with_family_discount( $person_id, $season );
+				$fee_data = FeeServices::fee_calculator()->calculate_fee_with_family_discount( $person_id, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
@@ -622,7 +618,7 @@ class Fees extends Base {
 				$fee_data['from_cache']         = false;
 				$fee_data['calculated_at']      = current_time( 'Y-m-d H:i:s' );
 			} else {
-				$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
+				$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}
@@ -707,7 +703,7 @@ class Fees extends Base {
 		}
 
 		// Sort by category priority, then name
-		$category_order = $fees->settings()->get_category_sort_order( $season );
+		$category_order = FeeServices::settings()->get_category_sort_order( $season );
 		usort(
 			$results,
 			function ( $a, $b ) use ( $category_order ) {
@@ -720,7 +716,7 @@ class Fees extends Base {
 		);
 
 		// Get category metadata for frontend
-		$categories_raw  = $fees->settings()->get_categories_for_season( $season );
+		$categories_raw  = FeeServices::settings()->get_categories_for_season( $season );
 		$categories_meta = [];
 		foreach ( $categories_raw as $slug => $category ) {
 			$categories_meta[ $slug ] = [
@@ -730,9 +726,9 @@ class Fees extends Base {
 			];
 		}
 
-		$billing_method             = $fees->settings()->get_billing_method( $season );
-		$installment_plan_3_enabled = $fees->settings()->get_installment_plan_3_enabled( $season );
-		$installment_plan_8_enabled = $fees->settings()->get_installment_plan_8_enabled( $season );
+		$billing_method             = FeeServices::settings()->get_billing_method( $season );
+		$installment_plan_3_enabled = FeeServices::settings()->get_installment_plan_3_enabled( $season );
+		$installment_plan_8_enabled = FeeServices::settings()->get_installment_plan_8_enabled( $season );
 
 		return rest_ensure_response(
 			[
@@ -762,7 +758,6 @@ class Fees extends Base {
 		global $wpdb;
 
 		$forecast = $request->get_param( 'forecast' );
-		$fees     = new \Rondo\Fees\MembershipFees();
 
 		if ( $forecast ) {
 			$season = SeasonKey::next();
@@ -777,7 +772,7 @@ class Fees extends Base {
 		// For forecast, we use the current season's cache but treat fee_after_discount
 		// as final_fee (100% pro-rata) and exclude former members.
 		$cache_season  = $forecast ? SeasonKey::current() : $season;
-		$fee_cache_key = $fees->get_fee_cache_meta_key( $cache_season );
+		$fee_cache_key = FeeServices::fee_cache()->get_fee_cache_meta_key( $cache_season );
 
 		if ( $forecast ) {
 			// Forecast: exclude members leaving before next season starts (lid-tot < July 1).
@@ -818,7 +813,7 @@ class Fees extends Base {
 		$total_members = 0;
 
 		// Pre-load youth slugs for forecast reclassification (only youth members age up)
-		$current_youth_slugs = $forecast ? $fees->settings()->get_youth_category_slugs( SeasonKey::current() ) : [];
+		$current_youth_slugs = $forecast ? FeeServices::settings()->get_youth_category_slugs( SeasonKey::current() ) : [];
 
 		foreach ( $rows as $row ) {
 			$fee_data = maybe_unserialize( $row->meta_value );
@@ -839,7 +834,7 @@ class Fees extends Base {
 				if ( in_array( $current_cat, $current_youth_slugs, true ) ) {
 					$leeftijdsgroep = $fee_data['leeftijdsgroep'] ?? '';
 					if ( ! empty( $leeftijdsgroep ) ) {
-						$category_resolver = $fees->category_resolver();
+						$category_resolver = FeeServices::category_resolver();
 						$next_age_class    = $category_resolver->predict_next_season_age_class( $leeftijdsgroep );
 						$next_cat          = $category_resolver->get_category_by_age_class( $next_age_class, $season );
 					} else {
@@ -849,7 +844,7 @@ class Fees extends Base {
 				} else {
 					$cat = $current_cat;
 				}
-				$base_fee = $fees->settings()->get_fee( $cat, $season );
+				$base_fee = FeeServices::settings()->get_fee( $cat, $season );
 
 				// Recalculate family discount with new base fee but same rate
 				$discount_rate   = $fee_data['family_discount_rate'] ?? 0;
@@ -914,7 +909,7 @@ class Fees extends Base {
 		unset( $agg );
 
 		// Get category metadata for frontend
-		$categories_raw  = $fees->settings()->get_categories_for_season( $season );
+		$categories_raw  = FeeServices::settings()->get_categories_for_season( $season );
 		$categories_meta = [];
 		foreach ( $categories_raw as $slug => $category ) {
 			$categories_meta[ $slug ] = [
@@ -924,9 +919,9 @@ class Fees extends Base {
 			];
 		}
 
-		$billing_method             = $fees->settings()->get_billing_method( $season );
-		$installment_plan_3_enabled = $fees->settings()->get_installment_plan_3_enabled( $season );
-		$installment_plan_8_enabled = $fees->settings()->get_installment_plan_8_enabled( $season );
+		$billing_method             = FeeServices::settings()->get_billing_method( $season );
+		$installment_plan_3_enabled = FeeServices::settings()->get_installment_plan_3_enabled( $season );
+		$installment_plan_8_enabled = FeeServices::settings()->get_installment_plan_8_enabled( $season );
 
 		return rest_ensure_response(
 			[
@@ -958,8 +953,6 @@ class Fees extends Base {
 			return new \WP_Error( 'not_found', 'Person not found', [ 'status' => 404 ] );
 		}
 
-		$fees = new \Rondo\Fees\MembershipFees();
-
 		if ( $season === null ) {
 			$season = SeasonKey::current();
 		}
@@ -979,7 +972,7 @@ class Fees extends Base {
 
 		// Check if person is a former member not in the requested season
 		$is_former = ( get_field( 'former_member', $person_id ) === true );
-		if ( $is_former && ! $fees->is_former_member_in_season( $person_id, $season ) ) {
+		if ( $is_former && ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
 			return rest_ensure_response(
 				[
 					'person_id'        => $person_id,
@@ -992,7 +985,7 @@ class Fees extends Base {
 		}
 
 		// Get fee data with caching
-		$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
+		$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
 
 		if ( $fee_data === null ) {
 			// Person is not calculable (no valid category)
@@ -1007,7 +1000,7 @@ class Fees extends Base {
 		}
 
 		// Look up category label from season config
-		$season_categories = $fees->settings()->get_categories_for_season( $season );
+		$season_categories = FeeServices::settings()->get_categories_for_season( $season );
 		$category_label    = $season_categories[ $fee_data['category'] ]['label'] ?? $fee_data['category'];
 
 		// Derive family_members and family_size from family_key if not already populated
@@ -1017,7 +1010,7 @@ class Fees extends Base {
 
 		if ( $family_key !== null && empty( $family_members ) && ( $fee_data['family_position'] ?? 0 ) > 0 ) {
 			// Derive siblings from family_key: find other youth persons at same address
-			$groups         = $fees->family_grouping()->build_family_groups( $season );
+			$groups         = FeeServices::family_grouping()->build_family_groups( $season );
 			$group_families = $groups['families'];
 			$group_members  = $group_families[ $family_key ] ?? [];
 
@@ -1048,7 +1041,7 @@ class Fees extends Base {
 		$financiele_blokkade = get_field( 'financiele-blokkade', $person_id );
 
 		// Get billing method for this season
-		$billing_method = $fees->settings()->get_billing_method( $season );
+		$billing_method = FeeServices::settings()->get_billing_method( $season );
 
 		return rest_ensure_response(
 			[
@@ -1089,16 +1082,15 @@ class Fees extends Base {
 	 * @return \WP_REST_Response Response with recalculation status.
 	 */
 	public function recalculate_all_fees( $request ) {
-		$fees   = new \Rondo\Fees\MembershipFees();
-		$season = $request->get_param( 'season' );
+				$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
 			$season = SeasonKey::current();
 		}
 
 		// Clear all caches and family discount meta
-		$cleared = $fees->clear_all_fee_caches( $season );
-		$fees->family_grouping()->clear_all_family_discount_meta();
+		$cleared = FeeServices::fee_cache()->clear_all_fee_caches( $season );
+		FeeServices::family_grouping()->clear_all_family_discount_meta();
 
 		// Run recalculation synchronously
 		$invalidator = new \Rondo\Fees\FeeCacheInvalidator();
@@ -1125,8 +1117,7 @@ class Fees extends Base {
 	 * @return \WP_REST_Response Billing settings.
 	 */
 	public function get_billing_settings( $request ) {
-		$fees   = new \Rondo\Fees\MembershipFees();
-		$season = $request->get_param( 'season' );
+				$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
 			$season = SeasonKey::current();
@@ -1135,10 +1126,10 @@ class Fees extends Base {
 		return rest_ensure_response(
 			[
 				'season'                     => $season,
-				'billing_method'             => $fees->settings()->get_billing_method( $season ),
-				'installment_plan_3_enabled' => $fees->settings()->get_installment_plan_3_enabled( $season ),
-				'installment_plan_8_enabled' => $fees->settings()->get_installment_plan_8_enabled( $season ),
-				'installment_admin_fee'      => $fees->settings()->get_installment_admin_fee( $season ),
+				'billing_method'             => FeeServices::settings()->get_billing_method( $season ),
+				'installment_plan_3_enabled' => FeeServices::settings()->get_installment_plan_3_enabled( $season ),
+				'installment_plan_8_enabled' => FeeServices::settings()->get_installment_plan_8_enabled( $season ),
+				'installment_admin_fee'      => FeeServices::settings()->get_installment_admin_fee( $season ),
 			]
 		);
 	}
@@ -1150,36 +1141,35 @@ class Fees extends Base {
 	 * @return \WP_REST_Response Updated billing settings.
 	 */
 	public function update_billing_settings( $request ) {
-		$fees   = new \Rondo\Fees\MembershipFees();
-		$season = $request->get_param( 'season' );
+				$season = $request->get_param( 'season' );
 
 		$billing_method = $request->get_param( 'billing_method' );
 		if ( $billing_method !== null ) {
-			$fees->settings()->set_billing_method( $billing_method, $season );
+			FeeServices::settings()->set_billing_method( $billing_method, $season );
 		}
 
 		$plan_3_enabled = $request->get_param( 'installment_plan_3_enabled' );
 		if ( $plan_3_enabled !== null ) {
-			$fees->settings()->set_installment_plan_3_enabled( (bool) $plan_3_enabled, $season );
+			FeeServices::settings()->set_installment_plan_3_enabled( (bool) $plan_3_enabled, $season );
 		}
 
 		$plan_8_enabled = $request->get_param( 'installment_plan_8_enabled' );
 		if ( $plan_8_enabled !== null ) {
-			$fees->settings()->set_installment_plan_8_enabled( (bool) $plan_8_enabled, $season );
+			FeeServices::settings()->set_installment_plan_8_enabled( (bool) $plan_8_enabled, $season );
 		}
 
 		$installment_admin_fee = $request->get_param( 'installment_admin_fee' );
 		if ( $installment_admin_fee !== null ) {
-			$fees->settings()->set_installment_admin_fee( (float) $installment_admin_fee, $season );
+			FeeServices::settings()->set_installment_admin_fee( (float) $installment_admin_fee, $season );
 		}
 
 		return rest_ensure_response(
 			[
 				'season'                     => $season,
-				'billing_method'             => $fees->settings()->get_billing_method( $season ),
-				'installment_plan_3_enabled' => $fees->settings()->get_installment_plan_3_enabled( $season ),
-				'installment_plan_8_enabled' => $fees->settings()->get_installment_plan_8_enabled( $season ),
-				'installment_admin_fee'      => $fees->settings()->get_installment_admin_fee( $season ),
+				'billing_method'             => FeeServices::settings()->get_billing_method( $season ),
+				'installment_plan_3_enabled' => FeeServices::settings()->get_installment_plan_3_enabled( $season ),
+				'installment_plan_8_enabled' => FeeServices::settings()->get_installment_plan_8_enabled( $season ),
+				'installment_admin_fee'      => FeeServices::settings()->get_installment_admin_fee( $season ),
 			]
 		);
 	}
@@ -1191,8 +1181,7 @@ class Fees extends Base {
 	 * @return \WP_REST_Response|\WP_Error Job status or error if already running.
 	 */
 	public function start_bulk_invoice_job( $request ) {
-		$fees   = new \Rondo\Fees\MembershipFees();
-		$season = $request->get_param( 'season' );
+				$season = $request->get_param( 'season' );
 
 		if ( $season === null ) {
 			$season = SeasonKey::current();
@@ -1224,9 +1213,8 @@ class Fees extends Base {
 	 * @return \WP_REST_Response|\WP_Error Invoice data or error.
 	 */
 	public function create_single_membership_invoice( $request ) {
-		$fees      = new \Rondo\Fees\MembershipFees();
-		$person_id = (int) $request->get_param( 'person_id' );
-		$season    = $request->get_param( 'season' );
+				$person_id = (int) $request->get_param( 'person_id' );
+		$season            = $request->get_param( 'season' );
 
 		if ( $season === null ) {
 			$season = SeasonKey::current();
@@ -1239,7 +1227,7 @@ class Fees extends Base {
 		}
 
 		// Check fee first to return appropriate error codes.
-		$fee_data = $fees->get_fee_for_person_cached( $person_id, $season );
+		$fee_data = FeeServices::fee_cache()->get_fee_for_person_cached( $person_id, $season );
 		if ( $fee_data === null ) {
 			return new \WP_Error(
 				'no_fee',
