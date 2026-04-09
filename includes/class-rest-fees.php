@@ -612,7 +612,7 @@ class Fees extends Base {
 		// Fallback: calculate fees for uncached members (rare after background recalculation)
 		foreach ( $uncached_ids as $person_id ) {
 			if ( $forecast ) {
-				$fee_data = $fees->calculate_fee_with_family_discount( $person_id, $season );
+				$fee_data = $fees->fee_calculator()->calculate_fee_with_family_discount( $person_id, $season );
 				if ( $fee_data === null ) {
 					continue;
 				}

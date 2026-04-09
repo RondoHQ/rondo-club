@@ -74,7 +74,7 @@ foreach ( $query->posts as $person_id ) {
 		$registration_date = (string) $registration_date;
 	}
 
-	$full = $fees->calculate_full_fee( $person_id, $registration_date ?: null, $season );
+	$full = $fees->fee_calculator()->calculate_full_fee( $person_id, $registration_date ?: null, $season );
 
 	if ( $full === null ) {
 		// Unresolvable fee: record the fact so we notice if it changes.
