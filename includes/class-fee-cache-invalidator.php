@@ -29,20 +29,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 class FeeCacheInvalidator {
 
 	/**
-	 * MembershipFees instance
+	 * Fee cache storage service (Phase 218).
 	 *
-	 * @var MembershipFees
+	 * Replaces the MembershipFees reference this class held from its
+	 * inception. Before Phase 218, every cache clear went through
+	 * `$this->fee_cache->clear_fee_cache()`; now they go through
+	 * `$this->fee_cache->clear_fee_cache()` on an explicit typed
+	 * dependency.
+	 *
+	 * @var FeeCache
 	 */
-	private $fees;
+	private FeeCache $fee_cache;
 
 	/**
 	 * FamilyGroupingService instance.
 	 *
-	 * Explicit dependency established in Phase 215 of the v33.0 Fee Service
-	 * Decomposition milestone (STRU-04). Before the extraction this class
-	 * reached into `$this->fees` for every family-grouping operation, which
-	 * tied it to the MembershipFees god object. It now holds a typed
-	 * FamilyGroupingService reference obtained once at construction time.
+	 * Explicit dependency established in Phase 215 (STRU-04). All five
+	 * family-grouping call sites go through this property instead of
+	 * reaching through a god-class reference.
 	 *
 	 * @var FamilyGroupingService
 	 */
@@ -52,8 +56,8 @@ class FeeCacheInvalidator {
 	 * Constructor - registers all invalidation hooks
 	 */
 	public function __construct() {
-		$this->fees            = new MembershipFees();
-		$this->family_grouping = $this->fees->family_grouping();
+		$this->fee_cache       = FeeServices::fee_cache();
+		$this->family_grouping = FeeServices::family_grouping();
 
 		// Age group changes affect fee category
 		add_filter( 'acf/update_value/name=leeftijdsgroep', [ $this, 'invalidate_person_cache' ], 10, 3 );
@@ -118,7 +122,7 @@ class FeeCacheInvalidator {
 			return $value;
 		}
 
-		$this->fees->clear_fee_cache( $post_id );
+		$this->fee_cache->clear_fee_cache( $post_id );
 
 		return $value;
 	}
@@ -142,7 +146,7 @@ class FeeCacheInvalidator {
 		}
 
 		// Clear this person's cache first
-		$this->fees->clear_fee_cache( $post_id );
+		$this->fee_cache->clear_fee_cache( $post_id );
 
 		// Get family key BEFORE the address update (using current saved value)
 		$old_family_key = $this->family_grouping->get_family_key( $post_id );
@@ -177,7 +181,7 @@ class FeeCacheInvalidator {
 
 		foreach ( $families[ $family_key ] as $member_id ) {
 			if ( (int) $member_id !== $exclude_id ) {
-				$this->fees->clear_fee_cache( (int) $member_id );
+				$this->fee_cache->clear_fee_cache( (int) $member_id );
 				delete_post_meta( $member_id, '_family_discount_rate' );
 				delete_post_meta( $member_id, '_family_discount_position' );
 			}
@@ -194,7 +198,7 @@ class FeeCacheInvalidator {
 	 * @param \WP_REST_Request $request The request object.
 	 */
 	public function invalidate_person_cache_rest( $post, $request ) {
-		$this->fees->clear_fee_cache( $post->ID );
+		$this->fee_cache->clear_fee_cache( $post->ID );
 	}
 
 	/**
@@ -355,7 +359,7 @@ class FeeCacheInvalidator {
 	 */
 	public function invalidate_all_caches( ?string $season = null ): int {
 		$season = $season ?: SeasonKey::current();
-		return $this->fees->clear_all_fee_caches( $season );
+		return $this->fee_cache->clear_all_fee_caches( $season );
 	}
 
 	/**
@@ -370,7 +374,7 @@ class FeeCacheInvalidator {
 		$season = SeasonKey::current();
 
 		// Clear all caches and family discount meta immediately
-		$cleared = $this->fees->clear_all_fee_caches( $season );
+		$cleared = $this->fee_cache->clear_all_fee_caches( $season );
 		$this->family_grouping->clear_all_family_discount_meta();
 
 		// Schedule background recalculation (10 seconds from now)
@@ -423,10 +427,10 @@ class FeeCacheInvalidator {
 
 		foreach ( $query->posts as $person_id ) {
 			// Clear existing cache first to force fresh calculation
-			$this->fees->clear_fee_cache( (int) $person_id, $season );
+			$this->fee_cache->clear_fee_cache( (int) $person_id, $season );
 
 			// Now get_fee_for_person_cached will calculate fresh and save
-			$result = $this->fees->get_fee_for_person_cached( (int) $person_id, $season );
+			$result = $this->fee_cache->get_fee_for_person_cached( (int) $person_id, $season );
 
 			if ( $result !== null ) {
 				++$calculated;

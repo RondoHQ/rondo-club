@@ -27,13 +27,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit( 1 );
 }
 
-if ( ! class_exists( '\Rondo\Fees\MembershipFees' ) ) {
-	fwrite( STDERR, "Rondo\\Fees\\MembershipFees not loaded.\n" );
+if ( ! class_exists( '\Rondo\Fees\FeeServices' ) ) {
+	fwrite( STDERR, "Rondo\\Fees\\FeeServices not loaded.\n" );
 	exit( 1 );
 }
 
-$fees   = new \Rondo\Fees\MembershipFees();
-$season = \Rondo\Fees\SeasonKey::current();
+$person_context = \Rondo\Fees\FeeServices::person_context();
+$fee_calculator = \Rondo\Fees\FeeServices::fee_calculator();
+$season         = \Rondo\Fees\SeasonKey::current();
 
 // Under wp eval-file there is no logged-in user, so the AccessControl
 // pre_get_posts hook would otherwise clamp this query down to post__in [0].
@@ -63,7 +64,7 @@ foreach ( $query->posts as $person_id ) {
 
 	// Former members: include only those who qualify for the current season.
 	$is_former = (bool) get_field( 'former_member', $person_id );
-	if ( $is_former && ! $fees->is_former_member_in_season( $person_id, $season ) ) {
+	if ( $is_former && ! $person_context->is_former_member_in_season( $person_id, $season ) ) {
 		continue;
 	}
 
@@ -74,7 +75,7 @@ foreach ( $query->posts as $person_id ) {
 		$registration_date = (string) $registration_date;
 	}
 
-	$full = $fees->fee_calculator()->calculate_full_fee( $person_id, $registration_date ?: null, $season );
+	$full = $fee_calculator->calculate_full_fee( $person_id, $registration_date ?: null, $season );
 
 	if ( $full === null ) {
 		// Unresolvable fee: record the fact so we notice if it changes.

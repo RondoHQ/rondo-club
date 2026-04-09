@@ -14,13 +14,12 @@
  * (bin/fee-snapshot.sh) is the regression net: pre- and post-phase
  * snapshots must diff empty.
  *
- * The calculator takes FeeCategoryResolver and FamilyGroupingService as
- * explicit constructor collaborators (per STRU-02). It also retains a
- * MembershipFees reference for helper methods that still live on the god
- * class (get_youth_category_slugs, get_fee, get_current_teams,
- * get_effective_werkfuncties, normalize_werkfuncties_for_fee_match,
- * get_family_discount_rate, get_entry_discount_config). Phase 217 will
- * move those settings/helper methods and the last dep disappears.
+ * The calculator takes FeeCategoryResolver, FamilyGroupingService,
+ * MembershipFeeSettings and PersonFeeContext as explicit constructor
+ * collaborators (per STRU-02). Phase 217 added the MembershipFeeSettings
+ * dependency for all fee-settings reads; Phase 218 replaced the last
+ * MembershipFees god-class reference with PersonFeeContext for the
+ * per-person data helpers, retiring the god class entirely.
  *
  * @package Rondo\Fees
  */
@@ -63,15 +62,16 @@ class FeeCalculator {
 	private MembershipFeeSettings $settings;
 
 	/**
-	 * MembershipFees reference for person-data helpers.
+	 * Person fee context collaborator (Phase 218).
 	 *
-	 * Provides get_current_teams, get_effective_werkfuncties, and
-	 * normalize_werkfuncties_for_fee_match. These person-data helpers
-	 * stay on MembershipFees until Phase 218 decides where they end up.
+	 * Provides get_current_teams, get_effective_werkfuncties and
+	 * normalize_werkfuncties_for_fee_match. Before Phase 218 these were
+	 * reached via a MembershipFees god-class reference; now they are on
+	 * an explicit typed service with zero dependencies.
 	 *
-	 * @var MembershipFees
+	 * @var PersonFeeContext
 	 */
-	private MembershipFees $fees;
+	private PersonFeeContext $person_context;
 
 	/**
 	 * Constructor.
@@ -79,18 +79,18 @@ class FeeCalculator {
 	 * @param FeeCategoryResolver   $category_resolver Category resolver collaborator (Phase 214).
 	 * @param FamilyGroupingService $family_grouping   Family grouping collaborator (Phase 215).
 	 * @param MembershipFeeSettings $settings          Settings repository (Phase 217).
-	 * @param MembershipFees        $fees              Person-data helper facade.
+	 * @param PersonFeeContext      $person_context    Person-data helper (Phase 218).
 	 */
 	public function __construct(
 		FeeCategoryResolver $category_resolver,
 		FamilyGroupingService $family_grouping,
 		MembershipFeeSettings $settings,
-		MembershipFees $fees
+		PersonFeeContext $person_context
 	) {
 		$this->category_resolver = $category_resolver;
 		$this->family_grouping   = $family_grouping;
 		$this->settings          = $settings;
-		$this->fees              = $fees;
+		$this->person_context    = $person_context;
 	}
 
 	/**
@@ -137,7 +137,7 @@ class FeeCalculator {
 		}
 
 		// Check team matching (config-driven, player roles only)
-		$teams = $this->fees->get_current_teams( $person_id );
+		$teams = $this->person_context->get_current_teams( $person_id );
 		if ( ! empty( $teams ) ) {
 			$team_matched_category = $this->category_resolver->get_category_by_team_match( $teams, $season );
 			if ( $team_matched_category !== null ) {
@@ -151,8 +151,8 @@ class FeeCalculator {
 		}
 
 		// Check werkfunctie matching (config-driven)
-		$werkfuncties = $this->fees->normalize_werkfuncties_for_fee_match(
-			$this->fees->get_effective_werkfuncties( $person_id )
+		$werkfuncties = $this->person_context->normalize_werkfuncties_for_fee_match(
+			$this->person_context->get_effective_werkfuncties( $person_id )
 		);
 		if ( ! empty( $werkfuncties ) ) {
 			$werkfunctie_matched_category = $this->category_resolver->get_category_by_werkfunctie_match( $werkfuncties, $season );

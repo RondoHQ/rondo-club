@@ -139,7 +139,6 @@ use Rondo\REST\Lettermint as RESTLettermint;
 use Rondo\REST\Capabilities as RESTCapabilities;
 use Rondo\REST\FinanceSettings as RESTFinanceSettings;
 use Rondo\VOG\VOGEmail;
-use Rondo\Fees\MembershipFees;
 use Rondo\Fees\FeeCacheInvalidator;
 use Rondo\Config\ClubConfig;
 use Rondo\Config\FinanceConfig;
