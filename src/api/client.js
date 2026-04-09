@@ -260,12 +260,6 @@ export const prmApi = {
   getMeetingNotes: (eventId) => api.get(`/rondo/v1/calendar/events/${eventId}/notes`),
   updateMeetingNotes: (eventId, notes) => api.put(`/rondo/v1/calendar/events/${eventId}/notes`, { notes }),
 
-  // Google Sheets OAuth
-  getSheetsStatus: () => api.get('/rondo/v1/google-sheets/status'),
-  getSheetsAuthUrl: () => api.get('/rondo/v1/google-sheets/auth'),
-  disconnectSheets: () => api.delete('/rondo/v1/google-sheets/disconnect'),
-  exportPeopleToSheets: (data) => api.post('/rondo/v1/google-sheets/export-people', data),
-
   // Custom Fields management (admin only)
   getCustomFields: (postType) => api.get(`/rondo/v1/custom-fields/${postType}`),
   createCustomField: (postType, data) => api.post(`/rondo/v1/custom-fields/${postType}`, data),
@@ -376,7 +370,6 @@ export const prmApi = {
   getFeeSummary: (params = {}) => api.get('/rondo/v1/fees/summary', { params }),
   getPersonFee: (personId, params = {}) => api.get(`/rondo/v1/fees/person/${personId}`, { params }),
   recalculateAllFees: (params = {}) => api.post('/rondo/v1/fees/recalculate', params),
-  exportFeesToSheets: (data) => api.post('/rondo/v1/google-sheets/export-fees', data),
 
   // Bulk invoice creation
   startBulkInvoiceJob: (data) => api.post('/rondo/v1/fees/bulk-create-invoices', data),
