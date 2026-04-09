@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: "(between milestones)"
-milestone_name: "(planning next)"
-status: ready_for_next_milestone
-stopped_at: v33.0 Fee Service Decomposition shipped and archived 2026-04-09
-last_updated: "2026-04-09T10:15:00.000Z"
-last_activity: 2026-04-09 — v33.0 archived, phase directories moved to milestones/v33.0-phases/, ready for v34.0 scoping
+milestone: v34.0
+milestone_name: Finance Service Decomposition
+status: defining_requirements
+stopped_at: v34.0 kickoff — PROJECT.md updated, requirements drafted, awaiting roadmap
+last_updated: "2026-04-09T13:30:00.000Z"
+last_activity: 2026-04-09 — v34.0 Finance Service Decomposition milestone kickoff, requirements being defined
 progress:
   total_phases: 0
   completed_phases: 0
@@ -18,20 +18,20 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-08)
+See: .planning/PROJECT.md (updated 2026-04-09)
 
 **Core value:** Club administrators can manage their members, teams, and club operations through a single integrated system
-**Current focus:** v33.0 Fee Service Decomposition SHIPPED (2026-04-09). MembershipFees god class deleted entirely. Fee system is now 7 focused classes + SeasonKey helper. Next: archive milestone, audit, and start v34.0 planning.
+**Current focus:** v34.0 Finance Service Decomposition — decompose the 1,308-line `FinanceConfig` god class (now the top god node post-v33.0) into focused services using the v33.0 hard-replacement pattern. Strategy Option C: delete FinanceConfig entirely, 18 callers rewired phase-by-phase, `FinanceServices` static locator as the ergonomic entry point.
 
 ## Current Position
 
-Milestone: v33.0 Fee Service Decomposition ✅ **SHIPPED** 2026-04-09
-Phase: 218 (Retire MembershipFees) — shipped 2026-04-09 — FINAL
+Milestone: v34.0 Finance Service Decomposition
+Phase: Not started (defining requirements)
 Plan: —
-Status: All 5 phases shipped direct-style. MembershipFees god class deleted entirely (Option A). Fee system is now 7 focused classes + SeasonKey helper (2,692 total lines vs 2,137 original god class). Every phase validated with fee snapshot diff; phases 217+218 additionally validated with wp option list diff. Zero regressions across 4,021 active members throughout the milestone.
-Last activity: 2026-04-09 — phase 218 (Retire MembershipFees) deletion, triple-clean diff validation, milestone complete
+Status: Defining requirements
+Last activity: 2026-04-09 — Milestone v34.0 started
 
-Progress: [██████████] 100% ✅
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
