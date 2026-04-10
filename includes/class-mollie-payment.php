@@ -10,8 +10,6 @@
 
 namespace Rondo\Finance;
 
-use Rondo\Config\FinanceConfig;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -59,9 +57,8 @@ class MolliePayment {
 		}
 
 		// 3. Guard: account API key configured
-		$config     = new FinanceConfig();
 		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
-		$api_key    = $config->get_mollie_api_key_for_account( $account_id );
+		$api_key    = FinanceServices::mollie()->get_mollie_api_key_for_account( $account_id );
 		if ( empty( $api_key ) ) {
 			return new \WP_Error(
 				'mollie_not_configured',
@@ -78,7 +75,7 @@ class MolliePayment {
 		$amount_string = number_format( (float) $total_amount, 2, '.', '' );
 
 		// 6. Determine redirect URL — configured URL or fallback to homepage.
-		$redirect_url = $config->get_mollie_redirect_url();
+		$redirect_url = FinanceServices::mollie()->get_mollie_redirect_url();
 		if ( empty( $redirect_url ) ) {
 			$redirect_url = home_url( '/' );
 		}

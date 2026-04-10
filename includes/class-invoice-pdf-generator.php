@@ -695,7 +695,7 @@ table.line-items .total-row td {
 			];
 		}
 
-		$default = $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
+		$default = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
 		if ( is_array( $default ) ) {
 			return $default;
 		}
