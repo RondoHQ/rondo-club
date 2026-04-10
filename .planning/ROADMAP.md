@@ -62,7 +62,7 @@ Plans:
   2. Every Mollie-touching caller is rewired through `FinanceServices::mollie()->X()` — verified by grepping the codebase: `MolliePayment`, `MollieWebhook`, `InstallmentPaymentService`, `PublicPaymentPage`, `RestInvoices`, and any other consumer show zero remaining references to `FinanceConfig` for Mollie-related calls
   3. `bin/finance-settings-snapshot.sh` pre/post diff is byte-for-byte clean across all 48 option keys + REST response, recorded in phase `SUMMARY.md`
   4. End-to-end Mollie test-mode webhook roundtrip verified: test-mode API key → test payment link created → test payment completed → webhook fires → invoice transitions to `rondo_paid` → reverse-lookup `_mollie_pid_{pl_xxx}` meta is found → status email sent. Evidence captured in phase `SUMMARY.md`.
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 - [ ] 220-01-PLAN.md — Scaffold MollieConfig class + FinanceServices locator + rewire FinanceConfig internals to delegate (Wave 1)
 - [ ] 220-02-PLAN.md — Rewire 7 Mollie consumer files to FinanceServices::mollie() and delete FinanceConfig Mollie forwarders (Wave 2)
@@ -122,7 +122,7 @@ Plans:
 | 217. MembershipFeeSettings | v33.0 | 2/2 | Complete | 2026-04-09 |
 | 218. Retire MembershipFees | v33.0 | 1/1 | Complete | 2026-04-09 |
 | 219. Finance Settings Snapshot Harness | 1/1 | Complete    | 2026-04-09 | — |
-| 220. Extract MollieConfig | 1/3 | In Progress|  | — |
+| 220. Extract MollieConfig | 2/3 | In Progress|  | — |
 | 221. Extract EmailTemplates | v34.0 | 0/0 | Not started | — |
 | 222. Extract MembershipPassConfig | v34.0 | 0/0 | Not started | — |
 | 223. Extract OrgInfo + PaymentTerms + RabobankConfig | v34.0 | 0/0 | Not started | — |

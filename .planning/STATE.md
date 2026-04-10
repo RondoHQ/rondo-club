@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v34.0
 milestone_name: Finance Service Decomposition
 status: Roadmap defined, awaiting plan-phase
-stopped_at: Completed 220-01-PLAN.md — Extract MollieConfig
-last_updated: "2026-04-10T06:21:16.504Z"
+stopped_at: Completed 220-02-PLAN.md — Rewire Mollie Consumers + Delete Forwarders
+last_updated: "2026-04-10T06:30:55.744Z"
 last_activity: 2026-04-09 — v34.0 roadmap created (6 phases, 219-224)
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -83,6 +83,8 @@ Decisions logged in PROJECT.md Key Decisions table.
 - [Phase 219-01]: Namespace is Rondo\Config\FinanceConfig (not Rondo\Finance\FinanceConfig as plan assumed)
 - [Phase 220]: Mollie extracted as pure motion refactor: FinanceConfig keeps one-line forwarders (deleted in Plan 02), callers rewired in Plan 02
 - [Phase 220]: normalize_accounts_for_storage and build_safe_accounts_from_storage made public on MollieConfig (dropped _mollie_ infix)
+- [Phase 220-extract-mollieconfig]: resolve_payment_account_for_payload in RestInvoices: dropped FinanceConfig parameter from signature — clean approach
+- [Phase 220-extract-mollieconfig]: Mollie option constants kept in FinanceConfig — still referenced internally by update_settings(), deletion deferred to Phase 224
 
 ### Pending Todos
 
@@ -103,11 +105,12 @@ Decisions logged in PROJECT.md Key Decisions table.
 | 128 | Remove orphaned Google Sheets subsystem | 2026-04-08 | 68c63652 | [128-remove-orphaned-google-sheets-subsystem](./quick/128-remove-orphaned-google-sheets-subsystem/) |
 | Phase 219-finance-settings-snapshot-harness P01 | 30 | 3 tasks | 3 files |
 | Phase 220 P01 | 1210 | 3 tasks | 5 files |
+| Phase 220-extract-mollieconfig P02 | 25 | 3 tasks | 8 files |
 
 ## Session Continuity
 
-Last session: 2026-04-10T06:21:16.502Z
-Stopped at: Completed 220-01-PLAN.md — Extract MollieConfig
+Last session: 2026-04-10T06:30:55.742Z
+Stopped at: Completed 220-02-PLAN.md — Rewire Mollie Consumers + Delete Forwarders
 
 **Next action:** `/gsd:plan-phase 219` to decompose Phase 219 (Finance Settings Snapshot Harness) into plans. Harness must exist and produce a clean baseline snapshot before any extraction work in Phase 220+ can begin.
 
