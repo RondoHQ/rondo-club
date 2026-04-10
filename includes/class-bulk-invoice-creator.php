@@ -10,7 +10,6 @@
 
 namespace Rondo\Finance;
 
-use Rondo\Config\FinanceConfig;
 use Rondo\Fees\FeeServices;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -293,8 +292,7 @@ class BulkInvoiceCreator {
 
 		update_field( 'line_items', $line_items, $post_id );
 
-		$finance_config  = new FinanceConfig();
-		$payment_account = $finance_config->get_payment_account_snapshot_for_invoice_type( 'membership' );
+		$payment_account = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( 'membership' );
 		if ( is_wp_error( $payment_account ) ) {
 			error_log( 'Membership invoice account resolution failed for person ' . $person_id . ': ' . $payment_account->get_error_message() );
 			wp_delete_post( $post_id, true );

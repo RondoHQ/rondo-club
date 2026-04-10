@@ -190,8 +190,8 @@ class FinanceConfig {
 	 * @return string The IBAN (empty string if not configured)
 	 */
 	public function get_iban(): string {
-		$default_account = $this->get_active_payment_provider() === 'mollie'
-			? $this->get_default_mollie_account( 'manual' )
+		$default_account = FinanceServices::mollie()->get_active_payment_provider() === 'mollie'
+			? FinanceServices::mollie()->get_default_mollie_account( 'manual' )
 			: null;
 
 		if ( is_array( $default_account ) && ! empty( $default_account['iban'] ) ) {
@@ -199,75 +199,6 @@ class FinanceConfig {
 		}
 
 		return get_option( self::OPTION_IBAN, self::DEFAULTS['iban'] );
-	}
-
-	/**
-	 * Get configured Mollie accounts without exposing API keys.
-	 *
-	 * @return array<int, array<string, string>>
-	 */
-	public function get_mollie_accounts(): array {
-		return FinanceServices::mollie()->get_mollie_accounts();
-	}
-
-	/**
-	 * Get a configured Mollie account by ID without exposing its API key.
-	 *
-	 * @param string $account_id Mollie account ID.
-	 * @return array<string, string>|null
-	 */
-	public function get_mollie_account_by_id( string $account_id ): ?array {
-		return FinanceServices::mollie()->get_mollie_account_by_id( $account_id );
-	}
-
-	/**
-	 * Get the decrypted Mollie API key for an account.
-	 *
-	 * @param string $account_id Mollie account ID.
-	 * @return string
-	 */
-	public function get_mollie_api_key_for_account( string $account_id ): string {
-		return FinanceServices::mollie()->get_mollie_api_key_for_account( $account_id );
-	}
-
-	/**
-	 * Get Mollie accounts that have an API key configured.
-	 *
-	 * @return array<int, array<string, string>>
-	 */
-	public function get_usable_mollie_accounts(): array {
-		return FinanceServices::mollie()->get_usable_mollie_accounts();
-	}
-
-	/**
-	 * Get the configured default Mollie account ID for an invoice type.
-	 *
-	 * @param string $invoice_type Invoice type slug.
-	 * @return string
-	 */
-	public function get_default_mollie_account_id( string $invoice_type ): string {
-		return FinanceServices::mollie()->get_default_mollie_account_id( $invoice_type );
-	}
-
-	/**
-	 * Get the default Mollie account for an invoice type.
-	 *
-	 * @param string $invoice_type Invoice type slug.
-	 * @return array<string, string>|null
-	 */
-	public function get_default_mollie_account( string $invoice_type ): ?array {
-		return FinanceServices::mollie()->get_default_mollie_account( $invoice_type );
-	}
-
-	/**
-	 * Build a payment-account snapshot for the given invoice type.
-	 *
-	 * @param string $invoice_type Invoice type slug.
-	 * @param string $requested_account_id Optional override account ID for manual invoices.
-	 * @return array<string, string>|\WP_Error
-	 */
-	public function get_payment_account_snapshot_for_invoice_type( string $invoice_type, string $requested_account_id = '' ) {
-		return FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
 	}
 
 	/**
@@ -608,7 +539,7 @@ class FinanceConfig {
 			case 'iban':
 				return $this->get_iban();
 			case 'mollie_accounts':
-				return $this->get_mollie_accounts();
+				return FinanceServices::mollie()->get_mollie_accounts();
 			case 'payment_term_days':
 				return $this->get_payment_term_days();
 			case 'payment_clause':
@@ -1026,33 +957,5 @@ class FinanceConfig {
 
 		$encrypted = CredentialEncryption::encrypt( $credentials );
 		return update_option( self::OPTION_RABOBANK_CREDENTIALS, $encrypted );
-	}
-
-	/**
-	 * Get Mollie redirect URL (where payer lands after payment)
-	 *
-	 * @return string The redirect URL, or empty string if not configured.
-	 */
-	public function get_mollie_redirect_url(): string {
-		return FinanceServices::mollie()->get_mollie_redirect_url();
-	}
-
-	/**
-	 * Get active payment provider
-	 *
-	 * @return string Active payment provider slug ('rabobank' or 'mollie'). Defaults to 'rabobank'.
-	 */
-	public function get_active_payment_provider(): string {
-		return FinanceServices::mollie()->get_active_payment_provider();
-	}
-
-	/**
-	 * Update active payment provider
-	 *
-	 * @param string $provider Payment provider slug ('rabobank' or 'mollie')
-	 * @return bool True on success, false for invalid provider
-	 */
-	public function update_active_payment_provider( string $provider ): bool {
-		return FinanceServices::mollie()->update_active_payment_provider( $provider );
 	}
 }

@@ -15,6 +15,7 @@ use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\RabobankOAuth;
 use Rondo\Finance\RabobankPayment;
 use Rondo\Finance\MolliePayment;
+use Rondo\Finance\FinanceServices;
 use Rondo\Config\FinanceConfig;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -1353,7 +1354,7 @@ class Invoices extends Base {
 			}
 		} else {
 			// Discipline/other invoices: create direct Mollie/Rabobank payment link + QR.
-			$active_provider = $finance_config->get_active_payment_provider();
+			$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 
 			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
@@ -1557,7 +1558,7 @@ class Invoices extends Base {
 		// Ensure payment link and QR code exist before resending
 		$existing_payment_link = get_field( 'payment_link', $invoice_id );
 		if ( empty( $existing_payment_link ) ) {
-			$active_provider = $config->get_active_payment_provider();
+			$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 			if ( $active_provider === 'mollie' ) {
 				$mollie_payment = new MolliePayment();
 				$payment_result = $mollie_payment->create_payment_link( $invoice_id );
@@ -1643,8 +1644,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$finance_config  = new FinanceConfig();
-		$active_provider = $finance_config->get_active_payment_provider();
+		$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 
 		if ( $active_provider === 'mollie' ) {
 			// Clear Mollie payment link ID to bypass idempotency and force a new payment link
@@ -1925,12 +1925,13 @@ class Invoices extends Base {
 		$provider = $settings['active_payment_provider'] ?? '';
 
 		if ( $provider === 'mollie' ) {
+			$mollie     = FinanceServices::mollie();
 			$account_id = $invoice_id > 0
 				? (string) get_post_meta( $invoice_id, '_payment_account_id', true )
-				: $config->get_default_mollie_account_id( 'manual' );
+				: $mollie->get_default_mollie_account_id( 'manual' );
 
 			if ( $account_id === '' ) {
-				$default_account = $config->get_default_mollie_account( 'manual' );
+				$default_account = $mollie->get_default_mollie_account( 'manual' );
 				$account_id      = is_array( $default_account ) ? (string) ( $default_account['id'] ?? '' ) : '';
 			}
 
@@ -1938,7 +1939,7 @@ class Invoices extends Base {
 				return false;
 			}
 
-			$account = $config->get_mollie_account_by_id( $account_id );
+			$account = $mollie->get_mollie_account_by_id( $account_id );
 			return is_array( $account ) && ( $account['environment'] ?? '' ) === 'test';
 		}
 
@@ -2345,7 +2346,7 @@ class Invoices extends Base {
 			$invoice_type = $fallback_invoice_type;
 		}
 
-		$selected_payment_account = $this->resolve_payment_account_for_payload( $finance_config, $invoice_type, $payment_account_id );
+		$selected_payment_account = $this->resolve_payment_account_for_payload( $invoice_type, $payment_account_id );
 		if ( is_wp_error( $selected_payment_account ) ) {
 			return $selected_payment_account;
 		}
@@ -2417,15 +2418,14 @@ class Invoices extends Base {
 	/**
 	 * Resolve a payment-account snapshot from request payload and invoice type.
 	 *
-	 * @param FinanceConfig $finance_config Finance config service.
-	 * @param string        $invoice_type Invoice type slug.
-	 * @param string        $payment_account_id Requested account ID.
+	 * @param string $invoice_type Invoice type slug.
+	 * @param string $payment_account_id Requested account ID.
 	 * @return array<string, string>|\WP_Error
 	 */
-	private function resolve_payment_account_for_payload( FinanceConfig $finance_config, string $invoice_type, string $payment_account_id ) {
+	private function resolve_payment_account_for_payload( string $invoice_type, string $payment_account_id ) {
 		$requested_account_id = $invoice_type === 'manual' ? $payment_account_id : '';
 
-		return $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
+		return FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( $invoice_type, $requested_account_id );
 	}
 
 	/**
@@ -2452,18 +2452,18 @@ class Invoices extends Base {
 			];
 		}
 
-		$finance_config = new FinanceConfig();
-		$default        = $finance_config->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
+		$default = FinanceServices::mollie()->get_payment_account_snapshot_for_invoice_type( $invoice_type ?: 'manual' );
 
 		if ( is_array( $default ) ) {
 			return $default;
 		}
 
+		$fc = new FinanceConfig();
 		return [
 			'id'              => '',
 			'internal_name'   => '',
-			'account_holder'  => $finance_config->get_org_name(),
-			'iban'            => $finance_config->get_iban(),
+			'account_holder'  => $fc->get_org_name(),
+			'iban'            => $fc->get_iban(),
 			'linked_provider' => '',
 		];
 	}
