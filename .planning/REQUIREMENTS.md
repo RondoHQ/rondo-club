@@ -14,7 +14,7 @@ Every requirement below is validated by: (a) a clean `bin/finance-settings-snaps
 
 ### Mollie Configuration Service
 
-- [ ] **FIN-02**: `Rondo\Finance\MollieConfig` class owns the complete Mollie configuration surface: `get_mollie_accounts()`, `get_mollie_account_by_id()`, `get_mollie_api_key_for_account()`, `get_usable_mollie_accounts()`, `get_default_mollie_account_id( $invoice_type )`, `get_default_mollie_account()`, `get_payment_account_snapshot_for_invoice_type()`, `get_mollie_redirect_url()`, `get_active_payment_provider()`, `update_active_payment_provider()`, plus the private helpers (`normalize_mollie_accounts_for_storage`, `build_safe_mollie_accounts_from_storage`, `decrypt_mollie_account_api_key`, `derive_mollie_environment`, `get_mollie_account_record_by_id`). Zero Mollie code remains in `FinanceConfig` after this requirement is satisfied.
+- [x] **FIN-02**: `Rondo\Finance\MollieConfig` class owns the complete Mollie configuration surface: `get_mollie_accounts()`, `get_mollie_account_by_id()`, `get_mollie_api_key_for_account()`, `get_usable_mollie_accounts()`, `get_default_mollie_account_id( $invoice_type )`, `get_default_mollie_account()`, `get_payment_account_snapshot_for_invoice_type()`, `get_mollie_redirect_url()`, `get_active_payment_provider()`, `update_active_payment_provider()`, plus the private helpers (`normalize_mollie_accounts_for_storage`, `build_safe_mollie_accounts_from_storage`, `decrypt_mollie_account_api_key`, `derive_mollie_environment`, `get_mollie_account_record_by_id`). Zero Mollie code remains in `FinanceConfig` after this requirement is satisfied.
 
 - [ ] **FIN-03**: Mollie webhook integration verified end-to-end with a real test-mode roundtrip (test-mode API key, test payment link, test webhook fires, invoice transitions to `rondo_paid`, reverse-lookup `_mollie_pid_{pl_xxx}` meta found, status email sent) **before** the Mollie phase merges to main. Mollie is the scariest subsystem in the refactor because of encrypted API key plumbing and webhook routing — snapshot diff alone is not sufficient evidence.
 
@@ -81,7 +81,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FIN-01 | Phase 219 | Complete |
-| FIN-02 | Phase 220 | Pending |
+| FIN-02 | Phase 220 | Complete |
 | FIN-03 | Phase 220 | Pending |
 | FIN-04 | Phase 221 | Pending |
 | FIN-05 | Phase 222 | Pending |
