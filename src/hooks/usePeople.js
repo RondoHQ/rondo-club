@@ -115,9 +115,8 @@ export function usePeople(params = {}, options = {}) {
  * @param {Object} options - TanStack Query options (staleTime, enabled, etc.)
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
-export function useFilteredPeople(filters = {}, options = {}) {
-  // Normalize filter keys for backend (snake_case)
-  const params = {
+export function buildFilteredPeopleParams(filters = {}) {
+  return {
     page: filters.page || 1,
     per_page: filters.perPage || 100,
     ownership: filters.ownership || 'all',
@@ -127,7 +126,6 @@ export function useFilteredPeople(filters = {}, options = {}) {
     birth_month: filters.birthMonth || null,
     orderby: filters.orderby || 'first_name',
     order: filters.order || 'asc',
-    // Custom field filters
     huidig_vrijwilliger: filters.huidigeVrijwilliger || null,
     financiele_blokkade: filters.financieleBlokkade || null,
     type_lid: filters.typeLid || null,
@@ -144,6 +142,10 @@ export function useFilteredPeople(filters = {}, options = {}) {
     lid_tot_future: filters.lidTotFuture || null,
     spelactiviteit_no_team: filters.spelactiviteitNoTeam || null,
   };
+}
+
+export function useFilteredPeople(filters = {}, options = {}) {
+  const params = buildFilteredPeopleParams(filters);
 
   return useQuery({
     // Include all filter params in query key for proper cache separation
@@ -160,6 +162,24 @@ export function useFilteredPeople(filters = {}, options = {}) {
     // Allow staleTime, enabled, etc. to be passed
     ...options,
   });
+}
+
+// Fetch every matching person across all pages. Backend caps per_page at 100,
+// so we walk pages sequentially. Page 1 tells us total_pages; the rest fan out.
+export async function fetchAllFilteredPeople(filters = {}) {
+  const firstParams = { ...buildFilteredPeopleParams(filters), page: 1, per_page: 100 };
+  const first = (await prmApi.getFilteredPeople(firstParams)).data;
+  const totalPages = first.total_pages || 1;
+  if (totalPages <= 1) return first.people || [];
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => i + 2).map(async (page) => {
+      const response = await prmApi.getFilteredPeople({ ...firstParams, page });
+      return response.data.people || [];
+    })
+  );
+
+  return [...(first.people || []), ...rest.flat()];
 }
 
 /**
