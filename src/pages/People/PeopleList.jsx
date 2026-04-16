@@ -1,8 +1,8 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info } from 'lucide-react';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info, Loader2 } from 'lucide-react';
 import { DataTableToolbar, createColumn, FILTER_TYPES } from '@/components/DataTable';
-import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople } from '@/hooks/usePeople';
+import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople, fetchAllFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
@@ -645,6 +645,7 @@ export default function PeopleList() {
   const [showBulkOrganizationModal, setShowBulkOrganizationModal] = useState(false);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -1057,20 +1058,61 @@ export default function PeopleList() {
     }
   }, [sortField, sortOrder, updateSearchParams]);
 
-  // Handle CSV export
-  const handleExportCsv = () => {
-    const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team'];
-    const rows = people.map(person => [
-      [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
-      person.first_name || '',
-      person.infix || '',
-      person.last_name || '',
-      getFirstEmail(person) || '',
-      getFirstPhone(person) || '',
-      personTeamMap[person.id] || '',
-    ]);
-    const csv = buildCsv([headers, ...rows]);
-    downloadCsv(csv, `leden-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  // Handle CSV export — fetches every matching person across all pages
+  // (list view is capped at 100 per page; export must include the full set).
+  const handleExportCsv = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const allPeople = await fetchAllFilteredPeople({
+        perPage: 100,
+        ownership: 'all',
+        modifiedDays: lastModifiedFilter ? parseInt(lastModifiedFilter, 10) : null,
+        birthYearFrom: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+        birthYearTo: selectedBirthYear ? parseInt(selectedBirthYear, 10) : null,
+        birthMonth: selectedBirthMonth ? parseInt(selectedBirthMonth, 10) : null,
+        orderby: resolvedOrderBy,
+        order: sortOrder,
+        huidigeVrijwilliger,
+        financieleBlokkade,
+        typeLid,
+        leeftijdsgroep,
+        fotoMissing,
+        vogMissing,
+        vogOlderThanYears,
+        includeFormer: includeFormer || null,
+        lidTotFuture: lidTotFuture || null,
+        spelactiviteitNoTeam: spelactiviteitNoTeam || null,
+      });
+
+      const allTeamIds = [...new Set(allPeople.map(getCurrentTeamId).filter(Boolean))];
+      const exportTeamMap = {};
+      for (let i = 0; i < allTeamIds.length; i += 100) {
+        const chunk = allTeamIds.slice(i, i + 100);
+        const response = await wpApi.getTeams({ per_page: 100, include: chunk.join(',') });
+        (response.data || []).forEach(team => {
+          exportTeamMap[team.id] = getTeamName(team);
+        });
+      }
+
+      const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team'];
+      const rows = allPeople.map(person => {
+        const teamId = getCurrentTeamId(person);
+        return [
+          [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
+          person.first_name || '',
+          person.infix || '',
+          person.last_name || '',
+          getFirstEmail(person) || '',
+          getFirstPhone(person) || '',
+          (teamId && exportTeamMap[teamId]) || '',
+        ];
+      });
+      const csv = buildCsv([headers, ...rows]);
+      downloadCsv(csv, `leden-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -1089,10 +1131,12 @@ export default function PeopleList() {
             <button
               onClick={handleExportCsv}
               className="btn-tertiary"
-              title="Downloaden als CSV"
-              disabled={!people.length}
+              title={isExporting ? 'Bezig met exporteren…' : 'Downloaden als CSV'}
+              disabled={isExporting || totalPeople === 0}
             >
-              <Download className="w-4 h-4" />
+              {isExporting
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Download className="w-4 h-4" />}
             </button>
           }
         />
