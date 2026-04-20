@@ -54,6 +54,26 @@ class UserSettings extends Base {
 			'label' => 'Laatst gewijzigd',
 			'type'  => 'core',
 		],
+		[
+			'id'    => 'address',
+			'label' => 'Adres',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'postal_code',
+			'label' => 'Postcode',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'city',
+			'label' => 'Plaats',
+			'type'  => 'core',
+		],
+		[
+			'id'    => 'country',
+			'label' => 'Land',
+			'type'  => 'core',
+		],
 	];
 
 	/**
