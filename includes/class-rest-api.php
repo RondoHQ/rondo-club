@@ -380,6 +380,26 @@ class Api extends Base {
 			]
 		);
 
+		// Sportlink individual sync (admin and toegangscontrole users)
+		register_rest_route(
+			'rondo/v1',
+			'/sportlink/sync-individual',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'sync_individual_from_sportlink' ],
+				'permission_callback' => [ $this, 'check_admin_or_toegangscontrole_permission' ],
+				'args'                => [
+					'knvb_id' => [
+						'required'          => true,
+						'type'              => 'string',
+						'validate_callback' => function ( $param ) {
+							return is_string( $param ) && ! empty( $param );
+						},
+					],
+				],
+			]
+		);
+
 		// Capability sync for a single person (admin only — on-demand from AccountCard)
 		register_rest_route(
 			'rondo/v1',
@@ -1680,6 +1700,41 @@ class Api extends Base {
 		}
 
 		return rest_ensure_response( $body );
+	}
+
+	/**
+	 * Find people where email_1 or email_2 matches a query fragment.
+	 *
+	 * @param string $query Email search fragment.
+	 * @param int    $limit Max number of results.
+	 * @return array<int, \WP_Post>
+	 */
+	private function find_people_by_contact_email_fragment( string $query, int $limit = 20 ): array {
+		$query_lower = strtolower( trim( $query ) );
+		if ( $query_lower === '' ) {
+			return [];
+		}
+
+		return get_posts(
+			[
+				'post_type'      => 'person',
+				'post_status'    => 'publish',
+				'posts_per_page' => $limit,
+				'meta_query'     => [
+					'relation' => 'OR',
+					[
+						'key'     => 'email_1',
+						'value'   => $query_lower,
+						'compare' => 'LIKE',
+					],
+					[
+						'key'     => 'email_2',
+						'value'   => $query_lower,
+						'compare' => 'LIKE',
+					],
+				],
+			]
+		);
 	}
 
 	/**

@@ -27,6 +27,19 @@ function getFirstPhone(person) {
   return person.acf?.mobile_1 || person.acf?.telephone_1 || person.acf?.mobile_2 || person.acf?.telephone_2 || null;
 }
 
+// Primary address is the first row of the ACF `addresses` repeater.
+function getPrimaryAddress(person) {
+  const addresses = person.acf?.addresses;
+  return Array.isArray(addresses) && addresses.length > 0 ? addresses[0] : null;
+}
+
+function formatStreetLine(address) {
+  if (!address) return '';
+  const street = address.street_name || '';
+  const number = [address.house_number, address.house_number_addition].filter(Boolean).join('');
+  return [street, number].filter(Boolean).join(' ').trim();
+}
+
 function formatBirthdateDisplay(birthdate) {
   if (!birthdate) return '-';
   const parsed = parseYmd(birthdate);
@@ -79,7 +92,7 @@ const COLUMN_SORT_FIELDS = {
   'freescout-id': 'custom_freescout-id',
 };
 
-const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone']);
+const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone', 'address', 'postal_code', 'city', 'country']);
 const SORTABLE_CUSTOM_TYPES = new Set(['text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false']);
 
 function getColumnSortField(colId, column) {
@@ -238,6 +251,24 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
                   {formatPhoneForDisplay(phone)}
                 </a>
               ) : '-'}
+            </td>
+          );
+        }
+
+        if (colId === 'address' || colId === 'postal_code' || colId === 'city' || colId === 'country') {
+          const address = getPrimaryAddress(person);
+          let value = '';
+          if (address) {
+            if (colId === 'address') value = formatStreetLine(address);
+            else value = address[colId] || '';
+          }
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {value || '-'}
             </td>
           );
         }
@@ -1095,9 +1126,10 @@ export default function PeopleList() {
         });
       }
 
-      const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team'];
+      const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
       const rows = allPeople.map(person => {
         const teamId = getCurrentTeamId(person);
+        const address = getPrimaryAddress(person);
         return [
           [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
           person.first_name || '',
@@ -1106,6 +1138,10 @@ export default function PeopleList() {
           getFirstEmail(person) || '',
           getFirstPhone(person) || '',
           (teamId && exportTeamMap[teamId]) || '',
+          formatStreetLine(address),
+          address?.postal_code || '',
+          address?.city || '',
+          address?.country || '',
         ];
       });
       const csv = buildCsv([headers, ...rows]);
