@@ -389,6 +389,6 @@ export const prmApi = {
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',
     { knvb_id: knvbId },
-    { timeout: 60000 }
+    { timeout: 180000 }
   ),
 };
