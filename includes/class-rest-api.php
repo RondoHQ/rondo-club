@@ -1647,7 +1647,7 @@ class Api extends Base {
 					'X-Sync-API-Key' => RONDO_SYNC_API_KEY,
 				],
 				'body'    => wp_json_encode( [ 'knvb_id' => $knvb_id ] ),
-				'timeout' => 60,
+				'timeout' => 180,
 			]
 		);
 
