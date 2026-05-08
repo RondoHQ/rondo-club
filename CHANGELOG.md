@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Birthday entries in the daily digest email and the dashboard reminder widget now display the person's birth year (instead of the current year) and append the age they're turning, e.g. `15 mei 1990 (wordt 36)`.
 - Credit invoice emails now use the dedicated credit template body and subject instead of the regular payment-request template. `InvoiceEmailSender::send()` now detects `_invoice_kind === 'credit'` before template selection and pulls `FinanceConfig::get_credit_email_template()` and `get_credit_email_subject()`. Previously only the heading was swapped, so credit invoices still went out with "pay this amount" body copy + QR code + betaallink placeholders.
 
 ### Added

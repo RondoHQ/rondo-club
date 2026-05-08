@@ -213,10 +213,21 @@ class EmailChannel extends Channel {
 		$html = '';
 
 		foreach ( $dates as $date ) {
-			$date_formatted = date_i18n(
-				$date_format,
-				strtotime( $date['next_occurrence'] )
-			);
+			$next_occurrence_ts = strtotime( $date['next_occurrence'] );
+			$date_value_ts      = ! empty( $date['date_value'] ) ? strtotime( $date['date_value'] ) : false;
+			$display_ts         = $next_occurrence_ts;
+			$age_suffix         = '';
+
+			if ( $date_value_ts && ! empty( $date['is_recurring'] ) && empty( $date['year_unknown'] ) ) {
+				$birth_year = (int) gmdate( 'Y', $date_value_ts );
+				$occ_year   = (int) gmdate( 'Y', $next_occurrence_ts );
+				if ( $birth_year > 0 && $birth_year < $occ_year ) {
+					$display_ts = $date_value_ts;
+					$age_suffix = sprintf( ' (wordt %d)', $occ_year - $birth_year );
+				}
+			}
+
+			$date_formatted = date_i18n( $date_format, $display_ts ) . $age_suffix;
 
 			$person_in_title = $this->find_person_in_title( $date['title'], $date['related_people'] );
 			if ( $person_in_title ) {

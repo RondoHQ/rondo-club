@@ -89,6 +89,12 @@ function ReminderCard({ reminder }) {
   const firstPersonId = reminder.related_people?.[0]?.id;
   const hasRelatedPeople = reminder.related_people?.length > 0;
 
+  const occYear = parseInt(reminder.next_occurrence?.substring(0, 4), 10);
+  const birthYear = reminder.date_value ? parseInt(reminder.date_value.substring(0, 4), 10) : null;
+  const isBirthday = reminder.is_recurring && !reminder.year_unknown && birthYear && birthYear < occYear;
+  const displayDate = isBirthday ? reminder.date_value : reminder.next_occurrence;
+  const ageSuffix = isBirthday ? ` (wordt ${occYear - birthYear})` : '';
+
   const cardContent = (
     <>
       <div className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
@@ -97,7 +103,7 @@ function ReminderCard({ reminder }) {
       <div className="ml-3 flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-900 dark:text-gray-50">{reminder.title}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {format(new Date(reminder.next_occurrence), 'd MMMM yyyy')}
+          {format(new Date(displayDate), 'd MMMM yyyy')}{ageSuffix}
         </p>
       </div>
       {hasRelatedPeople && (
