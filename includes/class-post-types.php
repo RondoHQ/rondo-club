@@ -179,6 +179,29 @@ class PostTypes {
 		];
 
 		register_post_type( 'team', $args );
+
+		// Volunteer-policy kickoff tracking (#13): per-team status of Guido's
+		// vrijwilligersbeleid-gesprek aan het begin van het seizoen.
+		register_post_meta(
+			'team',
+			'kickoff_done_at',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_text_field',
+			]
+		);
+		register_post_meta(
+			'team',
+			'kickoff_notes',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'sanitize_callback' => 'sanitize_textarea_field',
+			]
+		);
 	}
 
 	/**

@@ -1,0 +1,44 @@
+{
+    "key": "group_team_kickoff_fields",
+    "title": "Vrijwilligersbeleid kickoff",
+    "fields": [
+        {
+            "key": "field_team_kickoff_done_at",
+            "label": "Kickoff afgerond op",
+            "name": "kickoff_done_at",
+            "type": "date_picker",
+            "instructions": "Datum waarop Guido (of bestuur) het vrijwilligersbeleid heeft besproken met dit team.",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_team_kickoff_notes",
+            "label": "Notities kickoff",
+            "name": "kickoff_notes",
+            "type": "textarea",
+            "instructions": "Opmerkingen uit het gesprek (acties, openstaande vragen).",
+            "rows": 3,
+            "new_lines": ""
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "team"
+            }
+        ]
+    ],
+    "menu_order": 10,
+    "position": "side",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}
