@@ -3287,10 +3287,115 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
   );
 }
 
-// Welkomstmail Tab Component - Welcome email template configuration
+// Welkomstmail Tab Component — three templates, selected via sub-tabs:
+// 1) Account aanmaken (existing) — sent on user provisioning
+// 2) Nieuw lid (onboarding) — sent from the Onboarding screen, leden tab
+// 3) Nieuwe vrijwilliger (onboarding) — sent from the Onboarding screen, vrijwilligers tab
 function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handleSave }) {
-  const inputClass = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan';
+  const [activeSubTab, setActiveSubTab] = useState('account');
 
+  const [lidSettings, setLidSettings] = useState(null);
+  const [lidLoading, setLidLoading] = useState(false);
+  const [lidSaving, setLidSaving] = useState(false);
+  const [lidSaved, setLidSaved] = useState(false);
+
+  const [vrijwilligerSettings, setVrijwilligerSettings] = useState(null);
+  const [vrijwilligerLoading, setVrijwilligerLoading] = useState(false);
+  const [vrijwilligerSaving, setVrijwilligerSaving] = useState(false);
+  const [vrijwilligerSaved, setVrijwilligerSaved] = useState(false);
+
+  useEffect(() => {
+    if (activeSubTab === 'lid' && !lidSettings && !lidLoading) {
+      setLidLoading(true);
+      prmApi.getOnboardingEmailSettings('lid')
+        .then((res) => setLidSettings(res.data))
+        .catch(() => {})
+        .finally(() => setLidLoading(false));
+    }
+  }, [activeSubTab, lidSettings, lidLoading]);
+
+  useEffect(() => {
+    if (activeSubTab === 'vrijwilliger' && !vrijwilligerSettings && !vrijwilligerLoading) {
+      setVrijwilligerLoading(true);
+      prmApi.getOnboardingEmailSettings('vrijwilliger')
+        .then((res) => setVrijwilligerSettings(res.data))
+        .catch(() => {})
+        .finally(() => setVrijwilligerLoading(false));
+    }
+  }, [activeSubTab, vrijwilligerSettings, vrijwilligerLoading]);
+
+  const handleOnboardingSave = async (type, value, setValue, setSavingState, setSavedState) => {
+    setSavingState(true);
+    setSavedState(false);
+    try {
+      const res = await prmApi.updateOnboardingEmailSettings(type, value);
+      setValue(res.data);
+      setSavedState(true);
+      setTimeout(() => setSavedState(false), 2000);
+    } catch {
+      // Silent — backend errors surface in browser console
+    } finally {
+      setSavingState(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Welkomstmail</h3>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Beheer de drie welkomstmail-sjablonen: één voor accountaanmaak en twee voor onboarding van nieuwe leden en vrijwilligers.
+        </p>
+      </div>
+
+      <div className="flex items-end gap-6 border-b border-gray-200 dark:border-gray-700">
+        <TabButton label="Account aanmaken" isActive={activeSubTab === 'account'} onClick={() => setActiveSubTab('account')} />
+        <TabButton label="Nieuw lid" isActive={activeSubTab === 'lid'} onClick={() => setActiveSubTab('lid')} />
+        <TabButton label="Nieuwe vrijwilliger" isActive={activeSubTab === 'vrijwilliger'} onClick={() => setActiveSubTab('vrijwilliger')} />
+      </div>
+
+      {activeSubTab === 'account' && (
+        <AccountWelkomstmailForm
+          settings={settings}
+          setSettings={setSettings}
+          loading={loading}
+          saving={saving}
+          saved={saved}
+          handleSave={handleSave}
+        />
+      )}
+
+      {activeSubTab === 'lid' && (
+        <OnboardingWelkomstmailForm
+          description="Verstuurd vanaf de Onboarding-pagina aan leden die in de afgelopen 30 dagen lid zijn geworden."
+          settings={lidSettings}
+          setSettings={setLidSettings}
+          loading={lidLoading}
+          saving={lidSaving}
+          saved={lidSaved}
+          onSave={() => handleOnboardingSave('lid', lidSettings, setLidSettings, setLidSaving, setLidSaved)}
+        />
+      )}
+
+      {activeSubTab === 'vrijwilliger' && (
+        <OnboardingWelkomstmailForm
+          description="Verstuurd vanaf de Onboarding-pagina aan vrijwilligers die in de afgelopen 60 dagen actief zijn geworden."
+          settings={vrijwilligerSettings}
+          setSettings={setVrijwilligerSettings}
+          loading={vrijwilligerLoading}
+          saving={vrijwilligerSaving}
+          saved={vrijwilligerSaved}
+          onSave={() => handleOnboardingSave('vrijwilliger', vrijwilligerSettings, setVrijwilligerSettings, setVrijwilligerSaving, setVrijwilligerSaved)}
+        />
+      )}
+    </div>
+  );
+}
+
+const TEMPLATE_INPUT_CLASS = 'w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-electric-cyan';
+
+// Sub-form: existing account-provisioning email (includes from_email/from_name).
+function AccountWelkomstmailForm({ settings, setSettings, loading, saving, saved, handleSave }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -3300,97 +3405,128 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Verstuurd zodra een nieuwe gebruiker een account krijgt.
+      </p>
+
       <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Welkomstmail</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Stel het sjabloon in voor de welkomstmail die verstuurd wordt als een account wordt aangemaakt.
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Van e-mailadres</label>
+        <input
+          type="text"
+          value={settings?.from_email || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, from_email: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="noreply@example.com"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Van naam</label>
+        <input
+          type="text"
+          value={settings?.from_name || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, from_name: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="Rondo Club"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp</label>
+        <input
+          type="text"
+          value={settings?.subject || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, subject: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="Welkom bij {club_naam}"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht</label>
+        <RichTextEditor
+          value={settings?.body || ''}
+          onChange={(html) => setSettings((prev) => ({ ...prev, body: html }))}
+          placeholder="Hallo {first_name},..."
+          minHeight="200px"
+        />
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{login}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{set_password_url}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
         </p>
       </div>
 
-      <div className="space-y-5">
-        {/* From email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Van e-mailadres
-          </label>
-          <input
-            type="text"
-            value={settings?.from_email || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, from_email: e.target.value }))}
-            className={inputClass}
-            placeholder="noreply@example.com"
-          />
-        </div>
+      <SaveRow saving={saving} saved={saved} disabled={!settings} onSave={handleSave} />
+    </div>
+  );
+}
 
-        {/* From name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Van naam
-          </label>
-          <input
-            type="text"
-            value={settings?.from_name || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, from_name: e.target.value }))}
-            className={inputClass}
-            placeholder="Rondo Club"
-          />
-        </div>
-
-        {/* Subject */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Onderwerp
-          </label>
-          <input
-            type="text"
-            value={settings?.subject || ''}
-            onChange={(e) => setSettings(prev => ({ ...prev, subject: e.target.value }))}
-            className={inputClass}
-            placeholder="Welkom bij {club_naam}"
-          />
-        </div>
-
-        {/* Body */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Bericht
-          </label>
-          <RichTextEditor
-            value={settings?.body || ''}
-            onChange={(html) => setSettings(prev => ({ ...prev, body: html }))}
-            placeholder="Hallo {first_name},..."
-            minHeight="200px"
-          />
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-            Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{login}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{set_password_url}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
-          </p>
-        </div>
-
-        {/* Save button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSave}
-            disabled={saving || !settings}
-            className="btn-primary gap-2 disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Opslaan...
-              </>
-            ) : (
-              'Opslaan'
-            )}
-          </button>
-          {saved && (
-            <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
-              <Check className="w-4 h-4" />
-              Opgeslagen
-            </span>
-          )}
-        </div>
+// Sub-form: onboarding template (subject + body only — uses WordPress default from address).
+function OnboardingWelkomstmailForm({ description, settings, setSettings, loading, saving, saved, onSave }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Onderwerp</label>
+        <input
+          type="text"
+          value={settings?.subject || ''}
+          onChange={(e) => setSettings((prev) => ({ ...prev, subject: e.target.value }))}
+          className={TEMPLATE_INPUT_CLASS}
+          placeholder="Welkom bij {club_naam}"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bericht</label>
+        <RichTextEditor
+          value={settings?.body || ''}
+          onChange={(html) => setSettings((prev) => ({ ...prev, body: html }))}
+          placeholder="Hallo {first_name},..."
+          minHeight="200px"
+        />
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{infix}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{last_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{full_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{email}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_naam}'}</code>
+        </p>
+      </div>
+
+      <SaveRow saving={saving} saved={saved} disabled={!settings} onSave={onSave} />
+    </div>
+  );
+}
+
+function SaveRow({ saving, saved, disabled, onSave }) {
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={onSave}
+        disabled={saving || disabled}
+        className="btn-primary gap-2 disabled:opacity-50"
+      >
+        {saving ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Opslaan...
+          </>
+        ) : (
+          'Opslaan'
+        )}
+      </button>
+      {saved && (
+        <span className="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+          <Check className="w-4 h-4" />
+          Opgeslagen
+        </span>
+      )}
     </div>
   );
 }

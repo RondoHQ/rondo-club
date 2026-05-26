@@ -13,7 +13,7 @@ import Dashboard from '@/pages/Dashboard';
 
 // Lazy-loaded page components (separate file for fast refresh compatibility)
 import {
-  PeopleList, PeopleAnniversaries, PersonDetail, TeamsList, TeamDetail,
+  PeopleList, PeopleAnniversaries, PeopleOnboarding, PersonDetail, TeamsList, TeamDetail,
   Kaderlijst,
   CommissiesList, CommissieDetail, TodosList,
   FeedbackList, FeedbackDetail, Settings, VOG,
@@ -172,6 +172,7 @@ const router = createBrowserRouter([
           // People routes
           { path: 'people', element: <PeopleList /> },
           { path: 'people/jubilarissen', element: <PeopleAnniversaries /> },
+          { path: 'people/onboarding', element: <PeopleOnboarding /> },
           { path: 'people/:id', element: <PersonDetail /> },
 
           // VOG routes - requires VOG capability

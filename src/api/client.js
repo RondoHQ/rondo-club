@@ -120,6 +120,7 @@ export const prmApi = {
   
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),
+  sendOnboardingEmail: (personIds, type) => api.post('/rondo/v1/people/onboarding-email', { person_ids: personIds, type }),
   bulkUpdateTeams: (ids, updates) => api.post('/rondo/v1/teams/bulk-update', { ids, updates }),
   bulkUpdateCommissies: (ids, updates) => api.post('/rondo/v1/commissies/bulk-update', { ids, updates }),
 
@@ -313,6 +314,8 @@ export const prmApi = {
   provisionUser: (personId) => api.post(`/rondo/v1/people/${personId}/provision`),
   getProvisioningSettings: () => api.get('/rondo/v1/provisioning/settings'),
   updateProvisioningSettings: (data) => api.post('/rondo/v1/provisioning/settings', data),
+  getOnboardingEmailSettings: (type) => api.get(`/rondo/v1/onboarding/email-settings/${type}`),
+  updateOnboardingEmailSettings: (type, data) => api.post(`/rondo/v1/onboarding/email-settings/${type}`, data),
 
   // Club configuration (admin only)
   getClubConfig: () => api.get('/rondo/v1/config'),

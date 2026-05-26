@@ -104,6 +104,44 @@ class People extends Base {
 			]
 		);
 
+		// Onboarding email send endpoint
+		register_rest_route(
+			'rondo/v1',
+			'/people/onboarding-email',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'send_onboarding_emails' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'person_ids' => [
+						'required'          => true,
+						'validate_callback' => function ( $param ) {
+							if ( ! is_array( $param ) || empty( $param ) ) {
+								return false;
+							}
+							foreach ( $param as $id ) {
+								if ( ! is_numeric( $id ) ) {
+									return false;
+								}
+							}
+							return true;
+						},
+						'sanitize_callback' => function ( $param ) {
+							return array_map( 'intval', $param );
+						},
+					],
+					'type'       => [
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ 'lid', 'vrijwilliger' ], true );
+						},
+					],
+				],
+			]
+		);
+
 		// Bulk update endpoint
 		register_rest_route(
 			'rondo/v1',
@@ -171,27 +209,27 @@ class People extends Base {
 				'callback'            => [ $this, 'get_filtered_people' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 				'args'                => [
-					'page'                     => [
+					'page'                      => [
 						'default'           => 1,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'per_page'                 => [
+					'per_page'                  => [
 						'default'           => 100,
 						'validate_callback' => function ( $param ) {
 							return is_numeric( $param ) && (int) $param > 0 && (int) $param <= 100;
 						},
 						'sanitize_callback' => 'absint',
 					],
-					'ownership'                => [
+					'ownership'                 => [
 						'default'           => 'all',
 						'validate_callback' => function ( $param ) {
 							return in_array( $param, [ 'mine', 'shared', 'all' ], true );
 						},
 					],
-					'modified_days'            => [
+					'modified_days'             => [
 						'default'           => null,
 						'validate_callback' => function ( $param ) {
 							return $param === null || $param === '' || ( is_numeric( $param ) && (int) $param > 0 );
@@ -200,11 +238,11 @@ class People extends Base {
 							return $param === null || $param === '' ? null : absint( $param );
 						},
 					],
-					'orderby'                  => [
+					'orderby'                   => [
 						'default'           => 'first_name',
 						'validate_callback' => [ $this, 'validate_orderby_param' ],
 					],
-					'order'                    => [
+					'order'                     => [
 						'default'           => 'asc',
 						'validate_callback' => function ( $param ) {
 							return in_array( strtolower( $param ), [ 'asc', 'desc' ], true );
@@ -213,7 +251,7 @@ class People extends Base {
 							return strtolower( $param );
 						},
 					],
-					'birth_year_from'          => [
+					'birth_year_from'           => [
 						'description'       => 'Filter by birth year (minimum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -221,7 +259,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_year_to'            => [
+					'birth_year_to'             => [
 						'description'       => 'Filter by birth year (maximum year, inclusive)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -229,7 +267,7 @@ class People extends Base {
 							return $value >= 1900 && $value <= 2100;
 						},
 					],
-					'birth_month'              => [
+					'birth_month'               => [
 						'description'       => 'Filter by birth month (1-12)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -238,7 +276,7 @@ class People extends Base {
 						},
 					],
 					// Custom field filters
-					'huidig_vrijwilliger'      => [
+					'huidig_vrijwilliger'       => [
 						'description'       => 'Filter by current volunteer status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -246,7 +284,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'financiele_blokkade'      => [
+					'financiele_blokkade'       => [
 						'description'       => 'Filter by financial block status (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -254,12 +292,12 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
-					'type_lid'                 => [
+					'type_lid'                  => [
 						'description'       => 'Filter by member type',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'foto_missing'             => [
+					'foto_missing'              => [
 						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -267,7 +305,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_missing'              => [
+					'vog_missing'               => [
 						'description'       => 'Filter for people without VOG date (1=missing, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -275,7 +313,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'vog_older_than_years'     => [
+					'vog_older_than_years'      => [
 						'description'       => 'Filter for VOG older than N years',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -283,7 +321,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 10;
 						},
 					],
-					'vog_email_status'         => [
+					'vog_email_status'          => [
 						'description'       => 'Filter by VOG email status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -291,7 +329,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'vog_type'                 => [
+					'vog_type'                  => [
 						'description'       => 'Filter by VOG type (nieuw=no VOG, vernieuwing=expired VOG)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -299,12 +337,12 @@ class People extends Base {
 							return in_array( $value, [ '', 'nieuw', 'vernieuwing' ], true );
 						},
 					],
-					'leeftijdsgroep'           => [
+					'leeftijdsgroep'            => [
 						'description'       => 'Filter by age group',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
-					'vog_expiring_within_days' => [
+					'vog_expiring_within_days'  => [
 						'description'       => 'Filter for VOG expiring within N days (valid but expiring soon)',
 						'type'              => 'integer',
 						'sanitize_callback' => 'absint',
@@ -312,7 +350,7 @@ class People extends Base {
 							return $value >= 1 && $value <= 365;
 						},
 					],
-					'vog_justis_status'        => [
+					'vog_justis_status'         => [
 						'description'       => 'Filter by VOG Justis status (submitted, not_submitted, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -320,7 +358,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'submitted', 'not_submitted' ], true );
 						},
 					],
-					'vog_reminder_status'      => [
+					'vog_reminder_status'       => [
 						'description'       => 'Filter by VOG reminder status (sent, not_sent, empty=all)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -328,7 +366,7 @@ class People extends Base {
 							return in_array( $value, [ '', 'sent', 'not_sent' ], true );
 						},
 					],
-					'include_former'           => [
+					'include_former'            => [
 						'description'       => 'Include former members in results (1=include, empty=exclude)',
 						'type'              => 'string',
 						'default'           => '',
@@ -337,7 +375,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'lid_tot_future'           => [
+					'lid_tot_future'            => [
 						'description'       => 'Filter for people with lid-tot date in the future (1=future only, empty=all)',
 						'type'              => 'string',
 						'default'           => '',
@@ -346,7 +384,7 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'lid_tot_season'           => [
+					'lid_tot_season'            => [
 						'description'       => 'Filter for people with lid-tot date in the current sports season (1 Jul – 30 Jun). 1=only this season, empty=all. Auto-includes former members.',
 						'type'              => 'string',
 						'default'           => '',
@@ -355,8 +393,26 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
-					'spelactiviteit_no_team'   => [
+					'spelactiviteit_no_team'    => [
 						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'onboarding_new_members'    => [
+						'description'       => 'New members (lid-sinds <= 30 days ago) who have not yet received an onboarding email. 1=filter, empty=all.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
+					'onboarding_new_volunteers' => [
+						'description'       => 'New volunteers (vrijwilliger-sinds <= 60 days ago, huidig-vrijwilliger=1) who have not yet received an onboarding email. 1=filter, empty=all.',
 						'type'              => 'string',
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
@@ -747,6 +803,50 @@ class People extends Base {
 	}
 
 	/**
+	 * Send onboarding emails to a batch of people.
+	 *
+	 * Skips people who already received the email; records a timestamp on
+	 * successful sends so they drop out of the onboarding list. People with no
+	 * email are reported back so the caller can flag them — they do not fail
+	 * the whole batch.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function send_onboarding_emails( $request ) {
+		$person_ids = $request->get_param( 'person_ids' );
+		$type       = $request->get_param( 'type' );
+
+		$sender  = new \Rondo\Notifications\OnboardingEmailSender();
+		$results = [];
+		$counts  = [
+			'sent'         => 0,
+			'already_sent' => 0,
+			'no_email'     => 0,
+			'send_failed'  => 0,
+			'not_found'    => 0,
+			'invalid_type' => 0,
+		];
+
+		foreach ( $person_ids as $person_id ) {
+			$result    = $sender->send( (int) $person_id, $type );
+			$results[] = $result;
+			if ( isset( $counts[ $result['status'] ] ) ) {
+				++$counts[ $result['status'] ];
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'success' => $counts['send_failed'] === 0 && $counts['invalid_type'] === 0,
+				'type'    => $type,
+				'counts'  => $counts,
+				'results' => $results,
+			]
+		);
+	}
+
+	/**
 	 * Validate orderby parameter - accepts built-in fields or custom_ prefixed fields.
 	 *
 	 * @param string $param The orderby value to validate.
@@ -826,22 +926,24 @@ class People extends Base {
 		$order           = strtoupper( $request->get_param( 'order' ) );
 
 		// Custom field filter parameters
-		$huidig_vrijwilliger      = $request->get_param( 'huidig_vrijwilliger' );
-		$financiele_blokkade      = $request->get_param( 'financiele_blokkade' );
-		$type_lid                 = $request->get_param( 'type_lid' );
-		$foto_missing             = $request->get_param( 'foto_missing' );
-		$vog_missing              = $request->get_param( 'vog_missing' );
-		$vog_older_than_years     = $request->get_param( 'vog_older_than_years' );
-		$vog_expiring_within_days = $request->get_param( 'vog_expiring_within_days' );
-		$vog_email_status         = $request->get_param( 'vog_email_status' );
-		$vog_type                 = $request->get_param( 'vog_type' );
-		$leeftijdsgroep           = $request->get_param( 'leeftijdsgroep' );
-		$vog_justis_status        = $request->get_param( 'vog_justis_status' );
-		$vog_reminder_status      = $request->get_param( 'vog_reminder_status' );
-		$include_former           = $request->get_param( 'include_former' );
-		$lid_tot_future           = $request->get_param( 'lid_tot_future' );
-		$lid_tot_season           = $request->get_param( 'lid_tot_season' );
-		$spelactiviteit_no_team   = $request->get_param( 'spelactiviteit_no_team' );
+		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
+		$financiele_blokkade       = $request->get_param( 'financiele_blokkade' );
+		$type_lid                  = $request->get_param( 'type_lid' );
+		$foto_missing              = $request->get_param( 'foto_missing' );
+		$vog_missing               = $request->get_param( 'vog_missing' );
+		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
+		$vog_expiring_within_days  = $request->get_param( 'vog_expiring_within_days' );
+		$vog_email_status          = $request->get_param( 'vog_email_status' );
+		$vog_type                  = $request->get_param( 'vog_type' );
+		$leeftijdsgroep            = $request->get_param( 'leeftijdsgroep' );
+		$vog_justis_status         = $request->get_param( 'vog_justis_status' );
+		$vog_reminder_status       = $request->get_param( 'vog_reminder_status' );
+		$include_former            = $request->get_param( 'include_former' );
+		$lid_tot_future            = $request->get_param( 'lid_tot_future' );
+		$lid_tot_season            = $request->get_param( 'lid_tot_season' );
+		$spelactiviteit_no_team    = $request->get_param( 'spelactiviteit_no_team' );
+		$onboarding_new_members    = $request->get_param( 'onboarding_new_members' );
+		$onboarding_new_volunteers = $request->get_param( 'onboarding_new_volunteers' );
 
 		// Cancellation-this-season filter implies former members must be visible:
 		// once lid-tot has passed, Sportlink flips `former_member` to '1', and the
@@ -1148,6 +1250,30 @@ class People extends Base {
 			);
 
 			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
+		}
+
+		// Onboarding: new members.
+		// lid-sinds within the last 30 days AND no onboarding-email-lid-sent timestamp.
+		if ( $onboarding_new_members === '1' ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ols ON p.ID = ols.post_id AND ols.meta_key = 'lid-sinds'";
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} oles ON p.ID = oles.post_id AND oles.meta_key = 'onboarding-email-lid-sent'";
+			$cutoff           = gmdate( 'Y-m-d', strtotime( '-30 days' ) );
+			$where_clauses[]  = '(ols.meta_value IS NOT NULL AND ols.meta_value != \'\' AND ols.meta_value >= %s)';
+			$where_clauses[]  = '(oles.meta_value IS NULL OR oles.meta_value = \'\')';
+			$prepare_values[] = $cutoff;
+		}
+
+		// Onboarding: new volunteers.
+		// vrijwilliger-sinds within last 60 days AND huidig-vrijwilliger=1 AND no onboarding-email-vrijwilliger-sent timestamp.
+		if ( $onboarding_new_volunteers === '1' ) {
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ovs ON p.ID = ovs.post_id AND ovs.meta_key = 'vrijwilliger-sinds'";
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} ohv ON p.ID = ohv.post_id AND ohv.meta_key = 'huidig-vrijwilliger'";
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} oves ON p.ID = oves.post_id AND oves.meta_key = 'onboarding-email-vrijwilliger-sent'";
+			$cutoff           = gmdate( 'Y-m-d', strtotime( '-60 days' ) );
+			$where_clauses[]  = '(ovs.meta_value IS NOT NULL AND ovs.meta_value != \'\' AND ovs.meta_value >= %s)';
+			$where_clauses[]  = "(ohv.meta_value = '1')";
+			$where_clauses[]  = '(oves.meta_value IS NULL OR oves.meta_value = \'\')';
+			$prepare_values[] = $cutoff;
 		}
 
 		// Build ORDER BY clause (columns are whitelisted in args validation)
