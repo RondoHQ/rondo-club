@@ -286,6 +286,12 @@ function rondo_init() {
 
 		// Seed volunteer-policy fixtures (dienst_types + pool commissies).
 		new \Rondo\Volunteer\VolunteerSeeder();
+
+		// Hourly shift-completion cron + no-show → boete wiring.
+		new \Rondo\Volunteer\ShiftScheduler();
+
+		// Daily template-expander cron (rolling 12-week window).
+		new \Rondo\Volunteer\ShiftTemplateExpander();
 	}
 
 	// REST API classes - only for REST requests

@@ -12,8 +12,10 @@
 namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
+use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
+use Rondo\Volunteer\VolunteerObligationCalculator;
 use Rondo\Volunteer\VolunteerSeeder;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -78,6 +80,199 @@ class Volunteer extends Base {
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 				],
+			]
+		);
+
+		// IVA approval — restricted to bestuurslid kantine (rondo_iva_approve cap).
+		register_rest_route(
+			'rondo/v1',
+			'/iva/(?P<person_id>\d+)/approve',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'approve_iva' ],
+				'permission_callback' => [ $this, 'check_iva_approve_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'approve'   => [
+						'required' => false,
+						'default'  => true,
+					],
+				],
+			]
+		);
+
+		// Obligations — counter view per unit, plus aggregate dashboard stats.
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-obligations',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_obligations' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'season' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
+		// No-show endpoint (admin / coordinator only).
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/(?P<id>\d+)/no-show',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'mark_no_show' ],
+				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'args'                => [
+					'id'        => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'revert'    => [
+						'required' => false,
+						'default'  => false,
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/iva/(?P<person_id>\d+)/status',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_iva_status' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+	}
+
+	public function check_iva_approve_permission() {
+		return current_user_can( 'rondo_iva_approve' ) || current_user_can( 'manage_options' );
+	}
+
+	public function approve_iva( \WP_REST_Request $request ) {
+		$person_id = (int) $request->get_param( 'person_id' );
+		$approve   = filter_var( $request->get_param( 'approve' ), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+		if ( $approve === null ) {
+			$approve = true;
+		}
+
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+			return new \WP_Error( 'invalid_person', 'Invalid person ID.', [ 'status' => 404 ] );
+		}
+
+		update_post_meta( $person_id, 'iva-approved', $approve ? 1 : 0 );
+		update_field( 'iva-approved', $approve ? 1 : 0, $person_id );
+
+		return rest_ensure_response(
+			[
+				'person_id' => $person_id,
+				'approved'  => $approve,
+				'status'    => IvaStatus::status( $person_id ),
+				'expires_at' => IvaStatus::expires_at( $person_id ),
+			]
+		);
+	}
+
+	/**
+	 * GET /rondo/v1/volunteer-obligations
+	 *
+	 * Returns every eligible unit for the season, augmented with
+	 * `completed_count`, `pending_count`, `no_show_count`, and a `status` bucket.
+	 * Used by the Vrijwilligers dashboard and (later) the member-facing surface.
+	 */
+	public function get_obligations( \WP_REST_Request $request ) {
+		$season = $request->get_param( 'season' ) ?: SeasonKey::current();
+
+		$eligibility = new VolunteerEligibilityService();
+		$calculator  = new VolunteerObligationCalculator();
+
+		$units      = $eligibility->get_eligible_units( $season );
+		$decorated  = $calculator->decorate_units( $units, $season );
+		$aggregate  = $calculator->aggregate( $decorated );
+
+		return rest_ensure_response(
+			[
+				'season'    => $season,
+				'units'     => $decorated,
+				'aggregate' => $aggregate,
+			]
+		);
+	}
+
+	/**
+	 * POST /rondo/v1/shifts/{id}/no-show
+	 *
+	 * Marks a person as a no-show on a given shift (or reverts the mark when
+	 * `revert=true`). Triggers the `rondo_volunteer_no_show_marked` action so the
+	 * boete pipeline can fire — see ShiftScheduler.
+	 */
+	public function mark_no_show( \WP_REST_Request $request ) {
+		$shift_id  = (int) $request->get_param( 'id' );
+		$person_id = (int) $request->get_param( 'person_id' );
+		$revert    = filter_var( $request->get_param( 'revert' ), FILTER_VALIDATE_BOOLEAN );
+
+		if ( $revert ) {
+			$ok = VolunteerObligationCalculator::unmark_no_show( $shift_id, $person_id );
+			return rest_ensure_response(
+				[
+					'shift_id'  => $shift_id,
+					'person_id' => $person_id,
+					'reverted'  => (bool) $ok,
+				]
+			);
+		}
+
+		$result = VolunteerObligationCalculator::mark_no_show( $shift_id, $person_id );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		/**
+		 * Fires after a person is marked no-show on a shift.
+		 * Consumed by ShiftScheduler → VolunteerFineGenerator.
+		 */
+		do_action( 'rondo_volunteer_no_show_marked', $shift_id, $person_id, get_current_user_id() );
+
+		return rest_ensure_response(
+			[
+				'shift_id'  => $shift_id,
+				'person_id' => $person_id,
+				'marked'    => true,
+			]
+		);
+	}
+
+	public function get_iva_status( \WP_REST_Request $request ) {
+		$person_id = (int) $request->get_param( 'person_id' );
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+			return new \WP_Error( 'invalid_person', 'Invalid person ID.', [ 'status' => 404 ] );
+		}
+
+		return rest_ensure_response(
+			[
+				'person_id'             => $person_id,
+				'status'                => IvaStatus::status( $person_id ),
+				'expires_at'            => IvaStatus::expires_at( $person_id ),
+				'needs_renewal_reminder' => IvaStatus::needs_renewal_reminder( $person_id ),
+				'validity_years'        => IvaStatus::VALIDITY_YEARS,
 			]
 		);
 	}

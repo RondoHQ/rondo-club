@@ -97,7 +97,7 @@ class Invoices extends Base {
 						'invoice_type' => [
 							'required'          => false,
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership' ], true );
+								return empty( $param ) || in_array( $param, [ 'manual', 'discipline', 'membership', 'volunteer_fine' ], true );
 							},
 						],
 					],
@@ -131,7 +131,7 @@ class Invoices extends Base {
 						'type'         => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual' ], true );
+								return empty( $param ) || in_array( $param, [ 'membership', 'discipline', 'manual', 'volunteer_fine' ], true );
 							},
 						],
 						'payment_plan' => [
@@ -713,7 +713,7 @@ class Invoices extends Base {
 	 */
 	public function get_next_invoice_number( $request ) {
 		$invoice_type = sanitize_key( (string) ( $request->get_param( 'invoice_type' ) ?: 'manual' ) );
-		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership' ], true ) ) {
+		if ( ! in_array( $invoice_type, [ 'manual', 'discipline', 'membership', 'volunteer_fine' ], true ) ) {
 			$invoice_type = 'manual';
 		}
 

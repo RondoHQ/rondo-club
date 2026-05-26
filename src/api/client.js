@@ -393,6 +393,10 @@ export const prmApi = {
   getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
   getManagedCommissies: () => api.get('/rondo/v1/managed-commissies'),
 
+  // IVA
+  approveIva: (personId, approve = true) => api.post(`/rondo/v1/iva/${personId}/approve`, { approve }),
+  getIvaStatus: (personId) => api.get(`/rondo/v1/iva/${personId}/status`),
+
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',
