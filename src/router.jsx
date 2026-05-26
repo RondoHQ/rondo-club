@@ -22,6 +22,7 @@ import {
   CustomFields, Login, Profile,
   MembershipPassScanner,
   ClothingPage,
+  VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -128,6 +129,14 @@ function LedenadministratieRoute({ children }) {
   );
 }
 
+function VrijwilligersRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_vrijwilligers}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
 
@@ -191,6 +200,7 @@ const router = createBrowserRouter([
           { path: 'people/:id', element: <PersonDetail /> },
 
           // VOG routes - requires VOG capability
+          // Canonical lives under /vrijwilligers/vog; legacy /vog kept for back-compat.
           {
             path: 'vog',
             element: (
@@ -210,6 +220,56 @@ const router = createBrowserRouter([
           {
             path: 'vog/instellingen',
             element: <Navigate to="/settings/vog" replace />,
+          },
+
+          // Vrijwilligers section - requires vrijwilligers capability
+          {
+            path: 'vrijwilligers',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDashboard />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/vog',
+            element: (
+              <VOGRoute>
+                <VOG />
+              </VOGRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/vog/:tab',
+            element: (
+              <VOGRoute>
+                <VOG />
+              </VOGRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/iva',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersIva />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensten',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDiensten />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/vrijstellingen',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersExemptions />
+              </VrijwilligersRoute>
+            ),
           },
 
           // Finance routes - requires financieel capability

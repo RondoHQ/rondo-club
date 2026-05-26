@@ -24,7 +24,10 @@ import {
   Wallet,
   Receipt,
   Shirt,
-  UserPlus
+  UserPlus,
+  HeartHandshake,
+  Wine,
+  CalendarClock
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -46,12 +49,16 @@ const navigation = [
   { name: 'Leden', href: '/people', icon: Users },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true },
-  { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
   { name: 'Teams', href: '/teams', icon: Building2 },
   { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
   { name: 'Commissies', href: '/commissies', icon: UsersRound },
+  { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
+  { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
+  { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
+  { name: 'Diensten', href: '/vrijwilligers/diensten', icon: CalendarClock, indent: true, requiresVrijwilligers: true },
+  { name: 'Vrijstellingen', href: '/vrijwilligers/vrijstellingen', icon: UsersRound, indent: true, requiresVrijwilligers: true },
   { name: 'Financiën', href: '/financien', icon: Wallet, requiresFinancieel: true },
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
@@ -75,6 +82,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
+  const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
 
   // Finance menu counters
@@ -161,6 +169,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
             if (item.requiresClothing && !canAccessClothing) return false;
             if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
+            if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
             return true;
           })
           .map((item) => {
