@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.8.0] - 2026-05-26
+
+### Added — Member-facing /vrijwillig surface (Fase D #4)
+
+- **`/vrijwillig` route** — logged-in members see their personal obligation card (X van Y diensten gedaan, progress bar, status bucket), two tabs (Beschikbaar / Mijn diensten), and one-click signup/afmelden. Page resolves the caller via `rondo_linked_person_id` user meta; unlinked accounts get a friendly "contact ledenadministratie" prompt instead of a stack trace.
+- **Hard-block banners** for missing VOG or IVA per #8/#9 — the same eligibility-filtered shift list hides VOG-/IVA-vereiste shifts until the cert is valid (bestuursbesluit: hard block, no soft warning route).
+- **Overlap warning** — when signing up for a shift that overlaps with an existing assignment the server returns `overlap_warning` with a `can_force=true` hint; the UI shows a "toch aanmelden" prompt.
+- **Auto-fill on capacity** — signups that reach capacity flip the shift status to `vol`; afmeldingen flip it back to `open`.
+- **Pool-only shifts** are hidden from non-pool members. `dienst_type.required_pool` (commissie post id) is honored server-side.
+- **`GET /rondo/v1/my-shifts`** returns the caller's assigned + completed shifts plus the decorated obligation unit and exemption (if any) for the current season.
+- **`GET /rondo/v1/shifts/available`** lists open shifts within the 84-day window, filtered by eligibility/VOG/IVA/pool.
+- **`POST /rondo/v1/shifts/{id}/signup`** and **`/cancel`** drive the member flow. Afmelden is altijd toegestaan (bestuursbesluit) tot de shift voltooid is.
+
+### Operational follow-up (not in this release)
+
+Member-facing flow assumes Magic Login is configured on production and that eligible members have WP-accounts with `rondo_linked_person_id` set. Bulk-provisioning of accounts for the full eligible pool is a one-time operation that happens outside the codebase.
+
 ## [33.7.0] - 2026-05-26
 
 ### Added — Volunteer Policy: trainings/leider exemption UI, team kickoff, welkomstmail
