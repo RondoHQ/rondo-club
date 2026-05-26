@@ -397,6 +397,18 @@ export const prmApi = {
   approveIva: (personId, approve = true) => api.post(`/rondo/v1/iva/${personId}/approve`, { approve }),
   getIvaStatus: (personId) => api.get(`/rondo/v1/iva/${personId}/status`),
 
+  // Member-facing shift signup (/vrijwillig)
+  getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),
+  getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
+  signupForShift: (shiftId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/signup`, opts),
+  cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),
+
+  // Admin no-show endpoint
+  markShiftNoShow: (shiftId, personId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/no-show`, { person_id: personId, ...opts }),
+
+  // Volunteer obligations (admin dashboard)
+  getVolunteerObligations: (params = {}) => api.get('/rondo/v1/volunteer-obligations', { params }),
+
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',

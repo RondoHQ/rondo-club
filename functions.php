@@ -132,6 +132,7 @@ use Rondo\REST\Users as RESTUsers;
 use Rondo\REST\Reminders as RESTReminders;
 use Rondo\REST\Vog as RESTVog;
 use Rondo\REST\Volunteer as RESTVolunteer;
+use Rondo\REST\MemberShifts as RESTMemberShifts;
 use Rondo\REST\Fees as RESTFees;
 use Rondo\REST\Lettermint as RESTLettermint;
 use Rondo\REST\Capabilities as RESTCapabilities;
@@ -311,6 +312,7 @@ function rondo_init() {
 		new RESTReminders();
 		new RESTVog();
 		new RESTVolunteer();
+		new RESTMemberShifts();
 		new RESTFees();
 		new RESTLettermint();
 		new RESTCapabilities();
