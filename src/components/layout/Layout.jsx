@@ -23,7 +23,8 @@ import {
   Gavel,
   Wallet,
   Receipt,
-  Shirt
+  Shirt,
+  UserPlus
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -43,6 +44,7 @@ import { prmApi } from '@/api/client';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
+  { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
@@ -575,6 +577,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
+    if (path.startsWith('/people/onboarding')) return 'Onboarding';
     if (path.startsWith('/people')) return 'Leden';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';

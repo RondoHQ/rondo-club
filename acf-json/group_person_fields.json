@@ -712,6 +712,34 @@
             "wrapper": {
                 "width": "33"
             }
+        },
+        {
+            "key": "field_onboarding_email_lid_sent",
+            "label": "Onboarding e-mail lid verstuurd",
+            "name": "onboarding-email-lid-sent",
+            "type": "date_time_picker",
+            "instructions": "Tijdstip waarop de onboarding e-mail voor nieuwe leden is verstuurd",
+            "required": 0,
+            "display_format": "d-m-Y H:i",
+            "return_format": "Y-m-d H:i:s",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_onboarding_email_vrijwilliger_sent",
+            "label": "Onboarding e-mail vrijwilliger verstuurd",
+            "name": "onboarding-email-vrijwilliger-sent",
+            "type": "date_time_picker",
+            "instructions": "Tijdstip waarop de onboarding e-mail voor nieuwe vrijwilligers is verstuurd",
+            "required": 0,
+            "display_format": "d-m-Y H:i",
+            "return_format": "Y-m-d H:i:s",
+            "readonly": 1,
+            "wrapper": {
+                "width": "50"
+            }
         }
     ],
     "location": [

@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.2.0] - 2026-05-26
+
+### Added
+- **Onboarding screen for new members and new volunteers.** New page under Leden → Onboarding with two tabs: Nieuwe leden (lid-sinds ≤ 30 days, no member onboarding email sent) and Nieuwe vrijwilligers (vrijwilliger-sinds ≤ 60 days, huidig-vrijwilliger=1, no volunteer onboarding email sent). Each row has a Verstuur button; the toolbar has a multi-select bulk send. Sent recipients drop out of the list automatically because the server stamps a timestamp on the person.
+- **Two new ACF datetime fields on person:** `onboarding-email-lid-sent` and `onboarding-email-vrijwilliger-sent` (readonly). Server stamps these on successful send so the same person can't be re-onboarded for the same type.
+- **Two new welkomstmail templates.** Settings → Beheer → Welkomstmail now has three sub-tabs: Account aanmaken (existing), Nieuw lid (new), Nieuwe vrijwilliger (new). Each onboarding template stores subject + HTML body; supports `{first_name}`, `{infix}`, `{last_name}`, `{full_name}`, `{email}`, `{club_naam}` placeholders. Templates fall back to a sensible Dutch default when unset.
+- **New REST endpoints:**
+  - `POST /rondo/v1/people/onboarding-email` — body `{ person_ids: int[], type: 'lid'|'vrijwilliger' }`. Sends per person, stamps the timestamp only on a successful `wp_mail()`, returns per-id status (sent / already_sent / no_email / send_failed / not_found). People with no email are reported back, not errored.
+  - `GET|POST /rondo/v1/onboarding/email-settings/{lid|vrijwilliger}` — read/update the new welkomstmail templates (admin only).
+  - `GET /rondo/v1/people/filtered` gains two parameters: `onboarding_new_members=1` and `onboarding_new_volunteers=1`.
+- Onboarding emails get a timeline entry on the person via `CommentTypes::create_email_log()`, same as account-provisioning welcome emails.
+
 ### Fixed
 - Birthday entries in the daily digest email and the dashboard reminder widget now display the person's birth year (instead of the current year) and append the age they're turning, e.g. `15 mei 1990 (wordt 36)`.
 - Credit invoice emails now use the dedicated credit template body and subject instead of the regular payment-request template. `InvoiceEmailSender::send()` now detects `_invoice_kind === 'credit'` before template selection and pulls `FinanceConfig::get_credit_email_template()` and `get_credit_email_subject()`. Previously only the heading was swapped, so credit invoices still went out with "pay this amount" body copy + QR code + betaallink placeholders.
 
-### Added
+### Added (other)
 - `rondo_finance_credit_email_subject` option + settings UI field for configuring the credit invoice email subject (default: `Creditfactuur {factuur_nummer} - {organisatie_naam}`).
 
 ## [33.1.1] - 2026-05-26

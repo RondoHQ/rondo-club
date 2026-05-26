@@ -143,6 +143,8 @@ export function buildFilteredPeopleParams(filters = {}) {
     lid_tot_future: filters.lidTotFuture || null,
     lid_tot_season: filters.lidTotSeason || null,
     spelactiviteit_no_team: filters.spelactiviteitNoTeam || null,
+    onboarding_new_members: filters.onboardingNewMembers || null,
+    onboarding_new_volunteers: filters.onboardingNewVolunteers || null,
   };
 }
 
@@ -387,6 +389,24 @@ export function useBulkUpdatePeople() {
       // Refetch people list to show updated data immediately
       await queryClient.refetchQueries({ queryKey: peopleKeys.lists() });
       // Invalidate details for individual person views
+      queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
+    },
+  });
+}
+
+/**
+ * Send onboarding email(s) to one or more people. Server stamps a per-type
+ * timestamp on each successful send so they drop out of the onboarding list.
+ *
+ * @returns mutation that accepts { personIds: number[], type: 'lid' | 'vrijwilliger' }
+ */
+export function useSendOnboardingEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ personIds, type }) => prmApi.sendOnboardingEmail(personIds, type),
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: peopleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: peopleKeys.details() });
     },
   });

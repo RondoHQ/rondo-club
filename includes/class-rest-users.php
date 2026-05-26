@@ -117,6 +117,25 @@ class Users extends Base {
 				],
 			]
 		);
+
+		// Onboarding email template settings, per type (admin only).
+		// Stored as separate options so the existing account-provisioning template is untouched.
+		register_rest_route(
+			'rondo/v1',
+			'/onboarding/email-settings/(?P<type>lid|vrijwilliger)',
+			[
+				[
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => [ $this, 'get_onboarding_email_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'update_onboarding_email_settings' ],
+					'permission_callback' => [ $this, 'check_admin_permission' ],
+				],
+			]
+		);
 	}
 
 	/**
@@ -282,6 +301,41 @@ class Users extends Base {
 		);
 
 		return rest_ensure_response( $provisioner->update_settings( $settings ) );
+	}
+
+	/**
+	 * Get onboarding email template settings for a given type.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_onboarding_email_settings( $request ) {
+		$type   = $request->get_param( 'type' );
+		$sender = new \Rondo\Notifications\OnboardingEmailSender();
+		return rest_ensure_response( $sender->get_settings( $type ) );
+	}
+
+	/**
+	 * Update onboarding email template settings for a given type.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function update_onboarding_email_settings( $request ) {
+		$type   = $request->get_param( 'type' );
+		$sender = new \Rondo\Notifications\OnboardingEmailSender();
+
+		$settings = array_filter(
+			[
+				'subject' => $request->get_param( 'subject' ),
+				'body'    => $request->get_param( 'body' ),
+			],
+			function ( $v ) {
+				return $v !== null;
+			}
+		);
+
+		return rest_ensure_response( $sender->update_settings( $type, $settings ) );
 	}
 
 	/**
