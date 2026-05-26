@@ -1,0 +1,134 @@
+{
+    "key": "group_shift_template_fields",
+    "title": "Shift Template",
+    "fields": [
+        {
+            "key": "field_shift_template_dienst_type",
+            "label": "Dienst type",
+            "name": "dienst_type_id",
+            "type": "post_object",
+            "instructions": "Welke dienst rolt deze template uit?",
+            "required": 1,
+            "post_type": [
+                "dienst_type"
+            ],
+            "return_format": "id",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 1
+        },
+        {
+            "key": "field_shift_template_day_of_week",
+            "label": "Dag van de week",
+            "name": "day_of_week",
+            "type": "select",
+            "instructions": "Op welke dag valt de shift?",
+            "required": 1,
+            "choices": {
+                "1": "Maandag",
+                "2": "Dinsdag",
+                "3": "Woensdag",
+                "4": "Donderdag",
+                "5": "Vrijdag",
+                "6": "Zaterdag",
+                "7": "Zondag"
+            },
+            "default_value": "",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_shift_template_start_time",
+            "label": "Starttijd",
+            "name": "start_time",
+            "type": "time_picker",
+            "instructions": "Begintijd van de shift (HH:MM).",
+            "required": 1,
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_shift_template_end_time",
+            "label": "Eindtijd",
+            "name": "end_time",
+            "type": "time_picker",
+            "instructions": "Eindtijd van de shift (HH:MM).",
+            "required": 1,
+            "display_format": "H:i",
+            "return_format": "H:i",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_shift_template_capacity",
+            "label": "Capaciteit",
+            "name": "capacity",
+            "type": "number",
+            "instructions": "Overschrijft de standaard van het dienst type. Leeg = gebruik default.",
+            "min": 0,
+            "step": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_shift_template_active_from",
+            "label": "Actief vanaf",
+            "name": "active_from",
+            "type": "date_picker",
+            "instructions": "Eerste datum waarop deze template shifts genereert.",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_shift_template_active_until",
+            "label": "Actief tot",
+            "name": "active_until",
+            "type": "date_picker",
+            "instructions": "Laatste datum (inclusief). Leeg = doorlopend.",
+            "display_format": "d F Y",
+            "return_format": "Y-m-d",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_shift_template_notes",
+            "label": "Notities",
+            "name": "notes",
+            "type": "textarea",
+            "instructions": "Vrij toelichtingsveld voor admins (bv. \"alleen bij thuiswedstrijden\").",
+            "rows": 2,
+            "new_lines": ""
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "shift_template"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}

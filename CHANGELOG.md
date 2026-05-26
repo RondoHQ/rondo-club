@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.4.0] - 2026-05-26
+
+### Added — Volunteer Policy foundation (Fase A)
+
+Backend foundation for the AWC vrijwilligersbeleid. No user-visible UI changes yet — Fase B will surface this in a Vrijwilligers admin section. See `.planning/VOLUNTEER-POLICY-ROADMAP.md` for the full plan.
+
+- **`rondo_vrijwilligers` capability + role.** Mirrors the existing `vog` / `financieel` / `ledenadministratie` pattern. `rondo_bestuur` inherits it; administrators auto-receive it. New pool roles: `rondo_pool_schoonmaak`, `rondo_pool_activiteiten`, `rondo_pool_werkploeg`. `can_access_vrijwilligers` flag added to `GET /rondo/v1/user/current`.
+- **Three new CPTs** (admin-only): `dienst_type` (task catalog), `shift_template` (seasonal recurring rules), `dienst_shift` (concrete scheduled shifts). Includes ACF field groups and REST-exposed post meta.
+- **`VolunteerSeeder`.** Idempotent on-activation seed of six initial dienst types (Terreinmeester, Kantine bar/keuken-prep/keuken-verkoop, Schoonmaak, Terreinonderhoud) and three Rondo-managed pool commissies (Schoonmaakpoule, Activiteitenpoule, Werkploeg terreinonderhoud). Stored option `rondo_volunteer_pool_commissies` maps pool slugs to commissie IDs.
+- **`VolunteerExemptionResolver`.** Single-source-of-truth service for the 4 auto + 1 manual vrijstellingsroutes (active commissie / staff role / betaalde vrijwilliger / handmatig). Consumed by every downstream feature so we never duplicate the rule.
+- **`VolunteerEligibilityService` + `GET /rondo/v1/volunteer-eligibility`.** Pure derived view of the eligible units per KNVB-seizoen — one gezin-unit per huishouden with a JO15- player (parents-relationship primary, address fallback), one speler-unit per O17+ player. Multi-child scaling defaults to per-gezin (board decision pending).
+- **`GET /rondo/v1/volunteer-exemption/{person_id}`.** Returns the resolved exemption reason for a single person, or null.
+- **`GET /rondo/v1/managed-commissies`.** Public list of Rondo-managed commissie IDs so `rondo-sync` can skip them during its untracked-commissie cleanup. The `rondo-sync` repo's `submit-rondo-club-commissies.js` now consumes this whitelist.
+- **`VolunteerStatus::OPTION_STAFF_ROLES` + default list** (Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teamleider, Teammanager, Coördinator, Scheidsrechter). Surfaced in `GET/POST /rondo/v1/volunteer-roles/settings` next to `player_roles` and `excluded_roles` so admins can refine via the Capabilities settings UI.
+- **New ACF field group on `person`:** `betaalde_vrijwilliger` + `vergoeding_reden` + `vergoeding_tot` (vrijwilligersvergoeding), `vrijgesteld_handmatig` + `vrijstelling_reden` + `vrijstelling_seizoen` (handmatige vrijstelling), `datum-iva` + `iva-certificaat` + `iva-approved` (IVA alcoholtraining tracking — admin-approval flow).
+
+### Deferred (board decisions)
+- Multi-child scaling rule for ouderplicht (#6).
+- Boete-pipeline (#7) — trigger, ontvanger, vrijkoop, bedrag.
+- VOG bulk-rollout mechanism (#8).
+- IVA geldigheidstermijn (#9).
+
 ## [33.3.1] - 2026-05-26
 
 ### Added

@@ -131,6 +131,7 @@ use Rondo\REST\UserSettings as RESTUserSettings;
 use Rondo\REST\Users as RESTUsers;
 use Rondo\REST\Reminders as RESTReminders;
 use Rondo\REST\Vog as RESTVog;
+use Rondo\REST\Volunteer as RESTVolunteer;
 use Rondo\REST\Fees as RESTFees;
 use Rondo\REST\Lettermint as RESTLettermint;
 use Rondo\REST\Capabilities as RESTCapabilities;
@@ -282,6 +283,9 @@ function rondo_init() {
 
 		// Initialize fee cache invalidation hooks
 		new FeeCacheInvalidator();
+
+		// Seed volunteer-policy fixtures (dienst_types + pool commissies).
+		new \Rondo\Volunteer\VolunteerSeeder();
 	}
 
 	// REST API classes - only for REST requests
@@ -300,6 +304,7 @@ function rondo_init() {
 		new RESTUsers();
 		new RESTReminders();
 		new RESTVog();
+		new RESTVolunteer();
 		new RESTFees();
 		new RESTLettermint();
 		new RESTCapabilities();
