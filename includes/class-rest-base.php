@@ -79,6 +79,18 @@ abstract class Base {
 	}
 
 	/**
+	 * Check if the current user can manage membership administration.
+	 *
+	 * Used to gate the Onboarding screen (Leden → Onboarding) and the
+	 * `POST /people/onboarding-email` endpoint. Admins always pass.
+	 *
+	 * @return bool True if user has ledenadministratie capability or is admin.
+	 */
+	public function check_ledenadministratie_permission() {
+		return current_user_can( 'ledenadministratie' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
 	 * Check if user can access a person
 	 *
 	 * Permission callback for person-specific endpoints.

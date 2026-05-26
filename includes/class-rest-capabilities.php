@@ -462,11 +462,12 @@ class Capabilities extends Base {
 	 */
 	public function get_capability_matrix() {
 		$capability_labels = [
-			'fairplay'         => 'FairPlay',
-			'vog'              => 'VOG',
-			'financieel'       => 'Financieel',
-			'toegangscontrole' => 'Toegangscontrole',
-			'manage_clothing'  => 'Kledingbeheer',
+			'fairplay'           => 'FairPlay',
+			'vog'                => 'VOG',
+			'financieel'         => 'Financieel',
+			'toegangscontrole'   => 'Toegangscontrole',
+			'manage_clothing'    => 'Kledingbeheer',
+			'ledenadministratie' => 'Ledenadministratie',
 		];
 
 		$wp_roles     = wp_roles();
@@ -529,7 +530,7 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ];
+		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie' ];
 		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 

@@ -120,6 +120,14 @@ function ClothingRoute({ children }) {
   );
 }
 
+function LedenadministratieRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_access_ledenadministratie}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
 
@@ -172,7 +180,14 @@ const router = createBrowserRouter([
           // People routes
           { path: 'people', element: <PeopleList /> },
           { path: 'people/jubilarissen', element: <PeopleAnniversaries /> },
-          { path: 'people/onboarding', element: <PeopleOnboarding /> },
+          {
+            path: 'people/onboarding',
+            element: (
+              <LedenadministratieRoute>
+                <PeopleOnboarding />
+              </LedenadministratieRoute>
+            ),
+          },
           { path: 'people/:id', element: <PersonDetail /> },
 
           // VOG routes - requires VOG capability

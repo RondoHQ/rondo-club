@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.3.1] - 2026-05-26
+
+### Added
+- **New `ledenadministratie` capability and `rondo_ledenadministratie` role.** Admins now control who can see the Leden → Onboarding screen and send onboarding emails. Editable in **Instellingen → Beheer → Capabilities** (Ledenadministratie column) and `Rollen` (the new base role). Administrators auto-receive the capability; `rondo_bestuur` includes it.
+- `can_access_ledenadministratie` flag on `GET /rondo/v1/user/me`.
+
+### Changed
+- **Onboarding screen is now gated behind the new `ledenadministratie` capability** (previously visible to every approved user). The sidebar item disappears for users without it; direct navigation to `/people/onboarding` yields the "Geen toegang" page. `POST /rondo/v1/people/onboarding-email` rejects callers without the capability (admins always pass).
+
 ## [33.3.0] - 2026-05-26
 
 ### Added
