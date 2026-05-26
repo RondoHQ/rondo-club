@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.3.0] - 2026-05-26
+
+### Added
+- **People list: "Nieuw lid dit seizoen" filter.** New boolean filter on the People list (under Lidmaatschap) that shows every member whose `lid-sinds` (membership start date) falls inside the current Dutch sports season (1 July through 30 June). Same season-window logic as "Afgemeld dit seizoen" but on the opposite end of the membership lifecycle. Backed by `lid_sinds_season=1` on `GET /rondo/v1/people`. Does NOT auto-include former members — the goal is current members who joined this season, not people who joined and already left.
+- When this filter is active, the People list force-shows `Lid sinds` and `Type lid` as the first two columns after Name (parallel to how the cancellation filter force-shows lid-sinds + lid-tot). User's stored Column Settings are untouched while the filter is off.
+
+### Changed
+- DRY: extracted the season-window computation in `class-rest-people.php` into a private `get_current_season_window()` helper shared by `lid_tot_season` and `lid_sinds_season`. Behaviour unchanged for the existing filter.
+
 ## [33.2.2] - 2026-05-26
 
 ### Changed

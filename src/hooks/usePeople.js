@@ -113,6 +113,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.vogReminderStatus - 'sent' or 'not_sent' to filter by reminder status
  * @param {string} filters.lidTotFuture - '1' to show only people with lid-tot date in the future
  * @param {string} filters.lidTotSeason - '1' to show only people whose lid-tot falls in the current sports season (1 Jul – 30 Jun); auto-includes former members on the server
+ * @param {string} filters.lidSindsSeason - '1' to show only people whose lid-sinds falls in the current sports season (1 Jul – 30 Jun) — i.e. new members this season
  * @param {Object} options - TanStack Query options (staleTime, enabled, etc.)
  * @returns {Object} TanStack Query result with data, isLoading, error, etc.
  */
@@ -142,6 +143,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     include_former: filters.includeFormer || null,
     lid_tot_future: filters.lidTotFuture || null,
     lid_tot_season: filters.lidTotSeason || null,
+    lid_sinds_season: filters.lidSindsSeason || null,
     spelactiviteit_no_team: filters.spelactiviteitNoTeam || null,
     onboarding_new_members: filters.onboardingNewMembers || null,
     onboarding_new_volunteers: filters.onboardingNewVolunteers || null,
