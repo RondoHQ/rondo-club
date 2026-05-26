@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `rondo_finance_credit_email_subject` option + settings UI field for configuring the credit invoice email subject (default: `Creditfactuur {factuur_nummer} - {organisatie_naam}`).
 
+## [33.1.1] - 2026-05-26
+
+### Changed
+- When the "Afgemeld dit seizoen" filter is active, the People list now force-shows `Lid sinds` and `Lid tot` as the first two columns after Name. User's stored Column Settings are untouched — the override only applies while the filter is on, so the matching reason is always visible without manual column tweaking.
+
 ## [33.1.0] - 2026-05-26
 
 ### Added
