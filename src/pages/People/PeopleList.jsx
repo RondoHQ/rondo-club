@@ -833,14 +833,18 @@ export default function PeopleList() {
   }, []);
 
   const filterColumns = useMemo(() => [
-    createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
-    createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
-    createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen' }),
-    createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '' }),
+    // Lidmaatschap — who counts as a member right now / cancellations
+    createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+
+    // Persoon — birth/age/category attributes
     createColumn({
       id: 'birth_year', header: 'Geboortejaar', filterType: FILTER_TYPES.SELECT,
       filterOptions: availableBirthYears.map(y => ({ value: String(y), label: String(y) })),
       getFilterLabel: (val) => `Geboren ${val}`,
+      filterSection: 'Persoon',
     }),
     createColumn({
       id: 'birthday_month', header: 'Verjaardagmaand', filterType: FILTER_TYPES.SELECT,
@@ -875,7 +879,21 @@ export default function PeopleList() {
         };
         return `Verjaardag: ${monthLabels[val] || val}`;
       },
+      filterSection: 'Persoon',
     }),
+    createColumn({
+      id: 'type_lid', header: 'Type lid', filterType: FILTER_TYPES.SELECT,
+      filterOptions: filterOptions?.member_types?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+      getFilterLabel: (val) => `Type: ${val}`,
+      filterSection: 'Persoon',
+    }),
+    createColumn({
+      id: 'leeftijdsgroep', header: 'Leeftijdsgroep', filterType: FILTER_TYPES.SELECT,
+      filterOptions: filterOptions?.age_groups?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+      filterSection: 'Persoon',
+    }),
+
+    // Activiteit — recent changes
     createColumn({
       id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
       filterOptions: [
@@ -883,30 +901,21 @@ export default function PeopleList() {
         { value: '90', label: 'Laatste 90 dagen' }, { value: '365', label: 'Laatste jaar' },
       ],
       getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
+      filterSection: 'Activiteit',
     }),
+
+    // Vrijwilliger & VOG
     createColumn({
       id: 'vrijwilliger', header: 'Huidig vrijwilliger', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
       getFilterLabel: (val) => `Vrijwilliger: ${val === '1' ? 'Ja' : 'Nee'}`,
-    }),
-    createColumn({
-      id: 'blokkade', header: 'Financiële blokkade', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `Blokkade: ${val === '1' ? 'Ja' : 'Nee'}`,
-    }),
-    createColumn({
-      id: 'type_lid', header: 'Type lid', filterType: FILTER_TYPES.SELECT,
-      filterOptions: filterOptions?.member_types?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
-      getFilterLabel: (val) => `Type: ${val}`,
-    }),
-    createColumn({
-      id: 'leeftijdsgroep', header: 'Leeftijdsgroep', filterType: FILTER_TYPES.SELECT,
-      filterOptions: filterOptions?.age_groups?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
+      filterSection: 'Vrijwilliger & VOG',
     }),
     createColumn({
       id: 'foto_missing', header: 'Foto datum', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ontbreekt' }],
       getFilterLabel: () => 'Foto ontbreekt',
+      filterSection: 'Vrijwilliger & VOG',
     }),
     createColumn({
       id: 'vog_datum', header: 'VOG datum', filterType: FILTER_TYPES.SELECT,
@@ -916,6 +925,15 @@ export default function PeopleList() {
         { value: 'older_5', label: 'Ouder dan 5 jaar' },
       ],
       getFilterLabel: (val) => ({ missing: 'VOG ontbreekt', older_3: 'VOG ouder dan 3 jaar', older_5: 'VOG ouder dan 5 jaar' }[val] || val),
+      filterSection: 'Vrijwilliger & VOG',
+    }),
+
+    // Administratief
+    createColumn({
+      id: 'blokkade', header: 'Financiële blokkade', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Blokkade: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Administratief',
     }),
   ], [availableBirthYears, filterOptions]);
 

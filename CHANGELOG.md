@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.2.1] - 2026-05-26
+
+### Changed
+- **People list filter dropdown is now grouped + two-column.** Filters are organised into named sections (Lidmaatschap / Persoon / Activiteit / Vrijwilliger & VOG / Administratief) and laid out in a two-column grid on screens ≥ 640px (single column below). The panel widens from 256px → 576px on roomy viewports, caps at 80vh with internal scroll, and clamps its left edge so the wider panel can't run off the right side of the viewport. Resolves the "too tall to fit on a laptop screen" complaint without losing any filters.
+- `createColumn()` accepts an optional `filterSection` argument (surfaced as `meta.filterSection`) — columns without a section land in a default "Overige" group. Backwards-compatible: existing consumers (NogTeFactureren, CommissiesList, PeopleAnniversaries) still render correctly without sections.
+
 ## [33.2.0] - 2026-05-26
 
 ### Added

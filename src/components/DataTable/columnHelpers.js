@@ -21,6 +21,7 @@ export const FILTER_TYPES = {
  * @param {function} [config.filterFn] - Custom TanStack filter function (overrides default)
  * @param {function} [config.getFilterLabel] - Returns display label for active filter chip: (value) => string
  * @param {string} [config.filterLabel] - Override column header in filter dropdown/chip
+ * @param {string} [config.filterSection] - Optional section heading to group this filter under in the FilterDropdown. Filters without a section land in an "Overige" group.
  * @param {boolean} [config.sortable=true] - Whether the column supports sorting
  * @param {boolean} [config.defaultHidden=false] - Hide column by default
  * @param {boolean} [config.enableHiding=true] - Whether column appears in column picker (false for action columns)
@@ -39,6 +40,7 @@ export function createColumn({
   filterFn: customFilterFn,
   getFilterLabel,
   filterLabel,
+  filterSection = null,
   sortable = true,
   defaultHidden = false,
   enableHiding = true,
@@ -57,6 +59,7 @@ export function createColumn({
       filterOptions,
       getFilterLabel: getFilterLabel || null,
       filterLabel: filterLabel || header,
+      filterSection,
       defaultHidden,
       className,
       headerClassName,
