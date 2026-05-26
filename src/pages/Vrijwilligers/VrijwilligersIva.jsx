@@ -2,15 +2,33 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Wine, Check, X, ExternalLink, Upload } from 'lucide-react';
-import { wpApi, prmApi } from '@/api/client';
+import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 
 const TABS = [
-  { id: 'pending', label: 'Wacht op goedkeuring' },
-  { id: 'approved', label: 'Goedgekeurd' },
+  { id: 'pending',  label: 'Wacht op goedkeuring' },
+  { id: 'valid',    label: 'Geldig' },
+  { id: 'expired',  label: 'Verlopen' },
   { id: 'missing',  label: 'Niet ingeleverd' },
 ];
+
+// Bestuursbesluit 2026-05-26: IVA-certificaten zijn 5 jaar geldig.
+const IVA_VALIDITY_YEARS = 5;
+
+function ivaExpiryDate(datum) {
+  if (!datum) return null;
+  const parsed = new Date(datum);
+  if (Number.isNaN(parsed.getTime())) return null;
+  parsed.setFullYear(parsed.getFullYear() + IVA_VALIDITY_YEARS);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function isExpired(datum) {
+  const expiry = ivaExpiryDate(datum);
+  if (!expiry) return false;
+  return expiry < new Date().toISOString().slice(0, 10);
+}
 
 function loadPeopleWithIvaFields() {
   // Pull the full people list once; filter client-side. People list is small enough
@@ -19,10 +37,9 @@ function loadPeopleWithIvaFields() {
 }
 
 function approveIva(personId, approve) {
-  // Person updates go through the standard wp/v2/people endpoint.
-  return wpApi.updatePerson(personId, {
-    meta: { 'iva-approved': approve },
-  });
+  // Dedicated endpoint — gated on the rondo_iva_approve capability per the
+  // 2026-05-26 board decision (only bestuurslid kantine can approve).
+  return prmApi.approveIva(personId, approve);
 }
 
 export default function VrijwilligersIva() {
@@ -47,7 +64,8 @@ export default function VrijwilligersIva() {
 
   const buckets = useMemo(() => {
     const pending = [];
-    const approved = [];
+    const valid = [];
+    const expired = [];
     const missing = [];
     for (const person of people) {
       const datum = person.datum_iva || person['datum-iva'] || person.meta?.['datum-iva'] || '';
@@ -56,13 +74,15 @@ export default function VrijwilligersIva() {
 
       if (!datum && !cert) {
         missing.push(person);
-      } else if (isApproved) {
-        approved.push(person);
-      } else {
+      } else if (!isApproved || !datum) {
         pending.push(person);
+      } else if (isExpired(datum)) {
+        expired.push(person);
+      } else {
+        valid.push(person);
       }
     }
-    return { pending, approved, missing };
+    return { pending, valid, expired, missing };
   }, [people]);
 
   const active = buckets[tab] || [];
@@ -109,6 +129,7 @@ export default function VrijwilligersIva() {
             <tr>
               <th className="px-4 py-2">Naam</th>
               <th className="px-4 py-2">Datum IVA</th>
+              <th className="px-4 py-2">Verloopt</th>
               <th className="px-4 py-2">Certificaat</th>
               <th className="px-4 py-2">Status</th>
               <th className="px-4 py-2 text-right">Acties</th>
@@ -116,11 +137,12 @@ export default function VrijwilligersIva() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {isLoading ? (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Laden…</td></tr>
             ) : active.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+              <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                 {tab === 'pending' && 'Geen IVA-certificaten wachten op goedkeuring.'}
-                {tab === 'approved' && 'Nog niemand heeft een goedgekeurd IVA-certificaat.'}
+                {tab === 'valid' && 'Nog niemand heeft een geldig IVA-certificaat.'}
+                {tab === 'expired' && 'Geen verlopen IVA-certificaten.'}
                 {tab === 'missing' && 'Iedereen heeft minimaal iets ingeleverd.'}
               </td></tr>
             ) : (
@@ -129,6 +151,8 @@ export default function VrijwilligersIva() {
                 const isApproved = !!(person['iva-approved'] || person.iva_approved || person.meta?.['iva-approved']);
                 const cert = person['iva-certificaat'] || person.iva_certificaat || person.acf?.['iva-certificaat'];
                 const certUrl = typeof cert === 'object' ? (cert?.url || cert?.link) : (typeof cert === 'string' ? cert : '');
+                const expiry  = ivaExpiryDate(datum);
+                const expired = isApproved && isExpired(datum);
 
                 return (
                   <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
@@ -139,6 +163,13 @@ export default function VrijwilligersIva() {
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
                       {datum ? format(datum, 'dd-MM-yyyy') : <span className="text-gray-400">—</span>}
+                    </td>
+                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
+                      {expiry
+                        ? <span className={expired ? 'text-red-700 dark:text-red-300' : ''}>
+                            {format(expiry, 'dd-MM-yyyy')}
+                          </span>
+                        : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-4 py-2">
                       {certUrl ? (
@@ -151,11 +182,13 @@ export default function VrijwilligersIva() {
                       )}
                     </td>
                     <td className="px-4 py-2">
-                      {isApproved
-                        ? <span className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Goedgekeurd</span>
-                        : datum || certUrl
-                          ? <span className="text-amber-700 dark:text-amber-400 text-xs font-medium">Wacht op review</span>
-                          : <span className="text-gray-500 text-xs">Niet ingeleverd</span>
+                      {expired
+                        ? <span className="text-red-700 dark:text-red-300 text-xs font-medium">Verlopen</span>
+                        : isApproved
+                          ? <span className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Geldig</span>
+                          : datum || certUrl
+                            ? <span className="text-amber-700 dark:text-amber-400 text-xs font-medium">Wacht op review</span>
+                            : <span className="text-gray-500 text-xs">Niet ingeleverd</span>
                       }
                     </td>
                     <td className="px-4 py-2 text-right">

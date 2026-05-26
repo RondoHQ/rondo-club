@@ -23,6 +23,7 @@ class UserRoles {
 	const CLOTHING_CAPABILITY           = 'manage_clothing';
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
 	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
+	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
 
 	/**
 	 * WordPress option key for admin-created custom roles.
@@ -44,10 +45,11 @@ class UserRoles {
 		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
 		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
 		'rondo_vrijwilligers'      => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
+		'rondo_iva_approver'       => [ 'Rondo IVA Goedkeurder (Bestuurslid Kantine)', [ 'rondo_iva_approve', 'vrijwilligers' ] ],
 		'rondo_pool_schoonmaak'    => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'  => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'     => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers' ] ],
+		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	public function __construct() {
@@ -234,6 +236,7 @@ class UserRoles {
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
+			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
 		}
 	}
 
@@ -251,6 +254,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
+			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
 		}
 
 		foreach ( self::get_all_roles() as $slug => $_ ) {

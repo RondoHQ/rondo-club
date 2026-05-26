@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.6.0] - 2026-05-26
+
+### Added — Volunteer Policy scheduling core + sancties (Fase C & E)
+
+Implements every roadmap item that the 2026-05-26 bestuursvergadering unblocked.
+
+- **Multi-child scaling (#6).** `VolunteerEligibilityService` now applies the contribution-discount rule: kid 1 = 2 diensten, kid 2 = 1,5 (75%), kid 3+ = 1 elk, floor-rounded. Each gezin unit carries a `child_count` plus the scaled `required_count`. The single-person resolver merges all youth children before scaling so a parent of 3 kids sees the full 4-diensten obligation.
+- **IVA 5-year validity (#9).** New `Rondo\Volunteer\IvaStatus` helper with status enum (missing / pending / valid / expired), `expires_at()` and `needs_renewal_reminder()` (3-month window). New REST: `GET /rondo/v1/iva/{person_id}/status`, `POST /rondo/v1/iva/{person_id}/approve` (replaces the previous direct ACF write).
+- **`rondo_iva_approve` capability + `rondo_iva_approver` role** for the bestuurslid kantine. Administrator and `rondo_bestuur` inherit it. IVA approval endpoint is gated on this cap.
+- **IVA admin UI extended:** new "Geldig" / "Verlopen" tabs, dedicated "Verloopt" column with red highlighting when expired. Approval uses the new dedicated endpoint.
+- **`VolunteerObligationCalculator` service (#6).** Per-unit counter: required / completed / pending / no-show counts + a status bucket (voldaan / op-weg / risico / geen-actie). Transient cache (`rondo_vobligation_*`, 5 min TTL) auto-invalidated by shift completion and no-show events. Aggregate dashboard stats too.
+- **No-show endpoint (#6).** `POST /rondo/v1/shifts/{id}/no-show` (+ `revert=true` to undo). 72-hour window after `end_datetime` is enforced. Fires `rondo_volunteer_no_show_marked` action.
+- **Hourly shift-completion cron (#6).** `rondo_complete_shifts` flips shifts past `end_datetime + 1h` to `voltooid`, clears obligation cache.
+- **`VolunteerFineGenerator` (#7).** Hooks `rondo_volunteer_no_show_marked` and creates a €30 `rondo_invoice` with `invoice_type=volunteer_fine`, routed to the primary parent (first `relationship_type=parent` entry on the child's repeater) or the player themselves for O17+. Idempotent — back-references the shift to prevent double-billing. New invoice-number prefix `V` (e.g. `2026V0001`).
+- **Daily `ShiftTemplateExpander` cron (#3b).** Rolls out `shift_template` records into concrete `dienst_shift` posts for the next 84 days. Idempotent — keyed on (template_id, start_datetime).
+- **`GET /rondo/v1/volunteer-obligations`** — surfaces the decorated units + aggregate dashboard stats consumed by the Vrijwilligers dashboard.
+
+### Changed
+- `invoice_type` enum on `rondo_invoice` accepts `volunteer_fine` (was `discipline|membership|manual`). All REST validators and the InvoiceNumbering format map updated accordingly.
+
 ## [33.5.0] - 2026-05-26
 
 ### Added — Volunteer Policy admin section (Fase B)

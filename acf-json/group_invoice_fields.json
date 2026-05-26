@@ -11,7 +11,8 @@
             "required": 0,
             "choices": {
                 "discipline": "Tuchtzaak",
-                "membership": "Lidmaatschapsbijdrage"
+                "membership": "Lidmaatschapsbijdrage",
+                "volunteer_fine": "Vrijwilligersboete"
             },
             "default_value": "discipline",
             "allow_null": 1,

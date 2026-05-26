@@ -16,11 +16,16 @@
  *              (in te vullen door één of meerdere ouders samen)
  *   - SPELER : one obligation per O17+ player (vervangt de ouderplicht)
  *
- * NOTE — multi-child scaling for the parent obligation is still a board decision
- * (#6 in VOLUNTEER-POLICY-ROADMAP). The current implementation uses the
- * conservative per-gezin default: one obligation per huishouden regardless of
- * how many JO15- children live there. When the board picks a rule we extend
- * `required_count_for_unit()` accordingly.
+ * Multi-child scaling (bestuursbesluit 2026-05-26): per kind tellend met
+ * contributie-korting voor opvolgende kinderen. Kid 1 = 2, kid 2 = 1.5 (75%),
+ * kid 3 en verder = 1 (50%). Resultaat wordt naar beneden afgerond (floor) —
+ * in voordeel van het lid, consistent met "korting"-intentie.
+ *
+ *   1 kind  → 2 diensten
+ *   2 kids  → floor(2 + 1.5)         = 3
+ *   3 kids  → floor(2 + 1.5 + 1)     = 4
+ *   4 kids  → floor(2 + 1.5 + 1 + 1) = 5
+ *   n (≥3)  → floor(1.5 + n)         = n + 1
  *
  * @package Rondo\Volunteer
  */
@@ -52,9 +57,16 @@ class VolunteerEligibilityService {
 	const ADULT_MIN_AGE = 17;
 
 	/**
-	 * Base obligation count per unit per season. Multi-child scaling will adjust this.
+	 * Base obligation count per kind for the parent duty.
 	 */
 	const BASE_OBLIGATION = 2;
+
+	/**
+	 * Multi-child contribution discount for the parent duty.
+	 * Kid 1: 100% (2 diensten), Kid 2: 75% (1.5), Kid 3+: 50% (1 each).
+	 * Indexed by 1-based child position; positions beyond the array fall back to the last value.
+	 */
+	private const CHILD_OBLIGATION_FACTORS = [ 1.0, 0.75, 0.5 ];
 
 	/**
 	 * Get every eligible unit for a given season.
@@ -133,7 +145,48 @@ class VolunteerEligibilityService {
 			}
 		}
 
+		// Apply multi-child scaling — required_count depends on the FINAL number
+		// of JO15- triggers in each gezin, which we only know after merging.
+		foreach ( $gezin_units as &$unit ) {
+			$child_count            = count( $unit['trigger_person_ids'] );
+			$unit['required_count'] = self::calculate_gezin_required_count( $child_count );
+			$unit['child_count']    = $child_count;
+		}
+		unset( $unit );
+
 		return array_values( array_merge( $gezin_units, $speler_units ) );
+	}
+
+	/**
+	 * Compute the parent obligation for a gezin given the number of JO15- children.
+	 *
+	 * Multi-child scaling (bestuursbesluit 2026-05-26): per kind tellend met
+	 * contributie-korting. Kid 1 = 100%, kid 2 = 75%, kid 3+ = 50% each.
+	 * Resultaat naar beneden afgerond (floor).
+	 *
+	 *   1 kind  → 2
+	 *   2 kids  → floor(2 + 1.5)         = 3
+	 *   3 kids  → floor(2 + 1.5 + 1)     = 4
+	 *   4 kids  → floor(2 + 1.5 + 1 + 1) = 5
+	 *
+	 * @param int $child_count Number of JO15- children triggering the gezin's plicht.
+	 * @return int Floor-rounded total required diensten for the gezin this season.
+	 */
+	public static function calculate_gezin_required_count( int $child_count ): int {
+		if ( $child_count <= 0 ) {
+			return 0;
+		}
+
+		$factors = self::CHILD_OBLIGATION_FACTORS;
+		$tail    = end( $factors ); // factor used for children beyond the configured tier list
+
+		$total = 0.0;
+		for ( $i = 1; $i <= $child_count; $i++ ) {
+			$factor = $factors[ $i - 1 ] ?? $tail;
+			$total += self::BASE_OBLIGATION * $factor;
+		}
+
+		return (int) floor( $total );
 	}
 
 	/**
@@ -161,12 +214,37 @@ class VolunteerEligibilityService {
 
 		// Adult who is not playing — could still owe via a JO15- child.
 		$children = $this->find_youth_children( $person_id );
-		if ( ! empty( $children ) ) {
-			$first_child = (int) $children[0];
-			return $this->build_gezin_unit( $first_child );
+		if ( empty( $children ) ) {
+			return null;
 		}
 
-		return null;
+		// Merge per-child units so the trigger list covers ALL youth children, then
+		// apply multi-child scaling. Otherwise an adult with 3 youth children would
+		// see "1 dienst" (single trigger) instead of "4 diensten" (3 triggers, floor).
+		$merged = null;
+		foreach ( $children as $child_id ) {
+			$child_unit = $this->build_gezin_unit( (int) $child_id );
+			if ( $child_unit === null ) {
+				continue;
+			}
+			if ( $merged === null ) {
+				$merged = $child_unit;
+				continue;
+			}
+			$merged['trigger_person_ids'] = array_values(
+				array_unique( array_merge( $merged['trigger_person_ids'], $child_unit['trigger_person_ids'] ) )
+			);
+			$merged['person_ids'] = array_values(
+				array_unique( array_merge( $merged['person_ids'], $child_unit['person_ids'] ) )
+			);
+		}
+
+		if ( $merged !== null ) {
+			$merged['child_count']    = count( $merged['trigger_person_ids'] );
+			$merged['required_count'] = self::calculate_gezin_required_count( $merged['child_count'] );
+		}
+
+		return $merged;
 	}
 
 	/**
