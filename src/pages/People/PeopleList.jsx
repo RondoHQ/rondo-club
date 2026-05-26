@@ -892,16 +892,11 @@ export default function PeopleList() {
       filterOptions: filterOptions?.age_groups?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
       filterSection: 'Persoon',
     }),
-
-    // Activiteit — recent changes
     createColumn({
-      id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [
-        { value: '7', label: 'Laatste 7 dagen' }, { value: '30', label: 'Laatste 30 dagen' },
-        { value: '90', label: 'Laatste 90 dagen' }, { value: '365', label: 'Laatste jaar' },
-      ],
-      getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
-      filterSection: 'Activiteit',
+      id: 'foto_missing', header: 'Foto datum', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ontbreekt' }],
+      getFilterLabel: () => 'Foto ontbreekt',
+      filterSection: 'Persoon',
     }),
 
     // Vrijwilliger & VOG
@@ -909,12 +904,6 @@ export default function PeopleList() {
       id: 'vrijwilliger', header: 'Huidig vrijwilliger', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
       getFilterLabel: (val) => `Vrijwilliger: ${val === '1' ? 'Ja' : 'Nee'}`,
-      filterSection: 'Vrijwilliger & VOG',
-    }),
-    createColumn({
-      id: 'foto_missing', header: 'Foto datum', filterType: FILTER_TYPES.SELECT,
-      filterOptions: [{ value: '1', label: 'Ontbreekt' }],
-      getFilterLabel: () => 'Foto ontbreekt',
       filterSection: 'Vrijwilliger & VOG',
     }),
     createColumn({
@@ -933,6 +922,15 @@ export default function PeopleList() {
       id: 'blokkade', header: 'Financiële blokkade', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
       getFilterLabel: (val) => `Blokkade: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Administratief',
+    }),
+    createColumn({
+      id: 'last_modified', header: 'Gewijzigd', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: '7', label: 'Laatste 7 dagen' }, { value: '30', label: 'Laatste 30 dagen' },
+        { value: '90', label: 'Laatste 90 dagen' }, { value: '365', label: 'Laatste jaar' },
+      ],
+      getFilterLabel: (val) => ({ '7': 'Laatste 7 dagen', '30': 'Laatste 30 dagen', '90': 'Laatste 90 dagen', '365': 'Laatste jaar' }[val] || val),
       filterSection: 'Administratief',
     }),
   ], [availableBirthYears, filterOptions]);

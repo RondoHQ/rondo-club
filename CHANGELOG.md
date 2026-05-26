@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.2.2] - 2026-05-26
+
+### Changed
+- People list filter sections re-tuned: `Foto datum` moved to **Persoon** (it's a profile attribute, not a VOG-volunteer concern) and `Gewijzigd` moved to **Administratief** (the Activiteit section is gone — recent-edits sits better with bookkeeping filters like financiële blokkade).
+
 ## [33.2.1] - 2026-05-26
 
 ### Changed
