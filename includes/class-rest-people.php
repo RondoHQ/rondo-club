@@ -111,7 +111,7 @@ class People extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'send_onboarding_emails' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_ledenadministratie_permission' ],
 				'args'                => [
 					'person_ids' => [
 						'required'          => true,

@@ -44,7 +44,7 @@ import { prmApi } from '@/api/client';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Leden', href: '/people', icon: Users },
-  { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true },
+  { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true },
   { name: 'VOG', href: '/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
@@ -74,6 +74,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
+  const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
 
   // Finance menu counters
@@ -159,6 +160,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             if (item.requiresFinancieel && !canAccessFinancieel) return false;
             if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
             if (item.requiresClothing && !canAccessClothing) return false;
+            if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
             return true;
           })
           .map((item) => {

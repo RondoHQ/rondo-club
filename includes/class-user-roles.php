@@ -14,13 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class UserRoles {
 
-	const ROLE_NAME             = 'rondo_user';
-	const ROLE_DISPLAY_NAME     = 'Rondo User';
-	const FAIRPLAY_CAPABILITY   = 'fairplay';
-	const VOG_CAPABILITY        = 'vog';
-	const FINANCIEEL_CAPABILITY = 'financieel';
-	const TOEGANG_CAPABILITY    = 'toegangscontrole';
-	const CLOTHING_CAPABILITY   = 'manage_clothing';
+	const ROLE_NAME                     = 'rondo_user';
+	const ROLE_DISPLAY_NAME             = 'Rondo User';
+	const FAIRPLAY_CAPABILITY           = 'fairplay';
+	const VOG_CAPABILITY                = 'vog';
+	const FINANCIEEL_CAPABILITY         = 'financieel';
+	const TOEGANG_CAPABILITY            = 'toegangscontrole';
+	const CLOTHING_CAPABILITY           = 'manage_clothing';
+	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
 
 	/**
 	 * WordPress option key for admin-created custom roles.
@@ -34,13 +35,14 @@ class UserRoles {
 	 * Custom roles are stored separately in the rondo_custom_roles wp_option.
 	 */
 	const BASE_ROLES = [
-		'rondo_user'             => [ 'Rondo User', [] ],
-		'rondo_fairplay'         => [ 'Rondo FairPlay', [ 'fairplay' ] ],
-		'rondo_vog'              => [ 'Rondo VOG', [ 'vog' ] ],
-		'rondo_financieel'       => [ 'Rondo Financieel', [ 'financieel' ] ],
-		'rondo_toegangscontrole' => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
-		'rondo_clothing_manager' => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
-		'rondo_bestuur'          => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing' ] ],
+		'rondo_user'               => [ 'Rondo User', [] ],
+		'rondo_fairplay'           => [ 'Rondo FairPlay', [ 'fairplay' ] ],
+		'rondo_vog'                => [ 'Rondo VOG', [ 'vog' ] ],
+		'rondo_financieel'         => [ 'Rondo Financieel', [ 'financieel' ] ],
+		'rondo_toegangscontrole'   => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
+		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
+		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
+		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie' ] ],
 	];
 
 	public function __construct() {
@@ -225,6 +227,7 @@ class UserRoles {
 			$admin_role->add_cap( self::FINANCIEEL_CAPABILITY );
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
+			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 		}
 	}
 
@@ -240,6 +243,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
+			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 		}
 
 		foreach ( self::get_all_roles() as $slug => $_ ) {
