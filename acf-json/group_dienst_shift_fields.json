@@ -1,0 +1,137 @@
+{
+    "key": "group_dienst_shift_fields",
+    "title": "Dienst",
+    "fields": [
+        {
+            "key": "field_dienst_shift_dienst_type",
+            "label": "Dienst type",
+            "name": "dienst_type_id",
+            "type": "post_object",
+            "instructions": "Welk type dienst is dit?",
+            "required": 1,
+            "post_type": [
+                "dienst_type"
+            ],
+            "return_format": "id",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 1
+        },
+        {
+            "key": "field_dienst_shift_template",
+            "label": "Sjabloon (optioneel)",
+            "name": "template_id",
+            "type": "post_object",
+            "instructions": "Welke template heeft deze shift uitgerold? Leeg = ad-hoc.",
+            "post_type": [
+                "shift_template"
+            ],
+            "return_format": "id",
+            "allow_null": 1,
+            "multiple": 0,
+            "ui": 1
+        },
+        {
+            "key": "field_dienst_shift_start_datetime",
+            "label": "Start",
+            "name": "start_datetime",
+            "type": "date_time_picker",
+            "instructions": "Wanneer begint de shift?",
+            "required": 1,
+            "display_format": "d-m-Y H:i",
+            "return_format": "Y-m-d H:i:s",
+            "first_day": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_shift_end_datetime",
+            "label": "Einde",
+            "name": "end_datetime",
+            "type": "date_time_picker",
+            "instructions": "Wanneer eindigt de shift?",
+            "required": 1,
+            "display_format": "d-m-Y H:i",
+            "return_format": "Y-m-d H:i:s",
+            "first_day": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_shift_capacity",
+            "label": "Capaciteit",
+            "name": "capacity",
+            "type": "number",
+            "instructions": "Aantal vrijwilligers benodigd. Snapshot van template op moment van expansie.",
+            "default_value": 1,
+            "min": 0,
+            "step": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_shift_status",
+            "label": "Status",
+            "name": "status",
+            "type": "select",
+            "instructions": "Huidige status van de shift.",
+            "required": 1,
+            "choices": {
+                "open": "Open",
+                "vol": "Vol",
+                "voltooid": "Voltooid",
+                "geannuleerd": "Geannuleerd"
+            },
+            "default_value": "open",
+            "return_format": "value",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0
+        },
+        {
+            "key": "field_dienst_shift_assigned_persons",
+            "label": "Toegewezen vrijwilligers",
+            "name": "assigned_persons",
+            "type": "relationship",
+            "instructions": "Personen die deze shift draaien.",
+            "post_type": [
+                "person"
+            ],
+            "filters": [
+                "search"
+            ],
+            "min": 0,
+            "max": 0,
+            "return_format": "id"
+        },
+        {
+            "key": "field_dienst_shift_notes",
+            "label": "Notities",
+            "name": "notes",
+            "type": "textarea",
+            "instructions": "Vrij toelichtingsveld.",
+            "rows": 2,
+            "new_lines": ""
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "dienst_shift"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}

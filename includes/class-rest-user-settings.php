@@ -1040,6 +1040,7 @@ class UserSettings extends Base {
 			'can_access_toegangscontrole'   => current_user_can( 'toegangscontrole' ),
 			'can_access_clothing'           => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
 			'can_access_ledenadministratie' => current_user_can( 'ledenadministratie' ) || current_user_can( 'manage_options' ),
+			'can_access_vrijwilligers'      => current_user_can( 'vrijwilligers' ) || current_user_can( 'manage_options' ),
 			'permitted_age_groups'          => \Rondo\Core\AccessControl::get_permitted_age_groups(),
 			'profile_url'                   => admin_url( 'profile.php' ),
 			'admin_url'                     => admin_url(),

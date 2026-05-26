@@ -67,6 +67,15 @@ class Capabilities extends Base {
 								return array_values( array_unique( array_map( 'sanitize_text_field', $param ) ) );
 							},
 						],
+						'staff_roles'    => [
+							'required'          => false,
+							'validate_callback' => function ( $param ) {
+								return is_array( $param );
+							},
+							'sanitize_callback' => function ( $param ) {
+								return array_values( array_unique( array_map( 'sanitize_text_field', $param ) ) );
+							},
+						],
 					],
 				],
 			]
@@ -247,8 +256,10 @@ class Capabilities extends Base {
 			[
 				'player_roles'           => \Rondo\Core\VolunteerStatus::get_player_roles(),
 				'excluded_roles'         => \Rondo\Core\VolunteerStatus::get_excluded_roles(),
+				'staff_roles'            => \Rondo\Core\VolunteerStatus::get_staff_roles(),
 				'default_player_roles'   => \Rondo\Core\VolunteerStatus::get_default_player_roles(),
 				'default_excluded_roles' => \Rondo\Core\VolunteerStatus::get_default_excluded_roles(),
+				'default_staff_roles'    => \Rondo\Core\VolunteerStatus::get_default_staff_roles(),
 			]
 		);
 	}
@@ -262,6 +273,7 @@ class Capabilities extends Base {
 	public function update_volunteer_role_settings( $request ) {
 		$player_roles   = $request->get_param( 'player_roles' );
 		$excluded_roles = $request->get_param( 'excluded_roles' );
+		$staff_roles    = $request->get_param( 'staff_roles' );
 
 		if ( $player_roles !== null ) {
 			update_option( \Rondo\Core\VolunteerStatus::OPTION_PLAYER_ROLES, $player_roles );
@@ -271,6 +283,10 @@ class Capabilities extends Base {
 			update_option( \Rondo\Core\VolunteerStatus::OPTION_EXCLUDED_ROLES, $excluded_roles );
 		}
 
+		if ( $staff_roles !== null ) {
+			update_option( \Rondo\Core\VolunteerStatus::OPTION_STAFF_ROLES, $staff_roles );
+		}
+
 		// Trigger volunteer status recalculation for all people.
 		$people_recalculated = $this->trigger_vog_recalculation();
 
@@ -278,6 +294,7 @@ class Capabilities extends Base {
 			[
 				'player_roles'        => \Rondo\Core\VolunteerStatus::get_player_roles(),
 				'excluded_roles'      => \Rondo\Core\VolunteerStatus::get_excluded_roles(),
+				'staff_roles'         => \Rondo\Core\VolunteerStatus::get_staff_roles(),
 				'people_recalculated' => $people_recalculated,
 			]
 		);

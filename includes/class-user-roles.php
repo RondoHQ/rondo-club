@@ -22,6 +22,7 @@ class UserRoles {
 	const TOEGANG_CAPABILITY            = 'toegangscontrole';
 	const CLOTHING_CAPABILITY           = 'manage_clothing';
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
+	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
 
 	/**
 	 * WordPress option key for admin-created custom roles.
@@ -42,7 +43,11 @@ class UserRoles {
 		'rondo_toegangscontrole'   => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
 		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
 		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
-		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie' ] ],
+		'rondo_vrijwilligers'      => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
+		'rondo_pool_schoonmaak'    => [ 'Rondo Schoonmaakpoule', [] ],
+		'rondo_pool_activiteiten'  => [ 'Rondo Activiteitenpoule', [] ],
+		'rondo_pool_werkploeg'     => [ 'Rondo Werkploeg terreinonderhoud', [] ],
+		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers' ] ],
 	];
 
 	public function __construct() {
@@ -228,6 +233,7 @@ class UserRoles {
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
+			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 		}
 	}
 
@@ -244,6 +250,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
+			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
 		}
 
 		foreach ( self::get_all_roles() as $slug => $_ ) {

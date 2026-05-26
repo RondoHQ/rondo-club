@@ -35,6 +35,15 @@ class VolunteerStatus {
 	const OPTION_EXCLUDED_ROLES = 'rondo_excluded_roles';
 
 	/**
+	 * Option key for staff roles that exempt the holder from the 2-diensten-plicht.
+	 * A person with an active work_history entry whose job_title is in this list
+	 * is treated as already volunteering enough through their staff role.
+	 *
+	 * @var string
+	 */
+	const OPTION_STAFF_ROLES = 'rondo_volunteer_staff_roles';
+
+	/**
 	 * Default player roles that do NOT count as volunteer positions.
 	 * These are actual player positions on a team.
 	 * Used as fallback when no option is set.
@@ -65,6 +74,23 @@ class VolunteerStatus {
 		'Erelid',
 		'Lid van Verdienste',
 		'Verenigingslid voor het leven (contributievrij)',
+	];
+
+	/**
+	 * Default staff roles that grant exemption from the 2-diensten-plicht.
+	 * Used as fallback when no option is set.
+	 *
+	 * @var array
+	 */
+	private const DEFAULT_STAFF_ROLES = [
+		'Trainer',
+		'Hoofdtrainer',
+		'Assistent-trainer',
+		'Leider',
+		'Teamleider',
+		'Teammanager',
+		'Coördinator',
+		'Scheidsrechter',
 	];
 
 	/**
@@ -110,6 +136,25 @@ class VolunteerStatus {
 	 */
 	public static function get_default_excluded_roles(): array {
 		return self::DEFAULT_EXCLUDED_ROLES;
+	}
+
+	/**
+	 * Get the configured staff roles (exempt from 2-diensten-plicht), with defaults as fallback.
+	 *
+	 * @return array Staff role names.
+	 */
+	public static function get_staff_roles(): array {
+		$roles = get_option( self::OPTION_STAFF_ROLES, null );
+		return is_array( $roles ) ? $roles : self::DEFAULT_STAFF_ROLES;
+	}
+
+	/**
+	 * Get the default staff roles.
+	 *
+	 * @return array Default staff role names.
+	 */
+	public static function get_default_staff_roles(): array {
+		return self::DEFAULT_STAFF_ROLES;
 	}
 
 	/**

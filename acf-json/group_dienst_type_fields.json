@@ -1,0 +1,115 @@
+{
+    "key": "group_dienst_type_fields",
+    "title": "Dienst Type",
+    "fields": [
+        {
+            "key": "field_dienst_type_description",
+            "label": "Omschrijving",
+            "name": "description",
+            "type": "textarea",
+            "instructions": "Korte uitleg van wat deze dienst inhoudt. Zichtbaar voor vrijwilligers bij het aanmelden.",
+            "rows": 3,
+            "new_lines": ""
+        },
+        {
+            "key": "field_dienst_type_vog_required",
+            "label": "VOG vereist",
+            "name": "vog_required",
+            "type": "true_false",
+            "instructions": "Aanvinken als deze dienst een geldige VOG vereist.",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_type_iva_required",
+            "label": "IVA vereist",
+            "name": "iva_required",
+            "type": "true_false",
+            "instructions": "Aanvinken als deze dienst een IVA-certificaat vereist (alcohol).",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_type_sleutel_involved",
+            "label": "Sleutel betrokken",
+            "name": "sleutel_involved",
+            "type": "true_false",
+            "instructions": "Aanvinken als deze dienst met sleutels werkt.",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_type_default_capacity",
+            "label": "Standaard capaciteit",
+            "name": "default_capacity",
+            "type": "number",
+            "instructions": "Standaard aantal personen per shift. 0 = onbeperkt.",
+            "default_value": 1,
+            "min": 0,
+            "step": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_type_color",
+            "label": "Kleur",
+            "name": "color",
+            "type": "color_picker",
+            "instructions": "Kleur voor de kalender-UI.",
+            "default_value": "#6b7280",
+            "wrapper": {
+                "width": "33"
+            }
+        },
+        {
+            "key": "field_dienst_type_required_pool",
+            "label": "Vereiste poule",
+            "name": "required_pool",
+            "type": "post_object",
+            "instructions": "Optioneel: alleen leden van deze poule kunnen aanmelden (bv. Schoonmaakpoule).",
+            "post_type": [
+                "commissie"
+            ],
+            "return_format": "id",
+            "allow_null": 1,
+            "multiple": 0,
+            "ui": 1,
+            "wrapper": {
+                "width": "33"
+            }
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "dienst_type"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}

@@ -31,6 +31,9 @@ class PostTypes {
 		$this->register_discipline_case_post_type();
 		$this->register_invoice_statuses();
 		$this->register_invoice_post_type();
+		$this->register_dienst_type_post_type();
+		$this->register_shift_template_post_type();
+		$this->register_dienst_shift_post_type();
 	}
 
 	/**
@@ -80,6 +83,11 @@ class PostTypes {
 			'vog_reminder_sent_date',
 			'vrijwilliger-sinds',
 			'team',
+			'datum-iva',
+			'vergoeding_reden',
+			'vergoeding_tot',
+			'vrijstelling_reden',
+			'vrijstelling_seizoen',
 		];
 		foreach ( $person_string_meta as $key ) {
 			register_post_meta(
@@ -90,6 +98,26 @@ class PostTypes {
 					'single'            => true,
 					'show_in_rest'      => true,
 					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
+		}
+
+		// Person meta: boolean flags exposed in REST.
+		$person_bool_meta = [
+			'betaalde_vrijwilliger',
+			'vrijgesteld_handmatig',
+			'iva-approved',
+		];
+		foreach ( $person_bool_meta as $key ) {
+			register_post_meta(
+				'person',
+				$key,
+				[
+					'type'              => 'boolean',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'default'           => false,
+					'sanitize_callback' => 'rest_sanitize_boolean',
 				]
 			);
 		}
@@ -595,5 +623,296 @@ class PostTypes {
 		];
 
 		register_post_type( 'rondo_invoice', $args );
+	}
+
+	/**
+	 * Register Dienst Type CPT
+	 *
+	 * Catalog of volunteer task categories (terreinmeester, kantine bar/keuken,
+	 * schoonmaak, terreinonderhoud, …). Admin-only — there is no public view.
+	 * Consumed by shift_template / dienst_shift for scheduling.
+	 */
+	private function register_dienst_type_post_type() {
+		$labels = [
+			'name'               => _x( 'Dienst Types', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Dienst Type', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Dienst Types', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Dienst Type', 'rondo' ),
+			'edit_item'          => __( 'Edit Dienst Type', 'rondo' ),
+			'new_item'           => __( 'New Dienst Type', 'rondo' ),
+			'view_item'          => __( 'View Dienst Type', 'rondo' ),
+			'search_items'       => __( 'Search Dienst Types', 'rondo' ),
+			'not_found'          => __( 'No dienst types found', 'rondo' ),
+			'not_found_in_trash' => __( 'No dienst types found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Dienst Types', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'dienst-types',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 11,
+			'menu_icon'          => 'dashicons-clipboard',
+			'supports'           => [ 'title', 'author' ],
+		];
+
+		register_post_type( 'dienst_type', $args );
+
+		$dienst_type_bool_meta = [
+			'vog_required',
+			'iva_required',
+			'sleutel_involved',
+		];
+		foreach ( $dienst_type_bool_meta as $key ) {
+			register_post_meta(
+				'dienst_type',
+				$key,
+				[
+					'type'              => 'boolean',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'default'           => false,
+					'sanitize_callback' => 'rest_sanitize_boolean',
+				]
+			);
+		}
+
+		register_post_meta(
+			'dienst_type',
+			'default_capacity',
+			[
+				'type'              => 'integer',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => 1,
+				'sanitize_callback' => 'absint',
+			]
+		);
+
+		register_post_meta(
+			'dienst_type',
+			'color',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => '#6b7280',
+				'sanitize_callback' => 'sanitize_hex_color',
+			]
+		);
+
+		register_post_meta(
+			'dienst_type',
+			'description',
+			[
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => '',
+				'sanitize_callback' => 'sanitize_textarea_field',
+			]
+		);
+
+		register_post_meta(
+			'dienst_type',
+			'required_pool',
+			[
+				'type'              => 'integer',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => 0,
+				'sanitize_callback' => 'absint',
+			]
+		);
+	}
+
+	/**
+	 * Register Shift Template CPT
+	 *
+	 * Seasonal recurring shift rules (e.g. "every Saturday 7:30–12, Kantine bar,
+	 * capacity 2"). Template-expander cron expands these into concrete
+	 * `dienst_shift` records for an upcoming window.
+	 */
+	private function register_shift_template_post_type() {
+		$labels = [
+			'name'               => _x( 'Shift Templates', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Shift Template', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Shift Templates', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Shift Template', 'rondo' ),
+			'edit_item'          => __( 'Edit Shift Template', 'rondo' ),
+			'new_item'           => __( 'New Shift Template', 'rondo' ),
+			'view_item'          => __( 'View Shift Template', 'rondo' ),
+			'search_items'       => __( 'Search Shift Templates', 'rondo' ),
+			'not_found'          => __( 'No shift templates found', 'rondo' ),
+			'not_found_in_trash' => __( 'No shift templates found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Shift Templates', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'shift-templates',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 12,
+			'menu_icon'          => 'dashicons-calendar-alt',
+			'supports'           => [ 'title', 'author' ],
+		];
+
+		register_post_type( 'shift_template', $args );
+
+		$shift_template_int_meta = [
+			'dienst_type_id',
+			'day_of_week',
+			'capacity',
+		];
+		foreach ( $shift_template_int_meta as $key ) {
+			register_post_meta(
+				'shift_template',
+				$key,
+				[
+					'type'              => 'integer',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'absint',
+				]
+			);
+		}
+
+		$shift_template_string_meta = [
+			'start_time',
+			'end_time',
+			'active_from',
+			'active_until',
+			'notes',
+		];
+		foreach ( $shift_template_string_meta as $key ) {
+			register_post_meta(
+				'shift_template',
+				$key,
+				[
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
+		}
+	}
+
+	/**
+	 * Register Dienst Shift CPT
+	 *
+	 * A concrete scheduled volunteer shift in time. Either expanded from a
+	 * shift_template by the cron expander, or created ad-hoc by an admin
+	 * (e.g. an evening match that needs extra bar staff).
+	 */
+	private function register_dienst_shift_post_type() {
+		$labels = [
+			'name'               => _x( 'Diensten', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Dienst', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Diensten', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Dienst', 'rondo' ),
+			'edit_item'          => __( 'Edit Dienst', 'rondo' ),
+			'new_item'           => __( 'New Dienst', 'rondo' ),
+			'view_item'          => __( 'View Dienst', 'rondo' ),
+			'search_items'       => __( 'Search Diensten', 'rondo' ),
+			'not_found'          => __( 'No diensten found', 'rondo' ),
+			'not_found_in_trash' => __( 'No diensten found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Diensten', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'dienst-shifts',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 13,
+			'menu_icon'          => 'dashicons-clock',
+			'supports'           => [ 'title', 'author' ],
+		];
+
+		register_post_type( 'dienst_shift', $args );
+
+		$shift_int_meta = [
+			'dienst_type_id',
+			'template_id',
+			'capacity',
+		];
+		foreach ( $shift_int_meta as $key ) {
+			register_post_meta(
+				'dienst_shift',
+				$key,
+				[
+					'type'              => 'integer',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'absint',
+				]
+			);
+		}
+
+		$shift_string_meta = [
+			'start_datetime',
+			'end_datetime',
+			'status',
+			'notes',
+		];
+		foreach ( $shift_string_meta as $key ) {
+			register_post_meta(
+				'dienst_shift',
+				$key,
+				[
+					'type'              => 'string',
+					'single'            => true,
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+				]
+			);
+		}
+
+		// Assigned persons as a serialized array of post IDs.
+		register_post_meta(
+			'dienst_shift',
+			'assigned_persons',
+			[
+				'type'         => 'array',
+				'single'       => true,
+				'show_in_rest' => [
+					'schema' => [
+						'type'  => 'array',
+						'items' => [ 'type' => 'integer' ],
+					],
+				],
+				'default'      => [],
+			]
+		);
 	}
 }
