@@ -101,6 +101,11 @@ class UserSettings extends Base {
 			'type'  => 'date',
 		],
 		[
+			'id'    => 'lid-tot',
+			'label' => 'Lid tot',
+			'type'  => 'date',
+		],
+		[
 			'id'    => 'vrijwilliger-sinds',
 			'label' => 'Vrijwilliger sinds',
 			'type'  => 'date',

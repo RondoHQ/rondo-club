@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `rondo_finance_credit_email_subject` option + settings UI field for configuring the credit invoice email subject (default: `Creditfactuur {factuur_nummer} - {organisatie_naam}`).
 
+## [33.1.0] - 2026-05-26
+
+### Added
+- **People list: "Afgemeld dit seizoen" filter.** New boolean filter on the People list that shows every member whose `lid-tot` (membership end date) falls inside the current Dutch sports season (1 July through 30 June). The server computes the season window from `today`: before 1 July it spans (year-1)-07-01 → year-06-30, on/after 1 July it spans year-07-01 → (year+1)-06-30. Backed by `lid_tot_season=1` on `GET /rondo/v1/people`. Auto-flips `include_former=1` on the server because Sportlink marks members as former once their `lid-tot` has passed, so without it the season's cancellations would silently disappear from the list.
+- **`Lid tot` as a list column.** Added `lid-tot` to the available Sportlink columns so it can be enabled via Column Settings, sorted on, and exported via CSV. Pairs naturally with the new filter — turn on the filter, add the column, sort by date.
+
 ## [33.0.0] - 2026-04-09
 
 ### Changed
