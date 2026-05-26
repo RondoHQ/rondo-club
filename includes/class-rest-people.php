@@ -346,6 +346,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'lid_tot_season'           => [
+						'description'       => 'Filter for people with lid-tot date in the current sports season (1 Jul – 30 Jun). 1=only this season, empty=all. Auto-includes former members.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'spelactiviteit_no_team'   => [
 						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
 						'type'              => 'string',
@@ -831,7 +840,16 @@ class People extends Base {
 		$vog_reminder_status      = $request->get_param( 'vog_reminder_status' );
 		$include_former           = $request->get_param( 'include_former' );
 		$lid_tot_future           = $request->get_param( 'lid_tot_future' );
+		$lid_tot_season           = $request->get_param( 'lid_tot_season' );
 		$spelactiviteit_no_team   = $request->get_param( 'spelactiviteit_no_team' );
+
+		// Cancellation-this-season filter implies former members must be visible:
+		// once lid-tot has passed, Sportlink flips `former_member` to '1', and the
+		// default people query hides those. Auto-flip include_former so the user
+		// sees every cancellation in the season window, not just the not-yet-expired ones.
+		if ( $lid_tot_season === '1' ) {
+			$include_former = '1';
+		}
 
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
@@ -1076,6 +1094,26 @@ class People extends Base {
 			$prepare_values[] = $today;
 		}
 
+		// Lid-tot cancelled-this-season filter (Dutch sports season: 1 Jul – 30 Jun).
+		// Window: members whose lid-tot falls inside the season that contains today.
+		if ( $lid_tot_season === '1' && $lid_tot_future !== '1' ) {
+			$today_year  = (int) gmdate( 'Y' );
+			$today_month = (int) gmdate( 'n' );
+			// Before 1 July: season runs (year-1)-07-01 .. year-06-30
+			// On/after 1 July: season runs year-07-01 .. (year+1)-06-30
+			if ( $today_month < 7 ) {
+				$season_start = ( $today_year - 1 ) . '-07-01';
+				$season_end   = $today_year . '-06-30';
+			} else {
+				$season_start = $today_year . '-07-01';
+				$season_end   = ( $today_year + 1 ) . '-06-30';
+			}
+			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} lt ON p.ID = lt.post_id AND lt.meta_key = 'lid-tot'";
+			$where_clauses[]  = "(lt.meta_value IS NOT NULL AND lt.meta_value != '' AND lt.meta_value >= %s AND lt.meta_value <= %s)";
+			$prepare_values[] = $season_start;
+			$prepare_values[] = $season_end;
+		}
+
 		// Spelactiviteit without team filter
 		// Shows people who have a spelactiviteit value but no current PLAYER role in a team.
 		// Volunteer/staff roles in teams should NOT exclude a person from this filter.
@@ -1154,6 +1192,7 @@ class People extends Base {
 				$order_clause = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
 			case 'custom_lid-sinds':
+			case 'custom_lid-tot':
 			case 'custom_vrijwilliger-sinds':
 			case 'custom_datum-foto':
 				// ACF date fields (not from Manager)
