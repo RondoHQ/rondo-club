@@ -393,6 +393,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'lid_sinds_season'          => [
+						'description'       => 'Filter for people with lid-sinds date in the current sports season (1 Jul – 30 Jun) — i.e. members who joined this season. 1=only this season, empty=all.',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'spelactiviteit_no_team'    => [
 						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
 						'type'              => 'string',
@@ -941,6 +950,7 @@ class People extends Base {
 		$include_former            = $request->get_param( 'include_former' );
 		$lid_tot_future            = $request->get_param( 'lid_tot_future' );
 		$lid_tot_season            = $request->get_param( 'lid_tot_season' );
+		$lid_sinds_season          = $request->get_param( 'lid_sinds_season' );
 		$spelactiviteit_no_team    = $request->get_param( 'spelactiviteit_no_team' );
 		$onboarding_new_members    = $request->get_param( 'onboarding_new_members' );
 		$onboarding_new_volunteers = $request->get_param( 'onboarding_new_volunteers' );
@@ -1199,21 +1209,23 @@ class People extends Base {
 		// Lid-tot cancelled-this-season filter (Dutch sports season: 1 Jul – 30 Jun).
 		// Window: members whose lid-tot falls inside the season that contains today.
 		if ( $lid_tot_season === '1' && $lid_tot_future !== '1' ) {
-			$today_year  = (int) gmdate( 'Y' );
-			$today_month = (int) gmdate( 'n' );
-			// Before 1 July: season runs (year-1)-07-01 .. year-06-30
-			// On/after 1 July: season runs year-07-01 .. (year+1)-06-30
-			if ( $today_month < 7 ) {
-				$season_start = ( $today_year - 1 ) . '-07-01';
-				$season_end   = $today_year . '-06-30';
-			} else {
-				$season_start = $today_year . '-07-01';
-				$season_end   = ( $today_year + 1 ) . '-06-30';
-			}
-			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} lt ON p.ID = lt.post_id AND lt.meta_key = 'lid-tot'";
-			$where_clauses[]  = "(lt.meta_value IS NOT NULL AND lt.meta_value != '' AND lt.meta_value >= %s AND lt.meta_value <= %s)";
-			$prepare_values[] = $season_start;
-			$prepare_values[] = $season_end;
+			[ $season_start, $season_end ] = $this->get_current_season_window();
+			$join_clauses[]                = "LEFT JOIN {$wpdb->postmeta} lt ON p.ID = lt.post_id AND lt.meta_key = 'lid-tot'";
+			$where_clauses[]               = "(lt.meta_value IS NOT NULL AND lt.meta_value != '' AND lt.meta_value >= %s AND lt.meta_value <= %s)";
+			$prepare_values[]              = $season_start;
+			$prepare_values[]              = $season_end;
+		}
+
+		// Lid-sinds new-this-season filter (Dutch sports season: 1 Jul – 30 Jun).
+		// Window: members whose lid-sinds falls inside the season that contains today.
+		// Does NOT auto-include former members — by default we want current members who joined this season,
+		// not people who joined and already cancelled.
+		if ( $lid_sinds_season === '1' ) {
+			[ $season_start, $season_end ] = $this->get_current_season_window();
+			$join_clauses[]                = "LEFT JOIN {$wpdb->postmeta} ls ON p.ID = ls.post_id AND ls.meta_key = 'lid-sinds'";
+			$where_clauses[]               = "(ls.meta_value IS NOT NULL AND ls.meta_value != '' AND ls.meta_value >= %s AND ls.meta_value <= %s)";
+			$prepare_values[]              = $season_start;
+			$prepare_values[]              = $season_end;
 		}
 
 		// Spelactiviteit without team filter
@@ -1531,6 +1543,26 @@ class People extends Base {
 	 *
 	 * @return array Filter configuration.
 	 */
+	/**
+	 * Return [start, end] dates (Y-m-d strings) for the Dutch sports season
+	 * that contains "today" — 1 July through 30 June.
+	 *
+	 * Before 1 July: season ran (year-1)-07-01 .. year-06-30
+	 * On/after 1 July: season runs year-07-01 .. (year+1)-06-30
+	 *
+	 * @return array{0:string,1:string} Tuple of [season_start, season_end].
+	 */
+	private function get_current_season_window(): array {
+		$today_year  = (int) gmdate( 'Y' );
+		$today_month = (int) gmdate( 'n' );
+
+		if ( $today_month < 7 ) {
+			return [ ( $today_year - 1 ) . '-07-01', $today_year . '-06-30' ];
+		}
+
+		return [ $today_year . '-07-01', ( $today_year + 1 ) . '-06-30' ];
+	}
+
 	private function get_dynamic_filter_config() {
 		return [
 			'age_groups'   => [

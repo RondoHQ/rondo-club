@@ -599,6 +599,7 @@ export default function PeopleList() {
   const includeFormer = searchParams.get('oudLeden') || '';
   const lidTotFuture = searchParams.get('lidTot') || '';
   const lidTotSeason = searchParams.get('lidTotSeizoen') || '';
+  const lidSindsSeason = searchParams.get('lidSindsSeizoen') || '';
   const spelactiviteitNoTeam = searchParams.get('spelactiviteitZonderTeam') || '';
 
   // Helper to update URL params
@@ -672,6 +673,10 @@ export default function PeopleList() {
     updateSearchParams({ lidTotSeizoen: value });
   }, [updateSearchParams]);
 
+  const setLidSindsSeason = useCallback((value) => {
+    updateSearchParams({ lidSindsSeizoen: value });
+  }, [updateSearchParams]);
+
   const setSpelactiviteitNoTeam = useCallback((value) => {
     updateSearchParams({ spelactiviteitZonderTeam: value });
   }, [updateSearchParams]);
@@ -724,6 +729,7 @@ export default function PeopleList() {
     includeFormer: includeFormer || null,
     lidTotFuture: lidTotFuture || null,
     lidTotSeason: lidTotSeason || null,
+    lidSindsSeason: lidSindsSeason || null,
     spelactiviteitNoTeam: spelactiviteitNoTeam || null,
   });
 
@@ -777,13 +783,19 @@ export default function PeopleList() {
   }, [preferences?.available_columns]);
 
   // Get visible columns (excluding 'name' which is always shown in a fixed position).
-  // When the "Afgemeld dit seizoen" filter is active, force lid-sinds and lid-tot to
-  // appear first — otherwise the matching reason isn't visible without the user fiddling
-  // with Column Settings. User's stored preferences are unchanged.
+  // When a season-based membership filter is active, force the relevant date columns
+  // to appear first so the matching reason is visible without fiddling with Column
+  // Settings. User's stored preferences are unchanged.
+  //   lid_tot_season   → lid-sinds, lid-tot
+  //   lid_sinds_season → lid-sinds, type-lid
   const visibleColumns = useMemo(() => {
+    let forced = [];
+    if (lidTotSeason === '1') forced = ['lid-sinds', 'lid-tot'];
+    else if (lidSindsSeason === '1') forced = ['lid-sinds', 'type-lid'];
+
     if (!preferences?.visible_columns || !preferences?.column_order) {
       // Fallback to default columns if preferences not loaded
-      return lidTotSeason === '1' ? ['lid-sinds', 'lid-tot', 'team'] : ['team'];
+      return forced.length > 0 ? [...forced, 'team'] : ['team'];
     }
 
     // Filter column_order to only visible columns, excluding 'name'
@@ -792,13 +804,12 @@ export default function PeopleList() {
       colId !== 'name' && visibleSet.has(colId)
     );
 
-    if (lidTotSeason === '1') {
-      const forced = ['lid-sinds', 'lid-tot'];
+    if (forced.length > 0) {
       return [...forced, ...cols.filter(colId => !forced.includes(colId))];
     }
 
     return cols;
-  }, [preferences?.visible_columns, preferences?.column_order, lidTotSeason]);
+  }, [preferences?.visible_columns, preferences?.column_order, lidTotSeason, lidSindsSeason]);
 
   // Get column widths from preferences
   const columnWidths = preferences?.column_widths || {};
@@ -837,6 +848,7 @@ export default function PeopleList() {
     createColumn({ id: 'include_former', header: 'Toon oud-leden', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_tot_future', header: 'Afmelding in de toekomst', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'lid_sinds_season', header: 'Nieuw lid dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Nieuw lid dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
 
     // Persoon — birth/age/category attributes
@@ -956,6 +968,7 @@ export default function PeopleList() {
     include_former: includeFormer,
     lid_tot_future: lidTotFuture,
     lid_tot_season: lidTotSeason,
+    lid_sinds_season: lidSindsSeason,
     spelactiviteit_no_team: spelactiviteitNoTeam,
     birth_year: selectedBirthYear,
     birthday_month: selectedBirthMonth,
@@ -1017,6 +1030,7 @@ export default function PeopleList() {
       case 'include_former': setIncludeFormer(value); break;
       case 'lid_tot_future': setLidTotFuture(value); break;
       case 'lid_tot_season': setLidTotSeason(value); break;
+      case 'lid_sinds_season': setLidSindsSeason(value); break;
       case 'spelactiviteit_no_team': setSpelactiviteitNoTeam(value); break;
       case 'birth_year': setSelectedBirthYear(value); break;
       case 'birthday_month': setSelectedBirthMonth(value); break;
@@ -1033,7 +1047,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setSpelactiviteitNoTeam, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1066,7 +1080,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, spelactiviteitNoTeam, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1150,6 +1164,7 @@ export default function PeopleList() {
         includeFormer: includeFormer || null,
         lidTotFuture: lidTotFuture || null,
         lidTotSeason: lidTotSeason || null,
+        lidSindsSeason: lidSindsSeason || null,
         spelactiviteitNoTeam: spelactiviteitNoTeam || null,
       });
 
