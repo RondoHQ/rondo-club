@@ -388,6 +388,11 @@ export const prmApi = {
   bulkMarkVOGJustis: (ids) => api.post('/rondo/v1/vog/bulk-mark-justis', { ids }),
   bulkSendVOGReminders: (ids) => api.post('/rondo/v1/vog/bulk-send-reminder', { ids }),
 
+  // Volunteer Policy
+  getVolunteerEligibility: (params = {}) => api.get('/rondo/v1/volunteer-eligibility', { params }),
+  getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
+  getManagedCommissies: () => api.get('/rondo/v1/managed-commissies'),
+
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',

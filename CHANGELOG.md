@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.5.0] - 2026-05-26
+
+### Added — Volunteer Policy admin section (Fase B)
+
+- **New top-level Vrijwilligers section in the sidebar** with four sub-routes:
+  - `/vrijwilligers` — Dashboard with eligibility stats (totaal, gezinnen, spelers) and quick navigation cards.
+  - `/vrijwilligers/vog` — VOG management (existing page accessible at both the legacy `/vog` and the new canonical path).
+  - `/vrijwilligers/iva` — Three-tab IVA approval queue (Wacht op goedkeuring / Goedgekeurd / Niet ingeleverd) with one-click approve/intrekken.
+  - `/vrijwilligers/diensten` — Diensttype catalog (cards with VOG/IVA/sleutel badges, capacity) + recent shifts list, links into WP admin for editing.
+  - `/vrijwilligers/vrijstellingen` — Filterable view of vrijgestelde personen by reason (commissielid / trainer-leider / betaalde vrijwilliger / handmatig).
+- **`VrijwilligersRoute` capability guard** mirrors the existing `VOGRoute` / `FinancieelRoute` pattern; uses `can_access_vrijwilligers` from the current-user response.
+- **API client additions:** `getVolunteerEligibility()`, `getVolunteerExemption()`, `getManagedCommissies()`.
+
 ## [33.4.0] - 2026-05-26
 
 ### Added — Volunteer Policy foundation (Fase A)
