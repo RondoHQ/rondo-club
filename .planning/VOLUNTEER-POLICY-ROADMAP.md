@@ -1,9 +1,9 @@
 # Roadmap: AWC Volunteer Policy support in Rondo
 
 **Source:** [Toekomstbestendig Vrijwilligersbeleid](https://docs.google.com/document/d/1UBunFqCy9jS5hHHmPpJmZLO4IXtCyXdsROxZ7iewv5Y/edit)
-**Status:** Drafting — working through the 17 features one by one with Joost.
+**Status:** Bestuursbesluit verwerkt — alle blokkerende vragen beantwoord (2026-05-26 's avonds). Klaar voor Fase A implementatie.
 **Owner:** Joost
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-26 (bestuursvergadering)
 
 ## Context
 
@@ -20,10 +20,10 @@ Rondo today has the people, teams, roles, VOG dates, invoicing and Mollie paymen
 | 3 | Shift / time-slot scheduling | `shift_template` + `dienst_shift` CPTs; eligibility-filtered zichtbaarheid; afmelden altijd, boete bij no-show | XL | TBD |
 | 4 | Member self sign-up (inschrijving) | Full WP-login via Magic Login plugin; alleen individuele signup; overlap = waarschuwing | L | TBD |
 | 5 | Pool management (vaste poules) | Hergebruik commissies; in Rondo beheerd (Sportlink-sync whitelist); geen rotatie | S | TBD |
-| 6 | 2-diensten-per-jaar counter | Hybrid completion, KNVB-seizoen, pro-rato half, plichten optellen (multi-kind nog te bevestigen) | M | TBD |
-| 7 | Boete for missed duty | DEFERRED tot bestuursbesluit (trigger, ontvanger, vrijkoop, bedrag) | M | TBD |
-| 8 | VOG-plicht voor iedereen | Hard block in signup; scope = eligible pool; geldigheid via bestaande logica; bulk-rollout DEFERRED | S | TBD |
-| 9 | Online IVA / alcoholtraining | `datum-iva` + upload-veld; admin-approval; alleen Kantine-bar vereist; geldigheidstermijn DEFERRED | S | TBD |
+| 6 | 2-diensten-per-jaar counter | Hybrid completion, KNVB-seizoen, pro-rato half, multi-kind met contributie-korting (25%/50%) | M | C |
+| 7 | Boete for missed duty | No-show direct, naar primaire ouder, €30/gemiste dienst, geen vrijkoop | M | E |
+| 8 | VOG-plicht voor iedereen | Hard block in signup; scope = eligible pool; bulk-rollout handmatig per persoon | S | B |
+| 9 | Online IVA / alcoholtraining | `datum-iva` + upload; bestuurslid kantine approveert; alleen Kantine-bar; 5 jaar geldig | S | B |
 | 10 | Talentregistratie | v2-feature; hybride (tags + vrije tekst); half-geautomatiseerd matchen | M | v2 |
 | 11 | Sleutel-uitgifte | Niet bouwen — paper/whiteboard volstaat | — | n.v.t. |
 | 12 | Trainer/leider extra taken | Trainer/leider = vrijgesteld (analoog aan commissie); extra taken alleen in communicatie | XS | n.v.t. |
@@ -223,12 +223,24 @@ Rondo today has the people, teams, roles, VOG dates, invoicing and Mollie paymen
 - **Plichten optellen** voor gemengde huishoudens: ouderplicht (voor JO15- spelers) en spelersplicht (voor O17+ spelers) tellen apart. Een gezin met JO13 + O17+ heeft dus 2 ouderplicht-diensten + 2 spelersplicht-diensten = 4 totaal.
 - **Vrijgesteld** is wie actief commissielid is (zie #2/#16) — die personen staan niet in de counter-tabel.
 
-**Open punt — multi-child scaling:**
-Hoe schaalt de ouderplicht bij meerdere JO15- kinderen in hetzelfde gezin?
-- Optie A: per-kind (2× JO13 → 4 ouderplicht)
-- Optie B: per-gezin met cap (2× JO13 → nog steeds 2)
-- Optie C: schaalt met cap (1=2, 2+=3, max 4)
-**Wordt besproken in bestuursvergadering 2026-05-26 's avonds. Doc updaten na besluit.**
+**Multi-child scaling (besluit bestuursvergadering 2026-05-26):**
+
+Per kind tellend, met **contributie-korting** voor opvolgende kinderen:
+- Kind 1: 2 diensten (100%)
+- Kind 2: 1,5 diensten (75% — 25% korting)
+- Kind 3 en verder: 1 dienst (50% — 50% korting)
+
+**Berekening en afronding:**
+
+| Aantal JO15- kinderen | Berekening | Halve diensten | Afgerond (floor) |
+|---|---|---|---|
+| 1 | 2 | 2 | **2** |
+| 2 | 2 + 1.5 | 3,5 | **3** |
+| 3 | 2 + 1.5 + 1 | 4,5 | **4** |
+| 4 | 2 + 1.5 + 1 + 1 | 5,5 | **5** |
+| n (≥3) | 1.5 + n | n + 1.5 | **n + 1** |
+
+**Afrondingsregel:** naar beneden (floor) — in voordeel van het lid, consistent met "korting"-intentie. Configureerbaar via constante als bestuur later anders besluit.
 
 **Datamodel:**
 
@@ -252,8 +264,7 @@ Caching via WP transient (`rondo_vobligation_{unit}_{season}`), invalided bij sh
 5. Hooks voor #7 (boete) en #17 (communicatie/herinnering).
 
 **Open punten:**
-- Multi-child scaling (boven).
-- Speler O17+ in gezin met JO13 — telt zijn dienst alleen voor zichzelf, of mag hij ook bijdragen aan de ouderplicht voor het broertje? Voorstel: nee, plichten zijn gescheiden. Bevestigen tijdens bestuur.
+- Speler O17+ in gezin met JO13 — telt zijn dienst alleen voor zichzelf, of mag hij ook bijdragen aan de ouderplicht voor het broertje? Voorstel: nee, plichten zijn gescheiden (consistent met "plichten optellen" beslissing). Bestuur heeft dit punt niet expliciet geadresseerd; standaard houden op gescheiden.
 
 ---
 
@@ -263,26 +274,34 @@ Caching via WP transient (`rondo_vobligation_{unit}_{season}`), invalided bij sh
 
 **Status in Rondo:** Volledig werkende boete-pipeline aanwezig — `rondo_invoice` CPT met `invoice_type=discipline`, Mollie + Rabobank betaalverzoek, Lettermint reminders (2 + 3 weken). Direct herbruikbaar voor vrijwilligers-boetes.
 
-**Status: DEFERRED — wacht op bestuursbesluit.**
+**Decisions (bestuursvergadering 2026-05-26):**
+- **Trigger: alleen no-show direct.** Geen eindseizoen-batch. Wie zich nooit aanmeldt en dus nooit no-show is, krijgt geen boete via dit mechanisme. Dat is een bewuste keuze — sociale druk en gesprek (Guido per team) moet zorgen voor signups; sanctie is alleen voor mensen die zich aanmelden en dan verzaken.
+- **Ontvanger: primaire ouder.** Boete naar contributie-account van de primaire ouder uit `relationships`-repeater. Sluit aan op bestaande contributie-flow. Bij O17+ speler: naar speler zelf.
+- **Vrijkoop: nee.** Plicht blijft staan. Boete is pure sanctie, geen alternatief. Volgend seizoen begint iedereen weer met 2 diensten.
+- **Bedrag: €30 per gemiste dienst.** Eén invoice per no-show event.
 
-Vier vragen die door bestuur beantwoord moeten worden voordat we dit kunnen bouwen:
+**Datamodel:**
+- Nieuw `invoice_type=volunteer_fine` in bestaande invoice CPT
+- Eigen `heading_type=volunteer_fine` voor email template
+- Line item: "Gemiste vrijwilligersdienst op [datum] — [dienst_type naam]"
 
-1. **Wanneer wordt de boete gegenereerd?** Eindseizoen-batch, no-show direct, of hybride?
-2. **Wie wordt geboet?** Primaire ouder, kind-account, beide ouders 50/50?
-3. **Mag je vrijkopen?** Boete als alternatief voor plicht, of pure sanctie?
-4. **Bedrag.** Voorbeeld richtwaardes: €25 / €50 / €100 per gemiste dienst.
+**Plan:**
+1. `invoice_type=volunteer_fine` toevoegen aan `group_invoice_fields.json` enum.
+2. Service `VolunteerFineGenerator::on_no_show_marked($shift, $person)` die meteen een invoice creëert:
+   - €30 bedrag
+   - Line item met dienst-info
+   - `person` = primaire ouder van het huishouden (of speler zelf voor O17+)
+   - Mollie payment link gegenereerd
+3. Hook in no-show endpoint (#6): bij `mark_no_show()` → trigger `VolunteerFineGenerator`.
+4. Email template: nieuwe `heading_type` toevoegen in `EmailTemplates` (post-v34.0 refactor) of in `FinanceConfig`-equivalent.
+5. Hardship/coulance: admin-knop "kwijtschelden met reden" op invoice (kan bestaande discipline-kwijtschelding patroon hergebruiken).
 
-**Bouwstenen die al klaar liggen:**
-- Nieuw `invoice_type` toevoegen: `volunteer_fine` (naast bestaande `discipline` en `membership`)
-- Email template voor boete-aanzegging (kan zijn eigen `heading_type`)
-- Hergebruikt: Mollie betaling, betaalverzoek, reminder-flow, payment-page
+**Primaire ouder bepalen:**
+Eerste persoon in `relationships`-repeater van het JO15- kind met `relationship_type=ouder`. Bij meerdere ouders: oudste relatie-entry (eerste in array). Admin kan handmatig wijzigen via "factuur-ontvanger" veld als nodig.
 
-**Plan (na bestuursbesluit):**
-1. Nieuwe `invoice_type=volunteer_fine` in invoice CPT.
-2. Service `VolunteerFineGenerator` die op basis van trigger (date/no-show) invoices aanmaakt.
-3. Cron job: in juni alle units met `completed_count < required_count` → invoice (als hybride/eindseizoen gekozen).
-4. Hook in no-show endpoint (#6): bij markeren als no-show → directe invoice aanmaken (als hybride/no-show gekozen).
-5. Hardship/coulance: admin-knop "kwijtschelden met reden" op invoice.
+**Open punten:**
+- Bevestigingsmail aan speler/ouder als no-show wordt gemarkeerd, met uitleg en betaallink. Hergebruikt Lettermint.
+- Reminder-cadans hergebruikt discipline-flow (2 + 3 weken).
 
 ---
 
@@ -296,7 +315,7 @@ Vier vragen die door bestuur beantwoord moeten worden voordat we dit kunnen bouw
 - **Geldigheidsregel: hergebruik bestaande logica.** Niet opnieuw bepalen; bij implementatie verifiëren welke termijn momenteel actief is en daar bij aansluiten.
 - **Hard block in signup.** Een persoon zonder geldige VOG ziet geen shifts in `/vrijwillig`. De eligibility-filter uit #4 wordt uitgebreid met VOG-validatie. Geen "soft warning"-route.
 - **Scope: alleen wie onder de doelgroep valt** (eligible pool uit #1). Niet alle leden ≥18 — alleen wie ouderplicht of spelersplicht heeft, plus bestaande commissieleden.
-- **Bulk-rollout (eenmalige operatie bij beleidsactivering): DEFERRED.** Bestuurlijke discussie nodig: gaan we via Sportlink OAS scripten, handmatig, of soft-via-signup-gate?
+- **Bulk-rollout (bestuursbesluit 2026-05-26): handmatig per persoon.** Geen Sportlink OAS-bulk-script. VOG-coördinator stuurt aanvragen via de bestaande VogEmail-templates één voor één naar mensen die zich aanmelden voor diensten. De hard-block in signup zorgt voor de natuurlijke trigger ("ik wil aanmelden → o, ik heb geen geldige VOG → coördinator stuurt aanvraag").
 
 **Plan:**
 1. Bestaande VOG-geldigheidsregel localiseren en documenteren (waarschijnlijk in `VogEmail` of een gerelateerde class).
@@ -306,8 +325,8 @@ Vier vragen die door bestuur beantwoord moeten worden voordat we dit kunnen bouw
 5. Bulk-rollout-script staat klaar als sub-taak na bestuurlijke beslissing.
 
 **Open punten:**
-- Bulk-rollout mechanisme (Sportlink OAS, handmatig, of signup-gated).
-- Vergeet niet: in beleidsactiveringsbericht (#17 communicatie) duidelijk maken dat geen VOG = geen diensten kan doen = boete-risico.
+- Vergeet niet: in beleidsactiveringsbericht (#17 communicatie) duidelijk maken dat geen VOG = geen diensten kan doen.
+- Hard-block UX: wanneer iemand in `/vrijwillig` geen shifts kan zien wegens ontbrekende VOG, moet de pagina expliciet uitleggen waarom en hoe de VOG aan te vragen — anders krijgen we support-vragen.
 
 ---
 
@@ -320,7 +339,8 @@ Vier vragen die door bestuur beantwoord moeten worden voordat we dit kunnen bouw
 **Decisions (2026-05-26):**
 - **Registratie via upload + admin-approval.** Persoon uploadt PDF-certificaat via `/vrijwillig/profiel`; admin keurt goed → status `geldig`. Veiliger dan zelf-rapportage, beter dan handmatige admin-only invoer.
 - **Mapping op `dienst_type`**: alleen `Kantine — bar` vereist IVA. Keuken-prep en keuken-verkoop niet (default off; admin kan later aanvinken voor specifieke shifts indien gewenst).
-- **Geldigheidstermijn: DEFERRED — bestuursbesluit.** Mogelijke opties: geen expiratie / 5 jaar / 3 jaar (gelijk aan VOG).
+- **Geldigheidstermijn (bestuursbesluit 2026-05-26): 5 jaar.** `datum-iva` + 5 jaar = expiratiedatum. Verlengingsreminder 3 maanden voor expiratie.
+- **Approval-rol (bestuursbesluit 2026-05-26): bestuurslid kantine.** Nieuwe capability `rondo_iva_approve` toegekend aan de WP-account van het bestuurslid kantine.
 
 **Datamodel (ACF velden op Person):**
 - `datum-iva` (date — datum certificaat behaald)
@@ -336,9 +356,8 @@ Vier vragen die door bestuur beantwoord moeten worden voordat we dit kunnen bouw
 6. Lettermint-mail: bevestiging na approval; verlengingsherinnering 3 maanden voor expiratie (als termijn-besluit dat oplevert).
 
 **Open punten:**
-- Geldigheidstermijn (zie boven).
-- Wie krijgt admin-rol voor IVA-approval? Voorstel: kantinebeheerder of bestuurslid kantine.
-- Bulk-onboarding bestaande bar-vrijwilligers — vergelijkbaar met VOG-bulk-vraag uit #8.
+- Bulk-onboarding bestaande bar-vrijwilligers: bekend bar-personeel uitvragen op bestaande IVA-certificaten en handmatig invoeren (analoog aan VOG-aanpak uit #8).
+- IVA-certificaat uploaden — bewaartermijn? GDPR-overweging: na 5 jaar (na expiratie) automatisch verwijderen? Detail voor implementatie.
 
 ---
 
@@ -400,8 +419,12 @@ Vier vragen die door bestuur beantwoord moeten worden voordat we dit kunnen bouw
 2. Welke job_titles als trainer/leider? Hergebruik bestaande "player roles" Settings-mechanisme — er is al een config van titels per categorie. Voeg analoge config toe voor "staff roles" (= vrijgesteld).
 3. Geen UI-werk; vrijstelling wordt zichtbaar in de counter-widget op `/vrijwillig/mijn-shifts` ("Je bent vrijgesteld als Leider O15-1").
 
+**Staff-roles voor vrijstelling (bestuursbesluit 2026-05-26):**
+Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter.
+
+Deze waarden komen in een config-constante `RONDO_STAFF_ROLES_VRIJGESTELD`. Bij wijziging in `job_title` waarden uit Sportlink: lijst opnieuw kalibreren.
+
 **Open punten:**
-- Welke job_titles precies vrijstelling geven? Voorstel: Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter. Bestuur kan dit afkaderen.
 - Wat met ex-trainers (rol beëindigd half seizoen)? Vrijgesteld voor heel seizoen of pro-rato? Voorstel: voor het seizoen waarin ze actief waren, vrijgesteld; volgend seizoen vol mee.
 
 ---
@@ -533,9 +556,9 @@ function is_exempt(Person $person, string $season): bool {
 4. Admin-UI: filter "Vrijgesteld" op personen-lijst + reden zichtbaar.
 5. Per-persoon detailpagina: vrijstellings-banner met bron ("Vrijgesteld via commissie X" / "Handmatig — reden Y").
 
-**Open punten:**
-- Welke commissies tellen als vrijstellend? Strikt alle, of een whitelist? Voorstel: alle, met optie om enkele uit te sluiten via config.
-- Welke staff-roles? Voorgesteld in #12 (Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter); finaliseren met bestuur.
+**Besluiten bestuursvergadering 2026-05-26:**
+- **Welke commissies tellen vrijstellend?** Alle. Geen whitelist of uitsluitingslijst.
+- **Welke staff-roles?** Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter (zie #12).
 
 ---
 
@@ -664,19 +687,27 @@ Het beleid voor het eerst zichtbaar voor leden.
 - **Vrijstellingsregeling** uit #16 wordt consumeerd door eligibility (#1) en counter (#6) via dezelfde service. Geen logica-duplicatie.
 - **Activiteiten blijven buiten Rondo** (#2) — alleen de poule (#5) wordt gemodelleerd, geen individuele evenementen of shifts.
 
-## Open vragen voor bestuur (bestuursvergadering 2026-05-26 's avonds)
+## Bestuursbesluiten 2026-05-26 (verwerkt)
 
-1. **Multi-child scaling**: gezin met meerdere JO15- kinderen — plichten optellen, cappen, of schalen? (#6)
-2. **Boete-trigger**: eindseizoen, no-show, of hybride? (#7)
-3. **Boete-ontvanger**: primaire ouder, kind-contributie, of beide? (#7)
-4. **Boete-bedrag**: €25/€50/€100 per gemiste dienst? (#7)
-5. **Vrijkoop toegestaan**: telt betalen als alternatief voor plicht? (#7)
-6. **VOG bulk-rollout**: via Sportlink OAS, handmatig, of signup-gated? (#8)
-7. **IVA geldigheidstermijn**: geen expiratie / 5 jaar / 3 jaar? (#9)
+Zeven blokkerende vragen beantwoord; alle besluiten verwerkt in de feature-secties hierboven.
+
+| # | Vraag | Besluit |
+|---|---|---|
+| 1 | Multi-child scaling | Per kind met contributie-korting: kind 1 = 2, kind 2 = 1,5, kind 3+ = 1 elk. Floor afronden (zie #6). |
+| 2 | Boete-trigger | Alleen no-show direct (zie #7). |
+| 3 | Boete-ontvanger | Primaire ouder uit relationships; speler zelf bij O17+ (zie #7). |
+| 4 | Boete-bedrag | €30 per gemiste dienst (zie #7). |
+| 5 | Vrijkoop | Nee — plicht blijft, boete is sanctie (zie #7). |
+| 6 | VOG bulk-rollout | Handmatig per persoon door VOG-coördinator (zie #8). |
+| 7 | IVA termijn | 5 jaar (zie #9). |
+| extra | IVA approver-rol | Bestuurslid kantine (zie #9). |
+| extra | Staff-roles vrijstelling | 7 rollen: Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter (zie #12). |
+| extra | Vrijstellende commissies | Alle (zie #16). |
 
 ## Next steps
 
-1. Roadmap-doc reviewen, eventueel bijstellen.
-2. Bestuursvergadering — zeven open vragen boven.
-3. Fase A planning (creëer phase-folders in `.planning/phases/` zoals bestaande projecten).
-4. Inhoudelijke content schrijven voor website-uitleg-pagina (#13/#17).
+1. ~~Roadmap-doc reviewen, eventueel bijstellen.~~ Done.
+2. ~~Bestuursvergadering — zeven open vragen.~~ Done 2026-05-26.
+3. **Fase A planning** — creëer phase-folders in `.planning/phases/` voor de eerste implementatie-laag (eligibility, taakcatalogus, vrijstellingen).
+4. **Inhoudelijke content** voor website-uitleg-pagina (#13/#17) — Joost werkt eerste versie uit.
+5. **Fase F36 milestone-tracking** — koppel deze roadmap aan bestaande `MILESTONES.md` zodra Fase A start.
