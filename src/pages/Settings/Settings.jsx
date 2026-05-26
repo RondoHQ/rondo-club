@@ -119,8 +119,8 @@ export default function Settings() {
 
   // Volunteer role classification state
   const [availableRoles, setAvailableRoles] = useState([]);
-  const [roleSettings, setRoleSettings] = useState({ player_roles: [], excluded_roles: [] });
-  const [roleDefaults, setRoleDefaults] = useState({ default_player_roles: [], default_excluded_roles: [] });
+  const [roleSettings, setRoleSettings] = useState({ player_roles: [], excluded_roles: [], staff_roles: [] });
+  const [roleDefaults, setRoleDefaults] = useState({ default_player_roles: [], default_excluded_roles: [], default_staff_roles: [] });
   const [rolesLoading, setRolesLoading] = useState(true);
   const [rolesSaving, setRolesSaving] = useState(false);
   const [rolesMessage, setRolesMessage] = useState('');
@@ -200,9 +200,16 @@ export default function Settings() {
           prmApi.getVolunteerRoleSettings(),
         ]);
         setAvailableRoles(availableResponse.data || []);
-        const { player_roles, excluded_roles, default_player_roles, default_excluded_roles } = settingsResponse.data;
-        setRoleSettings({ player_roles, excluded_roles });
-        setRoleDefaults({ default_player_roles, default_excluded_roles });
+        const {
+          player_roles,
+          excluded_roles,
+          staff_roles = [],
+          default_player_roles,
+          default_excluded_roles,
+          default_staff_roles = [],
+        } = settingsResponse.data;
+        setRoleSettings({ player_roles, excluded_roles, staff_roles });
+        setRoleDefaults({ default_player_roles, default_excluded_roles, default_staff_roles });
       } catch {
         // Role settings fetch failed silently
       } finally {
@@ -407,8 +414,8 @@ export default function Settings() {
     setRolesMessage('');
     try {
       const response = await prmApi.updateVolunteerRoleSettings(roleSettings);
-      const { player_roles, excluded_roles, people_recalculated } = response.data;
-      setRoleSettings({ player_roles, excluded_roles });
+      const { player_roles, excluded_roles, staff_roles = [], people_recalculated } = response.data;
+      setRoleSettings({ player_roles, excluded_roles, staff_roles });
       setRolesMessage(
         people_recalculated !== undefined && people_recalculated !== null
           ? `Rolclassificatie opgeslagen. ${people_recalculated} personen herberekend.`
@@ -2715,6 +2722,49 @@ function RollenTab({
                       ))}
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Staf-rollen: vrijgesteld van 2-diensten-plicht (#12 vrijwilligersbeleid) */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h4 className="text-base font-medium text-gray-900 dark:text-gray-100">
+              Staf-rollen — vrijgesteld van vrijwilligersplicht
+            </h4>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Personen met een actieve werkrol in deze lijst zijn automatisch vrijgesteld van de 2-diensten-plicht.
+              Vink de functies aan die als trainer/leider/teammanager-rol gelden.
+            </p>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 max-h-64 overflow-y-auto border rounded-md border-gray-200 dark:border-gray-700 p-3">
+              {allRoles.map((role) => {
+                const isStaff = (roleSettings.staff_roles || []).includes(role);
+                const defaultStaff = (roleDefaults.default_staff_roles || []).includes(role);
+                const modified = defaultStaff !== isStaff;
+                return (
+                  <label key={`staff-${role}`} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isStaff}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setRoleSettings((prev) => {
+                          const current = new Set(prev.staff_roles || []);
+                          if (checked) {
+                            current.add(role);
+                          } else {
+                            current.delete(role);
+                          }
+                          return { ...prev, staff_roles: Array.from(current).sort() };
+                        });
+                      }}
+                      className="h-4 w-4 text-electric-cyan focus:ring-electric-cyan border-gray-300 rounded"
+                    />
+                    <span className="text-gray-900 dark:text-gray-100">{role}</span>
+                    {modified && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400">(gewijzigd)</span>
+                    )}
+                  </label>
                 );
               })}
             </div>

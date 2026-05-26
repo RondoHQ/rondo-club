@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.7.0] - 2026-05-26
+
+### Added — Volunteer Policy: trainings/leider exemption UI, team kickoff, welkomstmail
+
+- **Settings → Beheer → Rollen** now has a "Staf-rollen — vrijgesteld van vrijwilligersplicht" checkbox section below the player/excluded matrix (#12). Defaults to the seven board-approved roles (Trainer, Hoofdtrainer, Assistent-trainer, Leider, Teammanager, Coördinator, Scheidsrechter); admin can adjust per club's actual Sportlink job-title spelling. Persists via the existing `/rondo/v1/volunteer-roles/settings` endpoint.
+- **Team CPT gets `kickoff_done_at` (date) + `kickoff_notes` (textarea)** ACF fields exposed in REST (#13). Lets Guido tick off the per-team vrijwilligersbeleid-gesprek with optional notes — input for the dashboard "kickoffs nog te doen" widget (Fase D follow-up). Website-uitleg-pagina blijft in het Astro-project.
+- **Welkomstmail voor nieuwe vrijwilligers** is uitgebreid met een vrijwilligersbeleid-blok (#14): 2-diensten-plicht in het kort, links naar VOG/IVA, en de uitleg dat trainers/commissieleden/betaalde vrijwilligers automatisch vrijgesteld zijn. Volledig editable in **Settings → Beheer → Welkomstmail → Nieuwe vrijwilliger**.
+
 ## [33.6.0] - 2026-05-26
 
 ### Added — Volunteer Policy scheduling core + sancties (Fase C & E)

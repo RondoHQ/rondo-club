@@ -228,7 +228,20 @@ Beste {first_name},
 
 Wat fijn dat je vrijwilliger bent geworden bij {club_naam}. Vrijwilligers maken onze club mogelijk en we zijn blij met jouw inzet.
 
-In de komende tijd nemen we contact met je op om je verder wegwijs te maken. Heb je nu al vragen? Neem gerust contact op.
+**Vrijwilligersbeleid in het kort**
+
+Sinds dit seizoen vragen we van elke vrijwilliger 2 diensten per jaar (terreinmeester, kantine, schoonmaak of terreinonderhoud). Bij meerdere kinderen telt de plicht per kind met een oplopende korting. Trainers, leiders, commissieleden en betaalde vrijwilligers zijn automatisch vrijgesteld.
+
+**Wat je nu kunt doen**
+
+1. Bekijk het rooster en meld je aan: ga in Rondo naar **Vrijwilligers → Diensten**. Je ziet alleen diensten waarvoor je in aanmerking komt.
+2. **VOG verklaring** is verplicht voor alle vrijwilligers. Heb je er nog geen of is hij verlopen? Onze VOG-coördinator stuurt je een aanvraag via Justis.
+3. **IVA-certificaat** is alleen verplicht voor bardienst. Het is gratis via NOC*NSF en 5 jaar geldig. Mail het certificaat naar onze kantinebeheerder voor goedkeuring.
+4. Plan je eerste dienst binnen 4 weken na ontvangst van deze mail — sociale druk doet de rest.
+
+Als je een dienst niet kunt doen: tijdig afmelden mag altijd zonder gevolg. Wel komen opdagen telt voor de plicht.
+
+Heb je vragen? Neem gerust contact op.
 
 Met sportieve groet,
 {club_naam}
