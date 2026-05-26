@@ -776,19 +776,29 @@ export default function PeopleList() {
     return map;
   }, [preferences?.available_columns]);
 
-  // Get visible columns (excluding 'name' which is always shown in a fixed position)
+  // Get visible columns (excluding 'name' which is always shown in a fixed position).
+  // When the "Afgemeld dit seizoen" filter is active, force lid-sinds and lid-tot to
+  // appear first — otherwise the matching reason isn't visible without the user fiddling
+  // with Column Settings. User's stored preferences are unchanged.
   const visibleColumns = useMemo(() => {
     if (!preferences?.visible_columns || !preferences?.column_order) {
       // Fallback to default columns if preferences not loaded
-      return ['team'];
+      return lidTotSeason === '1' ? ['lid-sinds', 'lid-tot', 'team'] : ['team'];
     }
 
     // Filter column_order to only visible columns, excluding 'name'
     const visibleSet = new Set(preferences.visible_columns);
-    return preferences.column_order.filter(colId =>
+    const cols = preferences.column_order.filter(colId =>
       colId !== 'name' && visibleSet.has(colId)
     );
-  }, [preferences?.visible_columns, preferences?.column_order]);
+
+    if (lidTotSeason === '1') {
+      const forced = ['lid-sinds', 'lid-tot'];
+      return [...forced, ...cols.filter(colId => !forced.includes(colId))];
+    }
+
+    return cols;
+  }, [preferences?.visible_columns, preferences?.column_order, lidTotSeason]);
 
   // Get column widths from preferences
   const columnWidths = preferences?.column_widths || {};
