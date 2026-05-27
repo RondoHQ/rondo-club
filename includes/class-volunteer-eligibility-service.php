@@ -86,6 +86,25 @@ class VolunteerEligibilityService {
 	 * }>
 	 */
 	public function get_eligible_units( ?string $season = null ): array {
+		return $this->get_eligibility_view( $season )['units'];
+	}
+
+	/**
+	 * Full eligibility view — units plus diagnostic counts of people who couldn't
+	 * be placed cleanly. The dashboard surfaces these so admins know how many
+	 * records need data attention (missing leeftijdsgroep, missing parents).
+	 *
+	 * @return array{
+	 *   units: array<int, array>,
+	 *   diagnostics: array{
+	 *     skipped_no_leeftijdsgroep: int,
+	 *     gezinnen_with_parents: int,
+	 *     gezinnen_via_address: int,
+	 *     gezinnen_orphan: int,
+	 *   },
+	 * }
+	 */
+	public function get_eligibility_view( ?string $season = null ): array {
 		$season = $season ?: SeasonKey::current();
 
 		$query = new \WP_Query(
@@ -101,28 +120,30 @@ class VolunteerEligibilityService {
 
 		$gezin_units  = [];
 		$speler_units = [];
+		$skipped_no_leeftijdsgroep = 0;
 
 		foreach ( $query->posts as $person_id ) {
 			$person_id = (int) $person_id;
 			$age       = $this->age_group_number( $person_id );
 
 			if ( $age === null ) {
-				continue; // no leeftijdsgroep → cannot place in eligibility model
+				// Could still be a JO16- player whose Sportlink sync failed to
+				// populate leeftijdsgroep. We count them so the dashboard can
+				// surface data-quality issues, but we can't model them.
+				$skipped_no_leeftijdsgroep++;
+				continue;
 			}
 
 			if ( $age >= self::ADULT_MIN_AGE ) {
-				$unit                            = $this->build_speler_unit( $person_id );
+				$unit                              = $this->build_speler_unit( $person_id );
 				$speler_units[ $unit['unit_id'] ] = $unit;
 				continue;
 			}
 
 			if ( $age <= self::YOUTH_MAX_AGE ) {
 				$gezin_unit = $this->build_gezin_unit( $person_id );
-				if ( $gezin_unit === null ) {
-					continue; // no parents and no shared address — orphaned youth player
-				}
+				$key        = $gezin_unit['unit_id'];
 
-				$key = $gezin_unit['unit_id'];
 				if ( isset( $gezin_units[ $key ] ) ) {
 					$gezin_units[ $key ]['trigger_person_ids'] = array_values(
 						array_unique(
@@ -148,14 +169,28 @@ class VolunteerEligibilityService {
 
 		// Apply multi-child scaling — required_count depends on the FINAL number
 		// of JO16- triggers in each gezin, which we only know after merging.
+		$counts_by_quality = [ 'ok' => 0, 'address_fallback' => 0, 'orphan' => 0 ];
 		foreach ( $gezin_units as &$unit ) {
 			$child_count            = count( $unit['trigger_person_ids'] );
 			$unit['required_count'] = self::calculate_gezin_required_count( $child_count );
 			$unit['child_count']    = $child_count;
+			$quality                = $unit['data_quality'] ?? 'ok';
+			if ( isset( $counts_by_quality[ $quality ] ) ) {
+				$counts_by_quality[ $quality ]++;
+			}
 		}
 		unset( $unit );
 
-		return array_values( array_merge( $gezin_units, $speler_units ) );
+		return [
+			'units'       => array_values( array_merge( $gezin_units, $speler_units ) ),
+			'diagnostics' => [
+				'skipped_no_leeftijdsgroep' => $skipped_no_leeftijdsgroep,
+				'gezinnen_with_parents'     => $counts_by_quality['ok'],
+				'gezinnen_via_address'      => $counts_by_quality['address_fallback'],
+				'gezinnen_orphan'           => $counts_by_quality['orphan'],
+				'speler_units'              => count( $speler_units ),
+			],
+		];
 	}
 
 	/**
@@ -225,9 +260,6 @@ class VolunteerEligibilityService {
 		$merged = null;
 		foreach ( $children as $child_id ) {
 			$child_unit = $this->build_gezin_unit( (int) $child_id );
-			if ( $child_unit === null ) {
-				continue;
-			}
 			if ( $merged === null ) {
 				$merged = $child_unit;
 				continue;
@@ -298,51 +330,65 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Build a GEZIN unit for a JO16- player. Returns null when no responsible
-	 * adult can be located (no parent relationships and no shared address).
+	 * Build a GEZIN unit for a JO16- player. Always returns a unit — orphans
+	 * (no parents in relationships, no adult housemates) get a per-child unit
+	 * tagged `data_quality=orphan` so the dashboard can surface them as data
+	 * issues without silently losing the obligation.
 	 *
-	 * The unit is keyed by:
-	 *   - the sorted parent person IDs when relationship data exists, OR
-	 *   - the address key (postal + housenumber) as fallback.
+	 * The unit is keyed by, in order of preference:
+	 *   1. sorted parent person IDs from the `relationships` repeater (best)
+	 *   2. address key (postal + housenumber) of the youth player (fallback)
+	 *   3. the youth player's own ID (orphan — invites admin to fix relations)
 	 *
-	 * The first identifier that resolves wins; later children at the same
-	 * key will be merged on top by the caller.
+	 * Later children at the same key will be merged on top by the caller, so
+	 * kids that share parents/addresses naturally collapse into one gezin.
 	 */
-	private function build_gezin_unit( int $youth_person_id ): ?array {
+	private function build_gezin_unit( int $youth_person_id ): array {
 		$parents = $this->find_parents( $youth_person_id );
 
 		if ( ! empty( $parents ) ) {
 			sort( $parents );
-			$id = 'gezin-rel-' . implode( '-', $parents );
 			return [
-				'unit_id'            => $id,
+				'unit_id'            => 'gezin-rel-' . implode( '-', $parents ),
 				'kind'               => self::UNIT_KIND_GEZIN,
 				'person_ids'         => array_values( array_unique( array_merge( $parents, [ $youth_person_id ] ) ) ),
 				'trigger_person_ids' => [ $youth_person_id ],
 				'required_count'     => self::BASE_OBLIGATION,
 				'address_key'        => $this->address_key( $youth_person_id ),
+				'data_quality'       => 'ok',
 			];
 		}
 
 		$address_key = $this->address_key( $youth_person_id );
-		if ( $address_key === null ) {
-			return null;
+		if ( $address_key !== null ) {
+			$housemates = $this->find_adults_at_address( $address_key, $youth_person_id );
+			if ( ! empty( $housemates ) ) {
+				return [
+					'unit_id'            => 'gezin-adr-' . $address_key,
+					'kind'               => self::UNIT_KIND_GEZIN,
+					'person_ids'         => array_values( array_unique( array_merge( $housemates, [ $youth_person_id ] ) ) ),
+					'trigger_person_ids' => [ $youth_person_id ],
+					'required_count'     => self::BASE_OBLIGATION,
+					'address_key'        => $address_key,
+					'data_quality'       => 'address_fallback',
+				];
+			}
 		}
 
-		$housemates = $this->find_adults_at_address( $address_key, $youth_person_id );
+		// Orphan: keep the kid as the lone person_id so the obligation stays
+		// visible. Multiple orphans at the same address (when known) still merge.
+		$orphan_id = $address_key !== null
+			? 'gezin-orphan-adr-' . $address_key
+			: 'gezin-orphan-' . $youth_person_id;
 
-		if ( empty( $housemates ) ) {
-			return null;
-		}
-
-		$id = 'gezin-adr-' . $address_key;
 		return [
-			'unit_id'            => $id,
+			'unit_id'            => $orphan_id,
 			'kind'               => self::UNIT_KIND_GEZIN,
-			'person_ids'         => array_values( array_unique( array_merge( $housemates, [ $youth_person_id ] ) ) ),
+			'person_ids'         => [ $youth_person_id ],
 			'trigger_person_ids' => [ $youth_person_id ],
 			'required_count'     => self::BASE_OBLIGATION,
 			'address_key'        => $address_key,
+			'data_quality'       => 'orphan',
 		];
 	}
 

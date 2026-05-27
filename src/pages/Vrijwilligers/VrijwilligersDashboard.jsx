@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users } from 'lucide-react';
+import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, AlertTriangle } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
@@ -41,8 +41,17 @@ export default function VrijwilligersDashboard() {
     const total = units.length;
     const gezin = units.filter((u) => u.kind === 'gezin').length;
     const speler = units.filter((u) => u.kind === 'speler').length;
-    return { total, gezin, speler };
+    const gezinOrphan = units.filter((u) => u.kind === 'gezin' && u.data_quality === 'orphan').length;
+    const gezinAddressFallback = units.filter((u) => u.kind === 'gezin' && u.data_quality === 'address_fallback').length;
+    return { total, gezin, speler, gezinOrphan, gezinAddressFallback };
   }, [eligibility]);
+
+  const diagnostics = eligibility?.diagnostics || null;
+  const hasDataIssues =
+    diagnostics &&
+    ((diagnostics.skipped_no_leeftijdsgroep || 0) > 0 ||
+      (diagnostics.gezinnen_orphan || 0) > 0 ||
+      (diagnostics.gezinnen_via_address || 0) > 0);
 
   return (
     <div className="space-y-6">
@@ -89,6 +98,40 @@ export default function VrijwilligersDashboard() {
           />
         </div>
       </section>
+
+      {hasDataIssues && (
+        <section className="card p-5 border-l-4 border-amber-400">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Datakwaliteit</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Een deel van de doelgroep kon niet schoon worden afgeleid uit Sportlink/relaties. Deze records tellen mee, maar verdienen aandacht.
+              </p>
+              <ul className="mt-2 text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc pl-5">
+                {(diagnostics.gezinnen_with_parents || 0) > 0 && (
+                  <li><strong>{diagnostics.gezinnen_with_parents.toLocaleString('nl-NL')}</strong> gezinnen met ouder-relaties in Rondo — alles schoon.</li>
+                )}
+                {(diagnostics.gezinnen_via_address || 0) > 0 && (
+                  <li>
+                    <strong>{diagnostics.gezinnen_via_address.toLocaleString('nl-NL')}</strong> gezinnen afgeleid uit adres-overeenkomst (geen ouder-relatie gevonden in <code>relationships</code>). Het loont om die relaties expliciet vast te leggen.
+                  </li>
+                )}
+                {(diagnostics.gezinnen_orphan || 0) > 0 && (
+                  <li>
+                    <strong>{diagnostics.gezinnen_orphan.toLocaleString('nl-NL')}</strong> gezinnen <em>zonder</em> ouder-relatie én zonder volwassen huisgenoot — alleen het kind staat in de eenheid. Boetes en e-mails kunnen voor deze records nergens heen tot er een ouder bekend is.
+                  </li>
+                )}
+                {(diagnostics.skipped_no_leeftijdsgroep || 0) > 0 && (
+                  <li>
+                    <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> personen overgeslagen omdat ze geen <code>leeftijdsgroep</code> hebben. Vaak ex-leden of niet-spelende ouders — geen probleem als dat klopt, wel een rode vlag als er actieve jeugdspelers tussen zitten.
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
