@@ -53,7 +53,7 @@ export default function VrijwilligersDashboard() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Vrijwilligersbeleid — 2 diensten per jaar voor ouders (t/m JO15) en spelers (vanaf O17).
+            Vrijwilligersbeleid — 2 diensten per jaar voor ouders (t/m JO16) en spelers (vanaf O17).
           </p>
         </div>
       </header>
@@ -78,7 +78,7 @@ export default function VrijwilligersDashboard() {
           <StatCard
             label="Gezinnen (ouderplicht)"
             value={isLoading ? '…' : (stats?.gezin ?? 0).toLocaleString('nl-NL')}
-            sub="Huishoudens met ≥1 speler t/m JO15"
+            sub="Huishoudens met ≥1 speler t/m JO16"
             icon={UsersRound}
           />
           <StatCard
@@ -105,11 +105,12 @@ export default function VrijwilligersDashboard() {
       <section className="card p-5">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Status van de uitrol</h2>
         <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
-          <li>Eligibility-derivatie en vrijstellingsresolver zijn live (per-gezin baseline, multi-child regel wacht op bestuursbesluit).</li>
-          <li>VOG verhuist onder Vrijwilligers; bestaande functionaliteit blijft werken.</li>
-          <li>IVA-tracking accepteert uploads en admin-approval; geldigheidstermijn wacht op bestuur.</li>
-          <li>Diensten-planner (shifts, signup, counter) volgt in Fase C/D van de roadmap.</li>
-          <li>Boete-pipeline (Fase E) wacht op bestuursbesluit over trigger, ontvanger en bedrag.</li>
+          <li>Eligibility-derivatie en vrijstellingsresolver zijn live, inclusief multi-child schaal (kind 1 = 2 diensten, kind 2 = 1,5, kind 3+ = 1, naar beneden afgerond).</li>
+          <li>VOG verhuisd onder Vrijwilligers; hard-block bij ontbrekende VOG actief in de signup-flow.</li>
+          <li>IVA-tracking met 5-jaar geldigheid; goedkeuring door bestuurslid kantine via een dedicated capability.</li>
+          <li>Diensten-planner staat live: dagelijkse template-expander, uurlijkse auto-complete cron, 72-uurs no-show venster.</li>
+          <li>Boete-pipeline genereert direct bij no-show een €30 factuur (volunteer_fine) naar de primaire ouder of speler zelf.</li>
+          <li>Member-facing /vrijwillig route is operationeel zodra Magic Login en bulk-provisioning van WP-accounts zijn ingericht.</li>
         </ul>
       </section>
     </div>

@@ -7,7 +7,7 @@
  *
  * Bestuursbesluiten 2026-05-26:
  *   - Trigger:    alleen no-show direct (geen eindseizoen-batch)
- *   - Ontvanger:  primaire ouder uit relationships voor JO15- kind,
+ *   - Ontvanger:  primaire ouder uit relationships voor JO16- kind,
  *                 speler zelf voor O17+ (eligibility kind = speler)
  *   - Bedrag:     €30 per gemiste dienst
  *   - Vrijkoop:   nee — plicht blijft staan, boete is sanctie
@@ -141,7 +141,7 @@ class VolunteerFineGenerator {
 	 * Resolve the invoice recipient for a no-show'd person.
 	 *
 	 *   - Adults (no parent relationships, or O17+ league member) → the person themselves.
-	 *   - JO15- children → the FIRST `relationship_type = TYPE_PARENT` entry on the
+	 *   - JO16- children → the FIRST `relationship_type = TYPE_PARENT` entry on the
 	 *     child's relationships repeater (oldest entry in array, consistent with
 	 *     the "primaire ouder" intent of the bestuursbesluit).
 	 *
@@ -156,7 +156,7 @@ class VolunteerFineGenerator {
 			return $person_id;
 		}
 
-		// JO15- → primary parent from relationships.
+		// JO16- → primary parent from relationships.
 		$rels = get_field( 'relationships', $person_id );
 		if ( is_array( $rels ) ) {
 			foreach ( $rels as $rel ) {

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.8.1] - 2026-05-27
+
+### Changed
+- **Ouderplicht uitgebreid van t/m JO15 naar t/m JO16.** `VolunteerEligibilityService::YOUTH_MAX_AGE` is opgerekt naar 16 (was 15). Spelers in "Onder 16" en hun ouders vallen nu in de doelgroep. `ADULT_MIN_AGE` blijft 17 — geen gap. Dashboard copy en interne docstrings bijgewerkt.
+
+### Fixed
+- **Vrijwilligers-dashboard "Status van de uitrol"** liet nog steeds zien dat IVA-geldigheidstermijn, multi-child-regel en boete-pipeline op het bestuur wachtten. Het bestuur heeft alles besloten — copy bijgewerkt om de feitelijke status weer te geven.
+
 ## [33.8.0] - 2026-05-26
 
 ### Added — Member-facing /vrijwillig surface (Fase D #4)
