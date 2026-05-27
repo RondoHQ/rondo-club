@@ -6,8 +6,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 
 const REASON_LABELS = {
-  same_age_group: { label: 'Zelfde leeftijdsgroep', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
-  age_gap_too_small: { label: 'Te klein leeftijdsverschil', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  age_gap_too_small: { label: 'Te klein leeftijdsverschil', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
   sibling_gap_too_large: { label: 'Erg groot sibling-verschil', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
 };
 
