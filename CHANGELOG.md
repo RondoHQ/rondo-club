@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.14.1] - 2026-05-27
+
+### Performance
+- **Vrijwilligers-dashboard laadt nu in milliseconden** in plaats van tientallen seconden. Drie wins:
+  1. `VolunteerEligibilityService::get_eligibility_view()` en `RelationshipQualityChecker::find_suspect_pairs()` hebben elk een 5-minuten transient-cache. Eerste call doet het zware werk, daarna O(1).
+  2. `address_adults_map()` vervangt N losse SQL queries (één per orphaned youth player) door 2 bulk-queries die in PHP de adres→volwassenen-mapping bouwen.
+  3. Hot-loop `get_field()` calls voor `leeftijdsgroep`, `birthdate`, `former_member` vervangen door directe `get_post_meta()` — 10–100× sneller in iteraties over 1000+ personen.
+- Nieuwe `VolunteerCacheInvalidator` wist beide transients automatisch bij elke person-mutatie (save_post, REST insert/update, ACF save, post delete) zodat data wel vers blijft.
+- **Handmatige "Ververs"-knop** rechtsbovenaan het dashboard + nieuwe `POST /rondo/v1/volunteer-cache/refresh` endpoint voor admins die nu meteen iets hebben aangepast en niet 5 minuten willen wachten.
+
 ## [33.14.0] - 2026-05-27
 
 ### Added

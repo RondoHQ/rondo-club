@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, AlertTriangle } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, AlertTriangle, RefreshCw } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
@@ -25,6 +25,15 @@ function StatCard({ label, value, sub, icon: Icon, href }) {
 
 export default function VrijwilligersDashboard() {
   useDocumentTitle('Vrijwilligers');
+  const queryClient = useQueryClient();
+
+  const refreshMutation = useMutation({
+    mutationFn: () => prmApi.refreshVolunteerCache(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'eligibility'] });
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'relationship-quality'] });
+    },
+  });
 
   const { data: eligibility, isLoading, error } = useQuery({
     queryKey: ['volunteer', 'eligibility'],
@@ -61,12 +70,22 @@ export default function VrijwilligersDashboard() {
         <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
           <HeartHandshake className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Vrijwilligersbeleid — 2 diensten per jaar voor ouders (t/m JO16) en spelers (vanaf O17), zolang ze spelend/contributie-plichtig lid zijn.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => refreshMutation.mutate()}
+          disabled={refreshMutation.isLoading}
+          className="shrink-0 inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+          title="Cache wissen en data opnieuw berekenen (~10s)"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshMutation.isLoading ? 'animate-spin' : ''}`} />
+          {refreshMutation.isLoading ? 'Bezig…' : 'Ververs'}
+        </button>
       </header>
 
       {error && (

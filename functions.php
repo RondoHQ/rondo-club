@@ -293,6 +293,9 @@ function rondo_init() {
 
 		// Daily template-expander cron (rolling 12-week window).
 		new \Rondo\Volunteer\ShiftTemplateExpander();
+
+		// Invalidate eligibility + relationship cache on person mutations.
+		new \Rondo\Volunteer\VolunteerCacheInvalidator();
 	}
 
 	// REST API classes - only for REST requests
