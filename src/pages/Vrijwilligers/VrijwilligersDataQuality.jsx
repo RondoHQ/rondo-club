@@ -21,10 +21,11 @@ const CATEGORIES = {
       'Dat werkt, maar wordt fragiel zodra iemand verhuist. Voeg expliciete relationship_type=parent entries toe op de persoonspagina van de speler.',
   },
   missing_leeftijdsgroep: {
-    title: 'Personen zonder leeftijdsgroep',
+    title: 'Actieve leden zonder leeftijdsgroep',
     intro:
-      'Deze personen hebben geen leeftijdsgroep-veld. Meestal zijn dit ex-leden of niet-spelende ouders — dat is prima. ' +
-      'Maar als er een actief jeugdspeler tussen zit, dan ontbreekt de Sportlink-sync of staat het lid op de verkeerde leeftijdsgroep.',
+      'Deze actieve leden (geen ex-lid, niet uitgesloten van contributie) hebben geen leeftijdsgroep-veld. ' +
+      'Daardoor vallen ze nu buiten de vrijwilligersplicht-doelgroep terwijl ze daar wél in horen. ' +
+      'Sportlink-sync ontbreekt, of het leeftijdsgroep-veld is leeg — corrigeer het op de persoonspagina.',
   },
   non_paying: {
     title: 'Niet-spelende / niet-contributie-plichtige leden',

@@ -184,10 +184,14 @@ class VolunteerEligibilityService {
 			$age       = $this->age_group_number( $person_id );
 
 			if ( $age === null ) {
-				// Could still be a JO16- player whose Sportlink sync failed to
-				// populate leeftijdsgroep. We count them so the dashboard can
-				// surface data-quality issues, but we can't model them.
-				$skipped_no_leeftijdsgroep++;
+				// Alleen als actief lid hier tellen — anders krijgen we vooral
+				// ex-leden en niet-spelende ouders in de diagnostic, en daar kan
+				// een admin niets mee. Wat we wél willen vlaggen: actieve leden
+				// (geen former_member, geen _exclude_from_contributie) die geen
+				// leeftijdsgroep hebben — dat is een Sportlink-sync of data-issue.
+				if ( self::is_contributie_member( $person_id ) ) {
+					$skipped_no_leeftijdsgroep++;
+				}
 				continue;
 			}
 
@@ -824,7 +828,14 @@ class VolunteerEligibilityService {
 		);
 		$all = array_map( 'intval', (array) $all_person_ids );
 
-		return array_values( array_diff( $all, $with ) );
+		// Alleen actieve leden — ex-leden en handmatig uitgesloten leden horen
+		// hier sowieso niet in. Wat overblijft is een echte data-quality flag.
+		return array_values(
+			array_filter(
+				array_diff( $all, $with ),
+				fn( $pid ) => self::is_contributie_member( (int) $pid )
+			)
+		);
 	}
 
 	/**
