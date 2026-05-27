@@ -161,9 +161,9 @@ export default function VrijwilligersDashboard() {
                       to="/vrijwilligers/datakwaliteit/missing_leeftijdsgroep"
                       className="text-bright-cobalt dark:text-electric-cyan hover:underline"
                     >
-                      <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> personen
+                      <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> actieve leden
                     </Link>{' '}
-                    overgeslagen omdat ze geen <code>leeftijdsgroep</code> hebben. Vaak ex-leden of niet-spelende ouders — geen probleem als dat klopt, wel een rode vlag als er actieve jeugdspelers tussen zitten.
+                    zonder <code>leeftijdsgroep</code>. Sportlink-sync ontbreekt, of het leeftijdsgroep-veld is leeg — corrigeer het op de persoonspagina zodat ze meegenomen worden in de doelgroep.
                   </li>
                 )}
                 {(diagnostics.skipped_non_paying || 0) > 0 && (

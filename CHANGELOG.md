@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.14.3] - 2026-05-27
+
+### Changed
+- **"Personen zonder leeftijdsgroep"-diagnostic** filtert nu ex-leden en handmatig uitgesloten leden eruit. Wat overblijft zijn actieve leden waar de Sportlink-sync gehaperd heeft of waar het veld om een andere reden leeg is — daar kan een admin daadwerkelijk iets aan doen. Dashboard copy + drill-down intro bijgewerkt.
+
 ## [33.14.2] - 2026-05-27
 
 ### Changed
