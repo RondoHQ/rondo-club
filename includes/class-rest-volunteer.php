@@ -14,6 +14,7 @@ namespace Rondo\REST;
 use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\RelationshipQualityChecker;
+use Rondo\Volunteer\VolunteerCacheInvalidator;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerObligationCalculator;
@@ -101,6 +102,18 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_suspect_relationships' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+			]
+		);
+
+		// Manual cache-bust voor de dashboard "ververs"-knop. Wipt zowel de
+		// eligibility-view als de relationship-quality transients.
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-cache/refresh',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'refresh_cache' ],
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
@@ -737,6 +750,16 @@ class Volunteer extends Base {
 				'persons'  => $persons,
 			]
 		);
+	}
+
+	/**
+	 * POST /rondo/v1/volunteer-cache/refresh — wipt de eligibility + relationship
+	 * quality transients zodat de volgende dashboard-call vers herrekent.
+	 */
+	public function refresh_cache( \WP_REST_Request $request ) {
+		VolunteerEligibilityService::invalidate_cache();
+		RelationshipQualityChecker::invalidate_cache();
+		return rest_ensure_response( [ 'refreshed' => true ] );
 	}
 
 	/**

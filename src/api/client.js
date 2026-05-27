@@ -393,6 +393,7 @@ export const prmApi = {
   getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
   getVolunteerDataQuality: (category, params = {}) => api.get(`/rondo/v1/volunteer-data-quality/${category}`, { params }),
   getRelationshipQuality: () => api.get('/rondo/v1/relationship-quality'),
+  refreshVolunteerCache: () => api.post('/rondo/v1/volunteer-cache/refresh'),
   getManagedCommissies: () => api.get('/rondo/v1/managed-commissies'),
 
   // IVA

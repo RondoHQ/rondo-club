@@ -45,6 +45,24 @@ class VolunteerEligibilityService {
 	const UNIT_KIND_SPELER = 'speler';
 
 	/**
+	 * Transient key prefix. Bumped via `invalidate_cache()` on any person save.
+	 * The full result of `get_eligibility_view()` is cached for CACHE_TTL_SECONDS
+	 * so a dashboard refresh costs one O(1) transient read instead of an
+	 * O(N²) full scan with thousands of ACF calls.
+	 */
+	const CACHE_PREFIX      = 'rondo_eligibility_view_';
+	const CACHE_TTL_SECONDS = 5 * MINUTE_IN_SECONDS;
+
+	/**
+	 * In-memory cache for the address→adults map, used during a single
+	 * eligibility pass. One DB query feeds all orphan lookups instead of
+	 * one query per orphan.
+	 *
+	 * @var array<string, int[]>|null
+	 */
+	private ?array $address_to_adults_cache = null;
+
+	/**
 	 * Highest leeftijdsgroep number that still triggers ouderplicht (t/m JO16).
 	 * Players in "Onder N" with N <= 16 are youth → parents owe the obligation.
 	 * Bestuursbesluit: opgerekt van JO15 naar JO16.
@@ -105,7 +123,45 @@ class VolunteerEligibilityService {
 	 * }
 	 */
 	public function get_eligibility_view( ?string $season = null ): array {
-		$season = $season ?: SeasonKey::current();
+		$season    = $season ?: SeasonKey::current();
+		$cache_key = self::CACHE_PREFIX . md5( $season );
+
+		$cached = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$result = $this->compute_eligibility_view( $season );
+		set_transient( $cache_key, $result, self::CACHE_TTL_SECONDS );
+		return $result;
+	}
+
+	/**
+	 * Wipe every cached eligibility view + every cached drill-down. Hooked on
+	 * person save (and accessible to other classes that mutate person data).
+	 */
+	public static function invalidate_cache(): void {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options}
+				 WHERE option_name LIKE %s
+				    OR option_name LIKE %s",
+				'_transient_' . self::CACHE_PREFIX . '%',
+				'_transient_timeout_' . self::CACHE_PREFIX . '%'
+			)
+		);
+	}
+
+	/**
+	 * Actual eligibility computation — cached behind get_eligibility_view().
+	 * Uses get_post_meta() directly for hot scalar fields (10–100× faster than
+	 * get_field for simple strings) and pre-builds an address→adults map so
+	 * orphan lookups are O(1) instead of N DB queries.
+	 */
+	private function compute_eligibility_view( string $season ): array {
+		$this->address_to_adults_cache = null; // reset per pass
 
 		$query = new \WP_Query(
 			[
@@ -218,7 +274,11 @@ class VolunteerEligibilityService {
 	 * wat administrators handmatig kunnen aanvinken.
 	 */
 	public static function is_contributie_member( int $person_id ): bool {
-		if ( (bool) get_field( 'former_member', $person_id ) ) {
+		// Direct post_meta — get_field() bootstraps the full ACF field
+		// definition tree, which is much slower in hot loops with thousands
+		// of persons.
+		$former = get_post_meta( $person_id, 'former_member', true );
+		if ( $former === '1' || $former === 1 || $former === true ) {
 			return false;
 		}
 		$excluded = get_post_meta( $person_id, '_exclude_from_contributie', true );
@@ -324,7 +384,8 @@ class VolunteerEligibilityService {
 	 *   - null when no leeftijdsgroep is set or unparseable
 	 */
 	public function age_group_number( int $person_id ): ?int {
-		$raw = get_field( 'leeftijdsgroep', $person_id );
+		// Direct post_meta — leeftijdsgroep is a simple string, no ACF formatting needed.
+		$raw = get_post_meta( $person_id, 'leeftijdsgroep', true );
 		if ( ! is_string( $raw ) || trim( $raw ) === '' ) {
 			return null;
 		}
@@ -528,44 +589,127 @@ class VolunteerEligibilityService {
 	 * @return int[]
 	 */
 	private function find_adults_at_address( string $address_key, int $exclude_id ): array {
-		[ $postal, $house ] = array_pad( explode( '-', $address_key, 2 ), 2, '' );
-		if ( $postal === '' ) {
+		$map    = $this->address_adults_map();
+		$adults = $map[ $address_key ] ?? [];
+		if ( empty( $adults ) ) {
 			return [];
+		}
+		// Strip the youth player themselves and dedupe.
+		return array_values( array_filter( $adults, fn( $pid ) => (int) $pid !== $exclude_id ) );
+	}
+
+	/**
+	 * Build (once per eligibility pass) a map of address_key → adult person IDs.
+	 *
+	 * Replaces the previous "one DB query per orphaned youth player" pattern.
+	 * Reads ALL `addresses_N_postal_code` + `addresses_N_house_number` +
+	 * `addresses_N_house_number_addition` meta rows in two queries, joins them
+	 * up in PHP, and bucketed adults (no leeftijdsgroep or >= ADULT_MIN_AGE)
+	 * per address key.
+	 *
+	 * @return array<string, int[]>
+	 */
+	private function address_adults_map(): array {
+		if ( $this->address_to_adults_cache !== null ) {
+			return $this->address_to_adults_cache;
 		}
 
 		global $wpdb;
-		// We can only filter on postal_code at the SQL level (house number is inside ACF rows).
-		$person_ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT p.ID
-				 FROM {$wpdb->posts} p
-				 INNER JOIN {$wpdb->postmeta} pm
-				   ON pm.post_id = p.ID
-				   AND pm.meta_key LIKE %s
-				   AND UPPER(REPLACE(pm.meta_value, ' ', '')) = %s
-				 WHERE p.post_type = 'person'
-				   AND p.post_status = 'publish'
-				   AND p.ID != %d",
-				'addresses_%_postal_code',
-				$postal,
-				$exclude_id
-			)
+
+		// Pull every address-component meta row for any published person.
+		// Returned columns: post_id, meta_key (addresses_N_*), meta_value.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			"SELECT pm.post_id, pm.meta_key, pm.meta_value
+			 FROM {$wpdb->postmeta} pm
+			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			   AND ( pm.meta_key LIKE 'addresses\\_%\\_postal\\_code'
+			      OR pm.meta_key LIKE 'addresses\\_%\\_house\\_number'
+			      OR pm.meta_key LIKE 'addresses\\_%\\_house\\_number\\_addition' )"
 		);
 
-		$adults = [];
-		foreach ( (array) $person_ids as $pid ) {
-			$pid = (int) $pid;
-			if ( $this->address_key( $pid ) !== $address_key ) {
+		// Group per (person_id, address_index) → component → value
+		$by_person = [];
+		foreach ( (array) $rows as $row ) {
+			if ( ! preg_match( '/^addresses_(\d+)_(postal_code|house_number|house_number_addition)$/', $row->meta_key, $m ) ) {
 				continue;
 			}
-			$age = $this->age_group_number( $pid );
-			// Include people without a leeftijdsgroep (e.g. non-playing parents).
-			if ( $age === null || $age >= self::ADULT_MIN_AGE ) {
-				$adults[] = $pid;
-			}
+			$pid       = (int) $row->post_id;
+			$idx       = (int) $m[1];
+			$component = $m[2];
+			$by_person[ $pid ][ $idx ][ $component ] = (string) $row->meta_value;
 		}
 
-		return $adults;
+		// Pull leeftijdsgroep for every person in one shot so we can classify
+		// without per-person get_post_meta calls.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$lg_rows = $wpdb->get_results(
+			"SELECT pm.post_id, pm.meta_value
+			 FROM {$wpdb->postmeta} pm
+			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			   AND pm.meta_key = 'leeftijdsgroep'"
+		);
+		$lg_by_person = [];
+		foreach ( (array) $lg_rows as $row ) {
+			$lg_by_person[ (int) $row->post_id ] = (string) $row->meta_value;
+		}
+
+		$map = [];
+		foreach ( $by_person as $pid => $addresses ) {
+			// Use address index 0 (primary) only — matches address_key() behavior.
+			if ( ! isset( $addresses[0] ) ) {
+				continue;
+			}
+			$primary  = $addresses[0];
+			$postal   = (string) ( $primary['postal_code'] ?? '' );
+			$house    = (string) ( $primary['house_number'] ?? '' );
+			$addition = (string) ( $primary['house_number_addition'] ?? '' );
+
+			if ( $postal === '' || $house === '' ) {
+				continue;
+			}
+
+			$normalized = strtoupper( preg_replace( '/\s+/', '', trim( $postal ) ) );
+			if ( ! preg_match( '/^\d{4}[A-Z]{2}$/', $normalized ) ) {
+				continue;
+			}
+			$key = $normalized . '-' . trim( $house . $addition );
+
+			// Only adults (no leeftijdsgroep OR Onder N where N >= ADULT_MIN_AGE OR adult bucket).
+			$lg = $lg_by_person[ $pid ] ?? '';
+			if ( ! $this->is_adult_age_string( $lg ) ) {
+				continue;
+			}
+
+			$map[ $key ][] = $pid;
+		}
+
+		$this->address_to_adults_cache = $map;
+		return $map;
+	}
+
+	/**
+	 * Quick adult-check from a raw leeftijdsgroep string (no get_field, no ACF).
+	 * Mirrors age_group_number() classification.
+	 */
+	private function is_adult_age_string( string $lg ): bool {
+		if ( trim( $lg ) === '' ) {
+			return true; // unknown → likely a non-playing parent, treat as adult for housemate purposes
+		}
+		$normalized = preg_replace( '/\s+(Meiden|Vrouwen)$/i', '', trim( $lg ) );
+		if ( preg_match( '/^Onder\s+(\d+)/i', $normalized, $m ) ) {
+			return (int) $m[1] >= self::ADULT_MIN_AGE;
+		}
+		foreach ( [ 'Senioren', 'Veteranen', 'Recreanten', 'Champions league', 'Walking' ] as $needle ) {
+			if ( stripos( $normalized, $needle ) !== false ) {
+				return true;
+			}
+		}
+		return true; // unrecognized → assume adult, don't lose data
 	}
 
 	private function extract_type_id( $term ): ?int {

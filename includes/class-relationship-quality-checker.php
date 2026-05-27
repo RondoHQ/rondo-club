@@ -34,6 +34,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class RelationshipQualityChecker {
 
 	/**
+	 * Transient key for the suspect-pairs result. Wiped via `invalidate_cache()`
+	 * whenever a person is saved (zelfde hook als de eligibility cache).
+	 */
+	const CACHE_KEY         = 'rondo_relationship_quality_v1';
+	const CACHE_TTL_SECONDS = 5 * MINUTE_IN_SECONDS;
+
+	/**
 	 * Minimum plausible age gap for a parent/child relation. 14 jaar is bewust
 	 * laag — we willen liever te veel flaggen dan een echte fout missen.
 	 */
@@ -65,6 +72,21 @@ class RelationshipQualityChecker {
 	 * }>
 	 */
 	public function find_suspect_pairs(): array {
+		$cached = get_transient( self::CACHE_KEY );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$result = $this->compute_suspect_pairs();
+		set_transient( self::CACHE_KEY, $result, self::CACHE_TTL_SECONDS );
+		return $result;
+	}
+
+	public static function invalidate_cache(): void {
+		delete_transient( self::CACHE_KEY );
+	}
+
+	private function compute_suspect_pairs(): array {
 		$persons = get_posts(
 			[
 				'post_type'        => 'person',
@@ -153,8 +175,8 @@ class RelationshipQualityChecker {
 		$age_b = $this->resolve_age_years( $person_b_id );
 		$gap   = ( $age_a !== null && $age_b !== null ) ? abs( $age_a - $age_b ) : null;
 
-		$lg_a = (string) get_field( 'leeftijdsgroep', $person_a_id );
-		$lg_b = (string) get_field( 'leeftijdsgroep', $person_b_id );
+		$lg_a = (string) get_post_meta( $person_a_id, 'leeftijdsgroep', true );
+		$lg_b = (string) get_post_meta( $person_b_id, 'leeftijdsgroep', true );
 
 		$claimed = $this->claimed_relation_label( $type_id );
 		$base    = [
@@ -226,7 +248,8 @@ class RelationshipQualityChecker {
 	 * parsing the integer in "Onder N" leeftijdsgroep (using N as approx age).
 	 */
 	private function resolve_age_years( int $person_id ): ?float {
-		$birthdate = get_field( 'birthdate', $person_id );
+		// Direct post_meta — both fields are simple strings, no ACF formatting needed.
+		$birthdate = get_post_meta( $person_id, 'birthdate', true );
 		if ( is_string( $birthdate ) && $birthdate !== '' ) {
 			$ts = strtotime( $birthdate );
 			if ( $ts !== false ) {
@@ -234,7 +257,7 @@ class RelationshipQualityChecker {
 			}
 		}
 
-		$lg = (string) get_field( 'leeftijdsgroep', $person_id );
+		$lg = (string) get_post_meta( $person_id, 'leeftijdsgroep', true );
 		if ( preg_match( '/^Onder\s+(\d+)/i', $lg, $m ) ) {
 			// "Onder N" = under N years old, so an upper-bound approximation.
 			// We use N - 0.5 as a midpoint guess.
