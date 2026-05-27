@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.10.0] - 2026-05-27
+
+### Added
+- **Doorklik-pagina's voor de Datakwaliteit-categorieën.** Elk telcijfer op het Vrijwilligers-dashboard linkt nu naar een eigen pagina `/vrijwilligers/datakwaliteit/{category}` met de daadwerkelijke personen + adres, leeftijdsgroep en aantal relaties, plus directe link naar de persoonspagina om de data te repareren.
+  - `orphan` — JO16- spelers zonder ouder-relatie én zonder huisgenoot.
+  - `address_fallback` — personen waar het gezin uit gedeeld adres is afgeleid (gegroepeerd per adres voor context).
+  - `missing_leeftijdsgroep` — personen zonder leeftijdsgroep-veld.
+- **`GET /rondo/v1/volunteer-data-quality/{category}`** levert de personen achter elke categorie. Drie nieuwe public methods op `VolunteerEligibilityService`: `get_orphan_youth_ids()`, `get_address_fallback_person_ids()`, `get_skipped_no_leeftijdsgroep_ids()`.
+
 ## [33.9.0] - 2026-05-27
 
 ### Changed

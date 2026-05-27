@@ -391,6 +391,7 @@ export const prmApi = {
   // Volunteer Policy
   getVolunteerEligibility: (params = {}) => api.get('/rondo/v1/volunteer-eligibility', { params }),
   getVolunteerExemption: (personId, params = {}) => api.get(`/rondo/v1/volunteer-exemption/${personId}`, { params }),
+  getVolunteerDataQuality: (category, params = {}) => api.get(`/rondo/v1/volunteer-data-quality/${category}`, { params }),
   getManagedCommissies: () => api.get('/rondo/v1/managed-commissies'),
 
   // IVA

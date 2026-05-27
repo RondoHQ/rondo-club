@@ -63,6 +63,35 @@ class Volunteer extends Base {
 			]
 		);
 
+		// Data-quality drill-down — returns the personen behind each category
+		// surfaced on the dashboard's "Datakwaliteit" card.
+		register_rest_route(
+			'rondo/v1',
+			'/volunteer-data-quality/(?P<category>[a-z_]+)',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_data_quality_persons' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
+				'args'                => [
+					'category' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => function ( $param ) {
+							return in_array(
+								$param,
+								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep' ],
+								true
+							);
+						},
+					],
+					'season'   => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
 		register_rest_route(
 			'rondo/v1',
 			'/volunteer-exemption/(?P<person_id>\d+)',
@@ -451,6 +480,78 @@ class Volunteer extends Base {
 				'is_exempt'    => $reason !== null,
 				'reason'       => $reason,
 				'reason_label' => $reason ? VolunteerExemptionResolver::reason_label( $reason ) : null,
+			]
+		);
+	}
+
+	/**
+	 * GET /rondo/v1/volunteer-data-quality/{category}
+	 *
+	 * Drill-down for the Datakwaliteit-kaart on the dashboard. Returns the
+	 * personen behind each category so admins can fix the underlying records.
+	 *
+	 *   - orphan                 → JO16- spelers zonder ouder-relatie én zonder volwassen huisgenoot.
+	 *   - address_fallback       → spelers + ouders waar het gezin alleen via adres-overeenkomst is samengesteld.
+	 *   - missing_leeftijdsgroep → personen zonder leeftijdsgroep meta.
+	 */
+	public function get_data_quality_persons( \WP_REST_Request $request ) {
+		$category = sanitize_key( (string) $request->get_param( 'category' ) );
+		$season   = $request->get_param( 'season' ) ?: SeasonKey::current();
+
+		$service = new VolunteerEligibilityService();
+
+		switch ( $category ) {
+			case 'orphan':
+				$ids = $service->get_orphan_youth_ids( $season );
+				break;
+			case 'address_fallback':
+				$ids = $service->get_address_fallback_person_ids( $season );
+				break;
+			case 'missing_leeftijdsgroep':
+				$ids = $service->get_skipped_no_leeftijdsgroep_ids();
+				break;
+			default:
+				return new \WP_Error( 'invalid_category', 'Unknown data-quality category.', [ 'status' => 400 ] );
+		}
+
+		$persons = [];
+		foreach ( $ids as $pid ) {
+			$post = get_post( $pid );
+			if ( ! $post || $post->post_type !== 'person' ) {
+				continue;
+			}
+
+			$age_group = (string) get_field( 'leeftijdsgroep', $pid );
+			$addresses = get_field( 'addresses', $pid );
+			$primary   = is_array( $addresses ) && ! empty( $addresses ) ? $addresses[0] : null;
+			$rels      = get_field( 'relationships', $pid );
+			$rel_count = is_array( $rels ) ? count( $rels ) : 0;
+
+			$persons[] = [
+				'id'                 => (int) $pid,
+				'name'               => $this->sanitize_text( $post->post_title ),
+				'thumbnail'          => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
+				'leeftijdsgroep'     => $age_group,
+				'address'            => $primary ? trim(
+					(string) ( $primary['street'] ?? '' )
+					. ' ' . (string) ( $primary['house_number'] ?? '' )
+					. (string) ( $primary['house_number_addition'] ?? '' )
+				) : '',
+				'postal_code'        => $primary ? (string) ( $primary['postal_code'] ?? '' ) : '',
+				'city'               => $primary ? (string) ( $primary['city'] ?? '' ) : '',
+				'relationships_count' => $rel_count,
+			];
+		}
+
+		// Sort by name for a stable display.
+		usort( $persons, fn( $a, $b ) => strcasecmp( $a['name'], $b['name'] ) );
+
+		return rest_ensure_response(
+			[
+				'season'   => $season,
+				'category' => $category,
+				'count'    => count( $persons ),
+				'persons'  => $persons,
 			]
 		);
 	}
