@@ -7,11 +7,10 @@
  * relationship implausible (almost always a sibling miscategorisation).
  *
  * Rules:
- *   - Two persons with claimed parent/child relation but in the same
- *     `leeftijdsgroep` → SAME_AGE_GROUP (definitely wrong, almost certainly
- *     siblings).
- *   - Same pair with a birthdate-based age gap below {@see MIN_PARENT_GAP_YEARS}
- *     → AGE_GAP_TOO_SMALL.
+ *   - Parent/child pair with a birthdate-based age gap below
+ *     {@see MIN_PARENT_GAP_YEARS} → AGE_GAP_TOO_SMALL. Vangt ook het oude
+ *     "zelfde leeftijdsgroep"-geval af, want twee personen in dezelfde
+ *     `Onder N` bucket vallen automatisch onder de gap-drempel.
  *   - Sibling pair where the birthdate gap exceeds {@see MAX_SIBLING_GAP_YEARS}
  *     → SIBLING_GAP_TOO_LARGE (suspect uncle/aunt or generation confusion).
  *
@@ -52,7 +51,6 @@ class RelationshipQualityChecker {
 	 */
 	const MAX_SIBLING_GAP_YEARS = 30;
 
-	const REASON_SAME_AGE_GROUP    = 'same_age_group';
 	const REASON_AGE_GAP_TOO_SMALL = 'age_gap_too_small';
 	const REASON_SIBLING_GAP       = 'sibling_gap_too_large';
 
@@ -133,9 +131,8 @@ class RelationshipQualityChecker {
 			$suspects,
 			static function ( $a, $b ) {
 				$severity = [
-					self::REASON_SAME_AGE_GROUP    => 0,
-					self::REASON_AGE_GAP_TOO_SMALL => 1,
-					self::REASON_SIBLING_GAP       => 2,
+					self::REASON_AGE_GAP_TOO_SMALL => 0,
+					self::REASON_SIBLING_GAP       => 1,
 				];
 				$sa = $severity[ $a['reason'] ] ?? 99;
 				$sb = $severity[ $b['reason'] ] ?? 99;
@@ -191,22 +188,12 @@ class RelationshipQualityChecker {
 			'leeftijdsgroep_b' => $lg_b,
 		];
 
-		// Rule 1: ouder/kind in dezelfde JO-leeftijdsgroep is bijna altijd siblings.
-		if (
-			in_array( $type_id, [ InverseRelationships::TYPE_PARENT, InverseRelationships::TYPE_CHILD ], true )
-			&& $lg_a !== ''
-			&& strcasecmp( $lg_a, $lg_b ) === 0
-		) {
-			return array_merge(
-				$base,
-				[
-					'reason' => self::REASON_SAME_AGE_GROUP,
-					'detail' => sprintf( 'Beide personen zitten in %s — als ze écht ouder/kind zouden zijn, zou de leeftijdsgroep verschillen.', $lg_a ),
-				]
-			);
-		}
-
-		// Rule 2: ouder/kind met te kleine geboorte-gap.
+		// Rule 1: ouder/kind met te klein leeftijdsverschil. Vangt ook het oude
+		// "zelfde leeftijdsgroep"-geval af (twee personen in dezelfde Onder N
+		// vallen sowieso onder de gap-drempel via age_group_number fallback).
+		// "Zelfde leeftijdsgroep" alleen flaggen we niet meer — als twee mensen
+		// in dezelfde Sportlink-groep zitten met >17 jaar verschil (bv. een
+		// 25-jarige speler en zijn 45-jarige vader, beide Senioren) klopt dat.
 		if (
 			in_array( $type_id, [ InverseRelationships::TYPE_PARENT, InverseRelationships::TYPE_CHILD ], true )
 			&& $gap !== null

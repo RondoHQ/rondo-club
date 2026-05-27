@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.14.2] - 2026-05-27
+
+### Changed
+- **Relatie-kwaliteitscheck**: regel "zelfde leeftijdsgroep" verwijderd. Twee mensen in dezelfde Sportlink-groep (bv. allebei Senioren) kunnen prima ouder/kind zijn als het leeftijdsverschil > 14 jaar is. De `age_gap_too_small`-regel vangt het echte probleem af; de `same_age_group`-regel produceerde false positives bij volwassen ouder/kind-koppels die toevallig in dezelfde leeftijdsgroep zaten.
+
 ## [33.14.1] - 2026-05-27
 
 ### Performance
