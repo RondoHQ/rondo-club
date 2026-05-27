@@ -12,7 +12,7 @@
  *   - `addresses` (first address as gezin fallback when relations are missing)
  *
  * Two unit kinds:
- *   - GEZIN  : one obligation per huishouden with one or more JO15- players
+ *   - GEZIN  : one obligation per huishouden with one or more JO16- players
  *              (in te vullen door één of meerdere ouders samen)
  *   - SPELER : one obligation per O17+ player (vervangt de ouderplicht)
  *
@@ -45,10 +45,11 @@ class VolunteerEligibilityService {
 	const UNIT_KIND_SPELER = 'speler';
 
 	/**
-	 * Highest leeftijdsgroep number that still triggers ouderplicht (t/m JO15).
-	 * Players in "Onder N" with N <= 15 are youth → parents owe the obligation.
+	 * Highest leeftijdsgroep number that still triggers ouderplicht (t/m JO16).
+	 * Players in "Onder N" with N <= 16 are youth → parents owe the obligation.
+	 * Bestuursbesluit: opgerekt van JO15 naar JO16.
 	 */
-	const YOUTH_MAX_AGE = 15;
+	const YOUTH_MAX_AGE = 16;
 
 	/**
 	 * Lowest leeftijdsgroep number that triggers spelersplicht (vanaf O17).
@@ -146,7 +147,7 @@ class VolunteerEligibilityService {
 		}
 
 		// Apply multi-child scaling — required_count depends on the FINAL number
-		// of JO15- triggers in each gezin, which we only know after merging.
+		// of JO16- triggers in each gezin, which we only know after merging.
 		foreach ( $gezin_units as &$unit ) {
 			$child_count            = count( $unit['trigger_person_ids'] );
 			$unit['required_count'] = self::calculate_gezin_required_count( $child_count );
@@ -158,7 +159,7 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Compute the parent obligation for a gezin given the number of JO15- children.
+	 * Compute the parent obligation for a gezin given the number of JO16- children.
 	 *
 	 * Multi-child scaling (bestuursbesluit 2026-05-26): per kind tellend met
 	 * contributie-korting. Kid 1 = 100%, kid 2 = 75%, kid 3+ = 50% each.
@@ -169,7 +170,7 @@ class VolunteerEligibilityService {
 	 *   3 kids  → floor(2 + 1.5 + 1)     = 4
 	 *   4 kids  → floor(2 + 1.5 + 1 + 1) = 5
 	 *
-	 * @param int $child_count Number of JO15- children triggering the gezin's plicht.
+	 * @param int $child_count Number of JO16- children triggering the gezin's plicht.
 	 * @return int Floor-rounded total required diensten for the gezin this season.
 	 */
 	public static function calculate_gezin_required_count( int $child_count ): int {
@@ -212,7 +213,7 @@ class VolunteerEligibilityService {
 			}
 		}
 
-		// Adult who is not playing — could still owe via a JO15- child.
+		// Adult who is not playing — could still owe via a JO16- child.
 		$children = $this->find_youth_children( $person_id );
 		if ( empty( $children ) ) {
 			return null;
@@ -297,7 +298,7 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Build a GEZIN unit for a JO15- player. Returns null when no responsible
+	 * Build a GEZIN unit for a JO16- player. Returns null when no responsible
 	 * adult can be located (no parent relationships and no shared address).
 	 *
 	 * The unit is keyed by:
@@ -379,7 +380,7 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Find the youth children (JO15-) of an adult.
+	 * Find the youth children (JO16-) of an adult.
 	 *
 	 * @return int[] Child person IDs.
 	 */
