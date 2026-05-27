@@ -421,6 +421,19 @@ export const prmApi = {
   // Volunteer obligations (admin dashboard)
   getVolunteerObligations: (params = {}) => api.get('/rondo/v1/volunteer-obligations', { params }),
 
+  // Dienst types & shifts & templates — admin CRUD via wp/v2 onder de motorkap.
+  getDienstTypes: (params = { per_page: 100 }) => api.get('/wp/v2/dienst-types', { params }),
+  getShiftTemplates: (params = { per_page: 100 }) => api.get('/wp/v2/shift-templates', { params }),
+  getShiftTemplate: (id) => api.get(`/wp/v2/shift-templates/${id}`),
+  createShiftTemplate: (data) => api.post('/wp/v2/shift-templates', data),
+  updateShiftTemplate: (id, data) => api.post(`/wp/v2/shift-templates/${id}`, data),
+  deleteShiftTemplate: (id) => api.delete(`/wp/v2/shift-templates/${id}`, { params: { force: true } }),
+  getDienstShifts: (params = { per_page: 100, orderby: 'date', order: 'desc' }) => api.get('/wp/v2/dienst-shifts', { params }),
+  getDienstShift: (id) => api.get(`/wp/v2/dienst-shifts/${id}`),
+  createDienstShift: (data) => api.post('/wp/v2/dienst-shifts', data),
+  updateDienstShift: (id, data) => api.post(`/wp/v2/dienst-shifts/${id}`, data),
+  deleteDienstShift: (id) => api.delete(`/wp/v2/dienst-shifts/${id}`, { params: { force: true } }),
+
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',

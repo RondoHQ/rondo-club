@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.13.0] - 2026-05-27
+## [33.14.0] - 2026-05-27
+
+### Added
+- **Frontend CRUD voor sjablonen en diensten** — geen WP-admin meer nodig voor het beheren van shift_templates en dienst_shifts.
+  - `/vrijwilligers/sjablonen` — overzicht van alle sjablonen, sorteerbaar op dag + tijd.
+  - `/vrijwilligers/sjablonen/nieuw` en `/vrijwilligers/sjablonen/:id` — create/edit form met dienst_type, dag-van-de-week, start/eindtijd, capaciteit, actief-vanaf/tot, notities. Auto-generated titel.
+  - `/vrijwilligers/diensten/nieuw` en `/vrijwilligers/diensten/:id` — ad-hoc dienst form (datetime, capaciteit, status, notities). Bij bestaande diensten is er een sectie "Aanmeldingen" met handmatig-verwijderen-knop per aangemelde persoon.
+  - Verwijderknop met confirm op beide editors.
+- "Nieuwe dienst" en "Sjablonen" knoppen op het Diensten-overzicht openen nu de frontend forms in plaats van WP-admin.
+
+### Changed
+- Recente-diensten-tabel: de titel + actie-icoon linken naar de frontend-editor (`/vrijwilligers/diensten/:id`) i.p.v. WP-admin.
+
+
 
 ### Added
 - **`/vrijwillig/profiel` — lid-facing IVA-upload flow.** Geen WP-admin meer nodig: een lid kiest datum + bestand (PDF/JPG/PNG, max 10 MB), upload, en ziet de huidige status (Geldig / Wacht op goedkeuring / Verlopen / Niet ingeleverd) plus de vervaldatum. Bij upload wordt `iva-approved` automatisch teruggezet zodat de bestuurslid kantine het opnieuw beoordeelt.

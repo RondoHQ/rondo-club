@@ -23,6 +23,7 @@ import {
   MembershipPassScanner,
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
+  VrijwilligersDienstForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, VrijwilligProfiel,
 } from './lazyPages';
 
@@ -261,6 +262,46 @@ const router = createBrowserRouter([
             element: (
               <VrijwilligersRoute>
                 <VrijwilligersDiensten />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensten/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDienstForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/diensten/:id',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersDienstForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/sjablonen',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersSjablonen />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/sjablonen/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersSjabloonForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/sjablonen/:id',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersSjabloonForm />
               </VrijwilligersRoute>
             ),
           },
