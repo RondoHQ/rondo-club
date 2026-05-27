@@ -125,6 +125,38 @@ class Volunteer extends Base {
 			]
 		);
 
+		// IVA upload — door het lid zélf, via /vrijwillig/profiel. Schrijft het
+		// uploadbestand naar de attachment-library, koppelt het aan het ACF veld
+		// op de gelinkte persoon, en reset iva-approved zodat de bestuurslid
+		// kantine het opnieuw beoordeelt.
+		register_rest_route(
+			'rondo/v1',
+			'/iva/upload',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'upload_iva' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'datum_iva' => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
+		// Lid haalt zijn/haar eigen IVA-status op voor /vrijwillig/profiel
+		// (zonder dat we daar het hele admin-endpoint voor open hoeven te zetten).
+		register_rest_route(
+			'rondo/v1',
+			'/iva/me',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_my_iva' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
 		// IVA approval — restricted to bestuurslid kantine (rondo_iva_approve cap).
 		register_rest_route(
 			'rondo/v1',
@@ -301,6 +333,133 @@ class Volunteer extends Base {
 		);
 
 		return array_values( array_unique( array_map( 'intval', (array) $ids ) ) );
+	}
+
+	/**
+	 * POST /rondo/v1/iva/upload
+	 *
+	 * Lid-zelf upload. Schrijft het bestand naar de attachment-library,
+	 * koppelt het aan het ACF veld iva-certificaat van de gelinkte persoon,
+	 * en reset iva-approved zodat de bestuurslid kantine het opnieuw beoordeelt.
+	 * Accepteert een optionele datum_iva (anders: vandaag).
+	 */
+	public function upload_iva( \WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+		if ( $user_id <= 0 ) {
+			return new \WP_Error( 'not_logged_in', 'Niet ingelogd.', [ 'status' => 401 ] );
+		}
+
+		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+			return new \WP_Error(
+				'no_linked_person',
+				'Geen gekoppeld lid-profiel — vraag de ledenadministratie om je account te koppelen.',
+				[ 'status' => 404 ]
+			);
+		}
+
+		$files = $request->get_file_params();
+		if ( empty( $files['certificaat'] ) ) {
+			return new \WP_Error(
+				'no_file',
+				'Geen bestand geüpload. Stuur het PDF-certificaat mee als veld "certificaat".',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$file          = $files['certificaat'];
+		$allowed_types = [ 'application/pdf', 'image/jpeg', 'image/png' ];
+		if ( ! in_array( $file['type'], $allowed_types, true ) ) {
+			return new \WP_Error(
+				'invalid_file_type',
+				'Alleen PDF, JPG of PNG-bestanden zijn toegestaan.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( $file['size'] > 10 * 1024 * 1024 ) {
+			return new \WP_Error(
+				'file_too_large',
+				'Bestand is te groot — maximaal 10 MB.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+
+		$ext  = pathinfo( $file['name'], PATHINFO_EXTENSION );
+		$name = sanitize_file_name( 'iva-certificaat-' . $person_id . '.' . $ext );
+
+		$_FILES['certificaat']         = $file;
+		$_FILES['certificaat']['name'] = $name;
+
+		$attachment_id = media_handle_upload( 'certificaat', $person_id );
+		if ( is_wp_error( $attachment_id ) ) {
+			return $attachment_id;
+		}
+
+		// Datum: gebruik wat het lid invult, anders vandaag.
+		$datum = (string) $request->get_param( 'datum_iva' );
+		if ( $datum === '' || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $datum ) ) {
+			$datum = gmdate( 'Y-m-d' );
+		}
+
+		// Schrijf via ACF zodat zowel de admin-form als de relationships-pipeline
+		// het correct ophalen.
+		update_field( 'iva-certificaat', $attachment_id, $person_id );
+		update_field( 'datum-iva', $datum, $person_id );
+		update_field( 'iva-approved', 0, $person_id );
+		update_post_meta( $person_id, 'iva-approved', 0 );
+
+		return rest_ensure_response(
+			[
+				'person_id'   => $person_id,
+				'attachment'  => [
+					'id'  => $attachment_id,
+					'url' => wp_get_attachment_url( $attachment_id ),
+				],
+				'datum_iva'   => $datum,
+				'status'      => IvaStatus::status( $person_id ),
+				'expires_at'  => IvaStatus::expires_at( $person_id ),
+			]
+		);
+	}
+
+	/**
+	 * GET /rondo/v1/iva/me — zonder admin-cap, geeft het lid zélf de status terug
+	 * van zijn/haar eigen IVA-certificaat.
+	 */
+	public function get_my_iva( \WP_REST_Request $request ) {
+		$user_id   = get_current_user_id();
+		$person_id = $user_id ? (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) : 0;
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+			return new \WP_Error( 'no_linked_person', 'Geen gekoppeld lid-profiel.', [ 'status' => 404 ] );
+		}
+
+		$cert     = get_field( 'iva-certificaat', $person_id );
+		$cert_url = '';
+		if ( is_array( $cert ) ) {
+			$cert_url = $cert['url'] ?? '';
+		} elseif ( is_numeric( $cert ) ) {
+			$cert_url = (string) wp_get_attachment_url( (int) $cert );
+		} elseif ( is_string( $cert ) ) {
+			$cert_url = $cert;
+		}
+
+		return rest_ensure_response(
+			[
+				'person_id'             => $person_id,
+				'status'                => IvaStatus::status( $person_id ),
+				'expires_at'            => IvaStatus::expires_at( $person_id ),
+				'datum_iva'             => (string) get_field( 'datum-iva', $person_id ),
+				'iva_certificaat_url'   => $cert_url ? $this->sanitize_url( $cert_url ) : '',
+				'iva_approved'          => (bool) get_post_meta( $person_id, 'iva-approved', true ),
+				'needs_renewal_reminder' => IvaStatus::needs_renewal_reminder( $person_id ),
+				'validity_years'        => IvaStatus::VALIDITY_YEARS,
+			]
+		);
 	}
 
 	public function approve_iva( \WP_REST_Request $request ) {
