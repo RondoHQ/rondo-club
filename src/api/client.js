@@ -396,6 +396,7 @@ export const prmApi = {
   // IVA
   approveIva: (personId, approve = true) => api.post(`/rondo/v1/iva/${personId}/approve`, { approve }),
   getIvaStatus: (personId) => api.get(`/rondo/v1/iva/${personId}/status`),
+  getIvaPeople: () => api.get('/rondo/v1/iva/people'),
 
   // Member-facing shift signup (/vrijwillig)
   getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),

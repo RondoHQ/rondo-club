@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.8.2] - 2026-05-27
+
+### Fixed
+- **IVA-pagina gaf 400.** `VrijwilligersIva` riep `/rondo/v1/people/filtered?per_page=1000` aan terwijl die endpoint `per_page` op 100 capt. Vervangen door een dedicated `GET /rondo/v1/iva/people` endpoint dat alleen de personen met IVA-relevante velden teruggeeft (datum-iva, iva-certificaat of iva-approved). Geen paginering nodig — typische scope is tientallen records. De status (missing/pending/valid/expired) wordt server-side bepaald via `IvaStatus`, dus de UI hoeft geen datum-rekenwerk meer te doen.
+
 ## [33.8.1] - 2026-05-27
 
 ### Changed

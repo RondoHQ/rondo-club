@@ -7,33 +7,15 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 
 const TABS = [
-  { id: 'pending',  label: 'Wacht op goedkeuring' },
-  { id: 'valid',    label: 'Geldig' },
-  { id: 'expired',  label: 'Verlopen' },
-  { id: 'missing',  label: 'Niet ingeleverd' },
+  { id: 'pending', label: 'Wacht op goedkeuring' },
+  { id: 'valid',   label: 'Geldig' },
+  { id: 'expired', label: 'Verlopen' },
 ];
 
-// Bestuursbesluit 2026-05-26: IVA-certificaten zijn 5 jaar geldig.
-const IVA_VALIDITY_YEARS = 5;
-
-function ivaExpiryDate(datum) {
-  if (!datum) return null;
-  const parsed = new Date(datum);
-  if (Number.isNaN(parsed.getTime())) return null;
-  parsed.setFullYear(parsed.getFullYear() + IVA_VALIDITY_YEARS);
-  return parsed.toISOString().slice(0, 10);
-}
-
-function isExpired(datum) {
-  const expiry = ivaExpiryDate(datum);
-  if (!expiry) return false;
-  return expiry < new Date().toISOString().slice(0, 10);
-}
-
-function loadPeopleWithIvaFields() {
-  // Pull the full people list once; filter client-side. People list is small enough
-  // (a few hundred records typically) and re-using existing endpoints keeps this MVP small.
-  return prmApi.getFilteredPeople({ per_page: 1000 }).then((r) => r.data);
+function loadIvaPeople() {
+  // Dedicated server endpoint — returns only people with IVA-relevant meta set,
+  // so the result is small (typically tens of records, not the full member roster).
+  return prmApi.getIvaPeople().then((r) => r.data?.people || []);
 }
 
 function approveIva(personId, approve) {
@@ -47,9 +29,9 @@ export default function VrijwilligersIva() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('pending');
 
-  const { data, isLoading, error } = useQuery({
+  const { data: people = [], isLoading, error } = useQuery({
     queryKey: ['volunteer', 'iva', 'people'],
-    queryFn: loadPeopleWithIvaFields,
+    queryFn: loadIvaPeople,
     staleTime: 60 * 1000,
   });
 
@@ -60,29 +42,17 @@ export default function VrijwilligersIva() {
     },
   });
 
-  const people = data?.people || data || [];
-
+  // The server normalizes each person to a single `status` enum (missing /
+  // pending / valid / expired) using the same IvaStatus rules everywhere else.
+  // We just bucket by status — no client-side date math required.
   const buckets = useMemo(() => {
-    const pending = [];
-    const valid = [];
-    const expired = [];
-    const missing = [];
+    const out = { pending: [], valid: [], expired: [] };
     for (const person of people) {
-      const datum = person.datum_iva || person['datum-iva'] || person.meta?.['datum-iva'] || '';
-      const isApproved = !!(person['iva-approved'] || person.iva_approved || person.meta?.['iva-approved']);
-      const cert = person['iva-certificaat'] || person.iva_certificaat || person.acf?.['iva-certificaat'];
-
-      if (!datum && !cert) {
-        missing.push(person);
-      } else if (!isApproved || !datum) {
-        pending.push(person);
-      } else if (isExpired(datum)) {
-        expired.push(person);
-      } else {
-        valid.push(person);
-      }
+      if (person.status === 'valid') out.valid.push(person);
+      else if (person.status === 'expired') out.expired.push(person);
+      else out.pending.push(person);
     }
-    return { pending, valid, expired, missing };
+    return out;
   }, [people]);
 
   const active = buckets[tab] || [];
@@ -96,7 +66,7 @@ export default function VrijwilligersIva() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">IVA — Alcoholcertificaat</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Instructie Verantwoord Alcoholschenken — vereist voor wie achter de bar staat.
+            Instructie Verantwoord Alcoholschenken — vereist voor wie achter de bar staat. 5 jaar geldig.
           </p>
         </div>
       </header>
@@ -143,22 +113,20 @@ export default function VrijwilligersIva() {
                 {tab === 'pending' && 'Geen IVA-certificaten wachten op goedkeuring.'}
                 {tab === 'valid' && 'Nog niemand heeft een geldig IVA-certificaat.'}
                 {tab === 'expired' && 'Geen verlopen IVA-certificaten.'}
-                {tab === 'missing' && 'Iedereen heeft minimaal iets ingeleverd.'}
               </td></tr>
             ) : (
               active.map((person) => {
-                const datum = person.datum_iva || person['datum-iva'] || person.meta?.['datum-iva'] || '';
-                const isApproved = !!(person['iva-approved'] || person.iva_approved || person.meta?.['iva-approved']);
-                const cert = person['iva-certificaat'] || person.iva_certificaat || person.acf?.['iva-certificaat'];
-                const certUrl = typeof cert === 'object' ? (cert?.url || cert?.link) : (typeof cert === 'string' ? cert : '');
-                const expiry  = ivaExpiryDate(datum);
-                const expired = isApproved && isExpired(datum);
+                const datum    = person.datum_iva || '';
+                const certUrl  = person.iva_certificaat || '';
+                const expiry   = person.expires_at || null;
+                const approved = !!person.iva_approved;
+                const expired  = person.status === 'expired';
 
                 return (
                   <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-2">
                       <Link to={`/people/${person.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                        {person.name || person.title?.rendered || `Persoon ${person.id}`}
+                        {person.name || `Persoon ${person.id}`}
                       </Link>
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
@@ -166,9 +134,7 @@ export default function VrijwilligersIva() {
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
                       {expiry
-                        ? <span className={expired ? 'text-red-700 dark:text-red-300' : ''}>
-                            {format(expiry, 'dd-MM-yyyy')}
-                          </span>
+                        ? <span className={expired ? 'text-red-700 dark:text-red-300' : ''}>{format(expiry, 'dd-MM-yyyy')}</span>
                         : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-4 py-2">
@@ -184,16 +150,14 @@ export default function VrijwilligersIva() {
                     <td className="px-4 py-2">
                       {expired
                         ? <span className="text-red-700 dark:text-red-300 text-xs font-medium">Verlopen</span>
-                        : isApproved
+                        : person.status === 'valid'
                           ? <span className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Geldig</span>
-                          : datum || certUrl
-                            ? <span className="text-amber-700 dark:text-amber-400 text-xs font-medium">Wacht op review</span>
-                            : <span className="text-gray-500 text-xs">Niet ingeleverd</span>
+                          : <span className="text-amber-700 dark:text-amber-400 text-xs font-medium">Wacht op review</span>
                       }
                     </td>
                     <td className="px-4 py-2 text-right">
                       <div className="inline-flex gap-1">
-                        {!isApproved && (datum || certUrl) && (
+                        {!approved && (datum || certUrl) && (
                           <button
                             onClick={() => approveMutation.mutate({ personId: person.id, approve: true })}
                             disabled={approveMutation.isLoading}
@@ -203,7 +167,7 @@ export default function VrijwilligersIva() {
                             <Check className="w-3 h-3" /> Goedkeur
                           </button>
                         )}
-                        {isApproved && (
+                        {approved && (
                           <button
                             onClick={() => approveMutation.mutate({ personId: person.id, approve: false })}
                             disabled={approveMutation.isLoading}
@@ -227,8 +191,8 @@ export default function VrijwilligersIva() {
         <Upload className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
           Vrijwilligers uploaden hun IVA-certificaat via de standaard person-bewerk-flow (ACF veld
-          <code className="mx-1 text-xs">iva-certificaat</code>). Geldigheidstermijn wordt nog vastgesteld door het bestuur —
-          op dit moment vervalt een goedgekeurd certificaat niet automatisch.
+          <code className="mx-1 text-xs">iva-certificaat</code>). Certificaten zijn 5 jaar geldig na
+          <code className="mx-1 text-xs">datum-iva</code>; daarna verloopt de goedkeuring automatisch.
         </div>
       </div>
     </div>
