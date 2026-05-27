@@ -26,6 +26,12 @@ const CATEGORIES = {
       'Deze personen hebben geen leeftijdsgroep-veld. Meestal zijn dit ex-leden of niet-spelende ouders — dat is prima. ' +
       'Maar als er een actief jeugdspeler tussen zit, dan ontbreekt de Sportlink-sync of staat het lid op de verkeerde leeftijdsgroep.',
   },
+  non_paying: {
+    title: 'Niet-spelende / niet-contributie-plichtige leden',
+    intro:
+      'Deze personen vallen buiten de vrijwilligersplicht omdat ze als ex-lid (former_member) of als handmatig uitgesloten van contributie ' +
+      'gemarkeerd zijn. Geen vrijwilligersplicht — hun bijdrage staat al op een andere manier vast (donateur, erelid, contributievrij).',
+  },
 };
 
 export default function VrijwilligersDataQuality() {

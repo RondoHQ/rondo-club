@@ -79,7 +79,7 @@ class Volunteer extends Base {
 						'validate_callback' => function ( $param ) {
 							return in_array(
 								$param,
-								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep' ],
+								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep', 'non_paying' ],
 								true
 							);
 						},
@@ -509,6 +509,9 @@ class Volunteer extends Base {
 				break;
 			case 'missing_leeftijdsgroep':
 				$ids = $service->get_skipped_no_leeftijdsgroep_ids();
+				break;
+			case 'non_paying':
+				$ids = $service->get_non_paying_ids();
 				break;
 			default:
 				return new \WP_Error( 'invalid_category', 'Unknown data-quality category.', [ 'status' => 400 ] );
