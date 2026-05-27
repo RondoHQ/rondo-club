@@ -146,6 +146,20 @@ class Volunteer extends Base {
 			]
 		);
 
+		// IVA admin overview — every person who has uploaded a cert, has a datum-iva,
+		// or has been approved. Keeps the result set small enough that we don't need
+		// pagination (typical clubs have ~30–100 IVA-relevant people, not the full
+		// member roster). Available to anyone with the vrijwilligers cap.
+		register_rest_route(
+			'rondo/v1',
+			'/iva/people',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_iva_people' ],
+				'permission_callback' => [ $this, 'check_iva_view_permission' ],
+			]
+		);
+
 		register_rest_route(
 			'rondo/v1',
 			'/iva/(?P<person_id>\d+)/status',
@@ -165,6 +179,86 @@ class Volunteer extends Base {
 
 	public function check_iva_approve_permission() {
 		return current_user_can( 'rondo_iva_approve' ) || current_user_can( 'manage_options' );
+	}
+
+	public function check_iva_view_permission() {
+		return current_user_can( 'vrijwilligers' )
+			|| current_user_can( 'rondo_iva_approve' )
+			|| current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * GET /rondo/v1/iva/people
+	 *
+	 * Returns every person with any IVA-relevant data: a datum-iva, an uploaded
+	 * certificaat, or an iva-approved flag. The set is naturally small (kantine
+	 * bar-vrijwilligers) so we return it all in one shot, no pagination.
+	 */
+	public function get_iva_people( \WP_REST_Request $request ) {
+		$ids = $this->collect_iva_person_ids();
+
+		if ( empty( $ids ) ) {
+			return rest_ensure_response( [ 'people' => [] ] );
+		}
+
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'post__in'         => $ids,
+				'posts_per_page'   => count( $ids ),
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+
+		$people = [];
+		foreach ( $query->posts as $post ) {
+			$cert_field = get_field( 'iva-certificaat', $post->ID );
+			$cert_url   = '';
+			if ( is_array( $cert_field ) ) {
+				$cert_url = $cert_field['url'] ?? '';
+			} elseif ( is_string( $cert_field ) ) {
+				$cert_url = $cert_field;
+			}
+
+			$people[] = [
+				'id'                => $post->ID,
+				'name'              => $this->sanitize_text( $post->post_title ),
+				'thumbnail'         => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
+				'datum_iva'         => (string) get_field( 'datum-iva', $post->ID ),
+				'iva_certificaat'   => $cert_url ? $this->sanitize_url( $cert_url ) : '',
+				'iva_approved'      => (bool) get_post_meta( $post->ID, 'iva-approved', true ),
+				'status'            => IvaStatus::status( $post->ID ),
+				'expires_at'        => IvaStatus::expires_at( $post->ID ),
+			];
+		}
+
+		return rest_ensure_response( [ 'people' => $people ] );
+	}
+
+	/**
+	 * Find the post IDs of every person with any IVA-relevant meta set.
+	 *
+	 * Direct WPDB query — meta-OR via WP_Query is awkward and we want the
+	 * smallest possible read for an admin page that's loaded rarely.
+	 */
+	private function collect_iva_person_ids(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ids = $wpdb->get_col(
+			"SELECT DISTINCT pm.post_id
+			 FROM {$wpdb->postmeta} pm
+			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			 WHERE p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			   AND pm.meta_key IN ('datum-iva', 'iva-certificaat', 'iva-approved')
+			   AND pm.meta_value <> ''
+			   AND pm.meta_value <> '0'"
+		);
+
+		return array_values( array_unique( array_map( 'intval', (array) $ids ) ) );
 	}
 
 	public function approve_iva( \WP_REST_Request $request ) {
