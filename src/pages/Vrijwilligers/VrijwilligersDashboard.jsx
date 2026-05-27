@@ -114,17 +114,35 @@ export default function VrijwilligersDashboard() {
                 )}
                 {(diagnostics.gezinnen_via_address || 0) > 0 && (
                   <li>
-                    <strong>{diagnostics.gezinnen_via_address.toLocaleString('nl-NL')}</strong> gezinnen afgeleid uit adres-overeenkomst (geen ouder-relatie gevonden in <code>relationships</code>). Het loont om die relaties expliciet vast te leggen.
+                    <Link
+                      to="/vrijwilligers/datakwaliteit/address_fallback"
+                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+                    >
+                      <strong>{diagnostics.gezinnen_via_address.toLocaleString('nl-NL')}</strong> gezinnen
+                    </Link>{' '}
+                    afgeleid uit adres-overeenkomst (geen ouder-relatie gevonden in <code>relationships</code>). Het loont om die relaties expliciet vast te leggen.
                   </li>
                 )}
                 {(diagnostics.gezinnen_orphan || 0) > 0 && (
                   <li>
-                    <strong>{diagnostics.gezinnen_orphan.toLocaleString('nl-NL')}</strong> gezinnen <em>zonder</em> ouder-relatie én zonder volwassen huisgenoot — alleen het kind staat in de eenheid. Boetes en e-mails kunnen voor deze records nergens heen tot er een ouder bekend is.
+                    <Link
+                      to="/vrijwilligers/datakwaliteit/orphan"
+                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+                    >
+                      <strong>{diagnostics.gezinnen_orphan.toLocaleString('nl-NL')}</strong> gezinnen
+                    </Link>{' '}
+                    <em>zonder</em> ouder-relatie én zonder volwassen huisgenoot — alleen het kind staat in de eenheid. Boetes en e-mails kunnen voor deze records nergens heen tot er een ouder bekend is.
                   </li>
                 )}
                 {(diagnostics.skipped_no_leeftijdsgroep || 0) > 0 && (
                   <li>
-                    <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> personen overgeslagen omdat ze geen <code>leeftijdsgroep</code> hebben. Vaak ex-leden of niet-spelende ouders — geen probleem als dat klopt, wel een rode vlag als er actieve jeugdspelers tussen zitten.
+                    <Link
+                      to="/vrijwilligers/datakwaliteit/missing_leeftijdsgroep"
+                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+                    >
+                      <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> personen
+                    </Link>{' '}
+                    overgeslagen omdat ze geen <code>leeftijdsgroep</code> hebben. Vaak ex-leden of niet-spelende ouders — geen probleem als dat klopt, wel een rode vlag als er actieve jeugdspelers tussen zitten.
                   </li>
                 )}
               </ul>

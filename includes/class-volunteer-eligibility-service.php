@@ -558,4 +558,88 @@ class VolunteerEligibilityService {
 		}
 		return null;
 	}
+
+	/**
+	 * Drill-down: every JO16- player in an orphan gezin (no parents in
+	 * relationships, no adult housemates at the shared address). Returns
+	 * just the youth trigger IDs — these are the records that need a parent
+	 * link added.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	public function get_orphan_youth_ids( ?string $season = null ): array {
+		return $this->collect_unit_person_ids( $season, 'orphan', 'triggers' );
+	}
+
+	/**
+	 * Drill-down: every person in an address-fallback gezin — both the youth
+	 * triggers and the adult housemates we inferred from shared addresses.
+	 * These records would benefit from explicit relationship_type=parent
+	 * entries so we don't depend on address heuristics.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	public function get_address_fallback_person_ids( ?string $season = null ): array {
+		return $this->collect_unit_person_ids( $season, 'address_fallback', 'all' );
+	}
+
+	/**
+	 * Drill-down: every person whose record lacks a `leeftijdsgroep`. These
+	 * are usually ex-members or non-playing parents who aren't synced to
+	 * Sportlink — fine if expected, a red flag if an active youth player is
+	 * in the list.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	public function get_skipped_no_leeftijdsgroep_ids(): array {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$ids_with_value = $wpdb->get_col(
+			"SELECT DISTINCT p.ID
+			 FROM {$wpdb->posts} p
+			 INNER JOIN {$wpdb->postmeta} pm
+				ON pm.post_id = p.ID AND pm.meta_key = 'leeftijdsgroep'
+			 WHERE p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			   AND pm.meta_value <> ''"
+		);
+		$with = array_map( 'intval', (array) $ids_with_value );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$all_person_ids = $wpdb->get_col(
+			"SELECT ID FROM {$wpdb->posts}
+			 WHERE post_type = 'person' AND post_status = 'publish'"
+		);
+		$all = array_map( 'intval', (array) $all_person_ids );
+
+		return array_values( array_diff( $all, $with ) );
+	}
+
+	/**
+	 * Internal helper for the orphan/address-fallback drill-downs.
+	 *
+	 * @param string|null $season         KNVB-seizoen.
+	 * @param string      $data_quality   'orphan' | 'address_fallback' | 'ok'
+	 * @param string      $scope          'triggers' | 'all' — which IDs to return per unit.
+	 * @return int[]
+	 */
+	private function collect_unit_person_ids( ?string $season, string $data_quality, string $scope ): array {
+		$view = $this->get_eligibility_view( $season );
+		$ids  = [];
+		foreach ( $view['units'] as $unit ) {
+			if ( ( $unit['kind'] ?? '' ) !== self::UNIT_KIND_GEZIN ) {
+				continue;
+			}
+			if ( ( $unit['data_quality'] ?? '' ) !== $data_quality ) {
+				continue;
+			}
+			$pool = $scope === 'triggers'
+				? (array) ( $unit['trigger_person_ids'] ?? [] )
+				: (array) ( $unit['person_ids'] ?? [] );
+			foreach ( $pool as $pid ) {
+				$ids[] = (int) $pid;
+			}
+		}
+		return array_values( array_unique( $ids ) );
+	}
 }
