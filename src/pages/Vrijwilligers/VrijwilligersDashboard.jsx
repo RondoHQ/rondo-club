@@ -52,7 +52,8 @@ export default function VrijwilligersDashboard() {
     ((diagnostics.skipped_no_leeftijdsgroep || 0) > 0 ||
       (diagnostics.skipped_non_paying || 0) > 0 ||
       (diagnostics.gezinnen_orphan || 0) > 0 ||
-      (diagnostics.gezinnen_via_address || 0) > 0);
+      (diagnostics.gezinnen_via_address || 0) > 0 ||
+      (diagnostics.suspect_relationships || 0) > 0);
 
   return (
     <div className="space-y-6">
@@ -155,6 +156,17 @@ export default function VrijwilligersDashboard() {
                       <strong>{diagnostics.skipped_non_paying.toLocaleString('nl-NL')}</strong> personen
                     </Link>{' '}
                     buiten de doelgroep gehouden omdat ze geen spelend/contributie-plichtig lid zijn (ex-leden, donateurs, ereleden, contributievrije leden).
+                  </li>
+                )}
+                {(diagnostics.suspect_relationships || 0) > 0 && (
+                  <li>
+                    <Link
+                      to="/vrijwilligers/relatie-check"
+                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+                    >
+                      <strong>{diagnostics.suspect_relationships.toLocaleString('nl-NL')}</strong> verdachte familie-relaties
+                    </Link>{' '}
+                    — ouder/kind-koppels waar het leeftijdsverschil te klein is (vaak in werkelijkheid siblings) of sibling-koppels met een wel erg groot leeftijdsverschil.
                   </li>
                 )}
               </ul>

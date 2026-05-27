@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.12.0] - 2026-05-27
+
+### Added
+- **Relatie-kwaliteitscheck** — `RelationshipQualityChecker` doorloopt alle `relationships`-entries en vlagged ouder/kind-koppels met te klein leeftijdsverschil (vaak in werkelijkheid siblings) en sibling-koppels met een wel erg groot verschil. Drie regels: zelfde leeftijdsgroep (rood), <14 jaar verschil (amber), >30 jaar voor siblings (paars).
+- **`GET /rondo/v1/relationship-quality`** retourneert de verdachte paren met namen, thumbnails en leeftijdsgroepen. Aantal verdachte relaties zit ook in de `diagnostics` van `/volunteer-eligibility` zodat de Datakwaliteit-kaart in één call alles kan tonen.
+- **`/vrijwilligers/relatie-check`** drill-down pagina toont de paren met een directe link naar elke persoonspagina om het `relationship_type` te corrigeren. InverseRelationships hangt de wijziging automatisch aan de andere kant aan.
+- Nieuwe rij op de Datakwaliteit-kaart die naar deze pagina linkt.
+
 ## [33.11.0] - 2026-05-27
 
 ### Changed

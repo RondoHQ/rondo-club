@@ -13,6 +13,7 @@ namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\IvaStatus;
+use Rondo\Volunteer\RelationshipQualityChecker;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerObligationCalculator;
@@ -89,6 +90,18 @@ class Volunteer extends Base {
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 				],
+			]
+		);
+
+		// Relationship-quality drill-down — flagged suspect ouder/kind/sibling
+		// links uit de relationships repeater.
+		register_rest_route(
+			'rondo/v1',
+			'/relationship-quality',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_suspect_relationships' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
 
@@ -448,12 +461,20 @@ class Volunteer extends Base {
 			);
 		}
 
+		// Cheap-ish to add: a count of suspect relationships so the dashboard
+		// can render the Datakwaliteit-kaart in one round-trip. The drill-down
+		// page hits /rondo/v1/relationship-quality directly for full detail.
+		$diagnostics                          = $view['diagnostics'];
+		$diagnostics['suspect_relationships'] = count(
+			( new RelationshipQualityChecker() )->find_suspect_pairs()
+		);
+
 		return rest_ensure_response(
 			[
 				'season'      => $season,
 				'units'       => $units,
 				'total_units' => count( $units ),
-				'diagnostics' => $view['diagnostics'],
+				'diagnostics' => $diagnostics,
 			]
 		);
 	}
@@ -555,6 +576,34 @@ class Volunteer extends Base {
 				'category' => $category,
 				'count'    => count( $persons ),
 				'persons'  => $persons,
+			]
+		);
+	}
+
+	/**
+	 * GET /rondo/v1/relationship-quality
+	 *
+	 * Lijst van verdachte ouder/kind/sibling-paren — afgewogen op
+	 * leeftijdsverschil. Gebruikt door de Datakwaliteit-kaart op het
+	 * Vrijwilligers-dashboard om data-issues zichtbaar te maken.
+	 */
+	public function get_suspect_relationships( \WP_REST_Request $request ) {
+		$checker = new RelationshipQualityChecker();
+		$pairs   = $checker->find_suspect_pairs();
+
+		// Voeg thumbnails toe zodat het frontend de personen herkenbaar kan tonen.
+		foreach ( $pairs as &$pair ) {
+			$pair['person_a_thumbnail'] = $this->sanitize_url( get_the_post_thumbnail_url( (int) $pair['person_a_id'], 'thumbnail' ) );
+			$pair['person_b_thumbnail'] = $this->sanitize_url( get_the_post_thumbnail_url( (int) $pair['person_b_id'], 'thumbnail' ) );
+			$pair['person_a_name']      = $this->sanitize_text( $pair['person_a_name'] );
+			$pair['person_b_name']      = $this->sanitize_text( $pair['person_b_name'] );
+		}
+		unset( $pair );
+
+		return rest_ensure_response(
+			[
+				'count' => count( $pairs ),
+				'pairs' => $pairs,
 			]
 		);
 	}

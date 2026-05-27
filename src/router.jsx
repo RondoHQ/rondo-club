@@ -23,7 +23,7 @@ import {
   MembershipPassScanner,
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
-  VrijwilligersDataQuality, Vrijwillig,
+  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -277,6 +277,14 @@ const router = createBrowserRouter([
             element: (
               <VrijwilligersRoute>
                 <VrijwilligersDataQuality />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/relatie-check',
+            element: (
+              <VrijwilligersRoute>
+                <VrijwilligersRelationshipQuality />
               </VrijwilligersRoute>
             ),
           },
