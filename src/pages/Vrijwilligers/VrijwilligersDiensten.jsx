@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { CalendarClock, Plus, Settings, ExternalLink } from 'lucide-react';
-import api from '@/api/client';
+import { CalendarClock, Plus, Settings, Pencil } from 'lucide-react';
+import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 
@@ -12,19 +12,13 @@ export default function VrijwilligersDiensten() {
 
   const { data: typesData, isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
-    queryFn: async () => {
-      const response = await api.get('/wp/v2/dienst-types', { params: { per_page: 50 } });
-      return response.data;
-    },
+    queryFn: async () => (await prmApi.getDienstTypes({ per_page: 50 })).data,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: shiftsData, isLoading: shiftsLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-shifts'],
-    queryFn: async () => {
-      const response = await api.get('/wp/v2/dienst-shifts', { params: { per_page: 50, orderby: 'date', order: 'desc' } });
-      return response.data;
-    },
+    queryFn: async () => (await prmApi.getDienstShifts({ per_page: 50, orderby: 'date', order: 'desc' })).data,
     staleTime: 60 * 1000,
   });
 
@@ -46,12 +40,12 @@ export default function VrijwilligersDiensten() {
           </div>
         </div>
         <div className="flex gap-2">
-          <a href={adminUrl('edit.php?post_type=shift_template')} className="btn-tertiary inline-flex items-center gap-1.5">
+          <Link to="/vrijwilligers/sjablonen" className="btn-tertiary inline-flex items-center gap-1.5">
             <Settings className="w-4 h-4" /> Sjablonen
-          </a>
-          <a href={adminUrl('post-new.php?post_type=dienst_shift')} className="btn-primary inline-flex items-center gap-1.5">
-            <Plus className="w-4 h-4" /> Nieuwe shift
-          </a>
+          </Link>
+          <Link to="/vrijwilligers/diensten/nieuw" className="btn-primary inline-flex items-center gap-1.5">
+            <Plus className="w-4 h-4" /> Nieuwe dienst
+          </Link>
         </div>
       </header>
 
@@ -87,9 +81,9 @@ export default function VrijwilligersDiensten() {
                     <a
                       href={adminUrl(`post.php?post=${type.id}&action=edit`)}
                       className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                      title="Bewerken"
+                      title="Bewerken in WP-admin (alleen voor admins)"
                     >
-                      <ExternalLink className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" />
                     </a>
                   </div>
                   <div className="flex flex-wrap gap-1 text-xs">
@@ -127,10 +121,10 @@ export default function VrijwilligersDiensten() {
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
         ) : shifts.length === 0 ? (
           <div className="card p-8 text-center">
-            <div className="text-gray-500 dark:text-gray-400 mb-2">Nog geen shifts gepland.</div>
+            <div className="text-gray-500 dark:text-gray-400 mb-2">Nog geen diensten gepland.</div>
             <p className="text-xs text-gray-400 dark:text-gray-500 max-w-md mx-auto">
-              Shifts ontstaan handmatig (via Diensten → Nieuwe shift) of automatisch uit Sjablonen wanneer de
-              expander-cron actief is. Fase C/D van het vrijwilligersbeleid voegt de member-facing planner toe.
+              Maak een ad-hoc dienst aan via &ldquo;Nieuwe dienst&rdquo; rechtsboven, of zet een wekelijks{' '}
+              <Link to="/vrijwilligers/sjablonen" className="underline">sjabloon</Link> klaar — de expander rolt sjablonen elke nacht uit naar concrete diensten voor de komende 12 weken.
             </p>
           </div>
         ) : (
@@ -151,7 +145,9 @@ export default function VrijwilligersDiensten() {
                   return (
                     <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
-                        {shift.title?.rendered || shift.title || `Shift ${shift.id}`}
+                        <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                          {shift.title?.rendered || shift.title || `Shift ${shift.id}`}
+                        </Link>
                       </td>
                       <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
                         {meta.start_datetime ? format(meta.start_datetime, 'dd-MM-yyyy HH:mm') : '—'}
@@ -163,12 +159,9 @@ export default function VrijwilligersDiensten() {
                         {meta.status || 'open'}
                       </td>
                       <td className="px-4 py-2">
-                        <a
-                          href={adminUrl(`post.php?post=${shift.id}&action=edit`)}
-                          className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
+                        <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Bewerken">
+                          <Pencil className="w-4 h-4" />
+                        </Link>
                       </td>
                     </tr>
                   );
