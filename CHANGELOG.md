@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.11.0] - 2026-05-27
+
+### Changed
+- **Alleen spelend/contributie-plichtige leden vallen onder de vrijwilligersplicht.** `VolunteerEligibilityService` filtert speler- en gezin-trigger-personen nu op `is_contributie_member()`: ex-leden (`former_member`) en handmatig uitgesloten leden (`_exclude_from_contributie`) tellen niet meer mee. Ouders en huisgenoten in een gezin-unit worden niet gefilterd — het kind blijft het ankerpunt.
+- Nieuwe diagnostic `skipped_non_paying` op `GET /rondo/v1/volunteer-eligibility` + drill-down `/vrijwilligers/datakwaliteit/non_paying` zodat admins kunnen zien wie er buiten de doelgroep valt en waarom (donateurs, ereleden, contributievrij, ex-leden).
+
 ## [33.10.0] - 2026-05-27
 
 ### Added

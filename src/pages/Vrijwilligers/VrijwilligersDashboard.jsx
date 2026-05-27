@@ -50,6 +50,7 @@ export default function VrijwilligersDashboard() {
   const hasDataIssues =
     diagnostics &&
     ((diagnostics.skipped_no_leeftijdsgroep || 0) > 0 ||
+      (diagnostics.skipped_non_paying || 0) > 0 ||
       (diagnostics.gezinnen_orphan || 0) > 0 ||
       (diagnostics.gezinnen_via_address || 0) > 0);
 
@@ -62,7 +63,7 @@ export default function VrijwilligersDashboard() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Vrijwilligersbeleid — 2 diensten per jaar voor ouders (t/m JO16) en spelers (vanaf O17).
+            Vrijwilligersbeleid — 2 diensten per jaar voor ouders (t/m JO16) en spelers (vanaf O17), zolang ze spelend/contributie-plichtig lid zijn.
           </p>
         </div>
       </header>
@@ -143,6 +144,17 @@ export default function VrijwilligersDashboard() {
                       <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> personen
                     </Link>{' '}
                     overgeslagen omdat ze geen <code>leeftijdsgroep</code> hebben. Vaak ex-leden of niet-spelende ouders — geen probleem als dat klopt, wel een rode vlag als er actieve jeugdspelers tussen zitten.
+                  </li>
+                )}
+                {(diagnostics.skipped_non_paying || 0) > 0 && (
+                  <li>
+                    <Link
+                      to="/vrijwilligers/datakwaliteit/non_paying"
+                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+                    >
+                      <strong>{diagnostics.skipped_non_paying.toLocaleString('nl-NL')}</strong> personen
+                    </Link>{' '}
+                    buiten de doelgroep gehouden omdat ze geen spelend/contributie-plichtig lid zijn (ex-leden, donateurs, ereleden, contributievrije leden).
                   </li>
                 )}
               </ul>

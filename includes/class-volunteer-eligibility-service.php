@@ -121,6 +121,7 @@ class VolunteerEligibilityService {
 		$gezin_units  = [];
 		$speler_units = [];
 		$skipped_no_leeftijdsgroep = 0;
+		$skipped_non_paying        = 0;
 
 		foreach ( $query->posts as $person_id ) {
 			$person_id = (int) $person_id;
@@ -131,6 +132,14 @@ class VolunteerEligibilityService {
 				// populate leeftijdsgroep. We count them so the dashboard can
 				// surface data-quality issues, but we can't model them.
 				$skipped_no_leeftijdsgroep++;
+				continue;
+			}
+
+			// Only spelend / contributie-plichtig lid telt mee voor de plicht.
+			// Donateurs, ereleden, contributievrij-leden en ex-leden vallen buiten
+			// de doelgroep — hun bijdrage staat al vast via een andere route.
+			if ( ! self::is_contributie_member( $person_id ) ) {
+				$skipped_non_paying++;
 				continue;
 			}
 
@@ -185,12 +194,38 @@ class VolunteerEligibilityService {
 			'units'       => array_values( array_merge( $gezin_units, $speler_units ) ),
 			'diagnostics' => [
 				'skipped_no_leeftijdsgroep' => $skipped_no_leeftijdsgroep,
+				'skipped_non_paying'        => $skipped_non_paying,
 				'gezinnen_with_parents'     => $counts_by_quality['ok'],
 				'gezinnen_via_address'      => $counts_by_quality['address_fallback'],
 				'gezinnen_orphan'           => $counts_by_quality['orphan'],
 				'speler_units'              => count( $speler_units ),
 			],
 		];
+	}
+
+	/**
+	 * Is this person a spelend / contributie-plichtig lid?
+	 *
+	 * The doelgroep is "alle ouders t/m JO16 en spelers vanaf O17 die ook
+	 * contributie betalen". We exclude:
+	 *   - `former_member` flag — ex-leden hoeven niet
+	 *   - `_exclude_from_contributie` meta — donateurs, ereleden, contributie-
+	 *     vrije leden zijn op een andere manier al bijdragend
+	 *
+	 * Bewust géén check op `type-lid` of fee-calculator-uitkomst: die zou de
+	 * regel afhankelijk maken van het ingewikkeldere fee-systeem. Voor de
+	 * doelgroep-bepaling zijn de twee bovenstaande flags voldoende én exact
+	 * wat administrators handmatig kunnen aanvinken.
+	 */
+	public static function is_contributie_member( int $person_id ): bool {
+		if ( (bool) get_field( 'former_member', $person_id ) ) {
+			return false;
+		}
+		$excluded = get_post_meta( $person_id, '_exclude_from_contributie', true );
+		if ( $excluded === '1' || $excluded === 1 || $excluded === true ) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -581,6 +616,39 @@ class VolunteerEligibilityService {
 	 */
 	public function get_address_fallback_person_ids( ?string $season = null ): array {
 		return $this->collect_unit_person_ids( $season, 'address_fallback', 'all' );
+	}
+
+	/**
+	 * Drill-down: every person met een leeftijdsgroep die NIET in de doelgroep
+	 * valt omdat ze geen contributie betalen (former_member of
+	 * _exclude_from_contributie). Voor admins is dit fijn om te zien wie er
+	 * dus geen vrijwilligersplicht heeft.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	public function get_non_paying_ids(): array {
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish' ],
+			]
+		);
+
+		$ids = [];
+		foreach ( $query->posts as $person_id ) {
+			$person_id = (int) $person_id;
+			if ( $this->age_group_number( $person_id ) === null ) {
+				continue; // dat zit al in de missing_leeftijdsgroep bucket
+			}
+			if ( ! self::is_contributie_member( $person_id ) ) {
+				$ids[] = $person_id;
+			}
+		}
+		return $ids;
 	}
 
 	/**
