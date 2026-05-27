@@ -36,3 +36,4 @@ export const VrijwilligersDiensten = lazy(() => import('@/pages/Vrijwilligers/Vr
 export const VrijwilligersDataQuality = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersDataQuality'));
 export const VrijwilligersRelationshipQuality = lazy(() => import('@/pages/Vrijwilligers/VrijwilligersRelationshipQuality'));
 export const Vrijwillig = lazy(() => import('@/pages/Vrijwillig/Vrijwillig'));
+export const VrijwilligProfiel = lazy(() => import('@/pages/Vrijwillig/VrijwilligProfiel'));

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.13.0] - 2026-05-27
+
+### Added
+- **`/vrijwillig/profiel` — lid-facing IVA-upload flow.** Geen WP-admin meer nodig: een lid kiest datum + bestand (PDF/JPG/PNG, max 10 MB), upload, en ziet de huidige status (Geldig / Wacht op goedkeuring / Verlopen / Niet ingeleverd) plus de vervaldatum. Bij upload wordt `iva-approved` automatisch teruggezet zodat de bestuurslid kantine het opnieuw beoordeelt.
+- **`POST /rondo/v1/iva/upload`** voor de upload zelf (multipart, gebruikt `rondo_linked_person_id` om het juiste persoonsrecord te vinden).
+- **`GET /rondo/v1/iva/me`** voor de lid-facing status — geen admin-cap nodig.
+- "Mijn profiel"-link rechtsbovenaan `/vrijwillig` en directe deeplink in de IVA-hard-block banner.
+
+### Changed
+- Welkomstmail voor nieuwe vrijwilligers verwijst nu naar **Vrijwilligers → Mijn profiel** voor het uploaden van het IVA-certificaat in plaats van "mail het naar de kantinebeheerder".
+- Admin-IVA-pagina footer verwijst niet meer naar de WP-admin person-bewerk-flow.
+
 ## [33.12.0] - 2026-05-27
 
 ### Added

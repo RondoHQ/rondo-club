@@ -23,7 +23,7 @@ import {
   MembershipPassScanner,
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
-  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig,
+  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, VrijwilligProfiel,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -292,6 +292,7 @@ const router = createBrowserRouter([
           // Member-facing surface (#4) — any logged-in member can use this,
           // capability gating happens server-side based on linked-person eligibility.
           { path: 'vrijwillig', element: <Vrijwillig /> },
+          { path: 'vrijwillig/profiel', element: <VrijwilligProfiel /> },
 
           // Finance routes - requires financieel capability
           {

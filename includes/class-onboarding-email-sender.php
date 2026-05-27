@@ -236,7 +236,7 @@ Sinds dit seizoen vragen we van elke vrijwilliger 2 diensten per jaar (terreinme
 
 1. Bekijk het rooster en meld je aan: ga in Rondo naar **Vrijwilligers → Diensten**. Je ziet alleen diensten waarvoor je in aanmerking komt.
 2. **VOG verklaring** is verplicht voor alle vrijwilligers. Heb je er nog geen of is hij verlopen? Onze VOG-coördinator stuurt je een aanvraag via Justis.
-3. **IVA-certificaat** is alleen verplicht voor bardienst. Het is gratis via NOC*NSF en 5 jaar geldig. Mail het certificaat naar onze kantinebeheerder voor goedkeuring.
+3. **IVA-certificaat** is alleen verplicht voor bardienst. Het is gratis via NOC*NSF en 5 jaar geldig. Upload je certificaat in Rondo via **Vrijwilligers → Mijn profiel** — de bestuurslid kantine keurt het daar goed.
 4. Plan je eerste dienst binnen 4 weken na ontvangst van deze mail — sociale druk doet de rest.
 
 Als je een dienst niet kunt doen: tijdig afmelden mag altijd zonder gevolg. Wel komen opdagen telt voor de plicht.

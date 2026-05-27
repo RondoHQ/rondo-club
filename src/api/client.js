@@ -399,6 +399,15 @@ export const prmApi = {
   approveIva: (personId, approve = true) => api.post(`/rondo/v1/iva/${personId}/approve`, { approve }),
   getIvaStatus: (personId) => api.get(`/rondo/v1/iva/${personId}/status`),
   getIvaPeople: () => api.get('/rondo/v1/iva/people'),
+  getMyIva: () => api.get('/rondo/v1/iva/me'),
+  uploadMyIva: (file, datumIva) => {
+    const fd = new FormData();
+    fd.append('certificaat', file);
+    if (datumIva) fd.append('datum_iva', datumIva);
+    return api.post('/rondo/v1/iva/upload', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 
   // Member-facing shift signup (/vrijwillig)
   getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),

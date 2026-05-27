@@ -190,8 +190,11 @@ export default function VrijwilligersIva() {
       <div className="card p-4 text-xs text-gray-500 dark:text-gray-400 flex items-start gap-2">
         <Upload className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
-          Vrijwilligers uploaden hun IVA-certificaat via de standaard person-bewerk-flow (ACF veld
-          <code className="mx-1 text-xs">iva-certificaat</code>). Certificaten zijn 5 jaar geldig na
+          Vrijwilligers uploaden hun IVA-certificaat zelf via{' '}
+          <Link to="/vrijwillig/profiel" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+            /vrijwillig/profiel
+          </Link>
+          {' '}(geen WP-admin nodig). Certificaten zijn 5 jaar geldig na
           <code className="mx-1 text-xs">datum-iva</code>; daarna verloopt de goedkeuring automatisch.
         </div>
       </div>

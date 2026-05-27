@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Clock, Calendar, ShieldAlert } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -104,7 +104,11 @@ function BlockBanners({ blockReasons }) {
           <div className="text-sm">
             <strong className="text-gray-900 dark:text-gray-100">IVA-certificaat ontbreekt of is verlopen.</strong>
             <p className="text-gray-600 dark:text-gray-400 mt-0.5">
-              Bardiensten zijn nog niet zichtbaar. Upload je IVA-certificaat (5 jaar geldig) via je profiel — de bestuurslid kantine keurt het goed.
+              Bardiensten zijn nog niet zichtbaar. Behaal je IVA gratis bij NOC*NSF (5 jaar geldig) en{' '}
+              <Link to="/vrijwillig/profiel" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                upload het certificaat hier
+              </Link>
+              .
             </p>
           </div>
         </div>
@@ -241,12 +245,18 @@ export default function Vrijwillig() {
         <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
           <HeartHandshake className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Plan je diensten in en houd je voortgang bij voor het seizoen {mine?.season}.
           </p>
         </div>
+        <Link
+          to="/vrijwillig/profiel"
+          className="text-sm text-bright-cobalt dark:text-electric-cyan hover:underline shrink-0"
+        >
+          Mijn profiel
+        </Link>
       </header>
 
       {mineLoading ? (
