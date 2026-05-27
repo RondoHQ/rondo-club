@@ -409,7 +409,8 @@ class Volunteer extends Base {
 			);
 		}
 
-		$units = $service->get_eligible_units( $season );
+		$view  = $service->get_eligibility_view( $season );
+		$units = $view['units'];
 
 		if ( $with_persons ) {
 			$units = array_map(
@@ -423,6 +424,7 @@ class Volunteer extends Base {
 				'season'      => $season,
 				'units'       => $units,
 				'total_units' => count( $units ),
+				'diagnostics' => $view['diagnostics'],
 			]
 		);
 	}

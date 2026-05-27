@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.9.0] - 2026-05-27
+
+### Changed
+- **Eligibility-derivatie verliest geen JO16-spelers meer.** Voorheen dropte `VolunteerEligibilityService` stilletjes elke jeugdspeler zonder ouder-relatie én zonder gedeelde-adres-volwassene. Nu krijgt elk JO16-kind gegarandeerd een gezin-unit, met een `data_quality` vlag (`ok` / `address_fallback` / `orphan`). Ook personen zonder `leeftijdsgroep` worden niet meer onzichtbaar — ze worden geteld als diagnostic.
+- **`GET /rondo/v1/volunteer-eligibility`** retourneert nu een `diagnostics` blok met: aantal gezinnen via relaties, via adres-fallback, orphan-gezinnen, en het aantal personen overgeslagen wegens ontbrekende `leeftijdsgroep`.
+- **Vrijwilligers-dashboard toont een "Datakwaliteit"-kaart** zodra een van de diagnostics > 0 is, met klikbare uitleg per categorie. Helpt admins gericht stuk-voor-stuk de relaties of leeftijdsgroep-velden bij te werken.
+
+Verklaart waarom het Gezin-totaal eerst te laag was: een fors deel van de JO16-spelers heeft (nog) geen ouder-record in `relationships`.
+
 ## [33.8.2] - 2026-05-27
 
 ### Fixed
