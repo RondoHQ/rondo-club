@@ -32,6 +32,7 @@
 
 namespace Rondo\Volunteer;
 
+use Rondo\Core\VolunteerStatus;
 use Rondo\Data\InverseRelationships;
 use Rondo\Fees\SeasonKey;
 
@@ -176,21 +177,33 @@ class VolunteerEligibilityService {
 
 		$gezin_units  = [];
 		$speler_units = [];
-		$skipped_no_leeftijdsgroep = 0;
-		$skipped_non_paying        = 0;
+		$no_age_group_candidates = []; // Per-loop verzameling; ouders vallen pas later af.
+		$skipped_non_paying      = 0;
 
 		foreach ( $query->posts as $person_id ) {
 			$person_id = (int) $person_id;
 			$age       = $this->age_group_number( $person_id );
 
 			if ( $age === null ) {
-				// Alleen als actief lid hier tellen — anders krijgen we vooral
-				// ex-leden en niet-spelende ouders in de diagnostic, en daar kan
-				// een admin niets mee. Wat we wél willen vlaggen: actieve leden
-				// (geen former_member, geen _exclude_from_contributie) die geen
-				// leeftijdsgroep hebben — dat is een Sportlink-sync of data-issue.
-				if ( self::is_contributie_member( $person_id ) ) {
-					$skipped_no_leeftijdsgroep++;
+				// Wat we wél willen vlaggen: actieve leden (geen former_member,
+				// geen _exclude_from_contributie) die geen leeftijdsgroep hebben
+				// — dat is een Sportlink-sync of data-issue.
+				// Huidige vrijwilligers vallen er hier uit: die hebben terecht
+				// geen spelactiviteit en horen niet in de doelgroep.
+				// Honorary leden (Donateur, Erelid, Lid van Verdienste,
+				// Verenigingslid voor het leven) vallen ook af — die zijn al
+				// bijdragend via hun functie, niet via spelactiviteit.
+				// Ouders met een directe `Kind`-relatie worden hier ook al
+				// uitgefilterd — los van of het kind een leeftijdsgroep heeft.
+				// Daarnaast worden hieronder, NÁ het bouwen van de gezin-units,
+				// ook adres-fallback-ouders/huisgenoten weggefilterd.
+				if (
+					self::is_contributie_member( $person_id )
+					&& ! self::is_current_volunteer( $person_id )
+					&& ! self::has_active_honorary_role( $person_id )
+					&& ! $this->is_parent( $person_id )
+				) {
+					$no_age_group_candidates[] = $person_id;
 				}
 				continue;
 			}
@@ -250,6 +263,23 @@ class VolunteerEligibilityService {
 		}
 		unset( $unit );
 
+		// Ouders die al via een gezin-unit gekoppeld zijn (relationships of
+		// adres-fallback) horen niet in de "missing leeftijdsgroep"-bucket:
+		// ze hebben terecht geen Sportlink-spelactiviteit. Filter ze nu pas
+		// uit, omdat we de gezin-units pas hierboven volledig hebben opgebouwd.
+		$known_gezin_person_ids = [];
+		foreach ( $gezin_units as $unit ) {
+			foreach ( $unit['person_ids'] as $pid ) {
+				$known_gezin_person_ids[ (int) $pid ] = true;
+			}
+		}
+		$skipped_no_leeftijdsgroep = 0;
+		foreach ( $no_age_group_candidates as $pid ) {
+			if ( ! isset( $known_gezin_person_ids[ $pid ] ) ) {
+				$skipped_no_leeftijdsgroep++;
+			}
+		}
+
 		return [
 			'units'       => array_values( array_merge( $gezin_units, $speler_units ) ),
 			'diagnostics' => [
@@ -290,6 +320,69 @@ class VolunteerEligibilityService {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Is this person flagged as a current volunteer?
+	 *
+	 * Current volunteers are exempt from the obligation entirely — they're
+	 * already bijdragend via hun functie. We use this to keep them out of the
+	 * "missing leeftijdsgroep" data-quality bucket: a vrijwilliger zonder
+	 * spelactiviteit *hoort* geen leeftijdsgroep te hebben, dus zou daar
+	 * onterecht als data-issue verschijnen.
+	 */
+	public static function is_current_volunteer( int $person_id ): bool {
+		$flag = get_post_meta( $person_id, 'huidig-vrijwilliger', true );
+		return $flag === '1' || $flag === 1 || $flag === true;
+	}
+
+	/**
+	 * Does this person hold an honorary / membership role (Donateur, Erelid,
+	 * Lid van Verdienste, Verenigingslid voor het leven) — i.e. a job_title
+	 * in `VolunteerStatus::get_excluded_roles()` — on a current work_history
+	 * entry? Honorary leden hebben geen spelactiviteit en horen niet als
+	 * data-gap te verschijnen.
+	 *
+	 * Reads work_history via get_field() (ACF repeater) — acceptably priced
+	 * because callers only invoke this for the small set of personen zonder
+	 * leeftijdsgroep, niet voor de volledige ledenpopulatie.
+	 */
+	public static function has_active_honorary_role( int $person_id ): bool {
+		$work_history = get_field( 'work_history', $person_id );
+		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
+			return false;
+		}
+
+		$excluded = array_map( 'strtolower', VolunteerStatus::get_excluded_roles() );
+		if ( empty( $excluded ) ) {
+			return false;
+		}
+
+		$today = strtotime( 'today' );
+		foreach ( $work_history as $job ) {
+			if ( ! is_array( $job ) ) {
+				continue;
+			}
+			$job_title = strtolower( trim( (string) ( $job['job_title'] ?? '' ) ) );
+			if ( $job_title === '' || ! in_array( $job_title, $excluded, true ) ) {
+				continue;
+			}
+
+			// Only count CURRENT positions: is_current flag, no end_date, or end_date in future.
+			if ( ! empty( $job['is_current'] ) ) {
+				return true;
+			}
+			$end_date = (string) ( $job['end_date'] ?? '' );
+			if ( $end_date === '' ) {
+				return true;
+			}
+			$ts = strtotime( $end_date );
+			if ( $ts !== false && $ts >= $today ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -523,6 +616,30 @@ class VolunteerEligibilityService {
 		}
 
 		return array_values( array_unique( $parents ) );
+	}
+
+	/**
+	 * Does this person have ANY child-relationship at all (TYPE_CHILD outgoing
+	 * of de inverse TYPE_PARENT op de gerelateerde persoon)? Onafhankelijk van
+	 * de leeftijdsgroep van het kind — zodat we ouders ook kunnen herkennen
+	 * als hun kind nog geen leeftijdsgroep heeft (sync issue) of als het kind
+	 * al O17+ is.
+	 *
+	 * Gebruikt door de "missing leeftijdsgroep"-bucket om ouders uit de lijst
+	 * te filteren: een ouder heeft terecht geen Sportlink-spelactiviteit.
+	 */
+	public function is_parent( int $person_id ): bool {
+		$rels = get_field( 'relationships', $person_id );
+		if ( empty( $rels ) || ! is_array( $rels ) ) {
+			return false;
+		}
+		foreach ( $rels as $rel ) {
+			$type_id = $this->extract_type_id( $rel['relationship_type'] ?? null );
+			if ( $type_id === InverseRelationships::TYPE_CHILD ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -828,12 +945,35 @@ class VolunteerEligibilityService {
 		);
 		$all = array_map( 'intval', (array) $all_person_ids );
 
+		// Bouw een set van personen die al via een gezin-unit gekoppeld zijn
+		// (ouders, huisgenoten via adres-fallback). Die horen niet in deze
+		// bucket — ze hebben terecht geen Sportlink-spelactiviteit.
+		$known_gezin_person_ids = [];
+		foreach ( $this->get_eligible_units() as $unit ) {
+			if ( ( $unit['kind'] ?? '' ) !== self::UNIT_KIND_GEZIN ) {
+				continue;
+			}
+			foreach ( $unit['person_ids'] ?? [] as $pid ) {
+				$known_gezin_person_ids[ (int) $pid ] = true;
+			}
+		}
+
 		// Alleen actieve leden — ex-leden en handmatig uitgesloten leden horen
-		// hier sowieso niet in. Wat overblijft is een echte data-quality flag.
+		// hier sowieso niet in. Huidige vrijwilligers ook niet (terecht geen
+		// spelactiviteit). Honorary leden (Donateur/Erelid/Lid van Verdienste/
+		// Verenigingslid voor het leven) ook niet — die zijn al bijdragend via
+		// hun functie. Ouders met een directe `Kind`-relatie ook niet, ook als
+		// het kind zelf geen leeftijdsgroep heeft. Ouders/huisgenoten in een
+		// gezin-unit (adres-fallback) ook niet. Wat overblijft is een echte
+		// data-gap.
 		return array_values(
 			array_filter(
 				array_diff( $all, $with ),
 				fn( $pid ) => self::is_contributie_member( (int) $pid )
+					&& ! self::is_current_volunteer( (int) $pid )
+					&& ! self::has_active_honorary_role( (int) $pid )
+					&& ! $this->is_parent( (int) $pid )
+					&& ! isset( $known_gezin_person_ids[ (int) $pid ] )
 			)
 		);
 	}
