@@ -162,16 +162,23 @@ export function formatDateValue(dateString, yearUnknown = false, formatFn) {
 
 /**
  * Sanitize ACF data for person updates via REST API
- * - Converts empty strings to null for enum fields (gender)
+ * - Converts empty strings to null for enum fields (select fields with restricted choices)
  * - Ensures repeater fields are always arrays
- * 
+ *
+ * Why: ACF generates a JSON Schema with `enum: [<choice>, ...]` for select fields and
+ * does NOT include `""` in that enum, even when `allow_null: 1` is set on the field.
+ * Sending `""` for any of these fields makes WP REST reject the whole request with
+ * `rest_invalid_param`. Coerce to `null` here so the schema accepts it.
+ *
+ * Add a field here whenever you add a new ACF select on the Person CPT.
+ *
  * @param {Object} acfData - The ACF data to sanitize
  * @param {Object} overrides - Fields to override in the sanitized data
  * @returns {Object} Sanitized ACF data ready for API submission
  */
 export function sanitizePersonAcf(acfData, overrides = {}) {
   // Fields that are select/enum and should be null instead of empty string
-  const enumFields = ['gender'];
+  const enumFields = ['gender', 'vergoeding_reden'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
   const numericFields = [

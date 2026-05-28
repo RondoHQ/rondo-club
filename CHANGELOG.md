@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.14.5] - 2026-05-28
+
+### Fixed
+- **Relatie wijzigen gaf 400-fout** voor personen die geen betaalde vrijwilliger zijn. De frontend stuurde `vergoeding_reden: ""` mee in elke ACF-update, maar ACF's REST-schema accepteert alleen de vier gedefinieerde keuzes — niet een lege string. `sanitizePersonAcf()` zet nu, net als bij `gender`, lege waarden voor `vergoeding_reden` om naar `null`.
+
 ## [33.14.4] - 2026-05-27
 
 ### Removed
