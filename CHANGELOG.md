@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.14.8] - 2026-05-28
+
+### Changed
+- **"Actieve leden zonder leeftijdsgroep"-rapport** filtert nu ook honorary leden eruit (Donateur, Erelid, Lid van Verdienste, Verenigingslid voor het leven — komt uit `VolunteerStatus::get_excluded_roles()`, dus volgt de instellingen in Instellingen → Vrijwilligers), én ouders die een directe `Kind`-relatie hebben — ook als hun kind zélf geen leeftijdsgroep heeft (dan wordt er geen gezin-unit gebouwd en bleef de ouder eerder onterecht in de lijst staan).
+
+## [33.14.7] - 2026-05-28
+
+### Changed
+- **"Actieve leden zonder leeftijdsgroep"-rapport** filtert nu ook ouders/huisgenoten eruit die al via een gezin-unit (relationships of adres-fallback) gekoppeld zijn. Die hebben terecht geen Sportlink-spelactiviteit en stonden onterecht als data-gap. Wat overblijft zijn alleen nog actieve, contributieplichtige, niet-vrijwilligende, niet-aan-een-gezin-gekoppelde leden zonder leeftijdsgroep — echte sync-issues of leden die als donateur/erelid/contributievrij gemarkeerd moeten worden.
+
+## [33.14.6] - 2026-05-28
+
+### Changed
+- **"Actieve leden zonder leeftijdsgroep"-rapport** filtert nu ook huidige vrijwilligers eruit. Vrijwilligers zonder spelactiviteit hebben terecht geen leeftijdsgroep en horen niet in de doelgroep — ze stonden onterecht als data-quality issue gemarkeerd. Backend (`get_skipped_no_leeftijdsgroep_ids()` en de diagnostic-teller) en frontend-intro bijgewerkt.
+
 ## [33.14.5] - 2026-05-28
 
 ### Fixed
