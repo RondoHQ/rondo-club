@@ -82,12 +82,14 @@ class ShiftTemplateExpander {
 
 		if ( $created > 0 ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf(
+			error_log(
+				sprintf(
 				'[Rondo Volunteer] Expanded %d shift(s) between %s and %s.',
 				$created,
 				$from,
 				$to
-			) );
+			)
+				);
 		}
 
 		return $created;
@@ -139,7 +141,7 @@ class ShiftTemplateExpander {
 				$end_datetime   = gmdate( 'Y-m-d', $cursor ) . ' ' . self::normalize_time( $end_time );
 
 				if ( self::find_existing_shift( $template_id, $start_datetime ) === 0 ) {
-					$title = self::shift_title( $dienst_type_id, $start_datetime );
+					$title   = self::shift_title( $dienst_type_id, $start_datetime );
 					$post_id = wp_insert_post(
 						[
 							'post_type'   => 'dienst_shift',
@@ -160,7 +162,7 @@ class ShiftTemplateExpander {
 						if ( $notes !== '' ) {
 							update_post_meta( $post_id, 'notes', $notes );
 						}
-						$created++;
+						++$created;
 					}
 				}
 			}

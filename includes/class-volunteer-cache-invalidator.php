@@ -19,14 +19,14 @@ class VolunteerCacheInvalidator {
 
 	public function __construct() {
 		// Person CRUD via admin / REST / sync.
-		add_action( 'save_post_person',            [ $this, 'invalidate' ] );
-		add_action( 'deleted_post',                [ $this, 'maybe_invalidate_on_delete' ], 10, 2 );
-		add_action( 'rest_after_insert_person',    [ $this, 'invalidate_rest' ], 10, 2 );
-		add_action( 'rest_after_update_person',    [ $this, 'invalidate_rest' ], 10, 2 );
+		add_action( 'save_post_person', [ $this, 'invalidate' ] );
+		add_action( 'deleted_post', [ $this, 'maybe_invalidate_on_delete' ], 10, 2 );
+		add_action( 'rest_after_insert_person', [ $this, 'invalidate_rest' ], 10, 2 );
+		add_action( 'rest_after_update_person', [ $this, 'invalidate_rest' ], 10, 2 );
 
 		// ACF saves (admin form + ACF REST) — covers relationships / addresses
 		// repeater changes that don't fire save_post on the related person.
-		add_action( 'acf/save_post',               [ $this, 'invalidate_on_acf_save' ], 30 );
+		add_action( 'acf/save_post', [ $this, 'invalidate_on_acf_save' ], 30 );
 	}
 
 	public function invalidate() {

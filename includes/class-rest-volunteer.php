@@ -311,14 +311,14 @@ class Volunteer extends Base {
 			}
 
 			$people[] = [
-				'id'                => $post->ID,
-				'name'              => $this->sanitize_text( $post->post_title ),
-				'thumbnail'         => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-				'datum_iva'         => (string) get_field( 'datum-iva', $post->ID ),
-				'iva_certificaat'   => $cert_url ? $this->sanitize_url( $cert_url ) : '',
-				'iva_approved'      => (bool) get_post_meta( $post->ID, 'iva-approved', true ),
-				'status'            => IvaStatus::status( $post->ID ),
-				'expires_at'        => IvaStatus::expires_at( $post->ID ),
+				'id'              => $post->ID,
+				'name'            => $this->sanitize_text( $post->post_title ),
+				'thumbnail'       => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
+				'datum_iva'       => (string) get_field( 'datum-iva', $post->ID ),
+				'iva_certificaat' => $cert_url ? $this->sanitize_url( $cert_url ) : '',
+				'iva_approved'    => (bool) get_post_meta( $post->ID, 'iva-approved', true ),
+				'status'          => IvaStatus::status( $post->ID ),
+				'expires_at'      => IvaStatus::expires_at( $post->ID ),
 			];
 		}
 
@@ -428,14 +428,14 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id'   => $person_id,
-				'attachment'  => [
+				'person_id'  => $person_id,
+				'attachment' => [
 					'id'  => $attachment_id,
 					'url' => wp_get_attachment_url( $attachment_id ),
 				],
-				'datum_iva'   => $datum,
-				'status'      => IvaStatus::status( $person_id ),
-				'expires_at'  => IvaStatus::expires_at( $person_id ),
+				'datum_iva'  => $datum,
+				'status'     => IvaStatus::status( $person_id ),
+				'expires_at' => IvaStatus::expires_at( $person_id ),
 			]
 		);
 	}
@@ -463,14 +463,14 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id'             => $person_id,
-				'status'                => IvaStatus::status( $person_id ),
-				'expires_at'            => IvaStatus::expires_at( $person_id ),
-				'datum_iva'             => (string) get_field( 'datum-iva', $person_id ),
-				'iva_certificaat_url'   => $cert_url ? $this->sanitize_url( $cert_url ) : '',
-				'iva_approved'          => (bool) get_post_meta( $person_id, 'iva-approved', true ),
+				'person_id'              => $person_id,
+				'status'                 => IvaStatus::status( $person_id ),
+				'expires_at'             => IvaStatus::expires_at( $person_id ),
+				'datum_iva'              => (string) get_field( 'datum-iva', $person_id ),
+				'iva_certificaat_url'    => $cert_url ? $this->sanitize_url( $cert_url ) : '',
+				'iva_approved'           => (bool) get_post_meta( $person_id, 'iva-approved', true ),
 				'needs_renewal_reminder' => IvaStatus::needs_renewal_reminder( $person_id ),
-				'validity_years'        => IvaStatus::VALIDITY_YEARS,
+				'validity_years'         => IvaStatus::VALIDITY_YEARS,
 			]
 		);
 	}
@@ -491,9 +491,9 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id' => $person_id,
-				'approved'  => $approve,
-				'status'    => IvaStatus::status( $person_id ),
+				'person_id'  => $person_id,
+				'approved'   => $approve,
+				'status'     => IvaStatus::status( $person_id ),
 				'expires_at' => IvaStatus::expires_at( $person_id ),
 			]
 		);
@@ -512,9 +512,9 @@ class Volunteer extends Base {
 		$eligibility = new VolunteerEligibilityService();
 		$calculator  = new VolunteerObligationCalculator();
 
-		$units      = $eligibility->get_eligible_units( $season );
-		$decorated  = $calculator->decorate_units( $units, $season );
-		$aggregate  = $calculator->aggregate( $decorated );
+		$units     = $eligibility->get_eligible_units( $season );
+		$decorated = $calculator->decorate_units( $units, $season );
+		$aggregate = $calculator->aggregate( $decorated );
 
 		return rest_ensure_response(
 			[
@@ -576,11 +576,11 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id'             => $person_id,
-				'status'                => IvaStatus::status( $person_id ),
-				'expires_at'            => IvaStatus::expires_at( $person_id ),
+				'person_id'              => $person_id,
+				'status'                 => IvaStatus::status( $person_id ),
+				'expires_at'             => IvaStatus::expires_at( $person_id ),
 				'needs_renewal_reminder' => IvaStatus::needs_renewal_reminder( $person_id ),
-				'validity_years'        => IvaStatus::VALIDITY_YEARS,
+				'validity_years'         => IvaStatus::VALIDITY_YEARS,
 			]
 		);
 	}
@@ -724,17 +724,17 @@ class Volunteer extends Base {
 			$rel_count = is_array( $rels ) ? count( $rels ) : 0;
 
 			$persons[] = [
-				'id'                 => (int) $pid,
-				'name'               => $this->sanitize_text( $post->post_title ),
-				'thumbnail'          => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
-				'leeftijdsgroep'     => $age_group,
-				'address'            => $primary ? trim(
+				'id'                  => (int) $pid,
+				'name'                => $this->sanitize_text( $post->post_title ),
+				'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
+				'leeftijdsgroep'      => $age_group,
+				'address'             => $primary ? trim(
 					(string) ( $primary['street'] ?? '' )
 					. ' ' . (string) ( $primary['house_number'] ?? '' )
 					. (string) ( $primary['house_number_addition'] ?? '' )
 				) : '',
-				'postal_code'        => $primary ? (string) ( $primary['postal_code'] ?? '' ) : '',
-				'city'               => $primary ? (string) ( $primary['city'] ?? '' ) : '',
+				'postal_code'         => $primary ? (string) ( $primary['postal_code'] ?? '' ) : '',
+				'city'                => $primary ? (string) ( $primary['city'] ?? '' ) : '',
 				'relationships_count' => $rel_count,
 			];
 		}
@@ -810,19 +810,19 @@ class Volunteer extends Base {
 			if ( ! $post || $post->post_type !== 'commissie' ) {
 				continue;
 			}
-			$slug = array_search( $id, $pools, true ) ?: '';
+			$slug     = array_search( $id, $pools, true ) ?: '';
 			$detail[] = [
-				'id'        => (int) $id,
-				'slug'      => is_string( $slug ) ? $slug : '',
-				'title'     => $this->sanitize_text( $post->post_title ),
+				'id'    => (int) $id,
+				'slug'  => is_string( $slug ) ? $slug : '',
+				'title' => $this->sanitize_text( $post->post_title ),
 			];
 		}
 
 		return rest_ensure_response(
 			[
-				'ids'         => $ids,
-				'pools'       => $pools,
-				'commissies'  => $detail,
+				'ids'        => $ids,
+				'pools'      => $pools,
+				'commissies' => $detail,
 			]
 		);
 	}
@@ -838,7 +838,7 @@ class Volunteer extends Base {
 			if ( ! $post ) {
 				continue;
 			}
-			$reason = VolunteerExemptionResolver::resolve( (int) $pid, $season );
+			$reason    = VolunteerExemptionResolver::resolve( (int) $pid, $season );
 			$persons[] = [
 				'id'           => (int) $pid,
 				'name'         => $this->sanitize_text( $post->post_title ),

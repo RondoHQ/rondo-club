@@ -782,7 +782,7 @@ class People extends Base {
 			'Deze persoon is gemarkeerd als oud-lid en kan niet worden bewerkt. Zet eerst "Oud-lid" uit als je de gegevens wilt aanpassen.',
 			'rondo'
 		);
-		$data = [ 'status' => 403 ];
+		$data    = [ 'status' => 403 ];
 		if ( ! empty( $blocked_fields ) ) {
 			$data['blocked_fields'] = array_values( $blocked_fields );
 		}
@@ -815,30 +815,36 @@ class People extends Base {
 		$falsy  = [ '0', 0, 'false', false, 'no' ];
 
 		if ( in_array( $param, $truthy, true ) ) {
-			$args['meta_query'] = array_merge( $args['meta_query'] ?? [], [
+			$args['meta_query'] = array_merge(
+				$args['meta_query'] ?? [],
 				[
-					'key'   => 'former_member',
-					'value' => '1',
-				],
-			] );
+					[
+						'key'   => 'former_member',
+						'value' => '1',
+					],
+				]
+				);
 			return $args;
 		}
 
 		if ( in_array( $param, $falsy, true ) ) {
-			$args['meta_query'] = array_merge( $args['meta_query'] ?? [], [
+			$args['meta_query'] = array_merge(
+				$args['meta_query'] ?? [],
 				[
-					'relation' => 'OR',
 					[
-						'key'     => 'former_member',
-						'compare' => 'NOT EXISTS',
+						'relation' => 'OR',
+						[
+							'key'     => 'former_member',
+							'compare' => 'NOT EXISTS',
+						],
+						[
+							'key'     => 'former_member',
+							'value'   => '1',
+							'compare' => '!=',
+						],
 					],
-					[
-						'key'     => 'former_member',
-						'value'   => '1',
-						'compare' => '!=',
-					],
-				],
-			] );
+				]
+				);
 			return $args;
 		}
 

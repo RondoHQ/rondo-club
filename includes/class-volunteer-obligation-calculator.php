@@ -36,7 +36,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VolunteerObligationCalculator {
 
-	const NO_SHOW_META_PREFIX = '_no_show_';
+	const NO_SHOW_META_PREFIX  = '_no_show_';
 	const NO_SHOW_WINDOW_HOURS = 72;
 	const CACHE_TTL_SECONDS    = 5 * MINUTE_IN_SECONDS;
 
@@ -49,12 +49,12 @@ class VolunteerObligationCalculator {
 	 */
 	public function decorate_units( array $units, string $season ): array {
 		foreach ( $units as &$unit ) {
-			$progress                  = $this->progress_for_unit( $unit, $season );
-			$unit['completed_count']   = $progress['completed_count'];
-			$unit['pending_count']     = $progress['pending_count'];
-			$unit['no_show_count']     = $progress['no_show_count'];
-			$unit['remaining']         = max( 0, $unit['required_count'] - $progress['completed_count'] );
-			$unit['status']            = $this->unit_status( $unit );
+			$progress                = $this->progress_for_unit( $unit, $season );
+			$unit['completed_count'] = $progress['completed_count'];
+			$unit['pending_count']   = $progress['pending_count'];
+			$unit['no_show_count']   = $progress['no_show_count'];
+			$unit['remaining']       = max( 0, $unit['required_count'] - $progress['completed_count'] );
+			$unit['status']          = $this->unit_status( $unit );
 		}
 		unset( $unit );
 		return $units;
@@ -90,23 +90,23 @@ class VolunteerObligationCalculator {
 		];
 
 		foreach ( $units as $unit ) {
-			$stats['total_required']  += $unit['required_count']  ?? 0;
+			$stats['total_required']  += $unit['required_count'] ?? 0;
 			$stats['total_completed'] += $unit['completed_count'] ?? 0;
-			$stats['total_no_show']   += $unit['no_show_count']   ?? 0;
-			$stats['total_pending']   += $unit['pending_count']   ?? 0;
+			$stats['total_no_show']   += $unit['no_show_count'] ?? 0;
+			$stats['total_pending']   += $unit['pending_count'] ?? 0;
 
 			switch ( $unit['status'] ?? 'geen-actie' ) {
 				case 'voldaan':
-					$stats['units_voldaan']++;
+					++$stats['units_voldaan'];
 					break;
 				case 'op-weg':
-					$stats['units_op_weg']++;
+					++$stats['units_op_weg'];
 					break;
 				case 'risico':
-					$stats['units_risico']++;
+					++$stats['units_risico'];
 					break;
 				default:
-					$stats['units_geen_actie']++;
+					++$stats['units_geen_actie'];
 			}
 		}
 
@@ -148,9 +148,9 @@ class VolunteerObligationCalculator {
 			return new \WP_Error( 'no_end_datetime', 'Shift has no end_datetime.', [ 'status' => 400 ] );
 		}
 
-		$end_ts   = strtotime( $end_datetime );
-		$cutoff   = $end_ts + ( self::NO_SHOW_WINDOW_HOURS * HOUR_IN_SECONDS );
-		$now      = time();
+		$end_ts = strtotime( $end_datetime );
+		$cutoff = $end_ts + ( self::NO_SHOW_WINDOW_HOURS * HOUR_IN_SECONDS );
+		$now    = time();
 		if ( $end_ts === false || $now > $cutoff ) {
 			return new \WP_Error(
 				'window_expired',
@@ -227,7 +227,7 @@ class VolunteerObligationCalculator {
 		$count = 0;
 		foreach ( $query->posts as $shift_id ) {
 			update_post_meta( $shift_id, 'status', 'voltooid' );
-			$count++;
+			++$count;
 		}
 
 		if ( $count > 0 ) {
@@ -262,7 +262,11 @@ class VolunteerObligationCalculator {
 	private function compute_progress( array $unit, string $season ): array {
 		$person_ids = array_map( 'intval', $unit['person_ids'] ?? [] );
 		if ( empty( $person_ids ) ) {
-			return [ 'completed_count' => 0, 'pending_count' => 0, 'no_show_count' => 0 ];
+			return [
+				'completed_count' => 0,
+				'pending_count'   => 0,
+				'no_show_count'   => 0,
+			];
 		}
 
 		[ $season_start, $season_end ] = self::season_range( $season );
@@ -308,9 +312,9 @@ class VolunteerObligationCalculator {
 
 				if ( $status === 'voltooid' ) {
 					if ( $marked_no_show ) {
-						$no_show++;
+						++$no_show;
 					} else {
-						$completed++;
+						++$completed;
 					}
 					continue;
 				}
@@ -320,7 +324,7 @@ class VolunteerObligationCalculator {
 				}
 
 				if ( $start !== '' && strtotime( $start ) >= $now_ts ) {
-					$pending++;
+					++$pending;
 				}
 			}
 		}
@@ -336,9 +340,9 @@ class VolunteerObligationCalculator {
 	 * Bucket a decorated unit into one of: voldaan / op-weg / risico / geen-actie.
 	 */
 	private function unit_status( array $unit ): string {
-		$required = (int) ( $unit['required_count']  ?? 0 );
+		$required = (int) ( $unit['required_count'] ?? 0 );
 		$done     = (int) ( $unit['completed_count'] ?? 0 );
-		$pending  = (int) ( $unit['pending_count']   ?? 0 );
+		$pending  = (int) ( $unit['pending_count'] ?? 0 );
 
 		if ( $required <= 0 ) {
 			return 'voldaan';

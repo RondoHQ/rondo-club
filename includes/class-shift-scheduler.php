@@ -66,12 +66,14 @@ class ShiftScheduler {
 			VolunteerFineGenerator::on_no_show( $shift_id, $person_id, $marked_by_user );
 		} catch ( \Throwable $e ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf(
+			error_log(
+				sprintf(
 				'[Rondo Volunteer] Failed to generate fine for shift %d / person %d: %s',
 				$shift_id,
 				$person_id,
 				$e->getMessage()
-			) );
+			)
+				);
 		}
 	}
 }

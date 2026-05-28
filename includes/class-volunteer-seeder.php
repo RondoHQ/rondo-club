@@ -26,9 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VolunteerSeeder {
 
-	const SEED_META_KEY     = '_rondo_seed_key';
-	const POOL_OPTION       = 'rondo_volunteer_pool_commissies';
-	const SEED_DONE_OPTION  = 'rondo_volunteer_seed_version';
+	const SEED_META_KEY        = '_rondo_seed_key';
+	const POOL_OPTION          = 'rondo_volunteer_pool_commissies';
+	const SEED_DONE_OPTION     = 'rondo_volunteer_seed_version';
 	const CURRENT_SEED_VERSION = 1;
 
 	/**
@@ -36,59 +36,59 @@ class VolunteerSeeder {
 	 * Each key is the slug stored in _rondo_seed_key; values become post fields.
 	 */
 	private const DIENST_TYPES = [
-		'terreinmeester' => [
-			'title'             => 'Terreinmeester',
-			'description'       => 'Sleutel + ranja uitreiken aan trainers/leiders, terrein gereed maken voor trainingen en wedstrijden.',
-			'vog_required'      => true,
-			'iva_required'      => false,
-			'default_capacity'  => 1,
-			'sleutel_involved'  => true,
-			'color'             => '#4f46e5',
+		'terreinmeester'         => [
+			'title'            => 'Terreinmeester',
+			'description'      => 'Sleutel + ranja uitreiken aan trainers/leiders, terrein gereed maken voor trainingen en wedstrijden.',
+			'vog_required'     => true,
+			'iva_required'     => false,
+			'default_capacity' => 1,
+			'sleutel_involved' => true,
+			'color'            => '#4f46e5',
 		],
-		'kantine_bar'    => [
-			'title'             => 'Kantine — bar',
-			'description'       => 'Bardienst: schenken, kassa, opruimen. Vereist een geldig IVA-certificaat (alcohol).',
-			'vog_required'      => true,
-			'iva_required'      => true,
-			'default_capacity'  => 1,
-			'sleutel_involved'  => false,
-			'color'             => '#dc2626',
+		'kantine_bar'            => [
+			'title'            => 'Kantine — bar',
+			'description'      => 'Bardienst: schenken, kassa, opruimen. Vereist een geldig IVA-certificaat (alcohol).',
+			'vog_required'     => true,
+			'iva_required'     => true,
+			'default_capacity' => 1,
+			'sleutel_involved' => false,
+			'color'            => '#dc2626',
 		],
-		'kantine_keuken_prep' => [
-			'title'             => 'Kantine — keuken voorbereiding',
-			'description'       => 'Vooraf snijden, kop koffie zetten, broodjes smeren, voorraad bijvullen.',
-			'vog_required'      => true,
-			'iva_required'      => false,
-			'default_capacity'  => 1,
-			'sleutel_involved'  => false,
-			'color'             => '#f59e0b',
+		'kantine_keuken_prep'    => [
+			'title'            => 'Kantine — keuken voorbereiding',
+			'description'      => 'Vooraf snijden, kop koffie zetten, broodjes smeren, voorraad bijvullen.',
+			'vog_required'     => true,
+			'iva_required'     => false,
+			'default_capacity' => 1,
+			'sleutel_involved' => false,
+			'color'            => '#f59e0b',
 		],
 		'kantine_keuken_verkoop' => [
-			'title'             => 'Kantine — keuken verkoop',
-			'description'       => 'Snacks en broodjes verkopen tijdens wedstrijddagen.',
-			'vog_required'      => true,
-			'iva_required'      => false,
-			'default_capacity'  => 1,
-			'sleutel_involved'  => false,
-			'color'             => '#eab308',
+			'title'            => 'Kantine — keuken verkoop',
+			'description'      => 'Snacks en broodjes verkopen tijdens wedstrijddagen.',
+			'vog_required'     => true,
+			'iva_required'     => false,
+			'default_capacity' => 1,
+			'sleutel_involved' => false,
+			'color'            => '#eab308',
 		],
-		'schoonmaak'     => [
-			'title'             => 'Schoonmaak',
-			'description'       => 'Wekelijkse schoonmaak van clubgebouw, kleedkamers en kantine.',
-			'vog_required'      => true,
-			'iva_required'      => false,
-			'default_capacity'  => 4,
-			'sleutel_involved'  => false,
-			'color'             => '#10b981',
+		'schoonmaak'             => [
+			'title'            => 'Schoonmaak',
+			'description'      => 'Wekelijkse schoonmaak van clubgebouw, kleedkamers en kantine.',
+			'vog_required'     => true,
+			'iva_required'     => false,
+			'default_capacity' => 4,
+			'sleutel_involved' => false,
+			'color'            => '#10b981',
 		],
-		'terreinonderhoud' => [
-			'title'             => 'Terreinonderhoud',
-			'description'       => 'Onderhoud van velden, hekwerk, groen en infrastructuur. Door de werkploeg + ad-hoc helpers.',
-			'vog_required'      => true,
-			'iva_required'      => false,
-			'default_capacity'  => 0,  // 0 = unlimited
-			'sleutel_involved'  => false,
-			'color'             => '#84cc16',
+		'terreinonderhoud'       => [
+			'title'            => 'Terreinonderhoud',
+			'description'      => 'Onderhoud van velden, hekwerk, groen en infrastructuur. Door de werkploeg + ad-hoc helpers.',
+			'vog_required'     => true,
+			'iva_required'     => false,
+			'default_capacity' => 0,  // 0 = unlimited
+			'sleutel_involved' => false,
+			'color'            => '#84cc16',
 		],
 	];
 
@@ -97,15 +97,15 @@ class VolunteerSeeder {
 	 * `slug` is also used as the entry in the pool-commissie option.
 	 */
 	private const POOL_COMMISSIES = [
-		'schoonmaak'      => [
+		'schoonmaak'   => [
 			'title'   => 'Schoonmaakpoule',
 			'content' => 'Vaste poule van ~20 vrijwilligers die rouleren in de wekelijkse schoonmaakdienst. Beheerd in Rondo, niet gesynchroniseerd vanuit Sportlink.',
 		],
-		'activiteiten'    => [
+		'activiteiten' => [
 			'title'   => 'Activiteitenpoule',
 			'content' => 'Vaste poule van ~75 vrijwilligers die activiteiten en evenementen regelen. Leden zijn vrijgesteld van de 2-diensten-plicht.',
 		],
-		'werkploeg'       => [
+		'werkploeg'    => [
 			'title'   => 'Werkploeg terreinonderhoud',
 			'content' => 'Vaste werkploeg voor terreinonderhoud. Aangevuld met (ouders van) leden op inschrijving via de 2-diensten-plicht.',
 		],
@@ -180,7 +180,7 @@ class VolunteerSeeder {
 		}
 
 		foreach ( self::POOL_COMMISSIES as $slug => $data ) {
-			$seed_key   = 'pool-' . $slug;
+			$seed_key      = 'pool-' . $slug;
 			$existing_post = $this->find_seeded_post( 'commissie', $seed_key );
 
 			if ( $existing_post !== null ) {
