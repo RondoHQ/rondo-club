@@ -211,6 +211,37 @@ This is a single repository containing both backend (PHP) and frontend (React) c
 
 **Adding PHP classes:** Create new class file in `includes/`, load it in `functions.php` via `rondo_init()`
 
+## Common Pitfalls
+
+### ACF select fields reject empty strings via REST — coerce to `null` on the client
+
+**Symptom — this exact error has bitten us multiple times:**
+```
+{
+  "code": "rest_invalid_param",
+  "message": "Invalid parameter(s): acf",
+  "data": {
+    "params": { "acf": "acf[<field_name>] is not one of <choice1>, <choice2>, ..." }
+  }
+}
+```
+
+**Why it happens:**
+ACF auto-generates a JSON Schema for every field exposed in REST. For `type: "select"` fields it emits `enum: [<choice1>, <choice2>, ...]`. **That enum does NOT include `""` — even when the field has `allow_null: 1` and `default_value: ""` in its ACF config.** So any REST update whose `acf` payload contains `<field>: ""` is rejected by WP REST schema validation *before* any of our PHP code runs. The whole request fails, including the unrelated field the user was actually trying to change (e.g. a relationship update).
+
+**The frontend trigger:**
+Most person/team writes round-trip the full `acf` object (read it, mutate one field, send it all back). So a person editing a *relationship* still POSTs `vergoeding_reden: ""` if the person isn't a paid volunteer. Same for any other select field that's empty on this record.
+
+**The fix — always done on the client:**
+Add the field name to the `enumFields` list inside the relevant sanitizer in `src/utils/formatters.js` (`sanitizePersonAcf`, `sanitizeTeamAcf`, etc.). That sanitizer converts `""` → `null` before submit, which IS accepted by the schema.
+
+**When you add a new ACF select to any CPT:**
+1. Add the field name to the `enumFields` array of the corresponding sanitizer in `src/utils/formatters.js`.
+2. Make sure every code path that builds an ACF payload routes through that sanitizer (`sanitizePersonAcf(person.acf, { ... })`), not raw object spread.
+3. Same applies to `radio` and `button_group` ACF types — they generate the same enum schema.
+
+**If you see this error in production:** grep the field name out of the error message, check it's a select-type field in `acf-json/`, then add it to the sanitizer. Don't try to fix it server-side by loosening the ACF schema — that fights the framework and breaks the next ACF Pro upgrade.
+
 ## Required rules for every change
 
 ### Rule 0: Use WordPress & ACF native data models
