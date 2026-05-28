@@ -242,6 +242,21 @@ Add the field name to the `enumFields` list inside the relevant sanitizer in `sr
 
 **If you see this error in production:** grep the field name out of the error message, check it's a select-type field in `acf-json/`, then add it to the sanitizer. Don't try to fix it server-side by loosening the ACF schema — that fights the framework and breaks the next ACF Pro upgrade.
 
+### `former_member=true` persons are read-only end-to-end
+
+Sportlink rejects every contact / profile write for the lidsoorten that map to `former_member=true` ("Oud bondslid", "Oud verenigingslid"). Accepting an edit here just generates reverse-sync work in the `rondo-sync` repo that can never land. The policy is enforced in two places that **MUST stay in sync** if you touch either side:
+
+- **Backend:** `class-rest-people.php` — `block_former_member_edits()` on the `rest_pre_insert_person` filter rejects non-admin ACF writes with `HTTP 403 rondo_former_member_readonly`. Admins (incl. the `RONDO_USERNAME`-authenticated sync service user with `manage_options`) are exempt so the forward sync keeps working on former-member records.
+- **Frontend:** `src/pages/People/PersonDetail.jsx` — `canEditPeople` flips to `false` when `acf.former_member === true`, hiding every existing edit affordance. A "Oud-lid — alleen-lezen" banner explains why and tells the user to ask a beheerder.
+
+The only allowed non-admin write is the `former_member` field itself, so an admin can flip a person back to active to make them editable. When adding new edit UI: route through the same `canEditPeople` gate (don't introduce a parallel "can edit" boolean), and don't try to relax the REST filter for "just one field" — the next reverse-sync loop will find you.
+
+### ACF `date_picker` fields store `YYYYMMDD`, not `YYYY-MM-DD` — use `parseAcfDate()`
+
+ACF persists `date_picker` values in compact `Ymd` format (e.g. `"20140708"`) regardless of `return_format`. `new Date("20140708")` returns `Invalid Date`. Affects any date field returned by `wp/v2/people` via ACF — `birthdate`, `lid-sinds`, `lid-tot`, `datum-vog`, every `work_history.start_date`/`end_date`, etc.
+
+Use `parseAcfDate()` from `src/utils/formatters.js` — it handles both `YYYYMMDD` and `YYYY-MM-DD`. `isValidDate()` already delegates to it. Anywhere you'd write `new Date(acf.foo_date)` to format an ACF date, write `parseAcfDate(acf.foo_date)` instead. This bit us once when work_history dates rendered as empty `" - "` for every sync-written entry — only the legacy hand-entered records survived because they were in the other format.
+
 ## Required rules for every change
 
 ### Rule 0: Use WordPress & ACF native data models
