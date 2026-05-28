@@ -281,15 +281,37 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
 }
 
 /**
+ * Parse a date value coming from ACF or the REST API.
+ *
+ * Handles two formats both seen in practice:
+ *  - ISO 8601 / "YYYY-MM-DD" / full datetime — passed straight to `new Date()`
+ *  - "YYYYMMDD" — ACF's internal date_picker storage format, which `new Date()`
+ *    does NOT parse natively (returns Invalid Date). Common on work_history
+ *    entries written by the rondo-sync pipeline.
+ *
+ * @param {string|null|undefined} dateString
+ * @returns {Date|null} Parsed Date, or null if input is missing/invalid
+ */
+export function parseAcfDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+  const trimmed = dateString.trim();
+  let date;
+  if (/^\d{8}$/.test(trimmed)) {
+    date = new Date(`${trimmed.slice(0, 4)}-${trimmed.slice(4, 6)}-${trimmed.slice(6, 8)}`);
+  } else {
+    date = new Date(trimmed);
+  }
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
  * Validate date strings
  *
  * @param {string|null|undefined} dateString - Date string to validate
  * @returns {boolean} True if valid date
  */
 export function isValidDate(dateString) {
-  if (!dateString) return false;
-  const date = new Date(dateString);
-  return date instanceof Date && !isNaN(date.getTime());
+  return parseAcfDate(dateString) !== null;
 }
 
 /**

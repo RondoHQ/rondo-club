@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.16.0] - 2026-05-28
+
+### Added
+- **Functiegeschiedenis-paneel toont nu historische teams als tekst** — als een work_history-entry geen gekoppeld team-post heeft maar wel `team_name_text` (gevuld door de player-history-sync voor oude Sportlink-seizoenen), wordt die naam nu getoond. Geldt voor zowel de Functiegeschiedenis-lijst in de Werk-tab als de huidige-positie-regel in de header (bv. "Teamspeler bij Zaterdag E5 (seizoen 2014/'15)").
+
+### Fixed
+- **YYYYMMDD-datums in `work_history` worden nu correct gerenderd.** ACF slaat de `date_picker` velden op als `YYYYMMDD` (bv. "20140708"), wat `new Date()` niet parset — dus alle entries die door de sync zijn geschreven toonden tot nu toe een lege " - " in plaats van een datumbereik. Nieuwe `parseAcfDate()`-helper in `formatters.js` herkent beide formaten (YYYY-MM-DD én YYYYMMDD); `isValidDate` delegeert ernaar, en `PersonDetail.jsx` gebruikt de helper voor work_history-datums. Lost zichtbaar het probleem op voor álle bestaande work_history-entries die in compact formaat zijn opgeslagen.
+
 ## [33.15.0] - 2026-05-28
 
 ### Added

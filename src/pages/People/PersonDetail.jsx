@@ -29,7 +29,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -862,19 +862,49 @@ export default function PersonDetail() {
     const groups = new Map();
 
     positionsToShow.forEach(job => {
-      const team = job.team && teamMap[job.team];
-      const isVerenigingsbreed = team?.name === 'Verenigingsbreed';
-      const groupKey = (!team || isVerenigingsbreed) ? null : job.team;
+      const linkedTeam = job.team && teamMap[job.team];
+      const isVerenigingsbreed = linkedTeam?.name === 'Verenigingsbreed';
+
+      // Three buckets:
+      // - Linked team (not Verenigingsbreed) → group by team id, render as link
+      // - Text-fallback (no linked team, but team_name_text present from
+      //   historical-team sync) → group by text name, render as plain text
+      // - Verenigingsbreed / no team at all → null group (sorted first)
+      let groupKey, groupData;
+      if (linkedTeam && !isVerenigingsbreed) {
+        groupKey = `id:${job.team}`;
+        groupData = {
+          teamId: job.team,
+          team: linkedTeam,
+          teamName: linkedTeam.name,
+          teamType: linkedTeam.type,
+          showTeamLink: true,
+          titles: []
+        };
+      } else if (!linkedTeam && job.team_name_text) {
+        groupKey = `text:${job.team_name_text.toLowerCase()}`;
+        groupData = {
+          teamId: null,
+          team: null,
+          teamName: job.team_name_text,
+          teamType: null,
+          showTeamLink: false,
+          titles: []
+        };
+      } else {
+        groupKey = null;
+        groupData = {
+          teamId: null,
+          team: null,
+          teamName: null,
+          teamType: null,
+          showTeamLink: false,
+          titles: []
+        };
+      }
 
       if (!groups.has(groupKey)) {
-        groups.set(groupKey, {
-          teamId: groupKey,
-          team: groupKey ? team : null,
-          teamName: groupKey ? team.name : null,
-          teamType: groupKey ? team.type : null,
-          showTeamLink: groupKey !== null, // Don't show link for Verenigingsbreed or no-team
-          titles: []
-        });
+        groups.set(groupKey, groupData);
       }
 
       if (job.job_title) {
@@ -882,13 +912,15 @@ export default function PersonDetail() {
       }
     });
 
-    // Convert to array and sort: Verenigingsbreed (null key) first, then other teams
+    // Convert to array and sort: Verenigingsbreed (null group, no name) first,
+    // then linked teams and text-fallback teams in insertion order.
     const result = Array.from(groups.values())
-      .filter(group => group.titles.length > 0) // Only show groups with titles
+      .filter(group => group.titles.length > 0)
       .sort((a, b) => {
-        // null (Verenigingsbreed/no-team) first
-        if (a.teamId === null && b.teamId !== null) return -1;
-        if (a.teamId !== null && b.teamId === null) return 1;
+        const aIsBreed = a.teamId === null && !a.teamName;
+        const bIsBreed = b.teamId === null && !b.teamName;
+        if (aIsBreed && !bIsBreed) return -1;
+        if (!aIsBreed && bIsBreed) return 1;
         return 0;
       });
 
@@ -1176,6 +1208,12 @@ export default function PersonDetail() {
                         >
                           {group.teamName}
                         </Link>
+                      </>
+                    )}
+                    {!group.showTeamLink && group.teamName && (
+                      <>
+                        <span className="text-gray-400 dark:text-gray-500"> bij </span>
+                        <span>{group.teamName}</span>
                       </>
                     )}
                   </span>
@@ -1694,6 +1732,8 @@ export default function PersonDetail() {
                 {sortedWorkHistory.map((job) => {
                   const teamData = job.team ? teamMap[job.team] : null;
                   const originalIndex = job.originalIndex;
+                  const startDate = parseAcfDate(job.start_date);
+                  const endDate = parseAcfDate(job.end_date);
 
                   return (
                     <div key={originalIndex} className="flex items-start">
@@ -1718,10 +1758,15 @@ export default function PersonDetail() {
                             {teamData.name}
                           </Link>
                         )}
+                        {!job.team && job.team_name_text && (
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {job.team_name_text}
+                          </p>
+                        )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {job.start_date && isValidDate(job.start_date) && format(new Date(job.start_date), 'MMM yyyy')}
+                          {startDate && format(startDate, 'MMM yyyy')}
                           {' - '}
-                          {job.is_current ? 'Heden' : job.end_date && isValidDate(job.end_date) ? format(new Date(job.end_date), 'MMM yyyy') : ''}
+                          {job.is_current ? 'Heden' : endDate ? format(endDate, 'MMM yyyy') : ''}
                         </p>
                         {job.description && (
                           <p className="text-sm text-gray-600 mt-1">{job.description}</p>
