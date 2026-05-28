@@ -77,7 +77,6 @@ export default function PersonDetail() {
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
-  // eslint-disable-next-line prefer-const -- reassigned below once acf is loaded
   let canEditPeople = currentUser?.can_edit_people ?? false;
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 

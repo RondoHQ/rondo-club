@@ -50,7 +50,7 @@ export default function VrijwilligersDataQuality() {
     staleTime: 60 * 1000,
   });
 
-  const persons = data?.persons || [];
+  const persons = useMemo(() => data?.persons || [], [data?.persons]);
 
   const groupedByAddress = useMemo(() => {
     if (category !== 'address_fallback') return null;

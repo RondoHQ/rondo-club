@@ -77,7 +77,7 @@ class MemberShifts extends Base {
 				'callback'            => [ $this, 'signup' ],
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
-					'id' => [
+					'id'            => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					],
@@ -138,13 +138,13 @@ class MemberShifts extends Base {
 
 		return rest_ensure_response(
 			[
-				'person_id'   => $person_id,
-				'season'      => $season,
-				'obligation'  => $obligation,
-				'exemption'   => $this->resolve_exemption_block( $person_id, $season ),
-				'iva_status'  => IvaStatus::status( $person_id ),
+				'person_id'      => $person_id,
+				'season'         => $season,
+				'obligation'     => $obligation,
+				'exemption'      => $this->resolve_exemption_block( $person_id, $season ),
+				'iva_status'     => IvaStatus::status( $person_id ),
 				'iva_expires_at' => IvaStatus::expires_at( $person_id ),
-				'shifts'      => $shifts,
+				'shifts'         => $shifts,
 			]
 		);
 	}
@@ -155,29 +155,30 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
 		}
 
-		$season  = SeasonKey::current();
-		$exempt  = VolunteerExemptionResolver::resolve( $person_id, $season );
+		$season   = SeasonKey::current();
+		$exempt   = VolunteerExemptionResolver::resolve( $person_id, $season );
 		$eligible = ( new VolunteerEligibilityService() )->get_eligible_unit_for_person( $person_id, $season ) !== null
 			|| $exempt !== null; // Exempt members may still volunteer voluntarily.
 
 		if ( ! $eligible ) {
 			return rest_ensure_response(
 				[
-					'person_id'  => $person_id,
-					'eligible'   => false,
-					'shifts'     => [],
+					'person_id'    => $person_id,
+					'eligible'     => false,
+					'shifts'       => [],
 					'block_reason' => 'Je valt niet onder de vrijwilligersplicht-doelgroep.',
 				]
 			);
 		}
 
-		$blocks   = $this->signup_blocks( $person_id );
-		$now      = gmdate( 'Y-m-d H:i:s' );
-		$horizon  = gmdate( 'Y-m-d H:i:s', strtotime( '+' . self::AVAILABLE_WINDOW_DAYS . ' days' ) );
+		$blocks  = $this->signup_blocks( $person_id );
+		$now     = gmdate( 'Y-m-d H:i:s' );
+		$horizon = gmdate( 'Y-m-d H:i:s', strtotime( '+' . self::AVAILABLE_WINDOW_DAYS . ' days' ) );
 
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded by AVAILABLE_WINDOW_DAYS horizon, intentional cap.
 				'posts_per_page'   => 200,
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
@@ -271,7 +272,12 @@ class MemberShifts extends Base {
 
 		$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
 		if ( in_array( $person_id, $assigned, true ) ) {
-			return rest_ensure_response( [ 'shift_id' => $shift_id, 'already_signed_up' => true ] );
+			return rest_ensure_response(
+				[
+					'shift_id'          => $shift_id,
+					'already_signed_up' => true,
+				]
+				);
 		}
 
 		$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
@@ -298,9 +304,9 @@ class MemberShifts extends Base {
 					'overlap_warning',
 					sprintf( 'Deze shift overlapt met een bestaande aanmelding (%s).', $overlap['title'] ),
 					[
-						'status'         => 409,
-						'overlap_shift'  => $overlap,
-						'can_force'      => true,
+						'status'        => 409,
+						'overlap_shift' => $overlap,
+						'can_force'     => true,
 					]
 				);
 			}
@@ -428,6 +434,7 @@ class MemberShifts extends Base {
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- per-person scope, intentional cap.
 				'posts_per_page'   => 200,
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
@@ -454,7 +461,7 @@ class MemberShifts extends Base {
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary !== null ) {
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
-				$out[] = $summary;
+				$out[]              = $summary;
 			}
 		}
 

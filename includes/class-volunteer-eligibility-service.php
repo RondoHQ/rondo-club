@@ -175,8 +175,8 @@ class VolunteerEligibilityService {
 			]
 		);
 
-		$gezin_units  = [];
-		$speler_units = [];
+		$gezin_units             = [];
+		$speler_units            = [];
 		$no_age_group_candidates = []; // Per-loop verzameling; ouders vallen pas later af.
 		$skipped_former_members  = 0;
 
@@ -211,12 +211,12 @@ class VolunteerEligibilityService {
 			// af. Contributie-vrijstelling is bewust géén exclusion-grond hier
 			// — die loopt via VolunteerExemptionResolver of honorary role.
 			if ( ! self::is_active_member( $person_id ) ) {
-				$skipped_former_members++;
+				++$skipped_former_members;
 				continue;
 			}
 
 			if ( $age >= self::ADULT_MIN_AGE ) {
-				$unit                              = $this->build_speler_unit( $person_id );
+				$unit                             = $this->build_speler_unit( $person_id );
 				$speler_units[ $unit['unit_id'] ] = $unit;
 				continue;
 			}
@@ -234,7 +234,7 @@ class VolunteerEligibilityService {
 							)
 						)
 					);
-					$gezin_units[ $key ]['person_ids'] = array_values(
+					$gezin_units[ $key ]['person_ids']         = array_values(
 						array_unique(
 							array_merge(
 								$gezin_units[ $key ]['person_ids'],
@@ -250,14 +250,18 @@ class VolunteerEligibilityService {
 
 		// Apply multi-child scaling — required_count depends on the FINAL number
 		// of JO16- triggers in each gezin, which we only know after merging.
-		$counts_by_quality = [ 'ok' => 0, 'address_fallback' => 0, 'orphan' => 0 ];
+		$counts_by_quality = [
+			'ok'               => 0,
+			'address_fallback' => 0,
+			'orphan'           => 0,
+		];
 		foreach ( $gezin_units as &$unit ) {
 			$child_count            = count( $unit['trigger_person_ids'] );
 			$unit['required_count'] = self::calculate_gezin_required_count( $child_count );
 			$unit['child_count']    = $child_count;
 			$quality                = $unit['data_quality'] ?? 'ok';
 			if ( isset( $counts_by_quality[ $quality ] ) ) {
-				$counts_by_quality[ $quality ]++;
+				++$counts_by_quality[ $quality ];
 			}
 		}
 		unset( $unit );
@@ -275,7 +279,7 @@ class VolunteerEligibilityService {
 		$skipped_no_leeftijdsgroep = 0;
 		foreach ( $no_age_group_candidates as $pid ) {
 			if ( ! isset( $known_gezin_person_ids[ $pid ] ) ) {
-				$skipped_no_leeftijdsgroep++;
+				++$skipped_no_leeftijdsgroep;
 			}
 		}
 
@@ -446,7 +450,7 @@ class VolunteerEligibilityService {
 			$merged['trigger_person_ids'] = array_values(
 				array_unique( array_merge( $merged['trigger_person_ids'], $child_unit['trigger_person_ids'] ) )
 			);
-			$merged['person_ids'] = array_values(
+			$merged['person_ids']         = array_values(
 				array_unique( array_merge( $merged['person_ids'], $child_unit['person_ids'] ) )
 			);
 		}
@@ -670,10 +674,10 @@ class VolunteerEligibilityService {
 			return null;
 		}
 
-		$primary       = $addresses[0];
-		$postal_raw    = (string) ( $primary['postal_code'] ?? '' );
-		$house_number  = (string) ( $primary['house_number'] ?? '' );
-		$house_suffix  = (string) ( $primary['house_number_addition'] ?? '' );
+		$primary      = $addresses[0];
+		$postal_raw   = (string) ( $primary['postal_code'] ?? '' );
+		$house_number = (string) ( $primary['house_number'] ?? '' );
+		$house_suffix = (string) ( $primary['house_number_addition'] ?? '' );
 
 		if ( $postal_raw === '' || $house_number === '' ) {
 			return null;
@@ -744,16 +748,16 @@ class VolunteerEligibilityService {
 			if ( ! preg_match( '/^addresses_(\d+)_(postal_code|house_number|house_number_addition)$/', $row->meta_key, $m ) ) {
 				continue;
 			}
-			$pid       = (int) $row->post_id;
-			$idx       = (int) $m[1];
-			$component = $m[2];
+			$pid                                     = (int) $row->post_id;
+			$idx                                     = (int) $m[1];
+			$component                               = $m[2];
 			$by_person[ $pid ][ $idx ][ $component ] = (string) $row->meta_value;
 		}
 
 		// Pull leeftijdsgroep for every person in one shot so we can classify
 		// without per-person get_post_meta calls.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$lg_rows = $wpdb->get_results(
+		$lg_rows      = $wpdb->get_results(
 			"SELECT pm.post_id, pm.meta_value
 			 FROM {$wpdb->postmeta} pm
 			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
@@ -923,14 +927,14 @@ class VolunteerEligibilityService {
 			   AND p.post_status = 'publish'
 			   AND pm.meta_value <> ''"
 		);
-		$with = array_map( 'intval', (array) $ids_with_value );
+		$with           = array_map( 'intval', (array) $ids_with_value );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		$all_person_ids = $wpdb->get_col(
 			"SELECT ID FROM {$wpdb->posts}
 			 WHERE post_type = 'person' AND post_status = 'publish'"
 		);
-		$all = array_map( 'intval', (array) $all_person_ids );
+		$all            = array_map( 'intval', (array) $all_person_ids );
 
 		// Bouw een set van personen die al via een gezin-unit gekoppeld zijn
 		// (ouders, huisgenoten via adres-fallback). Die horen niet in deze

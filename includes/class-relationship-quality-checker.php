@@ -134,8 +134,8 @@ class RelationshipQualityChecker {
 					self::REASON_AGE_GAP_TOO_SMALL => 0,
 					self::REASON_SIBLING_GAP       => 1,
 				];
-				$sa = $severity[ $a['reason'] ] ?? 99;
-				$sb = $severity[ $b['reason'] ] ?? 99;
+				$sa       = $severity[ $a['reason'] ] ?? 99;
+				$sb       = $severity[ $b['reason'] ] ?? 99;
 				if ( $sa !== $sb ) {
 					return $sa <=> $sb;
 				}

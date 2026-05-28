@@ -32,10 +32,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VolunteerFineGenerator {
 
-	const FINE_AMOUNT_EUR     = 30.0;
-	const INVOICE_TYPE        = 'volunteer_fine';
-	const INVOICE_KIND        = 'person';
-	const SHIFT_INVOICE_META  = '_volunteer_fine_invoice_';
+	const FINE_AMOUNT_EUR    = 30.0;
+	const INVOICE_TYPE       = 'volunteer_fine';
+	const INVOICE_KIND       = 'person';
+	const SHIFT_INVOICE_META = '_volunteer_fine_invoice_';
 
 	/**
 	 * Generate a boete invoice for the given (shift, person) no-show.
