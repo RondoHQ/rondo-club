@@ -178,27 +178,26 @@ class VolunteerEligibilityService {
 		$gezin_units  = [];
 		$speler_units = [];
 		$no_age_group_candidates = []; // Per-loop verzameling; ouders vallen pas later af.
-		$skipped_non_paying      = 0;
+		$skipped_former_members  = 0;
 
 		foreach ( $query->posts as $person_id ) {
 			$person_id = (int) $person_id;
 			$age       = $this->age_group_number( $person_id );
 
 			if ( $age === null ) {
-				// Wat we wél willen vlaggen: actieve leden (geen former_member,
-				// geen _exclude_from_contributie) die geen leeftijdsgroep hebben
-				// — dat is een Sportlink-sync of data-issue.
-				// Huidige vrijwilligers vallen er hier uit: die hebben terecht
-				// geen spelactiviteit en horen niet in de doelgroep.
-				// Honorary leden (Donateur, Erelid, Lid van Verdienste,
-				// Verenigingslid voor het leven) vallen ook af — die zijn al
-				// bijdragend via hun functie, niet via spelactiviteit.
+				// Wat we wél willen vlaggen: actieve leden (geen former_member)
+				// die geen leeftijdsgroep hebben — dat is een Sportlink-sync of
+				// data-issue. Huidige vrijwilligers vallen er hier uit: die
+				// hebben terecht geen spelactiviteit en horen niet in de
+				// doelgroep. Honorary leden (Donateur, Erelid, Lid van
+				// Verdienste, Verenigingslid voor het leven) vallen ook af —
+				// die zijn al bijdragend via hun functie, niet via spelactiviteit.
 				// Ouders met een directe `Kind`-relatie worden hier ook al
 				// uitgefilterd — los van of het kind een leeftijdsgroep heeft.
 				// Daarnaast worden hieronder, NÁ het bouwen van de gezin-units,
 				// ook adres-fallback-ouders/huisgenoten weggefilterd.
 				if (
-					self::is_contributie_member( $person_id )
+					self::is_active_member( $person_id )
 					&& ! self::is_current_volunteer( $person_id )
 					&& ! self::has_active_honorary_role( $person_id )
 					&& ! $this->is_parent( $person_id )
@@ -208,11 +207,11 @@ class VolunteerEligibilityService {
 				continue;
 			}
 
-			// Only spelend / contributie-plichtig lid telt mee voor de plicht.
-			// Donateurs, ereleden, contributievrij-leden en ex-leden vallen buiten
-			// de doelgroep — hun bijdrage staat al vast via een andere route.
-			if ( ! self::is_contributie_member( $person_id ) ) {
-				$skipped_non_paying++;
+			// Alleen actieve leden tellen mee voor de plicht. Ex-leden vallen
+			// af. Contributie-vrijstelling is bewust géén exclusion-grond hier
+			// — die loopt via VolunteerExemptionResolver of honorary role.
+			if ( ! self::is_active_member( $person_id ) ) {
+				$skipped_former_members++;
 				continue;
 			}
 
@@ -284,7 +283,7 @@ class VolunteerEligibilityService {
 			'units'       => array_values( array_merge( $gezin_units, $speler_units ) ),
 			'diagnostics' => [
 				'skipped_no_leeftijdsgroep' => $skipped_no_leeftijdsgroep,
-				'skipped_non_paying'        => $skipped_non_paying,
+				'skipped_former_members'    => $skipped_former_members,
 				'gezinnen_with_parents'     => $counts_by_quality['ok'],
 				'gezinnen_via_address'      => $counts_by_quality['address_fallback'],
 				'gezinnen_orphan'           => $counts_by_quality['orphan'],
@@ -294,32 +293,20 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Is this person a spelend / contributie-plichtig lid?
+	 * Is this person an actief lid for purposes of the vrijwilligers-doelgroep?
 	 *
-	 * The doelgroep is "alle ouders t/m JO16 en spelers vanaf O17 die ook
-	 * contributie betalen". We exclude:
-	 *   - `former_member` flag — ex-leden hoeven niet
-	 *   - `_exclude_from_contributie` meta — donateurs, ereleden, contributie-
-	 *     vrije leden zijn op een andere manier al bijdragend
-	 *
-	 * Bewust géén check op `type-lid` of fee-calculator-uitkomst: die zou de
-	 * regel afhankelijk maken van het ingewikkeldere fee-systeem. Voor de
-	 * doelgroep-bepaling zijn de twee bovenstaande flags voldoende én exact
-	 * wat administrators handmatig kunnen aanvinken.
+	 * Only `former_member` excludes — contributie-vrijstelling (`_exclude_from_contributie`)
+	 * heeft niets met vrijwilligerstaken te maken: een donateur, erelid of
+	 * contributievrij lid kan nog steeds vrijwilligers-plicht hebben. Eventuele
+	 * vrijstelling daarvoor loopt via VolunteerExemptionResolver (commissie,
+	 * staf-rol, betaalde vrijwilliger, handmatige vrijstelling).
 	 */
-	public static function is_contributie_member( int $person_id ): bool {
+	public static function is_active_member( int $person_id ): bool {
 		// Direct post_meta — get_field() bootstraps the full ACF field
 		// definition tree, which is much slower in hot loops with thousands
 		// of persons.
 		$former = get_post_meta( $person_id, 'former_member', true );
-		if ( $former === '1' || $former === 1 || $former === true ) {
-			return false;
-		}
-		$excluded = get_post_meta( $person_id, '_exclude_from_contributie', true );
-		if ( $excluded === '1' || $excluded === 1 || $excluded === true ) {
-			return false;
-		}
-		return true;
+		return ! ( $former === '1' || $former === 1 || $former === true );
 	}
 
 	/**
@@ -885,13 +872,13 @@ class VolunteerEligibilityService {
 
 	/**
 	 * Drill-down: every person met een leeftijdsgroep die NIET in de doelgroep
-	 * valt omdat ze geen contributie betalen (former_member of
-	 * _exclude_from_contributie). Voor admins is dit fijn om te zien wie er
-	 * dus geen vrijwilligersplicht heeft.
+	 * valt omdat ze ex-lid (`former_member`) zijn. Contributie-vrijstelling
+	 * (`_exclude_from_contributie`) telt hier bewust NIET — die leden zitten
+	 * gewoon in de doelgroep.
 	 *
 	 * @return int[] Person post IDs.
 	 */
-	public function get_non_paying_ids(): array {
+	public function get_former_member_ids(): array {
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'person',
@@ -909,7 +896,7 @@ class VolunteerEligibilityService {
 			if ( $this->age_group_number( $person_id ) === null ) {
 				continue; // dat zit al in de missing_leeftijdsgroep bucket
 			}
-			if ( ! self::is_contributie_member( $person_id ) ) {
+			if ( ! self::is_active_member( $person_id ) ) {
 				$ids[] = $person_id;
 			}
 		}
@@ -958,18 +945,17 @@ class VolunteerEligibilityService {
 			}
 		}
 
-		// Alleen actieve leden — ex-leden en handmatig uitgesloten leden horen
-		// hier sowieso niet in. Huidige vrijwilligers ook niet (terecht geen
-		// spelactiviteit). Honorary leden (Donateur/Erelid/Lid van Verdienste/
-		// Verenigingslid voor het leven) ook niet — die zijn al bijdragend via
-		// hun functie. Ouders met een directe `Kind`-relatie ook niet, ook als
-		// het kind zelf geen leeftijdsgroep heeft. Ouders/huisgenoten in een
-		// gezin-unit (adres-fallback) ook niet. Wat overblijft is een echte
-		// data-gap.
+		// Alleen actieve leden — ex-leden horen hier sowieso niet in. Huidige
+		// vrijwilligers ook niet (terecht geen spelactiviteit). Honorary leden
+		// (Donateur/Erelid/Lid van Verdienste/Verenigingslid voor het leven)
+		// ook niet — die zijn al bijdragend via hun functie. Ouders met een
+		// directe `Kind`-relatie ook niet, ook als het kind zelf geen
+		// leeftijdsgroep heeft. Ouders/huisgenoten in een gezin-unit
+		// (adres-fallback) ook niet. Wat overblijft is een echte data-gap.
 		return array_values(
 			array_filter(
 				array_diff( $all, $with ),
-				fn( $pid ) => self::is_contributie_member( (int) $pid )
+				fn( $pid ) => self::is_active_member( (int) $pid )
 					&& ! self::is_current_volunteer( (int) $pid )
 					&& ! self::has_active_honorary_role( (int) $pid )
 					&& ! $this->is_parent( (int) $pid )

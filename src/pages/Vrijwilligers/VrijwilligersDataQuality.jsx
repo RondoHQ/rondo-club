@@ -23,17 +23,18 @@ const CATEGORIES = {
   missing_leeftijdsgroep: {
     title: 'Actieve leden zonder leeftijdsgroep',
     intro:
-      'Deze actieve, contributieplichtige leden hebben geen leeftijdsgroep én geen andere zichtbare reden om er geen te hebben. ' +
+      'Deze actieve leden hebben geen leeftijdsgroep én geen andere zichtbare reden om er geen te hebben. ' +
       'Al uitgefilterd: huidige vrijwilligers, honorary leden (Donateur, Erelid, Lid van Verdienste, Verenigingslid voor het leven), ' +
       'en ouders die al via een gezin gekoppeld zijn (relationships of adres). ' +
       'Wat overblijft is meestal een Sportlink-sync die gehaperd heeft — corrigeer het op de persoonspagina ' +
-      '(leeftijdsgroep zetten, een passende werkfunctie of "huidig vrijwilliger" aanvinken, of contributievrij/ex-lid markeren).',
+      '(leeftijdsgroep zetten, een passende werkfunctie of "huidig vrijwilliger" aanvinken, of als ex-lid markeren).',
   },
-  non_paying: {
-    title: 'Niet-spelende / niet-contributie-plichtige leden',
+  former_members: {
+    title: 'Ex-leden',
     intro:
-      'Deze personen vallen buiten de vrijwilligersplicht omdat ze als ex-lid (former_member) of als handmatig uitgesloten van contributie ' +
-      'gemarkeerd zijn. Geen vrijwilligersplicht — hun bijdrage staat al op een andere manier vast (donateur, erelid, contributievrij).',
+      'Deze personen vallen buiten de vrijwilligersplicht omdat ze als ex-lid (former_member) gemarkeerd zijn. ' +
+      'Contributievrijstelling (donateur, erelid, Lid van Verdienste, contributievrij) is hier bewust geen reden — ' +
+      'die leden zitten gewoon in de doelgroep, tenzij ze via een andere route vrijgesteld zijn (commissie, staf-rol, betaalde vrijwilliger, handmatige vrijstelling).',
   },
 };
 

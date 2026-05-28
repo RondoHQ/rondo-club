@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.19.0] - 2026-05-28
+
+### Changed
+- **Contributievrijstelling sluit niet langer uit van vrijwilligers-doelgroep.** `_exclude_from_contributie` (donateurs, ereleden, Lid van Verdienste, handmatig contributievrij) bepaalde tot nu toe ook of iemand in de vrijwilligers-doelgroep zat — wat conceptueel onjuist is: contributie-vrijstelling en vrijwilligers-vrijstelling zijn losse beslissingen. Vrijstelling van vrijwilligerstaken loopt nu uitsluitend via `VolunteerExemptionResolver` (commissie, staf-rol, betaalde vrijwilliger, handmatige vrijstelling) of via een actieve honorary role (Donateur/Erelid/Lid van Verdienste/Verenigingslid voor het leven met die job_title in `work_history`).
+  - Nieuwe `VolunteerEligibilityService::is_active_member()` checkt alleen `former_member`.
+  - `is_contributie_member()` is verwijderd (had geen consumers meer).
+  - Diagnostic `skipped_non_paying` → `skipped_former_members`; drill-down `get_non_paying_ids()` → `get_former_member_ids()`; REST-categorie `non_paying` → `former_members`.
+  - Dashboard- en data-quality-teksten bijgewerkt.
+
+### Removed
+- **`/wp-json/rondo/v1/volunteer/data-quality?category=non_paying`** — vervangen door `category=former_members`. Drill-down toont nu alleen ex-leden, niet meer contributievrije leden (want die zitten gewoon in de doelgroep).
+
 ## [33.18.0] - 2026-05-28
 
 ### Added

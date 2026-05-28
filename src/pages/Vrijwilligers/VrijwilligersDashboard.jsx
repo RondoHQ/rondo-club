@@ -59,7 +59,7 @@ export default function VrijwilligersDashboard() {
   const hasDataIssues =
     diagnostics &&
     ((diagnostics.skipped_no_leeftijdsgroep || 0) > 0 ||
-      (diagnostics.skipped_non_paying || 0) > 0 ||
+      (diagnostics.skipped_former_members || 0) > 0 ||
       (diagnostics.gezinnen_orphan || 0) > 0 ||
       (diagnostics.gezinnen_via_address || 0) > 0 ||
       (diagnostics.suspect_relationships || 0) > 0);
@@ -166,15 +166,15 @@ export default function VrijwilligersDashboard() {
                     zonder <code>leeftijdsgroep</code>. Sportlink-sync ontbreekt, of het leeftijdsgroep-veld is leeg — corrigeer het op de persoonspagina zodat ze meegenomen worden in de doelgroep.
                   </li>
                 )}
-                {(diagnostics.skipped_non_paying || 0) > 0 && (
+                {(diagnostics.skipped_former_members || 0) > 0 && (
                   <li>
                     <Link
-                      to="/vrijwilligers/datakwaliteit/non_paying"
+                      to="/vrijwilligers/datakwaliteit/former_members"
                       className="text-bright-cobalt dark:text-electric-cyan hover:underline"
                     >
-                      <strong>{diagnostics.skipped_non_paying.toLocaleString('nl-NL')}</strong> personen
+                      <strong>{diagnostics.skipped_former_members.toLocaleString('nl-NL')}</strong> ex-leden
                     </Link>{' '}
-                    buiten de doelgroep gehouden omdat ze geen spelend/contributie-plichtig lid zijn (ex-leden, donateurs, ereleden, contributievrije leden).
+                    buiten de doelgroep gehouden (former_member). Contributievrije leden zijn bewust niet uitgesloten — een vrijstelling van contributie is geen vrijstelling van vrijwilligerstaken.
                   </li>
                 )}
                 {(diagnostics.suspect_relationships || 0) > 0 && (
