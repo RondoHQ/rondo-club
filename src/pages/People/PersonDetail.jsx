@@ -1205,6 +1205,11 @@ export default function PersonDetail() {
                   Afmelding in de toekomst
                 </span>
               )}
+              {acf.wacht_op_overschrijving && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                  Wacht op overschrijving
+                </span>
+              )}
               {acf['huidig-vrijwilliger'] && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan text-white dark:bg-electric-cyan dark:text-white">
                   Vrijwilliger

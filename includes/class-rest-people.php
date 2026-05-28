@@ -417,6 +417,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'wacht_op_overschrijving'   => [
+						'description'       => 'Filter for people waiting on KNVB transfer (1=only waiting, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'spelactiviteit_no_team'    => [
 						'description'       => 'Filter for people with spelactiviteit but no team (1=filter, empty=all)',
 						'type'              => 'string',
@@ -1101,6 +1110,7 @@ class People extends Base {
 		$lid_tot_season            = $request->get_param( 'lid_tot_season' );
 		$lid_sinds_season          = $request->get_param( 'lid_sinds_season' );
 		$spelactiviteit_no_team    = $request->get_param( 'spelactiviteit_no_team' );
+		$wacht_op_overschrijving   = $request->get_param( 'wacht_op_overschrijving' );
 		$onboarding_new_members    = $request->get_param( 'onboarding_new_members' );
 		$onboarding_new_volunteers = $request->get_param( 'onboarding_new_volunteers' );
 
@@ -1411,6 +1421,14 @@ class People extends Base {
 			);
 
 			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
+		}
+
+		// Wacht op overschrijving — members transferred in from another club whose
+		// KNVB transfer hasn't been processed yet (Sportlink Tooltip "Actie van
+		// een ander (overschrijving)").
+		if ( $wacht_op_overschrijving === '1' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} wo ON p.ID = wo.post_id AND wo.meta_key = 'wacht_op_overschrijving'";
+			$where_clauses[] = "(wo.meta_value = '1')";
 		}
 
 		// Onboarding: new members.

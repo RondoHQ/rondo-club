@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.20.0] - 2026-05-28
+
+### Added
+- **Nieuw veld `wacht_op_overschrijving` op personen.** Leden die van een andere club afkomen staan in Sportlink (en dus in Rondo) zodra ze aangemeld zijn, maar hebben pas een voetbalactiviteit zodra de KNVB-overschrijving rond is. Sportlink markeert ze tot die tijd met de Tooltip "Actie van een ander (overschrijving)". De rondo-sync herkent dat nu en zet `wacht_op_overschrijving` op `true`; zodra de overschrijving verwerkt is wordt de flag weer op `false` gezet bij de volgende sync.
+  - Read-only ACF-veld onder Basic Information (zelfde plek als Oud-lid).
+  - Oranje "Wacht op overschrijving"-badge op de personenlijst (naast Oud-lid) en op de persoondetailpagina (naast Afmelding in de toekomst).
+  - Boolean-filter "Wacht op overschrijving" in de Lidmaatschap-sectie van de People-pagina, via nieuwe REST-query `?wacht_op_overschrijving=1` op `GET /rondo/v1/people-filtered`.
+
 ## [33.19.0] - 2026-05-28
 
 ### Changed

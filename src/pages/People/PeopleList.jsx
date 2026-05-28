@@ -157,6 +157,11 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               Oud-lid
             </span>
           )}
+          {person.acf?.wacht_op_overschrijving && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+              Wacht op overschrijving
+            </span>
+          )}
         </Link>
       </td>
       {/* Dynamic columns based on visible_columns order */}
@@ -601,6 +606,7 @@ export default function PeopleList() {
   const lidTotSeason = searchParams.get('lidTotSeizoen') || '';
   const lidSindsSeason = searchParams.get('lidSindsSeizoen') || '';
   const spelactiviteitNoTeam = searchParams.get('spelactiviteitZonderTeam') || '';
+  const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
 
   // Helper to update URL params
   const updateSearchParams = useCallback((updates) => {
@@ -681,6 +687,10 @@ export default function PeopleList() {
     updateSearchParams({ spelactiviteitZonderTeam: value });
   }, [updateSearchParams]);
 
+  const setWachtOverschrijving = useCallback((value) => {
+    updateSearchParams({ wachtOverschrijving: value });
+  }, [updateSearchParams]);
+
   // Local UI state (not persisted in URL)
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showBulkDropdown, setShowBulkDropdown] = useState(false);
@@ -731,6 +741,7 @@ export default function PeopleList() {
     lidTotSeason: lidTotSeason || null,
     lidSindsSeason: lidSindsSeason || null,
     spelactiviteitNoTeam: spelactiviteitNoTeam || null,
+    wachtOverschrijving: wachtOverschrijving || null,
   });
 
   // Extract data from response
@@ -850,6 +861,7 @@ export default function PeopleList() {
     createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_sinds_season', header: 'Nieuw lid dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Nieuw lid dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
+    createColumn({ id: 'wacht_overschrijving', header: 'Wacht op overschrijving', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Wacht op overschrijving', filterSection: 'Lidmaatschap' }),
 
     // Persoon — birth/age/category attributes
     createColumn({
@@ -970,6 +982,7 @@ export default function PeopleList() {
     lid_tot_season: lidTotSeason,
     lid_sinds_season: lidSindsSeason,
     spelactiviteit_no_team: spelactiviteitNoTeam,
+    wacht_overschrijving: wachtOverschrijving,
     birth_year: selectedBirthYear,
     birthday_month: selectedBirthMonth,
     last_modified: lastModifiedFilter,
@@ -1032,6 +1045,7 @@ export default function PeopleList() {
       case 'lid_tot_season': setLidTotSeason(value); break;
       case 'lid_sinds_season': setLidSindsSeason(value); break;
       case 'spelactiviteit_no_team': setSpelactiviteitNoTeam(value); break;
+      case 'wacht_overschrijving': setWachtOverschrijving(value); break;
       case 'birth_year': setSelectedBirthYear(value); break;
       case 'birthday_month': setSelectedBirthMonth(value); break;
       case 'last_modified': setLastModifiedFilter(value); break;
@@ -1047,7 +1061,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1080,7 +1094,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1166,6 +1180,7 @@ export default function PeopleList() {
         lidTotSeason: lidTotSeason || null,
         lidSindsSeason: lidSindsSeason || null,
         spelactiviteitNoTeam: spelactiviteitNoTeam || null,
+        wachtOverschrijving: wachtOverschrijving || null,
       });
 
       const allTeamIds = [...new Set(allPeople.map(getCurrentTeamId).filter(Boolean))];
