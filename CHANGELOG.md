@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.17.0] - 2026-05-28
+
+### Changed
+- **Oud-leden zijn nu alleen-lezen in Rondo Club.** Sportlink weigert sowieso elke wijziging voor hun lidsoort ("Oud bondslid" / "Oud verenigingslid"), dus elke bewerking werd door de reverse-sync afgewezen en bleef in een oneindige re-detectie-loop hangen (één lid had 17 identieke pogingen sinds februari). Vanaf nu:
+  - **Frontend** (`PersonDetail.jsx`) toont een prominente "Oud-lid — alleen-lezen"-banner en verbergt alle bewerk-knoppen wanneer `former_member` waar is. `canEditPeople` wordt onder de motorkap op `false` gezet zodra de persoon als oud-lid geladen is, waardoor de bestaande edit-affordances vanzelf verdwijnen (Bewerken-knoppen, foto-upload, relaties/adressen/contact-modals etc.).
+  - **Backend** (`class-rest-people.php`, nieuwe `block_former_member_edits()` op het `rest_pre_insert_person` filter) weigert ACF-edits met HTTP 403 (`rondo_former_member_readonly`) wanneer de bestaande persoon `former_member=true` is en de aanvragende gebruiker geen `manage_options` heeft. Admins (en daarmee de sync-service-account) zijn vrijgesteld zodat de forward-sync z'n werk kan blijven doen.
+  - De enige toegestane wijziging voor niet-admins blijft het `former_member`-veld zelf, zodat een beheerder de status kan terugzetten naar actief vóórdat de overige velden bewerkbaar worden.
+
 ## [33.16.0] - 2026-05-28
 
 ### Added
