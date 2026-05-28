@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.18.0] - 2026-05-28
+
+### Added
+- **`?former_member=0|1` query param op `GET /wp/v2/people`** — server-side filter via `rest_person_query`. Voorheen moest de rondo-sync change detector ALLE recent gewijzigde personen ophalen (incl. ACF-blob) en dan in JavaScript op `former_member` filteren; nu kan de query 95% van die rijen op WP_Query-niveau wegfilteren. `former_member=0` matcht ook posts zonder `former_member` meta (zoals net-aangemaakte personen). `former_member=1` matcht alleen oud-leden. Andere waarden negeren we, dus oudere clients blijven ongewijzigd werken.
+
 ## [33.17.0] - 2026-05-28
 
 ### Changed
