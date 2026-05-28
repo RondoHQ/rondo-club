@@ -77,7 +77,8 @@ export default function PersonDetail() {
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
-  const canEditPeople = currentUser?.can_edit_people ?? false;
+  // eslint-disable-next-line prefer-const -- reassigned below once acf is loaded
+  let canEditPeople = currentUser?.can_edit_people ?? false;
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
@@ -1036,6 +1037,16 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
+  const isFormerMember = acf.former_member === true;
+
+  // Former members are read-only — Sportlink rejects writes for their
+  // lidsoort ("Oud bondslid" / "Oud verenigingslid") so any UI edit
+  // would just generate doomed reverse-sync work. Backend enforces the
+  // same rule (rest_pre_insert_person filter); hiding edit affordances
+  // here just keeps users from trying.
+  if (isFormerMember) {
+    canEditPeople = false;
+  }
 
   // Build contact display items from fixed fields
   const contactItems = [
@@ -1129,6 +1140,13 @@ export default function PersonDetail() {
         <p className="text-sm text-red-600 dark:text-red-400">{syncErrorMessage}</p>
       )}
       
+      {isFormerMember && (
+        <div className="mb-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+          <span className="font-medium">Oud-lid — alleen-lezen.</span>{' '}
+          Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.
+        </div>
+      )}
+
       {/* Profile header */}
       <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
 

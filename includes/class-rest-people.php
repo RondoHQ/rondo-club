@@ -34,6 +34,15 @@ class People extends Base {
 
 		// Add computed fields (is_deceased) to person REST responses
 		add_filter( 'rest_prepare_person', [ $this, 'add_person_computed_fields' ], 20, 3 );
+
+		// Reject ACF edits on persons marked former_member=true. Sportlink
+		// rejects writes for these members' lidsoort ("Oud bondslid" /
+		// "Oud verenigingslid"), so anything we accept here just generates
+		// reverse-sync work that can never land. Admins (incl. the sync
+		// service user) are exempt so the sync itself can still touch
+		// former-member records. The only allowed non-admin write is the
+		// former_member toggle itself — flip it off first, then edit.
+		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
 	}
 
 	/**
@@ -685,6 +694,84 @@ class People extends Base {
 		$response->set_data( $data );
 
 		return $response;
+	}
+
+	/**
+	 * Block ACF edits on persons marked former_member=true, except for the
+	 * former_member toggle itself. Admins (including the rondo-sync service
+	 * user, which authenticates with manage_options) bypass the check so
+	 * the sync can still write to former-member records.
+	 *
+	 * Filter signature: rest_pre_insert_{$post_type}. Runs before WordPress
+	 * persists a REST insert/update; returning WP_Error aborts the write.
+	 *
+	 * @param stdClass $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request The originating request.
+	 * @return stdClass|WP_Error Original $prepared_post to allow, WP_Error to block.
+	 */
+	public function block_former_member_edits( $prepared_post, $request ) {
+		// Skip on create (no existing ID) — this hook is about edits.
+		if ( empty( $prepared_post->ID ) ) {
+			return $prepared_post;
+		}
+
+		// Admins (incl. the sync service user) are exempt.
+		if ( current_user_can( 'manage_options' ) ) {
+			return $prepared_post;
+		}
+
+		// Existing post's former_member state.
+		$is_former = (bool) get_field( 'former_member', $prepared_post->ID );
+		if ( ! $is_former ) {
+			return $prepared_post;
+		}
+
+		$acf = $request->get_param( 'acf' );
+		if ( ! is_array( $acf ) || empty( $acf ) ) {
+			// Non-ACF write (e.g., title-only edit) on a former member is
+			// also blocked — there's nothing legitimate to change here.
+			return $this->former_member_readonly_error();
+		}
+
+		// Identify which ACF fields the request actually changes vs. current.
+		$current_acf  = get_fields( $prepared_post->ID ) ?: [];
+		$changed_keys = [];
+		foreach ( $acf as $key => $new_value ) {
+			$current = $current_acf[ $key ] ?? null;
+			// Loose serialized comparison handles arrays, post relations,
+			// ACF date-picker formats, etc., without false positives on
+			// type coercion.
+			if ( maybe_serialize( $new_value ) !== maybe_serialize( $current ) ) {
+				$changed_keys[] = $key;
+			}
+		}
+
+		// Only allowed change: flipping former_member itself.
+		$other_changes = array_diff( $changed_keys, [ 'former_member' ] );
+		if ( empty( $other_changes ) ) {
+			return $prepared_post;
+		}
+
+		return $this->former_member_readonly_error( $other_changes );
+	}
+
+	/**
+	 * Build the standard WP_Error returned when a non-admin tries to edit
+	 * a former member's data.
+	 *
+	 * @param array $blocked_fields Names of the fields the caller tried to change.
+	 * @return WP_Error
+	 */
+	protected function former_member_readonly_error( array $blocked_fields = [] ) {
+		$message = __(
+			'Deze persoon is gemarkeerd als oud-lid en kan niet worden bewerkt. Zet eerst "Oud-lid" uit als je de gegevens wilt aanpassen.',
+			'rondo'
+		);
+		$data = [ 'status' => 403 ];
+		if ( ! empty( $blocked_fields ) ) {
+			$data['blocked_fields'] = array_values( $blocked_fields );
+		}
+		return new \WP_Error( 'rondo_former_member_readonly', $message, $data );
 	}
 
 	/**
