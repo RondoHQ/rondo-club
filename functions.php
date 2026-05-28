@@ -687,8 +687,8 @@ add_action( 'wp_head', 'rondo_theme_add_config_to_head', 0 );
 /**
  * Preload the dashboard API endpoint so the browser starts fetching before JS boots.
  *
- * Uses <link rel="preload"> with fetch destination and the WP REST nonce cookie
- * to ensure the request is authenticated and reusable by the React app.
+ * Fires an authenticated fetch (with X-WP-Nonce) inline in <head> and stashes the
+ * promise on window.__dashboardPreload for the React app to consume.
  */
 function rondo_preload_dashboard_api() {
 	if ( ! is_user_logged_in() ) {
@@ -696,8 +696,6 @@ function rondo_preload_dashboard_api() {
 	}
 	$dashboard_url = rest_url( 'rondo/v1/dashboard' );
 	$nonce         = wp_create_nonce( 'wp_rest' );
-	// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
-	echo '<link rel="preload" href="' . esc_url( $dashboard_url ) . '" as="fetch" crossorigin="anonymous">' . "\n";
 	echo '<script>window.__dashboardPreload = fetch(' . wp_json_encode( $dashboard_url ) . ', { headers: { "X-WP-Nonce": ' . wp_json_encode( $nonce ) . ' } });</script>' . "\n";
 }
 add_action( 'wp_head', 'rondo_preload_dashboard_api', 1 );
