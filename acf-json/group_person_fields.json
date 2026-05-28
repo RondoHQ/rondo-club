@@ -331,6 +331,24 @@
                     }
                 },
                 {
+                    "key": "field_work_team_name_text",
+                    "label": "Team name (historical)",
+                    "name": "team_name_text",
+                    "type": "text",
+                    "instructions": "Free-text team name for historical Sportlink teams that don't exist in Rondo Club as posts (e.g. \"Zaterdag E5 (seizoen 2014/'15)\"). Only used when Team / Commissie is empty.",
+                    "conditional_logic": [
+                        [
+                            {
+                                "field": "field_work_company",
+                                "operator": "==empty"
+                            }
+                        ]
+                    ],
+                    "wrapper": {
+                        "width": "50"
+                    }
+                },
+                {
                     "key": "field_work_entity_type",
                     "label": "Entity Type",
                     "name": "entity_type",

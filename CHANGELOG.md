@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.15.0] - 2026-05-28
+
+### Added
+- **`team_name_text` veld op `work_history` repeater** — vrij-tekst teamnaam voor historische Sportlink-teams die niet als post in Rondo Club bestaan (bv. "Zaterdag E5 (seizoen 2014/'15)"). Alleen zichtbaar/gebruikt als het normale Team / Commissie-veld leeg is. Wordt automatisch gevuld door de `player-history`-sync wanneer een Sportlink-team niet matcht met een bestaand Rondo Club-team.
+
 ## [33.14.8] - 2026-05-28
 
 ### Changed
