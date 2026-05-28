@@ -43,6 +43,12 @@ class People extends Base {
 		// former-member records. The only allowed non-admin write is the
 		// former_member toggle itself — flip it off first, then edit.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
+
+		// Allow callers to filter person list endpoints by former_member via
+		// a ?former_member=0 (or =1) query param. Used by rondo-sync's
+		// change detector to skip former members at the database level
+		// instead of pulling them all into JS and filtering there.
+		add_filter( 'rest_person_query', [ $this, 'filter_by_former_member' ], 20, 2 );
 	}
 
 	/**
@@ -772,6 +778,62 @@ class People extends Base {
 			$data['blocked_fields'] = array_values( $blocked_fields );
 		}
 		return new \WP_Error( 'rondo_former_member_readonly', $message, $data );
+	}
+
+	/**
+	 * Server-side filter on the ?former_member=0|1 query param for GET
+	 * /wp/v2/people. Pushes the predicate into the meta query instead of
+	 * making clients fetch everything and filter client-side.
+	 *
+	 * - `former_member=0` (or `false`, `no`) → only members whose
+	 *   former_member meta is NOT '1'. Matches "no value at all" too, so
+	 *   newly-created persons that haven't been touched yet show up.
+	 * - `former_member=1` (or `true`, `yes`) → only members where
+	 *   former_member meta is '1'.
+	 * - Any other value (incl. missing param) → no filter applied.
+	 *
+	 * @param array $args WP_Query args being built for this REST call.
+	 * @param WP_REST_Request $request
+	 * @return array
+	 */
+	public function filter_by_former_member( $args, $request ) {
+		$param = $request->get_param( 'former_member' );
+		if ( $param === null || $param === '' ) {
+			return $args;
+		}
+
+		$truthy = [ '1', 1, 'true', true, 'yes' ];
+		$falsy  = [ '0', 0, 'false', false, 'no' ];
+
+		if ( in_array( $param, $truthy, true ) ) {
+			$args['meta_query'] = array_merge( $args['meta_query'] ?? [], [
+				[
+					'key'   => 'former_member',
+					'value' => '1',
+				],
+			] );
+			return $args;
+		}
+
+		if ( in_array( $param, $falsy, true ) ) {
+			$args['meta_query'] = array_merge( $args['meta_query'] ?? [], [
+				[
+					'relation' => 'OR',
+					[
+						'key'     => 'former_member',
+						'compare' => 'NOT EXISTS',
+					],
+					[
+						'key'     => 'former_member',
+						'value'   => '1',
+						'compare' => '!=',
+					],
+				],
+			] );
+			return $args;
+		}
+
+		return $args;
 	}
 
 	/**
