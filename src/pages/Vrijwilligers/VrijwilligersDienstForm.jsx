@@ -60,15 +60,15 @@ export default function VrijwilligersDienstForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const meta = existing.meta || {};
+    const acf = existing.acf || {};
     setForm({
       title: existing.title?.rendered || existing.title || '',
-      dienst_type_id: Number(meta.dienst_type_id) || 0,
-      start_datetime: toLocalInput(meta.start_datetime || ''),
-      end_datetime: toLocalInput(meta.end_datetime || ''),
-      capacity: meta.capacity ? Number(meta.capacity) : 1,
-      status: meta.status || 'open',
-      notes: meta.notes || '',
+      dienst_type_id: Number(acf.dienst_type_id) || 0,
+      start_datetime: toLocalInput(acf.start_datetime || ''),
+      end_datetime: toLocalInput(acf.end_datetime || ''),
+      capacity: acf.capacity ? Number(acf.capacity) : 1,
+      status: acf.status || 'open',
+      notes: acf.notes || '',
     });
   }, [existing]);
 
@@ -87,8 +87,8 @@ export default function VrijwilligersDienstForm() {
   }, [form, types]);
 
   const assignedIds = useMemo(() => {
-    const meta = existing?.meta || {};
-    const raw = meta.assigned_persons;
+    const acf = existing?.acf || {};
+    const raw = acf.assigned_persons;
     if (Array.isArray(raw)) return raw.map(Number).filter(Boolean);
     return [];
   }, [existing]);
@@ -117,7 +117,7 @@ export default function VrijwilligersDienstForm() {
   const removeAssigneeMutation = useMutation({
     mutationFn: (personId) =>
       prmApi.updateDienstShift(id, {
-        meta: {
+        acf: {
           assigned_persons: assignedIds.filter((pid) => pid !== personId),
         },
       }),
@@ -174,7 +174,7 @@ export default function VrijwilligersDienstForm() {
           saveMutation.mutate({
             title: defaultTitle,
             status: 'publish',
-            meta: {
+            acf: {
               dienst_type_id: Number(form.dienst_type_id),
               start_datetime: fromLocalInput(form.start_datetime),
               end_datetime: fromLocalInput(form.end_datetime),
