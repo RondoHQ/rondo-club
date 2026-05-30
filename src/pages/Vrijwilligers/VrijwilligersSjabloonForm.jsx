@@ -28,6 +28,12 @@ const EMPTY = {
   notes: '',
 };
 
+function acfDateToInput(value) {
+  if (!value) return '';
+  if (/^\d{8}$/.test(value)) return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+  return value;
+}
+
 export default function VrijwilligersSjabloonForm() {
   const { id } = useParams();
   const isEdit = !!id;
@@ -52,17 +58,17 @@ export default function VrijwilligersSjabloonForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const meta = existing.meta || {};
+    const acf = existing.acf || {};
     setForm({
       title: existing.title?.rendered || existing.title || '',
-      dienst_type_id: Number(meta.dienst_type_id) || 0,
-      day_of_week: Number(meta.day_of_week) || 6,
-      start_time: meta.start_time || '09:00',
-      end_time: meta.end_time || '12:00',
-      capacity: meta.capacity ? String(meta.capacity) : '',
-      active_from: meta.active_from || '',
-      active_until: meta.active_until || '',
-      notes: meta.notes || '',
+      dienst_type_id: Number(acf.dienst_type_id) || 0,
+      day_of_week: Number(acf.day_of_week) || 6,
+      start_time: acf.start_time || '09:00',
+      end_time: acf.end_time || '12:00',
+      capacity: acf.capacity ? String(acf.capacity) : '',
+      active_from: acfDateToInput(acf.active_from),
+      active_until: acfDateToInput(acf.active_until),
+      notes: acf.notes || '',
     });
   }, [existing]);
 
@@ -137,7 +143,7 @@ export default function VrijwilligersSjabloonForm() {
           saveMutation.mutate({
             title: defaultTitle,
             status: 'publish',
-            meta: {
+            acf: {
               dienst_type_id: Number(form.dienst_type_id),
               day_of_week: Number(form.day_of_week),
               start_time: form.start_time,

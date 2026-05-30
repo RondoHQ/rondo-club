@@ -62,8 +62,8 @@ export default function VrijwilligersDiensten() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {types.map((type) => {
-              const meta = type.meta || {};
-              const color = meta.color || '#6b7280';
+              const acf = type.acf || {};
+              const color = acf.color || '#6b7280';
               return (
                 <div key={type.id} className="card p-4 flex flex-col gap-2">
                   <div className="flex items-start gap-3">
@@ -72,9 +72,9 @@ export default function VrijwilligersDiensten() {
                       <div className="font-medium text-gray-900 dark:text-gray-100">
                         {type.title?.rendered || type.title}
                       </div>
-                      {meta.description && (
+                      {acf.description && (
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                          {meta.description}
+                          {acf.description}
                         </p>
                       )}
                     </div>
@@ -87,23 +87,23 @@ export default function VrijwilligersDiensten() {
                     </a>
                   </div>
                   <div className="flex flex-wrap gap-1 text-xs">
-                    {meta.vog_required && (
+                    {acf.vog_required && (
                       <span className="px-2 py-0.5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300 rounded">
                         VOG
                       </span>
                     )}
-                    {meta.iva_required && (
+                    {acf.iva_required && (
                       <span className="px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 rounded">
                         IVA
                       </span>
                     )}
-                    {meta.sleutel_involved && (
+                    {acf.sleutel_involved && (
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded">
                         Sleutel
                       </span>
                     )}
                     <span className="ml-auto text-gray-400">
-                      Cap. {meta.default_capacity || 1}
+                      Cap. {acf.default_capacity || 1}
                     </span>
                   </div>
                 </div>
@@ -141,7 +141,7 @@ export default function VrijwilligersDiensten() {
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {shifts.map((shift) => {
-                  const meta = shift.meta || {};
+                  const acf = shift.acf || {};
                   return (
                     <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
@@ -150,13 +150,13 @@ export default function VrijwilligersDiensten() {
                         </Link>
                       </td>
                       <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                        {meta.start_datetime ? format(meta.start_datetime, 'dd-MM-yyyy HH:mm') : '—'}
+                        {acf.start_datetime ? format(acf.start_datetime, 'dd-MM-yyyy HH:mm') : '—'}
                       </td>
                       <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                        {meta.end_datetime ? format(meta.end_datetime, 'dd-MM-yyyy HH:mm') : '—'}
+                        {acf.end_datetime ? format(acf.end_datetime, 'dd-MM-yyyy HH:mm') : '—'}
                       </td>
                       <td className="px-4 py-2 text-xs">
-                        {meta.status || 'open'}
+                        {acf.status || 'open'}
                       </td>
                       <td className="px-4 py-2">
                         <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Bewerken">

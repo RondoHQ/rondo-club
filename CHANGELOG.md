@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.20.1] - 2026-05-30
+
+### Fixed
+- **Sjabloon- en dienst-formulieren tonen en bewaren nu de velden correct.** De frontend las/schreef onder `meta` terwijl ACF deze CPT-velden onder `acf` exposeert; WP REST liet de `meta`-payload stilletjes vallen bij opslag. Resultaat: nieuw aangemaakte diensten/sjablonen hadden geen postmeta (kolommen Start/Eind leeg in het overzicht, edit-form leeg). Zowel `VrijwilligersDienstForm`, `VrijwilligersSjabloonForm`, `VrijwilligersDiensten` als `VrijwilligersSjablonen` lezen/schrijven nu via `acf`. ACF-datums (`active_from`/`active_until`) worden bij weergave van `YYYYMMDD` genormaliseerd naar `YYYY-MM-DD`.
+- **Bestaande diensten zonder meta blijven leeg** — handmatig aangemaakte diensten (bv. shift 6810) hebben geen opgeslagen waarden en moeten opnieuw bewerkt of verwijderd worden.
+
 ## [33.20.0] - 2026-05-28
 
 ### Added

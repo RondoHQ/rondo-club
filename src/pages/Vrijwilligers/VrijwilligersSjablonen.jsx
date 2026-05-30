@@ -8,6 +8,12 @@ import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 
 const DAYS = ['', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 
+function formatAcfDate(value) {
+  if (!value) return '';
+  if (/^\d{8}$/.test(value)) return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+  return value;
+}
+
 export default function VrijwilligersSjablonen() {
   useDocumentTitle('Sjablonen — Vrijwilligers');
 
@@ -31,10 +37,10 @@ export default function VrijwilligersSjablonen() {
 
   const rows = useMemo(() => {
     return [...templates].sort((a, b) => {
-      const da = Number(a.meta?.day_of_week || 0);
-      const db = Number(b.meta?.day_of_week || 0);
+      const da = Number(a.acf?.day_of_week || 0);
+      const db = Number(b.acf?.day_of_week || 0);
       if (da !== db) return da - db;
-      return (a.meta?.start_time || '').localeCompare(b.meta?.start_time || '');
+      return (a.acf?.start_time || '').localeCompare(b.acf?.start_time || '');
     });
   }, [templates]);
 
@@ -86,23 +92,23 @@ export default function VrijwilligersSjablonen() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {rows.map((tpl) => {
-                const meta = tpl.meta || {};
+                const acf = tpl.acf || {};
                 return (
                   <tr key={tpl.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-2">
                       <Link to={`/vrijwilligers/sjablonen/${tpl.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                        {typeMap.get(Number(meta.dienst_type_id)) || '—'}
+                        {typeMap.get(Number(acf.dienst_type_id)) || '—'}
                       </Link>
                     </td>
-                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{DAYS[Number(meta.day_of_week) || 0] || '—'}</td>
+                    <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{DAYS[Number(acf.day_of_week) || 0] || '—'}</td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                      {meta.start_time || '—'} – {meta.end_time || '—'}
+                      {acf.start_time || '—'} – {acf.end_time || '—'}
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                      {meta.capacity > 0 ? meta.capacity : <span className="text-gray-400">default</span>}
+                      {acf.capacity > 0 ? acf.capacity : <span className="text-gray-400">default</span>}
                     </td>
                     <td className="px-4 py-2 text-gray-700 dark:text-gray-300 text-xs">
-                      {meta.active_from || '—'} → {meta.active_until || 'doorlopend'}
+                      {formatAcfDate(acf.active_from) || '—'} → {formatAcfDate(acf.active_until) || 'doorlopend'}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <Link
