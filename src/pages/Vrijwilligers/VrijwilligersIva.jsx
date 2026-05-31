@@ -191,8 +191,8 @@ export default function VrijwilligersIva() {
         <Upload className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
           Vrijwilligers uploaden hun IVA-certificaat zelf via{' '}
-          <Link to="/vrijwillig/profiel" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-            /vrijwillig/profiel
+          <Link to="/profile/iva" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+            /profile/iva
           </Link>
           {' '}(geen WP-admin nodig). Certificaten zijn 5 jaar geldig na
           <code className="mx-1 text-xs">datum-iva</code>; daarna verloopt de goedkeuring automatisch.

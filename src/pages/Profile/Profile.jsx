@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { User, Lock, Briefcase, Bell, Sun, Moon, Monitor } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { User, Lock, Briefcase, Bell, Sun, Moon, Monitor, FileCheck, Wine, ChevronRight } from 'lucide-react';
 import { useCurrentUser, useChangePassword } from '@/hooks/useCurrentUser';
 import { prmApi } from '@/api/client';
 import { useTheme } from '@/hooks/useTheme';
@@ -206,6 +207,39 @@ export default function Profile() {
             </dd>
           </div>
         </dl>
+      </div>
+
+      {/* Certificaten card */}
+      <div className="card p-6">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Mijn certificaten</h2>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <Link
+            to="/profile/vog"
+            className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg shrink-0">
+              <FileCheck className="w-5 h-5 text-bright-cobalt dark:text-electric-cyan" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Mijn VOG</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Status &amp; geldigheid</div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+          </Link>
+          <Link
+            to="/profile/iva"
+            className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+          >
+            <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg shrink-0">
+              <Wine className="w-5 h-5 text-bright-cobalt dark:text-electric-cyan" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Mijn IVA-certificaat</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Voor bardienst — upload &amp; status</div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+          </Link>
+        </div>
       </div>
 
       {/* Sportlink koppeling card — kader only, en alleen als gekoppeld */}

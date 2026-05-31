@@ -14,8 +14,8 @@ const STATUS_CONFIG = {
   missing: { label: 'Niet ingeleverd',       color: 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200',                icon: AlertTriangle },
 };
 
-export default function VrijwilligProfiel() {
-  useDocumentTitle('Mijn profiel — Vrijwilligers');
+export default function ProfileIva() {
+  useDocumentTitle('Mijn IVA-certificaat');
   const queryClient = useQueryClient();
   const fileRef = useRef(null);
   const [file, setFile] = useState(null);
@@ -65,10 +65,10 @@ export default function VrijwilligProfiel() {
     <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
       <header className="space-y-2">
         <Link
-          to="/vrijwillig"
+          to="/profile"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar mijn diensten
+          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar profiel
         </Link>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
@@ -77,7 +77,16 @@ export default function VrijwilligProfiel() {
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mijn IVA-certificaat</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Verplicht voor bardienst. Gratis online behaalbaar via NOC*NSF; 5 jaar geldig.
+              Verplicht voor bardienst. Gratis online behaalbaar via{' '}
+              <a
+                href="https://www.nocnsf.nl/over-nocnsf/sport-en-maatschappij/gezonde-sportomgeving/e-learning-verantwoord-alcohol-schenken"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+              >
+                NOC*NSF
+              </a>
+              ; 5 jaar geldig.
             </p>
           </div>
         </div>
