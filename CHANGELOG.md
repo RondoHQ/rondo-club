@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.20.2] - 2026-05-31
+
+### Fixed
+- **Sjabloon `Dag van de week` werd niet bewaard.** ACF's `day_of_week`-select heeft een string-enum (`"1"`–`"7"`); de frontend stuurde een JS-getal, waardoor ACF de waarde stilletjes verwierp en de oude waarde bleef staan (titel wel bijgewerkt, dag niet). Form stuurt nu `String(form.day_of_week)`.
+
 ## [33.20.1] - 2026-05-30
 
 ### Fixed
