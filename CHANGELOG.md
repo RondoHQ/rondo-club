@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.21.1] - 2026-05-31
+
+### Fixed
+- **"Reeds aangemeld" in plaats van "Niet beschikbaar" op /vrijwillig.** Shifts waarvoor het lid al ingeschreven is staan ook nog in de "Beschikbaar"-tab zolang er nog plek over is voor anderen. De knop toonde verwarrend "Niet beschikbaar" terwijl `is_signed_up=true` allang in de REST response zat. Vervangen door een groene "Reeds aangemeld"-knop die ook als afmeldknop werkt (hover → rood).
+
 ## [33.21.0] - 2026-05-31
 
 ### Added
