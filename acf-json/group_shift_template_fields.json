@@ -105,6 +105,15 @@
             }
         },
         {
+            "key": "field_shift_template_iva_waived",
+            "label": "IVA niet vereist voor deze sjabloon",
+            "name": "iva_waived",
+            "type": "true_false",
+            "instructions": "Aanvinken als bij de uitgerolde diensten geen alcohol geschonken wordt (bv. zaterdagochtend voor 15:00). De expander zet dezelfde waarde op elke uitgerolde dienst. Heeft alleen effect als het diensttype IVA vereist.",
+            "default_value": 0,
+            "ui": 1
+        },
+        {
             "key": "field_shift_template_notes",
             "label": "Notities",
             "name": "notes",

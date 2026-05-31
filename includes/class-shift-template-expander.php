@@ -156,6 +156,7 @@ class ShiftTemplateExpander {
 		$active_from    = (string) get_post_meta( $template_id, 'active_from', true );
 		$active_until   = (string) get_post_meta( $template_id, 'active_until', true );
 		$notes          = (string) get_post_meta( $template_id, 'notes', true );
+		$iva_waived     = (bool) get_post_meta( $template_id, 'iva_waived', true );
 
 		// Default capacity falls back to the dienst_type setting.
 		if ( $capacity <= 0 && $dienst_type_id > 0 ) {
@@ -205,6 +206,7 @@ class ShiftTemplateExpander {
 						update_post_meta( $post_id, 'end_datetime', $end_datetime . ':00' );
 						update_post_meta( $post_id, 'capacity', $capacity > 0 ? $capacity : 1 );
 						update_post_meta( $post_id, 'status', 'open' );
+						update_post_meta( $post_id, 'iva_waived', $iva_waived ? 1 : 0 );
 						update_post_meta( $post_id, 'assigned_persons', [] );
 						if ( $notes !== '' ) {
 							update_post_meta( $post_id, 'notes', $notes );
