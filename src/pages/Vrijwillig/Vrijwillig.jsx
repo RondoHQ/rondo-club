@@ -273,7 +273,7 @@ export default function Vrijwillig() {
           to="/vrijwillig/profiel"
           className="text-sm text-bright-cobalt dark:text-electric-cyan hover:underline shrink-0"
         >
-          Mijn profiel
+          Mijn certificaten
         </Link>
       </header>
 

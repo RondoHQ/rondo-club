@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.22.3] - 2026-05-31
+
+### Changed
+- **"Mijn profiel" rechtsboven op `/vrijwillig` → "Mijn certificaten".** Voorkomt verwarring met de algemene `/profile` (nu via zijbalk bereikbaar voor iedereen), en dekt naast IVA ook toekomstige certificaten (VOG, EHBO, KNVB-diploma's).
+
 ## [33.22.2] - 2026-05-31
 
 ### Changed
