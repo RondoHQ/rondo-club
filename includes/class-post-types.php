@@ -839,6 +839,20 @@ class PostTypes {
 				]
 			);
 		}
+
+		// Sjabloon-niveau IVA-override; expander schrijft deze waarde door naar
+		// elke uitgerolde dienst_shift.
+		register_post_meta(
+			'shift_template',
+			'iva_waived',
+			[
+				'type'              => 'boolean',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			]
+		);
 	}
 
 	/**

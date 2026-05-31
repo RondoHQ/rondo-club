@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.23.2] - 2026-05-31
+
+### Added
+- **`iva_waived` ook op sjablonen.** Een sjabloon kan nu de IVA-eis voor alle uitgerolde diensten ineens uitschakelen — handig voor de wekelijkse "Kantine bar — zaterdag 08:00"-sjabloon. De expander schrijft `iva_waived` door naar elke nieuw aangemaakte dienst. Bestaande, eerder uitgerolde diensten worden niet aangepast (handmatig aanvinken via dienst-edit blijft mogelijk).
+
 ## [33.23.1] - 2026-05-31
 
 ### Added

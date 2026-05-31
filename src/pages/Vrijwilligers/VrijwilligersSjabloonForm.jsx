@@ -25,6 +25,7 @@ const EMPTY = {
   capacity: '',
   active_from: '',
   active_until: '',
+  iva_waived: false,
   notes: '',
 };
 
@@ -68,9 +69,16 @@ export default function VrijwilligersSjabloonForm() {
       capacity: acf.capacity ? String(acf.capacity) : '',
       active_from: acfDateToInput(acf.active_from),
       active_until: acfDateToInput(acf.active_until),
+      iva_waived: Boolean(acf.iva_waived),
       notes: acf.notes || '',
     });
   }, [existing]);
+
+  const selectedType = useMemo(
+    () => types.find((t) => t.id === Number(form.dienst_type_id)),
+    [types, form.dienst_type_id]
+  );
+  const typeRequiresIva = Boolean(selectedType?.acf?.iva_required);
 
   const defaultTitle = useMemo(() => {
     if (form.title) return form.title;
@@ -152,6 +160,7 @@ export default function VrijwilligersSjabloonForm() {
               capacity: form.capacity === '' ? 0 : Number(form.capacity),
               active_from: form.active_from,
               active_until: form.active_until,
+              iva_waived: typeRequiresIva ? Boolean(form.iva_waived) : false,
               notes: form.notes,
             },
           });
@@ -232,6 +241,23 @@ export default function VrijwilligersSjabloonForm() {
             />
           </Field>
         </div>
+
+        {typeRequiresIva && (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.iva_waived}
+              onChange={(e) => setForm({ ...form, iva_waived: e.target.checked })}
+              className="mt-0.5 rounded border-gray-300 dark:border-gray-600"
+            />
+            <span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">IVA niet vereist voor uitgerolde diensten</span>
+              <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Aanvinken als bij deze sjabloon geen alcohol geschonken wordt (bv. zaterdagochtend voor 15:00). De expander zet dezelfde waarde op elke uitgerolde dienst — bestaande diensten worden niet aangepast.
+              </span>
+            </span>
+          </label>
+        )}
 
         <Field label="Notities">
           <textarea
