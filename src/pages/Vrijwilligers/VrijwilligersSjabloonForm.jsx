@@ -88,6 +88,7 @@ export default function VrijwilligersSjabloonForm() {
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'shift-templates'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'sjabloon', id] });
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
       navigate('/vrijwilligers/sjablonen');
     },
     onError: (err) => {
