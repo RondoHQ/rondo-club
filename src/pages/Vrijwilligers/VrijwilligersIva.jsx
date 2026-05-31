@@ -164,7 +164,7 @@ export default function VrijwilligersIva() {
                             className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300"
                             title="Goedkeuren"
                           >
-                            <Check className="w-3 h-3" /> Goedkeur
+                            <Check className="w-3 h-3" /> Keur goed
                           </button>
                         )}
                         {approved && (
