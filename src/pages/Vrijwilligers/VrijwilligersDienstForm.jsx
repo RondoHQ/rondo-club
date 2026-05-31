@@ -14,6 +14,7 @@ const EMPTY = {
   end_datetime: '',
   capacity: 1,
   status: 'open',
+  iva_waived: false,
   notes: '',
 };
 
@@ -68,9 +69,16 @@ export default function VrijwilligersDienstForm() {
       end_datetime: toLocalInput(acf.end_datetime || ''),
       capacity: acf.capacity ? Number(acf.capacity) : 1,
       status: acf.status || 'open',
+      iva_waived: Boolean(acf.iva_waived),
       notes: acf.notes || '',
     });
   }, [existing]);
+
+  const selectedType = useMemo(
+    () => types.find((t) => t.id === Number(form.dienst_type_id)),
+    [types, form.dienst_type_id]
+  );
+  const typeRequiresIva = Boolean(selectedType?.acf?.iva_required);
 
   const defaultTitle = useMemo(() => {
     if (form.title) return form.title;
@@ -180,6 +188,7 @@ export default function VrijwilligersDienstForm() {
               end_datetime: fromLocalInput(form.end_datetime),
               capacity: Number(form.capacity) || 1,
               status: form.status,
+              iva_waived: typeRequiresIva ? Boolean(form.iva_waived) : false,
               notes: form.notes,
             },
           });
@@ -245,6 +254,23 @@ export default function VrijwilligersDienstForm() {
             </select>
           </Field>
         </div>
+
+        {typeRequiresIva && (
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.iva_waived}
+              onChange={(e) => setForm({ ...form, iva_waived: e.target.checked })}
+              className="mt-0.5 rounded border-gray-300 dark:border-gray-600"
+            />
+            <span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">IVA niet vereist voor deze dienst</span>
+              <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Aanvinken als er bij deze dienst geen alcohol geschonken wordt (bv. zaterdag voor 15:00). Geldt alleen voor deze specifieke dienst — het diensttype blijft IVA-vereist.
+              </span>
+            </span>
+          </label>
+        )}
 
         <Field label="Notities">
           <textarea

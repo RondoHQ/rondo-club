@@ -108,6 +108,15 @@
             "return_format": "id"
         },
         {
+            "key": "field_dienst_shift_iva_waived",
+            "label": "IVA niet vereist voor deze dienst",
+            "name": "iva_waived",
+            "type": "true_false",
+            "instructions": "Aanvinken als er bij deze specifieke dienst geen alcohol geschonken wordt (bv. zaterdag voor 15:00). Overruled de IVA-eis op het diensttype voor uitsluitend deze dienst.",
+            "default_value": 0,
+            "ui": 1
+        },
+        {
             "key": "field_dienst_shift_notes",
             "label": "Notities",
             "name": "notes",
