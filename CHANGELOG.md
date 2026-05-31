@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.20.4] - 2026-05-31
+
+### Changed
+- **Sjabloon opslaan rolt direct 12 weken aan diensten uit, niet pas de volgende dag.** `ShiftTemplateExpander::expand_on_template_save()` haakt nu op `acf/save_post` voor `shift_template`-posts en roept dezelfde idempotente `expand_template()` aan die de cron 's nachts gebruikt. Bestaande diensten worden niet gedupliceerd (de `(template_id, start_datetime)`-check in `find_existing_shift()` blokkeert dat). Sjabloon-form invalideert nu ook de `dienst-shifts`-cache zodat de Diensten-lijst direct de nieuwe shifts toont.
+
 ## [33.20.3] - 2026-05-31
 
 ### Fixed

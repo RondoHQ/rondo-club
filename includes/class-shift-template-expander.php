@@ -28,6 +28,24 @@ class ShiftTemplateExpander {
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
 		add_action( self::CRON_HOOK, [ $this, 'expand_default_window' ] );
+		add_action( 'acf/save_post', [ $this, 'expand_on_template_save' ], 20 );
+	}
+
+	/**
+	 * Expand the saved template immediately so the user sees concrete shifts
+	 * for the next 12 weeks without waiting for the daily cron. Idempotent —
+	 * relies on `find_existing_shift()` to skip already-rolled-out dates.
+	 *
+	 * @param int|string $post_id ACF save_post payload (post ID or "options").
+	 */
+	public function expand_on_template_save( $post_id ) {
+		if ( ! is_numeric( $post_id ) ) {
+			return;
+		}
+		if ( get_post_type( (int) $post_id ) !== 'shift_template' ) {
+			return;
+		}
+		self::expand_template( (int) $post_id, gmdate( 'Y-m-d' ), gmdate( 'Y-m-d', strtotime( '+' . self::WINDOW_DAYS . ' days' ) ) );
 	}
 
 	public function register_cron() {
