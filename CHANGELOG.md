@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.22.2] - 2026-05-31
+
+### Changed
+- **IVA-blokmelding op `/vrijwillig` herschreven.** "IVA-certificaat ontbreekt of is verlopen" → "Je kunt nog geen bardiensten draaien", met uitleg over wat de IVA-cursus inhoudt en directe link naar de NOC*NSF e-learning.
+
 ## [33.22.1] - 2026-05-31
 
 ### Changed
