@@ -29,6 +29,35 @@ class ShiftTemplateExpander {
 		add_action( 'init', [ $this, 'register_cron' ] );
 		add_action( self::CRON_HOOK, [ $this, 'expand_default_window' ] );
 		add_action( 'acf/save_post', [ $this, 'expand_on_template_save' ], 20 );
+		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+	}
+
+	/**
+	 * Frontend triggert deze als de gebruiker op "Uitrollen" klikt zodat we
+	 * niet hoeven te wachten op de nachtelijke cron.
+	 */
+	public function register_routes() {
+		register_rest_route(
+			'rondo/v1',
+			'/shift-templates/expand',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'rest_expand_all' ],
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			]
+		);
+	}
+
+	public function rest_expand_all() {
+		$created = $this->expand_default_window();
+		return rest_ensure_response(
+			[
+				'created' => (int) $created,
+				'window'  => self::WINDOW_DAYS,
+			]
+		);
 	}
 
 	/**
