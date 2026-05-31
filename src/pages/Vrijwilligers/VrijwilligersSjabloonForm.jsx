@@ -145,7 +145,7 @@ export default function VrijwilligersSjabloonForm() {
             status: 'publish',
             acf: {
               dienst_type_id: Number(form.dienst_type_id),
-              day_of_week: Number(form.day_of_week),
+              day_of_week: String(form.day_of_week),
               start_time: form.start_time,
               end_time: form.end_time,
               capacity: form.capacity === '' ? 0 : Number(form.capacity),
