@@ -161,6 +161,15 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
               Afmelden
             </button>
           )
+        ) : shift.is_signed_up ? (
+          <button
+            onClick={() => onCancel(shift.id)}
+            disabled={cancelMutation.isLoading}
+            className="text-xs px-3 py-1.5 rounded bg-emerald-100 text-emerald-800 hover:bg-red-100 hover:text-red-800 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-red-900/30 dark:hover:text-red-300 inline-flex items-center gap-1"
+            title="Klik om af te melden"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" /> Reeds aangemeld
+          </button>
         ) : (
           <button
             onClick={() => onSignup(shift.id)}
@@ -325,6 +334,7 @@ export default function Vrijwillig() {
                       key={shift.id}
                       shift={shift}
                       onSignup={(id) => signupMutation.mutate({ shiftId: id })}
+                      onCancel={(id) => cancelMutation.mutate(id)}
                       signupMutation={signupMutation}
                       cancelMutation={cancelMutation}
                       isMine={false}
