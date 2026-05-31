@@ -67,6 +67,7 @@ const navigation = [
   { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
   { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
   { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
+  { name: 'Profiel', href: '/profile', icon: User },
 ];
 
 function Sidebar({ mobile = false, onClose, stats }) {

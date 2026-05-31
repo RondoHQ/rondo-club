@@ -22,6 +22,17 @@ export default function Profile() {
   const [savingTime, setSavingTime] = useState(false);
   const [savingMentionPref, setSavingMentionPref] = useState(false);
 
+  const isKader = Boolean(
+    user?.is_admin ||
+    user?.can_access_fairplay ||
+    user?.can_access_vog ||
+    user?.can_access_financieel ||
+    user?.can_access_toegangscontrole ||
+    user?.can_access_clothing ||
+    user?.can_access_ledenadministratie ||
+    user?.can_access_vrijwilligers
+  );
+
   const isDemoUser = window.rondoConfig?.isDemoUser;
   const colorSchemeOptions = [
     { id: 'light', label: 'Licht', icon: Sun },
@@ -30,6 +41,10 @@ export default function Profile() {
   ];
 
   useEffect(() => {
+    if (!isKader) {
+      setNotificationsLoading(false);
+      return;
+    }
     const fetchNotificationChannels = async () => {
       try {
         const response = await prmApi.getNotificationChannels();
@@ -43,7 +58,7 @@ export default function Profile() {
       }
     };
     fetchNotificationChannels();
-  }, []);
+  }, [isKader]);
 
   const toggleChannel = async (channelId) => {
     const newChannels = notificationChannels.includes(channelId)
@@ -193,8 +208,8 @@ export default function Profile() {
         </dl>
       </div>
 
-      {/* Sportlink koppeling card — only shown when linked */}
-      {user?.linked_person_name && (
+      {/* Sportlink koppeling card — kader only, en alleen als gekoppeld */}
+      {isKader && user?.linked_person_name && (
         <div className="card p-6">
           <div className="flex items-center gap-3 mb-4">
             <Briefcase className="w-5 h-5 text-gray-400" />
@@ -234,7 +249,8 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Notifications card */}
+      {/* Notifications card — kader only; plain leden hebben geen taken/mentions */}
+      {isKader && (
       <div className="card p-6">
         <div className="flex items-center gap-3 mb-4">
           <Bell className="w-5 h-5 text-gray-400" />
@@ -296,6 +312,7 @@ export default function Profile() {
           </div>
         )}
       </div>
+      )}
 
       {/* Password change card — hidden for demo users */}
       {!isDemoUser && (

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.22.1] - 2026-05-31
+
+### Changed
+- **Kader-routes hard gegate.** `/people`, `/people/:id`, `/people/jubilarissen`, `/teams`, `/teams/:id`, `/kaderlijst`, `/commissies`, `/commissies/:id`, `/todos`, `/feedback`, `/feedback/:id`, `/settings`, `/settings/:tab`, `/settings/relationship-types`, `/settings/custom-fields` redirecten plain leden naar `/vrijwillig` als ze de URL handmatig intypen. Voorheen rendererden ze de pagina-chrome (zonder data dankzij REST-filtering).
+- **Profiel-pagina nu in zijbalk voor iedereen.** Plain leden zien daar alleen Account, Thema en Wachtwoord wijzigen. **Meldingen** en **Sportlink koppeling** blijven kader-only; de notification-API wordt voor plain leden niet eens aangeroepen.
+
 ## [33.22.0] - 2026-05-31
 
 ### Changed

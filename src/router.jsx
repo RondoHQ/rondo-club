@@ -214,9 +214,9 @@ const router = createBrowserRouter([
           // Dashboard — plain leden zonder kader-rol redirecten naar /vrijwillig
           { index: true, element: <KaderOrVrijwilligRedirect><Dashboard /></KaderOrVrijwilligRedirect> },
 
-          // People routes
-          { path: 'people', element: <PeopleList /> },
-          { path: 'people/jubilarissen', element: <PeopleAnniversaries /> },
+          // People routes — kader only (plain leden zien hun eigen gegevens via /profile of /vrijwillig)
+          { path: 'people', element: <KaderOrVrijwilligRedirect><PeopleList /></KaderOrVrijwilligRedirect> },
+          { path: 'people/jubilarissen', element: <KaderOrVrijwilligRedirect><PeopleAnniversaries /></KaderOrVrijwilligRedirect> },
           {
             path: 'people/onboarding',
             element: (
@@ -225,7 +225,7 @@ const router = createBrowserRouter([
               </LedenadministratieRoute>
             ),
           },
-          { path: 'people/:id', element: <PersonDetail /> },
+          { path: 'people/:id', element: <KaderOrVrijwilligRedirect><PersonDetail /></KaderOrVrijwilligRedirect> },
 
           // VOG routes - requires VOG capability
           // Canonical lives under /vrijwilligers/vog; legacy /vog kept for back-compat.
@@ -430,10 +430,10 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Teams routes
-          { path: 'teams', element: <TeamsList /> },
-          { path: 'teams/:id', element: <TeamDetail /> },
-          { path: 'kaderlijst', element: <Kaderlijst /> },
+          // Teams routes — kader only
+          { path: 'teams', element: <KaderOrVrijwilligRedirect><TeamsList /></KaderOrVrijwilligRedirect> },
+          { path: 'teams/:id', element: <KaderOrVrijwilligRedirect><TeamDetail /></KaderOrVrijwilligRedirect> },
+          { path: 'kaderlijst', element: <KaderOrVrijwilligRedirect><Kaderlijst /></KaderOrVrijwilligRedirect> },
           {
             path: 'kleding/:tab',
             element: (
@@ -451,24 +451,24 @@ const router = createBrowserRouter([
             ),
           },
 
-          // Commissies routes
-          { path: 'commissies', element: <CommissiesList /> },
-          { path: 'commissies/:id', element: <CommissieDetail /> },
+          // Commissies routes — kader only
+          { path: 'commissies', element: <KaderOrVrijwilligRedirect><CommissiesList /></KaderOrVrijwilligRedirect> },
+          { path: 'commissies/:id', element: <KaderOrVrijwilligRedirect><CommissieDetail /></KaderOrVrijwilligRedirect> },
 
-          // Todos routes - accessible to all users (tasks are user-isolated at backend)
-          { path: 'todos', element: <TodosList /> },
+          // Todos routes — kader only
+          { path: 'todos', element: <KaderOrVrijwilligRedirect><TodosList /></KaderOrVrijwilligRedirect> },
 
-          // Feedback routes - accessible to all users
-          { path: 'feedback', element: <FeedbackList /> },
-          { path: 'feedback/:id', element: <FeedbackDetail /> },
+          // Feedback routes — kader only
+          { path: 'feedback', element: <KaderOrVrijwilligRedirect><FeedbackList /></KaderOrVrijwilligRedirect> },
+          { path: 'feedback/:id', element: <KaderOrVrijwilligRedirect><FeedbackDetail /></KaderOrVrijwilligRedirect> },
 
-          // Settings routes
+          // Settings routes — kader only
           { path: 'settings/notifications', element: <Navigate to="/profile" replace /> },
-          { path: 'settings', element: <Settings /> },
-          { path: 'settings/:tab', element: <Settings /> },
-          { path: 'settings/:tab/:subtab', element: <Settings /> },
-          { path: 'settings/relationship-types', element: <RelationshipTypes /> },
-          { path: 'settings/custom-fields', element: <CustomFields /> },
+          { path: 'settings', element: <KaderOrVrijwilligRedirect><Settings /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/:tab', element: <KaderOrVrijwilligRedirect><Settings /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/:tab/:subtab', element: <KaderOrVrijwilligRedirect><Settings /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/relationship-types', element: <KaderOrVrijwilligRedirect><RelationshipTypes /></KaderOrVrijwilligRedirect> },
+          { path: 'settings/custom-fields', element: <KaderOrVrijwilligRedirect><CustomFields /></KaderOrVrijwilligRedirect> },
           { path: 'settings/feedback', element: <Navigate to="/feedback" replace /> },
 
           // Profile route
