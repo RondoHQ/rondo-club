@@ -921,6 +921,21 @@ class PostTypes {
 			);
 		}
 
+		// Per-dienst override op het IVA-vereiste van het diensttype. Use case:
+		// kantine-bardienst op zaterdag voor 15:00 — geen alcoholschenking, dus
+		// IVA niet nodig ook al staat 'iva_required' op het diensttype.
+		register_post_meta(
+			'dienst_shift',
+			'iva_waived',
+			[
+				'type'              => 'boolean',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'default'           => false,
+				'sanitize_callback' => 'rest_sanitize_boolean',
+			]
+		);
+
 		// Assigned persons as a serialized array of post IDs.
 		register_post_meta(
 			'dienst_shift',

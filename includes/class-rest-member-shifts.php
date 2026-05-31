@@ -214,6 +214,12 @@ class MemberShifts extends Base {
 			$requires_vog   = $dienst_type_id > 0 && (bool) get_post_meta( $dienst_type_id, 'vog_required', true );
 			$requires_iva   = $dienst_type_id > 0 && (bool) get_post_meta( $dienst_type_id, 'iva_required', true );
 
+			// Per-dienst override: een specifieke shift mag de IVA-eis uitschakelen
+			// (bv. zaterdag voor 15:00 — geen alcohol → geen IVA nodig).
+			if ( $requires_iva && (bool) get_post_meta( $shift->ID, 'iva_waived', true ) ) {
+				$requires_iva = false;
+			}
+
 			$shift_blocks = [];
 			if ( $requires_vog && in_array( 'vog', $blocks, true ) ) {
 				$shift_blocks[] = 'vog';
@@ -291,7 +297,8 @@ class MemberShifts extends Base {
 			if ( get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
 				return new \WP_Error( 'vog_required', 'Voor deze dienst is een geldige VOG vereist.', [ 'status' => 403 ] );
 			}
-			if ( get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
+			$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
+			if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
 				return new \WP_Error( 'iva_required', 'Voor deze dienst is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
 			}
 		}

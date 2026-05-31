@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.23.1] - 2026-05-31
+
+### Added
+- **Per-dienst IVA-override.** Op `dienst_shift` is een nieuw veld `iva_waived` (ACF + `register_post_meta`) dat de IVA-eis van het diensttype voor één specifieke dienst uitschakelt. Use case: kantine-bardienst op zaterdag voor 15:00 — geen alcoholschenking, dus geen IVA nodig. De checkbox verschijnt alleen in het dienst-formulier als het gekozen diensttype IVA vereist. Server-side enforcement zit in zowel `get_available_shifts` (lijst-filtering) als in `signup` (laatste check).
+
 ## [33.23.0] - 2026-05-31
 
 ### Added
