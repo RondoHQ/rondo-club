@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.20.3] - 2026-05-31
+
+### Fixed
+- **Nieuwe sjabloon/dienst verschijnt direct in het overzicht (geen hard refresh meer).** De QueryClient heeft globaal `refetchOnMount: false` staan; `invalidateQueries` markeerde de lijst alleen als stale en omdat de lijst tijdens het bewerken niet gemount was werd er nooit opnieuw gefetcht. Beide formulieren gebruiken nu `refetchQueries({ type: 'all' })` — dezelfde aanpak als `usePeople.js`.
+
 ## [33.20.2] - 2026-05-31
 
 ### Fixed

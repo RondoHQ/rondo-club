@@ -96,8 +96,8 @@ export default function VrijwilligersDienstForm() {
   const saveMutation = useMutation({
     mutationFn: (payload) =>
       isEdit ? prmApi.updateDienstShift(id, payload) : prmApi.createDienstShift(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
       navigate('/vrijwilligers/diensten');
     },
@@ -108,8 +108,8 @@ export default function VrijwilligersDienstForm() {
 
   const deleteMutation = useMutation({
     mutationFn: () => prmApi.deleteDienstShift(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
       navigate('/vrijwilligers/diensten');
     },
   });
