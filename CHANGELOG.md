@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.22.0] - 2026-05-31
+
+### Changed
+- **Plain leden (account zonder kader-rol) zien een minimale zijbalk.** Voorheen kreeg iedereen die inlogde Dashboard, Leden, Jubilarissen, Teams, Kaderlijst, Commissies, Taken, Feedback en Instellingen te zien — ook leden die alleen voor hun eigen vrijwilligerswerk inloggen. Die items zijn nu gegate achter `requiresKader` (= admin of een `can_access_*`-capability). Een plain lid ziet alleen **Mijn diensten** (`/vrijwillig`).
+- **Dashboard `/` redirect naar `/vrijwillig` voor plain leden.** Voorkomt dat een lid zonder kader-rol per ongeluk op het stafdashboard belandt met openstaande taken, ledenstatistieken e.d. Nieuwe component `KaderOrVrijwilligRedirect` in `router.jsx`.
+- **Voorbereiding op "elk lid krijgt een account".** Met deze gates blijft de UI bruikbaar voor zowel kader als plain leden zodra accounts breed worden uitgerold.
+
 ## [33.21.2] - 2026-05-31
 
 ### Changed

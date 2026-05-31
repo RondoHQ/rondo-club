@@ -139,6 +139,32 @@ function VrijwilligersRoute({ children }) {
   );
 }
 
+/**
+ * Kader-only: any user with at least one staff capability. Plain leden zonder
+ * expliciete rechten krijgen geen "Geen toegang"-scherm maar worden meteen
+ * doorgestuurd naar hun eigen vrijwillig-aanmelding.
+ */
+function isKaderUser(user) {
+  if (!user) return false;
+  return Boolean(
+    user.is_admin ||
+    user.can_access_fairplay ||
+    user.can_access_vog ||
+    user.can_access_financieel ||
+    user.can_access_toegangscontrole ||
+    user.can_access_clothing ||
+    user.can_access_ledenadministratie ||
+    user.can_access_vrijwilligers
+  );
+}
+
+function KaderOrVrijwilligRedirect({ children }) {
+  const { data: user, isLoading } = useCurrentUser();
+  if (isLoading) return <PageLoadingSpinner />;
+  if (!isKaderUser(user)) return <Navigate to="/vrijwillig" replace />;
+  return children;
+}
+
 function ProtectedRoute({ children }) {
   const { isLoggedIn, isLoading } = useAuth();
 
@@ -185,8 +211,8 @@ const router = createBrowserRouter([
       {
         element: <ProtectedLayout />,
         children: [
-          // Dashboard
-          { index: true, element: <Dashboard /> },
+          // Dashboard — plain leden zonder kader-rol redirecten naar /vrijwillig
+          { index: true, element: <KaderOrVrijwilligRedirect><Dashboard /></KaderOrVrijwilligRedirect> },
 
           // People routes
           { path: 'people', element: <PeopleList /> },

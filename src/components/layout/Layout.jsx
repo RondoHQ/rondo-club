@@ -45,15 +45,16 @@ import { useDisciplineCasesCount } from '@/hooks/useDisciplineCases';
 import { prmApi } from '@/api/client';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Leden', href: '/people', icon: Users },
+  { name: 'Mijn diensten', href: '/vrijwillig', icon: HeartHandshake },
+  { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
+  { name: 'Leden', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
-  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true },
+  { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
-  { name: 'Teams', href: '/teams', icon: Building2 },
-  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true },
+  { name: 'Teams', href: '/teams', icon: Building2, requiresKader: true },
+  { name: 'Kaderlijst', href: '/kaderlijst', icon: Users, indent: true, requiresKader: true },
   { name: 'Kleding', href: '/kleding', icon: Shirt, requiresClothing: true },
-  { name: 'Commissies', href: '/commissies', icon: UsersRound },
+  { name: 'Commissies', href: '/commissies', icon: UsersRound, requiresKader: true },
   { name: 'Vrijwilligers', href: '/vrijwilligers', icon: HeartHandshake, requiresVrijwilligers: true },
   { name: 'VOG', href: '/vrijwilligers/vog', icon: FileCheck, indent: true, requiresVOG: true },
   { name: 'IVA', href: '/vrijwilligers/iva', icon: Wine, indent: true, requiresVrijwilligers: true },
@@ -63,9 +64,9 @@ const navigation = [
   { name: 'Contributie', href: '/financien/contributie', icon: Coins, indent: true, requiresFinancieel: true },
   { name: 'Facturen', href: '/financien/facturen', icon: Receipt, indent: true, requiresFinancieel: true },
   { name: 'Lidpas Scanner', href: '/lidpas-scanner', icon: QrCode, requiresToegangscontrole: true, mobileOnly: true },
-  { name: 'Taken', href: '/todos', icon: CheckSquare },
-  { name: 'Feedback', href: '/feedback', icon: MessageSquare },
-  { name: 'Instellingen', href: '/settings', icon: Settings },
+  { name: 'Taken', href: '/todos', icon: CheckSquare, requiresKader: true },
+  { name: 'Feedback', href: '/feedback', icon: MessageSquare, requiresKader: true },
+  { name: 'Instellingen', href: '/settings', icon: Settings, requiresKader: true },
 ];
 
 function Sidebar({ mobile = false, onClose, stats }) {
@@ -84,6 +85,17 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   const canAccessVrijwilligers = currentUser?.can_access_vrijwilligers ?? false;
   const isAdmin = currentUser?.is_admin ?? false;
+
+  // `isKader` = iedereen met een staf-rol. Plain leden (account zonder
+  // expliciete rechten) zien alleen "Mijn diensten" in de zijbalk.
+  const isKader = isAdmin
+    || canAccessFairplay
+    || canAccessVOG
+    || canAccessFinancieel
+    || canAccessToegangscontrole
+    || canAccessClothing
+    || canAccessLedenadministratie
+    || canAccessVrijwilligers;
 
   // Finance menu counters
   const { data: invoiceData = [] } = useQuery({
@@ -170,6 +182,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
             if (item.requiresClothing && !canAccessClothing) return false;
             if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
             if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
+            if (item.requiresKader && !isKader) return false;
             return true;
           })
           .map((item) => {
