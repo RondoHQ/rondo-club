@@ -102,11 +102,20 @@ function BlockBanners({ blockReasons }) {
         <div className="card p-4 border-l-4 border-amber-400 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
           <div className="text-sm">
-            <strong className="text-gray-900 dark:text-gray-100">IVA-certificaat ontbreekt of is verlopen.</strong>
+            <strong className="text-gray-900 dark:text-gray-100">Je kunt nog geen bardiensten draaien</strong>
             <p className="text-gray-600 dark:text-gray-400 mt-0.5">
-              Bardiensten zijn nog niet zichtbaar. Behaal je IVA gratis bij NOC*NSF (5 jaar geldig) en{' '}
+              Hiervoor moet je eerst je{' '}
+              <a
+                href="https://www.nocnsf.nl/over-nocnsf/sport-en-maatschappij/gezonde-sportomgeving/e-learning-verantwoord-alcohol-schenken"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+              >
+                IVA certificaat halen via NOC*NSF
+              </a>
+              , waarin je leert wat verantwoord alcohol schenken betekent. Dat is gratis en kost je 20–30 minuten. Als je dat gedaan hebt, kun je het{' '}
               <Link to="/vrijwillig/profiel" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                upload het certificaat hier
+                hier uploaden
               </Link>
               .
             </p>
