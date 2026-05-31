@@ -434,6 +434,7 @@ export const prmApi = {
   createDienstShift: (data) => api.post('/wp/v2/dienst-shifts', data),
   updateDienstShift: (id, data) => api.post(`/wp/v2/dienst-shifts/${id}`, data),
   deleteDienstShift: (id) => api.delete(`/wp/v2/dienst-shifts/${id}`, { params: { force: true } }),
+  expandShiftTemplates: () => api.post('/rondo/v1/shift-templates/expand'),
 
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(

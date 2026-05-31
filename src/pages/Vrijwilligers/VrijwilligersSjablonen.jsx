@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CalendarClock, Plus, Pencil } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, CalendarClock, Plus, Pencil, Play } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
@@ -16,6 +16,8 @@ function formatAcfDate(value) {
 
 export default function VrijwilligersSjablonen() {
   useDocumentTitle('Sjablonen — Vrijwilligers');
+  const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState(null);
 
   const { data: types = [] } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -27,6 +29,24 @@ export default function VrijwilligersSjablonen() {
     queryKey: ['volunteer', 'shift-templates'],
     queryFn: async () => (await prmApi.getShiftTemplates()).data || [],
     staleTime: 60 * 1000,
+  });
+
+  const expandMutation = useMutation({
+    mutationFn: () => prmApi.expandShiftTemplates(),
+    onSuccess: (response) => {
+      const created = response?.data?.created ?? 0;
+      const window = response?.data?.window ?? 84;
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
+      setFeedback({
+        kind: 'success',
+        message: created > 0
+          ? `${created} nieuwe dienst${created === 1 ? '' : 'en'} aangemaakt voor de komende ${window} dagen.`
+          : `Alle sjablonen zijn al uitgerold voor de komende ${window} dagen — niets toe te voegen.`,
+      });
+    },
+    onError: (err) => {
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Uitrollen mislukt.' });
+    },
   });
 
   const typeMap = useMemo(() => {
@@ -65,10 +85,33 @@ export default function VrijwilligersSjablonen() {
               </p>
             </div>
           </div>
-          <Link to="/vrijwilligers/sjablonen/nieuw" className="btn-primary inline-flex items-center gap-2 shrink-0">
-            <Plus className="w-4 h-4" /> Nieuw sjabloon
-          </Link>
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => { setFeedback(null); expandMutation.mutate(); }}
+              disabled={expandMutation.isLoading || templates.length === 0}
+              className="btn-tertiary inline-flex items-center gap-2"
+              title="Rol alle actieve sjablonen uit naar concrete diensten voor de komende 12 weken"
+            >
+              <Play className="w-4 h-4" />
+              {expandMutation.isLoading ? 'Uitrollen…' : 'Uitrollen'}
+            </button>
+            <Link to="/vrijwilligers/sjablonen/nieuw" className="btn-primary inline-flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Nieuw sjabloon
+            </Link>
+          </div>
         </div>
+        {feedback && (
+          <div
+            className={`text-sm pt-2 ${
+              feedback.kind === 'success'
+                ? 'text-emerald-700 dark:text-emerald-300'
+                : 'text-red-700 dark:text-red-300'
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
       </header>
 
       {isLoading ? (

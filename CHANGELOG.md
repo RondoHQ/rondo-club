@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.21.0] - 2026-05-31
+
+### Added
+- **"Uitrollen"-knop op de Sjablonen-pagina.** Rolt direct alle actieve sjablonen uit naar concrete diensten voor de komende 12 weken — handig als de gebruiker een sjabloon heeft aangemaakt vóór de auto-expansion live ging, of bestaande sjablonen alsnog wil uitrollen zonder te wachten op de nachtelijke cron. Nieuwe endpoint: `POST /rondo/v1/shift-templates/expand` (vereist `edit_posts`). Geeft `created` (aantal nieuwe diensten) terug. Idempotent — bestaande diensten worden niet gedupliceerd dankzij `find_existing_shift()`.
+
 ## [33.20.4] - 2026-05-31
 
 ### Changed
