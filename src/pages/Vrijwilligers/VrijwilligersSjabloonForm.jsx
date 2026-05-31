@@ -85,8 +85,8 @@ export default function VrijwilligersSjabloonForm() {
   const saveMutation = useMutation({
     mutationFn: (payload) =>
       isEdit ? prmApi.updateShiftTemplate(id, payload) : prmApi.createShiftTemplate(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'shift-templates'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'shift-templates'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'sjabloon', id] });
       navigate('/vrijwilligers/sjablonen');
     },
@@ -97,8 +97,8 @@ export default function VrijwilligersSjabloonForm() {
 
   const deleteMutation = useMutation({
     mutationFn: () => prmApi.deleteShiftTemplate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'shift-templates'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'shift-templates'], type: 'all' });
       navigate('/vrijwilligers/sjablonen');
     },
   });
