@@ -19,12 +19,12 @@ import {
   FeedbackList, FeedbackDetail, Settings, VOG,
   Contributie, DisciplineCasesList,
   FinanceDashboard, Facturen, FactuurDetail, FactuurNieuw, RelationshipTypes,
-  CustomFields, Login, Profile,
+  CustomFields, Login, Profile, ProfileIva, ProfileVog,
   MembershipPassScanner,
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
   VrijwilligersDienstForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
-  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, VrijwilligProfiel,
+  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -359,7 +359,8 @@ const router = createBrowserRouter([
           // Member-facing surface (#4) — any logged-in member can use this,
           // capability gating happens server-side based on linked-person eligibility.
           { path: 'vrijwillig', element: <Vrijwillig /> },
-          { path: 'vrijwillig/profiel', element: <VrijwilligProfiel /> },
+          // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.
+          { path: 'vrijwillig/profiel', element: <Navigate to="/profile/iva" replace /> },
 
           // Finance routes - requires financieel capability
           {
@@ -471,8 +472,10 @@ const router = createBrowserRouter([
           { path: 'settings/custom-fields', element: <KaderOrVrijwilligRedirect><CustomFields /></KaderOrVrijwilligRedirect> },
           { path: 'settings/feedback', element: <Navigate to="/feedback" replace /> },
 
-          // Profile route
+          // Profile routes — Profile zelf is voor iedereen, subpagina's voor certificaten
           { path: 'profile', element: <Profile /> },
+          { path: 'profile/vog', element: <ProfileVog /> },
+          { path: 'profile/iva', element: <ProfileIva /> },
 
           // Membership pass scanner
           {

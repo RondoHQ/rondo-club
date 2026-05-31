@@ -401,6 +401,7 @@ export const prmApi = {
   getIvaStatus: (personId) => api.get(`/rondo/v1/iva/${personId}/status`),
   getIvaPeople: () => api.get('/rondo/v1/iva/people'),
   getMyIva: () => api.get('/rondo/v1/iva/me'),
+  getMyVog: () => api.get('/rondo/v1/vog/me'),
   uploadMyIva: (file, datumIva) => {
     const fd = new FormData();
     fd.append('certificaat', file);

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.23.0] - 2026-05-31
+
+### Added
+- **Profielsubpagina's voor certificaten.** `/profile/vog` (nieuw, leesalleen) toont VOG-status, afgiftedatum en vervaldatum + uitleg over het aanvraagproces. `/profile/iva` is de bestaande IVA-uploadpagina, verplaatst van `/vrijwillig/profiel`. Het hoofd-Profiel toont nu een "Mijn certificaten"-sectie met cards naar beide.
+- **REST endpoint `GET /rondo/v1/vog/me`** — geeft het lid zelf zijn VOG-status, datum-vog en vervaldatum terug. Read-only; aanvraag/uitgifte regelt de VOG-coördinator extern.
+
+### Changed
+- **`/vrijwillig/profiel` redirect naar `/profile/iva`** (bookmarks blijven werken).
+- **"Mijn certificaten"-link op `/vrijwillig`** wijst nu naar `/profile` (toont beide subpagina's) in plaats van direct naar de IVA-pagina.
+- **Admin IVA-pagina** verwijst nu naar het nieuwe `/profile/iva`-pad.
+
 ## [33.22.3] - 2026-05-31
 
 ### Changed

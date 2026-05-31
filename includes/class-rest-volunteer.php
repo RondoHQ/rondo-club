@@ -170,6 +170,17 @@ class Volunteer extends Base {
 			]
 		);
 
+		// Lid haalt zijn/haar eigen VOG-status op voor /profile/vog.
+		register_rest_route(
+			'rondo/v1',
+			'/vog/me',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_my_vog' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
 		// IVA approval — restricted to bestuurslid kantine (rondo_iva_approve cap).
 		register_rest_route(
 			'rondo/v1',
@@ -471,6 +482,52 @@ class Volunteer extends Base {
 				'iva_approved'           => (bool) get_post_meta( $person_id, 'iva-approved', true ),
 				'needs_renewal_reminder' => IvaStatus::needs_renewal_reminder( $person_id ),
 				'validity_years'         => IvaStatus::VALIDITY_YEARS,
+			]
+		);
+	}
+
+	/**
+	 * GET /rondo/v1/vog/me — geeft het lid zélf zijn VOG-status terug.
+	 *
+	 * VOG (Verklaring Omtrent Gedrag) is geldig 3 jaar vanaf `datum-vog`.
+	 * Aanvraag en upload regelt de VOG-coördinator, niet het lid zelf —
+	 * dit endpoint is read-only voor het lid.
+	 */
+	public function get_my_vog( \WP_REST_Request $request ) {
+		$user_id   = get_current_user_id();
+		$person_id = $user_id ? (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) : 0;
+		if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+			return new \WP_Error( 'no_linked_person', 'Geen gekoppeld lid-profiel.', [ 'status' => 404 ] );
+		}
+
+		$datum_vog              = (string) get_field( 'datum-vog', $person_id );
+		$expires_at             = '';
+		$status                 = 'missing';
+		$needs_renewal_reminder = false;
+
+		if ( $datum_vog !== '' ) {
+			$expiry_ts = strtotime( $datum_vog . ' +3 years' );
+			if ( $expiry_ts !== false ) {
+				$expires_at = gmdate( 'Y-m-d', $expiry_ts );
+				$now_ts     = strtotime( gmdate( 'Y-m-d' ) );
+				if ( $now_ts !== false ) {
+					$status = $expiry_ts >= $now_ts ? 'valid' : 'expired';
+					if ( $status === 'valid' ) {
+						$days_remaining         = (int) floor( ( $expiry_ts - $now_ts ) / DAY_IN_SECONDS );
+						$needs_renewal_reminder = $days_remaining <= 90;
+					}
+				}
+			}
+		}
+
+		return rest_ensure_response(
+			[
+				'person_id'              => $person_id,
+				'status'                 => $status,
+				'datum_vog'              => $datum_vog,
+				'expires_at'             => $expires_at,
+				'needs_renewal_reminder' => $needs_renewal_reminder,
+				'validity_years'         => 3,
 			]
 		);
 	}

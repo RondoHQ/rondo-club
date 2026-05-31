@@ -114,7 +114,7 @@ function BlockBanners({ blockReasons }) {
                 IVA certificaat halen via NOC*NSF
               </a>
               , waarin je leert wat verantwoord alcohol schenken betekent. Dat is gratis en kost je 20–30 minuten. Als je dat gedaan hebt, kun je het{' '}
-              <Link to="/vrijwillig/profiel" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+              <Link to="/profile/iva" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
                 hier uploaden
               </Link>
               .
@@ -270,7 +270,7 @@ export default function Vrijwillig() {
           </p>
         </div>
         <Link
-          to="/vrijwillig/profiel"
+          to="/profile"
           className="text-sm text-bright-cobalt dark:text-electric-cyan hover:underline shrink-0"
         >
           Mijn certificaten
