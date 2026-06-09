@@ -9,6 +9,87 @@
             "type": "url"
         },
         {
+            "key": "field_commissie_lange_omschrijving",
+            "label": "Uitgebreide omschrijving",
+            "name": "lange_omschrijving",
+            "type": "textarea",
+            "instructions": "Een uitgebreide omschrijving van deze commissie.",
+            "rows": 5,
+            "new_lines": "wpautop"
+        },
+        {
+            "key": "field_commissie_taakomschrijving",
+            "label": "Taakomschrijving",
+            "name": "taakomschrijving",
+            "type": "textarea",
+            "instructions": "Wat doet een lid van deze commissie?",
+            "rows": 5,
+            "new_lines": "wpautop"
+        },
+        {
+            "key": "field_commissie_uren_aantal",
+            "label": "Geschat aantal uren",
+            "name": "uren_aantal",
+            "type": "number",
+            "instructions": "Geschatte tijdsinvestering voor een lid.",
+            "min": 0,
+            "step": 0.5,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_commissie_uren_periode",
+            "label": "Periode",
+            "name": "uren_periode",
+            "type": "select",
+            "instructions": "Per welke periode geldt het aantal uren?",
+            "choices": {
+                "week": "Per week",
+                "maand": "Per maand"
+            },
+            "default_value": "",
+            "allow_null": 1,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": "",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_commissie_dagen_flexibel",
+            "label": "Dagen / flexibiliteit",
+            "name": "dagen_flexibel",
+            "type": "text",
+            "instructions": "Gebeurt dit vooral op vaste dagen of is het flexibel?",
+            "placeholder": "Bijv. 'Voornamelijk op zaterdag' of 'Flexibel'"
+        },
+        {
+            "key": "field_commissie_max_leden",
+            "label": "Maximum aantal leden",
+            "name": "max_leden",
+            "type": "number",
+            "instructions": "Maximaal aantal leden in deze commissie.",
+            "min": 0,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_commissie_max_wachtlijst",
+            "label": "Maximum aantal op wachtlijst",
+            "name": "max_wachtlijst",
+            "type": "number",
+            "instructions": "Maximaal aantal personen op de wachtlijst.",
+            "min": 0,
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_commissie_contact_info",
             "label": "Contact Information",
             "name": "contact_info",
@@ -75,5 +156,6 @@
         "author"
     ],
     "active": true,
-    "show_in_rest": 1
+    "show_in_rest": 1,
+    "modified": 1781001183
 }

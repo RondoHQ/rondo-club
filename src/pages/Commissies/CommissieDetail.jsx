@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2 } from 'lucide-react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2, Info, Pencil, Check, X, Clock, CalendarDays, ListOrdered } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -9,6 +9,243 @@ import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
+
+const PERIOD_LABELS = {
+  week: 'per week',
+  maand: 'per maand',
+};
+
+/**
+ * Editable card showing the Rondo-local commissie information
+ * (long description, task description, time investment, member limits).
+ *
+ * These fields are stored as ACF meta on the commissie post and round-trip
+ * through wp/v2/commissie. The card has a view mode and an inline edit form.
+ */
+function CommissieInfoCard({ acf, onSave, isSaving }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({});
+
+  const startEdit = () => {
+    setForm({
+      lange_omschrijving: acf.lange_omschrijving ?? '',
+      taakomschrijving: acf.taakomschrijving ?? '',
+      uren_aantal: acf.uren_aantal ?? '',
+      uren_periode: acf.uren_periode ?? '',
+      dagen_flexibel: acf.dagen_flexibel ?? '',
+      max_leden: acf.max_leden ?? '',
+      max_wachtlijst: acf.max_wachtlijst ?? '',
+    });
+    setIsEditing(true);
+  };
+
+  const setField = (name, value) => setForm((prev) => ({ ...prev, [name]: value }));
+
+  const handleSave = async () => {
+    await onSave(form);
+    setIsEditing(false);
+  };
+
+  const hours = acf.uren_aantal !== '' && acf.uren_aantal !== null && acf.uren_aantal !== undefined
+    ? `${acf.uren_aantal} uur ${PERIOD_LABELS[acf.uren_periode] || ''}`.trim()
+    : null;
+
+  const hasAnyValue = [
+    acf.lange_omschrijving,
+    acf.taakomschrijving,
+    acf.dagen_flexibel,
+  ].some((v) => v != null && v !== '')
+    || hours
+    || acf.max_leden != null && acf.max_leden !== ''
+    || acf.max_wachtlijst != null && acf.max_wachtlijst !== '';
+
+  return (
+    <div className="card p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-semibold text-brand-gradient flex items-center">
+          <Info className="w-5 h-5 mr-2" />
+          Commissie-informatie
+        </h2>
+        {!isEditing && (
+          <button onClick={startEdit} className="btn-tertiary" title="Bewerken">
+            <Pencil className="w-4 h-4 mr-2" />
+            Bewerken
+          </button>
+        )}
+      </div>
+
+      {isEditing ? (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Uitgebreide omschrijving
+            </label>
+            <textarea
+              value={form.lange_omschrijving}
+              onChange={(e) => setField('lange_omschrijving', e.target.value)}
+              rows={5}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+              disabled={isSaving}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Taakomschrijving
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Wat doet een lid van deze commissie?</p>
+            <textarea
+              value={form.taakomschrijving}
+              onChange={(e) => setField('taakomschrijving', e.target.value)}
+              rows={5}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+              disabled={isSaving}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Geschat aantal uren
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={form.uren_aantal}
+                onChange={(e) => setField('uren_aantal', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+                disabled={isSaving}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Periode
+              </label>
+              <select
+                value={form.uren_periode}
+                onChange={(e) => setField('uren_periode', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+                disabled={isSaving}
+              >
+                <option value="">—</option>
+                <option value="week">Per week</option>
+                <option value="maand">Per maand</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Dagen / flexibiliteit
+            </label>
+            <input
+              type="text"
+              value={form.dagen_flexibel}
+              onChange={(e) => setField('dagen_flexibel', e.target.value)}
+              placeholder="Bijv. 'Voornamelijk op zaterdag' of 'Flexibel'"
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+              disabled={isSaving}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Maximum aantal leden
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.max_leden}
+                onChange={(e) => setField('max_leden', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+                disabled={isSaving}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Maximum op wachtlijst
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.max_wachtlijst}
+                onChange={(e) => setField('max_wachtlijst', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-electric-cyan focus:border-electric-cyan dark:bg-gray-700 dark:text-gray-100"
+                disabled={isSaving}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2">
+            <button onClick={handleSave} disabled={isSaving} className="btn-primary">
+              {isSaving ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              ) : (
+                <Check className="w-4 h-4 mr-2" />
+              )}
+              Opslaan
+            </button>
+            <button onClick={() => setIsEditing(false)} disabled={isSaving} className="btn-tertiary">
+              <X className="w-4 h-4 mr-2" />
+              Annuleren
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {!hasAnyValue && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Nog geen informatie ingevuld. Klik op &lsquo;Bewerken&rsquo; om dit aan te vullen.
+            </p>
+          )}
+
+          {acf.lange_omschrijving && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Omschrijving</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{acf.lange_omschrijving}</p>
+            </div>
+          )}
+
+          {acf.taakomschrijving && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Taakomschrijving</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{acf.taakomschrijving}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {hours && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Tijdsinvestering:</span> {hours}</span>
+              </div>
+            )}
+            {acf.dagen_flexibel && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <CalendarDays className="w-4 h-4 mr-2 text-gray-400" />
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Dagen:</span> {acf.dagen_flexibel}</span>
+              </div>
+            )}
+            {acf.max_leden != null && acf.max_leden !== '' && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Users className="w-4 h-4 mr-2 text-gray-400" />
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Max. leden:</span> {acf.max_leden}</span>
+              </div>
+            )}
+            {acf.max_wachtlijst != null && acf.max_wachtlijst !== '' && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <ListOrdered className="w-4 h-4 mr-2 text-gray-400" />
+                <span><span className="font-medium text-gray-700 dark:text-gray-300">Max. wachtlijst:</span> {acf.max_wachtlijst}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CommissieDetail() {
   const { id } = useParams();
@@ -145,7 +382,17 @@ export default function CommissieDetail() {
           </div>
         </div>
       </div>
-      
+
+      {/* Rondo-local commissie information */}
+      <CommissieInfoCard
+        acf={acf}
+        isSaving={updateCommissie.isPending}
+        onSave={(values) => {
+          const acfData = sanitizeCommissieAcf(commissie?.acf, values);
+          return updateCommissie.mutateAsync({ acf: acfData });
+        }}
+      />
+
       {/* Subsidiaries */}
       {childCommissies.length > 0 && (
         <div className="card p-6">

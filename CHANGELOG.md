@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.24.0] - 2026-06-09
+
+### Added
+- **Nieuw posttype Taakuitleg.** Vrijwilligers-gerichte taakinstructies ("hoe gebruik en reinig je de koekenpan") met rich text, inline afbeeldingen en printbare QR-codes.
+  - Nieuw CPT `taakuitleg` (`includes/class-post-types.php`), `public`/`publicly_queryable` op `false` — geen SEO-oppervlak. Titel + body (`post_content`, met `editor`/`revisions`-support) + ACF-`relationship` naar één of meer `dienst_type`'s (`acf-json/group_taakuitleg_fields.json`).
+  - **Publieke leespagina** op `/uitleg/{slug}` (`includes/class-public-taakuitleg-page.php`) — standalone, print-vriendelijke HTML zonder login, naar het voorbeeld van de betaalpagina. Dit is het doel van de QR-codes; een vrijwilliger scant een sticker zonder in te loggen. Alleen `publish`-status wordt getoond; `noindex`.
+  - **Bewerken in de SPA** onder `/vrijwilligers/taakuitleg` (lijst + formulier), gated op de `vrijwilligers`-capability. Gedeeld bewerken voor alle vrijwilligers via een `map_meta_cap`-filter in `class-access-control.php`.
+  - **Inline afbeeldingen** in de Tiptap-editor via een opt-in `enableImages`-prop op `RichTextEditor` (upload naar `/wp/v2/media`); bestaande notitie-/taakvelden blijven ongewijzigd.
+  - **Printbare QR-codes** (`qrcode`) via een stickervoorbeeld-dialoog; printen gebeurt in een geïsoleerde iframe.
+  - Rewrite-regels worden na deploy één keer geflusht via een versie-optie (`rondo_rewrite_rules_version`), zodat `/uitleg/{slug}` zonder handmatige permalink-flush werkt.
+- **Rondo-lokale commissie-informatie.** Commissies kunnen nu extra gegevens bevatten die alleen in Rondo worden bijgehouden, te bewerken via een nieuwe "Commissie-informatie"-kaart op de commissie-detailpagina (`/commissies/:id`):
+  - `lange_omschrijving` — uitgebreide omschrijving (tekstveld).
+  - `taakomschrijving` — wat doet een lid van deze commissie (tekstveld).
+  - `uren_aantal` + `uren_periode` — geschatte tijdsinvestering (aantal uren per week/maand).
+  - `dagen_flexibel` — vrij tekstveld voor vaste dagen of flexibel.
+  - `max_leden` — maximaal aantal leden in de commissie.
+  - `max_wachtlijst` — maximaal aantal personen op de wachtlijst.
+  - Velden zijn ACF-meta op het `commissie`-posttype, blootgesteld via `wp/v2/commissie`. `uren_periode` (select) en de numerieke velden worden op de client genormaliseerd in `sanitizeCommissieAcf` (lege string → `null`) om de ACF REST-enum/number-schemavalidatie te respecteren.
+
 ## [33.23.2] - 2026-05-31
 
 ### Added

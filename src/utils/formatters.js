@@ -265,7 +265,15 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
   // Fields that are repeaters and should always be arrays
   const repeaterFields = ['contact_info'];
 
-  const sanitized = { ...acfData };
+  // Fields that are select/enum and should be null instead of empty string
+  // (ACF auto-generates a REST enum schema that rejects "" — see CLAUDE.md pitfall)
+  const enumFields = ['uren_periode'];
+
+  // Fields that expect number|null — convert empty strings to null, string numbers to numbers
+  const numericFields = ['uren_aantal', 'max_leden', 'max_wachtlijst'];
+
+  // Merge overrides first so coercion below also applies to edited values
+  const sanitized = { ...acfData, ...overrides };
 
   // Ensure repeater fields are arrays
   repeaterFields.forEach(field => {
@@ -274,8 +282,21 @@ export function sanitizeCommissieAcf(acfData, overrides = {}) {
     }
   });
 
-  // Apply overrides
-  Object.assign(sanitized, overrides);
+  // Convert empty strings to null for enum/select fields
+  enumFields.forEach(field => {
+    if (sanitized[field] === '') {
+      sanitized[field] = null;
+    }
+  });
+
+  // Convert numeric fields to proper type
+  numericFields.forEach(field => {
+    if (sanitized[field] === '' || sanitized[field] === undefined) {
+      sanitized[field] = null;
+    } else if (typeof sanitized[field] === 'string') {
+      sanitized[field] = Number(sanitized[field]);
+    }
+  });
 
   return sanitized;
 }
