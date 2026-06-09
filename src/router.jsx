@@ -25,6 +25,7 @@ import {
   VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
   VrijwilligersDienstForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
   VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig,
+  TaakuitlegList, TaakuitlegForm,
 } from './lazyPages';
 
 // Page loader for Suspense fallback
@@ -336,6 +337,30 @@ const router = createBrowserRouter([
             element: (
               <VrijwilligersRoute>
                 <VrijwilligersExemptions />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/taakuitleg',
+            element: (
+              <VrijwilligersRoute>
+                <TaakuitlegList />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/taakuitleg/nieuw',
+            element: (
+              <VrijwilligersRoute>
+                <TaakuitlegForm />
+              </VrijwilligersRoute>
+            ),
+          },
+          {
+            path: 'vrijwilligers/taakuitleg/:id',
+            element: (
+              <VrijwilligersRoute>
+                <TaakuitlegForm />
               </VrijwilligersRoute>
             ),
           },

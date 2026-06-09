@@ -160,6 +160,7 @@ use Rondo\Demo\DemoAnonymizer;
 use Rondo\Demo\DemoImport;
 use Rondo\Demo\DemoProtection;
 use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\Volunteer\PublicTaakuitlegPage;
 
 define( 'RONDO_THEME_DIR', get_template_directory() );
 define( 'RONDO_THEME_URL', get_template_directory_uri() );
@@ -360,6 +361,9 @@ function rondo_init() {
 
 	// Public membership pass landing page - /lidpas/{token}
 	new PublicMembershipPassPage();
+
+	// Public taakuitleg landing page - /uitleg/{slug} (QR target, no auth)
+	new PublicTaakuitlegPage();
 
 	// Installment scheduler — daily cron sweeper for installment emails and reminders
 	new InstallmentScheduler();
@@ -895,6 +899,28 @@ function rondo_theme_rewrite_rules() {
 	add_rewrite_rule( '^app/(.+)/?', 'index.php', 'top' );
 }
 add_action( 'init', 'rondo_theme_rewrite_rules' );
+
+/**
+ * Flush rewrite rules once after a deploy that adds new public routes.
+ *
+ * Rewrite rules are normally only flushed on theme activation. A plain rsync
+ * deploy (the usual path) does not re-activate the theme, so new rewrite rules
+ * — like the /uitleg/{slug} taakuitleg page — would 404 until someone visits
+ * Settings → Permalinks. Bumping this version flushes exactly once on the first
+ * request after deploy, mirroring rondo_maybe_add_postmeta_indexes().
+ *
+ * Runs late on `init` so every add_rewrite_rule() call has already registered.
+ */
+function rondo_maybe_flush_rewrite_rules() {
+	$rewrite_version = '2'; // Bump when adding/changing a rewrite rule.
+	if ( get_option( 'rondo_rewrite_rules_version' ) === $rewrite_version ) {
+		return;
+	}
+
+	flush_rewrite_rules();
+	update_option( 'rondo_rewrite_rules_version', $rewrite_version, true );
+}
+add_action( 'init', 'rondo_maybe_flush_rewrite_rules', 99 );
 add_action( 'init', 'rondo_maybe_add_postmeta_indexes' );
 
 /**

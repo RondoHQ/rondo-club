@@ -437,6 +437,14 @@ export const prmApi = {
   deleteDienstShift: (id) => api.delete(`/wp/v2/dienst-shifts/${id}`, { params: { force: true } }),
   expandShiftTemplates: () => api.post('/rondo/v1/shift-templates/expand'),
 
+  // Taakuitleg — volunteer task instructions (rich text + inline images),
+  // linked to dienst_types. The QR codes point at the public /uitleg/{slug} page.
+  getTaakuitleg: (params = { per_page: 100, orderby: 'title', order: 'asc' }) => api.get('/wp/v2/taakuitleg', { params }),
+  getTaakuitlegItem: (id) => api.get(`/wp/v2/taakuitleg/${id}`, { params: { context: 'edit' } }),
+  createTaakuitleg: (data) => api.post('/wp/v2/taakuitleg', data),
+  updateTaakuitleg: (id, data) => api.post(`/wp/v2/taakuitleg/${id}`, data),
+  deleteTaakuitleg: (id) => api.delete(`/wp/v2/taakuitleg/${id}`, { params: { force: true } }),
+
   // Sportlink sync
   syncFromSportlink: (knvbId) => api.post(
     '/rondo/v1/sportlink/sync-individual',

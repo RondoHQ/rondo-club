@@ -34,6 +34,7 @@ class PostTypes {
 		$this->register_dienst_type_post_type();
 		$this->register_shift_template_post_type();
 		$this->register_dienst_shift_post_type();
+		$this->register_taakuitleg_post_type();
 	}
 
 	/**
@@ -966,5 +967,59 @@ class PostTypes {
 				'default'      => [],
 			]
 		);
+	}
+
+	/**
+	 * Register Taakuitleg CPT
+	 *
+	 * Volunteer-facing task instructions ("how to use and clean the frying pan").
+	 * Each entry is a rich-text explanation with inline images, linked to one or
+	 * more dienst_types. A printable QR code points at the public read-only page
+	 * at /uitleg/{slug} (see PublicTaakuitlegPage) so a volunteer can scan a
+	 * sticker without logging in.
+	 *
+	 * `public`/`publicly_queryable` are false — the CPT carries no SEO surface
+	 * and is not exposed through WordPress' own routing. The public view is
+	 * served by our own rewrite rule, exactly like the payment landing page.
+	 * Editing happens in the React SPA (gated by the `vrijwilligers` capability).
+	 */
+	private function register_taakuitleg_post_type() {
+		$labels = [
+			'name'               => _x( 'Taakuitleg', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Taakuitleg', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Taakuitleg', 'Admin Menu text', 'rondo' ),
+			'add_new'            => __( 'Add New', 'rondo' ),
+			'add_new_item'       => __( 'Add New Taakuitleg', 'rondo' ),
+			'edit_item'          => __( 'Edit Taakuitleg', 'rondo' ),
+			'new_item'           => __( 'New Taakuitleg', 'rondo' ),
+			'view_item'          => __( 'View Taakuitleg', 'rondo' ),
+			'search_items'       => __( 'Search Taakuitleg', 'rondo' ),
+			'not_found'          => __( 'No taakuitleg found', 'rondo' ),
+			'not_found_in_trash' => __( 'No taakuitleg found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Taakuitleg', 'rondo' ),
+		];
+
+		$args = [
+			'labels'             => $labels,
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_ui'            => true,
+			'show_in_menu'       => true,
+			'show_in_rest'       => true,
+			'rest_base'          => 'taakuitleg',
+			'query_var'          => false,
+			'rewrite'            => false,
+			'capability_type'    => 'post',
+			'has_archive'        => false,
+			'hierarchical'       => false,
+			'menu_position'      => 14,
+			'menu_icon'          => 'dashicons-media-document',
+			// `editor` stores the rich-text body (with inline images) in
+			// post_content, exposed as the `content` field over REST; `revisions`
+			// gives us a free edit history and the modified date.
+			'supports'           => [ 'title', 'editor', 'author', 'revisions' ],
+		];
+
+		register_post_type( 'taakuitleg', $args );
 	}
 }

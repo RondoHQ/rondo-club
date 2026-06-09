@@ -1,17 +1,22 @@
+import { useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
-import { 
-  Bold, 
-  Italic, 
-  List, 
-  ListOrdered, 
+import Image from '@tiptap/extension-image';
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
   Link as LinkIcon,
   Unlink,
+  Image as ImageIcon,
   Undo,
-  Redo
+  Redo,
+  Loader2,
 } from 'lucide-react';
+import { wpApi } from '../api/client';
 
 const containsHtmlMarkup = (value) => /<\s*[a-z!/][^>]*>/i.test(value);
 
@@ -56,8 +61,31 @@ const MenuButton = ({ onClick, isActive, disabled, children, title }) => (
   </button>
 );
 
-const MenuBar = ({ editor }) => {
+const MenuBar = ({ editor, enableImages = false }) => {
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   if (!editor) return null;
+
+  const handleImageFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const response = await wpApi.uploadMedia(file);
+      const src = response.data?.source_url;
+      if (src) {
+        editor.chain().focus().setImage({ src, alt: file.name }).run();
+      }
+    } catch (error) {
+      console.error('Afbeelding uploaden mislukt:', error);
+      alert('Afbeelding uploaden mislukt. Probeer het opnieuw.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href;
@@ -130,6 +158,30 @@ const MenuBar = ({ editor }) => {
         </MenuButton>
       )}
 
+      {enableImages && (
+        <>
+          <div className="w-px h-4 bg-gray-300 dark:bg-gray-500 mx-1" />
+          <MenuButton
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            title="Afbeelding toevoegen"
+          >
+            {isUploading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ImageIcon className="w-4 h-4" />
+            )}
+          </MenuButton>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageFile}
+          />
+        </>
+      )}
+
       <div className="flex-1" />
 
       <MenuButton
@@ -151,13 +203,14 @@ const MenuBar = ({ editor }) => {
   );
 };
 
-export default function RichTextEditor({ 
-  value = '', 
-  onChange, 
-  placeholder = 'Schrijf iets...', 
+export default function RichTextEditor({
+  value = '',
+  onChange,
+  placeholder = 'Schrijf iets...',
   disabled = false,
   minHeight = '120px',
   autoFocus = false,
+  enableImages = false,
 }) {
   const editor = useEditor({
     extensions: [
@@ -176,6 +229,19 @@ export default function RichTextEditor({
           class: 'text-electric-cyan hover:text-bright-cobalt underline',
         },
       }),
+      // Inline images (opt-in) — uploaded to /wp/v2/media, stored as <img> in
+      // the HTML body. Off by default so notes/activities are unaffected.
+      ...(enableImages
+        ? [
+            Image.configure({
+              inline: false,
+              allowBase64: false,
+              HTMLAttributes: {
+                class: 'rounded-md max-w-full h-auto my-2',
+              },
+            }),
+          ]
+        : []),
     ],
     content: normalizeEditorContent(value),
     editable: !disabled,
@@ -204,7 +270,7 @@ export default function RichTextEditor({
     <div className={`border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-electric-cyan focus-within:border-transparent ${
       disabled ? 'bg-gray-100 dark:bg-gray-800 opacity-60' : 'bg-white dark:bg-gray-700'
     }`}>
-      <MenuBar editor={editor} />
+      <MenuBar editor={editor} enableImages={enableImages} />
       <EditorContent
         editor={editor}
         className="prose prose-sm dark:prose-invert max-w-none"

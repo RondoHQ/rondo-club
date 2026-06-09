@@ -1,0 +1,40 @@
+{
+    "key": "group_taakuitleg_fields",
+    "title": "Taakuitleg",
+    "fields": [
+        {
+            "key": "field_taakuitleg_dienst_types",
+            "label": "Diensttypes",
+            "name": "dienst_types",
+            "type": "relationship",
+            "instructions": "Bij welke diensttypes hoort deze uitleg? Eén uitleg mag aan meerdere diensttypes hangen.",
+            "required": 0,
+            "post_type": [
+                "dienst_type"
+            ],
+            "filters": [
+                "search"
+            ],
+            "min": 0,
+            "max": 0,
+            "return_format": "id"
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "taakuitleg"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "show_in_rest": 1
+}

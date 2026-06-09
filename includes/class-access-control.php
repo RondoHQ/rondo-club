@@ -42,6 +42,9 @@ class AccessControl {
 		// Block person editing for users without the right capabilities
 		add_filter( 'map_meta_cap', [ $this, 'restrict_person_editing' ], 10, 4 );
 
+		// Allow any vrijwilligers-capable user to edit every taakuitleg (shared model)
+		add_filter( 'map_meta_cap', [ $this, 'grant_taakuitleg_editing' ], 10, 4 );
+
 		// Filter queries to block unapproved users
 		add_action( 'pre_get_posts', [ $this, 'filter_queries' ] );
 
@@ -109,6 +112,45 @@ class AccessControl {
 		}
 
 		return $caps;
+	}
+
+	/**
+	 * Grant shared editing of taakuitleg to vrijwilligers-capable users.
+	 *
+	 * Taakuitleg follows the app's shared-access model: any user who can reach
+	 * the Vrijwilligers section (the `vrijwilligers` capability) may edit and
+	 * delete every taakuitleg, not just ones they authored. By default
+	 * map_meta_cap would require `edit_others_posts` for non-author edits, which
+	 * Rondo Users do not have — so we remap to a primitive they do hold. Admins
+	 * (manage_options) already pass. Everyone else is denied.
+	 *
+	 * @param string[] $caps    Required primitive capabilities.
+	 * @param string   $cap     Capability being checked.
+	 * @param int      $user_id User ID.
+	 * @param array    $args    Additional arguments (post ID at index 0).
+	 * @return string[] Modified capabilities.
+	 */
+	public function grant_taakuitleg_editing( $caps, $cap, $user_id, $args ) {
+		$primitive = [
+			'edit_post'   => 'edit_posts',
+			'delete_post' => 'delete_posts',
+		];
+
+		if ( ! isset( $primitive[ $cap ] ) || empty( $args[0] ) ) {
+			return $caps;
+		}
+
+		$post = get_post( $args[0] );
+
+		if ( ! $post || $post->post_type !== 'taakuitleg' ) {
+			return $caps;
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'vrijwilligers' ) ) {
+			return [ $primitive[ $cap ] ];
+		}
+
+		return [ 'do_not_allow' ];
 	}
 
 	/**
