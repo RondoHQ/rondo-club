@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.25.0] - 2026-06-11
+
+### Added
+- **Inklapbare zijbalksecties.** Menu-items met subitems (Leden, Teams, Vrijwilligers, Financiën) hebben nu een chevron waarmee je de subitems in- en uitklapt. De keuze wordt per sectie onthouden in `localStorage`, dus blijft staan tussen bezoeken. De sectie waar je je huidige pagina in zit, staat altijd open.
+
 ## [33.24.0] - 2026-06-09
 
 ### Added
