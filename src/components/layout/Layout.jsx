@@ -28,7 +28,8 @@ import {
   HeartHandshake,
   Wine,
   CalendarClock,
-  BookOpen
+  BookOpen,
+  ChevronRight
 } from 'lucide-react';
 
 // Wordmark URLs from theme directory.
@@ -155,6 +156,113 @@ function Sidebar({ mobile = false, onClose, stats }) {
     }
   };
 
+  // Collapsible sections — persist collapsed state across visits.
+  const COLLAPSE_STORAGE_KEY = 'rondo:sidebar:collapsed';
+  const [collapsedSections, setCollapsedSections] = useState(() => {
+    try {
+      const stored = localStorage.getItem(COLLAPSE_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(collapsedSections));
+    } catch {
+      // Ignore storage failures (private mode, quota).
+    }
+  }, [collapsedSections]);
+
+  const toggleSection = (name) => {
+    setCollapsedSections((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  // The section containing the current route always shows expanded.
+  const location = useLocation();
+  const isHrefActive = (href) => {
+    if (!href) return false;
+    if (href === '/') return location.pathname === '/';
+    return location.pathname === href || location.pathname.startsWith(`${href}/`);
+  };
+
+  // Filter to the items this user may see, then group each top-level item
+  // with its following indented sub-items into a collapsible section.
+  const visibleNav = navigation.filter((item) => {
+    // Enforce mobile-only items regardless of role.
+    if (item.mobileOnly && !mobile) return false;
+    if (isAdmin) return true;
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.requiresFairplay && !canAccessFairplay) return false;
+    if (item.requiresVOG && !canAccessVOG) return false;
+    if (item.requiresFinancieel && !canAccessFinancieel) return false;
+    if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
+    if (item.requiresClothing && !canAccessClothing) return false;
+    if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
+    if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
+    if (item.requiresKader && !isKader) return false;
+    return true;
+  });
+
+  const navGroups = [];
+  for (const item of visibleNav) {
+    if (item.indent && navGroups.length > 0) {
+      navGroups[navGroups.length - 1].children.push(item);
+    } else {
+      navGroups.push({ parent: item, children: [] });
+    }
+  }
+
+  // Renders a single nav entry (section header, disabled item, or link).
+  const renderItem = (item) => {
+    const count = getCounts(item.name);
+
+    if (item.type === 'section') {
+      return (
+        <div className="flex items-center px-3 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-gray-500">
+          <item.icon className="w-4 h-4 mr-2" />
+          {item.name}
+        </div>
+      );
+    }
+
+    if (item.disabled) {
+      return (
+        <div
+          className={`flex items-center py-2 text-sm font-medium rounded-lg opacity-50 cursor-default pointer-events-none ${
+            item.indent ? 'pl-8 pr-3' : 'px-3'
+          } text-gray-700 dark:text-gray-200`}
+        >
+          <item.icon className="w-5 h-5 mr-3" />
+          {item.name}
+        </div>
+      );
+    }
+
+    return (
+      <NavLink
+        to={item.href}
+        onClick={mobile ? onClose : undefined}
+        className={({ isActive }) =>
+          `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
+            item.indent ? 'pl-8 pr-3' : 'px-3'
+          } ${
+            isActive
+              ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan dark:border-l-2 dark:border-electric-cyan'
+              : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
+          }`
+        }
+      >
+        <item.icon className="w-5 h-5 mr-3" />
+        {item.name}
+        {count != null && (
+          <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{formatMenuCount(count)}</span>
+        )}
+      </NavLink>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
       {/* Logo */}
@@ -172,77 +280,36 @@ function Sidebar({ mobile = false, onClose, stats }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-        {navigation
-          .filter(item => {
-            // Enforce mobile-only items regardless of role.
-            if (item.mobileOnly && !mobile) return false;
-            if (isAdmin) return true;
-            if (item.adminOnly && !isAdmin) return false;
-            if (item.requiresFairplay && !canAccessFairplay) return false;
-            if (item.requiresVOG && !canAccessVOG) return false;
-            if (item.requiresFinancieel && !canAccessFinancieel) return false;
-            if (item.requiresToegangscontrole && !canAccessToegangscontrole) return false;
-            if (item.requiresClothing && !canAccessClothing) return false;
-            if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
-            if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
-            if (item.requiresKader && !isKader) return false;
-            return true;
-          })
-          .map((item) => {
-            const count = getCounts(item.name);
+        {navGroups.map(({ parent, children }) => {
+          // Top-level item with no sub-items: render as-is.
+          if (children.length === 0) {
+            return <div key={parent.href || parent.name}>{renderItem(parent)}</div>;
+          }
 
-            // Render section header
-            if (item.type === 'section') {
-              return (
-                <div
-                  key={item.name}
-                  className="flex items-center px-3 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider dark:text-gray-500"
+          // Section with sub-items: collapsible, but always open when active.
+          const groupActive = isHrefActive(parent.href) || children.some((c) => isHrefActive(c.href));
+          const expanded = groupActive || !collapsedSections[parent.name];
+
+          return (
+            <div key={parent.href || parent.name} className="space-y-1">
+              <div className="flex items-center">
+                <div className="flex-1 min-w-0">{renderItem(parent)}</div>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(parent.name)}
+                  aria-expanded={expanded}
+                  aria-label={`${expanded ? 'Inklappen' : 'Uitklappen'}: ${parent.name}`}
+                  className="flex-shrink-0 p-1.5 ml-1 rounded-lg text-gray-400 transition-colors hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                 >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.name}
-                </div>
-              );
-            }
-
-            // Render disabled item (grayed out, not clickable)
-            if (item.disabled) {
-              return (
-                <div
-                  key={item.href || item.name}
-                  className={`flex items-center py-2 text-sm font-medium rounded-lg opacity-50 cursor-default pointer-events-none ${
-                    item.indent ? 'pl-8 pr-3' : 'px-3'
-                  } text-gray-700 dark:text-gray-200`}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </div>
-              );
-            }
-
-            // Render regular navigation link
-            return (
-              <NavLink
-                key={item.href || item.name}
-                to={item.href}
-                onClick={mobile ? onClose : undefined}
-                className={({ isActive }) =>
-                  `flex items-center py-2 text-sm font-medium rounded-lg transition-colors ${
-                    item.indent ? 'pl-8 pr-3' : 'px-3'
-                  } ${
-                    isActive
-                      ? 'bg-cyan-50 text-bright-cobalt dark:bg-gray-700 dark:text-electric-cyan dark:border-l-2 dark:border-electric-cyan'
-                      : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700'
-                  }`
-                }
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.name}
-                {count != null && (
-                  <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{formatMenuCount(count)}</span>
-                )}
-              </NavLink>
-            );
-          })}
+                  <ChevronRight className={`w-4 h-4 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+              {expanded && children.map((child) => (
+                <div key={child.href || child.name}>{renderItem(child)}</div>
+              ))}
+            </div>
+          );
+        })}
       </nav>
 
       {/* User identity + Logout */}
