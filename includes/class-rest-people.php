@@ -436,12 +436,12 @@ class People extends Base {
 						},
 					],
 					'spelend_lid'               => [
-						'description'       => 'Filter for playing members: spelactiviteit is set and not "-" (1=filter, empty=all)',
+						'description'       => 'Filter by playing-member status: spelactiviteit set and not "-" (1=yes, 0=no, empty=all)',
 						'type'              => 'string',
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => function ( $value ) {
-							return in_array( $value, [ '', '1' ], true );
+							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
 					'onboarding_new_members'    => [
@@ -1439,10 +1439,13 @@ class People extends Base {
 			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
 		}
 
-		// Spelend lid — playing members: has a spelactiviteit value other than empty or '-'.
-		if ( $spelend_lid === '1' ) {
+		// Spelend lid — playing members have a spelactiviteit value other than empty or '-'.
+		// 1 = playing (value set and not '-'), 0 = not playing (no value or '-').
+		if ( $spelend_lid !== null && $spelend_lid !== '' ) {
 			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sl ON p.ID = sl.post_id AND sl.meta_key = 'spelactiviteit'";
-			$where_clauses[] = "(sl.meta_value IS NOT NULL AND sl.meta_value != '' AND sl.meta_value != '-')";
+			$where_clauses[] = $spelend_lid === '1'
+				? "(sl.meta_value IS NOT NULL AND sl.meta_value != '' AND sl.meta_value != '-')"
+				: "(sl.meta_value IS NULL OR sl.meta_value = '' OR sl.meta_value = '-')";
 		}
 
 		// Wacht op overschrijving — members transferred in from another club whose

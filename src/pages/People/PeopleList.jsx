@@ -867,7 +867,12 @@ export default function PeopleList() {
     createColumn({ id: 'lid_tot_season', header: 'Afgemeld dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Afgemeld dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'lid_sinds_season', header: 'Nieuw lid dit seizoen', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Nieuw lid dit seizoen', filterSection: 'Lidmaatschap' }),
     createColumn({ id: 'spelactiviteit_no_team', header: 'Spelactiviteit zonder team', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => '', filterSection: 'Lidmaatschap' }),
-    createColumn({ id: 'spelend_lid', header: 'Spelend lid', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Spelend lid', filterSection: 'Lidmaatschap' }),
+    createColumn({
+      id: 'spelend_lid', header: 'Spelend lid', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Spelend lid: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Lidmaatschap',
+    }),
     createColumn({ id: 'wacht_overschrijving', header: 'Wacht op overschrijving', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Wacht op overschrijving', filterSection: 'Lidmaatschap' }),
 
     // Persoon — birth/age/category attributes
