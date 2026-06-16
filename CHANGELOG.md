@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.27.0] - 2026-06-16
+
+### Changed
+- **Filter "Spelend lid" is nu een Ja/Nee-keuze.** In plaats van alleen spelende leden te tonen, kun je nu ook filteren op niet-spelende leden (geen Spelactiviteit of "-"). De bestaande URL `?spelendLid=1` blijft werken.
+
 ## [33.26.0] - 2026-06-16
 
 ### Added
