@@ -435,6 +435,15 @@ class People extends Base {
 							return in_array( $value, [ '', '1' ], true );
 						},
 					],
+					'spelend_lid'               => [
+						'description'       => 'Filter for playing members: spelactiviteit is set and not "-" (1=filter, empty=all)',
+						'type'              => 'string',
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1' ], true );
+						},
+					],
 					'onboarding_new_members'    => [
 						'description'       => 'New members (lid-sinds <= 30 days ago) who have not yet received an onboarding email. 1=filter, empty=all.',
 						'type'              => 'string',
@@ -1116,6 +1125,7 @@ class People extends Base {
 		$lid_tot_season            = $request->get_param( 'lid_tot_season' );
 		$lid_sinds_season          = $request->get_param( 'lid_sinds_season' );
 		$spelactiviteit_no_team    = $request->get_param( 'spelactiviteit_no_team' );
+		$spelend_lid               = $request->get_param( 'spelend_lid' );
 		$wacht_op_overschrijving   = $request->get_param( 'wacht_op_overschrijving' );
 		$onboarding_new_members    = $request->get_param( 'onboarding_new_members' );
 		$onboarding_new_volunteers = $request->get_param( 'onboarding_new_volunteers' );
@@ -1427,6 +1437,12 @@ class People extends Base {
 			);
 
 			$where_clauses[] = "(sa.meta_value IS NOT NULL AND sa.meta_value != '' AND NOT EXISTS ($player_team_subquery))";
+		}
+
+		// Spelend lid — playing members: has a spelactiviteit value other than empty or '-'.
+		if ( $spelend_lid === '1' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sl ON p.ID = sl.post_id AND sl.meta_key = 'spelactiviteit'";
+			$where_clauses[] = "(sl.meta_value IS NOT NULL AND sl.meta_value != '' AND sl.meta_value != '-')";
 		}
 
 		// Wacht op overschrijving — members transferred in from another club whose

@@ -145,6 +145,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     lid_tot_season: filters.lidTotSeason || null,
     lid_sinds_season: filters.lidSindsSeason || null,
     spelactiviteit_no_team: filters.spelactiviteitNoTeam || null,
+    spelend_lid: filters.spelendLid || null,
     wacht_op_overschrijving: filters.wachtOverschrijving || null,
     onboarding_new_members: filters.onboardingNewMembers || null,
     onboarding_new_volunteers: filters.onboardingNewVolunteers || null,

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.26.0] - 2026-06-16
+
+### Added
+- **Filter "Spelend lid" op /leden.** Nieuwe boolean-schakelaar in de sectie Lidmaatschap die leden toont met een ingevulde Spelactiviteit (niet leeg en niet "-"). Werkt door in de export en "selecteer alles".
+
 ## [33.25.0] - 2026-06-11
 
 ### Added
