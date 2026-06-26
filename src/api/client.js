@@ -425,6 +425,10 @@ export const prmApi = {
 
   // Dienst types & shifts & templates — admin CRUD via wp/v2 onder de motorkap.
   getDienstTypes: (params = { per_page: 100 }) => api.get('/wp/v2/dienst-types', { params }),
+  getDienstType: (id) => api.get(`/wp/v2/dienst-types/${id}`, { params: { context: 'edit' } }),
+  createDienstType: (data) => api.post('/wp/v2/dienst-types', data),
+  updateDienstType: (id, data) => api.post(`/wp/v2/dienst-types/${id}`, data),
+  deleteDienstType: (id) => api.delete(`/wp/v2/dienst-types/${id}`, { params: { force: true } }),
   getShiftTemplates: (params = { per_page: 100 }) => api.get('/wp/v2/shift-templates', { params }),
   getShiftTemplate: (id) => api.get(`/wp/v2/shift-templates/${id}`),
   createShiftTemplate: (data) => api.post('/wp/v2/shift-templates', data),

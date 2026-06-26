@@ -41,9 +41,24 @@ export function useVersionCheck({ checkInterval = 5 * 60 * 1000 } = {}) {
     }
   }, [currentBuildTime]);
 
-  const reload = useCallback(() => {
-    // Clear TanStack Query cache before reload
-    window.location.reload(true);
+  const reload = useCallback(async () => {
+    // A plain reload is not enough on PWA installs: the *old* service worker
+    // keeps controlling the page (registerType: 'prompt' leaves the new SW
+    // "waiting"), so cached assets are served again and the user stays on the
+    // stale build. Tear down the SW + caches first, then hard-reload.
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((reg) => reg.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      }
+    } catch (error) {
+      console.debug('Cache teardown before reload failed:', error?.message);
+    }
+    window.location.reload();
   }, []);
 
   // Initial check on mount (with small delay to not block initial render)

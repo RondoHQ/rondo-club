@@ -8,8 +8,6 @@ import { format } from '@/utils/dateFormat';
 export default function VrijwilligersDiensten() {
   useDocumentTitle('Diensten — Vrijwilligers');
 
-  const adminUrl = (path) => `${window.rondoConfig?.adminUrl || '/wp-admin/'}${path}`;
-
   const { data: typesData, isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
     queryFn: async () => (await prmApi.getDienstTypes({ per_page: 50 })).data,
@@ -50,14 +48,19 @@ export default function VrijwilligersDiensten() {
       </header>
 
       <section>
-        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
-          Diensttypes ({types.length})
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
+            Diensttypes ({types.length})
+          </h2>
+          <Link to="/vrijwilligers/diensttypes/nieuw" className="btn-tertiary inline-flex items-center gap-1.5 text-xs">
+            <Plus className="w-3.5 h-3.5" /> Diensttype
+          </Link>
+        </div>
         {typesLoading ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
         ) : types.length === 0 ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">
-            Geen diensttypes gevonden. De seeder maakt deze automatisch aan bij de eerstvolgende init.
+            Nog geen diensttypes. Maak er een aan met &ldquo;Diensttype&rdquo; hierboven.
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -78,13 +81,13 @@ export default function VrijwilligersDiensten() {
                         </p>
                       )}
                     </div>
-                    <a
-                      href={adminUrl(`post.php?post=${type.id}&action=edit`)}
+                    <Link
+                      to={`/vrijwilligers/diensttypes/${type.id}`}
                       className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                      title="Bewerken in WP-admin (alleen voor admins)"
+                      title="Diensttype bewerken"
                     >
                       <Pencil className="w-4 h-4" />
-                    </a>
+                    </Link>
                   </div>
                   <div className="flex flex-wrap gap-1 text-xs">
                     {acf.vog_required && (
