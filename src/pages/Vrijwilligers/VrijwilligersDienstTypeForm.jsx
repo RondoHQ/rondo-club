@@ -1,0 +1,267 @@
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, ClipboardList, Save, Trash2 } from 'lucide-react';
+import { prmApi } from '@/api/client';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+
+const EMPTY = {
+  title: '',
+  description: '',
+  vog_required: false,
+  iva_required: false,
+  sleutel_involved: false,
+  default_capacity: '1',
+  color: '#6b7280',
+  required_pool: 0,
+};
+
+export default function VrijwilligersDienstTypeForm() {
+  const { id } = useParams();
+  const isEdit = !!id;
+  useDocumentTitle(isEdit ? 'Diensttype bewerken' : 'Nieuw diensttype');
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [form, setForm] = useState(EMPTY);
+  const [feedback, setFeedback] = useState(null);
+
+  const { data: commissies = [] } = useQuery({
+    queryKey: ['commissies', 'list'],
+    queryFn: async () => (await prmApi.getCommissies({ per_page: 100 })).data || [],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: existing, isLoading: existingLoading } = useQuery({
+    queryKey: ['volunteer', 'dienst-type', id],
+    queryFn: async () => (await prmApi.getDienstType(id)).data,
+    enabled: isEdit,
+  });
+
+  useEffect(() => {
+    if (!existing) return;
+    const acf = existing.acf || {};
+    setForm({
+      title: existing.title?.raw ?? existing.title?.rendered ?? '',
+      description: acf.description || '',
+      vog_required: Boolean(acf.vog_required),
+      iva_required: Boolean(acf.iva_required),
+      sleutel_involved: Boolean(acf.sleutel_involved),
+      default_capacity: acf.default_capacity != null ? String(acf.default_capacity) : '1',
+      color: acf.color || '#6b7280',
+      required_pool: Number(acf.required_pool) || 0,
+    });
+  }, [existing]);
+
+  const saveMutation = useMutation({
+    mutationFn: (payload) =>
+      isEdit ? prmApi.updateDienstType(id, payload) : prmApi.createDienstType(payload),
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-types'], type: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-type', id] });
+      navigate('/vrijwilligers/diensten');
+    },
+    onError: (err) => {
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Opslaan mislukt.' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => prmApi.deleteDienstType(id),
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-types'], type: 'all' });
+      navigate('/vrijwilligers/diensten');
+    },
+    onError: (err) => {
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Verwijderen mislukt.' });
+    },
+  });
+
+  if (isEdit && existingLoading) {
+    return <ContentLoadingSpinner />;
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
+      <header className="space-y-2">
+        <Link
+          to="/vrijwilligers/diensten"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar diensten
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
+            <ClipboardList className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              {isEdit ? 'Diensttype bewerken' : 'Nieuw diensttype'}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Soort vrijwilligersdienst (bv. kantine bar, terreinonderhoud). Sjablonen en concrete diensten verwijzen hiernaar.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <form
+        className="card p-5 space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setFeedback(null);
+          if (!form.title.trim()) {
+            setFeedback({ kind: 'error', message: 'Geef een naam op.' });
+            return;
+          }
+          saveMutation.mutate({
+            title: form.title.trim(),
+            status: 'publish',
+            acf: {
+              description: form.description,
+              vog_required: Boolean(form.vog_required),
+              iva_required: Boolean(form.iva_required),
+              sleutel_involved: Boolean(form.sleutel_involved),
+              default_capacity: form.default_capacity === '' ? 0 : Number(form.default_capacity),
+              color: form.color,
+              required_pool: form.required_pool ? Number(form.required_pool) : null,
+            },
+          });
+        }}
+      >
+        <Field label="Naam">
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+            placeholder="bv. Kantine bar"
+            className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+          />
+        </Field>
+
+        <Field label="Omschrijving" hint="Zichtbaar voor vrijwilligers bij het aanmelden.">
+          <textarea
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            placeholder="Korte uitleg van wat deze dienst inhoudt."
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Toggle
+            label="VOG vereist"
+            checked={form.vog_required}
+            onChange={(v) => setForm({ ...form, vog_required: v })}
+          />
+          <Toggle
+            label="IVA vereist"
+            checked={form.iva_required}
+            onChange={(v) => setForm({ ...form, iva_required: v })}
+          />
+          <Toggle
+            label="Sleutel betrokken"
+            checked={form.sleutel_involved}
+            onChange={(v) => setForm({ ...form, sleutel_involved: v })}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Standaard capaciteit" hint="0 = onbeperkt">
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={form.default_capacity}
+              onChange={(e) => setForm({ ...form, default_capacity: e.target.value })}
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Kleur" hint="Voor de kalender-UI">
+            <input
+              type="color"
+              value={form.color}
+              onChange={(e) => setForm({ ...form, color: e.target.value })}
+              className="block h-9 w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 px-1 py-1"
+            />
+          </Field>
+          <Field label="Vereiste poule" hint="Optioneel: alleen leden van deze poule">
+            <select
+              value={form.required_pool}
+              onChange={(e) => setForm({ ...form, required_pool: e.target.value })}
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            >
+              <option value={0}>— geen —</option>
+              {commissies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title?.rendered || c.title}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {feedback && (
+          <div
+            className={`text-sm ${
+              feedback.kind === 'success'
+                ? 'text-emerald-700 dark:text-emerald-300'
+                : 'text-red-700 dark:text-red-300'
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 pt-2">
+          <button type="submit" disabled={saveMutation.isLoading} className="btn-primary inline-flex items-center gap-2">
+            <Save className="w-4 h-4" />
+            {saveMutation.isLoading ? 'Opslaan…' : 'Opslaan'}
+          </button>
+          {isEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Diensttype verwijderen? Bestaande sjablonen en diensten verwijzen dan naar een onbekend type.')) {
+                  deleteMutation.mutate();
+                }
+              }}
+              disabled={deleteMutation.isLoading}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded text-sm bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+            >
+              <Trash2 className="w-4 h-4" />
+              Verwijderen
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function Field({ label, hint, children }) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{label}</span>
+      {children}
+      {hint && <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">{hint}</span>}
+    </label>
+  );
+}
+
+function Toggle({ label, checked, onChange }) {
+  return (
+    <label className="flex items-center gap-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="rounded border-gray-300 dark:border-gray-600"
+      />
+      <span className="font-medium text-gray-700 dark:text-gray-200">{label}</span>
+    </label>
+  );
+}

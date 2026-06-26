@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.28.0] - 2026-06-26
+
+### Added
+- **Diensttypes beheren op de frontend.** Je kunt nu diensttypes toevoegen en bewerken vanuit het Diensten-scherm (knop "Diensttype" en het potloodje), in plaats van in wp-admin. Het formulier dekt naam, omschrijving, VOG/IVA/sleutel-vereisten, capaciteit, kleur en een optionele poule.
+
+### Changed
+- **Vrijwilligers-coördinatoren mogen alle vrijwilligers-CPT's bewerken.** De gedeelde-toegangsregel die al voor taakuitleg gold, geldt nu ook voor diensttypes, sjablonen en concrete diensten — ook als die door de seeder of een beheerder zijn aangemaakt. Voorheen kon een coördinator alleen items bewerken die hij zelf had aangemaakt.
+
+### Fixed
+- **Potloodje bij diensttypes ging naar de startpagina.** De bewerk-link verwees naar wp-admin en belandde voor niet-admins op de homepage; hij opent nu het nieuwe frontend-bewerkscherm.
+- **"Update beschikbaar" werkte niet altijd op PWA-installs.** Bij het herladen bleef de oude service worker de gecachte build serveren, waardoor nieuwe pagina's (zoals een net opgeslagen taakuitleg) onvindbaar leken. De herlaadknop ruimt nu de service worker en caches op vóór het verversen.
+
 ## [33.27.0] - 2026-06-16
 
 ### Changed
