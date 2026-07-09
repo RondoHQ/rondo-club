@@ -1208,8 +1208,16 @@ class People extends Base {
 
 			if ( $permitted_age_groups !== null ) {
 				if ( empty( $permitted_age_groups ) ) {
-					// Empty array = see nobody. Force zero results.
-					$where_clauses[] = '1 = 0';
+					// Scoped member: their own household, nothing else.
+					$visible = \Rondo\Core\AccessControl::get_visible_person_ids( $current_user_id );
+
+					if ( empty( $visible ) ) {
+						$where_clauses[] = '1 = 0';
+					} else {
+						$id_placeholders = implode( ', ', array_fill( 0, count( $visible ), '%d' ) );
+						$where_clauses[] = "p.ID IN ($id_placeholders)";
+						$prepare_values  = array_merge( $prepare_values, $visible );
+					}
 				} else {
 					$ag_placeholders = implode( ', ', array_fill( 0, count( $permitted_age_groups ), '%s' ) );
 					$join_clauses[]  = "INNER JOIN {$wpdb->postmeta} ag ON p.ID = ag.post_id AND ag.meta_key = 'leeftijdsgroep'";

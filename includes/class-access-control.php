@@ -38,6 +38,48 @@ class AccessControl {
 		'manage_clothing',
 	];
 
+	/**
+	 * A child stops being visible to their parent at this age — by then they are an
+	 * adult member who can hold their own account.
+	 */
+	private const CHILD_VISIBILITY_MAX_AGE = 18;
+
+	/**
+	 * ACF fields a scoped member may read on their own and their children's records.
+	 *
+	 * An allowlist, deliberately: a field added to the person CPT later is private
+	 * until someone consciously adds it here. Notably absent are `financiele-blokkade`,
+	 * `wacht_op_overschrijving` and `freescout-id`.
+	 */
+	private const MEMBER_VISIBLE_ACF_FIELDS = [
+		'first_name',
+		'infix',
+		'last_name',
+		'birthdate',
+		'gender',
+		'email_1',
+		'email_2',
+		'mobile_1',
+		'telephone_1',
+		'addresses',
+		'knvb-id',
+		'leeftijdsgroep',
+		'spelactiviteit',
+		'type-lid',
+		'lid-sinds',
+		'datum-vog',
+		'huidig-vrijwilliger',
+		'former_member',
+		'relationships',
+	];
+
+	/**
+	 * Memoised per-user visible person IDs. Keyed by user ID.
+	 *
+	 * @var array<int, int[]>
+	 */
+	private static $visible_person_ids_cache = [];
+
 	public function __construct() {
 		// Block person editing for users without the right capabilities
 		add_filter( 'map_meta_cap', [ $this, 'restrict_person_editing' ], 10, 4 );
@@ -287,6 +329,180 @@ class AccessControl {
 	}
 
 	/**
+	 * The single authority on "may this user see this person".
+	 *
+	 * Three tiers, in order:
+	 *   1. Management users (`get_permitted_age_groups()` → null) see everyone.
+	 *   2. Coordinators (a configured, non-empty list) see their own age groups.
+	 *   3. Everyone else — plain members — see only themselves and their minor children.
+	 *
+	 * Every person-visibility decision must route through here: the REST collection
+	 * filter, the single-item filter, the raw-SQL people endpoint, and
+	 * user_can_access_post(). Do not re-derive the rule anywhere else.
+	 *
+	 * @param int      $person_id Person post ID.
+	 * @param int|null $user_id   User ID (optional, defaults to current user).
+	 * @return bool Whether the user may view this person.
+	 */
+	public static function can_view_person( $person_id, $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		$permitted = self::get_permitted_age_groups( $user_id );
+
+		// Management: no restriction at all.
+		if ( $permitted === null ) {
+			return true;
+		}
+
+		// Coordinator: restricted to configured age groups.
+		if ( ! empty( $permitted ) ) {
+			$age_group = get_post_meta( $person_id, 'leeftijdsgroep', true );
+			return in_array( $age_group, $permitted, true );
+		}
+
+		// Plain member: self and minor children only.
+		return in_array( (int) $person_id, self::get_visible_person_ids( $user_id ), true );
+	}
+
+	/**
+	 * Is this user scoped to their own household? True for plain members — the users
+	 * whose permitted age-group list is empty, meaning "see nobody" by default.
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return bool
+	 */
+	public static function is_scoped_member( $user_id = null ) {
+		return self::get_permitted_age_groups( $user_id ) === [];
+	}
+
+	/**
+	 * The person records a scoped member may reach: their own, plus their children
+	 * who are under CHILD_VISIBILITY_MAX_AGE.
+	 *
+	 * Returns an empty array when the user has no linked person.
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return int[] Person post IDs.
+	 */
+	public static function get_visible_person_ids( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return [];
+		}
+
+		if ( isset( self::$visible_person_ids_cache[ $user_id ] ) ) {
+			return self::$visible_person_ids_cache[ $user_id ];
+		}
+
+		$ids  = [];
+		$self = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+
+		if ( $self ) {
+			$ids[] = $self;
+			foreach ( self::minor_children_of( $self ) as $child_id ) {
+				$ids[] = $child_id;
+			}
+		}
+
+		self::$visible_person_ids_cache[ $user_id ] = array_values( array_unique( $ids ) );
+
+		return self::$visible_person_ids_cache[ $user_id ];
+	}
+
+	/**
+	 * Drop the memoised visible-person IDs. Call after changing a user's linked
+	 * person or a person's relationships within the same request.
+	 */
+	public static function flush_visible_person_ids_cache() {
+		self::$visible_person_ids_cache = [];
+	}
+
+	/**
+	 * Person IDs of this person's children who are still minors.
+	 *
+	 * @param int $person_id Parent person post ID.
+	 * @return int[] Child person post IDs.
+	 */
+	private static function minor_children_of( $person_id ) {
+		$relationships = get_field( 'relationships', $person_id );
+
+		if ( empty( $relationships ) || ! is_array( $relationships ) ) {
+			return [];
+		}
+
+		$children = [];
+
+		foreach ( $relationships as $relationship ) {
+			$type = $relationship['relationship_type'] ?? null;
+			if ( is_object( $type ) ) {
+				$type = $type->term_id ?? null;
+			} elseif ( is_array( $type ) ) {
+				$type = $type['term_id'] ?? null;
+			}
+
+			if ( (int) $type !== \Rondo\Data\InverseRelationships::TYPE_CHILD ) {
+				continue;
+			}
+
+			$related = $relationship['related_person'] ?? null;
+			if ( is_object( $related ) ) {
+				$related = $related->ID ?? null;
+			} elseif ( is_array( $related ) ) {
+				$related = $related['ID'] ?? ( $related[0] ?? null );
+			}
+
+			if ( $related && self::is_minor( (int) $related ) ) {
+				$children[] = (int) $related;
+			}
+		}
+
+		return array_values( array_unique( $children ) );
+	}
+
+	/**
+	 * Is this person under CHILD_VISIBILITY_MAX_AGE?
+	 *
+	 * ACF `date_picker` stores `Ymd`, not `Y-m-d`. A person with no usable birthdate
+	 * is treated as an adult — fail closed, do not expose a record on a missing field.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return bool
+	 */
+	private static function is_minor( $person_id ) {
+		$birthdate = (string) get_post_meta( $person_id, 'birthdate', true );
+		$digits    = preg_replace( '/\D/', '', $birthdate );
+
+		if ( strlen( $digits ) !== 8 ) {
+			return false;
+		}
+
+		$birth = \DateTimeImmutable::createFromFormat( 'Ymd', $digits );
+
+		if ( ! $birth ) {
+			return false;
+		}
+
+		$age = $birth->diff( new \DateTimeImmutable( 'now' ) )->y;
+
+		return $age < self::CHILD_VISIBILITY_MAX_AGE;
+	}
+
+	/**
+	 * Strip a person's ACF payload down to what a scoped member may read.
+	 *
+	 * @param array $acf Full ACF payload.
+	 * @return array Allowlisted subset.
+	 */
+	public static function filter_member_visible_acf( array $acf ) {
+		return array_intersect_key( $acf, array_flip( self::MEMBER_VISIBLE_ACF_FIELDS ) );
+	}
+
+	/**
 	 * Whether a user may pass `suppress_age_group` to widen their person queries.
 	 *
 	 * Only a user with an explicitly configured, non-empty age-group list qualifies —
@@ -317,30 +533,63 @@ class AccessControl {
 	 * @param \WP_Query $query Query object to modify.
 	 */
 	private function apply_age_group_filter( $query ) {
-		$permitted = self::get_permitted_age_groups();
+		$scope = self::person_scope();
 
-		if ( $permitted === null ) {
+		if ( $scope === null ) {
 			return;
 		}
 
-		$meta_query = $query->get( 'meta_query' ) ?: [];
-
-		if ( empty( $permitted ) ) {
-			// Empty array = see nobody. Use an impossible condition.
-			$meta_query[] = [
-				'key'     => 'leeftijdsgroep',
-				'value'   => '___impossible___',
-				'compare' => '=',
-			];
-		} else {
-			$meta_query[] = [
-				'key'     => 'leeftijdsgroep',
-				'value'   => $permitted,
-				'compare' => 'IN',
-			];
+		if ( isset( $scope['post__in'] ) ) {
+			$query->set( 'post__in', self::narrow_post_in( (array) $query->get( 'post__in' ), $scope['post__in'] ) );
+			return;
 		}
 
+		$meta_query   = $query->get( 'meta_query' ) ?: [];
+		$meta_query[] = [
+			'key'     => 'leeftijdsgroep',
+			'value'   => $scope['age_groups'],
+			'compare' => 'IN',
+		];
 		$query->set( 'meta_query', $meta_query );
+	}
+
+	/**
+	 * How a user's person queries must be narrowed. The one place the rule lives.
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return array{age_groups?: string[], post__in?: int[]}|null Null when unrestricted.
+	 */
+	private static function person_scope( $user_id = null ) {
+		$permitted = self::get_permitted_age_groups( $user_id );
+
+		// Management: no narrowing at all.
+		if ( $permitted === null ) {
+			return null;
+		}
+
+		// Coordinator: narrow to their configured age groups.
+		if ( ! empty( $permitted ) ) {
+			return [ 'age_groups' => $permitted ];
+		}
+
+		// Scoped member: their own household, or nothing.
+		$visible = self::get_visible_person_ids( $user_id );
+
+		return [ 'post__in' => ! empty( $visible ) ? $visible : [ 0 ] ];
+	}
+
+	/**
+	 * Intersect an existing post__in with the allowed set, so a caller-supplied
+	 * `include` can narrow further but never widen. `[0]` means "no results".
+	 *
+	 * @param int[] $existing Current post__in, possibly empty.
+	 * @param int[] $allowed  IDs the user may see.
+	 * @return int[]
+	 */
+	private static function narrow_post_in( array $existing, array $allowed ) {
+		$result = ! empty( $existing ) ? array_intersect( $existing, $allowed ) : $allowed;
+
+		return ! empty( $result ) ? array_values( $result ) : [ 0 ];
 	}
 
 	/**
@@ -373,6 +622,13 @@ class AccessControl {
 		// Don't allow access to trashed posts
 		if ( $post->post_status === 'trash' ) {
 			return false;
+		}
+
+		// Persons obey the visibility rule. This guard backs /people/{id}/notes,
+		// /activities and /timeline; without it any logged-in user could read the
+		// notes of any person in the club.
+		if ( $post->post_type === 'person' ) {
+			return self::can_view_person( $post->ID, $user_id );
 		}
 
 		return true;
@@ -466,28 +722,19 @@ class AccessControl {
 				&& self::can_suppress_age_group();
 		}
 
-		// Age-group filtering for person post type
-		if ( $post_type === 'person' && ! self::$suppress_age_group_filter && $this->has_age_group_restriction() ) {
-			$permitted = self::get_permitted_age_groups();
+		// Person visibility: coordinators narrow to age groups, members to their household.
+		if ( $post_type === 'person' && ! self::$suppress_age_group_filter ) {
+			$scope = self::person_scope();
 
-			if ( $permitted !== null ) {
-				$meta_query = $args['meta_query'] ?? [];
-
-				if ( empty( $permitted ) ) {
-					// Empty array = see nobody. Use an impossible condition.
-					$meta_query[] = [
-						'key'     => 'leeftijdsgroep',
-						'value'   => '___impossible___',
-						'compare' => '=',
-					];
-				} else {
-					$meta_query[] = [
-						'key'     => 'leeftijdsgroep',
-						'value'   => $permitted,
-						'compare' => 'IN',
-					];
-				}
-
+			if ( isset( $scope['post__in'] ) ) {
+				$args['post__in'] = self::narrow_post_in( $args['post__in'] ?? [], $scope['post__in'] );
+			} elseif ( isset( $scope['age_groups'] ) ) {
+				$meta_query         = $args['meta_query'] ?? [];
+				$meta_query[]       = [
+					'key'     => 'leeftijdsgroep',
+					'value'   => $scope['age_groups'],
+					'compare' => 'IN',
+				];
 				$args['meta_query'] = $meta_query;
 			}
 		}
@@ -559,20 +806,23 @@ class AccessControl {
 			);
 		}
 
-		// Age-group filtering for person post type
+		// Person visibility: management sees all, coordinators see their age groups,
+		// members see their own household. Kaderlijst may widen a coordinator only.
 		if ( $post->post_type === 'person' && ! self::$suppress_age_group_filter ) {
-			$permitted = self::get_permitted_age_groups();
+			if ( ! self::can_view_person( $post->ID ) ) {
+				// Error code kept for back-compat: PersonDetail.jsx branches on it.
+				return new \WP_Error(
+					'rest_forbidden_age_group',
+					__( 'You do not have permission to view this person.', 'rondo' ),
+					[ 'status' => 403 ]
+				);
+			}
 
-			if ( $permitted !== null ) {
-				$person_age_group = get_post_meta( $post->ID, 'leeftijdsgroep', true );
-
-				if ( ! in_array( $person_age_group, $permitted, true ) ) {
-					return new \WP_Error(
-						'rest_forbidden_age_group',
-						__( 'You do not have permission to view this person.', 'rondo' ),
-						[ 'status' => 403 ]
-					);
-				}
+			// A scoped member reads an allowlisted subset — never the financial flags.
+			$data = $response->get_data();
+			if ( isset( $data['acf'] ) && is_array( $data['acf'] ) && self::is_scoped_member() ) {
+				$data['acf'] = self::filter_member_visible_acf( $data['acf'] );
+				$response->set_data( $data );
 			}
 		}
 
