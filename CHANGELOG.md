@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.30.0] - 2026-07-09
+
+### Added
+- **Leden zien hun eigen gegevens en die van hun minderjarige kinderen.** `AccessControl::can_view_person()` is nu de enige plek waar zichtbaarheid van personen wordt bepaald: beheerders zien iedereen, coördinatoren hun eigen leeftijdsgroepen, gewone leden alleen zichzelf en hun kinderen onder de 18. Leden lezen een uitgeklede set velden — betaalblokkade, wacht-op-overschrijving en freescout-id blijven verborgen, en een later toegevoegd ACF-veld is standaard privé.
+- `PersonVisibilityTest` — 18 tests, inclusief de REST-collectie, de losse persoon en de veldafscherming.
+
+### Fixed
+- **Beveiliging: notities en activiteiten van elk lid waren leesbaar voor elke ingelogde gebruiker.** `user_can_access_post()` gaf voor personen altijd `true` terug, waardoor `/people/{id}/notes`, `/activities` en `/timeline` niet werkelijk afgeschermd waren. Deze routes volgen nu dezelfde zichtbaarheidsregel. Er stonden nog geen notities in het systeem, dus er is niets gelekt.
+
+### Changed
+- De leeftijdsgroep-afscherming stond op twee plekken los van elkaar geïmplementeerd (`filter_rest_query` en `apply_age_group_filter`). Beide gebruiken nu één gedeelde `person_scope()`.
+
 ## [33.29.1] - 2026-07-09
 
 ### Fixed
