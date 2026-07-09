@@ -112,15 +112,28 @@ that is precisely what the flag was built to do, because `Kaderlijst.jsx` fetche
 give Kaderlijst a scoped endpoint returning only people with a current `work_history` functie, with
 only the fields it renders, and then delete the flag entirely. Tracked as item 12.
 
-### 1. No way to create 730 accounts
-`provision()` is called one `person_id` at a time from an admin picker, sends its welcome email
-inline, and — via `/rondo/v1/users/provisionable` — filters to people who *have a KNVB-ID*. That
-filter alone hides every non-member parent. There is no bulk route and no self-service route.
+### 1. No way to create 730 accounts — *partly addressed*
+`provision()` is called one `person_id` at a time from an admin picker and sends its welcome email
+inline. The `knvb-id` filter on `/rondo/v1/users/provisionable` — which hid every non-member parent
+— is **gone as of 33.31.0**: the provisionable population went from 1,048 to 1,317, the 269
+difference being exactly the parents.
 
-### 2. Shared email addresses
-WordPress enforces one account per `user_email`. Parents share addresses with each other and with
-their children. Within the 16+ member cohort only 50 people across 24 addresses collide, but once
-parents are included the collisions multiply, because a gezin is by definition a shared mailbox.
+Still no self-service route. That is item 9, and it is the only remaining piece that sends mail to
+real members, so it needs explicit sign-off before it ships.
+
+### 2. Shared email addresses — **FIXED in 33.31.0**
+WordPress enforces one account per `user_email`, and `provision()` rejected the second member of a
+household with `email_taken`. The first claimant now keeps the real address; later members get an
+undeliverable `person-{id}@members.rondo.invalid` placeholder, with the real address in
+`rondo_contact_email` user meta.
+
+The trap this surfaced: WordPress core addresses the password-reset link straight to `user_email`,
+so a placeholder account would have been **unrecoverable**. `ContactEmailRouter` hooks `wp_mail` and
+rewrites synthetic recipients to the real address, dropping the recipient when none is known.
+Covered by a test that drives `retrieve_password()` end to end.
+
+Five unprovisioned people currently share an address with an existing WP user; they will get a
+placeholder. Verified on production: all 17 existing users still resolve to a deliverable address.
 
 ### 3. 56 parents have no email address at all
 They cannot be reached by any activation flow. Ledenadministratie must collect these.
@@ -277,10 +290,10 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~4~~ | ~~Scoped read grant: member sees own record + children~~ — **done, 33.30.0** | — |
 | 13 | Member-facing UI for the household view — the grant exists, the router still redirects | 4 |
 | 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped | — |
-| 5 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
-| 6 | Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable` | — |
+| ~~5~~ | ~~`rondo_contact_email` + synthetic-email fallback~~ — **done, 33.31.0** | — |
+| ~~6~~ | ~~Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable`~~ — **done, 33.31.0** | — |
+| ~~8~~ | ~~Reroute password-reset and WP notification mail~~ — **done, 33.31.0** (`ContactEmailRouter`) | — |
 | 7 | `authenticate` filter: username / KNVB-ID / unique contact-email login | 5 |
-| 8 | Reroute password-reset and WP notification mail to `rondo_contact_email` | 5 |
 | 9 | Public `/activeren` page + token endpoints + rate limiting | 5, 8 |
 | 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen | — |
 | 11 | Docs in `../developer/src/content/docs/features/` | all |
