@@ -153,13 +153,11 @@ two separate defects:
 
 - `get_eligible_unit_for_person()` must return **all** units a person belongs to, not the first one.
   `/vrijwillig` must render more than one obligation.
-- **Double-crediting silently discounts the duty.** `compute_progress()` credits a shift to every
-  unit whose `person_ids` contain the actor. Lennart owes 2 (speler) + 3 (gezin) = 5, but 3 shifts
-  would satisfy *both* units, because each shift is counted twice. **Still open — item 2.**
-
-  Good news: this needs **no data-model change**. Attribution is derivable, because the order is
-  fixed and the speler duty is per-person. Each person's shifts fill their own speler duty first;
-  the surplus flows to their gezin unit:
+- ~~**Double-crediting silently discounts the duty.**~~ **Fixed in 33.29.1.** `compute_progress()`
+  credited a shift to every unit whose `person_ids` contain the actor, so Lennart's 2 + 3 = 5 duty
+  was satisfied by 3 shifts. Needed **no data-model change** — the order is fixed and the speler
+  duty is per-person, so the split is derivable. Each person's shifts fill their own speler duty
+  first; the surplus flows to their gezin unit:
 
   ```
   speler.completed = min( completed[p], speler.required )
@@ -168,10 +166,12 @@ two separate defects:
 
   where `speler_required(p)` is 2 for an O17+ player and 0 for everyone else (children, non-playing
   parents). Pending shifts are consumed after completed ones. `assigned_persons` needs no unit
-  reference.
+  reference. A player with no youth children has nowhere to spill, so their speler unit keeps every
+  shift — capping there would erase real work from `total_completed`.
 
-  **There are zero shift assignments on production** (19 shifts exist, all `open`, none claimed), so
-  this can be built and tested with no migration and no risk to live progress numbers.
+  Shipped with zero risk: there were **no shift assignments at all** on production (19 shifts, all
+  `open`), so no migration and no live progress numbers to disturb. Covered by
+  `VolunteerShiftAttributionTest`; 4 of its 8 tests fail against the old calculator.
 
 The header comment `SPELER : one obligation per O17+ player (vervangt de ouderplicht)` is now wrong
 and must be corrected.
@@ -249,7 +249,7 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~0~~ | ~~Gate `suppress_age_group`~~ — **done, shipped in 33.28.2** | — |
 | ~~1~~ | ~~`get_eligible_units_for_person()` returns all units; `/vrijwillig` renders both~~ — **done, 33.29.0** | — |
 | ~~3~~ | ~~Split `may_volunteer()` from owing an obligation~~ — **done, 33.29.0** | — |
-| 2 | Attribute each shift to one unit, speler duty first (decision 4) | 1 |
+| ~~2~~ | ~~Attribute each shift to one unit, speler duty first~~ — **done, 33.29.1** | — |
 | 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` altogether | 1 |
 | 4 | Scoped read grant: member sees own record + children, enforced server-side | 0 |
 | 5 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
