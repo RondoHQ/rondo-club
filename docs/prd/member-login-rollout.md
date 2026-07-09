@@ -54,7 +54,42 @@ diensten today.** Nothing in the sign-up path needs to change.
 
 The gap is entirely **identity and provisioning**, not volunteer logic.
 
+## Decisions taken (2026-07-09)
+
+1. **A playing parent owes both duties** — the speler obligation *and* the gezin obligation.
+2. **A parent may see their child's person record.**
+3. **Anyone in the system may activate an account.** Willingness to volunteer is not gated on owing
+   an obligation.
+
+Each of these collides with something in the current code. See blockers 0, 5, 6 and 7.
+
 ## Blockers, in order of severity
+
+### 0. SECURITY — any logged-in user can read all 4,095 person records
+`AccessControl::filter_rest_query()` honours a `suppress_age_group` request parameter with no
+capability check at all — the only condition is `is_user_logged_in()`:
+
+```php
+if ( $post_type === 'person' && $request->get_param( 'suppress_age_group' ) && is_user_logged_in() ) {
+    self::$suppress_age_group_filter = true;
+}
+```
+
+Reproduced on production as `borre.valk`, a plain `rondo_user` with no capabilities:
+
+| request | result |
+|---|---|
+| `GET /wp/v2/people` | 200, `X-WP-Total: 0` |
+| `GET /wp/v2/people/{id}` | 403 |
+| `GET /wp/v2/people?suppress_age_group=1` | **200, `X-WP-Total: 4095`, ACF included (names, emails)** |
+
+Only `src/pages/Teams/Kaderlijst.jsx` passes the flag legitimately. Today this is a **live privilege
+escalation** for the four coordinator accounts, whose `rondo_age_group_access` restriction to one
+age group they can shed at will. The moment members activate, it becomes a full member-database
+disclosure — an AVG breach involving minors. `self::$suppress_age_group_filter` is also a static
+that is never reset once set.
+
+**Fix before any member logs in.** Gate the flag on a kader capability.
 
 ### 1. No way to create 730 accounts
 `provision()` is called one `person_id` at a time from an admin picker, sends its welcome email
@@ -90,10 +125,51 @@ Verified on production: person 25 (gezin required 2 / speler 2), person 52 (3 / 
 under-states what the club believes the household owes.
 
 Today this is nearly invisible — 9 people have accounts. The moment 739 log in, 17 households see a
-number that contradicts the coordinator's dashboard. **This is a bug now, independent of login, and
-should ship on its own before rollout.** Fixing it needs a product decision: does a playing parent
-owe their speler obligation *and* the gezin obligation, or does the speler duty absorb it (as the
-`SPELER : one obligation per O17+ player (vervangt de ouderplicht)` header comment implies)?
+number that contradicts the coordinator's dashboard.
+
+**Decision 1 says the parent owes both.** That makes the dashboard's two units correct and exposes
+two separate defects:
+
+- `get_eligible_unit_for_person()` must return **all** units a person belongs to, not the first one.
+  `/vrijwillig` must render more than one obligation.
+- **Double-crediting silently discounts the duty.** `compute_progress()` credits a shift to every
+  unit whose `person_ids` contain the actor. Lennart owes 2 (speler) + 3 (gezin) = 5, but 3 shifts
+  would satisfy *both* units, because each shift is counted twice. To make "owes both" real, a shift
+  must be attributed to exactly one unit. That is a data-model change: `assigned_persons` post meta
+  carries no unit reference today. **Open question — see below.**
+
+The header comment `SPELER : one obligation per O17+ player (vervangt de ouderplicht)` is now wrong
+and must be corrected.
+
+### 6. A parent cannot currently see their child's record
+Verified as a plain member: `GET /wp/v2/people` returns 0 rows and `GET /wp/v2/people/{id}` returns
+403. Plain members see nobody — which is correct today and wrong under decision 2.
+
+Needs a positive, scoped grant in `AccessControl`: a member may read their own `person` record and
+the records of people reachable through their `relationships` (children). Read-only to start; any
+write path must respect the existing `former_member` read-only rule. This grant must be enforced in
+`filter_rest_query()`, `filter_rest_single_access()` **and** `map_meta_cap`, not in React — the
+frontend `KaderOrVrijwilligRedirect` guard is navigation, not authorization.
+
+### 7. A willing volunteer with no obligation is refused
+Decision 3 says anyone may activate because they might want to volunteer. But
+`get_available_shifts()` refuses them:
+
+```php
+$eligible = get_eligible_unit_for_person( $person_id, $season ) !== null
+    || $exempt !== null; // Exempt members may still volunteer voluntarily.
+if ( ! $eligible ) { return [ 'eligible' => false, 'shifts' => [],
+    'block_reason' => 'Je valt niet onder de vrijwilligersplicht-doelgroep.' ]; }
+```
+
+So a sponsor, a grandparent, or an O17+ player's willing partner activates an account and lands on
+an empty page telling them they are not in the target group. Exempt members are already allowed
+through, which shows the intent: **owing an obligation and being allowed to volunteer are different
+things.** Split them — `may_volunteer()` should be true for any active person; the unit only decides
+whether progress is *required*.
+
+Note that activation under decision 3 reaches the 396 active members under 16. Creating accounts for
+under-16s raises an AVG consent question that is a club/legal decision, not a technical one.
 
 ## Proposed approach
 
@@ -135,21 +211,27 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 
 | # | Work | Depends on |
 |---|---|---|
-| 1 | Resolve the double-counted playing parent (17 people) — needs a product decision first | — |
-| 2 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
-| 3 | Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable` | — |
-| 4 | `authenticate` filter: username / KNVB-ID / unique contact-email login | 2 |
-| 5 | Reroute password-reset and WP notification mail to `rondo_contact_email` | 2 |
-| 6 | Public `/activeren` page + token endpoints + rate limiting | 2, 5 |
-| 7 | Data-quality report: 56 parents without email, 27 orphan gezinnen | — |
-| 8 | Docs in `../developer/src/content/docs/features/` | all |
+| **0** | **Gate `suppress_age_group` on a kader capability. Ship alone, now.** | — |
+| 1 | `get_eligible_unit_for_person()` returns all units; `/vrijwillig` renders multiple obligations | — |
+| 2 | Attribute each shift to one unit so "owes both" is not silently discounted | 1, open question |
+| 3 | Split `may_volunteer()` from `owes_obligation()` so willing non-obliged people can claim shifts | — |
+| 4 | Scoped read grant: member sees own record + children, enforced server-side | 0 |
+| 5 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
+| 6 | Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable` | — |
+| 7 | `authenticate` filter: username / KNVB-ID / unique contact-email login | 5 |
+| 8 | Reroute password-reset and WP notification mail to `rondo_contact_email` | 5 |
+| 9 | Public `/activeren` page + token endpoints + rate limiting | 5, 8 |
+| 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen | — |
+| 11 | Docs in `../developer/src/content/docs/features/` | all |
 
-Items 1, 2, 3 and 7 are independent and can land first. Item 1 is the one that is a bug **today**,
-independent of login, and should ship on its own.
+Item 0 is a live vulnerability and must not wait for the rest. Items 1, 3, 5, 6 and 10 are
+independent. Nothing in 5–9 should be deployed before 0 and 4 are done, because they are what let
+738 new people through the door.
 
 ## Open questions
 
-- Should a parent be able to see their child's person record, or only the family's diensten?
-- Should the 328 non-member contacts who are *not* parents (sponsors, external) be able to activate
-  at all? Current proposal: no — activation matches only people in an eligible unit.
+- **Shift attribution.** To make a playing parent genuinely owe 5 rather than 3, each shift must
+  count toward exactly one unit. Does the member choose which duty a shift discharges, or does the
+  system apply a fixed order (e.g. fill the speler duty first, then the gezin duty)?
+- AVG consent for the 396 active members under 16 who may now activate.
 - Do we re-evaluate obligations as children age past JO16 mid-season, or only at season roll-over?
