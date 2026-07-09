@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.29.1] - 2026-07-09
+
+### Fixed
+- **Een dienst telde voor twee plichten tegelijk.** Wie zowel een eigen dienstplicht als een gezinsplicht heeft, kreeg elke dienst bij beide plichten bijgeschreven — 3 diensten voldeden zo aan een plicht van 2 + 3. Een dienst telt nu voor precies één plicht: eerst de eigen dienstplicht, daarna de gezinsplicht. Spelers zonder kinderen houden al hun diensten op hun eigen plicht staan, zodat extra werk niet verdwijnt uit de clubtotalen. Een no-show telt één keer, bij de eigen plicht.
+
+### Added
+- `VolunteerShiftAttributionTest` — 8 tests op de toerekening van diensten aan plichten.
+
 ## [33.29.0] - 2026-07-09
 
 ### Fixed
