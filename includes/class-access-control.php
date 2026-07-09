@@ -287,6 +287,22 @@ class AccessControl {
 	}
 
 	/**
+	 * Whether a user may pass `suppress_age_group` to widen their person queries.
+	 *
+	 * Only a user with an explicitly configured, non-empty age-group list qualifies —
+	 * that is a coordinator, the case the Kaderlijst rebuild was built for. Management
+	 * users are unrestricted already, so the flag is a no-op for them. Everyone else
+	 * has an empty list meaning "see nobody", and the flag must not turn that into
+	 * "see everybody".
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return bool Whether the age-group narrowing may be suppressed.
+	 */
+	public static function can_suppress_age_group( $user_id = null ) {
+		return ! empty( self::get_permitted_age_groups( $user_id ) );
+	}
+
+	/**
 	 * Check if the current user has age-group restrictions.
 	 *
 	 * @return bool True if the user is restricted to specific age groups.
@@ -441,9 +457,13 @@ class AccessControl {
 			}
 		}
 
-		// Allow authenticated callers to suppress age-group filtering (e.g. Kaderlijst rebuild).
-		if ( $post_type === 'person' && $request->get_param( 'suppress_age_group' ) && is_user_logged_in() ) {
-			self::$suppress_age_group_filter = true;
+		// Allow the Kaderlijst rebuild to widen a coordinator's age-group narrowing.
+		// Only users who already have a non-empty permitted list may do so. A user
+		// whose list is empty means "see nobody" (the default for non-management
+		// users) — for them the flag must never turn deny into allow.
+		if ( $post_type === 'person' ) {
+			self::$suppress_age_group_filter = (bool) $request->get_param( 'suppress_age_group' )
+				&& self::can_suppress_age_group();
 		}
 
 		// Age-group filtering for person post type
