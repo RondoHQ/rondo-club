@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.28.1] - 2026-07-09
+
+### Fixed
+- **Gebruikers met een extra rol komen weer op het dashboard uit.** Wie naast de standaardrol (Rondo User) nog een andere rol heeft — bijvoorbeeld een poule-rol of een zelf aangemaakte rol zonder eigen rechten — werd doorgestuurd naar `/vrijwillig`. Zij zien nu gewoon het dashboard op `/`.
+
 ## [33.28.0] - 2026-06-26
 
 ### Added

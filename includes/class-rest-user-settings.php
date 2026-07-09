@@ -1005,6 +1005,10 @@ class UserSettings extends Base {
 		$avatar_url = get_avatar_url( $user_id, [ 'size' => 96 ] );
 		$is_admin   = current_user_can( 'manage_options' );
 
+		// Roles beyond the plain member baseline — e.g. poule-rollen of custom rollen
+		// zonder eigen capability. Deze gebruikers horen het dashboard te zien.
+		$has_extra_roles = ! empty( array_diff( (array) $user->roles, [ \Rondo\Core\UserRoles::ROLE_NAME, 'subscriber' ] ) );
+
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		$linked_person_name  = null;
 		$linked_person_photo = null;
@@ -1033,6 +1037,7 @@ class UserSettings extends Base {
 			'email'                         => $user->user_email,
 			'avatar_url'                    => $avatar_url,
 			'is_admin'                      => $is_admin,
+			'has_extra_roles'               => $has_extra_roles,
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),

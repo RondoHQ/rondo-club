@@ -141,7 +141,9 @@ function VrijwilligersRoute({ children }) {
 }
 
 /**
- * Kader-only: any user with at least one staff capability. Plain leden zonder
+ * Kader-only: any user with at least one staff capability, or with any role
+ * beyond the plain-lid baseline (poule-rollen en custom rollen hebben geen
+ * eigen capability maar horen wel het dashboard te zien). Plain leden zonder
  * expliciete rechten krijgen geen "Geen toegang"-scherm maar worden meteen
  * doorgestuurd naar hun eigen vrijwillig-aanmelding.
  */
@@ -149,6 +151,7 @@ function isKaderUser(user) {
   if (!user) return false;
   return Boolean(
     user.is_admin ||
+    user.has_extra_roles ||
     user.can_access_fairplay ||
     user.can_access_vog ||
     user.can_access_financieel ||
