@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.32.0] - 2026-07-10
+
+### Added
+- **Inloggen met je KNVB-ID of je eigen e-mailadres.** Leden hoeven de door Rondo aangemaakte gebruikersnaam niet te kennen. Voor het tweede lid van een gezin is dit de enige manier om binnen te komen: het gedeelde adres hoort bij het account van de eerste.
+- `LoginResolverTest` — 10 tests, waaronder de gedeelde gezinsbrievenbus.
+
+### Security
+- Een gedeeld e-mailadres logt nooit in op het verkeerde account. Hoort het adres bij niemands WordPress-account, dan is het dubbelzinnig en weigert het systeem te gokken — die leden gebruiken hun KNVB-ID.
+
 ## [33.31.0] - 2026-07-09
 
 ### Added
