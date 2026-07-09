@@ -22,33 +22,15 @@ function StatusBadge({ kind, children }) {
   );
 }
 
-function ObligationCard({ obligation, exemption }) {
-  if (exemption) {
-    return (
-      <div className="card p-5 border-l-4 border-purple-400">
-        <div className="flex items-start gap-3">
-          <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
-          <div>
-            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Je bent vrijgesteld</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {exemption.reason_label}. Je hoeft dit seizoen geen diensten te plannen, maar je mag natuurlijk wel meedoen.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+function obligationTitle(obligation, hasBoth) {
+  if (obligation.kind !== 'gezin') {
+    return hasBoth ? 'Jouw eigen dienstplicht' : 'Jouw vrijwilligersplicht';
   }
+  const children = obligation.child_count || 0;
+  return children > 1 ? `Jullie gezinsplicht (${children} kinderen)` : 'Jullie gezinsplicht';
+}
 
-  if (!obligation) {
-    return (
-      <div className="card p-5">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Je valt op dit moment niet onder de 2-diensten-plicht.
-        </p>
-      </div>
-    );
-  }
-
+function ObligationCard({ obligation, hasBoth }) {
   const required = obligation.required_count || 0;
   const completed = obligation.completed_count || 0;
   const pending = obligation.pending_count || 0;
@@ -58,7 +40,7 @@ function ObligationCard({ obligation, exemption }) {
     <div className="card p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Jouw vrijwilligersplicht</h2>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">{obligationTitle(obligation, hasBoth)}</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Je hebt <strong>{completed}</strong> van <strong>{required}</strong> diensten gedaan dit seizoen.
             {pending > 0 && <> Je staat al ingepland voor {pending} {pending === 1 ? 'dienst' : 'diensten'}.</>}
@@ -79,6 +61,46 @@ function ObligationCard({ obligation, exemption }) {
           style={{ width: `${required > 0 ? Math.min(100, (completed / required) * 100) : 0}%` }}
         />
       </div>
+    </div>
+  );
+}
+
+function ObligationList({ obligations, exemption }) {
+  if (exemption) {
+    return (
+      <div className="card p-5 border-l-4 border-purple-400">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-purple-500 mt-0.5 shrink-0" />
+          <div>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Je bent vrijgesteld</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {exemption.reason_label}. Je hoeft dit seizoen geen diensten te plannen, maar je mag natuurlijk wel meedoen.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!obligations || obligations.length === 0) {
+    return (
+      <div className="card p-5">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Je valt op dit moment niet onder de dienstplicht. Je mag je natuurlijk wel aanmelden voor diensten.
+        </p>
+      </div>
+    );
+  }
+
+  // A speler who is also a parent carries both duties. Diensten vullen eerst de
+  // eigen dienstplicht, daarna de gezinsplicht.
+  const hasBoth = obligations.length > 1;
+
+  return (
+    <div className="space-y-3">
+      {obligations.map((obligation) => (
+        <ObligationCard key={obligation.unit_id} obligation={obligation} hasBoth={hasBoth} />
+      ))}
     </div>
   );
 }
@@ -281,7 +303,7 @@ export default function Vrijwillig() {
         <ContentLoadingSpinner />
       ) : (
         <>
-          <ObligationCard obligation={mine?.obligation} exemption={mine?.exemption} />
+          <ObligationList obligations={mine?.obligations} exemption={mine?.exemption} />
           <BlockBanners blockReasons={available?.block_reasons} />
 
           <nav className="flex gap-6 border-b border-gray-200 dark:border-gray-700">

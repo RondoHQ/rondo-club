@@ -127,12 +127,8 @@ class MemberShifts extends Base {
 		$eligibility = new VolunteerEligibilityService();
 		$calculator  = new VolunteerObligationCalculator();
 
-		$unit       = $eligibility->get_eligible_unit_for_person( $person_id, $season );
-		$obligation = null;
-		if ( $unit !== null ) {
-			$decorated  = $calculator->decorate_units( [ $unit ], $season );
-			$obligation = $decorated[0];
-		}
+		$units       = $eligibility->get_eligible_units_for_person( $person_id, $season );
+		$obligations = $units ? $calculator->decorate_units( $units, $season ) : [];
 
 		$shifts = $this->query_shifts_for_person( $person_id );
 
@@ -140,7 +136,7 @@ class MemberShifts extends Base {
 			[
 				'person_id'      => $person_id,
 				'season'         => $season,
-				'obligation'     => $obligation,
+				'obligations'    => $obligations,
 				'exemption'      => $this->resolve_exemption_block( $person_id, $season ),
 				'iva_status'     => IvaStatus::status( $person_id ),
 				'iva_expires_at' => IvaStatus::expires_at( $person_id ),
@@ -155,18 +151,15 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
 		}
 
-		$season   = SeasonKey::current();
-		$exempt   = VolunteerExemptionResolver::resolve( $person_id, $season );
-		$eligible = ( new VolunteerEligibilityService() )->get_eligible_unit_for_person( $person_id, $season ) !== null
-			|| $exempt !== null; // Exempt members may still volunteer voluntarily.
-
-		if ( ! $eligible ) {
+		// Owing an obligation is not a precondition for helping out. Anyone still on the
+		// books may claim a shift; only oud-leden are turned away.
+		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
 			return rest_ensure_response(
 				[
 					'person_id'    => $person_id,
 					'eligible'     => false,
 					'shifts'       => [],
-					'block_reason' => 'Je valt niet onder de vrijwilligersplicht-doelgroep.',
+					'block_reason' => 'Je bent geen actief lid meer.',
 				]
 			);
 		}
