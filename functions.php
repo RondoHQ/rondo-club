@@ -268,6 +268,8 @@ function rondo_init() {
 	// Must load on every request: core password-reset mail is addressed to user_email,
 	// which for a household member is an undeliverable placeholder.
 	new \Rondo\Users\ContactEmailRouter();
+	// Lets members sign in with their KNVB-ID or real email instead of a generated username.
+	new \Rondo\Users\LoginResolver();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
