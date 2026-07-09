@@ -155,9 +155,23 @@ two separate defects:
   `/vrijwillig` must render more than one obligation.
 - **Double-crediting silently discounts the duty.** `compute_progress()` credits a shift to every
   unit whose `person_ids` contain the actor. Lennart owes 2 (speler) + 3 (gezin) = 5, but 3 shifts
-  would satisfy *both* units, because each shift is counted twice. To make "owes both" real, a shift
-  must be attributed to exactly one unit. That is a data-model change: `assigned_persons` post meta
-  carries no unit reference today. **Open question — see below.**
+  would satisfy *both* units, because each shift is counted twice. **Still open — item 2.**
+
+  Good news: this needs **no data-model change**. Attribution is derivable, because the order is
+  fixed and the speler duty is per-person. Each person's shifts fill their own speler duty first;
+  the surplus flows to their gezin unit:
+
+  ```
+  speler.completed = min( completed[p], speler.required )
+  gezin.completed  = Σ over p in gezin.person_ids of max( 0, completed[p] − speler_required(p) )
+  ```
+
+  where `speler_required(p)` is 2 for an O17+ player and 0 for everyone else (children, non-playing
+  parents). Pending shifts are consumed after completed ones. `assigned_persons` needs no unit
+  reference.
+
+  **There are zero shift assignments on production** (19 shifts exist, all `open`, none claimed), so
+  this can be built and tested with no migration and no risk to live progress numbers.
 
 The header comment `SPELER : one obligation per O17+ player (vervangt de ouderplicht)` is now wrong
 and must be corrected.
@@ -233,10 +247,10 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | # | Work | Depends on |
 |---|---|---|
 | ~~0~~ | ~~Gate `suppress_age_group`~~ — **done, shipped in 33.28.2** | — |
-| 1 | `get_eligible_unit_for_person()` returns all units; `/vrijwillig` renders multiple obligations | — |
+| ~~1~~ | ~~`get_eligible_units_for_person()` returns all units; `/vrijwillig` renders both~~ — **done, 33.29.0** | — |
+| ~~3~~ | ~~Split `may_volunteer()` from owing an obligation~~ — **done, 33.29.0** | — |
 | 2 | Attribute each shift to one unit, speler duty first (decision 4) | 1 |
 | 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` altogether | 1 |
-| 3 | Split `may_volunteer()` from `owes_obligation()` so willing non-obliged people can claim shifts | — |
 | 4 | Scoped read grant: member sees own record + children, enforced server-side | 0 |
 | 5 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
 | 6 | Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable` | — |
