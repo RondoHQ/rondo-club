@@ -60,12 +60,14 @@ The gap is entirely **identity and provisioning**, not volunteer logic.
 2. **A parent may see their child's person record.**
 3. **Anyone in the system may activate an account.** Willingness to volunteer is not gated on owing
    an obligation.
+4. **Shift attribution is a fixed order: the speler duty fills first, then the gezin duty.** A shift
+   discharges exactly one unit. No member-facing choice, no new UI.
 
 Each of these collides with something in the current code. See blockers 0, 5, 6 and 7.
 
 ## Blockers, in order of severity
 
-### 0. SECURITY — any logged-in user can read all 4,095 person records
+### 0. SECURITY — any logged-in user can read all 4,095 person records — **FIXED in 33.28.2**
 `AccessControl::filter_rest_query()` honours a `suppress_age_group` request parameter with no
 capability check at all — the only condition is `is_user_logged_in()`:
 
@@ -89,7 +91,26 @@ age group they can shed at will. The moment members activate, it becomes a full 
 disclosure — an AVG breach involving minors. `self::$suppress_age_group_filter` is also a static
 that is never reset once set.
 
-**Fix before any member logs in.** Gate the flag on a kader capability.
+**Fixed in 33.28.2.** The flag is now honoured only for users whose `get_permitted_age_groups()`
+returns a *non-empty* list — coordinators, the Kaderlijst case it was built for. Management users
+are unrestricted already, so it stays a no-op for them; users with an empty list ("see nobody")
+have the flag ignored. Verified on production after deploy:
+
+| user | `suppress=0` | `suppress=1` |
+|---|---|---|
+| plain member (`borre.valk`) | 0 | **0** (was 4095) |
+| coordinator (`jasper.jansen`) | 252 | 4095 |
+| admin (`joost`) | 4095 | 4095 |
+
+`/rondo/v1/people/filtered` reads the same static but nothing ever sets it on that route
+(`filter_rest_query` is hooked on `rest_person_query`, which only fires for `wp/v2/people`), so it
+always applied the age filter and was never exposed.
+
+**Residual, accepted for now:** a coordinator can still widen to all 4,095 records with full ACF —
+that is precisely what the flag was built to do, because `Kaderlijst.jsx` fetches *every* person
+(`_fields=id,acf`, all pages) and filters client-side. Four trusted accounts. The proper fix is to
+give Kaderlijst a scoped endpoint returning only people with a current `work_history` functie, with
+only the fields it renders, and then delete the flag entirely. Tracked as item 12.
 
 ### 1. No way to create 730 accounts
 `provision()` is called one `person_id` at a time from an admin picker, sends its welcome email
@@ -211,9 +232,10 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 
 | # | Work | Depends on |
 |---|---|---|
-| **0** | **Gate `suppress_age_group` on a kader capability. Ship alone, now.** | — |
+| ~~0~~ | ~~Gate `suppress_age_group`~~ — **done, shipped in 33.28.2** | — |
 | 1 | `get_eligible_unit_for_person()` returns all units; `/vrijwillig` renders multiple obligations | — |
-| 2 | Attribute each shift to one unit so "owes both" is not silently discounted | 1, open question |
+| 2 | Attribute each shift to one unit, speler duty first (decision 4) | 1 |
+| 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` altogether | 1 |
 | 3 | Split `may_volunteer()` from `owes_obligation()` so willing non-obliged people can claim shifts | — |
 | 4 | Scoped read grant: member sees own record + children, enforced server-side | 0 |
 | 5 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
@@ -230,8 +252,5 @@ independent. Nothing in 5–9 should be deployed before 0 and 4 are done, becaus
 
 ## Open questions
 
-- **Shift attribution.** To make a playing parent genuinely owe 5 rather than 3, each shift must
-  count toward exactly one unit. Does the member choose which duty a shift discharges, or does the
-  system apply a fixed order (e.g. fill the speler duty first, then the gezin duty)?
 - AVG consent for the 396 active members under 16 who may now activate.
 - Do we re-evaluate obligations as children age past JO16 mid-season, or only at season roll-over?
