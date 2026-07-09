@@ -14,6 +14,13 @@
  *   no_show   → shift.status = 'voltooid' AND a `_no_show_{person_id}` meta exists
  *   pending   → shift.start_datetime ≥ now() AND person is in assigned_persons
  *
+ * Each shift is attributed to exactly ONE unit. A person who carries both a
+ * spelersplicht and a gezinsplicht fills the speler duty first; only the surplus
+ * counts toward the gezin. A player with no youth children has nowhere to spill,
+ * so their speler unit keeps every shift and extra work is never dropped from the
+ * club's totals. No unit reference is stored on the shift — the order is fixed and
+ * the speler duty is per-person, so the split is derivable.
+ *
  * The `required_count` field is the value already computed by
  * VolunteerEligibilityService (it already applies the multi-child rule); we
  * don't recompute it here, we just enrich every unit with progress numbers.
@@ -39,6 +46,14 @@ class VolunteerObligationCalculator {
 	const NO_SHOW_META_PREFIX  = '_no_show_';
 	const NO_SHOW_WINDOW_HOURS = 72;
 	const CACHE_TTL_SECONDS    = 5 * MINUTE_IN_SECONDS;
+
+	/**
+	 * Shared eligibility service, used to resolve each person's own speler duty
+	 * when attributing shifts. Lazily created; see eligibility().
+	 *
+	 * @var VolunteerEligibilityService|null
+	 */
+	private ?VolunteerEligibilityService $eligibility = null;
 
 	/**
 	 * Enrich a list of eligible units with progress numbers.
@@ -258,6 +273,11 @@ class VolunteerObligationCalculator {
 
 	/**
 	 * Heart of the calculator — actually walks `dienst_shift` posts and counts.
+	 *
+	 * Every shift is attributed to exactly ONE unit. A person who owes both a
+	 * spelersplicht and a gezinsplicht fills the speler duty first; the surplus
+	 * spills into the gezin. Without this a playing parent who owes 2 + 3 = 5
+	 * would be done after 3 shifts, because each shift counted twice.
 	 */
 	private function compute_progress( array $unit, string $season ): array {
 		$person_ids = array_map( 'intval', $unit['person_ids'] ?? [] );
@@ -266,6 +286,32 @@ class VolunteerObligationCalculator {
 				'completed_count' => 0,
 				'pending_count'   => 0,
 				'no_show_count'   => 0,
+			];
+		}
+
+		$tallies = $this->tally_per_person( $person_ids, $season );
+
+		if ( ( $unit['kind'] ?? '' ) === VolunteerEligibilityService::UNIT_KIND_SPELER ) {
+			return $this->speler_share( $person_ids[0], $tallies[ $person_ids[0] ], (int) ( $unit['required_count'] ?? 0 ) );
+		}
+
+		return $this->gezin_share( $person_ids, $tallies );
+	}
+
+	/**
+	 * Count each person's own completed / pending / no-show shifts for the season.
+	 *
+	 * @param int[]  $person_ids Persons to tally.
+	 * @param string $season     KNVB season key.
+	 * @return array<int, array{completed: int, pending: int, no_show: int}> Keyed by person ID.
+	 */
+	private function tally_per_person( array $person_ids, string $season ): array {
+		$tallies = [];
+		foreach ( $person_ids as $pid ) {
+			$tallies[ $pid ] = [
+				'completed' => 0,
+				'pending'   => 0,
+				'no_show'   => 0,
 			];
 		}
 
@@ -290,10 +336,7 @@ class VolunteerObligationCalculator {
 			]
 		);
 
-		$completed = 0;
-		$pending   = 0;
-		$no_show   = 0;
-		$now_ts    = time();
+		$now_ts = time();
 
 		foreach ( $query->posts as $shift_id ) {
 			$assigned = (array) get_post_meta( $shift_id, 'assigned_persons', true );
@@ -308,13 +351,12 @@ class VolunteerObligationCalculator {
 			$start  = (string) get_post_meta( $shift_id, 'start_datetime', true );
 
 			foreach ( $overlap as $pid ) {
-				$marked_no_show = (bool) get_post_meta( $shift_id, self::NO_SHOW_META_PREFIX . $pid, true );
-
 				if ( $status === 'voltooid' ) {
+					$marked_no_show = (bool) get_post_meta( $shift_id, self::NO_SHOW_META_PREFIX . $pid, true );
 					if ( $marked_no_show ) {
-						++$no_show;
+						++$tallies[ $pid ]['no_show'];
 					} else {
-						++$completed;
+						++$tallies[ $pid ]['completed'];
 					}
 					continue;
 				}
@@ -324,8 +366,69 @@ class VolunteerObligationCalculator {
 				}
 
 				if ( $start !== '' && strtotime( $start ) >= $now_ts ) {
-					++$pending;
+					++$tallies[ $pid ]['pending'];
 				}
+			}
+		}
+
+		return $tallies;
+	}
+
+	/**
+	 * The share of a person's shifts that discharges their own spelersplicht.
+	 *
+	 * Capped at `required` only when the person also carries a gezinsplicht for the
+	 * surplus to spill into. A player without youth children keeps every shift here,
+	 * so extra work is never silently dropped from the club's totals.
+	 *
+	 * @param array{completed: int, pending: int, no_show: int} $tally The person's own shifts.
+	 */
+	private function speler_share( int $person_id, array $tally, int $required ): array {
+		if ( ! $this->has_gezin_duty( $person_id ) ) {
+			return [
+				'completed_count' => $tally['completed'],
+				'pending_count'   => $tally['pending'],
+				'no_show_count'   => $tally['no_show'],
+			];
+		}
+
+		$completed = min( $tally['completed'], $required );
+		$pending   = min( $tally['pending'], max( 0, $required - $completed ) );
+
+		return [
+			'completed_count' => $completed,
+			'pending_count'   => $pending,
+			// A no-show is a personal failure, counted once, on the person's own duty.
+			'no_show_count'   => $tally['no_show'],
+		];
+	}
+
+	/**
+	 * The gezin's progress: whatever each member did beyond their own spelersplicht.
+	 *
+	 * Children and non-playing parents owe no speler duty, so every shift they do
+	 * lands here.
+	 *
+	 * @param int[]                                                     $person_ids Parents plus children.
+	 * @param array<int, array{completed: int, pending: int, no_show: int}> $tallies    Per-person shifts.
+	 */
+	private function gezin_share( array $person_ids, array $tallies ): array {
+		$completed = 0;
+		$pending   = 0;
+		$no_show   = 0;
+
+		foreach ( $person_ids as $pid ) {
+			$tally         = $tallies[ $pid ];
+			$speler_needs  = $this->speler_required_for( $pid );
+			$speler_took_c = min( $tally['completed'], $speler_needs );
+			$speler_took_p = min( $tally['pending'], max( 0, $speler_needs - $speler_took_c ) );
+
+			$completed += $tally['completed'] - $speler_took_c;
+			$pending   += $tally['pending'] - $speler_took_p;
+
+			// Members with a speler unit already report their no-shows there.
+			if ( $speler_needs === 0 ) {
+				$no_show += $tally['no_show'];
 			}
 		}
 
@@ -334,6 +437,35 @@ class VolunteerObligationCalculator {
 			'pending_count'   => $pending,
 			'no_show_count'   => $no_show,
 		];
+	}
+
+	/**
+	 * How many shifts this person's own spelersplicht consumes before any spill.
+	 * Zero for children and for adults who do not play.
+	 */
+	private function speler_required_for( int $person_id ): int {
+		$age = $this->eligibility()->age_group_number( $person_id );
+
+		return ( $age !== null && $age >= VolunteerEligibilityService::ADULT_MIN_AGE )
+			? VolunteerEligibilityService::BASE_OBLIGATION
+			: 0;
+	}
+
+	/**
+	 * Does this person also carry a gezinsplicht that surplus shifts can spill into?
+	 */
+	private function has_gezin_duty( int $person_id ): bool {
+		return ! empty( $this->eligibility()->find_youth_children( $person_id ) );
+	}
+
+	/**
+	 * Lazily instantiated eligibility service, shared across one calculator run.
+	 */
+	private function eligibility(): VolunteerEligibilityService {
+		if ( $this->eligibility === null ) {
+			$this->eligibility = new VolunteerEligibilityService();
+		}
+		return $this->eligibility;
 	}
 
 	/**
