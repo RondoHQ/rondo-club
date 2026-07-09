@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.28.2] - 2026-07-09
+
+### Fixed
+- **Beveiliging: `suppress_age_group` kon de leeftijdsgroep-afscherming volledig omzeilen.** Elke ingelogde gebruiker — ook een gewoon lid zonder rechten — kon met `?suppress_age_group=1` op `/wp/v2/people` alle persoonsrecords opvragen, inclusief e-mailadressen. De parameter wordt nu alleen nog gehonoreerd voor gebruikers met een expliciet ingestelde, niet-lege leeftijdsgroep-lijst (coördinatoren, waarvoor de Kaderlijst hem nodig heeft). Beheerders waren al onbeperkt; voor gebruikers die "niemand" mogen zien wordt de parameter genegeerd.
+
 ## [33.28.1] - 2026-07-09
 
 ### Fixed
