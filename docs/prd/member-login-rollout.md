@@ -244,6 +244,13 @@ under-16s raises an AVG consent question that is a club/legal decision, not a te
 
 ## Proposed approach
 
+### Status, 2026-07-10
+
+Everything below the activation page is built, tested and on production. What remains is item 9 —
+the public `/activeren` page — plus the member-facing household UI (13) and the capability-matrix
+audit (14). **Item 9 is the only remaining piece that sends mail to real members and the only public
+unauthenticated endpoint; it needs explicit sign-off.**
+
 ### Identity model — synthetic email only on collision
 - Keep `user_email` = the real address whenever it is free. Those members log in with their email,
   exactly as the 17 existing accounts do. No migration.
@@ -293,7 +300,7 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~5~~ | ~~`rondo_contact_email` + synthetic-email fallback~~ — **done, 33.31.0** | — |
 | ~~6~~ | ~~Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable`~~ — **done, 33.31.0** | — |
 | ~~8~~ | ~~Reroute password-reset and WP notification mail~~ — **done, 33.31.0** (`ContactEmailRouter`) | — |
-| 7 | `authenticate` filter: username / KNVB-ID / unique contact-email login | 5 |
+| ~~7~~ | ~~username / KNVB-ID / unique contact-email login~~ — **done, 33.32.0** (`LoginResolver`) | — |
 | 9 | Public `/activeren` page + token endpoints + rate limiting | 5, 8 |
 | 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen | — |
 | 11 | Docs in `../developer/src/content/docs/features/` | all |
