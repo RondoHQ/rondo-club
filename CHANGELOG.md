@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.28.3] - 2026-07-09
+
+### Fixed
+- **De PHP-testsuite draait weer.** `codeception.yml` verwees nog naar het oude thema `stadion` en `composer test` riep de suite aan met de verkeerde hoofdletters. `AgeGroupAccessTest` is bijgewerkt naar de huidige "niet-beheerders zien niemand"-semantiek en dekt nu ook de `suppress_age_group`-fix uit 33.28.2 (18 tests groen).
+
+### Changed
+- Documentatie toegevoegd over het draaien van de testsuite, inclusief de waarschuwing dat 118 van de 153 tests verouderd zijn (geschreven voor het verwijderde goedkeuringssysteem).
+
 ## [33.28.2] - 2026-07-09
 
 ### Fixed
