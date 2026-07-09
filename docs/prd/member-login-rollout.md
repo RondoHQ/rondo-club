@@ -176,15 +176,38 @@ two separate defects:
 The header comment `SPELER : one obligation per O17+ player (vervangt de ouderplicht)` is now wrong
 and must be corrected.
 
-### 6. A parent cannot currently see their child's record
-Verified as a plain member: `GET /wp/v2/people` returns 0 rows and `GET /wp/v2/people/{id}` returns
-403. Plain members see nobody — which is correct today and wrong under decision 2.
+### 6. A parent cannot see their child's record — **FIXED in 33.30.0**
+`can_view_person()` is now the single authority: management sees everyone, coordinators their
+configured age groups, plain members themselves plus their children under 18. Enforced in
+`filter_rest_query()`, `apply_age_group_filter()` (the `pre_get_posts` path — a second, separate
+copy of the rule that had to be unified), `filter_rest_single_access()`, the raw-SQL
+`/rondo/v1/people/filtered`, and `user_can_access_post()`. Writes stay closed via
+`restrict_person_editing()`.
 
-Needs a positive, scoped grant in `AccessControl`: a member may read their own `person` record and
-the records of people reachable through their `relationships` (children). Read-only to start; any
-write path must respect the existing `former_member` read-only rule. This grant must be enforced in
-`filter_rest_query()`, `filter_rest_single_access()` **and** `map_meta_cap`, not in React — the
-frontend `KaderOrVrijwilligRedirect` guard is navigation, not authorization.
+Members read an allowlisted ACF subset; `financiele-blokkade`, `wacht_op_overschrijving` and
+`freescout-id` are withheld, and a field added later is private by default. A person with no usable
+birthdate is treated as an adult — fail closed.
+
+Verified on production: `borre.valk` sees exactly 1 person (himself, was 0), a stranger returns 403,
+`user_can_access_post()` on a stranger is `false`, and his own record returns 19 ACF fields with
+none of the three withheld ones. `jasper.jansen` still sees his 252, `joost` all 4,095.
+
+**Still missing: the UI.** The grant is server-side only. `/people/:id` is wrapped in
+`KaderOrVrijwilligRedirect`, so a member navigating there is still bounced to `/vrijwillig`. Item 13.
+
+### 6b. SECURITY — notes and activities were readable on any person — **FIXED in 33.30.0**
+`user_can_access_post()` returned `true` for every logged-in user on every person, and it is the
+permission callback behind `/rondo/v1/people/{id}/notes`, `/activities` and `/timeline`. The same
+class of bug as `suppress_age_group`. There are zero `rondo_note` comments site-wide, so nothing was
+disclosed. It now obeys `can_view_person()`.
+
+### 6c. Coordinator roles are not actually scoped
+`rondo_coordinator-junioren` carries the `fairplay` and `vog` capabilities, both of which are in
+`AGE_GROUP_BYPASS_CAPS`. So `patrice` reads as a management user and sees all 4,095 people; the
+role's `rondo_age_group_access` entry is dead configuration. `rondo_coordinator-pupillen` has no
+such capabilities, so `jasper.jansen` *is* correctly scoped to 252.
+
+This is a **capability-matrix configuration** issue, not a code bug. Item 14.
 
 ### 7. A willing volunteer with no obligation is refused
 Decision 3 says anyone may activate because they might want to volunteer. But
@@ -251,7 +274,9 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~3~~ | ~~Split `may_volunteer()` from owing an obligation~~ — **done, 33.29.0** | — |
 | ~~2~~ | ~~Attribute each shift to one unit, speler duty first~~ — **done, 33.29.1** | — |
 | 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` altogether | 1 |
-| 4 | Scoped read grant: member sees own record + children, enforced server-side | 0 |
+| ~~4~~ | ~~Scoped read grant: member sees own record + children~~ — **done, 33.30.0** | — |
+| 13 | Member-facing UI for the household view — the grant exists, the router still redirects | 4 |
+| 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped | — |
 | 5 | `rondo_contact_email` user meta + synthetic-email fallback in `UserProvisioning::provision()` | — |
 | 6 | Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable` | — |
 | 7 | `authenticate` filter: username / KNVB-ID / unique contact-email login | 5 |
