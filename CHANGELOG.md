@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.29.0] - 2026-07-09
+
+### Fixed
+- **Spelende ouders zagen hun gezinsplicht niet op /vrijwillig.** Wie zelf O17+ speelt én een kind onder 17 heeft, kreeg alleen de eigen spelersplicht te zien, terwijl het vrijwilligersdashboard de gezinsplicht apart meetelde. Beide plichten gelden — ze worden nu allebei getoond, met de eigen dienstplicht eerst.
+
+### Changed
+- **Meedoen mag ook zonder dienstplicht.** Wie niet onder de vrijwilligersplicht valt — een sponsor, een grootouder, een ouder van wie de kinderen zijn doorgestroomd — kreeg een leeg scherm met "Je valt niet onder de vrijwilligersplicht-doelgroep". Iedereen die actief lid is kan zich nu gewoon aanmelden voor diensten; alleen oud-leden worden geweigerd.
+
+### Added
+- Documentatie van het vrijwilligersplicht-systeem (`features/vrijwilligersplicht`) en van de leeftijdsgroep-afscherming (`features/access-control`).
+- `VolunteerObligationUnitsTest` — 10 tests op de plicht-afleiding, inclusief de cumulatieve plicht van een spelende ouder.
+
 ## [33.28.3] - 2026-07-09
 
 ### Fixed

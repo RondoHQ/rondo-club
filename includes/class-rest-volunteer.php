@@ -646,7 +646,7 @@ class Volunteer extends Base {
 	 * GET /rondo/v1/volunteer-eligibility
 	 *
 	 * Returns the derived eligible units for the requested season.
-	 * If `person_id` is given, returns just that person's unit (or 404 if none).
+	 * If `person_id` is given, returns that person's units — a playing parent has two.
 	 *
 	 * Response shape:
 	 *   {
@@ -663,19 +663,15 @@ class Volunteer extends Base {
 		$service = new VolunteerEligibilityService();
 
 		if ( $person_id > 0 ) {
-			$unit = $service->get_eligible_unit_for_person( $person_id, $season );
-			if ( $unit === null ) {
-				return rest_ensure_response(
-					[
-						'season' => $season,
-						'unit'   => null,
-					]
-				);
+			$units = $service->get_eligible_units_for_person( $person_id, $season );
+			if ( $with_persons ) {
+				$units = array_map( fn( $unit ) => $this->expand_unit( $unit, $season ), $units );
 			}
 			return rest_ensure_response(
 				[
-					'season' => $season,
-					'unit'   => $with_persons ? $this->expand_unit( $unit, $season ) : $unit,
+					'season'      => $season,
+					'units'       => $units,
+					'total_units' => count( $units ),
 				]
 			);
 		}

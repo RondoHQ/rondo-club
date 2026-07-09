@@ -14,7 +14,14 @@
  * Two unit kinds:
  *   - GEZIN  : one obligation per huishouden with one or more JO16- players
  *              (in te vullen door één of meerdere ouders samen)
- *   - SPELER : one obligation per O17+ player (vervangt de ouderplicht)
+ *   - SPELER : one obligation per O17+ player
+ *
+ * The two are CUMULATIVE, not alternatives. An O17+ player who is also the parent
+ * of a JO16- player owes both duties. Shifts fill the speler duty first and spill
+ * into the gezin duty afterwards.
+ *
+ * Owing an obligation is separate from being ALLOWED to volunteer: any active person
+ * may claim shifts (see may_volunteer()); the unit only decides what is required.
  *
  * Multi-child scaling (bestuursbesluit 2026-05-26): per kind tellend met
  * contributie-korting voor opvolgende kinderen. Kid 1 = 2, kid 2 = 1.5 (75%),
@@ -409,10 +416,66 @@ class VolunteerEligibilityService {
 	}
 
 	/**
+	 * Whether a person is allowed to claim shifts at all.
+	 *
+	 * Deliberately broader than "owes an obligation". A sponsor, a grandparent, or a
+	 * parent whose children have all aged out owes nothing yet may still want to help,
+	 * and the club has no reason to refuse them. Exempt members were already allowed
+	 * through on the same reasoning.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return bool Whether this person may sign up for diensten.
+	 */
+	public function may_volunteer( int $person_id ): bool {
+		return self::is_active_member( $person_id );
+	}
+
+	/**
+	 * Resolve every eligible unit a person is responsible for.
+	 *
+	 * A person can carry two duties at once: an O17+ player who is also the parent
+	 * of a JO16- player owes their own spelersplicht *and* the family's ouderplicht.
+	 * Both are returned; the speler unit always comes first, which is the order in
+	 * which completed shifts are attributed (see VolunteerObligationCalculator).
+	 *
+	 * Returns an empty array when the person is not in the doelgroep — a JO16- player
+	 * (their parents owe), or an adult with no youth children who does not play.
+	 *
+	 * @param int         $person_id Person post ID.
+	 * @param string|null $season    Defaults to current KNVB season.
+	 * @return array[] Zero, one or two unit arrays, shape matching get_eligible_units().
+	 */
+	public function get_eligible_units_for_person( int $person_id, ?string $season = null ): array {
+		$units = [];
+		$age   = $this->age_group_number( $person_id );
+
+		if ( $age !== null && $age <= self::YOUTH_MAX_AGE ) {
+			// The person themselves owes nothing — their parent(s) do.
+			return [];
+		}
+
+		if ( $age !== null && $age >= self::ADULT_MIN_AGE ) {
+			$units[] = $this->build_speler_unit( $person_id );
+		}
+
+		// Any adult — playing or not — may also owe via a JO16- child.
+		$gezin = $this->merged_gezin_unit_for_parent( $person_id );
+		if ( $gezin !== null ) {
+			$units[] = $gezin;
+		}
+
+		return $units;
+	}
+
+	/**
 	 * Resolve the eligible unit for a single person, if any.
 	 *
 	 * Returns null when the person is not in the doelgroep (e.g. age 16, no kids,
-	 * not a Senior/Veteraan player). Useful for member-facing "do I have to volunteer?" UI.
+	 * not a Senior/Veteraan player).
+	 *
+	 * @deprecated Use get_eligible_units_for_person(), which also returns the gezin
+	 *             unit of a playing parent. Kept for VolunteerFineGenerator, which
+	 *             only needs a household roster.
 	 *
 	 * @param int         $person_id Person post ID.
 	 * @param string|null $season    Defaults to current KNVB season.
@@ -431,15 +494,25 @@ class VolunteerEligibilityService {
 			}
 		}
 
-		// Adult who is not playing — could still owe via a JO16- child.
+		return $this->merged_gezin_unit_for_parent( $person_id );
+	}
+
+	/**
+	 * Build the gezin unit an adult owes through their JO16- children, or null.
+	 *
+	 * Merges the per-child units so the trigger list covers ALL youth children before
+	 * multi-child scaling is applied. Otherwise an adult with 3 youth children would
+	 * see "2 diensten" (single trigger) instead of "4 diensten" (3 triggers, floor).
+	 *
+	 * @param int $person_id Adult person post ID.
+	 * @return array|null Merged gezin unit, or null when they have no youth children.
+	 */
+	private function merged_gezin_unit_for_parent( int $person_id ): ?array {
 		$children = $this->find_youth_children( $person_id );
 		if ( empty( $children ) ) {
 			return null;
 		}
 
-		// Merge per-child units so the trigger list covers ALL youth children, then
-		// apply multi-child scaling. Otherwise an adult with 3 youth children would
-		// see "1 dienst" (single trigger) instead of "4 diensten" (3 triggers, floor).
 		$merged = null;
 		foreach ( $children as $child_id ) {
 			$child_unit = $this->build_gezin_unit( (int) $child_id );
