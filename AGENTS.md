@@ -23,9 +23,28 @@ npm run dev      # Start Vite dev server (port 5173, HMR enabled)
 npm run build    # Production build to dist/
 npm run lint     # ESLint check (max-warnings: 0)
 npm run preview  # Preview production build
+composer lint    # phpcs — run before every deploy
+composer test    # Codeception wpunit suite
 ```
 
 **Important:** The deploy script (`bin/deploy.sh`) runs `npm run build` automatically before syncing. You do not need to build separately before deploying. However, when creating PRs, run `npm run build` to verify the frontend compiles before committing.
+
+### Running the PHP test suite
+
+`composer test` needs a local WordPress whose `wp-content/themes/` contains a `rondo-club`
+directory. `tests/.env` points `WP_ROOT_FOLDER` at a Local site; symlink the theme in once:
+
+```bash
+source tests/.env
+ln -sfn "$PWD" "$WP_ROOT_FOLDER/wp-content/themes/rondo-club"
+```
+
+Run a single file with `vendor/bin/codecept run Wpunit AgeGroupAccessTest`.
+
+**Most of the suite is stale.** 118 of 153 tests error or fail against current code — they were
+written for the removed user-approval system and still reference `UserRoles::APPROVAL_META_KEY`.
+`AgeGroupAccessTest` is green and guards person-visibility access control; keep it that way. Do not
+treat a red suite as "expected" for the files you touch.
 
 ## Development Setup
 

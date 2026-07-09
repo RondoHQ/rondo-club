@@ -122,19 +122,19 @@ class AgeGroupAccessTest extends RondoTestCase {
 	}
 
 	/**
-	 * When no age-group config exists, should return null (no restriction).
+	 * When no age-group config exists, a non-management user sees nobody.
 	 */
-	public function test_returns_null_when_no_config_exists(): void {
+	public function test_returns_empty_when_no_config_exists(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'no_config_user' ] );
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
-		$this->assertNull( $result, 'Should return null when no config exists' );
+		$this->assertSame( [], $result, 'Unconfigured non-management user should see nobody' );
 	}
 
 	/**
-	 * When user's role has an empty array in config, should return null (no restriction).
+	 * When the user's role has an empty array in config, they see nobody.
 	 */
-	public function test_returns_null_when_role_has_empty_config(): void {
+	public function test_returns_empty_when_role_has_empty_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'empty_config_user' ] );
 
 		update_option(
@@ -145,7 +145,7 @@ class AgeGroupAccessTest extends RondoTestCase {
 		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
-		$this->assertNull( $result, 'Should return null when role has empty array config' );
+		$this->assertSame( [], $result, 'Empty role config should mean "see nobody"' );
 	}
 
 	/**
@@ -226,7 +226,7 @@ class AgeGroupAccessTest extends RondoTestCase {
 	/**
 	 * When user's role is not in the config, should return null.
 	 */
-	public function test_returns_null_when_role_not_in_config(): void {
+	public function test_returns_empty_when_role_not_in_config(): void {
 		$user_id = $this->createRondoUser( [ 'user_login' => 'unconfigured_role_user' ] );
 
 		update_option(
@@ -237,7 +237,58 @@ class AgeGroupAccessTest extends RondoTestCase {
 		);
 
 		$result = AccessControl::get_permitted_age_groups( $user_id );
-		$this->assertNull( $result, 'Should return null when user role is not in config' );
+		$this->assertSame( [], $result, 'A role absent from the config should see nobody' );
+	}
+
+	/**
+	 * A user who may see nobody must not be able to widen that to everybody by
+	 * passing `suppress_age_group`. Regression test for the 33.28.2 fix.
+	 */
+	public function test_user_who_sees_nobody_cannot_suppress_age_group(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'suppress_denied_user' ] );
+
+		$this->assertSame( [], AccessControl::get_permitted_age_groups( $user_id ) );
+		$this->assertFalse(
+			AccessControl::can_suppress_age_group( $user_id ),
+			'A user with an empty permitted list must never suppress the age-group filter'
+		);
+	}
+
+	/**
+	 * A coordinator with a configured, non-empty list may suppress — this is what
+	 * the Kaderlijst rebuild relies on.
+	 */
+	public function test_configured_coordinator_may_suppress_age_group(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'suppress_allowed_user' ] );
+
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_user' => [ 'Onder 11', 'Onder 12' ],
+			]
+		);
+
+		$this->assertTrue(
+			AccessControl::can_suppress_age_group( $user_id ),
+			'A coordinator with a non-empty permitted list may suppress'
+		);
+	}
+
+	/**
+	 * Management users are unrestricted already, so suppression is a no-op for them
+	 * and `can_suppress_age_group()` reports false rather than granting anything.
+	 */
+	public function test_management_user_does_not_need_suppression(): void {
+		$user_id = $this->factory()->user->create( [ 'role' => 'administrator' ] );
+
+		$this->assertNull(
+			AccessControl::get_permitted_age_groups( $user_id ),
+			'Management users bypass age-group filtering entirely'
+		);
+		$this->assertFalse(
+			AccessControl::can_suppress_age_group( $user_id ),
+			'Nothing to suppress for an already-unrestricted user'
+		);
 	}
 
 	/**

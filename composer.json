@@ -35,8 +35,8 @@
         "wp-coding-standards/wpcs": "^3.3"
     },
     "scripts": {
-        "test": "vendor/bin/codecept run wpunit",
-        "test:coverage": "vendor/bin/codecept run wpunit --coverage --coverage-html",
+        "test": "vendor/bin/codecept run Wpunit",
+        "test:coverage": "vendor/bin/codecept run Wpunit --coverage --coverage-html",
         "lint": "vendor/bin/phpcs",
         "lint:fix": "vendor/bin/phpcbf"
     }
