@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.31.0] - 2026-07-09
+
+### Added
+- **Gezinnen kunnen één e-mailadres delen.** Wie als tweede op een adres een account krijgt, krijgt een onbezorgbaar WordPress-adres (`person-{id}@members.rondo.invalid`); het echte adres staat in `rondo_contact_email`. Voorheen weigerde het systeem zo iemand met "Dit e-mailadres is al in gebruik".
+- **`ContactEmailRouter`** stuurt alle post die naar zo'n plaatsvervangend adres gaat door naar het echte adres — inclusief de wachtwoord-herstelmail van WordPress zelf. Zonder dit zou een tweede gezinslid nooit meer kunnen inloggen.
+- `UserProvisioningEmailTest` — 12 tests, waaronder de wachtwoord-herstelmail naar de gezinsbrievenbus.
+
+### Changed
+- **Ouders zijn nu te vinden in de accountkiezer.** De eis van een KNVB-ID verborg 269 actieve mensen — precies de ouders die de ouderplicht dragen en géén Sportlink-lid zijn. Een geldig e-mailadres is voortaan de enige eis.
+- Bestaat er al een account dat naar de persoon verwijst, maar ontbreekt de terugverwijzing, dan wordt dat account overgenomen in plaats van een tweede aangemaakt.
+
 ## [33.30.0] - 2026-07-09
 
 ### Added

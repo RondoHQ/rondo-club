@@ -265,6 +265,9 @@ function rondo_init() {
 	new UserRoles();
 	new LettermintMailer();
 	new DemoProtection();
+	// Must load on every request: core password-reset mail is addressed to user_email,
+	// which for a household member is an undeliverable placeholder.
+	new \Rondo\Users\ContactEmailRouter();
 
 	// Skip loading heavy classes for non-relevant requests
 	$is_admin = is_admin();
