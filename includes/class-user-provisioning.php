@@ -61,6 +61,24 @@ class UserProvisioning {
 	const META_KNVB_ID = '_rondo_knvb_id';
 
 	/**
+	 * User meta key: the member's real email address.
+	 *
+	 * Always set, for every provisioned user. When the address is free, it also becomes
+	 * the WordPress `user_email`; when it is already claimed by another member of the
+	 * same household, `user_email` gets a synthetic placeholder instead and this meta is
+	 * the only record of where mail should actually go. Read it through contact_email().
+	 */
+	const META_CONTACT_EMAIL = 'rondo_contact_email';
+
+	/**
+	 * Domain for synthetic, undeliverable `user_email` values.
+	 *
+	 * `.invalid` is reserved by RFC 2606 and can never resolve, so a stray notification
+	 * addressed here fails locally rather than reaching a stranger.
+	 */
+	const SYNTHETIC_EMAIL_DOMAIN = 'members.rondo.invalid';
+
+	/**
 	 * Custom from email for current send operation.
 	 *
 	 * @var string|null
@@ -109,6 +127,27 @@ class UserProvisioning {
 			delete_post_meta( $person_id, self::META_USER_ID );
 		}
 
+		// The reverse link may survive without the forward one (stale data, or a user
+		// created before provisioning existed). Adopt it rather than duplicating — and
+		// do so before any further validation, since the account already exists.
+		$orphan_link = get_users(
+			[
+				'meta_key'   => 'rondo_linked_person_id',
+				'meta_value' => $person_id,
+				'number'     => 1,
+				'fields'     => 'ID',
+			]
+		);
+		if ( ! empty( $orphan_link ) ) {
+			$existing_id = (int) $orphan_link[0];
+			update_post_meta( $person_id, self::META_USER_ID, $existing_id );
+			return [
+				'status'  => 'already_exists',
+				'user_id' => $existing_id,
+				'message' => 'Gebruiker bestaat al.',
+			];
+		}
+
 		// Get person's email address.
 		$email = $this->get_person_email( $person_id );
 		if ( ! $email ) {
@@ -119,15 +158,10 @@ class UserProvisioning {
 			);
 		}
 
-		// Check if email is already taken by another user.
-		$email_owner = email_exists( $email );
-		if ( $email_owner ) {
-			return new \WP_Error(
-				'email_taken',
-				'Dit e-mailadres is al in gebruik door een andere gebruiker.',
-				[ 'status' => 409 ]
-			);
-		}
+		// Households share one mailbox. WordPress insists on a unique user_email, so the
+		// first claimant keeps the real address and later members get an undeliverable
+		// placeholder. The real address always lives in META_CONTACT_EMAIL.
+		$wp_email = email_exists( $email ) ? $this->synthetic_email( $person_id ) : $email;
 
 		// Get person name fields.
 		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
@@ -137,10 +171,13 @@ class UserProvisioning {
 		$username = $this->generate_username( $first_name, $last_name );
 
 		// Create the WordPress user.
-		$user_id = wp_create_user( $username, wp_generate_password( 24, true, true ), $email );
+		$user_id = wp_create_user( $username, wp_generate_password( 24, true, true ), $wp_email );
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
 		}
+
+		// The address we actually send to — never the synthetic placeholder.
+		update_user_meta( $user_id, self::META_CONTACT_EMAIL, $email );
 
 		$user = new \WP_User( $user_id );
 
@@ -234,6 +271,13 @@ class UserProvisioning {
 			return new \WP_Error( 'user_not_found', 'Gebruiker niet gevonden.' );
 		}
 
+		// Never wp_mail() to user_email — for a household member that is a .invalid
+		// placeholder and the mail would go nowhere.
+		$to = self::contact_email( $user_id );
+		if ( ! $to ) {
+			return new \WP_Error( 'no_contact_email', 'Geen bezorgbaar e-mailadres voor deze gebruiker.' );
+		}
+
 		// Build password-set URL.
 		$set_password_url = add_query_arg(
 			[
@@ -270,7 +314,7 @@ class UserProvisioning {
 		// Perform {variable} substitution.
 		$vars = [
 			'first_name'       => $first_name,
-			'email'            => $user->user_email,
+			'email'            => $to,
 			'login'            => $user->user_login,
 			'set_password_url' => $set_password_url,
 			'club_naam'        => $club_naam,
@@ -301,7 +345,7 @@ class UserProvisioning {
 
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-		$result = wp_mail( $user->user_email, $subject, $html_body, $headers );
+		$result = wp_mail( $to, $subject, $html_body, $headers );
 
 		// Remove filters after sending.
 		remove_filter( 'wp_mail_from', [ $this, 'filter_mail_from' ] );
@@ -481,6 +525,50 @@ EOT;
 	 * @param int $person_id Person post ID.
 	 * @return string|null Email address or null if not found.
 	 */
+	/**
+	 * Where mail for this user must actually go.
+	 *
+	 * Falls back to `user_email` for accounts provisioned before META_CONTACT_EMAIL
+	 * existed — those all hold a real address, since a synthetic one is only ever
+	 * written alongside the meta.
+	 *
+	 * @param int $user_id WordPress user ID.
+	 * @return string|null The real address, or null when the user is gone.
+	 */
+	public static function contact_email( int $user_id ): ?string {
+		$contact = (string) get_user_meta( $user_id, self::META_CONTACT_EMAIL, true );
+		if ( is_email( $contact ) ) {
+			return $contact;
+		}
+
+		$user = get_userdata( $user_id );
+		if ( ! $user || self::is_synthetic_email( $user->user_email ) ) {
+			return null;
+		}
+
+		return $user->user_email;
+	}
+
+	/**
+	 * Is this an undeliverable placeholder rather than a real address?
+	 *
+	 * @param string $email Address to test.
+	 * @return bool
+	 */
+	public static function is_synthetic_email( string $email ): bool {
+		return str_ends_with( strtolower( $email ), '@' . self::SYNTHETIC_EMAIL_DOMAIN );
+	}
+
+	/**
+	 * A unique, undeliverable `user_email` for a member whose real address is taken.
+	 *
+	 * @param int $person_id Person post ID — unique by construction, so the address is too.
+	 * @return string
+	 */
+	private function synthetic_email( int $person_id ): string {
+		return sprintf( 'person-%d@%s', $person_id, self::SYNTHETIC_EMAIL_DOMAIN );
+	}
+
 	private function get_person_email( int $person_id ): ?string {
 		$email = get_field( 'email_1', $person_id );
 		if ( is_email( $email ) ) {

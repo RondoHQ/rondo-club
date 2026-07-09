@@ -203,16 +203,13 @@ class Users extends Base {
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				's'              => $search,
+				// No knvb-id requirement: the parents who carry the ouderplicht are not
+				// Sportlink members and have none. An email address is the only thing a
+				// provisionable person actually needs.
 				'meta_query'     => [
-					'relation' => 'AND',
 					[
 						'key'     => $meta_key,
 						'compare' => 'NOT EXISTS',
-					],
-					[
-						'key'     => 'knvb-id',
-						'compare' => '!=',
-						'value'   => '',
 					],
 				],
 				'fields'         => 'ids',
