@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2, Copy } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices, useSendInvoice, useDeleteInvoice } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -434,6 +434,26 @@ export default function Facturen() {
         filterType: null,
         size: 130,
       }),
+      ...(canEditFinancieel ? [{
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <Link
+            to={`/financien/facturen/nieuw?copyFrom=${row.original.id}`}
+            onClick={(e) => e.stopPropagation()}
+            title="Kopiëren naar nieuwe factuur"
+            aria-label="Kopiëren naar nieuwe factuur"
+            className="inline-flex items-center justify-center text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan"
+          >
+            <Copy className="w-4 h-4" />
+          </Link>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        enableColumnFilter: false,
+        size: 44,
+        meta: { className: 'w-10 !px-2 text-center' },
+      }] : []),
     ];
   }, [selectedIds, toggleSelect, handleSelectAll, canEditFinancieel]);
 

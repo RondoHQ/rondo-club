@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.39.2] - 2026-07-10
+## [33.40.0] - 2026-07-10
+
+### Added
+- **Bestaande factuur kopiëren als nieuw concept.** Op het Facturen-overzicht staat nu bij elke factuur een kopieer-knop, en op de factuurpagina zelf een knop "Kopiëren naar nieuwe factuur". Je komt dan in het factuurformulier met alle gegevens al ingevuld — lid/klant, regels, bedragen, e-mailtekst en eigen velden — zodat je terugkerende facturen (bijvoorbeeld de maandelijkse BSO-facturen) niet opnieuw hoeft in te tikken. Er wordt een nieuw factuurnummer toegekend bij versturen en de vervaldatum wordt opnieuw gezet. Een gekopieerde contributiefactuur wordt als handmatige factuur aangemaakt, omdat contributiefacturen automatisch worden gegenereerd. (feedback #6631)
 
 ### Fixed
 - **Creditfacturen kregen de tekst van een reguliere factuur in de e-mail.** Bij het aanmaken van een creditfactuur vulde het factuurformulier het e-mailtekstveld altijd met de reguliere-factuurtekst, ongeacht de factuursoort. Omdat de editor die tekst bij het laden opnieuw opmaakt, werd die reguliere tekst vervolgens als handmatige override meegestuurd en overschreef zo het ingestelde creditfactuur-template. Het formulier gebruikt nu de juiste standaardtekst per factuursoort (creditfactuur-template voor creditfacturen) en wisselt die correct om als je de factuursoort wijzigt. (feedback #6633)
