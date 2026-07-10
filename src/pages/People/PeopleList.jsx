@@ -48,6 +48,22 @@ function formatBirthdateDisplay(birthdate) {
   return format(parsed, 'd MMM yyyy');
 }
 
+function getMembershipTypeLabel(person) {
+  const acf = person.acf || {};
+
+  if (acf.person_type === 'contact') return 'Contact';
+
+  const sportlinkType = String(acf['type-lid'] || '').trim().toLowerCase();
+  if (sportlinkType.includes('verenigingslid')) return 'Verenigingslid';
+  if (sportlinkType.includes('bondslid')) return 'Bondslid';
+  if (sportlinkType.includes('ouder')) return 'Ouder';
+
+  const isParent = acf.isparent === true || acf.isparent === 1 || acf.isparent === '1';
+  if (isParent || !acf['knvb-id']) return 'Ouder';
+
+  return 'Bondslid';
+}
+
 // Helper function to get current team ID from person's work history
 function getCurrentTeamId(person) {
   if (person?.team_id) return person.team_id;
@@ -181,6 +197,18 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           minWidth: `${width}px`,
           maxWidth: `${width}px`,
         } : {};
+
+        if (colId === 'type-lid') {
+          return (
+            <td
+              key={colId}
+              className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
+              style={style}
+            >
+              {getMembershipTypeLabel(person)}
+            </td>
+          );
+        }
 
         // Check if this is a custom field
         const customField = customFieldsMap[colId];
