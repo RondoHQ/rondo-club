@@ -244,12 +244,28 @@ under-16s raises an AVG consent question that is a club/legal decision, not a te
 
 ## Proposed approach
 
-### Status, 2026-07-10
+### Status, 2026-07-10 — the rollout is live
 
-Everything below the activation page is built, tested and on production. What remains is item 9 —
-the public `/activeren` page — plus the member-facing household UI (13) and the capability-matrix
-audit (14). **Item 9 is the only remaining piece that sends mail to real members and the only public
-unauthenticated endpoint; it needs explicit sign-off.**
+**`/activeren` is open on production.** Any of the 1,317 provisionable people can create their own
+account. Nothing has been announced yet, so no mail has gone to a member.
+
+Verified end to end against production with a throwaway person (token minted directly, so no mail
+was sent), then cleaned up — user count back to 17:
+
+- `GET /activeren` → 200, form with nonce
+- `POST /activeren` without a nonce → 403
+- `POST /activeren` with an unknown address → the same "Kijk in je mailbox" as a known one
+- `GET /activeren/{token}` → the "Wie ben je?" picker listing the person
+- `POST` with a person on **another** address → 400, "hoort niet bij dit e-mailadres"
+- `POST` with the right person → 302 to `wp-login.php?action=rp&key=…`
+- replaying the burned token → 400, "verlopen of ongeldig"
+- `GET /betaling/{bogus}` → 404 with its normal error page (chrome extraction did not break payments)
+
+Remaining: the member-facing household UI (13) and the capability-matrix audit (14). Neither blocks
+the announcement.
+
+**Before announcing:** `wp rewrite flush` has been run; re-run it after any deploy that adds rewrite
+rules.
 
 ### Identity model — synthetic email only on collision
 - Keep `user_email` = the real address whenever it is free. Those members log in with their email,
@@ -301,7 +317,7 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~6~~ | ~~Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable`~~ — **done, 33.31.0** | — |
 | ~~8~~ | ~~Reroute password-reset and WP notification mail~~ — **done, 33.31.0** (`ContactEmailRouter`) | — |
 | ~~7~~ | ~~username / KNVB-ID / unique contact-email login~~ — **done, 33.32.0** (`LoginResolver`) | — |
-| 9 | Public `/activeren` page + token endpoints + rate limiting | 5, 8 |
+| ~~9~~ | ~~Public `/activeren` page + token endpoints + rate limiting~~ — **done, 33.33.0** | — |
 | 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen | — |
 | 11 | Docs in `../developer/src/content/docs/features/` | all |
 
