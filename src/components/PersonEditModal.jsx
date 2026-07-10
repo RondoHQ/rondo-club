@@ -12,7 +12,8 @@ export default function PersonEditModal({
   onSubmit,
   isLoading,
   person = null, // Pass person data for editing
-  prefillData = null // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
+  prefillData = null, // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
+  initialPersonType = 'contact'
 }) {
   const isEditing = !!person;
   const isOnline = useOnlineStatus();
@@ -46,12 +47,13 @@ export default function PersonEditModal({
     },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     defaultValues: {
       first_name: '',
       infix: '',
       last_name: '',
       nickname: '',
+      person_type: initialPersonType,
       gender: '',
       pronouns: '',
       email: '',
@@ -60,6 +62,7 @@ export default function PersonEditModal({
       birthday: '',
     },
   });
+  const selectedPersonType = watch('person_type');
 
   // Reset form when modal opens
   useEffect(() => {
@@ -76,6 +79,7 @@ export default function PersonEditModal({
           infix: person.acf?.infix || '',
           last_name: person.acf?.last_name || '',
           nickname: person.acf?.nickname || '',
+          person_type: person.acf?.person_type || 'member',
           gender: person.acf?.gender || '',
           pronouns: person.acf?.pronouns || '',
           email: person.acf?.email_1 || '',
@@ -90,6 +94,7 @@ export default function PersonEditModal({
           infix: prefillData.infix || '',
           last_name: prefillData.last_name || '',
           nickname: '',
+          person_type: prefillData.person_type || initialPersonType,
           gender: '',
           pronouns: '',
           email: prefillData.email || '',
@@ -104,6 +109,7 @@ export default function PersonEditModal({
           infix: '',
           last_name: '',
           nickname: '',
+          person_type: initialPersonType,
           gender: '',
           pronouns: '',
           email: '',
@@ -113,7 +119,7 @@ export default function PersonEditModal({
         });
       }
     }
-  }, [isOpen, person, prefillData, reset]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, person, prefillData, initialPersonType, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle vCard drag and drop
   const handleDrag = useCallback((e) => {
@@ -153,6 +159,7 @@ export default function PersonEditModal({
           infix: data.infix || '',
           last_name: data.last_name || '',
           nickname: data.nickname || '',
+          person_type: initialPersonType,
           gender: data.gender || '',
           pronouns: data.pronouns || '',
           email: data.email || '',
@@ -199,7 +206,9 @@ export default function PersonEditModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">{isEditing ? 'Lid bewerken' : 'Lid toevoegen'}</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+            {isEditing ? 'Persoon bewerken' : selectedPersonType === 'member' ? 'Lid / ouder toevoegen' : 'Contact toevoegen'}
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -324,6 +333,21 @@ export default function PersonEditModal({
               />
             </div>
 
+            <div>
+              <label className="label">Persoonstype</label>
+              <select
+                {...register('person_type')}
+                className="input"
+                disabled={isLoading}
+              >
+                <option value="member">Lid / ouder</option>
+                <option value="contact">Contact</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Contacten gebruiken dezelfde adres-, relatie- en factuurgegevens als leden.
+              </p>
+            </div>
+
             {/* Gender and Pronouns */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -419,7 +443,7 @@ export default function PersonEditModal({
               className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!isOnline || isLoading}
             >
-              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Lid aanmaken')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : selectedPersonType === 'member' ? 'Lid / ouder aanmaken' : 'Contact aanmaken')}
             </button>
           </div>
         </form>

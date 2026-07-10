@@ -178,7 +178,7 @@ export function formatDateValue(dateString, yearUnknown = false, formatFn) {
  */
 export function sanitizePersonAcf(acfData, overrides = {}) {
   // Fields that are select/enum and should be null instead of empty string
-  const enumFields = ['gender', 'vergoeding_reden'];
+  const enumFields = ['gender', 'vergoeding_reden', 'person_type'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
   const numericFields = [
@@ -468,4 +468,3 @@ export function isDutchMobilePhone(phone) {
 
   return cleaned.startsWith('+316') || cleaned.startsWith('06');
 }
-

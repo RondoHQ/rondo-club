@@ -50,6 +50,28 @@
             }
         },
         {
+            "key": "field_person_type",
+            "label": "Persoonstype",
+            "name": "person_type",
+            "type": "select",
+            "instructions": "Gebruik Contact voor externe relaties die geen lid of ouder/verzorger zijn.",
+            "required": 0,
+            "choices": {
+                "member": "Lid / ouder",
+                "contact": "Contact"
+            },
+            "default_value": "member",
+            "allow_null": 0,
+            "multiple": 0,
+            "ui": 0,
+            "return_format": "value",
+            "ajax": 0,
+            "placeholder": "",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
             "key": "field_gender",
             "label": "Gender",
             "name": "gender",
@@ -794,5 +816,5 @@
     ],
     "active": true,
     "show_in_rest": 1,
-    "modified": 1779999281
+    "modified": 1783677600
 }

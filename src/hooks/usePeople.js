@@ -104,6 +104,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.huidigeVrijwilliger - '1' for yes, '0' for no, '' for all
  * @param {string} filters.financieleBlokkade - '1' for yes, '0' for no, '' for all
  * @param {string} filters.typeLid - Filter by member type value
+ * @param {string} filters.personType - Filter by Rondo person type (`member` or `contact`)
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
@@ -131,6 +132,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     huidig_vrijwilliger: filters.huidigeVrijwilliger || null,
     financiele_blokkade: filters.financieleBlokkade || null,
     type_lid: filters.typeLid || null,
+    person_type: filters.personType || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
@@ -267,6 +269,7 @@ export function useCreatePerson({ onSuccess } = {}) {
           infix: data.infix || '',
           last_name: data.last_name,
           nickname: data.nickname,
+          person_type: data.person_type || 'member',
           gender: data.gender || null,
           pronouns: data.pronouns || null,
           email_1: data.email || '',
@@ -281,7 +284,7 @@ export function useCreatePerson({ onSuccess } = {}) {
       return response.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.all });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['reminders'] });
       queryClient.invalidateQueries({ queryKey: ['person-meetings'] });
@@ -298,7 +301,7 @@ export function useUpdatePerson() {
     mutationFn: ({ id, data }) => wpApi.updatePerson(id, data),
     onSuccess: (_, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: peopleKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: peopleKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: peopleKeys.all });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       // If relationships were updated, invalidate cache for related people

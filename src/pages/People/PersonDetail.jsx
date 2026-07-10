@@ -121,6 +121,7 @@ export default function PersonDetail() {
   const [editingRelationship, setEditingRelationship] = useState(null);
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isSavingPersonType, setIsSavingPersonType] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
@@ -187,6 +188,18 @@ export default function PersonDetail() {
       alert('Contacten konden niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingContacts(false);
+    }
+  };
+
+  const handlePersonTypeChange = async (personType) => {
+    setIsSavingPersonType(true);
+    try {
+      const acfData = sanitizePersonAcf(person.acf, { person_type: personType });
+      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+    } catch {
+      alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
+    } finally {
+      setIsSavingPersonType(false);
     }
   };
 
@@ -1200,6 +1213,11 @@ export default function PersonDetail() {
                   Oud-lid
                 </span>
               )}
+              {acf.person_type === 'contact' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+                  Contact
+                </span>
+              )}
               {!acf.former_member && hasValidLidTot && new Date(acf['lid-tot']) > new Date() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Afmelding in de toekomst
@@ -1216,6 +1234,20 @@ export default function PersonDetail() {
                 </span>
               )}
             </div>
+            {canEditPeople && (
+              <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span>Persoonstype</span>
+                <select
+                  value={acf.person_type || 'member'}
+                  onChange={(event) => handlePersonTypeChange(event.target.value)}
+                  className="input py-1 text-sm w-auto"
+                  disabled={isSavingPersonType}
+                >
+                  <option value="member">Lid / ouder</option>
+                  <option value="contact">Contact</option>
+                </select>
+              </label>
+            )}
             {groupedPositions.length > 0 && (
               <p className="text-base text-gray-600 dark:text-gray-300">
                 {groupedPositions.map((group, groupIdx) => (
@@ -1542,8 +1574,8 @@ export default function PersonDetail() {
             {/* Sportlink Card */}
             <SportlinkCard acfData={person?.acf} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
-            {/* Relationships - only show when relationships exist */}
-            {sortedRelationships?.length > 0 && (
+            {/* Keep the card available for editable people so the first relationship can be added. */}
+            {(canEditPeople || sortedRelationships?.length > 0) && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-brand-gradient">Relaties</h2>

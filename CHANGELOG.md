@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.42.0] - 2026-07-10
+
+### Added
+- Externe verenigingscontacten kunnen als persoonstype **Contact** in hetzelfde adresboek als leden en ouders worden bijgehouden. De ledenlijst heeft hiervoor een knop "Contact toevoegen", een persoonstypefilter en herkenbare Contact-labels. Contacten gebruiken dezelfde adres-, relatie- en factuurgegevens als andere personen. (feedback #7921)
+
+### Changed
+- De Relaties-kaart blijft voor bevoegde gebruikers zichtbaar wanneer een persoon nog geen relaties heeft, zodat ook bij een nieuw contact direct de eerste relatie kan worden toegevoegd.
+
 ## [33.41.5] - 2026-07-10
 
 ### Fixed
