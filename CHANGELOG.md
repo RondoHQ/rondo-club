@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.42.1] - 2026-07-10
+
+### Changed
+- De dialoog **Contact toevoegen** vermeldt nu duidelijk dat hij alleen voor externe contacten bedoeld is en dat leden en ouders/verzorgers uitsluitend via Sportlink worden toegevoegd en bijgewerkt. Bij het aanmaken kan het persoonstype daarom niet meer naar lid/ouder worden gewijzigd.
+
 ## [33.42.0] - 2026-07-10
 
 ### Added

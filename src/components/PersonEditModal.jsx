@@ -47,7 +47,7 @@ export default function PersonEditModal({
     },
   });
 
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       first_name: '',
       infix: '',
@@ -62,8 +62,6 @@ export default function PersonEditModal({
       birthday: '',
     },
   });
-  const selectedPersonType = watch('person_type');
-
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -207,7 +205,7 @@ export default function PersonEditModal({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-            {isEditing ? 'Persoon bewerken' : selectedPersonType === 'member' ? 'Lid / ouder toevoegen' : 'Contact toevoegen'}
+            {isEditing ? 'Persoon bewerken' : 'Contact toevoegen'}
           </h2>
           <button
             onClick={onClose}
@@ -220,6 +218,15 @@ export default function PersonEditModal({
         
         <form onSubmit={handleSubmit(handleFormSubmit)} className="flex flex-col flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {!isEditing && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <p>
+                  Voeg hier alleen externe contacten toe. Leden en ouders/verzorgers worden uitsluitend via Sportlink toegevoegd en bijgewerkt.
+                </p>
+              </div>
+            )}
+
             {/* vCard Import - only when creating */}
             {!isEditing && (
               <div>
@@ -333,20 +340,19 @@ export default function PersonEditModal({
               />
             </div>
 
-            <div>
-              <label className="label">Persoonstype</label>
-              <select
-                {...register('person_type')}
-                className="input"
-                disabled={isLoading}
-              >
-                <option value="member">Lid / ouder</option>
-                <option value="contact">Contact</option>
-              </select>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Contacten gebruiken dezelfde adres-, relatie- en factuurgegevens als leden.
-              </p>
-            </div>
+            {isEditing && (
+              <div>
+                <label className="label">Persoonstype</label>
+                <select
+                  {...register('person_type')}
+                  className="input"
+                  disabled={isLoading}
+                >
+                  <option value="member">Lid / ouder</option>
+                  <option value="contact">Contact</option>
+                </select>
+              </div>
+            )}
 
             {/* Gender and Pronouns */}
             <div className="grid grid-cols-2 gap-4">
@@ -443,7 +449,7 @@ export default function PersonEditModal({
               className={`btn-primary ${!isOnline ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!isOnline || isLoading}
             >
-              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : selectedPersonType === 'member' ? 'Lid / ouder aanmaken' : 'Contact aanmaken')}
+              {isLoading ? 'Opslaan...' : (isEditing ? 'Wijzigingen opslaan' : 'Contact aanmaken')}
             </button>
           </div>
         </form>
