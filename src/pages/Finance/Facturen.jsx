@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2, Copy } from 'lucide-react';
+import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2, Copy, CalendarClock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useInvoices, useSendInvoice, useDeleteInvoice } from '@/hooks/useInvoices';
+import { useInvoices, useSendInvoice, useDeleteInvoice, useScheduleInvoice } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
@@ -45,9 +45,18 @@ const typeColors = {
   credit: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
 };
 
-function StatusBadge({ status, reminderCount = 0, paidInstallments = 0, installmentCount = 0 }) {
+function StatusBadge({ status, reminderCount = 0, paidInstallments = 0, installmentCount = 0, scheduledSendDate = null }) {
   let colorKey = status;
   let label = statusLabels[status] || status;
+
+  // A draft queued for automatic sending gets its own badge.
+  if (status === 'draft' && scheduledSendDate) {
+    return (
+      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+        Ingepland · {format(parseYmd(scheduledSendDate), 'd MMM yyyy')}
+      </span>
+    );
+  }
 
   // Derive partially paid status when some (but not all) installments are paid.
   if (status !== 'paid' && paidInstallments > 0 && paidInstallments < installmentCount) {
@@ -87,12 +96,20 @@ export default function Facturen() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkSending, setBulkSending] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  // action is 'send' | 'delete' — labels the result panel; done counts completed items.
+  const [bulkScheduling, setBulkScheduling] = useState(false);
+  const [showScheduleInput, setShowScheduleInput] = useState(false);
+  const [bulkScheduleDate, setBulkScheduleDate] = useState('');
+  // action is 'send' | 'delete' | 'schedule' — labels the result panel; done counts completed items.
   const [bulkProgress, setBulkProgress] = useState({ action: 'send', done: 0, total: 0, errors: [] });
 
   const sendInvoice = useSendInvoice();
   const deleteInvoice = useDeleteInvoice();
-  const bulkBusy = bulkSending || bulkDeleting;
+  const scheduleInvoice = useScheduleInvoice();
+  const bulkBusy = bulkSending || bulkDeleting || bulkScheduling;
+  const todayInput = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
 
   const toggleSelect = useCallback((id) => {
     setSelectedIds((prev) => {
@@ -211,6 +228,30 @@ export default function Facturen() {
     }
 
     setBulkDeleting(false);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+  };
+
+  const handleBulkSchedule = async () => {
+    if (!bulkScheduleDate) return;
+    const ids = Array.from(selectedIds);
+    const scheduledSendDate = bulkScheduleDate.replaceAll('-', '');
+    setBulkScheduling(true);
+    setBulkProgress({ action: 'schedule', done: 0, total: ids.length, errors: [] });
+
+    const errors = [];
+    for (let i = 0; i < ids.length; i++) {
+      try {
+        await scheduleInvoice.mutateAsync({ id: ids[i], scheduledSendDate });
+      } catch (err) {
+        errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
+      }
+      setBulkProgress({ action: 'schedule', done: i + 1, total: ids.length, errors: [...errors] });
+    }
+
+    setBulkScheduling(false);
+    setShowScheduleInput(false);
+    setBulkScheduleDate('');
     setSelectedIds(new Set());
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
   };
@@ -362,6 +403,7 @@ export default function Facturen() {
             reminderCount={row.original.reminder_count || 0}
             paidInstallments={row.original.paid_installments || 0}
             installmentCount={row.original.installment_count || 0}
+            scheduledSendDate={row.original.scheduled_send_date}
           />
         ),
         filterType: FILTER_TYPES.SELECT,
@@ -500,6 +542,51 @@ export default function Facturen() {
                 </>
               )}
             </button>
+            {showScheduleInput ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={bulkScheduleDate}
+                  min={todayInput}
+                  onChange={(e) => setBulkScheduleDate(e.target.value)}
+                  className="input text-sm py-1 px-2"
+                />
+                <button
+                  onClick={handleBulkSchedule}
+                  disabled={bulkBusy || !bulkScheduleDate}
+                  className="btn-tertiary gap-2 text-sm py-1.5 px-3"
+                >
+                  {bulkScheduling ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Inplannen ({bulkProgress.done}/{bulkProgress.total})...
+                    </>
+                  ) : (
+                    <>
+                      <CalendarClock className="w-4 h-4" />
+                      Inplannen
+                    </>
+                  )}
+                </button>
+                {!bulkBusy && (
+                  <button
+                    onClick={() => { setShowScheduleInput(false); setBulkScheduleDate(''); }}
+                    className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Annuleer
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowScheduleInput(true)}
+                disabled={bulkBusy}
+                className="btn-tertiary gap-2 text-sm py-1.5 px-3"
+              >
+                <CalendarClock className="w-4 h-4" />
+                Inplannen voor…
+              </button>
+            )}
             <button
               onClick={handleBulkDelete}
               disabled={bulkBusy}
@@ -536,7 +623,7 @@ export default function Facturen() {
               : 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800'
           }`}>
             <p className="font-medium text-gray-900 dark:text-gray-100">
-              {bulkProgress.done - bulkProgress.errors.length} van {bulkProgress.total} {bulkProgress.total === 1 ? 'factuur' : 'facturen'} {bulkProgress.action === 'delete' ? 'verwijderd' : 'verstuurd'}
+              {bulkProgress.done - bulkProgress.errors.length} van {bulkProgress.total} {bulkProgress.total === 1 ? 'factuur' : 'facturen'} {bulkProgress.action === 'delete' ? 'verwijderd' : bulkProgress.action === 'schedule' ? 'ingepland' : 'verstuurd'}
               {bulkProgress.errors.length > 0 && `, ${bulkProgress.errors.length} mislukt`}
             </p>
             {bulkProgress.errors.map((err) => (

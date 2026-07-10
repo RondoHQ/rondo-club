@@ -318,6 +318,30 @@ class Invoices extends Base {
 			]
 		);
 
+		// Schedule (or clear) a future automatic send date for a draft invoice
+		register_rest_route(
+			'rondo/v1',
+			'/invoices/(?P<id>\d+)/schedule',
+			[
+				[
+					'methods'             => \WP_REST_Server::CREATABLE,
+					'callback'            => [ $this, 'schedule_invoice' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'args'                => [
+						'id'                  => [
+							'validate_callback' => function ( $param ) {
+								return is_numeric( $param );
+							},
+						],
+						'scheduled_send_date' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+					],
+				],
+			]
+		);
+
 		// Resend invoice via email
 		register_rest_route(
 			'rondo/v1',
@@ -1437,6 +1461,10 @@ class Invoices extends Base {
 		// Update ACF status field
 		update_field( 'status', 'sent', $invoice_id );
 
+		// Clear any pending scheduled-send date now that the invoice is sent.
+		delete_post_meta( $invoice_id, '_scheduled_send_date' );
+		delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
+
 		// Set sent_date
 		$sent_date = current_time( 'Ymd' );
 		update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
@@ -1473,6 +1501,86 @@ class Invoices extends Base {
 		// Return updated invoice detail
 		$invoice = get_post( $invoice_id );
 		return rest_ensure_response( $this->format_invoice_detail( $invoice ) );
+	}
+
+	/**
+	 * Schedule (or clear) the future automatic send date for a draft invoice.
+	 *
+	 * An empty scheduled_send_date clears the schedule. A future date queues the
+	 * invoice for the daily scheduled-send cron sweeper
+	 * (InvoiceScheduledSendScheduler), which runs the normal send flow on that day.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function schedule_invoice( $request ) {
+		$invoice_id = (int) $request->get_param( 'id' );
+		$invoice    = get_post( $invoice_id );
+
+		if ( ! $invoice || $invoice->post_type !== 'rondo_invoice' ) {
+			return new \WP_Error( 'rest_not_found', __( 'Factuur niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
+		}
+
+		if ( $invoice->post_status !== 'rondo_draft' ) {
+			return new \WP_Error(
+				'invoice_not_draft',
+				__( 'Alleen conceptfacturen kunnen worden ingepland.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		$raw = (string) $request->get_param( 'scheduled_send_date' );
+
+		// Empty value clears any existing schedule.
+		if ( trim( $raw ) === '' ) {
+			delete_post_meta( $invoice_id, '_scheduled_send_date' );
+			delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
+			return rest_ensure_response( $this->format_invoice_detail( get_post( $invoice_id ) ) );
+		}
+
+		$ymd = self::normalize_scheduled_send_date( $raw );
+		if ( $ymd === '' ) {
+			return new \WP_Error( 'invalid_date', __( 'Ongeldige verzenddatum.', 'rondo' ), [ 'status' => 400 ] );
+		}
+
+		if ( $ymd < current_time( 'Ymd' ) ) {
+			return new \WP_Error(
+				'date_in_past',
+				__( 'De verzenddatum moet vandaag of in de toekomst liggen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		update_post_meta( $invoice_id, '_scheduled_send_date', $ymd );
+		update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+
+		return rest_ensure_response( $this->format_invoice_detail( get_post( $invoice_id ) ) );
+	}
+
+	/**
+	 * Normalize a date input (Y-m-d or Ymd) to a valid Ymd string, or '' if invalid.
+	 *
+	 * @param string $value Raw date value.
+	 * @return string
+	 */
+	private static function normalize_scheduled_send_date( string $value ): string {
+		$value = trim( $value );
+		if ( preg_match( '/^\d{8}$/', $value ) ) {
+			$ymd = $value;
+		} elseif ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
+			$ymd = str_replace( '-', '', $value );
+		} else {
+			return '';
+		}
+
+		$year  = (int) substr( $ymd, 0, 4 );
+		$month = (int) substr( $ymd, 4, 2 );
+		$day   = (int) substr( $ymd, 6, 2 );
+		if ( ! checkdate( $month, $day, $year ) ) {
+			return '';
+		}
+
+		return $ymd;
 	}
 
 	/**
@@ -2103,30 +2211,31 @@ class Invoices extends Base {
 		}
 
 		return [
-			'id'                 => $post->ID,
-			'invoice_number'     => get_field( 'invoice_number', $post->ID ),
-			'person'             => $this->get_invoice_person_summary( $post->ID ),
-			'customer_name'      => (string) get_post_meta( $post->ID, '_customer_name', true ),
-			'customer_attention' => (string) get_post_meta( $post->ID, '_customer_attention', true ),
-			'customer_email'     => (string) get_post_meta( $post->ID, '_customer_email', true ),
-			'customer_cc_email'  => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
-			'customer_address'   => (string) get_post_meta( $post->ID, '_customer_address', true ),
-			'invoice_kind'       => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
-			'total_amount'       => (float) get_field( 'total_amount', $post->ID ),
-			'status'             => $status,
-			'post_status'        => $post->post_status,
-			'sent_date'          => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
-			'due_date'           => get_post_meta( $post->ID, 'due_date', true ) ?: null,
-			'payment_link'       => $payment_link,
-			'payment_account'    => $this->get_invoice_payment_account( $post->ID ),
-			'created'            => $post->post_date,
-			'invoice_type'       => get_field( 'invoice_type', $post->ID ) ?: null,
-			'installment_plan'   => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
-			'installment_count'  => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
-			'paid_installments'  => $this->count_paid_installments( $post->ID ),
-			'reminder_sent_at'   => $reminder_sent_at,
-			'reminder_count'     => $reminder_count,
-			'sent_by'            => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
+			'id'                  => $post->ID,
+			'invoice_number'      => get_field( 'invoice_number', $post->ID ),
+			'person'              => $this->get_invoice_person_summary( $post->ID ),
+			'customer_name'       => (string) get_post_meta( $post->ID, '_customer_name', true ),
+			'customer_attention'  => (string) get_post_meta( $post->ID, '_customer_attention', true ),
+			'customer_email'      => (string) get_post_meta( $post->ID, '_customer_email', true ),
+			'customer_cc_email'   => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
+			'customer_address'    => (string) get_post_meta( $post->ID, '_customer_address', true ),
+			'invoice_kind'        => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
+			'total_amount'        => (float) get_field( 'total_amount', $post->ID ),
+			'status'              => $status,
+			'post_status'         => $post->post_status,
+			'sent_date'           => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
+			'due_date'            => get_post_meta( $post->ID, 'due_date', true ) ?: null,
+			'scheduled_send_date' => get_post_meta( $post->ID, '_scheduled_send_date', true ) ?: null,
+			'payment_link'        => $payment_link,
+			'payment_account'     => $this->get_invoice_payment_account( $post->ID ),
+			'created'             => $post->post_date,
+			'invoice_type'        => get_field( 'invoice_type', $post->ID ) ?: null,
+			'installment_plan'    => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
+			'installment_count'   => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
+			'paid_installments'   => $this->count_paid_installments( $post->ID ),
+			'reminder_sent_at'    => $reminder_sent_at,
+			'reminder_count'      => $reminder_count,
+			'sent_by'             => $this->get_user_summary_by_id( $sent_by_user_id ?: $last_sent_by_user_id ),
 		];
 	}
 
@@ -2252,6 +2361,12 @@ class Invoices extends Base {
 		$custom_fields       = $request->get_param( 'custom_fields' );
 		$finance_config      = new FinanceConfig();
 
+		// Optional future automatic send date. Only kept when today or later.
+		$scheduled_send_date = self::normalize_scheduled_send_date( (string) $request->get_param( 'scheduled_send_date' ) );
+		if ( $scheduled_send_date !== '' && $scheduled_send_date < current_time( 'Ymd' ) ) {
+			$scheduled_send_date = '';
+		}
+
 		if ( empty( $line_items ) || ! is_array( $line_items ) ) {
 			return new \WP_Error(
 				'rest_missing_param',
@@ -2367,6 +2482,7 @@ class Invoices extends Base {
 			'payment_account'     => $selected_payment_account,
 			'email_subject'       => $email_subject,
 			'email_body_override' => $email_body_override,
+			'scheduled_send_date' => $scheduled_send_date,
 			'custom_fields'       => $normalized_custom_fields,
 			'line_items'          => $rows,
 			'total_amount'        => $total_amount,
@@ -2401,6 +2517,16 @@ class Invoices extends Base {
 		update_post_meta( $invoice_id, '_payment_account_linked_provider', (string) ( $payment_account['linked_provider'] ?? '' ) );
 		update_post_meta( $invoice_id, '_email_subject', $payload['email_subject'] );
 		update_post_meta( $invoice_id, '_email_body_override', $payload['email_body_override'] );
+
+		// Optional scheduled automatic send date.
+		if ( ! empty( $payload['scheduled_send_date'] ) ) {
+			update_post_meta( $invoice_id, '_scheduled_send_date', $payload['scheduled_send_date'] );
+			update_post_meta( $invoice_id, '_scheduled_send_by_user_id', get_current_user_id() );
+		} else {
+			delete_post_meta( $invoice_id, '_scheduled_send_date' );
+			delete_post_meta( $invoice_id, '_scheduled_send_by_user_id' );
+		}
+
 		update_post_meta( $invoice_id, '_custom_fields', wp_json_encode( $payload['custom_fields'] ) );
 	}
 

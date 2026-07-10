@@ -20,6 +20,8 @@ export function mapInvoiceToInitialValues(invoice, { copy = false } = {}) {
     personId: invoice.person?.id || null,
     personLabel: invoice.person?.name || '',
     dueDate: copy ? '' : (invoice.due_date || ''),
+    // A copy starts unscheduled — the schedule belongs to the original invoice.
+    scheduledSendDate: copy ? '' : (invoice.scheduled_send_date || ''),
     paymentAccountId: invoice.payment_account?.id || '',
     emailSubject: invoice.email_subject || '',
     emailBody: invoice.email_body_override || '',

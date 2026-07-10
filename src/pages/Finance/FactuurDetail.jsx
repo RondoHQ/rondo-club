@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil, Copy } from 'lucide-react';
-import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
+import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil, Copy, CalendarClock } from 'lucide-react';
+import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice, useScheduleInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -79,9 +79,17 @@ function getPlanLabel(plan, installmentCount) {
 /**
  * Status badge component
  */
-function StatusBadge({ status, reminderCount = 0 }) {
+function StatusBadge({ status, reminderCount = 0, scheduledSendDate = null }) {
   let colorKey = status;
   let label = statusLabels[status] || status;
+
+  if (status === 'draft' && scheduledSendDate) {
+    return (
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+        Ingepland · {format(parseYmd(scheduledSendDate), 'd MMM yyyy')}
+      </span>
+    );
+  }
 
   if (status === 'overdue' && reminderCount > 0) {
     if (reminderCount >= 2) {
@@ -177,6 +185,8 @@ export default function FactuurDetail() {
   const [entryDiscountPercentInput, setEntryDiscountPercentInput] = useState('');
   const [draftAdjustmentDescription, setDraftAdjustmentDescription] = useState('Correctie');
   const [draftAdjustmentAmount, setDraftAdjustmentAmount] = useState('');
+  const scheduleInvoice = useScheduleInvoice();
+  const [scheduleDateInput, setScheduleDateInput] = useState('');
   const displayCustomFields = getDisplayCustomFields(invoice?.custom_fields);
   const customerAttention = normalizeAttentionValue(invoice?.customer_attention);
 
@@ -217,6 +227,38 @@ export default function FactuurDetail() {
       setIsEditingDraft(false);
     }
   }, [invoice?.status]);
+
+  // Seed the schedule date input from the invoice's stored schedule (Ymd -> Y-m-d).
+  useEffect(() => {
+    const value = invoice?.scheduled_send_date || '';
+    setScheduleDateInput(/^\d{8}$/.test(value) ? `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}` : '');
+  }, [invoice?.scheduled_send_date]);
+
+  const todayInputValue = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+
+  const handleSchedule = async () => {
+    if (!scheduleDateInput) return;
+    setErrorMessage('');
+    try {
+      await scheduleInvoice.mutateAsync({ id: invoice.id, scheduledSendDate: scheduleDateInput.replaceAll('-', '') });
+      setSuccessMessage('Factuur ingepland om automatisch te versturen.');
+    } catch (err) {
+      setErrorMessage(err?.response?.data?.message || 'Inplannen is mislukt.');
+    }
+  };
+
+  const handleClearSchedule = async () => {
+    setErrorMessage('');
+    try {
+      await scheduleInvoice.mutateAsync({ id: invoice.id, scheduledSendDate: '' });
+      setSuccessMessage('Inplanning geannuleerd.');
+    } catch (err) {
+      setErrorMessage(err?.response?.data?.message || 'Annuleren is mislukt.');
+    }
+  };
 
   const handleSend = async () => {
     if (!window.confirm('Weet je zeker dat je deze factuur wilt versturen?')) {
@@ -416,7 +458,7 @@ export default function FactuurDetail() {
     }
   };
 
-  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending;
+  const isPending = sendInvoice.isPending || updateInvoiceStatus.isPending || resendInvoice.isPending || generatePdf.isPending || createPaymentLink.isPending || regeneratePaymentLink.isPending || resetPaymentState.isPending || deleteInvoice.isPending || updateMembershipDiscount.isPending || addDraftLineItem.isPending || updateDraftInvoice.isPending || scheduleInvoice.isPending;
 
   if (isLoading) {
     return (
@@ -507,7 +549,7 @@ export default function FactuurDetail() {
               )}
             </div>
           </div>
-          <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
+          <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} scheduledSendDate={invoice.scheduled_send_date} />
         </div>
       </div>
 
@@ -547,7 +589,7 @@ export default function FactuurDetail() {
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</h3>
                 <div className="mt-1">
-                  <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
+                  <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} scheduledSendDate={invoice.scheduled_send_date} />
                 </div>
               </div>
               <div>
@@ -969,6 +1011,49 @@ export default function FactuurDetail() {
                 )}
                 {isTestMode ? 'Verstuur factuur (test)' : 'Verstuur factuur'}
               </button>
+              <div className="w-full basis-full rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                <div className="flex flex-wrap items-end gap-3">
+                  <label className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="flex items-center gap-1.5">
+                      <CalendarClock className="w-4 h-4" />
+                      Automatisch verzenden op
+                    </span>
+                    <input
+                      type="date"
+                      value={scheduleDateInput}
+                      min={todayInputValue}
+                      onChange={(e) => setScheduleDateInput(e.target.value)}
+                      className="input mt-1"
+                    />
+                  </label>
+                  <button
+                    onClick={handleSchedule}
+                    disabled={isPending || !scheduleDateInput}
+                    className="btn-tertiary gap-2"
+                  >
+                    {scheduleInvoice.isPending ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    ) : (
+                      <CalendarClock className="w-4 h-4" />
+                    )}
+                    {invoice.scheduled_send_date ? 'Inplanning bijwerken' : 'Inplannen'}
+                  </button>
+                  {invoice.scheduled_send_date && (
+                    <button
+                      onClick={handleClearSchedule}
+                      disabled={isPending}
+                      className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Inplanning annuleren
+                    </button>
+                  )}
+                </div>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                  {invoice.scheduled_send_date
+                    ? `Deze factuur wordt automatisch verstuurd op ${format(parseYmd(invoice.scheduled_send_date), 'd MMMM yyyy')}. Je kunt hem ook nu al handmatig versturen.`
+                    : 'De factuur blijft een concept en wordt op de gekozen dag automatisch verstuurd.'}
+                </p>
+              </div>
               <button
                 onClick={() => handleMarkPaid({ fromDraft: true })}
                 disabled={isPending}
