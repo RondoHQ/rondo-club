@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.34.1] - 2026-07-10
+
+### Fixed
+- **De penningmeester zag geen seizoenen en geen categorieën op de contributiepagina.** Het Financiën-menu is afgeschermd op de rol-rechten "financieel", maar de bijbehorende endpoints eisten beheerdersrechten (`manage_options`). Wie financieel beheert zonder beheerder te zijn, kreeg dus een leeg scherm. Alle contributie- en factuur-endpoints luisteren nu naar hetzelfde recht als het menu.
+- `/rondo/v1/werkfuncties/available` — nodig om categorieën aan functies te koppelen — is nu ook bereikbaar voor financieel beheerders.
+
+### Changed
+- `Invoices::check_financieel_permission()` was een woordelijke kopie van de methode in `Base` en is verwijderd.
+
 ## [33.34.0] - 2026-07-10
 
 ### Added

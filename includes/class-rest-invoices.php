@@ -454,17 +454,6 @@ class Invoices extends Base {
 	}
 
 	/**
-	 * Check if user has financieel capability
-	 *
-	 * Permission callback for invoice endpoints.
-	 *
-	 * @return bool True if user has financieel capability, false otherwise.
-	 */
-	public function check_financieel_permission() {
-		return current_user_can( 'financieel' );
-	}
-
-	/**
 	 * Get discipline case IDs that already have invoices for a person
 	 *
 	 * @param \WP_REST_Request $request The REST request object.

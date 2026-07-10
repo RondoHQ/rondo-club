@@ -88,7 +88,7 @@ class Capabilities extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_available_werkfuncties' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_admin_or_financieel_permission' ],
 			]
 		);
 
