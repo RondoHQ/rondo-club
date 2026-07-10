@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.38.0] - 2026-07-10
+
+### Added
+- **Conceptfacturen in bulk verwijderen.** Op de Facturen-overzichtspagina kun je nu meerdere conceptfacturen aanvinken en in één keer verwijderen, naast de bestaande "verstuur alle"-actie. Er verschijnt een "Verwijder alle"-knop in de selectiebalk met een bevestiging vooraf; alleen conceptfacturen zijn selecteerbaar, dus verstuurde of betaalde facturen kunnen niet per ongeluk verwijderd worden.
+
 ## [33.37.0] - 2026-07-10
 
 ### Changed

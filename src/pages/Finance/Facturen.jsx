@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2 } from 'lucide-react';
+import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useInvoices, useSendInvoice } from '@/hooks/useInvoices';
+import { useInvoices, useSendInvoice, useDeleteInvoice } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
@@ -86,9 +86,13 @@ export default function Facturen() {
   // Selection state for bulk actions
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkSending, setBulkSending] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState({ sent: 0, total: 0, errors: [] });
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  // action is 'send' | 'delete' — labels the result panel; done counts completed items.
+  const [bulkProgress, setBulkProgress] = useState({ action: 'send', done: 0, total: 0, errors: [] });
 
   const sendInvoice = useSendInvoice();
+  const deleteInvoice = useDeleteInvoice();
+  const bulkBusy = bulkSending || bulkDeleting;
 
   const toggleSelect = useCallback((id) => {
     setSelectedIds((prev) => {
@@ -169,7 +173,7 @@ export default function Facturen() {
   const handleBulkSend = async () => {
     const ids = Array.from(selectedIds);
     setBulkSending(true);
-    setBulkProgress({ sent: 0, total: ids.length, errors: [] });
+    setBulkProgress({ action: 'send', done: 0, total: ids.length, errors: [] });
 
     const errors = [];
     for (let i = 0; i < ids.length; i++) {
@@ -178,10 +182,35 @@ export default function Facturen() {
       } catch (err) {
         errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
       }
-      setBulkProgress({ sent: i + 1, total: ids.length, errors: [...errors] });
+      setBulkProgress({ action: 'send', done: i + 1, total: ids.length, errors: [...errors] });
     }
 
     setBulkSending(false);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    const message = ids.length === 1
+      ? 'Weet je zeker dat je deze conceptfactuur wilt verwijderen? Dit kan niet ongedaan worden gemaakt.'
+      : `Weet je zeker dat je ${ids.length} conceptfacturen wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`;
+    if (!window.confirm(message)) return;
+
+    setBulkDeleting(true);
+    setBulkProgress({ action: 'delete', done: 0, total: ids.length, errors: [] });
+
+    const errors = [];
+    for (let i = 0; i < ids.length; i++) {
+      try {
+        await deleteInvoice.mutateAsync(ids[i]);
+      } catch (err) {
+        errors.push({ id: ids[i], message: err?.response?.data?.message || err.message });
+      }
+      setBulkProgress({ action: 'delete', done: i + 1, total: ids.length, errors: [...errors] });
+    }
+
+    setBulkDeleting(false);
     setSelectedIds(new Set());
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
   };
@@ -436,13 +465,13 @@ export default function Facturen() {
             </span>
             <button
               onClick={handleBulkSend}
-              disabled={bulkSending}
+              disabled={bulkBusy}
               className="btn-primary gap-2 text-sm py-1.5 px-3"
             >
               {bulkSending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Versturen ({bulkProgress.sent}/{bulkProgress.total})...
+                  Versturen ({bulkProgress.done}/{bulkProgress.total})...
                 </>
               ) : (
                 <>
@@ -451,7 +480,24 @@ export default function Facturen() {
                 </>
               )}
             </button>
-            {!bulkSending && (
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkBusy}
+              className="btn-danger gap-2 text-sm py-1.5 px-3"
+            >
+              {bulkDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Verwijderen ({bulkProgress.done}/{bulkProgress.total})...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  Verwijder {selectedIds.size === 1 ? 'factuur' : 'alle'}
+                </>
+              )}
+            </button>
+            {!bulkBusy && (
               <button
                 onClick={() => setSelectedIds(new Set())}
                 className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
@@ -462,15 +508,15 @@ export default function Facturen() {
           </div>
         )}
 
-        {/* Bulk send result feedback */}
-        {!bulkSending && bulkProgress.total > 0 && (
+        {/* Bulk action result feedback */}
+        {!bulkBusy && bulkProgress.total > 0 && (
           <div className={`mb-4 rounded-lg px-4 py-3 text-sm ${
             bulkProgress.errors.length > 0
               ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800'
               : 'bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800'
           }`}>
             <p className="font-medium text-gray-900 dark:text-gray-100">
-              {bulkProgress.sent - bulkProgress.errors.length} van {bulkProgress.total} {bulkProgress.total === 1 ? 'factuur' : 'facturen'} verstuurd
+              {bulkProgress.done - bulkProgress.errors.length} van {bulkProgress.total} {bulkProgress.total === 1 ? 'factuur' : 'facturen'} {bulkProgress.action === 'delete' ? 'verwijderd' : 'verstuurd'}
               {bulkProgress.errors.length > 0 && `, ${bulkProgress.errors.length} mislukt`}
             </p>
             {bulkProgress.errors.map((err) => (
@@ -479,7 +525,7 @@ export default function Facturen() {
               </p>
             ))}
             <button
-              onClick={() => setBulkProgress({ sent: 0, total: 0, errors: [] })}
+              onClick={() => setBulkProgress({ action: 'send', done: 0, total: 0, errors: [] })}
               className="mt-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 underline"
             >
               Sluiten
