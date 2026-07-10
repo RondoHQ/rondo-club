@@ -17,6 +17,19 @@ U kunt betalen via: {betaallink}
 Met vriendelijke groet,
 {organisatie_naam}`;
 
+// Compare an editor value against a default template loosely. The rich text
+// editor re-serializes HTML when a value is loaded, so an exact `===` check
+// spuriously reports an untouched default as "customized". Stripping tags and
+// collapsing whitespace lets an unedited default still match its source.
+const emailBodyMatchesDefault = (a, b) => {
+  const norm = (value) => (value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return norm(a) === norm(b);
+};
+
 const formatDateForInput = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -108,7 +121,8 @@ export default function InvoiceDraftForm({
   const [paymentAccountId, setPaymentAccountId] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
-  const [emailDefaultsHydrated, setEmailDefaultsHydrated] = useState(false);
+  const appliedDefaultSubjectRef = useRef('');
+  const appliedDefaultBodyRef = useRef('');
   const [customFields, setCustomFields] = useState([{ label: '', text: '' }, { label: '', text: '' }]);
   const [showCustomFields, setShowCustomFields] = useState(false);
   const [lineItems, setLineItems] = useState([{ ...emptyLine }]);
@@ -119,8 +133,19 @@ export default function InvoiceDraftForm({
   const searchTerm = personSearch.trim();
   const { data: searchResults } = useSearch(searchTerm);
   const memberOptions = (searchResults?.people || []).slice(0, 20);
-  const defaultEmailSubject = financeSettings?.regular_invoice_email_subject || DEFAULT_SUBJECT_TEMPLATE;
-  const defaultEmailBody = financeSettings?.regular_invoice_email_body || DEFAULT_BODY_TEMPLATE;
+  // Credit invoices carry their own configured email template; every other
+  // kind uses the regular-invoice defaults. Picking the wrong default here is
+  // what caused credit invoices to go out with regular-invoice wording.
+  const defaultEmailSubject = useMemo(() => (
+    invoiceKind === 'credit'
+      ? (financeSettings?.credit_email_subject || DEFAULT_SUBJECT_TEMPLATE)
+      : (financeSettings?.regular_invoice_email_subject || DEFAULT_SUBJECT_TEMPLATE)
+  ), [financeSettings, invoiceKind]);
+  const defaultEmailBody = useMemo(() => (
+    invoiceKind === 'credit'
+      ? (financeSettings?.credit_email_template || DEFAULT_BODY_TEMPLATE)
+      : (financeSettings?.regular_invoice_email_body || DEFAULT_BODY_TEMPLATE)
+  ), [financeSettings, invoiceKind]);
   const usableMollieAccounts = Array.isArray(financeSettings?.mollie_accounts)
     ? financeSettings.mollie_accounts.filter((account) => account?.has_api_key)
     : [];
@@ -159,7 +184,8 @@ export default function InvoiceDraftForm({
     setPaymentAccountId(initialValues?.paymentAccountId || '');
     setEmailSubject(initialValues?.emailSubject || '');
     setEmailBody(initialValues?.emailBody || '');
-    setEmailDefaultsHydrated(false);
+    appliedDefaultSubjectRef.current = '';
+    appliedDefaultBodyRef.current = '';
     setCustomFields(normalizeCustomFields(initialValues?.customFields));
     setShowCustomFields((initialValues?.customFields || []).some((field) => field?.label || field?.text));
     setLineItems(normalizeLineItems(initialValues?.lineItems));
@@ -170,15 +196,24 @@ export default function InvoiceDraftForm({
     setPaymentAccountId((current) => current || initialValues?.paymentAccountId || getDefaultPaymentAccountId(financeSettings, invoiceType));
   }, [financeSettings, initialValues?.paymentAccountId, invoiceType]);
 
+  // Hydrate the email fields with the kind-appropriate default, and swap them
+  // over when the invoice kind changes — but only while the field still holds a
+  // default value, so a user's own edits are never overwritten.
   useEffect(() => {
-    if (emailDefaultsHydrated || !financeSettings) {
+    if (!financeSettings) {
       return;
     }
 
-    setEmailSubject((current) => current || defaultEmailSubject);
-    setEmailBody((current) => current || defaultEmailBody);
-    setEmailDefaultsHydrated(true);
-  }, [defaultEmailBody, defaultEmailSubject, emailDefaultsHydrated, financeSettings]);
+    setEmailSubject((current) => (
+      current === '' || current === appliedDefaultSubjectRef.current ? defaultEmailSubject : current
+    ));
+    setEmailBody((current) => (
+      current === '' || emailBodyMatchesDefault(current, appliedDefaultBodyRef.current) ? defaultEmailBody : current
+    ));
+
+    appliedDefaultSubjectRef.current = defaultEmailSubject;
+    appliedDefaultBodyRef.current = defaultEmailBody;
+  }, [financeSettings, defaultEmailSubject, defaultEmailBody]);
 
   const total = useMemo(() => lineItems.reduce((sum, item) => {
     const amount = parseFloat(item.amount) || 0;
@@ -257,7 +292,7 @@ export default function InvoiceDraftForm({
       payment_terms_due_date: dueDate ? dueDate.replaceAll('-', '') : '',
       payment_account_id: paymentAccountId,
       email_subject: emailSubject === defaultEmailSubject ? '' : emailSubject,
-      email_body_override: emailBody === defaultEmailBody ? '' : emailBody,
+      email_body_override: emailBodyMatchesDefault(emailBody, defaultEmailBody) ? '' : emailBody,
       custom_fields: customFields,
       line_items: rows,
     });

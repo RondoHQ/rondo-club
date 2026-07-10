@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.39.1] - 2026-07-10
+## [33.39.2] - 2026-07-10
+
+### Fixed
+- **Creditfacturen kregen de tekst van een reguliere factuur in de e-mail.** Bij het aanmaken van een creditfactuur vulde het factuurformulier het e-mailtekstveld altijd met de reguliere-factuurtekst, ongeacht de factuursoort. Omdat de editor die tekst bij het laden opnieuw opmaakt, werd die reguliere tekst vervolgens als handmatige override meegestuurd en overschreef zo het ingestelde creditfactuur-template. Het formulier gebruikt nu de juiste standaardtekst per factuursoort (creditfactuur-template voor creditfacturen) en wisselt die correct om als je de factuursoort wijzigt. (feedback #6633)
 
 ### Changed
 - De herinneringen voor overige facturen staan nu op een eigen tabblad "Overige herinneringen" onder Instellingen → Financieel, in plaats van onder het tabblad "Contributieherinneringen".
