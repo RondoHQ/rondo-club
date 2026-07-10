@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.41.5] - 2026-07-10
+
+### Fixed
+- `/mijn-gegevens` gebruikt nu een eigen household-endpoint en toont altijd alleen de gekoppelde persoon en minderjarige kinderen. Beheerders zien op deze persoonlijke pagina niet langer het volledige ledenbestand.
+
 ## [33.41.4] - 2026-07-10
 
 ### Fixed

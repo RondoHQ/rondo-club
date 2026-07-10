@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Core\AccessControl;
 use Rondo\Core\UserRoles;
+use Rondo\REST\People;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -255,5 +256,21 @@ class CptCrudTest extends RondoTestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 'Updated member record', get_post( $person_id )->post_title );
+	}
+
+	public function test_household_endpoint_stays_personal_for_administrators(): void {
+		$self     = $this->createPerson( [ 'post_title' => 'Administrator self' ] );
+		$stranger = $this->createPerson( [ 'post_title' => 'Other member' ] );
+		$admin_id = $this->user( 'administrator' );
+		update_user_meta( $admin_id, 'rondo_linked_person_id', $self );
+		AccessControl::flush_visible_person_ids_cache();
+		wp_set_current_user( $admin_id );
+
+		$response = ( new People() )->get_household();
+		$ids      = array_map( 'intval', array_column( $response->get_data(), 'id' ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertContains( $self, $ids );
+		$this->assertNotContains( $stranger, $ids );
 	}
 }
