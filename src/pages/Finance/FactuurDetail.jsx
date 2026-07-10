@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil, Copy } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -9,6 +9,7 @@ import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
 import { prmApi } from '@/api/client';
 import InvoiceDraftForm from '@/components/finance/InvoiceDraftForm';
+import { mapInvoiceToInitialValues } from '@/utils/invoiceFormValues';
 
 // Status badge colors (same as Facturen.jsx)
 const statusColors = {
@@ -481,19 +482,30 @@ export default function FactuurDetail() {
             <h1 className="text-2xl font-bold text-brand-gradient mb-2">
               {invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Credit' : ''}
             </h1>
-            {invoice.status === 'draft' && canEditFinancieel && (
-              <button
-                onClick={() => {
-                  setIsEditingDraft((current) => !current);
-                  setErrorMessage('');
-                }}
-                disabled={isPending && !isEditingDraft}
-                className="btn-tertiary gap-2"
-              >
-                <Pencil className="w-4 h-4" />
-                {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {invoice.status === 'draft' && canEditFinancieel && (
+                <button
+                  onClick={() => {
+                    setIsEditingDraft((current) => !current);
+                    setErrorMessage('');
+                  }}
+                  disabled={isPending && !isEditingDraft}
+                  className="btn-tertiary gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  {isEditingDraft ? 'Sluit bewerken' : 'Bewerk concept'}
+                </button>
+              )}
+              {canEditFinancieel && (
+                <button
+                  onClick={() => navigate(`/financien/facturen/nieuw?copyFrom=${invoice.id}`)}
+                  className="btn-tertiary gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  Kopiëren naar nieuwe factuur
+                </button>
+              )}
+            </div>
           </div>
           <StatusBadge status={invoice.status} reminderCount={invoice.reminder_count || 0} />
         </div>
@@ -503,27 +515,7 @@ export default function FactuurDetail() {
         <InvoiceDraftForm
           invoiceType={invoice.invoice_type || 'manual'}
           formKey={`draft-${invoice.id}`}
-          initialValues={{
-            invoiceKind: invoice.invoice_kind || 'normal',
-            invoiceTarget: invoice.person?.id ? 'member' : 'external',
-            customerName: invoice.customer_name || '',
-            customerAttention: invoice.customer_attention || '',
-            customerEmail: invoice.customer_email || '',
-            customerCcEmail: invoice.customer_cc_email || '',
-            customerAddress: invoice.customer_address || '',
-            personId: invoice.person?.id || null,
-            personLabel: invoice.person?.name || '',
-            dueDate: invoice.due_date || '',
-            paymentAccountId: invoice.payment_account?.id || '',
-            emailSubject: invoice.email_subject || '',
-            emailBody: invoice.email_body_override || '',
-            customFields: invoice.custom_fields || [],
-            lineItems: (invoice.line_items || []).map((item) => ({
-              description: item.description || '',
-              amount: item.amount ?? '',
-              discipline_case_id: item.discipline_case?.id || null,
-            })),
-          }}
+          initialValues={mapInvoiceToInitialValues(invoice)}
           onSubmit={handleUpdateDraft}
           submitLabel="Wijzigingen opslaan"
           isSubmitting={updateDraftInvoice.isPending}
