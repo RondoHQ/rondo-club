@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.39.1] - 2026-07-10
+
+### Changed
+- De herinneringen voor overige facturen staan nu op een eigen tabblad "Overige herinneringen" onder Instellingen → Financieel, in plaats van onder het tabblad "Contributieherinneringen".
+
 ## [33.39.0] - 2026-07-10
 
 ### Fixed
