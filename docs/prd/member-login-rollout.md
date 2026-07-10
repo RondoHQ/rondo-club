@@ -261,8 +261,16 @@ was sent), then cleaned up — user count back to 17:
 - replaying the burned token → 400, "verlopen of ongeldig"
 - `GET /betaling/{bogus}` → 404 with its normal error page (chrome extraction did not break payments)
 
-Remaining: the member-facing household UI (13) and the capability-matrix audit (14). Neither blocks
-the announcement.
+The member-facing household view shipped in 33.34.0 as `/mijn-gegevens`. Verified on production with
+a throwaway account linked to a real parent (Linda Van Blijderveen): `GET /wp/v2/people` returned
+her and her child Morris Witte, 19 allowlisted ACF fields, nothing else. Cleaned up afterwards.
+
+That work also fixed a bug introduced in 33.28.1: "kader" was derived independently in `router.jsx`
+and `Layout.jsx`, and only the router counted `has_extra_roles`. A coordinator was routed to the
+dashboard while the sidebar hid every link to it. `is_kader` is now computed server-side and both
+read it.
+
+Remaining: the capability-matrix audit (14). It does not block the announcement.
 
 **Before announcing:** `wp rewrite flush` has been run; re-run it after any deploy that adds rewrite
 rules.
@@ -311,7 +319,7 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~2~~ | ~~Attribute each shift to one unit, speler duty first~~ — **done, 33.29.1** | — |
 | 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` altogether | 1 |
 | ~~4~~ | ~~Scoped read grant: member sees own record + children~~ — **done, 33.30.0** | — |
-| 13 | Member-facing UI for the household view — the grant exists, the router still redirects | 4 |
+| ~~13~~ | ~~Member-facing UI for the household view~~ — **done, 33.34.0** (`/mijn-gegevens`) | — |
 | 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped | — |
 | ~~5~~ | ~~`rondo_contact_email` + synthetic-email fallback~~ — **done, 33.31.0** | — |
 | ~~6~~ | ~~Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable`~~ — **done, 33.31.0** | — |
