@@ -62,6 +62,7 @@ export default function VrijwilligersDashboard() {
       (diagnostics.skipped_former_members || 0) > 0 ||
       (diagnostics.gezinnen_orphan || 0) > 0 ||
       (diagnostics.gezinnen_via_address || 0) > 0 ||
+      (diagnostics.no_email || 0) > 0 ||
       (diagnostics.suspect_relationships || 0) > 0);
 
   return (
@@ -153,6 +154,17 @@ export default function VrijwilligersDashboard() {
                       <strong>{diagnostics.gezinnen_orphan.toLocaleString('nl-NL')}</strong> gezinnen
                     </Link>{' '}
                     <em>zonder</em> ouder-relatie én zonder volwassen huisgenoot — alleen het kind staat in de eenheid. Boetes en e-mails kunnen voor deze records nergens heen tot er een ouder bekend is.
+                  </li>
+                )}
+                {(diagnostics.no_email || 0) > 0 && (
+                  <li>
+                    <Link
+                      to="/vrijwilligers/datakwaliteit/no_email"
+                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
+                    >
+                      <strong>{diagnostics.no_email.toLocaleString('nl-NL')}</strong> actieve leden
+                    </Link>{' '}
+                    <em>zonder e-mailadres</em> — zij kunnen geen account activeren via <code>/activeren</code> tot iemand een adres verzamelt. Ledenadministratie kan de lijst exporteren en nabellen.
                   </li>
                 )}
                 {(diagnostics.skipped_no_leeftijdsgroep || 0) > 0 && (

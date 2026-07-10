@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, ExternalLink } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ExternalLink, Download } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { buildCsv, downloadCsv } from '@/utils/csvExport';
 
 const CATEGORIES = {
   orphan: {
@@ -36,17 +38,28 @@ const CATEGORIES = {
       'Contributievrijstelling (donateur, erelid, Lid van Verdienste, contributievrij) is hier bewust geen reden — ' +
       'die leden zitten gewoon in de doelgroep, tenzij ze via een andere route vrijgesteld zijn (commissie, staf-rol, betaalde vrijwilliger, handmatige vrijstelling).',
   },
+  no_email: {
+    title: 'Actieve leden zonder e-mailadres',
+    requiresLedenadministratie: true,
+    showKnvbId: true,
+    intro:
+      'Deze actieve leden hebben geen geldig e-mailadres (email_1 en email_2 zijn beide leeg of ongeldig). ' +
+      'Ze kunnen géén account activeren via /activeren totdat iemand een adres verzamelt. ' +
+      'Zoek de leden op, achterhaal een e-mailadres (bijvoorbeeld via een ouder of teamgenoot) en vul het in op de persoonspagina.',
+  },
 };
 
 export default function VrijwilligersDataQuality() {
   const { category } = useParams();
   const cfg = CATEGORIES[category];
+  const { data: currentUser } = useCurrentUser();
+  const canAccessLedenadministratie = currentUser?.can_access_ledenadministratie ?? false;
   useDocumentTitle(`Datakwaliteit — ${cfg?.title || 'Vrijwilligers'}`);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['volunteer', 'data-quality', category],
     queryFn: async () => (await prmApi.getVolunteerDataQuality(category)).data,
-    enabled: !!cfg,
+    enabled: !!cfg && (!cfg.requiresLedenadministratie || canAccessLedenadministratie),
     staleTime: 60 * 1000,
   });
 
@@ -63,7 +76,36 @@ export default function VrijwilligersDataQuality() {
     return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], 'nl'));
   }, [persons, category]);
 
+  const handleExportCsv = () => {
+    const showKnvbId = !!cfg?.showKnvbId;
+    const headers = [
+      'Naam',
+      ...(showKnvbId ? ['KNVB-ID'] : []),
+      'Leeftijdsgroep',
+      'Adres',
+      'Postcode',
+      'Plaats',
+      ...(showKnvbId ? [] : ['# relaties']),
+    ];
+    const rows = persons.map((person) => [
+      person.name,
+      ...(showKnvbId ? [person.knvb_id || ''] : []),
+      person.leeftijdsgroep || '',
+      person.address || '',
+      person.postal_code || '',
+      person.city || '',
+      ...(showKnvbId ? [] : [person.relationships_count]),
+    ]);
+    const csv = buildCsv([headers, ...rows]);
+    downloadCsv(csv, `datakwaliteit-${category}-${new Date().toISOString().slice(0, 10)}.csv`);
+  };
+
   if (!cfg) {
+    return <Navigate to="/vrijwilligers" replace />;
+  }
+
+  // no_email is a ledenadministratie report — send other users back to the dashboard.
+  if (cfg.requiresLedenadministratie && currentUser && !canAccessLedenadministratie) {
     return <Navigate to="/vrijwilligers" replace />;
   }
 
@@ -76,16 +118,28 @@ export default function VrijwilligersDataQuality() {
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Terug naar Vrijwilligers-dashboard
         </Link>
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-            <AlertTriangle className="w-6 h-6 text-amber-500" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{cfg.title}</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-3xl">
+                {cfg.intro}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{cfg.title}</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-3xl">
-              {cfg.intro}
-            </p>
-          </div>
+          {persons.length > 0 && (
+            <button
+              onClick={handleExportCsv}
+              className="btn-tertiary shrink-0"
+              title="Downloaden als CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Exporteer CSV</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -112,7 +166,7 @@ export default function VrijwilligersDataQuality() {
                 <span>{group[0].address || '—'}, {group[0].postal_code || '—'} {group[0].city || ''}</span>
                 <span>{group.length} {group.length === 1 ? 'persoon' : 'personen'}</span>
               </div>
-              <PersonsTable persons={group} />
+              <PersonsTable persons={group} showKnvbId={!!cfg.showKnvbId} />
             </div>
           ))}
         </section>
@@ -122,7 +176,7 @@ export default function VrijwilligersDataQuality() {
             {persons.length} personen.
           </p>
           <div className="card overflow-hidden">
-            <PersonsTable persons={persons} />
+            <PersonsTable persons={persons} showKnvbId={!!cfg.showKnvbId} />
           </div>
         </section>
       )}
@@ -130,15 +184,16 @@ export default function VrijwilligersDataQuality() {
   );
 }
 
-function PersonsTable({ persons }) {
+function PersonsTable({ persons, showKnvbId = false }) {
   return (
     <table className="w-full text-sm">
       <thead className="bg-gray-50 dark:bg-gray-700 text-left text-xs uppercase text-gray-500 dark:text-gray-300">
         <tr>
           <th className="px-4 py-2">Naam</th>
+          {showKnvbId && <th className="px-4 py-2">KNVB-ID</th>}
           <th className="px-4 py-2">Leeftijdsgroep</th>
           <th className="px-4 py-2">Adres</th>
-          <th className="px-4 py-2"># relaties</th>
+          {!showKnvbId && <th className="px-4 py-2"># relaties</th>}
           <th className="px-4 py-2 w-12"></th>
         </tr>
       </thead>
@@ -153,6 +208,11 @@ function PersonsTable({ persons }) {
                 {person.name}
               </Link>
             </td>
+            {showKnvbId && (
+              <td className="px-4 py-2 text-gray-700 dark:text-gray-300 text-xs font-mono">
+                {person.knvb_id || <span className="text-gray-400">—</span>}
+              </td>
+            )}
             <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
               {person.leeftijdsgroep || <span className="text-gray-400">—</span>}
             </td>
@@ -167,9 +227,11 @@ function PersonsTable({ persons }) {
                 <span className="text-gray-400">—</span>
               )}
             </td>
-            <td className="px-4 py-2 text-gray-700 dark:text-gray-300 text-xs">
-              {person.relationships_count}
-            </td>
+            {!showKnvbId && (
+              <td className="px-4 py-2 text-gray-700 dark:text-gray-300 text-xs">
+                {person.relationships_count}
+              </td>
+            )}
             <td className="px-4 py-2">
               <Link
                 to={`/people/${person.id}`}

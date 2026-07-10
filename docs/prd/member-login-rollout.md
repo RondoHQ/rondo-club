@@ -326,7 +326,7 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~8~~ | ~~Reroute password-reset and WP notification mail~~ — **done, 33.31.0** (`ContactEmailRouter`) | — |
 | ~~7~~ | ~~username / KNVB-ID / unique contact-email login~~ — **done, 33.32.0** (`LoginResolver`) | — |
 | ~~9~~ | ~~Public `/activeren` page + token endpoints + rate limiting~~ — **done, 33.33.0** | — |
-| 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen — [todo](../../.planning/todos/pending/2026-07-10-activation-data-quality-screen.md) | — |
+| ~~10~~ | ~~Data-quality report: parents without email, orphan gezinnen~~ — **done, 33.36.0**. Orphan gezinnen already had a drill-down; added a `no_email` category (gated on `ledenadministratie`) + CSV export to the Vrijwilligers → Datakwaliteit drill-downs. | — |
 | 11 | Docs in `../developer/src/content/docs/features/` | all |
 
 Item 0 is a live vulnerability and must not wait for the rest. Items 1, 3, 5, 6 and 10 are
