@@ -13,57 +13,297 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Api extends Base {
 
-	private const KADERLIJST_SNAPSHOT_OPTION = 'rondo_kaderlijst_snapshot';
-	private const KADERLIJST_UPDATED_OPTION  = 'rondo_kaderlijst_snapshot_updated_at';
+	/**
+	 * ACF fields the Kaderlijst renders. The endpoint returns nothing else — a
+	 * scoped viewer never sees a kaderlid's financial flags or private meta.
+	 */
+	private const KADERLIJST_ACF_FIELDS = [
+		'first_name',
+		'infix',
+		'last_name',
+		'work_history',
+		'email_1',
+		'email_2',
+		'mobile_1',
+		'mobile_2',
+		'telephone_1',
+		'telephone_2',
+	];
 
 	/**
-	 * Get persisted kaderlijst snapshot from WordPress options.
+	 * Memoised player-role lookup (role name => true) for the current request.
+	 *
+	 * @var array<string, true>|null
+	 */
+	private $player_role_lookup = null;
+
+	/**
+	 * Return the kaderleden the current user may see, with only the fields the
+	 * Kaderlijst renders.
+	 *
+	 * "Kader" is anyone with a current `work_history` job linked to a team. The
+	 * result is scoped server-side — this is the surface that replaced the old
+	 * `suppress_age_group` full-club fetch:
+	 *
+	 *   - Management (unrestricted) sees every kaderlid.
+	 *   - A coordinator sees kaderleden attached to a team whose current roster
+	 *     includes one of their permitted `leeftijdsgroep` values — i.e. the
+	 *     kader of the age groups they coordinate, not kader who merely share
+	 *     their own (adult) age group.
+	 *   - A scoped member sees only kaderleden in their own household.
 	 *
 	 * @param \WP_REST_Request $request The request object.
 	 * @return \WP_REST_Response
 	 */
-	public function get_kaderlijst_snapshot( $request ) {
-		$snapshot   = get_option( self::KADERLIJST_SNAPSHOT_OPTION, null );
-		$updated_at = get_option( self::KADERLIJST_UPDATED_OPTION, null );
+	public function get_kaderlijst_people( $request ) {
+		$permitted = \Rondo\Core\AccessControl::get_permitted_age_groups();
 
-		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) ) {
-			$snapshot = null;
+		// Scoped member: only their own household, and only if they are kader.
+		if ( is_array( $permitted ) && empty( $permitted ) ) {
+			$visible = \Rondo\Core\AccessControl::get_visible_person_ids();
+
+			return rest_ensure_response(
+				[ 'people' => empty( $visible ) ? [] : $this->build_kaderlijst_people( $visible ) ]
+			);
+		}
+
+		$candidate_ids = $this->kaderlijst_candidate_ids();
+
+		// Coordinator: keep only kaderleden attached to a team they coordinate.
+		if ( is_array( $permitted ) && ! empty( $permitted ) ) {
+			$scoped_teams  = $this->teams_for_age_groups( $permitted );
+			$candidate_ids = $this->filter_candidates_by_teams( $candidate_ids, $scoped_teams );
 		}
 
 		return rest_ensure_response(
-			[
-				'snapshot'   => $snapshot,
-				'updated_at' => is_string( $updated_at ) ? $updated_at : null,
-			]
+			[ 'people' => $this->build_kaderlijst_people( $candidate_ids ) ]
 		);
 	}
 
 	/**
-	 * Persist kaderlijst snapshot in WordPress options.
+	 * Person IDs of the kader: at least one current `work_history` job whose
+	 * job_title is not a player role. Excludes former members.
 	 *
-	 * @param \WP_REST_Request $request The request object.
-	 * @return \WP_REST_Response|\WP_Error
+	 * A job is "current" when its end date is empty or today-or-later — the same
+	 * rule the client applies (`isCurrentJob`), which ignores the `is_current`
+	 * flag. Player rows are dropped here for the same reason the client hides them:
+	 * they are not kader. A player who is also a coach still qualifies on the coach
+	 * row. The team is deliberately optional — the old list showed teamless
+	 * coordinator functies too, and they are re-derived from the role text client-side.
+	 *
+	 * ACF stores repeater rows as flat meta (`work_history_{N}_job_title`,
+	 * `work_history_{N}_end_date`) and date_pickers as `Ymd` (a few legacy rows are
+	 * `Y-m-d`), so the end date is normalised with REPLACE before comparison.
+	 *
+	 * @return int[]
 	 */
-	public function update_kaderlijst_snapshot( $request ) {
-		$snapshot = $request->get_param( 'snapshot' );
-		if ( ! is_array( $snapshot ) || ! isset( $snapshot['teams'], $snapshot['rows'] ) || ! is_array( $snapshot['teams'] ) || ! is_array( $snapshot['rows'] ) ) {
-			return new \WP_Error(
-				'invalid_snapshot',
-				__( 'Invalid kaderlijst snapshot payload.', 'rondo' ),
-				[ 'status' => 400 ]
-			);
+	private function kaderlijst_candidate_ids(): array {
+		global $wpdb;
+
+		$player_roles = \Rondo\Core\VolunteerStatus::get_player_roles();
+		$today        = current_time( 'Ymd' );
+
+		if ( empty( $player_roles ) ) {
+			$player_roles = [ '' ];
 		}
 
-		update_option( self::KADERLIJST_SNAPSHOT_OPTION, $snapshot, false );
-		$updated_at = gmdate( 'c' );
-		update_option( self::KADERLIJST_UPDATED_OPTION, $updated_at, false );
+		$role_placeholders = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
 
-		return rest_ensure_response(
-			[
-				'snapshot'   => $snapshot,
-				'updated_at' => $updated_at,
-			]
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT p.ID
+			 FROM {$wpdb->posts} p
+			 JOIN {$wpdb->postmeta} wh_jt
+			   ON wh_jt.post_id = p.ID
+			   AND wh_jt.meta_key REGEXP '^work_history_[0-9]+_job_title$'
+			   AND wh_jt.meta_value <> ''
+			   AND wh_jt.meta_value NOT IN ($role_placeholders)
+			 LEFT JOIN {$wpdb->postmeta} wh_ed
+			   ON wh_ed.post_id = p.ID
+			   AND wh_ed.meta_key = REPLACE( wh_jt.meta_key, '_job_title', '_end_date' )
+			 LEFT JOIN {$wpdb->postmeta} fm
+			   ON fm.post_id = p.ID AND fm.meta_key = 'former_member'
+			 WHERE p.post_type = 'person'
+			   AND p.post_status = 'publish'
+			   AND ( fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0' )
+			   AND ( wh_ed.meta_value IS NULL OR wh_ed.meta_value = '' OR REPLACE( wh_ed.meta_value, '-', '' ) >= %s )",
+			...array_merge( $player_roles, [ $today ] )
 		);
+
+		return array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+	}
+
+	/**
+	 * Team IDs whose current roster includes a player in one of the given
+	 * `leeftijdsgroep` values. This is how a coordinator's age-group scope
+	 * (`Onder 12`, `Onder 9 Meiden`, `Senioren Vrouwen`, …) resolves to the set
+	 * of teams they coordinate, without parsing team names.
+	 *
+	 * @param string[] $age_groups Permitted leeftijdsgroep values.
+	 * @return int[] Team post IDs.
+	 */
+	private function teams_for_age_groups( array $age_groups ): array {
+		global $wpdb;
+
+		$player_roles = \Rondo\Core\VolunteerStatus::get_player_roles();
+
+		if ( empty( $age_groups ) || empty( $player_roles ) ) {
+			return [];
+		}
+
+		$ag_placeholders   = implode( ', ', array_fill( 0, count( $age_groups ), '%s' ) );
+		$role_placeholders = implode( ', ', array_fill( 0, count( $player_roles ), '%s' ) );
+
+		$sql = $wpdb->prepare(
+			"SELECT DISTINCT wh_tm.meta_value AS team_id
+			 FROM {$wpdb->postmeta} lg
+			 JOIN {$wpdb->postmeta} wh_jt
+			   ON wh_jt.post_id = lg.post_id
+			   AND wh_jt.meta_key REGEXP '^work_history_[0-9]+_job_title$'
+			   AND wh_jt.meta_value IN ($role_placeholders)
+			 JOIN {$wpdb->postmeta} wh_ic
+			   ON wh_ic.post_id = lg.post_id
+			   AND wh_ic.meta_key = REPLACE( wh_jt.meta_key, '_job_title', '_is_current' )
+			   AND wh_ic.meta_value = '1'
+			 JOIN {$wpdb->postmeta} wh_tm
+			   ON wh_tm.post_id = lg.post_id
+			   AND wh_tm.meta_key = REPLACE( wh_jt.meta_key, '_job_title', '_team' )
+			 WHERE lg.meta_key = 'leeftijdsgroep'
+			   AND lg.meta_value IN ($ag_placeholders)",
+			...array_merge( $player_roles, $age_groups )
+		);
+
+		return array_map( 'intval', (array) $wpdb->get_col( $sql ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above.
+	}
+
+	/**
+	 * Keep only candidates who have a current, team-linked job on one of the
+	 * given teams.
+	 *
+	 * @param int[] $candidate_ids Person IDs to filter.
+	 * @param int[] $team_ids      Allowed team IDs.
+	 * @return int[]
+	 */
+	private function filter_candidates_by_teams( array $candidate_ids, array $team_ids ): array {
+		if ( empty( $candidate_ids ) || empty( $team_ids ) ) {
+			return [];
+		}
+
+		$allowed = array_flip( array_map( 'intval', $team_ids ) );
+		$kept    = [];
+
+		foreach ( $candidate_ids as $person_id ) {
+			foreach ( $this->current_team_ids_for_person( $person_id ) as $team_id ) {
+				if ( isset( $allowed[ $team_id ] ) ) {
+					$kept[] = $person_id;
+					break;
+				}
+			}
+		}
+
+		return $kept;
+	}
+
+	/**
+	 * Team IDs a person currently coaches: the teams of their current, non-player
+	 * work_history jobs. This is the set a coordinator's team scope is matched
+	 * against, so a player's own team never widens what a coordinator can see.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return int[]
+	 */
+	private function current_team_ids_for_person( int $person_id ): array {
+		$work_history = get_field( 'work_history', $person_id );
+
+		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
+			return [];
+		}
+
+		$player_roles = $this->player_role_lookup();
+		$team_ids     = [];
+
+		foreach ( $work_history as $job ) {
+			$team_id = (int) ( $job['team'] ?? 0 );
+			$role    = trim( (string) ( $job['job_title'] ?? '' ) );
+
+			if ( $team_id && $role !== '' && ! isset( $player_roles[ $role ] ) && $this->is_current_job( $job ) ) {
+				$team_ids[] = $team_id;
+			}
+		}
+
+		return $team_ids;
+	}
+
+	/**
+	 * Player role names as a lookup map (role => true), memoised per request.
+	 *
+	 * @return array<string, true>
+	 */
+	private function player_role_lookup(): array {
+		if ( $this->player_role_lookup === null ) {
+			$this->player_role_lookup = array_fill_keys( \Rondo\Core\VolunteerStatus::get_player_roles(), true );
+		}
+
+		return $this->player_role_lookup;
+	}
+
+	/**
+	 * Whether a work_history row is current. Mirrors the client's `isCurrentJob`:
+	 * current when the end date is empty, or a parseable date that is today or
+	 * later. The `is_current` flag is deliberately ignored — the client ignores it
+	 * too (both of its branches reduce to the same end-date test).
+	 *
+	 * @param array $job Work history row.
+	 * @return bool
+	 */
+	private function is_current_job( array $job ): bool {
+		$end_date = trim( (string) ( $job['end_date'] ?? '' ) );
+
+		if ( $end_date === '' ) {
+			return true;
+		}
+
+		$digits = preg_replace( '/\D/', '', $end_date );
+
+		if ( strlen( $digits ) !== 8 ) {
+			return false;
+		}
+
+		$end = \DateTimeImmutable::createFromFormat( 'Ymd', $digits );
+
+		return $end && $end >= new \DateTimeImmutable( 'today' );
+	}
+
+	/**
+	 * Build the trimmed person payload for the given IDs, in the wp/v2 shape the
+	 * Kaderlijst already consumes (`{ id, acf }`).
+	 *
+	 * @param int[] $person_ids Person post IDs.
+	 * @return array<int, array{id:int, acf:array}>
+	 */
+	private function build_kaderlijst_people( array $person_ids ): array {
+		$people = [];
+
+		foreach ( array_unique( array_map( 'intval', $person_ids ) ) as $person_id ) {
+			if ( $person_id <= 0 || get_post_type( $person_id ) !== 'person' ) {
+				continue;
+			}
+
+			if ( get_field( 'former_member', $person_id ) ) {
+				continue;
+			}
+
+			$acf = [];
+			foreach ( self::KADERLIJST_ACF_FIELDS as $field ) {
+				$acf[ $field ] = get_field( $field, $person_id );
+			}
+
+			$people[] = [
+				'id'  => $person_id,
+				'acf' => $acf,
+			];
+		}
+
+		return $people;
 	}
 
 	public function __construct() {
@@ -177,29 +417,14 @@ class Api extends Base {
 			]
 		);
 
-		// Kaderlijst snapshot (database-backed)
+		// Kaderlijst — scoped kader people, visibility enforced server-side.
 		register_rest_route(
 			'rondo/v1',
-			'/kaderlijst/snapshot',
+			'/kaderlijst/people',
 			[
-				[
-					'methods'             => \WP_REST_Server::READABLE,
-					'callback'            => [ $this, 'get_kaderlijst_snapshot' ],
-					'permission_callback' => [ $this, 'check_user_approved' ],
-				],
-				[
-					'methods'             => \WP_REST_Server::CREATABLE,
-					'callback'            => [ $this, 'update_kaderlijst_snapshot' ],
-					'permission_callback' => [ $this, 'check_user_approved' ],
-					'args'                => [
-						'snapshot' => [
-							'required'          => true,
-							'validate_callback' => function ( $param ) {
-								return is_array( $param ) && isset( $param['teams'], $param['rows'] ) && is_array( $param['teams'] ) && is_array( $param['rows'] );
-							},
-						],
-					],
-				],
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_kaderlijst_people' ],
+				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
 

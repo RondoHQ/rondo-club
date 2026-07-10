@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.37.0] - 2026-07-10
+
+### Changed
+- **De Kaderlijst is nu server-side afgeschermd.** De pagina haalde tot nu toe álle leden op en filterde in de browser, waardoor een coördinator via de Kaderlijst het hele ledenbestand kon inzien. Er is nu een eigen endpoint (`GET /rondo/v1/kaderlijst/people`) dat alleen kaderleden teruggeeft (mensen met een lopende functie in de werkhistorie) en alleen de velden die de lijst toont. De zichtbaarheid wordt op de server bepaald: beheerders zien alle kaderleden, een coördinator ziet de kaderleden van de teams die hij coördineert (bepaald op basis van de leeftijdsgroep van de huidige spelers in dat team), en een lid ziet alleen het eigen huishouden.
+
+### Removed
+- **`suppress_age_group` is volledig verwijderd.** Deze query-parameter was de laatste plek waar een gescopete account de leeftijdsgroep-afscherming kon omzeilen. De parameter, `AccessControl::can_suppress_age_group()`, de `$suppress_age_group_filter`-vlag en alle bijbehorende vertakkingen zijn weg; de Kaderlijst gebruikt nu het afgeschermde endpoint.
+- De gedeelde Kaderlijst-snapshot (`rondo_kaderlijst_snapshot`, opgeslagen in de opties) is vervangen door een live, per-gebruiker afgeschermde query. Eén gedeelde snapshot is niet verenigbaar met per-gebruiker zichtbaarheid.
+
 ## [33.36.0] - 2026-07-10
 
 ### Added
