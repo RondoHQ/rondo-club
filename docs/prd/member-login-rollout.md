@@ -106,11 +106,11 @@ have the flag ignored. Verified on production after deploy:
 (`filter_rest_query` is hooked on `rest_person_query`, which only fires for `wp/v2/people`), so it
 always applied the age filter and was never exposed.
 
-**Residual, accepted for now:** a coordinator can still widen to all 4,095 records with full ACF —
-that is precisely what the flag was built to do, because `Kaderlijst.jsx` fetches *every* person
-(`_fields=id,acf`, all pages) and filters client-side. Four trusted accounts. The proper fix is to
-give Kaderlijst a scoped endpoint returning only people with a current `work_history` functie, with
-only the fields it renders, and then delete the flag entirely. Tracked as item 12.
+**Residual — CLOSED in 33.37.0.** The flag let a coordinator widen to all 4,095 records with full
+ACF because `Kaderlijst.jsx` fetched *every* person (`_fields=id,acf`, all pages) and filtered
+client-side. It is gone: `GET /rondo/v1/kaderlijst/people` returns only kader (people with a current
+`work_history` functie), with only the fields the list renders, scoped server-side. `suppress_age_group`
+and the shared snapshot were deleted with it. See item 12.
 
 ### 1. No way to create 730 accounts — *partly addressed*
 `provision()` is called one `person_id` at a time from an admin picker and sends its welcome email
@@ -317,7 +317,7 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~1~~ | ~~`get_eligible_units_for_person()` returns all units; `/vrijwillig` renders both~~ — **done, 33.29.0** | — |
 | ~~3~~ | ~~Split `may_volunteer()` from owing an obligation~~ — **done, 33.29.0** | — |
 | ~~2~~ | ~~Attribute each shift to one unit, speler duty first~~ — **done, 33.29.1** | — |
-| 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` — [todo](../../.planning/todos/pending/2026-07-10-scoped-kaderlijst-endpoint.md) | 1 |
+| ~~12~~ | ~~Scoped Kaderlijst endpoint, then delete `suppress_age_group`~~ — **done, 33.37.0**. `GET /rondo/v1/kaderlijst/people` returns only kader (current work_history job), scoped server-side: management sees all, a coordinator sees kader of the teams they coordinate (team age-group derived from the current roster's `leeftijdsgroep`, so `Onder 12`/`Meiden`/`Vrouwen` variants resolve correctly), a member sees own household. `suppress_age_group` and the shared snapshot are gone. | 1 |
 | ~~4~~ | ~~Scoped read grant: member sees own record + children~~ — **done, 33.30.0** | — |
 | ~~13~~ | ~~Member-facing UI for the household view~~ — **done, 33.34.0** (`/mijn-gegevens`) | — |
 | 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped — *deferred, config decision, left as-is 2026-07-10* | — |

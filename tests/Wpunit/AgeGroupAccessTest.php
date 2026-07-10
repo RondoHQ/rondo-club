@@ -18,14 +18,10 @@ class AgeGroupAccessTest extends RondoTestCase {
 
 		// Clean up the option before each test.
 		delete_option( 'rondo_age_group_access' );
-
-		// Reset the suppress flag.
-		AccessControl::$suppress_age_group_filter = false;
 	}
 
 	protected function tear_down(): void {
 		delete_option( 'rondo_age_group_access' );
-		AccessControl::$suppress_age_group_filter = false;
 		parent::tear_down();
 	}
 
@@ -241,25 +237,25 @@ class AgeGroupAccessTest extends RondoTestCase {
 	}
 
 	/**
-	 * A user who may see nobody must not be able to widen that to everybody by
-	 * passing `suppress_age_group`. Regression test for the 33.28.2 fix.
+	 * A user who may see nobody has an empty permitted list. This is the invariant
+	 * that used to be widened by `suppress_age_group`: with that flag removed, an
+	 * empty list is the whole story — there is no path that turns it into "everybody".
 	 */
-	public function test_user_who_sees_nobody_cannot_suppress_age_group(): void {
-		$user_id = $this->createRondoUser( [ 'user_login' => 'suppress_denied_user' ] );
+	public function test_user_who_sees_nobody_has_empty_permitted_list(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'sees_nobody_user' ] );
 
-		$this->assertSame( [], AccessControl::get_permitted_age_groups( $user_id ) );
-		$this->assertFalse(
-			AccessControl::can_suppress_age_group( $user_id ),
-			'A user with an empty permitted list must never suppress the age-group filter'
+		$this->assertSame(
+			[],
+			AccessControl::get_permitted_age_groups( $user_id ),
+			'A user with no age-group config must see nobody'
 		);
 	}
 
 	/**
-	 * A coordinator with a configured, non-empty list may suppress — this is what
-	 * the Kaderlijst rebuild relies on.
+	 * A coordinator with a configured, non-empty list is scoped to exactly that list.
 	 */
-	public function test_configured_coordinator_may_suppress_age_group(): void {
-		$user_id = $this->createRondoUser( [ 'user_login' => 'suppress_allowed_user' ] );
+	public function test_configured_coordinator_is_scoped_to_its_list(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'scoped_coordinator' ] );
 
 		update_option(
 			'rondo_age_group_access',
@@ -268,40 +264,11 @@ class AgeGroupAccessTest extends RondoTestCase {
 			]
 		);
 
-		$this->assertTrue(
-			AccessControl::can_suppress_age_group( $user_id ),
-			'A coordinator with a non-empty permitted list may suppress'
-		);
-	}
-
-	/**
-	 * Management users are unrestricted already, so suppression is a no-op for them
-	 * and `can_suppress_age_group()` reports false rather than granting anything.
-	 */
-	public function test_management_user_does_not_need_suppression(): void {
-		$user_id = $this->factory()->user->create( [ 'role' => 'administrator' ] );
-
-		$this->assertNull(
+		$this->assertSame(
+			[ 'Onder 11', 'Onder 12' ],
 			AccessControl::get_permitted_age_groups( $user_id ),
-			'Management users bypass age-group filtering entirely'
+			'A coordinator is scoped to their configured age groups'
 		);
-		$this->assertFalse(
-			AccessControl::can_suppress_age_group( $user_id ),
-			'Nothing to suppress for an already-unrestricted user'
-		);
-	}
-
-	/**
-	 * The suppress flag should exist as a static property.
-	 */
-	public function test_suppress_flag_exists(): void {
-		$this->assertFalse( AccessControl::$suppress_age_group_filter );
-
-		AccessControl::$suppress_age_group_filter = true;
-		$this->assertTrue( AccessControl::$suppress_age_group_filter );
-
-		// Reset.
-		AccessControl::$suppress_age_group_filter = false;
 	}
 
 	/**

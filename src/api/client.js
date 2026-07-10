@@ -114,9 +114,8 @@ export const prmApi = {
     return api.get('/rondo/v1/dashboard');
   },
 
-  // Kaderlijst snapshot (database-backed cache)
-  getKaderlijstSnapshot: () => api.get('/rondo/v1/kaderlijst/snapshot'),
-  updateKaderlijstSnapshot: (snapshot) => api.post('/rondo/v1/kaderlijst/snapshot', { snapshot }),
+  // Kaderlijst — scoped kader people, visibility enforced server-side.
+  getKaderlijstPeople: () => api.get('/rondo/v1/kaderlijst/people'),
   
   // Bulk operations
   bulkUpdatePeople: (ids, updates) => api.post('/rondo/v1/people/bulk-update', { ids, updates }),

@@ -20,13 +20,6 @@ class AccessControl {
 	private const TODO_ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
 	/**
-	 * When true, age-group filtering is suppressed (used by Kaderlijst).
-	 *
-	 * @var bool
-	 */
-	public static $suppress_age_group_filter = false;
-
-	/**
 	 * Management capabilities that bypass age-group filtering.
 	 *
 	 * `financieel_read` is here because facturen and contributie span the whole club:
@@ -509,22 +502,6 @@ class AccessControl {
 	}
 
 	/**
-	 * Whether a user may pass `suppress_age_group` to widen their person queries.
-	 *
-	 * Only a user with an explicitly configured, non-empty age-group list qualifies —
-	 * that is a coordinator, the case the Kaderlijst rebuild was built for. Management
-	 * users are unrestricted already, so the flag is a no-op for them. Everyone else
-	 * has an empty list meaning "see nobody", and the flag must not turn that into
-	 * "see everybody".
-	 *
-	 * @param int|null $user_id User ID (optional, defaults to current user).
-	 * @return bool Whether the age-group narrowing may be suppressed.
-	 */
-	public static function can_suppress_age_group( $user_id = null ) {
-		return ! empty( self::get_permitted_age_groups( $user_id ) );
-	}
-
-	/**
 	 * Check if the current user has age-group restrictions.
 	 *
 	 * @return bool True if the user is restricted to specific age groups.
@@ -684,7 +661,7 @@ class AccessControl {
 		}
 
 		// Age-group filtering for person post type
-		if ( $post_type === 'person' && ! self::$suppress_age_group_filter && $this->has_age_group_restriction() ) {
+		if ( $post_type === 'person' && $this->has_age_group_restriction() ) {
 			$this->apply_age_group_filter( $query );
 		}
 	}
@@ -719,17 +696,8 @@ class AccessControl {
 			}
 		}
 
-		// Allow the Kaderlijst rebuild to widen a coordinator's age-group narrowing.
-		// Only users who already have a non-empty permitted list may do so. A user
-		// whose list is empty means "see nobody" (the default for non-management
-		// users) — for them the flag must never turn deny into allow.
-		if ( $post_type === 'person' ) {
-			self::$suppress_age_group_filter = (bool) $request->get_param( 'suppress_age_group' )
-				&& self::can_suppress_age_group();
-		}
-
 		// Person visibility: coordinators narrow to age groups, members to their household.
-		if ( $post_type === 'person' && ! self::$suppress_age_group_filter ) {
+		if ( $post_type === 'person' ) {
 			$scope = self::person_scope();
 
 			if ( isset( $scope['post__in'] ) ) {
@@ -813,8 +781,8 @@ class AccessControl {
 		}
 
 		// Person visibility: management sees all, coordinators see their age groups,
-		// members see their own household. Kaderlijst may widen a coordinator only.
-		if ( $post->post_type === 'person' && ! self::$suppress_age_group_filter ) {
+		// members see their own household.
+		if ( $post->post_type === 'person' ) {
 			if ( ! self::can_view_person( $post->ID ) ) {
 				// Error code kept for back-compat: PersonDetail.jsx branches on it.
 				return new \WP_Error(

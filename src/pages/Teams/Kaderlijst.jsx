@@ -235,38 +235,16 @@ async function fetchAllTeams() {
   }));
 }
 
-async function fetchAllPeople() {
-  const perPage = 100;
-  const params = {
-    per_page: perPage,
-    _fields: 'id,acf',
-    suppress_age_group: true,
-  };
-
-  const firstResponse = await wpApi.getPeople({ ...params, page: 1 });
-  const totalPages = Number.parseInt(
-    firstResponse.headers['x-wp-totalpages'] || firstResponse.headers['X-WP-TotalPages'] || '1',
-    10,
-  ) || 1;
-
-  const allPeople = [...(firstResponse.data || [])];
-  if (totalPages > 1) {
-    const pageNumbers = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
-
-    for (let i = 0; i < pageNumbers.length; i += FETCH_CONCURRENCY) {
-      const batch = pageNumbers.slice(i, i + FETCH_CONCURRENCY);
-      const responses = await Promise.all(batch.map((page) => wpApi.getPeople({ ...params, page })));
-      responses.forEach((response) => {
-        allPeople.push(...(response.data || []));
-      });
-    }
-  }
-
-  return allPeople;
+async function fetchKaderPeople() {
+  // Scoped, kader-only person list. The server enforces visibility (management
+  // sees all kader, a coordinator sees the kader of the teams they coordinate,
+  // a member sees their own household) and returns only the rendered fields.
+  const response = await prmApi.getKaderlijstPeople();
+  return Array.isArray(response.data?.people) ? response.data.people : [];
 }
 
-async function buildKaderlijstSnapshot() {
-  const [teams, people] = await Promise.all([fetchAllTeams(), fetchAllPeople()]);
+async function buildKaderlijst() {
+  const [teams, people] = await Promise.all([fetchAllTeams(), fetchKaderPeople()]);
   const teamsById = new Map(teams.map((team) => [team.id, team]));
 
   const rows = [];
@@ -325,18 +303,7 @@ export default function Kaderlijst() {
 
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: ['kaderlijst'],
-    queryFn: async () => {
-      const response = await prmApi.getKaderlijstSnapshot();
-      const snapshot = response.data?.snapshot;
-
-      if (snapshot && Array.isArray(snapshot.teams) && Array.isArray(snapshot.rows)) {
-        return snapshot;
-      }
-
-      const rebuiltSnapshot = await buildKaderlijstSnapshot();
-      await prmApi.updateKaderlijstSnapshot(rebuiltSnapshot);
-      return rebuiltSnapshot;
-    },
+    queryFn: buildKaderlijst,
     staleTime: Infinity,
     gcTime: Infinity,
     refetchOnWindowFocus: false,
@@ -555,11 +522,9 @@ export default function Kaderlijst() {
             type="button"
             onClick={async () => {
               setIsRefreshing(true);
-              await queryClient.removeQueries({ queryKey: ['kaderlijst'], exact: true });
               try {
-                const rebuiltSnapshot = await buildKaderlijstSnapshot();
-                await prmApi.updateKaderlijstSnapshot(rebuiltSnapshot);
-                queryClient.setQueryData(['kaderlijst'], rebuiltSnapshot);
+                const rebuilt = await buildKaderlijst();
+                queryClient.setQueryData(['kaderlijst'], rebuilt);
               } finally {
                 setIsRefreshing(false);
               }
