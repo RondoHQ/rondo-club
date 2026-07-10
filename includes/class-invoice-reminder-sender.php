@@ -158,11 +158,8 @@ class InvoiceReminderSender {
 
 		if ( $person && $person->post_type === 'person' ) {
 			// Build person name.
-			$first_name  = (string) get_field( 'first_name', $person_id );
-			$infix       = (string) get_field( 'infix', $person_id );
-			$last_name   = (string) get_field( 'last_name', $person_id );
-			$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
-			$person_name = implode( ' ', $name_parts );
+			$first_name  = (string) ( get_field( 'first_name', $person_id ) ?: get_field( 'company_name', $person_id ) );
+			$person_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
 
 			// Resolve all invoice recipients (person emails + parents if minor).
 			$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );

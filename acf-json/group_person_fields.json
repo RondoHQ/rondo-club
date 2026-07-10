@@ -14,7 +14,7 @@
             "label": "First Name",
             "name": "first_name",
             "type": "text",
-            "required": 1,
+            "required": 0,
             "wrapper": {
                 "width": "33"
             }
@@ -45,6 +45,17 @@
             "label": "Nickname",
             "name": "nickname",
             "type": "text",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_company_name",
+            "label": "Bedrijfsnaam",
+            "name": "company_name",
+            "type": "text",
+            "instructions": "Optioneel voor externe contacten. Bij een contact zonder persoonsnaam wordt dit de weergavenaam.",
+            "required": 0,
             "wrapper": {
                 "width": "50"
             }
@@ -816,5 +827,5 @@
     ],
     "active": true,
     "show_in_rest": 1,
-    "modified": 1783677600
+    "modified": 1783678500
 }

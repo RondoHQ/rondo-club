@@ -33,6 +33,7 @@ function transformPerson(person) {
     first_name: person.acf?.first_name || '',
     infix: person.acf?.infix || '',
     last_name: person.acf?.last_name || '',
+    company_name: person.acf?.company_name || '',
     is_deceased: person.is_deceased || false,
     birth_year: person.birth_year || null,
     modified: person.modified || null,
@@ -262,13 +263,14 @@ export function useCreatePerson({ onSuccess } = {}) {
 
       // Build the full payload with fixed contact fields
       const payload = {
-        title: formatPersonName(data.first_name, data.infix, data.last_name),
+        title: formatPersonName(data.first_name, data.infix, data.last_name) || data.company_name,
         status: 'publish',
         acf: {
           first_name: data.first_name,
           infix: data.infix || '',
           last_name: data.last_name,
           nickname: data.nickname,
+          company_name: data.company_name || '',
           person_type: data.person_type || 'member',
           gender: data.gender || null,
           pronouns: data.pronouns || null,

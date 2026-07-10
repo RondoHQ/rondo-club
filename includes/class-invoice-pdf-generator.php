@@ -79,11 +79,7 @@ class InvoicePdfGenerator {
 
 		$person = $person_id ? get_post( $person_id ) : null;
 		if ( $person && $person->post_type === 'person' ) {
-			$first_name  = get_field( 'first_name', $person_id );
-			$infix       = get_field( 'infix', $person_id );
-			$last_name   = get_field( 'last_name', $person_id );
-			$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
-			$member_name = implode( ' ', $name_parts );
+			$member_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
 			if ( $person_name === '' ) {
 				$person_name = $member_name;
 			}

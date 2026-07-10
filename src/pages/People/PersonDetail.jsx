@@ -29,7 +29,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { decodeHtml, formatPersonName, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -122,6 +122,7 @@ export default function PersonDetail() {
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [isSavingPersonType, setIsSavingPersonType] = useState(false);
+  const [companyNameDraft, setCompanyNameDraft] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState(null);
@@ -134,6 +135,10 @@ export default function PersonDetail() {
 
   // Mobile todos panel state
   const [showMobileTodos, setShowMobileTodos] = useState(false);
+
+  useEffect(() => {
+    setCompanyNameDraft(person?.acf?.company_name || '');
+  }, [person?.acf?.company_name]);
 
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
@@ -200,6 +205,24 @@ export default function PersonDetail() {
       alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingPersonType(false);
+    }
+  };
+
+  const handleCompanyNameSave = async () => {
+    const companyName = companyNameDraft.trim();
+    if (companyName === (person.acf?.company_name || '')) return;
+    if (!companyName && !person.acf?.first_name) {
+      alert('Vul een bedrijfsnaam of voornaam in.');
+      setCompanyNameDraft(person.acf?.company_name || '');
+      return;
+    }
+
+    try {
+      const acfData = sanitizePersonAcf(person.acf, { company_name: companyName });
+      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+    } catch {
+      alert('Bedrijfsnaam kon niet worden opgeslagen. Probeer het opnieuw.');
+      setCompanyNameDraft(person.acf?.company_name || '');
     }
   };
 
@@ -1050,6 +1073,7 @@ export default function PersonDetail() {
   }
   
   const acf = person.acf || {};
+  const personalName = formatPersonName(acf.first_name, acf.infix, acf.last_name);
   const isFormerMember = acf.former_member === true;
 
   // Former members are read-only — Sportlink rejects writes for their
@@ -1174,7 +1198,7 @@ export default function PersonDetail() {
             ) : (
               <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-medium text-gray-500 dark:text-gray-300">
-                  {person.first_name?.[0] || '?'}
+                  {person.name?.[0] || acf.company_name?.[0] || '?'}
                 </span>
               </div>
             )}
@@ -1234,6 +1258,9 @@ export default function PersonDetail() {
                 </span>
               )}
             </div>
+            {acf.company_name && personalName && (
+              <p className="text-base text-gray-600 dark:text-gray-300">{acf.company_name}</p>
+            )}
             {canEditPeople && (
               <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <span>Persoonstype</span>
@@ -1246,6 +1273,23 @@ export default function PersonDetail() {
                   <option value="member">Lid / ouder</option>
                   <option value="contact">Contact</option>
                 </select>
+              </label>
+            )}
+            {canEditPeople && acf.person_type === 'contact' && (
+              <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
+                <span className="mb-1 block">Bedrijfsnaam</span>
+                <input
+                  type="text"
+                  value={companyNameDraft}
+                  onChange={(event) => setCompanyNameDraft(event.target.value)}
+                  onBlur={handleCompanyNameSave}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.currentTarget.blur();
+                  }}
+                  className="input py-1 text-sm"
+                  placeholder="Voorbeeld BV"
+                  disabled={updatePerson.isPending}
+                />
               </label>
             )}
             {groupedPositions.length > 0 && (
