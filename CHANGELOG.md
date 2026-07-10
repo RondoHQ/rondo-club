@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.41.3] - 2026-07-10
+
+### Fixed
+- De eenmalige migratie van bestaande IVA-certificaten gebruikt nu afzonderlijke, geïndexeerde WordPress-metaqueries. De eerdere gecombineerde OR-query kon op productie een timeout veroorzaken voordat de migratie begon.
+
 ## [33.41.2] - 2026-07-10
 
 ### Security
