@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.41.2] - 2026-07-10
+
+### Security
+- Het deployscript sluit nu lokale `.env`-bestanden, agentconfiguratie, worktrees, tests en overige ontwikkelbestanden uit. Ook bij `--with-node-modules` wordt uitsluitend de benodigde dependency-map meegestuurd.
+
 ## [33.41.1] - 2026-07-10
 
 ### Security

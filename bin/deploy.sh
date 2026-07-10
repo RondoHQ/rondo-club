@@ -142,21 +142,31 @@ rsync -avz --delete \
 
 # Step 3: Sync remaining theme files
 echo -e "${YELLOW}Step 3: Syncing theme files...${NC}"
+RSYNC_EXCLUDES=(
+    --exclude='.git'
+    --exclude='.github'
+    --exclude='.claude'
+    --exclude='.agents'
+    --exclude='.codex'
+    --exclude='.husky'
+    --exclude='.env'
+    --exclude='.DS_Store'
+    --exclude='dist'
+    --exclude='graphify-out'
+    --exclude='tests'
+)
+
 if [ "$INCLUDE_NODE_MODULES" = true ]; then
     echo "(Including node_modules)"
     rsync -avz \
-        --exclude='.git' \
-        --exclude='dist' \
-        --exclude='graphify-out' \
+        "${RSYNC_EXCLUDES[@]}" \
         -e "ssh -p $DEPLOY_SSH_PORT" \
         "$PROJECT_ROOT/" \
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
 else
     rsync -avz \
-        --exclude='.git' \
+        "${RSYNC_EXCLUDES[@]}" \
         --exclude='node_modules' \
-        --exclude='dist' \
-        --exclude='graphify-out' \
         -e "ssh -p $DEPLOY_SSH_PORT" \
         "$PROJECT_ROOT/" \
         "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:$DEPLOY_REMOTE_THEME_PATH/"
