@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck } from 'lucide-react';
-import { wpApi } from '@/api/client';
+import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatPersonName, parseAcfDate } from '@/utils/formatters';
@@ -76,9 +76,8 @@ function PersonCard({ person, isSelf }) {
 /**
  * "Mijn gezin" — the member's own record plus their children under 18.
  *
- * No filtering happens here. `GET /wp/v2/people` already returns exactly the people
- * a scoped member may see, with the sensitive ACF fields stripped server-side. A kader
- * user would get the whole club back, so the sidebar only offers this to plain leden.
+ * The dedicated endpoint always returns the linked person and minor children,
+ * even when the caller has broader management privileges.
  */
 export default function Household() {
   useDocumentTitle('Mijn gegevens');
@@ -88,7 +87,7 @@ export default function Household() {
   const { data: people = [], isLoading, isError } = useQuery({
     queryKey: ['household'],
     queryFn: async () => {
-      const response = await wpApi.getPeople({ per_page: 20, orderby: 'title', order: 'asc' });
+      const response = await prmApi.getHousehold();
       return response.data;
     },
   });

@@ -198,8 +198,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresKader && !isKader) return false;
-    // "Mijn gegevens" leans on /wp/v2/people being scoped to the member's own
-    // household. For kader that endpoint returns the whole club, so hide it.
+    // Kader normally does not need the member-facing household page.
     if (item.memberOnly && isKader) return false;
     return true;
   });

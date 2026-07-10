@@ -55,6 +55,17 @@ class People extends Base {
 	 * Register custom REST routes for people domain
 	 */
 	public function register_routes() {
+		// Personal household scope, independent of broader management privileges.
+		register_rest_route(
+			'rondo/v1',
+			'/people/household',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_household' ],
+				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
 		// Dates by person
 		register_rest_route(
 			'rondo/v1',
@@ -476,6 +487,53 @@ class People extends Base {
 				'permission_callback' => [ $this, 'check_user_approved' ],
 			]
 		);
+	}
+
+	/** Return only the linked person and their minor children. */
+	public function get_household() {
+		$ids = \Rondo\Core\AccessControl::get_visible_person_ids();
+		if ( empty( $ids ) ) {
+			return rest_ensure_response( [] );
+		}
+
+		$posts = get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'post__in'         => $ids,
+				'posts_per_page'   => count( $ids ),
+				'orderby'          => 'post__in',
+				'suppress_filters' => true,
+			]
+		);
+
+		$fields = [
+			'first_name',
+			'infix',
+			'last_name',
+			'email_1',
+			'mobile_1',
+			'telephone_1',
+			'addresses',
+			'birthdate',
+			'leeftijdsgroep',
+			'knvb-id',
+			'lid-sinds',
+			'datum-vog',
+		];
+		$people = [];
+		foreach ( $posts as $post ) {
+			$acf = [];
+			foreach ( $fields as $field ) {
+				$acf[ $field ] = get_field( $field, $post->ID );
+			}
+			$people[] = [
+				'id'  => $post->ID,
+				'acf' => $acf,
+			];
+		}
+
+		return rest_ensure_response( $people );
 	}
 
 	/**
