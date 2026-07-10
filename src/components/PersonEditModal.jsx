@@ -315,7 +315,7 @@ export default function PersonEditModal({
                 <label className="label">Voornaam</label>
                 <input
                   {...register('first_name', {
-                    validate: (value) => value?.trim() || getValues('company_name')?.trim() || 'Vul een voornaam of bedrijfsnaam in',
+                    validate: (value) => Boolean(value?.trim() || getValues('company_name')?.trim()) || 'Vul een voornaam of bedrijfsnaam in',
                   })}
                   className="input"
                   placeholder="Jan"
@@ -331,10 +331,9 @@ export default function PersonEditModal({
                 <label className="label">Tussenvoegsel</label>
                 <input
                   {...register('infix')}
-                  className="input bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  className="input"
                   placeholder="van de"
-                  disabled={true}
-                  title="Komt van Sportlink"
+                  disabled={isLoading}
                 />
               </div>
 

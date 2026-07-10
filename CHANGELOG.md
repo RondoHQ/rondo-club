@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.43.1] - 2026-07-10
+
+### Fixed
+- Het formulier **Contact toevoegen** toont een ingevulde voornaam niet langer ten onrechte als foutmelding. Het veld Tussenvoegsel is voor handmatig aangemaakte contacten nu bewerkbaar in plaats van geblokkeerd door de Sportlink-regel voor leden.
+
 ## [33.43.0] - 2026-07-10
 
 ### Added
