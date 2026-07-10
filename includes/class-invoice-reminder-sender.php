@@ -66,15 +66,24 @@ class InvoiceReminderSender {
 	 * @return true|\WP_Error True on success, WP_Error on failure.
 	 */
 	public static function send_reminder_1( int $invoice_id ): true|\WP_Error {
-		$config   = new FinanceConfig();
-		$template = $config->get_invoice_reminder_1_email_template();
+		$config = new FinanceConfig();
+
+		// Membership invoices use the contributie-specific reminder; all other
+		// invoice types (manual, discipline) use the neutral generic reminder.
+		if ( self::is_membership_invoice( $invoice_id ) ) {
+			$template     = $config->get_invoice_reminder_1_email_template();
+			$heading_type = 'invoice_reminder_1';
+		} else {
+			$template     = $config->get_generic_invoice_reminder_1_email_template();
+			$heading_type = 'generic_invoice_reminder_1';
+		}
 
 		// Write timestamp BEFORE wp_mail to prevent duplicate sends.
 		update_post_meta( $invoice_id, '_invoice_reminder_1_sent_at', current_time( 'mysql' ) );
 
 		$subject_prefix = 'Herinnering';
 
-		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, false, 'invoice_reminder_1' );
+		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, false, $heading_type );
 	}
 
 	/**
@@ -90,15 +99,38 @@ class InvoiceReminderSender {
 	 * @return true|\WP_Error True on success, WP_Error on failure.
 	 */
 	public static function send_reminder_2( int $invoice_id ): true|\WP_Error {
-		$config   = new FinanceConfig();
-		$template = $config->get_invoice_reminder_2_email_template();
+		$config = new FinanceConfig();
+
+		// Membership invoices use the contributie-specific reminder; all other
+		// invoice types (manual, discipline) use the neutral generic reminder.
+		if ( self::is_membership_invoice( $invoice_id ) ) {
+			$template     = $config->get_invoice_reminder_2_email_template();
+			$heading_type = 'invoice_reminder_2';
+		} else {
+			$template     = $config->get_generic_invoice_reminder_2_email_template();
+			$heading_type = 'generic_invoice_reminder_2';
+		}
 
 		// Write timestamp BEFORE wp_mail to prevent duplicate sends.
 		update_post_meta( $invoice_id, '_invoice_reminder_2_sent_at', current_time( 'mysql' ) );
 
 		$subject_prefix = 'Tweede herinnering';
 
-		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, true, 'invoice_reminder_2' );
+		return self::resolve_and_send( $invoice_id, $template, $subject_prefix, true, $heading_type );
+	}
+
+	/**
+	 * Determine whether an invoice is a membership (contributie) invoice.
+	 *
+	 * Membership invoices carry the contributie-specific reminder wording
+	 * (plan selection, installments). Every other invoice_type — manual and
+	 * discipline — should receive the neutral generic reminder instead.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 * @return bool True when the invoice_type field equals 'membership'.
+	 */
+	private static function is_membership_invoice( int $invoice_id ): bool {
+		return (string) get_field( 'invoice_type', $invoice_id ) === 'membership';
 	}
 
 	/**

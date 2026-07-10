@@ -244,6 +244,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     reminder_2_email_template: '',
     invoice_reminder_1_email_template: '',
     invoice_reminder_2_email_template: '',
+    generic_invoice_reminder_1_email_template: '',
+    generic_invoice_reminder_2_email_template: '',
     regular_invoice_email_subject: '',
     regular_invoice_email_body: '',
     regular_invoice_email_heading: '',
@@ -254,6 +256,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
     reminder_2_email_heading: '',
     invoice_reminder_1_email_heading: '',
     invoice_reminder_2_email_heading: '',
+    generic_invoice_reminder_1_email_heading: '',
+    generic_invoice_reminder_2_email_heading: '',
     credit_email_template: '',
     credit_email_heading: '',
     credit_email_subject: '',
@@ -324,6 +328,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_template: settings.reminder_2_email_template || '',
         invoice_reminder_1_email_template: settings.invoice_reminder_1_email_template || '',
         invoice_reminder_2_email_template: settings.invoice_reminder_2_email_template || '',
+        generic_invoice_reminder_1_email_template: settings.generic_invoice_reminder_1_email_template || '',
+        generic_invoice_reminder_2_email_template: settings.generic_invoice_reminder_2_email_template || '',
         regular_invoice_email_subject: settings.regular_invoice_email_subject || '',
         regular_invoice_email_body: settings.regular_invoice_email_body || '',
         regular_invoice_email_heading: settings.regular_invoice_email_heading || '',
@@ -334,6 +340,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_heading: settings.reminder_2_email_heading || '',
         invoice_reminder_1_email_heading: settings.invoice_reminder_1_email_heading || '',
         invoice_reminder_2_email_heading: settings.invoice_reminder_2_email_heading || '',
+        generic_invoice_reminder_1_email_heading: settings.generic_invoice_reminder_1_email_heading || '',
+        generic_invoice_reminder_2_email_heading: settings.generic_invoice_reminder_2_email_heading || '',
         credit_email_template: settings.credit_email_template || '',
         credit_email_heading: settings.credit_email_heading || '',
         credit_email_subject: settings.credit_email_subject || '',
@@ -515,6 +523,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_template: formData.reminder_2_email_template,
         invoice_reminder_1_email_template: formData.invoice_reminder_1_email_template,
         invoice_reminder_2_email_template: formData.invoice_reminder_2_email_template,
+        generic_invoice_reminder_1_email_template: formData.generic_invoice_reminder_1_email_template,
+        generic_invoice_reminder_2_email_template: formData.generic_invoice_reminder_2_email_template,
         regular_invoice_email_subject: formData.regular_invoice_email_subject,
         regular_invoice_email_body: formData.regular_invoice_email_body,
         regular_invoice_email_heading: formData.regular_invoice_email_heading,
@@ -525,6 +535,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
         reminder_2_email_heading: formData.reminder_2_email_heading,
         invoice_reminder_1_email_heading: formData.invoice_reminder_1_email_heading,
         invoice_reminder_2_email_heading: formData.invoice_reminder_2_email_heading,
+        generic_invoice_reminder_1_email_heading: formData.generic_invoice_reminder_1_email_heading,
+        generic_invoice_reminder_2_email_heading: formData.generic_invoice_reminder_2_email_heading,
         credit_email_template: formData.credit_email_template,
         credit_email_heading: formData.credit_email_heading,
         credit_email_subject: formData.credit_email_subject,
@@ -1169,9 +1181,9 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           {emailSubTab === 'factuur_herinneringen' && (
             <div className="card p-6">
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Herinneringen voor facturen zonder betaalplan</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Herinneringen voor contributiefacturen zonder betaalplan</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Deze herinneringen worden automatisch verstuurd aan leden die hun contributiefactuur hebben ontvangen maar nog geen betaalwijze hebben gekozen.
+                  Deze herinneringen worden automatisch verstuurd aan leden die hun contributiefactuur hebben ontvangen maar nog geen betaalwijze hebben gekozen. Voor overige facturen (handmatige facturen en tuchtzaken) worden de herinneringen hieronder gebruikt.
                 </p>
               </div>
 
@@ -1237,6 +1249,94 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
                 <div className="space-y-1 font-mono">
                   <div><code>{'{naam}'}</code> - Volledige naam van het lid</div>
                   <div><code>{'{voornaam}'}</code> - Voornaam van het lid</div>
+                  <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
+                  <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
+                  <div><code>{'{betaallink}'}</code> - Link naar betaalpagina</div>
+                  <div><code>{'{betaalknop}'}</code> - Betaalknop</div>
+                  <div><code>{'{qr_code}'}</code> - QR code voor de betaallink</div>
+                  <div><code>{'{factuurdatum}'}</code> - Datum van de originele factuur</div>
+                  <div><code>{'{dagen_sinds_factuur}'}</code> - Aantal dagen sinds factuurdatum</div>
+                  <div><code>{'{organisatie_naam}'}</code> - Naam van de organisatie</div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Typ de variabelen als tekst in de editor. Ze worden automatisch vervangen bij het versturen.
+              </p>
+            </div>
+          )}
+
+          {/* Herinneringen voor overige facturen (niet-contributie) */}
+          {emailSubTab === 'factuur_herinneringen' && (
+            <div className="card p-6 mt-6">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Herinneringen voor overige facturen</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Deze herinneringen worden gebruikt voor handmatige facturen en tuchtzaakfacturen — facturen zonder contributie- of termijncontext. Vermijd hier verwijzingen naar contributie of termijnen.
+                </p>
+              </div>
+
+              {/* Reminder 1 — 14 days */}
+              <div className="space-y-4 mb-8">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Eerste herinnering</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Wordt verstuurd 2 weken na de factuurdatum.
+                  </p>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titel in e-mail</label>
+                    <input
+                      type="text"
+                      value={formData.generic_invoice_reminder_1_email_heading}
+                      onChange={(e) => setFormData(prev => ({ ...prev, generic_invoice_reminder_1_email_heading: e.target.value }))}
+                      placeholder="Herinnering"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                  </div>
+                  <RichTextEditor
+                    value={formData.generic_invoice_reminder_1_email_template}
+                    onChange={(html) => setFormData(prev => ({ ...prev, generic_invoice_reminder_1_email_template: html }))}
+                    placeholder="Schrijf hier het template voor de eerste herinnering van overige facturen..."
+                    minHeight="200px"
+                  />
+                  <TestEmailBlock templateType="generic_invoice_reminder_1" />
+                </div>
+              </div>
+
+              {/* Reminder 2 — 28 days */}
+              <div className="space-y-4 mb-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-1">Tweede herinnering</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Wordt verstuurd 4 weken na de factuurdatum. De penningmeester ontvangt een BCC.
+                  </p>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Titel in e-mail</label>
+                    <input
+                      type="text"
+                      value={formData.generic_invoice_reminder_2_email_heading}
+                      onChange={(e) => setFormData(prev => ({ ...prev, generic_invoice_reminder_2_email_heading: e.target.value }))}
+                      placeholder="Tweede herinnering"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-electric-cyan dark:focus:ring-electric-cyan focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">De grote titel in de e-mail. Het factuurnummer wordt automatisch erboven getoond.</p>
+                  </div>
+                  <RichTextEditor
+                    value={formData.generic_invoice_reminder_2_email_template}
+                    onChange={(html) => setFormData(prev => ({ ...prev, generic_invoice_reminder_2_email_template: html }))}
+                    placeholder="Schrijf hier het template voor de tweede herinnering van overige facturen..."
+                    minHeight="200px"
+                  />
+                  <TestEmailBlock templateType="generic_invoice_reminder_2" />
+                </div>
+              </div>
+
+              {/* Available variables */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm text-blue-700 dark:text-blue-300">
+                <p className="font-semibold mb-2">Beschikbare variabelen:</p>
+                <div className="space-y-1 font-mono">
+                  <div><code>{'{naam}'}</code> - Volledige naam</div>
+                  <div><code>{'{voornaam}'}</code> - Voornaam</div>
                   <div><code>{'{factuur_nummer}'}</code> - Factuurnummer</div>
                   <div><code>{'{totaal_bedrag}'}</code> - Totaalbedrag</div>
                   <div><code>{'{betaallink}'}</code> - Link naar betaalpagina</div>
