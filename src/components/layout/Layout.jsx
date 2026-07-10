@@ -51,7 +51,7 @@ const navigation = [
   { name: 'Mijn diensten', href: '/vrijwillig', icon: HeartHandshake },
   { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
-  { name: 'Leden', href: '/people', icon: Users, requiresKader: true },
+  { name: 'Relaties', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
   { name: 'Jubilarissen', href: '/people/jubilarissen', icon: Award, indent: true, requiresKader: true },
   { name: 'Tuchtzaken', href: '/tuchtzaken', icon: Gavel, indent: true, requiresFairplay: true },
@@ -135,7 +135,7 @@ function Sidebar({ mobile = false, onClose, stats }) {
   // Map navigation items to their counts
   const getCounts = (name) => {
     switch (name) {
-      case 'Leden': return stats?.total_people || null;
+      case 'Relaties': return stats?.total_people || null;
       case 'Teams': return stats?.total_teams || null;
       case 'Commissies': return stats?.total_commissies || null;
       case 'Taken': return stats?.open_todos_count || null;
@@ -455,7 +455,7 @@ function SearchModal({ isOpen, onClose }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Zoek leden en teams..."
+              placeholder="Zoek relaties en teams..."
               className="flex-1 px-4 py-4 text-lg outline-none placeholder:text-gray-400 bg-transparent dark:text-gray-100"
               autoComplete="off"
             />
@@ -483,7 +483,7 @@ function SearchModal({ isOpen, onClose }) {
                 {safeResults.people && safeResults.people.length > 0 && (
                   <div className="px-2">
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-gray-400">
-                      Leden
+                      Relaties
                     </div>
                     {safeResults.people.map((person, index) => {
                       const globalIndex = index;
@@ -670,7 +670,7 @@ function Header({ onMenuClick, onOpenSearch, onOpenFeedback }) {
     if (path === '/') return 'Dashboard';
     if (path.startsWith('/people/jubilarissen')) return 'Jubilarissen';
     if (path.startsWith('/people/onboarding')) return 'Onboarding';
-    if (path.startsWith('/people')) return 'Leden';
+    if (path.startsWith('/people')) return 'Relaties';
     if (path === '/financien' || path === '/financien/') return 'Financiën';
     if (path.startsWith('/financien/contributie')) return 'Contributie';
     if (path.startsWith('/financien/facturen')) return 'Facturen';

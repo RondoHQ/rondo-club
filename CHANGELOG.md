@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.44.2] - 2026-07-11
+
+### Changed
+- Het hoofdmenu-item **Leden** heet voortaan **Relaties**, zodat het ook ouders en externe contacten omvat. De classificatiekolom op dit overzicht heet nu kortweg **Type**.
+
 ## [33.44.1] - 2026-07-10
 
 ### Changed
