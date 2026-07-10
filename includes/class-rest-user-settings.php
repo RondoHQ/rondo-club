@@ -87,7 +87,7 @@ class UserSettings extends Base {
 		],
 		[
 			'id'    => 'type-lid',
-			'label' => 'Type lid',
+			'label' => 'Type',
 			'type'  => 'text',
 		],
 		[

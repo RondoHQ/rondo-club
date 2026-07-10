@@ -976,7 +976,7 @@ export default function PeopleList() {
       filterSection: 'Persoon',
     }),
     createColumn({
-      id: 'type_lid', header: 'Type lid', filterType: FILTER_TYPES.SELECT,
+      id: 'type_lid', header: 'Type', filterType: FILTER_TYPES.SELECT,
       filterOptions: filterOptions?.member_types?.map(opt => ({ value: opt.value, label: `${opt.value} (${opt.count})` })) || [],
       getFilterLabel: (val) => `Type: ${val}`,
       filterSection: 'Persoon',
