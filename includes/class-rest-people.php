@@ -323,6 +323,14 @@ class People extends Base {
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					],
+					'person_type'               => [
+						'description'       => 'Filter by Rondo person type (member or contact)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', 'member', 'contact' ], true );
+						},
+					],
 					'foto_missing'              => [
 						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
 						'type'              => 'string',
@@ -1170,6 +1178,7 @@ class People extends Base {
 		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
 		$financiele_blokkade       = $request->get_param( 'financiele_blokkade' );
 		$type_lid                  = $request->get_param( 'type_lid' );
+		$person_type               = $request->get_param( 'person_type' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
 		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
@@ -1352,6 +1361,16 @@ class People extends Base {
 			$join_clauses[]   = "LEFT JOIN {$wpdb->postmeta} tl ON p.ID = tl.post_id AND tl.meta_key = 'type-lid'";
 			$where_clauses[]  = 'tl.meta_value = %s';
 			$prepare_values[] = $type_lid;
+		}
+
+		// Rondo person type. Legacy records without this field are members/parents.
+		if ( ! empty( $person_type ) ) {
+			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} pt ON p.ID = pt.post_id AND pt.meta_key = 'person_type'";
+			if ( $person_type === 'contact' ) {
+				$where_clauses[] = "pt.meta_value = 'contact'";
+			} else {
+				$where_clauses[] = "(pt.meta_value IS NULL OR pt.meta_value = '' OR pt.meta_value = 'member')";
+			}
 		}
 
 		// Leeftijdsgroep (age group) - select filter

@@ -1,8 +1,8 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Filter, X, Check, ArrowUp, ArrowDown, Square, CheckSquare, MinusSquare, ChevronDown, Building2, Download, Info, Loader2, Plus } from 'lucide-react';
 import { DataTableToolbar, createColumn, FILTER_TYPES } from '@/components/DataTable';
-import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople, fetchAllFilteredPeople } from '@/hooks/usePeople';
+import { useFilteredPeople, useFilterOptions, useBulkUpdatePeople, useCreatePerson, fetchAllFilteredPeople } from '@/hooks/usePeople';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
@@ -16,6 +16,7 @@ import { useListPreferences } from '@/hooks/useListPreferences';
 import { useColumnResize } from '@/hooks/useColumnResize';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import ColumnSettingsModal from './ColumnSettingsModal';
+import PersonEditModal from '@/components/PersonEditModal';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
@@ -155,6 +156,11 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           {person.former_member && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
               Oud-lid
+            </span>
+          )}
+          {person.acf?.person_type === 'contact' && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
+              Contact
             </span>
           )}
           {person.acf?.wacht_op_overschrijving && (
@@ -581,6 +587,7 @@ function BulkOrganizationModal({ isOpen, onClose, selectedCount, teams, onSubmit
 
 export default function PeopleList() {
   const { data: currentUser } = useCurrentUser();
+  const navigate = useNavigate();
 
   // URL-based filter state for persistence on back navigation
   const [searchParams, setSearchParams] = useSearchParams();
@@ -597,6 +604,7 @@ export default function PeopleList() {
   const huidigeVrijwilliger = searchParams.get('vrijwilliger') || '';
   const financieleBlokkade = searchParams.get('blokkade') || '';
   const typeLid = searchParams.get('typeLid') || '';
+  const personType = searchParams.get('personType') || '';
   const leeftijdsgroep = searchParams.get('leeftijdsgroep') || '';
   const fotoMissing = searchParams.get('fotoMissing') || '';
   const vogMissing = searchParams.get('vogMissing') || '';
@@ -660,6 +668,10 @@ export default function PeopleList() {
     updateSearchParams({ typeLid: value });
   }, [updateSearchParams]);
 
+  const setPersonType = useCallback((value) => {
+    updateSearchParams({ personType: value });
+  }, [updateSearchParams]);
+
   const setLeeftijdsgroep = useCallback((value) => {
     updateSearchParams({ leeftijdsgroep: value });
   }, [updateSearchParams]);
@@ -703,8 +715,15 @@ export default function PeopleList() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
+  const createPersonMutation = useCreatePerson({
+    onSuccess: (createdPerson) => {
+      setShowContactModal(false);
+      navigate(`/people/${createdPerson.id}`);
+    },
+  });
 
   // Column preferences hook
   const {
@@ -737,6 +756,7 @@ export default function PeopleList() {
     huidigeVrijwilliger,
     financieleBlokkade,
     typeLid,
+    personType,
     leeftijdsgroep,
     fotoMissing,
     vogMissing,
@@ -875,6 +895,16 @@ export default function PeopleList() {
     }),
     createColumn({ id: 'wacht_overschrijving', header: 'Wacht op overschrijving', filterType: FILTER_TYPES.BOOLEAN, getFilterLabel: () => 'Wacht op overschrijving', filterSection: 'Lidmaatschap' }),
 
+    createColumn({
+      id: 'person_type', header: 'Persoonstype', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [
+        { value: 'member', label: 'Leden en ouders' },
+        { value: 'contact', label: 'Contacten' },
+      ],
+      getFilterLabel: (val) => val === 'contact' ? 'Persoonstype: Contact' : 'Persoonstype: Lid / ouder',
+      filterSection: 'Persoon',
+    }),
+
     // Persoon — birth/age/category attributes
     createColumn({
       id: 'birth_year', header: 'Geboortejaar', filterType: FILTER_TYPES.SELECT,
@@ -1002,6 +1032,7 @@ export default function PeopleList() {
     vrijwilliger: huidigeVrijwilliger,
     blokkade: financieleBlokkade,
     type_lid: typeLid,
+    person_type: personType,
     leeftijdsgroep,
     foto_missing: fotoMissing,
     vog_datum: vogMissing === '1' ? 'missing' : vogOlderThanYears ? `older_${vogOlderThanYears}` : '',
@@ -1066,6 +1097,7 @@ export default function PeopleList() {
       case 'vrijwilliger': setHuidigeVrijwilliger(value); break;
       case 'blokkade': setFinancieleBlokkade(value); break;
       case 'type_lid': setTypeLid(value); break;
+      case 'person_type': setPersonType(value); break;
       case 'leeftijdsgroep': setLeeftijdsgroep(value); break;
       case 'foto_missing': setFotoMissing(value); break;
       case 'vog_datum':
@@ -1075,7 +1107,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1108,7 +1140,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1185,6 +1217,7 @@ export default function PeopleList() {
         huidigeVrijwilliger,
         financieleBlokkade,
         typeLid,
+        personType,
         leeftijdsgroep,
         fotoMissing,
         vogMissing,
@@ -1246,16 +1279,24 @@ export default function PeopleList() {
           activeFilterCount={activeFilterCount}
           onOpenColumnSettings={() => setShowColumnSettings(true)}
           toolbarEnd={
-            <button
-              onClick={handleExportCsv}
-              className="btn-tertiary"
-              title={isExporting ? 'Bezig met exporteren…' : 'Downloaden als CSV'}
-              disabled={isExporting || totalPeople === 0}
-            >
-              {isExporting
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : <Download className="w-4 h-4" />}
-            </button>
+            <div className="flex items-center gap-2">
+              {currentUser?.can_edit_people && (
+                <button onClick={() => setShowContactModal(true)} className="btn-primary">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Contact toevoegen</span>
+                </button>
+              )}
+              <button
+                onClick={handleExportCsv}
+                className="btn-tertiary"
+                title={isExporting ? 'Bezig met exporteren…' : 'Downloaden als CSV'}
+                disabled={isExporting || totalPeople === 0}
+              >
+                {isExporting
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Download className="w-4 h-4" />}
+              </button>
+            </div>
           }
         />
 
@@ -1397,6 +1438,14 @@ export default function PeopleList() {
       <ColumnSettingsModal
         isOpen={showColumnSettings}
         onClose={() => setShowColumnSettings(false)}
+      />
+
+      <PersonEditModal
+        isOpen={showContactModal}
+        onClose={() => setShowContactModal(false)}
+        onSubmit={(data) => createPersonMutation.mutate(data)}
+        isLoading={createPersonMutation.isPending}
+        initialPersonType="contact"
       />
 
       {/* Bulk Organization Modal */}
