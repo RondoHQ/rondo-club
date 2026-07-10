@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2, Copy, CalendarClock } from 'lucide-react';
+import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2, Trash2, Copy, CalendarClock, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices, useSendInvoice, useDeleteInvoice, useScheduleInvoice } from '@/hooks/useInvoices';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
+import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -46,14 +47,21 @@ const typeColors = {
 };
 
 function StatusBadge({ status, reminderCount = 0, paidInstallments = 0, installmentCount = 0, scheduledSendDate = null }) {
+  const invoice = {
+    status,
+    reminder_count: reminderCount,
+    paid_installments: paidInstallments,
+    installment_count: installmentCount,
+    scheduled_send_date: scheduledSendDate,
+  };
   let colorKey = status;
-  let label = statusLabels[status] || status;
+  const label = getInvoiceStatusLabel(invoice);
 
   // A draft queued for automatic sending gets its own badge.
   if (status === 'draft' && scheduledSendDate) {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
-        Ingepland · {format(parseYmd(scheduledSendDate), 'd MMM yyyy')}
+        {label}
       </span>
     );
   }
@@ -61,13 +69,10 @@ function StatusBadge({ status, reminderCount = 0, paidInstallments = 0, installm
   // Derive partially paid status when some (but not all) installments are paid.
   if (status !== 'paid' && paidInstallments > 0 && paidInstallments < installmentCount) {
     colorKey = 'partially_paid';
-    label = `Deels betaald (${paidInstallments}/${installmentCount})`;
   } else if (status === 'overdue' && reminderCount > 0) {
     if (reminderCount >= 2) {
-      label = '2e herinnering';
       colorKey = 'overdue'; // red
     } else {
-      label = '1e herinnering';
       colorKey = 'overdue_warning'; // amber/warning
     }
   }
@@ -84,6 +89,26 @@ const PLAN_OPTIONS = [
   { value: 'quarterly_3', label: '3 termijnen' },
   { value: 'monthly_8', label: '8 termijnen' },
 ];
+
+function getInvoiceStatusLabel(invoice) {
+  if (invoice.status === 'draft' && invoice.scheduled_send_date) {
+    return `Ingepland · ${format(parseYmd(invoice.scheduled_send_date), 'd MMM yyyy')}`;
+  }
+  if (invoice.status !== 'paid' && invoice.paid_installments > 0 && invoice.paid_installments < invoice.installment_count) {
+    return `Deels betaald (${invoice.paid_installments}/${invoice.installment_count})`;
+  }
+  if (invoice.status === 'overdue' && invoice.reminder_count > 0) {
+    return invoice.reminder_count >= 2 ? '2e herinnering' : '1e herinnering';
+  }
+  return statusLabels[invoice.status] || invoice.status;
+}
+
+function getInvoicePlanLabel(invoice) {
+  if (!invoice.installment_plan) return '';
+  if (invoice.installment_plan === 'full') return 'Volledig';
+  if (invoice.installment_count) return `${invoice.installment_count} termijnen`;
+  return PLAN_OPTIONS.find((option) => option.value === invoice.installment_plan)?.label || invoice.installment_plan;
+}
 
 export default function Facturen() {
   useDocumentTitle('Facturen');
@@ -513,6 +538,40 @@ export default function Facturen() {
     return '';
   }, [selectedIds]);
 
+  const handleExportCsv = useCallback((filteredInvoices) => {
+    const headers = [
+      'Factuurnummer',
+      'Naam',
+      'Contactpersoon',
+      'Bedrag',
+      'Type',
+      'Status',
+      'Betaalplan',
+      'Verstuurd',
+      'Herinnering',
+      'Verstuurd door',
+      'Aangemaakt',
+    ];
+    const rows = filteredInvoices.map((invoice) => {
+      const effectiveType = invoice.invoice_kind === 'credit' ? 'credit' : invoice.invoice_type;
+      return [
+        invoice.invoice_number || '',
+        invoice.person?.name || invoice.customer_name || '',
+        invoice.person?.contact_name || '',
+        parseFloat(invoice.total_amount) || 0,
+        typeLabels[effectiveType] || effectiveType || '',
+        getInvoiceStatusLabel(invoice),
+        getInvoicePlanLabel(invoice),
+        invoice.sent_date ? format(parseYmd(invoice.sent_date), 'dd-MM-yyyy') : '',
+        invoice.reminder_sent_at ? format(new Date(invoice.reminder_sent_at), 'dd-MM-yyyy') : '',
+        invoice.sent_by?.name || '',
+        invoice.created ? format(new Date(invoice.created), 'dd-MM-yyyy') : '',
+      ];
+    });
+    const csv = buildCsv([headers, ...rows]);
+    downloadCsv(csv, `facturen-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  }, []);
+
   if (error) {
     return (
       <div className="card p-8 text-center">
@@ -659,11 +718,24 @@ export default function Facturen() {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           rowClassName={rowClassName}
-          toolbarEnd={canEditFinancieel ? (
-            <Link to="/financien/facturen/nieuw" className="btn-primary gap-2">
-              <Plus className="w-4 h-4" /> Nieuwe factuur
-            </Link>
-          ) : null}
+          toolbarEnd={({ filteredRows }) => (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleExportCsv(filteredRows)}
+                className="btn-tertiary"
+                title="Gefilterde facturen downloaden als CSV voor Excel"
+                aria-label="Gefilterde facturen exporteren"
+                disabled={filteredRows.length === 0}
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              {canEditFinancieel && (
+                <Link to="/financien/facturen/nieuw" className="btn-primary gap-2">
+                  <Plus className="w-4 h-4" /> Nieuwe factuur
+                </Link>
+              )}
+            </div>
+          )}
         />
       </div>
     </PullToRefreshWrapper>

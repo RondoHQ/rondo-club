@@ -5,7 +5,7 @@ import PersonAvatar from '@/components/PersonAvatar';
 import { formatCurrency, getPersonName } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import SortableHeader from '@/components/SortableHeader';
-import { isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
+import { getDoorbelastLabel, isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
 
 /**
  * Parse ACF date format to Date object
@@ -56,20 +56,6 @@ function formatAcfDate(dateStr) {
   }
 
   return '-';
-}
-
-/**
- * Returns the display label for the Doorbelast column.
- * @param {Object} acf - ACF fields of a discipline case
- * @returns {string}
- */
-function getDoorbelastLabel(acf) {
-  if (isDoorbelastException(acf)) return 'Uitzondering';
-  if (isDoorbelastNVT(acf)) return 'n.v.t.';
-  if (acf.is_charged === 'sportlink') return 'Ja, Sportlink';
-  if (acf.is_charged === 'rondo') return 'Ja, Rondo';
-  if (acf.is_charged) return 'Ja';
-  return 'Nee';
 }
 
 /**

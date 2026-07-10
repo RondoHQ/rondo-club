@@ -43,7 +43,7 @@ function readStoredVisibility(storageKey) {
  * @param {ReactNode} [props.emptyIcon] - Icon for empty state
  * @param {string} [props.emptyTitle] - Heading for empty state
  * @param {string} [props.emptyDescription] - Description for empty state
- * @param {ReactNode} [props.toolbarEnd] - Extra elements on the right side of the toolbar
+ * @param {ReactNode|function} [props.toolbarEnd] - Extra elements on the right side of the toolbar, or a render function receiving the current table rows
  * @param {ReactNode} [props.footer] - Optional <tfoot> element appended inside <table>
  * @param {string} [props.className] - Additional class for the card wrapper
  *
@@ -151,6 +151,9 @@ export default function DataTable({
   });
 
   const rows = table.getRowModel().rows;
+  const resolvedToolbarEnd = typeof toolbarEnd === 'function'
+    ? toolbarEnd({ table, filteredRows: rows.map((row) => row.original) })
+    : toolbarEnd;
 
   return (
     <div className="space-y-4">
@@ -162,7 +165,7 @@ export default function DataTable({
         hasActiveFilters={hasActiveFilters}
         activeFilterCount={activeFilterCount}
         onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
-        toolbarEnd={toolbarEnd}
+        toolbarEnd={resolvedToolbarEnd}
       />
 
       <div
