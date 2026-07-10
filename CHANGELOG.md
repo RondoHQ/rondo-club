@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.41.4] - 2026-07-10
+
+### Fixed
+- De migratie van bestaande IVA-bestanden draait niet langer tijdens de bootstrap van iedere REST-aanvraag. Daardoor blijven de app-API en navigatie direct beschikbaar; de migratie wordt als gecontroleerde eenmalige beheeractie uitgevoerd.
+
 ## [33.41.3] - 2026-07-10
 
 ### Fixed

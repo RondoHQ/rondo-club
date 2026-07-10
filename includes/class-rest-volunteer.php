@@ -31,7 +31,6 @@ class Volunteer extends Base {
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
-		add_action( 'init', [ $this, 'maybe_migrate_iva_files' ], 30 );
 		add_filter( 'rest_pre_serve_request', [ $this, 'serve_private_iva_file' ], 10, 4 );
 	}
 
