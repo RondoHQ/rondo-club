@@ -131,6 +131,22 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		$this->assertTrue( $controller->check_iva_certificate_permission( $request ) );
 	}
 
+	public function test_iva_migration_candidates_use_current_nonempty_meta(): void {
+		$with_date = $this->createPerson( [ 'post_title' => 'IVA date' ] );
+		$approved  = $this->createPerson( [ 'post_title' => 'IVA approved' ] );
+		$empty     = $this->createPerson( [ 'post_title' => 'IVA empty' ] );
+		update_post_meta( $with_date, 'datum-iva', '2026-01-01' );
+		update_post_meta( $approved, 'iva-approved', '1' );
+		update_post_meta( $empty, 'iva-certificaat', '' );
+
+		$method = new \ReflectionMethod( Volunteer::class, 'collect_iva_person_ids' );
+		$ids    = $method->invoke( new Volunteer() );
+
+		$this->assertContains( $with_date, $ids );
+		$this->assertContains( $approved, $ids );
+		$this->assertNotContains( $empty, $ids );
+	}
+
 	public function test_member_shift_response_does_not_expose_other_assignees(): void {
 		$user_id   = $this->createRondoUser( [ 'user_login' => 'security_shift_member' ] );
 		$person_id = $this->createPerson( [ 'post_title' => 'Shift Member' ] );

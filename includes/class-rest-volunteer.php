@@ -369,38 +369,34 @@ class Volunteer extends Base {
 
 	/** Find the post IDs of every person with any IVA-relevant meta set. */
 	private function collect_iva_person_ids(): array {
-		$query = new \WP_Query(
-			[
-				'post_type'              => 'person',
-				'post_status'            => 'publish',
-				'posts_per_page'         => -1,
-				'fields'                 => 'ids',
-				'no_found_rows'          => true,
-				'suppress_filters'       => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-				'meta_query'             => [
-					'relation' => 'OR',
-					[
-						'key'     => 'datum-iva',
-						'value'   => [ '', '0' ],
-						'compare' => 'NOT IN',
-					],
-					[
-						'key'     => 'iva-certificaat',
-						'value'   => [ '', '0' ],
-						'compare' => 'NOT IN',
-					],
-					[
-						'key'     => 'iva-approved',
-						'value'   => [ '', '0' ],
-						'compare' => 'NOT IN',
-					],
-				],
-			]
-		);
+		$ids = [];
 
-		return array_values( array_unique( array_map( 'intval', $query->posts ) ) );
+		// Separate meta-key lookups use WordPress' indexed postmeta key path. A
+		// three-way OR with NOT IN made the first production migration time out.
+		foreach ( [ 'datum-iva', 'iva-certificaat', 'iva-approved' ] as $meta_key ) {
+			$candidates = get_posts(
+				[
+					'post_type'        => 'person',
+					'post_status'      => 'publish',
+					'posts_per_page'   => -1,
+					'fields'           => 'ids',
+					'no_found_rows'    => true,
+					'suppress_filters' => true,
+					'meta_key'         => $meta_key,
+					'meta_compare'     => 'EXISTS',
+				]
+			);
+
+			update_meta_cache( 'post', $candidates );
+			foreach ( $candidates as $person_id ) {
+				$value = get_post_meta( $person_id, $meta_key, true );
+				if ( $value !== '' && $value !== '0' ) {
+					$ids[] = (int) $person_id;
+				}
+			}
+		}
+
+		return array_values( array_unique( $ids ) );
 	}
 
 	/**
