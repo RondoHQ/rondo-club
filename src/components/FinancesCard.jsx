@@ -60,6 +60,8 @@ export default function FinancesCard({ personId }) {
   const { data: currentUser } = useCurrentUser();
 
   const canAccessFairplay = Boolean(currentUser?.can_access_fairplay);
+  // Read-only finance users see the card but none of its write affordances.
+  const canEditFinancieel = Boolean(currentUser?.can_edit_financieel);
 
   // Fetch discipline cases (only if user has fairplay access)
   const { data: disciplineCases } = usePersonDisciplineCases(personId, {
@@ -171,13 +173,15 @@ export default function FinancesCard({ personId }) {
             <Ban className="w-4 h-4 text-gray-400" />
             <span className="text-sm text-gray-500 dark:text-gray-400">Uitgesloten van contributie</span>
           </div>
-          <button
-            onClick={handleToggleExclusion}
-            disabled={updatePerson.isPending}
-            className="text-xs text-electric-cyan hover:underline disabled:opacity-50"
-          >
-            Opnemen
-          </button>
+          {canEditFinancieel && (
+            <button
+              onClick={handleToggleExclusion}
+              disabled={updatePerson.isPending}
+              className="text-xs text-electric-cyan hover:underline disabled:opacity-50"
+            >
+              Opnemen
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -260,7 +264,7 @@ export default function FinancesCard({ personId }) {
           </div>
 
           {/* Maak factuur button - only for rondo billing, no existing membership invoice, positive fee */}
-          {billingMethod === 'rondo' && !hasMembershipInvoice && feeData?.final_fee > 0 && (
+          {canEditFinancieel && billingMethod === 'rondo' && !hasMembershipInvoice && feeData?.final_fee > 0 && (
             <div className="pt-2">
               <button
                 onClick={() => createInvoice.mutate()}
@@ -348,17 +352,19 @@ export default function FinancesCard({ personId }) {
             </div>
           )}
 
-          {/* Exclusion toggle — financieel users only (entire card is already hidden for others) */}
-          <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-            <button
-              onClick={handleToggleExclusion}
-              disabled={updatePerson.isPending}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors"
-            >
-              <Ban className="w-3 h-3" />
-              Uitsluiten van contributie
-            </button>
-          </div>
+          {/* Exclusion toggle — writing this needs the financieel capability, not financieel_read */}
+          {canEditFinancieel && (
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <button
+                onClick={handleToggleExclusion}
+                disabled={updatePerson.isPending}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 disabled:opacity-50 transition-colors"
+              >
+                <Ban className="w-3 h-3" />
+                Uitsluiten van contributie
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

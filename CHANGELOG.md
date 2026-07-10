@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.35.0] - 2026-07-10
+
+### Added
+- **Financieel is nu gesplitst in lezen en bewerken.** Wie mee wil kijken met de contributie en de facturen hoeft daarvoor niet langer het recht te krijgen om facturen te versturen, te verwijderen of als betaald te markeren. Een nieuwe capability `financieel_read` geeft alleen inzage.
+- Nieuwe rol **Rondo Financieel Lezen** — direct toe te kennen vanuit de gebruikerslijst. `financieel_read` is daarnaast aan te vinken in de rechtenmatrix onder Instellingen → Beheer.
+- De gebruiker-endpoint geeft nu `can_edit_financieel` terug naast `can_access_financieel`, zodat de interface knoppen kan verbergen in plaats van ze te laten mislukken op een 403.
+
+### Changed
+- `financieel` impliceert `financieel_read`. Iedereen die vandaag financieel beheert, ziet en kan exact hetzelfde als voorheen; de rechten worden bij het laden van het thema eenmalig bijgewerkt.
+- Leesrechten geven inzage in facturen, de contributiepagina, de FinanciënKaart op een persoonspagina en facturen in de zoekresultaten. Ze geven **geen** recht om personen te bewerken, en geen toegang tot Instellingen → Financieel.
+
 ## [33.34.1] - 2026-07-10
 
 ### Fixed

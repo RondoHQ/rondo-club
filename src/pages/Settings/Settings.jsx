@@ -49,7 +49,7 @@ export default function Settings() {
   const config = window.rondoConfig || {};
   const { data: currentUser, isLoading: currentUserLoading } = useCurrentUser();
   const isAdmin = (currentUser?.is_admin ?? config.isAdmin) || false;
-  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessVOG = currentUser?.can_access_vog ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const userId = config.userId;
@@ -88,7 +88,7 @@ export default function Settings() {
   const visibleTabs = TABS.filter((tab) => {
     if (tab.adminOnly && !isAdmin) return false;
     if (tab.requiresClothing && !canAccessClothing) return false;
-    if (tab.requiresFinancieel && !canAccessFinancieel) return false;
+    if (tab.requiresFinancieel && !canEditFinancieel) return false;
     if (tab.requiresVOG && !canAccessVOG) return false;
     return true;
   });
@@ -506,7 +506,7 @@ export default function Settings() {
           activeSubtab={activeSubtab}
           setActiveSubtab={setActiveSubtab}
           isAdmin={isAdmin}
-          canAccessFinancieel={canAccessFinancieel}
+          canEditFinancieel={canEditFinancieel}
           currentUserEmail={currentUser?.email || ''}
           config={config}
           // Club config props
@@ -528,7 +528,7 @@ export default function Settings() {
           formatDate={formatDate}
         />;
       case 'financieel':
-        return canAccessFinancieel ? (
+        return canEditFinancieel ? (
           <FinanceSettings
             allowedTabs={['organization', 'payment', 'discipline', 'contributie', 'email']}
             activeTab={activeSubtab}
@@ -1040,7 +1040,7 @@ function AppearanceTab() {
 // ConnectionsTab Component - Container for connection subtabs
 function ConnectionsTab({
   activeSubtab, setActiveSubtab,
-  isAdmin, canAccessFinancieel, currentUserEmail,
+  isAdmin, canEditFinancieel, currentUserEmail,
   config,
   // Club config props
   clubConfig, setClubConfig, clubConfigLoading,
@@ -1109,10 +1109,10 @@ function ConnectionsTab({
         />
       )}
       {activeSubtab === 'payment-providers' && (
-        <PaymentProvidersSubtab canAccessFinancieel={canAccessFinancieel} />
+        <PaymentProvidersSubtab canEditFinancieel={canEditFinancieel} />
       )}
       {activeSubtab === 'wallets' && (
-        <WalletsSubtab canAccessFinancieel={canAccessFinancieel} />
+        <WalletsSubtab canEditFinancieel={canEditFinancieel} />
       )}
     </div>
   );
@@ -1821,8 +1821,8 @@ function LettermintConnectionSubtab({ isAdmin, currentUserEmail, clubConfig, set
   );
 }
 
-function PaymentProvidersSubtab({ canAccessFinancieel }) {
-  if (!canAccessFinancieel) {
+function PaymentProvidersSubtab({ canEditFinancieel }) {
+  if (!canEditFinancieel) {
     return (
       <div className="card p-6">
         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1835,8 +1835,8 @@ function PaymentProvidersSubtab({ canAccessFinancieel }) {
   return <FinanceSettings initialTab="mollie" allowedTabs={['mollie', 'rabobank']} />;
 }
 
-function WalletsSubtab({ canAccessFinancieel }) {
-  if (!canAccessFinancieel) {
+function WalletsSubtab({ canEditFinancieel }) {
+  if (!canEditFinancieel) {
     return (
       <div className="card p-6">
         <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -3070,7 +3070,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
   }, [openDropdownRole]);
 
   // Management capabilities that bypass age-group filtering (mirrors AGE_GROUP_BYPASS_CAPS in PHP)
-  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing'];
+  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing'];
 
   const handleCheckboxChange = (roleSlug, capSlug, checked) => {
     setMatrixState(prev => ({

@@ -668,8 +668,9 @@ class People extends Base {
 			}
 		}
 
-		// Expose contributie exclusion flag only to users with financieel capability
-		if ( current_user_can( 'financieel' ) ) {
+		// Expose contributie exclusion flag only to users who may view finance data.
+		// Writing it still requires 'financieel' — see the auth_callback in PostTypes.
+		if ( \Rondo\Core\UserRoles::can_view_finances() ) {
 			$data['exclude_from_contributie'] = (bool) get_post_meta( $post->ID, '_exclude_from_contributie', true );
 		}
 
@@ -709,7 +710,7 @@ class People extends Base {
 				$data['linked_user_roles'] = array_values(
 					array_intersect(
 						$user->roles,
-						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_toegangscontrole', 'rondo_bestuur', 'administrator' ]
+						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_financieel_lezen', 'rondo_toegangscontrole', 'rondo_bestuur', 'administrator' ]
 					)
 				);
 			}

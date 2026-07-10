@@ -259,7 +259,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_bulk_invoice_job_status' ],
-				'permission_callback' => [ $this, 'check_financieel_permission' ],
+				'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 			]
 		);
 

@@ -19,11 +19,20 @@ class UserRoles {
 	const FAIRPLAY_CAPABILITY           = 'fairplay';
 	const VOG_CAPABILITY                = 'vog';
 	const FINANCIEEL_CAPABILITY         = 'financieel';
+	const FINANCIEEL_READ_CAPABILITY    = 'financieel_read';
 	const TOEGANG_CAPABILITY            = 'toegangscontrole';
 	const CLOTHING_CAPABILITY           = 'manage_clothing';
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
 	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
 	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
+
+	/**
+	 * Option key holding the schema version of the registered roles.
+	 * Bump ROLES_VERSION whenever BASE_ROLES gains a capability that existing
+	 * installs must also receive; add_role() does not touch existing roles.
+	 */
+	const ROLES_VERSION_OPTION = 'rondo_roles_version';
+	const ROLES_VERSION        = 2;
 
 	/**
 	 * WordPress option key for admin-created custom roles.
@@ -40,7 +49,8 @@ class UserRoles {
 		'rondo_user'               => [ 'Rondo User', [] ],
 		'rondo_fairplay'           => [ 'Rondo FairPlay', [ 'fairplay' ] ],
 		'rondo_vog'                => [ 'Rondo VOG', [ 'vog' ] ],
-		'rondo_financieel'         => [ 'Rondo Financieel', [ 'financieel' ] ],
+		'rondo_financieel'         => [ 'Rondo Financieel', [ 'financieel', 'financieel_read' ] ],
+		'rondo_financieel_lezen'   => [ 'Rondo Financieel Lezen', [ 'financieel_read' ] ],
 		'rondo_toegangscontrole'   => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
 		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
 		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
@@ -49,8 +59,44 @@ class UserRoles {
 		'rondo_pool_schoonmaak'    => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'  => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'     => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
+
+	/**
+	 * May the user see finance data (facturen, contributie, betaalstatus)?
+	 *
+	 * `financieel` implies read: a custom role may carry the write capability
+	 * alone, and a treasurer who cannot read their own invoices is nonsense.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True if the user may view finance data.
+	 */
+	public static function can_view_finances( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, self::FINANCIEEL_READ_CAPABILITY )
+			|| user_can( $user_id, self::FINANCIEEL_CAPABILITY );
+	}
+
+	/**
+	 * May the user change finance data — create, send, delete, mark paid?
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True if the user may write finance data.
+	 */
+	public static function can_manage_finances( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, self::FINANCIEEL_CAPABILITY );
+	}
 
 	public function __construct() {
 		// Register role on theme activation
@@ -61,6 +107,9 @@ class UserRoles {
 
 		// Ensure role exists on init (in case theme was already active)
 		add_action( 'init', [ $this, 'ensure_role_exists' ], 20 );
+
+		// Backfill capabilities added to BASE_ROLES after this install was created.
+		add_action( 'init', [ $this, 'maybe_upgrade_roles' ], 21 );
 
 		// Delete user's posts when user is deleted
 		add_action( 'delete_user', [ $this, 'delete_user_posts' ], 10, 1 );
@@ -213,6 +262,40 @@ class UserRoles {
 	}
 
 	/**
+	 * Backfill capabilities that BASE_ROLES gained after this install was created.
+	 *
+	 * `add_role()` is a no-op for a role that already exists, so widening BASE_ROLES
+	 * never reaches installs that registered the role earlier. Roles are also live,
+	 * admin-edited state (see the capability matrix in Settings → Admin), which rules
+	 * out simply re-adding them.
+	 *
+	 * Version 2: every role holding `financieel` also gets `financieel_read`, so the
+	 * read/write split is invisible to everyone who had finance access before it.
+	 */
+	public function maybe_upgrade_roles() {
+		if ( (int) get_option( self::ROLES_VERSION_OPTION, 0 ) >= self::ROLES_VERSION ) {
+			return;
+		}
+
+		$slugs   = self::get_role_slugs();
+		$slugs[] = 'administrator';
+
+		foreach ( $slugs as $slug ) {
+			$role = get_role( $slug );
+			if ( ! $role ) {
+				continue;
+			}
+
+			if ( ! empty( $role->capabilities[ self::FINANCIEEL_CAPABILITY ] )
+				&& empty( $role->capabilities[ self::FINANCIEEL_READ_CAPABILITY ] ) ) {
+				$role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
+			}
+		}
+
+		update_option( self::ROLES_VERSION_OPTION, self::ROLES_VERSION );
+	}
+
+	/**
 	 * Register all Rondo roles (base + custom)
 	 */
 	public function register_role() {
@@ -232,6 +315,7 @@ class UserRoles {
 			$admin_role->add_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->add_cap( self::VOG_CAPABILITY );
 			$admin_role->add_cap( self::FINANCIEEL_CAPABILITY );
+			$admin_role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
@@ -250,6 +334,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::FAIRPLAY_CAPABILITY );
 			$admin_role->remove_cap( self::VOG_CAPABILITY );
 			$admin_role->remove_cap( self::FINANCIEEL_CAPABILITY );
+			$admin_role->remove_cap( self::FINANCIEEL_READ_CAPABILITY );
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );

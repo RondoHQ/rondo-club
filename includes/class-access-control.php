@@ -28,12 +28,18 @@ class AccessControl {
 
 	/**
 	 * Management capabilities that bypass age-group filtering.
+	 *
+	 * `financieel_read` is here because facturen and contributie span the whole club:
+	 * scoping a read-only penningmeester to one age group hides the members their
+	 * invoices belong to. It is a view bypass only — it grants no edit rights, so it
+	 * is deliberately absent from can_edit_people().
 	 */
 	private const AGE_GROUP_BYPASS_CAPS = [
 		'manage_options',
 		'fairplay',
 		'vog',
 		'financieel',
+		'financieel_read',
 		'toegangscontrole',
 		'manage_clothing',
 	];

@@ -26,9 +26,9 @@ export default function DisciplineCasesList() {
   const navigate = useNavigate();
 
   const { data: currentUser } = useCurrentUser();
-  const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
-  const canCreateInvoice = canAccessFairplay && canAccessFinancieel;
+  const canCreateInvoice = canAccessFairplay && canEditFinancieel;
 
   const [selectedCaseIds, setSelectedCaseIds] = useState(new Set());
   const { data: invoicedCaseIds = [] } = useAllInvoicedCaseIds({ enabled: canCreateInvoice });

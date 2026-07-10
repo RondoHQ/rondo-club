@@ -3,7 +3,7 @@
  * REST API Endpoints for Invoice Custom Post Type
  *
  * Provides CRUD operations for invoices (facturen) via the REST API at rondo/v1/invoices.
- * All endpoints require the 'financieel' capability.
+ * Reads require 'financieel_read' (implied by 'financieel'); every write requires 'financieel'.
  */
 
 namespace Rondo\REST;
@@ -44,7 +44,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoiced_case_ids' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'person_id' => [
 							'required'          => true,
@@ -66,7 +66,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_all_invoiced_case_ids' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 				],
 			]
 		);
@@ -113,7 +113,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoice_list' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'status'       => [
 							'default'           => '',
@@ -158,7 +158,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_invoice' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -279,7 +279,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'download_pdf' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {
@@ -373,7 +373,7 @@ class Invoices extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'download_qr' ],
-					'permission_callback' => [ $this, 'check_financieel_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 					'args'                => [
 						'id' => [
 							'validate_callback' => function ( $param ) {

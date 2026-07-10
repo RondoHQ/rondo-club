@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Receipt, Square, CheckSquare, MinusSquare, Send, Loader2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useInvoices, useSendInvoice } from '@/hooks/useInvoices';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
@@ -77,6 +78,10 @@ const PLAN_OPTIONS = [
 
 export default function Facturen() {
   useDocumentTitle('Facturen');
+
+  const { data: currentUser } = useCurrentUser();
+  // financieel_read reaches this list; selecting, bulk-sending and creating are writes.
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
 
   // Selection state for bulk actions
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -238,7 +243,7 @@ export default function Facturen() {
     };
 
     return [
-      checkboxCol,
+      ...(canEditFinancieel ? [checkboxCol] : []),
       createColumn({
         id: 'invoice_number',
         header: 'Factuurnummer',
@@ -401,7 +406,7 @@ export default function Facturen() {
         size: 130,
       }),
     ];
-  }, [selectedIds, toggleSelect, handleSelectAll]);
+  }, [selectedIds, toggleSelect, handleSelectAll, canEditFinancieel]);
 
   const rowClassName = useCallback((rowData) => {
     if (selectedIds.has(rowData.id)) {
@@ -494,11 +499,11 @@ export default function Facturen() {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           rowClassName={rowClassName}
-          toolbarEnd={(
+          toolbarEnd={canEditFinancieel ? (
             <Link to="/financien/facturen/nieuw" className="btn-primary gap-2">
               <Plus className="w-4 h-4" /> Nieuwe factuur
             </Link>
-          )}
+          ) : null}
         />
       </div>
     </PullToRefreshWrapper>
