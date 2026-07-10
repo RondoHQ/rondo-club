@@ -317,16 +317,16 @@ come. Provisioning happens lazily, one member at a time, at the moment they ask 
 | ~~1~~ | ~~`get_eligible_units_for_person()` returns all units; `/vrijwillig` renders both~~ — **done, 33.29.0** | — |
 | ~~3~~ | ~~Split `may_volunteer()` from owing an obligation~~ — **done, 33.29.0** | — |
 | ~~2~~ | ~~Attribute each shift to one unit, speler duty first~~ — **done, 33.29.1** | — |
-| 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` altogether | 1 |
+| 12 | Scoped Kaderlijst endpoint, then delete `suppress_age_group` — [todo](../../.planning/todos/pending/2026-07-10-scoped-kaderlijst-endpoint.md) | 1 |
 | ~~4~~ | ~~Scoped read grant: member sees own record + children~~ — **done, 33.30.0** | — |
 | ~~13~~ | ~~Member-facing UI for the household view~~ — **done, 33.34.0** (`/mijn-gegevens`) | — |
-| 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped | — |
+| 14 | Audit the capability matrix: coordinator roles holding `vog`/`fairplay` are not scoped — *deferred, config decision, left as-is 2026-07-10* | — |
 | ~~5~~ | ~~`rondo_contact_email` + synthetic-email fallback~~ — **done, 33.31.0** | — |
 | ~~6~~ | ~~Drop the `knvb-id` requirement from `/rondo/v1/users/provisionable`~~ — **done, 33.31.0** | — |
 | ~~8~~ | ~~Reroute password-reset and WP notification mail~~ — **done, 33.31.0** (`ContactEmailRouter`) | — |
 | ~~7~~ | ~~username / KNVB-ID / unique contact-email login~~ — **done, 33.32.0** (`LoginResolver`) | — |
 | ~~9~~ | ~~Public `/activeren` page + token endpoints + rate limiting~~ — **done, 33.33.0** | — |
-| 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen | — |
+| 10 | Data-quality report: 56 parents without email, 27 orphan gezinnen — [todo](../../.planning/todos/pending/2026-07-10-activation-data-quality-screen.md) | — |
 | 11 | Docs in `../developer/src/content/docs/features/` | all |
 
 Item 0 is a live vulnerability and must not wait for the rest. Items 1, 3, 5, 6 and 10 are
