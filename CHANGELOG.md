@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.33.0] - 2026-07-10
+
+### Added
+- **Leden kunnen zelf een account aanmaken op `/activeren`.** Je vult je e-mailadres in, wij sturen een link naar het adres dat bij de club bekend is. Staan er meerdere leden op dat adres, dan kies je wie je bent. Daarna stel je meteen een wachtwoord in — er komt geen tweede mail aan te pas.
+- `PublicPageChrome` — de gedeelde HTML-schil van `/betaling` en `/activeren`, zodat de twee pagina's niet uit elkaar lopen.
+- `ActivationServiceTest` — 20 tests, met nadruk op misbruik: een link van het ene adres kan geen lid op een ander adres activeren, is eenmalig, en werkt niet na afloop.
+
+### Security
+- De pagina antwoordt **precies hetzelfde** of het e-mailadres nu bekend is of niet. Anders zou het een opzoekregister van clubleden worden.
+- Activatie geeft nooit rechtstreeks toegang: de link gaat altijd naar het adres dat al bij de club bekend staat. Wie een adres gokt, leert niets en ontvangt niets.
+- Van de token wordt alleen de SHA-256 bewaard, en hij wordt na gebruik direct ongeldig.
+- Snelheidsbegrenzing: 3 aanvragen per e-mailadres en 10 per IP-adres per uur.
+
 ## [33.32.0] - 2026-07-10
 
 ### Added

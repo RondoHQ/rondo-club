@@ -367,6 +367,9 @@ function rondo_init() {
 	// Public membership pass landing page - /lidpas/{token}
 	new PublicMembershipPassPage();
 
+	// Public self-service account activation - /activeren
+	new \Rondo\Users\ActivationPage();
+
 	// Public taakuitleg landing page - /uitleg/{slug} (QR target, no auth)
 	new PublicTaakuitlegPage();
 
