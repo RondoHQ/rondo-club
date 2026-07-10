@@ -17,8 +17,8 @@ use Tests\Support\RondoTestCase;
 class ActivationServiceTest extends RondoTestCase {
 
 	private function person( string $name, ?string $email, bool $former = false ): int {
-		$person_id            = $this->createPerson( [ 'post_title' => $name ] );
-		[ $first, $last ]     = array_pad( explode( ' ', $name, 2 ), 2, '' );
+		$person_id        = $this->createPerson( [ 'post_title' => $name ] );
+		[ $first, $last ] = array_pad( explode( ' ', $name, 2 ), 2, '' );
 		update_field( 'first_name', $first, $person_id );
 		update_field( 'last_name', $last, $person_id );
 		if ( $email !== null ) {

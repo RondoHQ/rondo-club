@@ -103,12 +103,34 @@ class ActivationPage {
 
 		$persons = ActivationService::persons_for_email( $email );
 
+		// Identical response whether or not anyone matched — and sent BEFORE the mail
+		// goes out. Delivering the mail takes an API round-trip; doing that first would
+		// make a known address measurably slower than an unknown one, which is an
+		// enumeration oracle no matter how identical the HTML is.
+		$this->render_confirmation();
+		self::flush_response();
+
 		if ( ! empty( $persons ) ) {
 			ActivationService::send_activation_email( $email, ActivationService::create_token( $email ) );
 		}
+	}
 
-		// Identical response whether or not anyone matched.
-		$this->render_confirmation();
+	/**
+	 * Hand the response to the client and keep running.
+	 *
+	 * Under PHP-FPM this genuinely closes the connection; elsewhere we settle for
+	 * flushing the buffers, which is close enough to hide a mail round-trip.
+	 */
+	private static function flush_response(): void {
+		if ( function_exists( 'fastcgi_finish_request' ) ) {
+			fastcgi_finish_request();
+			return;
+		}
+
+		if ( ob_get_level() > 0 ) {
+			ob_end_flush();
+		}
+		flush();
 	}
 
 	/**
