@@ -26,6 +26,7 @@ const EMAIL_SUB_TABS = [
   { id: 'termijnen', label: 'Termijnen' },
   { id: 'herinneringen', label: 'Termijnherinneringen' },
   { id: 'factuur_herinneringen', label: 'Contributieherinneringen' },
+  { id: 'overige_herinneringen', label: 'Overige herinneringen' },
   { id: 'creditfacturen', label: 'Creditfacturen' },
 ];
 
@@ -1183,7 +1184,7 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Herinneringen voor contributiefacturen zonder betaalplan</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Deze herinneringen worden automatisch verstuurd aan leden die hun contributiefactuur hebben ontvangen maar nog geen betaalwijze hebben gekozen. Voor overige facturen (handmatige facturen en tuchtzaken) worden de herinneringen hieronder gebruikt.
+                  Deze herinneringen worden automatisch verstuurd aan leden die hun contributiefactuur hebben ontvangen maar nog geen betaalwijze hebben gekozen. Voor overige facturen (handmatige facturen en tuchtzaken) gebruik je het tabblad &quot;Overige herinneringen&quot;.
                 </p>
               </div>
 
@@ -1266,8 +1267,8 @@ export default function FinanceSettings({ initialTab = 'organization', allowedTa
           )}
 
           {/* Herinneringen voor overige facturen (niet-contributie) */}
-          {emailSubTab === 'factuur_herinneringen' && (
-            <div className="card p-6 mt-6">
+          {emailSubTab === 'overige_herinneringen' && (
+            <div className="card p-6">
               <div className="mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Herinneringen voor overige facturen</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
