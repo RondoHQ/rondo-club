@@ -486,6 +486,8 @@ class Capabilities extends Base {
 			'toegangscontrole'   => 'Toegangscontrole',
 			'manage_clothing'    => 'Kledingbeheer',
 			'ledenadministratie' => 'Ledenadministratie',
+			'vrijwilligers'      => 'Vrijwilligersbeheer',
+			'rondo_iva_approve'  => 'IVA goedkeuren',
 		];
 
 		$wp_roles     = wp_roles();
@@ -548,7 +550,7 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie' ];
+		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers', 'rondo_iva_approve' ];
 		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 
@@ -585,6 +587,8 @@ class Capabilities extends Base {
 					$role_obj->remove_cap( $cap );
 				}
 			}
+
+			\Rondo\Core\UserRoles::sync_role_capabilities( $slug );
 		}
 
 		// Return fresh matrix state.

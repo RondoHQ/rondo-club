@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.41.1] - 2026-07-10
+
+### Security
+- Alle Rondo-posttypes gebruiken nu eigen WordPress-capabilities. Gewone leden hebben geen generieke schrijf-, verwijder- of uploadrechten meer en kunnen daardoor geen facturen, tuchtzaken, kledingrecords of vrijwilligersconfiguratie via de standaard REST API lezen of vervalsen.
+- Financiële overzichten, VOG-bulkacties, vrijwilligersdiagnostiek en zoeken op e-mailadres zijn afgeschermd op hun specifieke functierecht. Dashboardcaches zijn per gebruiker gescheiden en dienstreacties lekken geen persoon-ID's van andere vrijwilligers meer.
+- IVA-certificaten worden buiten de publieke webmap opgeslagen en alleen via een geauthenticeerd endpoint aan het gekoppelde lid of een bevoegde functionaris geleverd. Bestaande certificaten worden eenmalig uit de mediabibliotheek gemigreerd.
+- Axios, React Router, Vite, Guzzle, phpseclib, FPDI en overige kwetsbare indirecte dependencies zijn bijgewerkt naar gepatchte versies. `npm audit` en `composer audit` melden geen bekende kwetsbaarheden meer.
+
+### Fixed
+- De CRUD-tests beschrijven weer het huidige ledenmodel en de actuele rechten per posttype. De todo-fixture en ACF-locatieregel gebruiken nu `rondo_todo` en het huidige meervoudige `related_persons`-veld.
+- Een gekoppeld ledenaccount kan zijn persoonskoppeling niet meer zelf verwijderen of verplaatsen; de provisioning-marker blijft behouden als bescherming tegen dubbele accounts.
+
 ## [33.41.0] - 2026-07-10
 
 ### Added

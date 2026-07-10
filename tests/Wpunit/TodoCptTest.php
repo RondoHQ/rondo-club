@@ -4,7 +4,6 @@ namespace Tests\Wpunit;
 
 use Tests\Support\RondoTestCase;
 use RONDO_Access_Control;
-use RONDO_User_Roles;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -46,16 +45,19 @@ class TodoCptTest extends RondoTestCase {
 	}
 
 	/**
-	 * Helper to create an approved Rondo user.
+	 * Helper to create a logged-in Rondo user.
 	 *
 	 * @param string $prefix User login prefix for uniqueness
 	 * @return int User ID
 	 */
 	private function createApprovedRondoUser( string $prefix = 'user' ): int {
 		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createRondoUser( [ 'user_login' => $unique_id ] );
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
-		return $user_id;
+		return $this->createRondoUser( [ 'user_login' => $unique_id ] );
+	}
+
+	private function linkPerson( int $user_id, int $person_id ): void {
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		\Rondo\Core\AccessControl::flush_visible_person_ids_cache();
 	}
 
 	/**
@@ -87,8 +89,7 @@ class TodoCptTest extends RondoTestCase {
 			]
 		);
 
-		update_field( 'related_person', $person_id, $post_id );
-		update_field( 'visibility', $data['visibility'], $post_id );
+		update_field( 'field_todo_related_person', [ $person_id ], $post_id );
 
 		if ( ! empty( $data['due_date'] ) ) {
 			update_field( 'due_date', $data['due_date'], $post_id );
@@ -196,7 +197,6 @@ class TodoCptTest extends RondoTestCase {
 	public function test_admin_sees_own_todos(): void {
 		// Create admin user
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
-		update_user_meta( $admin_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$regular_user_id = $this->createApprovedRondoUser( 'regular' );
 
@@ -285,6 +285,7 @@ class TodoCptTest extends RondoTestCase {
 				'post_title'  => 'Person 2',
 			]
 		);
+		$this->linkPerson( $user_id, $person1 );
 
 		// Create todos for each
 		$todo1 = $this->createTodo( $person1, $user_id, [ 'content' => 'Todo for Person 1' ] );
@@ -315,6 +316,7 @@ class TodoCptTest extends RondoTestCase {
 				'post_title'  => 'Test Person',
 			]
 		);
+		$this->linkPerson( $user_id, $person_id );
 
 		$response = $this->doRestRequest(
 			'POST',
@@ -570,20 +572,19 @@ class TodoCptTest extends RondoTestCase {
 	}
 
 	// =========================================================================
-	// Access Control - Unapproved User Tests
+	// Access Control - Authentication Tests
 	// =========================================================================
 
 	/**
-	 * Test todos endpoint blocked for unapproved user.
+	 * Approval was removed: every logged-in member may use their scoped todo list.
 	 */
-	public function test_todos_blocked_for_unapproved_user(): void {
-		$unapproved_id = $this->createRondoUser( [ 'user_login' => 'unapproved_todo' ] );
-		update_user_meta( $unapproved_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
-		wp_set_current_user( $unapproved_id );
+	public function test_todos_available_to_logged_in_member(): void {
+		$user_id = $this->createRondoUser( [ 'user_login' => 'logged_in_todo' ] );
+		wp_set_current_user( $user_id );
 
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos' );
 
-		$this->assertEquals( 403, $response->get_status(), 'Unapproved user should be denied todos access' );
+		$this->assertEquals( 200, $response->get_status(), 'Logged-in member should reach their scoped todo list' );
 	}
 
 	/**
@@ -900,6 +901,7 @@ class TodoCptTest extends RondoTestCase {
 				'post_title'  => 'Test Person',
 			]
 		);
+		$this->linkPerson( $user_id, $person_id );
 
 		$response = $this->doRestRequest(
 			'POST',
@@ -984,6 +986,7 @@ class TodoCptTest extends RondoTestCase {
 				'post_title'  => 'Test Person',
 			]
 		);
+		$this->linkPerson( $user_id, $person_id );
 
 		// Create todo with awaiting status via REST
 		$create_response = $this->doRestRequest(
@@ -1030,6 +1033,7 @@ class TodoCptTest extends RondoTestCase {
 				'post_title'  => 'Test Person',
 			]
 		);
+		$this->linkPerson( $user_id, $person_id );
 
 		// Create todo with awaiting status
 		$create_response = $this->doRestRequest(
@@ -1104,6 +1108,7 @@ class TodoCptTest extends RondoTestCase {
 				'post_title'  => 'Test Person',
 			]
 		);
+		$this->linkPerson( $user_id, $person_id );
 
 		// Create open todo
 		$create_response = $this->doRestRequest(

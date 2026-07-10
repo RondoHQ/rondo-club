@@ -51,7 +51,7 @@
             {
                 "param": "post_type",
                 "operator": "==",
-                "value": "stadion_todo"
+                "value": "rondo_todo"
             }
         ]
     ],

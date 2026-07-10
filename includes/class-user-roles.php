@@ -32,7 +32,17 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 2;
+	const ROLES_VERSION        = 3;
+
+	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
+	private const LEGACY_GENERIC_WRITE_CAPS = [
+		'edit_posts',
+		'publish_posts',
+		'delete_posts',
+		'edit_published_posts',
+		'delete_published_posts',
+		'upload_files',
+	];
 
 	/**
 	 * WordPress option key for admin-created custom roles.
@@ -175,16 +185,8 @@ class UserRoles {
 			);
 		}
 
-		// Base capabilities — same as rondo_user.
-		$capabilities = [
-			'read'                   => true,
-			'edit_posts'             => true,
-			'publish_posts'          => true,
-			'delete_posts'           => true,
-			'edit_published_posts'   => true,
-			'delete_published_posts' => true,
-			'upload_files'           => true,
-		];
+		// New roles start at the least-privilege member baseline.
+		$capabilities = self::base_capabilities();
 
 		$result = add_role( $slug, $label, $capabilities );
 
@@ -195,6 +197,8 @@ class UserRoles {
 				[ 'status' => 500 ]
 			);
 		}
+
+		self::sync_role_capabilities( $slug );
 
 		// Persist in custom roles option.
 		$custom          = self::get_custom_roles();
@@ -269,16 +273,15 @@ class UserRoles {
 	 * admin-edited state (see the capability matrix in Settings → Admin), which rules
 	 * out simply re-adding them.
 	 *
-	 * Version 2: every role holding `financieel` also gets `financieel_read`, so the
-	 * read/write split is invisible to everyone who had finance access before it.
+	 * Version 2: every role holding `financieel` also gets `financieel_read`.
+	 * Version 3: generic post/media access is replaced by dedicated CPT caps.
 	 */
 	public function maybe_upgrade_roles() {
 		if ( (int) get_option( self::ROLES_VERSION_OPTION, 0 ) >= self::ROLES_VERSION ) {
 			return;
 		}
 
-		$slugs   = self::get_role_slugs();
-		$slugs[] = 'administrator';
+		$slugs = array_merge( self::get_role_slugs(), [ 'administrator' ] );
 
 		foreach ( $slugs as $slug ) {
 			$role = get_role( $slug );
@@ -290,6 +293,8 @@ class UserRoles {
 				&& empty( $role->capabilities[ self::FINANCIEEL_READ_CAPABILITY ] ) ) {
 				$role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
 			}
+
+			self::sync_role_capabilities( $slug );
 		}
 
 		update_option( self::ROLES_VERSION_OPTION, self::ROLES_VERSION );
@@ -307,6 +312,7 @@ class UserRoles {
 				$capabilities[ $cap ] = true;
 			}
 			add_role( $slug, $display_name, $capabilities );
+			self::sync_role_capabilities( $slug );
 		}
 
 		// Add app-specific capabilities to administrator role
@@ -321,7 +327,137 @@ class UserRoles {
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
+			self::sync_role_capabilities( 'administrator' );
 		}
+	}
+
+	/**
+	 * Synchronize the dedicated CPT capabilities derived from business caps.
+	 *
+	 * @param string $slug WordPress role slug.
+	 */
+	public static function sync_role_capabilities( string $slug ): void {
+		$role = get_role( $slug );
+		if ( ! $role ) {
+			return;
+		}
+
+		$is_admin = $slug === 'administrator';
+
+		if ( ! $is_admin ) {
+			foreach ( self::LEGACY_GENERIC_WRITE_CAPS as $cap ) {
+				$role->remove_cap( $cap );
+			}
+		}
+
+		// Always rebuild derived primitives so capability-matrix removals propagate.
+		foreach ( array_keys( PostTypes::CAPABILITY_DOMAINS ) as $post_type ) {
+			foreach ( array_values( PostTypes::capability_map( $post_type ) ) as $cap ) {
+				$role->remove_cap( $cap );
+			}
+		}
+
+		$desired = [ 'read' ];
+
+		if ( $is_admin ) {
+			foreach ( array_keys( PostTypes::CAPABILITY_DOMAINS ) as $post_type ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'manage' ) );
+			}
+			$desired[] = 'upload_files';
+		} else {
+			// Core member surfaces: household people plus read-only club structure.
+			foreach ( [ 'person', 'team', 'commissie' ] as $post_type ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'read' ) );
+			}
+
+			if ( $role->has_cap( self::FAIRPLAY_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'person', 'manage' ),
+					self::cpt_capabilities( 'discipline_case', 'read' )
+				);
+			}
+
+			if ( $role->has_cap( self::VOG_CAPABILITY ) ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+			}
+
+			if ( $role->has_cap( self::LEDENADMINISTRATIE_CAPABILITY ) ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+			}
+
+			if ( $role->has_cap( self::FINANCIEEL_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'person', 'manage' ),
+					self::cpt_capabilities( 'rondo_invoice', 'manage' ),
+					self::cpt_capabilities( 'discipline_case', 'read' )
+				);
+			} elseif ( $role->has_cap( self::FINANCIEEL_READ_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_invoice', 'read' ),
+					self::cpt_capabilities( 'discipline_case', 'read' )
+				);
+			}
+
+			if ( $role->has_cap( self::CLOTHING_CAPABILITY ) ) {
+				$desired = array_merge(
+					$desired,
+					self::cpt_capabilities( 'rondo_clothing_item', 'manage' ),
+					self::cpt_capabilities( 'rondo_clothing_txn', 'manage' )
+				);
+			}
+
+			if ( $role->has_cap( self::VRIJWILLIGERS_CAPABILITY ) ) {
+				foreach ( [ 'dienst_type', 'shift_template', 'dienst_shift', 'taakuitleg' ] as $post_type ) {
+					$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'manage' ) );
+				}
+			}
+
+			if (
+				$role->has_cap( self::FAIRPLAY_CAPABILITY )
+				|| $role->has_cap( self::VOG_CAPABILITY )
+				|| $role->has_cap( self::FINANCIEEL_CAPABILITY )
+				|| $role->has_cap( self::CLOTHING_CAPABILITY )
+				|| $role->has_cap( self::LEDENADMINISTRATIE_CAPABILITY )
+				|| $role->has_cap( self::VRIJWILLIGERS_CAPABILITY )
+			) {
+				$desired[] = 'upload_files';
+			}
+		}
+
+		foreach ( array_unique( $desired ) as $cap ) {
+			$role->add_cap( $cap );
+		}
+	}
+
+	/**
+	 * Primitive capabilities for a CPT access level.
+	 *
+	 * @param string $post_type Registered post type.
+	 * @param string $level     `read` or `manage`.
+	 * @return string[]
+	 */
+	private static function cpt_capabilities( string $post_type, string $level ): array {
+		$map = PostTypes::capability_map( $post_type );
+		if ( empty( $map ) ) {
+			return [];
+		}
+
+		if ( $level === 'read' ) {
+			return array_values(
+				array_filter(
+					[
+						$map['read'] ?? null,
+						$map['read_post'] ?? null,
+						$map['read_private_posts'] ?? null,
+					]
+				)
+			);
+		}
+
+		return array_values( array_unique( $map ) );
 	}
 
 	/**
@@ -355,33 +491,17 @@ class UserRoles {
 	/**
 	 * Get capabilities for Rondo User role
 	 *
-	 * Minimal permissions needed to:
-	 * - Create, edit, and delete their own people and teams
-	 * - Upload files (for photos and logos)
-	 * - Read content (required for WordPress)
+	 * Plain members receive only WordPress login/read access here. Dedicated
+	 * read capabilities for their household and club structure are derived by
+	 * sync_role_capabilities().
 	 */
 	private function get_role_capabilities() {
-		return [
-			// Basic WordPress capabilities
-			'read'                   => true,
+		return self::base_capabilities();
+	}
 
-			// Post capabilities (used by person, team, and other post types)
-			'edit_posts'             => true,                    // Can create and edit their own posts
-			'publish_posts'          => true,                 // Can publish their own posts
-			'delete_posts'           => true,                  // Can delete their own posts
-			'edit_published_posts'   => true,          // Can edit their own published posts
-			'delete_published_posts' => true,        // Can delete their own published posts
-
-			// Media capabilities
-			'upload_files'           => true,                  // Can upload files (photos, logos)
-
-			// No other capabilities - users can't:
-			// - Edit other users' posts
-			// - Manage other users
-			// - Access WordPress admin settings
-			// - Install plugins or themes
-			// - Edit themes or plugins
-		];
+	/** @return array<string, bool> */
+	private static function base_capabilities(): array {
+		return [ 'read' => true ];
 	}
 
 

@@ -235,6 +235,7 @@ class MemberShifts extends Base {
 
 			$summary['is_signed_up'] = in_array( $person_id, $summary['assigned_person_ids'], true );
 			$summary['can_signup']   = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+			unset( $summary['assigned_person_ids'] );
 
 			$out[] = $summary;
 		}
@@ -325,7 +326,6 @@ class MemberShifts extends Base {
 			[
 				'shift_id'  => $shift_id,
 				'signed_up' => true,
-				'assigned'  => $assigned,
 			]
 		);
 	}
@@ -360,7 +360,6 @@ class MemberShifts extends Base {
 			[
 				'shift_id'  => $shift_id,
 				'cancelled' => true,
-				'assigned'  => $filtered,
 			]
 		);
 	}
@@ -460,6 +459,7 @@ class MemberShifts extends Base {
 			}
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary !== null ) {
+				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
 				$out[]              = $summary;
 			}

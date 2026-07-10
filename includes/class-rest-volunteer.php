@@ -25,9 +25,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Volunteer extends Base {
+	private const PRIVATE_IVA_VERSION = 1;
+	private const PRIVATE_PATH_META   = '_rondo_private_iva_path';
+	private const ORIGINAL_NAME_META  = '_rondo_private_iva_name';
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'init', [ $this, 'maybe_migrate_iva_files' ], 30 );
+		add_filter( 'rest_pre_serve_request', [ $this, 'serve_private_iva_file' ], 10, 4 );
 	}
 
 	public function register_routes() {
@@ -37,7 +42,7 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_eligibility' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 				'args'                => [
 					'season'       => [
 						'required'          => false,
@@ -105,7 +110,7 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_suspect_relationships' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 			]
 		);
 
@@ -117,7 +122,7 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'refresh_cache' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 			]
 		);
 
@@ -127,7 +132,7 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_exemption' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 				'args'                => [
 					'person_id' => [
 						'required'          => true,
@@ -173,6 +178,22 @@ class Volunteer extends Base {
 			]
 		);
 
+		register_rest_route(
+			'rondo/v1',
+			'/iva/(?P<person_id>\d+)/certificate',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_iva_certificate' ],
+				'permission_callback' => [ $this, 'check_iva_certificate_permission' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
 		// Lid haalt zijn/haar eigen VOG-status op voor /profile/vog.
 		register_rest_route(
 			'rondo/v1',
@@ -212,7 +233,7 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_obligations' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 				'args'                => [
 					'season' => [
 						'required'          => false,
@@ -267,7 +288,7 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_iva_status' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
 				'args'                => [
 					'person_id' => [
 						'required'          => true,
@@ -286,6 +307,18 @@ class Volunteer extends Base {
 		return current_user_can( 'vrijwilligers' )
 			|| current_user_can( 'rondo_iva_approve' )
 			|| current_user_can( 'manage_options' );
+	}
+
+	public function check_iva_certificate_permission( \WP_REST_Request $request ) {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		if ( $this->check_iva_view_permission() ) {
+			return true;
+		}
+
+		return (int) get_user_meta( get_current_user_id(), 'rondo_linked_person_id', true ) === (int) $request->get_param( 'person_id' );
 	}
 
 	/**
@@ -317,12 +350,7 @@ class Volunteer extends Base {
 		$people = [];
 		foreach ( $query->posts as $post ) {
 			$cert_field = get_field( 'iva-certificaat', $post->ID );
-			$cert_url   = '';
-			if ( is_array( $cert_field ) ) {
-				$cert_url = $cert_field['url'] ?? '';
-			} elseif ( is_string( $cert_field ) ) {
-				$cert_url = $cert_field;
-			}
+			$cert_url   = $cert_field ? $this->iva_certificate_url( $post->ID ) : '';
 
 			$people[] = [
 				'id'              => $post->ID,
@@ -339,27 +367,40 @@ class Volunteer extends Base {
 		return rest_ensure_response( [ 'people' => $people ] );
 	}
 
-	/**
-	 * Find the post IDs of every person with any IVA-relevant meta set.
-	 *
-	 * Direct WPDB query — meta-OR via WP_Query is awkward and we want the
-	 * smallest possible read for an admin page that's loaded rarely.
-	 */
+	/** Find the post IDs of every person with any IVA-relevant meta set. */
 	private function collect_iva_person_ids(): array {
-		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$ids = $wpdb->get_col(
-			"SELECT DISTINCT pm.post_id
-			 FROM {$wpdb->postmeta} pm
-			 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-			 WHERE p.post_type = 'person'
-			   AND p.post_status = 'publish'
-			   AND pm.meta_key IN ('datum-iva', 'iva-certificaat', 'iva-approved')
-			   AND pm.meta_value <> ''
-			   AND pm.meta_value <> '0'"
+		$query = new \WP_Query(
+			[
+				'post_type'              => 'person',
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'suppress_filters'       => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query'             => [
+					'relation' => 'OR',
+					[
+						'key'     => 'datum-iva',
+						'value'   => [ '', '0' ],
+						'compare' => 'NOT IN',
+					],
+					[
+						'key'     => 'iva-certificaat',
+						'value'   => [ '', '0' ],
+						'compare' => 'NOT IN',
+					],
+					[
+						'key'     => 'iva-approved',
+						'value'   => [ '', '0' ],
+						'compare' => 'NOT IN',
+					],
+				],
+			]
 		);
 
-		return array_values( array_unique( array_map( 'intval', (array) $ids ) ) );
+		return array_values( array_unique( array_map( 'intval', $query->posts ) ) );
 	}
 
 	/**
@@ -412,20 +453,46 @@ class Volunteer extends Base {
 			);
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
+		$checked = wp_check_filetype_and_ext(
+			$file['tmp_name'],
+			$file['name'],
+			[
+				'pdf'          => 'application/pdf',
+				'jpg|jpeg|jpe' => 'image/jpeg',
+				'png'          => 'image/png',
+			]
+		);
+		if ( empty( $checked['type'] ) || empty( $checked['ext'] ) ) {
+			return new \WP_Error( 'invalid_file_contents', 'Het bestandstype kon niet veilig worden vastgesteld.', [ 'status' => 400 ] );
+		}
 
-		$ext  = pathinfo( $file['name'], PATHINFO_EXTENSION );
-		$name = sanitize_file_name( 'iva-certificaat-' . $person_id . '.' . $ext );
+		$directory = $this->private_iva_directory();
+		if ( is_wp_error( $directory ) ) {
+			return $directory;
+		}
 
-		$_FILES['certificaat']         = $file;
-		$_FILES['certificaat']['name'] = $name;
+		$filename = wp_unique_filename( $directory, 'iva-' . wp_generate_password( 32, false, false ) . '.' . $checked['ext'] );
+		$path     = trailingslashit( $directory ) . $filename;
+		if ( ! move_uploaded_file( $file['tmp_name'], $path ) ) {
+			return new \WP_Error( 'private_upload_failed', 'Het certificaat kon niet veilig worden opgeslagen.', [ 'status' => 500 ] );
+		}
+		chmod( $path, 0640 );
 
-		$attachment_id = media_handle_upload( 'certificaat', $person_id );
+		$attachment_id = wp_insert_attachment(
+			[
+				'post_mime_type' => $checked['type'],
+				'post_title'     => 'IVA-certificaat ' . $person_id,
+				'post_status'    => 'private',
+				'post_parent'    => $person_id,
+				'guid'           => $this->iva_certificate_url( $person_id ),
+			]
+		);
 		if ( is_wp_error( $attachment_id ) ) {
+			unlink( $path );
 			return $attachment_id;
 		}
+		update_post_meta( $attachment_id, self::PRIVATE_PATH_META, $path );
+		update_post_meta( $attachment_id, self::ORIGINAL_NAME_META, sanitize_file_name( $file['name'] ) );
 
 		// Datum: gebruik wat het lid invult, anders vandaag.
 		$datum = (string) $request->get_param( 'datum_iva' );
@@ -435,7 +502,11 @@ class Volunteer extends Base {
 
 		// Schrijf via ACF zodat zowel de admin-form als de relationships-pipeline
 		// het correct ophalen.
+		$old_attachment_id = $this->iva_attachment_id( $person_id );
 		update_field( 'iva-certificaat', $attachment_id, $person_id );
+		if ( $old_attachment_id > 0 && $old_attachment_id !== $attachment_id ) {
+			$this->delete_private_attachment( $old_attachment_id );
+		}
 		update_field( 'datum-iva', $datum, $person_id );
 		update_field( 'iva-approved', 0, $person_id );
 		update_post_meta( $person_id, 'iva-approved', 0 );
@@ -445,7 +516,7 @@ class Volunteer extends Base {
 				'person_id'  => $person_id,
 				'attachment' => [
 					'id'  => $attachment_id,
-					'url' => wp_get_attachment_url( $attachment_id ),
+					'url' => $this->iva_certificate_url( $person_id ),
 				],
 				'datum_iva'  => $datum,
 				'status'     => IvaStatus::status( $person_id ),
@@ -466,14 +537,7 @@ class Volunteer extends Base {
 		}
 
 		$cert     = get_field( 'iva-certificaat', $person_id );
-		$cert_url = '';
-		if ( is_array( $cert ) ) {
-			$cert_url = $cert['url'] ?? '';
-		} elseif ( is_numeric( $cert ) ) {
-			$cert_url = (string) wp_get_attachment_url( (int) $cert );
-		} elseif ( is_string( $cert ) ) {
-			$cert_url = $cert;
-		}
+		$cert_url = $cert ? $this->iva_certificate_url( $person_id ) : '';
 
 		return rest_ensure_response(
 			[
@@ -487,6 +551,131 @@ class Volunteer extends Base {
 				'validity_years'         => IvaStatus::VALIDITY_YEARS,
 			]
 		);
+	}
+
+	public function get_iva_certificate( \WP_REST_Request $request ) {
+		$person_id     = (int) $request->get_param( 'person_id' );
+		$attachment_id = $this->iva_attachment_id( $person_id );
+		$path          = $attachment_id ? (string) get_post_meta( $attachment_id, self::PRIVATE_PATH_META, true ) : '';
+
+		if ( $path === '' || ! is_readable( $path ) ) {
+			return new \WP_Error( 'iva_certificate_not_found', 'IVA-certificaat niet gevonden.', [ 'status' => 404 ] );
+		}
+
+		return rest_ensure_response(
+			[
+				'_rondo_private_file' => $path,
+				'mime_type'           => get_post_mime_type( $attachment_id ) ?: 'application/octet-stream',
+				'filename'            => (string) ( get_post_meta( $attachment_id, self::ORIGINAL_NAME_META, true ) ?: basename( $path ) ),
+			]
+		);
+	}
+
+	public function serve_private_iva_file( $served, $result, $request, $server ) {
+		$data = $result instanceof \WP_REST_Response ? $result->get_data() : null;
+		if ( ! is_array( $data ) || empty( $data['_rondo_private_file'] ) ) {
+			return $served;
+		}
+
+		$path = (string) $data['_rondo_private_file'];
+		if ( ! is_readable( $path ) ) {
+			return $served;
+		}
+
+		header( 'Content-Type: ' . sanitize_mime_type( (string) $data['mime_type'] ) );
+		header( 'Content-Length: ' . filesize( $path ) );
+		header( 'Content-Disposition: inline; filename="' . sanitize_file_name( (string) $data['filename'] ) . '"' );
+		header( 'X-Content-Type-Options: nosniff' );
+		header( 'Cache-Control: private, no-store, max-age=0' );
+		readfile( $path );
+		return true;
+	}
+
+	public function maybe_migrate_iva_files() {
+		if ( (int) get_option( 'rondo_private_iva_version', 0 ) >= self::PRIVATE_IVA_VERSION ) {
+			return;
+		}
+
+		$directory = $this->private_iva_directory();
+		if ( is_wp_error( $directory ) ) {
+			return;
+		}
+
+		$success = true;
+		foreach ( $this->collect_iva_person_ids() as $person_id ) {
+			$attachment_id = $this->iva_attachment_id( $person_id );
+			if ( $attachment_id <= 0 || get_post_meta( $attachment_id, self::PRIVATE_PATH_META, true ) ) {
+				continue;
+			}
+
+			$source = get_attached_file( $attachment_id );
+			if ( ! $source || ! is_readable( $source ) ) {
+				$success = false;
+				continue;
+			}
+
+			$filename = wp_unique_filename( $directory, 'iva-' . wp_generate_password( 32, false, false ) . '.' . pathinfo( $source, PATHINFO_EXTENSION ) );
+			$target   = trailingslashit( $directory ) . $filename;
+			if ( ! rename( $source, $target ) && ( ! copy( $source, $target ) || ! unlink( $source ) ) ) {
+				$success = false;
+				continue;
+			}
+			chmod( $target, 0640 );
+
+			$metadata = wp_get_attachment_metadata( $attachment_id );
+			if ( is_array( $metadata ) && ! empty( $metadata['sizes'] ) ) {
+				foreach ( $metadata['sizes'] as $size ) {
+					$derived = trailingslashit( dirname( $source ) ) . $size['file'];
+					if ( is_file( $derived ) ) {
+						unlink( $derived );
+					}
+				}
+			}
+
+			update_post_meta( $attachment_id, self::PRIVATE_PATH_META, $target );
+			update_post_meta( $attachment_id, self::ORIGINAL_NAME_META, basename( $source ) );
+			delete_post_meta( $attachment_id, '_wp_attached_file' );
+			delete_post_meta( $attachment_id, '_wp_attachment_metadata' );
+			wp_update_post(
+				[
+					'ID'          => $attachment_id,
+					'post_status' => 'private',
+					'guid'        => $this->iva_certificate_url( $person_id ),
+				]
+				);
+		}
+
+		if ( $success ) {
+			update_option( 'rondo_private_iva_version', self::PRIVATE_IVA_VERSION, false );
+		}
+	}
+
+	private function private_iva_directory() {
+		$directory = trailingslashit( dirname( ABSPATH ) ) . 'rondo-private/iva';
+		if ( ! wp_mkdir_p( $directory ) ) {
+			return new \WP_Error( 'private_directory_failed', 'De private IVA-map kon niet worden aangemaakt.', [ 'status' => 500 ] );
+		}
+		return $directory;
+	}
+
+	private function iva_attachment_id( int $person_id ): int {
+		$value = get_field( 'iva-certificaat', $person_id, false );
+		if ( is_array( $value ) ) {
+			$value = $value['ID'] ?? $value['id'] ?? 0;
+		}
+		return (int) $value;
+	}
+
+	private function iva_certificate_url( int $person_id ): string {
+		return rest_url( 'rondo/v1/iva/' . $person_id . '/certificate' );
+	}
+
+	private function delete_private_attachment( int $attachment_id ): void {
+		$path = (string) get_post_meta( $attachment_id, self::PRIVATE_PATH_META, true );
+		if ( $path !== '' && is_file( $path ) ) {
+			unlink( $path );
+		}
+		wp_delete_attachment( $attachment_id, true );
 	}
 
 	/**
@@ -744,10 +933,8 @@ class Volunteer extends Base {
 	/**
 	 * Permission gate for the data-quality drill-down.
 	 *
-	 * The eligibility categories (orphan, address_fallback, …) stay open to every
-	 * approved user — they're already surfaced on the Vrijwilligers-dashboard. The
-	 * `no_email` category exposes ledenadministratie-territory (which members can't
-	 * be reached for activation), so it gates on ledenadministratie/admin instead.
+	 * Volunteer diagnostics contain club-wide person records. The `no_email`
+	 * category is additionally restricted to membership administration.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
 	 * @return bool
@@ -756,7 +943,7 @@ class Volunteer extends Base {
 		if ( $request->get_param( 'category' ) === 'no_email' ) {
 			return $this->check_ledenadministratie_permission();
 		}
-		return $this->check_user_approved();
+		return $this->check_vrijwilligers_permission();
 	}
 
 	/**

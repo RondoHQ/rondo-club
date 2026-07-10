@@ -41,17 +41,7 @@ class LettermintWebhookTest extends RondoTestCase {
 		update_option( LettermintConfig::OPTION_WEBHOOK_SECRET, $secret );
 
 		$person_id = $this->createPerson( [ 'post_title' => 'Bounced Member' ] );
-		update_field(
-			'contact_info',
-			[
-				[
-					'contact_type'  => 'email',
-					'contact_label' => 'Email',
-					'contact_value' => 'bounce@example.com',
-				],
-			],
-			$person_id
-		);
+		update_field( 'email_1', 'bounce@example.com', $person_id );
 
 		$payload = [
 			'event' => 'message.hard_bounced',

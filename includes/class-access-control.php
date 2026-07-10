@@ -16,7 +16,21 @@ class AccessControl {
 	/**
 	 * Post types that should have access control
 	 */
-	private $controlled_post_types            = [ 'person', 'team', 'rondo_todo', 'rondo_clothing_item', 'rondo_clothing_txn' ];
+	private $controlled_post_types            = [
+		'person',
+		'team',
+		'commissie',
+		'rondo_todo',
+		'rondo_feedback',
+		'rondo_clothing_item',
+		'rondo_clothing_txn',
+		'discipline_case',
+		'rondo_invoice',
+		'dienst_type',
+		'shift_template',
+		'dienst_shift',
+		'taakuitleg',
+	];
 	private const TODO_ASSIGNED_USER_META_KEY = 'assigned_user_id';
 
 	/**
@@ -35,6 +49,7 @@ class AccessControl {
 		'financieel_read',
 		'toegangscontrole',
 		'manage_clothing',
+		'ledenadministratie',
 	];
 
 	/**
@@ -89,25 +104,23 @@ class AccessControl {
 		// Filter queries to block unapproved users
 		add_action( 'pre_get_posts', [ $this, 'filter_queries' ] );
 
-		// Filter REST API queries
-		add_filter( 'rest_person_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'person' ), 10, 2 );
-		add_filter( 'rest_team_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'team' ), 10, 2 );
-		add_filter( 'rest_rondo_todo_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_todo' ), 10, 2 );
-		add_filter( 'rest_rondo_clothing_item_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_clothing_item' ), 10, 2 );
-		add_filter( 'rest_rondo_clothing_txn_query', fn( $args, $req ) => $this->filter_rest_query( $args, $req, 'rondo_clothing_txn' ), 10, 2 );
-
-		// Filter REST API single item access
-		add_filter( 'rest_prepare_person', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_team', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_rondo_todo', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_rondo_clothing_item', [ $this, 'filter_rest_single_access' ], 10, 3 );
-		add_filter( 'rest_prepare_rondo_clothing_txn', [ $this, 'filter_rest_single_access' ], 10, 3 );
+		// Cover every core REST route for every Rondo CPT. Custom route permission
+		// callbacks remain in place as a second layer.
+		foreach ( $this->controlled_post_types as $post_type ) {
+			add_filter(
+				'rest_' . $post_type . '_query',
+				fn( $args, $req ) => $this->filter_rest_query( $args, $req, $post_type ),
+				10,
+				2
+			);
+			add_filter( 'rest_prepare_' . $post_type, [ $this, 'filter_rest_single_access' ], 10, 3 );
+		}
 	}
 
 	/**
 	 * Check if a user can edit people records.
 	 *
-	 * Users with fairplay, vog, financieel, or manage_options capabilities can edit people.
+	 * Users with a people-administration capability can edit people.
 	 *
 	 * @param int|null $user_id User ID (optional, defaults to current user).
 	 * @return bool Whether the user can edit people.
@@ -122,7 +135,8 @@ class AccessControl {
 		return user_can( $user_id, 'manage_options' )
 			|| user_can( $user_id, 'fairplay' )
 			|| user_can( $user_id, 'vog' )
-			|| user_can( $user_id, 'financieel' );
+			|| user_can( $user_id, 'financieel' )
+			|| user_can( $user_id, 'ledenadministratie' );
 	}
 
 	/**
@@ -184,12 +198,7 @@ class AccessControl {
 	 * @return string[] Modified capabilities.
 	 */
 	public function grant_volunteer_editing( $caps, $cap, $user_id, $args ) {
-		$primitive = [
-			'edit_post'   => 'edit_posts',
-			'delete_post' => 'delete_posts',
-		];
-
-		if ( ! isset( $primitive[ $cap ] ) || empty( $args[0] ) ) {
+		if ( ! in_array( $cap, [ 'edit_post', 'delete_post' ], true ) || empty( $args[0] ) ) {
 			return $caps;
 		}
 
@@ -200,7 +209,16 @@ class AccessControl {
 		}
 
 		if ( user_can( $user_id, 'manage_options' ) || user_can( $user_id, 'vrijwilligers' ) ) {
-			return [ $primitive[ $cap ] ];
+			$post_type_object = get_post_type_object( $post->post_type );
+			if ( ! $post_type_object ) {
+				return [ 'do_not_allow' ];
+			}
+
+			$primitive = $cap === 'delete_post'
+				? $post_type_object->cap->delete_posts
+				: $post_type_object->cap->edit_posts;
+
+			return [ $primitive ];
 		}
 
 		return [ 'do_not_allow' ];
@@ -614,7 +632,15 @@ class AccessControl {
 			return self::can_view_person( $post->ID, $user_id );
 		}
 
-		return true;
+		if ( $post->post_type === 'rondo_todo' ) {
+			return in_array( (int) $post->ID, $this->get_visible_todo_ids( (int) $user_id ), true );
+		}
+
+		if ( in_array( $post->post_type, [ 'rondo_clothing_item', 'rondo_clothing_txn' ], true ) ) {
+			return user_can( $user_id, 'manage_clothing' ) || user_can( $user_id, 'manage_options' );
+		}
+
+		return user_can( $user_id, 'read_post', $post->ID );
 	}
 
 	/**
@@ -679,6 +705,12 @@ class AccessControl {
 	public function filter_rest_query( $args, $request, $post_type ) {
 		if ( ! is_user_logged_in() ) {
 			// Not logged in - show nothing
+			$args['post__in'] = [ 0 ];
+			return $args;
+		}
+
+		$post_type_object = get_post_type_object( $post_type );
+		if ( ! $post_type_object || ! current_user_can( $post_type_object->cap->read ) ) {
 			$args['post__in'] = [ 0 ];
 			return $args;
 		}
@@ -777,6 +809,14 @@ class AccessControl {
 				'rest_forbidden',
 				__( 'This item has been deleted.', 'rondo' ),
 				[ 'status' => 404 ]
+			);
+		}
+
+		if ( ! $this->user_can_access_post( $post->ID ) ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permission to access this resource.', 'rondo' ),
+				[ 'status' => 403 ]
 			);
 		}
 

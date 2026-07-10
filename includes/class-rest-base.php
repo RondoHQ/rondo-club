@@ -123,6 +123,20 @@ abstract class Base {
 	}
 
 	/**
+	 * Check if the current user may manage the volunteer programme.
+	 */
+	public function check_vrijwilligers_permission() {
+		return current_user_can( 'vrijwilligers' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
+	 * Check if the current user may manage VOG records and communications.
+	 */
+	public function check_vog_permission() {
+		return current_user_can( 'vog' ) || current_user_can( 'manage_options' );
+	}
+
+	/**
 	 * Check if user can access a person
 	 *
 	 * Permission callback for person-specific endpoints.

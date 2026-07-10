@@ -83,7 +83,7 @@ class Vog extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_send_vog_emails' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vog_permission' ],
 				'args'                => [
 					'ids' => [
 						'required'          => true,
@@ -102,7 +102,7 @@ class Vog extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_mark_vog_justis' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vog_permission' ],
 				'args'                => [
 					'ids' => [
 						'required'          => true,
@@ -121,7 +121,7 @@ class Vog extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'bulk_send_vog_reminders' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_vog_permission' ],
 				'args'                => [
 					'ids' => [
 						'required'          => true,

@@ -92,7 +92,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_fee_list' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 				'args'                => [
 					'season'   => [
 						'default'           => null,
@@ -117,7 +117,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_fee_summary' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 				'args'                => [
 					'season'   => [
 						'default'           => null,
@@ -141,7 +141,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_person_fee' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				'permission_callback' => [ $this, 'check_financieel_read_permission' ],
 				'args'                => [
 					'id'     => [
 						'required'          => true,
