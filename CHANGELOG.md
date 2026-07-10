@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.34.0] - 2026-07-10
+
+### Added
+- **"Mijn gegevens" voor leden.** Een nieuw scherm waar je je eigen gegevens ziet en die van je kinderen onder de 18, precies zoals ze bij de club bekend staan. Alleen-lezen; kloppen ze niet, dan geef je het door aan de ledenadministratie.
+
+### Fixed
+- **Coördinatoren kwamen op een dashboard zonder menu.** "Kader" werd op twee plekken los van elkaar bepaald: de router telde poule- en coördinatorrollen mee, de zijbalk niet. Wie zo'n rol had, belandde op het dashboard terwijl er geen enkel menu-item naartoe wees. Beide lezen nu hetzelfde `is_kader`-veld, dat de server bepaalt.
+
 ## [33.33.0] - 2026-07-10
 
 ### Added
