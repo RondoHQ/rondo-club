@@ -49,6 +49,14 @@ function getInitialDueDate(value) {
   return formatDateForInput(defaultDueDate);
 }
 
+// Convert a stored date (Ymd or Y-m-d) to a `<input type="date">` value, or '' when empty.
+function toDateInputValue(value) {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (/^\d{8}$/.test(value)) return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`;
+  return '';
+}
+
 function normalizeLineItems(lineItems = []) {
   if (!Array.isArray(lineItems) || lineItems.length === 0) {
     return [{ ...emptyLine }];
@@ -118,6 +126,7 @@ export default function InvoiceDraftForm({
   const [personSearch, setPersonSearch] = useState('');
   const [isPersonOpen, setIsPersonOpen] = useState(false);
   const [dueDate, setDueDate] = useState('');
+  const [scheduledSendDate, setScheduledSendDate] = useState('');
   const [paymentAccountId, setPaymentAccountId] = useState('');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
@@ -181,6 +190,7 @@ export default function InvoiceDraftForm({
     setPersonSearch(initialValues?.personLabel || '');
     setIsPersonOpen(false);
     setDueDate(getInitialDueDate(initialValues?.dueDate));
+    setScheduledSendDate(toDateInputValue(initialValues?.scheduledSendDate));
     setPaymentAccountId(initialValues?.paymentAccountId || '');
     setEmailSubject(initialValues?.emailSubject || '');
     setEmailBody(initialValues?.emailBody || '');
@@ -290,6 +300,7 @@ export default function InvoiceDraftForm({
       customer_cc_email: invoiceTarget === 'external' ? customerCcEmail : '',
       customer_address: invoiceTarget === 'external' ? customerAddress : '',
       payment_terms_due_date: dueDate ? dueDate.replaceAll('-', '') : '',
+      scheduled_send_date: scheduledSendDate ? scheduledSendDate.replaceAll('-', '') : '',
       payment_account_id: paymentAccountId,
       email_subject: emailSubject === defaultEmailSubject ? '' : emailSubject,
       email_body_override: emailBodyMatchesDefault(emailBody, defaultEmailBody) ? '' : emailBody,
@@ -433,6 +444,19 @@ export default function InvoiceDraftForm({
 
         <label className="text-sm block max-w-sm">Vervaldatum
           <input type="date" className="input mt-1" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        </label>
+
+        <label className="text-sm block max-w-sm">Automatisch verzenden op <span className="text-gray-400">(optioneel)</span>
+          <input
+            type="date"
+            className="input mt-1"
+            value={scheduledSendDate}
+            min={formatDateForInput(new Date())}
+            onChange={(e) => setScheduledSendDate(e.target.value)}
+          />
+          <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+            Laat leeg om direct te versturen. Met een datum blijft de factuur een concept en wordt hij op die dag automatisch verstuurd.
+          </span>
         </label>
 
         {showManualMollieAccountSelector && (

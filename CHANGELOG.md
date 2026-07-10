@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.40.0] - 2026-07-10
+## [33.41.0] - 2026-07-10
+
+### Added
+- **Facturen inplannen om automatisch te verzenden.** Je kunt een conceptfactuur nu een verzenddatum in de toekomst geven; de factuur blijft een concept en wordt op die dag automatisch verstuurd (met betaallink, PDF en e-mail, net als een handmatige verzending). Ideaal om bijvoorbeeld BSO-facturen in één keer aan te maken en elk op een eigen datum te laten uitgaan. (feedback #6632)
+  - Stel de datum in via het veld "Automatisch verzenden op" in het factuurformulier, of via "Automatisch verzenden op" op de factuurpagina zelf (met een knop om de inplanning bij te werken of te annuleren).
+  - Op het Facturen-overzicht kun je meerdere concepten selecteren en in één keer inplannen voor dezelfde datum ("Inplannen voor…" in de selectiebalk).
+  - Ingeplande concepten krijgen een "Ingepland · {datum}"-label in het overzicht en op de factuurpagina. Handmatig "Verstuur nu" blijft altijd mogelijk en annuleert de inplanning.
+  - Een dagelijkse achtergrondtaak verstuurt de ingeplande facturen; de verzending wordt toegeschreven aan degene die de factuur heeft ingepland.
 
 ### Added
 - **Bestaande factuur kopiëren als nieuw concept.** Op het Facturen-overzicht staat nu bij elke factuur een kopieer-knop, en op de factuurpagina zelf een knop "Kopiëren naar nieuwe factuur". Je komt dan in het factuurformulier met alle gegevens al ingevuld — lid/klant, regels, bedragen, e-mailtekst en eigen velden — zodat je terugkerende facturen (bijvoorbeeld de maandelijkse BSO-facturen) niet opnieuw hoeft in te tikken. Er wordt een nieuw factuurnummer toegekend bij versturen en de vervaldatum wordt opnieuw gezet. Een gekopieerde contributiefactuur wordt als handmatige factuur aangemaakt, omdat contributiefacturen automatisch worden gegenereerd. (feedback #6631)

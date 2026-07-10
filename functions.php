@@ -152,6 +152,7 @@ use Rondo\Finance\InstallmentPaymentService;
 use Rondo\Finance\InstallmentEmailSender;
 use Rondo\Finance\InstallmentScheduler;
 use Rondo\Finance\InvoiceReminderScheduler;
+use Rondo\Finance\InvoiceScheduledSendScheduler;
 use Rondo\Finance\PublicPaymentPage;
 use Rondo\Finance\BulkInvoiceCreator;
 use Rondo\Finance\QrCodeGenerator;
@@ -378,6 +379,9 @@ function rondo_init() {
 
 	// Invoice reminder scheduler — daily cron sweeper for membership and discipline invoice reminders
 	new InvoiceReminderScheduler();
+
+	// Invoice scheduled-send sweeper — daily cron that sends drafts queued for a future date
+	new InvoiceScheduledSendScheduler();
 
 	$initialized = true;
 }

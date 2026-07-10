@@ -154,6 +154,27 @@ export function useSendInvoice() {
 }
 
 /**
+ * Schedule (or clear) a draft invoice's future automatic send date.
+ * Pass { id, scheduledSendDate } — an empty date clears the schedule.
+ * @returns {object} Mutation object for scheduling invoices
+ */
+export function useScheduleInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, scheduledSendDate }) => {
+      const response = await prmApi.scheduleInvoice(id, { scheduled_send_date: scheduledSendDate || '' });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['invoice'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'person'] });
+    },
+  });
+}
+
+/**
  * Update invoice status
  * @returns {object} Mutation object for updating invoice status
  */

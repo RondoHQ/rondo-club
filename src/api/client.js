@@ -362,6 +362,7 @@ export const prmApi = {
   bulkCreateInvoices: (caseIds) => api.post('/rondo/v1/invoices/bulk', { case_ids: caseIds }),
   generateInvoicePdf: (id) => api.post(`/rondo/v1/invoices/${id}/generate-pdf`),
   sendInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/send`, data),
+  scheduleInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/schedule`, data),
   resendInvoice: (id, data = {}) => api.post(`/rondo/v1/invoices/${id}/resend`, data),
   deleteInvoice: (id) => api.delete(`/rondo/v1/invoices/${id}`),
   getInvoicePdfUrl: (id) => `${window.rondoConfig?.apiUrl || '/wp-json'}rondo/v1/invoices/${id}/pdf?_wpnonce=${window.rondoConfig?.nonce || ''}`,
