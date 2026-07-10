@@ -61,7 +61,7 @@ abstract class Base {
 	}
 
 	/**
-	 * Check if the user may manage contributie and facturen.
+	 * Check if the user may manage contributie and facturen — the write gate.
 	 *
 	 * `financieel` alone — no `manage_options` fallback, because
 	 * UserRoles::register_role() grants the capability to the administrator role.
@@ -69,10 +69,24 @@ abstract class Base {
 	 * endpoint behind it must be too. Gating those on `manage_options` gave the
 	 * penningmeester a menu full of empty screens.
 	 *
+	 * Use this for anything that creates, mutates, sends, or deletes. Read-only
+	 * endpoints belong behind check_financieel_read_permission().
+	 *
 	 * @return bool True if user has financieel capability.
 	 */
 	public function check_financieel_permission() {
-		return current_user_can( 'financieel' );
+		return \Rondo\Core\UserRoles::can_manage_finances();
+	}
+
+	/**
+	 * Check if the user may view contributie and facturen — the read gate.
+	 *
+	 * Satisfied by `financieel_read` or by `financieel`, which implies it.
+	 *
+	 * @return bool True if user may view finance data.
+	 */
+	public function check_financieel_read_permission() {
+		return \Rondo\Core\UserRoles::can_view_finances();
 	}
 
 	/**

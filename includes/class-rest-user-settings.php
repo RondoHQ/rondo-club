@@ -1016,7 +1016,7 @@ class UserSettings extends Base {
 			|| $has_extra_roles
 			|| current_user_can( 'fairplay' )
 			|| current_user_can( 'vog' )
-			|| current_user_can( 'financieel' )
+			|| \Rondo\Core\UserRoles::can_view_finances()
 			|| current_user_can( 'toegangscontrole' )
 			|| current_user_can( 'manage_clothing' )
 			|| current_user_can( 'ledenadministratie' )
@@ -1055,7 +1055,8 @@ class UserSettings extends Base {
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),
-			'can_access_financieel'         => current_user_can( 'financieel' ),
+			'can_access_financieel'         => \Rondo\Core\UserRoles::can_view_finances(),
+			'can_edit_financieel'           => \Rondo\Core\UserRoles::can_manage_finances(),
 			'can_access_toegangscontrole'   => current_user_can( 'toegangscontrole' ),
 			'can_access_clothing'           => current_user_can( 'manage_clothing' ) || current_user_can( 'manage_options' ),
 			'can_access_ledenadministratie' => current_user_can( 'ledenadministratie' ) || current_user_can( 'manage_options' ),

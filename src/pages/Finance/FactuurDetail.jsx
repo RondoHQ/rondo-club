@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format, parseYmd } from '@/utils/dateFormat';
 import { formatCurrency } from '@/utils/formatters';
@@ -164,7 +165,9 @@ export default function FactuurDetail() {
   const updateMembershipDiscount = useUpdateMembershipInvoiceDiscount();
   const addDraftLineItem = useAddDraftInvoiceLineItem();
   const updateDraftInvoice = useUpdateDraftInvoice();
-  const { data: financeSettings } = useFinanceSettings();
+  const { data: currentUser } = useCurrentUser();
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
+  const { data: financeSettings } = useFinanceSettings({ enabled: canEditFinancieel });
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -478,7 +481,7 @@ export default function FactuurDetail() {
             <h1 className="text-2xl font-bold text-brand-gradient mb-2">
               {invoice.invoice_number}{invoice.invoice_kind === 'credit' ? ' · Credit' : ''}
             </h1>
-            {invoice.status === 'draft' && (
+            {invoice.status === 'draft' && canEditFinancieel && (
               <button
                 onClick={() => {
                   setIsEditingDraft((current) => !current);
@@ -754,7 +757,7 @@ export default function FactuurDetail() {
             </tfoot>
           </table>
         </div>
-        {invoice.status === 'draft' && !isEditingDraft && (
+        {invoice.status === 'draft' && !isEditingDraft && canEditFinancieel && (
           <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Extra regel toevoegen</h3>
             <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -931,7 +934,18 @@ export default function FactuurDetail() {
         </div>
       )}
 
+      {/* Read-only finance users get the PDF and nothing else. */}
+      {!canEditFinancieel && invoice.pdf_path && (
+        <div className="card p-6">
+          <button onClick={handleDownloadPdf} className="btn-tertiary gap-2">
+            <Download className="w-4 h-4" />
+            Download PDF
+          </button>
+        </div>
+      )}
+
       {/* Action buttons */}
+      {canEditFinancieel && (
       <div className="card p-6">
         <div className="flex flex-wrap gap-3">
           {/* Draft status actions */}
@@ -1234,6 +1248,7 @@ export default function FactuurDetail() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

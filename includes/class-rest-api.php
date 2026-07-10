@@ -820,8 +820,8 @@ class Api extends Base {
 			$results['teams'][] = $this->format_company_summary( $item['team'] );
 		}
 
-		// Search invoices (only for users with financieel capability)
-		if ( current_user_can( 'financieel' ) ) {
+		// Search invoices (only for users who may view finance data)
+		if ( \Rondo\Core\UserRoles::can_view_finances() ) {
 			$invoice_posts = get_posts(
 				[
 					'post_type'      => 'rondo_invoice',

@@ -75,6 +75,7 @@ export default function PersonDetail() {
 
   const canAccessFairplay = currentUser?.can_access_fairplay ?? false;
   const canAccessFinancieel = currentUser?.can_access_financieel ?? false;
+  const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   let canEditPeople = currentUser?.can_edit_people ?? false;
@@ -1865,7 +1866,7 @@ export default function PersonDetail() {
               onSelectionChange={setSelectedCaseIds}
               onCreateInvoice={handleCreateInvoice}
               isCreatingInvoice={createInvoice.isPending}
-              canCreateInvoice={canAccessFairplay && canAccessFinancieel}
+              canCreateInvoice={canAccessFairplay && canEditFinancieel}
             />
           </div>
         )}

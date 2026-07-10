@@ -481,7 +481,8 @@ class Capabilities extends Base {
 		$capability_labels = [
 			'fairplay'           => 'FairPlay',
 			'vog'                => 'VOG',
-			'financieel'         => 'Financieel',
+			'financieel'         => 'Financieel (bewerken)',
+			'financieel_read'    => 'Financieel (lezen)',
 			'toegangscontrole'   => 'Toegangscontrole',
 			'manage_clothing'    => 'Kledingbeheer',
 			'ledenadministratie' => 'Ledenadministratie',
@@ -547,7 +548,7 @@ class Capabilities extends Base {
 			);
 		}
 
-		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'toegangscontrole', 'manage_clothing', 'ledenadministratie' ];
+		$allowed_caps  = [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie' ];
 		$valid_slugs   = array_keys( \Rondo\Core\UserRoles::get_all_roles() );
 		$valid_slugs[] = 'administrator';
 

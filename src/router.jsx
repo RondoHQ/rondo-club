@@ -100,9 +100,19 @@ function VOGRoute({ children }) {
   );
 }
 
+// Viewing finance screens: satisfied by financieel_read or financieel.
 function FinancieelRoute({ children }) {
   return (
     <CapabilityRoute checkAccess={(user) => user?.can_access_financieel}>
+      {children}
+    </CapabilityRoute>
+  );
+}
+
+// Screens that only exist to write: creating an invoice, editing finance settings.
+function FinancieelSchrijfRoute({ children }) {
+  return (
+    <CapabilityRoute checkAccess={(user) => user?.can_edit_financieel}>
       {children}
     </CapabilityRoute>
   );
@@ -432,9 +442,9 @@ const router = createBrowserRouter([
           {
             path: 'financien/facturen/nieuw',
             element: (
-              <FinancieelRoute>
+              <FinancieelSchrijfRoute>
                 <FactuurNieuw />
-              </FinancieelRoute>
+              </FinancieelSchrijfRoute>
             ),
           },
           {
