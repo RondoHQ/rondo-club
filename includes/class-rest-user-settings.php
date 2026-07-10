@@ -1009,6 +1009,19 @@ class UserSettings extends Base {
 		// zonder eigen capability. Deze gebruikers horen het dashboard te zien.
 		$has_extra_roles = ! empty( array_diff( (array) $user->roles, [ \Rondo\Core\UserRoles::ROLE_NAME, 'subscriber' ] ) );
 
+		// The single definition of "kader". The React router and the sidebar both read
+		// this; deriving it separately in either place lets them disagree, and a user
+		// lands on a dashboard with no navigation to it.
+		$is_kader = $is_admin
+			|| $has_extra_roles
+			|| current_user_can( 'fairplay' )
+			|| current_user_can( 'vog' )
+			|| current_user_can( 'financieel' )
+			|| current_user_can( 'toegangscontrole' )
+			|| current_user_can( 'manage_clothing' )
+			|| current_user_can( 'ledenadministratie' )
+			|| current_user_can( 'vrijwilligers' );
+
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 		$linked_person_name  = null;
 		$linked_person_photo = null;
@@ -1038,6 +1051,7 @@ class UserSettings extends Base {
 			'avatar_url'                    => $avatar_url,
 			'is_admin'                      => $is_admin,
 			'has_extra_roles'               => $has_extra_roles,
+			'is_kader'                      => $is_kader,
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),
@@ -1049,6 +1063,7 @@ class UserSettings extends Base {
 			'permitted_age_groups'          => \Rondo\Core\AccessControl::get_permitted_age_groups(),
 			'profile_url'                   => admin_url( 'profile.php' ),
 			'admin_url'                     => admin_url(),
+			'linked_person_id'              => $person_id ?: null,
 			'linked_person_name'            => $linked_person_name,
 			'active_functies'               => $active_functies,
 			'linked_person_photo'           => $linked_person_photo,

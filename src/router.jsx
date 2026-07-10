@@ -24,7 +24,7 @@ import {
   ClothingPage,
   VrijwilligersDashboard, VrijwilligersExemptions, VrijwilligersIva, VrijwilligersDiensten,
   VrijwilligersDienstForm, VrijwilligersDienstTypeForm, VrijwilligersSjablonen, VrijwilligersSjabloonForm,
-  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig,
+  VrijwilligersDataQuality, VrijwilligersRelationshipQuality, Vrijwillig, Household,
   TaakuitlegList, TaakuitlegForm,
 } from './lazyPages';
 
@@ -141,25 +141,16 @@ function VrijwilligersRoute({ children }) {
 }
 
 /**
- * Kader-only: any user with at least one staff capability, or with any role
- * beyond the plain-lid baseline (poule-rollen en custom rollen hebben geen
- * eigen capability maar horen wel het dashboard te zien). Plain leden zonder
- * expliciete rechten krijgen geen "Geen toegang"-scherm maar worden meteen
- * doorgestuurd naar hun eigen vrijwillig-aanmelding.
+ * Kader = iedereen met een staf-rol. Plain leden zonder expliciete rechten
+ * krijgen geen "Geen toegang"-scherm maar worden meteen doorgestuurd naar hun
+ * eigen vrijwillig-aanmelding.
+ *
+ * `is_kader` wordt server-side bepaald. Leid het hier niet opnieuw af: de
+ * zijbalk gebruikt hetzelfde veld, en twee definities lopen uiteen — dan landt
+ * iemand op een dashboard waar geen menu-item naartoe wijst.
  */
 function isKaderUser(user) {
-  if (!user) return false;
-  return Boolean(
-    user.is_admin ||
-    user.has_extra_roles ||
-    user.can_access_fairplay ||
-    user.can_access_vog ||
-    user.can_access_financieel ||
-    user.can_access_toegangscontrole ||
-    user.can_access_clothing ||
-    user.can_access_ledenadministratie ||
-    user.can_access_vrijwilligers
-  );
+  return Boolean(user?.is_kader);
 }
 
 function KaderOrVrijwilligRedirect({ children }) {
@@ -403,6 +394,8 @@ const router = createBrowserRouter([
           // Member-facing surface (#4) — any logged-in member can use this,
           // capability gating happens server-side based on linked-person eligibility.
           { path: 'vrijwillig', element: <Vrijwillig /> },
+          // Mijn gegevens — eigen record + kinderen. Server-side gescoped.
+          { path: 'mijn-gegevens', element: <Household /> },
           // Legacy: /vrijwillig/profiel is verplaatst naar /profile/iva.
           { path: 'vrijwillig/profiel', element: <Navigate to="/profile/iva" replace /> },
 

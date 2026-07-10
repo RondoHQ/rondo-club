@@ -9,6 +9,7 @@ import {
   Menu,
   X,
   Home,
+  IdCard,
   LogOut,
   Search,
   CheckSquare,
@@ -48,6 +49,7 @@ import { prmApi } from '@/api/client';
 
 const navigation = [
   { name: 'Mijn diensten', href: '/vrijwillig', icon: HeartHandshake },
+  { name: 'Mijn gegevens', href: '/mijn-gegevens', icon: IdCard, memberOnly: true },
   { name: 'Dashboard', href: '/', icon: Home, requiresKader: true },
   { name: 'Leden', href: '/people', icon: Users, requiresKader: true },
   { name: 'Onboarding', href: '/people/onboarding', icon: UserPlus, indent: true, requiresLedenadministratie: true },
@@ -91,15 +93,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
   const isAdmin = currentUser?.is_admin ?? false;
 
   // `isKader` = iedereen met een staf-rol. Plain leden (account zonder
-  // expliciete rechten) zien alleen "Mijn diensten" in de zijbalk.
-  const isKader = isAdmin
-    || canAccessFairplay
-    || canAccessVOG
-    || canAccessFinancieel
-    || canAccessToegangscontrole
-    || canAccessClothing
-    || canAccessLedenadministratie
-    || canAccessVrijwilligers;
+  // expliciete rechten) zien alleen hun eigen items in de zijbalk. Server-side
+  // bepaald, net als in router.jsx — leid het hier niet opnieuw af.
+  const isKader = currentUser?.is_kader ?? false;
 
   // Finance menu counters
   const { data: invoiceData = [] } = useQuery({
@@ -202,6 +198,9 @@ function Sidebar({ mobile = false, onClose, stats }) {
     if (item.requiresLedenadministratie && !canAccessLedenadministratie) return false;
     if (item.requiresVrijwilligers && !canAccessVrijwilligers) return false;
     if (item.requiresKader && !isKader) return false;
+    // "Mijn gegevens" leans on /wp/v2/people being scoped to the member's own
+    // household. For kader that endpoint returns the whole club, so hide it.
+    if (item.memberOnly && isKader) return false;
     return true;
   });
 
