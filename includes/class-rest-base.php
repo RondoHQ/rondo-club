@@ -61,12 +61,30 @@ abstract class Base {
 	}
 
 	/**
-	 * Check if the current user has the financieel capability.
+	 * Check if the user may manage contributie and facturen.
+	 *
+	 * `financieel` alone — no `manage_options` fallback, because
+	 * UserRoles::register_role() grants the capability to the administrator role.
+	 * The Financiën section of the UI is gated on exactly this capability, so every
+	 * endpoint behind it must be too. Gating those on `manage_options` gave the
+	 * penningmeester a menu full of empty screens.
 	 *
 	 * @return bool True if user has financieel capability.
 	 */
 	public function check_financieel_permission() {
 		return current_user_can( 'financieel' );
+	}
+
+	/**
+	 * Check if user is admin or has the Financieel capability.
+	 *
+	 * For endpoints shared between the admin settings screens and the contributie
+	 * screens, such as the list of available werkfuncties.
+	 *
+	 * @return bool True if user has manage_options or financieel capability.
+	 */
+	public function check_admin_or_financieel_permission() {
+		return current_user_can( 'manage_options' ) || current_user_can( 'financieel' );
 	}
 
 	/**

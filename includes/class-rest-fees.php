@@ -33,12 +33,12 @@ class Fees extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_membership_fee_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'update_membership_fee_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
 						'season'     => [
 							'required'          => true,
@@ -65,7 +65,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'copy_season_categories' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
 				'args'                => [
 					'from_season' => [
 						'required'          => true,
@@ -166,9 +166,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'recalculate_all_fees' ],
-				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
-				},
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
 				'args'                => [
 					'season' => [
 						'default'           => null,
@@ -189,7 +187,7 @@ class Fees extends Base {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_billing_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
 						'season' => [
 							'default'           => null,
@@ -202,7 +200,7 @@ class Fees extends Base {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'update_billing_settings' ],
-					'permission_callback' => [ $this, 'check_admin_permission' ],
+					'permission_callback' => [ $this, 'check_financieel_permission' ],
 					'args'                => [
 						'season'                     => [
 							'required'          => true,
@@ -242,7 +240,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'start_bulk_invoice_job' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
 				'args'                => [
 					'season' => [
 						'default'           => null,
@@ -261,7 +259,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_bulk_invoice_job_status' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
 			]
 		);
 
@@ -272,7 +270,7 @@ class Fees extends Base {
 			[
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'create_single_membership_invoice' ],
-				'permission_callback' => [ $this, 'check_admin_permission' ],
+				'permission_callback' => [ $this, 'check_financieel_permission' ],
 				'args'                => [
 					'person_id' => [
 						'required'          => true,
