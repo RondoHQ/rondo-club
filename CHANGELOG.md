@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.43.3] - 2026-07-10
+
+### Added
+- Op een commissiepagina opent **E-mail leden** een nieuw bericht in het standaard mailprogramma, gericht aan alle huidige commissieleden met een bekend e-mailadres. Dubbele adressen worden overgeslagen. (feedback #6861)
+
 ## [33.43.2] - 2026-07-10
 
 ### Fixed
