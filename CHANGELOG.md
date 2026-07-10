@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.36.0] - 2026-07-10
+
+### Added
+- **Datakwaliteit: "actieve leden zonder e-mailadres".** De ledenadministratie ziet nu op het Vrijwilligers-dashboard hoeveel actieve leden geen geldig e-mailadres hebben (email_1 én email_2 leeg of ongeldig). Zij kunnen geen account activeren via `/activeren` tot iemand een adres verzamelt. Doorklikken toont de lijst met naam, KNVB-ID, leeftijdsgroep en adres, met KNVB-ID erbij zodat ze snel op te zoeken zijn. Deze categorie is afgeschermd op het `ledenadministratie`-recht (beheerders inbegrepen); de bestaande categorieën blijven zichtbaar voor alle goedgekeurde gebruikers.
+- **CSV-export op elke Datakwaliteit-lijst.** De drill-downpagina's (wees-gezinnen, adres-overeenkomst, geen leeftijdsgroep, ex-leden, geen e-mailadres) hebben nu een "Exporteer CSV"-knop, zodat de lijst buiten Rondo nagebeld of afgewerkt kan worden.
+
 ## [33.35.0] - 2026-07-10
 
 ### Added

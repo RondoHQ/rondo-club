@@ -73,7 +73,10 @@ class Volunteer extends Base {
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_data_quality_persons' ],
-				'permission_callback' => [ $this, 'check_user_approved' ],
+				// no_email is a ledenadministratie concern (activation gaps), so it
+				// gates tighter than the eligibility categories — see
+				// check_data_quality_permission().
+				'permission_callback' => [ $this, 'check_data_quality_permission' ],
 				'args'                => [
 					'category' => [
 						'required'          => true,
@@ -81,7 +84,7 @@ class Volunteer extends Base {
 						'validate_callback' => function ( $param ) {
 							return in_array(
 								$param,
-								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep', 'former_members' ],
+								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep', 'former_members', 'no_email' ],
 								true
 							);
 						},
@@ -694,6 +697,14 @@ class Volunteer extends Base {
 			( new RelationshipQualityChecker() )->find_suspect_pairs()
 		);
 
+		// Only ledenadministratie/admins see the no-email chase card (and the
+		// drill-down behind it), so only compute the count for them — it keeps a
+		// membership metric out of the general Vrijwilligers view and skips the
+		// extra scan for everyone else.
+		if ( $this->check_ledenadministratie_permission() ) {
+			$diagnostics['no_email'] = count( $this->get_no_email_person_ids() );
+		}
+
 		return rest_ensure_response(
 			[
 				'season'      => $season,
@@ -731,6 +742,24 @@ class Volunteer extends Base {
 	}
 
 	/**
+	 * Permission gate for the data-quality drill-down.
+	 *
+	 * The eligibility categories (orphan, address_fallback, …) stay open to every
+	 * approved user — they're already surfaced on the Vrijwilligers-dashboard. The
+	 * `no_email` category exposes ledenadministratie-territory (which members can't
+	 * be reached for activation), so it gates on ledenadministratie/admin instead.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return bool
+	 */
+	public function check_data_quality_permission( $request ) {
+		if ( $request->get_param( 'category' ) === 'no_email' ) {
+			return $this->check_ledenadministratie_permission();
+		}
+		return $this->check_user_approved();
+	}
+
+	/**
 	 * GET /rondo/v1/volunteer-data-quality/{category}
 	 *
 	 * Drill-down for the Datakwaliteit-kaart on the dashboard. Returns the
@@ -739,6 +768,8 @@ class Volunteer extends Base {
 	 *   - orphan                 → JO16- spelers zonder ouder-relatie én zonder volwassen huisgenoot.
 	 *   - address_fallback       → spelers + ouders waar het gezin alleen via adres-overeenkomst is samengesteld.
 	 *   - missing_leeftijdsgroep → personen zonder leeftijdsgroep meta.
+	 *   - former_members         → als ex-lid gemarkeerde personen.
+	 *   - no_email               → actieve (niet-former) leden zonder geldig e-mailadres — kunnen niet activeren.
 	 */
 	public function get_data_quality_persons( \WP_REST_Request $request ) {
 		$category = sanitize_key( (string) $request->get_param( 'category' ) );
@@ -758,6 +789,9 @@ class Volunteer extends Base {
 				break;
 			case 'former_members':
 				$ids = $service->get_former_member_ids();
+				break;
+			case 'no_email':
+				$ids = $this->get_no_email_person_ids();
 				break;
 			default:
 				return new \WP_Error( 'invalid_category', 'Unknown data-quality category.', [ 'status' => 400 ] );
@@ -780,6 +814,7 @@ class Volunteer extends Base {
 				'id'                  => (int) $pid,
 				'name'                => $this->sanitize_text( $post->post_title ),
 				'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $pid, 'thumbnail' ) ),
+				'knvb_id'             => (string) get_post_meta( $pid, 'knvb-id', true ),
 				'leeftijdsgroep'      => $age_group,
 				'address'             => $primary ? trim(
 					(string) ( $primary['street'] ?? '' )
@@ -803,6 +838,52 @@ class Volunteer extends Base {
 				'persons'  => $persons,
 			]
 		);
+	}
+
+	/**
+	 * Active (non-former) members with no valid e-mail address on file.
+	 *
+	 * These members can't be reached by the self-service activation flow
+	 * (/activeren) until someone collects an address, so ledenadministratie
+	 * needs to see and chase them. A person qualifies when neither `email_1`
+	 * nor `email_2` is a valid address and they are not marked `former_member`.
+	 *
+	 * Full scan with direct post_meta reads (mirrors get_former_member_ids()):
+	 * cheaper than a meta_query, and validity has to be checked in PHP anyway.
+	 *
+	 * @return int[] Person post IDs.
+	 */
+	private function get_no_email_person_ids(): array {
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'person',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish' ],
+			]
+		);
+
+		$ids = [];
+		foreach ( $query->posts as $pid ) {
+			$pid = (int) $pid;
+
+			$former = get_post_meta( $pid, 'former_member', true );
+			if ( $former === '1' || $former === 1 || $former === true ) {
+				continue;
+			}
+
+			$email_1 = (string) get_post_meta( $pid, 'email_1', true );
+			$email_2 = (string) get_post_meta( $pid, 'email_2', true );
+			if ( is_email( $email_1 ) || is_email( $email_2 ) ) {
+				continue;
+			}
+
+			$ids[] = $pid;
+		}
+
+		return $ids;
 	}
 
 	/**
