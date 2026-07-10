@@ -335,12 +335,19 @@ export default function Facturen() {
         accessorFn: (row) => row.person?.name || row.customer_name || '',
         cell: ({ row }) =>
           row.original.person?.name ? (
+            <div>
             <Link
               to={`/people/${row.original.person.id}`}
               className="text-gray-900 dark:text-gray-100 hover:text-electric-cyan dark:hover:text-electric-cyan"
             >
               {row.original.person.name}
             </Link>
+              {row.original.person.contact_name && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Contactpersoon: {row.original.person.contact_name}
+                </p>
+              )}
+            </div>
           ) : row.original.customer_name ? (
             <span className="text-gray-900 dark:text-gray-100">{row.original.customer_name}</span>
           ) : (

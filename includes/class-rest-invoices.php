@@ -2698,6 +2698,41 @@ class Invoices extends Base {
 			return null;
 		}
 
-		return $this->format_person_summary( $person );
+		return $this->format_invoice_person_summary( $person );
+	}
+
+	/**
+	 * Format a linked person as the customer shown on an invoice.
+	 *
+	 * Company contacts use the company as the primary customer name while the
+	 * personal name remains available as contact_name for secondary display.
+	 *
+	 * @param \WP_Post $person Linked person post.
+	 * @return array Invoice customer summary.
+	 */
+	protected function format_invoice_person_summary( $person ) {
+		$summary      = $this->format_person_summary( $person );
+		$company_name = trim( (string) get_field( 'company_name', $person->ID ) );
+
+		if ( $company_name === '' ) {
+			return $summary;
+		}
+
+		$contact_name = implode(
+			' ',
+			array_filter(
+				[
+					get_field( 'first_name', $person->ID ),
+					get_field( 'infix', $person->ID ),
+					get_field( 'last_name', $person->ID ),
+				]
+			)
+		);
+
+		$summary['name']         = $this->sanitize_text( $company_name );
+		$summary['company_name'] = $this->sanitize_text( $company_name );
+		$summary['contact_name'] = $this->sanitize_text( $contact_name ) ?: null;
+
+		return $summary;
 	}
 }

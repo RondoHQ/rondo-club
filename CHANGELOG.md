@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.43.2] - 2026-07-10
+
+### Fixed
+- Factuurdetail en facturenoverzicht tonen bij een bedrijfscontact nu dezelfde primaire klantnaam als de PDF: de bedrijfsnaam. De persoonsnaam blijft zichtbaar als contactpersoon, zodat bijvoorbeeld **Businessclub AWC** niet meer als **Roel de Bruijn** in de administratie verschijnt.
+
 ## [33.43.1] - 2026-07-10
 
 ### Fixed

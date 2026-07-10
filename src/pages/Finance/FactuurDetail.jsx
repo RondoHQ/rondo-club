@@ -697,6 +697,12 @@ export default function FactuurDetail() {
                 <p className="text-gray-700 dark:text-gray-300">{invoice.person?.name || invoice.customer_name || '-'}</p>
               )}
             </div>
+            {invoice.person?.contact_name && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Contactpersoon</h3>
+                <p className="text-gray-700 dark:text-gray-300">{invoice.person.contact_name}</p>
+              </div>
+            )}
             {customerAttention && (
               <div>
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Ter attentie van</h3>
