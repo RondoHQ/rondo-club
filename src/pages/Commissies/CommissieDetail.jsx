@@ -1,6 +1,6 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2, Info, Pencil, Check, X, Clock, CalendarDays, ListOrdered } from 'lucide-react';
+import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2, Info, Pencil, Check, X, Clock, CalendarDays, ListOrdered, Mail } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -335,6 +335,14 @@ export default function CommissieDetail() {
   }
   
   const acf = commissie.acf || {};
+  const memberEmails = [...new Set(
+    (employees?.current || [])
+      .map((person) => person.email?.trim().toLowerCase())
+      .filter(Boolean)
+  )];
+  const memberMailto = memberEmails.length > 0
+    ? `mailto:${memberEmails.join(',')}?subject=${encodeURIComponent(getCommissieName(commissie))}`
+    : null;
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -429,10 +437,22 @@ export default function CommissieDetail() {
       
       {/* Members */}
       <div className="card p-6">
-        <h2 className="font-semibold text-brand-gradient mb-4 flex items-center">
-          <Users className="w-5 h-5 mr-2" />
-          Leden
-        </h2>
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <h2 className="font-semibold text-brand-gradient flex items-center">
+            <Users className="w-5 h-5 mr-2" />
+            Leden
+          </h2>
+          {memberMailto && (
+            <a
+              href={memberMailto}
+              className="btn-tertiary shrink-0"
+              title={`E-mail opstellen aan ${memberEmails.length} commissieleden`}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              E-mail leden
+            </a>
+          )}
+        </div>
 
         {employees?.current?.length > 0 ? (
           <div className="space-y-2">
