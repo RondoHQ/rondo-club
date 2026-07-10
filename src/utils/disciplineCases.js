@@ -16,3 +16,18 @@ export function isDoorbelastNVT(acf) {
 export function isDoorbelastException(acf) {
   return acf?.is_charged === 'exception';
 }
+
+/**
+ * Return the user-facing charging status for a discipline case.
+ * Shared by the table and exports so both representations stay aligned.
+ * @param {Object} acf - ACF fields of a discipline case
+ * @returns {string}
+ */
+export function getDoorbelastLabel(acf = {}) {
+  if (isDoorbelastException(acf)) return 'Uitzondering';
+  if (isDoorbelastNVT(acf)) return 'n.v.t.';
+  if (acf.is_charged === 'sportlink') return 'Ja, Sportlink';
+  if (acf.is_charged === 'rondo') return 'Ja, Rondo';
+  if (acf.is_charged) return 'Ja';
+  return 'Nee';
+}

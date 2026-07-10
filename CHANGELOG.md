@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.44.0] - 2026-07-10
+
+### Added
+- De overzichten **Tuchtzaken** en **Facturen** kunnen de huidige gefilterde selectie exporteren als een Excel-compatibel CSV-bestand. De export bevat ook relevante detailvelden die niet altijd als zichtbare kolom in het overzicht staan. (feedback #6857)
+
 ## [33.43.3] - 2026-07-10
 
 ### Added

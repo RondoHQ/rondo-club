@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { Gavel } from 'lucide-react';
+import { Download, Gavel } from 'lucide-react';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,7 +11,9 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAllInvoicedCaseIds, useBulkCreateInvoices } from '@/hooks/useInvoices';
 import { wpApi } from '@/api/client';
 import DisciplineCaseTable from '@/components/DisciplineCaseTable';
-import { isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
+import { getDoorbelastLabel, isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
+import { buildCsv, downloadCsv } from '@/utils/csvExport';
+import { format, parseYmd } from '@/utils/dateFormat';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTableToolbar, ColumnSettingsPanel, useColumnVisibility, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -340,6 +342,42 @@ export default function DisciplineCasesList() {
     setSelectedSeasonId(value === '' ? null : parseInt(value, 10));
   };
 
+  const handleExportCsv = () => {
+    const headers = [
+      'Dossier',
+      'Persoon',
+      'Wedstrijd',
+      'Wedstrijddatum',
+      'Team',
+      'Kaart',
+      'Code',
+      'Tenlastelegging',
+      'Sanctie',
+      'Doorbelast',
+      'Boete',
+    ];
+    const rows = filteredCases.map((disciplineCase) => {
+      const acf = disciplineCase.acf || {};
+      const chargeCodes = (acf.charge_codes || '').trim();
+      const person = personMap.get(acf.person);
+      return [
+        acf.dossier_id || '',
+        person?.name || '',
+        acf.match_description || '',
+        acf.match_date ? format(parseYmd(acf.match_date), 'dd-MM-yyyy') : '',
+        formatTeamName(acf),
+        chargeCodes ? (chargeCodes.endsWith('-1') ? 'Geel' : 'Rood') : '',
+        chargeCodes,
+        acf.charge_description || '',
+        acf.sanction_description || '',
+        getDoorbelastLabel(acf),
+        parseFloat(acf.administrative_fee) || 0,
+      ];
+    });
+    const csv = buildCsv([headers, ...rows]);
+    downloadCsv(csv, `tuchtzaken-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+  };
+
   const isLoading =
     isCurrentSeasonLoading || (hasInitialized && isCasesLoading);
 
@@ -356,18 +394,29 @@ export default function DisciplineCasesList() {
           activeFilterCount={activeFilterCount}
           onOpenColumnSettings={() => setIsColumnSettingsOpen(true)}
           toolbarEnd={(
-            <select
-              value={selectedSeasonId ?? ''}
-              onChange={handleSeasonChange}
-              className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
-            >
-              <option value="">Alle seizoenen</option>
-              {seasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  {season.name}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedSeasonId ?? ''}
+                onChange={handleSeasonChange}
+                className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded-lg px-3 py-2 focus:ring-electric-cyan focus:border-electric-cyan"
+              >
+                <option value="">Alle seizoenen</option>
+                {seasons.map((season) => (
+                  <option key={season.id} value={season.id}>
+                    {season.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleExportCsv}
+                className="btn-tertiary"
+                title="Gefilterde tuchtzaken downloaden als CSV voor Excel"
+                aria-label="Gefilterde tuchtzaken exporteren"
+                disabled={filteredCases.length === 0}
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
           )}
         />
 
