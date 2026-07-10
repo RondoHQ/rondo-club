@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.38.0] - 2026-07-10
+## [33.39.0] - 2026-07-10
+
+### Fixed
+- **Herinneringen voor niet-contributiefacturen spraken ten onrechte over contributie.** Bij een betalingsherinnering voor een handmatige factuur of een tuchtzaakfactuur werd de contributie-herinneringstekst gebruikt — inclusief verwijzingen naar "je contributie", "je betaalwijze kiezen" en "eventueel in termijnen", die op dat soort facturen niet van toepassing zijn. De verzender koos één vaste herinneringstekst voor álle factuursoorten. (feedback #6687)
+
+### Added
+- **Aparte herinneringstemplates voor overige facturen.** Onder Instellingen → Financieel → Factuurherinneringen staat nu een tweede blok "Herinneringen voor overige facturen". Contributiefacturen blijven de bestaande contributie-herinneringen gebruiken; handmatige facturen en tuchtzaakfacturen krijgen een neutrale herinnering zonder contributie- of termijncontext. De juiste template wordt automatisch gekozen op basis van het factuurtype. Beide herinneringen (eerste en tweede) hebben een eigen titel en zijn met een testmail te controleren.
 
 ### Added
 - **Conceptfacturen in bulk verwijderen.** Op de Facturen-overzichtspagina kun je nu meerdere conceptfacturen aanvinken en in één keer verwijderen, naast de bestaande "verstuur alle"-actie. Er verschijnt een "Verwijder alle"-knop in de selectiebalk met een bevestiging vooraf; alleen conceptfacturen zijn selecteerbaar, dus verstuurde of betaalde facturen kunnen niet per ongeluk verwijderd worden.

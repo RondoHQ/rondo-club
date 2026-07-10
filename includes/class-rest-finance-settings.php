@@ -91,6 +91,14 @@ class FinanceSettings extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
 						],
+						'generic_invoice_reminder_1_email_template' => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
+						'generic_invoice_reminder_2_email_template' => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
 						'credit_email_template'            => [
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
@@ -132,6 +140,14 @@ class FinanceSettings extends Base {
 							'sanitize_callback' => 'sanitize_text_field',
 						],
 						'invoice_reminder_2_email_heading' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'generic_invoice_reminder_1_email_heading' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'generic_invoice_reminder_2_email_heading' => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
