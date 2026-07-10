@@ -2,628 +2,258 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\AccessControl;
+use Rondo\Core\UserRoles;
 use Tests\Support\RondoTestCase;
-use RONDO_Access_Control;
-use RONDO_User_Roles;
 use WP_REST_Request;
 use WP_REST_Server;
 
 /**
- * Tests for WordPress REST API CRUD operations on CPTs.
+ * Current REST CRUD contract for Rondo CPTs.
  *
- * Verifies that standard REST API endpoints work correctly for person and team
- * post types with proper access control and ACF field handling.
+ * Administrators and specialist roles may mutate their domains. Plain members
+ * can read only the household/club-structure surfaces and must never inherit
+ * generic WordPress post CRUD permissions.
  */
 class CptCrudTest extends RondoTestCase {
 
-	/**
-	 * REST server instance.
-	 *
-	 * @var WP_REST_Server
-	 */
 	private WP_REST_Server $server;
 
-	/**
-	 * Set up test environment before each test.
-	 */
 	protected function set_up(): void {
 		parent::set_up();
 
-		// Initialize REST server
 		global $wp_rest_server;
 		$this->server   = rest_get_server();
 		$wp_rest_server = $this->server;
+
+		AccessControl::flush_visible_person_ids_cache();
+		delete_option( 'rondo_age_group_access' );
 	}
 
-	/**
-	 * Helper to create an approved Rondo user with a unique login.
-	 *
-	 * @param string $prefix User login prefix for uniqueness
-	 * @return int User ID
-	 */
-	private function createApprovedRondoUser( string $prefix = 'user' ): int {
-		$unique_id = uniqid( $prefix . '_' );
-		$user_id   = $this->createRondoUser( [ 'user_login' => $unique_id ] );
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
+	private function user( string $role = UserRoles::ROLE_NAME ): int {
+		$user_id = self::factory()->user->create(
+			[
+				'role'       => $role,
+				'user_login' => uniqid( $role . '_', true ),
+			]
+		);
+		UserRoles::sync_role_capabilities( $role );
 		return $user_id;
 	}
 
-	/**
-	 * Make an internal REST request.
-	 *
-	 * @param string $method HTTP method
-	 * @param string $route REST route
-	 * @param array  $params Request parameters
-	 * @return \WP_REST_Response
-	 */
-	private function restRequest( string $method, string $route, array $params = [] ): \WP_REST_Response {
+	private function request( string $method, string $route, array $params = [] ) {
 		$request = new WP_REST_Request( $method, $route );
-
 		foreach ( $params as $key => $value ) {
 			$request->set_param( $key, $value );
 		}
-
 		return $this->server->dispatch( $request );
 	}
 
-	// =========================================================================
-	// Task 1: Test REST API CRUD for person CPT
-	// =========================================================================
+	private function assertDenied( $response, string $message = '' ): void {
+		$this->assertContains( $response->get_status(), [ 401, 403, 404 ], $message ?: 'Request should be denied.' );
+	}
 
-	/**
-	 * Test CREATE person via POST to /wp/v2/people.
-	 */
-	public function test_person_create_via_rest_api(): void {
-		$user_id = $this->createApprovedRondoUser( 'creator' );
-		wp_set_current_user( $user_id );
+	public function test_administrator_can_crud_person_with_acf(): void {
+		$admin_id = $this->user( 'administrator' );
+		wp_set_current_user( $admin_id );
 
-		$response = $this->restRequest(
+		$create = $this->request(
 			'POST',
 			'/wp/v2/people',
 			[
-				'title'  => 'John Doe',
+				'title'  => 'CRUD Person',
 				'status' => 'publish',
+				'acf'    => [
+					'first_name' => 'CRUD',
+					'last_name'  => 'Person',
+				],
 			]
 		);
+		$this->assertSame( 201, $create->get_status() );
+		$person_id = (int) $create->get_data()['id'];
 
-		$this->assertEquals( 201, $response->get_status(), 'Should return 201 Created' );
+		$read = $this->request( 'GET', '/wp/v2/people/' . $person_id );
+		$this->assertSame( 200, $read->get_status() );
+		$this->assertSame( 'CRUD', $read->get_data()['acf']['first_name'] );
 
-		$data = $response->get_data();
-		$this->assertArrayHasKey( 'id', $data, 'Response should include ID' );
-		$this->assertEquals( 'John Doe', $data['title']['raw'], 'Title should match' );
-
-		// Verify post author is current user
-		$post = get_post( $data['id'] );
-		$this->assertEquals( $user_id, (int) $post->post_author, 'Post author should be current user' );
-	}
-
-	/**
-	 * Test READ person via GET as owner.
-	 */
-	public function test_person_read_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedRondoUser( 'owner' );
-		wp_set_current_user( $user_id );
-
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'Jane Doe',
-				'post_author' => $user_id,
-			]
-		);
-
-		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
-
-		$this->assertEquals( 200, $response->get_status(), 'Owner should get 200 OK' );
-
-		$data = $response->get_data();
-		$this->assertEquals( $person_id, $data['id'], 'Returned ID should match' );
-		$this->assertEquals( 'Jane Doe', $data['title']['rendered'], 'Title should match' );
-	}
-
-	/**
-	 * Test READ person denied for non-owner.
-	 */
-	public function test_person_read_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-		$other_id = $this->createApprovedRondoUser( 'other' );
-
-		// Create person as owner
-		wp_set_current_user( $owner_id );
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'Owner Person',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Try to read as other user
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
-
-		// Should be denied - either 403 or empty/filtered
-		$status = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
-			'Non-owner should be denied access (got status ' . $status . ')'
-		);
-	}
-
-	/**
-	 * Test person list only returns user's own posts.
-	 */
-	public function test_person_list_returns_only_user_posts(): void {
-		$alice_id = $this->createApprovedRondoUser( 'alice' );
-		$bob_id   = $this->createApprovedRondoUser( 'bob' );
-
-		// Create persons for Alice
-		wp_set_current_user( $alice_id );
-		$alice_person_1 = $this->createPerson(
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Alice Person 1',
-			]
-		);
-		$alice_person_2 = $this->createPerson(
-			[
-				'post_author' => $alice_id,
-				'post_title'  => 'Alice Person 2',
-			]
-		);
-
-		// Create person for Bob
-		wp_set_current_user( $bob_id );
-		$bob_person = $this->createPerson(
-			[
-				'post_author' => $bob_id,
-				'post_title'  => 'Bob Person',
-			]
-		);
-
-		// Query as Alice - should only see her own
-		wp_set_current_user( $alice_id );
-		$response = $this->restRequest( 'GET', '/wp/v2/people', [ 'per_page' => 100 ] );
-
-		$this->assertEquals( 200, $response->get_status() );
-
-		$data = $response->get_data();
-		$ids  = array_column( $data, 'id' );
-
-		$this->assertContains( $alice_person_1, $ids, 'Alice should see her first person' );
-		$this->assertContains( $alice_person_2, $ids, 'Alice should see her second person' );
-		$this->assertNotContains( $bob_person, $ids, 'Alice should NOT see Bob\'s person' );
-	}
-
-	/**
-	 * Test UPDATE person via PATCH as owner.
-	 */
-	public function test_person_update_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedRondoUser( 'updater' );
-		wp_set_current_user( $user_id );
-
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'Original Name',
-				'post_author' => $user_id,
-			]
-		);
-
-		$response = $this->restRequest(
+		$update = $this->request(
 			'PATCH',
 			'/wp/v2/people/' . $person_id,
-			[
-				'title' => 'Updated Name',
-			]
+			[ 'acf' => [ 'first_name' => 'Updated' ] ]
 		);
+		$this->assertSame( 200, $update->get_status() );
+		$this->assertSame( 'Updated', get_field( 'first_name', $person_id ) );
 
-		$this->assertEquals( 200, $response->get_status(), 'Owner should be able to update' );
-
-		$data = $response->get_data();
-		$this->assertEquals( 'Updated Name', $data['title']['raw'], 'Title should be updated' );
-
-		// Verify in database
-		$post = get_post( $person_id );
-		$this->assertEquals( 'Updated Name', $post->post_title );
+		$delete = $this->request( 'DELETE', '/wp/v2/people/' . $person_id, [ 'force' => true ] );
+		$this->assertSame( 200, $delete->get_status() );
+		$this->assertNull( get_post( $person_id ) );
 	}
 
-	/**
-	 * Test UPDATE person denied for non-owner.
-	 */
-	public function test_person_update_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-		$other_id = $this->createApprovedRondoUser( 'other' );
-
-		// Create person as owner
-		wp_set_current_user( $owner_id );
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'Owner Person',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Try to update as other user
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/people/' . $person_id,
-			[
-				'title' => 'Hacked Name',
-			]
-		);
-
-		// Should be denied
-		$status = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401 ], true ),
-			'Non-owner should NOT be able to update (got status ' . $status . ')'
-		);
-
-		// Verify original title unchanged
-		$post = get_post( $person_id );
-		$this->assertEquals( 'Owner Person', $post->post_title, 'Title should be unchanged' );
-	}
-
-	/**
-	 * Test DELETE person via REST as owner.
-	 *
-	 * Note: Due to access control filter on rest_prepare_person, DELETE returns 404
-	 * because the post is trashed before the response is prepared, and the filter
-	 * treats trashed posts as deleted. However, the delete operation does succeed
-	 * and the post is moved to trash.
-	 */
-	public function test_person_delete_as_owner_via_rest_api(): void {
-		$user_id = $this->createApprovedRondoUser( 'deleter' );
+	public function test_plain_member_reads_only_linked_household(): void {
+		$me       = $this->createPerson( [ 'post_title' => 'Me' ] );
+		$stranger = $this->createPerson( [ 'post_title' => 'Stranger' ] );
+		$user_id  = $this->user();
+		update_user_meta( $user_id, 'rondo_linked_person_id', $me );
+		AccessControl::flush_visible_person_ids_cache();
 		wp_set_current_user( $user_id );
 
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'To Be Deleted',
-				'post_author' => $user_id,
-			]
-		);
+		$this->assertSame( 200, $this->request( 'GET', '/wp/v2/people/' . $me )->get_status() );
+		$this->assertDenied( $this->request( 'GET', '/wp/v2/people/' . $stranger ) );
 
-		// Verify post exists and is owned by user before delete
-		$pre_post = get_post( $person_id );
-		$this->assertNotNull( $pre_post, 'Post should exist before delete' );
-		$this->assertEquals( $user_id, (int) $pre_post->post_author, 'Post should be owned by user' );
-		$this->assertEquals( 'publish', $pre_post->post_status, 'Post should be published' );
-
-		$response = $this->restRequest( 'DELETE', '/wp/v2/people/' . $person_id );
-		$status   = $response->get_status();
-
-		// The delete operation succeeds but returns 404 because the access control
-		// filter sees the trashed post and returns "This item has been deleted"
-		// This is expected behavior - the important thing is that the post is trashed
-		$this->assertTrue(
-			in_array( $status, [ 200, 404 ], true ),
-			'Owner delete should succeed or return 404 (got status ' . $status . ')'
-		);
-
-		// Verify post is trashed - this is the real test of delete working
-		$post = get_post( $person_id );
-		$this->assertEquals( 'trash', $post->post_status, 'Post should be trashed after delete' );
+		$list = $this->request( 'GET', '/wp/v2/people', [ 'per_page' => 100 ] );
+		$this->assertSame( 200, $list->get_status() );
+		$this->assertSame( [ $me ], array_map( 'intval', array_column( $list->get_data(), 'id' ) ) );
 	}
 
-	/**
-	 * Test DELETE person denied for non-owner.
-	 */
-	public function test_person_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-		$other_id = $this->createApprovedRondoUser( 'other' );
-
-		// Create person as owner
-		wp_set_current_user( $owner_id );
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'Owner Person',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Try to delete as other user
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'DELETE', '/wp/v2/people/' . $person_id );
-
-		// Should be denied - access control filters first, so non-owner gets 404 (not found)
-		$status = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401, 404 ], true ),
-			'Non-owner should NOT be able to delete (got status ' . $status . ')'
-		);
-
-		// Verify post still exists and is published
-		$post = get_post( $person_id );
-		$this->assertEquals( 'publish', $post->post_status, 'Post should still be published' );
-	}
-
-	// =========================================================================
-	// Task 2: Test CRUD for team CPT
-	// =========================================================================
-
-	/**
-	 * Test team CREATE via POST.
-	 */
-	public function test_team_create_via_rest_api(): void {
-		$user_id = $this->createApprovedRondoUser( 'creator' );
+	public function test_plain_member_cannot_create_update_or_delete_people(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Protected Person' ] );
+		$user_id   = $this->user();
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		AccessControl::flush_visible_person_ids_cache();
 		wp_set_current_user( $user_id );
 
-		$response = $this->restRequest(
+		$this->assertDenied(
+			$this->request(
+				'POST',
+				'/wp/v2/people',
+				[
+					'title'  => 'Forged',
+					'status' => 'publish',
+				]
+				)
+		);
+		$this->assertDenied(
+			$this->request( 'PATCH', '/wp/v2/people/' . $person_id, [ 'title' => 'Changed' ] )
+		);
+		$this->assertDenied( $this->request( 'DELETE', '/wp/v2/people/' . $person_id ) );
+		$this->assertSame( 'Protected Person', get_post( $person_id )->post_title );
+	}
+
+	public function test_plain_member_can_read_but_not_mutate_teams_and_commissies(): void {
+		$admin_id     = $this->user( 'administrator' );
+		$team_id      = self::factory()->post->create(
+			[
+				'post_type'   => 'team',
+				'post_status' => 'publish',
+				'post_author' => $admin_id,
+			]
+			);
+		$commissie_id = self::factory()->post->create(
+			[
+				'post_type'   => 'commissie',
+				'post_status' => 'publish',
+				'post_author' => $admin_id,
+			]
+			);
+		$user_id      = $this->user();
+		wp_set_current_user( $user_id );
+
+		$this->assertSame( 200, $this->request( 'GET', '/wp/v2/teams/' . $team_id )->get_status() );
+		$this->assertSame( 200, $this->request( 'GET', '/wp/v2/commissies/' . $commissie_id )->get_status() );
+		$this->assertDenied(
+			$this->request(
 			'POST',
 			'/wp/v2/teams',
 			[
-				'title'  => 'Acme Corp',
+				'title'  => 'Forged team',
+				'status' => 'publish',
+			]
+			)
+			);
+		$this->assertDenied( $this->request( 'PATCH', '/wp/v2/teams/' . $team_id, [ 'title' => 'Changed' ] ) );
+		$this->assertDenied( $this->request( 'DELETE', '/wp/v2/commissies/' . $commissie_id ) );
+	}
+
+	/** @dataProvider sensitiveCoreRoutes */
+	public function test_plain_member_cannot_read_or_create_sensitive_core_cpts( string $post_type, string $rest_base ): void {
+		$admin_id = $this->user( 'administrator' );
+		$post_id  = self::factory()->post->create(
+			[
+				'post_type'   => $post_type,
+				'post_status' => 'publish',
+				'post_author' => $admin_id,
+				'post_title'  => 'Sensitive record',
+			]
+		);
+
+		$user_id = $this->user();
+		wp_set_current_user( $user_id );
+
+		$this->assertFalse(
+			current_user_can( 'read_post', $post_id ),
+			'Core read meta-cap unexpectedly allowed for ' . $post_type . ': ' . wp_json_encode( get_post_type_object( $post_type )->cap )
+		);
+		$this->assertDenied( $this->request( 'GET', '/wp/v2/' . $rest_base . '/' . $post_id ) );
+		$this->assertDenied(
+			$this->request(
+				'POST',
+				'/wp/v2/' . $rest_base,
+				[
+					'title'  => 'Forged record',
+					'status' => 'publish',
+				]
+				)
+		);
+	}
+
+	public static function sensitiveCoreRoutes(): array {
+		return [
+			'invoices'         => [ 'rondo_invoice', 'invoices' ],
+			'discipline cases' => [ 'discipline_case', 'discipline-cases' ],
+			'clothing items'   => [ 'rondo_clothing_item', 'clothing-items' ],
+			'dienst types'     => [ 'dienst_type', 'dienst-types' ],
+			'shift templates'  => [ 'shift_template', 'shift-templates' ],
+			'dienst shifts'    => [ 'dienst_shift', 'dienst-shifts' ],
+			'taakuitleg items' => [ 'taakuitleg', 'taakuitleg' ],
+		];
+	}
+
+	public function test_finance_role_can_read_invoices_but_plain_member_cannot(): void {
+		$admin_id   = $this->user( 'administrator' );
+		$invoice_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_invoice',
+				'post_status' => 'publish',
+				'post_author' => $admin_id,
+			]
+		);
+
+		$finance_id = $this->user( 'rondo_financieel_lezen' );
+		wp_set_current_user( $finance_id );
+		$this->assertSame( 200, $this->request( 'GET', '/wp/v2/invoices/' . $invoice_id )->get_status() );
+
+		$member_id = $this->user();
+		wp_set_current_user( $member_id );
+		$this->assertDenied( $this->request( 'GET', '/wp/v2/invoices/' . $invoice_id ) );
+	}
+
+	public function test_volunteer_manager_can_crud_shift_configuration(): void {
+		$user_id = $this->user( 'rondo_vrijwilligers' );
+		wp_set_current_user( $user_id );
+
+		$create = $this->request(
+			'POST',
+			'/wp/v2/dienst-types',
+			[
+				'title'  => 'Kantinedienst',
 				'status' => 'publish',
 			]
 		);
+		$this->assertSame( 201, $create->get_status() );
+		$post_id = (int) $create->get_data()['id'];
 
-		$this->assertEquals( 201, $response->get_status(), 'Should return 201 Created' );
-
-		$data = $response->get_data();
-		$this->assertArrayHasKey( 'id', $data );
-		$this->assertEquals( 'Acme Corp', $data['title']['raw'] );
-
-		$post = get_post( $data['id'] );
-		$this->assertEquals( $user_id, (int) $post->post_author );
+		$this->assertSame( 200, $this->request( 'PATCH', '/wp/v2/dienst-types/' . $post_id, [ 'title' => 'Bardienst' ] )->get_status() );
+		$this->assertSame( 200, $this->request( 'DELETE', '/wp/v2/dienst-types/' . $post_id, [ 'force' => true ] )->get_status() );
 	}
 
-	/**
-	 * Test team READ as owner vs non-owner.
-	 */
-	public function test_team_read_access_control(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-		$other_id = $this->createApprovedRondoUser( 'other' );
-
-		wp_set_current_user( $owner_id );
-		$team_id = $this->createOrganization(
-			[
-				'post_title'  => 'Owner Team',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Owner can read
-		$response = $this->restRequest( 'GET', '/wp/v2/teams/' . $team_id );
-		$this->assertEquals( 200, $response->get_status(), 'Owner should read team' );
-
-		// Non-owner denied
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'GET', '/wp/v2/teams/' . $team_id );
-		$status   = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401 ], true ) || $response->get_data()['code'] === 'rest_forbidden',
-			'Non-owner should be denied (got status ' . $status . ')'
-		);
-	}
-
-	/**
-	 * Test team UPDATE access control.
-	 */
-	public function test_team_update_access_control(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-		$other_id = $this->createApprovedRondoUser( 'other' );
-
-		wp_set_current_user( $owner_id );
-		$team_id = $this->createOrganization(
-			[
-				'post_title'  => 'Original Corp',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Owner can update
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/teams/' . $team_id,
-			[
-				'title' => 'Updated Corp',
-			]
-		);
-		$this->assertEquals( 200, $response->get_status() );
-
-		// Non-owner denied
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/teams/' . $team_id,
-			[
-				'title' => 'Hacked Corp',
-			]
-		);
-		$this->assertTrue( in_array( $response->get_status(), [ 403, 401 ], true ) );
-	}
-
-	/**
-	 * Test team DELETE as owner.
-	 *
-	 * Note: Returns 404 due to access control filter (see person delete test comment).
-	 * The important assertion is that the post is actually trashed.
-	 */
-	public function test_team_delete_as_owner(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-
-		wp_set_current_user( $owner_id );
-		$team_id = $this->createOrganization(
-			[
-				'post_title'  => 'Delete Corp',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Verify exists before delete
-		$pre_post = get_post( $team_id );
-		$this->assertEquals( 'publish', $pre_post->post_status );
-
-		// Owner can delete
-		$response = $this->restRequest( 'DELETE', '/wp/v2/teams/' . $team_id );
-		$status   = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 200, 404 ], true ),
-			'Owner delete should succeed or return 404 (got status ' . $status . ')'
-		);
-
-		// Verify post is trashed
-		$post = get_post( $team_id );
-		$this->assertEquals( 'trash', $post->post_status, 'Post should be trashed' );
-	}
-
-	/**
-	 * Test team DELETE denied for non-owner.
-	 */
-	public function test_team_delete_denied_for_non_owner(): void {
-		$owner_id = $this->createApprovedRondoUser( 'owner' );
-		$other_id = $this->createApprovedRondoUser( 'other' );
-
-		wp_set_current_user( $owner_id );
-		$team_id = $this->createOrganization(
-			[
-				'post_title'  => 'Delete Corp',
-				'post_author' => $owner_id,
-			]
-		);
-
-		// Non-owner denied (gets 404 because access control filters the post)
-		wp_set_current_user( $other_id );
-		$response = $this->restRequest( 'DELETE', '/wp/v2/teams/' . $team_id );
-		$status   = $response->get_status();
-		$this->assertTrue(
-			in_array( $status, [ 403, 401, 404 ], true ),
-			'Non-owner should not be able to delete (got status ' . $status . ')'
-		);
-
-		// Verify still exists
-		$post = get_post( $team_id );
-		$this->assertEquals( 'publish', $post->post_status );
-	}
-
-	// =========================================================================
-	// Task 2 Continued: ACF Fields in REST Responses
-	// =========================================================================
-
-	/**
-	 * Test person ACF fields appear in REST response.
-	 */
-	public function test_person_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedRondoUser( 'acfuser' );
+	public function test_membership_administrator_can_edit_people(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Member record' ] );
+		$user_id   = $this->user( 'rondo_ledenadministratie' );
 		wp_set_current_user( $user_id );
 
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'John ACF Test',
-				'post_author' => $user_id,
-			],
-			[
-				'first_name' => 'John',
-				'last_name'  => 'Tester',
-				'nickname'   => 'JT',
-			]
-		);
+		$response = $this->request( 'PATCH', '/wp/v2/people/' . $person_id, [ 'title' => 'Updated member record' ] );
 
-		$response = $this->restRequest( 'GET', '/wp/v2/people/' . $person_id );
-
-		$this->assertEquals( 200, $response->get_status() );
-
-		$data = $response->get_data();
-
-		// ACF fields should be in 'acf' key
-		$this->assertArrayHasKey( 'acf', $data, 'Response should include acf key' );
-		$this->assertEquals( 'John', $data['acf']['first_name'], 'first_name should match' );
-		$this->assertEquals( 'Tester', $data['acf']['last_name'], 'last_name should match' );
-		$this->assertEquals( 'JT', $data['acf']['nickname'], 'nickname should match' );
-	}
-
-	/**
-	 * Test team ACF fields appear in REST response.
-	 */
-	public function test_team_acf_fields_in_rest_response(): void {
-		$user_id = $this->createApprovedRondoUser( 'acfuser' );
-		wp_set_current_user( $user_id );
-
-		$team_id = $this->createOrganization(
-			[
-				'post_title'  => 'ACF Corp',
-				'post_author' => $user_id,
-			],
-			[
-				'website' => 'https://example.com',
-			]
-		);
-
-		$response = $this->restRequest( 'GET', '/wp/v2/teams/' . $team_id );
-
-		$this->assertEquals( 200, $response->get_status() );
-
-		$data = $response->get_data();
-
-		$this->assertArrayHasKey( 'acf', $data, 'Response should include acf key' );
-		$this->assertEquals( 'https://example.com', $data['acf']['website'], 'website should match' );
-	}
-
-	/**
-	 * Test ACF field updates via REST PATCH.
-	 */
-	public function test_person_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedRondoUser( 'acfupdater' );
-		wp_set_current_user( $user_id );
-
-		$person_id = $this->createPerson(
-			[
-				'post_title'  => 'Update ACF Test',
-				'post_author' => $user_id,
-			],
-			[
-				'first_name' => 'Original',
-				'last_name'  => 'Name',
-			]
-		);
-
-		// Update ACF field via REST
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/people/' . $person_id,
-			[
-				'acf' => [
-					'first_name' => 'Updated',
-					'nickname'   => 'New Nick',
-				],
-			]
-		);
-
-		$this->assertEquals( 200, $response->get_status() );
-
-		// Verify fields updated in database
-		$this->assertEquals( 'Updated', get_field( 'first_name', $person_id ), 'first_name should be updated' );
-		$this->assertEquals( 'Name', get_field( 'last_name', $person_id ), 'last_name should be unchanged' );
-		$this->assertEquals( 'New Nick', get_field( 'nickname', $person_id ), 'nickname should be set' );
-	}
-
-	/**
-	 * Test team ACF field update via REST.
-	 */
-	public function test_team_acf_field_update_via_rest(): void {
-		$user_id = $this->createApprovedRondoUser( 'acfupdater' );
-		wp_set_current_user( $user_id );
-
-		$team_id = $this->createOrganization(
-			[
-				'post_title'  => 'Update Corp',
-				'post_author' => $user_id,
-			],
-			[
-				'website' => 'https://old.com',
-			]
-		);
-
-		$response = $this->restRequest(
-			'PATCH',
-			'/wp/v2/teams/' . $team_id,
-			[
-				'acf' => [
-					'website' => 'https://new.com',
-				],
-			]
-		);
-
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertEquals( 'https://new.com', get_field( 'website', $team_id ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Updated member record', get_post( $person_id )->post_title );
 	}
 }

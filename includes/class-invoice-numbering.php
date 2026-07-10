@@ -73,11 +73,12 @@ class InvoiceNumbering {
 		// Query all invoices with numbers starting with this year's prefix.
 		$query = new \WP_Query(
 			[
-				'post_type'      => 'rondo_invoice',
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => [
+				'post_type'        => 'rondo_invoice',
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+				'meta_query'       => [
 					[
 						'key'     => 'invoice_number',
 						'value'   => $prefix,

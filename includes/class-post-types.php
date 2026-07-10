@@ -11,6 +11,75 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class PostTypes {
 
+	/**
+	 * Capability slugs for each custom post type.
+	 *
+	 * Every CPT must use its own primitives. Reusing WordPress' generic `post`
+	 * capabilities lets any role with `edit_posts` create or mutate every
+	 * REST-exposed Rondo record, including invoices and discipline cases.
+	 */
+	public const CAPABILITY_DOMAINS = [
+		'person'              => [ 'person', 'people' ],
+		'team'                => [ 'team', 'teams' ],
+		'commissie'           => [ 'commissie', 'commissies' ],
+		'rondo_clothing_item' => [ 'clothing_item', 'clothing_items' ],
+		'rondo_clothing_txn'  => [ 'clothing_transaction', 'clothing_transactions' ],
+		'rondo_todo'          => [ 'todo', 'todos' ],
+		'calendar_event'      => [ 'calendar_event', 'calendar_events' ],
+		'rondo_feedback'      => [ 'feedback_item', 'feedback_items' ],
+		'discipline_case'     => [ 'discipline_case', 'discipline_cases' ],
+		'rondo_invoice'       => [ 'invoice', 'invoices' ],
+		'dienst_type'         => [ 'dienst_type', 'dienst_types' ],
+		'shift_template'      => [ 'shift_template', 'shift_templates' ],
+		'dienst_shift'        => [ 'dienst_shift', 'dienst_shifts' ],
+		'taakuitleg'          => [ 'taakuitleg', 'taakuitleg_items' ],
+	];
+
+	/**
+	 * Build the complete primitive/meta capability map for a Rondo CPT.
+	 *
+	 * @param string $post_type Registered post type.
+	 * @return array<string, string>
+	 */
+	public static function capability_map( string $post_type ): array {
+		if ( ! isset( self::CAPABILITY_DOMAINS[ $post_type ] ) ) {
+			return [];
+		}
+
+		[ $singular, $plural ] = self::CAPABILITY_DOMAINS[ $post_type ];
+
+		return [
+			'edit_post'              => 'edit_rondo_' . $singular,
+			'read_post'              => 'read_rondo_' . $singular,
+			'delete_post'            => 'delete_rondo_' . $singular,
+			'edit_posts'             => 'edit_rondo_' . $plural,
+			'edit_others_posts'      => 'edit_others_rondo_' . $plural,
+			'publish_posts'          => 'publish_rondo_' . $plural,
+			'read_private_posts'     => 'read_private_rondo_' . $plural,
+			'delete_posts'           => 'delete_rondo_' . $plural,
+			'delete_private_posts'   => 'delete_private_rondo_' . $plural,
+			'delete_published_posts' => 'delete_published_rondo_' . $plural,
+			'delete_others_posts'    => 'delete_others_rondo_' . $plural,
+			'edit_private_posts'     => 'edit_private_rondo_' . $plural,
+			'edit_published_posts'   => 'edit_published_rondo_' . $plural,
+			'create_posts'           => 'create_rondo_' . $plural,
+			'read'                   => 'read_rondo_' . $plural,
+		];
+	}
+
+	/**
+	 * Registration arguments shared by every Rondo CPT.
+	 *
+	 * @param string $post_type Registered post type.
+	 * @return array<string, mixed>
+	 */
+	private static function capability_args( string $post_type ): array {
+		return [
+			'capabilities' => self::capability_map( $post_type ),
+			'map_meta_cap' => true,
+		];
+	}
+
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_post_types' ] );
 	}
@@ -56,23 +125,25 @@ class PostTypes {
 			'all_items'          => __( 'All People', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'people',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 5,
-			'menu_icon'          => 'dashicons-groups',
-			'supports'           => [ 'title', 'thumbnail', 'comments', 'author', 'custom-fields' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'people',
+				'query_var'          => false,
+				'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 5,
+				'menu_icon'          => 'dashicons-groups',
+				'supports'           => [ 'title', 'thumbnail', 'comments', 'author', 'custom-fields' ],
+			],
+			self::capability_args( 'person' )
+			);
 
 		register_post_type( 'person', $args );
 
@@ -161,23 +232,25 @@ class PostTypes {
 			'all_items'          => __( 'All Teams', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'teams',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => true, // Enable parent-child relationships
-			'menu_position'      => 6,
-			'menu_icon'          => 'dashicons-groups',
-			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'teams',
+				'query_var'          => false,
+				'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => true, // Enable parent-child relationships
+				'menu_position'      => 6,
+				'menu_icon'          => 'dashicons-groups',
+				'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
+			],
+			self::capability_args( 'team' )
+			);
 
 		register_post_type( 'team', $args );
 
@@ -226,23 +299,25 @@ class PostTypes {
 			'all_items'          => __( 'All Commissies', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'commissies',
-			'query_var'          => false,
-			'rewrite'            => false, // Disable rewrite rules - React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => true, // Enable parent-child relationships
-			'menu_position'      => 7,
-			'menu_icon'          => 'dashicons-businessperson',
-			'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'commissies',
+				'query_var'          => false,
+				'rewrite'            => false, // Disable rewrite rules - React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => true, // Enable parent-child relationships
+				'menu_position'      => 7,
+				'menu_icon'          => 'dashicons-businessperson',
+				'supports'           => [ 'title', 'editor', 'thumbnail', 'author', 'page-attributes' ],
+			],
+			self::capability_args( 'commissie' )
+			);
 
 		register_post_type( 'commissie', $args );
 	}
@@ -266,23 +341,25 @@ class PostTypes {
 			'all_items'          => __( 'All Clothing Items', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'clothing-items',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 8,
-			'menu_icon'          => 'dashicons-tickets-alt',
-			'supports'           => [ 'title', 'thumbnail', 'author', 'custom-fields' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'clothing-items',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 8,
+				'menu_icon'          => 'dashicons-tickets-alt',
+				'supports'           => [ 'title', 'thumbnail', 'author', 'custom-fields' ],
+			],
+			self::capability_args( 'rondo_clothing_item' )
+			);
 
 		register_post_type( 'rondo_clothing_item', $args );
 	}
@@ -306,23 +383,25 @@ class PostTypes {
 			'all_items'          => __( 'All Clothing Assignments', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'clothing-assignments',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 9,
-			'menu_icon'          => 'dashicons-clipboard',
-			'supports'           => [ 'title', 'author', 'custom-fields' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'clothing-assignments',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 9,
+				'menu_icon'          => 'dashicons-clipboard',
+				'supports'           => [ 'title', 'author', 'custom-fields' ],
+			],
+			self::capability_args( 'rondo_clothing_txn' )
+			);
 
 		register_post_type( 'rondo_clothing_txn', $args );
 	}
@@ -397,23 +476,25 @@ class PostTypes {
 			'all_items'          => __( 'All Todos', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'todos',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 8,
-			'menu_icon'          => 'dashicons-yes-alt',
-			'supports'           => [ 'title', 'editor', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'todos',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 8,
+				'menu_icon'          => 'dashicons-yes-alt',
+				'supports'           => [ 'title', 'editor', 'author' ],
+			],
+			self::capability_args( 'rondo_todo' )
+			);
 
 		register_post_type( 'rondo_todo', $args );
 	}
@@ -441,21 +522,22 @@ class PostTypes {
 			'all_items'          => __( 'All Events', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => false, // No admin UI needed
-			'show_in_menu'       => false,
-			'show_in_rest'       => false, // Custom endpoints only
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'map_meta_cap'       => true,
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => false, // No admin UI needed
+				'show_in_menu'       => false,
+				'show_in_rest'       => false, // Custom endpoints only
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'calendar_event' )
+			);
 
 		register_post_type( 'calendar_event', $args );
 	}
@@ -482,23 +564,25 @@ class PostTypes {
 			'all_items'          => __( 'All Feedback', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'feedback',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 26,
-			'menu_icon'          => 'dashicons-megaphone',
-			'supports'           => [ 'title', 'editor', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'feedback',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 26,
+				'menu_icon'          => 'dashicons-megaphone',
+				'supports'           => [ 'title', 'editor', 'author' ],
+			],
+			self::capability_args( 'rondo_feedback' )
+			);
 
 		register_post_type( 'rondo_feedback', $args );
 	}
@@ -525,23 +609,25 @@ class PostTypes {
 			'all_items'          => __( 'All Tuchtzaken', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'discipline-cases',
-			'query_var'          => false,
-			'rewrite'            => false, // React Router handles routing
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 9,
-			'menu_icon'          => 'dashicons-warning',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'discipline-cases',
+				'query_var'          => false,
+				'rewrite'            => false, // React Router handles routing
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 9,
+				'menu_icon'          => 'dashicons-warning',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'discipline_case' )
+			);
 
 		register_post_type( 'discipline_case', $args );
 	}
@@ -628,23 +714,25 @@ class PostTypes {
 			'all_items'          => __( 'All Facturen', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'invoices',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 10,
-			'menu_icon'          => 'dashicons-media-text',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'invoices',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 10,
+				'menu_icon'          => 'dashicons-media-text',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'rondo_invoice' )
+			);
 
 		register_post_type( 'rondo_invoice', $args );
 	}
@@ -672,23 +760,25 @@ class PostTypes {
 			'all_items'          => __( 'All Dienst Types', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'dienst-types',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 11,
-			'menu_icon'          => 'dashicons-clipboard',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'dienst-types',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 11,
+				'menu_icon'          => 'dashicons-clipboard',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'dienst_type' )
+			);
 
 		register_post_type( 'dienst_type', $args );
 
@@ -783,23 +873,25 @@ class PostTypes {
 			'all_items'          => __( 'All Shift Templates', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'shift-templates',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 12,
-			'menu_icon'          => 'dashicons-calendar-alt',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'shift-templates',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 12,
+				'menu_icon'          => 'dashicons-calendar-alt',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'shift_template' )
+			);
 
 		register_post_type( 'shift_template', $args );
 
@@ -879,23 +971,25 @@ class PostTypes {
 			'all_items'          => __( 'All Diensten', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'dienst-shifts',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 13,
-			'menu_icon'          => 'dashicons-clock',
-			'supports'           => [ 'title', 'author' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'dienst-shifts',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 13,
+				'menu_icon'          => 'dashicons-clock',
+				'supports'           => [ 'title', 'author' ],
+			],
+			self::capability_args( 'dienst_shift' )
+			);
 
 		register_post_type( 'dienst_shift', $args );
 
@@ -999,26 +1093,28 @@ class PostTypes {
 			'all_items'          => __( 'All Taakuitleg', 'rondo' ),
 		];
 
-		$args = [
-			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_ui'            => true,
-			'show_in_menu'       => true,
-			'show_in_rest'       => true,
-			'rest_base'          => 'taakuitleg',
-			'query_var'          => false,
-			'rewrite'            => false,
-			'capability_type'    => 'post',
-			'has_archive'        => false,
-			'hierarchical'       => false,
-			'menu_position'      => 14,
-			'menu_icon'          => 'dashicons-media-document',
-			// `editor` stores the rich-text body (with inline images) in
-			// post_content, exposed as the `content` field over REST; `revisions`
-			// gives us a free edit history and the modified date.
-			'supports'           => [ 'title', 'editor', 'author', 'revisions' ],
-		];
+		$args = array_merge(
+			[
+				'labels'             => $labels,
+				'public'             => false,
+				'publicly_queryable' => false,
+				'show_ui'            => true,
+				'show_in_menu'       => true,
+				'show_in_rest'       => true,
+				'rest_base'          => 'taakuitleg',
+				'query_var'          => false,
+				'rewrite'            => false,
+				'has_archive'        => false,
+				'hierarchical'       => false,
+				'menu_position'      => 14,
+				'menu_icon'          => 'dashicons-media-document',
+				// `editor` stores the rich-text body (with inline images) in
+				// post_content, exposed as the `content` field over REST; `revisions`
+				// gives us a free edit history and the modified date.
+				'supports'           => [ 'title', 'editor', 'author', 'revisions' ],
+			],
+			self::capability_args( 'taakuitleg' )
+			);
 
 		register_post_type( 'taakuitleg', $args );
 	}

@@ -93,9 +93,19 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'src/main.jsx'),
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
-          utils: ['date-fns', 'clsx', 'axios', 'react-hook-form'],
+        manualChunks(id) {
+          const packageGroups = {
+            vendor: ['react', 'react-dom', 'react-router', 'react-router-dom', '@tanstack/react-query'],
+            utils: ['date-fns', 'clsx', 'axios', 'react-hook-form'],
+          };
+
+          for (const [chunk, packages] of Object.entries(packageGroups)) {
+            if (packages.some((packageName) => id.includes(`/node_modules/${packageName}/`))) {
+              return chunk;
+            }
+          }
+
+          return undefined;
         },
       },
     },

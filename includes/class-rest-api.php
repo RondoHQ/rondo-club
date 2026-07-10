@@ -385,16 +385,14 @@ class Api extends Base {
 		);
 
 		// Find person by email (for sync deduplication)
-		// Uses check_authenticated instead of check_user_approved for sync scripts
+		// Restricted to membership administration and the admin-authenticated sync user.
 		register_rest_route(
 			'rondo/v1',
 			'/people/find-by-email',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'find_person_by_email' ],
-				'permission_callback' => function () {
-					return is_user_logged_in();
-				},
+				'permission_callback' => [ $this, 'check_ledenadministratie_permission' ],
 				'args'                => [
 					'email' => [
 						'required'          => true,
@@ -1172,8 +1170,8 @@ class Api extends Base {
 		$reminders_handler  = new \RONDO_Reminders();
 		$upcoming_reminders = $reminders_handler->get_upcoming_reminders( 14 );
 
-		// Anniversaries: shared cache (not per-user, data is the same for everyone)
-		$anniversary_cache_key  = 'rondo_anniversaries_365';
+		// Anniversaries are visibility-scoped, so their cache must be per user.
+		$anniversary_cache_key  = 'rondo_anniversaries_365_' . get_current_user_id();
 		$upcoming_anniversaries = get_transient( $anniversary_cache_key );
 		if ( $upcoming_anniversaries === false ) {
 			$reminders_rest         = new Reminders();

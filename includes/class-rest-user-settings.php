@@ -926,16 +926,24 @@ class UserSettings extends Base {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update_linked_person( $request ) {
-		$user_id   = get_current_user_id();
-		$person_id = $request->get_param( 'person_id' );
+		$user_id           = get_current_user_id();
+		$person_id         = $request->get_param( 'person_id' );
+		$current_person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+
+		// Provisioned members cannot move or remove their identity link themselves.
+		// Administrators can repair links through the user-management workflow.
+		if ( $current_person_id > 0 && (int) $person_id !== $current_person_id && ! current_user_can( 'manage_options' ) ) {
+			return new \WP_Error(
+				'permission_denied',
+				__( 'Your linked person can only be changed by an administrator.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
 
 		// Handle unlinking
 		if ( ! $person_id || $person_id === 0 ) {
-			$old_person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
 			delete_user_meta( $user_id, 'rondo_linked_person_id' );
-			if ( $old_person_id ) {
-				delete_post_meta( $old_person_id, \Rondo\Users\UserProvisioning::META_USER_ID );
-			}
+			// Keep the forward provisioning marker as a duplicate-account guard.
 			return rest_ensure_response(
 				[
 					'success'   => true,
