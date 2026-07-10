@@ -131,6 +131,10 @@ class AutoTitle {
 		);
 
 		if ( empty( $full_name ) ) {
+			$full_name = trim( (string) get_field( 'company_name', $post_id ) );
+		}
+
+		if ( empty( $full_name ) ) {
 			$full_name = __( 'Unnamed Person', 'rondo' );
 		}
 

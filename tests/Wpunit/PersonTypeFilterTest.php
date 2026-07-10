@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Core\AutoTitle;
 use Rondo\REST\People;
 use Tests\Support\RondoTestCase;
 
@@ -71,5 +72,82 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->assertContains( $legacy_id, $ids );
 		$this->assertContains( $member_id, $ids );
 		$this->assertNotContains( $contact_id, $ids );
+	}
+
+	public function test_company_only_contact_uses_company_as_display_name(): void {
+		$contact_id = $this->createPerson(
+			[ 'post_title' => 'Tijdelijke titel' ],
+			[
+				'company_name' => 'Voorbeeld BV',
+				'person_type'  => 'contact',
+			]
+		);
+
+		$auto_title = new AutoTitle();
+		$auto_title->auto_generate_person_title_rest( get_post( $contact_id ), new \WP_REST_Request() );
+
+		$this->assertSame( 'Voorbeeld BV', get_the_title( $contact_id ) );
+
+		$request = new \WP_REST_Request( 'GET' );
+		$request->set_param( 'page', 1 );
+		$request->set_param( 'per_page', 100 );
+		$request->set_param( 'ownership', 'all' );
+		$request->set_param( 'orderby', 'first_name' );
+		$request->set_param( 'order', 'asc' );
+		$request->set_param( 'person_type', 'contact' );
+
+		$data    = $this->controller->get_filtered_people( $request )->get_data();
+		$contact = current( array_filter( $data['people'], static fn( $person ) => $person['id'] === $contact_id ) );
+
+		$this->assertSame( 'Voorbeeld BV', $contact['name'] );
+		$this->assertSame( 'Voorbeeld BV', $contact['acf']['company_name'] );
+	}
+
+	public function test_rest_identity_validation_accepts_company_without_first_name(): void {
+		$request = new \WP_REST_Request( 'POST' );
+		$request->set_param(
+			'acf',
+			[
+				'first_name'   => '',
+				'company_name' => 'Voorbeeld BV',
+				'person_type'  => 'contact',
+			]
+		);
+
+		$prepared = new \stdClass();
+		$this->assertSame( $prepared, $this->controller->validate_person_identity( $prepared, $request ) );
+	}
+
+	public function test_rest_identity_validation_rejects_nameless_person(): void {
+		$request = new \WP_REST_Request( 'POST' );
+		$request->set_param(
+			'acf',
+			[
+				'first_name'   => '',
+				'company_name' => '',
+			]
+		);
+
+		$result = $this->controller->validate_person_identity( new \stdClass(), $request );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_person_name_required', $result->get_error_code() );
+	}
+
+	public function test_rest_identity_validation_rejects_company_only_member(): void {
+		$request = new \WP_REST_Request( 'POST' );
+		$request->set_param(
+			'acf',
+			[
+				'first_name'   => '',
+				'company_name' => 'Voorbeeld BV',
+				'person_type'  => 'member',
+			]
+		);
+
+		$result = $this->controller->validate_person_identity( new \stdClass(), $request );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'rondo_company_only_contact_required', $result->get_error_code() );
 	}
 }

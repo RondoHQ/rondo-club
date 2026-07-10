@@ -43,6 +43,7 @@ class People extends Base {
 		// former-member records. The only allowed non-admin write is the
 		// former_member toggle itself — flip it off first, then edit.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'validate_person_identity' ], 20, 2 );
 
 		// Allow callers to filter person list endpoints by former_member via
 		// a ?former_member=0 (or =1) query param. Used by rondo-sync's
@@ -847,6 +848,50 @@ class People extends Base {
 	}
 
 	/**
+	 * Require either a personal first name or a company name.
+	 *
+	 * ACF's first_name field is optional so company-only contacts can be saved,
+	 * but a person record must never become entirely nameless.
+	 *
+	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request       Originating REST request.
+	 * @return stdClass|WP_Error
+	 */
+	public function validate_person_identity( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post ) ) {
+			return $prepared_post;
+		}
+
+		$acf = $request->get_param( 'acf' );
+		if ( ! is_array( $acf ) ) {
+			return $prepared_post;
+		}
+
+		$post_id      = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+		$first_name   = array_key_exists( 'first_name', $acf ) ? $acf['first_name'] : ( $post_id ? get_field( 'first_name', $post_id ) : '' );
+		$company_name = array_key_exists( 'company_name', $acf ) ? $acf['company_name'] : ( $post_id ? get_field( 'company_name', $post_id ) : '' );
+		$person_type  = array_key_exists( 'person_type', $acf ) ? $acf['person_type'] : ( $post_id ? get_field( 'person_type', $post_id ) : 'member' );
+
+		if ( trim( (string) $first_name ) === '' && trim( (string) $company_name ) === '' ) {
+			return new \WP_Error(
+				'rondo_person_name_required',
+				__( 'Vul een voornaam of bedrijfsnaam in.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( trim( (string) $first_name ) === '' && $person_type !== 'contact' ) {
+			return new \WP_Error(
+				'rondo_company_only_contact_required',
+				__( 'Alleen contacten mogen uitsluitend een bedrijfsnaam hebben.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+
+		return $prepared_post;
+	}
+
+	/**
 	 * Build the standard WP_Error returned when a non-admin tries to edit
 	 * a former member's data.
 	 *
@@ -1226,7 +1271,7 @@ class People extends Base {
 		$volunteers_only = user_can( $current_user_id, 'vog' ) && ! user_can( $current_user_id, 'fairplay' );
 
 		// Build query components
-		$select_fields  = 'p.ID, p.post_modified, p.post_author';
+		$select_fields  = 'p.ID, p.post_title, p.post_modified, p.post_author';
 		$join_clauses   = [];
 		$where_clauses  = [
 			"p.post_type = 'person'",
@@ -1568,10 +1613,10 @@ class People extends Base {
 		// ORDER and orderby are safe - validated against whitelist
 		switch ( $orderby ) {
 			case 'first_name':
-				$order_clause = "ORDER BY fn.meta_value $order, ln.meta_value $order";
+				$order_clause = "ORDER BY COALESCE(NULLIF(fn.meta_value, ''), p.post_title) $order, ln.meta_value $order";
 				break;
 			case 'last_name':
-				$order_clause = "ORDER BY ln.meta_value $order, fn.meta_value $order";
+				$order_clause = "ORDER BY COALESCE(NULLIF(ln.meta_value, ''), p.post_title) $order, fn.meta_value $order";
 				break;
 			case 'modified':
 				$order_clause = "ORDER BY p.post_modified $order";
@@ -1766,6 +1811,7 @@ class People extends Base {
 		foreach ( $results as $row ) {
 			$person = [
 				'id'            => (int) $row->ID,
+				'name'          => $this->sanitize_text( $row->post_title ?: '' ),
 				'first_name'    => $this->sanitize_text( $row->first_name ?: '' ),
 				'infix'         => $this->sanitize_text( $row->infix ?: '' ),
 				'last_name'     => $this->sanitize_text( $row->last_name ?: '' ),

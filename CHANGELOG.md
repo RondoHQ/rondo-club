@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.43.0] - 2026-07-10
+
+### Added
+- Contacten kunnen nu een bedrijfsnaam hebben en mogen ook uitsluitend uit een bedrijfsnaam bestaan. Als geen persoonsnaam is ingevuld, gebruikt Rondo de bedrijfsnaam als weergavenaam in lijsten, zoekvelden, facturen, factuurmails en PDF's.
+
+### Changed
+- De CSV-export van personen bevat een aparte kolom Bedrijfsnaam. Op de persoonspagina kan de bedrijfsnaam van een contact worden bijgewerkt.
+
 ## [33.42.1] - 2026-07-10
 
 ### Changed

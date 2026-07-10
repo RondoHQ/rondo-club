@@ -134,8 +134,8 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
         <Link to={`/people/${person.id}`} className="flex items-center justify-center">
           <PersonAvatar
             thumbnail={person.thumbnail}
-            name={person.first_name}
-            firstName={person.first_name}
+            name={person.name || person.company_name}
+            firstName={person.first_name || person.company_name}
             size="md"
           />
         </Link>
@@ -150,7 +150,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
       >
         <Link to={`/people/${person.id}`} className="flex items-center">
           <span className="text-sm font-medium text-gray-900 dark:text-gray-50">
-            {[person.first_name, person.infix, person.last_name].filter(Boolean).join(' ')}
+            {person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name}
             {person.is_deceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
           </span>
           {person.former_member && (
@@ -1241,12 +1241,13 @@ export default function PeopleList() {
         });
       }
 
-      const headers = ['Naam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
+      const headers = ['Naam', 'Bedrijfsnaam', 'Voornaam', 'Tussenvoegsel', 'Achternaam', 'Email', 'Telefoon', 'Team', 'Adres', 'Postcode', 'Plaats', 'Land'];
       const rows = allPeople.map(person => {
         const teamId = getCurrentTeamId(person);
         const address = getPrimaryAddress(person);
         return [
-          [person.first_name, person.infix, person.last_name].filter(Boolean).join(' '),
+          person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name || '',
+          person.acf?.company_name || person.company_name || '',
           person.first_name || '',
           person.infix || '',
           person.last_name || '',

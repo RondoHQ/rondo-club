@@ -47,12 +47,13 @@ export default function PersonEditModal({
     },
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, getValues, formState: { errors } } = useForm({
     defaultValues: {
       first_name: '',
       infix: '',
       last_name: '',
       nickname: '',
+      company_name: '',
       person_type: initialPersonType,
       gender: '',
       pronouns: '',
@@ -77,6 +78,7 @@ export default function PersonEditModal({
           infix: person.acf?.infix || '',
           last_name: person.acf?.last_name || '',
           nickname: person.acf?.nickname || '',
+          company_name: person.acf?.company_name || '',
           person_type: person.acf?.person_type || 'member',
           gender: person.acf?.gender || '',
           pronouns: person.acf?.pronouns || '',
@@ -92,6 +94,7 @@ export default function PersonEditModal({
           infix: prefillData.infix || '',
           last_name: prefillData.last_name || '',
           nickname: '',
+          company_name: prefillData.company_name || '',
           person_type: prefillData.person_type || initialPersonType,
           gender: '',
           pronouns: '',
@@ -107,6 +110,7 @@ export default function PersonEditModal({
           infix: '',
           last_name: '',
           nickname: '',
+          company_name: '',
           person_type: initialPersonType,
           gender: '',
           pronouns: '',
@@ -157,6 +161,7 @@ export default function PersonEditModal({
           infix: data.infix || '',
           last_name: data.last_name || '',
           nickname: data.nickname || '',
+          company_name: data.company_name || '',
           person_type: initialPersonType,
           gender: data.gender || '',
           pronouns: data.pronouns || '',
@@ -291,12 +296,27 @@ export default function PersonEditModal({
               </div>
             )}
             
+            <div>
+              <label className="label">Bedrijfsnaam</label>
+              <input
+                {...register('company_name')}
+                className="input"
+                placeholder="Voorbeeld BV"
+                disabled={isLoading}
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Vul een bedrijfsnaam, een persoonsnaam of beide in.
+              </p>
+            </div>
+
             {/* Name fields */}
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="label">Voornaam *</label>
+                <label className="label">Voornaam</label>
                 <input
-                  {...register('first_name', { required: 'Voornaam is verplicht' })}
+                  {...register('first_name', {
+                    validate: (value) => value?.trim() || getValues('company_name')?.trim() || 'Vul een voornaam of bedrijfsnaam in',
+                  })}
                   className="input"
                   placeholder="Jan"
                   disabled={isLoading}
