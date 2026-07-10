@@ -98,10 +98,13 @@ class UserProvisioning {
 	 * Creates a user, assigns roles, links person↔user bidirectionally,
 	 * stores KNVB ID, and sends a branded welcome email.
 	 *
-	 * @param int $person_id The person post ID.
+	 * @param int  $person_id     The person post ID.
+	 * @param bool $send_welcome  Send the welcome email. False for self-service activation,
+	 *                            where the member already clicked a link from their inbox
+	 *                            and is sent straight on to set a password.
 	 * @return array|\WP_Error Result array with status, user_id, message or WP_Error.
 	 */
-	public function provision( int $person_id ): array|\WP_Error {
+	public function provision( int $person_id, bool $send_welcome = true ): array|\WP_Error {
 		// Validate the person post.
 		$person = get_post( $person_id );
 		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
@@ -236,6 +239,15 @@ class UserProvisioning {
 			return $reset_key;
 		}
 
+		if ( ! $send_welcome ) {
+			return [
+				'status'    => 'created',
+				'user_id'   => $user_id,
+				'reset_key' => $reset_key,
+				'message'   => 'Account aangemaakt.',
+			];
+		}
+
 		// Send welcome email (non-blocking: user is created even if email fails).
 		$email_result = $this->send_welcome_email( $person_id, $user_id, $reset_key );
 		if ( is_wp_error( $email_result ) ) {
@@ -255,6 +267,24 @@ class UserProvisioning {
 			'user_id' => $user_id,
 			'message' => 'Account aangemaakt en welkomstmail verstuurd.',
 		];
+	}
+
+	/**
+	 * The wp-login.php URL where a user sets their first password.
+	 *
+	 * @param \WP_User $user      The user.
+	 * @param string   $reset_key Key from get_password_reset_key().
+	 * @return string
+	 */
+	public static function set_password_url( \WP_User $user, string $reset_key ): string {
+		return add_query_arg(
+			[
+				'action' => 'rp',
+				'key'    => $reset_key,
+				'login'  => rawurlencode( $user->user_login ),
+			],
+			network_site_url( 'wp-login.php', 'login' )
+		);
 	}
 
 	/**
