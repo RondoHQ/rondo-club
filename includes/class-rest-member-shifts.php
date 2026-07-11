@@ -233,8 +233,9 @@ class MemberShifts extends Base {
 				continue;
 			}
 
-			$summary['is_signed_up'] = in_array( $person_id, $summary['assigned_person_ids'], true );
-			$summary['can_signup']   = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+			$summary['is_signed_up']      = in_array( $person_id, $summary['assigned_person_ids'], true );
+			$summary['can_signup']        = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+			$summary['fellow_volunteers'] = $this->format_fellow_volunteers( $summary['assigned_person_ids'], $person_id );
 			unset( $summary['assigned_person_ids'] );
 
 			$out[] = $summary;
@@ -396,6 +397,37 @@ class MemberShifts extends Base {
 	}
 
 	/**
+	 * Return display names for the other volunteers on a shift.
+	 *
+	 * Person IDs stay internal: members only need names to know who they will
+	 * work with, not identifiers that can be used to enumerate person records.
+	 *
+	 * @param int[] $assigned_person_ids Assigned person post IDs.
+	 * @return string[]
+	 */
+	private function format_fellow_volunteers( array $assigned_person_ids, int $current_person_id ): array {
+		$names = [];
+		foreach ( $assigned_person_ids as $assigned_person_id ) {
+			$assigned_person_id = (int) $assigned_person_id;
+			if ( $assigned_person_id <= 0 || $assigned_person_id === $current_person_id ) {
+				continue;
+			}
+
+			$person = get_post( $assigned_person_id );
+			if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
+				continue;
+			}
+
+			$name = $this->sanitize_text( $person->post_title );
+			if ( $name !== '' ) {
+				$names[] = $name;
+			}
+		}
+
+		return array_values( array_unique( $names ) );
+	}
+
+	/**
 	 * Format a shift post for both `get_my_shifts` and `get_available_shifts`.
 	 */
 	private function format_shift_summary( \WP_Post $shift ): ?array {
@@ -459,6 +491,7 @@ class MemberShifts extends Base {
 			}
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary !== null ) {
+				$summary['fellow_volunteers'] = $this->format_fellow_volunteers( $summary['assigned_person_ids'], $person_id );
 				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
 				$out[]              = $summary;

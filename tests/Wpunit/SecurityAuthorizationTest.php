@@ -147,9 +147,10 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		$this->assertNotContains( $empty, $ids );
 	}
 
-	public function test_member_shift_response_does_not_expose_other_assignees(): void {
-		$user_id   = $this->createRondoUser( [ 'user_login' => 'security_shift_member' ] );
-		$person_id = $this->createPerson( [ 'post_title' => 'Shift Member' ] );
+	public function test_member_shift_response_exposes_names_but_not_ids_of_other_assignees(): void {
+		$user_id      = $this->createRondoUser( [ 'user_login' => 'security_shift_member' ] );
+		$person_id    = $this->createPerson( [ 'post_title' => 'Shift Member' ] );
+		$colleague_id = $this->createPerson( [ 'post_title' => 'Helpful Colleague' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 		wp_set_current_user( $user_id );
 
@@ -160,14 +161,23 @@ class SecurityAuthorizationTest extends RondoTestCase {
 				'post_title'  => 'Private assignees',
 			]
 		);
-		update_post_meta( $shift_id, 'start_datetime', '2026-08-01 10:00:00' );
-		update_post_meta( $shift_id, 'end_datetime', '2026-08-01 12:00:00' );
-		update_post_meta( $shift_id, 'assigned_persons', [ $person_id, 99999 ] );
+		update_post_meta( $shift_id, 'start_datetime', gmdate( 'Y-m-d 10:00:00', strtotime( '+1 day' ) ) );
+		update_post_meta( $shift_id, 'end_datetime', gmdate( 'Y-m-d 12:00:00', strtotime( '+1 day' ) ) );
+		update_post_meta( $shift_id, 'status', 'open' );
+		update_post_meta( $shift_id, 'assigned_persons', [ $person_id, $colleague_id, 99999 ] );
 
 		$response = ( new MemberShifts() )->get_my_shifts( new WP_REST_Request( 'GET', '/rondo/v1/my-shifts' ) );
 		$data     = $response->get_data();
 
 		$this->assertNotEmpty( $data['shifts'] );
 		$this->assertArrayNotHasKey( 'assigned_person_ids', $data['shifts'][0] );
+		$this->assertSame( [ 'Helpful Colleague' ], $data['shifts'][0]['fellow_volunteers'] );
+
+		$available_response = ( new MemberShifts() )->get_available_shifts( new WP_REST_Request( 'GET', '/rondo/v1/shifts/available' ) );
+		$available_data     = $available_response->get_data();
+
+		$this->assertNotEmpty( $available_data['shifts'] );
+		$this->assertArrayNotHasKey( 'assigned_person_ids', $available_data['shifts'][0] );
+		$this->assertSame( [ 'Helpful Colleague' ], $available_data['shifts'][0]['fellow_volunteers'] );
 	}
 }

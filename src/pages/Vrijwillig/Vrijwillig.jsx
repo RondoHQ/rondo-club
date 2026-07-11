@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Clock, Calendar, ShieldAlert } from 'lucide-react';
+import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Clock, Calendar, ShieldAlert, Users } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
@@ -152,6 +152,10 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
   const start = shift.start_datetime;
   const end = shift.end_datetime;
   const color = shift.dienst_type_color || '#6b7280';
+  const fellowVolunteers = shift.fellow_volunteers || [];
+  const volunteerLabel = fellowVolunteers.length > 0
+    ? `${isMine || shift.is_signed_up ? 'Samen met' : 'Aangemeld'}: ${fellowVolunteers.join(', ')}`
+    : (isMine || shift.is_signed_up ? 'Je bent tot nu toe de enige aanmelding.' : 'Nog niemand aangemeld.');
 
   return (
     <li className="card p-4 flex items-start gap-4">
@@ -168,6 +172,10 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 inline-flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5" />
           {start ? format(start, 'EEEE d MMMM, HH:mm') : '—'} – {end ? format(end, 'HH:mm') : ''}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-start gap-1">
+          <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+          <span>{volunteerLabel}</span>
         </p>
         {shift.capacity > 0 && (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
