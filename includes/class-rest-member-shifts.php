@@ -233,9 +233,11 @@ class MemberShifts extends Base {
 				continue;
 			}
 
+			$fellow_volunteers = $this->format_fellow_volunteer_contacts( $summary['assigned_person_ids'], $person_id );
+
 			$summary['is_signed_up']      = in_array( $person_id, $summary['assigned_person_ids'], true );
 			$summary['can_signup']        = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
-			$summary['fellow_volunteers'] = $this->format_fellow_volunteers( $summary['assigned_person_ids'], $person_id );
+			$summary['fellow_volunteers'] = array_column( $fellow_volunteers, 'name' );
 			unset( $summary['assigned_person_ids'] );
 
 			$out[] = $summary;
@@ -397,16 +399,16 @@ class MemberShifts extends Base {
 	}
 
 	/**
-	 * Return display names for the other volunteers on a shift.
+	 * Return contact details for the other volunteers on a shift.
 	 *
 	 * Person IDs stay internal: members only need names to know who they will
 	 * work with, not identifiers that can be used to enumerate person records.
 	 *
 	 * @param int[] $assigned_person_ids Assigned person post IDs.
-	 * @return string[]
+	 * @return array<int, array{name: string, whatsapp_url: string|null}>
 	 */
-	private function format_fellow_volunteers( array $assigned_person_ids, int $current_person_id ): array {
-		$names = [];
+	private function format_fellow_volunteer_contacts( array $assigned_person_ids, int $current_person_id ): array {
+		$contacts = [];
 		foreach ( $assigned_person_ids as $assigned_person_id ) {
 			$assigned_person_id = (int) $assigned_person_id;
 			if ( $assigned_person_id <= 0 || $assigned_person_id === $current_person_id ) {
@@ -420,11 +422,38 @@ class MemberShifts extends Base {
 
 			$name = $this->sanitize_text( $person->post_title );
 			if ( $name !== '' ) {
-				$names[] = $name;
+				$contacts[] = [
+					'name'         => $name,
+					'whatsapp_url' => $this->get_whatsapp_url( $assigned_person_id ),
+				];
 			}
 		}
 
-		return array_values( array_unique( $names ) );
+		return $contacts;
+	}
+
+	/**
+	 * Build a wa.me link from a person's primary mobile number.
+	 */
+	private function get_whatsapp_url( int $person_id ): ?string {
+		$mobile = (string) get_field( 'mobile_1', $person_id );
+		if ( $mobile === '' ) {
+			return null;
+		}
+
+		$mobile = preg_replace( '/[\x{200B}-\x{200D}\x{FEFF}\x{200E}\x{200F}\x{202A}-\x{202E}]/u', '', trim( $mobile ) );
+		$digits = preg_replace( '/\D/', '', $mobile );
+		if ( str_starts_with( $digits, '00' ) ) {
+			$digits = substr( $digits, 2 );
+		} elseif ( str_starts_with( $digits, '0' ) ) {
+			$digits = '31' . substr( $digits, 1 );
+		}
+
+		if ( ! preg_match( '/^\d{8,15}$/', $digits ) ) {
+			return null;
+		}
+
+		return esc_url_raw( 'https://wa.me/' . $digits );
 	}
 
 	/**
@@ -491,7 +520,10 @@ class MemberShifts extends Base {
 			}
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary !== null ) {
-				$summary['fellow_volunteers'] = $this->format_fellow_volunteers( $summary['assigned_person_ids'], $person_id );
+				$fellow_volunteers = $this->format_fellow_volunteer_contacts( $summary['assigned_person_ids'], $person_id );
+
+				$summary['fellow_volunteers']         = array_column( $fellow_volunteers, 'name' );
+				$summary['fellow_volunteer_contacts'] = $fellow_volunteers;
 				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
 				$out[]              = $summary;

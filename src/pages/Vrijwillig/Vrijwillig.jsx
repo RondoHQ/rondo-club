@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Clock, Calendar, ShieldAlert, Users } from 'lucide-react';
+import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
@@ -153,9 +154,10 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
   const end = shift.end_datetime;
   const color = shift.dienst_type_color || '#6b7280';
   const fellowVolunteers = shift.fellow_volunteers || [];
+  const fellowVolunteerContacts = shift.fellow_volunteer_contacts || [];
   const volunteerLabel = fellowVolunteers.length > 0
-    ? `${isMine || shift.is_signed_up ? 'Samen met' : 'Aangemeld'}: ${fellowVolunteers.join(', ')}`
-    : (isMine || shift.is_signed_up ? 'Je bent tot nu toe de enige aanmelding.' : 'Nog niemand aangemeld.');
+    ? `Aangemeld: ${fellowVolunteers.join(', ')}`
+    : (shift.is_signed_up ? 'Je bent tot nu toe de enige aanmelding.' : 'Nog niemand aangemeld.');
 
   return (
     <li className="card p-4 flex items-start gap-4">
@@ -175,7 +177,30 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-start gap-1">
           <Users className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          <span>{volunteerLabel}</span>
+          {isMine && fellowVolunteerContacts.length > 0 ? (
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>Samen met:</span>
+              {fellowVolunteerContacts.map((volunteer) => (
+                volunteer.whatsapp_url ? (
+                  <a
+                    key={volunteer.name}
+                    href={volunteer.whatsapp_url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex items-center gap-1 text-[#128C7E] hover:underline dark:text-[#25D366]"
+                    aria-label={`Stuur ${volunteer.name} een WhatsApp-bericht`}
+                  >
+                    {volunteer.name}
+                    <SiWhatsapp className="w-3.5 h-3.5" aria-hidden="true" />
+                  </a>
+                ) : (
+                  <span key={volunteer.name}>{volunteer.name}</span>
+                )
+              ))}
+            </span>
+          ) : (
+            <span>{isMine ? 'Je bent tot nu toe de enige aanmelding.' : volunteerLabel}</span>
+          )}
         </p>
         {shift.capacity > 0 && (
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
