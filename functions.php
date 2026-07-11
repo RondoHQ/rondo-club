@@ -710,6 +710,19 @@ function rondo_preload_dashboard_api() {
 	if ( ! is_user_logged_in() ) {
 		return;
 	}
+
+	// WordPress renders the SPA shell for every client-side route. Avoid an
+	// expensive dashboard request when the visitor opened another route
+	// directly (for example /people/123 or /vrijwilligers).
+	$request_path = isset( $_SERVER['REQUEST_URI'] ) ? wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+	$home_path    = wp_parse_url( home_url( '/' ), PHP_URL_PATH );
+	$request_path = '/' . trim( (string) $request_path, '/' );
+	$home_path    = '/' . trim( (string) $home_path, '/' );
+
+	if ( $request_path !== $home_path ) {
+		return;
+	}
+
 	$dashboard_url = rest_url( 'rondo/v1/dashboard' );
 	$nonce         = wp_create_nonce( 'wp_rest' );
 	echo '<script>window.__dashboardPreload = fetch(' . wp_json_encode( $dashboard_url ) . ', { headers: { "X-WP-Nonce": ' . wp_json_encode( $nonce ) . ' } });</script>' . "\n";
