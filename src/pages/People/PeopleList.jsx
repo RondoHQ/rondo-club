@@ -17,6 +17,7 @@ import { useColumnResize } from '@/hooks/useColumnResize';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import ColumnSettingsModal from './ColumnSettingsModal';
 import PersonEditModal from '@/components/PersonEditModal';
+import FloatingHorizontalScrollbar from '@/components/FloatingHorizontalScrollbar';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
@@ -416,9 +417,16 @@ function PersonListView({
   onSort,
   onColumnWidthChange,
 }) {
+  const scrollContainerRef = useRef(null);
+
   return (
-    <div className="card !overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+    <>
+      <div
+        ref={scrollContainerRef}
+        className="card !overflow-x-auto"
+        data-horizontal-scroll="true"
+      >
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr className="shadow-sm dark:shadow-gray-900/50">
             {/* Checkbox column - sticky */}
@@ -494,8 +502,10 @@ function PersonListView({
             />
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+      <FloatingHorizontalScrollbar targetRef={scrollContainerRef} />
+    </>
   );
 }
 
