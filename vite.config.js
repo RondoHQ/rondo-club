@@ -46,7 +46,7 @@ export default defineConfig({
         // chunks are cached when they are actually visited instead of making
         // every new user download the complete application up front.
         globPatterns: [
-          '**/*.{html,ico,png,svg,woff2}',
+          'assets/montserrat-latin-{600,700}-normal-*.woff2',
           'assets/main-*.css',
           'assets/{main,vendor,utils,rolldown-runtime,createLucideIcon}-*.js',
         ],

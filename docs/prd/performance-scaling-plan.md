@@ -33,7 +33,7 @@ Status: uitgevoerd in versie 33.46.1.
 
 ### Verklein de installatiepiek van de PWA
 
-De serviceworker precachet alleen nog de app-shell. Scripts voor afzonderlijke pagina's worden bij het eerste bezoek geladen en daarna maximaal één jaar in `rondo-assets` bewaard. De precache daalde hierdoor naar 37 bestanden en 1.208,78 KiB, een afname van 56%.
+De serviceworker precachet alleen nog de app-shell. Scripts voor afzonderlijke pagina's en niet-Latijnse fontsets worden bij het eerste gebruik geladen en daarna maximaal één jaar in `rondo-assets` bewaard. De definitieve precache bevat 19 bestanden en 762,73 KiB. Dat is 72% minder dan de nulmeting; dubbele iconen en de offlinepagina zijn uit de installatielijst verwijderd.
 
 ### Voorkom ongebruikte dashboardverzoeken
 
