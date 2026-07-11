@@ -93,6 +93,51 @@
             "wrapper": {
                 "width": "33"
             }
+        },
+        {
+            "key": "field_dienst_type_reminder_email_subject",
+            "label": "Onderwerp herinneringsmail",
+            "name": "reminder_email_subject",
+            "type": "text",
+            "instructions": "Onderwerp voor de herinneringen 2 weken, 1 week en 2 dagen voor de dienst.",
+            "default_value": "Herinnering: {dienst} op {datum}"
+        },
+        {
+            "key": "field_dienst_type_reminder_email_body",
+            "label": "Tekst herinneringsmail",
+            "name": "reminder_email_body",
+            "type": "textarea",
+            "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
+            "default_value": "Hoi {naam},\n\nDit is een herinnering voor je dienst {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe draait deze dienst samen met {medevrijwilligers}.",
+            "rows": 8,
+            "new_lines": ""
+        },
+        {
+            "key": "field_dienst_type_survey_email_subject",
+            "label": "Onderwerp enquêtemail",
+            "name": "survey_email_subject",
+            "type": "text",
+            "instructions": "Onderwerp van de e-mail die één dag na de dienst wordt verstuurd.",
+            "default_value": "Hoe ging je dienst {dienst}?"
+        },
+        {
+            "key": "field_dienst_type_survey_email_body",
+            "label": "Tekst enquêtemail",
+            "name": "survey_email_body",
+            "type": "textarea",
+            "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
+            "default_value": "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?",
+            "rows": 8,
+            "new_lines": ""
+        },
+        {
+            "key": "field_dienst_type_survey_url",
+            "label": "Google Forms-link",
+            "name": "survey_url",
+            "type": "url",
+            "instructions": "Link naar de enquête voor dit diensttype. Zonder link wordt geen enquêtemail verstuurd.",
+            "default_value": "",
+            "placeholder": "https://docs.google.com/forms/..."
         }
     ],
     "location": [

@@ -123,12 +123,7 @@ export default function VrijwilligersDienstForm() {
   });
 
   const removeAssigneeMutation = useMutation({
-    mutationFn: (personId) =>
-      prmApi.updateDienstShift(id, {
-        acf: {
-          assigned_persons: assignedIds.filter((pid) => pid !== personId),
-        },
-      }),
+    mutationFn: (personId) => prmApi.removeShiftAssignee(id, personId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
     },
