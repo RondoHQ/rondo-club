@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.47.1] - 2026-07-11
+
+### Fixed
+- De horizontale scrollbar van de brede relatieslijst blijft onder in het venster bereikbaar zolang de gewone scrollbar nog buiten beeld staat. Gebruikers hoeven daardoor niet meer eerst langs alle 100 relaties naar beneden te scrollen om kolommen aan de rechterkant te bekijken. (feedback #6473)
+
 ## [33.47.0] - 2026-07-11
 
 ### Added
