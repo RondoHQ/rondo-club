@@ -42,9 +42,30 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Keep the install burst small: only precache the app shell. Lazy page
+        // chunks are cached when they are actually visited instead of making
+        // every new user download the complete application up front.
+        globPatterns: [
+          '**/*.{html,ico,png,svg,woff2}',
+          'assets/main-*.css',
+          'assets/{main,vendor,utils,rolldown-runtime,createLucideIcon}-*.js',
+        ],
         cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            urlPattern: /\/wp-content\/themes\/rondo-club\/dist\/assets\/.*\.(?:js|css|woff2)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'rondo-assets',
+              expiration: {
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 24 * 365,
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
           {
             urlPattern: /\/wp-json\/.*/i,
             handler: 'NetworkFirst',

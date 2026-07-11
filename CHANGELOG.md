@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.46.1] - 2026-07-11
+
+### Changed
+- De PWA precachet bij installatie alleen nog de app-shell; zware paginascripts worden pas bij het eerste bezoek gedownload en daarna langdurig gecachet. Dit verlaagt de gelijktijdige downloadpiek bij nieuwe gebruikers aanzienlijk.
+- Rondo start de dashboard-API alleen vervroegd op de daadwerkelijke dashboardroute en controleert nieuwe versies minder agressief en zonder overlappende verzoeken. Hierdoor veroorzaken directe links en terugkerende tabbladen minder onnodige WordPress REST-belasting.
+
 ## [33.46.0] - 2026-07-11
 
 ### Added
