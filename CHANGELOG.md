@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.45.0] - 2026-07-11
+
+### Added
+- Leden zien bij beschikbare en eigen diensten de namen van de andere aangemelde vrijwilligers, zodat vooraf duidelijk is met wie zij de dienst uitvoeren. De leden-API deelt hiervoor alleen weergavenamen en blijft interne persoon-ID's en contactgegevens afschermen.
+
 ## [33.44.2] - 2026-07-11
 
 ### Changed
