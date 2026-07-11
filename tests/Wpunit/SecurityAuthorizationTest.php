@@ -151,6 +151,7 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		$user_id      = $this->createRondoUser( [ 'user_login' => 'security_shift_member' ] );
 		$person_id    = $this->createPerson( [ 'post_title' => 'Shift Member' ] );
 		$colleague_id = $this->createPerson( [ 'post_title' => 'Helpful Colleague' ] );
+		update_field( 'mobile_1', '+31 6 1234 5678', $colleague_id );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 		wp_set_current_user( $user_id );
 
@@ -172,12 +173,22 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		$this->assertNotEmpty( $data['shifts'] );
 		$this->assertArrayNotHasKey( 'assigned_person_ids', $data['shifts'][0] );
 		$this->assertSame( [ 'Helpful Colleague' ], $data['shifts'][0]['fellow_volunteers'] );
+		$this->assertSame(
+			[
+				[
+					'name'         => 'Helpful Colleague',
+					'whatsapp_url' => 'https://wa.me/31612345678',
+				],
+			],
+			$data['shifts'][0]['fellow_volunteer_contacts']
+		);
 
 		$available_response = ( new MemberShifts() )->get_available_shifts( new WP_REST_Request( 'GET', '/rondo/v1/shifts/available' ) );
 		$available_data     = $available_response->get_data();
 
 		$this->assertNotEmpty( $available_data['shifts'] );
 		$this->assertArrayNotHasKey( 'assigned_person_ids', $available_data['shifts'][0] );
+		$this->assertArrayNotHasKey( 'fellow_volunteer_contacts', $available_data['shifts'][0] );
 		$this->assertSame( [ 'Helpful Colleague' ], $available_data['shifts'][0]['fellow_volunteers'] );
 	}
 }

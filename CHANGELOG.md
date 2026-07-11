@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.46.0] - 2026-07-11
+
+### Added
+- Op **Mijn diensten** is de naam van iedere mede-vrijwilliger met een bekend mobiel nummer een WhatsApp-link, zodat mensen die samen een dienst uitvoeren rechtstreeks contact kunnen opnemen. De link wordt uitsluitend in de persoonlijke dienstenrespons gedeeld; beschikbare diensten blijven alleen namen tonen.
+
 ## [33.45.0] - 2026-07-11
 
 ### Added
