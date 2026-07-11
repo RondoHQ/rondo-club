@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.46.2] - 2026-07-11
+
+### Changed
+- De PWA-installatiecache bevat geen dubbele iconen of offlinepagina meer en laadt alleen de Latijnse Montserrat-fontbestanden vooraf. Andere schriftsets blijven op aanvraag beschikbaar en worden na gebruik gecachet.
+
 ## [33.46.1] - 2026-07-11
 
 ### Changed
