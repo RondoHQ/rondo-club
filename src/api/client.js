@@ -417,6 +417,7 @@ export const prmApi = {
   getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
   signupForShift: (shiftId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/signup`, opts),
   cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),
+  removeShiftAssignee: (shiftId, personId) => api.delete(`/rondo/v1/shifts/${shiftId}/assignees/${personId}`),
 
   // Admin no-show endpoint
   markShiftNoShow: (shiftId, personId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/no-show`, { person_id: personId, ...opts }),

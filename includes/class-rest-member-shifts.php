@@ -38,6 +38,12 @@ class MemberShifts extends Base {
 	 */
 	const AVAILABLE_WINDOW_DAYS = 84;
 
+	/** Members may cancel until this many days before a shift starts. */
+	const CANCEL_DEADLINE_DAYS = 21;
+
+	/** Grace period after signup for correcting an accidental click. */
+	const CANCEL_GRACE_SECONDS = 30 * MINUTE_IN_SECONDS;
+
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
@@ -98,6 +104,28 @@ class MemberShifts extends Base {
 				'permission_callback' => 'is_user_logged_in',
 				'args'                => [
 					'id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/(?P<id>\d+)/assignees/(?P<person_id>\d+)',
+			[
+				'methods'             => \WP_REST_Server::DELETABLE,
+				'callback'            => [ $this, 'remove_assignee' ],
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' ) || current_user_can( 'vrijwilligers' );
+				},
+				'args'                => [
+					'id'        => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'person_id' => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
 					],
@@ -235,9 +263,12 @@ class MemberShifts extends Base {
 
 			$fellow_volunteers = $this->format_fellow_volunteer_contacts( $summary['assigned_person_ids'], $person_id );
 
-			$summary['is_signed_up']      = in_array( $person_id, $summary['assigned_person_ids'], true );
-			$summary['can_signup']        = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
-			$summary['fellow_volunteers'] = array_column( $fellow_volunteers, 'name' );
+			$summary['is_signed_up']                = in_array( $person_id, $summary['assigned_person_ids'], true );
+			$summary['can_signup']                  = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+			$summary['fellow_volunteers']           = array_column( $fellow_volunteers, 'name' );
+			$summary['can_cancel']                  = $summary['is_signed_up'] && $this->can_member_cancel( $shift->ID, $person_id );
+			$cancel_deadline                        = $this->cancel_deadline_timestamp( $shift->ID );
+			$summary['signup_is_final_after_grace'] = $cancel_deadline !== null && time() > $cancel_deadline;
 			unset( $summary['assigned_person_ids'] );
 
 			$out[] = $summary;
@@ -319,6 +350,7 @@ class MemberShifts extends Base {
 		$assigned[] = $person_id;
 		$assigned   = array_values( array_unique( $assigned ) );
 		update_post_meta( $shift_id, 'assigned_persons', $assigned );
+		update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
 
 		// Auto-flip to "vol" if capacity reached.
 		if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
@@ -351,10 +383,19 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'shift_completed', 'Deze shift is al voltooid en kan niet meer worden afgemeld.', [ 'status' => 409 ] );
 		}
 
+		if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
+			return new \WP_Error(
+				'shift_cancel_deadline_passed',
+				'Afmelden kan tot 3 weken voor de dienst, of binnen 30 minuten na je aanmelding. Neem contact op met de vrijwilligerscoördinator.',
+				[ 'status' => 409 ]
+			);
+		}
+
 		$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
 		$filtered = array_values( array_diff( $assigned, [ $person_id ] ) );
 
 		update_post_meta( $shift_id, 'assigned_persons', $filtered );
+		delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
 		if ( $status === 'vol' ) {
 			update_post_meta( $shift_id, 'status', 'open' );
 		}
@@ -365,6 +406,78 @@ class MemberShifts extends Base {
 				'cancelled' => true,
 			]
 		);
+	}
+
+	/**
+	 * Let a volunteer manager remove an assignee after the member deadline.
+	 */
+	public function remove_assignee( \WP_REST_Request $request ) {
+		$shift_id  = (int) $request->get_param( 'id' );
+		$person_id = (int) $request->get_param( 'person_id' );
+		$shift     = get_post( $shift_id );
+		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
+			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
+		}
+
+		$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+		if ( ! in_array( $person_id, $assigned, true ) ) {
+			return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de dienst aangemeld.', [ 'status' => 404 ] );
+		}
+
+		update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );
+		delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+		if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
+			update_post_meta( $shift_id, 'status', 'open' );
+		}
+
+		return rest_ensure_response(
+			[
+				'shift_id'  => $shift_id,
+				'person_id' => $person_id,
+				'removed'   => true,
+			]
+		);
+	}
+
+	/**
+	 * Determine whether a member may still cancel their own signup.
+	 */
+	private function can_member_cancel( int $shift_id, int $person_id ): bool {
+		$start_at = $this->shift_start_timestamp( $shift_id );
+		if ( $start_at === null ) {
+			return false;
+		}
+
+		$now = time();
+		if ( $now >= $start_at ) {
+			return false;
+		}
+
+		$deadline_at = $this->cancel_deadline_timestamp( $shift_id );
+		if ( $now <= $deadline_at ) {
+			return true;
+		}
+
+		$signup_at = (int) get_post_meta( $shift_id, '_shift_signup_at_' . $person_id, true );
+		return $signup_at > 0 && $now <= $signup_at + self::CANCEL_GRACE_SECONDS;
+	}
+
+	private function cancel_deadline_timestamp( int $shift_id ): ?int {
+		$start_at = $this->shift_start_timestamp( $shift_id );
+		return $start_at === null ? null : $start_at - ( self::CANCEL_DEADLINE_DAYS * DAY_IN_SECONDS );
+	}
+
+	private function shift_start_timestamp( int $shift_id ): ?int {
+		$start = (string) get_post_meta( $shift_id, 'start_datetime', true );
+		if ( $start === '' ) {
+			return null;
+		}
+
+		try {
+			return ( new \DateTimeImmutable( $start, wp_timezone() ) )->getTimestamp();
+		} catch ( \Exception $exception ) {
+			return null;
+		}
 	}
 
 	/**
@@ -524,6 +637,7 @@ class MemberShifts extends Base {
 
 				$summary['fellow_volunteers']         = array_column( $fellow_volunteers, 'name' );
 				$summary['fellow_volunteer_contacts'] = $fellow_volunteers;
+				$summary['can_cancel']                = $summary['status'] !== 'voltooid' && $this->can_member_cancel( $shift->ID, $person_id );
 				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
 				$out[]              = $summary;

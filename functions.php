@@ -298,6 +298,9 @@ function rondo_init() {
 		// Hourly shift-completion cron + no-show → boete wiring.
 		new \Rondo\Volunteer\ShiftScheduler();
 
+		// Hourly member reminders and post-shift survey emails.
+		new \Rondo\Volunteer\ShiftEmailScheduler();
+
 		// Daily template-expander cron (rolling 12-week window).
 		new \Rondo\Volunteer\ShiftTemplateExpander();
 
@@ -1029,6 +1032,11 @@ function rondo_theme_deactivation() {
 
 	// Clear legacy scheduled hook (for backward compatibility)
 	wp_clear_scheduled_hook( 'rondo_daily_reminder_check' );
+
+	// Clear volunteer shift lifecycle hooks.
+	\Rondo\Volunteer\ShiftScheduler::unregister_cron();
+	\Rondo\Volunteer\ShiftEmailScheduler::unregister_cron();
+	\Rondo\Volunteer\ShiftTemplateExpander::unregister_cron();
 
 	// Remove custom user role (must call directly since switch_theme hook already fired)
 	$user_roles = new UserRoles();

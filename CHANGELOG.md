@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.47.0] - 2026-07-11
+
+### Added
+- Diensttypen hebben aanpasbare onderwerpen en teksten voor herinneringsmails en enquêtemails, plus een Google Forms-link. Aangemelde vrijwilligers ontvangen automatisch en eenmalig een herinnering 2 weken, 1 week en 2 dagen voor de dienst en, als een enquêtelink is ingesteld, één dag na afloop een enquête. De mails ondersteunen variabelen voor naam, dienst, datum, tijden en medevrijwilligers.
+- Vrijwilligersbeheerders kunnen via het dienstbeheer altijd een deelnemer afmelden. Dit recht volgt de bestaande capability `vrijwilligers`, die per rol instelbaar is in de capabilitymatrix.
+
+### Changed
+- Leden kunnen zichzelf tot 3 weken vóór een dienst afmelden. Binnen die grens kan dat alleen nog gedurende 30 minuten na de eigen aanmelding om een foutklik te herstellen; daarna verwijst de interface naar de vrijwilligerscoördinator. Bij aanmelden binnen 3 weken verschijnt vooraf een duidelijke waarschuwing.
+
 ## [33.46.2] - 2026-07-11
 
 ### Changed

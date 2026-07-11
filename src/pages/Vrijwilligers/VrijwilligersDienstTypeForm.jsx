@@ -15,6 +15,11 @@ const EMPTY = {
   default_capacity: '1',
   color: '#6b7280',
   required_pool: 0,
+  reminder_email_subject: 'Herinnering: {dienst} op {datum}',
+  reminder_email_body: 'Hoi {naam},\n\nDit is een herinnering voor je dienst {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe draait deze dienst samen met {medevrijwilligers}.',
+  survey_email_subject: 'Hoe ging je dienst {dienst}?',
+  survey_email_body: 'Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?',
+  survey_url: '',
 };
 
 export default function VrijwilligersDienstTypeForm() {
@@ -51,6 +56,11 @@ export default function VrijwilligersDienstTypeForm() {
       default_capacity: acf.default_capacity != null ? String(acf.default_capacity) : '1',
       color: acf.color || '#6b7280',
       required_pool: Number(acf.required_pool) || 0,
+      reminder_email_subject: acf.reminder_email_subject || EMPTY.reminder_email_subject,
+      reminder_email_body: acf.reminder_email_body || EMPTY.reminder_email_body,
+      survey_email_subject: acf.survey_email_subject || EMPTY.survey_email_subject,
+      survey_email_body: acf.survey_email_body || EMPTY.survey_email_body,
+      survey_url: acf.survey_url || '',
     });
   }, [existing]);
 
@@ -126,6 +136,11 @@ export default function VrijwilligersDienstTypeForm() {
               default_capacity: form.default_capacity === '' ? 0 : Number(form.default_capacity),
               color: form.color,
               required_pool: form.required_pool ? Number(form.required_pool) : null,
+              reminder_email_subject: form.reminder_email_subject,
+              reminder_email_body: form.reminder_email_body,
+              survey_email_subject: form.survey_email_subject,
+              survey_email_body: form.survey_email_body,
+              survey_url: form.survey_url,
             },
           });
         }}
@@ -168,6 +183,71 @@ export default function VrijwilligersDienstTypeForm() {
             onChange={(v) => setForm({ ...form, sleutel_involved: v })}
           />
         </div>
+
+        <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Herinneringsmail</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Deze tekst wordt 2 weken, 1 week en 2 dagen voor iedere dienst verstuurd.
+            </p>
+          </div>
+          <Field label="Onderwerp">
+            <input
+              type="text"
+              value={form.reminder_email_subject}
+              onChange={(e) => setForm({ ...form, reminder_email_subject: e.target.value })}
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field
+            label="Tekst"
+            hint="Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}"
+          >
+            <textarea
+              rows={8}
+              value={form.reminder_email_body}
+              onChange={(e) => setForm({ ...form, reminder_email_body: e.target.value })}
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+        </section>
+
+        <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Enquête na de dienst</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Eén dag na de dienst ontvangt iedere deelnemer deze mail. Zonder Google Forms-link wordt niets verstuurd.
+            </p>
+          </div>
+          <Field label="Onderwerp">
+            <input
+              type="text"
+              value={form.survey_email_subject}
+              onChange={(e) => setForm({ ...form, survey_email_subject: e.target.value })}
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field
+            label="Tekst"
+            hint="Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}"
+          >
+            <textarea
+              rows={8}
+              value={form.survey_email_body}
+              onChange={(e) => setForm({ ...form, survey_email_body: e.target.value })}
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Google Forms-link" hint="Laat leeg om de enquêtemail voor dit diensttype uit te schakelen.">
+            <input
+              type="url"
+              value={form.survey_url}
+              onChange={(e) => setForm({ ...form, survey_url: e.target.value })}
+              placeholder="https://docs.google.com/forms/..."
+              className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+            />
+          </Field>
+        </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Field label="Standaard capaciteit" hint="0 = onbeperkt">
