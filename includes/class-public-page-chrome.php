@@ -58,12 +58,14 @@ class PublicPageChrome {
 	 * @param string $accent_color            Brand accent.
 	 * @param string $accent_background_color Page background.
 	 * @param string $logo_url                Favicon URL, optional.
+	 * @param string $social_image_url        Open Graph and Twitter image URL, optional.
 	 */
 	public static function header(
 		string $title,
 		string $accent_color = '#0891b2',
 		string $accent_background_color = '#f8fafc',
-		string $logo_url = ''
+		string $logo_url = '',
+		string $social_image_url = ''
 	) {
 		?>
 <!DOCTYPE html>
@@ -72,6 +74,16 @@ class PublicPageChrome {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?php echo esc_html( $title ); ?></title>
+	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
+	<meta property="og:type" content="website">
+		<?php if ( $social_image_url ) : ?>
+	<meta property="og:image" content="<?php echo esc_url( $social_image_url ); ?>">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:alt" content="<?php echo esc_attr( $title ); ?>">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:image" content="<?php echo esc_url( $social_image_url ); ?>">
+	<?php endif; ?>
 		<?php if ( $logo_url ) : ?>
 	<link rel="icon" href="<?php echo esc_url( $logo_url ); ?>">
 	<?php endif; ?>

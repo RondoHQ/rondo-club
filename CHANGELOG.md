@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.50.0] - 2026-07-12
+
+### Added
+
+- De openbare accountactivatiepagina heeft een eigen Open Graph-afbeelding van 1200×630 pixels en bijpassende Open Graph- en Twitter Card-metadata voor herkenbare previews bij het delen van `/activeren`.
+
 ## [33.49.0] - 2026-07-12
 
 ### Added
