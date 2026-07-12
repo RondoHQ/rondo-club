@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.47.3] - 2026-07-12
+
+### Changed
+- De bevestiging na een activatieaanvraag noemt `ledenadministratie@svawc.nl` als afzender en toont de hulptekst in een beter leesbare kleur.
+
+### Fixed
+- Accountactivatiemails worden verzonden namens `ledenadministratie@svawc.nl` in plaats van de algemene `noreply@`-afzender.
+
 ## [33.47.2] - 2026-07-12
 
 ### Changed

@@ -318,6 +318,12 @@ class PublicPageChrome {
 			color: #94a3b8;
 		}
 
+		.confirmation-help {
+			color: #475569;
+			line-height: 1.5;
+			margin-top: 0.75rem;
+		}
+
 		input[type="text"],
 		input[type="hidden"],
 		select,
