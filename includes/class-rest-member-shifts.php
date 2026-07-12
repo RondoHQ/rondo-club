@@ -44,8 +44,69 @@ class MemberShifts extends Base {
 	/** Grace period after signup for correcting an accidental click. */
 	const CANCEL_GRACE_SECONDS = 30 * MINUTE_IN_SECONDS;
 
+	/** Maximum time to wait for another write on the same shift. */
+	const SHIFT_LOCK_TIMEOUT_SECONDS = 5;
+
+	/** Locks older than this are treated as abandoned after a fatal request. */
+	const SHIFT_LOCK_STALE_SECONDS = 15;
+
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+	}
+
+	/**
+	 * Serialize writes to a shift's assigned-persons array.
+	 *
+	 * `assigned_persons` is a serialized WordPress meta value. Concurrent
+	 * read-modify-write requests would otherwise overwrite each other. An
+	 * autoload-disabled option gives us an atomic `add_option()` lock without a
+	 * custom table and works independently of the configured object-cache backend.
+	 *
+	 * @param int      $shift_id Shift post ID.
+	 * @param callable $callback Mutation to execute while holding the lock.
+	 * @return mixed Callback result or WP_Error when the lock stays busy.
+	 */
+	private function with_shift_write_lock( int $shift_id, callable $callback ) {
+		$lock_key = 'rondo_shift_write_lock_' . $shift_id;
+		$deadline = microtime( true ) + self::SHIFT_LOCK_TIMEOUT_SECONDS;
+		$token    = wp_generate_uuid4();
+
+		do {
+			$lock_value = [
+				'token'      => $token,
+				'created_at' => microtime( true ),
+			];
+			if ( add_option( $lock_key, $lock_value, '', false ) ) {
+				try {
+					return $callback();
+				} finally {
+					$current = get_option( $lock_key, [] );
+					if ( is_array( $current ) && ( $current['token'] ?? '' ) === $token ) {
+						delete_option( $lock_key );
+					}
+				}
+			}
+
+			$current = get_option( $lock_key, [] );
+			if (
+				is_array( $current )
+				&& isset( $current['created_at'], $current['token'] )
+				&& (float) $current['created_at'] < microtime( true ) - self::SHIFT_LOCK_STALE_SECONDS
+			) {
+				$latest = get_option( $lock_key, [] );
+				if ( is_array( $latest ) && ( $latest['token'] ?? '' ) === $current['token'] ) {
+					delete_option( $lock_key );
+				}
+			}
+
+			usleep( 25000 );
+		} while ( microtime( true ) < $deadline );
+
+		return new \WP_Error(
+			'shift_busy',
+			'Deze dienst wordt op dit moment bijgewerkt. Probeer het opnieuw.',
+			[ 'status' => 503 ]
+		);
 	}
 
 	public function register_routes() {
@@ -299,26 +360,6 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		$status = (string) get_post_meta( $shift_id, 'status', true );
-		if ( $status !== 'open' && $status !== 'vol' ) {
-			return new \WP_Error( 'shift_closed', 'Deze shift staat niet meer open.', [ 'status' => 409 ] );
-		}
-
-		$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
-		if ( in_array( $person_id, $assigned, true ) ) {
-			return rest_ensure_response(
-				[
-					'shift_id'          => $shift_id,
-					'already_signed_up' => true,
-				]
-				);
-		}
-
-		$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
-		if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
-			return new \WP_Error( 'shift_full', 'Deze shift is vol.', [ 'status' => 409 ] );
-		}
-
 		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
 		$blocks         = $this->signup_blocks( $person_id );
 		if ( $dienst_type_id > 0 ) {
@@ -347,21 +388,45 @@ class MemberShifts extends Base {
 			}
 		}
 
-		$assigned[] = $person_id;
-		$assigned   = array_values( array_unique( $assigned ) );
-		update_post_meta( $shift_id, 'assigned_persons', $assigned );
-		update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
+		return $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $person_id, $shift_id ) {
+				$status = (string) get_post_meta( $shift_id, 'status', true );
+				if ( $status !== 'open' && $status !== 'vol' ) {
+					return new \WP_Error( 'shift_closed', 'Deze shift staat niet meer open.', [ 'status' => 409 ] );
+				}
 
-		// Auto-flip to "vol" if capacity reached.
-		if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
-			update_post_meta( $shift_id, 'status', 'vol' );
-		}
+				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				if ( in_array( $person_id, $assigned, true ) ) {
+					return rest_ensure_response(
+						[
+							'shift_id'          => $shift_id,
+							'already_signed_up' => true,
+						]
+					);
+				}
 
-		return rest_ensure_response(
-			[
-				'shift_id'  => $shift_id,
-				'signed_up' => true,
-			]
+				$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
+				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
+					return new \WP_Error( 'shift_full', 'Deze shift is vol.', [ 'status' => 409 ] );
+				}
+
+				$assigned[] = $person_id;
+				$assigned   = array_values( array_unique( $assigned ) );
+				update_post_meta( $shift_id, 'assigned_persons', $assigned );
+				update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
+
+				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
+					update_post_meta( $shift_id, 'status', 'vol' );
+				}
+
+				return rest_ensure_response(
+					[
+						'shift_id'  => $shift_id,
+						'signed_up' => true,
+					]
+				);
+			}
 		);
 	}
 
@@ -378,33 +443,38 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		$status = (string) get_post_meta( $shift_id, 'status', true );
-		if ( $status === 'voltooid' ) {
-			return new \WP_Error( 'shift_completed', 'Deze shift is al voltooid en kan niet meer worden afgemeld.', [ 'status' => 409 ] );
-		}
+		return $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $person_id, $shift_id ) {
+				$status = (string) get_post_meta( $shift_id, 'status', true );
+				if ( $status === 'voltooid' ) {
+					return new \WP_Error( 'shift_completed', 'Deze shift is al voltooid en kan niet meer worden afgemeld.', [ 'status' => 409 ] );
+				}
 
-		if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
-			return new \WP_Error(
-				'shift_cancel_deadline_passed',
-				'Afmelden kan tot 3 weken voor de dienst, of binnen 30 minuten na je aanmelding. Neem contact op met de vrijwilligerscoördinator.',
-				[ 'status' => 409 ]
-			);
-		}
+				if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
+					return new \WP_Error(
+						'shift_cancel_deadline_passed',
+						'Afmelden kan tot 3 weken voor de dienst, of binnen 30 minuten na je aanmelding. Neem contact op met de vrijwilligerscoördinator.',
+						[ 'status' => 409 ]
+					);
+				}
 
-		$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
-		$filtered = array_values( array_diff( $assigned, [ $person_id ] ) );
+				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$filtered = array_values( array_diff( $assigned, [ $person_id ] ) );
 
-		update_post_meta( $shift_id, 'assigned_persons', $filtered );
-		delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
-		if ( $status === 'vol' ) {
-			update_post_meta( $shift_id, 'status', 'open' );
-		}
+				update_post_meta( $shift_id, 'assigned_persons', $filtered );
+				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				if ( $status === 'vol' ) {
+					update_post_meta( $shift_id, 'status', 'open' );
+				}
 
-		return rest_ensure_response(
-			[
-				'shift_id'  => $shift_id,
-				'cancelled' => true,
-			]
+				return rest_ensure_response(
+					[
+						'shift_id'  => $shift_id,
+						'cancelled' => true,
+					]
+				);
+			}
 		);
 	}
 
@@ -419,23 +489,28 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
-		if ( ! in_array( $person_id, $assigned, true ) ) {
-			return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de dienst aangemeld.', [ 'status' => 404 ] );
-		}
+		return $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $person_id, $shift_id ) {
+				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				if ( ! in_array( $person_id, $assigned, true ) ) {
+					return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de dienst aangemeld.', [ 'status' => 404 ] );
+				}
 
-		update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );
-		delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
-		if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
-			update_post_meta( $shift_id, 'status', 'open' );
-		}
+				update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );
+				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
+					update_post_meta( $shift_id, 'status', 'open' );
+				}
 
-		return rest_ensure_response(
-			[
-				'shift_id'  => $shift_id,
-				'person_id' => $person_id,
-				'removed'   => true,
-			]
+				return rest_ensure_response(
+					[
+						'shift_id'  => $shift_id,
+						'person_id' => $person_id,
+						'removed'   => true,
+					]
+				);
+			}
 		);
 	}
 

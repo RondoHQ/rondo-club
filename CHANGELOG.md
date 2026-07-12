@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.48.4] - 2026-07-12
+
+### Fixed
+- Gelijktijdige aanmeldingen, afmeldingen en beheer-verwijderingen voor dezelfde vrijwilligersdienst worden per dienst geserialiseerd met een korte WordPress-option-lock. Daardoor kunnen parallelle wijzigingen aan de `assigned_persons`-lijst elkaar niet meer overschrijven.
+
 ## [33.48.3] - 2026-07-12
 
 ### Added
