@@ -94,6 +94,30 @@ class ActivationServiceTest extends RondoTestCase {
 		);
 	}
 
+	public function test_activation_email_uses_the_membership_administration_sender(): void {
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$this->assertTrue( ActivationService::send_activation_email( 'anne@example.com', str_repeat( 'a', 64 ) ) );
+		$this->assertIsArray( $mail );
+		$from_headers = array_values(
+			array_filter(
+				$mail['headers'],
+				fn( string $header ): bool => str_starts_with( $header, 'From: ' )
+			)
+		);
+		$this->assertCount( 1, $from_headers );
+		$this->assertStringContainsString( '<' . ActivationService::ACTIVATION_FROM_EMAIL . '>', $from_headers[0] );
+	}
+
 	public function test_a_garbage_token_resolves_to_nothing(): void {
 		$this->assertNull( ActivationService::email_for_token( 'nope' ) );
 		$this->assertNull( ActivationService::email_for_token( str_repeat( 'a', 64 ) ) );

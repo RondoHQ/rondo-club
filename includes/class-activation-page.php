@@ -202,7 +202,7 @@ class ActivationPage {
 	<div class="card">
 		<h2>Kijk in je mailbox</h2>
 		<p>Als dit e-mailadres bij ons bekend is, hebben we er een activatielink naartoe gestuurd. De link is twee uur geldig.</p>
-		<p class="error-hint">Geen mail ontvangen? Kijk in je spam-map, of neem contact op met de ledenadministratie.</p>
+		<p class="confirmation-help">Geen mail ontvangen? Zoek in je spam-map naar een bericht van <?php echo esc_html( ActivationService::ACTIVATION_FROM_EMAIL ); ?>. Ook daar niets? Neem dan contact op met de ledenadministratie.</p>
 	</div>
 		<?php
 		$this->close();

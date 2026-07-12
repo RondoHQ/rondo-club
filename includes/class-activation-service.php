@@ -28,6 +28,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ActivationService {
 
+	const ACTIVATION_FROM_EMAIL = 'ledenadministratie@svawc.nl';
+
 	/** Transient prefix for activation tokens. */
 	const TOKEN_TRANSIENT_PREFIX = 'rondo_activation_';
 
@@ -234,7 +236,12 @@ class ActivationService {
 			]
 		);
 
-		return (bool) wp_mail( $email, $subject, $html, [ 'Content-Type: text/html; charset=UTF-8' ] );
+		$headers = [
+			'Content-Type: text/html; charset=UTF-8',
+			sprintf( 'From: %s <%s>', sanitize_text_field( $branding['name'] ), self::ACTIVATION_FROM_EMAIL ),
+		];
+
+		return (bool) wp_mail( $email, $subject, $html, $headers );
 	}
 
 	/**
