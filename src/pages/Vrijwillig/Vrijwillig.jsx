@@ -75,7 +75,11 @@ function ObligationList({ obligations, exemption }) {
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">Je bent vrijgesteld</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {exemption.reason_label}. Je hoeft dit seizoen geen diensten te plannen, maar je mag natuurlijk wel meedoen.
+              {exemption.reason === 'commissie' ? (
+                <>Je bent al een actief commissielid. Je hoeft daarom dit seizoen geen diensten in te plannen, maar je <em>mag</em> natuurlijk wel meedoen.</>
+              ) : (
+                <>{exemption.reason_label}. Je hoeft dit seizoen geen diensten te plannen, maar je mag natuurlijk wel meedoen.</>
+              )}
             </p>
           </div>
         </div>

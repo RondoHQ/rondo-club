@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.48.2] - 2026-07-12
+
+### Changed
+- De vrijstellingsmelding op `/vrijwillig` legt voor actieve commissieleden duidelijker uit waarom zij geen diensten hoeven in te plannen en dat zij wel mogen meedoen.
+
 ## [33.48.1] - 2026-07-12
 
 ### Removed
