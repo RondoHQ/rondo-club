@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.48.1] - 2026-07-12
+
+### Removed
+- De lokale Graphify-integratie, inclusief de verplichte agentinstructies, Claude-hook en deployconfiguratie. De verouderde kennisgraph indexeerde voornamelijk dependencies en gegenereerde bestanden en vertraagde daardoor ontwikkelwerk zonder bruikbare architectuurinformatie te leveren.
+
 ## [33.48.0] - 2026-07-12
 
 ### Added
