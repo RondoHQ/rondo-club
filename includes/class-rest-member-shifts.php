@@ -45,7 +45,7 @@ class MemberShifts extends Base {
 	const CANCEL_GRACE_SECONDS = 30 * MINUTE_IN_SECONDS;
 
 	/** Maximum time to wait for another write on the same shift. */
-	const SHIFT_LOCK_TIMEOUT_SECONDS = 5;
+	const SHIFT_LOCK_TIMEOUT_SECONDS = 10;
 
 	/** Locks older than this are treated as abandoned after a fatal request. */
 	const SHIFT_LOCK_STALE_SECONDS = 15;
@@ -72,14 +72,24 @@ class MemberShifts extends Base {
 		$token    = wp_generate_uuid4();
 
 		do {
+			// A request that already observed this option can retain that value in
+			// its runtime cache after another PHP process releases the lock. Force
+			// this request to consult the shared cache/database on every attempt.
+			wp_cache_delete( $lock_key, 'options' );
+
 			$lock_value = [
 				'token'      => $token,
 				'created_at' => microtime( true ),
 			];
 			if ( add_option( $lock_key, $lock_value, '', false ) ) {
 				try {
+					// The request may have primed this shift's post-meta cache while
+					// loading the available-shifts list before it waited for the lock.
+					// Discard that snapshot so the mutation starts with the latest row.
+					wp_cache_delete( $shift_id, 'post_meta' );
 					return $callback();
 				} finally {
+					wp_cache_delete( $lock_key, 'options' );
 					$current = get_option( $lock_key, [] );
 					if ( is_array( $current ) && ( $current['token'] ?? '' ) === $token ) {
 						delete_option( $lock_key );
@@ -87,12 +97,14 @@ class MemberShifts extends Base {
 				}
 			}
 
+			wp_cache_delete( $lock_key, 'options' );
 			$current = get_option( $lock_key, [] );
 			if (
 				is_array( $current )
 				&& isset( $current['created_at'], $current['token'] )
 				&& (float) $current['created_at'] < microtime( true ) - self::SHIFT_LOCK_STALE_SECONDS
 			) {
+				wp_cache_delete( $lock_key, 'options' );
 				$latest = get_option( $lock_key, [] );
 				if ( is_array( $latest ) && ( $latest['token'] ?? '' ) === $current['token'] ) {
 					delete_option( $lock_key );

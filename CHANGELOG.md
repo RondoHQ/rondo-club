@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.48.5] - 2026-07-12
+
+### Fixed
+
+- Refresh the per-request WordPress caches while waiting for a volunteer-shift write lock, preventing stale lock and assignee values when Memcached is active.
+
 ## [33.48.4] - 2026-07-12
 
 ### Fixed
