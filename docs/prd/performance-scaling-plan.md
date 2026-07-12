@@ -14,12 +14,12 @@ We sturen op deze productiedoelen:
 
 De aantallen zijn testniveaus, geen voorspelling. Een loadtest bepaalt welk niveau de huidige hosting veilig haalt.
 
-## Huidige nulmeting op 11 juli 2026
+## Nulmeting op 11 juli 2026
 
 - De publieke HTML had zonder ingelogde sessie een TTFB van 0,19 tot 0,30 seconde.
 - Cloudflare staat voor de site. Gehashte JavaScriptbestanden hebben `Cache-Control: max-age=31536000`.
-- WordPress meldt `wp_using_ext_object_cache() = false`. Er is dus geen persistente objectcache actief.
-- SiteGround Speed Optimizer 7.8.0 is actief, maar `wp-content/object-cache.php` ontbreekt. De Memcached-integratie is dus nog niet verbonden met WordPress.
+- WordPress meldde `wp_using_ext_object_cache() = false`. Er was dus nog geen persistente objectcache actief.
+- SiteGround Speed Optimizer 7.8.0 was actief, maar `wp-content/object-cache.php` ontbrak. De Memcached-integratie was dus nog niet verbonden met WordPress.
 - `DISABLE_WP_CRON` staat aan. De geplande taken stonden bij controle niet achter; de externe crontrigger lijkt daarom te werken.
 - De PWA precachete 138 bestanden en 2.768,67 KiB. De app downloadde daardoor bij installatie ook zelden gebruikte schermen.
 - De dashboardrespons wordt vijftien minuten per gebruiker gecachet. Persoonsgegevens in die cache blijven per gebruiker gescheiden vanwege leeftijdsgroep- en roltoegang.
@@ -45,9 +45,11 @@ De versiecheck start nu na zestig seconden, gebruikt standaard een interval van 
 
 ## Fase 2: serververbeteringen
 
-Deze fase vereist een serverwijziging en wordt pas uitgevoerd na akkoord.
+Memcached is op 12 juli 2026 geactiveerd op demo en productie. De overige serverwijzigingen worden pas uitgevoerd na akkoord.
 
 ### 1. Activeer persistente Memcached-objectcache
+
+Status: uitgevoerd en technisch geverifieerd. Zowel demo als productie melden `wp_using_ext_object_cache() = true`; de PHP-extensie, object-cache-drop-in en SiteGround-integratie zijn actief.
 
 Dit is de eerste serverwijziging met de grootste verwachte winst. Zonder persistente objectcache belanden transients in de options-tabel en kan WordPress resultaten niet tussen requests uit geheugen hergebruiken.
 
@@ -89,6 +91,23 @@ Test drie scenario's:
 3. **Gelijktijdige inschrijving:** twintig vrijwilligers schrijven vrijwel tegelijk in op dezelfde synthetische dienst. Controleer daarna apart dat alle succesvolle inschrijvingen uniek en blijvend zijn opgeslagen.
 
 De tooling staat in `tests/load/volunteer-journey.js`; `bin/load-test-fixtures.php` beheert gemarkeerde demo-only fixtures en ondersteunt `seed`, `reset`, `verify` en `cleanup`. Zie `tests/load/README.md` voor de operationele stappen en stopcriteria.
+
+### Resultaten van 12 juli 2026
+
+Alle runs gebruikten honderd synthetische vrijwilligers en 21 synthetische diensten op demo. Memcached was tijdens iedere run actief. Productie bleef tijdens de tests bereikbaar en het demo-errorlog kreeg geen nieuwe fatals.
+
+| Gelijktijdige vrijwilligers | HTTP-fouten | REST p95 | Iteratie p95 | Uitkomst |
+| --- | ---: | ---: | ---: | --- |
+| 1 | 0% | 142-161 ms | 1,98 s | Groen |
+| 5 | 0% | 134-151 ms | 2,11 s | Groen |
+| 25 | 0% | 374-795 ms | 3,73 s | Groen |
+| 50 | 0% | 960-1.560 ms | 6,31 s | Functioneel goed, maar boven de latencydoelen |
+
+De conditionele run met honderd gebruikers is niet uitgevoerd, omdat vijftig gebruikers het vooraf bepaalde stopcriterium al overschreden. Het huidige veilige testniveau is 25 gelijktijdige vrijwilligers. Dat is nog geen capaciteitsgarantie: demo en productie delen serverresources en de test duurde per gebruiker één reis.
+
+De eerste test met twintig vrijwel gelijktijdige inschrijvingen ontdekte een race condition in de geserialiseerde `assigned_persons`-postmeta: alle requests konden succes melden terwijl WordPress inschrijvingen verloor. Versie 33.48.6 serialiseert mutaties per dienst en forceert verse Memcached-reads binnen de lock. De definitieve hertest gaf 20/20 succesvolle requests, 20/20 uniek opgeslagen vrijwilligers, 0% requestfouten en een signup-p95 van 397 ms.
+
+Deze meting bewijst dat Memcached actief is en dat Rondo ermee correct functioneert onder de geteste belasting. De afzonderlijke snelheidswinst van Memcached is niet gekwantificeerd, omdat er geen vergelijkbare run met uitgeschakelde objectcache is gedaan.
 
 Leg per endpoint vast:
 
