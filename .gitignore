@@ -42,9 +42,6 @@ certs/
 # Local demo export artifact
 fixtures/demo-fixture.json
 
-# graphify knowledge graph output (local only, not for deploy or git)
-graphify-out/
-
 # ── GSD baseline (auto-generated) ──
 .gsd/activity/
 .gsd/runtime/

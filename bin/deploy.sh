@@ -152,7 +152,6 @@ RSYNC_EXCLUDES=(
     --exclude='.env'
     --exclude='.DS_Store'
     --exclude='dist'
-    --exclude='graphify-out'
     --exclude='tests'
 )
 
