@@ -80,13 +80,15 @@ Cloudflare en SiteGround mogen gehashte assets lang cachen. `/wp-json/` en HTML 
 
 ## Fase 3: meten onder echte belasting
 
-Voer loadtests uit tegen een productiegetrouwe stagingomgeving met een aparte testdatabase. Gebruik geen echte persoonsgegevens en verstuur geen e-mail of betalingen.
+De eerste loadtest draait op `demo.rondo.club`, met uitsluitend synthetische vrijwilligers en diensten. Demo gebruikt een aparte database maar deelt de server met productie. Bouw de belasting daarom stapsgewijs op en controleer tussen runs of productie stabiel blijft. Gebruik geen echte persoonsgegevens en verstuur geen e-mail of betalingen.
 
 Test drie scenario's:
 
-1. **Aankondigingspiek:** 25, 50 en 100 gebruikers loggen binnen twee minuten in en openen hun landingspagina.
-2. **Kadergebruik:** gebruikers openen dashboard, personenlijst, filters, zoeken en een persoonsdetail.
-3. **Gemengd gebruik:** 80% reads, 15% gewone updates en 5% zware rapportage- of financiële reads.
+1. **Aankondigingspiek:** 5, 25, 50 en conditioneel 100 unieke vrijwilligers loggen in en openen rechtstreeks `/vrijwillig`.
+2. **Vrijwilligerslijsten:** iedere gebruiker vraagt `user/me`, `my-shifts` en `shifts/available` op.
+3. **Gelijktijdige inschrijving:** twintig vrijwilligers schrijven vrijwel tegelijk in op dezelfde synthetische dienst. Controleer daarna apart dat alle succesvolle inschrijvingen uniek en blijvend zijn opgeslagen.
+
+De tooling staat in `tests/load/volunteer-journey.js`; `bin/load-test-fixtures.php` beheert gemarkeerde demo-only fixtures en ondersteunt `seed`, `reset`, `verify` en `cleanup`. Zie `tests/load/README.md` voor de operationele stappen en stopcriteria.
 
 Leg per endpoint vast:
 
