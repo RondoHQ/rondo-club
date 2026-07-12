@@ -32,6 +32,7 @@ npm-debug.log*
 coverage/
 tests/.env
 tests/_output/
+tests/load/results/
 
 # Certificates (mTLS)
 certs/

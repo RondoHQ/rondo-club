@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.48.3] - 2026-07-12
+
+### Added
+- Herbruikbare, strikt demo-only loadtesttooling voor de vrijwilligersreis. De fixturetool maakt en verwijdert gemarkeerde synthetische vrijwilligers, accounts en diensten; de k6-test meet unieke logins, vrijwilligerslijsten en gelijktijdige inschrijvingen met een afzonderlijke data-integriteitscontrole.
+
 ## [33.48.2] - 2026-07-12
 
 ### Changed
