@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.48.0] - 2026-07-12
+
+### Added
+- Op `/vrijwillig` kunnen beschikbare en eigen diensten worden gefilterd op diensttype. De keuze staat in de URL als `?diensttype=<id>`, zodat een gefilterd overzicht direct gedeeld kan worden.
+
 ## [33.47.3] - 2026-07-12
 
 ### Changed

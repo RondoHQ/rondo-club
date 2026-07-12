@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Clock, Calendar, ShieldAlert, Users } from 'lucide-react';
 import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
@@ -268,6 +268,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
 export default function Vrijwillig() {
   useDocumentTitle('Vrijwilligers — Aanmelden');
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState('available');
   const [confirmOverlap, setConfirmOverlap] = useState(null); // { shiftId, message }
   const [actionError, setActionError] = useState('');
@@ -316,9 +317,52 @@ export default function Vrijwillig() {
     },
   });
 
-  const upcomingShifts = useMemo(() => (mine?.shifts || []).filter(s => s.status !== 'voltooid'), [mine]);
-  const pastShifts     = useMemo(() => (mine?.shifts || []).filter(s => s.status === 'voltooid'), [mine]);
-  const availableShifts = available?.shifts || [];
+  const selectedDienstType = searchParams.get('diensttype') || '';
+  const dienstTypeOptions = useMemo(() => {
+    const types = new Map();
+    [...(available?.shifts || []), ...(mine?.shifts || [])].forEach((shift) => {
+      if (shift.dienst_type_id && shift.dienst_type_name) {
+        types.set(String(shift.dienst_type_id), shift.dienst_type_name);
+      }
+    });
+
+    return [...types.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'nl'));
+  }, [available, mine]);
+  const upcomingShifts = useMemo(
+    () => (mine?.shifts || []).filter(
+      (shift) => shift.status !== 'voltooid'
+        && (!selectedDienstType || String(shift.dienst_type_id) === selectedDienstType)
+    ),
+    [mine, selectedDienstType]
+  );
+  const pastShifts = useMemo(
+    () => (mine?.shifts || []).filter(
+      (shift) => shift.status === 'voltooid'
+        && (!selectedDienstType || String(shift.dienst_type_id) === selectedDienstType)
+    ),
+    [mine, selectedDienstType]
+  );
+  const availableShifts = useMemo(
+    () => (available?.shifts || []).filter(
+      (shift) => !selectedDienstType || String(shift.dienst_type_id) === selectedDienstType
+    ),
+    [available, selectedDienstType]
+  );
+
+  const handleDienstTypeChange = (event) => {
+    const dienstType = event.target.value;
+    setSearchParams((previousParams) => {
+      const nextParams = new URLSearchParams(previousParams);
+      if (dienstType) {
+        nextParams.set('diensttype', dienstType);
+      } else {
+        nextParams.delete('diensttype');
+      }
+      return nextParams;
+    }, { replace: true });
+  };
 
   if (mineError && mineError?.response?.status === 404) {
     return (
@@ -384,6 +428,31 @@ export default function Vrijwillig() {
             </button>
           </nav>
 
+          {(dienstTypeOptions.length > 1 || selectedDienstType) && (
+            <div className="flex flex-col gap-1.5 sm:max-w-xs">
+              <label
+                htmlFor="diensttype-filter"
+                className="text-sm font-medium text-gray-700 dark:text-gray-200"
+              >
+                Diensttype
+              </label>
+              <select
+                id="diensttype-filter"
+                value={selectedDienstType}
+                onChange={handleDienstTypeChange}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-bright-cobalt focus:outline-none focus:ring-1 focus:ring-bright-cobalt dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-electric-cyan dark:focus:ring-electric-cyan"
+              >
+                <option value="">Alle diensttypes</option>
+                {selectedDienstType && !dienstTypeOptions.some((type) => type.id === selectedDienstType) && (
+                  <option value={selectedDienstType}>Geselecteerd diensttype</option>
+                )}
+                {dienstTypeOptions.map((type) => (
+                  <option key={type.id} value={type.id}>{type.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {confirmOverlap && (
             <div className="card p-4 border-l-4 border-amber-400">
               <p className="text-sm text-gray-900 dark:text-gray-100">{confirmOverlap.message}</p>
@@ -417,7 +486,9 @@ export default function Vrijwillig() {
               ) : availableShifts.length === 0 ? (
                 <div className="card p-8 text-center text-sm text-gray-600 dark:text-gray-400">
                   <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  Geen open diensten beschikbaar in de komende periode.
+                  {selectedDienstType
+                    ? 'Geen open diensten van dit diensttype beschikbaar in de komende periode.'
+                    : 'Geen open diensten beschikbaar in de komende periode.'}
                 </div>
               ) : (
                 <ul className="space-y-2">
@@ -445,7 +516,7 @@ export default function Vrijwillig() {
                 </h2>
                 {upcomingShifts.length === 0 ? (
                   <div className="card p-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    Geen komende diensten gepland.
+                    {selectedDienstType ? 'Geen komende diensten van dit diensttype gepland.' : 'Geen komende diensten gepland.'}
                   </div>
                 ) : (
                   <ul className="space-y-2">
