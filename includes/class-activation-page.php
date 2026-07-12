@@ -173,18 +173,20 @@ class ActivationPage {
 		$this->open( 'Account activeren' );
 		?>
 	<div class="card">
-		<p>Vul het e-mailadres in dat bij de club bekend is. We sturen je een link om je account te activeren.</p>
+		<p>Vul het e-mailadres in dat bij de club bekend is, dit is hetzelfde mailadres waarop je onze nieuwsbrieven krijgt en waarmee je inlogt in de Voetbal.nl app. We sturen je dan een link om je account te activeren.</p>
 		<?php if ( $error ) : ?>
 			<p class="error-hint"><?php echo esc_html( $error ); ?></p>
 		<?php endif; ?>
 		<form method="post" action="<?php echo esc_url( home_url( '/activeren' ) ); ?>">
 			<?php wp_nonce_field( self::NONCE_ACTION ); ?>
-			<p>
-				<label for="rondo-activation-email">E-mailadres</label><br />
+			<p class="activation-email-field">
+				<label for="rondo-activation-email" class="activation-email-label">E-mailadres</label><br />
 				<input type="email" id="rondo-activation-email" name="email" required autocomplete="email"
+					oninvalid="this.setCustomValidity(this.validity.valueMissing ? 'Vul je e-mailadres in.' : 'Vul een geldig e-mailadres in.')"
+					oninput="this.setCustomValidity('')"
 					style="width:100%;padding:12px;font-size:16px;border:1px solid #cbd5e1;border-radius:8px;margin-top:6px;" />
 			</p>
-			<button type="submit" class="btn-primary">Stuur mij een activatielink</button>
+			<button type="submit" class="btn btn-primary activation-submit">Stuur mij een activatielink</button>
 		</form>
 	</div>
 		<?php

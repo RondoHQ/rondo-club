@@ -245,6 +245,19 @@ class PublicPageChrome {
 			color: #1e293b;
 		}
 
+		.activation-email-field {
+			margin-top: 1.25rem;
+		}
+
+		.activation-email-label {
+			display: inline-block;
+			font-weight: 700;
+		}
+
+		.activation-submit {
+			margin-top: 1rem;
+		}
+
 		.success-card {
 			text-align: center;
 			padding: 2rem 1.5rem;
