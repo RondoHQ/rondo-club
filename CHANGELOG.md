@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.47.2] - 2026-07-12
+
+### Changed
+- De uitleg en formulieropmaak op `/activeren` zijn verduidelijkt: leden herkennen welk e-mailadres ze moeten gebruiken, en het veldlabel en de activatieknop hebben meer nadruk en ruimte.
+
+### Fixed
+- De browservalidatie van het e-mailadres op `/activeren` toont Nederlandse meldingen voor een leeg of ongeldig adres.
+
 ## [33.47.1] - 2026-07-11
 
 ### Fixed
