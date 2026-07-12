@@ -50,6 +50,21 @@ class MemberShifts extends Base {
 	/** Locks older than this are treated as abandoned after a fatal request. */
 	const SHIFT_LOCK_STALE_SECONDS = 15;
 
+	/**
+	 * Refresh one value from the persistent object cache.
+	 *
+	 * SiteGround's Memcached drop-in keeps a per-request runtime copy and only
+	 * unsets it when a shared-cache delete succeeds. A waiter can therefore keep
+	 * an old value after the lock owner has already deleted the shared key. The
+	 * force flag bypasses that runtime copy without flushing unrelated caches.
+	 *
+	 * @param int|string $key   Cache key.
+	 * @param string     $group Cache group.
+	 */
+	private function refresh_cache_value( $key, string $group ): void {
+		wp_cache_get( $key, $group, true );
+	}
+
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 	}
@@ -75,7 +90,7 @@ class MemberShifts extends Base {
 			// A request that already observed this option can retain that value in
 			// its runtime cache after another PHP process releases the lock. Force
 			// this request to consult the shared cache/database on every attempt.
-			wp_cache_delete( $lock_key, 'options' );
+			$this->refresh_cache_value( $lock_key, 'options' );
 
 			$lock_value = [
 				'token'      => $token,
@@ -86,10 +101,10 @@ class MemberShifts extends Base {
 					// The request may have primed this shift's post-meta cache while
 					// loading the available-shifts list before it waited for the lock.
 					// Discard that snapshot so the mutation starts with the latest row.
-					wp_cache_delete( $shift_id, 'post_meta' );
+					$this->refresh_cache_value( $shift_id, 'post_meta' );
 					return $callback();
 				} finally {
-					wp_cache_delete( $lock_key, 'options' );
+					$this->refresh_cache_value( $lock_key, 'options' );
 					$current = get_option( $lock_key, [] );
 					if ( is_array( $current ) && ( $current['token'] ?? '' ) === $token ) {
 						delete_option( $lock_key );
@@ -97,14 +112,14 @@ class MemberShifts extends Base {
 				}
 			}
 
-			wp_cache_delete( $lock_key, 'options' );
+			$this->refresh_cache_value( $lock_key, 'options' );
 			$current = get_option( $lock_key, [] );
 			if (
 				is_array( $current )
 				&& isset( $current['created_at'], $current['token'] )
 				&& (float) $current['created_at'] < microtime( true ) - self::SHIFT_LOCK_STALE_SECONDS
 			) {
-				wp_cache_delete( $lock_key, 'options' );
+				$this->refresh_cache_value( $lock_key, 'options' );
 				$latest = get_option( $lock_key, [] );
 				if ( is_array( $latest ) && ( $latest['token'] ?? '' ) === $current['token'] ) {
 					delete_option( $lock_key );
