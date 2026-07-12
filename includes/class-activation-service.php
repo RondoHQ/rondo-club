@@ -236,12 +236,93 @@ class ActivationService {
 			]
 		);
 
-		$headers = [
-			'Content-Type: text/html; charset=UTF-8',
-			sprintf( 'From: %s <%s>', sanitize_text_field( $branding['name'] ), self::ACTIVATION_FROM_EMAIL ),
-		];
+		return (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+	}
 
-		return (bool) wp_mail( $email, $subject, $html, $headers );
+	/**
+	 * Send Magic Login links for the existing accounts behind an address.
+	 *
+	 * A shared household address receives one message with a named button per account.
+	 * Token creation and authentication remain owned by the Magic Login plugin.
+	 *
+	 * @param string $email      Address on file.
+	 * @param int[]  $person_ids People matched to the address.
+	 * @return bool Whether wp_mail() accepted the message.
+	 */
+	public static function send_magic_login_email( string $email, array $person_ids ): bool {
+		$branding    = PublicPageChrome::branding();
+		$login_links = [];
+
+		foreach ( $person_ids as $person_id ) {
+			$user_id = (int) get_post_meta( (int) $person_id, UserProvisioning::META_USER_ID, true );
+			$user    = $user_id > 0 ? get_userdata( $user_id ) : false;
+			if ( ! $user instanceof \WP_User ) {
+				continue;
+			}
+
+			// Respect Magic Login's own per-user failsafe before minting a token.
+			if ( apply_filters( 'magic_login_pre_send_login_link', null, $user ) !== null ) {
+				continue;
+			}
+
+			$login_url = (string) apply_filters( 'rondo_activation_magic_login_url', '', $user );
+			if ( $login_url === '' && function_exists( '\\MagicLogin\\Utils\\create_login_link' ) ) {
+				$login_url = (string) \MagicLogin\Utils\create_login_link( $user, 'email', home_url( '/' ) );
+			}
+			if ( $login_url === '' ) {
+				continue;
+			}
+
+			do_action( 'magic_login_send_login_link', $user );
+			$login_links[] = [
+				'name' => get_the_title( (int) $person_id ),
+				'url'  => $login_url,
+			];
+		}
+
+		if ( empty( $login_links ) ) {
+			return false;
+		}
+
+		$multiple = count( $login_links ) > 1;
+		$subject  = sprintf( 'Log in bij %s', $branding['name'] );
+		$body     = $multiple
+			? '<p>Voor dit e-mailadres bestaan meerdere accounts. Kies hieronder met welk account je wilt inloggen.</p>'
+			: '<p>Voor dit e-mailadres bestaat al een account. Met de knop hieronder log je veilig in zonder wachtwoord.</p>';
+
+		foreach ( $login_links as $login_link ) {
+			$label = $multiple ? 'Inloggen als ' . $login_link['name'] : 'Direct inloggen';
+			$body .= EmailTemplate::render_cta_button( $login_link['url'], $label, $branding['accent_color'] );
+		}
+
+		$body .= '<p style="margin:24px 0 0;">Heb je dit niet zelf aangevraagd? Dan hoef je niets te doen.</p>';
+
+		$html = EmailTemplate::render(
+			[
+				'brand_name'    => $branding['name'],
+				'preheader'     => $subject,
+				'eyebrow'       => 'Account',
+				'heading'       => $subject,
+				'body_html'     => $body,
+				'accent_color'  => $branding['accent_color'],
+				'support_email' => self::ACTIVATION_FROM_EMAIL,
+			]
+		);
+
+		return (bool) wp_mail( $email, $subject, $html, self::email_headers( $branding['name'] ) );
+	}
+
+	/**
+	 * Shared sender headers for activation and Magic Login mail.
+	 *
+	 * @param string $brand_name Club display name.
+	 * @return string[]
+	 */
+	private static function email_headers( string $brand_name ): array {
+		return [
+			'Content-Type: text/html; charset=UTF-8',
+			sprintf( 'From: %s <%s>', sanitize_text_field( $brand_name ), self::ACTIVATION_FROM_EMAIL ),
+		];
 	}
 
 	/**

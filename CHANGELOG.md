@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.51.0] - 2026-07-12
+
+### Added
+
+- Wie via `/activeren` een e-mailadres indient waarvoor alle accounts al bestaan, ontvangt voortaan een eenmalige Magic Login-link. Gedeelde gezinsadressen krijgen één e-mail met een herkenbare, benoemde link per account.
+
+### Changed
+
+- De neutrale bevestiging op `/activeren` vermeldt dat de e-mail zowel een activatie- als directe inloglink kan bevatten, zonder prijs te geven of het adres bekend is.
+
 ## [33.50.0] - 2026-07-12
 
 ### Added

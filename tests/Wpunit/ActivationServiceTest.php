@@ -118,6 +118,82 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertStringContainsString( '<' . ActivationService::ACTIVATION_FROM_EMAIL . '>', $from_headers[0] );
 	}
 
+	public function test_existing_account_receives_a_magic_login_link(): void {
+		$person_id = $this->person( 'Anne Jansen', 'anne@example.com' );
+		$user_id   = self::factory()->user->create(
+			[
+				'user_login' => 'anne',
+				'user_email' => 'anne@example.com',
+			]
+		);
+		update_post_meta( $person_id, UserProvisioning::META_USER_ID, $user_id );
+
+		add_filter(
+			'rondo_activation_magic_login_url',
+			fn() => 'https://example.com/magic-login-token'
+		);
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$this->assertTrue( ActivationService::send_magic_login_email( 'anne@example.com', [ $person_id ] ) );
+		$this->assertSame( [ 'anne@example.com' ], $mail['to'] );
+		$this->assertStringContainsString( 'https://example.com/magic-login-token', $mail['message'] );
+		$this->assertStringContainsString( 'Direct inloggen', $mail['message'] );
+	}
+
+	public function test_household_receives_a_named_magic_link_for_each_account(): void {
+		$anne = $this->person( 'Anne Jansen', 'gezin@example.com' );
+		$bram = $this->person( 'Bram Jansen', 'gezin@example.com' );
+
+		foreach (
+			[
+				$anne => 'anne',
+				$bram => 'bram',
+			] as $person_id => $login
+		) {
+			$user_id = self::factory()->user->create(
+				[
+					'user_login' => $login,
+					'user_email' => $login . '@example.com',
+				]
+			);
+			update_post_meta( $person_id, UserProvisioning::META_USER_ID, $user_id );
+		}
+
+		add_filter(
+			'rondo_activation_magic_login_url',
+			fn( $url, $user ) => 'https://example.com/magic-' . $user->user_login,
+			10,
+			2
+		);
+
+		$mail = null;
+		add_filter(
+			'pre_wp_mail',
+			function ( $short, $atts ) use ( &$mail ) {
+				$mail = $atts;
+				return true;
+			},
+			5,
+			2
+		);
+
+		$this->assertTrue( ActivationService::send_magic_login_email( 'gezin@example.com', [ $anne, $bram ] ) );
+		$this->assertStringContainsString( 'Inloggen als Anne Jansen', $mail['message'] );
+		$this->assertStringContainsString( 'Inloggen als Bram Jansen', $mail['message'] );
+		$this->assertStringContainsString( 'https://example.com/magic-anne', $mail['message'] );
+		$this->assertStringContainsString( 'https://example.com/magic-bram', $mail['message'] );
+	}
+
 	public function test_a_garbage_token_resolves_to_nothing(): void {
 		$this->assertNull( ActivationService::email_for_token( 'nope' ) );
 		$this->assertNull( ActivationService::email_for_token( str_repeat( 'a', 64 ) ) );
