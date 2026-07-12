@@ -415,6 +415,7 @@ export const prmApi = {
   // Member-facing shift signup (/vrijwillig)
   getMyShifts: (params = {}) => api.get('/rondo/v1/my-shifts', { params }),
   getAvailableShifts: () => api.get('/rondo/v1/shifts/available'),
+  getShiftCalendar: (params = {}) => api.get('/rondo/v1/shifts/calendar', { params }),
   signupForShift: (shiftId, opts = {}) => api.post(`/rondo/v1/shifts/${shiftId}/signup`, opts),
   cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),
   removeShiftAssignee: (shiftId, personId) => api.delete(`/rondo/v1/shifts/${shiftId}/assignees/${personId}`),

@@ -97,6 +97,7 @@ export default function VrijwilligersSjabloonForm() {
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'shift-templates'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'sjabloon', id] });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
       navigate('/vrijwilligers/sjablonen');
     },
     onError: (err) => {

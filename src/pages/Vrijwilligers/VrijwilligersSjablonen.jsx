@@ -35,8 +35,9 @@ export default function VrijwilligersSjablonen() {
     mutationFn: () => prmApi.expandShiftTemplates(),
     onSuccess: (response) => {
       const created = response?.data?.created ?? 0;
-      const window = response?.data?.window ?? 84;
+      const window = response?.data?.window ?? 93;
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
       setFeedback({
         kind: 'success',
         message: created > 0
@@ -81,7 +82,7 @@ export default function VrijwilligersSjablonen() {
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Sjablonen</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Wekelijks terugkerende shift-regels. De expander rolt deze elke nacht uit naar concrete diensten voor de komende 12 weken.
+                Wekelijks terugkerende shift-regels. De expander rolt deze elke nacht uit naar concrete diensten voor de komende drie maanden.
               </p>
             </div>
           </div>
@@ -91,7 +92,7 @@ export default function VrijwilligersSjablonen() {
               onClick={() => { setFeedback(null); expandMutation.mutate(); }}
               disabled={expandMutation.isLoading || templates.length === 0}
               className="btn-tertiary inline-flex items-center gap-2"
-              title="Rol alle actieve sjablonen uit naar concrete diensten voor de komende 12 weken"
+              title="Rol alle actieve sjablonen uit naar concrete diensten voor de komende drie maanden"
             >
               <Play className="w-4 h-4" />
               {expandMutation.isLoading ? 'Uitrollen…' : 'Uitrollen'}

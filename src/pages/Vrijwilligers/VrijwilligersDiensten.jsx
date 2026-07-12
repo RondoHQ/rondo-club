@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CalendarClock, Plus, Settings, Pencil } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
 export default function VrijwilligersDiensten() {
   useDocumentTitle('Diensten — Vrijwilligers');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedDienstType = searchParams.get('diensttype') || '';
 
   const { data: typesData, isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -20,8 +23,26 @@ export default function VrijwilligersDiensten() {
     staleTime: 60 * 1000,
   });
 
+  const { data: calendarData, isLoading: calendarLoading } = useQuery({
+    queryKey: ['shift-calendar', 'manage', selectedDienstType],
+    queryFn: async () => (await prmApi.getShiftCalendar({
+      view: 'manage',
+      dienst_type_id: selectedDienstType || undefined,
+    })).data,
+    staleTime: 60 * 1000,
+  });
+
   const types = Array.isArray(typesData) ? typesData : [];
   const shifts = Array.isArray(shiftsData) ? shiftsData : [];
+
+  const handleDienstTypeChange = (dienstType) => {
+    setSearchParams((previousParams) => {
+      const nextParams = new URLSearchParams(previousParams);
+      if (dienstType) nextParams.set('diensttype', dienstType);
+      else nextParams.delete('diensttype');
+      return nextParams;
+    }, { replace: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -116,6 +137,40 @@ export default function VrijwilligersDiensten() {
         )}
       </section>
 
+      <ShiftCoverageCalendar
+        data={calendarData}
+        isLoading={calendarLoading}
+        selectedDienstType={selectedDienstType}
+        onDienstTypeChange={handleDienstTypeChange}
+        description="Klik op een gekleurde datum om de bezetting per dienst te bekijken."
+        renderShift={(shift) => (
+          <div key={shift.id} className="flex items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700">
+            <span className="h-10 w-2 shrink-0 rounded-full" style={{ background: shift.dienst_type_color || '#6b7280' }} />
+            <div className="min-w-0 flex-1">
+              <Link
+                to={`/vrijwilligers/diensten/${shift.id}`}
+                className="font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
+              >
+                {shift.dienst_type_name || shift.title}
+              </Link>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
+              </p>
+            </div>
+            <span className={`text-xs font-medium ${shift.is_filled ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+              {shift.is_filled ? 'Ingevuld' : `${Math.max(0, Math.max(1, shift.capacity) - shift.assigned_count)} open`}
+            </span>
+            <Link
+              to={`/vrijwilligers/diensten/${shift.id}`}
+              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              title="Bewerken"
+            >
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
+      />
+
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
           Recente shifts ({shifts.length})
@@ -127,7 +182,7 @@ export default function VrijwilligersDiensten() {
             <div className="text-gray-500 dark:text-gray-400 mb-2">Nog geen diensten gepland.</div>
             <p className="text-xs text-gray-400 dark:text-gray-500 max-w-md mx-auto">
               Maak een ad-hoc dienst aan via &ldquo;Nieuwe dienst&rdquo; rechtsboven, of zet een wekelijks{' '}
-              <Link to="/vrijwilligers/sjablonen" className="underline">sjabloon</Link> klaar — de expander rolt sjablonen elke nacht uit naar concrete diensten voor de komende 12 weken.
+              <Link to="/vrijwilligers/sjablonen" className="underline">sjabloon</Link> klaar — de expander rolt sjablonen elke nacht uit naar concrete diensten voor de komende drie maanden.
             </p>
           </div>
         ) : (

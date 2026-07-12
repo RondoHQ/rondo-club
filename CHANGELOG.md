@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.49.0] - 2026-07-12
+
+### Added
+
+- Een gedeelde bezettingskalender op `/vrijwilligers/diensten` en `/vrijwillig` toont de komende drie kalendermaanden per datum: groen wanneer alle diensten gevuld zijn en rood wanneer nog plekken openstaan. Beide weergaven ondersteunen een deelbaar diensttypefilter en tonen details na het kiezen van een datum.
+- Het beveiligde endpoint `GET /rondo/v1/shifts/calendar` levert geaggregeerde bezetting voor vrijwilligerscoördinatoren en een persoonsgebonden, privacyveilige aanmeldweergave voor leden.
+
+### Changed
+
+- De beschikbare-dienstenlijst op `/vrijwillig` is vervangen door de kalender; de persoonlijke lijst onder “Mijn diensten” blijft behouden.
+- Terugkerende dienstsjablonen worden 93 dagen vooruit uitgerold, zodat iedere periode van drie kalendermaanden volledig gevuld kan worden.
+
+### Fixed
+
+- Rechtstreekse aanmeldverzoeken respecteren nu ook de status als actief lid en de vereiste vrijwilligerspool, naast de bestaande VOG- en IVA-controles.
+
 ## [33.48.6] - 2026-07-12
 
 ### Fixed

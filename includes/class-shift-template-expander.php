@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ShiftTemplateExpander {
 
 	const CRON_HOOK   = 'rondo_expand_shift_templates';
-	const WINDOW_DAYS = 84; // 12 weeks rolling
+	const WINDOW_DAYS = 93; // Covers every possible three-calendar-month window.
 
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
@@ -62,7 +62,7 @@ class ShiftTemplateExpander {
 
 	/**
 	 * Expand the saved template immediately so the user sees concrete shifts
-	 * for the next 12 weeks without waiting for the daily cron. Idempotent —
+	 * for the next three months without waiting for the daily cron. Idempotent —
 	 * relies on `find_existing_shift()` to skip already-rolled-out dates.
 	 *
 	 * @param int|string $post_id ACF save_post payload (post ID or "options").
