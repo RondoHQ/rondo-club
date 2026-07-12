@@ -301,7 +301,7 @@ function rondo_init() {
 		// Hourly member reminders and post-shift survey emails.
 		new \Rondo\Volunteer\ShiftEmailScheduler();
 
-		// Daily template-expander cron (rolling 12-week window).
+		// Daily template-expander cron (rolling three-month window).
 		new \Rondo\Volunteer\ShiftTemplateExpander();
 
 		// Invalidate eligibility + relationship cache on person mutations.

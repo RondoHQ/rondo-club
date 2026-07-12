@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Clock, Calendar, ShieldAlert, Users } from 'lucide-react';
+import { HeartHandshake, AlertTriangle, CheckCircle2, XCircle, Calendar, ShieldAlert, Users } from 'lucide-react';
 import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
 function StatusBadge({ kind, children }) {
   const styles = {
@@ -276,6 +277,7 @@ export default function Vrijwillig() {
   const [tab, setTab] = useState('available');
   const [confirmOverlap, setConfirmOverlap] = useState(null); // { shiftId, message }
   const [actionError, setActionError] = useState('');
+  const selectedDienstType = searchParams.get('diensttype') || '';
 
   const { data: mine, isLoading: mineLoading, error: mineError } = useQuery({
     queryKey: ['my-shifts'],
@@ -283,9 +285,12 @@ export default function Vrijwillig() {
     staleTime: 60 * 1000,
   });
 
-  const { data: available, isLoading: availLoading } = useQuery({
-    queryKey: ['available-shifts'],
-    queryFn: async () => (await prmApi.getAvailableShifts()).data,
+  const { data: calendarData, isLoading: calendarLoading } = useQuery({
+    queryKey: ['shift-calendar', 'signup', selectedDienstType],
+    queryFn: async () => (await prmApi.getShiftCalendar({
+      view: 'signup',
+      dienst_type_id: selectedDienstType || undefined,
+    })).data,
     staleTime: 60 * 1000,
   });
 
@@ -293,7 +298,7 @@ export default function Vrijwillig() {
     mutationFn: ({ shiftId, forceOverlap = false }) => prmApi.signupForShift(shiftId, { force_overlap: forceOverlap }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['available-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
       setConfirmOverlap(null);
     },
     onError: (error) => {
@@ -314,26 +319,13 @@ export default function Vrijwillig() {
     onSuccess: () => {
       setActionError('');
       queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['available-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
     },
     onError: (error) => {
       setActionError(error?.response?.data?.message || 'Afmelden is niet gelukt.');
     },
   });
 
-  const selectedDienstType = searchParams.get('diensttype') || '';
-  const dienstTypeOptions = useMemo(() => {
-    const types = new Map();
-    [...(available?.shifts || []), ...(mine?.shifts || [])].forEach((shift) => {
-      if (shift.dienst_type_id && shift.dienst_type_name) {
-        types.set(String(shift.dienst_type_id), shift.dienst_type_name);
-      }
-    });
-
-    return [...types.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'nl'));
-  }, [available, mine]);
   const upcomingShifts = useMemo(
     () => (mine?.shifts || []).filter(
       (shift) => shift.status !== 'voltooid'
@@ -348,15 +340,15 @@ export default function Vrijwillig() {
     ),
     [mine, selectedDienstType]
   );
-  const availableShifts = useMemo(
-    () => (available?.shifts || []).filter(
-      (shift) => !selectedDienstType || String(shift.dienst_type_id) === selectedDienstType
+  const availableCount = useMemo(
+    () => (calendarData?.days || []).reduce(
+      (count, day) => count + day.shifts.filter((shift) => shift.can_signup).length,
+      0
     ),
-    [available, selectedDienstType]
+    [calendarData]
   );
 
-  const handleDienstTypeChange = (event) => {
-    const dienstType = event.target.value;
+  const handleDienstTypeChange = (dienstType) => {
     setSearchParams((previousParams) => {
       const nextParams = new URLSearchParams(previousParams);
       if (dienstType) {
@@ -407,7 +399,7 @@ export default function Vrijwillig() {
       ) : (
         <>
           <ObligationList obligations={mine?.obligations} exemption={mine?.exemption} />
-          <BlockBanners blockReasons={available?.block_reasons} />
+          <BlockBanners blockReasons={calendarData?.block_reasons} />
 
           <nav className="flex gap-6 border-b border-gray-200 dark:border-gray-700">
             <button
@@ -418,7 +410,7 @@ export default function Vrijwillig() {
                   : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
-              Beschikbaar ({availableShifts.length})
+              Beschikbaar ({availableCount})
             </button>
             <button
               onClick={() => setTab('mine')}
@@ -432,7 +424,7 @@ export default function Vrijwillig() {
             </button>
           </nav>
 
-          {(dienstTypeOptions.length > 1 || selectedDienstType) && (
+          {tab === 'mine' && ((calendarData?.dienst_types || []).length > 1 || selectedDienstType) && (
             <div className="flex flex-col gap-1.5 sm:max-w-xs">
               <label
                 htmlFor="diensttype-filter"
@@ -443,14 +435,14 @@ export default function Vrijwillig() {
               <select
                 id="diensttype-filter"
                 value={selectedDienstType}
-                onChange={handleDienstTypeChange}
+                onChange={(event) => handleDienstTypeChange(event.target.value)}
                 className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-bright-cobalt focus:outline-none focus:ring-1 focus:ring-bright-cobalt dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-electric-cyan dark:focus:ring-electric-cyan"
               >
                 <option value="">Alle diensttypes</option>
-                {selectedDienstType && !dienstTypeOptions.some((type) => type.id === selectedDienstType) && (
+                {selectedDienstType && !(calendarData?.dienst_types || []).some((type) => String(type.id) === selectedDienstType) && (
                   <option value={selectedDienstType}>Geselecteerd diensttype</option>
                 )}
-                {dienstTypeOptions.map((type) => (
+                {(calendarData?.dienst_types || []).map((type) => (
                   <option key={type.id} value={type.id}>{type.name}</option>
                 ))}
               </select>
@@ -484,21 +476,16 @@ export default function Vrijwillig() {
           )}
 
           {tab === 'available' && (
-            <section>
-              {availLoading ? (
-                <ContentLoadingSpinner />
-              ) : availableShifts.length === 0 ? (
-                <div className="card p-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                  <Clock className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                  {selectedDienstType
-                    ? 'Geen open diensten van dit diensttype beschikbaar in de komende periode.'
-                    : 'Geen open diensten beschikbaar in de komende periode.'}
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {availableShifts.map(shift => (
+            <ShiftCoverageCalendar
+              data={calendarData}
+              isLoading={calendarLoading}
+              selectedDienstType={selectedDienstType}
+              onDienstTypeChange={handleDienstTypeChange}
+              title="Wanneer kun je helpen?"
+              description="Rood betekent dat er nog iemand nodig is. Klik op een datum om je aan te melden."
+              renderShift={(shift) => (
+                <ul key={shift.id}>
                     <ShiftRow
-                      key={shift.id}
                       shift={shift}
                       onSignup={(id) => signupMutation.mutate({ shiftId: id })}
                       onCancel={(id) => cancelMutation.mutate(id)}
@@ -506,10 +493,9 @@ export default function Vrijwillig() {
                       cancelMutation={cancelMutation}
                       isMine={false}
                     />
-                  ))}
                 </ul>
               )}
-            </section>
+            />
           )}
 
           {tab === 'mine' && (

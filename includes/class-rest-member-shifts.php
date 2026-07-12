@@ -36,7 +36,10 @@ class MemberShifts extends Base {
 	 * Window (days ahead from "now") of available shifts to consider.
 	 * Mirrors ShiftTemplateExpander::WINDOW_DAYS so nothing falls out of view.
 	 */
-	const AVAILABLE_WINDOW_DAYS = 84;
+	const AVAILABLE_WINDOW_DAYS = 93;
+
+	/** Longest calendar range accepted by the API. */
+	const CALENDAR_MAX_DAYS = 100;
 
 	/** Members may cancel until this many days before a shift starts. */
 	const CANCEL_DEADLINE_DAYS = 21;
@@ -160,6 +163,35 @@ class MemberShifts extends Base {
 				'methods'             => \WP_REST_Server::READABLE,
 				'callback'            => [ $this, 'get_available_shifts' ],
 				'permission_callback' => 'is_user_logged_in',
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/calendar',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_shift_calendar' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'from'           => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'to'             => [
+						'required'          => false,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+					'dienst_type_id' => [
+						'required'          => false,
+						'sanitize_callback' => 'absint',
+					],
+					'view'           => [
+						'required'          => false,
+						'default'           => 'signup',
+						'sanitize_callback' => 'sanitize_key',
+					],
+				],
 			]
 		);
 
@@ -319,33 +351,7 @@ class MemberShifts extends Base {
 				continue;
 			}
 
-			$dienst_type_id = (int) $summary['dienst_type_id'];
-			$requires_vog   = $dienst_type_id > 0 && (bool) get_post_meta( $dienst_type_id, 'vog_required', true );
-			$requires_iva   = $dienst_type_id > 0 && (bool) get_post_meta( $dienst_type_id, 'iva_required', true );
-
-			// Per-dienst override: een specifieke shift mag de IVA-eis uitschakelen
-			// (bv. zaterdag voor 15:00 — geen alcohol → geen IVA nodig).
-			if ( $requires_iva && (bool) get_post_meta( $shift->ID, 'iva_waived', true ) ) {
-				$requires_iva = false;
-			}
-
-			$shift_blocks = [];
-			if ( $requires_vog && in_array( 'vog', $blocks, true ) ) {
-				$shift_blocks[] = 'vog';
-			}
-			if ( $requires_iva && in_array( 'iva', $blocks, true ) ) {
-				$shift_blocks[] = 'iva';
-			}
-
-			// Hard-block hidden shifts: VOG/IVA-vereiste shifts pas zichtbaar als
-			// de persoon eraan voldoet (bestuursbesluit 2026-05-26).
-			if ( ! empty( $shift_blocks ) ) {
-				continue;
-			}
-
-			// Pool-only shifts: only show to pool members.
-			$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
-			if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
+			if ( ! $this->shift_is_visible_to_member( $shift->ID, $person_id, $blocks ) ) {
 				continue;
 			}
 
@@ -373,6 +379,209 @@ class MemberShifts extends Base {
 		);
 	}
 
+	/**
+	 * Return three months of shift coverage for the manager and signup calendars.
+	 */
+	public function get_shift_calendar( \WP_REST_Request $request ) {
+		$view = (string) ( $request->get_param( 'view' ) ?: 'signup' );
+		if ( ! in_array( $view, [ 'manage', 'signup' ], true ) ) {
+			return new \WP_Error( 'invalid_calendar_view', 'Onbekende kalenderweergave.', [ 'status' => 400 ] );
+		}
+
+		if ( $view === 'manage' && ! current_user_can( 'manage_options' ) && ! current_user_can( 'vrijwilligers' ) ) {
+			return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot de dienstenkalender.', [ 'status' => 403 ] );
+		}
+
+		$range = $this->calendar_range( $request );
+		if ( is_wp_error( $range ) ) {
+			return $range;
+		}
+		[ $from, $to ] = $range;
+
+		$person_id = 0;
+		$blocks    = [];
+		if ( $view === 'signup' ) {
+			$person_id = $this->current_person_id();
+			if ( $person_id <= 0 ) {
+				return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
+			}
+			if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
+				return rest_ensure_response( $this->empty_calendar_response( $view, $from, $to ) );
+			}
+			$blocks = $this->signup_blocks( $person_id );
+		}
+
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'dienst_shift',
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded by the validated calendar range.
+				'posts_per_page'   => 500,
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish' ],
+				'meta_query'       => [
+					'relation' => 'AND',
+					[
+						'key'     => 'start_datetime',
+						'value'   => [ $from->format( 'Y-m-d 00:00:00' ), $to->format( 'Y-m-d 23:59:59' ) ],
+						'compare' => 'BETWEEN',
+						'type'    => 'DATETIME',
+					],
+					[
+						'key'     => 'status',
+						'value'   => [ 'open', 'vol' ],
+						'compare' => 'IN',
+					],
+				],
+				'orderby'          => 'meta_value',
+				'meta_key'         => 'start_datetime',
+				'order'            => 'ASC',
+			]
+		);
+
+		$selected_type = (int) $request->get_param( 'dienst_type_id' );
+		$types         = [];
+		$days          = [];
+		foreach ( $query->posts as $shift ) {
+			$summary = $this->format_shift_summary( $shift );
+			if ( $summary === null ) {
+				continue;
+			}
+			if ( $view === 'signup' && ! $this->shift_is_visible_to_member( $shift->ID, $person_id, $blocks ) ) {
+				continue;
+			}
+
+			$type_id = (int) $summary['dienst_type_id'];
+			if ( $type_id > 0 ) {
+				$types[ $type_id ] = [
+					'id'    => $type_id,
+					'name'  => $this->sanitize_text( $summary['dienst_type_name'] ),
+					'color' => sanitize_hex_color( $summary['dienst_type_color'] ) ?: '#6b7280',
+				];
+			}
+			if ( $selected_type > 0 && $type_id !== $selected_type ) {
+				continue;
+			}
+
+			$assigned_ids         = $summary['assigned_person_ids'];
+			$is_filled            = $summary['capacity'] > 0 && $summary['assigned_count'] >= $summary['capacity'];
+			$summary['is_filled'] = $is_filled;
+			if ( $view === 'signup' ) {
+				$fellow_volunteers                      = $this->format_fellow_volunteer_contacts( $assigned_ids, $person_id );
+				$summary['is_signed_up']                = in_array( $person_id, $assigned_ids, true );
+				$summary['can_signup']                  = $summary['status'] === 'open' && ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+				$summary['fellow_volunteers']           = array_column( $fellow_volunteers, 'name' );
+				$summary['can_cancel']                  = $summary['is_signed_up'] && $this->can_member_cancel( $shift->ID, $person_id );
+				$cancel_deadline                        = $this->cancel_deadline_timestamp( $shift->ID );
+				$summary['signup_is_final_after_grace'] = $cancel_deadline !== null && time() > $cancel_deadline;
+			}
+			unset( $summary['assigned_person_ids'] );
+
+			$date = substr( $summary['start_datetime'], 0, 10 );
+			if ( ! isset( $days[ $date ] ) ) {
+				$days[ $date ] = [
+					'date'            => $date,
+					'state'           => 'full',
+					'shift_count'     => 0,
+					'capacity'        => 0,
+					'assigned_count'  => 0,
+					'spots_remaining' => 0,
+					'shifts'          => [],
+				];
+			}
+			++$days[ $date ]['shift_count'];
+			$required_capacity                 = max( 1, (int) $summary['capacity'] );
+			$days[ $date ]['capacity']        += $required_capacity;
+			$days[ $date ]['assigned_count']  += min( $required_capacity, (int) $summary['assigned_count'] );
+			$days[ $date ]['spots_remaining'] += max( 0, $required_capacity - (int) $summary['assigned_count'] );
+			$days[ $date ]['shifts'][]         = $summary;
+			if ( ! $is_filled ) {
+				$days[ $date ]['state'] = 'open';
+			}
+		}
+
+		usort( $types, static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
+
+		return rest_ensure_response(
+			[
+				'view'          => $view,
+				'from'          => $from->format( 'Y-m-d' ),
+				'to'            => $to->format( 'Y-m-d' ),
+				'dienst_types'  => array_values( $types ),
+				'block_reasons' => $blocks,
+				'days'          => array_values( $days ),
+			]
+		);
+	}
+
+	/**
+	 * Validate the requested calendar range in the WordPress timezone.
+	 *
+	 * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}|\WP_Error
+	 */
+	private function calendar_range( \WP_REST_Request $request ) {
+		$timezone = wp_timezone();
+		$today    = current_datetime()->setTime( 0, 0, 0 );
+		$from     = $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ?: $today;
+		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $from->modify( 'first day of this month' )->modify( '+3 months -1 day' );
+
+		if ( $request->get_param( 'from' ) && ! $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ) {
+			return new \WP_Error( 'invalid_calendar_from', 'De begindatum is ongeldig.', [ 'status' => 400 ] );
+		}
+		if ( $request->get_param( 'to' ) && ! $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ) {
+			return new \WP_Error( 'invalid_calendar_to', 'De einddatum is ongeldig.', [ 'status' => 400 ] );
+		}
+		if ( $to < $from ) {
+			return new \WP_Error( 'invalid_calendar_range', 'De einddatum moet na de begindatum liggen.', [ 'status' => 400 ] );
+		}
+		if ( (int) $from->diff( $to )->format( '%a' ) > self::CALENDAR_MAX_DAYS ) {
+			return new \WP_Error( 'calendar_range_too_large', 'De kalenderperiode mag maximaal 100 dagen zijn.', [ 'status' => 400 ] );
+		}
+
+		return [ $from, $to ];
+	}
+
+	private function parse_calendar_date( string $value, \DateTimeZone $timezone ): ?\DateTimeImmutable {
+		if ( $value === '' ) {
+			return null;
+		}
+		$date = \DateTimeImmutable::createFromFormat( '!Y-m-d', $value, $timezone );
+		return $date && $date->format( 'Y-m-d' ) === $value ? $date : null;
+	}
+
+	private function empty_calendar_response( string $view, \DateTimeImmutable $from, \DateTimeImmutable $to ): array {
+		return [
+			'view'          => $view,
+			'from'          => $from->format( 'Y-m-d' ),
+			'to'            => $to->format( 'Y-m-d' ),
+			'dienst_types'  => [],
+			'block_reasons' => [],
+			'days'          => [],
+		];
+	}
+
+	/**
+	 * Apply the same certificate and pool gates to lists, calendars and signup.
+	 */
+	private function shift_is_visible_to_member( int $shift_id, int $person_id, array $blocks ): bool {
+		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+		if ( $dienst_type_id <= 0 ) {
+			return true;
+		}
+
+		if ( (bool) get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
+			return false;
+		}
+
+		$requires_iva = (bool) get_post_meta( $dienst_type_id, 'iva_required', true );
+		if ( $requires_iva && ! (bool) get_post_meta( $shift_id, 'iva_waived', true ) && in_array( 'iva', $blocks, true ) ) {
+			return false;
+		}
+
+		$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
+		return $required_pool <= 0 || $this->person_is_pool_member( $person_id, $required_pool );
+	}
+
 	public function signup( \WP_REST_Request $request ) {
 		$person_id = $this->current_person_id();
 		$shift_id  = (int) $request->get_param( 'id' );
@@ -380,6 +589,9 @@ class MemberShifts extends Base {
 
 		if ( $person_id <= 0 ) {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon.', [ 'status' => 404 ] );
+		}
+		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
+			return new \WP_Error( 'not_eligible', 'Je bent geen actief lid meer.', [ 'status' => 403 ] );
 		}
 
 		$shift = get_post( $shift_id );
@@ -396,6 +608,10 @@ class MemberShifts extends Base {
 			$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
 			if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
 				return new \WP_Error( 'iva_required', 'Voor deze dienst is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
+			}
+			$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
+			if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
+				return new \WP_Error( 'pool_membership_required', 'Deze dienst is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.', [ 'status' => 403 ] );
 			}
 		}
 
