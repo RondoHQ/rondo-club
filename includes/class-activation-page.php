@@ -111,7 +111,13 @@ class ActivationPage {
 		self::flush_response();
 
 		if ( ! empty( $persons ) ) {
-			ActivationService::send_activation_email( $email, ActivationService::create_token( $email ) );
+			$available = array_filter( $persons, fn( $person_id ) => ! ActivationService::has_account( $person_id ) );
+			if ( ! empty( $available ) ) {
+				ActivationService::send_activation_email( $email, ActivationService::create_token( $email ) );
+			} elseif ( ! ActivationService::send_magic_login_email( $email, $persons ) ) {
+				// Keep the existing recovery page as a fallback when Magic Login is unavailable.
+				ActivationService::send_activation_email( $email, ActivationService::create_token( $email ) );
+			}
 		}
 	}
 
@@ -201,7 +207,7 @@ class ActivationPage {
 		?>
 	<div class="card">
 		<h2>Kijk in je mailbox</h2>
-		<p>Als dit e-mailadres bij ons bekend is, hebben we er een activatielink naartoe gestuurd. De link is twee uur geldig.</p>
+		<p>Als dit e-mailadres bij ons bekend is, hebben we een e-mail gestuurd met de juiste link om je account te activeren of direct in te loggen.</p>
 		<p class="confirmation-help">Geen mail ontvangen? Zoek in je spam-map naar een bericht van <?php echo esc_html( ActivationService::ACTIVATION_FROM_EMAIL ); ?>. Ook daar niets? Neem dan contact op met de ledenadministratie.</p>
 	</div>
 		<?php
