@@ -282,7 +282,8 @@ class ActivationPage {
 			$heading . ' — ' . $branding['name'],
 			$branding['accent_color'],
 			$branding['accent_background_color'],
-			$branding['logo_url']
+			$branding['logo_url'],
+			get_theme_file_uri( '/public/images/og-account-activation.png' )
 		);
 		echo '<div class="container">';
 		PublicPageChrome::header_card( $heading );
