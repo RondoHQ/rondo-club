@@ -1304,35 +1304,39 @@ export default function PersonDetail() {
             {acf.company_name && personalName && (
               <p className="text-base text-gray-600 dark:text-gray-300">{acf.company_name}</p>
             )}
-            {canEditAllPeople && (
-              <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <span>Persoonstype</span>
-                <select
-                  value={acf.person_type || 'member'}
-                  onChange={(event) => handlePersonTypeChange(event.target.value)}
-                  className="input py-1 text-sm w-auto"
-                  disabled={isSavingPersonType}
-                >
-                  <option value="member">Lid / ouder</option>
-                  <option value="contact">Contact</option>
-                  <option value="sponsor">Sponsor</option>
-                </select>
-              </label>
-            )}
-            {isSponsorPerson && canEditPeople && (
-              <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <span>Pasvariant</span>
-                <select
-                  value={acf.sponsor_pass_variant || ''}
-                  onChange={(event) => handleSponsorPassVariantChange(event.target.value)}
-                  className="input py-1 text-sm w-auto"
-                  disabled={isSavingSponsorPassVariant}
-                >
-                  <option value="" disabled>Kies...</option>
-                  <option value="businessclub">Businessclub AWC</option>
-                  <option value="awc_sponsor">AWC Sponsor</option>
-                </select>
-              </label>
+            {(canEditAllPeople || (isSponsorPerson && canEditPeople)) && (
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                {canEditAllPeople && (
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Persoonstype</span>
+                    <select
+                      value={acf.person_type || 'member'}
+                      onChange={(event) => handlePersonTypeChange(event.target.value)}
+                      className="input py-1 text-sm w-auto"
+                      disabled={isSavingPersonType}
+                    >
+                      <option value="member">Lid / ouder</option>
+                      <option value="contact">Contact</option>
+                      <option value="sponsor">Sponsor</option>
+                    </select>
+                  </label>
+                )}
+                {isSponsorPerson && canEditPeople && (
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <span>Pasvariant</span>
+                    <select
+                      value={acf.sponsor_pass_variant || ''}
+                      onChange={(event) => handleSponsorPassVariantChange(event.target.value)}
+                      className="input py-1 text-sm w-auto"
+                      disabled={isSavingSponsorPassVariant}
+                    >
+                      <option value="" disabled>Kies...</option>
+                      <option value="businessclub">Businessclub AWC</option>
+                      <option value="awc_sponsor">AWC Sponsor</option>
+                    </select>
+                  </label>
+                )}
+              </div>
             )}
             {canEditPeople && ['contact', 'sponsor'].includes(acf.person_type) && (
               <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
