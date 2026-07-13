@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.53.3] - 2026-07-13
+
+### Changed
+
+- Apple Wallet- en Google Wallet-passen voor sponsoren gebruiken voortaan het eigen Businessclub AWC-logo.
+
 ## [33.53.2] - 2026-07-13
 
 ### Changed

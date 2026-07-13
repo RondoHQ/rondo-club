@@ -35,6 +35,21 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertSame( '#ffffff', $google_method->invoke( new MembershipPassGoogle(), 'sponsor' ) );
 	}
 
+	public function test_sponsor_wallet_passes_use_businessclub_logo(): void {
+		$apple_method  = ( new ReflectionClass( MembershipPassApple::class ) )->getMethod( 'get_logo_image_path' );
+		$google_method = ( new ReflectionClass( MembershipPassGoogle::class ) )->getMethod( 'get_logo_image_url' );
+
+		$apple_method->setAccessible( true );
+		$google_method->setAccessible( true );
+
+		$apple_path = $apple_method->invoke( new MembershipPassApple(), 'sponsor' );
+		$google_url = $google_method->invoke( new MembershipPassGoogle(), 'sponsor' );
+
+		$this->assertFileExists( $apple_path );
+		$this->assertSame( 'businessclub-awc-logo.png', basename( $apple_path ) );
+		$this->assertStringEndsWith( '/public/icons/businessclub-awc-logo.png', $google_url );
+	}
+
 	public function test_sponsor_wallet_passes_use_businessclub_title_and_company_fields(): void {
 		$apple             = new MembershipPassApple();
 		$google            = new MembershipPassGoogle();
