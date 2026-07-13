@@ -48,12 +48,15 @@ class MembershipPassApple {
 		}
 
 		$knvb_id     = (string) get_field( 'knvb-id', $person_id );
-		$member_tier = $this->get_member_tier( $person_id );
+		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
 		}
 
-		$member_label = $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid';
+		$is_sponsor   = $member_tier === 'sponsor';
+		$member_label = $is_sponsor
+			? 'Sponsor'
+			: ( $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid' );
 
 		$cert_path = $this->get_cert_path();
 		if ( $cert_path === '' || ! file_exists( $cert_path ) ) {
@@ -83,10 +86,11 @@ class MembershipPassApple {
 			'serialNumber'       => $serial,
 			'teamIdentifier'     => $this->get_team_identifier(),
 			'organizationName'   => $this->get_organization_name(),
-			'description'        => 'Rondo lidmaatschapspas',
+			'description'        => $is_sponsor ? 'Rondo toegangspas' : 'Rondo lidmaatschapspas',
 			'logoText'           => $this->get_organization_name(),
-			'foregroundColor'    => 'rgb(255,255,255)',
-			'backgroundColor'    => $this->get_background_color(),
+			'foregroundColor'    => $is_sponsor ? 'rgb(17,24,39)' : 'rgb(255,255,255)',
+			'labelColor'         => $is_sponsor ? 'rgb(55,65,81)' : 'rgb(255,255,255)',
+			'backgroundColor'    => $this->get_background_color( $member_tier ),
 			'generic'            => [
 				'primaryFields'   => [
 					[
@@ -149,7 +153,7 @@ class MembershipPassApple {
 		}
 
 		return [
-			'filename' => 'rondo-lidpas-' . $person_id . '.pkpass',
+			'filename' => 'rondo-' . ( $is_sponsor ? 'toegangspas' : 'lidpas' ) . '-' . $person_id . '.pkpass',
 			'content'  => $binary,
 		];
 	}
@@ -243,24 +247,8 @@ class MembershipPassApple {
 		$infix      = (string) get_field( 'infix', $person_id );
 		$last_name  = (string) get_field( 'last_name', $person_id );
 
-		return trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-	}
-
-	/**
-	 * Resolve member tier from Type lid.
-	 *
-	 * @param int $person_id Person ID.
-	 * @return string
-	 */
-	private function get_member_tier( int $person_id ): string {
-		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
-		if ( $type_lid === 'bondslid' ) {
-			return 'bondslid';
-		}
-		if ( $type_lid === 'verenigingslid' ) {
-			return 'verenigingslid';
-		}
-		return '';
+		$name = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		return $name !== '' ? $name : trim( (string) get_field( 'company_name', $person_id ) );
 	}
 
 	/**
@@ -474,7 +462,11 @@ class MembershipPassApple {
 	 *
 	 * @return string
 	 */
-	private function get_background_color(): string {
+	private function get_background_color( string $member_tier = '' ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return 'rgb(255,255,255)';
+		}
+
 		$config = new FinanceConfig();
 		$hex    = trim( $config->get_accent_color() );
 		if ( preg_match( '/^#?([a-f0-9]{6})$/i', $hex, $matches ) ) {

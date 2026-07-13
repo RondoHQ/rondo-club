@@ -5,7 +5,7 @@ import {
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
   CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard
 } from 'lucide-react';
-import { usePerson, usePersonTimeline, useDeleteNote, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
+import { usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
@@ -43,6 +43,7 @@ export default function PersonDetail() {
   const { data: person, isLoading, error } = usePerson(id);
   const { data: timeline } = usePersonTimeline(id);
   const deleteNote = useDeleteNote();
+  const deletePerson = useDeletePerson();
   const updatePerson = useUpdatePerson();
   const createNote = useCreateNote();
   const createActivity = useCreateActivity();
@@ -78,7 +79,10 @@ export default function PersonDetail() {
   const canEditFinancieel = currentUser?.can_edit_financieel ?? false;
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
-  let canEditPeople = currentUser?.can_edit_people ?? false;
+  const canEditAllPeople = currentUser?.can_edit_people ?? false;
+  const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
+  const isSponsorPerson = person?.acf?.person_type === 'sponsor';
+  let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson);
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
@@ -205,6 +209,17 @@ export default function PersonDetail() {
       alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingPersonType(false);
+    }
+  };
+
+  const handleDeleteSponsor = async () => {
+    if (!isSponsorPerson || !confirm(`Weet je zeker dat je ${person?.name || 'deze sponsor'} definitief wilt verwijderen?`)) return;
+
+    try {
+      await deletePerson.mutateAsync(Number(id));
+      navigate('/people');
+    } catch {
+      alert('Sponsor kon niet worden verwijderd. Probeer het opnieuw.');
     }
   };
 
@@ -1171,6 +1186,16 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
           </button>
+          {isSponsorPerson && canEditPeople && (
+            <button
+              onClick={handleDeleteSponsor}
+              disabled={deletePerson.isPending}
+              className="btn-tertiary text-red-600 hover:text-red-700 dark:text-red-400"
+            >
+              <Trash2 className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">Sponsor verwijderen</span>
+            </button>
+          )}
         </div>
       </div>
       {syncErrorMessage && (
@@ -1242,6 +1267,11 @@ export default function PersonDetail() {
                   Contact
                 </span>
               )}
+              {acf.person_type === 'sponsor' && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+                  Sponsor
+                </span>
+              )}
               {!acf.former_member && hasValidLidTot && new Date(acf['lid-tot']) > new Date() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Afmelding in de toekomst
@@ -1261,7 +1291,7 @@ export default function PersonDetail() {
             {acf.company_name && personalName && (
               <p className="text-base text-gray-600 dark:text-gray-300">{acf.company_name}</p>
             )}
-            {canEditPeople && (
+            {canEditAllPeople && (
               <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <span>Persoonstype</span>
                 <select
@@ -1272,10 +1302,11 @@ export default function PersonDetail() {
                 >
                   <option value="member">Lid / ouder</option>
                   <option value="contact">Contact</option>
+                  <option value="sponsor">Sponsor</option>
                 </select>
               </label>
             )}
-            {canEditPeople && acf.person_type === 'contact' && (
+            {canEditPeople && ['contact', 'sponsor'].includes(acf.person_type) && (
               <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
                 <span className="mb-1 block">Bedrijfsnaam</span>
                 <input

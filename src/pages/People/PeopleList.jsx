@@ -53,6 +53,7 @@ function getMembershipTypeLabel(person) {
   const acf = person.acf || {};
 
   if (acf.person_type === 'contact') return 'Contact';
+  if (acf.person_type === 'sponsor') return 'Sponsor';
 
   const sportlinkType = String(acf['type-lid'] || '').trim().toLowerCase();
   if (sportlinkType.includes('verenigingslid')) return 'Verenigingslid';
@@ -178,6 +179,11 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           {person.acf?.person_type === 'contact' && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
               Contact
+            </span>
+          )}
+          {person.acf?.person_type === 'sponsor' && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
+              Sponsor
             </span>
           )}
           {person.acf?.wacht_op_overschrijving && (
@@ -753,12 +759,12 @@ export default function PeopleList() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
+  const [newPersonType, setNewPersonType] = useState(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
   const createPersonMutation = useCreatePerson({
     onSuccess: (createdPerson) => {
-      setShowContactModal(false);
+      setNewPersonType(null);
       navigate(`/people/${createdPerson.id}`);
     },
   });
@@ -938,8 +944,11 @@ export default function PeopleList() {
       filterOptions: [
         { value: 'member', label: 'Leden en ouders' },
         { value: 'contact', label: 'Contacten' },
+        { value: 'sponsor', label: 'Sponsors' },
       ],
-      getFilterLabel: (val) => val === 'contact' ? 'Persoonstype: Contact' : 'Persoonstype: Lid / ouder',
+      getFilterLabel: (val) => val === 'contact'
+        ? 'Persoonstype: Contact'
+        : val === 'sponsor' ? 'Persoonstype: Sponsor' : 'Persoonstype: Lid / ouder',
       filterSection: 'Persoon',
     }),
 
@@ -1320,9 +1329,15 @@ export default function PeopleList() {
           toolbarEnd={
             <div className="flex items-center gap-2">
               {currentUser?.can_edit_people && (
-                <button onClick={() => setShowContactModal(true)} className="btn-primary">
+                <button onClick={() => setNewPersonType('contact')} className="btn-primary">
                   <Plus className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Contact toevoegen</span>
+                </button>
+              )}
+              {(currentUser?.can_edit_people || currentUser?.can_manage_sponsors) && (
+                <button onClick={() => setNewPersonType('sponsor')} className="btn-primary">
+                  <Plus className="w-4 h-4 md:mr-2" />
+                  <span className="hidden md:inline">Sponsor toevoegen</span>
                 </button>
               )}
               <button
@@ -1480,11 +1495,11 @@ export default function PeopleList() {
       />
 
       <PersonEditModal
-        isOpen={showContactModal}
-        onClose={() => setShowContactModal(false)}
+        isOpen={newPersonType !== null}
+        onClose={() => setNewPersonType(null)}
         onSubmit={(data) => createPersonMutation.mutate(data)}
         isLoading={createPersonMutation.isPending}
-        initialPersonType="contact"
+        initialPersonType={newPersonType || 'contact'}
       />
 
       {/* Bulk Organization Modal */}

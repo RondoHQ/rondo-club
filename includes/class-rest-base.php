@@ -177,8 +177,9 @@ abstract class Base {
 			return false;
 		}
 
-		// Check if user has people-editing capability
-		if ( ! \Rondo\Core\AccessControl::can_edit_people() ) {
+		// Check the record-specific people-editing scope. Sponsor managers may
+		// edit sponsors, but never members or ordinary contacts.
+		if ( ! \Rondo\Core\AccessControl::can_edit_person( $person_id ) ) {
 			return false;
 		}
 

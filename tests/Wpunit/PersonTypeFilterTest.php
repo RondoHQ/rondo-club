@@ -74,6 +74,28 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->assertNotContains( $contact_id, $ids );
 	}
 
+	public function test_sponsor_filter_only_returns_explicit_sponsors(): void {
+		$contact_id = $this->createPerson(
+			[ 'post_title' => 'Extern contact' ],
+			[
+				'first_name'  => 'Extern',
+				'person_type' => 'contact',
+			]
+		);
+		$sponsor_id = $this->createPerson(
+			[ 'post_title' => 'Businessclublid' ],
+			[
+				'first_name'  => 'Businessclub',
+				'person_type' => 'sponsor',
+			]
+		);
+
+		$ids = $this->filtered_ids( 'sponsor' );
+
+		$this->assertContains( $sponsor_id, $ids );
+		$this->assertNotContains( $contact_id, $ids );
+	}
+
 	public function test_company_only_contact_uses_company_as_display_name(): void {
 		$contact_id = $this->createPerson(
 			[ 'post_title' => 'Tijdelijke titel' ],
@@ -111,6 +133,21 @@ class PersonTypeFilterTest extends RondoTestCase {
 				'first_name'   => '',
 				'company_name' => 'Voorbeeld BV',
 				'person_type'  => 'contact',
+			]
+		);
+
+		$prepared = new \stdClass();
+		$this->assertSame( $prepared, $this->controller->validate_person_identity( $prepared, $request ) );
+	}
+
+	public function test_rest_identity_validation_accepts_company_only_sponsor(): void {
+		$request = new \WP_REST_Request( 'POST' );
+		$request->set_param(
+			'acf',
+			[
+				'first_name'   => '',
+				'company_name' => 'Sponsor BV',
+				'person_type'  => 'sponsor',
 			]
 		);
 

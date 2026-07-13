@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.53.0] - 2026-07-13
+
+### Added
+
+- Businessclubleden en sponsoren kunnen als persoonstype **Sponsor** worden toegevoegd, beheerd en gefilterd. De ingebouwde rol **Rondo Sponsorbeheerder** mag uitsluitend sponsorrecords toevoegen, aanpassen en verwijderen.
+- Sponsors krijgen automatisch een digitale toegangspas. De Apple Wallet- en Google Wallet-passen hebben een witte achtergrond en tonen **Sponsor** als pastype.
+
 ## [33.52.0] - 2026-07-13
 
 ### Added
