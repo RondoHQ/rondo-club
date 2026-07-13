@@ -30,11 +30,13 @@ class ShiftEmailScheduler {
 
 	private const DEFAULT_SURVEY_BODY = "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?";
 
-	private const CANCELLATION_SUBJECT = 'Je dienst {dienst} op {datum} gaat niet door';
+	private const DEFAULT_EARLY_CANCELLATION_SUBJECT = 'Je dienst {dienst} op {datum} gaat niet door';
 
-	private const EARLY_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.";
+	private const DEFAULT_EARLY_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.";
 
-	private const LAST_MINUTE_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.";
+	private const DEFAULT_LAST_MINUTE_CANCELLATION_SUBJECT = 'Je dienst {dienst} op {datum} gaat niet door';
+
+	private const DEFAULT_LAST_MINUTE_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.";
 
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
@@ -121,10 +123,17 @@ class ShiftEmailScheduler {
 			return $result;
 		}
 
-		$body_template  = $cancellation['variant'] === ShiftCancellationService::VARIANT_LAST_MINUTE
-			? self::LAST_MINUTE_CANCELLATION_BODY
-			: self::EARLY_CANCELLATION_BODY;
-		$is_last_minute = $cancellation['variant'] === ShiftCancellationService::VARIANT_LAST_MINUTE;
+		$is_last_minute   = $cancellation['variant'] === ShiftCancellationService::VARIANT_LAST_MINUTE;
+		$subject_key      = $is_last_minute ? 'cancellation_last_minute_email_subject' : 'cancellation_early_email_subject';
+		$body_key         = $is_last_minute ? 'cancellation_last_minute_email_body' : 'cancellation_early_email_body';
+		$subject_template = (string) get_post_meta( $type_id, $subject_key, true );
+		$body_template    = (string) get_post_meta( $type_id, $body_key, true );
+		if ( $subject_template === '' ) {
+			$subject_template = $is_last_minute ? self::DEFAULT_LAST_MINUTE_CANCELLATION_SUBJECT : self::DEFAULT_EARLY_CANCELLATION_SUBJECT;
+		}
+		if ( $body_template === '' ) {
+			$body_template = $is_last_minute ? self::DEFAULT_LAST_MINUTE_CANCELLATION_BODY : self::DEFAULT_EARLY_CANCELLATION_BODY;
+		}
 		if ( $cancellation['reason'] !== '' ) {
 			$body_template .= "\n\nReden: " . $cancellation['reason'];
 		}
@@ -144,7 +153,7 @@ class ShiftEmailScheduler {
 			}
 
 			$vars    = $this->template_variables( $type_id, $person_id, $assigned, $start, $end );
-			$subject = $this->substitute_variables( self::CANCELLATION_SUBJECT, $vars );
+			$subject = $this->substitute_variables( $subject_template, $vars );
 			$body    = $this->substitute_variables( $body_template, $vars );
 			$html    = EmailTemplate::render(
 				[

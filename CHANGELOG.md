@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.57.0] - 2026-07-13
+
+### Added
+
+- Per diensttype zijn het onderwerp en de berichttekst van beide annuleringsmails instelbaar: minimaal 48 uur vooraf en binnen 48 uur. De bestaande standaardteksten blijven actief als terugval en ondersteunen dezelfde persoonlijke variabelen als de herinneringsmails.
+
 ## [33.56.0] - 2026-07-13
 
 ### Added
