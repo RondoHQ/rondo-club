@@ -83,23 +83,24 @@ class MembershipPassGoogle {
 			return $qr_result;
 		}
 
-		$person_name  = $this->get_person_full_name( $person_id );
-		$issuer_name  = $this->get_issuer_name();
-		$member_type  = $this->get_member_type_label( $member_tier );
-		$knvb_id      = trim( (string) get_field( 'knvb-id', $person_id ) );
-		$details      = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
-		$team_name    = $details['teams'] !== '' ? $details['teams'] : '-';
-		$functions    = $details['functions'] !== '' ? $details['functions'] : '-';
-		$company_name = trim( (string) get_field( 'company_name', $person_id ) );
-		$card_title   = $this->get_card_title( $issuer_name, $member_tier );
-		$object_id    = $issuer_id . '.member_' . $person_id;
+		$person_name          = $this->get_person_full_name( $person_id );
+		$issuer_name          = $this->get_issuer_name();
+		$member_type          = $this->get_member_type_label( $member_tier );
+		$knvb_id              = trim( (string) get_field( 'knvb-id', $person_id ) );
+		$details              = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
+		$team_name            = $details['teams'] !== '' ? $details['teams'] : '-';
+		$functions            = $details['functions'] !== '' ? $details['functions'] : '-';
+		$company_name         = trim( (string) get_field( 'company_name', $person_id ) );
+		$sponsor_pass_variant = $member_tier === 'sponsor' ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
+		$card_title           = $this->get_card_title( $issuer_name, $member_tier, $sponsor_pass_variant );
+		$object_id            = $issuer_id . '.member_' . $person_id;
 		if ( $details['selection'] !== '' ) {
 			$object_id .= '_' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
 		}
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $card_title, $person_name, $member_type, $team_name, $functions, $company_name, $knvb_id, $season, $qr_result['token'], $member_tier );
+			$this->upsert_object( $service, $object_id, $class_id, $card_title, $person_name, $member_type, $team_name, $functions, $company_name, $knvb_id, $season, $qr_result['token'], $member_tier, $sponsor_pass_variant );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -180,8 +181,9 @@ class MembershipPassGoogle {
 	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
 	 * @param string        $member_tier Resolved pass tier.
+	 * @param string        $sponsor_pass_variant Sponsor pass variant.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $company_name, string $knvb_id, string $season, string $qr_payload, string $member_tier ) {
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $company_name, string $knvb_id, string $season, string $qr_payload, string $member_tier, string $sponsor_pass_variant ) {
 		$text_modules = array_map(
 			static function ( array $module ): TextModuleData {
 				return new TextModuleData( $module );
@@ -223,10 +225,10 @@ class MembershipPassGoogle {
 				'hexBackgroundColor' => $this->get_hex_background_color( $member_tier ),
 			]
 		);
-		$logo   = $this->get_logo_image_url( $member_tier );
+		$logo   = $this->get_logo_image_url( $member_tier, $sponsor_pass_variant );
 		if ( $logo !== '' ) {
 			$object->setLogo(
-				$this->build_logo_image( $logo, $member_tier )
+				$this->build_logo_image( $logo, $member_tier, $sponsor_pass_variant )
 			);
 		}
 
@@ -466,10 +468,11 @@ class MembershipPassGoogle {
 	 * Resolve logo image URL.
 	 *
 	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return string
 	 */
-	private function get_logo_image_url( string $member_tier = '' ): string {
-		if ( $member_tier === 'sponsor' ) {
+	private function get_logo_image_url( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
+		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
 			$businessclub_logo = get_template_directory() . '/public/icons/businessclub-awc-logo.png';
 			if ( file_exists( $businessclub_logo ) ) {
 				return get_template_directory_uri() . '/public/icons/businessclub-awc-logo.png';
@@ -497,10 +500,11 @@ class MembershipPassGoogle {
 	 *
 	 * @param string $logo_url Logo URL.
 	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return Image
 	 */
-	private function build_logo_image( string $logo_url, string $member_tier = '' ): Image {
-		$logo_name = $this->get_card_title( $this->get_issuer_name(), $member_tier );
+	private function build_logo_image( string $logo_url, string $member_tier = '', string $sponsor_pass_variant = '' ): Image {
+		$logo_name = $this->get_card_title( $this->get_issuer_name(), $member_tier, $sponsor_pass_variant );
 
 		return new Image(
 			[
@@ -637,10 +641,17 @@ class MembershipPassGoogle {
 	 *
 	 * @param string $issuer_name Configured issuer name.
 	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return string
 	 */
-	private function get_card_title( string $issuer_name, string $member_tier ): string {
-		return $member_tier === 'sponsor' ? 'Businessclub ' . $issuer_name : $issuer_name;
+	private function get_card_title( string $issuer_name, string $member_tier, string $sponsor_pass_variant = '' ): string {
+		if ( $member_tier !== 'sponsor' ) {
+			return $issuer_name;
+		}
+
+		return $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR
+			? $issuer_name . ' Sponsor'
+			: 'Businessclub ' . $issuer_name;
 	}
 
 	/**

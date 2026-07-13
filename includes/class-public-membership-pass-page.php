@@ -35,7 +35,9 @@ class PublicMembershipPassPage {
 	/**
 	 * Token length in bytes (hex-encoded => 64 chars).
 	 */
-	const TOKEN_LENGTH = 32;
+	const TOKEN_LENGTH                      = 32;
+	const SPONSOR_PASS_VARIANT_BUSINESSCLUB = 'businessclub';
+	const SPONSOR_PASS_VARIANT_AWC_SPONSOR  = 'awc_sponsor';
 
 	/**
 	 * Constructor.
@@ -220,7 +222,7 @@ class PublicMembershipPassPage {
 	public static function get_person_member_tier( int $person_id ): string {
 		$person_type = strtolower( trim( (string) get_field( 'person_type', $person_id ) ) );
 		if ( $person_type === 'sponsor' ) {
-			return 'sponsor';
+			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
 		}
 
 		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
@@ -234,6 +236,22 @@ class PublicMembershipPassPage {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Resolve the required wallet pass variant for a Sponsor.
+	 *
+	 * @param int $person_id Person post ID.
+	 * @return string Valid variant or an empty string when none is selected.
+	 */
+	public static function get_sponsor_pass_variant( int $person_id ): string {
+		$variant = sanitize_key( (string) ( get_field( 'sponsor_pass_variant', $person_id ) ?: get_post_meta( $person_id, 'sponsor_pass_variant', true ) ) );
+		$allowed = [
+			self::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
+			self::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
+		];
+
+		return in_array( $variant, $allowed, true ) ? $variant : '';
 	}
 
 	/**

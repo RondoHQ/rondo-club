@@ -272,6 +272,7 @@ export function useCreatePerson({ onSuccess } = {}) {
           nickname: data.nickname,
           company_name: data.company_name || '',
           person_type: data.person_type || 'member',
+          ...(data.person_type === 'sponsor' ? { sponsor_pass_variant: data.sponsor_pass_variant } : {}),
           gender: data.gender || null,
           pronouns: data.pronouns || null,
           email_1: data.email || '',

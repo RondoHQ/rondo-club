@@ -281,6 +281,21 @@ class CptCrudTest extends RondoTestCase {
 		);
 		$this->assertDenied( $forged_contact );
 
+		$missing_variant = $this->request(
+			'POST',
+			'/wp/v2/people',
+			[
+				'title'  => 'Sponsor zonder pasvariant',
+				'status' => 'publish',
+				'acf'    => [
+					'company_name' => 'Sponsor BV',
+					'person_type'  => 'sponsor',
+				],
+			]
+		);
+		$this->assertSame( 400, $missing_variant->get_status() );
+		$this->assertSame( 'rondo_sponsor_pass_variant_required', $missing_variant->get_data()['code'] );
+
 		$create = $this->request(
 			'POST',
 			'/wp/v2/people',
@@ -288,9 +303,10 @@ class CptCrudTest extends RondoTestCase {
 				'title'  => 'Businessclublid',
 				'status' => 'publish',
 				'acf'    => [
-					'first_name'  => 'Businessclub',
-					'last_name'   => 'Lid',
-					'person_type' => 'sponsor',
+					'first_name'           => 'Businessclub',
+					'last_name'            => 'Lid',
+					'person_type'          => 'sponsor',
+					'sponsor_pass_variant' => 'businessclub',
 				],
 			]
 		);

@@ -53,8 +53,9 @@ class MembershipPassApple {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
 		}
 
-		$is_sponsor   = $member_tier === 'sponsor';
-		$member_label = $is_sponsor
+		$is_sponsor           = $member_tier === 'sponsor';
+		$sponsor_pass_variant = $is_sponsor ? PublicMembershipPassPage::get_sponsor_pass_variant( $person_id ) : '';
+		$member_label         = $is_sponsor
 			? 'Sponsor'
 			: ( $member_tier === 'verenigingslid' ? 'Verenigingslid' : 'Bondslid' );
 
@@ -77,7 +78,7 @@ class MembershipPassApple {
 		$functions         = $details['functions'] !== '' ? $details['functions'] : '-';
 		$company_name      = trim( (string) get_field( 'company_name', $person_id ) );
 		$organization_name = $this->get_organization_name();
-		$card_title        = $this->get_card_title( $organization_name, $member_tier );
+		$card_title        = $this->get_card_title( $organization_name, $member_tier, $sponsor_pass_variant );
 		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season );
 		$serial            = 'person-' . $person_id;
 		if ( $details['selection'] !== '' ) {
@@ -117,7 +118,7 @@ class MembershipPassApple {
 
 		try {
 			$pass->setData( $pass_data );
-			$this->add_default_images( $pass, $person_id, $member_tier );
+			$this->add_default_images( $pass, $person_id, $member_tier, $sponsor_pass_variant );
 			$binary = $pass->create( false );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_apple_generate_failed', 'Genereren van Apple pass mislukt: ' . $e->getMessage() );
@@ -139,11 +140,12 @@ class MembershipPassApple {
 	 * @param PKPass $pass Pass instance.
 	 * @param int    $person_id Person ID.
 	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 */
-	private function add_default_images( PKPass $pass, int $person_id, string $member_tier = '' ) {
+	private function add_default_images( PKPass $pass, int $person_id, string $member_tier = '', string $sponsor_pass_variant = '' ) {
 		$theme_dir = get_template_directory();
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
-		$logo_path = $this->get_logo_image_path( $member_tier );
+		$logo_path = $this->get_logo_image_path( $member_tier, $sponsor_pass_variant );
 
 		$thumbnail_path = $this->get_person_photo_path( $person_id );
 
@@ -172,13 +174,14 @@ class MembershipPassApple {
 	 * Resolve the local logo path for a pass tier.
 	 *
 	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return string
 	 */
-	private function get_logo_image_path( string $member_tier = '' ): string {
+	private function get_logo_image_path( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
 		$theme_dir = get_template_directory();
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
 
-		if ( $member_tier === 'sponsor' ) {
+		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
 			$businessclub_logo = $theme_dir . '/public/icons/businessclub-awc-logo.png';
 			if ( file_exists( $businessclub_logo ) ) {
 				return $businessclub_logo;
@@ -458,10 +461,17 @@ class MembershipPassApple {
 	 *
 	 * @param string $organization_name Configured organization name.
 	 * @param string $member_tier Resolved pass tier.
+	 * @param string $sponsor_pass_variant Sponsor pass variant.
 	 * @return string
 	 */
-	private function get_card_title( string $organization_name, string $member_tier ): string {
-		return $member_tier === 'sponsor' ? 'Businessclub ' . $organization_name : $organization_name;
+	private function get_card_title( string $organization_name, string $member_tier, string $sponsor_pass_variant = '' ): string {
+		if ( $member_tier !== 'sponsor' ) {
+			return $organization_name;
+		}
+
+		return $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR
+			? $organization_name . ' Sponsor'
+			: 'Businessclub ' . $organization_name;
 	}
 
 	/**

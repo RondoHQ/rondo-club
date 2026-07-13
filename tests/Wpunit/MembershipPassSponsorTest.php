@@ -15,8 +15,9 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$sponsor_id = $this->createPerson(
 			[ 'post_title' => 'Sponsor BV' ],
 			[
-				'company_name' => 'Sponsor BV',
-				'person_type'  => 'sponsor',
+				'company_name'         => 'Sponsor BV',
+				'person_type'          => 'sponsor',
+				'sponsor_pass_variant' => 'businessclub',
 			]
 		);
 
@@ -42,8 +43,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$apple_method->setAccessible( true );
 		$google_method->setAccessible( true );
 
-		$apple_path = $apple_method->invoke( new MembershipPassApple(), 'sponsor' );
-		$google_url = $google_method->invoke( new MembershipPassGoogle(), 'sponsor' );
+		$apple_path = $apple_method->invoke( new MembershipPassApple(), 'sponsor', 'businessclub' );
+		$google_url = $google_method->invoke( new MembershipPassGoogle(), 'sponsor', 'businessclub' );
 
 		$this->assertFileExists( $apple_path );
 		$this->assertSame( 'businessclub-awc-logo.png', basename( $apple_path ) );
@@ -66,8 +67,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$google_title->setAccessible( true );
 		$google_modules->setAccessible( true );
 
-		$this->assertSame( 'Businessclub AWC', $apple_title->invoke( $apple, 'AWC', 'sponsor' ) );
-		$this->assertSame( 'Businessclub AWC', $google_title->invoke( $google, 'AWC', 'sponsor' ) );
+		$this->assertSame( 'Businessclub AWC', $apple_title->invoke( $apple, 'AWC', 'sponsor', 'businessclub' ) );
+		$this->assertSame( 'Businessclub AWC', $google_title->invoke( $google, 'AWC', 'sponsor', 'businessclub' ) );
 
 		$apple_content  = $apple_fields->invoke( $apple, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '', '2026-2027' );
 		$google_content = $google_modules->invoke( $google, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '', '2026-2027' );
@@ -77,6 +78,42 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertSame( [], $apple_content['auxiliary'] );
 		$this->assertSame( [ 'BEDRIJF', 'SEIZOEN' ], array_column( $google_content, 'header' ) );
 		$this->assertSame( 'Sponsor BV', $google_content[0]['body'] );
+	}
+
+	public function test_awc_sponsor_variant_uses_awc_title_and_standard_logo(): void {
+		$apple             = new MembershipPassApple();
+		$google            = new MembershipPassGoogle();
+		$apple_reflection  = new ReflectionClass( MembershipPassApple::class );
+		$google_reflection = new ReflectionClass( MembershipPassGoogle::class );
+
+		$apple_title  = $apple_reflection->getMethod( 'get_card_title' );
+		$apple_logo   = $apple_reflection->getMethod( 'get_logo_image_path' );
+		$google_title = $google_reflection->getMethod( 'get_card_title' );
+		$google_logo  = $google_reflection->getMethod( 'get_logo_image_url' );
+
+		$apple_title->setAccessible( true );
+		$apple_logo->setAccessible( true );
+		$google_title->setAccessible( true );
+		$google_logo->setAccessible( true );
+
+		$this->assertSame( 'AWC Sponsor', $apple_title->invoke( $apple, 'AWC', 'sponsor', 'awc_sponsor' ) );
+		$this->assertSame( 'AWC Sponsor', $google_title->invoke( $google, 'AWC', 'sponsor', 'awc_sponsor' ) );
+		$this->assertNotSame( 'businessclub-awc-logo.png', basename( $apple_logo->invoke( $apple, 'sponsor', 'awc_sponsor' ) ) );
+		$this->assertStringNotContainsString( 'businessclub-awc-logo.png', $google_logo->invoke( $google, 'sponsor', 'awc_sponsor' ) );
+	}
+
+	public function test_sponsor_without_pass_variant_is_not_pass_eligible(): void {
+		$sponsor_id = $this->createPerson(
+			[ 'post_title' => 'Sponsor zonder variant' ],
+			[
+				'company_name' => 'Sponsor BV',
+				'person_type'  => 'sponsor',
+			]
+		);
+
+		$this->assertSame( '', PublicMembershipPassPage::get_sponsor_pass_variant( $sponsor_id ) );
+		$this->assertSame( '', PublicMembershipPassPage::get_person_member_tier( $sponsor_id ) );
+		$this->assertSame( '', PublicMembershipPassPage::ensure_person_pass_url( $sponsor_id ) );
 	}
 
 	public function test_scanner_summary_identifies_sponsor_and_company(): void {
