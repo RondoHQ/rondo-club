@@ -225,6 +225,7 @@ export default function PersonDetail() {
         ? sanitizePersonAcf(person.acf, sponsorFields)
         : sponsorFields;
       await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      window.location.reload();
     } catch {
       alert('Sponsorrol kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
