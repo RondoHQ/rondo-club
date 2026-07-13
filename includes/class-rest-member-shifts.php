@@ -22,6 +22,8 @@ namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\IvaStatus;
+use Rondo\Volunteer\ShiftCancellationService;
+use Rondo\Volunteer\ShiftEmailScheduler;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
 use Rondo\Volunteer\VolunteerObligationCalculator;
@@ -140,6 +142,22 @@ class MemberShifts extends Base {
 	}
 
 	public function register_routes() {
+		register_rest_field(
+			'dienst_shift',
+			'cancellation',
+			[
+				'get_callback' => static function ( array $object ) {
+					return ShiftCancellationService::details( (int) ( $object['id'] ?? 0 ) );
+				},
+				'schema'       => [
+					'description' => 'Auditgegevens van een geannuleerde vrijwilligersdienst.',
+					'type'        => [ 'object', 'null' ],
+					'context'     => [ 'view', 'edit' ],
+					'readonly'    => true,
+				],
+			]
+		);
+
 		register_rest_route(
 			'rondo/v1',
 			'/my-shifts',
@@ -226,6 +244,29 @@ class MemberShifts extends Base {
 					'id' => [
 						'required'          => true,
 						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/(?P<id>\d+)/cancellation',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'cancel_shift' ],
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' ) || current_user_can( 'vrijwilligers' );
+				},
+				'args'                => [
+					'id'     => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'reason' => [
+						'required'          => false,
+						'default'           => '',
+						'sanitize_callback' => 'sanitize_textarea_field',
 					],
 				],
 			]
@@ -690,8 +731,8 @@ class MemberShifts extends Base {
 			$shift_id,
 			function () use ( $person_id, $shift_id ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
-				if ( $status === 'voltooid' ) {
-					return new \WP_Error( 'shift_completed', 'Deze shift is al voltooid en kan niet meer worden afgemeld.', [ 'status' => 409 ] );
+				if ( in_array( $status, [ 'geannuleerd', 'voltooid' ], true ) ) {
+					return new \WP_Error( 'shift_closed', 'Een geannuleerde of voltooide dienst kan niet meer worden afgemeld.', [ 'status' => 409 ] );
 				}
 
 				if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
@@ -722,6 +763,34 @@ class MemberShifts extends Base {
 	}
 
 	/**
+	 * Cancel an entire shift and notify every retained assignee.
+	 */
+	public function cancel_shift( \WP_REST_Request $request ) {
+		$shift_id = (int) $request->get_param( 'id' );
+		$reason   = (string) $request->get_param( 'reason' );
+		$shift    = get_post( $shift_id );
+		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
+			return new \WP_Error( 'invalid_shift', 'Dienst bestaat niet.', [ 'status' => 404 ] );
+		}
+
+		$result = $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $shift_id, $reason ) {
+				$service = new ShiftCancellationService();
+				return $service->cancel( $shift_id, $reason, get_current_user_id() );
+			}
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		$mailer                  = new ShiftEmailScheduler();
+		$result['notifications'] = $mailer->send_cancellation_notifications( $shift_id );
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
 	 * Let a volunteer manager remove an assignee after the member deadline.
 	 */
 	public function remove_assignee( \WP_REST_Request $request ) {
@@ -735,6 +804,11 @@ class MemberShifts extends Base {
 		return $this->with_shift_write_lock(
 			$shift_id,
 			function () use ( $person_id, $shift_id ) {
+				$status = (string) get_post_meta( $shift_id, 'status', true );
+				if ( in_array( $status, [ 'geannuleerd', 'voltooid' ], true ) ) {
+					return new \WP_Error( 'shift_closed', 'Aanmeldingen van een geannuleerde of voltooide dienst kunnen niet meer worden gewijzigd.', [ 'status' => 409 ] );
+				}
+
 				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
 				if ( ! in_array( $person_id, $assigned, true ) ) {
 					return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de dienst aangemeld.', [ 'status' => 404 ] );
@@ -915,6 +989,7 @@ class MemberShifts extends Base {
 			'assigned_person_ids' => $assigned,
 			'spots_remaining'     => $capacity > 0 ? max( 0, $capacity - count( $assigned ) ) : -1,
 			'status'              => $status ?: 'open',
+			'cancellation'        => ShiftCancellationService::details( $shift->ID ),
 		];
 	}
 
@@ -955,7 +1030,7 @@ class MemberShifts extends Base {
 
 				$summary['fellow_volunteers']         = array_column( $fellow_volunteers, 'name' );
 				$summary['fellow_volunteer_contacts'] = $fellow_volunteers;
-				$summary['can_cancel']                = $summary['status'] !== 'voltooid' && $this->can_member_cancel( $shift->ID, $person_id );
+				$summary['can_cancel']                = in_array( $summary['status'], [ 'open', 'vol' ], true ) && $this->can_member_cancel( $shift->ID, $person_id );
 				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
 				$out[]              = $summary;

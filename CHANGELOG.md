@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.56.0] - 2026-07-13
+
+### Added
+
+- Vrijwilligerscoördinatoren kunnen een bezette dienst gecontroleerd annuleren. Alle aangemelde vrijwilligers ontvangen automatisch een persoonlijke e-mail met de dienstgegevens en een optionele reden.
+- Annuleringen binnen 48 uur voor aanvang tellen automatisch mee voor de vrijwilligersplicht; eerdere annuleringen niet. Geannuleerde diensten en hun aanmeldingen blijven als auditbare historie bewaard.
+
+### Changed
+
+- Diensten met aanmeldingen kunnen niet meer definitief worden verwijderd of rechtstreeks op **Geannuleerd** worden gezet. De ledenweergave toont geannuleerde diensten onder **Historie** met de melding of de dienst meetelt.
+
 ## [33.55.0] - 2026-07-13
 
 ### Added

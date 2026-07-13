@@ -22,7 +22,6 @@ const STATUSES = [
   { value: 'open', label: 'Open' },
   { value: 'vol', label: 'Vol' },
   { value: 'voltooid', label: 'Voltooid' },
-  { value: 'geannuleerd', label: 'Geannuleerd' },
 ];
 
 const INPUT_CLS = 'block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm';
@@ -46,6 +45,9 @@ export default function VrijwilligersDienstForm() {
 
   const [form, setForm] = useState(EMPTY);
   const [feedback, setFeedback] = useState(null);
+  const [cancellationOpen, setCancellationOpen] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [canRetryNotifications, setCanRetryNotifications] = useState(false);
 
   const { data: types = [], isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -101,6 +103,14 @@ export default function VrijwilligersDienstForm() {
     return [];
   }, [existing]);
 
+  const isCancelled = form.status === 'geannuleerd';
+  const cancellation = existing?.cancellation || null;
+  const cancellationIsLastMinute = useMemo(() => {
+    if (!form.start_datetime) return false;
+    const millisecondsUntilStart = new Date(form.start_datetime).getTime() - Date.now();
+    return millisecondsUntilStart > 0 && millisecondsUntilStart < 48 * 60 * 60 * 1000;
+  }, [form.start_datetime]);
+
   const saveMutation = useMutation({
     mutationFn: (payload) =>
       isEdit ? prmApi.updateDienstShift(id, payload) : prmApi.createDienstShift(payload),
@@ -121,6 +131,36 @@ export default function VrijwilligersDienstForm() {
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
       navigate('/vrijwilligers/diensten');
+    },
+    onError: (err) => {
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Verwijderen mislukt.' });
+    },
+  });
+
+  const cancellationMutation = useMutation({
+    mutationFn: () => prmApi.cancelDienstShift(id, { reason: cancellationReason.trim() }),
+    onSuccess: async (response) => {
+      const data = response?.data || {};
+      const notifications = data.notifications || {};
+      const issues = Number(notifications.failed || 0) + Number(notifications.no_email || 0);
+      const delivered = Number(notifications.sent || 0) + Number(notifications.already_sent || 0);
+      const creditText = data.credit_awarded
+        ? 'De dienst telt mee voor de vrijwilligersplicht.'
+        : 'De dienst telt niet mee; vrijwilligers moeten een nieuwe dienst kiezen.';
+      const mailText = issues > 0
+        ? ` ${delivered} bericht(en) zijn verzonden; ${notifications.failed || 0} verzending(en) mislukten en ${notifications.no_email || 0} vrijwilliger(s) hebben geen geldig e-mailadres.`
+        : ` ${delivered} bericht(en) zijn verzonden.`;
+
+      setFeedback({ kind: issues > 0 ? 'warning' : 'success', message: `Dienst geannuleerd. ${creditText}${mailText}` });
+      setCanRetryNotifications(Number(notifications.failed || 0) > 0);
+      setCancellationOpen(false);
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shift', id], type: 'active' });
+      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
+    },
+    onError: (err) => {
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Annuleren mislukt.' });
     },
   });
 
@@ -169,6 +209,10 @@ export default function VrijwilligersDienstForm() {
         onSubmit={(e) => {
           e.preventDefault();
           setFeedback(null);
+          if (isCancelled) {
+            setFeedback({ kind: 'error', message: 'Een geannuleerde dienst kan niet meer worden bewerkt.' });
+            return;
+          }
           if (!form.dienst_type_id) {
             setFeedback({ kind: 'error', message: 'Kies een dienst type.' });
             return;
@@ -241,17 +285,37 @@ export default function VrijwilligersDienstForm() {
             />
           </Field>
           <Field label="Status">
-            <select
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value })}
-              className={INPUT_CLS}
-            >
-              {STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
+            {isCancelled ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300">
+                Geannuleerd
+              </div>
+            ) : (
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className={INPUT_CLS}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            )}
           </Field>
         </div>
+
+        {isCancelled && cancellation && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+            <div className="font-semibold">
+              {cancellation.credit_awarded ? 'Deze dienst telt mee' : 'Deze dienst telt niet mee'} voor de vrijwilligersplicht.
+            </div>
+            <p className="mt-1">
+              {cancellation.credit_awarded
+                ? 'De annulering was minder dan 48 uur voor aanvang. Vrijwilligers hoeven geen vervangende dienst te kiezen.'
+                : 'De annulering was minimaal 48 uur voor aanvang. Vrijwilligers moeten een nieuwe dienst kiezen.'}
+            </p>
+            {cancellation.reason && <p className="mt-2"><strong>Reden:</strong> {cancellation.reason}</p>}
+          </div>
+        )}
 
         {typeRequiresIva && (
           <label className="flex items-start gap-2 text-sm">
@@ -285,7 +349,9 @@ export default function VrijwilligersDienstForm() {
             className={`text-sm ${
               feedback.kind === 'success'
                 ? 'text-emerald-700 dark:text-emerald-300'
-                : 'text-red-700 dark:text-red-300'
+                : feedback.kind === 'warning'
+                  ? 'text-amber-700 dark:text-amber-300'
+                  : 'text-red-700 dark:text-red-300'
             }`}
           >
             {feedback.message}
@@ -293,15 +359,17 @@ export default function VrijwilligersDienstForm() {
         )}
 
         <div className="flex flex-wrap items-center gap-2 pt-2">
-          <button type="submit" disabled={saveMutation.isLoading} className="btn-primary inline-flex items-center gap-2">
-            <Save className="w-4 h-4" />
-            {saveMutation.isLoading ? 'Opslaan…' : 'Opslaan'}
-          </button>
-          {isEdit && (
+          {!isCancelled && (
+            <button type="submit" disabled={saveMutation.isLoading} className="btn-primary inline-flex items-center gap-2">
+              <Save className="w-4 h-4" />
+              {saveMutation.isLoading ? 'Opslaan…' : 'Opslaan'}
+            </button>
+          )}
+          {isEdit && !isCancelled && assignedIds.length === 0 && (
             <button
               type="button"
               onClick={() => {
-                if (window.confirm('Dienst verwijderen? Aanmeldingen gaan verloren.')) {
+                if (window.confirm('Dienst definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
                   deleteMutation.mutate();
                 }
               }}
@@ -312,14 +380,79 @@ export default function VrijwilligersDienstForm() {
               Verwijderen
             </button>
           )}
+          {isEdit && !isCancelled && assignedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setFeedback(null);
+                setCancellationOpen(true);
+              }}
+              disabled={cancellationMutation.isLoading}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded text-sm bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+            >
+              <Trash2 className="w-4 h-4" />
+              Dienst annuleren
+            </button>
+          )}
+          {isCancelled && canRetryNotifications && (
+            <button
+              type="button"
+              onClick={() => cancellationMutation.mutate()}
+              disabled={cancellationMutation.isLoading}
+              className="btn-tertiary inline-flex items-center gap-2"
+            >
+              Niet-verzonden mails opnieuw proberen
+            </button>
+          )}
         </div>
       </form>
+
+      {cancellationOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="cancel-shift-title">
+          <div className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800">
+            <h2 id="cancel-shift-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">Dienst annuleren</h2>
+            <div className={`mt-3 rounded-md border p-4 text-sm ${cancellationIsLastMinute ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'}`}>
+              <div className="font-semibold">
+                {cancellationIsLastMinute ? 'Minder dan 48 uur: dienst telt mee' : 'Minimaal 48 uur: dienst telt niet mee'}
+              </div>
+              <p className="mt-1">
+                {cancellationIsLastMinute
+                  ? 'Alle aangemelde vrijwilligers krijgen bericht en hoeven geen nieuwe dienst te kiezen.'
+                  : 'Alle aangemelde vrijwilligers krijgen bericht en moeten een nieuwe dienst kiezen.'}
+              </p>
+            </div>
+            <label className="mt-4 block">
+              <span className="block text-sm font-medium text-gray-700 dark:text-gray-200">Reden of toelichting (optioneel)</span>
+              <textarea
+                rows={3}
+                value={cancellationReason}
+                onChange={(event) => setCancellationReason(event.target.value)}
+                className={`${INPUT_CLS} mt-1`}
+                placeholder="Bijvoorbeeld: de velden zijn afgekeurd."
+              />
+            </label>
+            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              De 48-uursregel wordt bij bevestigen opnieuw door de server berekend. De dienst en aanmeldingen blijven bewaard voor de historie.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" className="btn-tertiary" onClick={() => setCancellationOpen(false)} disabled={cancellationMutation.isLoading}>
+                Terug
+              </button>
+              <button type="button" className="inline-flex items-center gap-2 rounded bg-red-700 px-3 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50" onClick={() => cancellationMutation.mutate()} disabled={cancellationMutation.isLoading}>
+                {cancellationMutation.isLoading ? 'Annuleren…' : 'Bevestig annulering'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isEdit && assignedIds.length > 0 && (
         <section className="card p-5">
           <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Aanmeldingen ({assignedIds.length})</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-            Leden melden zich aan via <code>/vrijwillig</code>. Hier kun je iemand handmatig verwijderen — bv. bij vergissingen.
+            {isCancelled
+              ? 'Deze aanmeldingen blijven bewaard voor de historie en de puntentoekenning.'
+              : <>Leden melden zich aan via <code>/vrijwillig</code>. Hier kun je iemand handmatig verwijderen — bv. bij vergissingen.</>}
           </p>
           <ul className="divide-y divide-gray-100 dark:divide-gray-700">
             {assignedIds.map((pid) => (
@@ -327,7 +460,7 @@ export default function VrijwilligersDienstForm() {
                 <Link to={`/people/${pid}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline inline-flex items-center gap-1">
                   Persoon {pid} <ExternalLink className="w-3 h-3" />
                 </Link>
-                <button
+                {!isCancelled && <button
                   type="button"
                   onClick={() => {
                     if (window.confirm('Aanmelding verwijderen?')) {
@@ -338,7 +471,7 @@ export default function VrijwilligersDienstForm() {
                   className="text-xs text-red-700 dark:text-red-300 inline-flex items-center gap-1 hover:underline"
                 >
                   <UserX className="w-3 h-3" /> Verwijder
-                </button>
+                </button>}
               </li>
             ))}
           </ul>

@@ -301,6 +301,9 @@ function rondo_init() {
 		// Hourly member reminders and post-shift survey emails.
 		new \Rondo\Volunteer\ShiftEmailScheduler();
 
+		// Enforce the audited, mail-aware cancellation flow for assigned shifts.
+		new \Rondo\Volunteer\ShiftCancellationService();
+
 		// Daily template-expander cron (rolling three-month window).
 		new \Rondo\Volunteer\ShiftTemplateExpander();
 

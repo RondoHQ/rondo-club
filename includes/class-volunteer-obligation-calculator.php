@@ -10,7 +10,8 @@
  * containing one or more person IDs from the unit.
  *
  *   completed → shift.status = 'voltooid' AND person is in assigned_persons
- *                AND person was not marked no-show
+ *                AND person was not marked no-show; or a cancelled shift whose
+ *                cancellation was recorded less than 48 hours before start
  *   no_show   → shift.status = 'voltooid' AND a `_no_show_{person_id}` meta exists
  *   pending   → shift.start_datetime ≥ now() AND person is in assigned_persons
  *
@@ -192,7 +193,7 @@ class VolunteerObligationCalculator {
 			]
 		);
 
-		self::flush_cache_for_person( $person_id );
+		self::invalidate_cache();
 		return true;
 	}
 
@@ -202,7 +203,7 @@ class VolunteerObligationCalculator {
 	public static function unmark_no_show( int $shift_id, int $person_id ): bool {
 		$deleted = delete_post_meta( $shift_id, self::NO_SHOW_META_PREFIX . $person_id );
 		if ( $deleted ) {
-			self::flush_cache_for_person( $person_id );
+			self::invalidate_cache();
 		}
 		return (bool) $deleted;
 	}
@@ -246,23 +247,17 @@ class VolunteerObligationCalculator {
 		}
 
 		if ( $count > 0 ) {
-			// Wipe ALL caches — cheap enough at our scale and a missed flush would silently lie.
-			global $wpdb;
-			$wpdb->query(
-				"DELETE FROM {$wpdb->options}
-				 WHERE option_name LIKE '\\_transient\\_rondo_vobligation_%'
-				    OR option_name LIKE '\\_transient\\_timeout\\_rondo_vobligation_%'"
-			);
+			self::invalidate_cache();
 		}
 
 		return $count;
 	}
 
 	/**
-	 * Wipe all obligation-cache transients touching this person.
+	 * Wipe all obligation-cache transients.
 	 * Pragmatic: full-table delete is cheaper than indexing per-unit reverse maps.
 	 */
-	private static function flush_cache_for_person( int $person_id ): void {
+	public static function invalidate_cache(): void {
 		global $wpdb;
 		$wpdb->query(
 			"DELETE FROM {$wpdb->options}
@@ -362,6 +357,9 @@ class VolunteerObligationCalculator {
 				}
 
 				if ( $status === 'geannuleerd' ) {
+					if ( (bool) get_post_meta( $shift_id, ShiftCancellationService::META_CREDIT, true ) ) {
+						++$tallies[ $pid ]['completed'];
+					}
 					continue;
 				}
 

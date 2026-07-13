@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\REST\MemberShifts;
+use Rondo\Volunteer\ShiftCancellationService;
 use Rondo\Volunteer\ShiftEmailScheduler;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
@@ -67,6 +68,13 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/cancel' );
 		$request->set_param( 'id', $shift_id );
 		return $this->controller->cancel( $request );
+	}
+
+	private function cancel_shift( int $shift_id, string $reason = '' ) {
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/cancellation' );
+		$request->set_param( 'id', $shift_id );
+		$request->set_param( 'reason', $reason );
+		return $this->controller->cancel_shift( $request );
 	}
 
 	public function test_member_can_cancel_more_than_three_weeks_before_shift(): void {
@@ -159,6 +167,95 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertStringContainsString( 'https://docs.google.com/forms/d/test-form', $this->sent_mail[0]['message'] );
 		$this->assertSame( 0, $scheduler->run_sweep( $now ) );
 		$this->assertCount( 1, $this->sent_mail );
+	}
+
+	public function test_early_shift_cancellation_notifies_assignees_without_credit(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$shift_id  = $this->dated_shift( $type_id, [ $person_id ], current_datetime()->modify( '+3 days' ) );
+
+		$response = $this->cancel_shift( $shift_id, 'Geen wedstrijden op deze datum.' );
+		$data     = $response->get_data();
+
+		$this->assertSame( 'geannuleerd', get_post_meta( $shift_id, 'status', true ) );
+		$this->assertSame( [ $person_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$this->assertSame( ShiftCancellationService::VARIANT_EARLY, $data['variant'] );
+		$this->assertFalse( $data['credit_awarded'] );
+		$this->assertSame( 1, $data['notifications']['sent'] );
+		$this->assertCount( 1, $this->sent_mail );
+		$this->assertStringContainsString( 'telt daarom niet mee', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'Geen wedstrijden op deze datum.', $this->sent_mail[0]['message'] );
+	}
+
+	public function test_last_minute_cancellation_awards_credit_and_is_idempotent(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$shift_id  = $this->dated_shift( $type_id, [ $person_id ], current_datetime()->modify( '+24 hours' ) );
+
+		$first  = $this->cancel_shift( $shift_id, 'Velden afgekeurd.' )->get_data();
+		$second = $this->cancel_shift( $shift_id )->get_data();
+
+		$this->assertSame( ShiftCancellationService::VARIANT_LAST_MINUTE, $first['variant'] );
+		$this->assertTrue( $first['credit_awarded'] );
+		$this->assertStringContainsString( 'telt daarom wel mee', $this->sent_mail[0]['message'] );
+		$this->assertTrue( $second['already_cancelled'] );
+		$this->assertSame( 0, $second['notifications']['sent'] );
+		$this->assertSame( 1, $second['notifications']['already_sent'] );
+		$this->assertCount( 1, $this->sent_mail );
+	}
+
+	public function test_exactly_forty_eight_hours_is_the_early_variant(): void {
+		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$shift_id  = $this->dated_shift( $type_id, [ $person_id ], $now->modify( '+48 hours' ) );
+		$service   = new ShiftCancellationService();
+
+		$result = $service->cancel( $shift_id, '', 1, $now );
+
+		$this->assertIsArray( $result );
+		$this->assertSame( ShiftCancellationService::VARIANT_EARLY, $result['variant'] );
+		$this->assertFalse( $result['credit_awarded'] );
+	}
+
+	public function test_assigned_shift_cannot_be_hard_deleted(): void {
+		[, $person_id] = $this->member();
+		$shift_id      = $this->shift( [ $person_id ], 10 );
+		new ShiftCancellationService();
+
+		$this->assertFalse( wp_delete_post( $shift_id, true ) );
+		$this->assertNotNull( get_post( $shift_id ) );
+	}
+
+	public function test_cancellation_reports_assignee_without_email(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$type_id   = $this->dienst_type();
+		$person_id = $this->createPerson( [ 'post_title' => 'Geen E-mail' ], [ 'first_name' => 'Piet' ] );
+		$shift_id  = $this->dated_shift( $type_id, [ $person_id ], current_datetime()->modify( '+3 days' ) );
+
+		$data = $this->cancel_shift( $shift_id )->get_data();
+
+		$this->assertSame( 0, $data['notifications']['sent'] );
+		$this->assertSame( 1, $data['notifications']['no_email'] );
+		$this->assertSame( [ $person_id ], $data['notifications']['no_email_person_ids'] );
+		$this->assertCount( 0, $this->sent_mail );
+	}
+
+	public function test_plain_member_cannot_cancel_entire_shift(): void {
+		[, $person_id] = $this->member();
+		$shift_id      = $this->shift( [ $person_id ], 10 );
+		$request       = new WP_REST_Request( 'POST', "/rondo/v1/shifts/{$shift_id}/cancellation" );
+		$request->set_param( 'id', $shift_id );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'open', get_post_meta( $shift_id, 'status', true ) );
 	}
 
 	private function dienst_type(): int {
