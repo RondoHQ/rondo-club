@@ -51,6 +51,7 @@ class FinanceConfig {
 	const OPTION_EMAIL_TEMPLATE                             = 'rondo_finance_email_template';
 	const OPTION_RABOBANK_CREDENTIALS                       = 'rondo_finance_rabobank_credentials';
 	const OPTION_CLUB_LOGO_ID                               = 'rondo_finance_club_logo_id';
+	const OPTION_BUSINESSCLUB_LOGO_ID                       = 'rondo_finance_businessclub_logo_id';
 	const OPTION_ACCENT_COLOR                               = 'rondo_finance_accent_color';
 	const OPTION_ACCENT_BACKGROUND_COLOR                    = 'rondo_finance_accent_background_color';
 	const OPTION_BCC_EMAIL                                  = 'rondo_finance_bcc_email';
@@ -108,6 +109,7 @@ class FinanceConfig {
 		'payment_term_days'                         => 14,
 		'payment_clause'                            => '',
 		'club_logo_id'                              => 0,
+		'businessclub_logo_id'                      => 0,
 		'accent_color'                              => '',
 		'accent_background_color'                   => '',
 		'bcc_email'                                 => '',
@@ -413,6 +415,30 @@ class FinanceConfig {
 	}
 
 	/**
+	 * Get Businessclub logo ID.
+	 *
+	 * @return int The Businessclub logo attachment ID (0 if not configured).
+	 */
+	public function get_businessclub_logo_id(): int {
+		return (int) get_option( self::OPTION_BUSINESSCLUB_LOGO_ID, self::DEFAULTS['businessclub_logo_id'] );
+	}
+
+	/**
+	 * Resolve an attachment URL for settings output.
+	 *
+	 * @param int $attachment_id Attachment ID.
+	 * @return string Attachment URL or an empty string.
+	 */
+	private function get_attachment_url( int $attachment_id ): string {
+		if ( $attachment_id <= 0 ) {
+			return '';
+		}
+
+		$url = wp_get_attachment_url( $attachment_id );
+		return is_string( $url ) ? $url : '';
+	}
+
+	/**
 	 * Get accent color
 	 *
 	 * @return string The accent color hex code (empty string if not configured, defaults to #0891b2)
@@ -485,15 +511,11 @@ class FinanceConfig {
 	 * @return array<string, mixed> Array of all configuration settings
 	 */
 	public function get_all_settings(): array {
-		$rabobank_creds = $this->get_rabobank_credentials();
-		$club_logo_id   = $this->get_club_logo_id();
-		$club_logo_url  = '';
-		if ( $club_logo_id > 0 ) {
-			$url = wp_get_attachment_url( $club_logo_id );
-			if ( $url ) {
-				$club_logo_url = $url;
-			}
-		}
+		$rabobank_creds        = $this->get_rabobank_credentials();
+		$club_logo_id          = $this->get_club_logo_id();
+		$businessclub_logo_id  = $this->get_businessclub_logo_id();
+		$club_logo_url         = $this->get_attachment_url( $club_logo_id );
+		$businessclub_logo_url = $this->get_attachment_url( $businessclub_logo_id );
 
 		$apple_cert_id  = $this->get_membership_pass_apple_cert_attachment_id();
 		$google_sa_id   = $this->get_membership_pass_google_service_account_attachment_id();
@@ -535,6 +557,8 @@ class FinanceConfig {
 			'credit_email_heading'                       => $this->get_email_heading( 'credit' ),
 			'club_logo_id'                               => $club_logo_id,
 			'club_logo_url'                              => $club_logo_url,
+			'businessclub_logo_id'                       => $businessclub_logo_id,
+			'businessclub_logo_url'                      => $businessclub_logo_url,
 			'accent_color'                               => $this->get_accent_color(),
 			'accent_background_color'                    => $this->get_accent_background_color(),
 			'bcc_email'                                  => $this->get_bcc_email(),
@@ -612,6 +636,8 @@ class FinanceConfig {
 				return $this->get_regular_invoice_email_body();
 			case 'club_logo_id':
 				return $this->get_club_logo_id();
+			case 'businessclub_logo_id':
+				return $this->get_businessclub_logo_id();
 			case 'accent_color':
 				return $this->get_accent_color();
 			case 'accent_background_color':
@@ -760,6 +786,11 @@ class FinanceConfig {
 		if ( isset( $data['club_logo_id'] ) ) {
 			$logo_id = absint( $data['club_logo_id'] );
 			$success = update_option( self::OPTION_CLUB_LOGO_ID, $logo_id ) && $success;
+		}
+
+		if ( isset( $data['businessclub_logo_id'] ) ) {
+			$logo_id = absint( $data['businessclub_logo_id'] );
+			$success = update_option( self::OPTION_BUSINESSCLUB_LOGO_ID, $logo_id ) && $success;
 		}
 
 		if ( isset( $data['accent_color'] ) ) {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.55.0] - 2026-07-13
+
+### Added
+
+- Beheerders kunnen onder **Instellingen → Club → Huisstijl** een apart Businessclub-logo uploaden voor Businessclub AWC-passen. Zonder instelling blijft het meegeleverde Businessclub-logo actief.
+
 ## [33.54.0] - 2026-07-13
 
 ### Added

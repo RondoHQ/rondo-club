@@ -472,14 +472,23 @@ class MembershipPassGoogle {
 	 * @return string
 	 */
 	private function get_logo_image_url( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
+		$config = new FinanceConfig();
+
 		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
+			$logo_id = $config->get_businessclub_logo_id();
+			if ( $logo_id > 0 ) {
+				$url = wp_get_attachment_url( $logo_id );
+				if ( is_string( $url ) && $url !== '' ) {
+					return $url;
+				}
+			}
+
 			$businessclub_logo = get_template_directory() . '/public/icons/businessclub-awc-logo.png';
 			if ( file_exists( $businessclub_logo ) ) {
 				return get_template_directory_uri() . '/public/icons/businessclub-awc-logo.png';
 			}
 		}
 
-		$config  = new FinanceConfig();
 		$logo_id = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
 			$padded = $this->get_padded_logo_image_url( $logo_id );

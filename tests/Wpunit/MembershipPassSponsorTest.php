@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use ReflectionClass;
+use Rondo\Config\FinanceConfig;
 use Rondo\Passes\MembershipPassApple;
 use Rondo\Passes\MembershipPassGoogle;
 use Rondo\Passes\PublicMembershipPassPage;
@@ -49,6 +50,29 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertFileExists( $apple_path );
 		$this->assertSame( 'businessclub-awc-logo.png', basename( $apple_path ) );
 		$this->assertStringEndsWith( '/public/icons/businessclub-awc-logo.png', $google_url );
+	}
+
+	public function test_sponsor_wallet_passes_use_configured_businessclub_logo(): void {
+		$logo_path     = get_template_directory() . '/public/icons/businessclub-awc-logo.png';
+		$attachment_id = wp_insert_attachment(
+			[
+				'post_title'     => 'Aangepast Businessclub-logo',
+				'post_mime_type' => 'image/png',
+				'post_status'    => 'inherit',
+				'guid'           => 'https://example.org/uploads/aangepast-businessclub-logo.png',
+			],
+			$logo_path
+		);
+		update_attached_file( $attachment_id, $logo_path );
+		update_option( FinanceConfig::OPTION_BUSINESSCLUB_LOGO_ID, $attachment_id );
+
+		$apple_method  = ( new ReflectionClass( MembershipPassApple::class ) )->getMethod( 'get_logo_image_path' );
+		$google_method = ( new ReflectionClass( MembershipPassGoogle::class ) )->getMethod( 'get_logo_image_url' );
+		$apple_method->setAccessible( true );
+		$google_method->setAccessible( true );
+
+		$this->assertSame( $logo_path, $apple_method->invoke( new MembershipPassApple(), 'sponsor', 'businessclub' ) );
+		$this->assertSame( wp_get_attachment_url( $attachment_id ), $google_method->invoke( new MembershipPassGoogle(), 'sponsor', 'businessclub' ) );
 	}
 
 	public function test_sponsor_wallet_passes_use_businessclub_title_and_company_fields(): void {
