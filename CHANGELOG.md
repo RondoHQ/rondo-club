@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.58.1] - 2026-07-13
+
+### Fixed
+
+- Het veld **Bedrijfsnaam** op de persoonspagina wordt alleen getoond bij een actieve sponsorrol, onafhankelijk van het persoonstype.
+
 ## [33.58.0] - 2026-07-13
 
 ### Added
