@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.53.2] - 2026-07-13
+
+### Changed
+
+- De lidpasscanner toont bij een gescande sponsorpas **Bedrijf** met de bedrijfsnaam in plaats van een KNVB ID.
+
 ## [33.53.1] - 2026-07-13
 
 ### Changed
