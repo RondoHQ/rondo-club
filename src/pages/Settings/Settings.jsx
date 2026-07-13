@@ -751,6 +751,8 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
   const [clubLogoId, setClubLogoId] = useState(0);
   const [clubLogoUrl, setClubLogoUrl] = useState('');
+  const [businessclubLogoId, setBusinessclubLogoId] = useState(0);
+  const [businessclubLogoUrl, setBusinessclubLogoUrl] = useState('');
   const [primaryColor, setPrimaryColor] = useState('');
   const [accentColor, setAccentColor] = useState('');
   const [loadingBranding, setLoadingBranding] = useState(false);
@@ -774,6 +776,8 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
         const response = await prmApi.getFinanceBranding();
         setClubLogoId(response.data?.club_logo_id || 0);
         setClubLogoUrl(response.data?.club_logo_url || '');
+        setBusinessclubLogoId(response.data?.businessclub_logo_id || 0);
+        setBusinessclubLogoUrl(response.data?.businessclub_logo_url || '');
         setPrimaryColor(response.data?.accent_color || '');
         setAccentColor(response.data?.accent_background_color || '');
       } catch (error) {
@@ -809,7 +813,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
     }
   };
 
-  const handleLogoUpload = async (event) => {
+  const handleLogoUpload = async (event, setLogoId, setLogoUrl) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -824,8 +828,8 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setClubLogoId(response.data.id);
-      setClubLogoUrl(response.data.source_url);
+      setLogoId(response.data.id);
+      setLogoUrl(response.data.source_url);
     } catch (error) {
       setBrandingError(error.response?.data?.message || 'Fout bij uploaden logo');
     } finally {
@@ -840,6 +844,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
     try {
       await prmApi.updateFinanceBranding({
         club_logo_id: clubLogoId,
+        businessclub_logo_id: businessclubLogoId,
         accent_color: primaryColor,
         accent_background_color: accentColor,
       });
@@ -952,11 +957,44 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleLogoUpload}
+                  onChange={(event) => handleLogoUpload(event, setClubLogoId, setClubLogoUrl)}
                   className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Logo wordt getoond op facturen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+                  Wordt getoond op facturen en reguliere passen. Kies een afbeelding met transparante achtergrond voor het beste resultaat.
+                </p>
+              </div>
+
+              <div>
+                <label className="label">Businessclub-logo</label>
+                {businessclubLogoUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={businessclubLogoUrl}
+                      alt="Businessclub-logo"
+                      className="max-h-[60px] object-contain"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBusinessclubLogoId(0);
+                        setBusinessclubLogoUrl('');
+                        setBrandingSaved(false);
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      Verwijderen
+                    </button>
+                  </div>
+                ) : null}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => handleLogoUpload(event, setBusinessclubLogoId, setBusinessclubLogoUrl)}
+                  className="mt-2 block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-electric-cyan file:text-white hover:file:bg-electric-cyan/90 file:cursor-pointer"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Wordt gebruikt op Businessclub AWC-passen. Zonder instelling gebruikt Rondo het meegeleverde Businessclub-logo.
                 </p>
               </div>
 

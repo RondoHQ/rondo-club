@@ -180,15 +180,23 @@ class MembershipPassApple {
 	private function get_logo_image_path( string $member_tier = '', string $sponsor_pass_variant = '' ): string {
 		$theme_dir = get_template_directory();
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
+		$config    = new FinanceConfig();
 
 		if ( $member_tier === 'sponsor' && $sponsor_pass_variant === PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB ) {
+			$logo_id = $config->get_businessclub_logo_id();
+			if ( $logo_id > 0 ) {
+				$path = get_attached_file( $logo_id );
+				if ( is_string( $path ) && file_exists( $path ) ) {
+					return $path;
+				}
+			}
+
 			$businessclub_logo = $theme_dir . '/public/icons/businessclub-awc-logo.png';
 			if ( file_exists( $businessclub_logo ) ) {
 				return $businessclub_logo;
 			}
 		}
 
-		$config  = new FinanceConfig();
 		$logo_id = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
 			$path = get_attached_file( $logo_id );
