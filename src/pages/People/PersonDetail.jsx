@@ -29,7 +29,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, formatPersonName, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { decodeHtml, formatPersonName, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -81,8 +81,10 @@ export default function PersonDetail() {
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   const canEditAllPeople = currentUser?.can_edit_people ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
-  const isSponsorPerson = person?.acf?.person_type === 'sponsor';
-  let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson);
+  const isSponsorPerson = hasSponsorRole(person?.acf);
+  const isDualRoleSponsor = isSponsorPerson && (person?.acf?.person_type || 'member') !== 'contact';
+  let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson && !isDualRoleSponsor);
+  let canEditSponsorFields = canEditAllPeople || (canManageSponsors && isSponsorPerson);
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
@@ -213,20 +215,25 @@ export default function PersonDetail() {
     }
   };
 
-  const handleSponsorPassVariantChange = async (sponsorPassVariant) => {
+  const handleSponsorRoleChange = async (sponsorPassVariant) => {
     setIsSavingSponsorPassVariant(true);
     try {
-      const acfData = sanitizePersonAcf(person.acf, { sponsor_pass_variant: sponsorPassVariant });
+      const sponsorFields = sponsorPassVariant
+        ? { is_sponsor: true, sponsor_pass_variant: sponsorPassVariant }
+        : { is_sponsor: false, sponsor_pass_variant: null };
+      const acfData = canEditAllPeople
+        ? sanitizePersonAcf(person.acf, sponsorFields)
+        : sponsorFields;
       await updatePerson.mutateAsync({ id, data: { acf: acfData } });
     } catch {
-      alert('Pasvariant kon niet worden opgeslagen. Probeer het opnieuw.');
+      alert('Sponsorrol kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingSponsorPassVariant(false);
     }
   };
 
   const handleDeleteSponsor = async () => {
-    if (!isSponsorPerson || !confirm(`Weet je zeker dat je ${person?.name || 'deze sponsor'} definitief wilt verwijderen?`)) return;
+    if (!isSponsorPerson || isDualRoleSponsor || !confirm(`Weet je zeker dat je ${person?.name || 'deze sponsor'} definitief wilt verwijderen?`)) return;
 
     try {
       await deletePerson.mutateAsync(Number(id));
@@ -246,8 +253,7 @@ export default function PersonDetail() {
     }
 
     try {
-      const acfData = sanitizePersonAcf(person.acf, { company_name: companyName });
-      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      await updatePerson.mutateAsync({ id, data: { acf: { company_name: companyName } } });
     } catch {
       alert('Bedrijfsnaam kon niet worden opgeslagen. Probeer het opnieuw.');
       setCompanyNameDraft(person.acf?.company_name || '');
@@ -1111,6 +1117,7 @@ export default function PersonDetail() {
   // here just keeps users from trying.
   if (isFormerMember) {
     canEditPeople = false;
+    canEditSponsorFields = false;
   }
 
   // Build contact display items from fixed fields
@@ -1199,7 +1206,7 @@ export default function PersonDetail() {
             <Download className="w-4 h-4 md:mr-2" />
             <span className="hidden md:inline">Exporteer vCard</span>
           </button>
-          {isSponsorPerson && canEditPeople && (
+          {isSponsorPerson && !isDualRoleSponsor && canEditPeople && (
             <button
               onClick={handleDeleteSponsor}
               disabled={deletePerson.isPending}
@@ -1280,7 +1287,7 @@ export default function PersonDetail() {
                   Contact
                 </span>
               )}
-              {acf.person_type === 'sponsor' && (
+              {isSponsorPerson && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
                   Sponsor
                 </span>
@@ -1304,7 +1311,7 @@ export default function PersonDetail() {
             {acf.company_name && personalName && (
               <p className="text-base text-gray-600 dark:text-gray-300">{acf.company_name}</p>
             )}
-            {(canEditAllPeople || (isSponsorPerson && canEditPeople)) && (
+            {(canEditAllPeople || canEditSponsorFields) && (
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                 {canEditAllPeople && (
                   <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -1317,20 +1324,19 @@ export default function PersonDetail() {
                     >
                       <option value="member">Lid / ouder</option>
                       <option value="contact">Contact</option>
-                      <option value="sponsor">Sponsor</option>
                     </select>
                   </label>
                 )}
-                {isSponsorPerson && canEditPeople && (
+                {(canEditAllPeople || canEditSponsorFields) && (
                   <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                    <span>Pasvariant</span>
+                    <span>Sponsorrol</span>
                     <select
-                      value={acf.sponsor_pass_variant || ''}
-                      onChange={(event) => handleSponsorPassVariantChange(event.target.value)}
+                      value={isSponsorPerson ? (acf.sponsor_pass_variant || '') : ''}
+                      onChange={(event) => handleSponsorRoleChange(event.target.value)}
                       className="input py-1 text-sm w-auto"
                       disabled={isSavingSponsorPassVariant}
                     >
-                      <option value="" disabled>Kies...</option>
+                      {canEditAllPeople && <option value="">Geen sponsor</option>}
                       <option value="businessclub">Businessclub AWC</option>
                       <option value="awc_sponsor">AWC Sponsor</option>
                     </select>
@@ -1338,7 +1344,7 @@ export default function PersonDetail() {
                 )}
               </div>
             )}
-            {canEditPeople && ['contact', 'sponsor'].includes(acf.person_type) && (
+            {((canEditPeople && acf.person_type === 'contact') || canEditSponsorFields) && (
               <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
                 <span className="mb-1 block">Bedrijfsnaam</span>
                 <input

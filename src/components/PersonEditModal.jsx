@@ -13,10 +13,11 @@ export default function PersonEditModal({
   isLoading,
   person = null, // Pass person data for editing
   prefillData = null, // Pass prefillData for pre-filling from external context (e.g., meeting attendee)
-  initialPersonType = 'contact'
+  initialPersonType = 'contact',
+  initialSponsor = false
 }) {
   const isEditing = !!person;
-  const isSponsor = initialPersonType === 'sponsor';
+  const isSponsor = initialSponsor || Boolean(person?.acf?.is_sponsor);
   const isOnline = useOnlineStatus();
   
   // vCard import state
@@ -207,6 +208,8 @@ export default function PersonEditModal({
   const handleFormSubmit = (data) => {
     onSubmit({
       ...data,
+      person_type: isSponsor ? 'contact' : data.person_type,
+      is_sponsor: isSponsor,
       birthdayType: birthdayType, // Pass birthday type for creating birthday date
     });
   };
@@ -395,7 +398,6 @@ export default function PersonEditModal({
                 >
                   <option value="member">Lid / ouder</option>
                   <option value="contact">Contact</option>
-                  <option value="sponsor">Sponsor</option>
                 </select>
               </div>
             )}

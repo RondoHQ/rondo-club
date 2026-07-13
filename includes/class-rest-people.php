@@ -8,6 +8,7 @@
 namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
+use Rondo\Core\SponsorStatus;
 use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -327,11 +328,19 @@ class People extends Base {
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 					'person_type'               => [
-						'description'       => 'Filter by Rondo person type (member, contact, or sponsor)',
+						'description'       => 'Filter by Rondo person type (member or contact)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => function ( $value ) {
-							return in_array( $value, [ '', 'member', 'contact', 'sponsor' ], true );
+							return in_array( $value, [ '', 'member', 'contact' ], true );
+						},
+					],
+					'is_sponsor'                => [
+						'description'       => 'Filter by active sponsor role (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
 					'foto_missing'              => [
@@ -882,7 +891,7 @@ class People extends Base {
 			);
 		}
 
-		if ( trim( (string) $first_name ) === '' && ! in_array( $person_type, [ 'contact', 'sponsor' ], true ) ) {
+		if ( trim( (string) $first_name ) === '' && $person_type !== 'contact' ) {
 			return new \WP_Error(
 				'rondo_company_only_contact_required',
 				__( 'Alleen contacten en sponsors mogen uitsluitend een bedrijfsnaam hebben.', 'rondo' ),
@@ -894,7 +903,7 @@ class People extends Base {
 	}
 
 	/**
-	 * Require an explicit valid pass variant when a Sponsor is created.
+	 * Require an explicit valid pass variant whenever the sponsor role is active.
 	 *
 	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
 	 * @param WP_REST_Request $request       Originating REST request.
@@ -910,27 +919,25 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$post_id        = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
-		$current_type   = $post_id ? sanitize_key( (string) get_field( 'person_type', $post_id ) ) : '';
-		$requested_type = array_key_exists( 'person_type', $acf ) ? sanitize_key( (string) $acf['person_type'] ) : $current_type;
-		$has_variant    = array_key_exists( 'sponsor_pass_variant', $acf );
-		$variant        = $has_variant ? sanitize_key( (string) $acf['sponsor_pass_variant'] ) : '';
-		$allowed        = [
+		$post_id              = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+		$current_is_sponsor   = $post_id ? SponsorStatus::is_sponsor( $post_id ) : false;
+		$requested_is_sponsor = array_key_exists( 'is_sponsor', $acf )
+			? SponsorStatus::value_is_true( $acf['is_sponsor'] )
+			: $current_is_sponsor;
+		$has_variant          = array_key_exists( 'sponsor_pass_variant', $acf );
+		$variant              = $has_variant ? sanitize_key( (string) $acf['sponsor_pass_variant'] ) : '';
+		$allowed              = [
 			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
 			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
 		];
-		$is_new_sponsor = $post_id === 0 && $requested_type === 'sponsor';
 
 		if ( $has_variant && $variant !== '' && ! in_array( $variant, $allowed, true ) ) {
 			return $this->sponsor_pass_variant_error();
 		}
 
-		if ( $is_new_sponsor && ! in_array( $variant, $allowed, true ) ) {
-			return $this->sponsor_pass_variant_error();
-		}
-
-		$current_variant = $post_id ? PublicMembershipPassPage::get_sponsor_pass_variant( $post_id ) : '';
-		if ( $current_type === 'sponsor' && $current_variant !== '' && $has_variant && $variant === '' ) {
+		$current_variant   = $post_id ? PublicMembershipPassPage::get_sponsor_pass_variant( $post_id ) : '';
+		$effective_variant = $has_variant ? $variant : $current_variant;
+		if ( $requested_is_sponsor && ! in_array( $effective_variant, $allowed, true ) ) {
 			return $this->sponsor_pass_variant_error();
 		}
 
@@ -951,12 +958,12 @@ class People extends Base {
 	}
 
 	/**
-	 * Keep sponsor-only managers inside their person-type boundary.
+	 * Keep sponsor-only managers inside their sponsor-role boundary.
 	 *
 	 * Core REST create permissions are capability-based and do not yet have a
 	 * post ID. This pre-insert guard therefore requires new records to be explicit
-	 * sponsors, and prevents an existing sponsor from being converted to another
-	 * person type. Full people managers are unaffected.
+	 * contact+sponsor records. On a dual-role member, only sponsor-owned fields
+	 * may be changed. Full people managers are unaffected.
 	 *
 	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
 	 * @param WP_REST_Request $request       Originating REST request.
@@ -969,25 +976,56 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$acf            = $request->get_param( 'acf' );
-		$requested_type = is_array( $acf ) && array_key_exists( 'person_type', $acf )
-			? sanitize_key( (string) $acf['person_type'] )
-			: '';
-		$post_id        = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+		$acf     = $request->get_param( 'acf' );
+		$acf     = is_array( $acf ) ? $acf : [];
+		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 
 		if ( $post_id === 0 ) {
-			if ( $requested_type === 'sponsor' ) {
+			$requested_type       = sanitize_key( (string) ( $acf['person_type'] ?? '' ) );
+			$requested_is_sponsor = SponsorStatus::value_is_true( $acf['is_sponsor'] ?? false );
+			if ( $requested_type === 'contact' && $requested_is_sponsor ) {
 				return $prepared_post;
 			}
-		} elseif ( get_post_meta( $post_id, 'person_type', true ) === 'sponsor'
-			&& ( $requested_type === '' || $requested_type === 'sponsor' ) ) {
+		} elseif ( SponsorStatus::is_sponsor( $post_id ) ) {
+			$current_type = sanitize_key( (string) get_post_meta( $post_id, 'person_type', true ) );
+			if ( array_key_exists( 'is_sponsor', $acf ) && ! SponsorStatus::value_is_true( $acf['is_sponsor'] ) ) {
+				return $this->sponsor_manager_scope_error();
+			}
+			if ( array_key_exists( 'person_type', $acf )
+				&& sanitize_key( (string) $acf['person_type'] ) !== $current_type ) {
+				return $this->sponsor_manager_scope_error();
+			}
+
+			if ( SponsorStatus::is_dual_role( $post_id ) ) {
+				$allowed_fields = [ 'company_name', 'is_sponsor', 'sponsor_pass_variant' ];
+				$blocked_fields = array_diff( array_keys( $acf ), $allowed_fields );
+				if ( ! empty( $blocked_fields ) ) {
+					return $this->sponsor_manager_scope_error( $blocked_fields );
+				}
+			}
+
 			return $prepared_post;
+		}
+
+		return $this->sponsor_manager_scope_error();
+	}
+
+	/**
+	 * Build the sponsor-manager scope error.
+	 *
+	 * @param array $blocked_fields Fields outside the sponsor-owned allowlist.
+	 * @return WP_Error
+	 */
+	private function sponsor_manager_scope_error( array $blocked_fields = [] ) {
+		$data = [ 'status' => 403 ];
+		if ( ! empty( $blocked_fields ) ) {
+			$data['blocked_fields'] = array_values( $blocked_fields );
 		}
 
 		return new \WP_Error(
 			'rondo_sponsor_manager_scope',
-			__( 'Sponsorbeheerders mogen uitsluitend personen van het type Sponsor beheren.', 'rondo' ),
-			[ 'status' => 403 ]
+			__( 'Sponsorbeheerders mogen uitsluitend sponsorvelden beheren.', 'rondo' ),
+			$data
 		);
 	}
 
@@ -1324,6 +1362,7 @@ class People extends Base {
 		$financiele_blokkade       = $request->get_param( 'financiele_blokkade' );
 		$type_lid                  = $request->get_param( 'type_lid' );
 		$person_type               = $request->get_param( 'person_type' );
+		$is_sponsor                = $request->get_param( 'is_sponsor' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
 		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
@@ -1511,12 +1550,20 @@ class People extends Base {
 		// Rondo person type. Legacy records without this field are members/parents.
 		if ( ! empty( $person_type ) ) {
 			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} pt ON p.ID = pt.post_id AND pt.meta_key = 'person_type'";
-			if ( in_array( $person_type, [ 'contact', 'sponsor' ], true ) ) {
+			if ( $person_type === 'contact' ) {
 				$where_clauses[]  = 'pt.meta_value = %s';
 				$prepare_values[] = $person_type;
 			} else {
 				$where_clauses[] = "(pt.meta_value IS NULL OR pt.meta_value = '' OR pt.meta_value = 'member')";
 			}
+		}
+
+		// Sponsorship is an independent role and can overlap either person type.
+		if ( $is_sponsor !== null && $is_sponsor !== '' ) {
+			$join_clauses[]  = "LEFT JOIN {$wpdb->postmeta} sp ON p.ID = sp.post_id AND sp.meta_key = 'is_sponsor'";
+			$where_clauses[] = $is_sponsor === '1'
+				? "(sp.meta_value = '1')"
+				: "(sp.meta_value IS NULL OR sp.meta_value = '' OR sp.meta_value = '0')";
 		}
 
 		// Leeftijdsgroep (age group) - select filter

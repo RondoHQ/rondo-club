@@ -20,6 +20,16 @@ export function formatCurrency(amount, decimals = 2) {
 }
 
 /**
+ * Whether an ACF person payload has the independent sponsor role.
+ *
+ * @param {Object} acf Person ACF values.
+ * @returns {boolean}
+ */
+export function hasSponsorRole(acf = {}) {
+  return acf.is_sponsor === true || acf.is_sponsor === 1 || acf.is_sponsor === '1';
+}
+
+/**
  * Format a decimal rate as a percentage
  *
  * @param {number} rate - Decimal rate (e.g., 0.25 for 25%)

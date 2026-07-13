@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.58.0] - 2026-07-13
+
+### Added
+
+- Personen kunnen nu tegelijk lid of contact én sponsor zijn via de onafhankelijke sponsorrol `is_sponsor`.
+- De personenlijst heeft een apart sponsorfilter en toont **+ sponsor** naast het bestaande persoonstype.
+
+### Changed
+
+- `person_type` kent alleen nog `member` en `contact`; sponsorstatus en pasvariant staan daar los van.
+- Een actieve sponsorrol krijgt voorrang bij de digitale pas en valt na beëindiging terug op een eventuele ledenpas.
+- Sponsorbeheerders kunnen op dubbelrolrecords uitsluitend sponsorvelden wijzigen en kunnen het onderliggende lid niet verwijderen.
+
 ## [33.57.1] - 2026-07-13
 
 ### Fixed

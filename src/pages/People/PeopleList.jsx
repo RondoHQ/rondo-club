@@ -8,7 +8,7 @@ import { wpApi, prmApi } from '@/api/client';
 import { buildCsv, downloadCsv } from '@/utils/csvExport';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import PersonAvatar from '@/components/PersonAvatar';
-import { getTeamName, formatPhoneForTel, formatPhoneForDisplay } from '@/utils/formatters';
+import { getTeamName, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { format, parseYmd, isValid } from '@/utils/dateFormat';
 import CustomFieldColumn from '@/components/CustomFieldColumn';
 import Pagination from '@/components/Pagination';
@@ -51,19 +51,19 @@ function formatBirthdateDisplay(birthdate) {
 
 function getMembershipTypeLabel(person) {
   const acf = person.acf || {};
+  const sponsorSuffix = hasSponsorRole(acf) ? ' + sponsor' : '';
 
-  if (acf.person_type === 'contact') return 'Contact';
-  if (acf.person_type === 'sponsor') return 'Sponsor';
+  if (acf.person_type === 'contact') return `Contact${sponsorSuffix}`;
 
   const sportlinkType = String(acf['type-lid'] || '').trim().toLowerCase();
-  if (sportlinkType.includes('verenigingslid')) return 'Verenigingslid';
-  if (sportlinkType.includes('bondslid')) return 'Bondslid';
-  if (sportlinkType.includes('ouder')) return 'Ouder';
+  if (sportlinkType.includes('verenigingslid')) return `Verenigingslid${sponsorSuffix}`;
+  if (sportlinkType.includes('bondslid')) return `Bondslid${sponsorSuffix}`;
+  if (sportlinkType.includes('ouder')) return `Ouder${sponsorSuffix}`;
 
   const isParent = acf.isparent === true || acf.isparent === 1 || acf.isparent === '1';
-  if (isParent || !acf['knvb-id']) return 'Ouder';
+  if (isParent || !acf['knvb-id']) return `Ouder${sponsorSuffix}`;
 
-  return 'Bondslid';
+  return `Bondslid${sponsorSuffix}`;
 }
 
 // Helper function to get current team ID from person's work history
@@ -181,7 +181,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               Contact
             </span>
           )}
-          {person.acf?.person_type === 'sponsor' && (
+          {hasSponsorRole(person.acf) && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
               Sponsor
             </span>
@@ -649,6 +649,7 @@ export default function PeopleList() {
   const financieleBlokkade = searchParams.get('blokkade') || '';
   const typeLid = searchParams.get('typeLid') || '';
   const personType = searchParams.get('personType') || '';
+  const sponsorOnly = searchParams.get('sponsor') || '';
   const leeftijdsgroep = searchParams.get('leeftijdsgroep') || '';
   const fotoMissing = searchParams.get('fotoMissing') || '';
   const vogMissing = searchParams.get('vogMissing') || '';
@@ -716,6 +717,10 @@ export default function PeopleList() {
     updateSearchParams({ personType: value });
   }, [updateSearchParams]);
 
+  const setSponsorOnly = useCallback((value) => {
+    updateSearchParams({ sponsor: value });
+  }, [updateSearchParams]);
+
   const setLeeftijdsgroep = useCallback((value) => {
     updateSearchParams({ leeftijdsgroep: value });
   }, [updateSearchParams]);
@@ -759,12 +764,12 @@ export default function PeopleList() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [showColumnSettings, setShowColumnSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [newPersonType, setNewPersonType] = useState(null);
+  const [newPersonMode, setNewPersonMode] = useState(null);
   const bulkDropdownRef = useRef(null);
   const queryClient = useQueryClient();
   const createPersonMutation = useCreatePerson({
     onSuccess: (createdPerson) => {
-      setNewPersonType(null);
+      setNewPersonMode(null);
       navigate(`/people/${createdPerson.id}`);
     },
   });
@@ -801,6 +806,7 @@ export default function PeopleList() {
     financieleBlokkade,
     typeLid,
     personType,
+    isSponsor: sponsorOnly,
     leeftijdsgroep,
     fotoMissing,
     vogMissing,
@@ -944,11 +950,14 @@ export default function PeopleList() {
       filterOptions: [
         { value: 'member', label: 'Leden en ouders' },
         { value: 'contact', label: 'Contacten' },
-        { value: 'sponsor', label: 'Sponsors' },
       ],
-      getFilterLabel: (val) => val === 'contact'
-        ? 'Persoonstype: Contact'
-        : val === 'sponsor' ? 'Persoonstype: Sponsor' : 'Persoonstype: Lid / ouder',
+      getFilterLabel: (val) => val === 'contact' ? 'Persoonstype: Contact' : 'Persoonstype: Lid / ouder',
+      filterSection: 'Persoon',
+    }),
+    createColumn({
+      id: 'is_sponsor', header: 'Sponsor', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `Sponsor: ${val === '1' ? 'Ja' : 'Nee'}`,
       filterSection: 'Persoon',
     }),
 
@@ -1080,6 +1089,7 @@ export default function PeopleList() {
     blokkade: financieleBlokkade,
     type_lid: typeLid,
     person_type: personType,
+    is_sponsor: sponsorOnly,
     leeftijdsgroep,
     foto_missing: fotoMissing,
     vog_datum: vogMissing === '1' ? 'missing' : vogOlderThanYears ? `older_${vogOlderThanYears}` : '',
@@ -1145,6 +1155,7 @@ export default function PeopleList() {
       case 'blokkade': setFinancieleBlokkade(value); break;
       case 'type_lid': setTypeLid(value); break;
       case 'person_type': setPersonType(value); break;
+      case 'is_sponsor': setSponsorOnly(value); break;
       case 'leeftijdsgroep': setLeeftijdsgroep(value); break;
       case 'foto_missing': setFotoMissing(value); break;
       case 'vog_datum':
@@ -1154,7 +1165,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1187,7 +1198,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1265,6 +1276,7 @@ export default function PeopleList() {
         financieleBlokkade,
         typeLid,
         personType,
+        isSponsor: sponsorOnly,
         leeftijdsgroep,
         fotoMissing,
         vogMissing,
@@ -1329,13 +1341,13 @@ export default function PeopleList() {
           toolbarEnd={
             <div className="flex items-center gap-2">
               {currentUser?.can_edit_people && (
-                <button onClick={() => setNewPersonType('contact')} className="btn-primary">
+                <button onClick={() => setNewPersonMode('contact')} className="btn-primary">
                   <Plus className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Contact toevoegen</span>
                 </button>
               )}
               {(currentUser?.can_edit_people || currentUser?.can_manage_sponsors) && (
-                <button onClick={() => setNewPersonType('sponsor')} className="btn-primary">
+                <button onClick={() => setNewPersonMode('sponsor')} className="btn-primary">
                   <Plus className="w-4 h-4 md:mr-2" />
                   <span className="hidden md:inline">Sponsor toevoegen</span>
                 </button>
@@ -1495,11 +1507,12 @@ export default function PeopleList() {
       />
 
       <PersonEditModal
-        isOpen={newPersonType !== null}
-        onClose={() => setNewPersonType(null)}
+        isOpen={newPersonMode !== null}
+        onClose={() => setNewPersonMode(null)}
         onSubmit={(data) => createPersonMutation.mutate(data)}
         isLoading={createPersonMutation.isPending}
-        initialPersonType={newPersonType || 'contact'}
+        initialPersonType="contact"
+        initialSponsor={newPersonMode === 'sponsor'}
       />
 
       {/* Bulk Organization Modal */}

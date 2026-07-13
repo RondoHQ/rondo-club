@@ -85,6 +85,9 @@ class AccessControl {
 		'datum-vog',
 		'huidig-vrijwilliger',
 		'former_member',
+		'company_name',
+		'is_sponsor',
+		'sponsor_pass_variant',
 		'relationships',
 	];
 
@@ -158,8 +161,9 @@ class AccessControl {
 	/**
 	 * Check if a user may edit a specific person record.
 	 *
-	 * Full people managers may edit every person. Sponsor managers may only edit
-	 * records whose explicit ACF person type is `sponsor`.
+	 * Full people managers may edit every person. Sponsor managers may edit
+	 * sponsor-only records and the sponsor fields on dual-role members; the REST
+	 * guard keeps member-owned fields read-only for the latter.
 	 *
 	 * @param int      $person_id Person post ID.
 	 * @param int|null $user_id   User ID (optional, defaults to current user).
@@ -174,7 +178,30 @@ class AccessControl {
 
 		return self::can_manage_sponsors( $user_id )
 			&& get_post_type( $person_id ) === 'person'
-			&& get_post_meta( $person_id, 'person_type', true ) === 'sponsor';
+			&& SponsorStatus::is_sponsor( (int) $person_id );
+	}
+
+	/**
+	 * Check whether a user may delete a person record.
+	 *
+	 * Dual-role member+sponsor records must never be deletable by sponsor-only
+	 * managers because the underlying member identity belongs to Sportlink.
+	 *
+	 * @param int      $person_id Person post ID.
+	 * @param int|null $user_id   User ID (optional, defaults to current user).
+	 * @return bool
+	 */
+	public static function can_delete_person( $person_id, $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( self::can_edit_people( $user_id ) ) {
+			return true;
+		}
+
+		return self::can_manage_sponsors( $user_id )
+			&& get_post_type( $person_id ) === 'person'
+			&& SponsorStatus::is_sponsor( (int) $person_id )
+			&& get_post_meta( $person_id, 'person_type', true ) === 'contact';
 	}
 
 	/**
@@ -201,7 +228,11 @@ class AccessControl {
 			return $caps;
 		}
 
-		if ( ! self::can_edit_person( (int) $args[0], $user_id ) ) {
+		$allowed = $cap === 'delete_post'
+			? self::can_delete_person( (int) $args[0], $user_id )
+			: self::can_edit_person( (int) $args[0], $user_id );
+
+		if ( ! $allowed ) {
 			return [ 'do_not_allow' ];
 		}
 
