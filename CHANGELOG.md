@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.54.0] - 2026-07-13
+
+### Added
+
+- Bij het toevoegen van een sponsor is de pasvariant voortaan verplicht: **Businessclub AWC** gebruikt de witte Businessclub-pas met het Businessclub-logo, terwijl **AWC Sponsor** een witte pas met titel **AWC Sponsor** en het gewone AWC-logo krijgt. De keuze blijft wijzigbaar op de persoonspagina.
+
 ## [33.53.3] - 2026-07-13
 
 ### Changed

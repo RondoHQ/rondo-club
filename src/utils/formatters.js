@@ -178,7 +178,7 @@ export function formatDateValue(dateString, yearUnknown = false, formatFn) {
  */
 export function sanitizePersonAcf(acfData, overrides = {}) {
   // Fields that are select/enum and should be null instead of empty string
-  const enumFields = ['gender', 'vergoeding_reden', 'person_type'];
+  const enumFields = ['gender', 'vergoeding_reden', 'person_type', 'sponsor_pass_variant'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
   const numericFields = [

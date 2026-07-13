@@ -44,6 +44,7 @@ class People extends Base {
 		// former_member toggle itself — flip it off first, then edit.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_sponsor_manager_scope' ], 15, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'validate_sponsor_pass_variant' ], 18, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_person_identity' ], 20, 2 );
 
 		// Allow callers to filter person list endpoints by former_member via
@@ -890,6 +891,63 @@ class People extends Base {
 		}
 
 		return $prepared_post;
+	}
+
+	/**
+	 * Require an explicit valid pass variant when a Sponsor is created.
+	 *
+	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request       Originating REST request.
+	 * @return stdClass|WP_Error
+	 */
+	public function validate_sponsor_pass_variant( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post ) ) {
+			return $prepared_post;
+		}
+
+		$acf = $request->get_param( 'acf' );
+		if ( ! is_array( $acf ) ) {
+			return $prepared_post;
+		}
+
+		$post_id        = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+		$current_type   = $post_id ? sanitize_key( (string) get_field( 'person_type', $post_id ) ) : '';
+		$requested_type = array_key_exists( 'person_type', $acf ) ? sanitize_key( (string) $acf['person_type'] ) : $current_type;
+		$has_variant    = array_key_exists( 'sponsor_pass_variant', $acf );
+		$variant        = $has_variant ? sanitize_key( (string) $acf['sponsor_pass_variant'] ) : '';
+		$allowed        = [
+			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_BUSINESSCLUB,
+			PublicMembershipPassPage::SPONSOR_PASS_VARIANT_AWC_SPONSOR,
+		];
+		$is_new_sponsor = $post_id === 0 && $requested_type === 'sponsor';
+
+		if ( $has_variant && $variant !== '' && ! in_array( $variant, $allowed, true ) ) {
+			return $this->sponsor_pass_variant_error();
+		}
+
+		if ( $is_new_sponsor && ! in_array( $variant, $allowed, true ) ) {
+			return $this->sponsor_pass_variant_error();
+		}
+
+		$current_variant = $post_id ? PublicMembershipPassPage::get_sponsor_pass_variant( $post_id ) : '';
+		if ( $current_type === 'sponsor' && $current_variant !== '' && $has_variant && $variant === '' ) {
+			return $this->sponsor_pass_variant_error();
+		}
+
+		return $prepared_post;
+	}
+
+	/**
+	 * Build the validation error for a missing or invalid Sponsor pass variant.
+	 *
+	 * @return WP_Error
+	 */
+	private function sponsor_pass_variant_error() {
+		return new \WP_Error(
+			'rondo_sponsor_pass_variant_required',
+			__( 'Kies Businessclub AWC of AWC Sponsor als pasvariant.', 'rondo' ),
+			[ 'status' => 400 ]
+		);
 	}
 
 	/**

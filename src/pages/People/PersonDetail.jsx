@@ -126,6 +126,7 @@ export default function PersonDetail() {
   const [editingRelationshipIndex, setEditingRelationshipIndex] = useState(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [isSavingPersonType, setIsSavingPersonType] = useState(false);
+  const [isSavingSponsorPassVariant, setIsSavingSponsorPassVariant] = useState(false);
   const [companyNameDraft, setCompanyNameDraft] = useState('');
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -209,6 +210,18 @@ export default function PersonDetail() {
       alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
       setIsSavingPersonType(false);
+    }
+  };
+
+  const handleSponsorPassVariantChange = async (sponsorPassVariant) => {
+    setIsSavingSponsorPassVariant(true);
+    try {
+      const acfData = sanitizePersonAcf(person.acf, { sponsor_pass_variant: sponsorPassVariant });
+      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+    } catch {
+      alert('Pasvariant kon niet worden opgeslagen. Probeer het opnieuw.');
+    } finally {
+      setIsSavingSponsorPassVariant(false);
     }
   };
 
@@ -1303,6 +1316,21 @@ export default function PersonDetail() {
                   <option value="member">Lid / ouder</option>
                   <option value="contact">Contact</option>
                   <option value="sponsor">Sponsor</option>
+                </select>
+              </label>
+            )}
+            {isSponsorPerson && canEditPeople && (
+              <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span>Pasvariant</span>
+                <select
+                  value={acf.sponsor_pass_variant || ''}
+                  onChange={(event) => handleSponsorPassVariantChange(event.target.value)}
+                  className="input py-1 text-sm w-auto"
+                  disabled={isSavingSponsorPassVariant}
+                >
+                  <option value="" disabled>Kies...</option>
+                  <option value="businessclub">Businessclub AWC</option>
+                  <option value="awc_sponsor">AWC Sponsor</option>
                 </select>
               </label>
             )}

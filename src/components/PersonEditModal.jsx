@@ -56,6 +56,7 @@ export default function PersonEditModal({
       nickname: '',
       company_name: '',
       person_type: initialPersonType,
+      sponsor_pass_variant: '',
       gender: '',
       pronouns: '',
       email: '',
@@ -81,6 +82,7 @@ export default function PersonEditModal({
           nickname: person.acf?.nickname || '',
           company_name: person.acf?.company_name || '',
           person_type: person.acf?.person_type || 'member',
+          sponsor_pass_variant: person.acf?.sponsor_pass_variant || '',
           gender: person.acf?.gender || '',
           pronouns: person.acf?.pronouns || '',
           email: person.acf?.email_1 || '',
@@ -97,6 +99,7 @@ export default function PersonEditModal({
           nickname: '',
           company_name: prefillData.company_name || '',
           person_type: prefillData.person_type || initialPersonType,
+          sponsor_pass_variant: prefillData.sponsor_pass_variant || '',
           gender: '',
           pronouns: '',
           email: prefillData.email || '',
@@ -113,6 +116,7 @@ export default function PersonEditModal({
           nickname: '',
           company_name: '',
           person_type: initialPersonType,
+          sponsor_pass_variant: '',
           gender: '',
           pronouns: '',
           email: '',
@@ -164,6 +168,7 @@ export default function PersonEditModal({
           nickname: data.nickname || '',
           company_name: data.company_name || '',
           person_type: initialPersonType,
+          sponsor_pass_variant: '',
           gender: data.gender || '',
           pronouns: data.pronouns || '',
           email: data.email || '',
@@ -295,6 +300,24 @@ export default function PersonEditModal({
                     <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                     <span>{vcardError}</span>
                   </div>
+                )}
+              </div>
+            )}
+
+            {isSponsor && (
+              <div>
+                <label className="label">Pasvariant</label>
+                <select
+                  {...register('sponsor_pass_variant', { required: 'Kies een pasvariant' })}
+                  className="input"
+                  disabled={isLoading}
+                >
+                  <option value="">Kies een pasvariant...</option>
+                  <option value="businessclub">Businessclub AWC</option>
+                  <option value="awc_sponsor">AWC Sponsor</option>
+                </select>
+                {errors.sponsor_pass_variant && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.sponsor_pass_variant.message}</p>
                 )}
               </div>
             )}
