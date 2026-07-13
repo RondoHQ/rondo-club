@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.57.1] - 2026-07-13
+
+### Fixed
+
+- De velden **Persoonstype** en **Pasvariant** op de sponsorpagina hebben nu consistente horizontale en verticale tussenruimte.
+
 ## [33.57.0] - 2026-07-13
 
 ### Added
