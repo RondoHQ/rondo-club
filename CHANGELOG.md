@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.51.1] - 2026-07-13
+
+### Fixed
+
+- Het totaal op `/vrijwilligers` telt nu de werkelijk vereiste diensten per plichteenheid op. Gezinnen met meerdere jeugdleden tellen daardoor volgens de bestaande gezinskorting mee voor meer dan twee diensten, in plaats van slechts als één eenheid te worden getoond.
+
 ## [33.51.0] - 2026-07-12
 
 ### Added
