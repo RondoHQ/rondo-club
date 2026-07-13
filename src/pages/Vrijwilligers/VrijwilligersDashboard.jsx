@@ -47,12 +47,23 @@ export default function VrijwilligersDashboard() {
   const stats = useMemo(() => {
     if (!eligibility?.units) return null;
     const units = eligibility.units;
-    const total = units.length;
-    const gezin = units.filter((u) => u.kind === 'gezin').length;
-    const speler = units.filter((u) => u.kind === 'speler').length;
-    const gezinOrphan = units.filter((u) => u.kind === 'gezin' && u.data_quality === 'orphan').length;
-    const gezinAddressFallback = units.filter((u) => u.kind === 'gezin' && u.data_quality === 'address_fallback').length;
-    return { total, gezin, speler, gezinOrphan, gezinAddressFallback };
+    return units.reduce((totals, unit) => {
+      totals.totalRequired += Number(unit.required_count) || 0;
+      if (unit.kind === 'gezin') {
+        totals.gezin += 1;
+        if (unit.data_quality === 'orphan') totals.gezinOrphan += 1;
+        if (unit.data_quality === 'address_fallback') totals.gezinAddressFallback += 1;
+      } else if (unit.kind === 'speler') {
+        totals.speler += 1;
+      }
+      return totals;
+    }, {
+      totalRequired: 0,
+      gezin: 0,
+      speler: 0,
+      gezinOrphan: 0,
+      gezinAddressFallback: 0,
+    });
   }, [eligibility]);
 
   const diagnostics = eligibility?.diagnostics || null;
@@ -74,7 +85,7 @@ export default function VrijwilligersDashboard() {
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Vrijwilligersbeleid — 2 diensten per jaar voor ouders (t/m JO16) en spelers (vanaf O17), zolang ze spelend/contributie-plichtig lid zijn.
+            Vrijwilligersbeleid — 2 diensten voor het eerste kind t/m JO16 en per speler vanaf O17; volgende kinderen tellen met gezinskorting mee.
           </p>
         </div>
         <button
@@ -101,8 +112,8 @@ export default function VrijwilligersDashboard() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            label="Eenheden totaal"
-            value={isLoading ? '…' : (stats?.total ?? 0).toLocaleString('nl-NL')}
+            label="Diensten vereist"
+            value={isLoading ? '…' : (stats?.totalRequired ?? 0).toLocaleString('nl-NL')}
             sub={eligibility?.season ? `Seizoen ${eligibility.season}` : null}
             icon={Users}
           />
