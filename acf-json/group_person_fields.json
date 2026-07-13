@@ -65,12 +65,11 @@
             "label": "Persoonstype",
             "name": "person_type",
             "type": "select",
-            "instructions": "Gebruik Contact voor externe relaties en Sponsor voor businessclubleden en sponsoren.",
+            "instructions": "Gebruik Contact voor externe relaties. Sponsorschap wordt los van het persoonstype vastgelegd.",
             "required": 0,
             "choices": {
                 "member": "Lid / ouder",
-                "contact": "Contact",
-                "sponsor": "Sponsor"
+                "contact": "Contact"
             },
             "default_value": "member",
             "allow_null": 0,
@@ -79,6 +78,21 @@
             "return_format": "value",
             "ajax": 0,
             "placeholder": "",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_is_sponsor",
+            "label": "Sponsor",
+            "name": "is_sponsor",
+            "type": "true_false",
+            "instructions": "Actieve sponsorrol, onafhankelijk van het persoonstype.",
+            "required": 0,
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "Ja",
+            "ui_off_text": "Nee",
             "wrapper": {
                 "width": "50"
             }
@@ -93,9 +107,9 @@
             "conditional_logic": [
                 [
                     {
-                        "field": "field_person_type",
+                        "field": "field_is_sponsor",
                         "operator": "==",
-                        "value": "sponsor"
+                        "value": "1"
                     }
                 ]
             ],
@@ -110,6 +124,46 @@
             "return_format": "value",
             "ajax": 0,
             "placeholder": "",
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_sponsit_contact_id",
+            "label": "Sponsit contact-ID",
+            "name": "sponsit_contact_id",
+            "type": "text",
+            "instructions": "Stabiele bron-ID voor de Sponsit-sync.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_is_sponsor",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "50"
+            }
+        },
+        {
+            "key": "field_sponsit_person_id",
+            "label": "Sponsit persoon-ID",
+            "name": "sponsit_person_id",
+            "type": "text",
+            "instructions": "Stabiele contactpersoon-ID voor de Sponsit-sync.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_is_sponsor",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "50"
             }

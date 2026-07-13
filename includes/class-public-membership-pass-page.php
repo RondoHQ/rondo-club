@@ -8,6 +8,7 @@
 
 namespace Rondo\Passes;
 
+use Rondo\Core\SponsorStatus;
 use Rondo\Config\FinanceConfig;
 use Rondo\Fees\SeasonKey;
 
@@ -220,8 +221,7 @@ class PublicMembershipPassPage {
 	 * @return string
 	 */
 	public static function get_person_member_tier( int $person_id ): string {
-		$person_type = strtolower( trim( (string) get_field( 'person_type', $person_id ) ) );
-		if ( $person_type === 'sponsor' ) {
+		if ( SponsorStatus::is_sponsor( $person_id ) ) {
 			return self::get_sponsor_pass_variant( $person_id ) !== '' ? 'sponsor' : '';
 		}
 

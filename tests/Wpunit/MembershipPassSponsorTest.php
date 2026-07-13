@@ -17,13 +17,29 @@ class MembershipPassSponsorTest extends RondoTestCase {
 			[ 'post_title' => 'Sponsor BV' ],
 			[
 				'company_name'         => 'Sponsor BV',
-				'person_type'          => 'sponsor',
+				'person_type'          => 'contact',
+				'is_sponsor'           => 1,
 				'sponsor_pass_variant' => 'businessclub',
 			]
 		);
 
 		$this->assertSame( 'sponsor', PublicMembershipPassPage::get_person_member_tier( $sponsor_id ) );
 		$this->assertStringContainsString( '/lidpas/', PublicMembershipPassPage::ensure_person_pass_url( $sponsor_id ) );
+	}
+
+	public function test_member_sponsor_uses_sponsor_pass_precedence(): void {
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Lid en sponsor' ],
+			[
+				'first_name'           => 'Dubbelrol',
+				'person_type'          => 'member',
+				'is_sponsor'           => 1,
+				'sponsor_pass_variant' => 'awc_sponsor',
+				'type-lid'             => 'Bondslid',
+			]
+		);
+
+		$this->assertSame( 'sponsor', PublicMembershipPassPage::get_person_member_tier( $person_id ) );
 	}
 
 	public function test_sponsor_wallet_passes_use_a_white_background(): void {
@@ -131,7 +147,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 			[ 'post_title' => 'Sponsor zonder variant' ],
 			[
 				'company_name' => 'Sponsor BV',
-				'person_type'  => 'sponsor',
+				'person_type'  => 'contact',
+				'is_sponsor'   => 1,
 			]
 		);
 
@@ -145,7 +162,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 			[ 'post_title' => 'Sponsor BV' ],
 			[
 				'company_name' => 'Sponsor BV',
-				'person_type'  => 'sponsor',
+				'person_type'  => 'member',
+				'is_sponsor'   => 1,
 			]
 		);
 
@@ -154,7 +172,8 @@ class MembershipPassSponsorTest extends RondoTestCase {
 
 		$summary = $method->invoke( new MembershipPasses(), get_post( $sponsor_id ) );
 
-		$this->assertSame( 'sponsor', $summary['person_type'] );
+		$this->assertSame( 'member', $summary['person_type'] );
+		$this->assertTrue( $summary['is_sponsor'] );
 		$this->assertSame( 'Sponsor BV', $summary['company_name'] );
 	}
 }

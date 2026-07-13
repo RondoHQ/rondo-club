@@ -7,6 +7,7 @@ namespace Rondo\REST;
 
 use Rondo\Core\AccessControl;
 use Rondo\Passes\MembershipPassQr;
+use Rondo\Core\SponsorStatus;
 use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -188,6 +189,7 @@ class MembershipPasses extends Base {
 		$person['knvb_id']         = $knvb_id;
 		$person['knvb-id']         = $knvb_id;
 		$person['person_type']     = $this->sanitize_text( $person_type );
+		$person['is_sponsor']      = SponsorStatus::is_sponsor( (int) $post->ID );
 		$person['company_name']    = $this->sanitize_text( $company_name );
 		$person['photo_thumbnail'] = $person['thumbnail'] ?? '';
 

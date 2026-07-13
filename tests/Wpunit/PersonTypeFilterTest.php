@@ -19,14 +19,19 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->controller = new People();
 	}
 
-	private function filtered_ids( string $person_type ): array {
+	private function filtered_ids( string $person_type = '', string $is_sponsor = '' ): array {
 		$request = new \WP_REST_Request( 'GET' );
 		$request->set_param( 'page', 1 );
 		$request->set_param( 'per_page', 100 );
 		$request->set_param( 'ownership', 'all' );
 		$request->set_param( 'orderby', 'first_name' );
 		$request->set_param( 'order', 'asc' );
-		$request->set_param( 'person_type', $person_type );
+		if ( $person_type !== '' ) {
+			$request->set_param( 'person_type', $person_type );
+		}
+		if ( $is_sponsor !== '' ) {
+			$request->set_param( 'is_sponsor', $is_sponsor );
+		}
 
 		$response = $this->controller->get_filtered_people( $request );
 		$data     = $response->get_data();
@@ -74,25 +79,35 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->assertNotContains( $contact_id, $ids );
 	}
 
-	public function test_sponsor_filter_only_returns_explicit_sponsors(): void {
-		$contact_id = $this->createPerson(
+	public function test_sponsor_filter_returns_contact_and_member_sponsors(): void {
+		$contact_id        = $this->createPerson(
 			[ 'post_title' => 'Extern contact' ],
 			[
 				'first_name'  => 'Extern',
 				'person_type' => 'contact',
 			]
 		);
-		$sponsor_id = $this->createPerson(
+		$sponsor_id        = $this->createPerson(
 			[ 'post_title' => 'Businessclublid' ],
 			[
 				'first_name'  => 'Businessclub',
-				'person_type' => 'sponsor',
+				'person_type' => 'contact',
+				'is_sponsor'  => 1,
+			]
+		);
+		$member_sponsor_id = $this->createPerson(
+			[ 'post_title' => 'Lid en sponsor' ],
+			[
+				'first_name'  => 'Dubbelrol',
+				'person_type' => 'member',
+				'is_sponsor'  => 1,
 			]
 		);
 
-		$ids = $this->filtered_ids( 'sponsor' );
+		$ids = $this->filtered_ids( '', '1' );
 
 		$this->assertContains( $sponsor_id, $ids );
+		$this->assertContains( $member_sponsor_id, $ids );
 		$this->assertNotContains( $contact_id, $ids );
 	}
 
@@ -147,7 +162,8 @@ class PersonTypeFilterTest extends RondoTestCase {
 			[
 				'first_name'   => '',
 				'company_name' => 'Sponsor BV',
-				'person_type'  => 'sponsor',
+				'person_type'  => 'contact',
+				'is_sponsor'   => 1,
 			]
 		);
 

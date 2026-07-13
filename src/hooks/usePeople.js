@@ -106,6 +106,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.financieleBlokkade - '1' for yes, '0' for no, '' for all
  * @param {string} filters.typeLid - Filter by member type value
  * @param {string} filters.personType - Filter by Rondo person type (`member` or `contact`)
+ * @param {string} filters.isSponsor - Filter by independent sponsor role (`1` or `0`)
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
@@ -134,6 +135,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     financiele_blokkade: filters.financieleBlokkade || null,
     type_lid: filters.typeLid || null,
     person_type: filters.personType || null,
+    is_sponsor: filters.isSponsor || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
     vog_older_than_years: filters.vogOlderThanYears || null,
@@ -271,8 +273,9 @@ export function useCreatePerson({ onSuccess } = {}) {
           last_name: data.last_name,
           nickname: data.nickname,
           company_name: data.company_name || '',
-          person_type: data.person_type || 'member',
-          ...(data.person_type === 'sponsor' ? { sponsor_pass_variant: data.sponsor_pass_variant } : {}),
+          person_type: data.person_type || 'contact',
+          is_sponsor: Boolean(data.is_sponsor),
+          ...(data.is_sponsor ? { sponsor_pass_variant: data.sponsor_pass_variant } : {}),
           gender: data.gender || null,
           pronouns: data.pronouns || null,
           email_1: data.email || '',
