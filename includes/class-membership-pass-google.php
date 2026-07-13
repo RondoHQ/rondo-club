@@ -83,21 +83,23 @@ class MembershipPassGoogle {
 			return $qr_result;
 		}
 
-		$person_name = $this->get_person_full_name( $person_id );
-		$issuer_name = $this->get_issuer_name();
-		$member_type = $this->get_member_type_label( $member_tier );
-		$knvb_id     = trim( (string) get_field( 'knvb-id', $person_id ) );
-		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
-		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
-		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
-		$object_id   = $issuer_id . '.member_' . $person_id;
+		$person_name  = $this->get_person_full_name( $person_id );
+		$issuer_name  = $this->get_issuer_name();
+		$member_type  = $this->get_member_type_label( $member_tier );
+		$knvb_id      = trim( (string) get_field( 'knvb-id', $person_id ) );
+		$details      = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
+		$team_name    = $details['teams'] !== '' ? $details['teams'] : '-';
+		$functions    = $details['functions'] !== '' ? $details['functions'] : '-';
+		$company_name = trim( (string) get_field( 'company_name', $person_id ) );
+		$card_title   = $this->get_card_title( $issuer_name, $member_tier );
+		$object_id    = $issuer_id . '.member_' . $person_id;
 		if ( $details['selection'] !== '' ) {
 			$object_id .= '_' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
 		}
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $knvb_id, $season, $qr_result['token'], $member_tier );
+			$this->upsert_object( $service, $object_id, $class_id, $card_title, $person_name, $member_type, $team_name, $functions, $company_name, $knvb_id, $season, $qr_result['token'], $member_tier );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -173,43 +175,18 @@ class MembershipPassGoogle {
 	 * @param string        $member_type Membership type label.
 	 * @param string        $team_name Team label.
 	 * @param string        $functions Functions label.
+	 * @param string        $company_name Company name.
 	 * @param string        $knvb_id KNVB ID.
 	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
 	 * @param string        $member_tier Resolved pass tier.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $knvb_id, string $season, string $qr_payload, string $member_tier ) {
-		$text_modules = [
-			new TextModuleData(
-				[
-					'id'     => 'functie',
-					'header' => 'FUNCTIE',
-					'body'   => $functions,
-				]
-			),
-			new TextModuleData(
-				[
-					'id'     => 'team',
-					'header' => 'TEAM',
-					'body'   => $team_name,
-				]
-			),
-		];
-		if ( $member_tier === 'bondslid' && $knvb_id !== '' ) {
-			$text_modules[] = new TextModuleData(
-				[
-					'id'     => 'knvb_id',
-					'header' => 'KNVB ID',
-					'body'   => $knvb_id,
-				]
-			);
-		}
-		$text_modules[] = new TextModuleData(
-			[
-				'id'     => 'seizoen',
-				'header' => 'SEIZOEN',
-				'body'   => $season,
-			]
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $company_name, string $knvb_id, string $season, string $qr_payload, string $member_tier ) {
+		$text_modules = array_map(
+			static function ( array $module ): TextModuleData {
+				return new TextModuleData( $module );
+			},
+			$this->get_text_module_definitions( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season )
 		);
 
 		$object = new GenericObject(
@@ -642,6 +619,68 @@ class MembershipPassGoogle {
 			return 'Verenigingslid';
 		}
 		return 'Bondslid';
+	}
+
+	/**
+	 * Resolve the title shown at the top of the pass.
+	 *
+	 * @param string $issuer_name Configured issuer name.
+	 * @param string $member_tier Resolved pass tier.
+	 * @return string
+	 */
+	private function get_card_title( string $issuer_name, string $member_tier ): string {
+		return $member_tier === 'sponsor' ? 'Businessclub ' . $issuer_name : $issuer_name;
+	}
+
+	/**
+	 * Build Google Wallet text module definitions.
+	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $team_name Team label.
+	 * @param string $functions Functions label.
+	 * @param string $company_name Company name.
+	 * @param string $knvb_id KNVB ID.
+	 * @param string $season Season key.
+	 * @return array<int, array{id: string, header: string, body: string}>
+	 */
+	private function get_text_module_definitions( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id, string $season ): array {
+		if ( $member_tier === 'sponsor' ) {
+			$modules = [
+				[
+					'id'     => 'bedrijf',
+					'header' => 'BEDRIJF',
+					'body'   => $company_name !== '' ? $company_name : '-',
+				],
+			];
+		} else {
+			$modules = [
+				[
+					'id'     => 'functie',
+					'header' => 'FUNCTIE',
+					'body'   => $functions,
+				],
+				[
+					'id'     => 'team',
+					'header' => 'TEAM',
+					'body'   => $team_name,
+				],
+			];
+		}
+
+		if ( $member_tier === 'bondslid' && $knvb_id !== '' ) {
+			$modules[] = [
+				'id'     => 'knvb_id',
+				'header' => 'KNVB ID',
+				'body'   => $knvb_id,
+			];
+		}
+		$modules[] = [
+			'id'     => 'seizoen',
+			'header' => 'SEIZOEN',
+			'body'   => $season,
+		];
+
+		return $modules;
 	}
 
 	/**

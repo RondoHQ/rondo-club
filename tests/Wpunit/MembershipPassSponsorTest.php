@@ -33,4 +33,33 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertSame( 'rgb(255,255,255)', $apple_method->invoke( new MembershipPassApple(), 'sponsor' ) );
 		$this->assertSame( '#ffffff', $google_method->invoke( new MembershipPassGoogle(), 'sponsor' ) );
 	}
+
+	public function test_sponsor_wallet_passes_use_businessclub_title_and_company_fields(): void {
+		$apple             = new MembershipPassApple();
+		$google            = new MembershipPassGoogle();
+		$apple_reflection  = new ReflectionClass( MembershipPassApple::class );
+		$google_reflection = new ReflectionClass( MembershipPassGoogle::class );
+
+		$apple_title    = $apple_reflection->getMethod( 'get_card_title' );
+		$apple_fields   = $apple_reflection->getMethod( 'get_card_fields' );
+		$google_title   = $google_reflection->getMethod( 'get_card_title' );
+		$google_modules = $google_reflection->getMethod( 'get_text_module_definitions' );
+
+		$apple_title->setAccessible( true );
+		$apple_fields->setAccessible( true );
+		$google_title->setAccessible( true );
+		$google_modules->setAccessible( true );
+
+		$this->assertSame( 'Businessclub AWC', $apple_title->invoke( $apple, 'AWC', 'sponsor' ) );
+		$this->assertSame( 'Businessclub AWC', $google_title->invoke( $google, 'AWC', 'sponsor' ) );
+
+		$apple_content  = $apple_fields->invoke( $apple, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '', '2026-2027' );
+		$google_content = $google_modules->invoke( $google, 'sponsor', 'Team 1', 'Trainer', 'Sponsor BV', '', '2026-2027' );
+
+		$this->assertSame( [ 'BEDRIJF', 'SEIZOEN' ], array_column( $apple_content['secondary'], 'label' ) );
+		$this->assertSame( 'Sponsor BV', $apple_content['secondary'][0]['value'] );
+		$this->assertSame( [], $apple_content['auxiliary'] );
+		$this->assertSame( [ 'BEDRIJF', 'SEIZOEN' ], array_column( $google_content, 'header' ) );
+		$this->assertSame( 'Sponsor BV', $google_content[0]['body'] );
+	}
 }

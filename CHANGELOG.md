@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.53.1] - 2026-07-13
+
+### Changed
+
+- Sponsorpassen tonen bovenaan **Businessclub AWC** en vervangen de velden Teams en Functies door **Bedrijf** met de bedrijfsnaam.
+
 ## [33.53.0] - 2026-07-13
 
 ### Added

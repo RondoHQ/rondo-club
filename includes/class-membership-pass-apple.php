@@ -71,11 +71,15 @@ class MembershipPassApple {
 
 		$season = SeasonKey::current();
 
-		$person_name = $this->get_person_full_name( $person_id );
-		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
-		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
-		$functions   = $details['functions'] !== '' ? $details['functions'] : '-';
-		$serial      = 'person-' . $person_id;
+		$person_name       = $this->get_person_full_name( $person_id );
+		$details           = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
+		$team_name         = $details['teams'] !== '' ? $details['teams'] : '-';
+		$functions         = $details['functions'] !== '' ? $details['functions'] : '-';
+		$company_name      = trim( (string) get_field( 'company_name', $person_id ) );
+		$organization_name = $this->get_organization_name();
+		$card_title        = $this->get_card_title( $organization_name, $member_tier );
+		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season );
+		$serial            = 'person-' . $person_id;
 		if ( $details['selection'] !== '' ) {
 			$serial .= '-' . substr( hash( 'sha256', $details['selection'] ), 0, 12 );
 		}
@@ -85,9 +89,9 @@ class MembershipPassApple {
 			'passTypeIdentifier' => $this->get_pass_type_identifier(),
 			'serialNumber'       => $serial,
 			'teamIdentifier'     => $this->get_team_identifier(),
-			'organizationName'   => $this->get_organization_name(),
+			'organizationName'   => $card_title,
 			'description'        => $is_sponsor ? 'Rondo toegangspas' : 'Rondo lidmaatschapspas',
-			'logoText'           => $this->get_organization_name(),
+			'logoText'           => $card_title,
 			'foregroundColor'    => $is_sponsor ? 'rgb(17,24,39)' : 'rgb(255,255,255)',
 			'labelColor'         => $is_sponsor ? 'rgb(55,65,81)' : 'rgb(255,255,255)',
 			'backgroundColor'    => $this->get_background_color( $member_tier ),
@@ -99,37 +103,8 @@ class MembershipPassApple {
 						'value' => $person_name,
 					],
 				],
-				'secondaryFields' => [
-					[
-						'key'   => 'team',
-						'label' => 'TEAMS',
-						'value' => $team_name,
-					],
-					[
-						'key'   => 'season',
-						'label' => 'SEIZOEN',
-						'value' => $season,
-					],
-				],
-				'auxiliaryFields' => array_values(
-					array_filter(
-						[
-							[
-								'key'   => 'functions',
-								'label' => 'FUNCTIES',
-								'value' => $functions,
-							],
-							[
-								'key'   => 'knvb_id',
-								'label' => 'KNVB ID',
-								'value' => ( $member_tier === 'bondslid' && $knvb_id !== '' ) ? $knvb_id : null,
-							],
-						],
-						static function ( $field ) {
-							return isset( $field['value'] ) && $field['value'] !== null && $field['value'] !== '';
-						}
-					)
-				),
+				'secondaryFields' => $card_fields['secondary'],
+				'auxiliaryFields' => $card_fields['auxiliary'],
 			],
 			'barcode'            => [
 				'format'          => 'PKBarcodeFormatQR',
@@ -455,6 +430,64 @@ class MembershipPassApple {
 			$name = $config->get_display_name();
 		}
 		return $name !== '' ? $name : get_bloginfo( 'name' );
+	}
+
+	/**
+	 * Resolve the title shown at the top of the pass.
+	 *
+	 * @param string $organization_name Configured organization name.
+	 * @param string $member_tier Resolved pass tier.
+	 * @return string
+	 */
+	private function get_card_title( string $organization_name, string $member_tier ): string {
+		return $member_tier === 'sponsor' ? 'Businessclub ' . $organization_name : $organization_name;
+	}
+
+	/**
+	 * Build the detail fields for the Apple pass.
+	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @param string $team_name Team label.
+	 * @param string $functions Functions label.
+	 * @param string $company_name Company name.
+	 * @param string $knvb_id KNVB ID.
+	 * @param string $season Season key.
+	 * @return array{secondary: array<int, array<string, string>>, auxiliary: array<int, array<string, string>>}
+	 */
+	private function get_card_fields( string $member_tier, string $team_name, string $functions, string $company_name, string $knvb_id, string $season ): array {
+		$secondary = [
+			[
+				'key'   => $member_tier === 'sponsor' ? 'company' : 'team',
+				'label' => $member_tier === 'sponsor' ? 'BEDRIJF' : 'TEAMS',
+				'value' => $member_tier === 'sponsor' ? ( $company_name !== '' ? $company_name : '-' ) : $team_name,
+			],
+			[
+				'key'   => 'season',
+				'label' => 'SEIZOEN',
+				'value' => $season,
+			],
+		];
+
+		$auxiliary = [];
+		if ( $member_tier !== 'sponsor' ) {
+			$auxiliary[] = [
+				'key'   => 'functions',
+				'label' => 'FUNCTIES',
+				'value' => $functions,
+			];
+		}
+		if ( $member_tier === 'bondslid' && $knvb_id !== '' ) {
+			$auxiliary[] = [
+				'key'   => 'knvb_id',
+				'label' => 'KNVB ID',
+				'value' => $knvb_id,
+			];
+		}
+
+		return [
+			'secondary' => $secondary,
+			'auxiliary' => $auxiliary,
+		];
 	}
 
 	/**
