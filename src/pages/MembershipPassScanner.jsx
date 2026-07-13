@@ -167,6 +167,8 @@ export default function MembershipPassScanner() {
   const isActiveMembership = result?.membership?.status === 'active';
   const resultPhoto = result?.person?.photo_thumbnail || result?.person?.thumbnail || '';
   const resultKnvbId = result?.person?.knvb_id || result?.person?.['knvb-id'] || '';
+  const isSponsor = result?.person?.person_type === 'sponsor';
+  const resultCompanyName = result?.person?.company_name || '';
 
   return (
     <div className="space-y-6">
@@ -230,7 +232,9 @@ export default function MembershipPassScanner() {
             )}
             <div>
               <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{result.person?.name || '-'}</div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">KNVB ID: {resultKnvbId || '-'}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {isSponsor ? `Bedrijf: ${resultCompanyName || '-'}` : `KNVB ID: ${resultKnvbId || '-'}`}
+              </div>
             </div>
           </div>
 

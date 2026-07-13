@@ -6,6 +6,7 @@ use ReflectionClass;
 use Rondo\Passes\MembershipPassApple;
 use Rondo\Passes\MembershipPassGoogle;
 use Rondo\Passes\PublicMembershipPassPage;
+use Rondo\REST\MembershipPasses;
 use Tests\Support\RondoTestCase;
 
 class MembershipPassSponsorTest extends RondoTestCase {
@@ -61,5 +62,23 @@ class MembershipPassSponsorTest extends RondoTestCase {
 		$this->assertSame( [], $apple_content['auxiliary'] );
 		$this->assertSame( [ 'BEDRIJF', 'SEIZOEN' ], array_column( $google_content, 'header' ) );
 		$this->assertSame( 'Sponsor BV', $google_content[0]['body'] );
+	}
+
+	public function test_scanner_summary_identifies_sponsor_and_company(): void {
+		$sponsor_id = $this->createPerson(
+			[ 'post_title' => 'Sponsor BV' ],
+			[
+				'company_name' => 'Sponsor BV',
+				'person_type'  => 'sponsor',
+			]
+		);
+
+		$method = ( new ReflectionClass( MembershipPasses::class ) )->getMethod( 'format_verified_person_summary' );
+		$method->setAccessible( true );
+
+		$summary = $method->invoke( new MembershipPasses(), get_post( $sponsor_id ) );
+
+		$this->assertSame( 'sponsor', $summary['person_type'] );
+		$this->assertSame( 'Sponsor BV', $summary['company_name'] );
 	}
 }
