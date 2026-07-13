@@ -113,6 +113,42 @@
             "new_lines": ""
         },
         {
+            "key": "field_dienst_type_cancellation_early_email_subject",
+            "label": "Onderwerp annulering minimaal 48 uur vooraf",
+            "name": "cancellation_early_email_subject",
+            "type": "text",
+            "instructions": "Onderwerp wanneer een dienst minimaal 48 uur voor aanvang wordt geannuleerd en niet meetelt.",
+            "default_value": "Je dienst {dienst} op {datum} gaat niet door"
+        },
+        {
+            "key": "field_dienst_type_cancellation_early_email_body",
+            "label": "Tekst annulering minimaal 48 uur vooraf",
+            "name": "cancellation_early_email_body",
+            "type": "textarea",
+            "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
+            "default_value": "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.",
+            "rows": 8,
+            "new_lines": ""
+        },
+        {
+            "key": "field_dienst_type_cancellation_last_minute_email_subject",
+            "label": "Onderwerp annulering binnen 48 uur",
+            "name": "cancellation_last_minute_email_subject",
+            "type": "text",
+            "instructions": "Onderwerp wanneer een dienst binnen 48 uur voor aanvang wordt geannuleerd en wel meetelt.",
+            "default_value": "Je dienst {dienst} op {datum} gaat niet door"
+        },
+        {
+            "key": "field_dienst_type_cancellation_last_minute_email_body",
+            "label": "Tekst annulering binnen 48 uur",
+            "name": "cancellation_last_minute_email_body",
+            "type": "textarea",
+            "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
+            "default_value": "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.",
+            "rows": 8,
+            "new_lines": ""
+        },
+        {
             "key": "field_dienst_type_survey_email_subject",
             "label": "Onderwerp enquêtemail",
             "name": "survey_email_subject",

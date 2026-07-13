@@ -17,6 +17,10 @@ const EMPTY = {
   required_pool: 0,
   reminder_email_subject: 'Herinnering: {dienst} op {datum}',
   reminder_email_body: 'Hoi {naam},\n\nDit is een herinnering voor je dienst {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe draait deze dienst samen met {medevrijwilligers}.',
+  cancellation_early_email_subject: 'Je dienst {dienst} op {datum} gaat niet door',
+  cancellation_early_email_body: 'Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.',
+  cancellation_last_minute_email_subject: 'Je dienst {dienst} op {datum} gaat niet door',
+  cancellation_last_minute_email_body: 'Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.',
   survey_email_subject: 'Hoe ging je dienst {dienst}?',
   survey_email_body: 'Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?',
   survey_url: '',
@@ -58,6 +62,10 @@ export default function VrijwilligersDienstTypeForm() {
       required_pool: Number(acf.required_pool) || 0,
       reminder_email_subject: acf.reminder_email_subject || EMPTY.reminder_email_subject,
       reminder_email_body: acf.reminder_email_body || EMPTY.reminder_email_body,
+      cancellation_early_email_subject: acf.cancellation_early_email_subject || EMPTY.cancellation_early_email_subject,
+      cancellation_early_email_body: acf.cancellation_early_email_body || EMPTY.cancellation_early_email_body,
+      cancellation_last_minute_email_subject: acf.cancellation_last_minute_email_subject || EMPTY.cancellation_last_minute_email_subject,
+      cancellation_last_minute_email_body: acf.cancellation_last_minute_email_body || EMPTY.cancellation_last_minute_email_body,
       survey_email_subject: acf.survey_email_subject || EMPTY.survey_email_subject,
       survey_email_body: acf.survey_email_body || EMPTY.survey_email_body,
       survey_url: acf.survey_url || '',
@@ -138,6 +146,10 @@ export default function VrijwilligersDienstTypeForm() {
               required_pool: form.required_pool ? Number(form.required_pool) : null,
               reminder_email_subject: form.reminder_email_subject,
               reminder_email_body: form.reminder_email_body,
+              cancellation_early_email_subject: form.cancellation_early_email_subject,
+              cancellation_early_email_body: form.cancellation_early_email_body,
+              cancellation_last_minute_email_subject: form.cancellation_last_minute_email_subject,
+              cancellation_last_minute_email_body: form.cancellation_last_minute_email_body,
               survey_email_subject: form.survey_email_subject,
               survey_email_body: form.survey_email_body,
               survey_url: form.survey_url,
@@ -210,6 +222,61 @@ export default function VrijwilligersDienstTypeForm() {
               className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
             />
           </Field>
+        </section>
+
+        <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-5">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Annuleringsmails</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Deze mails worden direct verstuurd wanneer een bezette dienst wordt geannuleerd. Een ingevulde annuleringsreden wordt automatisch onder de tekst toegevoegd.
+            </p>
+          </div>
+
+          <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Minimaal 48 uur vooraf — telt niet mee</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">De vrijwilliger moet een nieuwe dienst kiezen.</p>
+            </div>
+            <Field label="Onderwerp">
+              <input
+                type="text"
+                value={form.cancellation_early_email_subject}
+                onChange={(e) => setForm({ ...form, cancellation_early_email_subject: e.target.value })}
+                className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+              />
+            </Field>
+            <Field label="Tekst" hint="Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}">
+              <textarea
+                rows={8}
+                value={form.cancellation_early_email_body}
+                onChange={(e) => setForm({ ...form, cancellation_early_email_body: e.target.value })}
+                className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+              />
+            </Field>
+          </div>
+
+          <div className="space-y-4 rounded-md border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Binnen 48 uur — telt wel mee</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">De vrijwilliger hoeft geen nieuwe dienst te kiezen.</p>
+            </div>
+            <Field label="Onderwerp">
+              <input
+                type="text"
+                value={form.cancellation_last_minute_email_subject}
+                onChange={(e) => setForm({ ...form, cancellation_last_minute_email_subject: e.target.value })}
+                className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+              />
+            </Field>
+            <Field label="Tekst" hint="Variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}">
+              <textarea
+                rows={8}
+                value={form.cancellation_last_minute_email_body}
+                onChange={(e) => setForm({ ...form, cancellation_last_minute_email_body: e.target.value })}
+                className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
+              />
+            </Field>
+          </div>
         </section>
 
         <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-4">

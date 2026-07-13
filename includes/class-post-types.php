@@ -850,11 +850,15 @@ class PostTypes {
 		);
 
 		$dienst_type_text_meta = [
-			'reminder_email_subject' => 'sanitize_text_field',
-			'reminder_email_body'    => 'sanitize_textarea_field',
-			'survey_email_subject'   => 'sanitize_text_field',
-			'survey_email_body'      => 'sanitize_textarea_field',
-			'survey_url'             => 'esc_url_raw',
+			'reminder_email_subject'                 => 'sanitize_text_field',
+			'reminder_email_body'                    => 'sanitize_textarea_field',
+			'cancellation_early_email_subject'       => 'sanitize_text_field',
+			'cancellation_early_email_body'          => 'sanitize_textarea_field',
+			'cancellation_last_minute_email_subject' => 'sanitize_text_field',
+			'cancellation_last_minute_email_body'    => 'sanitize_textarea_field',
+			'survey_email_subject'                   => 'sanitize_text_field',
+			'survey_email_body'                      => 'sanitize_textarea_field',
+			'survey_url'                             => 'esc_url_raw',
 		];
 		foreach ( $dienst_type_text_meta as $key => $sanitize_callback ) {
 			register_post_meta(

@@ -208,6 +208,32 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertCount( 1, $this->sent_mail );
 	}
 
+	public function test_cancellation_uses_the_configured_template_for_each_variant(): void {
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$type_id = $this->dienst_type();
+		update_post_meta( $type_id, 'cancellation_early_email_subject', 'Nieuwe dienst nodig: {dienst} op {datum}' );
+		update_post_meta( $type_id, 'cancellation_early_email_body', 'Beste {naam}, de vroege annulering van {dienst} is van {tijd} tot {eindtijd}.' );
+		update_post_meta( $type_id, 'cancellation_last_minute_email_subject', '{dienst} vervalt last minute' );
+		update_post_meta( $type_id, 'cancellation_last_minute_email_body', 'Beste {naam}, deze late annulering telt wel mee.' );
+
+		$early_person_id = $this->mail_person( 'Anne', 'anne@example.com' );
+		$early_shift_id  = $this->dated_shift( $type_id, [ $early_person_id ], current_datetime()->modify( '+3 days' ) );
+		$this->cancel_shift( $early_shift_id, 'Geen wedstrijden.' );
+
+		$late_person_id = $this->mail_person( 'Piet', 'piet@example.com' );
+		$late_shift_id  = $this->dated_shift( $type_id, [ $late_person_id ], current_datetime()->modify( '+24 hours' ) );
+		$this->cancel_shift( $late_shift_id );
+
+		$this->assertCount( 2, $this->sent_mail );
+		$this->assertStringStartsWith( 'Nieuwe dienst nodig: Bardienst op ', $this->sent_mail[0]['subject'] );
+		$this->assertStringNotContainsString( '{datum}', $this->sent_mail[0]['subject'] );
+		$this->assertStringContainsString( 'Beste Anne, de vroege annulering van Bardienst is van', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'Reden: Geen wedstrijden.', $this->sent_mail[0]['message'] );
+		$this->assertSame( 'Bardienst vervalt last minute', $this->sent_mail[1]['subject'] );
+		$this->assertStringContainsString( 'Beste Piet, deze late annulering telt wel mee.', $this->sent_mail[1]['message'] );
+	}
+
 	public function test_exactly_forty_eight_hours_is_the_early_variant(): void {
 		$now       = new \DateTimeImmutable( '2026-09-01 10:00:00', wp_timezone() );
 		$type_id   = $this->dienst_type();
