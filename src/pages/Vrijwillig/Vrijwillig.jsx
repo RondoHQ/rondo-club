@@ -278,6 +278,7 @@ export default function Vrijwillig() {
   const [confirmOverlap, setConfirmOverlap] = useState(null); // { shiftId, message }
   const [actionError, setActionError] = useState('');
   const selectedDienstType = searchParams.get('diensttype') || '';
+  const volunteerSignupInfo = window.rondoConfig?.volunteerSignupInfo || '';
 
   const { data: mine, isLoading: mineLoading, error: mineError } = useQuery({
     queryKey: ['my-shifts'],
@@ -393,6 +394,13 @@ export default function Vrijwillig() {
           Mijn certificaten
         </Link>
       </header>
+
+      {volunteerSignupInfo ? (
+        <div
+          className="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-gray-700 prose prose-sm max-w-none prose-a:text-bright-cobalt prose-a:font-medium hover:prose-a:underline dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-gray-200 dark:prose-invert dark:prose-a:text-electric-cyan"
+          dangerouslySetInnerHTML={{ __html: volunteerSignupInfo }}
+        />
+      ) : null}
 
       {mineLoading ? (
         <ContentLoadingSpinner />

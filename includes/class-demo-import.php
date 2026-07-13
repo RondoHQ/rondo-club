@@ -160,6 +160,7 @@ class DemoImport {
 		// Static option keys
 		$option_keys = [
 			'rondo_club_name',
+			'rondo_volunteer_signup_info',
 			'rondo_player_roles',
 			'rondo_excluded_roles',
 			'rondo_anniversary_milestones',
