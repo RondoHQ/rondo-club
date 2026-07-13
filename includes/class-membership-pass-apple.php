@@ -117,7 +117,7 @@ class MembershipPassApple {
 
 		try {
 			$pass->setData( $pass_data );
-			$this->add_default_images( $pass, $person_id );
+			$this->add_default_images( $pass, $person_id, $member_tier );
 			$binary = $pass->create( false );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_apple_generate_failed', 'Genereren van Apple pass mislukt: ' . $e->getMessage() );
@@ -138,20 +138,12 @@ class MembershipPassApple {
 	 *
 	 * @param PKPass $pass Pass instance.
 	 * @param int    $person_id Person ID.
+	 * @param string $member_tier Resolved pass tier.
 	 */
-	private function add_default_images( PKPass $pass, int $person_id ) {
+	private function add_default_images( PKPass $pass, int $person_id, string $member_tier = '' ) {
 		$theme_dir = get_template_directory();
 		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
-		$logo_path = $default;
-
-		$config  = new FinanceConfig();
-		$logo_id = $config->get_club_logo_id();
-		if ( $logo_id > 0 ) {
-			$path = get_attached_file( $logo_id );
-			if ( is_string( $path ) && file_exists( $path ) ) {
-				$logo_path = $path;
-			}
-		}
+		$logo_path = $this->get_logo_image_path( $member_tier );
 
 		$thumbnail_path = $this->get_person_photo_path( $person_id );
 
@@ -174,6 +166,35 @@ class MembershipPassApple {
 				$pass->addFileContent( $thumbnail_bytes, 'thumbnail@2x.png' );
 			}
 		}
+	}
+
+	/**
+	 * Resolve the local logo path for a pass tier.
+	 *
+	 * @param string $member_tier Resolved pass tier.
+	 * @return string
+	 */
+	private function get_logo_image_path( string $member_tier = '' ): string {
+		$theme_dir = get_template_directory();
+		$default   = $theme_dir . '/public/icons/apple-touch-icon-180x180.png';
+
+		if ( $member_tier === 'sponsor' ) {
+			$businessclub_logo = $theme_dir . '/public/icons/businessclub-awc-logo.png';
+			if ( file_exists( $businessclub_logo ) ) {
+				return $businessclub_logo;
+			}
+		}
+
+		$config  = new FinanceConfig();
+		$logo_id = $config->get_club_logo_id();
+		if ( $logo_id > 0 ) {
+			$path = get_attached_file( $logo_id );
+			if ( is_string( $path ) && file_exists( $path ) ) {
+				return $path;
+			}
+		}
+
+		return $default;
 	}
 
 	/**

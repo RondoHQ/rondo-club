@@ -223,10 +223,10 @@ class MembershipPassGoogle {
 				'hexBackgroundColor' => $this->get_hex_background_color( $member_tier ),
 			]
 		);
-		$logo   = $this->get_logo_image_url();
+		$logo   = $this->get_logo_image_url( $member_tier );
 		if ( $logo !== '' ) {
 			$object->setLogo(
-				$this->build_logo_image( $logo )
+				$this->build_logo_image( $logo, $member_tier )
 			);
 		}
 
@@ -465,9 +465,17 @@ class MembershipPassGoogle {
 	/**
 	 * Resolve logo image URL.
 	 *
+	 * @param string $member_tier Resolved pass tier.
 	 * @return string
 	 */
-	private function get_logo_image_url(): string {
+	private function get_logo_image_url( string $member_tier = '' ): string {
+		if ( $member_tier === 'sponsor' ) {
+			$businessclub_logo = get_template_directory() . '/public/icons/businessclub-awc-logo.png';
+			if ( file_exists( $businessclub_logo ) ) {
+				return get_template_directory_uri() . '/public/icons/businessclub-awc-logo.png';
+			}
+		}
+
 		$config  = new FinanceConfig();
 		$logo_id = $config->get_club_logo_id();
 		if ( $logo_id > 0 ) {
@@ -488,16 +496,19 @@ class MembershipPassGoogle {
 	 * Build logo image payload with localized content description.
 	 *
 	 * @param string $logo_url Logo URL.
+	 * @param string $member_tier Resolved pass tier.
 	 * @return Image
 	 */
-	private function build_logo_image( string $logo_url ): Image {
+	private function build_logo_image( string $logo_url, string $member_tier = '' ): Image {
+		$logo_name = $this->get_card_title( $this->get_issuer_name(), $member_tier );
+
 		return new Image(
 			[
 				'sourceUri'          => new ImageUri( [ 'uri' => $logo_url ] ),
 				'contentDescription' => [
 					'defaultValue' => [
 						'language' => 'nl-NL',
-						'value'    => $this->get_issuer_name() . ' Logo',
+						'value'    => $logo_name . ' Logo',
 					],
 				],
 			]
