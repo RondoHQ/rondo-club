@@ -1344,7 +1344,7 @@ export default function PersonDetail() {
                 )}
               </div>
             )}
-            {((canEditPeople && acf.person_type === 'contact') || canEditSponsorFields) && (
+            {isSponsorPerson && canEditSponsorFields && (
               <label className="block max-w-sm text-sm text-gray-500 dark:text-gray-400">
                 <span className="mb-1 block">Bedrijfsnaam</span>
                 <input
