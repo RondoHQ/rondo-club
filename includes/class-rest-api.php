@@ -504,6 +504,10 @@ class Api extends Base {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
+						'volunteer_signup_info'     => [
+							'required'          => false,
+							'sanitize_callback' => 'wp_kses_post',
+						],
 						'freescout_url'             => [
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
@@ -1772,6 +1776,11 @@ class Api extends Base {
 		$club_name = $request->get_param( 'club_name' );
 		if ( $club_name !== null ) {
 			\Rondo\Config\ClubConfig::update_club_name( $club_name );
+		}
+
+		$volunteer_signup_info = $request->get_param( 'volunteer_signup_info' );
+		if ( $volunteer_signup_info !== null ) {
+			\Rondo\Config\ClubConfig::update_volunteer_signup_info( $volunteer_signup_info );
 		}
 
 		// Update freescout_url if provided

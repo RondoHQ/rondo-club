@@ -500,7 +500,13 @@ export default function Settings() {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'appearance':
-        return <AppearanceTab />;
+        return (
+          <AppearanceTab
+            clubConfig={clubConfig}
+            setClubConfig={setClubConfig}
+            clubConfigLoading={clubConfigLoading}
+          />
+        );
       case 'connections':
         return <ConnectionsTab
           activeSubtab={activeSubtab}
@@ -734,12 +740,13 @@ function ClothingSettingsTab() {
 }
 
 // Appearance Tab Component
-function AppearanceTab() {
+function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
   const config = window.rondoConfig || {};
   const isAdmin = config.isAdmin || false;
 
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
+  const [volunteerSignupInfo, setVolunteerSignupInfo] = useState(config.volunteerSignupInfo || '');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
   const [clubLogoId, setClubLogoId] = useState(0);
@@ -750,6 +757,12 @@ function AppearanceTab() {
   const [savingBranding, setSavingBranding] = useState(false);
   const [brandingSaved, setBrandingSaved] = useState(false);
   const [brandingError, setBrandingError] = useState('');
+
+  useEffect(() => {
+    if (!clubConfig) return;
+    setClubName(clubConfig.club_name || '');
+    setVolunteerSignupInfo(clubConfig.volunteer_signup_info || '');
+  }, [clubConfig]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -780,9 +793,12 @@ function AppearanceTab() {
     try {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
+        volunteer_signup_info: volunteerSignupInfo,
       });
       // Update window.rondoConfig with saved values
       window.rondoConfig.clubName = response.data.club_name;
+      window.rondoConfig.volunteerSignupInfo = response.data.volunteer_signup_info;
+      setClubConfig(response.data);
 
       setClubConfigSaved(true);
       setTimeout(() => setClubConfigSaved(false), 3000);
@@ -860,6 +876,20 @@ function AppearanceTab() {
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Wordt getoond op het inlogscherm en in de paginatitel.
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Informatie op vrijwilligerspagina</label>
+              <RichTextEditor
+                value={volunteerSignupInfo}
+                onChange={setVolunteerSignupInfo}
+                placeholder="Aanvullende informatie voor leden die een dienst willen inplannen..."
+                disabled={clubConfigLoading}
+                minHeight="120px"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Wordt als informatieblok direct onder de introductie op <code>/vrijwillig</code> getoond. Laat leeg om het blok te verbergen.
               </p>
             </div>
 

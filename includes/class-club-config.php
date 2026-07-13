@@ -24,6 +24,11 @@ class ClubConfig {
 	const OPTION_CLUB_NAME = 'rondo_club_name';
 
 	/**
+	 * Option key for the member-facing volunteer signup information block.
+	 */
+	const OPTION_VOLUNTEER_SIGNUP_INFO = 'rondo_volunteer_signup_info';
+
+	/**
 	 * Option key for FreeScout URL
 	 */
 	const OPTION_FREESCOUT_URL = 'rondo_freescout_url';
@@ -100,6 +105,7 @@ class ClubConfig {
 	 */
 	const DEFAULTS = [
 		'club_name'                             => '',
+		'volunteer_signup_info'                 => '',
 		'freescout_url'                         => '',
 		'freescout_api_key'                     => '',
 		'lettermint_api_token'                  => '',
@@ -123,6 +129,20 @@ class ClubConfig {
 	 */
 	public static function get_club_name(): string {
 		return get_option( self::OPTION_CLUB_NAME, self::DEFAULTS['club_name'] );
+	}
+
+	/**
+	 * Get the member-facing volunteer signup information block.
+	 *
+	 * @return string Sanitized HTML, or an empty string when not configured.
+	 */
+	public static function get_volunteer_signup_info(): string {
+		return wp_kses_post(
+			(string) get_option(
+				self::OPTION_VOLUNTEER_SIGNUP_INFO,
+				self::DEFAULTS['volunteer_signup_info']
+			)
+		);
 	}
 
 	/**
@@ -288,6 +308,7 @@ class ClubConfig {
 
 		return [
 			'club_name'                             => self::get_club_name(),
+			'volunteer_signup_info'                 => self::get_volunteer_signup_info(),
 			'freescout_url'                         => self::get_freescout_url(),
 			'freescout_has_api_key'                 => self::has_freescout_api_key(),
 			'lettermint_project_id'                 => self::get_lettermint_project_id(),
@@ -315,6 +336,16 @@ class ClubConfig {
 	public static function update_club_name( string $name ): bool {
 		$sanitized = sanitize_text_field( $name );
 		return update_option( self::OPTION_CLUB_NAME, $sanitized );
+	}
+
+	/**
+	 * Update the member-facing volunteer signup information block.
+	 *
+	 * @param string $html Information block HTML.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_volunteer_signup_info( string $html ): bool {
+		return update_option( self::OPTION_VOLUNTEER_SIGNUP_INFO, wp_kses_post( $html ) );
 	}
 
 	/**

@@ -1403,7 +1403,8 @@ class DemoExport {
 		$settings = [];
 
 		// Club name (required)
-		$settings['rondo_club_name'] = get_option( 'rondo_club_name', '' );
+		$settings['rondo_club_name']             = get_option( 'rondo_club_name', '' );
+		$settings['rondo_volunteer_signup_info'] = get_option( 'rondo_volunteer_signup_info', '' );
 
 		// Get all seasons to discover dynamic option keys
 		$seasons = get_terms(

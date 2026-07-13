@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.52.0] - 2026-07-13
+
+### Added
+
+- Beheerders kunnen onder **Instellingen → Club** een clubspecifiek informatieblok met links en opmaak instellen. Het blok verschijnt direct onder de introductie op `/vrijwillig` en blijft verborgen wanneer het veld leeg is.
+
 ## [33.51.1] - 2026-07-13
 
 ### Fixed
