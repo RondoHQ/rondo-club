@@ -26,6 +26,7 @@ class CptCrudTest extends RondoTestCase {
 		global $wp_rest_server;
 		$this->server   = rest_get_server();
 		$wp_rest_server = $this->server;
+		new People();
 
 		AccessControl::flush_visible_person_ids_cache();
 		delete_option( 'rondo_age_group_access' );
@@ -256,6 +257,76 @@ class CptCrudTest extends RondoTestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 'Updated member record', get_post( $person_id )->post_title );
+	}
+
+	public function test_sponsor_manager_can_only_crud_sponsors(): void {
+		$member_id = $this->createPerson(
+			[ 'post_title' => 'Protected member' ],
+			[ 'first_name' => 'Protected' ]
+		);
+		$user_id   = $this->user( 'rondo_sponsorbeheerder' );
+		wp_set_current_user( $user_id );
+
+		$forged_contact = $this->request(
+			'POST',
+			'/wp/v2/people',
+			[
+				'title'  => 'Forged contact',
+				'status' => 'publish',
+				'acf'    => [
+					'first_name'  => 'Forged',
+					'person_type' => 'contact',
+				],
+			]
+		);
+		$this->assertDenied( $forged_contact );
+
+		$create = $this->request(
+			'POST',
+			'/wp/v2/people',
+			[
+				'title'  => 'Businessclublid',
+				'status' => 'publish',
+				'acf'    => [
+					'first_name'  => 'Businessclub',
+					'last_name'   => 'Lid',
+					'person_type' => 'sponsor',
+				],
+			]
+		);
+		$this->assertSame( 201, $create->get_status() );
+		$sponsor_id = (int) $create->get_data()['id'];
+
+		$this->assertSame(
+			200,
+			$this->request( 'PATCH', '/wp/v2/people/' . $sponsor_id, [ 'acf' => [ 'company_name' => 'Sponsor BV' ] ] )->get_status()
+		);
+		$this->assertDenied( $this->request( 'PATCH', '/wp/v2/people/' . $member_id, [ 'title' => 'Compromised' ] ) );
+		$this->assertDenied( $this->request( 'DELETE', '/wp/v2/people/' . $member_id, [ 'force' => true ] ) );
+		$this->assertSame( 200, $this->request( 'DELETE', '/wp/v2/people/' . $sponsor_id, [ 'force' => true ] )->get_status() );
+		$this->assertNotNull( get_post( $member_id ) );
+		$this->assertNull( get_post( $sponsor_id ) );
+	}
+
+	public function test_sponsor_manager_cannot_change_sponsor_person_type(): void {
+		$sponsor_id = $this->createPerson(
+			[ 'post_title' => 'Sponsor' ],
+			[
+				'first_name'  => 'Sponsor',
+				'person_type' => 'sponsor',
+			]
+		);
+		$user_id    = $this->user( 'rondo_sponsorbeheerder' );
+		wp_set_current_user( $user_id );
+
+		$response = $this->request(
+			'PATCH',
+			'/wp/v2/people/' . $sponsor_id,
+			[ 'acf' => [ 'person_type' => 'contact' ] ]
+		);
+
+		$this->assertDenied( $response );
+		$this->assertSame( 'sponsor', get_field( 'person_type', $sponsor_id ) );
 	}
 
 	public function test_household_endpoint_stays_personal_for_administrators(): void {

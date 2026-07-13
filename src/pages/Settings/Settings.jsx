@@ -3100,7 +3100,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
   }, [openDropdownRole]);
 
   // Management capabilities that bypass age-group filtering (mirrors AGE_GROUP_BYPASS_CAPS in PHP)
-  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing'];
+  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer'];
 
   const handleCheckboxChange = (roleSlug, capSlug, checked) => {
     setMatrixState(prev => ({

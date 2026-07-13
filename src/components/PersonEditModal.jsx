@@ -16,6 +16,7 @@ export default function PersonEditModal({
   initialPersonType = 'contact'
 }) {
   const isEditing = !!person;
+  const isSponsor = initialPersonType === 'sponsor';
   const isOnline = useOnlineStatus();
   
   // vCard import state
@@ -210,7 +211,7 @@ export default function PersonEditModal({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
-            {isEditing ? 'Persoon bewerken' : 'Contact toevoegen'}
+            {isEditing ? 'Persoon bewerken' : isSponsor ? 'Sponsor toevoegen' : 'Contact toevoegen'}
           </h2>
           <button
             onClick={onClose}
@@ -227,7 +228,9 @@ export default function PersonEditModal({
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                 <p>
-                  Voeg hier alleen externe contacten toe. Leden en ouders/verzorgers worden uitsluitend via Sportlink toegevoegd en bijgewerkt.
+                  {isSponsor
+                    ? 'Voeg hier een businessclublid of sponsor toe. Deze persoon krijgt automatisch een digitale toegangspas.'
+                    : 'Voeg hier alleen externe contacten toe. Leden en ouders/verzorgers worden uitsluitend via Sportlink toegevoegd en bijgewerkt.'}
                 </p>
               </div>
             )}
@@ -369,6 +372,7 @@ export default function PersonEditModal({
                 >
                   <option value="member">Lid / ouder</option>
                   <option value="contact">Contact</option>
+                  <option value="sponsor">Sponsor</option>
                 </select>
               </div>
             )}

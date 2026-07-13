@@ -43,6 +43,7 @@ class People extends Base {
 		// former-member records. The only allowed non-admin write is the
 		// former_member toggle itself — flip it off first, then edit.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_sponsor_manager_scope' ], 15, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_person_identity' ], 20, 2 );
 
 		// Allow callers to filter person list endpoints by former_member via
@@ -325,11 +326,11 @@ class People extends Base {
 						'sanitize_callback' => 'sanitize_text_field',
 					],
 					'person_type'               => [
-						'description'       => 'Filter by Rondo person type (member or contact)',
+						'description'       => 'Filter by Rondo person type (member, contact, or sponsor)',
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 						'validate_callback' => function ( $value ) {
-							return in_array( $value, [ '', 'member', 'contact' ], true );
+							return in_array( $value, [ '', 'member', 'contact', 'sponsor' ], true );
 						},
 					],
 					'foto_missing'              => [
@@ -777,7 +778,7 @@ class People extends Base {
 				$data['linked_user_roles'] = array_values(
 					array_intersect(
 						$user->roles,
-						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_financieel_lezen', 'rondo_toegangscontrole', 'rondo_bestuur', 'administrator' ]
+						[ 'rondo_user', 'rondo_fairplay', 'rondo_vog', 'rondo_financieel', 'rondo_financieel_lezen', 'rondo_toegangscontrole', 'rondo_ledenadministratie', 'rondo_sponsorbeheerder', 'rondo_bestuur', 'administrator' ]
 					)
 				);
 			}
@@ -880,15 +881,56 @@ class People extends Base {
 			);
 		}
 
-		if ( trim( (string) $first_name ) === '' && $person_type !== 'contact' ) {
+		if ( trim( (string) $first_name ) === '' && ! in_array( $person_type, [ 'contact', 'sponsor' ], true ) ) {
 			return new \WP_Error(
 				'rondo_company_only_contact_required',
-				__( 'Alleen contacten mogen uitsluitend een bedrijfsnaam hebben.', 'rondo' ),
+				__( 'Alleen contacten en sponsors mogen uitsluitend een bedrijfsnaam hebben.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
 
 		return $prepared_post;
+	}
+
+	/**
+	 * Keep sponsor-only managers inside their person-type boundary.
+	 *
+	 * Core REST create permissions are capability-based and do not yet have a
+	 * post ID. This pre-insert guard therefore requires new records to be explicit
+	 * sponsors, and prevents an existing sponsor from being converted to another
+	 * person type. Full people managers are unaffected.
+	 *
+	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
+	 * @param WP_REST_Request $request       Originating REST request.
+	 * @return stdClass|WP_Error
+	 */
+	public function enforce_sponsor_manager_scope( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post )
+			|| ! \Rondo\Core\AccessControl::can_manage_sponsors()
+			|| \Rondo\Core\AccessControl::can_edit_people() ) {
+			return $prepared_post;
+		}
+
+		$acf            = $request->get_param( 'acf' );
+		$requested_type = is_array( $acf ) && array_key_exists( 'person_type', $acf )
+			? sanitize_key( (string) $acf['person_type'] )
+			: '';
+		$post_id        = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
+
+		if ( $post_id === 0 ) {
+			if ( $requested_type === 'sponsor' ) {
+				return $prepared_post;
+			}
+		} elseif ( get_post_meta( $post_id, 'person_type', true ) === 'sponsor'
+			&& ( $requested_type === '' || $requested_type === 'sponsor' ) ) {
+			return $prepared_post;
+		}
+
+		return new \WP_Error(
+			'rondo_sponsor_manager_scope',
+			__( 'Sponsorbeheerders mogen uitsluitend personen van het type Sponsor beheren.', 'rondo' ),
+			[ 'status' => 403 ]
+		);
 	}
 
 	/**
@@ -1411,8 +1453,9 @@ class People extends Base {
 		// Rondo person type. Legacy records without this field are members/parents.
 		if ( ! empty( $person_type ) ) {
 			$join_clauses[] = "LEFT JOIN {$wpdb->postmeta} pt ON p.ID = pt.post_id AND pt.meta_key = 'person_type'";
-			if ( $person_type === 'contact' ) {
-				$where_clauses[] = "pt.meta_value = 'contact'";
+			if ( in_array( $person_type, [ 'contact', 'sponsor' ], true ) ) {
+				$where_clauses[]  = 'pt.meta_value = %s';
+				$prepare_values[] = $person_type;
 			} else {
 				$where_clauses[] = "(pt.meta_value IS NULL OR pt.meta_value = '' OR pt.meta_value = 'member')";
 			}

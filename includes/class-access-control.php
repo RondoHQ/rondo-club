@@ -50,6 +50,7 @@ class AccessControl {
 		'toegangscontrole',
 		'manage_clothing',
 		'ledenadministratie',
+		'sponsorbeheer',
 	];
 
 	/**
@@ -140,9 +141,47 @@ class AccessControl {
 	}
 
 	/**
+	 * Check if a user may manage sponsor records.
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return bool Whether the user has sponsor-management access.
+	 */
+	public static function can_manage_sponsors( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		return $user_id && (
+			user_can( $user_id, 'manage_options' )
+			|| user_can( $user_id, 'sponsorbeheer' )
+		);
+	}
+
+	/**
+	 * Check if a user may edit a specific person record.
+	 *
+	 * Full people managers may edit every person. Sponsor managers may only edit
+	 * records whose explicit ACF person type is `sponsor`.
+	 *
+	 * @param int      $person_id Person post ID.
+	 * @param int|null $user_id   User ID (optional, defaults to current user).
+	 * @return bool Whether the user may edit this person.
+	 */
+	public static function can_edit_person( $person_id, $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( self::can_edit_people( $user_id ) ) {
+			return true;
+		}
+
+		return self::can_manage_sponsors( $user_id )
+			&& get_post_type( $person_id ) === 'person'
+			&& get_post_meta( $person_id, 'person_type', true ) === 'sponsor';
+	}
+
+	/**
 	 * Restrict person editing via map_meta_cap filter.
 	 *
-	 * When a user without can_edit_people() tries to edit a person post,
+	 * When a user without record-specific person permissions tries to edit or
+	 * delete a person post,
 	 * map the capability to 'do_not_allow'.
 	 *
 	 * @param string[] $caps    Required primitive capabilities.
@@ -152,7 +191,7 @@ class AccessControl {
 	 * @return string[] Modified capabilities.
 	 */
 	public function restrict_person_editing( $caps, $cap, $user_id, $args ) {
-		if ( $cap !== 'edit_post' || empty( $args[0] ) ) {
+		if ( ! in_array( $cap, [ 'edit_post', 'delete_post' ], true ) || empty( $args[0] ) ) {
 			return $caps;
 		}
 
@@ -162,7 +201,7 @@ class AccessControl {
 			return $caps;
 		}
 
-		if ( ! self::can_edit_people( $user_id ) ) {
+		if ( ! self::can_edit_person( (int) $args[0], $user_id ) ) {
 			return [ 'do_not_allow' ];
 		}
 

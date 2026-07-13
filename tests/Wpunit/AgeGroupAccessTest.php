@@ -101,6 +101,16 @@ class AgeGroupAccessTest extends RondoTestCase {
 	}
 
 	/**
+	 * Sponsor managers need the club-wide people list to find and manage sponsors.
+	 */
+	public function test_returns_null_for_sponsor_manager(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_sponsorbeheerder' ] );
+
+		$result = AccessControl::get_permitted_age_groups( $user_id );
+		$this->assertNull( $result, 'User with sponsorbeheer capability should bypass filtering' );
+	}
+
+	/**
 	 * Bestuur role (has all management caps) should bypass filtering.
 	 */
 	public function test_returns_null_for_bestuur_user(): void {

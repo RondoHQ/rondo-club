@@ -50,6 +50,11 @@ class MembershipPassGoogle {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
+		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
+		if ( $member_tier === '' ) {
+			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
+		}
+
 		$issuer_id = $this->get_issuer_id();
 		$json_path = $this->get_service_account_path();
 		if ( $issuer_id === '' || $json_path === '' || ! file_exists( $json_path ) ) {
@@ -80,7 +85,7 @@ class MembershipPassGoogle {
 
 		$person_name = $this->get_person_full_name( $person_id );
 		$issuer_name = $this->get_issuer_name();
-		$member_type = $this->get_member_type_label( $person_id );
+		$member_type = $this->get_member_type_label( $member_tier );
 		$knvb_id     = trim( (string) get_field( 'knvb-id', $person_id ) );
 		$details     = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name   = $details['teams'] !== '' ? $details['teams'] : '-';
@@ -92,7 +97,7 @@ class MembershipPassGoogle {
 
 		try {
 			$this->ensure_class( $service, $class_id );
-			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $knvb_id, $season, $qr_result['token'] );
+			$this->upsert_object( $service, $object_id, $class_id, $issuer_name, $person_name, $member_type, $team_name, $functions, $knvb_id, $season, $qr_result['token'], $member_tier );
 		} catch ( \Throwable $e ) {
 			return new \WP_Error( 'membership_pass_google_api_error', 'Google Wallet API fout: ' . $e->getMessage() );
 		}
@@ -171,8 +176,9 @@ class MembershipPassGoogle {
 	 * @param string        $knvb_id KNVB ID.
 	 * @param string        $season Season key.
 	 * @param string        $qr_payload QR payload.
+	 * @param string        $member_tier Resolved pass tier.
 	 */
-	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $knvb_id, string $season, string $qr_payload ) {
+	private function upsert_object( Walletobjects $service, string $object_id, string $class_id, string $card_title, string $person_name, string $member_type, string $team_name, string $functions, string $knvb_id, string $season, string $qr_payload, string $member_tier ) {
 		$text_modules = [
 			new TextModuleData(
 				[
@@ -189,7 +195,7 @@ class MembershipPassGoogle {
 				]
 			),
 		];
-		if ( $knvb_id !== '' ) {
+		if ( $member_tier === 'bondslid' && $knvb_id !== '' ) {
 			$text_modules[] = new TextModuleData(
 				[
 					'id'     => 'knvb_id',
@@ -237,7 +243,7 @@ class MembershipPassGoogle {
 					]
 				),
 				'textModulesData'    => $text_modules,
-				'hexBackgroundColor' => $this->get_hex_background_color(),
+				'hexBackgroundColor' => $this->get_hex_background_color( $member_tier ),
 			]
 		);
 		$logo   = $this->get_logo_image_url();
@@ -347,7 +353,8 @@ class MembershipPassGoogle {
 		$infix      = (string) get_field( 'infix', $person_id );
 		$last_name  = (string) get_field( 'last_name', $person_id );
 
-		return trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		$name = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
+		return $name !== '' ? $name : trim( (string) get_field( 'company_name', $person_id ) );
 	}
 
 	/**
@@ -624,12 +631,14 @@ class MembershipPassGoogle {
 	/**
 	 * Resolve membership type label shown above the member name.
 	 *
-	 * @param int $person_id Person ID.
+	 * @param string $member_tier Resolved pass tier.
 	 * @return string
 	 */
-	private function get_member_type_label( int $person_id ): string {
-		$type_lid = strtolower( trim( (string) get_field( 'type-lid', $person_id ) ) );
-		if ( $type_lid === 'verenigingslid' ) {
+	private function get_member_type_label( string $member_tier ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return 'Sponsor';
+		}
+		if ( $member_tier === 'verenigingslid' ) {
 			return 'Verenigingslid';
 		}
 		return 'Bondslid';
@@ -640,7 +649,11 @@ class MembershipPassGoogle {
 	 *
 	 * @return string
 	 */
-	private function get_hex_background_color(): string {
+	private function get_hex_background_color( string $member_tier = '' ): string {
+		if ( $member_tier === 'sponsor' ) {
+			return '#ffffff';
+		}
+
 		$config = new FinanceConfig();
 		$hex    = trim( $config->get_accent_color() );
 		if ( preg_match( '/^#?[a-f0-9]{6}$/i', $hex ) ) {

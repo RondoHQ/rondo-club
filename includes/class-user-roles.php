@@ -23,6 +23,7 @@ class UserRoles {
 	const TOEGANG_CAPABILITY            = 'toegangscontrole';
 	const CLOTHING_CAPABILITY           = 'manage_clothing';
 	const LEDENADMINISTRATIE_CAPABILITY = 'ledenadministratie';
+	const SPONSORBEHEER_CAPABILITY      = 'sponsorbeheer';
 	const VRIJWILLIGERS_CAPABILITY      = 'vrijwilligers';
 	const IVA_APPROVE_CAPABILITY        = 'rondo_iva_approve';
 
@@ -32,7 +33,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 3;
+	const ROLES_VERSION        = 4;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -64,12 +65,13 @@ class UserRoles {
 		'rondo_toegangscontrole'   => [ 'Rondo Toegangscontrole', [ 'toegangscontrole' ] ],
 		'rondo_clothing_manager'   => [ 'Rondo Kledingbeheer', [ 'manage_clothing' ] ],
 		'rondo_ledenadministratie' => [ 'Rondo Ledenadministratie', [ 'ledenadministratie' ] ],
+		'rondo_sponsorbeheerder'   => [ 'Rondo Sponsorbeheerder', [ 'sponsorbeheer' ] ],
 		'rondo_vrijwilligers'      => [ 'Rondo Vrijwilligers', [ 'vrijwilligers' ] ],
 		'rondo_iva_approver'       => [ 'Rondo IVA Goedkeurder (Bestuurslid Kantine)', [ 'rondo_iva_approve', 'vrijwilligers' ] ],
 		'rondo_pool_schoonmaak'    => [ 'Rondo Schoonmaakpoule', [] ],
 		'rondo_pool_activiteiten'  => [ 'Rondo Activiteitenpoule', [] ],
 		'rondo_pool_werkploeg'     => [ 'Rondo Werkploeg terreinonderhoud', [] ],
-		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'vrijwilligers', 'rondo_iva_approve' ] ],
+		'rondo_bestuur'            => [ 'Rondo Bestuur', [ 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer', 'vrijwilligers', 'rondo_iva_approve' ] ],
 	];
 
 	/**
@@ -275,9 +277,11 @@ class UserRoles {
 	 *
 	 * Version 2: every role holding `financieel` also gets `financieel_read`.
 	 * Version 3: generic post/media access is replaced by dedicated CPT caps.
+	 * Version 4: the Sponsorbeheerder role and `sponsorbeheer` capability are added.
 	 */
 	public function maybe_upgrade_roles() {
-		if ( (int) get_option( self::ROLES_VERSION_OPTION, 0 ) >= self::ROLES_VERSION ) {
+		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
+		if ( $installed_version >= self::ROLES_VERSION ) {
 			return;
 		}
 
@@ -292,6 +296,11 @@ class UserRoles {
 			if ( ! empty( $role->capabilities[ self::FINANCIEEL_CAPABILITY ] )
 				&& empty( $role->capabilities[ self::FINANCIEEL_READ_CAPABILITY ] ) ) {
 				$role->add_cap( self::FINANCIEEL_READ_CAPABILITY );
+			}
+
+			if ( $installed_version < 4
+				&& in_array( $slug, [ 'rondo_sponsorbeheerder', 'rondo_bestuur', 'administrator' ], true ) ) {
+				$role->add_cap( self::SPONSORBEHEER_CAPABILITY );
 			}
 
 			self::sync_role_capabilities( $slug );
@@ -325,6 +334,7 @@ class UserRoles {
 			$admin_role->add_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->add_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->add_cap( self::LEDENADMINISTRATIE_CAPABILITY );
+			$admin_role->add_cap( self::SPONSORBEHEER_CAPABILITY );
 			$admin_role->add_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->add_cap( self::IVA_APPROVE_CAPABILITY );
 			self::sync_role_capabilities( 'administrator' );
@@ -386,6 +396,10 @@ class UserRoles {
 				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
 			}
 
+			if ( $role->has_cap( self::SPONSORBEHEER_CAPABILITY ) ) {
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'manage' ) );
+			}
+
 			if ( $role->has_cap( self::FINANCIEEL_CAPABILITY ) ) {
 				$desired = array_merge(
 					$desired,
@@ -421,6 +435,7 @@ class UserRoles {
 				|| $role->has_cap( self::FINANCIEEL_CAPABILITY )
 				|| $role->has_cap( self::CLOTHING_CAPABILITY )
 				|| $role->has_cap( self::LEDENADMINISTRATIE_CAPABILITY )
+				|| $role->has_cap( self::SPONSORBEHEER_CAPABILITY )
 				|| $role->has_cap( self::VRIJWILLIGERS_CAPABILITY )
 			) {
 				$desired[] = 'upload_files';
@@ -474,6 +489,7 @@ class UserRoles {
 			$admin_role->remove_cap( self::TOEGANG_CAPABILITY );
 			$admin_role->remove_cap( self::CLOTHING_CAPABILITY );
 			$admin_role->remove_cap( self::LEDENADMINISTRATIE_CAPABILITY );
+			$admin_role->remove_cap( self::SPONSORBEHEER_CAPABILITY );
 			$admin_role->remove_cap( self::VRIJWILLIGERS_CAPABILITY );
 			$admin_role->remove_cap( self::IVA_APPROVE_CAPABILITY );
 		}

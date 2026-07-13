@@ -65,11 +65,12 @@
             "label": "Persoonstype",
             "name": "person_type",
             "type": "select",
-            "instructions": "Gebruik Contact voor externe relaties die geen lid of ouder/verzorger zijn.",
+            "instructions": "Gebruik Contact voor externe relaties en Sponsor voor businessclubleden en sponsoren.",
             "required": 0,
             "choices": {
                 "member": "Lid / ouder",
-                "contact": "Contact"
+                "contact": "Contact",
+                "sponsor": "Sponsor"
             },
             "default_value": "member",
             "allow_null": 0,
