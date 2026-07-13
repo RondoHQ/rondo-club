@@ -4,6 +4,7 @@ namespace Tests\Wpunit;
 
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerObligationCalculator;
+use Rondo\Volunteer\ShiftCancellationService;
 use Tests\Support\RondoTestCase;
 
 /**
@@ -226,5 +227,21 @@ class VolunteerShiftAttributionTest extends RondoTestCase {
 		$this->assertSame( 0, $units['gezin']['no_show_count'], 'A no-show must not be counted on both units' );
 		$this->assertSame( 0, $units['speler']['completed_count'] );
 		$this->assertSame( 0, $units['gezin']['completed_count'] );
+	}
+
+	public function test_only_last_minute_cancelled_shifts_count_as_completed(): void {
+		$player_id        = $this->person( 'Senioren' );
+		$credited_shift   = $this->completed_shift( [ $player_id ] );
+		$uncredited_shift = $this->completed_shift( [ $player_id ] );
+
+		update_post_meta( $credited_shift, 'status', 'geannuleerd' );
+		update_post_meta( $credited_shift, ShiftCancellationService::META_CREDIT, '1' );
+		update_post_meta( $uncredited_shift, 'status', 'geannuleerd' );
+		update_post_meta( $uncredited_shift, ShiftCancellationService::META_CREDIT, '0' );
+
+		$units = $this->progress_by_kind( $player_id );
+
+		$this->assertSame( 1, $units['speler']['completed_count'] );
+		$this->assertSame( 0, $units['speler']['pending_count'] );
 	}
 }

@@ -30,6 +30,12 @@ class ShiftEmailScheduler {
 
 	private const DEFAULT_SURVEY_BODY = "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?";
 
+	private const CANCELLATION_SUBJECT = 'Je dienst {dienst} op {datum} gaat niet door';
+
+	private const EARLY_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.";
+
+	private const LAST_MINUTE_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.";
+
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
 		add_action( self::CRON_HOOK, [ $this, 'run_sweep' ] );
@@ -83,6 +89,88 @@ class ShiftEmailScheduler {
 		}
 
 		return $sent;
+	}
+
+	/**
+	 * Immediately notify all retained assignees of a cancelled shift.
+	 *
+	 * Repeated calls only retry recipients whose earlier wp_mail() call failed.
+	 *
+	 * @return array{sent: int, already_sent: int, failed: int, no_email: int, failed_person_ids: int[], no_email_person_ids: int[]}
+	 */
+	public function send_cancellation_notifications( int $shift_id ): array {
+		$result = [
+			'sent'                => 0,
+			'already_sent'        => 0,
+			'failed'              => 0,
+			'no_email'            => 0,
+			'failed_person_ids'   => [],
+			'no_email_person_ids' => [],
+		];
+
+		if ( (string) get_post_meta( $shift_id, 'status', true ) !== 'geannuleerd' ) {
+			return $result;
+		}
+
+		$cancellation = ShiftCancellationService::details( $shift_id );
+		$start        = $this->parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
+		$end          = $this->parse_datetime( (string) get_post_meta( $shift_id, 'end_datetime', true ) );
+		$type_id      = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+		$assigned     = array_values( array_unique( array_filter( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) ) ) );
+		if ( ! $cancellation || ! $start || ! $end || $type_id <= 0 || empty( $assigned ) ) {
+			return $result;
+		}
+
+		$body_template  = $cancellation['variant'] === ShiftCancellationService::VARIANT_LAST_MINUTE
+			? self::LAST_MINUTE_CANCELLATION_BODY
+			: self::EARLY_CANCELLATION_BODY;
+		$is_last_minute = $cancellation['variant'] === ShiftCancellationService::VARIANT_LAST_MINUTE;
+		if ( $cancellation['reason'] !== '' ) {
+			$body_template .= "\n\nReden: " . $cancellation['reason'];
+		}
+
+		foreach ( $assigned as $person_id ) {
+			$sent_meta_key = '_shift_email_cancellation_sent_' . $person_id;
+			if ( get_post_meta( $shift_id, $sent_meta_key, true ) ) {
+				++$result['already_sent'];
+				continue;
+			}
+
+			$email = $this->get_person_email( $person_id );
+			if ( ! $email ) {
+				++$result['no_email'];
+				$result['no_email_person_ids'][] = $person_id;
+				continue;
+			}
+
+			$vars    = $this->template_variables( $type_id, $person_id, $assigned, $start, $end );
+			$subject = $this->substitute_variables( self::CANCELLATION_SUBJECT, $vars );
+			$body    = $this->substitute_variables( $body_template, $vars );
+			$html    = EmailTemplate::render(
+				[
+					'eyebrow'      => 'Geannuleerde vrijwilligersdienst',
+					'heading'      => $subject,
+					'preheader'    => $subject,
+					'body_html'    => EmailTemplate::format_plain_text( $body ),
+					'cta_url'      => $is_last_minute ? '' : home_url( '/vrijwillig' ),
+					'cta_label'    => $is_last_minute ? '' : 'Kies een nieuwe dienst',
+					'accent_color' => '#b91c1c',
+				]
+			);
+
+			update_post_meta( $shift_id, $sent_meta_key, current_time( 'mysql' ) );
+			if ( ! wp_mail( $email, $subject, $html, [ 'Content-Type: text/html; charset=UTF-8' ] ) ) {
+				delete_post_meta( $shift_id, $sent_meta_key );
+				++$result['failed'];
+				$result['failed_person_ids'][] = $person_id;
+				continue;
+			}
+
+			++$result['sent'];
+			do_action( 'rondo_shift_email_sent', $shift_id, $person_id, 'cancellation' );
+		}
+
+		return $result;
 	}
 
 	private function process_shift( int $shift_id, \DateTimeImmutable $now ): int {

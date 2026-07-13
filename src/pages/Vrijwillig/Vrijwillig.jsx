@@ -218,10 +218,20 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
             Voltooid
           </span>
         )}
+        {shift.status === 'geannuleerd' && (
+          <div className="mt-2">
+            <span className={`inline-block text-xs px-2 py-0.5 rounded ${shift.cancellation?.credit_awarded ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'}`}>
+              {shift.cancellation?.credit_awarded ? 'Geannuleerd — telt mee' : 'Geannuleerd — telt niet mee'}
+            </span>
+            {shift.cancellation?.reason && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Reden: {shift.cancellation.reason}</p>
+            )}
+          </div>
+        )}
       </div>
       <div className="shrink-0">
         {isMine ? (
-          shift.status === 'voltooid' || shift.no_show ? null : (
+          ['voltooid', 'geannuleerd'].includes(shift.status) || shift.no_show ? null : (
             shift.can_cancel ? (
               <button
                 onClick={() => onCancel(shift.id)}
@@ -329,14 +339,14 @@ export default function Vrijwillig() {
 
   const upcomingShifts = useMemo(
     () => (mine?.shifts || []).filter(
-      (shift) => shift.status !== 'voltooid'
+      (shift) => ['open', 'vol'].includes(shift.status)
         && (!selectedDienstType || String(shift.dienst_type_id) === selectedDienstType)
     ),
     [mine, selectedDienstType]
   );
   const pastShifts = useMemo(
     () => (mine?.shifts || []).filter(
-      (shift) => shift.status === 'voltooid'
+      (shift) => ['voltooid', 'geannuleerd'].includes(shift.status)
         && (!selectedDienstType || String(shift.dienst_type_id) === selectedDienstType)
     ),
     [mine, selectedDienstType]
@@ -534,7 +544,7 @@ export default function Vrijwillig() {
               {pastShifts.length > 0 && (
                 <div>
                   <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-2">
-                    Voltooid
+                    Historie
                   </h2>
                   <ul className="space-y-2">
                     {pastShifts.map(shift => (
