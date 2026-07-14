@@ -34,7 +34,8 @@ class ShiftTemplateExpander {
 
 	/**
 	 * Frontend triggert deze als de gebruiker op "Uitrollen" klikt zodat we
-	 * niet hoeven te wachten op de nachtelijke cron.
+	 * niet hoeven te wachten op de nachtelijke cron. De handmatige actie
+	 * vereist een expliciete einddatum; de cron houdt zijn vaste venster.
 	 */
 	public function register_routes() {
 		register_rest_route(
@@ -46,18 +47,60 @@ class ShiftTemplateExpander {
 				'permission_callback' => function () {
 					return current_user_can( 'edit_posts' );
 				},
+				'args'                => [
+					'until' => [
+						'description'       => 'Laatste datum die bij de handmatige uitrol wordt meegenomen (Y-m-d).',
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
 			]
 		);
 	}
 
-	public function rest_expand_all() {
-		$created = $this->expand_default_window();
+	/**
+	 * Expand all templates through the explicitly selected date.
+	 *
+	 * @param \WP_REST_Request $request REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function rest_expand_all( \WP_REST_Request $request ) {
+		$from  = current_datetime()->format( 'Y-m-d' );
+		$until = (string) $request->get_param( 'until' );
+
+		if ( ! self::is_valid_date( $until ) ) {
+			return new \WP_Error(
+				'rondo_invalid_expansion_date',
+				'Kies een geldige einddatum.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( $until < $from ) {
+			return new \WP_Error(
+				'rondo_expansion_date_in_past',
+				'De einddatum mag niet vóór vandaag liggen.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		$created = self::expand_range( $from, $until );
 		return rest_ensure_response(
 			[
 				'created' => (int) $created,
-				'window'  => self::WINDOW_DAYS,
+				'from'    => $from,
+				'until'   => $until,
 			]
 		);
+	}
+
+	/**
+	 * Validate a strict ISO calendar date.
+	 */
+	private static function is_valid_date( string $date ): bool {
+		$parsed = \DateTimeImmutable::createFromFormat( '!Y-m-d', $date, new \DateTimeZone( 'UTC' ) );
+		return $parsed !== false && $parsed->format( 'Y-m-d' ) === $date;
 	}
 
 	/**
