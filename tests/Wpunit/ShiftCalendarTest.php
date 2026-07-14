@@ -124,8 +124,37 @@ class ShiftCalendarTest extends RondoTestCase {
 		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
 		wp_set_current_user( $manager_id );
 		$request = $this->calendar_request( 'manage' );
-		$request->set_param( 'to', current_datetime()->modify( '+101 days' )->format( 'Y-m-d' ) );
+		$request->set_param( 'to', current_datetime()->modify( '+191 days' )->format( 'Y-m-d' ) );
 		$this->assertSame( 'calendar_range_too_large', $this->controller->get_shift_calendar( $request )->get_error_code() );
+	}
+
+	public function test_default_calendar_range_is_six_months_for_managers_and_three_for_members(): void {
+		$today = current_datetime()->setTime( 0, 0, 0 );
+
+		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
+		wp_set_current_user( $manager_id );
+		$manager_request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/calendar' );
+		$manager_request->set_param( 'view', 'manage' );
+		$manager_data = $this->controller->get_shift_calendar( $manager_request )->get_data();
+
+		$this->assertSame( $today->format( 'Y-m-d' ), $manager_data['from'] );
+		$this->assertSame(
+			$today->modify( 'first day of this month' )->modify( '+6 months -1 day' )->format( 'Y-m-d' ),
+			$manager_data['to']
+		);
+
+		$user_id   = $this->createRondoUser();
+		$person_id = $this->createPerson( [ 'post_title' => 'Kalenderlid' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+		$member_request = new WP_REST_Request( 'GET', '/rondo/v1/shifts/calendar' );
+		$member_request->set_param( 'view', 'signup' );
+		$member_data = $this->controller->get_shift_calendar( $member_request )->get_data();
+
+		$this->assertSame(
+			$today->modify( 'first day of this month' )->modify( '+3 months -1 day' )->format( 'Y-m-d' ),
+			$member_data['to']
+		);
 	}
 
 	public function test_direct_signup_rejects_former_members_and_missing_pool_membership(): void {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.59.1] - 2026-07-14
+
+### Changed
+
+- Het bezettingsoverzicht op **Vrijwilligers → Diensten** toont nu de huidige en de komende vijf kalendermaanden.
+
 ## [33.59.0] - 2026-07-14
 
 ### Added
