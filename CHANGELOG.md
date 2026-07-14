@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.60.0] - 2026-07-14
+
+### Changed
+
+- Op het vrijwilligersdashboard zijn de statistieken voor gezinnen en spelers vervangen door het totale aantal plekken in inschrijftaken en het aantal plekken waarvoor al een vrijwilliger is ingeroosterd.
+
 ## [33.59.3] - 2026-07-14
 
 ### Changed

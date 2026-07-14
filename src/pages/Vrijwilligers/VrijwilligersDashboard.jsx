@@ -44,26 +44,9 @@ export default function VrijwilligersDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const stats = useMemo(() => {
-    if (!eligibility?.units) return null;
-    const units = eligibility.units;
-    return units.reduce((totals, unit) => {
-      totals.totalRequired += Number(unit.required_count) || 0;
-      if (unit.kind === 'gezin') {
-        totals.gezin += 1;
-        if (unit.data_quality === 'orphan') totals.gezinOrphan += 1;
-        if (unit.data_quality === 'address_fallback') totals.gezinAddressFallback += 1;
-      } else if (unit.kind === 'speler') {
-        totals.speler += 1;
-      }
-      return totals;
-    }, {
-      totalRequired: 0,
-      gezin: 0,
-      speler: 0,
-      gezinOrphan: 0,
-      gezinAddressFallback: 0,
-    });
+  const totalRequired = useMemo(() => {
+    if (!eligibility?.units) return 0;
+    return eligibility.units.reduce((total, unit) => total + (Number(unit.required_count) || 0), 0);
   }, [eligibility]);
 
   const diagnostics = eligibility?.diagnostics || null;
@@ -108,26 +91,26 @@ export default function VrijwilligersDashboard() {
 
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
-          Doelgroep dit seizoen
+          Doelgroep en planning dit seizoen
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             label="Inschrijftaken vereist"
-            value={isLoading ? '…' : (stats?.totalRequired ?? 0).toLocaleString('nl-NL')}
+            value={isLoading ? '…' : totalRequired.toLocaleString('nl-NL')}
             sub={eligibility?.season ? `Seizoen ${eligibility.season}` : null}
             icon={Users}
           />
           <StatCard
-            label="Gezinnen (ouderplicht)"
-            value={isLoading ? '…' : (stats?.gezin ?? 0).toLocaleString('nl-NL')}
-            sub="Huishoudens met ≥1 speler t/m JO16"
-            icon={UsersRound}
+            label="Inschrijftaken totaal"
+            value={isLoading ? '…' : (eligibility?.shift_capacity?.total_slots ?? 0).toLocaleString('nl-NL')}
+            sub="Totaal aantal plekken in inschrijftaken"
+            icon={CalendarClock}
           />
           <StatCard
-            label="Spelers (vanaf O17)"
-            value={isLoading ? '…' : (stats?.speler ?? 0).toLocaleString('nl-NL')}
-            sub="Individuele spelersplicht"
-            icon={Users}
+            label="Inschrijftaken ingeroosterd"
+            value={isLoading ? '…' : (eligibility?.shift_capacity?.assigned_slots ?? 0).toLocaleString('nl-NL')}
+            sub="Aantal plekken met een vrijwilliger"
+            icon={UsersRound}
           />
         </div>
       </section>
