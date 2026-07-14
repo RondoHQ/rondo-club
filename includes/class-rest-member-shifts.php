@@ -41,7 +41,7 @@ class MemberShifts extends Base {
 	const AVAILABLE_WINDOW_DAYS = 93;
 
 	/** Longest calendar range accepted by the API. */
-	const CALENDAR_MAX_DAYS = 100;
+	const CALENDAR_MAX_DAYS = 190;
 
 	/** Members may cancel until this many days before a shift starts. */
 	const CANCEL_DEADLINE_DAYS = 21;
@@ -421,7 +421,7 @@ class MemberShifts extends Base {
 	}
 
 	/**
-	 * Return three months of shift coverage for the manager and signup calendars.
+	 * Return shift coverage for the manager and signup calendars.
 	 */
 	public function get_shift_calendar( \WP_REST_Request $request ) {
 		$view = (string) ( $request->get_param( 'view' ) ?: 'signup' );
@@ -433,7 +433,7 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot de dienstenkalender.', [ 'status' => 403 ] );
 		}
 
-		$range = $this->calendar_range( $request );
+		$range = $this->calendar_range( $request, $view );
 		if ( is_wp_error( $range ) ) {
 			return $range;
 		}
@@ -456,7 +456,7 @@ class MemberShifts extends Base {
 			[
 				'post_type'        => 'dienst_shift',
 				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded by the validated calendar range.
-				'posts_per_page'   => 500,
+				'posts_per_page'   => 1000,
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
 				'post_status'      => [ 'publish' ],
@@ -560,11 +560,12 @@ class MemberShifts extends Base {
 	 *
 	 * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}|\WP_Error
 	 */
-	private function calendar_range( \WP_REST_Request $request ) {
+	private function calendar_range( \WP_REST_Request $request, string $view ) {
 		$timezone = wp_timezone();
 		$today    = current_datetime()->setTime( 0, 0, 0 );
 		$from     = $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ?: $today;
-		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $from->modify( 'first day of this month' )->modify( '+3 months -1 day' );
+		$months   = $view === 'manage' ? 6 : 3;
+		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $from->modify( 'first day of this month' )->modify( "+{$months} months -1 day" );
 
 		if ( $request->get_param( 'from' ) && ! $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ) {
 			return new \WP_Error( 'invalid_calendar_from', 'De begindatum is ongeldig.', [ 'status' => 400 ] );
@@ -576,7 +577,11 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_calendar_range', 'De einddatum moet na de begindatum liggen.', [ 'status' => 400 ] );
 		}
 		if ( (int) $from->diff( $to )->format( '%a' ) > self::CALENDAR_MAX_DAYS ) {
-			return new \WP_Error( 'calendar_range_too_large', 'De kalenderperiode mag maximaal 100 dagen zijn.', [ 'status' => 400 ] );
+			return new \WP_Error(
+				'calendar_range_too_large',
+				sprintf( 'De kalenderperiode mag maximaal %d dagen zijn.', self::CALENDAR_MAX_DAYS ),
+				[ 'status' => 400 ]
+			);
 		}
 
 		return [ $from, $to ];
