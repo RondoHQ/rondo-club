@@ -43,6 +43,9 @@ certs/
 # Local demo export artifact
 fixtures/demo-fixture.json
 
+# Local Graphify artifacts (Graphify is not part of this project)
+graphify-out/
+
 # ── GSD baseline (auto-generated) ──
 .gsd/activity/
 .gsd/runtime/

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.60.2] - 2026-07-14
+
+### Fixed
+
+- Lokale `graphify-out/`-artefacten worden genegeerd door Git en uitgesloten van productiedeploys; Graphify blijft verwijderd uit het project.
+
 ## [33.60.1] - 2026-07-14
 
 ### Fixed
