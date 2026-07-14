@@ -891,12 +891,68 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'season'      => $season,
-				'units'       => $units,
-				'total_units' => count( $units ),
-				'diagnostics' => $diagnostics,
+				'season'         => $season,
+				'units'          => $units,
+				'total_units'    => count( $units ),
+				'diagnostics'    => $diagnostics,
+				'shift_capacity' => $this->get_shift_capacity_stats( $season ),
 			]
 		);
+	}
+
+	/**
+	 * Count scheduled volunteer capacity and assignments for a sports season.
+	 *
+	 * Each capacity slot counts as one service opportunity. Cancelled shifts do
+	 * not contribute; completed shifts remain part of the season total.
+	 *
+	 * @return array{total_slots: int, assigned_slots: int}
+	 */
+	private function get_shift_capacity_stats( string $season ): array {
+		if ( ! preg_match( '/^(\d{4})-(\d{4})$/', $season, $matches ) ) {
+			$season = SeasonKey::current();
+			preg_match( '/^(\d{4})-(\d{4})$/', $season, $matches );
+		}
+
+		$season_start = $matches[1] . '-07-01 00:00:00';
+		$season_end   = $matches[2] . '-06-30 23:59:59';
+		$shift_ids    = get_posts(
+			[
+				'post_type'        => 'dienst_shift',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish' ],
+				'meta_query'       => [
+					[
+						'key'     => 'start_datetime',
+						'value'   => [ $season_start, $season_end ],
+						'compare' => 'BETWEEN',
+						'type'    => 'DATETIME',
+					],
+				],
+			]
+		);
+
+		$stats = [
+			'total_slots'    => 0,
+			'assigned_slots' => 0,
+		];
+		foreach ( $shift_ids as $shift_id ) {
+			if ( (string) get_post_meta( $shift_id, 'status', true ) === 'geannuleerd' ) {
+				continue;
+			}
+
+			$assigned                 = array_filter(
+				array_unique( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) ),
+				fn( int $person_id ) => $person_id > 0
+			);
+			$stats['total_slots']    += max( 1, (int) get_post_meta( $shift_id, 'capacity', true ) );
+			$stats['assigned_slots'] += count( $assigned );
+		}
+
+		return $stats;
 	}
 
 	/**
