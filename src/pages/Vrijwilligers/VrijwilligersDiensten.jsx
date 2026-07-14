@@ -7,7 +7,7 @@ import { format } from '@/utils/dateFormat';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
 export default function VrijwilligersDiensten() {
-  useDocumentTitle('Diensten — Vrijwilligers');
+  useDocumentTitle('Inschrijftaken — Vrijwilligers');
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedDienstType = searchParams.get('diensttype') || '';
 
@@ -52,9 +52,9 @@ export default function VrijwilligersDiensten() {
             <CalendarClock className="w-6 h-6 text-bright-cobalt dark:text-electric-cyan" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Diensten</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Inschrijftaken</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Catalog van diensttypes, sjablonen en concrete shifts.
+              Catalogus van inschrijftaken, sjablonen en geplande inschrijftaken.
             </p>
           </div>
         </div>
@@ -63,25 +63,59 @@ export default function VrijwilligersDiensten() {
             <Settings className="w-4 h-4" /> Sjablonen
           </Link>
           <Link to="/vrijwilligers/diensten/nieuw" className="btn-primary inline-flex items-center gap-1.5">
-            <Plus className="w-4 h-4" /> Nieuwe dienst
+            <Plus className="w-4 h-4" /> Nieuwe inschrijftaak
           </Link>
         </div>
       </header>
 
+      <ShiftCoverageCalendar
+        data={calendarData}
+        isLoading={calendarLoading}
+        selectedDienstType={selectedDienstType}
+        onDienstTypeChange={handleDienstTypeChange}
+        description="Klik op een gekleurde datum om de bezetting per inschrijftaak te bekijken."
+        renderShift={(shift) => (
+          <div key={shift.id} className="flex items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700">
+            <span className="h-10 w-2 shrink-0 rounded-full" style={{ background: shift.dienst_type_color || '#6b7280' }} />
+            <div className="min-w-0 flex-1">
+              <Link
+                to={`/vrijwilligers/diensten/${shift.id}`}
+                className="font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
+              >
+                {shift.dienst_type_name || shift.title}
+              </Link>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
+              </p>
+            </div>
+            <span className={`text-xs font-medium ${shift.is_filled ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+              {shift.is_filled ? 'Ingevuld' : `${Math.max(0, Math.max(1, shift.capacity) - shift.assigned_count)} open`}
+            </span>
+            <Link
+              to={`/vrijwilligers/diensten/${shift.id}`}
+              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              title="Bewerken"
+            >
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
+      />
+
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-            Diensttypes ({types.length})
+            Inschrijftaken ({types.length})
           </h2>
           <Link to="/vrijwilligers/diensttypes/nieuw" className="btn-tertiary inline-flex items-center gap-1.5 text-xs">
-            <Plus className="w-3.5 h-3.5" /> Diensttype
+            <Plus className="w-3.5 h-3.5" /> Inschrijftaak
           </Link>
         </div>
         {typesLoading ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
         ) : types.length === 0 ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">
-            Nog geen diensttypes. Maak er een aan met &ldquo;Diensttype&rdquo; hierboven.
+            Nog geen inschrijftaken. Maak er een aan met &ldquo;Inschrijftaak&rdquo; hierboven.
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -105,7 +139,7 @@ export default function VrijwilligersDiensten() {
                     <Link
                       to={`/vrijwilligers/diensttypes/${type.id}`}
                       className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                      title="Diensttype bewerken"
+                      title="Inschrijftaak bewerken"
                     >
                       <Pencil className="w-4 h-4" />
                     </Link>
@@ -137,52 +171,18 @@ export default function VrijwilligersDiensten() {
         )}
       </section>
 
-      <ShiftCoverageCalendar
-        data={calendarData}
-        isLoading={calendarLoading}
-        selectedDienstType={selectedDienstType}
-        onDienstTypeChange={handleDienstTypeChange}
-        description="Klik op een gekleurde datum om de bezetting per dienst te bekijken."
-        renderShift={(shift) => (
-          <div key={shift.id} className="flex items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700">
-            <span className="h-10 w-2 shrink-0 rounded-full" style={{ background: shift.dienst_type_color || '#6b7280' }} />
-            <div className="min-w-0 flex-1">
-              <Link
-                to={`/vrijwilligers/diensten/${shift.id}`}
-                className="font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
-              >
-                {shift.dienst_type_name || shift.title}
-              </Link>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {shift.assigned_count} van {Math.max(1, shift.capacity)} plekken bezet
-              </p>
-            </div>
-            <span className={`text-xs font-medium ${shift.is_filled ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
-              {shift.is_filled ? 'Ingevuld' : `${Math.max(0, Math.max(1, shift.capacity) - shift.assigned_count)} open`}
-            </span>
-            <Link
-              to={`/vrijwilligers/diensten/${shift.id}`}
-              className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              title="Bewerken"
-            >
-              <Pencil className="h-4 w-4" />
-            </Link>
-          </div>
-        )}
-      />
-
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
-          Recente shifts ({shifts.length})
+          Recente inschrijftaken ({shifts.length})
         </h2>
         {shiftsLoading ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
         ) : shifts.length === 0 ? (
           <div className="card p-8 text-center">
-            <div className="text-gray-500 dark:text-gray-400 mb-2">Nog geen diensten gepland.</div>
+            <div className="text-gray-500 dark:text-gray-400 mb-2">Nog geen inschrijftaken gepland.</div>
             <p className="text-xs text-gray-400 dark:text-gray-500 max-w-md mx-auto">
-              Maak een ad-hoc dienst aan via &ldquo;Nieuwe dienst&rdquo; rechtsboven, of zet een wekelijks{' '}
-              <Link to="/vrijwilligers/sjablonen" className="underline">sjabloon</Link> klaar — de expander rolt sjablonen elke nacht uit naar concrete diensten voor de komende drie maanden.
+              Maak een losse inschrijftaak aan via &ldquo;Nieuwe inschrijftaak&rdquo; rechtsboven, of zet een wekelijks{' '}
+              <Link to="/vrijwilligers/sjablonen" className="underline">sjabloon</Link> klaar — de expander rolt sjablonen elke nacht uit naar geplande inschrijftaken.
             </p>
           </div>
         ) : (
@@ -204,7 +204,7 @@ export default function VrijwilligersDiensten() {
                     <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
                         <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                          {shift.title?.rendered || shift.title || `Shift ${shift.id}`}
+                          {shift.title?.rendered || shift.title || `Inschrijftaak ${shift.id}`}
                         </Link>
                       </td>
                       <td className="px-4 py-2 text-gray-700 dark:text-gray-300">

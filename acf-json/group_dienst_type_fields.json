@@ -1,13 +1,13 @@
 {
     "key": "group_dienst_type_fields",
-    "title": "Dienst Type",
+    "title": "Inschrijftaak",
     "fields": [
         {
             "key": "field_dienst_type_description",
             "label": "Omschrijving",
             "name": "description",
             "type": "textarea",
-            "instructions": "Korte uitleg van wat deze dienst inhoudt. Zichtbaar voor vrijwilligers bij het aanmelden.",
+            "instructions": "Korte uitleg van wat deze inschrijftaak inhoudt. Zichtbaar voor vrijwilligers bij het aanmelden.",
             "rows": 3,
             "new_lines": ""
         },
@@ -16,7 +16,7 @@
             "label": "VOG vereist",
             "name": "vog_required",
             "type": "true_false",
-            "instructions": "Aanvinken als deze dienst een geldige VOG vereist.",
+            "instructions": "Aanvinken als deze inschrijftaak een geldige VOG vereist.",
             "default_value": 0,
             "ui": 1,
             "ui_on_text": "Ja",
@@ -30,7 +30,7 @@
             "label": "IVA vereist",
             "name": "iva_required",
             "type": "true_false",
-            "instructions": "Aanvinken als deze dienst een IVA-certificaat vereist (alcohol).",
+            "instructions": "Aanvinken als deze inschrijftaak een IVA-certificaat vereist (alcohol).",
             "default_value": 0,
             "ui": 1,
             "ui_on_text": "Ja",
@@ -44,7 +44,7 @@
             "label": "Sleutel betrokken",
             "name": "sleutel_involved",
             "type": "true_false",
-            "instructions": "Aanvinken als deze dienst met sleutels werkt.",
+            "instructions": "Aanvinken als deze inschrijftaak met sleutels werkt.",
             "default_value": 0,
             "ui": 1,
             "ui_on_text": "Ja",
@@ -58,7 +58,7 @@
             "label": "Standaard capaciteit",
             "name": "default_capacity",
             "type": "number",
-            "instructions": "Standaard aantal personen per shift. 0 = onbeperkt.",
+            "instructions": "Standaard aantal personen per inschrijftaak. 0 = onbeperkt.",
             "default_value": 1,
             "min": 0,
             "step": 1,
@@ -99,7 +99,7 @@
             "label": "Onderwerp herinneringsmail",
             "name": "reminder_email_subject",
             "type": "text",
-            "instructions": "Onderwerp voor de herinneringen 2 weken, 1 week en 2 dagen voor de dienst.",
+            "instructions": "Onderwerp voor de herinneringen 2 weken, 1 week en 2 dagen voor de inschrijftaak.",
             "default_value": "Herinnering: {dienst} op {datum}"
         },
         {
@@ -108,7 +108,7 @@
             "name": "reminder_email_body",
             "type": "textarea",
             "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
-            "default_value": "Hoi {naam},\n\nDit is een herinnering voor je dienst {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe draait deze dienst samen met {medevrijwilligers}.",
+            "default_value": "Hoi {naam},\n\nDit is een herinnering voor je inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe doet deze inschrijftaak samen met {medevrijwilligers}.",
             "rows": 8,
             "new_lines": ""
         },
@@ -117,8 +117,8 @@
             "label": "Onderwerp annulering minimaal 48 uur vooraf",
             "name": "cancellation_early_email_subject",
             "type": "text",
-            "instructions": "Onderwerp wanneer een dienst minimaal 48 uur voor aanvang wordt geannuleerd en niet meetelt.",
-            "default_value": "Je dienst {dienst} op {datum} gaat niet door"
+            "instructions": "Onderwerp wanneer een inschrijftaak minimaal 48 uur voor aanvang wordt geannuleerd en niet meetelt.",
+            "default_value": "Je inschrijftaak {dienst} op {datum} gaat niet door"
         },
         {
             "key": "field_dienst_type_cancellation_early_email_body",
@@ -126,7 +126,7 @@
             "name": "cancellation_early_email_body",
             "type": "textarea",
             "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
-            "default_value": "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.",
+            "default_value": "Hoi {naam},\n\nJe inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De inschrijftaak telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe inschrijftaak via Rondo.",
             "rows": 8,
             "new_lines": ""
         },
@@ -135,8 +135,8 @@
             "label": "Onderwerp annulering binnen 48 uur",
             "name": "cancellation_last_minute_email_subject",
             "type": "text",
-            "instructions": "Onderwerp wanneer een dienst binnen 48 uur voor aanvang wordt geannuleerd en wel meetelt.",
-            "default_value": "Je dienst {dienst} op {datum} gaat niet door"
+            "instructions": "Onderwerp wanneer een inschrijftaak binnen 48 uur voor aanvang wordt geannuleerd en wel meetelt.",
+            "default_value": "Je inschrijftaak {dienst} op {datum} gaat niet door"
         },
         {
             "key": "field_dienst_type_cancellation_last_minute_email_body",
@@ -144,7 +144,7 @@
             "name": "cancellation_last_minute_email_body",
             "type": "textarea",
             "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
-            "default_value": "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.",
+            "default_value": "Hoi {naam},\n\nJe inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De inschrijftaak telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe inschrijftaak te kiezen.",
             "rows": 8,
             "new_lines": ""
         },
@@ -153,8 +153,8 @@
             "label": "Onderwerp enquêtemail",
             "name": "survey_email_subject",
             "type": "text",
-            "instructions": "Onderwerp van de e-mail die één dag na de dienst wordt verstuurd.",
-            "default_value": "Hoe ging je dienst {dienst}?"
+            "instructions": "Onderwerp van de e-mail die één dag na de inschrijftaak wordt verstuurd.",
+            "default_value": "Hoe ging je inschrijftaak {dienst}?"
         },
         {
             "key": "field_dienst_type_survey_email_body",
@@ -162,7 +162,7 @@
             "name": "survey_email_body",
             "type": "textarea",
             "instructions": "Beschikbare variabelen: {naam}, {dienst}, {datum}, {tijd}, {eindtijd}, {medevrijwilligers}.",
-            "default_value": "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?",
+            "default_value": "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlopen. Wil je onze korte enquête invullen?",
             "rows": 8,
             "new_lines": ""
         },
@@ -171,7 +171,7 @@
             "label": "Google Forms-link",
             "name": "survey_url",
             "type": "url",
-            "instructions": "Link naar de enquête voor dit diensttype. Zonder link wordt geen enquêtemail verstuurd.",
+            "instructions": "Link naar de enquête voor deze inschrijftaak. Zonder link wordt geen enquêtemail verstuurd.",
             "default_value": "",
             "placeholder": "https://docs.google.com/forms/..."
         }

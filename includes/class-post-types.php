@@ -746,18 +746,18 @@ class PostTypes {
 	 */
 	private function register_dienst_type_post_type() {
 		$labels = [
-			'name'               => _x( 'Dienst Types', 'Post type general name', 'rondo' ),
-			'singular_name'      => _x( 'Dienst Type', 'Post type singular name', 'rondo' ),
-			'menu_name'          => _x( 'Dienst Types', 'Admin Menu text', 'rondo' ),
+			'name'               => _x( 'Inschrijftaken', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Inschrijftaak', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Inschrijftaken', 'Admin Menu text', 'rondo' ),
 			'add_new'            => __( 'Add New', 'rondo' ),
-			'add_new_item'       => __( 'Add New Dienst Type', 'rondo' ),
-			'edit_item'          => __( 'Edit Dienst Type', 'rondo' ),
-			'new_item'           => __( 'New Dienst Type', 'rondo' ),
-			'view_item'          => __( 'View Dienst Type', 'rondo' ),
-			'search_items'       => __( 'Search Dienst Types', 'rondo' ),
-			'not_found'          => __( 'No dienst types found', 'rondo' ),
-			'not_found_in_trash' => __( 'No dienst types found in Trash', 'rondo' ),
-			'all_items'          => __( 'All Dienst Types', 'rondo' ),
+			'add_new_item'       => __( 'Add New Inschrijftaak', 'rondo' ),
+			'edit_item'          => __( 'Edit Inschrijftaak', 'rondo' ),
+			'new_item'           => __( 'New Inschrijftaak', 'rondo' ),
+			'view_item'          => __( 'View Inschrijftaak', 'rondo' ),
+			'search_items'       => __( 'Search Inschrijftaken', 'rondo' ),
+			'not_found'          => __( 'No inschrijftaken found', 'rondo' ),
+			'not_found_in_trash' => __( 'No inschrijftaken found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Inschrijftaken', 'rondo' ),
 		];
 
 		$args = array_merge(
@@ -884,18 +884,18 @@ class PostTypes {
 	 */
 	private function register_shift_template_post_type() {
 		$labels = [
-			'name'               => _x( 'Shift Templates', 'Post type general name', 'rondo' ),
-			'singular_name'      => _x( 'Shift Template', 'Post type singular name', 'rondo' ),
-			'menu_name'          => _x( 'Shift Templates', 'Admin Menu text', 'rondo' ),
+			'name'               => _x( 'Inschrijftaaksjablonen', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Inschrijftaaksjabloon', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Inschrijftaaksjablonen', 'Admin Menu text', 'rondo' ),
 			'add_new'            => __( 'Add New', 'rondo' ),
-			'add_new_item'       => __( 'Add New Shift Template', 'rondo' ),
-			'edit_item'          => __( 'Edit Shift Template', 'rondo' ),
-			'new_item'           => __( 'New Shift Template', 'rondo' ),
-			'view_item'          => __( 'View Shift Template', 'rondo' ),
-			'search_items'       => __( 'Search Shift Templates', 'rondo' ),
-			'not_found'          => __( 'No shift templates found', 'rondo' ),
-			'not_found_in_trash' => __( 'No shift templates found in Trash', 'rondo' ),
-			'all_items'          => __( 'All Shift Templates', 'rondo' ),
+			'add_new_item'       => __( 'Add New Inschrijftaaksjabloon', 'rondo' ),
+			'edit_item'          => __( 'Edit Inschrijftaaksjabloon', 'rondo' ),
+			'new_item'           => __( 'New Inschrijftaaksjabloon', 'rondo' ),
+			'view_item'          => __( 'View Inschrijftaaksjabloon', 'rondo' ),
+			'search_items'       => __( 'Search Inschrijftaaksjablonen', 'rondo' ),
+			'not_found'          => __( 'No inschrijftaaksjablonen found', 'rondo' ),
+			'not_found_in_trash' => __( 'No inschrijftaaksjablonen found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Inschrijftaaksjablonen', 'rondo' ),
 		];
 
 		$args = array_merge(
@@ -982,18 +982,18 @@ class PostTypes {
 	 */
 	private function register_dienst_shift_post_type() {
 		$labels = [
-			'name'               => _x( 'Diensten', 'Post type general name', 'rondo' ),
-			'singular_name'      => _x( 'Dienst', 'Post type singular name', 'rondo' ),
-			'menu_name'          => _x( 'Diensten', 'Admin Menu text', 'rondo' ),
+			'name'               => _x( 'Inschrijftaken', 'Post type general name', 'rondo' ),
+			'singular_name'      => _x( 'Inschrijftaak', 'Post type singular name', 'rondo' ),
+			'menu_name'          => _x( 'Inschrijftaken', 'Admin Menu text', 'rondo' ),
 			'add_new'            => __( 'Add New', 'rondo' ),
-			'add_new_item'       => __( 'Add New Dienst', 'rondo' ),
-			'edit_item'          => __( 'Edit Dienst', 'rondo' ),
-			'new_item'           => __( 'New Dienst', 'rondo' ),
-			'view_item'          => __( 'View Dienst', 'rondo' ),
-			'search_items'       => __( 'Search Diensten', 'rondo' ),
-			'not_found'          => __( 'No diensten found', 'rondo' ),
-			'not_found_in_trash' => __( 'No diensten found in Trash', 'rondo' ),
-			'all_items'          => __( 'All Diensten', 'rondo' ),
+			'add_new_item'       => __( 'Add New Inschrijftaak', 'rondo' ),
+			'edit_item'          => __( 'Edit Inschrijftaak', 'rondo' ),
+			'new_item'           => __( 'New Inschrijftaak', 'rondo' ),
+			'view_item'          => __( 'View Inschrijftaak', 'rondo' ),
+			'search_items'       => __( 'Search Inschrijftaken', 'rondo' ),
+			'not_found'          => __( 'No inschrijftaken found', 'rondo' ),
+			'not_found_in_trash' => __( 'No inschrijftaken found in Trash', 'rondo' ),
+			'all_items'          => __( 'All Inschrijftaken', 'rondo' ),
 		];
 
 		$args = array_merge(

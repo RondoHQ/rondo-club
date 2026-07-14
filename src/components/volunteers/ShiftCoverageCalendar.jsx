@@ -17,8 +17,8 @@ import { format } from '@/utils/dateFormat';
 const WEEKDAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
 function dayStatusLabel(day) {
-  if (!day) return 'geen diensten';
-  if (day.state === 'full') return `alle ${day.shift_count} diensten ingevuld`;
+  if (!day) return 'geen inschrijftaken';
+  if (day.state === 'full') return `alle ${day.shift_count} inschrijftaken ingevuld`;
   return `${day.spots_remaining} ${day.spots_remaining === 1 ? 'plek' : 'plekken'} open`;
 }
 
@@ -112,7 +112,7 @@ export default function ShiftCoverageCalendar({
         {((data?.dienst_types || []).length > 1 || selectedDienstType) && (
           <div className="flex min-w-56 flex-col gap-1">
             <label htmlFor="calendar-diensttype-filter" className="text-xs font-medium text-gray-600 dark:text-gray-300">
-              Diensttype
+              Inschrijftaak
             </label>
             <select
               id="calendar-diensttype-filter"
@@ -120,9 +120,9 @@ export default function ShiftCoverageCalendar({
               onChange={(event) => onDienstTypeChange(event.target.value)}
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-bright-cobalt focus:outline-none focus:ring-1 focus:ring-bright-cobalt dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-electric-cyan dark:focus:ring-electric-cyan"
             >
-              <option value="">Alle diensttypes</option>
+              <option value="">Alle inschrijftaken</option>
               {selectedDienstType && !(data?.dienst_types || []).some((type) => String(type.id) === selectedDienstType) && (
-                <option value={selectedDienstType}>Geselecteerd diensttype</option>
+                <option value={selectedDienstType}>Geselecteerde inschrijftaak</option>
               )}
               {(data?.dienst_types || []).map((type) => (
                 <option key={type.id} value={type.id}>{type.name}</option>
@@ -135,7 +135,7 @@ export default function ShiftCoverageCalendar({
       <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-600 dark:text-gray-300" aria-label="Legenda">
         <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Alles ingevuld</span>
         <span className="inline-flex items-center gap-1.5"><XCircle className="h-4 w-4 text-red-600" /> Nog plekken open</span>
-        <span className="inline-flex items-center gap-1.5"><Circle className="h-4 w-4 text-gray-400" /> Geen diensten</span>
+        <span className="inline-flex items-center gap-1.5"><Circle className="h-4 w-4 text-gray-400" /> Geen inschrijftaken</span>
       </div>
 
       {isLoading ? (
@@ -158,7 +158,7 @@ export default function ShiftCoverageCalendar({
 
           {(data?.days || []).length === 0 && (
             <p className="rounded-md bg-gray-50 p-4 text-center text-sm text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-              Geen diensten gepland in deze periode.
+              Geen inschrijftaken gepland in deze periode.
             </p>
           )}
 

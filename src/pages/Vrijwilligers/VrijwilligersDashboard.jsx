@@ -85,7 +85,7 @@ export default function VrijwilligersDashboard() {
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Vrijwilligersbeleid — 2 diensten voor het eerste kind t/m JO16 en per speler vanaf O17; volgende kinderen tellen met gezinskorting mee.
+            Vrijwilligersbeleid — 2 inschrijftaken voor het eerste kind t/m JO16 en per speler vanaf O17; volgende kinderen tellen met gezinskorting mee.
           </p>
         </div>
         <button
@@ -112,7 +112,7 @@ export default function VrijwilligersDashboard() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            label="Diensten vereist"
+            label="Inschrijftaken vereist"
             value={isLoading ? '…' : (stats?.totalRequired ?? 0).toLocaleString('nl-NL')}
             sub={eligibility?.season ? `Seizoen ${eligibility.season}` : null}
             icon={Users}
@@ -224,7 +224,7 @@ export default function VrijwilligersDashboard() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="VOG" value="Beheer" sub="Verklaring Omtrent Gedrag" icon={FileCheck} href="/vrijwilligers/vog" />
           <StatCard label="IVA" value="Beheer" sub="Alcoholcertificaat kantine" icon={Wine} href="/vrijwilligers/iva" />
-          <StatCard label="Diensten" value="Planner" sub="Shifts en aanmeldingen" icon={CalendarClock} href="/vrijwilligers/diensten" />
+          <StatCard label="Inschrijftaken" value="Planner" sub="Inschrijftaken en aanmeldingen" icon={CalendarClock} href="/vrijwilligers/diensten" />
           <StatCard label="Vrijstellingen" value="Beheer" sub="Handmatige + auto vrijstellingen" icon={UsersRound} href="/vrijwilligers/vrijstellingen" />
         </div>
       </section>

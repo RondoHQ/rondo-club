@@ -67,7 +67,7 @@ function ExpandTemplatesModal({ isLoading, error, onClose, onSubmit }) {
 
           <div className="space-y-4 p-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Kies tot en met welke datum je de actieve sjablonen naar concrete diensten wilt uitrollen.
+              Kies tot en met welke datum je de actieve sjablonen naar geplande inschrijftaken wilt uitrollen.
             </p>
             <div>
               <label htmlFor="expand-until" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -133,7 +133,7 @@ export default function VrijwilligersSjablonen() {
       setFeedback({
         kind: 'success',
         message: created > 0
-          ? `${created} nieuwe dienst${created === 1 ? '' : 'en'} aangemaakt tot en met ${formatDisplayDate(until)}.`
+          ? `${created} ${created === 1 ? 'nieuwe inschrijftaak' : 'nieuwe inschrijftaken'} aangemaakt tot en met ${formatDisplayDate(until)}.`
           : `Alle sjablonen zijn al uitgerold tot en met ${formatDisplayDate(until)} — niets toe te voegen.`,
       });
     },
@@ -164,7 +164,7 @@ export default function VrijwilligersSjablonen() {
           to="/vrijwilligers/diensten"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar diensten
+          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar inschrijftaken
         </Link>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export default function VrijwilligersSjablonen() {
             <div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Sjablonen</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Wekelijks terugkerende shift-regels. De expander rolt deze elke nacht uit naar concrete diensten voor de komende drie maanden.
+                Wekelijks terugkerende regels. De expander rolt deze elke nacht uit naar geplande inschrijftaken.
               </p>
             </div>
           </div>
@@ -215,14 +215,14 @@ export default function VrijwilligersSjablonen() {
         <ContentLoadingSpinner />
       ) : rows.length === 0 ? (
         <div className="card p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          Nog geen sjablonen. Maak er één aan om wekelijkse diensten automatisch uit te rollen.
+          Nog geen sjablonen. Maak er één aan om wekelijkse inschrijftaken automatisch uit te rollen.
         </div>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-700 text-left text-xs uppercase text-gray-500 dark:text-gray-300">
               <tr>
-                <th className="px-4 py-2">Dienst type</th>
+                <th className="px-4 py-2">Inschrijftaak</th>
                 <th className="px-4 py-2">Dag</th>
                 <th className="px-4 py-2">Tijd</th>
                 <th className="px-4 py-2">Capaciteit</th>

@@ -136,7 +136,7 @@ class MemberShifts extends Base {
 
 		return new \WP_Error(
 			'shift_busy',
-			'Deze dienst wordt op dit moment bijgewerkt. Probeer het opnieuw.',
+			'Deze inschrijftaak wordt op dit moment bijgewerkt. Probeer het opnieuw.',
 			[ 'status' => 503 ]
 		);
 	}
@@ -150,7 +150,7 @@ class MemberShifts extends Base {
 					return ShiftCancellationService::details( (int) ( $object['id'] ?? 0 ) );
 				},
 				'schema'       => [
-					'description' => 'Auditgegevens van een geannuleerde vrijwilligersdienst.',
+					'description' => 'Auditgegevens van een geannuleerde inschrijftaak.',
 					'type'        => [ 'object', 'null' ],
 					'context'     => [ 'view', 'edit' ],
 					'readonly'    => true,
@@ -430,7 +430,7 @@ class MemberShifts extends Base {
 		}
 
 		if ( $view === 'manage' && ! current_user_can( 'manage_options' ) && ! current_user_can( 'vrijwilligers' ) ) {
-			return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot de dienstenkalender.', [ 'status' => 403 ] );
+			return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot de inschrijftakenkalender.', [ 'status' => 403 ] );
 		}
 
 		$range = $this->calendar_range( $request );
@@ -641,22 +641,22 @@ class MemberShifts extends Base {
 
 		$shift = get_post( $shift_id );
 		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
 		$blocks         = $this->signup_blocks( $person_id );
 		if ( $dienst_type_id > 0 ) {
 			if ( get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
-				return new \WP_Error( 'vog_required', 'Voor deze dienst is een geldige VOG vereist.', [ 'status' => 403 ] );
+				return new \WP_Error( 'vog_required', 'Voor deze inschrijftaak is een geldige VOG vereist.', [ 'status' => 403 ] );
 			}
 			$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
 			if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
-				return new \WP_Error( 'iva_required', 'Voor deze dienst is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
+				return new \WP_Error( 'iva_required', 'Voor deze inschrijftaak is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
 			}
 			$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
 			if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
-				return new \WP_Error( 'pool_membership_required', 'Deze dienst is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.', [ 'status' => 403 ] );
+				return new \WP_Error( 'pool_membership_required', 'Deze inschrijftaak is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.', [ 'status' => 403 ] );
 			}
 		}
 
@@ -666,7 +666,7 @@ class MemberShifts extends Base {
 			if ( $overlap !== null ) {
 				return new \WP_Error(
 					'overlap_warning',
-					sprintf( 'Deze shift overlapt met een bestaande aanmelding (%s).', $overlap['title'] ),
+					sprintf( 'Deze inschrijftaak overlapt met een bestaande aanmelding (%s).', $overlap['title'] ),
 					[
 						'status'        => 409,
 						'overlap_shift' => $overlap,
@@ -681,7 +681,7 @@ class MemberShifts extends Base {
 			function () use ( $person_id, $shift_id ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
 				if ( $status !== 'open' && $status !== 'vol' ) {
-					return new \WP_Error( 'shift_closed', 'Deze shift staat niet meer open.', [ 'status' => 409 ] );
+					return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
 				}
 
 				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
@@ -696,7 +696,7 @@ class MemberShifts extends Base {
 
 				$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
 				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
-					return new \WP_Error( 'shift_full', 'Deze shift is vol.', [ 'status' => 409 ] );
+					return new \WP_Error( 'shift_full', 'Deze inschrijftaak is vol.', [ 'status' => 409 ] );
 				}
 
 				$assigned[] = $person_id;
@@ -728,7 +728,7 @@ class MemberShifts extends Base {
 
 		$shift = get_post( $shift_id );
 		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		return $this->with_shift_write_lock(
@@ -736,13 +736,13 @@ class MemberShifts extends Base {
 			function () use ( $person_id, $shift_id ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
 				if ( in_array( $status, [ 'geannuleerd', 'voltooid' ], true ) ) {
-					return new \WP_Error( 'shift_closed', 'Een geannuleerde of voltooide dienst kan niet meer worden afgemeld.', [ 'status' => 409 ] );
+					return new \WP_Error( 'shift_closed', 'Een geannuleerde of voltooide inschrijftaak kan niet meer worden afgemeld.', [ 'status' => 409 ] );
 				}
 
 				if ( ! $this->can_member_cancel( $shift_id, $person_id ) ) {
 					return new \WP_Error(
 						'shift_cancel_deadline_passed',
-						'Afmelden kan tot 3 weken voor de dienst, of binnen 30 minuten na je aanmelding. Neem contact op met de vrijwilligerscoördinator.',
+						'Afmelden kan tot 3 weken voor de inschrijftaak, of binnen 30 minuten na je aanmelding. Neem contact op met de vrijwilligerscoördinator.',
 						[ 'status' => 409 ]
 					);
 				}
@@ -774,7 +774,7 @@ class MemberShifts extends Base {
 		$reason   = (string) $request->get_param( 'reason' );
 		$shift    = get_post( $shift_id );
 		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Dienst bestaat niet.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		$result = $this->with_shift_write_lock(
@@ -802,7 +802,7 @@ class MemberShifts extends Base {
 		$person_id = (int) $request->get_param( 'person_id' );
 		$shift     = get_post( $shift_id );
 		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Shift bestaat niet.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		return $this->with_shift_write_lock(
@@ -810,12 +810,12 @@ class MemberShifts extends Base {
 			function () use ( $person_id, $shift_id ) {
 				$status = (string) get_post_meta( $shift_id, 'status', true );
 				if ( in_array( $status, [ 'geannuleerd', 'voltooid' ], true ) ) {
-					return new \WP_Error( 'shift_closed', 'Aanmeldingen van een geannuleerde of voltooide dienst kunnen niet meer worden gewijzigd.', [ 'status' => 409 ] );
+					return new \WP_Error( 'shift_closed', 'Aanmeldingen van een geannuleerde of voltooide inschrijftaak kunnen niet meer worden gewijzigd.', [ 'status' => 409 ] );
 				}
 
 				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
 				if ( ! in_array( $person_id, $assigned, true ) ) {
-					return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de dienst aangemeld.', [ 'status' => 404 ] );
+					return new \WP_Error( 'assignee_not_found', 'Deze persoon is niet voor de inschrijftaak aangemeld.', [ 'status' => 404 ] );
 				}
 
 				update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );

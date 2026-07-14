@@ -1,13 +1,13 @@
 {
     "key": "group_dienst_shift_fields",
-    "title": "Dienst",
+    "title": "Inschrijftaak",
     "fields": [
         {
             "key": "field_dienst_shift_dienst_type",
-            "label": "Dienst type",
+            "label": "Inschrijftaak",
             "name": "dienst_type_id",
             "type": "post_object",
-            "instructions": "Welk type dienst is dit?",
+            "instructions": "Welke inschrijftaak is dit?",
             "required": 1,
             "post_type": [
                 "dienst_type"
@@ -22,7 +22,7 @@
             "label": "Sjabloon (optioneel)",
             "name": "template_id",
             "type": "post_object",
-            "instructions": "Welke template heeft deze shift uitgerold? Leeg = ad-hoc.",
+            "instructions": "Welk sjabloon heeft deze inschrijftaak uitgerold? Leeg = los ingepland.",
             "post_type": [
                 "shift_template"
             ],
@@ -36,7 +36,7 @@
             "label": "Start",
             "name": "start_datetime",
             "type": "date_time_picker",
-            "instructions": "Wanneer begint de shift?",
+            "instructions": "Wanneer begint de inschrijftaak?",
             "required": 1,
             "display_format": "d-m-Y H:i",
             "return_format": "Y-m-d H:i:s",
@@ -50,7 +50,7 @@
             "label": "Einde",
             "name": "end_datetime",
             "type": "date_time_picker",
-            "instructions": "Wanneer eindigt de shift?",
+            "instructions": "Wanneer eindigt de inschrijftaak?",
             "required": 1,
             "display_format": "d-m-Y H:i",
             "return_format": "Y-m-d H:i:s",
@@ -77,7 +77,7 @@
             "label": "Status",
             "name": "status",
             "type": "select",
-            "instructions": "Huidige status van de shift.",
+            "instructions": "Huidige status van de inschrijftaak.",
             "required": 1,
             "choices": {
                 "open": "Open",
@@ -96,7 +96,7 @@
             "label": "Toegewezen vrijwilligers",
             "name": "assigned_persons",
             "type": "relationship",
-            "instructions": "Personen die deze shift draaien.",
+            "instructions": "Personen die deze inschrijftaak uitvoeren.",
             "post_type": [
                 "person"
             ],
@@ -109,10 +109,10 @@
         },
         {
             "key": "field_dienst_shift_iva_waived",
-            "label": "IVA niet vereist voor deze dienst",
+            "label": "IVA niet vereist voor deze inschrijftaak",
             "name": "iva_waived",
             "type": "true_false",
-            "instructions": "Aanvinken als er bij deze specifieke dienst geen alcohol geschonken wordt (bv. zaterdag voor 15:00). Overruled de IVA-eis op het diensttype voor uitsluitend deze dienst.",
+            "instructions": "Aanvinken als er bij deze specifieke inschrijftaak geen alcohol geschonken wordt (bv. zaterdag voor 15:00). Overschrijft de IVA-eis voor uitsluitend deze planning.",
             "default_value": 0,
             "ui": 1
         },

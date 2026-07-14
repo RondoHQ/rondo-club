@@ -4,10 +4,10 @@
     "fields": [
         {
             "key": "field_taakuitleg_dienst_types",
-            "label": "Diensttypes",
+            "label": "Inschrijftaken",
             "name": "dienst_types",
             "type": "relationship",
-            "instructions": "Bij welke diensttypes hoort deze uitleg? Eén uitleg mag aan meerdere diensttypes hangen.",
+            "instructions": "Bij welke inschrijftaken hoort deze uitleg? Eén uitleg mag aan meerdere inschrijftaken hangen.",
             "required": 0,
             "post_type": [
                 "dienst_type"

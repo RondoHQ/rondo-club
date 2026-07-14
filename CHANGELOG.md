@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.59.3] - 2026-07-14
+
+### Changed
+
+- Op **Vrijwilligers → Inschrijftaken** staat het bezettingsoverzicht nu vóór de catalogus; recente inschrijftaken blijven onderaan.
+- De gebruikersgerichte termen **Diensttypes**, **Diensten** en **Shifts** zijn binnen de vrijwilligersfunctionaliteit vervangen door **Inschrijftaken**; technische routes en datasleutels blijven ongewijzigd.
+
 ## [33.59.2] - 2026-07-14
 
 ### Changed

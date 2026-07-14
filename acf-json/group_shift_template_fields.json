@@ -1,13 +1,13 @@
 {
     "key": "group_shift_template_fields",
-    "title": "Shift Template",
+    "title": "Inschrijftaaksjabloon",
     "fields": [
         {
             "key": "field_shift_template_dienst_type",
-            "label": "Dienst type",
+            "label": "Inschrijftaak",
             "name": "dienst_type_id",
             "type": "post_object",
-            "instructions": "Welke dienst rolt deze template uit?",
+            "instructions": "Welke inschrijftaak rolt dit sjabloon uit?",
             "required": 1,
             "post_type": [
                 "dienst_type"
@@ -22,7 +22,7 @@
             "label": "Dag van de week",
             "name": "day_of_week",
             "type": "select",
-            "instructions": "Op welke dag valt de shift?",
+            "instructions": "Op welke dag valt de inschrijftaak?",
             "required": 1,
             "choices": {
                 "1": "Maandag",
@@ -47,7 +47,7 @@
             "label": "Starttijd",
             "name": "start_time",
             "type": "time_picker",
-            "instructions": "Begintijd van de shift (HH:MM).",
+            "instructions": "Begintijd van de inschrijftaak (HH:MM).",
             "required": 1,
             "display_format": "H:i",
             "return_format": "H:i",
@@ -60,7 +60,7 @@
             "label": "Eindtijd",
             "name": "end_time",
             "type": "time_picker",
-            "instructions": "Eindtijd van de shift (HH:MM).",
+            "instructions": "Eindtijd van de inschrijftaak (HH:MM).",
             "required": 1,
             "display_format": "H:i",
             "return_format": "H:i",
@@ -73,7 +73,7 @@
             "label": "Capaciteit",
             "name": "capacity",
             "type": "number",
-            "instructions": "Overschrijft de standaard van het dienst type. Leeg = gebruik default.",
+            "instructions": "Overschrijft de standaard van de inschrijftaak. Leeg = gebruik de standaard.",
             "min": 0,
             "step": 1,
             "wrapper": {
@@ -85,7 +85,7 @@
             "label": "Actief vanaf",
             "name": "active_from",
             "type": "date_picker",
-            "instructions": "Eerste datum waarop deze template shifts genereert.",
+            "instructions": "Eerste datum waarop dit sjabloon inschrijftaken genereert.",
             "display_format": "d F Y",
             "return_format": "Y-m-d",
             "wrapper": {
@@ -109,7 +109,7 @@
             "label": "IVA niet vereist voor deze sjabloon",
             "name": "iva_waived",
             "type": "true_false",
-            "instructions": "Aanvinken als bij de uitgerolde diensten geen alcohol geschonken wordt (bv. zaterdagochtend voor 15:00). De expander zet dezelfde waarde op elke uitgerolde dienst. Heeft alleen effect als het diensttype IVA vereist.",
+            "instructions": "Aanvinken als bij de uitgerolde inschrijftaken geen alcohol geschonken wordt (bv. zaterdagochtend voor 15:00). De expander zet dezelfde waarde op elke uitgerolde inschrijftaak. Heeft alleen effect als de inschrijftaak IVA vereist.",
             "default_value": 0,
             "ui": 1
         },

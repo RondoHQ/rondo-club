@@ -73,7 +73,7 @@ export default function VrijwilligersExemptions() {
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijstellingen</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Personen die automatisch of handmatig zijn vrijgesteld van de 2-diensten-plicht.
+            Personen die automatisch of handmatig zijn vrijgesteld van de vrijwilligersplicht van twee inschrijftaken.
           </p>
         </div>
       </header>
