@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarClock, Plus, Pencil, Play } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Plus, Pencil, Play, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 
 const DAYS = ['', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
+const DUTCH_DATE_FORMATTER = new Intl.DateTimeFormat('nl-NL', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
 
 function formatAcfDate(value) {
   if (!value) return '';
@@ -14,10 +19,95 @@ function formatAcfDate(value) {
   return value;
 }
 
+function formatDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(value) {
+  const [year, month, day] = value.split('-').map(Number);
+  return DUTCH_DATE_FORMATTER.format(new Date(year, month - 1, day));
+}
+
+function ExpandTemplatesModal({ isLoading, error, onClose, onSubmit }) {
+  const [until, setUntil] = useState('');
+
+  const today = formatDateInput(new Date());
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="expand-templates-title"
+        className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-800"
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(until);
+          }}
+        >
+          <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+            <h2 id="expand-templates-title" className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              Sjablonen uitrollen
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-gray-300"
+              aria-label="Sluiten"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4 p-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Kies tot en met welke datum je de actieve sjablonen naar concrete diensten wilt uitrollen.
+            </p>
+            <div>
+              <label htmlFor="expand-until" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Uitrollen tot en met
+              </label>
+              <input
+                id="expand-until"
+                type="date"
+                value={until}
+                min={today}
+                onChange={(event) => setUntil(event.target.value)}
+                className="input w-full"
+                required
+                autoFocus
+              />
+            </div>
+            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+          </div>
+
+          <div className="flex justify-end gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+            <button type="button" onClick={onClose} disabled={isLoading} className="btn-secondary">
+              Annuleren
+            </button>
+            <button type="submit" disabled={isLoading || !until} className="btn-primary inline-flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              {isLoading ? 'Uitrollen…' : 'Uitrollen'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function VrijwilligersSjablonen() {
   useDocumentTitle('Sjablonen — Vrijwilligers');
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState(null);
+  const [showExpandModal, setShowExpandModal] = useState(false);
+  const [expandError, setExpandError] = useState('');
 
   const { data: types = [] } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -32,21 +122,23 @@ export default function VrijwilligersSjablonen() {
   });
 
   const expandMutation = useMutation({
-    mutationFn: () => prmApi.expandShiftTemplates(),
-    onSuccess: (response) => {
+    mutationFn: (until) => prmApi.expandShiftTemplates(until),
+    onMutate: () => setExpandError(''),
+    onSuccess: (response, selectedUntil) => {
       const created = response?.data?.created ?? 0;
-      const window = response?.data?.window ?? 93;
+      const until = response?.data?.until ?? selectedUntil;
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
       queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      setShowExpandModal(false);
       setFeedback({
         kind: 'success',
         message: created > 0
-          ? `${created} nieuwe dienst${created === 1 ? '' : 'en'} aangemaakt voor de komende ${window} dagen.`
-          : `Alle sjablonen zijn al uitgerold voor de komende ${window} dagen — niets toe te voegen.`,
+          ? `${created} nieuwe dienst${created === 1 ? '' : 'en'} aangemaakt tot en met ${formatDisplayDate(until)}.`
+          : `Alle sjablonen zijn al uitgerold tot en met ${formatDisplayDate(until)} — niets toe te voegen.`,
       });
     },
     onError: (err) => {
-      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Uitrollen mislukt.' });
+      setExpandError(err?.response?.data?.message || err?.message || 'Uitrollen mislukt.');
     },
   });
 
@@ -89,13 +181,17 @@ export default function VrijwilligersSjablonen() {
           <div className="flex gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => { setFeedback(null); expandMutation.mutate(); }}
-              disabled={expandMutation.isLoading || templates.length === 0}
+              onClick={() => {
+                setFeedback(null);
+                setExpandError('');
+                setShowExpandModal(true);
+              }}
+              disabled={expandMutation.isPending || templates.length === 0}
               className="btn-tertiary inline-flex items-center gap-2"
-              title="Rol alle actieve sjablonen uit naar concrete diensten voor de komende drie maanden"
+              title="Kies tot wanneer je alle actieve sjablonen wilt uitrollen"
             >
               <Play className="w-4 h-4" />
-              {expandMutation.isLoading ? 'Uitrollen…' : 'Uitrollen'}
+              Uitrollen
             </button>
             <Link to="/vrijwilligers/sjablonen/nieuw" className="btn-primary inline-flex items-center gap-2">
               <Plus className="w-4 h-4" /> Nieuw sjabloon
@@ -170,6 +266,15 @@ export default function VrijwilligersSjablonen() {
           </table>
         </div>
       )}
+
+      {showExpandModal ? (
+        <ExpandTemplatesModal
+          isLoading={expandMutation.isPending}
+          error={expandError}
+          onClose={() => setShowExpandModal(false)}
+          onSubmit={(until) => expandMutation.mutate(until)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.59.0] - 2026-07-14
+
+### Added
+
+- De knop **Uitrollen** bij vrijwilligerssjablonen vraagt nu om een einddatum en maakt diensten aan tot en met die gekozen datum.
+
 ## [33.58.2] - 2026-07-13
 
 ### Fixed
