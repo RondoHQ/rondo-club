@@ -38,30 +38,30 @@ class ShiftCancellationService {
 	public function cancel( int $shift_id, string $reason = '', ?int $user_id = null, ?\DateTimeImmutable $now = null ) {
 		$shift = get_post( $shift_id );
 		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Dienst bestaat niet.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		$status = (string) get_post_meta( $shift_id, 'status', true );
 		if ( $status === 'geannuleerd' ) {
 			$details = self::details( $shift_id );
 			if ( ! $details ) {
-				return new \WP_Error( 'legacy_shift_cancelled', 'Deze dienst was al geannuleerd zonder annuleringsgegevens.', [ 'status' => 409 ] );
+				return new \WP_Error( 'legacy_shift_cancelled', 'Deze inschrijftaak was al geannuleerd zonder annuleringsgegevens.', [ 'status' => 409 ] );
 			}
 			return array_merge( $details, [ 'already_cancelled' => true ] );
 		}
 		if ( $status === 'voltooid' ) {
-			return new \WP_Error( 'shift_completed', 'Een voltooide dienst kan niet meer worden geannuleerd.', [ 'status' => 409 ] );
+			return new \WP_Error( 'shift_completed', 'Een voltooide inschrijftaak kan niet meer worden geannuleerd.', [ 'status' => 409 ] );
 		}
 
 		$start = self::parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
 		$now   = $now ?: current_datetime();
 		if ( ! $start ) {
-			return new \WP_Error( 'invalid_shift_start', 'De dienst heeft geen geldige starttijd.', [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_shift_start', 'De inschrijftaak heeft geen geldige starttijd.', [ 'status' => 400 ] );
 		}
 
 		$seconds_notice = $start->getTimestamp() - $now->getTimestamp();
 		if ( $seconds_notice <= 0 ) {
-			return new \WP_Error( 'shift_already_started', 'Een dienst die al is begonnen kan niet meer worden geannuleerd.', [ 'status' => 409 ] );
+			return new \WP_Error( 'shift_already_started', 'Een inschrijftaak die al is begonnen kan niet meer worden geannuleerd.', [ 'status' => 409 ] );
 		}
 
 		$credit  = $seconds_notice < self::CREDIT_WINDOW_SECONDS;
@@ -141,7 +141,7 @@ class ShiftCancellationService {
 
 		$post_id = isset( $prepared_post->ID ) ? (int) $prepared_post->ID : (int) $request->get_param( 'id' );
 		if ( $post_id > 0 && (string) get_post_meta( $post_id, 'status', true ) === 'geannuleerd' ) {
-			return new \WP_Error( 'cancelled_shift_readonly', 'Een geannuleerde dienst kan niet meer worden bewerkt.', [ 'status' => 409 ] );
+			return new \WP_Error( 'cancelled_shift_readonly', 'Een geannuleerde inschrijftaak kan niet meer worden bewerkt.', [ 'status' => 409 ] );
 		}
 
 		$acf              = $request->get_param( 'acf' );
@@ -152,7 +152,7 @@ class ShiftCancellationService {
 
 		return new \WP_Error(
 			'use_shift_cancellation',
-			'Annuleer deze dienst via de annuleringsactie, zodat vrijwilligers bericht krijgen en de punten correct worden verwerkt.',
+			'Annuleer deze inschrijftaak via de annuleringsactie, zodat vrijwilligers bericht krijgen en de punten correct worden verwerkt.',
 			[ 'status' => 409 ]
 		);
 	}
@@ -177,7 +177,7 @@ class ShiftCancellationService {
 			return $valid;
 		}
 
-		return 'Annuleer deze dienst via Rondo, zodat vrijwilligers bericht krijgen en de punten correct worden verwerkt.';
+		return 'Annuleer deze inschrijftaak via Rondo, zodat vrijwilligers bericht krijgen en de punten correct worden verwerkt.';
 	}
 
 	private static function parse_datetime( string $value ): ?\DateTimeImmutable {

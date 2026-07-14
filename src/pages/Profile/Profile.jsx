@@ -235,7 +235,7 @@ export default function Profile() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Mijn IVA-certificaat</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Voor bardienst — upload &amp; status</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Voor inschrijftaken achter de bar — upload &amp; status</div>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
           </Link>

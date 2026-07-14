@@ -39,7 +39,7 @@ function fromLocalInput(value) {
 export default function VrijwilligersDienstForm() {
   const { id } = useParams();
   const isEdit = !!id;
-  useDocumentTitle(isEdit ? 'Dienst bewerken' : 'Nieuwe dienst');
+  useDocumentTitle(isEdit ? 'Inschrijftaak bewerken' : 'Nieuwe inschrijftaak');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -145,13 +145,13 @@ export default function VrijwilligersDienstForm() {
       const issues = Number(notifications.failed || 0) + Number(notifications.no_email || 0);
       const delivered = Number(notifications.sent || 0) + Number(notifications.already_sent || 0);
       const creditText = data.credit_awarded
-        ? 'De dienst telt mee voor de vrijwilligersplicht.'
-        : 'De dienst telt niet mee; vrijwilligers moeten een nieuwe dienst kiezen.';
+        ? 'De inschrijftaak telt mee voor de vrijwilligersplicht.'
+        : 'De inschrijftaak telt niet mee; vrijwilligers moeten een nieuwe inschrijftaak kiezen.';
       const mailText = issues > 0
         ? ` ${delivered} bericht(en) zijn verzonden; ${notifications.failed || 0} verzending(en) mislukten en ${notifications.no_email || 0} vrijwilliger(s) hebben geen geldig e-mailadres.`
         : ` ${delivered} bericht(en) zijn verzonden.`;
 
-      setFeedback({ kind: issues > 0 ? 'warning' : 'success', message: `Dienst geannuleerd. ${creditText}${mailText}` });
+      setFeedback({ kind: issues > 0 ? 'warning' : 'success', message: `Inschrijftaak geannuleerd. ${creditText}${mailText}` });
       setCanRetryNotifications(Number(notifications.failed || 0) > 0);
       setCancellationOpen(false);
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shift', id], type: 'active' });
@@ -183,7 +183,7 @@ export default function VrijwilligersDienstForm() {
           to="/vrijwilligers/diensten"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar diensten
+          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar inschrijftaken
         </Link>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
@@ -191,10 +191,10 @@ export default function VrijwilligersDienstForm() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isEdit ? 'Dienst bewerken' : 'Nieuwe dienst'}
+              {isEdit ? 'Inschrijftaak bewerken' : 'Nieuwe inschrijftaak'}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Ad-hoc dienst (bv. avondwedstrijd). Wekelijks terugkerend? Gebruik een{' '}
+              Losse inschrijftaak (bv. avondwedstrijd). Wekelijks terugkerend? Gebruik een{' '}
               <Link to="/vrijwilligers/sjablonen" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
                 sjabloon
               </Link>{' '}
@@ -210,11 +210,11 @@ export default function VrijwilligersDienstForm() {
           e.preventDefault();
           setFeedback(null);
           if (isCancelled) {
-            setFeedback({ kind: 'error', message: 'Een geannuleerde dienst kan niet meer worden bewerkt.' });
+            setFeedback({ kind: 'error', message: 'Een geannuleerde inschrijftaak kan niet meer worden bewerkt.' });
             return;
           }
           if (!form.dienst_type_id) {
-            setFeedback({ kind: 'error', message: 'Kies een dienst type.' });
+            setFeedback({ kind: 'error', message: 'Kies een inschrijftaak.' });
             return;
           }
           if (!form.start_datetime || !form.end_datetime) {
@@ -236,7 +236,7 @@ export default function VrijwilligersDienstForm() {
           });
         }}
       >
-        <Field label="Dienst type">
+        <Field label="Inschrijftaak">
           <select
             value={form.dienst_type_id}
             onChange={(e) => setForm({ ...form, dienst_type_id: e.target.value })}
@@ -306,12 +306,12 @@ export default function VrijwilligersDienstForm() {
         {isCancelled && cancellation && (
           <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
             <div className="font-semibold">
-              {cancellation.credit_awarded ? 'Deze dienst telt mee' : 'Deze dienst telt niet mee'} voor de vrijwilligersplicht.
+              {cancellation.credit_awarded ? 'Deze inschrijftaak telt mee' : 'Deze inschrijftaak telt niet mee'} voor de vrijwilligersplicht.
             </div>
             <p className="mt-1">
               {cancellation.credit_awarded
-                ? 'De annulering was minder dan 48 uur voor aanvang. Vrijwilligers hoeven geen vervangende dienst te kiezen.'
-                : 'De annulering was minimaal 48 uur voor aanvang. Vrijwilligers moeten een nieuwe dienst kiezen.'}
+                ? 'De annulering was minder dan 48 uur voor aanvang. Vrijwilligers hoeven geen vervangende inschrijftaak te kiezen.'
+                : 'De annulering was minimaal 48 uur voor aanvang. Vrijwilligers moeten een nieuwe inschrijftaak kiezen.'}
             </p>
             {cancellation.reason && <p className="mt-2"><strong>Reden:</strong> {cancellation.reason}</p>}
           </div>
@@ -326,9 +326,9 @@ export default function VrijwilligersDienstForm() {
               className="mt-0.5 rounded border-gray-300 dark:border-gray-600"
             />
             <span>
-              <span className="font-medium text-gray-700 dark:text-gray-200">IVA niet vereist voor deze dienst</span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">IVA niet vereist voor deze inschrijftaak</span>
               <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Aanvinken als er bij deze dienst geen alcohol geschonken wordt (bv. zaterdag voor 15:00). Geldt alleen voor deze specifieke dienst — het diensttype blijft IVA-vereist.
+                Aanvinken als er bij deze inschrijftaak geen alcohol geschonken wordt (bv. zaterdag voor 15:00). Geldt alleen voor deze specifieke planning — de inschrijftaak blijft IVA-vereist.
               </span>
             </span>
           </label>
@@ -369,7 +369,7 @@ export default function VrijwilligersDienstForm() {
             <button
               type="button"
               onClick={() => {
-                if (window.confirm('Dienst definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
+                if (window.confirm('Inschrijftaak definitief verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
                   deleteMutation.mutate();
                 }
               }}
@@ -391,7 +391,7 @@ export default function VrijwilligersDienstForm() {
               className="inline-flex items-center gap-2 px-3 py-2 rounded text-sm bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
             >
               <Trash2 className="w-4 h-4" />
-              Dienst annuleren
+              Inschrijftaak annuleren
             </button>
           )}
           {isCancelled && canRetryNotifications && (
@@ -410,15 +410,15 @@ export default function VrijwilligersDienstForm() {
       {cancellationOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="cancel-shift-title">
           <div className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800">
-            <h2 id="cancel-shift-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">Dienst annuleren</h2>
+            <h2 id="cancel-shift-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">Inschrijftaak annuleren</h2>
             <div className={`mt-3 rounded-md border p-4 text-sm ${cancellationIsLastMinute ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'}`}>
               <div className="font-semibold">
-                {cancellationIsLastMinute ? 'Minder dan 48 uur: dienst telt mee' : 'Minimaal 48 uur: dienst telt niet mee'}
+                {cancellationIsLastMinute ? 'Minder dan 48 uur: inschrijftaak telt mee' : 'Minimaal 48 uur: inschrijftaak telt niet mee'}
               </div>
               <p className="mt-1">
                 {cancellationIsLastMinute
-                  ? 'Alle aangemelde vrijwilligers krijgen bericht en hoeven geen nieuwe dienst te kiezen.'
-                  : 'Alle aangemelde vrijwilligers krijgen bericht en moeten een nieuwe dienst kiezen.'}
+                  ? 'Alle aangemelde vrijwilligers krijgen bericht en hoeven geen nieuwe inschrijftaak te kiezen.'
+                  : 'Alle aangemelde vrijwilligers krijgen bericht en moeten een nieuwe inschrijftaak kiezen.'}
               </p>
             </div>
             <label className="mt-4 block">
@@ -432,7 +432,7 @@ export default function VrijwilligersDienstForm() {
               />
             </label>
             <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-              De 48-uursregel wordt bij bevestigen opnieuw door de server berekend. De dienst en aanmeldingen blijven bewaard voor de historie.
+              De 48-uursregel wordt bij bevestigen opnieuw door de server berekend. De inschrijftaak en aanmeldingen blijven bewaard voor de historie.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button type="button" className="btn-tertiary" onClick={() => setCancellationOpen(false)} disabled={cancellationMutation.isLoading}>

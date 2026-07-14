@@ -24,19 +24,19 @@ class ShiftEmailScheduler {
 
 	private const DEFAULT_REMINDER_SUBJECT = 'Herinnering: {dienst} op {datum}';
 
-	private const DEFAULT_REMINDER_BODY = "Hoi {naam},\n\nDit is een herinnering voor je dienst {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe draait deze dienst samen met {medevrijwilligers}.";
+	private const DEFAULT_REMINDER_BODY = "Hoi {naam},\n\nDit is een herinnering voor je inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe voert deze inschrijftaak uit samen met {medevrijwilligers}.";
 
-	private const DEFAULT_SURVEY_SUBJECT = 'Hoe ging je dienst {dienst}?';
+	private const DEFAULT_SURVEY_SUBJECT = 'Hoe ging je inschrijftaak {dienst}?';
 
-	private const DEFAULT_SURVEY_BODY = "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?";
+	private const DEFAULT_SURVEY_BODY = "Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlopen. Wil je onze korte enquête invullen?";
 
-	private const DEFAULT_EARLY_CANCELLATION_SUBJECT = 'Je dienst {dienst} op {datum} gaat niet door';
+	private const DEFAULT_EARLY_CANCELLATION_SUBJECT = 'Je inschrijftaak {dienst} op {datum} gaat niet door';
 
-	private const DEFAULT_EARLY_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.";
+	private const DEFAULT_EARLY_CANCELLATION_BODY = "Hoi {naam},\n\nJe inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De inschrijftaak telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe inschrijftaak via Rondo.";
 
-	private const DEFAULT_LAST_MINUTE_CANCELLATION_SUBJECT = 'Je dienst {dienst} op {datum} gaat niet door';
+	private const DEFAULT_LAST_MINUTE_CANCELLATION_SUBJECT = 'Je inschrijftaak {dienst} op {datum} gaat niet door';
 
-	private const DEFAULT_LAST_MINUTE_CANCELLATION_BODY = "Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.";
+	private const DEFAULT_LAST_MINUTE_CANCELLATION_BODY = "Hoi {naam},\n\nJe inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De inschrijftaak telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe inschrijftaak te kiezen.";
 
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
@@ -157,12 +157,12 @@ class ShiftEmailScheduler {
 			$body    = $this->substitute_variables( $body_template, $vars );
 			$html    = EmailTemplate::render(
 				[
-					'eyebrow'      => 'Geannuleerde vrijwilligersdienst',
+					'eyebrow'      => 'Geannuleerde inschrijftaak',
 					'heading'      => $subject,
 					'preheader'    => $subject,
 					'body_html'    => EmailTemplate::format_plain_text( $body ),
 					'cta_url'      => $is_last_minute ? '' : home_url( '/vrijwillig' ),
-					'cta_label'    => $is_last_minute ? '' : 'Kies een nieuwe dienst',
+					'cta_label'    => $is_last_minute ? '' : 'Kies een nieuwe inschrijftaak',
 					'accent_color' => '#b91c1c',
 				]
 			);
@@ -261,7 +261,7 @@ class ShiftEmailScheduler {
 
 		$html = EmailTemplate::render(
 			[
-				'eyebrow'      => $is_survey ? 'Enquête vrijwilligersdienst' : 'Herinnering vrijwilligersdienst',
+				'eyebrow'      => $is_survey ? 'Enquête inschrijftaak' : 'Herinnering inschrijftaak',
 				'heading'      => $subject,
 				'preheader'    => $subject,
 				'body_html'    => EmailTemplate::format_plain_text( $body ),

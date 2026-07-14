@@ -16,20 +16,20 @@ const EMPTY = {
   color: '#6b7280',
   required_pool: 0,
   reminder_email_subject: 'Herinnering: {dienst} op {datum}',
-  reminder_email_body: 'Hoi {naam},\n\nDit is een herinnering voor je dienst {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe draait deze dienst samen met {medevrijwilligers}.',
-  cancellation_early_email_subject: 'Je dienst {dienst} op {datum} gaat niet door',
-  cancellation_early_email_body: 'Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De dienst telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe dienst via Rondo.',
-  cancellation_last_minute_email_subject: 'Je dienst {dienst} op {datum} gaat niet door',
-  cancellation_last_minute_email_body: 'Hoi {naam},\n\nJe vrijwilligersdienst {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De dienst telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe dienst te kiezen.',
-  survey_email_subject: 'Hoe ging je dienst {dienst}?',
-  survey_email_body: 'Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de dienst is verlopen. Wil je onze korte enquête invullen?',
+  reminder_email_body: 'Hoi {naam},\n\nDit is een herinnering voor je inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd}.\n\nJe voert deze inschrijftaak uit samen met {medevrijwilligers}.',
+  cancellation_early_email_subject: 'Je inschrijftaak {dienst} op {datum} gaat niet door',
+  cancellation_early_email_body: 'Hoi {naam},\n\nJe inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minimaal 48 uur voor aanvang doorgegeven. De inschrijftaak telt daarom niet mee voor je vrijwilligersplicht. Kies een nieuwe inschrijftaak via Rondo.',
+  cancellation_last_minute_email_subject: 'Je inschrijftaak {dienst} op {datum} gaat niet door',
+  cancellation_last_minute_email_body: 'Hoi {naam},\n\nJe inschrijftaak {dienst} op {datum} van {tijd} tot {eindtijd} gaat helaas niet door.\n\nDeze annulering is minder dan 48 uur voor aanvang doorgegeven. De inschrijftaak telt daarom wel mee voor je vrijwilligersplicht. Je hoeft hiervoor geen nieuwe inschrijftaak te kiezen.',
+  survey_email_subject: 'Hoe ging je inschrijftaak {dienst}?',
+  survey_email_body: 'Hoi {naam},\n\nBedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlopen. Wil je onze korte enquête invullen?',
   survey_url: '',
 };
 
 export default function VrijwilligersDienstTypeForm() {
   const { id } = useParams();
   const isEdit = !!id;
-  useDocumentTitle(isEdit ? 'Diensttype bewerken' : 'Nieuw diensttype');
+  useDocumentTitle(isEdit ? 'Inschrijftaak bewerken' : 'Nieuwe inschrijftaak');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -107,7 +107,7 @@ export default function VrijwilligersDienstTypeForm() {
           to="/vrijwilligers/diensten"
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar diensten
+          <ArrowLeft className="w-3.5 h-3.5" /> Terug naar inschrijftaken
         </Link>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-cyan-50 dark:bg-gray-700 rounded-lg">
@@ -115,10 +115,10 @@ export default function VrijwilligersDienstTypeForm() {
           </div>
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isEdit ? 'Diensttype bewerken' : 'Nieuw diensttype'}
+              {isEdit ? 'Inschrijftaak bewerken' : 'Nieuwe inschrijftaak'}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Soort vrijwilligersdienst (bv. kantine bar, terreinonderhoud). Sjablonen en concrete diensten verwijzen hiernaar.
+              Soort inschrijftaak (bv. kantinebar of terreinonderhoud). Sjablonen en geplande inschrijftaken verwijzen hiernaar.
             </p>
           </div>
         </div>
@@ -174,7 +174,7 @@ export default function VrijwilligersDienstTypeForm() {
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
             className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
-            placeholder="Korte uitleg van wat deze dienst inhoudt."
+            placeholder="Korte uitleg van wat deze inschrijftaak inhoudt."
           />
         </Field>
 
@@ -200,7 +200,7 @@ export default function VrijwilligersDienstTypeForm() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Herinneringsmail</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Deze tekst wordt 2 weken, 1 week en 2 dagen voor iedere dienst verstuurd.
+              Deze tekst wordt 2 weken, 1 week en 2 dagen voor iedere inschrijftaak verstuurd.
             </p>
           </div>
           <Field label="Onderwerp">
@@ -228,14 +228,14 @@ export default function VrijwilligersDienstTypeForm() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Annuleringsmails</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Deze mails worden direct verstuurd wanneer een bezette dienst wordt geannuleerd. Een ingevulde annuleringsreden wordt automatisch onder de tekst toegevoegd.
+              Deze mails worden direct verstuurd wanneer een bezette inschrijftaak wordt geannuleerd. Een ingevulde annuleringsreden wordt automatisch onder de tekst toegevoegd.
             </p>
           </div>
 
           <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Minimaal 48 uur vooraf — telt niet mee</h3>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">De vrijwilliger moet een nieuwe dienst kiezen.</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">De vrijwilliger moet een nieuwe inschrijftaak kiezen.</p>
             </div>
             <Field label="Onderwerp">
               <input
@@ -258,7 +258,7 @@ export default function VrijwilligersDienstTypeForm() {
           <div className="space-y-4 rounded-md border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Binnen 48 uur — telt wel mee</h3>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">De vrijwilliger hoeft geen nieuwe dienst te kiezen.</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">De vrijwilliger hoeft geen nieuwe inschrijftaak te kiezen.</p>
             </div>
             <Field label="Onderwerp">
               <input
@@ -281,9 +281,9 @@ export default function VrijwilligersDienstTypeForm() {
 
         <section className="border-t border-gray-200 dark:border-gray-700 pt-5 space-y-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Enquête na de dienst</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Enquête na de inschrijftaak</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Eén dag na de dienst ontvangt iedere deelnemer deze mail. Zonder Google Forms-link wordt niets verstuurd.
+              Eén dag na de inschrijftaak ontvangt iedere deelnemer deze mail. Zonder Google Forms-link wordt niets verstuurd.
             </p>
           </div>
           <Field label="Onderwerp">
@@ -305,7 +305,7 @@ export default function VrijwilligersDienstTypeForm() {
               className="block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm"
             />
           </Field>
-          <Field label="Google Forms-link" hint="Laat leeg om de enquêtemail voor dit diensttype uit te schakelen.">
+          <Field label="Google Forms-link" hint="Laat leeg om de enquêtemail voor deze inschrijftaak uit te schakelen.">
             <input
               type="url"
               value={form.survey_url}
@@ -372,7 +372,7 @@ export default function VrijwilligersDienstTypeForm() {
             <button
               type="button"
               onClick={() => {
-                if (window.confirm('Diensttype verwijderen? Bestaande sjablonen en diensten verwijzen dan naar een onbekend type.')) {
+                if (window.confirm('Inschrijftaak verwijderen? Bestaande sjablonen en geplande inschrijftaken verwijzen dan naar een onbekende soort.')) {
                   deleteMutation.mutate();
                 }
               }}

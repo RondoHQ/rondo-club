@@ -77,7 +77,7 @@ export default function ProfileIva() {
           <div>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mijn IVA-certificaat</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Verplicht voor bardienst. Gratis online behaalbaar via{' '}
+              Verplicht voor inschrijftaken achter de bar. Gratis online behaalbaar via{' '}
               <a
                 href="https://www.nocnsf.nl/over-nocnsf/sport-en-maatschappij/gezonde-sportomgeving/e-learning-verantwoord-alcohol-schenken"
                 target="_blank"
@@ -126,7 +126,7 @@ export default function ProfileIva() {
               )}
               {status === 'pending' && (
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  De kantinebeheerder beoordeelt je certificaat binnenkort. Zodra het is goedgekeurd verschijnen bardiensten in het rooster.
+                  De kantinebeheerder beoordeelt je certificaat binnenkort. Zodra het is goedgekeurd verschijnen inschrijftaken achter de bar in het rooster.
                 </p>
               )}
               {status === 'expired' && (
@@ -136,7 +136,7 @@ export default function ProfileIva() {
               )}
               {iva?.needs_renewal_reminder && status === 'valid' && (
                 <p className="mt-2 text-sm text-amber-700 dark:text-amber-400">
-                  Je certificaat verloopt binnenkort — vernieuw het op tijd om je bardiensten te kunnen blijven doen.
+                  Je certificaat verloopt binnenkort — vernieuw het op tijd om inschrijftaken achter de bar te kunnen blijven doen.
                 </p>
               )}
             </div>

@@ -51,7 +51,7 @@ class VolunteerFineGenerator {
 
 		$shift_post = get_post( $shift_id );
 		if ( ! $shift_post || $shift_post->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Invalid shift ID.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		$person_post = get_post( $person_id );
@@ -69,12 +69,12 @@ class VolunteerFineGenerator {
 		}
 
 		$dienst_type_id   = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
-		$dienst_type_name = $dienst_type_id > 0 ? get_the_title( $dienst_type_id ) : 'Vrijwilligersdienst';
+		$dienst_type_name = $dienst_type_id > 0 ? get_the_title( $dienst_type_id ) : 'Inschrijftaak';
 		$start_datetime   = (string) get_post_meta( $shift_id, 'start_datetime', true );
 		$shift_date_label = $start_datetime !== '' ? gmdate( 'd-m-Y', strtotime( $start_datetime ) ) : '';
 
 		$description = sprintf(
-			'Gemiste vrijwilligersdienst%s — %s (%s)',
+			'Gemiste inschrijftaak%s — %s (%s)',
 			$shift_date_label !== '' ? ' op ' . $shift_date_label : '',
 			$dienst_type_name,
 			$person_post->post_title

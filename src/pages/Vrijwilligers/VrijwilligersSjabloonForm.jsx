@@ -135,7 +135,7 @@ export default function VrijwilligersSjabloonForm() {
               {isEdit ? 'Sjabloon bewerken' : 'Nieuw sjabloon'}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Wekelijks terugkerende shift-regel. De template-expander rolt deze uit naar concrete diensten voor de komende 12 weken.
+              Wekelijks terugkerende regel. De template-expander rolt deze uit naar geplande inschrijftaken.
             </p>
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function VrijwilligersSjabloonForm() {
           e.preventDefault();
           setFeedback(null);
           if (!form.dienst_type_id) {
-            setFeedback({ kind: 'error', message: 'Kies een dienst type.' });
+            setFeedback({ kind: 'error', message: 'Kies een inschrijftaak.' });
             return;
           }
           saveMutation.mutate({
@@ -167,7 +167,7 @@ export default function VrijwilligersSjabloonForm() {
           });
         }}
       >
-        <Field label="Dienst type">
+        <Field label="Inschrijftaak">
           <select
             value={form.dienst_type_id}
             onChange={(e) => setForm({ ...form, dienst_type_id: e.target.value })}
@@ -216,7 +216,7 @@ export default function VrijwilligersSjabloonForm() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Field label="Capaciteit" hint="0 of leeg = gebruik default van dienst type">
+          <Field label="Capaciteit" hint="0 of leeg = gebruik de standaard van de inschrijftaak">
             <input
               type="number"
               min={0}
@@ -252,9 +252,9 @@ export default function VrijwilligersSjabloonForm() {
               className="mt-0.5 rounded border-gray-300 dark:border-gray-600"
             />
             <span>
-              <span className="font-medium text-gray-700 dark:text-gray-200">IVA niet vereist voor uitgerolde diensten</span>
+              <span className="font-medium text-gray-700 dark:text-gray-200">IVA niet vereist voor uitgerolde inschrijftaken</span>
               <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Aanvinken als bij deze sjabloon geen alcohol geschonken wordt (bv. zaterdagochtend voor 15:00). De expander zet dezelfde waarde op elke uitgerolde dienst — bestaande diensten worden niet aangepast.
+                Aanvinken als bij deze sjabloon geen alcohol geschonken wordt (bv. zaterdagochtend voor 15:00). De expander zet dezelfde waarde op elke uitgerolde inschrijftaak — bestaande inschrijftaken worden niet aangepast.
               </span>
             </span>
           </label>
@@ -291,7 +291,7 @@ export default function VrijwilligersSjabloonForm() {
             <button
               type="button"
               onClick={() => {
-                if (window.confirm('Sjabloon verwijderen? Reeds uitgerolde shifts blijven bestaan.')) {
+                if (window.confirm('Sjabloon verwijderen? Reeds uitgerolde inschrijftaken blijven bestaan.')) {
                   deleteMutation.mutate();
                 }
               }}

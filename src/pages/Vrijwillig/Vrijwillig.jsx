@@ -44,9 +44,9 @@ function ObligationCard({ obligation, hasBoth }) {
         <div>
           <h2 className="font-semibold text-gray-900 dark:text-gray-100">{obligationTitle(obligation, hasBoth)}</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Je hebt <strong>{completed}</strong> van <strong>{required}</strong> diensten gedaan dit seizoen.
-            {pending > 0 && <> Je staat al ingepland voor {pending} {pending === 1 ? 'dienst' : 'diensten'}.</>}
-            {remaining > 0 && <> Plan nog <strong>{remaining}</strong> {remaining === 1 ? 'dienst' : 'diensten'} in.</>}
+            Je hebt <strong>{completed}</strong> van <strong>{required}</strong> inschrijftaken gedaan dit seizoen.
+            {pending > 0 && <> Je staat al ingepland voor {pending} {pending === 1 ? 'inschrijftaak' : 'inschrijftaken'}.</>}
+            {remaining > 0 && <> Plan nog <strong>{remaining}</strong> {remaining === 1 ? 'inschrijftaak' : 'inschrijftaken'} in.</>}
           </p>
         </div>
         <StatusBadge kind={obligation.status}>
@@ -77,9 +77,9 @@ function ObligationList({ obligations, exemption }) {
             <h2 className="font-semibold text-gray-900 dark:text-gray-100">Je bent vrijgesteld</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {exemption.reason === 'commissie' ? (
-                <>Je bent al een actief commissielid. Je hoeft daarom dit seizoen geen diensten in te plannen, maar je <em>mag</em> natuurlijk wel meedoen.</>
+                <>Je bent al een actief commissielid. Je hoeft daarom dit seizoen geen inschrijftaken in te plannen, maar je <em>mag</em> natuurlijk wel meedoen.</>
               ) : (
-                <>{exemption.reason_label}. Je hoeft dit seizoen geen diensten te plannen, maar je mag natuurlijk wel meedoen.</>
+                <>{exemption.reason_label}. Je hoeft dit seizoen geen inschrijftaken te plannen, maar je mag natuurlijk wel meedoen.</>
               )}
             </p>
           </div>
@@ -92,7 +92,7 @@ function ObligationList({ obligations, exemption }) {
     return (
       <div className="card p-5">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Je valt op dit moment niet onder de dienstplicht. Je mag je natuurlijk wel aanmelden voor diensten.
+          Je valt op dit moment niet onder de vrijwilligersplicht. Je mag je natuurlijk wel aanmelden voor inschrijftaken.
         </p>
       </div>
     );
@@ -121,7 +121,7 @@ function BlockBanners({ blockReasons }) {
           <div className="text-sm">
             <strong className="text-gray-900 dark:text-gray-100">VOG ontbreekt of is verlopen.</strong>
             <p className="text-gray-600 dark:text-gray-400 mt-0.5">
-              Diensten waarvoor een geldige VOG nodig is, zijn nog niet zichtbaar. De VOG-coördinator kan een aanvraag voor je starten.
+              Inschrijftaken waarvoor een geldige VOG nodig is, zijn nog niet zichtbaar. De VOG-coördinator kan een aanvraag voor je starten.
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ function BlockBanners({ blockReasons }) {
         <div className="card p-4 border-l-4 border-amber-400 flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
           <div className="text-sm">
-            <strong className="text-gray-900 dark:text-gray-100">Je kunt nog geen bardiensten draaien</strong>
+            <strong className="text-gray-900 dark:text-gray-100">Je kunt nog geen inschrijftaken achter de bar uitvoeren</strong>
             <p className="text-gray-600 dark:text-gray-400 mt-0.5">
               Hiervoor moet je eerst je{' '}
               <a
@@ -263,7 +263,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
             onClick={() => {
               if (shift.signup_is_final_after_grace) {
                 const confirmed = window.confirm(
-                  'Deze dienst begint binnen 3 weken. Na aanmelden heb je 30 minuten om een fout te herstellen; daarna kan alleen de vrijwilligerscoördinator je afmelden. Wil je doorgaan?'
+                  'Deze inschrijftaak begint binnen 3 weken. Na aanmelden heb je 30 minuten om een fout te herstellen; daarna kan alleen de vrijwilligerscoördinator je afmelden. Wil je doorgaan?'
                 );
                 if (!confirmed) return;
               }
@@ -378,7 +378,7 @@ export default function Vrijwillig() {
           <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
           <h2 className="font-semibold text-gray-900 dark:text-gray-100">Geen gekoppeld lid-profiel</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-            Je account is nog niet gekoppeld aan een lid-record. Neem contact op met de ledenadministratie zodat je je voor diensten kunt aanmelden.
+            Je account is nog niet gekoppeld aan een lid-record. Neem contact op met de ledenadministratie zodat je je voor inschrijftaken kunt aanmelden.
           </p>
         </div>
       </div>
@@ -394,7 +394,7 @@ export default function Vrijwillig() {
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Vrijwilligers</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Plan je diensten in en houd je voortgang bij voor het seizoen {mine?.season}.
+            Plan je inschrijftaken in en houd je voortgang bij voor het seizoen {mine?.season}.
           </p>
         </div>
         <Link
@@ -438,7 +438,7 @@ export default function Vrijwillig() {
                   : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
-              Mijn diensten ({(mine?.shifts || []).length})
+              Mijn inschrijftaken ({(mine?.shifts || []).length})
             </button>
           </nav>
 
@@ -448,7 +448,7 @@ export default function Vrijwillig() {
                 htmlFor="diensttype-filter"
                 className="text-sm font-medium text-gray-700 dark:text-gray-200"
               >
-                Diensttype
+                Inschrijftaak
               </label>
               <select
                 id="diensttype-filter"
@@ -456,9 +456,9 @@ export default function Vrijwillig() {
                 onChange={(event) => handleDienstTypeChange(event.target.value)}
                 className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-bright-cobalt focus:outline-none focus:ring-1 focus:ring-bright-cobalt dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-electric-cyan dark:focus:ring-electric-cyan"
               >
-                <option value="">Alle diensttypes</option>
+                <option value="">Alle inschrijftaken</option>
                 {selectedDienstType && !(calendarData?.dienst_types || []).some((type) => String(type.id) === selectedDienstType) && (
-                  <option value={selectedDienstType}>Geselecteerd diensttype</option>
+                  <option value={selectedDienstType}>Geselecteerde inschrijftaak</option>
                 )}
                 {(calendarData?.dienst_types || []).map((type) => (
                   <option key={type.id} value={type.id}>{type.name}</option>
@@ -520,11 +520,11 @@ export default function Vrijwillig() {
             <section className="space-y-4">
               <div>
                 <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-2">
-                  Komende diensten
+                  Komende inschrijftaken
                 </h2>
                 {upcomingShifts.length === 0 ? (
                   <div className="card p-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                    {selectedDienstType ? 'Geen komende diensten van dit diensttype gepland.' : 'Geen komende diensten gepland.'}
+                    {selectedDienstType ? 'Geen komende inschrijftaken van deze soort gepland.' : 'Geen komende inschrijftaken gepland.'}
                   </div>
                 ) : (
                   <ul className="space-y-2">

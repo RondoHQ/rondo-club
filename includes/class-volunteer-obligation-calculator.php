@@ -156,12 +156,12 @@ class VolunteerObligationCalculator {
 	public static function mark_no_show( int $shift_id, int $person_id, ?int $marked_by_user = null ) {
 		$shift = get_post( $shift_id );
 		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
-			return new \WP_Error( 'invalid_shift', 'Invalid shift ID.', [ 'status' => 404 ] );
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
 		$end_datetime = get_post_meta( $shift_id, 'end_datetime', true );
 		if ( ! $end_datetime ) {
-			return new \WP_Error( 'no_end_datetime', 'Shift has no end_datetime.', [ 'status' => 400 ] );
+			return new \WP_Error( 'no_end_datetime', 'De inschrijftaak heeft geen eindtijd.', [ 'status' => 400 ] );
 		}
 
 		$end_ts = strtotime( $end_datetime );
@@ -170,7 +170,7 @@ class VolunteerObligationCalculator {
 		if ( $end_ts === false || $now > $cutoff ) {
 			return new \WP_Error(
 				'window_expired',
-				sprintf( 'No-show window closed (>%dh past shift end).', self::NO_SHOW_WINDOW_HOURS ),
+				sprintf( 'De afwezigheidsregistratie is gesloten (meer dan %d uur na het einde van de inschrijftaak).', self::NO_SHOW_WINDOW_HOURS ),
 				[ 'status' => 410 ]
 			);
 		}
@@ -179,7 +179,7 @@ class VolunteerObligationCalculator {
 		if ( ! is_array( $assigned ) || ! in_array( $person_id, array_map( 'intval', $assigned ), true ) ) {
 			return new \WP_Error(
 				'person_not_assigned',
-				'Person is not assigned to this shift.',
+				'Deze persoon is niet voor de inschrijftaak aangemeld.',
 				[ 'status' => 400 ]
 			);
 		}

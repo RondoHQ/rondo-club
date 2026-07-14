@@ -889,7 +889,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
               <RichTextEditor
                 value={volunteerSignupInfo}
                 onChange={setVolunteerSignupInfo}
-                placeholder="Aanvullende informatie voor leden die een dienst willen inplannen..."
+                placeholder="Aanvullende informatie voor leden die een inschrijftaak willen inplannen..."
                 disabled={clubConfigLoading}
                 minHeight="120px"
               />
@@ -2801,7 +2801,7 @@ function RollenTab({
               Staf-rollen — vrijgesteld van vrijwilligersplicht
             </h4>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Personen met een actieve werkrol in deze lijst zijn automatisch vrijgesteld van de 2-diensten-plicht.
+              Personen met een actieve werkrol in deze lijst zijn automatisch vrijgesteld van de vrijwilligersplicht van twee inschrijftaken.
               Vink de functies aan die als trainer/leider/teammanager-rol gelden.
             </p>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 max-h-64 overflow-y-auto border rounded-md border-gray-200 dark:border-gray-700 p-3">

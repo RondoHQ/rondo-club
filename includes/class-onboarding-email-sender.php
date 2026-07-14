@@ -230,16 +230,16 @@ Wat fijn dat je vrijwilliger bent geworden bij {club_naam}. Vrijwilligers maken 
 
 **Vrijwilligersbeleid in het kort**
 
-Sinds dit seizoen vragen we van elke vrijwilliger 2 diensten per jaar (terreinmeester, kantine, schoonmaak of terreinonderhoud). Bij meerdere kinderen telt de plicht per kind met een oplopende korting. Trainers, leiders, commissieleden en betaalde vrijwilligers zijn automatisch vrijgesteld.
+Sinds dit seizoen vragen we van elke vrijwilliger 2 inschrijftaken per jaar (terreinmeester, kantine, schoonmaak of terreinonderhoud). Bij meerdere kinderen telt de plicht per kind met een oplopende korting. Trainers, leiders, commissieleden en betaalde vrijwilligers zijn automatisch vrijgesteld.
 
 **Wat je nu kunt doen**
 
-1. Bekijk het rooster en meld je aan: ga in Rondo naar **Vrijwilligers → Diensten**. Je ziet alleen diensten waarvoor je in aanmerking komt.
+1. Bekijk het rooster en meld je aan: ga in Rondo naar **Vrijwilligers → Inschrijftaken**. Je ziet alleen inschrijftaken waarvoor je in aanmerking komt.
 2. **VOG verklaring** is verplicht voor alle vrijwilligers. Heb je er nog geen of is hij verlopen? Onze VOG-coördinator stuurt je een aanvraag via Justis.
-3. **IVA-certificaat** is alleen verplicht voor bardienst. Het is gratis via NOC*NSF en 5 jaar geldig. Upload je certificaat in Rondo via **Vrijwilligers → Mijn profiel** — de bestuurslid kantine keurt het daar goed.
-4. Plan je eerste dienst binnen 4 weken na ontvangst van deze mail — sociale druk doet de rest.
+3. **IVA-certificaat** is alleen verplicht voor inschrijftaken achter de bar. Het is gratis via NOC*NSF en 5 jaar geldig. Upload je certificaat in Rondo via **Vrijwilligers → Mijn profiel** — de bestuurslid kantine keurt het daar goed.
+4. Plan je eerste inschrijftaak binnen 4 weken na ontvangst van deze mail — sociale druk doet de rest.
 
-Als je een dienst niet kunt doen: tijdig afmelden mag altijd zonder gevolg. Wel komen opdagen telt voor de plicht.
+Als je een inschrijftaak niet kunt doen: tijdig afmelden mag altijd zonder gevolg. Wel komen opdagen telt voor de plicht.
 
 Heb je vragen? Neem gerust contact op.
 

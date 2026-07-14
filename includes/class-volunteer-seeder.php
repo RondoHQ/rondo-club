@@ -47,7 +47,7 @@ class VolunteerSeeder {
 		],
 		'kantine_bar'            => [
 			'title'            => 'Kantine — bar',
-			'description'      => 'Bardienst: schenken, kassa, opruimen. Vereist een geldig IVA-certificaat (alcohol).',
+			'description'      => 'Inschrijftaak achter de bar: schenken, kassa, opruimen. Vereist een geldig IVA-certificaat (alcohol).',
 			'vog_required'     => true,
 			'iva_required'     => true,
 			'default_capacity' => 1,
@@ -99,15 +99,15 @@ class VolunteerSeeder {
 	private const POOL_COMMISSIES = [
 		'schoonmaak'   => [
 			'title'   => 'Schoonmaakpoule',
-			'content' => 'Vaste poule van ~20 vrijwilligers die rouleren in de wekelijkse schoonmaakdienst. Beheerd in Rondo, niet gesynchroniseerd vanuit Sportlink.',
+			'content' => 'Vaste poule van ~20 vrijwilligers die rouleren in de wekelijkse schoonmaaktaak. Beheerd in Rondo, niet gesynchroniseerd vanuit Sportlink.',
 		],
 		'activiteiten' => [
 			'title'   => 'Activiteitenpoule',
-			'content' => 'Vaste poule van ~75 vrijwilligers die activiteiten en evenementen regelen. Leden zijn vrijgesteld van de 2-diensten-plicht.',
+			'content' => 'Vaste poule van ~75 vrijwilligers die activiteiten en evenementen regelen. Leden zijn vrijgesteld van de vrijwilligersplicht van twee inschrijftaken.',
 		],
 		'werkploeg'    => [
 			'title'   => 'Werkploeg terreinonderhoud',
-			'content' => 'Vaste werkploeg voor terreinonderhoud. Aangevuld met (ouders van) leden op inschrijving via de 2-diensten-plicht.',
+			'content' => 'Vaste werkploeg voor terreinonderhoud. Aangevuld met (ouders van) leden op inschrijving via de vrijwilligersplicht van twee inschrijftaken.',
 		],
 	];
 

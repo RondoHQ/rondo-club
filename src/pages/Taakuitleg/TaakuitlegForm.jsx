@@ -139,9 +139,9 @@ export default function TaakuitlegForm() {
         </div>
 
         <div className="block">
-          <span className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Diensttypes</span>
+          <span className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Inschrijftaken</span>
           {types.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">Er zijn nog geen diensttypes.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Er zijn nog geen inschrijftaken.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {types.map((t) => {
