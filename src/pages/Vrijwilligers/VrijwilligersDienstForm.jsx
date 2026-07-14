@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarClock, Save, Trash2, ExternalLink, UserX } from 'lucide-react';
-import { prmApi } from '@/api/client';
+import { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { format } from '@/utils/dateFormat';
@@ -102,6 +102,28 @@ export default function VrijwilligersDienstForm() {
     if (Array.isArray(raw)) return raw.map(Number).filter(Boolean);
     return [];
   }, [existing]);
+
+  const { data: assignedPeople = [], isLoading: assignedPeopleLoading } = useQuery({
+    queryKey: ['volunteer', 'shift-assignees', assignedIds.join(',')],
+    queryFn: async () => {
+      const response = await wpApi.getPeople({
+        include: assignedIds.join(','),
+        per_page: Math.min(assignedIds.length, 100),
+        _fields: 'id,title',
+      });
+      return response.data || [];
+    },
+    enabled: assignedIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const assignedPeopleById = useMemo(
+    () => new Map(assignedPeople.map((person) => [
+      Number(person.id),
+      person.title?.rendered || person.title || `Persoon ${person.id}`,
+    ])),
+    [assignedPeople]
+  );
 
   const isCancelled = form.status === 'geannuleerd';
   const cancellation = existing?.cancellation || null;
@@ -458,7 +480,7 @@ export default function VrijwilligersDienstForm() {
             {assignedIds.map((pid) => (
               <li key={pid} className="py-2 flex items-center justify-between gap-3 text-sm">
                 <Link to={`/people/${pid}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline inline-flex items-center gap-1">
-                  Persoon {pid} <ExternalLink className="w-3 h-3" />
+                  {assignedPeopleLoading ? 'Naam laden…' : (assignedPeopleById.get(pid) || `Persoon ${pid}`)} <ExternalLink className="w-3 h-3" />
                 </Link>
                 {!isCancelled && <button
                   type="button"
