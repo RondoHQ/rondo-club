@@ -433,7 +433,7 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'rest_forbidden', 'Je hebt geen toegang tot de dienstenkalender.', [ 'status' => 403 ] );
 		}
 
-		$range = $this->calendar_range( $request, $view );
+		$range = $this->calendar_range( $request );
 		if ( is_wp_error( $range ) ) {
 			return $range;
 		}
@@ -560,12 +560,11 @@ class MemberShifts extends Base {
 	 *
 	 * @return array{0: \DateTimeImmutable, 1: \DateTimeImmutable}|\WP_Error
 	 */
-	private function calendar_range( \WP_REST_Request $request, string $view ) {
+	private function calendar_range( \WP_REST_Request $request ) {
 		$timezone = wp_timezone();
 		$today    = current_datetime()->setTime( 0, 0, 0 );
 		$from     = $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ?: $today;
-		$months   = $view === 'manage' ? 6 : 3;
-		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $from->modify( 'first day of this month' )->modify( "+{$months} months -1 day" );
+		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $from->modify( 'first day of this month' )->modify( '+6 months -1 day' );
 
 		if ( $request->get_param( 'from' ) && ! $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ) {
 			return new \WP_Error( 'invalid_calendar_from', 'De begindatum is ongeldig.', [ 'status' => 400 ] );
