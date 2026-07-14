@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.60.1] - 2026-07-14
+
+### Fixed
+
+- Op het beheerscherm van een inschrijftaak worden aangemelde vrijwilligers met hun naam getoond in plaats van alleen als `Persoon {id}`.
+
 ## [33.60.0] - 2026-07-14
 
 ### Changed
