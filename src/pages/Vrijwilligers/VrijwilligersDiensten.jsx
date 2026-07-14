@@ -142,7 +142,6 @@ export default function VrijwilligersDiensten() {
         isLoading={calendarLoading}
         selectedDienstType={selectedDienstType}
         onDienstTypeChange={handleDienstTypeChange}
-        title="Bezetting komende zes maanden"
         description="Klik op een gekleurde datum om de bezetting per dienst te bekijken."
         renderShift={(shift) => (
           <div key={shift.id} className="flex items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700">

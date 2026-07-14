@@ -84,13 +84,13 @@ export default function ShiftCoverageCalendar({
   isLoading,
   selectedDienstType,
   onDienstTypeChange,
-  title = 'Bezetting komende drie maanden',
+  title = 'Bezetting komende zes maanden',
   description,
   renderShift,
 }) {
   const [selectedDate, setSelectedDate] = useState('');
   const from = data?.from ? parseISO(data.from) : new Date();
-  const to = data?.to ? parseISO(data.to) : endOfMonth(addMonths(from, 2));
+  const to = data?.to ? parseISO(data.to) : endOfMonth(addMonths(from, 5));
   const daysByDate = useMemo(
     () => new Map((data?.days || []).map((day) => [day.date, day])),
     [data]

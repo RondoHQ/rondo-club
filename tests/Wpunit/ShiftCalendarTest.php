@@ -128,7 +128,7 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertSame( 'calendar_range_too_large', $this->controller->get_shift_calendar( $request )->get_error_code() );
 	}
 
-	public function test_default_calendar_range_is_six_months_for_managers_and_three_for_members(): void {
+	public function test_default_calendar_range_is_six_months_for_managers_and_members(): void {
 		$today = current_datetime()->setTime( 0, 0, 0 );
 
 		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
@@ -152,7 +152,7 @@ class ShiftCalendarTest extends RondoTestCase {
 		$member_data = $this->controller->get_shift_calendar( $member_request )->get_data();
 
 		$this->assertSame(
-			$today->modify( 'first day of this month' )->modify( '+3 months -1 day' )->format( 'Y-m-d' ),
+			$today->modify( 'first day of this month' )->modify( '+6 months -1 day' )->format( 'Y-m-d' ),
 			$member_data['to']
 		);
 	}
