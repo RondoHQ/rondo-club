@@ -135,7 +135,7 @@ class IvaStatus {
 	/**
 	 * Read the iva-approved flag, tolerating ACF/post_meta truthy inconsistency.
 	 */
-	private static function is_approved( int $person_id ): bool {
+	public static function is_approved( int $person_id ): bool {
 		$value = get_field( 'iva-approved', $person_id );
 		if ( $value === null ) {
 			$value = get_post_meta( $person_id, 'iva-approved', true );

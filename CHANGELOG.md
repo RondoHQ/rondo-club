@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.61.0] - 2026-07-15
+
+### Added
+
+- Leden ontvangen na goedkeuring van een geldig IVA-certificaat een e-mail met een directe link naar de beschikbare inschrijftaken.
+
 ## [33.60.5] - 2026-07-15
 
 ### Changed
