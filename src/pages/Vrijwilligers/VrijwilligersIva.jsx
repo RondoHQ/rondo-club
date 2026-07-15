@@ -192,7 +192,7 @@ export default function VrijwilligersIva() {
           <Link to="/profile/iva" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
             /profile/iva
           </Link>
-          {' '}(geen WP-admin nodig). Certificaten zijn 5 jaar geldig na
+          . Certificaten zijn 5 jaar geldig na
           <code className="mx-1 text-xs">datum-iva</code>; daarna verloopt de goedkeuring automatisch.
         </div>
       </div>

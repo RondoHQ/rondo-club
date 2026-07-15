@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.60.5] - 2026-07-15
+
+### Changed
+
+- De interne WordPress-verwijzing is verwijderd uit de uitleg op het IVA-beheerscherm.
+
 ## [33.60.4] - 2026-07-15
 
 ### Fixed
