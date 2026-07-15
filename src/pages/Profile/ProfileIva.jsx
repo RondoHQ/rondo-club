@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wine, Upload, ExternalLink, CheckCircle2, Clock, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Wine, Upload, CheckCircle2, Clock, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import IvaCertificateLink from '@/components/IvaCertificateLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { format } from '@/utils/dateFormat';
@@ -115,14 +116,9 @@ export default function ProfileIva() {
                 )}
               </div>
               {iva?.iva_certificaat_url && (
-                <a
-                  href={iva.iva_certificaat_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-2 text-sm text-bright-cobalt dark:text-electric-cyan hover:underline"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> Bekijk huidige certificaat
-                </a>
+                <IvaCertificateLink personId={iva.person_id} className="mt-2 text-sm">
+                  Bekijk huidige certificaat
+                </IvaCertificateLink>
               )}
               {status === 'pending' && (
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
