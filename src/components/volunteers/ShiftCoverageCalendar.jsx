@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   addMonths,
   eachDayOfInterval,
@@ -10,7 +11,7 @@ import {
   parseISO,
   startOfMonth,
 } from 'date-fns';
-import { CheckCircle2, Circle, XCircle } from 'lucide-react';
+import { CheckCircle2, Circle, X, XCircle } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { format } from '@/utils/dateFormat';
 
@@ -58,8 +59,10 @@ function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
               key={dateKey}
               type="button"
               disabled={outsideRange || !day}
-              onClick={() => onSelectDate(dateKey)}
+              onClick={(event) => onSelectDate(dateKey, event.currentTarget)}
               aria-pressed={isSelected}
+              aria-expanded={isSelected}
+              aria-controls={isSelected ? `calendar-day-details-${dateKey}` : undefined}
               aria-label={`${format(date, 'EEEE d MMMM')}: ${dayStatusLabel(day)}`}
               className={`relative flex aspect-square min-h-9 items-center justify-center rounded-md border text-xs font-medium transition ${stateClasses} ${
                 outsideRange ? 'invisible' : ''
@@ -79,6 +82,106 @@ function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
   );
 }
 
+function DatePopover({ anchor, day, onClose, renderShift }) {
+  const popoverRef = useRef(null);
+  const closeButtonRef = useRef(null);
+  const [position, setPosition] = useState(null);
+
+  const updatePosition = useCallback(() => {
+    if (!anchor) return;
+
+    const margin = 16;
+    const gap = 8;
+    const width = Math.min(384, window.innerWidth - (margin * 2));
+    const anchorRect = anchor.getBoundingClientRect();
+    const availableBelow = window.innerHeight - anchorRect.bottom - gap - margin;
+    const availableAbove = anchorRect.top - gap - margin;
+    const placeBelow = availableBelow >= Math.min(360, window.innerHeight * 0.4)
+      || availableBelow >= availableAbove;
+    const availableHeight = placeBelow ? availableBelow : availableAbove;
+    const centeredLeft = anchorRect.left + (anchorRect.width / 2) - (width / 2);
+
+    setPosition({
+      bottom: placeBelow ? undefined : window.innerHeight - anchorRect.top + gap,
+      left: Math.max(margin, Math.min(centeredLeft, window.innerWidth - width - margin)),
+      maxHeight: Math.max(160, availableHeight),
+      top: placeBelow ? anchorRect.bottom + gap : undefined,
+      width,
+    });
+  }, [anchor]);
+
+  useLayoutEffect(() => {
+    updatePosition();
+    closeButtonRef.current?.focus();
+  }, [updatePosition]);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (popoverRef.current?.contains(event.target) || anchor?.contains(event.target)) return;
+      onClose();
+    };
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Escape') return;
+      onClose();
+      anchor?.focus();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [anchor, onClose, updatePosition]);
+
+  if (!position) return null;
+
+  const titleId = `calendar-day-details-title-${day.date}`;
+
+  return createPortal(
+    <div
+      ref={popoverRef}
+      id={`calendar-day-details-${day.date}`}
+      role="dialog"
+      aria-labelledby={titleId}
+      className="fixed z-50 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      style={position}
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h3 id={titleId} className="font-semibold capitalize text-gray-900 dark:text-gray-100">
+            {format(parseISO(day.date), 'EEEE d MMMM')}
+          </h3>
+          <p className={`mt-0.5 text-xs font-medium ${day.state === 'full' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+            {dayStatusLabel(day)}
+          </p>
+        </div>
+        <button
+          ref={closeButtonRef}
+          type="button"
+          onClick={() => {
+            onClose();
+            anchor?.focus();
+          }}
+          className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-bright-cobalt dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-electric-cyan"
+          aria-label="Sluiten"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+      <div className="space-y-2">
+        {day.shifts.map((shift) => renderShift(shift))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function ShiftCoverageCalendar({
   data,
   isLoading,
@@ -87,8 +190,9 @@ export default function ShiftCoverageCalendar({
   title = 'Bezetting komende zes maanden',
   description,
   renderShift,
+  detailsVariant = 'inline',
 }) {
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selection, setSelection] = useState(null);
   const from = data?.from ? parseISO(data.from) : new Date();
   const to = data?.to ? parseISO(data.to) : endOfMonth(addMonths(from, 5));
   const daysByDate = useMemo(
@@ -96,11 +200,17 @@ export default function ShiftCoverageCalendar({
     [data]
   );
   const months = eachMonthOfInterval({ start: startOfMonth(from), end: startOfMonth(to) });
+  const selectedDate = selection?.date || '';
   const selectedDay = selectedDate ? daysByDate.get(selectedDate) : null;
 
+  const closeDetails = useCallback(() => setSelection(null), []);
+  const handleSelectDate = useCallback((date, anchor) => {
+    setSelection((current) => current?.date === date ? null : { date, anchor });
+  }, []);
+
   useEffect(() => {
-    if (selectedDate && !daysByDate.has(selectedDate)) setSelectedDate('');
-  }, [daysByDate, selectedDate]);
+    if (selectedDate && !daysByDate.has(selectedDate)) closeDetails();
+  }, [closeDetails, daysByDate, selectedDate]);
 
   return (
     <section className="card p-4 sm:p-5 space-y-5">
@@ -151,7 +261,7 @@ export default function ShiftCoverageCalendar({
                 to={to}
                 daysByDate={daysByDate}
                 selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
+                onSelectDate={handleSelectDate}
               />
             ))}
           </div>
@@ -162,7 +272,7 @@ export default function ShiftCoverageCalendar({
             </p>
           )}
 
-          {selectedDay && (
+          {selectedDay && detailsVariant === 'inline' && (
             <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="font-semibold capitalize text-gray-900 dark:text-gray-100">
@@ -176,6 +286,15 @@ export default function ShiftCoverageCalendar({
                 {selectedDay.shifts.map((shift) => renderShift(shift))}
               </div>
             </div>
+          )}
+
+          {selectedDay && detailsVariant === 'popover' && (
+            <DatePopover
+              anchor={selection.anchor}
+              day={selectedDay}
+              onClose={closeDetails}
+              renderShift={renderShift}
+            />
           )}
         </>
       )}

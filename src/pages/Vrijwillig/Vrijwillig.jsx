@@ -501,6 +501,7 @@ export default function Vrijwillig() {
               onDienstTypeChange={handleDienstTypeChange}
               title="Wanneer kun je helpen?"
               description="Rood betekent dat er nog iemand nodig is. Klik op een datum om je aan te melden."
+              detailsVariant="popover"
               renderShift={(shift) => (
                 <ul key={shift.id}>
                     <ShiftRow

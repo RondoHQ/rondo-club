@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.60.3] - 2026-07-15
+
+### Changed
+
+- Op `/vrijwillig` verschijnen de inschrijftaken van een gekozen kalenderdatum nu in een popover bij die datum, zodat naar beneden scrollen niet meer nodig is.
+
 ## [33.60.2] - 2026-07-14
 
 ### Fixed
