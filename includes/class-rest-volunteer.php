@@ -12,6 +12,7 @@
 namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
+use Rondo\Volunteer\IvaApprovalEmailSender;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\RelationshipQualityChecker;
 use Rondo\Volunteer\VolunteerCacheInvalidator;
@@ -730,15 +731,22 @@ class Volunteer extends Base {
 			return new \WP_Error( 'invalid_person', 'Invalid person ID.', [ 'status' => 404 ] );
 		}
 
+		$was_approved = IvaStatus::is_approved( $person_id );
 		update_post_meta( $person_id, 'iva-approved', $approve ? 1 : 0 );
 		update_field( 'iva-approved', $approve ? 1 : 0, $person_id );
 
+		$notification = [ 'status' => 'not_applicable' ];
+		if ( $approve && ! $was_approved && IvaStatus::is_valid( $person_id ) ) {
+			$notification = ( new IvaApprovalEmailSender() )->send( $person_id );
+		}
+
 		return rest_ensure_response(
 			[
-				'person_id'  => $person_id,
-				'approved'   => $approve,
-				'status'     => IvaStatus::status( $person_id ),
-				'expires_at' => IvaStatus::expires_at( $person_id ),
+				'person_id'    => $person_id,
+				'approved'     => $approve,
+				'status'       => IvaStatus::status( $person_id ),
+				'expires_at'   => IvaStatus::expires_at( $person_id ),
+				'notification' => $notification,
 			]
 		);
 	}
