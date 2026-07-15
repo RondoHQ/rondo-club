@@ -500,50 +500,58 @@ class Api extends Base {
 					'callback'            => [ $this, 'update_club_config' ],
 					'permission_callback' => [ $this, 'check_admin_permission' ],
 					'args'                => [
-						'club_name'                 => [
+						'club_name'                  => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'volunteer_signup_info'     => [
+						'volunteer_signup_info'      => [
 							'required'          => false,
 							'sanitize_callback' => 'wp_kses_post',
 						],
-						'freescout_url'             => [
+						'iva_approval_email_subject' => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						],
+						'iva_approval_email_body'    => [
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						],
+						'freescout_url'              => [
 							'required'          => false,
 							'sanitize_callback' => 'esc_url_raw',
 						],
-						'freescout_api_key'         => [
+						'freescout_api_key'          => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_api_token'      => [
+						'lettermint_api_token'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_team_api_token' => [
+						'lettermint_team_api_token'  => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_project_id'     => [
+						'lettermint_project_id'      => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_route_id'       => [
+						'lettermint_route_id'        => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_from_email'     => [
+						'lettermint_from_email'      => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_email',
 							'validate_callback' => function ( $param ) {
 								return $param === null || $param === '' || is_email( $param );
 							},
 						],
-						'lettermint_from_name'      => [
+						'lettermint_from_name'       => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
-						'lettermint_webhook_secret' => [
+						'lettermint_webhook_secret'  => [
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						],
@@ -1781,6 +1789,16 @@ class Api extends Base {
 		$volunteer_signup_info = $request->get_param( 'volunteer_signup_info' );
 		if ( $volunteer_signup_info !== null ) {
 			\Rondo\Config\ClubConfig::update_volunteer_signup_info( $volunteer_signup_info );
+		}
+
+		$iva_approval_email_subject = $request->get_param( 'iva_approval_email_subject' );
+		if ( $iva_approval_email_subject !== null ) {
+			\Rondo\Config\ClubConfig::update_iva_approval_email_subject( $iva_approval_email_subject );
+		}
+
+		$iva_approval_email_body = $request->get_param( 'iva_approval_email_body' );
+		if ( $iva_approval_email_body !== null ) {
+			\Rondo\Config\ClubConfig::update_iva_approval_email_body( $iva_approval_email_body );
 		}
 
 		// Update freescout_url if provided
