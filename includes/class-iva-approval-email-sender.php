@@ -8,6 +8,7 @@
 namespace Rondo\Volunteer;
 
 use Rondo\Collaboration\CommentTypes;
+use Rondo\Config\ClubConfig;
 use Rondo\Notifications\EmailTemplate;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,12 +28,10 @@ class IvaApprovalEmailSender {
 			return [ 'status' => 'no_email' ];
 		}
 
-		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
-		$greeting   = $first_name !== '' ? sprintf( 'Hoi %s,', $first_name ) : 'Hoi,';
-		$subject    = 'Je IVA-certificaat is goedgekeurd';
-		$body       = $greeting
-			. "\n\nJe IVA-certificaat is goedgekeurd. Je kunt je nu ook inschrijven voor inschrijftaken waarvoor een geldig IVA-certificaat nodig is.";
-		$html       = EmailTemplate::render(
+		$template_values = $this->get_template_values( $person_id );
+		$subject         = sanitize_text_field( strtr( ClubConfig::get_iva_approval_email_subject(), $template_values ) );
+		$body            = strtr( ClubConfig::get_iva_approval_email_body(), $template_values );
+		$html            = EmailTemplate::render(
 			[
 				'preheader' => $subject,
 				'eyebrow'   => 'Vrijwilligers',
@@ -81,5 +80,30 @@ class IvaApprovalEmailSender {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get placeholder replacements for the configured email templates.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_template_values( int $person_id ): array {
+		$full_name  = trim( (string) get_the_title( $person_id ) );
+		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+		$club_name  = trim( ClubConfig::get_club_name() );
+
+		if ( $first_name === '' ) {
+			$first_name = $full_name !== '' ? $full_name : 'daar';
+		}
+
+		if ( $club_name === '' ) {
+			$club_name = (string) get_bloginfo( 'name' );
+		}
+
+		return [
+			'{first_name}' => $first_name,
+			'{full_name}'  => $full_name,
+			'{club_name}'  => $club_name,
+		];
 	}
 }

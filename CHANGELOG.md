@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.62.0] - 2026-07-15
+
+### Added
+
+- Beheerders kunnen het onderwerp en de berichttekst van de e-mail na IVA-goedkeuring aanpassen via de clubinstellingen.
+
 ## [33.61.0] - 2026-07-15
 
 ### Added

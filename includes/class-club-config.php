@@ -29,6 +29,16 @@ class ClubConfig {
 	const OPTION_VOLUNTEER_SIGNUP_INFO = 'rondo_volunteer_signup_info';
 
 	/**
+	 * Option key for the IVA approval email subject template.
+	 */
+	const OPTION_IVA_APPROVAL_EMAIL_SUBJECT = 'rondo_iva_approval_email_subject';
+
+	/**
+	 * Option key for the IVA approval email body template.
+	 */
+	const OPTION_IVA_APPROVAL_EMAIL_BODY = 'rondo_iva_approval_email_body';
+
+	/**
 	 * Option key for FreeScout URL
 	 */
 	const OPTION_FREESCOUT_URL = 'rondo_freescout_url';
@@ -106,6 +116,8 @@ class ClubConfig {
 	const DEFAULTS = [
 		'club_name'                             => '',
 		'volunteer_signup_info'                 => '',
+		'iva_approval_email_subject'            => 'Je IVA-certificaat is goedgekeurd',
+		'iva_approval_email_body'               => "Hoi {first_name},\n\nJe IVA-certificaat is goedgekeurd. Je kunt je nu ook inschrijven voor inschrijftaken waarvoor een geldig IVA-certificaat nodig is.",
 		'freescout_url'                         => '',
 		'freescout_api_key'                     => '',
 		'lettermint_api_token'                  => '',
@@ -143,6 +155,38 @@ class ClubConfig {
 				self::DEFAULTS['volunteer_signup_info']
 			)
 		);
+	}
+
+	/**
+	 * Get the IVA approval email subject template.
+	 *
+	 * @return string
+	 */
+	public static function get_iva_approval_email_subject(): string {
+		$subject = sanitize_text_field(
+			(string) get_option(
+				self::OPTION_IVA_APPROVAL_EMAIL_SUBJECT,
+				self::DEFAULTS['iva_approval_email_subject']
+			)
+		);
+
+		return $subject !== '' ? $subject : self::DEFAULTS['iva_approval_email_subject'];
+	}
+
+	/**
+	 * Get the IVA approval email body template.
+	 *
+	 * @return string
+	 */
+	public static function get_iva_approval_email_body(): string {
+		$body = sanitize_textarea_field(
+			(string) get_option(
+				self::OPTION_IVA_APPROVAL_EMAIL_BODY,
+				self::DEFAULTS['iva_approval_email_body']
+			)
+		);
+
+		return trim( $body ) !== '' ? $body : self::DEFAULTS['iva_approval_email_body'];
 	}
 
 	/**
@@ -309,6 +353,8 @@ class ClubConfig {
 		return [
 			'club_name'                             => self::get_club_name(),
 			'volunteer_signup_info'                 => self::get_volunteer_signup_info(),
+			'iva_approval_email_subject'            => self::get_iva_approval_email_subject(),
+			'iva_approval_email_body'               => self::get_iva_approval_email_body(),
 			'freescout_url'                         => self::get_freescout_url(),
 			'freescout_has_api_key'                 => self::has_freescout_api_key(),
 			'lettermint_project_id'                 => self::get_lettermint_project_id(),
@@ -346,6 +392,26 @@ class ClubConfig {
 	 */
 	public static function update_volunteer_signup_info( string $html ): bool {
 		return update_option( self::OPTION_VOLUNTEER_SIGNUP_INFO, wp_kses_post( $html ) );
+	}
+
+	/**
+	 * Update the IVA approval email subject template.
+	 *
+	 * @param string $subject Subject template.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_iva_approval_email_subject( string $subject ): bool {
+		return update_option( self::OPTION_IVA_APPROVAL_EMAIL_SUBJECT, sanitize_text_field( $subject ) );
+	}
+
+	/**
+	 * Update the IVA approval email body template.
+	 *
+	 * @param string $body Body template.
+	 * @return bool True on success, false on failure.
+	 */
+	public static function update_iva_approval_email_body( string $body ): bool {
+		return update_option( self::OPTION_IVA_APPROVAL_EMAIL_BODY, sanitize_textarea_field( $body ) );
 	}
 
 	/**

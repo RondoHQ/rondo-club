@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Collaboration\CommentTypes;
+use Rondo\Config\ClubConfig;
 use Rondo\REST\Volunteer;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
@@ -24,6 +25,17 @@ class IvaApprovalNotificationTest extends RondoTestCase {
 			10,
 			2
 		);
+
+		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_SUBJECT );
+		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_BODY );
+		delete_option( ClubConfig::OPTION_CLUB_NAME );
+	}
+
+	protected function tear_down(): void {
+		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_SUBJECT );
+		delete_option( ClubConfig::OPTION_IVA_APPROVAL_EMAIL_BODY );
+		delete_option( ClubConfig::OPTION_CLUB_NAME );
+		parent::tear_down();
 	}
 
 	public function test_approving_valid_iva_sends_one_actionable_email(): void {
@@ -74,6 +86,28 @@ class IvaApprovalNotificationTest extends RondoTestCase {
 		$this->approve( $person_id, true );
 
 		$this->assertCount( 2, $this->sent_mail );
+	}
+
+	public function test_configured_email_text_replaces_person_and_club_placeholders(): void {
+		ClubConfig::update_club_name( 'SV AWC' );
+		ClubConfig::update_iva_approval_email_subject( 'IVA goedgekeurd voor {full_name}' );
+		ClubConfig::update_iva_approval_email_body( "Dag {first_name},\n\nWelkom bij {club_name}." );
+
+		$person_id = $this->createPerson(
+			[ 'post_title' => 'Xander Notté' ],
+			[
+				'first_name' => 'Xander',
+				'email_1'    => 'xander@example.com',
+				'datum-iva'  => current_time( 'Y-m-d' ),
+			]
+		);
+
+		$this->approve( $person_id, true );
+
+		$this->assertSame( 'IVA goedgekeurd voor Xander Notté', $this->sent_mail[0]['subject'] );
+		$this->assertStringContainsString( 'Dag Xander,', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'Welkom bij SV AWC.', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( home_url( '/vrijwillig' ), $this->sent_mail[0]['message'] );
 	}
 
 	public function test_expired_iva_does_not_send_eligibility_email(): void {
