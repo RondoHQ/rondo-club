@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.60.4] - 2026-07-15
+
+### Fixed
+
+- IVA-certificaten worden vanuit het beheer- en profielscherm geauthenticeerd opgehaald, zodat **Bekijk** niet meer eindigt in een `rest_forbidden`-fout.
+
 ## [33.60.3] - 2026-07-15
 
 ### Changed

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Wine, Check, X, ExternalLink, Upload } from 'lucide-react';
+import { Wine, Check, X, Upload } from 'lucide-react';
 import { prmApi } from '@/api/client';
+import IvaCertificateLink from '@/components/IvaCertificateLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 
@@ -139,10 +140,7 @@ export default function VrijwilligersIva() {
                     </td>
                     <td className="px-4 py-2">
                       {certUrl ? (
-                        <a href={certUrl} target="_blank" rel="noopener noreferrer"
-                           className="text-bright-cobalt dark:text-electric-cyan hover:underline inline-flex items-center gap-1">
-                          <ExternalLink className="w-3.5 h-3.5" /> Bekijk
-                        </a>
+                        <IvaCertificateLink personId={person.id}>Bekijk</IvaCertificateLink>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
