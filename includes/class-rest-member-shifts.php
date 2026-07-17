@@ -703,6 +703,7 @@ class MemberShifts extends Base {
 				$assigned   = array_values( array_unique( $assigned ) );
 				update_post_meta( $shift_id, 'assigned_persons', $assigned );
 				update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
+				ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id );
 
 				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
 					update_post_meta( $shift_id, 'status', 'vol' );
@@ -752,6 +753,7 @@ class MemberShifts extends Base {
 
 				update_post_meta( $shift_id, 'assigned_persons', $filtered );
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
 				if ( $status === 'vol' ) {
 					update_post_meta( $shift_id, 'status', 'open' );
 				}
@@ -820,6 +822,7 @@ class MemberShifts extends Base {
 
 				update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
 				if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
 					update_post_meta( $shift_id, 'status', 'open' );
 				}
