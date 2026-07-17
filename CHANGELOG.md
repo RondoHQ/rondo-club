@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.1] - 2026-07-17
+
+### Fixed
+
+- De kalenderpopover voor inschrijftaken gebruikt de beschikbare ruimte beter, zodat datum- en bezettingsteksten niet onnodig smal worden weergegeven.
+
 ## [33.63.0] - 2026-07-17
 
 ### Added
