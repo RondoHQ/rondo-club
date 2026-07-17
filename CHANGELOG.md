@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.4] - 2026-07-17
+
+### Fixed
+
+- Links in het informatieblok op de vrijwilligerspagina openen nu in een nieuw tabblad.
+
 ## [33.63.3] - 2026-07-17
 
 ### Changed

@@ -5,18 +5,8 @@ import { format, parse, isValid } from '@/utils/dateFormat';
 import { Link } from 'react-router-dom';
 import { prmApi, wpApi } from '@/api/client';
 import { getPersonName, getTeamName } from '@/utils/formatters';
+import { openHtmlLinksInNewTab } from '@/utils/richTextUtils';
 import CustomFieldsEditModal from './CustomFieldsEditModal';
-
-/**
- * Process HTML to make links open in new tabs
- * Adds target="_blank" and rel="noopener noreferrer" to all anchor tags
- */
-function processHtmlLinks(html) {
-  if (!html || typeof html !== 'string') return html;
-
-  // Add target="_blank" and rel="noopener noreferrer" to all <a> tags
-  return html.replace(/<a\s+/gi, '<a target="_blank" rel="noopener noreferrer" ');
-}
 
 /**
  * Component to display a relationship item, fetching details if needed
@@ -209,7 +199,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
         return (
           <div
             className="prose prose-sm dark:prose-invert max-w-none prose-a:text-electric-cyan dark:prose-a:text-electric-cyan"
-            dangerouslySetInnerHTML={{ __html: processHtmlLinks(value) }}
+            dangerouslySetInnerHTML={{ __html: openHtmlLinksInNewTab(value) }}
           />
         );
 

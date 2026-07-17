@@ -6,6 +6,7 @@ import { SiWhatsapp } from '@icons-pack/react-simple-icons';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import { openHtmlLinksInNewTab } from '@/utils/richTextUtils';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
@@ -408,7 +409,7 @@ export default function Vrijwillig() {
       {volunteerSignupInfo ? (
         <div
           className="rounded-lg border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-gray-700 prose prose-sm max-w-none prose-a:text-bright-cobalt prose-a:font-medium hover:prose-a:underline dark:border-cyan-900/60 dark:bg-cyan-950/30 dark:text-gray-200 dark:prose-invert dark:prose-a:text-electric-cyan"
-          dangerouslySetInnerHTML={{ __html: volunteerSignupInfo }}
+          dangerouslySetInnerHTML={{ __html: openHtmlLinksInNewTab(volunteerSignupInfo) }}
         />
       ) : null}
 
