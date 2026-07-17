@@ -158,7 +158,6 @@ function BlockBanners({ blockReasons }) {
 function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, isMine }) {
   const start = shift.start_datetime;
   const end = shift.end_datetime;
-  const color = shift.dienst_type_color || '#6b7280';
   const fellowVolunteers = shift.fellow_volunteers || [];
   const fellowVolunteerContacts = shift.fellow_volunteer_contacts || [];
   const volunteerLabel = fellowVolunteers.length > 0
@@ -211,8 +210,7 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
   );
 
   return (
-    <li className="card p-4 flex items-start gap-4">
-      <span className="w-2 h-12 rounded-full mt-1 shrink-0" style={{ background: color }} />
+    <li className="card p-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">{shift.dienst_type_name || shift.title}</h3>
