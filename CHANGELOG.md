@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.6] - 2026-07-17
+
+### Changed
+
+- Inschrijftaakkaarten op de persoonlijke vrijwilligerspagina tonen geen diensttype-kleurbalk meer; de kleurcodering blijft beschikbaar in het beheeroverzicht.
+
 ## [33.63.5] - 2026-07-17
 
 ### Fixed
