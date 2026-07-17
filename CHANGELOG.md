@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.62.1] - 2026-07-17
+
+### Fixed
+
+- Vrijwilligers kunnen zich op `/vrijwillig` aanmelden voor twee aansluitende inschrijftaken waarvan de eind- en starttijd in dezelfde minuut vallen.
+
 ## [33.62.0] - 2026-07-15
 
 ### Added
