@@ -176,4 +176,27 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertSame( 'pool_membership_required', $this->controller->signup( $request )->get_error_code() );
 		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
 	}
+
+	public function test_signup_allows_consecutive_shifts_with_mixed_datetime_precision(): void {
+		$user_id   = $this->createRondoUser();
+		$person_id = $this->createPerson( [ 'post_title' => 'Aansluitende vrijwilliger' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+
+		$type_id      = $this->dienst_type( 'Aansluitende diensten' );
+		$existing_id  = $this->shift( $type_id, 1, [ $person_id ], 'vol', '10:00' );
+		$candidate_id = $this->shift( $type_id, 1, [], 'open', '12:00' );
+		update_post_meta( $candidate_id, 'end_datetime', $this->shift_date . ' 14:00:00' );
+
+		$this->assertSame( $this->shift_date . ' 12:00:00', get_post_meta( $existing_id, 'end_datetime', true ) );
+		$this->assertSame( $this->shift_date . ' 12:00', get_post_meta( $candidate_id, 'start_datetime', true ) );
+
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $candidate_id . '/signup' );
+		$request->set_param( 'id', $candidate_id );
+		$response = $this->controller->signup( $request );
+
+		$this->assertNotWPError( $response );
+		$this->assertTrue( $response->get_data()['signed_up'] );
+		$this->assertSame( [ $person_id ], get_post_meta( $candidate_id, 'assigned_persons', true ) );
+	}
 }

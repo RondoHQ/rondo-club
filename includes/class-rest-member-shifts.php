@@ -1048,9 +1048,9 @@ class MemberShifts extends Base {
 	 * Detect a same-day overlap with another assignment for this person.
 	 */
 	private function find_overlapping_shift( int $person_id, int $candidate_shift_id ): ?array {
-		$start = (string) get_post_meta( $candidate_shift_id, 'start_datetime', true );
-		$end   = (string) get_post_meta( $candidate_shift_id, 'end_datetime', true );
-		if ( $start === '' || $end === '' ) {
+		$start = strtotime( (string) get_post_meta( $candidate_shift_id, 'start_datetime', true ) );
+		$end   = strtotime( (string) get_post_meta( $candidate_shift_id, 'end_datetime', true ) );
+		if ( $start === false || $end === false ) {
 			return null;
 		}
 
@@ -1062,7 +1062,12 @@ class MemberShifts extends Base {
 			if ( in_array( $shift['status'], [ 'geannuleerd', 'voltooid' ], true ) ) {
 				continue;
 			}
-			if ( $shift['start_datetime'] < $end && $shift['end_datetime'] > $start ) {
+			$shift_start = strtotime( $shift['start_datetime'] );
+			$shift_end   = strtotime( $shift['end_datetime'] );
+			if ( $shift_start === false || $shift_end === false ) {
+				continue;
+			}
+			if ( $shift_start < $end && $shift_end > $start ) {
 				return $shift;
 			}
 		}
