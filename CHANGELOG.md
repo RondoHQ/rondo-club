@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.5] - 2026-07-17
+
+### Fixed
+
+- Kalenderbijlagen bij bevestigingsmails bewaren de geplande Nederlandse aanvangs- en eindtijd met expliciete `Europe/Amsterdam`-tijdzone, zodat agenda-apps geen extra uur optellen.
+
 ## [33.63.4] - 2026-07-17
 
 ### Fixed

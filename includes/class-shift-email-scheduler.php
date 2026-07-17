@@ -21,6 +21,7 @@ class ShiftEmailScheduler {
 
 	private const SIGNUP_CONFIRMATION_RETRY_SECONDS = 15 * MINUTE_IN_SECONDS;
 	private const SIGNUP_CONFIRMATION_QUEUE_PREFIX  = '_shift_confirmation_queued_at_';
+	private const CALENDAR_TIMEZONE                 = 'Europe/Amsterdam';
 	private const DUTCH_WEEKDAYS                    = [
 		1 => 'maandag',
 		2 => 'dinsdag',
@@ -567,16 +568,34 @@ class ShiftEmailScheduler {
 			'CALSCALE:GREGORIAN',
 			'METHOD:PUBLISH',
 			'X-WR-CALNAME:' . $this->escape_ical_text( get_bloginfo( 'name' ) . ' inschrijftaken' ),
+			'X-WR-TIMEZONE:' . self::CALENDAR_TIMEZONE,
+			'BEGIN:VTIMEZONE',
+			'TZID:' . self::CALENDAR_TIMEZONE,
+			'X-LIC-LOCATION:' . self::CALENDAR_TIMEZONE,
+			'BEGIN:DAYLIGHT',
+			'TZOFFSETFROM:+0100',
+			'TZOFFSETTO:+0200',
+			'TZNAME:CEST',
+			'DTSTART:19700329T020000',
+			'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+			'END:DAYLIGHT',
+			'BEGIN:STANDARD',
+			'TZOFFSETFROM:+0200',
+			'TZOFFSETTO:+0100',
+			'TZNAME:CET',
+			'DTSTART:19701025T030000',
+			'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+			'END:STANDARD',
+			'END:VTIMEZONE',
 		];
 		$url   = home_url( '/vrijwillig' );
-		$utc   = new \DateTimeZone( 'UTC' );
 
 		foreach ( $shifts as $shift ) {
 			$lines[] = 'BEGIN:VEVENT';
 			$lines[] = 'UID:rondo-shift-' . $shift['id'] . '-' . $person_id . '@' . $host;
 			$lines[] = 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' );
-			$lines[] = 'DTSTART:' . $shift['start']->setTimezone( $utc )->format( 'Ymd\THis\Z' );
-			$lines[] = 'DTEND:' . $shift['end']->setTimezone( $utc )->format( 'Ymd\THis\Z' );
+			$lines[] = 'DTSTART;TZID=' . self::CALENDAR_TIMEZONE . ':' . $shift['start']->format( 'Ymd\THis' );
+			$lines[] = 'DTEND;TZID=' . self::CALENDAR_TIMEZONE . ':' . $shift['end']->format( 'Ymd\THis' );
 			$lines[] = 'SUMMARY:' . $this->escape_ical_text( $shift['title'] );
 			$lines[] = 'DESCRIPTION:' . $this->escape_ical_text( 'Bekijk je inschrijftaken in Rondo: ' . $url );
 			$lines[] = 'URL:' . $url;
