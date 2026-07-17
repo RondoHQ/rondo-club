@@ -38,7 +38,7 @@ const ADMIN_SUBTABS = [
   { id: 'rollen', label: 'Rollen' },
   { id: 'functies', label: 'Functies' },
   { id: 'capabilities', label: 'Capabilities' },
-  { id: 'welkomstmail', label: 'Welkomstmail' },
+  { id: 'welkomstmail', label: 'E-mails' },
   { id: 'anniversaries', label: 'Jubilarissen', icon: Award },
   { id: 'systeem', label: 'Systeem', icon: Wrench },
 ];
@@ -600,6 +600,9 @@ export default function Settings() {
             welcomeSaving={welcomeSaving}
             welcomeSaved={welcomeSaved}
             handleWelcomeSave={handleWelcomeSave}
+            clubConfig={clubConfig}
+            setClubConfig={setClubConfig}
+            clubConfigLoading={clubConfigLoading}
             anniversarySettings={anniversarySettings}
             setAnniversarySettings={setAnniversarySettings}
             anniversarySettingsLoading={anniversarySettingsLoading}
@@ -747,8 +750,6 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
   const [volunteerSignupInfo, setVolunteerSignupInfo] = useState(config.volunteerSignupInfo || '');
-  const [ivaApprovalEmailSubject, setIvaApprovalEmailSubject] = useState('');
-  const [ivaApprovalEmailBody, setIvaApprovalEmailBody] = useState('');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
   const [clubLogoId, setClubLogoId] = useState(0);
@@ -766,8 +767,6 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
     if (!clubConfig) return;
     setClubName(clubConfig.club_name || '');
     setVolunteerSignupInfo(clubConfig.volunteer_signup_info || '');
-    setIvaApprovalEmailSubject(clubConfig.iva_approval_email_subject || '');
-    setIvaApprovalEmailBody(clubConfig.iva_approval_email_body || '');
   }, [clubConfig]);
 
   useEffect(() => {
@@ -802,8 +801,6 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
         volunteer_signup_info: volunteerSignupInfo,
-        iva_approval_email_subject: ivaApprovalEmailSubject,
-        iva_approval_email_body: ivaApprovalEmailBody,
       });
       // Update window.rondoConfig with saved values
       window.rondoConfig.clubName = response.data.club_name;
@@ -904,48 +901,11 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
               </p>
             </div>
 
-            <div className="border-t border-gray-200 pt-5 dark:border-gray-700">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100">E-mail na IVA-goedkeuring</h3>
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Deze e-mail wordt verstuurd zodra een geldig IVA-certificaat wordt goedgekeurd.
-              </p>
-
-              <div className="mt-4 space-y-4">
-                <div>
-                  <label className="label" htmlFor="iva-approval-email-subject">Onderwerp</label>
-                  <input
-                    id="iva-approval-email-subject"
-                    type="text"
-                    value={ivaApprovalEmailSubject}
-                    onChange={(e) => setIvaApprovalEmailSubject(e.target.value)}
-                    className="input max-w-2xl"
-                    disabled={clubConfigLoading}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="label" htmlFor="iva-approval-email-body">Berichttekst</label>
-                  <textarea
-                    id="iva-approval-email-body"
-                    value={ivaApprovalEmailBody}
-                    onChange={(e) => setIvaApprovalEmailBody(e.target.value)}
-                    className="input min-h-40 max-w-2xl resize-y"
-                    disabled={clubConfigLoading}
-                    required
-                  />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Beschikbare variabelen: <code>{'{first_name}'}</code>, <code>{'{full_name}'}</code> en <code>{'{club_name}'}</code>. De knop naar de inschrijftaken wordt automatisch toegevoegd.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Save Button */}
             <div className="flex items-center gap-3">
               <button
                 onClick={handleSaveClubConfig}
-                disabled={clubConfigLoading || savingClubConfig || !ivaApprovalEmailSubject.trim() || !ivaApprovalEmailBody.trim()}
+                disabled={clubConfigLoading || savingClubConfig}
                 className="btn-primary"
               >
                 {savingClubConfig ? 'Opslaan...' : 'Opslaan'}
@@ -2150,6 +2110,9 @@ function AdminTabWithSubtabs({
   welcomeSaving,
   welcomeSaved,
   handleWelcomeSave,
+  clubConfig,
+  setClubConfig,
+  clubConfigLoading,
   anniversarySettings,
   setAnniversarySettings,
   anniversarySettingsLoading,
@@ -2237,6 +2200,9 @@ function AdminTabWithSubtabs({
             saving={welcomeSaving}
             saved={welcomeSaved}
             handleSave={handleWelcomeSave}
+            clubConfig={clubConfig}
+            setClubConfig={setClubConfig}
+            clubConfigLoading={clubConfigLoading}
           />
         </div>
       ) : activeSubtab === 'anniversaries' ? (
@@ -3448,11 +3414,22 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
   );
 }
 
-// Welkomstmail Tab Component — three templates, selected via sub-tabs:
+// E-mail Tab Component — four templates, selected via sub-tabs:
 // 1) Account aanmaken (existing) — sent on user provisioning
 // 2) Nieuw lid (onboarding) — sent from the Onboarding screen, leden tab
 // 3) Nieuwe vrijwilliger (onboarding) — sent from the Onboarding screen, vrijwilligers tab
-function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handleSave }) {
+// 4) IVA-goedkeuring — sent when an IVA certificate is approved
+function WelkomstmailTab({
+  settings,
+  setSettings,
+  loading,
+  saving,
+  saved,
+  handleSave,
+  clubConfig,
+  setClubConfig,
+  clubConfigLoading,
+}) {
   const [activeSubTab, setActiveSubTab] = useState('account');
 
   const [lidSettings, setLidSettings] = useState(null);
@@ -3503,9 +3480,9 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Welkomstmail</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">E-mails</h3>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Beheer de drie welkomstmail-sjablonen: één voor accountaanmaak en twee voor onboarding van nieuwe leden en vrijwilligers.
+          Beheer de e-mails voor accountaanmaak, onboarding en IVA-goedkeuring.
         </p>
       </div>
 
@@ -3513,6 +3490,7 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
         <TabButton label="Account aanmaken" isActive={activeSubTab === 'account'} onClick={() => setActiveSubTab('account')} />
         <TabButton label="Nieuw lid" isActive={activeSubTab === 'lid'} onClick={() => setActiveSubTab('lid')} />
         <TabButton label="Nieuwe vrijwilliger" isActive={activeSubTab === 'vrijwilliger'} onClick={() => setActiveSubTab('vrijwilliger')} />
+        <TabButton label="IVA-goedkeuring" isActive={activeSubTab === 'iva'} onClick={() => setActiveSubTab('iva')} />
       </div>
 
       {activeSubTab === 'account' && (
@@ -3547,6 +3525,14 @@ function WelkomstmailTab({ settings, setSettings, loading, saving, saved, handle
           saving={vrijwilligerSaving}
           saved={vrijwilligerSaved}
           onSave={() => handleOnboardingSave('vrijwilliger', vrijwilligerSettings, setVrijwilligerSettings, setVrijwilligerSaving, setVrijwilligerSaved)}
+        />
+      )}
+
+      {activeSubTab === 'iva' && (
+        <IvaApprovalEmailForm
+          clubConfig={clubConfig}
+          setClubConfig={setClubConfig}
+          loading={clubConfigLoading}
         />
       )}
     </div>
@@ -3661,6 +3647,86 @@ function OnboardingWelkomstmailForm({ description, settings, setSettings, loadin
       </div>
 
       <SaveRow saving={saving} saved={saved} disabled={!settings} onSave={onSave} />
+    </div>
+  );
+}
+
+function IvaApprovalEmailForm({ clubConfig, setClubConfig, loading }) {
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (!clubConfig) return;
+    setSubject(clubConfig.iva_approval_email_subject || '');
+    setBody(clubConfig.iva_approval_email_body || '');
+  }, [clubConfig]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const response = await prmApi.updateClubConfig({
+        iva_approval_email_subject: subject,
+        iva_approval_email_body: body,
+      });
+      setClubConfig(response.data);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Keep the form available so the administrator can retry.
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-electric-cyan" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Verstuurd zodra een geldig IVA-certificaat wordt goedgekeurd.
+      </p>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="iva-approval-email-subject">Onderwerp</label>
+        <input
+          id="iva-approval-email-subject"
+          type="text"
+          value={subject}
+          onChange={(event) => setSubject(event.target.value)}
+          className={TEMPLATE_INPUT_CLASS}
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="iva-approval-email-body">Berichttekst</label>
+        <textarea
+          id="iva-approval-email-body"
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          className={`${TEMPLATE_INPUT_CLASS} min-h-40 resize-y`}
+          required
+        />
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          Beschikbare variabelen: <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{first_name}'}</code>, <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{full_name}'}</code> en <code className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-xs">{'{club_name}'}</code>. De knop naar de inschrijftaken wordt automatisch toegevoegd.
+        </p>
+      </div>
+
+      <SaveRow
+        saving={saving}
+        saved={saved}
+        disabled={!clubConfig || !subject.trim() || !body.trim()}
+        onSave={handleSave}
+      />
     </div>
   );
 }
