@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.62.2] - 2026-07-17
+
+### Fixed
+
+- De vrijstellingsmelding op `/vrijwillig` noemt een actieve vrijwilligersrol niet langer ten onrechte altijd een commissierol.
+
 ## [33.62.1] - 2026-07-17
 
 ### Fixed
