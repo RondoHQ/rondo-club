@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.0] - 2026-07-17
+
+### Added
+
+- Leden ontvangen tien minuten na hun eerste aanmelding één gecombineerde bevestigingsmail voor alle nieuw geplande inschrijftaken, inclusief een `.ics`-bestand om ze direct aan hun agenda toe te voegen.
+
 ## [33.62.2] - 2026-07-17
 
 ### Fixed

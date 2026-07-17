@@ -15,7 +15,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ShiftEmailScheduler {
 
-	const CRON_HOOK = 'rondo_shift_email_sweeper';
+	const CRON_HOOK                         = 'rondo_shift_email_sweeper';
+	const SIGNUP_CONFIRMATION_CRON_HOOK     = 'rondo_send_shift_signup_confirmation';
+	const SIGNUP_CONFIRMATION_DELAY_SECONDS = 10 * MINUTE_IN_SECONDS;
+
+	private const SIGNUP_CONFIRMATION_RETRY_SECONDS = 15 * MINUTE_IN_SECONDS;
+	private const SIGNUP_CONFIRMATION_QUEUE_PREFIX  = '_shift_confirmation_queued_at_';
 
 	/** A cron run may arrive late, but must never send an old reminder days later. */
 	const DELIVERY_WINDOW_SECONDS = DAY_IN_SECONDS;
@@ -41,6 +46,26 @@ class ShiftEmailScheduler {
 	public function __construct() {
 		add_action( 'init', [ $this, 'register_cron' ] );
 		add_action( self::CRON_HOOK, [ $this, 'run_sweep' ] );
+		add_action( self::SIGNUP_CONFIRMATION_CRON_HOOK, [ $this, 'send_signup_confirmation' ] );
+	}
+
+	/**
+	 * Queue a shift for the member's next combined signup confirmation.
+	 */
+	public static function queue_signup_confirmation( int $person_id, int $shift_id ): void {
+		if ( $person_id <= 0 || get_post_type( $shift_id ) !== 'dienst_shift' ) {
+			return;
+		}
+
+		update_post_meta( $shift_id, self::signup_confirmation_queue_key( $person_id ), time() );
+		self::schedule_signup_confirmation( $person_id, self::SIGNUP_CONFIRMATION_DELAY_SECONDS );
+	}
+
+	/**
+	 * Remove a cancelled signup from a pending confirmation.
+	 */
+	public static function discard_signup_confirmation( int $person_id, int $shift_id ): void {
+		delete_post_meta( $shift_id, self::signup_confirmation_queue_key( $person_id ) );
 	}
 
 	public function register_cron(): void {
@@ -54,6 +79,95 @@ class ShiftEmailScheduler {
 		if ( $timestamp ) {
 			wp_unschedule_event( $timestamp, self::CRON_HOOK );
 		}
+	}
+
+	/**
+	 * Send one email for every shift the member planned during the delay window.
+	 *
+	 * @return int Number of confirmed shifts.
+	 */
+	public function send_signup_confirmation( int $person_id ): int {
+		$shifts = $this->pending_signup_confirmations( $person_id );
+		if ( empty( $shifts ) ) {
+			return 0;
+		}
+
+		$email = $this->get_person_email( $person_id );
+		if ( ! $email ) {
+			$this->clear_signup_confirmation_queue( $person_id, $shifts );
+			return 0;
+		}
+
+		$name = trim( (string) get_field( 'first_name', $person_id ) );
+		if ( $name === '' ) {
+			$name = get_the_title( $person_id );
+		}
+
+		$count   = count( $shifts );
+		$subject = $count === 1
+			? sprintf( 'Bevestiging: %s op %s', $shifts[0]['title'], wp_date( 'j F Y', $shifts[0]['start']->getTimestamp(), wp_timezone() ) )
+			: sprintf( 'Bevestiging van je %d inschrijftaken', $count );
+
+		$list_items = [];
+		foreach ( $shifts as $shift ) {
+			$list_items[] = sprintf(
+				'<li style="margin:0 0 12px;"><strong>%1$s</strong><br>%2$s, %3$s–%4$s</li>',
+				esc_html( $shift['title'] ),
+				esc_html( wp_date( 'l j F Y', $shift['start']->getTimestamp(), wp_timezone() ) ),
+				esc_html( wp_date( 'H:i', $shift['start']->getTimestamp(), wp_timezone() ) ),
+				esc_html( wp_date( 'H:i', $shift['end']->getTimestamp(), wp_timezone() ) )
+			);
+		}
+
+		$attachment = $this->create_signup_calendar_attachment( $person_id, $shifts );
+		$body_html  = sprintf(
+			'<p style="margin:0 0 16px;">Hoi %s,</p><p style="margin:0 0 16px;">Je aanmelding is bevestigd voor:</p><ul style="margin:0 0 16px;padding-left:22px;">%s</ul><p style="margin:0;">%s</p>',
+			esc_html( $name ),
+			implode( '', $list_items ),
+			$attachment
+				? 'In de bijlage staat een kalenderbestand waarmee je deze inschrijftaken direct aan je agenda kunt toevoegen.'
+				: 'Je vindt je planning ook terug op de vrijwilligerspagina.'
+		);
+		$html       = EmailTemplate::render(
+			[
+				'eyebrow'      => 'Aanmelding bevestigd',
+				'heading'      => $subject,
+				'preheader'    => $subject,
+				'body_html'    => $body_html,
+				'cta_url'      => home_url( '/vrijwillig' ),
+				'cta_label'    => 'Bekijk je inschrijftaken',
+				'accent_color' => '#0f766e',
+			]
+		);
+
+		$attachments = $attachment ? [ $attachment ] : [];
+		$sent        = wp_mail(
+			$email,
+			$subject,
+			$html,
+			[
+				'Content-Type: text/html; charset=UTF-8',
+				'X-Rondo-Email-Tag: shift-signup-confirmation',
+			],
+			$attachments
+		);
+
+		if ( $attachment ) {
+			wp_delete_file( $attachment );
+		}
+
+		if ( ! $sent ) {
+			self::schedule_signup_confirmation( $person_id, self::SIGNUP_CONFIRMATION_RETRY_SECONDS );
+			return 0;
+		}
+
+		foreach ( $shifts as $shift ) {
+			delete_post_meta( $shift['id'], self::signup_confirmation_queue_key( $person_id ) );
+			update_post_meta( $shift['id'], '_shift_email_confirmation_sent_' . $person_id, current_time( 'mysql' ) );
+			do_action( 'rondo_shift_email_sent', $shift['id'], $person_id, 'confirmation' );
+		}
+
+		return $count;
 	}
 
 	/**
@@ -327,6 +441,165 @@ class ShiftEmailScheduler {
 			}
 		}
 		return null;
+	}
+
+	private static function signup_confirmation_queue_key( int $person_id ): string {
+		return self::SIGNUP_CONFIRMATION_QUEUE_PREFIX . $person_id;
+	}
+
+	private static function schedule_signup_confirmation( int $person_id, int $delay ): void {
+		$args = [ $person_id ];
+		if ( wp_next_scheduled( self::SIGNUP_CONFIRMATION_CRON_HOOK, $args ) === false ) {
+			wp_schedule_single_event( time() + $delay, self::SIGNUP_CONFIRMATION_CRON_HOOK, $args );
+		}
+	}
+
+	/**
+	 * @return array<int, array{id: int, title: string, start: \DateTimeImmutable, end: \DateTimeImmutable}>
+	 */
+	private function pending_signup_confirmations( int $person_id ): array {
+		$queue_key = self::signup_confirmation_queue_key( $person_id );
+		$query     = new \WP_Query(
+			[
+				'post_type'        => 'dienst_shift',
+				'post_status'      => 'publish',
+				'posts_per_page'   => 100,
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'fields'           => 'ids',
+				'meta_query'       => [
+					[
+						'key'     => $queue_key,
+						'compare' => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		$shifts = [];
+		foreach ( $query->posts as $shift_id ) {
+			$shift_id = (int) $shift_id;
+			$status   = (string) get_post_meta( $shift_id, 'status', true );
+			$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+			$start    = $this->parse_datetime( (string) get_post_meta( $shift_id, 'start_datetime', true ) );
+			$end      = $this->parse_datetime( (string) get_post_meta( $shift_id, 'end_datetime', true ) );
+			$type_id  = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+
+			if ( ! in_array( $status, [ 'open', 'vol' ], true ) || ! in_array( $person_id, $assigned, true ) || ! $start || ! $end || get_post_type( $type_id ) !== 'dienst_type' ) {
+				delete_post_meta( $shift_id, $queue_key );
+				continue;
+			}
+
+			$shifts[] = [
+				'id'    => $shift_id,
+				'title' => get_the_title( $type_id ),
+				'start' => $start,
+				'end'   => $end,
+			];
+		}
+
+		usort(
+			$shifts,
+			static fn( array $left, array $right ): int => $left['start']->getTimestamp() <=> $right['start']->getTimestamp()
+		);
+
+		return $shifts;
+	}
+
+	private function clear_signup_confirmation_queue( int $person_id, array $shifts ): void {
+		foreach ( $shifts as $shift ) {
+			delete_post_meta( $shift['id'], self::signup_confirmation_queue_key( $person_id ) );
+		}
+	}
+
+	/**
+	 * @param array<int, array{id: int, title: string, start: \DateTimeImmutable, end: \DateTimeImmutable}> $shifts Shift data.
+	 */
+	private function create_signup_calendar_attachment( int $person_id, array $shifts ): ?string {
+		$calendar = $this->build_signup_calendar( $person_id, $shifts );
+		$dir      = trailingslashit( get_temp_dir() ) . 'rondo-shift-confirmations';
+		if ( ! wp_mkdir_p( $dir ) ) {
+			return null;
+		}
+
+		$path = trailingslashit( $dir ) . 'inschrijftaken-' . $person_id . '-' . wp_generate_uuid4() . '.ics';
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary calendar attachment.
+		if ( file_put_contents( $path, $calendar ) === false ) {
+			return null;
+		}
+
+		return $path;
+	}
+
+	/**
+	 * @param array<int, array{id: int, title: string, start: \DateTimeImmutable, end: \DateTimeImmutable}> $shifts Shift data.
+	 */
+	private function build_signup_calendar( int $person_id, array $shifts ): string {
+		$host  = (string) wp_parse_url( home_url(), PHP_URL_HOST );
+		$host  = $host !== '' ? $host : 'rondo.club';
+		$lines = [
+			'BEGIN:VCALENDAR',
+			'VERSION:2.0',
+			'PRODID:-//Rondo Club//Vrijwilligerstaken//NL',
+			'CALSCALE:GREGORIAN',
+			'METHOD:PUBLISH',
+			'X-WR-CALNAME:' . $this->escape_ical_text( get_bloginfo( 'name' ) . ' inschrijftaken' ),
+		];
+		$url   = home_url( '/vrijwillig' );
+		$utc   = new \DateTimeZone( 'UTC' );
+
+		foreach ( $shifts as $shift ) {
+			$lines[] = 'BEGIN:VEVENT';
+			$lines[] = 'UID:rondo-shift-' . $shift['id'] . '-' . $person_id . '@' . $host;
+			$lines[] = 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' );
+			$lines[] = 'DTSTART:' . $shift['start']->setTimezone( $utc )->format( 'Ymd\THis\Z' );
+			$lines[] = 'DTEND:' . $shift['end']->setTimezone( $utc )->format( 'Ymd\THis\Z' );
+			$lines[] = 'SUMMARY:' . $this->escape_ical_text( $shift['title'] );
+			$lines[] = 'DESCRIPTION:' . $this->escape_ical_text( 'Bekijk je inschrijftaken in Rondo: ' . $url );
+			$lines[] = 'URL:' . $url;
+			$lines[] = 'STATUS:CONFIRMED';
+			$lines[] = 'TRANSP:OPAQUE';
+			$lines[] = 'END:VEVENT';
+		}
+
+		$lines[] = 'END:VCALENDAR';
+		return implode( "\r\n", array_map( [ $this, 'fold_ical_line' ], $lines ) ) . "\r\n";
+	}
+
+	private function escape_ical_text( string $value ): string {
+		return str_replace(
+			[ '\\', "\r\n", "\r", "\n", ',', ';' ],
+			[ '\\\\', '\\n', '\\n', '\\n', '\\,', '\\;' ],
+			$value
+		);
+	}
+
+	private function fold_ical_line( string $line ): string {
+		if ( strlen( $line ) <= 75 ) {
+			return $line;
+		}
+
+		$characters = preg_split( '//u', $line, -1, PREG_SPLIT_NO_EMPTY );
+		if ( $characters === false ) {
+			$characters = str_split( $line );
+		}
+
+		$segments = [];
+		$current  = '';
+		foreach ( $characters as $character ) {
+			$limit = empty( $segments ) ? 75 : 74;
+			if ( $current !== '' && strlen( $current . $character ) > $limit ) {
+				$segments[] = $current;
+				$current    = $character;
+				continue;
+			}
+			$current .= $character;
+		}
+		if ( $current !== '' ) {
+			$segments[] = $current;
+		}
+
+		return implode( "\r\n ", $segments );
 	}
 
 	private function is_due( \DateTimeImmutable $now, \DateTimeImmutable $send_at ): bool {

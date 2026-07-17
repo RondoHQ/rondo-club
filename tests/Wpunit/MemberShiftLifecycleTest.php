@@ -32,6 +32,13 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		add_filter(
 			'pre_wp_mail',
 			function ( $short_circuit, $atts ) {
+				$atts['attachment_contents'] = [];
+				foreach ( (array) ( $atts['attachments'] ?? [] ) as $attachment ) {
+					if ( is_string( $attachment ) && is_readable( $attachment ) ) {
+						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- inspect temporary test attachment.
+						$atts['attachment_contents'][ wp_basename( $attachment ) ] = file_get_contents( $attachment );
+					}
+				}
 				$this->sent_mail[] = $atts;
 				return true;
 			},
@@ -108,6 +115,60 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertWPError( $response );
 		$this->assertSame( 'shift_cancel_deadline_passed', $response->get_error_code() );
 		$this->assertSame( [ $person_id ], get_post_meta( $shift_id, 'assigned_persons', true ) );
+	}
+
+	public function test_signup_confirmation_combines_shifts_after_ten_minutes_and_attaches_calendar(): void {
+		[, $person_id] = $this->member( 'shift_confirmation_member' );
+		update_field( 'first_name', 'Anne', $person_id );
+		update_field( 'email_1', 'anne@example.com', $person_id );
+		$type_id   = $this->dienst_type();
+		$shift_one = $this->dated_shift( $type_id, [], current_datetime()->modify( '+22 days' ) );
+		$shift_two = $this->dated_shift( $type_id, [], current_datetime()->modify( '+23 days' ) );
+		$before    = time();
+
+		foreach ( [ $shift_one, $shift_two ] as $shift_id ) {
+			$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
+			$request->set_param( 'id', $shift_id );
+			$this->assertNotWPError( $this->controller->signup( $request ) );
+		}
+
+		$scheduled = wp_next_scheduled( ShiftEmailScheduler::SIGNUP_CONFIRMATION_CRON_HOOK, [ $person_id ] );
+		$this->assertIsInt( $scheduled );
+		$this->assertGreaterThanOrEqual( $before + ShiftEmailScheduler::SIGNUP_CONFIRMATION_DELAY_SECONDS, $scheduled );
+		$this->assertLessThanOrEqual( time() + ShiftEmailScheduler::SIGNUP_CONFIRMATION_DELAY_SECONDS + 2, $scheduled );
+
+		$scheduler = new ShiftEmailScheduler();
+		$this->assertSame( 2, $scheduler->send_signup_confirmation( $person_id ) );
+		$this->assertCount( 1, $this->sent_mail );
+		$this->assertSame( 'Bevestiging van je 2 inschrijftaken', $this->sent_mail[0]['subject'] );
+		$this->assertStringContainsString( 'kalenderbestand', $this->sent_mail[0]['message'] );
+		$this->assertCount( 1, $this->sent_mail[0]['attachment_contents'] );
+
+		$filename = array_key_first( $this->sent_mail[0]['attachment_contents'] );
+		$calendar = $this->sent_mail[0]['attachment_contents'][ $filename ];
+		$this->assertStringEndsWith( '.ics', $filename );
+		$this->assertSame( 2, substr_count( $calendar, 'BEGIN:VEVENT' ) );
+		$this->assertStringContainsString( 'SUMMARY:Bardienst', $calendar );
+		$this->assertStringContainsString( 'DTSTART:', $calendar );
+		$this->assertNotEmpty( get_post_meta( $shift_one, '_shift_email_confirmation_sent_' . $person_id, true ) );
+		$this->assertNotEmpty( get_post_meta( $shift_two, '_shift_email_confirmation_sent_' . $person_id, true ) );
+		$this->assertSame( 0, $scheduler->send_signup_confirmation( $person_id ) );
+		$this->assertCount( 1, $this->sent_mail );
+	}
+
+	public function test_cancelling_during_confirmation_delay_suppresses_the_email(): void {
+		[, $person_id] = $this->member( 'cancelled_shift_confirmation_member' );
+		update_field( 'email_1', 'cancelled@example.com', $person_id );
+		$type_id  = $this->dienst_type();
+		$shift_id = $this->dated_shift( $type_id, [], current_datetime()->modify( '+22 days' ) );
+		$request  = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
+		$request->set_param( 'id', $shift_id );
+
+		$this->assertNotWPError( $this->controller->signup( $request ) );
+		$this->assertNotWPError( $this->cancel( $shift_id ) );
+		$this->assertSame( 0, ( new ShiftEmailScheduler() )->send_signup_confirmation( $person_id ) );
+		$this->assertCount( 0, $this->sent_mail );
+		$this->assertEmpty( get_post_meta( $shift_id, '_shift_email_confirmation_sent_' . $person_id, true ) );
 	}
 
 	public function test_volunteer_manager_can_remove_after_deadline_but_plain_member_cannot(): void {
