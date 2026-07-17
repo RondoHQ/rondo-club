@@ -163,18 +163,65 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
   const volunteerLabel = fellowVolunteers.length > 0
     ? `Aangemeld: ${fellowVolunteers.join(', ')}`
     : (shift.is_signed_up ? 'Je bent tot nu toe de enige aanmelding.' : 'Nog niemand aangemeld.');
+  const action = isMine ? (
+    ['voltooid', 'geannuleerd'].includes(shift.status) || shift.no_show ? null : (
+      shift.can_cancel ? (
+        <button
+          onClick={() => onCancel(shift.id)}
+          disabled={cancelMutation.isLoading}
+          className="text-xs px-3 py-1.5 rounded bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
+        >
+          Afmelden
+        </button>
+      ) : (
+        <span
+          className="text-xs text-gray-500 dark:text-gray-400"
+          title="Neem contact op met de vrijwilligerscoördinator"
+        >
+          Afmelden niet meer mogelijk
+        </span>
+      )
+    )
+  ) : shift.is_signed_up ? (
+    <button
+      onClick={() => onCancel(shift.id)}
+      disabled={cancelMutation.isLoading || !shift.can_cancel}
+      className="text-xs px-3 py-1.5 rounded bg-emerald-100 text-emerald-800 hover:bg-red-100 hover:text-red-800 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-red-900/30 dark:hover:text-red-300 inline-flex items-center gap-1"
+      title={shift.can_cancel ? 'Klik om af te melden' : 'Afmelden kan alleen via de vrijwilligerscoördinator'}
+    >
+      <CheckCircle2 className="w-3.5 h-3.5" /> {shift.can_cancel ? 'Reeds aangemeld' : 'Aangemeld'}
+    </button>
+  ) : (
+    <button
+      onClick={() => {
+        if (shift.signup_is_final_after_grace) {
+          const confirmed = window.confirm(
+            'Deze inschrijftaak begint binnen 3 weken. Na aanmelden heb je 30 minuten om een fout te herstellen; daarna kan alleen de vrijwilligerscoördinator je afmelden. Wil je doorgaan?'
+          );
+          if (!confirmed) return;
+        }
+        onSignup(shift.id);
+      }}
+      disabled={signupMutation.isLoading || !shift.can_signup}
+      className="text-xs px-3 py-1.5 rounded bg-bright-cobalt text-white hover:bg-bright-cobalt/90 disabled:opacity-50 dark:bg-electric-cyan dark:text-gray-900"
+    >
+      {shift.can_signup ? 'Aanmelden' : 'Niet beschikbaar'}
+    </button>
+  );
 
   return (
     <li className="card p-4 flex items-start gap-4">
       <span className="w-2 h-12 rounded-full mt-1 shrink-0" style={{ background: color }} />
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline justify-between gap-2 flex-wrap">
+        <div className="flex items-start justify-between gap-3">
           <h3 className="font-semibold text-gray-900 dark:text-gray-100">{shift.dienst_type_name || shift.title}</h3>
-          {shift.no_show && (
-            <span className="text-xs font-medium text-red-700 dark:text-red-300 inline-flex items-center gap-1">
-              <XCircle className="w-3.5 h-3.5" /> No-show
-            </span>
-          )}
+          <div className="shrink-0">
+            {shift.no_show ? (
+              <span className="text-xs font-medium text-red-700 dark:text-red-300 inline-flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> No-show
+              </span>
+            ) : action}
+          </div>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 inline-flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5" />
@@ -227,53 +274,6 @@ function ShiftRow({ shift, onSignup, onCancel, signupMutation, cancelMutation, i
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Reden: {shift.cancellation.reason}</p>
             )}
           </div>
-        )}
-      </div>
-      <div className="shrink-0">
-        {isMine ? (
-          ['voltooid', 'geannuleerd'].includes(shift.status) || shift.no_show ? null : (
-            shift.can_cancel ? (
-              <button
-                onClick={() => onCancel(shift.id)}
-                disabled={cancelMutation.isLoading}
-                className="text-xs px-3 py-1.5 rounded bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300"
-              >
-                Afmelden
-              </button>
-            ) : (
-              <span
-                className="text-xs text-gray-500 dark:text-gray-400"
-                title="Neem contact op met de vrijwilligerscoördinator"
-              >
-                Afmelden niet meer mogelijk
-              </span>
-            )
-          )
-        ) : shift.is_signed_up ? (
-          <button
-            onClick={() => onCancel(shift.id)}
-            disabled={cancelMutation.isLoading || !shift.can_cancel}
-            className="text-xs px-3 py-1.5 rounded bg-emerald-100 text-emerald-800 hover:bg-red-100 hover:text-red-800 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-red-900/30 dark:hover:text-red-300 inline-flex items-center gap-1"
-            title={shift.can_cancel ? 'Klik om af te melden' : 'Afmelden kan alleen via de vrijwilligerscoördinator'}
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" /> {shift.can_cancel ? 'Reeds aangemeld' : 'Aangemeld'}
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              if (shift.signup_is_final_after_grace) {
-                const confirmed = window.confirm(
-                  'Deze inschrijftaak begint binnen 3 weken. Na aanmelden heb je 30 minuten om een fout te herstellen; daarna kan alleen de vrijwilligerscoördinator je afmelden. Wil je doorgaan?'
-                );
-                if (!confirmed) return;
-              }
-              onSignup(shift.id);
-            }}
-            disabled={signupMutation.isLoading || !shift.can_signup}
-            className="text-xs px-3 py-1.5 rounded bg-bright-cobalt text-white hover:bg-bright-cobalt/90 disabled:opacity-50 dark:bg-electric-cyan dark:text-gray-900"
-          >
-            {shift.can_signup ? 'Aanmelden' : 'Niet beschikbaar'}
-          </button>
         )}
       </div>
     </li>

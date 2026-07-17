@@ -92,7 +92,7 @@ function DatePopover({ anchor, day, onClose, renderShift }) {
 
     const margin = 16;
     const gap = 8;
-    const width = Math.min(384, window.innerWidth - (margin * 2));
+    const width = Math.min(448, window.innerWidth - (margin * 2));
     const anchorRect = anchor.getBoundingClientRect();
     const availableBelow = window.innerHeight - anchorRect.bottom - gap - margin;
     const availableAbove = anchorRect.top - gap - margin;
@@ -174,7 +174,7 @@ function DatePopover({ anchor, day, onClose, renderShift }) {
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {day.shifts.map((shift) => renderShift(shift))}
       </div>
     </div>,
