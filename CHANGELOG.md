@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.2] - 2026-07-17
+
+### Fixed
+
+- Datums in bevestigings-, herinnerings- en annuleringsmails voor inschrijftaken worden altijd met Nederlandse dag- en maandnamen weergegeven, onafhankelijk van de WordPress-locale.
+
 ## [33.63.1] - 2026-07-17
 
 ### Fixed

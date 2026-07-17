@@ -21,6 +21,29 @@ class ShiftEmailScheduler {
 
 	private const SIGNUP_CONFIRMATION_RETRY_SECONDS = 15 * MINUTE_IN_SECONDS;
 	private const SIGNUP_CONFIRMATION_QUEUE_PREFIX  = '_shift_confirmation_queued_at_';
+	private const DUTCH_WEEKDAYS                    = [
+		1 => 'maandag',
+		2 => 'dinsdag',
+		3 => 'woensdag',
+		4 => 'donderdag',
+		5 => 'vrijdag',
+		6 => 'zaterdag',
+		7 => 'zondag',
+	];
+	private const DUTCH_MONTHS                      = [
+		1  => 'januari',
+		2  => 'februari',
+		3  => 'maart',
+		4  => 'april',
+		5  => 'mei',
+		6  => 'juni',
+		7  => 'juli',
+		8  => 'augustus',
+		9  => 'september',
+		10 => 'oktober',
+		11 => 'november',
+		12 => 'december',
+	];
 
 	/** A cron run may arrive late, but must never send an old reminder days later. */
 	const DELIVERY_WINDOW_SECONDS = DAY_IN_SECONDS;
@@ -105,7 +128,7 @@ class ShiftEmailScheduler {
 
 		$count   = count( $shifts );
 		$subject = $count === 1
-			? sprintf( 'Bevestiging: %s op %s', $shifts[0]['title'], wp_date( 'j F Y', $shifts[0]['start']->getTimestamp(), wp_timezone() ) )
+			? sprintf( 'Bevestiging: %s op %s', $shifts[0]['title'], $this->format_dutch_date( $shifts[0]['start'], false ) )
 			: sprintf( 'Bevestiging van je %d inschrijftaken', $count );
 
 		$list_items = [];
@@ -113,7 +136,7 @@ class ShiftEmailScheduler {
 			$list_items[] = sprintf(
 				'<li style="margin:0 0 12px;"><strong>%1$s</strong><br>%2$s, %3$s–%4$s</li>',
 				esc_html( $shift['title'] ),
-				esc_html( wp_date( 'l j F Y', $shift['start']->getTimestamp(), wp_timezone() ) ),
+				esc_html( $this->format_dutch_date( $shift['start'] ) ),
 				esc_html( wp_date( 'H:i', $shift['start']->getTimestamp(), wp_timezone() ) ),
 				esc_html( wp_date( 'H:i', $shift['end']->getTimestamp(), wp_timezone() ) )
 			);
@@ -419,7 +442,7 @@ class ShiftEmailScheduler {
 		return [
 			'naam'              => $name,
 			'dienst'            => get_the_title( $type_id ),
-			'datum'             => wp_date( 'l j F Y', $start->getTimestamp(), wp_timezone() ),
+			'datum'             => $this->format_dutch_date( $start ),
 			'tijd'              => wp_date( 'H:i', $start->getTimestamp(), wp_timezone() ),
 			'eindtijd'          => wp_date( 'H:i', $end->getTimestamp(), wp_timezone() ),
 			'medevrijwilligers' => empty( $fellow_names ) ? 'nog niemand anders' : implode( ', ', $fellow_names ),
@@ -572,6 +595,17 @@ class ShiftEmailScheduler {
 			[ '\\\\', '\\n', '\\n', '\\n', '\\,', '\\;' ],
 			$value
 		);
+	}
+
+	private function format_dutch_date( \DateTimeImmutable $date, bool $include_weekday = true ): string {
+		$parts = [];
+		if ( $include_weekday ) {
+			$parts[] = self::DUTCH_WEEKDAYS[ (int) $date->format( 'N' ) ];
+		}
+		$parts[] = $date->format( 'j' );
+		$parts[] = self::DUTCH_MONTHS[ (int) $date->format( 'n' ) ];
+		$parts[] = $date->format( 'Y' );
+		return implode( ' ', $parts );
 	}
 
 	private function fold_ical_line( string $line ): string {
