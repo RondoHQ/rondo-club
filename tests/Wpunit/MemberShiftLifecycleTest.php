@@ -122,9 +122,11 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		update_field( 'first_name', 'Anne', $person_id );
 		update_field( 'email_1', 'anne@example.com', $person_id );
 		$type_id   = $this->dienst_type();
-		$shift_one = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-09-14 10:00:00', wp_timezone() ) );
-		$shift_two = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-09-15 10:00:00', wp_timezone() ) );
-		$before    = time();
+		$shift_one = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-12-04 09:00:00', wp_timezone() ) );
+		$shift_two = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-12-05 09:00:00', wp_timezone() ) );
+		update_post_meta( $shift_one, 'end_datetime', '2026-12-04 12:00:00' );
+		update_post_meta( $shift_two, 'end_datetime', '2026-12-05 12:00:00' );
+		$before = time();
 
 		foreach ( [ $shift_one, $shift_two ] as $shift_id ) {
 			$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
@@ -141,7 +143,8 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( 2, $scheduler->send_signup_confirmation( $person_id ) );
 		$this->assertCount( 1, $this->sent_mail );
 		$this->assertSame( 'Bevestiging van je 2 inschrijftaken', $this->sent_mail[0]['subject'] );
-		$this->assertStringContainsString( 'maandag 14 september 2026', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'vrijdag 4 december 2026', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( '09:00–12:00', $this->sent_mail[0]['message'] );
 		$this->assertStringNotContainsString( 'Monday', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'kalenderbestand', $this->sent_mail[0]['message'] );
 		$this->assertCount( 1, $this->sent_mail[0]['attachment_contents'] );
@@ -151,7 +154,11 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertStringEndsWith( '.ics', $filename );
 		$this->assertSame( 2, substr_count( $calendar, 'BEGIN:VEVENT' ) );
 		$this->assertStringContainsString( 'SUMMARY:Bardienst', $calendar );
-		$this->assertStringContainsString( 'DTSTART:', $calendar );
+		$this->assertStringContainsString( 'BEGIN:VTIMEZONE', $calendar );
+		$this->assertStringContainsString( 'TZID:Europe/Amsterdam', $calendar );
+		$this->assertStringContainsString( 'DTSTART;TZID=Europe/Amsterdam:20261204T090000', $calendar );
+		$this->assertStringContainsString( 'DTEND;TZID=Europe/Amsterdam:20261204T120000', $calendar );
+		$this->assertStringNotContainsString( 'DTSTART:20261204T090000Z', $calendar );
 		$this->assertNotEmpty( get_post_meta( $shift_one, '_shift_email_confirmation_sent_' . $person_id, true ) );
 		$this->assertNotEmpty( get_post_meta( $shift_two, '_shift_email_confirmation_sent_' . $person_id, true ) );
 		$this->assertSame( 0, $scheduler->send_signup_confirmation( $person_id ) );
