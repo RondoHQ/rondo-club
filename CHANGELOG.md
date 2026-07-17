@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.63.3] - 2026-07-17
+
+### Changed
+
+- De instelling voor de e-mail na IVA-goedkeuring staat nu logisch gegroepeerd onder **Beheer → E-mails → IVA-goedkeuring** in plaats van bij de algemene clubconfiguratie.
+
 ## [33.63.2] - 2026-07-17
 
 ### Fixed
