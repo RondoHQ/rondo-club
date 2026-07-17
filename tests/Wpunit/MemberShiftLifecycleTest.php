@@ -122,8 +122,8 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		update_field( 'first_name', 'Anne', $person_id );
 		update_field( 'email_1', 'anne@example.com', $person_id );
 		$type_id   = $this->dienst_type();
-		$shift_one = $this->dated_shift( $type_id, [], current_datetime()->modify( '+22 days' ) );
-		$shift_two = $this->dated_shift( $type_id, [], current_datetime()->modify( '+23 days' ) );
+		$shift_one = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-09-14 10:00:00', wp_timezone() ) );
+		$shift_two = $this->dated_shift( $type_id, [], new \DateTimeImmutable( '2026-09-15 10:00:00', wp_timezone() ) );
 		$before    = time();
 
 		foreach ( [ $shift_one, $shift_two ] as $shift_id ) {
@@ -141,6 +141,8 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertSame( 2, $scheduler->send_signup_confirmation( $person_id ) );
 		$this->assertCount( 1, $this->sent_mail );
 		$this->assertSame( 'Bevestiging van je 2 inschrijftaken', $this->sent_mail[0]['subject'] );
+		$this->assertStringContainsString( 'maandag 14 september 2026', $this->sent_mail[0]['message'] );
+		$this->assertStringNotContainsString( 'Monday', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'kalenderbestand', $this->sent_mail[0]['message'] );
 		$this->assertCount( 1, $this->sent_mail[0]['attachment_contents'] );
 
@@ -203,6 +205,7 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertStringStartsWith( 'Denk aan Bardienst op ', $this->sent_mail[0]['subject'] );
 		$this->assertStringNotContainsString( '{datum}', $this->sent_mail[0]['subject'] );
 		$this->assertStringContainsString( 'Hoi Anne', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'dinsdag 15 september 2026', $this->sent_mail[0]['message'] );
 		$this->assertNotEmpty( get_post_meta( $shift_id, '_shift_email_reminder_14_sent_' . $person_id, true ) );
 
 		$this->assertSame( 0, $scheduler->run_sweep( $now ) );
