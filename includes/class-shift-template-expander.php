@@ -46,7 +46,7 @@ class ShiftTemplateExpander {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'rest_expand_all' ],
 				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
+					return current_user_can( 'manage_options' ) || current_user_can( 'vrijwilligers' );
 				},
 				'args'                => [
 					'until' => [
@@ -66,7 +66,7 @@ class ShiftTemplateExpander {
 				'methods'             => \WP_REST_Server::CREATABLE,
 				'callback'            => [ $this, 'rest_rerun_template' ],
 				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
+					return current_user_can( 'manage_options' ) || current_user_can( 'vrijwilligers' );
 				},
 				'args'                => [
 					'id' => [

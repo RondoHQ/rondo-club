@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.64.1] - 2026-07-19
+
+### Fixed
+
+- Vrijwilligersbeheerders (rol met `vrijwilligers`-capability, zonder de generieke `edit_posts`) kunnen nu sjablonen uitrollen en opnieuw uitrollen. De REST-endpoints `POST /rondo/v1/shift-templates/expand` en `.../{id}/rerun` controleerden op `edit_posts` — die capability wordt bij niet-admin Rondo-rollen juist verwijderd — en checken nu op `manage_options` of `vrijwilligers`, gelijk aan de overige vrijwilligers-endpoints.
+
 ## [33.64.0] - 2026-07-19
 
 ### Added
