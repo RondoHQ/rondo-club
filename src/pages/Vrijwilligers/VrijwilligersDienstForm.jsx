@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarClock, Save, Trash2, ExternalLink, UserX } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Save, Trash2, ExternalLink, UserX, Link2, Unlink } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
@@ -127,6 +127,7 @@ export default function VrijwilligersDienstForm() {
 
   const isCancelled = form.status === 'geannuleerd';
   const cancellation = existing?.cancellation || null;
+  const templateLink = existing?.template_link || null;
   const cancellationIsLastMinute = useMemo(() => {
     if (!form.start_datetime) return false;
     const millisecondsUntilStart = new Date(form.start_datetime).getTime() - Date.now();
@@ -258,6 +259,31 @@ export default function VrijwilligersDienstForm() {
           });
         }}
       >
+        {isEdit && templateLink && (
+          templateLink.customized ? (
+            <div className="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+              <Unlink className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+              <span>
+                Losgekoppeld van het sjabloon{' '}
+                <Link to={`/vrijwilligers/sjablonen/${templateLink.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                  {templateLink.title}
+                </Link>{' '}
+                omdat deze inschrijftaak handmatig is aangepast. Opnieuw uitrollen van het sjabloon laat deze taak ongemoeid.
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+              <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <span>
+                Uitgerold vanuit het sjabloon{' '}
+                <Link to={`/vrijwilligers/sjablonen/${templateLink.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                  {templateLink.title}
+                </Link>. Zodra je hier iets wijzigt en opslaat, wordt deze inschrijftaak losgekoppeld en niet meer overschreven bij opnieuw uitrollen.
+              </span>
+            </div>
+          )
+        )}
+
         <Field label="Inschrijftaak">
           <select
             value={form.dienst_type_id}

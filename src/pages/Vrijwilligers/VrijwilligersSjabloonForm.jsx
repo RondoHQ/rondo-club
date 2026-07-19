@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarClock, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, CalendarClock, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
@@ -44,6 +44,7 @@ export default function VrijwilligersSjabloonForm() {
 
   const [form, setForm] = useState(EMPTY);
   const [feedback, setFeedback] = useState(null);
+  const [showRerunModal, setShowRerunModal] = useState(false);
 
   const { data: types = [], isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -110,6 +111,32 @@ export default function VrijwilligersSjabloonForm() {
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'shift-templates'], type: 'all' });
       navigate('/vrijwilligers/sjablonen');
+    },
+  });
+
+  const rerunMutation = useMutation({
+    mutationFn: () => prmApi.rerunShiftTemplate(id),
+    onSuccess: (response) => {
+      const data = response?.data || {};
+      const deleted = Number(data.deleted || 0);
+      const created = Number(data.created || 0);
+      const kept = Number(data.kept || 0);
+      const keptSignups = Number(data.kept_signups || 0);
+      const preserved = [];
+      if (kept > 0) preserved.push(`${kept} handmatig aangepast of geannuleerd`);
+      if (keptSignups > 0) preserved.push(`${keptSignups} met aanmeldingen`);
+      const preservedText = preserved.length ? ` ${preserved.join(' en ')} bleven ongewijzigd.` : '';
+      setShowRerunModal(false);
+      setFeedback({
+        kind: 'success',
+        message: `Opnieuw uitgerold: ${deleted} verwijderd, ${created} opnieuw aangemaakt.${preservedText}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+    },
+    onError: (err) => {
+      setShowRerunModal(false);
+      setFeedback({ kind: 'error', message: err?.response?.data?.message || err?.message || 'Opnieuw uitrollen mislukt.' });
     },
   });
 
@@ -291,6 +318,21 @@ export default function VrijwilligersSjabloonForm() {
             <button
               type="button"
               onClick={() => {
+                setFeedback(null);
+                setShowRerunModal(true);
+              }}
+              disabled={rerunMutation.isLoading}
+              className="btn-tertiary inline-flex items-center gap-2"
+              title="Verwijder de nog niet aangepaste uitgerolde inschrijftaken en rol ze opnieuw uit met de huidige instellingen"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Opnieuw uitrollen
+            </button>
+          )}
+          {isEdit && (
+            <button
+              type="button"
+              onClick={() => {
                 if (window.confirm('Sjabloon verwijderen? Reeds uitgerolde inschrijftaken blijven bestaan.')) {
                   deleteMutation.mutate();
                 }
@@ -304,6 +346,46 @@ export default function VrijwilligersSjabloonForm() {
           )}
         </div>
       </form>
+
+      {showRerunModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="rerun-template-title">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+              <h2 id="rerun-template-title" className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                Sjabloon opnieuw uitrollen
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowRerunModal(false)}
+                disabled={rerunMutation.isLoading}
+                className="text-gray-400 hover:text-gray-600 disabled:opacity-50 dark:hover:text-gray-300"
+                aria-label="Sluiten"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-3 p-4 text-sm text-gray-600 dark:text-gray-400">
+              <p>
+                Alle nog niet aangepaste, toekomstige inschrijftaken van dit sjabloon worden verwijderd en opnieuw
+                uitgerold met de huidige instellingen.
+              </p>
+              <p>
+                Inschrijftaken die je handmatig hebt aangepast, waarvoor al aanmeldingen zijn, of die geannuleerd zijn,
+                blijven <strong>ongewijzigd</strong> bestaan.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+              <button type="button" onClick={() => setShowRerunModal(false)} disabled={rerunMutation.isLoading} className="btn-secondary">
+                Annuleren
+              </button>
+              <button type="button" onClick={() => rerunMutation.mutate()} disabled={rerunMutation.isLoading} className="btn-primary inline-flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                {rerunMutation.isLoading ? 'Uitrollen…' : 'Opnieuw uitrollen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

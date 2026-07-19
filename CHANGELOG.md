@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.64.0] - 2026-07-19
+
+### Added
+
+- Sjablonen kunnen per stuk opnieuw worden uitgerold ("Opnieuw uitrollen" op het sjabloonscherm): nog niet aangepaste, toekomstige inschrijftaken worden verwijderd en opnieuw aangemaakt met de huidige sjablooninstellingen. Handmatig aangepaste inschrijftaken, inschrijftaken met aanmeldingen en geannuleerde inschrijftaken blijven ongewijzigd.
+- Het inschrijftaakscherm toont nu of een taak van een sjabloon komt en of hij is losgekoppeld door een handmatige aanpassing.
+
+### Changed
+
+- Een uitgerolde inschrijftaak wordt automatisch losgekoppeld van zijn sjabloon zodra je hem handmatig bewerkt. De koppeling (herkomst) blijft zichtbaar, maar opnieuw uitrollen laat de taak voortaan met rust.
+
+### Fixed
+
+- Het bewerken (of opnieuw opslaan) van een sjabloon-inschrijftaak leverde geen dubbele inschrijftaak meer op bij de volgende nachtelijke uitrol: de idempotentiecheck herkent nu zowel de `Y-m-d H:i`- als de `Y-m-d H:i:s`-notatie van de starttijd.
+
 ## [33.63.6] - 2026-07-17
 
 ### Changed

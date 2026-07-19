@@ -445,6 +445,7 @@ export const prmApi = {
   updateDienstShift: (id, data) => api.post(`/wp/v2/dienst-shifts/${id}`, data),
   deleteDienstShift: (id) => api.delete(`/wp/v2/dienst-shifts/${id}`, { params: { force: true } }),
   expandShiftTemplates: (until) => api.post('/rondo/v1/shift-templates/expand', { until }),
+  rerunShiftTemplate: (id) => api.post(`/rondo/v1/shift-templates/${id}/rerun`),
 
   // Taakuitleg — volunteer task instructions (rich text + inline images),
   // linked to dienst_types. The QR codes point at the public /uitleg/{slug} page.

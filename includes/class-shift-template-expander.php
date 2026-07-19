@@ -30,6 +30,7 @@ class ShiftTemplateExpander {
 		add_action( self::CRON_HOOK, [ $this, 'expand_default_window' ] );
 		add_action( 'acf/save_post', [ $this, 'expand_on_template_save' ], 20 );
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_action( 'rest_after_insert_dienst_shift', [ $this, 'detach_on_manual_edit' ], 10, 3 );
 	}
 
 	/**
@@ -57,6 +58,174 @@ class ShiftTemplateExpander {
 				],
 			]
 		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shift-templates/(?P<id>\d+)/rerun',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'rest_rerun_template' ],
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+				'args'                => [
+					'id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		// Expose the sjabloon link so the shift editor can show provenance and
+		// whether a manual edit already detached the shift from its template.
+		register_rest_field(
+			'dienst_shift',
+			'template_link',
+			[
+				'get_callback' => static function ( array $object ): ?array {
+					$shift_id    = (int) ( $object['id'] ?? 0 );
+					$template_id = (int) get_post_meta( $shift_id, 'template_id', true );
+					if ( $template_id <= 0 ) {
+						return null;
+					}
+					return [
+						'id'         => $template_id,
+						'title'      => get_the_title( $template_id ),
+						'customized' => (int) get_post_meta( $shift_id, '_shift_customized', true ) === 1,
+					];
+				},
+				'schema'       => [
+					'description' => 'Sjabloonkoppeling van de inschrijftaak (null als los ingepland).',
+					'type'        => [ 'object', 'null' ],
+					'context'     => [ 'view', 'edit' ],
+					'readonly'    => true,
+				],
+			]
+		);
+	}
+
+	/**
+	 * A manual edit through the admin form detaches a rolled-out shift from its
+	 * sjabloon. The shift keeps its `template_id` for provenance but is flagged
+	 * `_shift_customized`, so re-rollout can never delete or overwrite it.
+	 *
+	 * Only fires for REST writes (the admin shift editor). The expander itself
+	 * uses `wp_insert_post()` directly and member signup/cancellation write meta
+	 * straight through `rondo/v1`, so neither trips this hook.
+	 *
+	 * @param \WP_Post         $post     The saved shift.
+	 * @param \WP_REST_Request $request  The REST request (unused).
+	 * @param bool             $creating True when the post was just created.
+	 */
+	public function detach_on_manual_edit( $post, $request, $creating ): void {
+		if ( $creating || ! $post instanceof \WP_Post || $post->post_type !== 'dienst_shift' ) {
+			return;
+		}
+		if ( (int) get_post_meta( $post->ID, 'template_id', true ) <= 0 ) {
+			return; // Standalone shift — nothing to detach from.
+		}
+		update_post_meta( $post->ID, '_shift_customized', 1 );
+	}
+
+	/**
+	 * Re-roll a single template: delete its future, template-managed shifts and
+	 * regenerate them from the template's current settings. Customized shifts,
+	 * shifts with signups and cancelled shifts are preserved.
+	 *
+	 * @param \WP_REST_Request $request REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function rest_rerun_template( \WP_REST_Request $request ) {
+		$template_id = (int) $request->get_param( 'id' );
+		if ( get_post_type( $template_id ) !== 'shift_template' ) {
+			return new \WP_Error( 'rondo_invalid_template', 'Sjabloon niet gevonden.', [ 'status' => 404 ] );
+		}
+
+		$from   = gmdate( 'Y-m-d' );
+		$to     = gmdate( 'Y-m-d', strtotime( '+' . self::WINDOW_DAYS . ' days' ) );
+		$result = self::rerun_template( $template_id, $from, $to );
+
+		return rest_ensure_response(
+			array_merge(
+				$result,
+				[
+					'from' => $from,
+					'to'   => $to,
+				]
+			)
+		);
+	}
+
+	/**
+	 * Delete every future template-managed shift for one template, then expand
+	 * the template afresh over the same window. Preserves customized shifts,
+	 * shifts with signups and cancelled shifts (kept for history).
+	 *
+	 * @param int    $template_id Template post ID.
+	 * @param string $from        Y-m-d start date.
+	 * @param string $to          Y-m-d end date.
+	 * @return array{deleted:int, created:int, kept:int, kept_signups:int}
+	 */
+	public static function rerun_template( int $template_id, string $from, string $to ): array {
+		$shift_ids = get_posts(
+			[
+				'post_type'        => 'dienst_shift',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish', 'draft' ],
+				'meta_query'       => [
+					'relation' => 'AND',
+					[
+						'key'   => 'template_id',
+						'value' => $template_id,
+					],
+					[
+						'key'     => 'start_datetime',
+						'value'   => [ $from . ' 00:00:00', $to . ' 23:59:59' ],
+						'compare' => 'BETWEEN',
+						'type'    => 'DATETIME',
+					],
+				],
+			]
+		);
+
+		$deleted      = 0;
+		$kept         = 0;
+		$kept_signups = 0;
+
+		foreach ( $shift_ids as $shift_id ) {
+			$shift_id = (int) $shift_id;
+
+			if ( (int) get_post_meta( $shift_id, '_shift_customized', true ) === 1 ) {
+				++$kept;
+				continue;
+			}
+			if ( (string) get_post_meta( $shift_id, 'status', true ) === 'geannuleerd' ) {
+				++$kept;
+				continue;
+			}
+			$assigned = array_filter( array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) ) );
+			if ( ! empty( $assigned ) ) {
+				++$kept_signups;
+				continue;
+			}
+
+			if ( wp_delete_post( $shift_id, true ) ) {
+				++$deleted;
+			}
+		}
+
+		$created = self::expand_template( $template_id, $from, $to );
+
+		return [
+			'deleted'      => $deleted,
+			'created'      => $created,
+			'kept'         => $kept,
+			'kept_signups' => $kept_signups,
+		];
 	}
 
 	/**
@@ -228,8 +397,11 @@ class ShiftTemplateExpander {
 		while ( $cursor !== false && $cursor <= $end_ts ) {
 			// PHP date('N') returns 1=Monday..7=Sunday — matches our convention.
 			if ( (int) gmdate( 'N', $cursor ) === $day_of_week ) {
-				$start_datetime = gmdate( 'Y-m-d', $cursor ) . ' ' . self::normalize_time( $start_time );
-				$end_datetime   = gmdate( 'Y-m-d', $cursor ) . ' ' . self::normalize_time( $end_time );
+				// Store the canonical `Y-m-d H:i:s` form ACF also writes, so an admin
+				// edit through the shift editor can't produce a phantom mismatch that
+				// re-spawns a duplicate on the next expansion.
+				$start_datetime = gmdate( 'Y-m-d', $cursor ) . ' ' . self::normalize_time( $start_time ) . ':00';
+				$end_datetime   = gmdate( 'Y-m-d', $cursor ) . ' ' . self::normalize_time( $end_time ) . ':00';
 
 				if ( self::find_existing_shift( $template_id, $start_datetime ) === 0 ) {
 					$title   = self::shift_title( $dienst_type_id, $start_datetime );
@@ -246,7 +418,7 @@ class ShiftTemplateExpander {
 						update_post_meta( $post_id, 'dienst_type_id', $dienst_type_id );
 						update_post_meta( $post_id, 'template_id', $template_id );
 						update_post_meta( $post_id, 'start_datetime', $start_datetime );
-						update_post_meta( $post_id, 'end_datetime', $end_datetime . ':00' );
+						update_post_meta( $post_id, 'end_datetime', $end_datetime );
 						update_post_meta( $post_id, 'capacity', $capacity > 0 ? $capacity : 1 );
 						update_post_meta( $post_id, 'status', 'open' );
 						update_post_meta( $post_id, 'iva_waived', $iva_waived ? 1 : 0 );
@@ -266,8 +438,14 @@ class ShiftTemplateExpander {
 
 	/**
 	 * Idempotency check — does a shift already exist for this template and start time?
+	 *
+	 * Historic rows were stored without seconds (`Y-m-d H:i`); current rows carry
+	 * the canonical `Y-m-d H:i:s`. Match both so neither legacy data nor an
+	 * ACF-normalized edit slips past the de-dup and spawns a duplicate.
 	 */
 	private static function find_existing_shift( int $template_id, string $start_datetime ): int {
+		$variants = array_values( array_unique( [ $start_datetime, preg_replace( '/:00$/', '', $start_datetime ) ] ) );
+
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
@@ -283,8 +461,9 @@ class ShiftTemplateExpander {
 						'value' => $template_id,
 					],
 					[
-						'key'   => 'start_datetime',
-						'value' => $start_datetime,
+						'key'     => 'start_datetime',
+						'value'   => $variants,
+						'compare' => 'IN',
 					],
 				],
 			]
