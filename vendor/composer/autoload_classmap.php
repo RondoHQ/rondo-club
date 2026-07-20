@@ -36182,6 +36182,7 @@ return array(
     'Rondo\\Users\\ActivationService' => $baseDir . '/includes/class-activation-service.php',
     'Rondo\\Users\\CapabilitySync' => $baseDir . '/includes/class-capability-sync.php',
     'Rondo\\Users\\ContactEmailRouter' => $baseDir . '/includes/class-contact-email-router.php',
+    'Rondo\\Users\\GuardianAccountService' => $baseDir . '/includes/class-guardian-account-service.php',
     'Rondo\\Users\\LoginResolver' => $baseDir . '/includes/class-login-resolver.php',
     'Rondo\\Users\\UserProvisioning' => $baseDir . '/includes/class-user-provisioning.php',
     'Rondo\\VOG\\VOGEmail' => $baseDir . '/includes/class-vog-email.php',

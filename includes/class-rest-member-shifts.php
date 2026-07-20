@@ -21,6 +21,7 @@
 namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
+use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\ShiftCancellationService;
 use Rondo\Volunteer\ShiftEmailScheduler;
@@ -72,6 +73,26 @@ class MemberShifts extends Base {
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
+		add_filter( 'rest_prepare_dienst_shift', [ $this, 'add_assignee_display_names' ], 10, 2 );
+	}
+
+	/**
+	 * Add temporary guardian names to the manager shift editor response.
+	 */
+	public function add_assignee_display_names( $response, $post ) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$data     = $response->get_data();
+		$assigned = array_map( 'intval', (array) get_post_meta( $post->ID, 'assigned_persons', true ) );
+		$names    = [];
+		foreach ( $assigned as $person_id ) {
+			$names[ $person_id ] = GuardianAccountService::display_name_for_person( $person_id );
+		}
+		$data['assigned_person_names'] = $names;
+		$response->set_data( $data );
+		return $response;
 	}
 
 	/**
@@ -307,6 +328,7 @@ class MemberShifts extends Base {
 	}
 
 	public function get_my_shifts( \WP_REST_Request $request ) {
+		$user_id   = get_current_user_id();
 		$person_id = $this->current_person_id();
 		if ( $person_id <= 0 ) {
 			return new \WP_Error( 'no_person', 'Geen gekoppelde persoon gevonden voor dit account.', [ 'status' => 404 ] );
@@ -316,7 +338,12 @@ class MemberShifts extends Base {
 		$eligibility = new VolunteerEligibilityService();
 		$calculator  = new VolunteerObligationCalculator();
 
-		$units       = $eligibility->get_eligible_units_for_person( $person_id, $season );
+		$pending_guardian = GuardianAccountService::pending_for_user( $user_id );
+		$units            = $eligibility->get_eligible_units_for_person( $person_id, $season );
+		if ( $pending_guardian && $pending_guardian['child_id'] === $person_id ) {
+			$gezin_unit = $eligibility->get_gezin_unit_for_youth( $person_id, $season );
+			$units      = $gezin_unit ? [ $gezin_unit ] : [];
+		}
 		$obligations = $units ? $calculator->decorate_units( $units, $season ) : [];
 
 		$shifts = $this->query_shifts_for_person( $person_id );
@@ -330,6 +357,11 @@ class MemberShifts extends Base {
 				'iva_status'     => IvaStatus::status( $person_id ),
 				'iva_expires_at' => IvaStatus::expires_at( $person_id ),
 				'shifts'         => $shifts,
+				'identity'       => [
+					'linked_person_name' => get_the_title( $person_id ),
+					'is_youth'           => GuardianAccountService::is_youth_person( $person_id ),
+					'pending_guardian'   => $pending_guardian,
+				],
 			]
 		);
 	}
@@ -703,6 +735,7 @@ class MemberShifts extends Base {
 				$assigned   = array_values( array_unique( $assigned ) );
 				update_post_meta( $shift_id, 'assigned_persons', $assigned );
 				update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
+				GuardianAccountService::mark_shift_signup( $shift_id, $person_id, get_current_user_id() );
 				ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id );
 
 				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
@@ -753,6 +786,7 @@ class MemberShifts extends Base {
 
 				update_post_meta( $shift_id, 'assigned_persons', $filtered );
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				GuardianAccountService::unmark_shift_signup( $shift_id, $person_id );
 				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
 				if ( $status === 'vol' ) {
 					update_post_meta( $shift_id, 'status', 'open' );
@@ -822,6 +856,7 @@ class MemberShifts extends Base {
 
 				update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				GuardianAccountService::unmark_shift_signup( $shift_id, $person_id );
 				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
 				if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
 					update_post_meta( $shift_id, 'status', 'open' );
@@ -932,7 +967,7 @@ class MemberShifts extends Base {
 				continue;
 			}
 
-			$name = $this->sanitize_text( $person->post_title );
+			$name = $this->sanitize_text( GuardianAccountService::display_name_for_person( $assigned_person_id ) );
 			if ( $name !== '' ) {
 				$contacts[] = [
 					'name'         => $name,

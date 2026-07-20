@@ -368,4 +368,36 @@ class ActivationService {
 
 		return UserProvisioning::set_password_url( $user, (string) $result['reset_key'] );
 	}
+
+	/**
+	 * Activate a youth-linked account for a parent who is not yet in Sportlink.
+	 *
+	 * The account remains linked to the child until membership administration
+	 * relinks it to the synced parent. The temporary guardian identity is stored
+	 * on the user and announced by email.
+	 *
+	 * @return string|\WP_Error Set-password URL or an error.
+	 */
+	public static function activate_guardian( string $token, int $child_id, string $guardian_name ) {
+		$guardian_name = trim( sanitize_text_field( $guardian_name ) );
+		if ( mb_strlen( $guardian_name ) < 2 || mb_strlen( $guardian_name ) > 120 ) {
+			return new \WP_Error( 'invalid_guardian_name', 'Vul je volledige naam in.' );
+		}
+		if ( ! GuardianAccountService::is_youth_person( $child_id ) ) {
+			return new \WP_Error( 'invalid_guardian_child', 'Deze persoon is geen jeugdlid.' );
+		}
+
+		$url = self::activate( $token, $child_id );
+		if ( is_wp_error( $url ) ) {
+			return $url;
+		}
+
+		$user_id = (int) get_post_meta( $child_id, UserProvisioning::META_USER_ID, true );
+		$claim   = GuardianAccountService::claim( $user_id, $child_id, $guardian_name );
+		if ( is_wp_error( $claim ) ) {
+			return $claim;
+		}
+
+		return $url;
+	}
 }

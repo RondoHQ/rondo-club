@@ -120,9 +120,12 @@ export default function VrijwilligersDienstForm() {
   const assignedPeopleById = useMemo(
     () => new Map(assignedPeople.map((person) => [
       Number(person.id),
-      person.title?.rendered || person.title || `Persoon ${person.id}`,
+      existing?.assigned_person_names?.[person.id]
+        || person.title?.rendered
+        || person.title
+        || `Persoon ${person.id}`,
     ])),
-    [assignedPeople]
+    [assignedPeople, existing]
   );
 
   const isCancelled = form.status === 'geannuleerd';
