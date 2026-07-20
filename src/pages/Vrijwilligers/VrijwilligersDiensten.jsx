@@ -17,9 +17,9 @@ export default function VrijwilligersDiensten() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: shiftsData, isLoading: shiftsLoading } = useQuery({
-    queryKey: ['volunteer', 'dienst-shifts'],
-    queryFn: async () => (await prmApi.getDienstShifts({ per_page: 50, orderby: 'date', order: 'desc' })).data,
+  const { data: recentSignupsData, isLoading: recentSignupsLoading } = useQuery({
+    queryKey: ['volunteer', 'recent-shift-signups'],
+    queryFn: async () => (await prmApi.getRecentShiftSignups()).data,
     staleTime: 60 * 1000,
   });
 
@@ -33,7 +33,7 @@ export default function VrijwilligersDiensten() {
   });
 
   const types = Array.isArray(typesData) ? typesData : [];
-  const shifts = Array.isArray(shiftsData) ? shiftsData : [];
+  const recentSignupShifts = Array.isArray(recentSignupsData?.shifts) ? recentSignupsData.shifts : [];
 
   const handleDienstTypeChange = (dienstType) => {
     setSearchParams((previousParams) => {
@@ -173,57 +173,50 @@ export default function VrijwilligersDiensten() {
 
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
-          Recente inschrijftaken ({shifts.length})
+          Recente aanmeldingen ({recentSignupShifts.length})
         </h2>
-        {shiftsLoading ? (
+        {recentSignupsLoading ? (
           <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
-        ) : shifts.length === 0 ? (
+        ) : recentSignupShifts.length === 0 ? (
           <div className="card p-8 text-center">
-            <div className="text-gray-500 dark:text-gray-400 mb-2">Nog geen inschrijftaken gepland.</div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 max-w-md mx-auto">
-              Maak een losse inschrijftaak aan via &ldquo;Nieuwe inschrijftaak&rdquo; rechtsboven, of zet een wekelijks{' '}
-              <Link to="/vrijwilligers/sjablonen" className="underline">sjabloon</Link> klaar — de expander rolt sjablonen elke nacht uit naar geplande inschrijftaken.
-            </p>
+            <div className="text-gray-500 dark:text-gray-400">Nog geen recente aanmeldingen.</div>
           </div>
         ) : (
-          <div className="card overflow-hidden">
+          <div className="card overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-700 text-left text-xs uppercase text-gray-500 dark:text-gray-300">
                 <tr>
-                  <th className="px-4 py-2">Titel</th>
-                  <th className="px-4 py-2">Start</th>
-                  <th className="px-4 py-2">Eind</th>
-                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Inschrijftaak</th>
+                  <th className="px-4 py-2">Dienstmoment</th>
+                  <th className="px-4 py-2">Ingeschreven</th>
+                  <th className="px-4 py-2">Laatste aanmelding</th>
                   <th className="px-4 py-2 w-12"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {shifts.map((shift) => {
-                  const acf = shift.acf || {};
-                  return (
-                    <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">
-                        <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
-                          {shift.title?.rendered || shift.title || `Inschrijftaak ${shift.id}`}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                        {acf.start_datetime ? format(acf.start_datetime, 'dd-MM-yyyy HH:mm') : '—'}
-                      </td>
-                      <td className="px-4 py-2 text-gray-700 dark:text-gray-300">
-                        {acf.end_datetime ? format(acf.end_datetime, 'dd-MM-yyyy HH:mm') : '—'}
-                      </td>
-                      <td className="px-4 py-2 text-xs">
-                        {acf.status || 'open'}
-                      </td>
-                      <td className="px-4 py-2">
-                        <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Bewerken">
-                          <Pencil className="w-4 h-4" />
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {recentSignupShifts.map((shift) => (
+                  <tr key={shift.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                      <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
+                        {shift.dienst_type_name || shift.title || `Inschrijftaak ${shift.id}`}
+                      </Link>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {format(shift.start_datetime, 'EEE d MMM yyyy, HH:mm')}–{format(shift.end_datetime, 'HH:mm')}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {shift.signups.map((signup) => signup.name).join(', ')}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-500 dark:text-gray-400">
+                      {format(shift.latest_signup_at, 'dd-MM-yyyy HH:mm')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link to={`/vrijwilligers/diensten/${shift.id}`} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Openen">
+                        <Pencil className="w-4 h-4" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

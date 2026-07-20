@@ -99,6 +99,41 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertArrayNotHasKey( 'fellow_volunteer_contacts', $data['upcoming'][0] );
 	}
 
+	public function test_recent_signups_returns_at_most_fifty_shifts_with_names_in_signup_order(): void {
+		$manager_id = $this->createRondoUser(
+			[
+				'role'       => 'rondo_vrijwilligers',
+				'user_login' => 'recent_signup_manager',
+			]
+		);
+		wp_set_current_user( $manager_id );
+
+		$anne_id = $this->createPerson( [ 'post_title' => 'Anne Recent' ] );
+		$bob_id  = $this->createPerson( [ 'post_title' => 'Bob Recent' ] );
+		$base    = time() - 1000;
+		$ids     = [];
+
+		for ( $index = 0; $index < 51; ++$index ) {
+			$shift_id = $this->shift( [ $anne_id ], 5 );
+			update_post_meta( $shift_id, '_shift_signup_at_' . $anne_id, $base + $index );
+			$ids[] = $shift_id;
+		}
+
+		$latest_shift_id = $ids[50];
+		update_post_meta( $latest_shift_id, 'assigned_persons', [ $anne_id, $bob_id ] );
+		update_post_meta( $latest_shift_id, '_shift_signup_at_' . $bob_id, $base + 100 );
+
+		$response = $this->server->dispatch( new WP_REST_Request( 'GET', '/rondo/v1/shifts/recent-signups' ) );
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$this->assertCount( 50, $data['shifts'] );
+		$this->assertSame( $latest_shift_id, $data['shifts'][0]['id'] );
+		$this->assertSame( [ 'Bob Recent', 'Anne Recent' ], array_column( $data['shifts'][0]['signups'], 'name' ) );
+		$this->assertNotContains( $ids[0], array_column( $data['shifts'], 'id' ) );
+		$this->assertArrayNotHasKey( 'person_id', $data['shifts'][0]['signups'][0] );
+	}
+
 	private function cancel( int $shift_id ) {
 		$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/cancel' );
 		$request->set_param( 'id', $shift_id );
