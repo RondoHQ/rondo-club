@@ -3,7 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trash2, Mail, Phone,
   MapPin, Building2, Plus, Pencil, MessageCircle, X, Camera, Download,
-  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard
+  CheckSquare2, TrendingUp, StickyNote, ExternalLink, Gavel, RefreshCw, CreditCard,
+  CalendarClock
 } from 'lucide-react';
 import { usePerson, usePersonTimeline, useDeleteNote, useDeletePerson, useUpdatePerson, useCreateNote, useCreateActivity, useUpdateActivity, useCreateTodo, useUpdateTodo, useDeleteActivity, useDeleteTodo, usePeople } from '@/hooks/usePeople';
 import TimelineView from '@/components/Timeline/TimelineView';
@@ -36,6 +37,81 @@ import TodoItem from '@/components/TodoItem.jsx';
 import TabButton from '@/components/TabButton.jsx';
 import { useClothingPersonProfile } from '@/hooks/useClothing';
 
+function PersonShiftItem({ shift }) {
+  const status = shift.no_show
+    ? { label: 'No-show', classes: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' }
+    : shift.status === 'voltooid'
+      ? { label: 'Voltooid', classes: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' }
+      : shift.status === 'geannuleerd'
+        ? { label: 'Geannuleerd', classes: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' }
+        : { label: 'Ingepland', classes: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300' };
+
+  return (
+    <li className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {shift.dienst_type_name || shift.title}
+          </p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {format(shift.start_datetime, 'EEEE d MMMM yyyy, HH:mm')}
+            {shift.end_datetime ? ` – ${format(shift.end_datetime, 'HH:mm')}` : ''}
+          </p>
+        </div>
+        <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${status.classes}`}>
+          {status.label}
+        </span>
+      </div>
+    </li>
+  );
+}
+
+function PersonShiftOverview({ overview, isLoading }) {
+  const upcoming = overview?.upcoming || [];
+  const recent = overview?.recent || [];
+
+  return (
+    <section className="card p-6 md:col-span-2">
+      <div className="mb-4 flex items-center gap-2">
+        <CalendarClock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+        <h2 className="font-semibold text-brand-gradient">Inschrijftaken</h2>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">Inschrijftaken laden…</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Komend ({upcoming.length})
+            </h3>
+            {upcoming.length > 0 ? (
+              <ul className="space-y-2">
+                {upcoming.map((shift) => <PersonShiftItem key={shift.id} shift={shift} />)}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Geen komende inschrijftaken gepland.</p>
+            )}
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Laatste 2 inschrijftaken
+            </h3>
+            {recent.length > 0 ? (
+              <ul className="space-y-2">
+                {recent.map((shift) => <PersonShiftItem key={shift.id} shift={shift} />)}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Nog geen eerdere inschrijftaken.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function PersonDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -58,6 +134,7 @@ export default function PersonDetail() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['people', 'detail', id] }),
       queryClient.invalidateQueries({ queryKey: ['people', id, 'timeline'] }),
+      queryClient.invalidateQueries({ queryKey: ['people', id, 'shifts'] }),
     ]);
   };
 
@@ -89,6 +166,13 @@ export default function PersonDetail() {
 
   const { data: clothingProfile } = useClothingPersonProfile(id, {
     enabled: canAccessClothing && !!id,
+  });
+
+  const { data: shiftOverview, isLoading: isShiftOverviewLoading } = useQuery({
+    queryKey: ['people', id, 'shifts'],
+    queryFn: async () => (await prmApi.getPersonShifts(id)).data,
+    enabled: !!id,
+    staleTime: 60 * 1000,
   });
 
   // Fetch discipline cases for this person (fairplay users only)
@@ -1781,6 +1865,8 @@ export default function PersonDetail() {
               isUpdating={updatePerson.isPending}
             />
             </div>
+
+            <PersonShiftOverview overview={shiftOverview} isLoading={isShiftOverviewLoading} />
           </div>
         )}
 
