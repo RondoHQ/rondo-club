@@ -1,14 +1,116 @@
+import { useCallback, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarClock, Plus, Settings, Pencil } from 'lucide-react';
+import { CalendarClock, ListChecks, Plus, Settings, Pencil, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import AnchoredPopover from '@/components/AnchoredPopover';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
+
+function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
+  const closeButtonRef = useRef(null);
+  const titleId = 'dienst-types-popover-title';
+
+  return (
+    <AnchoredPopover
+      anchor={anchor}
+      id="dienst-types-popover"
+      labelledBy={titleId}
+      initialFocusRef={closeButtonRef}
+      maxWidth={768}
+      preferredHeight={480}
+      onClose={onClose}
+      className="p-4 sm:p-5"
+    >
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 id={titleId} className="font-semibold text-gray-900 dark:text-gray-100">
+            Inschrijftaken ({types.length})
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Beheer de soorten inschrijftaken die je kunt inplannen.
+          </p>
+        </div>
+        <button
+          ref={closeButtonRef}
+          type="button"
+          onClick={() => {
+            onClose();
+            anchor?.focus();
+          }}
+          className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-bright-cobalt dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus:ring-electric-cyan"
+          aria-label="Sluiten"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="mb-3 flex justify-end">
+        <Link to="/vrijwilligers/diensttypes/nieuw" className="btn-tertiary inline-flex items-center gap-1.5 text-xs">
+          <Plus className="h-3.5 w-3.5" /> Inschrijftaak
+        </Link>
+      </div>
+
+      {isLoading ? (
+        <div className="rounded-lg border border-gray-200 p-6 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">Laden…</div>
+      ) : types.length === 0 ? (
+        <div className="rounded-lg border border-gray-200 p-6 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+          Nog geen inschrijftaken. Maak er een aan met &ldquo;Inschrijftaak&rdquo; hierboven.
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {types.map((type) => {
+            const acf = type.acf || {};
+            const color = acf.color || '#6b7280';
+            return (
+              <div key={type.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                <div className="flex items-start gap-3">
+                  <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: color }} />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 dark:text-gray-100">
+                      {type.title?.rendered || type.title}
+                    </div>
+                    {acf.description && (
+                      <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
+                        {acf.description}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    to={`/vrijwilligers/diensttypes/${type.id}`}
+                    className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    title="Inschrijftaak bewerken"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1 text-xs">
+                  {acf.vog_required && (
+                    <span className="rounded bg-cyan-100 px-2 py-0.5 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">VOG</span>
+                  )}
+                  {acf.iva_required && (
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">IVA</span>
+                  )}
+                  {acf.sleutel_involved && (
+                    <span className="rounded bg-purple-100 px-2 py-0.5 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Sleutel</span>
+                  )}
+                  <span className="ml-auto text-gray-400">Cap. {acf.default_capacity || 1}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </AnchoredPopover>
+  );
+}
 
 export default function VrijwilligersDiensten() {
   useDocumentTitle('Inschrijftaken — Vrijwilligers');
   const [searchParams, setSearchParams] = useSearchParams();
+  const [typesPopoverOpen, setTypesPopoverOpen] = useState(false);
+  const typesButtonRef = useRef(null);
   const selectedDienstType = searchParams.get('diensttype') || '';
 
   const { data: typesData, isLoading: typesLoading } = useQuery({
@@ -43,6 +145,7 @@ export default function VrijwilligersDiensten() {
       return nextParams;
     }, { replace: true });
   };
+  const closeTypesPopover = useCallback(() => setTypesPopoverOpen(false), []);
 
   return (
     <div className="space-y-6">
@@ -58,15 +161,34 @@ export default function VrijwilligersDiensten() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Link to="/vrijwilligers/sjablonen" className="btn-tertiary inline-flex items-center gap-1.5">
             <Settings className="w-4 h-4" /> Sjablonen
           </Link>
+          <button
+            ref={typesButtonRef}
+            type="button"
+            onClick={() => setTypesPopoverOpen((isOpen) => !isOpen)}
+            className="btn-tertiary inline-flex items-center gap-1.5"
+            aria-expanded={typesPopoverOpen}
+            aria-controls="dienst-types-popover"
+          >
+            <ListChecks className="h-4 w-4" /> Inschrijftaken
+          </button>
           <Link to="/vrijwilligers/diensten/nieuw" className="btn-primary inline-flex items-center gap-1.5">
             <Plus className="w-4 h-4" /> Nieuwe inschrijftaak
           </Link>
         </div>
       </header>
+
+      {typesPopoverOpen && (
+        <DienstTypesPopover
+          anchor={typesButtonRef.current}
+          isLoading={typesLoading}
+          onClose={closeTypesPopover}
+          types={types}
+        />
+      )}
 
       <ShiftCoverageCalendar
         data={calendarData}
@@ -74,6 +196,7 @@ export default function VrijwilligersDiensten() {
         selectedDienstType={selectedDienstType}
         onDienstTypeChange={handleDienstTypeChange}
         description="Klik op een gekleurde datum om de bezetting per inschrijftaak te bekijken."
+        detailsVariant="popover"
         renderShift={(shift) => (
           <div key={shift.id} className="flex items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700">
             <span className="h-10 w-2 shrink-0 rounded-full" style={{ background: shift.dienst_type_color || '#6b7280' }} />
@@ -101,75 +224,6 @@ export default function VrijwilligersDiensten() {
           </div>
         )}
       />
-
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider">
-            Inschrijftaken ({types.length})
-          </h2>
-          <Link to="/vrijwilligers/diensttypes/nieuw" className="btn-tertiary inline-flex items-center gap-1.5 text-xs">
-            <Plus className="w-3.5 h-3.5" /> Inschrijftaak
-          </Link>
-        </div>
-        {typesLoading ? (
-          <div className="card p-6 text-center text-gray-500 dark:text-gray-400">Laden…</div>
-        ) : types.length === 0 ? (
-          <div className="card p-6 text-center text-gray-500 dark:text-gray-400">
-            Nog geen inschrijftaken. Maak er een aan met &ldquo;Inschrijftaak&rdquo; hierboven.
-          </div>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {types.map((type) => {
-              const acf = type.acf || {};
-              const color = acf.color || '#6b7280';
-              return (
-                <div key={type.id} className="card p-4 flex flex-col gap-2">
-                  <div className="flex items-start gap-3">
-                    <span className="w-3 h-3 rounded-full mt-1.5 shrink-0" style={{ background: color }} />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {type.title?.rendered || type.title}
-                      </div>
-                      {acf.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                          {acf.description}
-                        </p>
-                      )}
-                    </div>
-                    <Link
-                      to={`/vrijwilligers/diensttypes/${type.id}`}
-                      className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                      title="Inschrijftaak bewerken"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Link>
-                  </div>
-                  <div className="flex flex-wrap gap-1 text-xs">
-                    {acf.vog_required && (
-                      <span className="px-2 py-0.5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300 rounded">
-                        VOG
-                      </span>
-                    )}
-                    {acf.iva_required && (
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 rounded">
-                        IVA
-                      </span>
-                    )}
-                    {acf.sleutel_involved && (
-                      <span className="px-2 py-0.5 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded">
-                        Sleutel
-                      </span>
-                    )}
-                    <span className="ml-auto text-gray-400">
-                      Cap. {acf.default_capacity || 1}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
 
       <section>
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.3] - 2026-07-20
+
+### Changed
+
+- De catalogus met soorten inschrijftaken opent op **Vrijwilligers → Inschrijftaken** voortaan via de knop **Inschrijftaken** naast **Sjablonen**, in plaats van als vast blok onder de kalender.
+- Diensten van een aangeklikte kalenderdag openen op de beheerpagina voortaan in een popover bij de gekozen datum.
+
 ## [33.68.2] - 2026-07-20
 
 ### Changed
