@@ -53,7 +53,6 @@ export default function VrijwilligersDashboard() {
   const hasDataIssues =
     diagnostics &&
     ((diagnostics.skipped_no_leeftijdsgroep || 0) > 0 ||
-      (diagnostics.skipped_former_members || 0) > 0 ||
       (diagnostics.gezinnen_orphan || 0) > 0 ||
       (diagnostics.gezinnen_via_address || 0) > 0 ||
       (diagnostics.no_email || 0) > 0 ||
@@ -136,7 +135,7 @@ export default function VrijwilligersDashboard() {
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Datakwaliteit</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Een deel van de doelgroep kon niet schoon worden afgeleid uit Sportlink/relaties. Deze records tellen mee, maar verdienen aandacht.
+                Voor een deel van de doelgroep ontbreken gegevens of worden relaties indirect afgeleid. Deze gegevens verdienen aandacht.
               </p>
               <ul className="mt-2 text-sm text-gray-700 dark:text-gray-300 space-y-1 list-disc pl-5">
                 {(diagnostics.gezinnen_with_parents || 0) > 0 && (
@@ -181,20 +180,9 @@ export default function VrijwilligersDashboard() {
                       to="/vrijwilligers/datakwaliteit/missing_leeftijdsgroep"
                       className="text-bright-cobalt dark:text-electric-cyan hover:underline"
                     >
-                      <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> actieve leden
+                      <strong>{diagnostics.skipped_no_leeftijdsgroep.toLocaleString('nl-NL')}</strong> spelende leden
                     </Link>{' '}
-                    zonder <code>leeftijdsgroep</code>. Sportlink-sync ontbreekt, of het leeftijdsgroep-veld is leeg — corrigeer het op de persoonspagina zodat ze meegenomen worden in de doelgroep.
-                  </li>
-                )}
-                {(diagnostics.skipped_former_members || 0) > 0 && (
-                  <li>
-                    <Link
-                      to="/vrijwilligers/datakwaliteit/former_members"
-                      className="text-bright-cobalt dark:text-electric-cyan hover:underline"
-                    >
-                      <strong>{diagnostics.skipped_former_members.toLocaleString('nl-NL')}</strong> ex-leden
-                    </Link>{' '}
-                    buiten de doelgroep gehouden (former_member). Contributievrije leden zijn bewust niet uitgesloten — een vrijstelling van contributie is geen vrijstelling van vrijwilligerstaken.
+                    zonder <code>leeftijdsgroep</code>. De spelactiviteit is bekend, maar de bijbehorende leeftijdsgroep ontbreekt — controleer de Sportlink-sync zodat ze correct worden ingedeeld.
                   </li>
                 )}
                 {(diagnostics.suspect_relationships || 0) > 0 && (

@@ -89,7 +89,7 @@ class Volunteer extends Base {
 						'validate_callback' => function ( $param ) {
 							return in_array(
 								$param,
-								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep', 'former_members', 'no_email' ],
+								[ 'orphan', 'address_fallback', 'missing_leeftijdsgroep', 'no_email' ],
 								true
 							);
 						},
@@ -1032,8 +1032,7 @@ class Volunteer extends Base {
 	 *
 	 *   - orphan                 → JO16- spelers zonder ouder-relatie én zonder volwassen huisgenoot.
 	 *   - address_fallback       → spelers + ouders waar het gezin alleen via adres-overeenkomst is samengesteld.
-	 *   - missing_leeftijdsgroep → personen zonder leeftijdsgroep meta.
-	 *   - former_members         → als ex-lid gemarkeerde personen.
+	 *   - missing_leeftijdsgroep → spelende leden zonder leeftijdsgroep meta.
 	 *   - no_email               → actieve (niet-former) leden zonder geldig e-mailadres — kunnen niet activeren.
 	 */
 	public function get_data_quality_persons( \WP_REST_Request $request ) {
@@ -1051,9 +1050,6 @@ class Volunteer extends Base {
 				break;
 			case 'missing_leeftijdsgroep':
 				$ids = $service->get_skipped_no_leeftijdsgroep_ids();
-				break;
-			case 'former_members':
-				$ids = $service->get_former_member_ids();
 				break;
 			case 'no_email':
 				$ids = $this->get_no_email_person_ids();
@@ -1113,8 +1109,8 @@ class Volunteer extends Base {
 	 * needs to see and chase them. A person qualifies when neither `email_1`
 	 * nor `email_2` is a valid address and they are not marked `former_member`.
 	 *
-	 * Full scan with direct post_meta reads (mirrors get_former_member_ids()):
-	 * cheaper than a meta_query, and validity has to be checked in PHP anyway.
+	 * Full scan with direct post_meta reads is cheaper than a meta_query, and
+	 * validity has to be checked in PHP anyway.
 	 *
 	 * @return int[] Person post IDs.
 	 */
