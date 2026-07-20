@@ -8,6 +8,7 @@
 namespace Rondo\Volunteer;
 
 use Rondo\Notifications\EmailTemplate;
+use Rondo\Users\GuardianAccountService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -122,10 +123,7 @@ class ShiftEmailScheduler {
 			return 0;
 		}
 
-		$name = trim( (string) get_field( 'first_name', $person_id ) );
-		if ( $name === '' ) {
-			$name = get_the_title( $person_id );
-		}
+		$name = GuardianAccountService::greeting_name_for_person( $person_id );
 
 		$count   = count( $shifts );
 		$subject = $count === 1
@@ -427,17 +425,14 @@ class ShiftEmailScheduler {
 		\DateTimeImmutable $start,
 		\DateTimeImmutable $end
 	): array {
-		$name = (string) get_field( 'first_name', $person_id );
-		if ( $name === '' ) {
-			$name = get_the_title( $person_id );
-		}
+		$name = GuardianAccountService::greeting_name_for_person( $person_id );
 
 		$fellow_names = [];
 		foreach ( $assigned as $assigned_person_id ) {
 			if ( (int) $assigned_person_id === $person_id || get_post_type( $assigned_person_id ) !== 'person' ) {
 				continue;
 			}
-			$fellow_names[] = get_the_title( $assigned_person_id );
+			$fellow_names[] = GuardianAccountService::display_name_for_person( (int) $assigned_person_id );
 		}
 
 		return [

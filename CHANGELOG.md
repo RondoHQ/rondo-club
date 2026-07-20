@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.66.0] - 2026-07-20
+
+### Added
+
+- Ouders en verzorgers die nog niet als eigen persoon uit Sportlink zijn gesynchroniseerd, kunnen Rondo tijdelijk via het account van hun jeugdlid gebruiken. Rondo vraagt hun naam, toont direct de gezinsplicht en informeert de ledenadministratie.
+- Beheerders kunnen onder **Beheer → Gebruikers** de persoonskoppeling van een account wijzigen zodra de ouder uit Sportlink is gesynchroniseerd.
+
+### Changed
+
+- Bij het wijzigen van een accountkoppeling verhuizen de via dat account gemaakte inschrijvingen en de VOG/IVA-gegevens van het kind naar de ouder. Afwijkende bestaande certificaatgegevens op de ouder blokkeren de verhuizing om overschrijven te voorkomen.
+- Persoonlijke en beheerweergaven van inschrijftaken tonen tijdens de tijdelijke koppeling de opgegeven naam van de ouder/verzorger.
+
 ## [33.65.0] - 2026-07-20
 
 ### Added

@@ -137,6 +137,8 @@ export const prmApi = {
   // User management (admin only)
   getUsers: () => api.get('/rondo/v1/users'),
   deleteUser: (userId) => api.delete(`/rondo/v1/users/${userId}`),
+  searchLinkablePeople: (query) => api.get('/rondo/v1/users/linkable-people', { params: { search: query } }),
+  relinkUser: (userId, personId) => api.post(`/rondo/v1/users/${userId}/linked-person`, { person_id: personId }),
   searchUsers: (query) => api.get('/rondo/v1/users/search', { params: { q: query } }),
   
   // Search
@@ -252,6 +254,7 @@ export const prmApi = {
   // Linked person (for filtering current user from attendee lists)
   getLinkedPerson: () => api.get('/rondo/v1/user/linked-person'),
   updateLinkedPerson: (personId) => api.post('/rondo/v1/user/linked-person', { person_id: personId }),
+  claimGuardianAccount: (name) => api.post('/rondo/v1/user/guardian-claim', { name }),
 
   // Person meetings
   getPersonMeetings: (personId, params = {}) => api.get(`/rondo/v1/people/${personId}/meetings`, { params }),

@@ -376,6 +376,7 @@ function rondo_init() {
 
 	// Public self-service account activation - /activeren
 	new \Rondo\Users\ActivationPage();
+	add_action( 'rondo_retry_guardian_notification', [ \Rondo\Users\GuardianAccountService::class, 'retry_notification' ] );
 
 	// Public taakuitleg landing page - /uitleg/{slug} (QR target, no auth)
 	new PublicTaakuitlegPage();

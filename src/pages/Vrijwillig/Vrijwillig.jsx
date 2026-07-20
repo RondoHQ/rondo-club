@@ -72,7 +72,7 @@ function ObligationCard({ obligation, hasBoth }) {
   );
 }
 
-function ObligationList({ obligations, exemption }) {
+function ObligationList({ obligations, exemption, identity }) {
   if (exemption) {
     return (
       <div className="card p-5 border-l-4 border-purple-400">
@@ -97,7 +97,9 @@ function ObligationList({ obligations, exemption }) {
     return (
       <div className="card p-5">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Je valt op dit moment niet onder de vrijwilligersplicht. Je mag je natuurlijk wel aanmelden voor inschrijftaken.
+          {identity?.is_youth && !identity?.pending_guardian
+            ? `Dit account staat op naam van ${identity.linked_person_name}. Als je zelf ${identity.linked_person_name} bent, heb je geen persoonlijke vrijwilligersplicht. Ben je de ouder of verzorger, geef dat dan hierboven aan zodat de gezinsplicht zichtbaar wordt.`
+            : 'Je valt op dit moment niet onder de vrijwilligersplicht. Je mag je natuurlijk wel aanmelden voor inschrijftaken.'}
         </p>
       </div>
     );
@@ -112,6 +114,69 @@ function ObligationList({ obligations, exemption }) {
       {obligations.map((obligation) => (
         <ObligationCard key={obligation.unit_id} obligation={obligation} hasBoth={hasBoth} />
       ))}
+    </div>
+  );
+}
+
+function GuardianIdentityCard({ identity, name, setName, isOpen, setIsOpen, mutation }) {
+  if (!identity?.is_youth) return null;
+
+  if (identity.pending_guardian) {
+    return (
+      <div className="card p-5 border-l-4 border-cyan-400">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">Aangemeld als ouder/verzorger</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Je gebruikt Rondo als <strong>{identity.pending_guardian.name}</strong>, ouder/verzorger van {identity.linked_person_name}.
+          De ledenadministratie koppelt dit account aan je eigen persoonsrecord zodra dat uit Sportlink is gesynchroniseerd.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card p-5 border-l-4 border-amber-400">
+      <h2 className="font-semibold text-gray-900 dark:text-gray-100">Gebruik je dit account als ouder/verzorger?</h2>
+      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        Dit account staat op naam van {identity.linked_person_name}. Ben je de ouder of verzorger, dan kun je alvast doorgaan terwijl de ledenadministratie je eigen persoonsrecord verwerkt.
+      </p>
+      {isOpen ? (
+        <form
+          className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap"
+          onSubmit={(event) => {
+            event.preventDefault();
+            mutation.mutate(name);
+          }}
+        >
+          <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+            Jouw volledige naam
+            <input
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              minLength={2}
+              maxLength={120}
+              autoComplete="name"
+              required
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setIsOpen(false)} className="btn-tertiary">Annuleren</button>
+            <button type="submit" disabled={mutation.isPending} className="btn-primary disabled:opacity-50">
+              {mutation.isPending ? 'Bezig…' : 'Ga verder als ouder/verzorger'}
+            </button>
+          </div>
+          {mutation.isError && (
+            <p className="basis-full text-sm text-red-600 dark:text-red-400">
+              {mutation.error?.response?.data?.message || 'Aanmelden als ouder/verzorger is niet gelukt.'}
+            </p>
+          )}
+        </form>
+      ) : (
+        <button type="button" onClick={() => setIsOpen(true)} className="btn-primary mt-4">
+          Ik ben ouder/verzorger van {identity.linked_person_name}
+        </button>
+      )}
     </div>
   );
 }
@@ -290,6 +355,8 @@ export default function Vrijwillig() {
   const [tab, setTab] = useState('available');
   const [confirmOverlap, setConfirmOverlap] = useState(null); // { shiftId, message }
   const [actionError, setActionError] = useState('');
+  const [guardianClaimOpen, setGuardianClaimOpen] = useState(false);
+  const [guardianName, setGuardianName] = useState('');
   const selectedDienstType = searchParams.get('diensttype') || '';
   const volunteerSignupInfo = window.rondoConfig?.volunteerSignupInfo || '';
 
@@ -337,6 +404,15 @@ export default function Vrijwillig() {
     },
     onError: (error) => {
       setActionError(error?.response?.data?.message || 'Afmelden is niet gelukt.');
+    },
+  });
+
+  const guardianMutation = useMutation({
+    mutationFn: (name) => prmApi.claimGuardianAccount(name),
+    onSuccess: () => {
+      setGuardianClaimOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['current-user'] });
     },
   });
 
@@ -415,11 +491,20 @@ export default function Vrijwillig() {
         />
       ) : null}
 
+      <GuardianIdentityCard
+        identity={mine?.identity}
+        name={guardianName}
+        setName={setGuardianName}
+        isOpen={guardianClaimOpen}
+        setIsOpen={setGuardianClaimOpen}
+        mutation={guardianMutation}
+      />
+
       {mineLoading ? (
         <ContentLoadingSpinner />
       ) : (
         <>
-          <ObligationList obligations={mine?.obligations} exemption={mine?.exemption} />
+          <ObligationList obligations={mine?.obligations} exemption={mine?.exemption} identity={mine?.identity} />
           <BlockBanners blockReasons={calendarData?.block_reasons} />
 
           <nav className="flex gap-6 border-b border-gray-200 dark:border-gray-700">

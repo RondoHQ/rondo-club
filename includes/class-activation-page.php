@@ -155,8 +155,17 @@ class ActivationPage {
 		if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 			check_admin_referer( self::NONCE_ACTION );
 
-			$person_id = isset( $_POST['person_id'] ) ? absint( wp_unslash( $_POST['person_id'] ) ) : 0;
-			$result    = ActivationService::activate( $token, $person_id );
+			$identity      = isset( $_POST['identity'] ) ? sanitize_text_field( wp_unslash( $_POST['identity'] ) ) : '';
+			$guardian_name = isset( $_POST['guardian_name'] ) ? sanitize_text_field( wp_unslash( $_POST['guardian_name'] ) ) : '';
+			if ( ! preg_match( '/^(self|guardian):(\d+)$/', $identity, $matches ) ) {
+				$this->render_error( 'Kies voor wie je het account aanmaakt.' );
+				return;
+			}
+
+			$person_id = (int) $matches[2];
+			$result    = $matches[1] === 'guardian'
+				? ActivationService::activate_guardian( $token, $person_id, $guardian_name )
+				: ActivationService::activate( $token, $person_id );
 
 			if ( is_wp_error( $result ) ) {
 				$this->render_error( $result->get_error_message() );
@@ -239,17 +248,29 @@ class ActivationPage {
 		?>
 	<div class="card">
 		<h2>Wie ben je?</h2>
-		<p>Op dit e-mailadres staan meerdere leden. Kies voor wie je een account aanmaakt.</p>
+		<p>Kies wie dit account gaat gebruiken. Ben je de ouder of verzorger van een jeugdlid en sta je zelf nog niet in Rondo? Dan kun je alvast via het account van je kind doorgaan.</p>
 		<form method="post" action="<?php echo esc_url( ActivationService::activation_url( $token ) ); ?>">
 			<?php wp_nonce_field( self::NONCE_ACTION ); ?>
 			<?php foreach ( $available as $index => $person_id ) : ?>
-				<p>
+				<div style="margin:0 0 18px;padding:14px;border:1px solid #cbd5e1;border-radius:8px;">
 					<label>
-						<input type="radio" name="person_id" value="<?php echo esc_attr( $person_id ); ?>" <?php checked( 0, $index ); ?> required />
-						<?php echo esc_html( get_the_title( $person_id ) ); ?>
+						<input type="radio" name="identity" value="self:<?php echo esc_attr( $person_id ); ?>" <?php checked( 0, $index ); ?> required />
+						Ik ben <?php echo esc_html( get_the_title( $person_id ) ); ?>
 					</label>
-				</p>
+					<?php if ( GuardianAccountService::is_youth_person( (int) $person_id ) ) : ?>
+						<br />
+						<label style="display:inline-block;margin-top:10px;">
+							<input type="radio" name="identity" value="guardian:<?php echo esc_attr( $person_id ); ?>" />
+							Ik ben ouder/verzorger van <?php echo esc_html( get_the_title( $person_id ) ); ?>
+						</label>
+					<?php endif; ?>
+				</div>
 			<?php endforeach; ?>
+			<p>
+				<label for="rondo-guardian-name">Jouw volledige naam <span style="font-weight:normal;">(alleen als ouder/verzorger)</span></label><br />
+				<input type="text" id="rondo-guardian-name" name="guardian_name" maxlength="120" autocomplete="name"
+					style="width:100%;padding:12px;font-size:16px;border:1px solid #cbd5e1;border-radius:8px;margin-top:6px;" />
+			</p>
 			<button type="submit" class="btn-primary">Account aanmaken</button>
 		</form>
 		<p class="error-hint">Deze link werkt één keer. Wil je daarna nog een account aanmaken voor iemand anders op dit adres, vraag dan een nieuwe link aan.</p>

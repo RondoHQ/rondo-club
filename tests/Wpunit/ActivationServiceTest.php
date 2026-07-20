@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Users\ActivationService;
+use Rondo\Users\GuardianAccountService;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
 
@@ -217,6 +218,20 @@ class ActivationServiceTest extends RondoTestCase {
 		$this->assertIsString( $url );
 		$this->assertStringContainsString( 'action=rp', $url );
 		$this->assertTrue( ActivationService::has_account( $person_id ) );
+	}
+
+	public function test_a_parent_can_activate_through_a_youth_person(): void {
+		$child_id = $this->person( 'Rens van Haren', 'bas@example.com' );
+		update_post_meta( $child_id, 'leeftijdsgroep', 'Onder 12' );
+		$token = ActivationService::create_token( 'bas@example.com' );
+
+		$url = ActivationService::activate_guardian( $token, $child_id, 'Bas van Haren' );
+
+		$user_id = (int) get_post_meta( $child_id, UserProvisioning::META_USER_ID, true );
+		$this->assertIsString( $url );
+		$this->assertGreaterThan( 0, $user_id );
+		$this->assertSame( 'Bas van Haren', GuardianAccountService::pending_for_user( $user_id )['name'] );
+		$this->assertSame( $child_id, (int) get_user_meta( $user_id, 'rondo_linked_person_id', true ) );
 	}
 
 	/**

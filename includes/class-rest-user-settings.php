@@ -346,6 +346,24 @@ class UserSettings extends Base {
 			]
 		);
 
+		// A parent can temporarily identify themselves through an account that is
+		// still linked to their child, pending the Sportlink person sync.
+		register_rest_route(
+			'rondo/v1',
+			'/user/guardian-claim',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'claim_guardian_account' ],
+				'permission_callback' => 'is_user_logged_in',
+				'args'                => [
+					'name' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+					],
+				],
+			]
+		);
+
 		// Update user's linked person ID
 		register_rest_route(
 			'rondo/v1',
@@ -992,6 +1010,28 @@ class UserSettings extends Base {
 	}
 
 	/**
+	 * Store a temporary parent/verzorger identity on the current child account.
+	 *
+	 * @param \WP_REST_Request $request The request object.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function claim_guardian_account( $request ) {
+		$user_id   = get_current_user_id();
+		$person_id = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$result    = \Rondo\Users\GuardianAccountService::claim(
+			$user_id,
+			$person_id,
+			(string) $request->get_param( 'name' )
+		);
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return rest_ensure_response( $result );
+	}
+
+	/**
 	 * Get current user info.
 	 *
 	 * @param \WP_REST_Request $request The request object.
@@ -1032,6 +1072,7 @@ class UserSettings extends Base {
 			|| current_user_can( 'vrijwilligers' );
 
 		$person_id           = (int) get_user_meta( $user_id, 'rondo_linked_person_id', true );
+		$pending_guardian    = \Rondo\Users\GuardianAccountService::pending_for_user( $user_id );
 		$linked_person_name  = null;
 		$linked_person_photo = null;
 		$active_functies     = [];
@@ -1078,6 +1119,7 @@ class UserSettings extends Base {
 			'linked_person_name'            => $linked_person_name,
 			'active_functies'               => $active_functies,
 			'linked_person_photo'           => $linked_person_photo,
+			'pending_guardian'              => $pending_guardian,
 		];
 	}
 

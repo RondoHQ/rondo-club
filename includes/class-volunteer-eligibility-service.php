@@ -468,6 +468,31 @@ class VolunteerEligibilityService {
 	}
 
 	/**
+	 * Resolve the merged gezin unit triggered by a youth person.
+	 *
+	 * Used only while an account is temporarily operated by a parent but still
+	 * linked to the child. The regular per-person accessor deliberately returns
+	 * no duty for a youth person.
+	 */
+	public function get_gezin_unit_for_youth( int $person_id, ?string $season = null ): ?array {
+		$age = $this->age_group_number( $person_id );
+		if ( $age === null || $age > self::YOUTH_MAX_AGE ) {
+			return null;
+		}
+
+		foreach ( $this->get_eligibility_view( $season )['units'] as $unit ) {
+			if (
+				( $unit['kind'] ?? '' ) === self::UNIT_KIND_GEZIN
+				&& in_array( $person_id, array_map( 'intval', (array) ( $unit['trigger_person_ids'] ?? [] ) ), true )
+			) {
+				return $unit;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Resolve the eligible unit for a single person, if any.
 	 *
 	 * Returns null when the person is not in the doelgroep (e.g. age 16, no kids,

@@ -36576,6 +36576,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Users\\ActivationService' => __DIR__ . '/../..' . '/includes/class-activation-service.php',
         'Rondo\\Users\\CapabilitySync' => __DIR__ . '/../..' . '/includes/class-capability-sync.php',
         'Rondo\\Users\\ContactEmailRouter' => __DIR__ . '/../..' . '/includes/class-contact-email-router.php',
+        'Rondo\\Users\\GuardianAccountService' => __DIR__ . '/../..' . '/includes/class-guardian-account-service.php',
         'Rondo\\Users\\LoginResolver' => __DIR__ . '/../..' . '/includes/class-login-resolver.php',
         'Rondo\\Users\\UserProvisioning' => __DIR__ . '/../..' . '/includes/class-user-provisioning.php',
         'Rondo\\VOG\\VOGEmail' => __DIR__ . '/../..' . '/includes/class-vog-email.php',
