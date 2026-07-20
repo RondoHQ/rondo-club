@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   addMonths,
   eachDayOfInterval,
@@ -13,6 +12,7 @@ import {
 } from 'date-fns';
 import { CheckCircle2, Circle, X, XCircle } from 'lucide-react';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import AnchoredPopover from '@/components/AnchoredPopover';
 import { format } from '@/utils/dateFormat';
 
 const WEEKDAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
@@ -83,74 +83,18 @@ function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
 }
 
 function DatePopover({ anchor, day, onClose, renderShift }) {
-  const popoverRef = useRef(null);
   const closeButtonRef = useRef(null);
-  const [position, setPosition] = useState(null);
-
-  const updatePosition = useCallback(() => {
-    if (!anchor) return;
-
-    const margin = 16;
-    const gap = 8;
-    const width = Math.min(448, window.innerWidth - (margin * 2));
-    const anchorRect = anchor.getBoundingClientRect();
-    const availableBelow = window.innerHeight - anchorRect.bottom - gap - margin;
-    const availableAbove = anchorRect.top - gap - margin;
-    const placeBelow = availableBelow >= Math.min(360, window.innerHeight * 0.4)
-      || availableBelow >= availableAbove;
-    const availableHeight = placeBelow ? availableBelow : availableAbove;
-    const centeredLeft = anchorRect.left + (anchorRect.width / 2) - (width / 2);
-
-    setPosition({
-      bottom: placeBelow ? undefined : window.innerHeight - anchorRect.top + gap,
-      left: Math.max(margin, Math.min(centeredLeft, window.innerWidth - width - margin)),
-      maxHeight: Math.max(160, availableHeight),
-      top: placeBelow ? anchorRect.bottom + gap : undefined,
-      width,
-    });
-  }, [anchor]);
-
-  useLayoutEffect(() => {
-    updatePosition();
-    closeButtonRef.current?.focus();
-  }, [updatePosition]);
-
-  useEffect(() => {
-    const handlePointerDown = (event) => {
-      if (popoverRef.current?.contains(event.target) || anchor?.contains(event.target)) return;
-      onClose();
-    };
-    const handleKeyDown = (event) => {
-      if (event.key !== 'Escape') return;
-      onClose();
-      anchor?.focus();
-    };
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-
-    return () => {
-      document.removeEventListener('pointerdown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-    };
-  }, [anchor, onClose, updatePosition]);
-
-  if (!position) return null;
 
   const titleId = `calendar-day-details-title-${day.date}`;
 
-  return createPortal(
-    <div
-      ref={popoverRef}
+  return (
+    <AnchoredPopover
+      anchor={anchor}
       id={`calendar-day-details-${day.date}`}
-      role="dialog"
-      aria-labelledby={titleId}
-      className="fixed z-50 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900"
-      style={position}
+      labelledBy={titleId}
+      initialFocusRef={closeButtonRef}
+      onClose={onClose}
+      className="p-4"
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
@@ -177,8 +121,7 @@ function DatePopover({ anchor, day, onClose, renderShift }) {
       <div className="space-y-3">
         {day.shifts.map((shift) => renderShift(shift))}
       </div>
-    </div>,
-    document.body
+    </AnchoredPopover>
   );
 }
 
