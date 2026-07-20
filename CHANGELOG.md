@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.1] - 2026-07-20
+
+### Fixed
+
+- De knop **Wijzigen** onder **Beheer → Gebruikers** opent de accountkoppeling nu direct in een zichtbare modal, ook wanneer de gebruikerstabel langer is dan het scherm.
+
 ## [33.68.0] - 2026-07-20
 
 ### Changed
