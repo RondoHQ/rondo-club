@@ -1194,6 +1194,7 @@ export default function PersonDetail() {
   const acf = person.acf || {};
   const personalName = formatPersonName(acf.first_name, acf.infix, acf.last_name);
   const isFormerMember = acf.former_member === true;
+  const isCurrentParent = person.is_current_parent === true;
 
   // Former members are read-only — Sportlink rejects writes for their
   // lidsoort ("Oud bondslid" / "Oud verenigingslid") so any UI edit
@@ -1309,8 +1310,12 @@ export default function PersonDetail() {
       
       {isFormerMember && (
         <div className="mb-4 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-          <span className="font-medium">Oud-lid — alleen-lezen.</span>{' '}
-          Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.
+          <span className="font-medium">
+            {isCurrentParent ? 'Oud-lid én actuele ouder/verzorger — alleen-lezen.' : 'Oud-lid — alleen-lezen.'}
+          </span>{' '}
+          {isCurrentParent
+            ? 'De historische lidmaatschapsgegevens blijven bewaard. Actuele contact- en adresgegevens worden bijgehouden via de oudergegevens van het kind in Sportlink.'
+            : 'Sportlink staat geen contact- of profielwijzigingen toe voor de lidsoort van deze persoon (Oud bondslid / Oud verenigingslid), dus elke aanpassing zou alsnog door de sync afgewezen worden. Vraag een beheerder om eerst de oud-lid-status uit te zetten als je deze gegevens wilt aanpassen.'}
         </div>
       )}
 
@@ -1364,7 +1369,7 @@ export default function PersonDetail() {
               </h1>
               {acf.former_member && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
-                  Oud-lid
+                  {isCurrentParent ? 'Oud-lid · ouder/verzorger' : 'Oud-lid'}
                 </span>
               )}
               {acf.person_type === 'contact' && (

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.5] - 2026-07-20
+
+### Changed
+
+- Een oud-lid met een actueel kind bij de club wordt op het persoonsprofiel nu herkenbaar getoond als **Oud-lid · ouder/verzorger**. De historische lidmaatschapsgegevens blijven alleen-lezen, terwijl de actuele oudercontactgegevens via Sportlink worden bijgehouden.
+
+### Fixed
+
+- De oudersync kan actuele contact- en adresgegevens van een oud-lid dat ook ouder/verzorger is verversen zonder diens naam, KNVB-ID of lidmaatschapshistorie te overschrijven.
+
 ## [33.68.4] - 2026-07-20
 
 ### Fixed
