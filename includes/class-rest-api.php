@@ -723,8 +723,9 @@ class Api extends Base {
 	/**
 	 * Find a person by email address (for sync deduplication)
 	 *
-	 * Searches all people for a matching email in fixed fields.
-	 * Returns the person ID if found, null otherwise.
+	 * Searches published and trashed people for a matching email in fixed fields.
+	 * The legacy top-level ID remains the first published match (or first trashed
+	 * match) while `matches` lets the sync exclude children and restore a parent.
 	 *
 	 * @param WP_REST_Request $request Request object.
 	 * @return WP_REST_Response Response with person ID or null.
@@ -736,30 +737,47 @@ class Api extends Base {
 			return new \WP_REST_Response( [ 'id' => null ], 200 );
 		}
 
-		// Search by email_1 first, then email_2.
-		foreach ( [ 'email_1', 'email_2' ] as $field ) {
-			$matches = get_posts(
-				[
-					'post_type'        => 'person',
-					'posts_per_page'   => 1,
-					'post_status'      => 'publish',
-					'suppress_filters' => true,
-					'meta_query'       => [
-						[
-							'key'     => $field,
-							'value'   => $email,
-							'compare' => '=',
-						],
-					],
-				]
-			);
+		$found = [];
 
-			if ( ! empty( $matches ) ) {
-				return new \WP_REST_Response( [ 'id' => $matches[0]->ID ], 200 );
+		// Prefer published matches for backward compatibility, but expose trashed
+		// matches so rondo-sync can restore an existing parent instead of duplicating it.
+		foreach ( [ 'publish', 'trash' ] as $status ) {
+			foreach ( [ 'email_1', 'email_2' ] as $field ) {
+				$matches = get_posts(
+					[
+						'post_type'        => 'person',
+						'posts_per_page'   => -1,
+						'post_status'      => $status,
+						'suppress_filters' => true,
+						'meta_query'       => [
+							[
+								'key'     => $field,
+								'value'   => $email,
+								'compare' => '=',
+							],
+						],
+					]
+				);
+
+				foreach ( $matches as $match ) {
+					$found[ $match->ID ] = [
+						'id'     => (int) $match->ID,
+						'status' => (string) $match->post_status,
+					];
+				}
 			}
 		}
 
-		return new \WP_REST_Response( [ 'id' => null ], 200 );
+		$matches = array_values( $found );
+
+		return new \WP_REST_Response(
+			[
+				'id'      => $matches[0]['id'] ?? null,
+				'status'  => $matches[0]['status'] ?? null,
+				'matches' => $matches,
+			],
+			200
+		);
 	}
 
 	/**

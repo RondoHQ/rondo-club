@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.4] - 2026-07-20
+
+### Fixed
+
+- De Sportlink-sync kan een terugkerende ouder nu ook op e-mailadres in de WordPress-prullenbak vinden, zodat het bestaande ouderrecord wordt hersteld in plaats van een sibling te hergebruiken of een duplicaat aan te maken.
+
 ## [33.68.3] - 2026-07-20
 
 ### Changed
