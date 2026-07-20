@@ -9,6 +9,7 @@
  * Endpoints:
  *   GET  /rondo/v1/my-shifts              — current user's assigned + completed shifts plus their counter
  *   GET  /rondo/v1/people/{id}/shifts      — person's active future shifts plus their two most recent past shifts
+ *   GET  /rondo/v1/shifts/recent-signups   — 50 shifts with the most recent current signups
  *   GET  /rondo/v1/shifts/available       — open shifts the current user can sign up for
  *   POST /rondo/v1/shifts/{id}/signup     — add current user to a shift
  *   POST /rondo/v1/shifts/{id}/cancel     — remove current user from a shift (afmelden mag altijd)
@@ -224,6 +225,16 @@ class MemberShifts extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/shifts/recent-signups',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_recent_signups' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/shifts/calendar',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -433,6 +444,94 @@ class MemberShifts extends Base {
 				'recent'    => array_slice( $recent, 0, 2 ),
 			]
 		);
+	}
+
+	/**
+	 * Return at most 50 shifts ordered by their latest current signup.
+	 *
+	 * A signup remains current only while the person is still present in the
+	 * shift's `assigned_persons` value. Manager-added assignees without a signup
+	 * timestamp are deliberately omitted: this overview tracks self-service
+	 * registrations, not every assignment edit.
+	 */
+	public function get_recent_signups() {
+		$query = new \WP_Query(
+			[
+				'post_type'        => 'dienst_shift',
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- dynamic per-person signup keys must be inspected before the top 50 can be selected.
+				'posts_per_page'   => -1,
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'post_status'      => [ 'publish' ],
+				'meta_query'       => [
+					[
+						'key'         => '_shift_signup_at_',
+						'compare_key' => 'LIKE',
+						'compare'     => 'EXISTS',
+					],
+				],
+			]
+		);
+
+		$shifts         = [];
+		$seen_shift_ids = [];
+		foreach ( $query->posts as $shift ) {
+			if ( isset( $seen_shift_ids[ $shift->ID ] ) ) {
+				continue;
+			}
+			$seen_shift_ids[ $shift->ID ] = true;
+
+			$assigned = array_map( 'intval', (array) get_post_meta( $shift->ID, 'assigned_persons', true ) );
+			$signups  = [];
+			foreach ( $assigned as $person_id ) {
+				$timestamp = (int) get_post_meta( $shift->ID, '_shift_signup_at_' . $person_id, true );
+				if ( $timestamp <= 0 ) {
+					continue;
+				}
+
+				$name = $this->sanitize_text( GuardianAccountService::display_name_for_person( $person_id ) );
+				if ( $name === '' ) {
+					continue;
+				}
+
+				$signups[] = [
+					'name'         => $name,
+					'signed_up_at' => wp_date( 'c', $timestamp ),
+					'timestamp'    => $timestamp,
+				];
+			}
+
+			if ( empty( $signups ) ) {
+				continue;
+			}
+
+			usort( $signups, fn( array $a, array $b ): int => $b['timestamp'] <=> $a['timestamp'] );
+			$summary = $this->format_shift_summary( $shift );
+			if ( $summary === null ) {
+				continue;
+			}
+
+			$latest_timestamp = $signups[0]['timestamp'];
+			unset( $summary['assigned_person_ids'] );
+			foreach ( $signups as &$signup ) {
+				unset( $signup['timestamp'] );
+			}
+			unset( $signup );
+
+			$summary['latest_signup_at'] = $signups[0]['signed_up_at'];
+			$summary['latest_timestamp'] = $latest_timestamp;
+			$summary['signups']          = $signups;
+			$shifts[]                    = $summary;
+		}
+
+		usort( $shifts, fn( array $a, array $b ): int => $b['latest_timestamp'] <=> $a['latest_timestamp'] );
+		$shifts = array_slice( $shifts, 0, 50 );
+		foreach ( $shifts as &$shift ) {
+			unset( $shift['latest_timestamp'] );
+		}
+		unset( $shift );
+
+		return rest_ensure_response( [ 'shifts' => $shifts ] );
 	}
 
 	public function get_available_shifts( \WP_REST_Request $request ) {

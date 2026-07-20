@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.0] - 2026-07-20
+
+### Changed
+
+- Het blok onderaan **Vrijwilligers → Inschrijftaken** toont niet langer de laatst aangemaakte diensten, maar maximaal 50 diensten met de recentste actuele aanmeldingen. Per dienst staan de ingeschreven namen en het tijdstip van de laatste aanmelding; de dienstnaam opent direct de diensteditor.
+
 ## [33.67.0] - 2026-07-20
 
 ### Added
