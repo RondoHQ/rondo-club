@@ -50,4 +50,20 @@ class VolunteerShiftCapacityTest extends RondoTestCase {
 			$response->get_data()['shift_capacity']
 		);
 	}
+
+	public function test_eligibility_counts_only_users_linked_to_a_person_as_rondo_accounts(): void {
+		$baseline_request = new WP_REST_Request( 'GET', '/rondo/v1/volunteer-eligibility' );
+		$baseline_request->set_param( 'season', '2026-2027' );
+		$baseline = ( new Volunteer() )->get_eligibility( $baseline_request )->get_data()['rondo_account_count'];
+
+		$linked_user_id = self::factory()->user->create();
+		update_user_meta( $linked_user_id, 'rondo_linked_person_id', $this->createPerson() );
+		self::factory()->user->create();
+
+		$request = new WP_REST_Request( 'GET', '/rondo/v1/volunteer-eligibility' );
+		$request->set_param( 'season', '2026-2027' );
+		$response = ( new Volunteer() )->get_eligibility( $request );
+
+		$this->assertSame( $baseline + 1, $response->get_data()['rondo_account_count'] );
+	}
 }
