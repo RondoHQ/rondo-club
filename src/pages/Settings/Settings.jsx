@@ -2241,6 +2241,7 @@ function GebruikersTab() {
   const [relinkResults, setRelinkResults] = useState([]);
   const [relinkSearching, setRelinkSearching] = useState(false);
   const [relinking, setRelinking] = useState(null);
+  const relinkSearchInputRef = useRef(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -2327,6 +2328,19 @@ function GebruikersTab() {
     setRelinkSearch('');
     setRelinkResults([]);
   };
+
+  useEffect(() => {
+    if (!relinkAccount) return undefined;
+
+    relinkSearchInputRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && !relinking) {
+        closeRelink();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [relinkAccount, relinking]);
 
   const handleRelink = async (person) => {
     if (!relinkAccount) return;
@@ -2465,11 +2479,24 @@ function GebruikersTab() {
           </div>
         )}
 
-        {relinkAccount && (
-          <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
-            <div className="flex items-start justify-between gap-4">
+      </div>
+
+      {relinkAccount && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="relink-account-title"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !relinking) closeRelink();
+          }}
+        >
+          <div className="w-full max-w-xl rounded-lg bg-white shadow-xl dark:bg-gray-800">
+            <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-4 dark:border-gray-700">
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">Accountkoppeling wijzigen</h3>
+                <h3 id="relink-account-title" className="font-medium text-gray-900 dark:text-gray-100">
+                  Accountkoppeling wijzigen
+                </h3>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                   Zoek de gesynchroniseerde persoon voor {relinkAccount.pending_guardian?.name || relinkAccount.name}.
                   Inschrijvingen en VOG/IVA-gegevens die via dit account op {relinkAccount.linked_person_name} staan, verhuizen mee.
@@ -2478,63 +2505,67 @@ function GebruikersTab() {
               <button
                 type="button"
                 onClick={closeRelink}
+                disabled={Boolean(relinking)}
                 aria-label="Sluiten"
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:hover:text-gray-200"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="relative mt-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={relinkSearch}
-                onChange={(event) => setRelinkSearch(event.target.value)}
-                placeholder="Zoek de ouder/verzorger op naam..."
-                className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
-              />
-              {relinkSearching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+            <div className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  ref={relinkSearchInputRef}
+                  type="text"
+                  value={relinkSearch}
+                  onChange={(event) => setRelinkSearch(event.target.value)}
+                  placeholder="Zoek de ouder/verzorger op naam..."
+                  className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-electric-cyan focus:border-transparent"
+                />
+                {relinkSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+                )}
+              </div>
+
+              {relinkSearch.length >= 2 && !relinkSearching && relinkResults.length === 0 && (
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Geen beschikbare personen gevonden.</p>
+              )}
+
+              {relinkResults.length > 0 && (
+                <div className="mt-3 max-h-72 overflow-y-auto rounded-md border border-gray-300 dark:border-gray-600">
+                  {relinkResults.map(person => (
+                    <div key={person.id} className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 last:border-0 dark:border-gray-700">
+                      <div>
+                        <Link to={`/people/${person.id}`} className="text-sm text-electric-cyan hover:underline">
+                          {person.name}
+                        </Link>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {[person.email, person.knvb_id].filter(Boolean).join(' · ') || 'Geen aanvullende gegevens'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRelink(person)}
+                        disabled={Boolean(relinking)}
+                        className="btn-primary gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50"
+                      >
+                        {relinking === person.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <LinkIcon className="w-3.5 h-3.5" />
+                        )}
+                        Koppelen
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-
-            {relinkSearch.length >= 2 && !relinkSearching && relinkResults.length === 0 && (
-              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">Geen beschikbare personen gevonden.</p>
-            )}
-
-            {relinkResults.length > 0 && (
-              <div className="mt-3 overflow-hidden rounded-md border border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800">
-                {relinkResults.map(person => (
-                  <div key={person.id} className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 last:border-0 dark:border-gray-700">
-                    <div>
-                      <Link to={`/people/${person.id}`} className="text-sm text-electric-cyan hover:underline">
-                        {person.name}
-                      </Link>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {[person.email, person.knvb_id].filter(Boolean).join(' · ') || 'Geen aanvullende gegevens'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRelink(person)}
-                      disabled={relinking === person.id}
-                      className="btn-primary gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50"
-                    >
-                      {relinking === person.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <LinkIcon className="w-3.5 h-3.5" />
-                      )}
-                      Koppelen
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Invite by search */}
       <div className="card p-6">
