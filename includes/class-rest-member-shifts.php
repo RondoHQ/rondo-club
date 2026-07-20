@@ -8,6 +8,7 @@
  *
  * Endpoints:
  *   GET  /rondo/v1/my-shifts              — current user's assigned + completed shifts plus their counter
+ *   GET  /rondo/v1/people/{id}/shifts      — person's active future shifts plus their two most recent past shifts
  *   GET  /rondo/v1/shifts/available       — open shifts the current user can sign up for
  *   POST /rondo/v1/shifts/{id}/signup     — add current user to a shift
  *   POST /rondo/v1/shifts/{id}/cancel     — remove current user from a shift (afmelden mag altijd)
@@ -197,6 +198,22 @@ class MemberShifts extends Base {
 
 		register_rest_route(
 			'rondo/v1',
+			'/people/(?P<person_id>\d+)/shifts',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_person_shifts' ],
+				'permission_callback' => [ $this, 'check_person_access' ],
+				'args'                => [
+					'person_id' => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
 			'/shifts/available',
 			[
 				'methods'             => \WP_REST_Server::READABLE,
@@ -362,6 +379,58 @@ class MemberShifts extends Base {
 					'is_youth'           => GuardianAccountService::is_youth_person( $person_id ),
 					'pending_guardian'   => $pending_guardian,
 				],
+			]
+		);
+	}
+
+	/**
+	 * Return the active future shifts and two most recent past shifts for a person.
+	 *
+	 * This read-only profile response deliberately omits fellow-volunteer contact
+	 * details and internal assignee IDs. Access follows the same person visibility
+	 * rules as the rest of the person detail screen.
+	 */
+	public function get_person_shifts( \WP_REST_Request $request ) {
+		$person_id = (int) $request->get_param( 'person_id' );
+		$person    = get_post( $person_id );
+		if ( ! $person || $person->post_type !== 'person' ) {
+			return new \WP_Error( 'invalid_person', 'Persoon bestaat niet.', [ 'status' => 404 ] );
+		}
+
+		$now      = current_datetime()->getTimestamp();
+		$upcoming = [];
+		$recent   = [];
+
+		foreach ( $this->query_shifts_for_person( $person_id, false, -1 ) as $shift ) {
+			$start = $this->shift_start_timestamp( (int) $shift['id'] );
+			if ( $start === null ) {
+				continue;
+			}
+
+			if ( $start >= $now ) {
+				if ( in_array( $shift['status'], [ 'open', 'vol' ], true ) ) {
+					$upcoming[] = $shift;
+				}
+				continue;
+			}
+
+			$recent[] = $shift;
+		}
+
+		usort(
+			$upcoming,
+			fn( array $a, array $b ): int => strcmp( $a['start_datetime'], $b['start_datetime'] )
+		);
+		usort(
+			$recent,
+			fn( array $a, array $b ): int => strcmp( $b['start_datetime'], $a['start_datetime'] )
+		);
+
+		return rest_ensure_response(
+			[
+				'person_id' => $person_id,
+				'upcoming'  => $upcoming,
+				'recent'    => array_slice( $recent, 0, 2 ),
 			]
 		);
 	}
@@ -1038,12 +1107,12 @@ class MemberShifts extends Base {
 	/**
 	 * Query every shift the person is assigned to OR completed in.
 	 */
-	private function query_shifts_for_person( int $person_id ): array {
+	private function query_shifts_for_person( int $person_id, bool $include_member_details = true, int $posts_per_page = 200 ): array {
 		$query = new \WP_Query(
 			[
 				'post_type'        => 'dienst_shift',
-				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- per-person scope, intentional cap.
-				'posts_per_page'   => 200,
+				// phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- per-person scope; profile overview intentionally requests every future shift.
+				'posts_per_page'   => $posts_per_page,
 				'no_found_rows'    => true,
 				'suppress_filters' => true,
 				'post_status'      => [ 'publish' ],
@@ -1068,11 +1137,13 @@ class MemberShifts extends Base {
 			}
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary !== null ) {
-				$fellow_volunteers = $this->format_fellow_volunteer_contacts( $summary['assigned_person_ids'], $person_id );
+				if ( $include_member_details ) {
+					$fellow_volunteers = $this->format_fellow_volunteer_contacts( $summary['assigned_person_ids'], $person_id );
 
-				$summary['fellow_volunteers']         = array_column( $fellow_volunteers, 'name' );
-				$summary['fellow_volunteer_contacts'] = $fellow_volunteers;
-				$summary['can_cancel']                = in_array( $summary['status'], [ 'open', 'vol' ], true ) && $this->can_member_cancel( $shift->ID, $person_id );
+					$summary['fellow_volunteers']         = array_column( $fellow_volunteers, 'name' );
+					$summary['fellow_volunteer_contacts'] = $fellow_volunteers;
+					$summary['can_cancel']                = in_array( $summary['status'], [ 'open', 'vol' ], true ) && $this->can_member_cancel( $shift->ID, $person_id );
+				}
 				unset( $summary['assigned_person_ids'] );
 				$summary['no_show'] = (bool) get_post_meta( $shift->ID, '_no_show_' . $person_id, true );
 				$out[]              = $summary;

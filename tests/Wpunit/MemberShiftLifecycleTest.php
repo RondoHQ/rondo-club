@@ -56,7 +56,7 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 	}
 
 	private function shift( array $assigned, int $days_until_start ): int {
-		$start    = current_datetime()->modify( '+' . $days_until_start . ' days' );
+		$start    = current_datetime()->modify( sprintf( '%+d days', $days_until_start ) );
 		$shift_id = self::factory()->post->create(
 			[
 				'post_type'   => 'dienst_shift',
@@ -69,6 +69,34 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		update_post_meta( $shift_id, 'status', 'open' );
 		update_post_meta( $shift_id, 'assigned_persons', $assigned );
 		return $shift_id;
+	}
+
+	public function test_person_profile_shifts_include_all_future_and_only_two_most_recent_past_shifts(): void {
+		[, $person_id] = $this->member( 'person_shift_overview_member' );
+
+		$future_later = $this->shift( [ $person_id ], 5 );
+		$future_next  = $this->shift( [ $person_id ], 2 );
+		$cancelled    = $this->shift( [ $person_id ], 3 );
+		update_post_meta( $cancelled, 'status', 'geannuleerd' );
+
+		$past_oldest = $this->shift( [ $person_id ], -8 );
+		$past_second = $this->shift( [ $person_id ], -4 );
+		$past_latest = $this->shift( [ $person_id ], -1 );
+		foreach ( [ $past_oldest, $past_second, $past_latest ] as $shift_id ) {
+			update_post_meta( $shift_id, 'status', 'voltooid' );
+		}
+
+		$request = new WP_REST_Request( 'GET', "/rondo/v1/people/{$person_id}/shifts" );
+		$request->set_param( 'person_id', $person_id );
+		$response = $this->server->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$this->assertSame( [ $future_next, $future_later ], array_column( $data['upcoming'], 'id' ) );
+		$this->assertSame( [ $past_latest, $past_second ], array_column( $data['recent'], 'id' ) );
+		$this->assertNotContains( $cancelled, array_column( $data['upcoming'], 'id' ) );
+		$this->assertArrayNotHasKey( 'assigned_person_ids', $data['upcoming'][0] );
+		$this->assertArrayNotHasKey( 'fellow_volunteer_contacts', $data['upcoming'][0] );
 	}
 
 	private function cancel( int $shift_id ) {

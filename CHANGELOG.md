@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.67.0] - 2026-07-20
+
+### Added
+
+- Ledenprofielen tonen alle komende inschrijftaken en de twee meest recente verstreken inschrijftaken van die persoon, inclusief datum, tijd en status.
+- Het nieuwe persoonsendpoint `GET /rondo/v1/people/{person_id}/shifts` levert dit beperkte overzicht met dezelfde toegangscontrole als het ledenprofiel en zonder persoonsgegevens van mede-vrijwilligers.
+
 ## [33.66.0] - 2026-07-20
 
 ### Added
