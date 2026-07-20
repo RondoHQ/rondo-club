@@ -37,7 +37,7 @@ function ObligationCard({ obligation, hasBoth }) {
   const required = obligation.required_count || 0;
   const completed = obligation.completed_count || 0;
   const pending = obligation.pending_count || 0;
-  const remaining = Math.max(0, required - completed);
+  const remainingToSchedule = Math.max(0, required - completed - pending);
 
   return (
     <div className="card p-5">
@@ -47,7 +47,11 @@ function ObligationCard({ obligation, hasBoth }) {
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Je hebt <strong>{completed}</strong> van <strong>{required}</strong> inschrijftaken gedaan dit seizoen.
             {pending > 0 && <> Je staat al ingepland voor {pending} {pending === 1 ? 'inschrijftaak' : 'inschrijftaken'}.</>}
-            {remaining > 0 && <> Plan nog <strong>{remaining}</strong> {remaining === 1 ? 'inschrijftaak' : 'inschrijftaken'} in.</>}
+            {remainingToSchedule > 0 ? (
+              <> Plan nog <strong>{remainingToSchedule}</strong> {remainingToSchedule === 1 ? 'inschrijftaak' : 'inschrijftaken'} in.</>
+            ) : completed < required && (
+              <> Je hebt alle benodigde inschrijftaken ingepland.</>
+            )}
           </p>
         </div>
         <StatusBadge kind={obligation.status}>
