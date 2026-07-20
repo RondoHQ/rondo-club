@@ -23,20 +23,12 @@ const CATEGORIES = {
       'Dat werkt, maar wordt fragiel zodra iemand verhuist. Voeg expliciete relationship_type=parent entries toe op de persoonspagina van de speler.',
   },
   missing_leeftijdsgroep: {
-    title: 'Actieve leden zonder leeftijdsgroep',
+    title: 'Spelende leden zonder leeftijdsgroep',
     intro:
-      'Deze actieve leden hebben geen leeftijdsgroep én geen andere zichtbare reden om er geen te hebben. ' +
-      'Al uitgefilterd: huidige vrijwilligers, honorary leden (Donateur, Erelid, Lid van Verdienste, Verenigingslid voor het leven), ' +
-      'en ouders die al via een gezin gekoppeld zijn (relationships of adres). ' +
-      'Wat overblijft is meestal een Sportlink-sync die gehaperd heeft — corrigeer het op de persoonspagina ' +
-      '(leeftijdsgroep zetten, een passende werkfunctie of "huidig vrijwilliger" aanvinken, of als ex-lid markeren).',
-  },
-  former_members: {
-    title: 'Ex-leden',
-    intro:
-      'Deze personen vallen buiten de vrijwilligersplicht omdat ze als ex-lid (former_member) gemarkeerd zijn. ' +
-      'Contributievrijstelling (donateur, erelid, Lid van Verdienste, contributievrij) is hier bewust geen reden — ' +
-      'die leden zitten gewoon in de doelgroep, tenzij ze via een andere route vrijgesteld zijn (commissie, staf-rol, betaalde vrijwilliger, handmatige vrijstelling).',
+      'Bij deze actieve leden bevat Sportlink wel een spelactiviteit, maar geen leeftijdsgroep. ' +
+      'Daardoor kan Rondo niet bepalen of de speler onder de gezins- of spelersplicht valt. ' +
+      'Niet-spelende ouders, sponsorcontacten en andere contacten zonder spelactiviteit zijn al uitgefilterd. ' +
+      'Controleer voor de overgebleven spelers de Sportlink-sync.',
   },
   no_email: {
     title: 'Actieve leden zonder e-mailadres',

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.6] - 2026-07-20
+
+### Fixed
+
+- **Datakwaliteit** onder Vrijwilligers meldt alleen nog spelende leden waarbij Sportlink wel een spelactiviteit maar geen leeftijdsgroep bevat; niet-spelende ouders, sponsorcontacten en andere contacten worden niet langer ten onrechte als probleem geteld.
+- Ex-leden worden nog steeds buiten de vrijwilligersdoelgroep gehouden, maar staan niet langer als datakwaliteitsprobleem op het dashboard.
+
 ## [33.68.5] - 2026-07-20
 
 ### Changed
