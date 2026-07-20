@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.64.2] - 2026-07-20
+
+### Fixed
+
+- De voortgangskaart op de persoonlijke vrijwilligerspagina trekt reeds ingeplande inschrijftaken nu af van het aantal dat nog moet worden ingepland. Wanneer de volledige plicht al is ingepland, bevestigt de kaart dat expliciet in plaats van ten onrechte om extra inschrijftaken te vragen.
+
 ## [33.64.1] - 2026-07-19
 
 ### Fixed
