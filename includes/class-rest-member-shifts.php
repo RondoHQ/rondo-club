@@ -495,6 +495,7 @@ class MemberShifts extends Base {
 				}
 
 				$signups[] = [
+					'person_id'    => $person_id,
 					'name'         => $name,
 					'signed_up_at' => wp_date( 'c', $timestamp ),
 					'timestamp'    => $timestamp,

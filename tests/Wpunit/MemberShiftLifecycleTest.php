@@ -130,8 +130,8 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$this->assertCount( 50, $data['shifts'] );
 		$this->assertSame( $latest_shift_id, $data['shifts'][0]['id'] );
 		$this->assertSame( [ 'Bob Recent', 'Anne Recent' ], array_column( $data['shifts'][0]['signups'], 'name' ) );
+		$this->assertSame( [ $bob_id, $anne_id ], array_column( $data['shifts'][0]['signups'], 'person_id' ) );
 		$this->assertNotContains( $ids[0], array_column( $data['shifts'], 'id' ) );
-		$this->assertArrayNotHasKey( 'person_id', $data['shifts'][0]['signups'][0] );
 	}
 
 	private function cancel( int $shift_id ) {

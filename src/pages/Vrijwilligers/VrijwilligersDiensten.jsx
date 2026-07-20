@@ -204,8 +204,18 @@ export default function VrijwilligersDiensten() {
                     <td className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">
                       {format(shift.start_datetime, 'EEE d MMM yyyy, HH:mm')}–{format(shift.end_datetime, 'HH:mm')}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {shift.signups.map((signup) => signup.name).join(', ')}
+                    <td className="px-4 py-3">
+                      {shift.signups.map((signup, index) => (
+                        <span key={signup.person_id}>
+                          {index > 0 ? ', ' : ''}
+                          <Link
+                            to={`/people/${signup.person_id}`}
+                            className="text-bright-cobalt hover:underline dark:text-electric-cyan"
+                          >
+                            {signup.name}
+                          </Link>
+                        </span>
+                      ))}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-500 dark:text-gray-400">
                       {format(shift.latest_signup_at, 'dd-MM-yyyy HH:mm')}
