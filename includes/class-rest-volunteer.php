@@ -899,13 +899,32 @@ class Volunteer extends Base {
 
 		return rest_ensure_response(
 			[
-				'season'         => $season,
-				'units'          => $units,
-				'total_units'    => count( $units ),
-				'diagnostics'    => $diagnostics,
-				'shift_capacity' => $this->get_shift_capacity_stats( $season ),
+				'season'              => $season,
+				'units'               => $units,
+				'total_units'         => count( $units ),
+				'rondo_account_count' => $this->get_rondo_account_count(),
+				'diagnostics'         => $diagnostics,
+				'shift_capacity'      => $this->get_shift_capacity_stats( $season ),
 			]
 		);
+	}
+
+	/**
+	 * Count WordPress users linked to a Rondo person record.
+	 */
+	private function get_rondo_account_count(): int {
+		$query = new \WP_User_Query(
+			[
+				'meta_key'     => 'rondo_linked_person_id',
+				'meta_compare' => '!=',
+				'meta_value'   => '',
+				'fields'       => 'ID',
+				'number'       => 1,
+				'count_total'  => true,
+			]
+		);
+
+		return (int) $query->get_total();
 	}
 
 	/**

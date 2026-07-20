@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, AlertTriangle, RefreshCw } from 'lucide-react';
+import { HeartHandshake, FileCheck, Wine, CalendarClock, UsersRound, Users, UserRoundCheck, AlertTriangle, RefreshCw } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
@@ -111,6 +111,20 @@ export default function VrijwilligersDashboard() {
             value={isLoading ? '…' : (eligibility?.shift_capacity?.assigned_slots ?? 0).toLocaleString('nl-NL')}
             sub="Aantal plekken met een vrijwilliger"
             icon={UsersRound}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wider mb-3">
+          Rondo accounts
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <StatCard
+            label="Accounts aangemaakt"
+            value={isLoading ? '…' : (eligibility?.rondo_account_count ?? 0).toLocaleString('nl-NL')}
+            sub="Gebruikersaccounts gekoppeld aan een persoon"
+            icon={UserRoundCheck}
           />
         </div>
       </section>
