@@ -323,8 +323,8 @@ export default function PersonDetail() {
     try {
       await deletePerson.mutateAsync(Number(id));
       navigate('/people');
-    } catch {
-      alert('Sponsor kon niet worden verwijderd. Probeer het opnieuw.');
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Sponsor kon niet worden verwijderd. Probeer het opnieuw.');
     }
   };
 

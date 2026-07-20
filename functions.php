@@ -123,6 +123,7 @@ use Rondo\Collaboration\MentionNotifications;
 use Rondo\Collaboration\Reminders;
 use Rondo\Export\VCard as VCardExport;
 use Rondo\Data\InverseRelationships;
+use Rondo\Data\PersonDeletionGuard;
 use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
 use Rondo\CustomFields\Validation as CustomFieldsValidation;
@@ -263,6 +264,7 @@ function rondo_init() {
 	new PostTypes();
 	new Taxonomies();
 	new AccessControl();
+	new PersonDeletionGuard();
 	new UserRoles();
 	new LettermintMailer();
 	new DemoProtection();

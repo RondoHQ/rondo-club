@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.7] - 2026-07-20
+
+### Fixed
+
+- Personen kunnen niet meer naar de prullenbak worden verplaatst of definitief worden verwijderd zolang hun profiel nog een actieve relatie met een andere persoon bevat. De verwijdermelding noemt de gekoppelde personen, zodat de relatie eerst kan worden gecorrigeerd of verwijderd.
+
 ## [33.68.6] - 2026-07-20
 
 ### Fixed
