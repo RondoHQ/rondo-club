@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.2] - 2026-07-20
+
+### Changed
+
+- De namen in **Recente aanmeldingen** onder **Vrijwilligers → Inschrijftaken** linken nu rechtstreeks naar het bijbehorende ledenprofiel.
+
 ## [33.68.1] - 2026-07-20
 
 ### Fixed
