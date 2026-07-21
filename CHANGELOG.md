@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.1] - 2026-07-21
+
+### Fixed
+
+- De actieve BC-lidfilter toont het label nog maar één keer in de filterchip.
+
 ## [33.73.0] - 2026-07-21
 
 ### Added
