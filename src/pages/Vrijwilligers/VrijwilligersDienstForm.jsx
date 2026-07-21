@@ -10,8 +10,9 @@ import { format } from '@/utils/dateFormat';
 const EMPTY = {
   title: '',
   dienst_type_id: 0,
-  start_datetime: '',
-  end_datetime: '',
+  date: '',
+  start_time: '',
+  end_time: '',
   capacity: 1,
   status: 'open',
   iva_waived: false,
@@ -26,14 +27,18 @@ const STATUSES = [
 
 const INPUT_CLS = 'block w-full rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 px-3 py-2 text-sm';
 
-function toLocalInput(value) {
-  if (!value) return '';
-  // accept both "Y-m-d H:i:s" and "Y-m-d H:i"
-  return value.replace(' ', 'T').slice(0, 16);
+function splitDateTime(value) {
+  if (!value) return { date: '', time: '' };
+  const localValue = value.replace(' ', 'T');
+  return {
+    date: localValue.slice(0, 10),
+    time: localValue.slice(11, 16),
+  };
 }
-function fromLocalInput(value) {
-  if (!value) return '';
-  return value.replace('T', ' ') + ':00';
+
+function toStoredDateTime(date, time) {
+  if (!date || !time) return '';
+  return `${date} ${time}:00`;
 }
 
 export default function VrijwilligersDienstForm() {
@@ -64,11 +69,14 @@ export default function VrijwilligersDienstForm() {
   useEffect(() => {
     if (!existing) return;
     const acf = existing.acf || {};
+    const start = splitDateTime(acf.start_datetime || '');
+    const end = splitDateTime(acf.end_datetime || '');
     setForm({
       title: existing.title?.rendered || existing.title || '',
       dienst_type_id: Number(acf.dienst_type_id) || 0,
-      start_datetime: toLocalInput(acf.start_datetime || ''),
-      end_datetime: toLocalInput(acf.end_datetime || ''),
+      date: start.date || end.date,
+      start_time: start.time,
+      end_time: end.time,
       capacity: acf.capacity ? Number(acf.capacity) : 1,
       status: acf.status || 'open',
       iva_waived: Boolean(acf.iva_waived),
@@ -85,12 +93,12 @@ export default function VrijwilligersDienstForm() {
   const defaultTitle = useMemo(() => {
     if (form.title) return form.title;
     const type = types.find((t) => t.id === Number(form.dienst_type_id));
-    if (type && form.start_datetime) {
+    if (type && form.date && form.start_time) {
       const typeName = type.title?.rendered || type.title;
       try {
-        return `${typeName} — ${format(form.start_datetime, 'dd-MM-yyyy HH:mm')}`;
+        return `${typeName} — ${format(`${form.date}T${form.start_time}`, 'dd-MM-yyyy HH:mm')}`;
       } catch {
-        return `${typeName} — ${form.start_datetime}`;
+        return `${typeName} — ${form.date} ${form.start_time}`;
       }
     }
     return '';
@@ -132,10 +140,10 @@ export default function VrijwilligersDienstForm() {
   const cancellation = existing?.cancellation || null;
   const templateLink = existing?.template_link || null;
   const cancellationIsLastMinute = useMemo(() => {
-    if (!form.start_datetime) return false;
-    const millisecondsUntilStart = new Date(form.start_datetime).getTime() - Date.now();
+    if (!form.date || !form.start_time) return false;
+    const millisecondsUntilStart = new Date(`${form.date}T${form.start_time}`).getTime() - Date.now();
     return millisecondsUntilStart > 0 && millisecondsUntilStart < 48 * 60 * 60 * 1000;
-  }, [form.start_datetime]);
+  }, [form.date, form.start_time]);
 
   const saveMutation = useMutation({
     mutationFn: (payload) =>
@@ -243,8 +251,12 @@ export default function VrijwilligersDienstForm() {
             setFeedback({ kind: 'error', message: 'Kies een inschrijftaak.' });
             return;
           }
-          if (!form.start_datetime || !form.end_datetime) {
-            setFeedback({ kind: 'error', message: 'Vul start- en eindtijd in.' });
+          if (!form.date || !form.start_time || !form.end_time) {
+            setFeedback({ kind: 'error', message: 'Vul de datum, begintijd en eindtijd in.' });
+            return;
+          }
+          if (form.end_time <= form.start_time) {
+            setFeedback({ kind: 'error', message: 'De eindtijd moet na de begintijd liggen.' });
             return;
           }
           saveMutation.mutate({
@@ -252,8 +264,8 @@ export default function VrijwilligersDienstForm() {
             status: 'publish',
             acf: {
               dienst_type_id: Number(form.dienst_type_id),
-              start_datetime: fromLocalInput(form.start_datetime),
-              end_datetime: fromLocalInput(form.end_datetime),
+              start_datetime: toStoredDateTime(form.date, form.start_time),
+              end_datetime: toStoredDateTime(form.date, form.end_time),
               capacity: Number(form.capacity) || 1,
               status: form.status,
               iva_waived: typeRequiresIva ? Boolean(form.iva_waived) : false,
@@ -303,22 +315,31 @@ export default function VrijwilligersDienstForm() {
           </select>
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Start">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Datum">
             <input
-              type="datetime-local"
+              type="date"
               required
-              value={form.start_datetime}
-              onChange={(e) => setForm({ ...form, start_datetime: e.target.value })}
+              value={form.date}
+              onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))}
               className={INPUT_CLS}
             />
           </Field>
-          <Field label="Eind">
+          <Field label="Begintijd">
             <input
-              type="datetime-local"
+              type="time"
               required
-              value={form.end_datetime}
-              onChange={(e) => setForm({ ...form, end_datetime: e.target.value })}
+              value={form.start_time}
+              onChange={(e) => setForm((current) => ({ ...current, start_time: e.target.value }))}
+              className={INPUT_CLS}
+            />
+          </Field>
+          <Field label="Eindtijd">
+            <input
+              type="time"
+              required
+              value={form.end_time}
+              onChange={(e) => setForm((current) => ({ ...current, end_time: e.target.value }))}
               className={INPUT_CLS}
             />
           </Field>
