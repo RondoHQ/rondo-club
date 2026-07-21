@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.72.2] - 2026-07-21
+
+### Fixed
+
+- Het datumveld van een losse inschrijftaak beperkt het jaartal nu tot vier cijfers, ook in Chrome en Edge op Windows.
+
 ## [33.72.1] - 2026-07-21
 
 ### Fixed
