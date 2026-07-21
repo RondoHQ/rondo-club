@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.70.0] - 2026-07-21
+
+### Added
+
+- Feedbackstatussen kunnen veilig via WP-CLI worden gewijzigd met `wp rondo feedback set-status <id> <status>`. De opdracht gebruikt dezelfde statusovergangen, oplostijd en eenmalige e-mailnotificatie als de REST API.
+
 ## [33.69.0] - 2026-07-21
 
 ### Added

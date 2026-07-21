@@ -14,6 +14,7 @@ use Rondo\Export\VCard;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Demo\DemoExport;
 use Rondo\Demo\DemoImport;
+use Rondo\Feedback\StatusService;
 
 // Only load if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -2082,6 +2083,71 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	}
 
 	/**
+	 * Feedback WP-CLI commands.
+	 */
+	class RONDO_Feedback_CLI_Command {
+
+		/**
+		 * Change the status of a feedback item.
+		 *
+		 * Uses the same status service as the REST API, including resolution
+		 * timestamps and the one-time resolution email.
+		 *
+		 * ## OPTIONS
+		 *
+		 * <feedback_id>
+		 * : Feedback post ID.
+		 *
+		 * <status>
+		 * : New status: new, approved, in_progress, in_review, resolved, declined, or needs_info.
+		 *
+		 * ## EXAMPLES
+		 *
+		 *     wp rondo feedback set-status 8496 resolved
+		 *     wp rondo feedback set-status 8496 needs_info
+		 *
+		 * @when after_wp_load
+		 */
+		public function set_status( $args, $assoc_args ) {
+			$feedback_id = isset( $args[0] ) ? absint( $args[0] ) : 0;
+			$new_status  = isset( $args[1] ) ? sanitize_key( $args[1] ) : '';
+
+			if ( $feedback_id === 0 ) {
+				WP_CLI::error( 'Please provide a valid feedback ID.' );
+			}
+
+			if ( ! in_array( $new_status, StatusService::ALLOWED_STATUSES, true ) ) {
+				WP_CLI::error( 'Invalid status. Allowed: ' . implode( ', ', StatusService::ALLOWED_STATUSES ) . '.' );
+			}
+
+			$result = ( new StatusService() )->update( $feedback_id, $new_status );
+			if ( is_wp_error( $result ) ) {
+				WP_CLI::error( $result->get_error_message() );
+			}
+
+			$title = get_the_title( $feedback_id );
+			if ( ! $result['changed'] ) {
+				WP_CLI::success( sprintf( 'Feedback #%d (%s) already has status %s.', $feedback_id, $title, $new_status ) );
+				return;
+			}
+
+			WP_CLI::log( sprintf( 'Status: %s → %s', $result['previous_status'], $result['status'] ) );
+			if ( isset( $result['resolution_email'] ) ) {
+				$email_status = $result['resolution_email']['status'];
+				if ( $email_status === 'sent' ) {
+					WP_CLI::log( 'Resolution email: sent.' );
+				} elseif ( $email_status === 'already_sent' ) {
+					WP_CLI::log( 'Resolution email: already sent previously.' );
+				} else {
+					WP_CLI::warning( 'Resolution email: ' . $email_status . '.' );
+				}
+			}
+
+			WP_CLI::success( sprintf( 'Updated feedback #%d (%s).', $feedback_id, $title ) );
+		}
+	}
+
+	/**
 	 * Demo WP-CLI Commands
 	 */
 	class RONDO_Demo_CLI_Command {
@@ -2276,6 +2342,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );
 	WP_CLI::add_command( 'prm relationships', 'RONDO_Relationships_CLI_Command' );
 	WP_CLI::add_command( 'rondo tasks', 'RONDO_Tasks_CLI_Command' );
+	WP_CLI::add_command( 'rondo feedback', 'RONDO_Feedback_CLI_Command' );
 	WP_CLI::add_command( 'rondo demo', 'RONDO_Demo_CLI_Command' );
 	WP_CLI::add_command( 'prm invoices', 'RONDO_Invoices_CLI_Command' );
 }

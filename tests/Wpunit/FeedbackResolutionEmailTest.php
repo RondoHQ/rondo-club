@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Feedback\ResolutionEmailSender;
+use Rondo\Feedback\StatusService;
 use Rondo\REST\Feedback;
 use Rondo\Users\UserProvisioning;
 use Tests\Support\RondoTestCase;
@@ -66,6 +67,12 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 		$second_response = $this->resolve( $feedback_id );
 		$this->assertArrayNotHasKey( 'resolution_email', $second_response->get_data() );
 		$this->assertCount( 1, $this->sent_mail, 'A repeated resolved status must not send another email.' );
+
+		$status_service = new StatusService();
+		$status_service->update( $feedback_id, 'approved' );
+		$resolved_again = $status_service->update( $feedback_id, 'resolved' );
+		$this->assertSame( 'already_sent', $resolved_again['resolution_email']['status'] );
+		$this->assertCount( 1, $this->sent_mail, 'Reopening and resolving feedback must not send another email.' );
 	}
 
 	public function test_resolution_email_uses_the_real_household_contact_address(): void {
