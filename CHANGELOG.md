@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.8] - 2026-07-21
+
+### Fixed
+
+- Statusbadges bij de vrijwilligersplicht, zoals **Op weg** en **Nog te plannen**, blijven ook naast langere toelichtingen op één regel staan.
+
 ## [33.73.7] - 2026-07-21
 
 ### Changed
