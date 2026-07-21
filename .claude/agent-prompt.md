@@ -37,7 +37,12 @@ End your response with EXACTLY ONE of these status blocks:
 ```
 STATUS: IN_REVIEW
 PR_URL: https://github.com/RondoHQ/rondo-club/pull/XXX
+RESOLUTION: Een korte, concrete Nederlandse uitleg van hoe je de feedback hebt opgelost
 ```
+
+The `RESOLUTION` must be written in clear Dutch for the person who submitted the feedback. Explain
+what changed in the product, without technical implementation details. This text is included in the
+confirmation email after the pull request is merged.
 
 ### If you need more information from the user:
 ```

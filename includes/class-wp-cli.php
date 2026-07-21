@@ -2101,9 +2101,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * <status>
 		 * : New status: new, approved, in_progress, in_review, resolved, declined, or needs_info.
 		 *
+		 * [--message=<message>]
+		 * : Dutch explanation of how the feedback was fixed. Required when newly resolving feedback.
+		 *
 		 * ## EXAMPLES
 		 *
-		 *     wp rondo feedback set-status 8496 resolved
+		 *     wp rondo feedback set-status 8496 resolved --message="Het formulier gebruikt nu één datum met aparte begin- en eindtijden."
 		 *     wp rondo feedback set-status 8496 needs_info
 		 *
 		 * @subcommand set-status
@@ -2112,6 +2115,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		public function set_status( $args, $assoc_args ) {
 			$feedback_id = isset( $args[0] ) ? absint( $args[0] ) : 0;
 			$new_status  = isset( $args[1] ) ? sanitize_key( $args[1] ) : '';
+			$message     = isset( $assoc_args['message'] ) ? sanitize_textarea_field( $assoc_args['message'] ) : '';
 
 			if ( $feedback_id === 0 ) {
 				WP_CLI::error( 'Please provide a valid feedback ID.' );
@@ -2121,7 +2125,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::error( 'Invalid status. Allowed: ' . implode( ', ', StatusService::ALLOWED_STATUSES ) . '.' );
 			}
 
-			$result = ( new StatusService() )->update( $feedback_id, $new_status );
+			$result = ( new StatusService() )->update( $feedback_id, $new_status, $message );
 			if ( is_wp_error( $result ) ) {
 				WP_CLI::error( $result->get_error_message() );
 			}

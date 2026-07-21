@@ -13,14 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class StatusService {
 
-	public const ALLOWED_STATUSES = [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info' ];
+	public const ALLOWED_STATUSES        = [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info' ];
+	public const META_RESOLUTION_SUMMARY = '_feedback_resolution_summary';
 
 	/**
 	 * Change a feedback item's status.
 	 *
 	 * @return array{changed: bool, previous_status: string, status: string, resolution_email?: array{status: string, recipient?: string}}|\WP_Error
 	 */
-	public function update( int $feedback_id, string $new_status ): array|\WP_Error {
+	public function update( int $feedback_id, string $new_status, string $resolution_summary = '' ): array|\WP_Error {
 		$feedback = get_post( $feedback_id );
 		if ( ! $feedback || $feedback->post_type !== 'rondo_feedback' ) {
 			return new \WP_Error( 'feedback_not_found', 'Feedback not found.' );
@@ -30,8 +31,24 @@ class StatusService {
 			return new \WP_Error( 'invalid_feedback_status', 'Invalid feedback status.' );
 		}
 
-		$current_status = (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
-		$result         = [
+		$current_status    = (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
+		$provided_summary  = trim( sanitize_textarea_field( $resolution_summary ) );
+		$stored_summary    = trim( (string) get_post_meta( $feedback_id, self::META_RESOLUTION_SUMMARY, true ) );
+		$effective_summary = $provided_summary !== '' ? $provided_summary : $stored_summary;
+
+		if ( $current_status !== 'resolved' && $new_status === 'resolved' && $effective_summary === '' ) {
+			return new \WP_Error(
+				'feedback_resolution_summary_required',
+				'Leg in het Nederlands uit hoe de feedback is opgelost.',
+				[ 'status' => 400 ]
+			);
+		}
+
+		if ( $provided_summary !== '' ) {
+			update_post_meta( $feedback_id, self::META_RESOLUTION_SUMMARY, $provided_summary );
+		}
+
+		$result = [
 			'changed'         => $current_status !== $new_status,
 			'previous_status' => $current_status,
 			'status'          => $new_status,

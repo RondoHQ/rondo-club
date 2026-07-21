@@ -31,6 +31,10 @@ export default function FeedbackEditModal({
 }) {
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm();
   const feedbackType = watch('feedback_type');
+  const selectedStatus = watch('status');
+  const requiresResolutionSummary = isAdmin
+    && selectedStatus === 'resolved'
+    && (feedback?.meta?.status || feedback?.status || 'new') !== 'resolved';
 
   // Reset form with feedback data when opening
   useEffect(() => {
@@ -42,6 +46,7 @@ export default function FeedbackEditModal({
         project: feedback.meta?.project || 'rondo-club',
         status: feedback.meta?.status || feedback.status || 'new',
         priority: feedback.meta?.priority || feedback.priority || 'medium',
+        resolution_summary: feedback.meta?.resolution_summary || '',
         steps_to_reproduce: feedback.meta?.steps_to_reproduce || feedback.steps_to_reproduce || '',
         expected_behavior: feedback.meta?.expected_behavior || feedback.expected_behavior || '',
         actual_behavior: feedback.meta?.actual_behavior || feedback.actual_behavior || '',
@@ -63,6 +68,9 @@ export default function FeedbackEditModal({
     if (isAdmin) {
       submitData.status = data.status;
       submitData.priority = data.priority;
+      if (data.status === 'resolved') {
+        submitData.resolution_summary = data.resolution_summary;
+      }
     }
 
     // Add type-specific fields
@@ -205,6 +213,27 @@ export default function FeedbackEditModal({
                 </div>
               </div>
             )}
+
+            {isAdmin && selectedStatus === 'resolved' ? (
+              <div>
+                <label className="label">Zo hebben we het opgelost {requiresResolutionSummary ? '*' : ''}</label>
+                <textarea
+                  {...register('resolution_summary', {
+                    validate: (value) => !requiresResolutionSummary || value?.trim() || 'Leg in het Nederlands uit hoe de feedback is opgelost',
+                  })}
+                  className="input"
+                  rows={4}
+                  placeholder="Deze uitleg wordt in de bevestigingsmail opgenomen"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  De indiener ontvangt deze Nederlandse uitleg per e-mail wanneer je de feedback oplost.
+                </p>
+                {errors.resolution_summary ? (
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.resolution_summary.message}</p>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Description */}
             <div>
