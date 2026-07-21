@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.6] - 2026-07-21
+
+### Fixed
+
+- De waarschuwing over een ontbrekende of verlopen VOG verschijnt op de vrijwilligerspagina alleen wanneer er in de getoonde kalender daadwerkelijk inschrijftaken met een VOG-vereiste worden verborgen.
+
 ## [33.73.5] - 2026-07-21
 
 ### Fixed

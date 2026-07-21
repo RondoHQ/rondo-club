@@ -586,14 +586,19 @@ class MemberShifts extends Base {
 			]
 		);
 
-		$out = [];
+		$out              = [];
+		$effective_blocks = [];
 		foreach ( $query->posts as $shift ) {
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary === null ) {
 				continue;
 			}
 
-			if ( ! $this->shift_is_visible_to_member( $shift->ID, $person_id, $blocks ) ) {
+			$block_reason = $this->member_shift_block_reason( $shift->ID, $person_id, $blocks );
+			if ( $block_reason !== null ) {
+				if ( in_array( $block_reason, [ 'vog', 'iva' ], true ) ) {
+					$effective_blocks[ $block_reason ] = true;
+				}
 				continue;
 			}
 
@@ -615,7 +620,7 @@ class MemberShifts extends Base {
 				'person_id'     => $person_id,
 				'eligible'      => true,
 				'iva_status'    => IvaStatus::status( $person_id ),
-				'block_reasons' => $blocks,
+				'block_reasons' => array_keys( $effective_blocks ),
 				'shifts'        => $out,
 			]
 		);
@@ -681,19 +686,27 @@ class MemberShifts extends Base {
 			]
 		);
 
-		$selected_type = (int) $request->get_param( 'dienst_type_id' );
-		$types         = [];
-		$days          = [];
+		$selected_type    = (int) $request->get_param( 'dienst_type_id' );
+		$types            = [];
+		$days             = [];
+		$effective_blocks = [];
 		foreach ( $query->posts as $shift ) {
 			$summary = $this->format_shift_summary( $shift );
 			if ( $summary === null ) {
 				continue;
 			}
-			if ( $view === 'signup' && ! $this->shift_is_visible_to_member( $shift->ID, $person_id, $blocks ) ) {
-				continue;
-			}
 
 			$type_id = (int) $summary['dienst_type_id'];
+			if ( $view === 'signup' ) {
+				$block_reason = $this->member_shift_block_reason( $shift->ID, $person_id, $blocks );
+				if ( $block_reason !== null ) {
+					if ( ( $selected_type <= 0 || $type_id === $selected_type ) && in_array( $block_reason, [ 'vog', 'iva' ], true ) ) {
+						$effective_blocks[ $block_reason ] = true;
+					}
+					continue;
+				}
+			}
+
 			if ( $type_id > 0 ) {
 				$types[ $type_id ] = [
 					'id'    => $type_id,
@@ -750,7 +763,7 @@ class MemberShifts extends Base {
 				'from'          => $from->format( 'Y-m-d' ),
 				'to'            => $to->format( 'Y-m-d' ),
 				'dienst_types'  => array_values( $types ),
-				'block_reasons' => $blocks,
+				'block_reasons' => array_keys( $effective_blocks ),
 				'days'          => array_values( $days ),
 			]
 		);
@@ -807,25 +820,32 @@ class MemberShifts extends Base {
 	}
 
 	/**
-	 * Apply the same certificate and pool gates to lists, calendars and signup.
+	 * Return the reason a shift is hidden from a member, or null when visible.
+	 *
+	 * Certificate reasons are also used to decide whether the member-facing
+	 * warning banners are relevant to the shifts in the requested result set.
 	 */
-	private function shift_is_visible_to_member( int $shift_id, int $person_id, array $blocks ): bool {
+	private function member_shift_block_reason( int $shift_id, int $person_id, array $blocks ): ?string {
 		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
 		if ( $dienst_type_id <= 0 ) {
-			return true;
+			return null;
 		}
 
 		if ( (bool) get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
-			return false;
+			return 'vog';
 		}
 
 		$requires_iva = (bool) get_post_meta( $dienst_type_id, 'iva_required', true );
 		if ( $requires_iva && ! (bool) get_post_meta( $shift_id, 'iva_waived', true ) && in_array( 'iva', $blocks, true ) ) {
-			return false;
+			return 'iva';
 		}
 
 		$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
-		return $required_pool <= 0 || $this->person_is_pool_member( $person_id, $required_pool );
+		if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
+			return 'pool';
+		}
+
+		return null;
 	}
 
 	public function signup( \WP_REST_Request $request ) {
