@@ -969,7 +969,6 @@ export default function PeopleList() {
     createColumn({
       id: 'is_businessclub_member', header: 'BC-lid', filterType: FILTER_TYPES.SELECT,
       filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
-      getFilterLabel: (val) => `BC-lid: ${val === '1' ? 'Ja' : 'Nee'}`,
       filterSection: 'Persoon',
     }),
 
