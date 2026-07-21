@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.71.0] - 2026-07-21
+
+### Added
+
+- Bij het oplossen van feedback is nu een Nederlandse uitleg verplicht. Deze uitleg wordt opgeslagen, door de feedbackagent en WP-CLI ondersteund en als uitgelicht onderdeel in de bevestigingsmail aan de indiener getoond.
+
 ## [33.70.1] - 2026-07-21
 
 ### Fixed

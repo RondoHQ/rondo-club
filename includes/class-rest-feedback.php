@@ -502,6 +502,15 @@ class Feedback extends Base {
 			);
 		}
 
+		$resolution_summary = $request->get_param( 'resolution_summary' );
+		if ( $resolution_summary !== null && ! $is_admin ) {
+			return new \WP_Error(
+				'rest_forbidden',
+				__( 'Only administrators can add a feedback resolution summary.', 'rondo' ),
+				[ 'status' => 403 ]
+			);
+		}
+
 		// Validate field values
 		$feedback_type = $request->get_param( 'feedback_type' );
 		if ( $feedback_type !== null && ! in_array( $feedback_type, [ 'bug', 'feature_request' ], true ) ) {
@@ -559,8 +568,15 @@ class Feedback extends Base {
 			update_field( 'feedback_type', $feedback_type, $feedback_id );
 		}
 
-		if ( $new_status !== null ) {
-			$status_update = ( new StatusService() )->update( $feedback_id, $new_status );
+		if ( $new_status !== null || $resolution_summary !== null ) {
+			$status_for_update = $new_status !== null
+				? $new_status
+				: (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
+			$status_update     = ( new StatusService() )->update(
+				$feedback_id,
+				$status_for_update,
+				$resolution_summary !== null ? (string) $resolution_summary : ''
+			);
 			if ( is_wp_error( $status_update ) ) {
 				return $status_update;
 			}
@@ -832,6 +848,7 @@ class Feedback extends Base {
 				'use_case'           => $this->sanitize_text( get_field( 'use_case', $post->ID ) ?: '' ),
 				'project'            => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_project', true ) ?: 'rondo-club' ),
 				'resolved_at'        => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_resolved_at', true ) ?: '' ),
+				'resolution_summary' => $this->sanitize_text( get_post_meta( $post->ID, StatusService::META_RESOLUTION_SUMMARY, true ) ?: '' ),
 				'pr_url'             => $this->sanitize_url( get_post_meta( $post->ID, '_feedback_pr_url', true ) ?: '' ),
 				'agent_branch'       => $this->sanitize_text( get_post_meta( $post->ID, '_feedback_agent_branch', true ) ?: '' ),
 				'agent_plan'         => get_post_meta( $post->ID, '_feedback_agent_plan', true ) ?: '',

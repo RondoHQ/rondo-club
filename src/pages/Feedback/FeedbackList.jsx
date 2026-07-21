@@ -7,6 +7,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import FeedbackModal from '@/components/FeedbackModal';
+import FeedbackResolutionModal from '@/components/FeedbackResolutionModal';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
 import { DataTable, createColumn, FILTER_TYPES } from '@/components/DataTable';
 
@@ -127,6 +128,7 @@ export default function FeedbackList() {
   useDocumentTitle('Feedback');
   const location = useLocation();
   const [showModal, setShowModal] = useState(false);
+  const [feedbackToResolve, setFeedbackToResolve] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const queryClient = useQueryClient();
@@ -198,9 +200,25 @@ export default function FeedbackList() {
     setShowModal(false);
   };
 
-  const handleStatusChange = useCallback((id, newStatus) => {
-    updateFeedback.mutate({ id, data: { status: newStatus } });
+  const handleStatusChange = useCallback((feedbackItem, newStatus) => {
+    if (newStatus === 'resolved' && feedbackItem.meta?.status !== 'resolved') {
+      setFeedbackToResolve(feedbackItem);
+      return;
+    }
+
+    updateFeedback.mutate({ id: feedbackItem.id, data: { status: newStatus } });
   }, [updateFeedback]);
+
+  const handleResolutionConfirm = async (resolutionSummary) => {
+    await updateFeedback.mutateAsync({
+      id: feedbackToResolve.id,
+      data: {
+        status: 'resolved',
+        resolution_summary: resolutionSummary,
+      },
+    });
+    setFeedbackToResolve(null);
+  };
 
   const handlePriorityChange = useCallback((id, newPriority) => {
     updateFeedback.mutate({ id, data: { priority: newPriority } });
@@ -270,7 +288,7 @@ export default function FeedbackList() {
         return (
           <select
             value={value}
-            onChange={(e) => handleStatusChange(row.original.id, e.target.value)}
+            onChange={(e) => handleStatusChange(row.original, e.target.value)}
             className="text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-50 rounded px-2 py-1"
             disabled={updateFeedback.isPending}
           >
@@ -407,6 +425,15 @@ export default function FeedbackList() {
           isLoading={createFeedback.isPending}
           urlContext={location.pathname}
         />
+
+        {feedbackToResolve ? (
+          <FeedbackResolutionModal
+            feedback={feedbackToResolve}
+            onClose={() => setFeedbackToResolve(null)}
+            onConfirm={handleResolutionConfirm}
+            isLoading={updateFeedback.isPending}
+          />
+        ) : null}
       </div>
     </PullToRefreshWrapper>
   );

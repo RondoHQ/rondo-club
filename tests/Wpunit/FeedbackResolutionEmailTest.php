@@ -10,6 +10,7 @@ use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 
 class FeedbackResolutionEmailTest extends RondoTestCase {
+	private const RESOLUTION_SUMMARY = 'We hebben de planner aangepast, zodat je diensten nu sneller kunt indelen.';
 
 	/** @var array<int, array<string, mixed>> */
 	private array $sent_mail = [];
@@ -59,6 +60,8 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 		$this->assertSame( 'Je feedback is opgelost: Makkelijker plannen', $this->sent_mail[0]['subject'] );
 		$this->assertStringContainsString( '<!doctype html>', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'Hoi Anne,', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( 'Zo hebben we het opgelost', $this->sent_mail[0]['message'] );
+		$this->assertStringContainsString( self::RESOLUTION_SUMMARY, $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( 'Bekijk je feedback', $this->sent_mail[0]['message'] );
 		$this->assertStringContainsString( home_url( '/feedback/' . $feedback_id ), $this->sent_mail[0]['message'] );
 		$this->assertSame( [ 'Content-Type: text/html; charset=UTF-8' ], $this->sent_mail[0]['headers'] );
@@ -91,6 +94,7 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 				'post_title'  => 'Feedback van gezinslid',
 			]
 		);
+		update_post_meta( $feedback_id, StatusService::META_RESOLUTION_SUMMARY, self::RESOLUTION_SUMMARY );
 
 		$result = ( new ResolutionEmailSender() )->send( $feedback_id );
 
@@ -98,10 +102,28 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 		$this->assertSame( [ 'family@example.com' ], $this->sent_mail[0]['to'] );
 	}
 
+	public function test_feedback_cannot_be_resolved_without_a_resolution_summary(): void {
+		$feedback_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_feedback',
+				'post_status' => 'publish',
+			]
+		);
+		update_field( 'status', 'approved', $feedback_id );
+
+		$result = ( new StatusService() )->update( $feedback_id, 'resolved' );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'feedback_resolution_summary_required', $result->get_error_code() );
+		$this->assertSame( 'approved', get_field( 'status', $feedback_id ) );
+		$this->assertCount( 0, $this->sent_mail );
+	}
+
 	private function resolve( int $feedback_id ) {
 		$request = new WP_REST_Request( 'PUT', '/rondo/v1/feedback/' . $feedback_id );
 		$request->set_param( 'id', $feedback_id );
 		$request->set_param( 'status', 'resolved' );
+		$request->set_param( 'resolution_summary', self::RESOLUTION_SUMMARY );
 
 		return ( new Feedback() )->update_feedback( $request );
 	}
