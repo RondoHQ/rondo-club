@@ -2106,6 +2106,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *     wp rondo feedback set-status 8496 resolved
 		 *     wp rondo feedback set-status 8496 needs_info
 		 *
+		 * @subcommand set-status
 		 * @when after_wp_load
 		 */
 		public function set_status( $args, $assoc_args ) {
