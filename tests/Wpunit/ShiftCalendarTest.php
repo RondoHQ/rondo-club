@@ -100,8 +100,16 @@ class ShiftCalendarTest extends RondoTestCase {
 		wp_set_current_user( $user_id );
 
 		$normal_type = $this->dienst_type( 'Algemene dienst' );
-		$vog_type    = $this->dienst_type( 'VOG-dienst', [ 'vog_required' => 1 ] );
 		$this->shift( $normal_type, 1, [ $colleague_id ], 'vol' );
+
+		$without_vog_shift = $this->controller->get_shift_calendar( $this->calendar_request( 'signup' ) )->get_data();
+		$this->assertNotContains( 'vog', $without_vog_shift['block_reasons'] );
+		$this->assertNotContains(
+			'vog',
+			$this->controller->get_available_shifts( new WP_REST_Request( 'GET', '/rondo/v1/shifts/available' ) )->get_data()['block_reasons']
+		);
+
+		$vog_type = $this->dienst_type( 'VOG-dienst', [ 'vog_required' => 1 ] );
 		$this->shift( $vog_type, 1, [] );
 
 		$response = $this->controller->get_shift_calendar( $this->calendar_request( 'signup' ) );
@@ -115,6 +123,31 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertArrayNotHasKey( 'assigned_person_ids', $shift );
 		$this->assertSame( [ 'Collega' ], $shift['fellow_volunteers'] );
 		$this->assertContains( 'vog', $data['block_reasons'] );
+		$this->assertContains(
+			'vog',
+			$this->controller->get_available_shifts( new WP_REST_Request( 'GET', '/rondo/v1/shifts/available' ) )->get_data()['block_reasons']
+		);
+
+		$normal_type_data = $this->controller->get_shift_calendar( $this->calendar_request( 'signup', $normal_type ) )->get_data();
+		$this->assertNotContains( 'vog', $normal_type_data['block_reasons'] );
+	}
+
+	public function test_signup_calendar_shows_vog_shift_without_warning_when_vog_is_valid(): void {
+		$user_id   = $this->createRondoUser();
+		$person_id = $this->createPerson( [ 'post_title' => 'Lid met VOG' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		update_field( 'datum-vog', current_datetime()->format( 'Ymd' ), $person_id );
+		wp_set_current_user( $user_id );
+
+		$vog_type = $this->dienst_type( 'Toegankelijke VOG-dienst', [ 'vog_required' => 1 ] );
+		$this->shift( $vog_type, 1, [] );
+
+		$data = $this->controller->get_shift_calendar( $this->calendar_request( 'signup' ) )->get_data();
+
+		$this->assertNotContains( 'vog', $data['block_reasons'] );
+		$this->assertCount( 1, $data['days'][0]['shifts'] );
+		$this->assertSame( $vog_type, $data['days'][0]['shifts'][0]['dienst_type_id'] );
+		$this->assertTrue( $data['days'][0]['shifts'][0]['can_signup'] );
 	}
 
 	public function test_plain_member_cannot_open_manager_calendar_and_large_ranges_are_rejected(): void {
@@ -174,6 +207,23 @@ class ShiftCalendarTest extends RondoTestCase {
 		update_post_meta( $person_id, 'former_member', 0 );
 		update_post_meta( $type_id, 'required_pool', 99999 );
 		$this->assertSame( 'pool_membership_required', $this->controller->signup( $request )->get_error_code() );
+		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
+	}
+
+	public function test_direct_signup_still_rejects_missing_vog(): void {
+		$user_id   = $this->createRondoUser();
+		$person_id = $this->createPerson( [ 'post_title' => 'Lid zonder VOG' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+
+		$vog_type = $this->dienst_type( 'Beveiligde VOG-dienst', [ 'vog_required' => 1 ] );
+		$shift_id = $this->shift( $vog_type, 1, [] );
+		$request  = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
+		$request->set_param( 'id', $shift_id );
+
+		$response = $this->controller->signup( $request );
+
+		$this->assertSame( 'vog_required', $response->get_error_code() );
 		$this->assertSame( [], get_post_meta( $shift_id, 'assigned_persons', true ) );
 	}
 
