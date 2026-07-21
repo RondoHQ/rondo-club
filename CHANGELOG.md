@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.70.1] - 2026-07-21
+
+### Fixed
+
+- Het WP-CLI-subcommando voor feedbackstatussen is expliciet geregistreerd als `set-status`, overeenkomstig de documentatie en voorbeelden.
+
 ## [33.70.0] - 2026-07-21
 
 ### Added
