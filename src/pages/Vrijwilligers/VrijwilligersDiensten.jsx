@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarClock, ListChecks, Plus, Settings, Pencil, X } from 'lucide-react';
+import { CalendarClock, Copy, ListChecks, Plus, Settings, Pencil, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
@@ -106,10 +106,107 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
   );
 }
 
+function CopyDayModal({ day, error, isLoading, onClose, onSubmit }) {
+  const [targetDate, setTargetDate] = useState('');
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const sourceLabel = format(`${day.date}T12:00:00`, 'EEEE d MMMM yyyy');
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="copy-day-title"
+        className="w-full max-w-lg rounded-lg bg-white shadow-xl dark:bg-gray-800"
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && !isLoading) onClose();
+        }}
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit(targetDate);
+          }}
+        >
+          <div className="flex items-start justify-between gap-3 border-b border-gray-200 p-4 dark:border-gray-700">
+            <div>
+              <h2 id="copy-day-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Dagplanning kopiëren
+              </h2>
+              <p className="mt-1 text-sm capitalize text-gray-500 dark:text-gray-400">{sourceLabel}</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+              aria-label="Sluiten"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          <div className="space-y-4 p-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {day.shift_count} {day.shift_count === 1 ? 'inschrijftaak' : 'inschrijftaken'} met in totaal {day.capacity} {day.capacity === 1 ? 'plek' : 'plekken'}.
+              Aanmeldingen en statussen worden niet meegenomen.
+            </p>
+
+            <div className="max-h-52 space-y-2 overflow-y-auto rounded-md bg-gray-50 p-3 dark:bg-gray-900/50">
+              {day.shifts.map((shift) => (
+                <div key={shift.id} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="min-w-0 truncate text-gray-800 dark:text-gray-200">
+                    {shift.dienst_type_name || shift.title}
+                  </span>
+                  <span className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                    {format(shift.start_datetime, 'HH:mm')}–{format(shift.end_datetime, 'HH:mm')} · {Math.max(1, Number(shift.capacity) || 1)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div>
+              <label htmlFor="copy-day-target" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Kopiëren naar
+              </label>
+              <input
+                id="copy-day-target"
+                type="date"
+                value={targetDate}
+                min={today}
+                onChange={(event) => setTargetDate(event.target.value)}
+                className="input w-full"
+                required
+                autoFocus
+              />
+            </div>
+
+            {error ? <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+          </div>
+
+          <div className="flex justify-end gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+            <button type="button" onClick={onClose} disabled={isLoading} className="btn-secondary">
+              Annuleren
+            </button>
+            <button type="submit" disabled={isLoading || !targetDate} className="btn-primary inline-flex items-center gap-2">
+              <Copy className="h-4 w-4" />
+              {isLoading ? 'Kopiëren…' : 'Dag kopiëren'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function VrijwilligersDiensten() {
   useDocumentTitle('Inschrijftaken — Vrijwilligers');
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [typesPopoverOpen, setTypesPopoverOpen] = useState(false);
+  const [copyDay, setCopyDay] = useState(null);
+  const [copyError, setCopyError] = useState('');
+  const [feedback, setFeedback] = useState(null);
   const typesButtonRef = useRef(null);
   const selectedDienstType = searchParams.get('diensttype') || '';
 
@@ -147,6 +244,54 @@ export default function VrijwilligersDiensten() {
   };
   const closeTypesPopover = useCallback(() => setTypesPopoverOpen(false), []);
 
+  const copyDayMutation = useMutation({
+    mutationFn: ({ sourceDate, targetDate }) => prmApi.copyShiftDay(sourceDate, targetDate),
+    onSuccess: async (response) => {
+      const data = response?.data || {};
+      const created = Number(data.created || 0);
+      const skipped = Number(data.skipped || 0);
+      const targetLabel = format(`${data.target_date}T12:00:00`, 'd MMMM yyyy');
+
+      await queryClient.refetchQueries({ queryKey: ['shift-calendar', 'manage'], type: 'active' });
+      setCopyDay(null);
+      setCopyError('');
+      setFeedback({
+        kind: 'success',
+        message: created > 0
+          ? `${created} ${created === 1 ? 'inschrijftaak is' : 'inschrijftaken zijn'} gekopieerd naar ${targetLabel}.${skipped > 0 ? ` ${skipped} bestaande ${skipped === 1 ? 'inschrijftaak is' : 'inschrijftaken zijn'} overgeslagen.` : ''}`
+          : `Op ${targetLabel} ${skipped === 1 ? 'stond deze inschrijftaak' : `stonden deze ${skipped} inschrijftaken`} al. Er is niets toegevoegd.`,
+      });
+    },
+    onError: (err) => {
+      setCopyError(err?.response?.data?.message || err?.message || 'De dagplanning kon niet worden gekopieerd.');
+    },
+  });
+
+  const renderDayActions = useCallback((day, closeDetails) => {
+    if (selectedDienstType) {
+      return (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Kies &ldquo;Alle inschrijftaken&rdquo; in het filter om de volledige dagplanning te kopiëren.
+        </p>
+      );
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          closeDetails();
+          setFeedback(null);
+          setCopyError('');
+          setCopyDay(day);
+        }}
+        className="btn-tertiary inline-flex w-full items-center justify-center gap-2"
+      >
+        <Copy className="h-4 w-4" /> Dagplanning kopiëren
+      </button>
+    );
+  }, [selectedDienstType]);
+
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between gap-3">
@@ -181,6 +326,19 @@ export default function VrijwilligersDiensten() {
         </div>
       </header>
 
+      {feedback ? (
+        <div
+          role="status"
+          className={`rounded-md border px-4 py-3 text-sm ${
+            feedback.kind === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+              : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200'
+          }`}
+        >
+          {feedback.message}
+        </div>
+      ) : null}
+
       {typesPopoverOpen && (
         <DienstTypesPopover
           anchor={typesButtonRef.current}
@@ -197,6 +355,7 @@ export default function VrijwilligersDiensten() {
         onDienstTypeChange={handleDienstTypeChange}
         description="Klik op een gekleurde datum om de bezetting per inschrijftaak te bekijken."
         detailsVariant="popover"
+        renderDayActions={renderDayActions}
         renderShift={(shift) => (
           <div key={shift.id} className="flex items-center gap-3 rounded-md border border-gray-200 p-3 dark:border-gray-700">
             <span className="h-10 w-2 shrink-0 rounded-full" style={{ background: shift.dienst_type_color || '#6b7280' }} />
@@ -286,6 +445,29 @@ export default function VrijwilligersDiensten() {
           </div>
         )}
       </section>
+
+      {copyDay ? (
+        <CopyDayModal
+          key={copyDay.date}
+          day={copyDay}
+          error={copyError}
+          isLoading={copyDayMutation.isPending}
+          onClose={() => {
+            if (!copyDayMutation.isPending) {
+              setCopyDay(null);
+              setCopyError('');
+            }
+          }}
+          onSubmit={(targetDate) => {
+            setCopyError('');
+            if (targetDate === copyDay.date) {
+              setCopyError('De doeldatum moet anders zijn dan de brondatum.');
+              return;
+            }
+            copyDayMutation.mutate({ sourceDate: copyDay.date, targetDate });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

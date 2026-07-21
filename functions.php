@@ -265,6 +265,10 @@ function rondo_should_log_rest_error( $error ) {
 		'rest_forbidden_context',
 		'rest_not_logged_in',
 		'rest_post_invalid_page_number',
+		'rondo_invalid_shift_copy_date',
+		'rondo_shift_copy_date_in_past',
+		'rondo_shift_copy_same_date',
+		'rondo_shift_copy_source_empty',
 	];
 
 	return ! in_array( $error->get_error_code(), $expected_codes, true );
@@ -355,6 +359,7 @@ function rondo_init() {
 		new RESTVog();
 		new RESTVolunteer();
 		new RESTMemberShifts();
+		new \Rondo\Volunteer\ShiftDayCopier();
 		new RESTFees();
 		new RESTLettermint();
 		new RESTCapabilities();

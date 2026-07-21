@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.72.0] - 2026-07-21
+
+### Added
+
+- Vrijwilligersbeheerders kunnen vanuit een kalenderdag de volledige dagplanning naar een andere datum kopiëren. Tijden, capaciteit, IVA-uitzonderingen en notities blijven behouden; aanmeldingen en statussen worden bewust niet meegenomen en bestaande doelregels worden veilig overgeslagen.
+
 ## [33.71.0] - 2026-07-21
 
 ### Added

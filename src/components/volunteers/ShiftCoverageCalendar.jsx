@@ -82,7 +82,7 @@ function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
   );
 }
 
-function DatePopover({ anchor, day, onClose, renderShift }) {
+function DatePopover({ anchor, day, onClose, renderDayActions, renderShift }) {
   const closeButtonRef = useRef(null);
 
   const titleId = `calendar-day-details-title-${day.date}`;
@@ -121,6 +121,11 @@ function DatePopover({ anchor, day, onClose, renderShift }) {
       <div className="space-y-3">
         {day.shifts.map((shift) => renderShift(shift))}
       </div>
+      {renderDayActions ? (
+        <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+          {renderDayActions(day, onClose)}
+        </div>
+      ) : null}
     </AnchoredPopover>
   );
 }
@@ -132,6 +137,7 @@ export default function ShiftCoverageCalendar({
   onDienstTypeChange,
   title = 'Bezetting komende zes maanden',
   description,
+  renderDayActions,
   renderShift,
   detailsVariant = 'inline',
 }) {
@@ -228,6 +234,11 @@ export default function ShiftCoverageCalendar({
               <div className="space-y-2">
                 {selectedDay.shifts.map((shift) => renderShift(shift))}
               </div>
+              {renderDayActions ? (
+                <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+                  {renderDayActions(selectedDay, closeDetails)}
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -236,6 +247,7 @@ export default function ShiftCoverageCalendar({
               anchor={selection.anchor}
               day={selectedDay}
               onClose={closeDetails}
+              renderDayActions={renderDayActions}
               renderShift={renderShift}
             />
           )}
