@@ -664,7 +664,7 @@ export default function PeopleList() {
   const wachtOverschrijving = searchParams.get('wachtOverschrijving') || '';
 
   // Helper to update URL params
-  const updateSearchParams = useCallback((updates) => {
+  const updateSearchParams = useCallback((updates, { resetPage = true } = {}) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
       Object.entries(updates).forEach(([key, value]) => {
@@ -677,7 +677,7 @@ export default function PeopleList() {
         }
       });
       // Reset page when filters change (except when explicitly setting page)
-      if (!('page' in updates)) {
+      if (resetPage && !('page' in updates)) {
         next.delete('page');
       }
       return next;
@@ -1111,15 +1111,17 @@ export default function PeopleList() {
 
   // Update filteredCount URL param when filters are active and data is loaded
   useEffect(() => {
+    const current = searchParams.get('filteredCount');
+
     if (hasActiveFilters && !isLoading) {
-      // Set filteredCount param when filters are active
-      updateSearchParams({ filteredCount: totalPeople });
-    } else {
-      // Remove filteredCount param when no filters
-      const current = searchParams.get('filteredCount');
-      if (current !== null) {
-        updateSearchParams({ filteredCount: null });
+      const next = String(totalPeople);
+
+      // This derived navigation count must not reset an explicitly selected page.
+      if (current !== next) {
+        updateSearchParams({ filteredCount: totalPeople }, { resetPage: false });
       }
+    } else if (current !== null) {
+      updateSearchParams({ filteredCount: null }, { resetPage: false });
     }
   }, [hasActiveFilters, totalPeople, isLoading, searchParams, updateSearchParams]);
 

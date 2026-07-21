@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.2] - 2026-07-21
+
+### Fixed
+
+- Pagineren in de relatieslijst blijft nu op de gekozen pagina staan wanneer er filters actief zijn. (feedback #8281)
+
 ## [33.73.1] - 2026-07-21
 
 ### Fixed
