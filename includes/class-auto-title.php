@@ -11,6 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AutoTitle {
 
+	/**
+	 * Person IDs whose matching email fields changed during this request.
+	 *
+	 * @var array<int, bool>
+	 */
+	private array $calendar_rematch_person_ids = [];
+
 	public function __construct() {
 		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
 
@@ -24,11 +31,14 @@ class AutoTitle {
 
 		// Handle async calendar rematch cron job
 		add_action( 'rondo_async_calendar_rematch', [ $this, 'handle_async_calendar_rematch' ] );
+		add_action( 'rondo_async_calendar_rematch_user', [ $this, 'handle_async_calendar_rematch_for_user' ] );
 
 		// Hide title field in admin for person CPT
 		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
 
 		// Lowercase email addresses on save (fixed fields + legacy repeater)
+		add_filter( 'acf/update_value/name=email_1', [ $this, 'track_calendar_email_change' ], 5, 4 );
+		add_filter( 'acf/update_value/name=email_2', [ $this, 'track_calendar_email_change' ], 5, 4 );
 		add_filter( 'acf/update_value/name=email_1', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/name=email_2', [ $this, 'maybe_lowercase_email' ], 10, 4 );
 		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
@@ -184,6 +194,34 @@ class AutoTitle {
 	}
 
 	/**
+	 * Remember when a fixed person email changes during the current request.
+	 *
+	 * Calendar attendee matching only reads email_1 and email_2, so unrelated
+	 * person updates do not need to schedule a full calendar rematch.
+	 *
+	 * @param mixed $value    New field value.
+	 * @param mixed $post_id  Person post ID.
+	 * @param array $field    ACF field definition.
+	 * @param mixed $original Previously stored field value.
+	 * @return mixed Unchanged field value.
+	 */
+	public function track_calendar_email_change( $value, $post_id, $field, $original ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 || get_post_type( $post_id ) !== 'person' ) {
+			return $value;
+		}
+
+		$normalized_value    = strtolower( trim( (string) $value ) );
+		$normalized_original = strtolower( trim( (string) $original ) );
+
+		if ( $normalized_value !== $normalized_original ) {
+			$this->calendar_rematch_person_ids[ $post_id ] = true;
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Trigger calendar event re-matching when a person is saved
 	 *
 	 * This ensures that when email addresses are added/changed on a person,
@@ -192,7 +230,8 @@ class AutoTitle {
 	 * @param int $post_id Post ID being saved
 	 */
 	public function trigger_calendar_rematch( $post_id ) {
-		if ( ! $this->is_valid_person_save( $post_id ) ) {
+		$post_id = (int) $post_id;
+		if ( ! $this->is_valid_person_save( $post_id ) || ! isset( $this->calendar_rematch_person_ids[ $post_id ] ) ) {
 			return;
 		}
 
@@ -209,6 +248,10 @@ class AutoTitle {
 	 * @param WP_REST_Request $request Request object.
 	 */
 	public function trigger_calendar_rematch_rest( $post, $request ) {
+		if ( ! isset( $this->calendar_rematch_person_ids[ $post->ID ] ) ) {
+			return;
+		}
+
 		// Schedule async rematch - don't block the API response
 		$this->schedule_calendar_rematch( $post->ID );
 	}
@@ -216,31 +259,24 @@ class AutoTitle {
 	/**
 	 * Schedule calendar rematch to run asynchronously
 	 *
-	 * Uses a static flag to prevent duplicate scheduling within the same request
-	 * (since both acf/save_post and rest_after_insert_person can fire).
+	 * Jobs are keyed by owner and delayed briefly so bulk imports coalesce into
+	 * one rematch instead of creating one cron job per changed person.
 	 *
 	 * @param int $post_id Person post ID.
 	 */
 	private function schedule_calendar_rematch( int $post_id ): void {
-		static $scheduled = [];
-
-		// Prevent scheduling multiple times for the same person in one request
-		if ( isset( $scheduled[ $post_id ] ) ) {
+		$user_id = (int) get_post_field( 'post_author', $post_id );
+		if ( $user_id <= 0 ) {
 			return;
 		}
-		$scheduled[ $post_id ] = true;
 
-		// Clear any existing scheduled event for this person
-		$timestamp = wp_next_scheduled( 'rondo_async_calendar_rematch', [ $post_id ] );
-		if ( $timestamp ) {
-			wp_unschedule_event( $timestamp, 'rondo_async_calendar_rematch', [ $post_id ] );
+		$args = [ $user_id ];
+		if ( wp_next_scheduled( 'rondo_async_calendar_rematch_user', $args ) ) {
+			return;
 		}
 
-		// Schedule to run immediately (next cron tick)
-		wp_schedule_single_event( time(), 'rondo_async_calendar_rematch', [ $post_id ] );
-
-		// Trigger cron to run soon (non-blocking)
-		spawn_cron();
+		// Debounce bulk imports: all changed people for one owner share one job.
+		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'rondo_async_calendar_rematch_user', $args );
 	}
 
 	/**
@@ -250,5 +286,19 @@ class AutoTitle {
 	 */
 	public function handle_async_calendar_rematch( int $post_id ): void {
 		\Rondo\Calendar\Matcher::on_person_saved( $post_id );
+	}
+
+	/**
+	 * Handle a coalesced calendar rematch for all changed people of one owner.
+	 *
+	 * @param int $user_id WordPress user ID that owns the people and events.
+	 */
+	public function handle_async_calendar_rematch_for_user( int $user_id ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		\Rondo\Calendar\Matcher::invalidate_cache( $user_id );
+		\Rondo\Calendar\Matcher::rematch_events_for_user( $user_id );
 	}
 }

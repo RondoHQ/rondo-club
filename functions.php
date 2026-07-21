@@ -247,6 +247,34 @@ function rondo_is_rest_request() {
 }
 
 /**
+ * Determine whether a REST error is unexpected enough to log.
+ *
+ * Authentication failures, permission denials, business-rule warnings, and a
+ * client probing beyond the final collection page are normal 4xx responses.
+ * Validation and server errors remain visible in debug.log.
+ *
+ * @param WP_Error $error REST callback error.
+ * @return bool Whether the error should be logged.
+ */
+function rondo_should_log_rest_error( $error ) {
+	if ( ! is_wp_error( $error ) ) {
+		return false;
+	}
+
+	$expected_codes = [
+		'overlap_warning',
+		'rest_cannot_edit',
+		'rest_forbidden',
+		'rest_forbidden_age_group',
+		'rest_forbidden_context',
+		'rest_not_logged_in',
+		'rest_post_invalid_page_number',
+	];
+
+	return ! in_array( $error->get_error_code(), $expected_codes, true );
+}
+
+/**
  * Initialize the CRM functionality with conditional class loading
  */
 function rondo_init() {
@@ -340,11 +368,11 @@ function rondo_init() {
 		new MollieWebhook();
 		new LettermintWebhook();
 
-		// Log REST API errors to debug.log
+		// Log actionable REST API errors to debug.log.
 		add_filter(
 			'rest_request_after_callbacks',
 			function ( $response, $handler, $request ) {
-				if ( is_wp_error( $response ) ) {
+				if ( rondo_should_log_rest_error( $response ) ) {
 					error_log(
 						sprintf(
 							'REST API error: %s %s — %s (code: %s)',

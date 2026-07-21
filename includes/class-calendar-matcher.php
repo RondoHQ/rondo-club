@@ -185,7 +185,7 @@ class Matcher {
 					++$count;
 				}
 
-				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				if ( $count > 0 && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 					error_log( "RONDO_Calendar_Matcher: Re-matched {$count} calendar events for user {$user_id}" );
 				}
 
