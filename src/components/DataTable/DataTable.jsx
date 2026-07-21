@@ -170,7 +170,6 @@ export default function DataTable({
 
       <div
         className={`card !overflow-x-auto overscroll-x-contain ${className}`}
-        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
         data-horizontal-scroll="true"
       >
         {isLoading ? (
