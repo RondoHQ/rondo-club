@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.4] - 2026-07-21
+
+### Fixed
+
+- De voortgang van de vrijwilligersplicht toont direct het nieuwe aantal ingeplande inschrijftaken na aanmelden, afmelden of verwijderen door een beheerder, ook wanneer een persistente objectcache actief is. (feedback #8627)
+
 ## [33.73.3] - 2026-07-21
 
 ### Fixed
