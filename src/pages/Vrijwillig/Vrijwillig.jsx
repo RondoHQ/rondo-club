@@ -20,7 +20,7 @@ function StatusBadge({ kind, children }) {
     exempt: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
   };
   return (
-    <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${styles[kind] || styles['geen-actie']}`}>
+    <span className={`inline-block shrink-0 whitespace-nowrap px-2 py-0.5 rounded text-xs font-medium ${styles[kind] || styles['geen-actie']}`}>
       {children}
     </span>
   );
