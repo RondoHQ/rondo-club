@@ -8,7 +8,7 @@
 
 namespace Rondo\REST;
 
-use Rondo\Feedback\ResolutionEmailSender;
+use Rondo\Feedback\StatusService;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -481,8 +481,7 @@ class Feedback extends Base {
 			);
 		}
 
-		$is_admin       = current_user_can( 'manage_options' );
-		$current_status = get_field( 'status', $feedback_id ) ?: 'new';
+		$is_admin = current_user_can( 'manage_options' );
 
 		// Check field-level permissions for status and priority
 		$new_status = $request->get_param( 'status' );
@@ -516,7 +515,7 @@ class Feedback extends Base {
 			);
 		}
 
-		if ( $new_status !== null && ! in_array( $new_status, [ 'new', 'approved', 'in_progress', 'in_review', 'resolved', 'declined', 'needs_info' ], true ) ) {
+		if ( $new_status !== null && ! in_array( $new_status, StatusService::ALLOWED_STATUSES, true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
@@ -561,12 +560,9 @@ class Feedback extends Base {
 		}
 
 		if ( $new_status !== null ) {
-			update_field( 'status', $new_status, $feedback_id );
-			if ( $new_status === 'resolved' && $current_status !== 'resolved' ) {
-				update_post_meta( $feedback_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
-				$resolution_email = ( new ResolutionEmailSender() )->send( $feedback_id );
-			} elseif ( $new_status !== 'resolved' && $current_status === 'resolved' ) {
-				delete_post_meta( $feedback_id, '_feedback_resolved_at' );
+			$status_update = ( new StatusService() )->update( $feedback_id, $new_status );
+			if ( is_wp_error( $status_update ) ) {
+				return $status_update;
 			}
 		}
 
@@ -648,8 +644,8 @@ class Feedback extends Base {
 		// Return formatted updated feedback
 		$feedback  = get_post( $feedback_id );
 		$formatted = $this->format_feedback( $feedback );
-		if ( isset( $resolution_email ) ) {
-			$formatted['resolution_email'] = $resolution_email;
+		if ( isset( $status_update['resolution_email'] ) ) {
+			$formatted['resolution_email'] = $status_update['resolution_email'];
 		}
 
 		return rest_ensure_response( $formatted );
