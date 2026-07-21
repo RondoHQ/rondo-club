@@ -19,7 +19,7 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->controller = new People();
 	}
 
-	private function filtered_ids( string $person_type = '', string $is_sponsor = '' ): array {
+	private function filtered_ids( string $person_type = '', string $is_sponsor = '', string $is_businessclub_member = '' ): array {
 		$request = new \WP_REST_Request( 'GET' );
 		$request->set_param( 'page', 1 );
 		$request->set_param( 'per_page', 100 );
@@ -31,6 +31,9 @@ class PersonTypeFilterTest extends RondoTestCase {
 		}
 		if ( $is_sponsor !== '' ) {
 			$request->set_param( 'is_sponsor', $is_sponsor );
+		}
+		if ( $is_businessclub_member !== '' ) {
+			$request->set_param( 'is_businessclub_member', $is_businessclub_member );
 		}
 
 		$response = $this->controller->get_filtered_people( $request );
@@ -109,6 +112,46 @@ class PersonTypeFilterTest extends RondoTestCase {
 		$this->assertContains( $sponsor_id, $ids );
 		$this->assertContains( $member_sponsor_id, $ids );
 		$this->assertNotContains( $contact_id, $ids );
+	}
+
+	public function test_businessclub_filter_requires_active_sponsor_role_and_businessclub_variant(): void {
+		$businessclub_id          = $this->createPerson(
+			[ 'post_title' => 'Actief businessclublid' ],
+			[
+				'first_name'           => 'Businessclub',
+				'person_type'          => 'contact',
+				'is_sponsor'           => 1,
+				'sponsor_pass_variant' => 'businessclub',
+			]
+		);
+		$awc_sponsor_id           = $this->createPerson(
+			[ 'post_title' => 'AWC sponsor' ],
+			[
+				'first_name'           => 'AWC',
+				'person_type'          => 'contact',
+				'is_sponsor'           => 1,
+				'sponsor_pass_variant' => 'awc_sponsor',
+			]
+		);
+		$inactive_businessclub_id = $this->createPerson(
+			[ 'post_title' => 'Voormalig businessclublid' ],
+			[
+				'first_name'           => 'Voormalig',
+				'person_type'          => 'contact',
+				'is_sponsor'           => 0,
+				'sponsor_pass_variant' => 'businessclub',
+			]
+		);
+
+		$businessclub_ids = $this->filtered_ids( '', '', '1' );
+		$other_ids        = $this->filtered_ids( '', '', '0' );
+
+		$this->assertContains( $businessclub_id, $businessclub_ids );
+		$this->assertNotContains( $awc_sponsor_id, $businessclub_ids );
+		$this->assertNotContains( $inactive_businessclub_id, $businessclub_ids );
+		$this->assertNotContains( $businessclub_id, $other_ids );
+		$this->assertContains( $awc_sponsor_id, $other_ids );
+		$this->assertContains( $inactive_businessclub_id, $other_ids );
 	}
 
 	public function test_company_only_contact_uses_company_as_display_name(): void {

@@ -343,6 +343,14 @@ class People extends Base {
 							return in_array( $value, [ '', '1', '0' ], true );
 						},
 					],
+					'is_businessclub_member'    => [
+						'description'       => 'Filter by active Businessclub membership (1=yes, 0=no, empty=all)',
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => function ( $value ) {
+							return in_array( $value, [ '', '1', '0' ], true );
+						},
+					],
 					'foto_missing'              => [
 						'description'       => 'Filter for people without photo date (1=missing, empty=all)',
 						'type'              => 'string',
@@ -1427,6 +1435,7 @@ class People extends Base {
 		$type_lid                  = $request->get_param( 'type_lid' );
 		$person_type               = $request->get_param( 'person_type' );
 		$is_sponsor                = $request->get_param( 'is_sponsor' );
+		$is_businessclub_member    = $request->get_param( 'is_businessclub_member' );
 		$foto_missing              = $request->get_param( 'foto_missing' );
 		$vog_missing               = $request->get_param( 'vog_missing' );
 		$vog_older_than_years      = $request->get_param( 'vog_older_than_years' );
@@ -1628,6 +1637,16 @@ class People extends Base {
 			$where_clauses[] = $is_sponsor === '1'
 				? "(sp.meta_value = '1')"
 				: "(sp.meta_value IS NULL OR sp.meta_value = '' OR sp.meta_value = '0')";
+		}
+
+		// Businessclub membership is the active sponsor role with the Businessclub pass variant.
+		if ( $is_businessclub_member !== null && $is_businessclub_member !== '' ) {
+			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcsp ON p.ID = bcsp.post_id AND bcsp.meta_key = 'is_sponsor'";
+			$join_clauses[]         = "LEFT JOIN {$wpdb->postmeta} bcpv ON p.ID = bcpv.post_id AND bcpv.meta_key = 'sponsor_pass_variant'";
+			$businessclub_condition = "(COALESCE(bcsp.meta_value, '') = '1' AND COALESCE(bcpv.meta_value, '') = 'businessclub')";
+			$where_clauses[]        = $is_businessclub_member === '1'
+				? $businessclub_condition
+				: "NOT {$businessclub_condition}";
 		}
 
 		// Leeftijdsgroep (age group) - select filter

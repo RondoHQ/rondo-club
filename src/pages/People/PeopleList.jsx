@@ -650,6 +650,7 @@ export default function PeopleList() {
   const typeLid = searchParams.get('typeLid') || '';
   const personType = searchParams.get('personType') || '';
   const sponsorOnly = searchParams.get('sponsor') || '';
+  const businessclubMember = searchParams.get('businessclub') || '';
   const leeftijdsgroep = searchParams.get('leeftijdsgroep') || '';
   const fotoMissing = searchParams.get('fotoMissing') || '';
   const vogMissing = searchParams.get('vogMissing') || '';
@@ -719,6 +720,10 @@ export default function PeopleList() {
 
   const setSponsorOnly = useCallback((value) => {
     updateSearchParams({ sponsor: value });
+  }, [updateSearchParams]);
+
+  const setBusinessclubMember = useCallback((value) => {
+    updateSearchParams({ businessclub: value });
   }, [updateSearchParams]);
 
   const setLeeftijdsgroep = useCallback((value) => {
@@ -807,6 +812,7 @@ export default function PeopleList() {
     typeLid,
     personType,
     isSponsor: sponsorOnly,
+    isBusinessclubMember: businessclubMember,
     leeftijdsgroep,
     fotoMissing,
     vogMissing,
@@ -960,6 +966,12 @@ export default function PeopleList() {
       getFilterLabel: (val) => `Sponsor: ${val === '1' ? 'Ja' : 'Nee'}`,
       filterSection: 'Persoon',
     }),
+    createColumn({
+      id: 'is_businessclub_member', header: 'BC-lid', filterType: FILTER_TYPES.SELECT,
+      filterOptions: [{ value: '1', label: 'Ja' }, { value: '0', label: 'Nee' }],
+      getFilterLabel: (val) => `BC-lid: ${val === '1' ? 'Ja' : 'Nee'}`,
+      filterSection: 'Persoon',
+    }),
 
     // Persoon — birth/age/category attributes
     createColumn({
@@ -1090,6 +1102,7 @@ export default function PeopleList() {
     type_lid: typeLid,
     person_type: personType,
     is_sponsor: sponsorOnly,
+    is_businessclub_member: businessclubMember,
     leeftijdsgroep,
     foto_missing: fotoMissing,
     vog_datum: vogMissing === '1' ? 'missing' : vogOlderThanYears ? `older_${vogOlderThanYears}` : '',
@@ -1156,6 +1169,7 @@ export default function PeopleList() {
       case 'type_lid': setTypeLid(value); break;
       case 'person_type': setPersonType(value); break;
       case 'is_sponsor': setSponsorOnly(value); break;
+      case 'is_businessclub_member': setBusinessclubMember(value); break;
       case 'leeftijdsgroep': setLeeftijdsgroep(value); break;
       case 'foto_missing': setFotoMissing(value); break;
       case 'vog_datum':
@@ -1165,7 +1179,7 @@ export default function PeopleList() {
         break;
       default: break;
     }
-  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
+  }, [setIncludeFormer, setLidTotFuture, setLidTotSeason, setLidSindsSeason, setSpelactiviteitNoTeam, setSpelendLid, setWachtOverschrijving, setSelectedBirthYear, setSelectedBirthMonth, setLastModifiedFilter, setHuidigeVrijwilliger, setFinancieleBlokkade, setTypeLid, setPersonType, setSponsorOnly, setBusinessclubMember, setLeeftijdsgroep, setFotoMissing, updateSearchParams]);
 
   // Selection helper functions
   const toggleSelection = (personId) => {
@@ -1198,7 +1212,7 @@ export default function PeopleList() {
   // Clear selection when filters change, page changes, or data changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
+  }, [selectedBirthYear, selectedBirthMonth, lastModifiedFilter, huidigeVrijwilliger, financieleBlokkade, typeLid, personType, sponsorOnly, businessclubMember, leeftijdsgroep, fotoMissing, vogMissing, vogOlderThanYears, includeFormer, lidTotFuture, lidTotSeason, lidSindsSeason, spelactiviteitNoTeam, spelendLid, wachtOverschrijving, page, people]);
 
   // Collect all team IDs
   const teamIds = useMemo(() => {
@@ -1277,6 +1291,7 @@ export default function PeopleList() {
         typeLid,
         personType,
         isSponsor: sponsorOnly,
+        isBusinessclubMember: businessclubMember,
         leeftijdsgroep,
         fotoMissing,
         vogMissing,
