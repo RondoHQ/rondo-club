@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.7] - 2026-07-21
+
+### Changed
+
+- De vrijwilligersplicht toont de vriendelijke status **Nog te plannen** in amber, met een uitnodigende tekst om de resterende inschrijftaken te kiezen, in plaats van de rode status **Risico**.
+
 ## [33.73.6] - 2026-07-21
 
 ### Fixed

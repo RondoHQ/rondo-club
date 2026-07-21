@@ -15,7 +15,7 @@ function StatusBadge({ kind, children }) {
   const styles = {
     voldaan: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
     'op-weg': 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
-    risico: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    risico: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
     'geen-actie': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
     exempt: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
   };
@@ -49,7 +49,7 @@ function ObligationCard({ obligation, hasBoth }) {
             Je hebt <strong>{completed}</strong> van <strong>{required}</strong> inschrijftaken gedaan dit seizoen.
             {pending > 0 && <> Je staat al ingepland voor {pending} {pending === 1 ? 'inschrijftaak' : 'inschrijftaken'}.</>}
             {remainingToSchedule > 0 ? (
-              <> Plan nog <strong>{remainingToSchedule}</strong> {remainingToSchedule === 1 ? 'inschrijftaak' : 'inschrijftaken'} in.</>
+              <> Kies wanneer het jou uitkomt nog <strong>{remainingToSchedule}</strong> {remainingToSchedule === 1 ? 'inschrijftaak' : 'inschrijftaken'}.</>
             ) : completed < required && (
               <> Je hebt alle benodigde inschrijftaken ingepland.</>
             )}
@@ -58,7 +58,7 @@ function ObligationCard({ obligation, hasBoth }) {
         <StatusBadge kind={obligation.status}>
           {obligation.status === 'voldaan' && 'Voldaan'}
           {obligation.status === 'op-weg' && 'Op weg'}
-          {obligation.status === 'risico' && 'Risico'}
+          {obligation.status === 'risico' && 'Nog te plannen'}
           {obligation.status === 'geen-actie' && 'Open'}
         </StatusBadge>
       </div>
