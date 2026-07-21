@@ -378,21 +378,26 @@ export default function Vrijwillig() {
 
   const signupMutation = useMutation({
     mutationFn: ({ shiftId, forceOverlap = false }) => prmApi.signupForShift(shiftId, { force_overlap: forceOverlap }),
+    onMutate: () => {
+      setActionError('');
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
       queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all });
       setConfirmOverlap(null);
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       const code = error?.response?.data?.code;
       const data = error?.response?.data?.data || {};
       if (code === 'overlap_warning' && data.can_force) {
         setConfirmOverlap({
-          shiftId: data.shift_id || null,
+          shiftId: variables?.shiftId ?? data.shift_id,
           message: error?.response?.data?.message,
           overlap: data.overlap_shift || null,
         });
+        return;
       }
+      setActionError(error?.response?.data?.message || 'Aanmelden is niet gelukt.');
     },
   });
 

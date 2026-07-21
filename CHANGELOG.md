@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.5] - 2026-07-21
+
+### Fixed
+
+- De knop **Toch aanmelden** schrijft een vrijwilliger nu daadwerkelijk in wanneer de gekozen inschrijftaak met een bestaande aanmelding overlapt; eventuele vervolgproblemen worden zichtbaar gemeld.
+
 ## [33.73.4] - 2026-07-21
 
 ### Fixed

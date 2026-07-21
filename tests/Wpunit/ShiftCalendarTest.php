@@ -199,4 +199,32 @@ class ShiftCalendarTest extends RondoTestCase {
 		$this->assertTrue( $response->get_data()['signed_up'] );
 		$this->assertSame( [ $person_id ], get_post_meta( $candidate_id, 'assigned_persons', true ) );
 	}
+
+	public function test_overlap_warning_can_be_forced_and_returns_candidate_shift_id(): void {
+		$user_id   = $this->createRondoUser();
+		$person_id = $this->createPerson( [ 'post_title' => 'Overlappende vrijwilliger' ] );
+		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
+		wp_set_current_user( $user_id );
+
+		$type_id      = $this->dienst_type( 'Overlappende diensten' );
+		$existing_id  = $this->shift( $type_id, 1, [ $person_id ], 'vol', '10:00:00' );
+		$candidate_id = $this->shift( $type_id, 1, [], 'open', '11:00:00' );
+
+		$request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $candidate_id . '/signup' );
+		$request->set_param( 'id', $candidate_id );
+		$response = $this->controller->signup( $request );
+
+		$this->assertWPError( $response );
+		$this->assertSame( 'overlap_warning', $response->get_error_code() );
+		$this->assertSame( $candidate_id, $response->get_error_data()['shift_id'] );
+		$this->assertSame( $existing_id, $response->get_error_data()['overlap_shift']['id'] );
+		$this->assertTrue( $response->get_error_data()['can_force'] );
+
+		$request->set_param( 'force_overlap', true );
+		$forced_response = $this->controller->signup( $request );
+
+		$this->assertNotWPError( $forced_response );
+		$this->assertTrue( $forced_response->get_data()['signed_up'] );
+		$this->assertSame( [ $person_id ], get_post_meta( $candidate_id, 'assigned_persons', true ) );
+	}
 }

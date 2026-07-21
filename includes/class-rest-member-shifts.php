@@ -870,6 +870,7 @@ class MemberShifts extends Base {
 					sprintf( 'Deze inschrijftaak overlapt met een bestaande aanmelding (%s).', $overlap['title'] ),
 					[
 						'status'        => 409,
+						'shift_id'      => $shift_id,
 						'overlap_shift' => $overlap,
 						'can_force'     => true,
 					]
