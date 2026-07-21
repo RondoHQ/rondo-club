@@ -8,6 +8,8 @@
 
 namespace Rondo\REST;
 
+use Rondo\Feedback\ResolutionEmailSender;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -562,6 +564,7 @@ class Feedback extends Base {
 			update_field( 'status', $new_status, $feedback_id );
 			if ( $new_status === 'resolved' && $current_status !== 'resolved' ) {
 				update_post_meta( $feedback_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
+				$resolution_email = ( new ResolutionEmailSender() )->send( $feedback_id );
 			} elseif ( $new_status !== 'resolved' && $current_status === 'resolved' ) {
 				delete_post_meta( $feedback_id, '_feedback_resolved_at' );
 			}
@@ -643,8 +646,13 @@ class Feedback extends Base {
 		}
 
 		// Return formatted updated feedback
-		$feedback = get_post( $feedback_id );
-		return rest_ensure_response( $this->format_feedback( $feedback ) );
+		$feedback  = get_post( $feedback_id );
+		$formatted = $this->format_feedback( $feedback );
+		if ( isset( $resolution_email ) ) {
+			$formatted['resolution_email'] = $resolution_email;
+		}
+
+		return rest_ensure_response( $formatted );
 	}
 
 	/**

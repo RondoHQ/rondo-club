@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.69.0] - 2026-07-21
+
+### Added
+
+- De indiener van feedback ontvangt een eenmalige, opgemaakte e-mail met een link naar het feedbackitem zodra de status naar **Opgelost** verandert. Gezinsaccounts gebruiken daarbij het echte contactadres in plaats van een technisch WordPress-adres.
+
 ## [33.68.10] - 2026-07-21
 
 ### Fixed
