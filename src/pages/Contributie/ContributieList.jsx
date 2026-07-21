@@ -496,7 +496,6 @@ export function ContributieList({ onlyMismatch = false }) {
         {/* Fee list table */}
         <div
           className="card !overflow-x-auto"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
           data-horizontal-scroll="true"
         >
           {sortedMembers.length === 0 ? (

@@ -748,7 +748,6 @@ export default function FactuurDetail() {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Regels</h2>
         <div
           className="overflow-x-auto"
-          style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
           data-horizontal-scroll="true"
         >
           <table className="w-full">
@@ -842,7 +841,6 @@ export default function FactuurDetail() {
           </h2>
           <div
             className="overflow-x-auto"
-            style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
             data-horizontal-scroll="true"
           >
             <table className="w-full">

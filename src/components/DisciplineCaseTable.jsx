@@ -241,7 +241,6 @@ export default function DisciplineCaseTable({
   return (
     <div
       className="overflow-x-auto"
-      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
       data-horizontal-scroll="true"
     >
       {/* Selection toolbar */}

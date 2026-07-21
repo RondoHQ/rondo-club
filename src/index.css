@@ -248,6 +248,16 @@ button, [role="tab"], [role="button"], summary {
   overflow: visible !important;
 }
 
+/*
+ * Keep horizontal tables native-scrollable without restricting the gesture to
+ * the horizontal axis. `touch-action: pan-x` prevents an ancestor page from
+ * scrolling vertically when a touch starts on the table, which makes long
+ * tables appear frozen on mobile.
+ */
+[data-horizontal-scroll="true"] {
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Custom component classes */
 
 /*

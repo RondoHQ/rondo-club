@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.3] - 2026-07-21
+
+### Fixed
+
+- Horizontaal scrollbare tabellen blokkeren op mobiel niet langer het verticaal scrollen van de pagina. (feedback #6584)
+
 ## [33.73.2] - 2026-07-21
 
 ### Fixed
