@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.8] - 2026-07-21
+
+### Changed
+
+- Kalenderkoppelingen worden alleen opnieuw gematcht wanneer een vast e-mailadres van een persoon wijzigt. Wijzigingen uit dezelfde importsessie worden per eigenaar samengevoegd tot één uitgestelde cronjob.
+- Verwachte REST-responses voor authenticatie, autorisatie, overlapwaarschuwingen en paginering worden niet langer als applicatiefout naar `debug.log` geschreven.
+
+### Fixed
+
+- Lettermint-mails zonder expliciete `Content-Type`-header gebruiken nu betrouwbaar `text/plain`, zodat onder meer standaard WordPress-mails niet meer worden geweigerd vanwege lege `metadata.content_type`.
+
 ## [33.68.7] - 2026-07-20
 
 ### Fixed

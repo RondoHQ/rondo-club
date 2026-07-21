@@ -93,7 +93,10 @@ class LettermintMailer {
 			$tag = $headers['x_rondo_email_tag'] ?? self::DEFAULT_TAG;
 			$email->tag( sanitize_title( (string) $tag ) );
 
-			$content_type = strtolower( (string) ( $headers['content_type'] ?? 'text/plain' ) );
+			$content_type = strtolower( trim( (string) ( $headers['content_type'] ?? '' ) ) );
+			if ( $content_type === '' ) {
+				$content_type = 'text/plain';
+			}
 			if ( str_starts_with( $content_type, 'text/html' ) ) {
 				$email->html( $message );
 				$email->text( wp_strip_all_tags( $message ) );
@@ -174,7 +177,7 @@ class LettermintMailer {
 			'cc'                 => [],
 			'bcc'                => [],
 			'reply_to'           => [],
-			'content_type'       => '',
+			'content_type'       => 'text/plain',
 			'x_rondo_email_tag'  => '',
 			'x_rondo_metadata'   => [],
 			'x_lettermint_route' => '',
@@ -226,7 +229,10 @@ class LettermintMailer {
 					$parsed['reply_to'] = array_merge( $parsed['reply_to'], $this->split_address_header( $value ) );
 					break;
 				case 'content-type':
-					$parsed['content_type'] = strtolower( trim( explode( ';', $value )[0] ) );
+					$content_type = strtolower( trim( explode( ';', $value )[0] ) );
+					if ( $content_type !== '' ) {
+						$parsed['content_type'] = $content_type;
+					}
 					break;
 				case 'x-rondo-email-tag':
 					$parsed['x_rondo_email_tag'] = $value;
