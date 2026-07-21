@@ -317,6 +317,7 @@ export default function VrijwilligersDienstForm() {
           <Field label="Datum">
             <input
               type="date"
+              max="9999-12-31"
               required
               value={form.date}
               onChange={(e) => setForm((current) => ({ ...current, date: e.target.value }))}
