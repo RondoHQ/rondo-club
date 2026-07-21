@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarClock, Plus, Pencil, Play, X } from 'lucide-react';
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { refreshShiftCalendars } from '@/utils/shiftQueryCache';
 
 const DAYS = ['', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
 const DUTCH_DATE_FORMATTER = new Intl.DateTimeFormat('nl-NL', {
@@ -124,11 +125,10 @@ export default function VrijwilligersSjablonen() {
   const expandMutation = useMutation({
     mutationFn: (until) => prmApi.expandShiftTemplates(until),
     onMutate: () => setExpandError(''),
-    onSuccess: (response, selectedUntil) => {
+    onSuccess: async (response, selectedUntil) => {
       const created = response?.data?.created ?? 0;
       const until = response?.data?.until ?? selectedUntil;
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
       setShowExpandModal(false);
       setFeedback({
         kind: 'success',

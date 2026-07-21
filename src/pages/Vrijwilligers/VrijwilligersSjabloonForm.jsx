@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarClock, RefreshCw, Save, Trash2, X } from 'lucide-rea
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
+import { refreshShiftCalendars } from '@/utils/shiftQueryCache';
 
 const DAYS = [
   { value: 1, label: 'Maandag' },
@@ -97,8 +98,7 @@ export default function VrijwilligersSjabloonForm() {
     onSuccess: async () => {
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'shift-templates'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'sjabloon', id] });
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
       navigate('/vrijwilligers/sjablonen');
     },
     onError: (err) => {
@@ -116,7 +116,7 @@ export default function VrijwilligersSjabloonForm() {
 
   const rerunMutation = useMutation({
     mutationFn: () => prmApi.rerunShiftTemplate(id),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       const data = response?.data || {};
       const deleted = Number(data.deleted || 0);
       const created = Number(data.created || 0);
@@ -131,8 +131,7 @@ export default function VrijwilligersSjabloonForm() {
         kind: 'success',
         message: `Opnieuw uitgerold: ${deleted} verwijderd, ${created} opnieuw aangemaakt.${preservedText}`,
       });
-      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shifts'], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
     },
     onError: (err) => {
       setShowRerunModal(false);

@@ -6,6 +6,7 @@ import { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import { format } from '@/utils/dateFormat';
+import { refreshShiftCalendars } from '@/utils/shiftQueryCache';
 
 const EMPTY = {
   title: '',
@@ -149,9 +150,8 @@ export default function VrijwilligersDienstForm() {
     mutationFn: (payload) =>
       isEdit ? prmApi.updateDienstShift(id, payload) : prmApi.createDienstShift(payload),
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
       navigate('/vrijwilligers/diensten');
     },
     onError: (err) => {
@@ -162,8 +162,7 @@ export default function VrijwilligersDienstForm() {
   const deleteMutation = useMutation({
     mutationFn: () => prmApi.deleteDienstShift(id),
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
       navigate('/vrijwilligers/diensten');
     },
     onError: (err) => {
@@ -189,8 +188,7 @@ export default function VrijwilligersDienstForm() {
       setCanRetryNotifications(Number(notifications.failed || 0) > 0);
       setCancellationOpen(false);
       await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shift', id], type: 'active' });
-      await queryClient.refetchQueries({ queryKey: ['volunteer', 'dienst-shifts'], type: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
       queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
     },
     onError: (err) => {
@@ -200,9 +198,9 @@ export default function VrijwilligersDienstForm() {
 
   const removeAssigneeMutation = useMutation({
     mutationFn: (personId) => prmApi.removeShiftAssignee(id, personId),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      await refreshShiftCalendars(queryClient);
     },
   });
 

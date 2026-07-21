@@ -7,6 +7,7 @@ import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
 import { openHtmlLinksInNewTab } from '@/utils/richTextUtils';
+import { shiftCalendarKeys } from '@/utils/shiftQueryCache';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
@@ -367,7 +368,7 @@ export default function Vrijwillig() {
   });
 
   const { data: calendarData, isLoading: calendarLoading } = useQuery({
-    queryKey: ['shift-calendar', 'signup', selectedDienstType],
+    queryKey: shiftCalendarKeys.signup(selectedDienstType),
     queryFn: async () => (await prmApi.getShiftCalendar({
       view: 'signup',
       dienst_type_id: selectedDienstType || undefined,
@@ -379,7 +380,7 @@ export default function Vrijwillig() {
     mutationFn: ({ shiftId, forceOverlap = false }) => prmApi.signupForShift(shiftId, { force_overlap: forceOverlap }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all });
       setConfirmOverlap(null);
     },
     onError: (error) => {
@@ -400,7 +401,7 @@ export default function Vrijwillig() {
     onSuccess: () => {
       setActionError('');
       queryClient.invalidateQueries({ queryKey: ['my-shifts'] });
-      queryClient.invalidateQueries({ queryKey: ['shift-calendar'] });
+      queryClient.invalidateQueries({ queryKey: shiftCalendarKeys.all });
     },
     onError: (error) => {
       setActionError(error?.response?.data?.message || 'Afmelden is niet gelukt.');
