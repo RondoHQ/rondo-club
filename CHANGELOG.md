@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.72.1] - 2026-07-21
+
+### Fixed
+
+- Aangemaakte, gewijzigde, geannuleerde en verwijderde inschrijftaken verschijnen nu direct correct in alle beheerderskalenders, inclusief eerder gebruikte taakfilters.
+
 ## [33.72.0] - 2026-07-21
 
 ### Added

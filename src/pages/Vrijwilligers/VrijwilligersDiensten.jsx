@@ -5,6 +5,7 @@ import { CalendarClock, Copy, ListChecks, Plus, Settings, Pencil, X } from 'luci
 import { prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { format } from '@/utils/dateFormat';
+import { refreshShiftCalendars, shiftCalendarKeys } from '@/utils/shiftQueryCache';
 import AnchoredPopover from '@/components/AnchoredPopover';
 import ShiftCoverageCalendar from '@/components/volunteers/ShiftCoverageCalendar';
 
@@ -223,7 +224,7 @@ export default function VrijwilligersDiensten() {
   });
 
   const { data: calendarData, isLoading: calendarLoading } = useQuery({
-    queryKey: ['shift-calendar', 'manage', selectedDienstType],
+    queryKey: shiftCalendarKeys.manage(selectedDienstType),
     queryFn: async () => (await prmApi.getShiftCalendar({
       view: 'manage',
       dienst_type_id: selectedDienstType || undefined,
@@ -252,7 +253,7 @@ export default function VrijwilligersDiensten() {
       const skipped = Number(data.skipped || 0);
       const targetLabel = format(`${data.target_date}T12:00:00`, 'd MMMM yyyy');
 
-      await queryClient.refetchQueries({ queryKey: ['shift-calendar', 'manage'], type: 'active' });
+      await refreshShiftCalendars(queryClient);
       setCopyDay(null);
       setCopyError('');
       setFeedback({
