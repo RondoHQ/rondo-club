@@ -107,6 +107,7 @@ export function usePeople(params = {}, options = {}) {
  * @param {string} filters.typeLid - Filter by member type value
  * @param {string} filters.personType - Filter by Rondo person type (`member` or `contact`)
  * @param {string} filters.isSponsor - Filter by independent sponsor role (`1` or `0`)
+ * @param {string} filters.isBusinessclubMember - Filter by active Businessclub membership (`1` or `0`)
  * @param {string} filters.fotoMissing - '1' to show only people without photo date
  * @param {string} filters.vogMissing - '1' to show only people without VOG date
  * @param {number} filters.vogOlderThanYears - Filter for VOG older than N years
@@ -136,6 +137,7 @@ export function buildFilteredPeopleParams(filters = {}) {
     type_lid: filters.typeLid || null,
     person_type: filters.personType || null,
     is_sponsor: filters.isSponsor || null,
+    is_businessclub_member: filters.isBusinessclubMember || null,
     foto_missing: filters.fotoMissing || null,
     vog_missing: filters.vogMissing || null,
     vog_older_than_years: filters.vogOlderThanYears || null,

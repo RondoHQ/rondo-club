@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.73.0] - 2026-07-21
+
+### Added
+
+- De relatieslijst heeft naast de sponsorfilter nu een aparte filter voor actieve BC-leden. De selectie blijft in de URL staan en wordt ook toegepast op CSV-exports.
+
 ## [33.72.2] - 2026-07-21
 
 ### Fixed
