@@ -3,8 +3,10 @@
 namespace Tests\Wpunit;
 
 use Rondo\REST\MemberShifts;
+use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\ShiftCancellationService;
 use Rondo\Volunteer\ShiftEmailScheduler;
+use Rondo\Volunteer\VolunteerObligationCalculator;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 use WP_REST_Server;
@@ -145,6 +147,29 @@ class MemberShiftLifecycleTest extends RondoTestCase {
 		$request->set_param( 'id', $shift_id );
 		$request->set_param( 'reason', $reason );
 		return $this->controller->cancel_shift( $request );
+	}
+
+	public function test_signup_and_cancellation_immediately_refresh_obligation_progress(): void {
+		[, $person_id] = $this->member( 'obligation_cache_member' );
+		$shift_id      = $this->shift( [], 22 );
+		$season        = SeasonKey::current();
+		$unit          = [
+			'unit_id'        => 'cache-regression-' . $person_id,
+			'kind'           => 'speler',
+			'person_ids'     => [ $person_id ],
+			'required_count' => 2,
+		];
+		$calculator    = new VolunteerObligationCalculator();
+
+		$this->assertSame( 0, $calculator->progress_for_unit( $unit, $season )['pending_count'] );
+
+		$signup_request = new WP_REST_Request( 'POST', '/rondo/v1/shifts/' . $shift_id . '/signup' );
+		$signup_request->set_param( 'id', $shift_id );
+		$this->assertNotWPError( $this->controller->signup( $signup_request ) );
+		$this->assertSame( 1, $calculator->progress_for_unit( $unit, $season )['pending_count'] );
+
+		$this->assertNotWPError( $this->cancel( $shift_id ) );
+		$this->assertSame( 0, $calculator->progress_for_unit( $unit, $season )['pending_count'] );
 	}
 
 	public function test_member_can_cancel_more_than_three_weeks_before_shift(): void {

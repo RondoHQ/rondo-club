@@ -44,9 +44,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class VolunteerObligationCalculator {
 
-	const NO_SHOW_META_PREFIX  = '_no_show_';
-	const NO_SHOW_WINDOW_HOURS = 72;
-	const CACHE_TTL_SECONDS    = 5 * MINUTE_IN_SECONDS;
+	const NO_SHOW_META_PREFIX     = '_no_show_';
+	const NO_SHOW_WINDOW_HOURS    = 72;
+	const CACHE_TTL_SECONDS       = 5 * MINUTE_IN_SECONDS;
+	const CACHE_GENERATION_OPTION = 'rondo_vobligation_cache_generation';
 
 	/**
 	 * Shared eligibility service, used to resolve each person's own speler duty
@@ -135,8 +136,9 @@ class VolunteerObligationCalculator {
 	 * @return array{completed_count: int, pending_count: int, no_show_count: int}
 	 */
 	public function progress_for_unit( array $unit, string $season ): array {
-		$cache_key = 'rondo_vobligation_' . md5( $unit['unit_id'] . '|' . $season );
-		$cached    = get_transient( $cache_key );
+		$generation = (string) get_option( self::CACHE_GENERATION_OPTION, '1' );
+		$cache_key  = 'rondo_vobligation_' . md5( $unit['unit_id'] . '|' . $season . '|' . $generation );
+		$cached     = get_transient( $cache_key );
 		if ( is_array( $cached ) ) {
 			return $cached;
 		}
@@ -254,16 +256,14 @@ class VolunteerObligationCalculator {
 	}
 
 	/**
-	 * Wipe all obligation-cache transients.
-	 * Pragmatic: full-table delete is cheaper than indexing per-unit reverse maps.
+	 * Invalidate every obligation-cache transient by advancing the generation.
+	 *
+	 * Old generations expire through their normal five-minute TTL. A generation
+	 * option works with both database transients and persistent object caches,
+	 * whereas deleting transient rows directly leaves Memcached values alive.
 	 */
 	public static function invalidate_cache(): void {
-		global $wpdb;
-		$wpdb->query(
-			"DELETE FROM {$wpdb->options}
-			 WHERE option_name LIKE '\\_transient\\_rondo_vobligation_%'
-			    OR option_name LIKE '\\_transient\\_timeout\\_rondo_vobligation_%'"
-		);
+		update_option( self::CACHE_GENERATION_OPTION, wp_generate_uuid4(), false );
 	}
 
 	/**

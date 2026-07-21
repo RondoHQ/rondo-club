@@ -910,6 +910,7 @@ class MemberShifts extends Base {
 				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
 					update_post_meta( $shift_id, 'status', 'vol' );
 				}
+				VolunteerObligationCalculator::invalidate_cache();
 
 				return rest_ensure_response(
 					[
@@ -960,6 +961,7 @@ class MemberShifts extends Base {
 				if ( $status === 'vol' ) {
 					update_post_meta( $shift_id, 'status', 'open' );
 				}
+				VolunteerObligationCalculator::invalidate_cache();
 
 				return rest_ensure_response(
 					[
@@ -1030,6 +1032,7 @@ class MemberShifts extends Base {
 				if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
 					update_post_meta( $shift_id, 'status', 'open' );
 				}
+				VolunteerObligationCalculator::invalidate_cache();
 
 				return rest_ensure_response(
 					[
