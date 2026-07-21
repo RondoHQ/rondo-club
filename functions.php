@@ -114,7 +114,6 @@ use Rondo\REST\Feedback as RESTFeedback;
 use Rondo\REST\Invoices as RESTInvoices;
 use Rondo\REST\MembershipPasses as RESTMembershipPasses;
 use Rondo\REST\Clothing as RESTClothing;
-use Rondo\Calendar\Matcher;
 use Rondo\Notifications\EmailChannel;
 use Rondo\Notifications\LettermintMailer;
 use Rondo\Notifications\LettermintWebhook;
@@ -219,9 +218,6 @@ class_alias( Api::class, 'RONDO_REST_API' );
 class_alias( People::class, 'RONDO_REST_People' );
 class_alias( Teams::class, 'RONDO_REST_Teams' );
 class_alias( Todos::class, 'RONDO_REST_Todos' );
-
-// Calendar — used in class-calendar-matcher.php
-class_alias( Matcher::class, 'RONDO_Calendar_Matcher' );
 
 // Notifications — used in class-reminders.php
 class_alias( EmailChannel::class, 'RONDO_Email_Channel' );
@@ -1149,22 +1145,6 @@ function rondo_acf_json_save_point( $path ) {
 	return $path;
 }
 add_filter( 'acf/settings/save_json', 'rondo_acf_json_save_point' );
-
-/**
- * Invalidate email lookup cache when a person is saved
- *
- * This ensures that the contact matching cache stays in sync
- * when contact info (emails) are updated on person records.
- */
-function rondo_invalidate_email_lookup_on_person_save( $post_id ) {
-	if ( get_post_type( $post_id ) === 'person' ) {
-		$user_id = get_post_field( 'post_author', $post_id );
-		if ( $user_id ) {
-			Matcher::invalidate_cache( $user_id );
-		}
-	}
-}
-add_action( 'acf/save_post', 'rondo_invalidate_email_lookup_on_person_save', 20 );
 
 /**
  * Reset VOG tracking fields when datum-vog is updated

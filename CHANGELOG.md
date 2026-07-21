@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.68.9] - 2026-07-21
+
+### Removed
+
+- Kalenderdeelnemers worden niet langer automatisch aan personen gekoppeld. De matcher, cache-invalidatie bij persoonswijzigingen, uitgestelde hermatching en het bijbehorende WP-CLI-commando zijn verwijderd om onnodige databasequeries en cronwerk te stoppen.
+
 ## [33.68.8] - 2026-07-21
 
 ### Changed

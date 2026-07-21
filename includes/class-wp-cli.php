@@ -10,7 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Import namespaced classes for WP-CLI commands
 use Rondo\Collaboration\Reminders;
 use Rondo\Notifications\EmailChannel;
-use Rondo\Calendar\Matcher;
 use Rondo\Export\VCard;
 use Rondo\Collaboration\CommentTypes;
 use Rondo\Demo\DemoExport;
@@ -1001,53 +1000,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			} else {
 				WP_CLI::success( sprintf( 'Migration complete! %d todo(s) migrated to multi-person format.', $migrated ) );
 			}
-		}
-	}
-
-	/**
-	 * Calendar Sync WP-CLI Commands
-	 */
-	class RONDO_Calendar_CLI_Command {
-
-		/**
-		 * Re-match calendar events against contacts
-		 *
-		 * Invalidates the email lookup cache and re-matches all calendar events
-		 * against the user's contacts. Useful after adding new email addresses
-		 * to contacts or after bulk imports.
-		 *
-		 * ## OPTIONS
-		 *
-		 * [--user-id=<user_id>]
-		 * : User ID to re-match events for (required)
-		 *
-		 * ## EXAMPLES
-		 *
-		 *     wp prm calendar rematch --user-id=1
-		 *
-		 * @when after_wp_load
-		 */
-		public function rematch( $args, $assoc_args ) {
-			$user_id = isset( $assoc_args['user-id'] ) ? (int) $assoc_args['user-id'] : 0;
-
-			if ( ! $user_id ) {
-				WP_CLI::error( 'No user ID provided. Use --user-id=ID' );
-				return;
-			}
-
-			$user = get_user_by( 'ID', $user_id );
-			if ( ! $user ) {
-				WP_CLI::error( "User {$user_id} not found." );
-				return;
-			}
-
-			WP_CLI::log( "Invalidating email cache for user {$user_id}..." );
-			Matcher::invalidate_cache( $user_id );
-
-			WP_CLI::log( "Re-matching calendar events for user {$user_id}..." );
-			$count = Matcher::rematch_events_for_user( $user_id );
-
-			WP_CLI::success( "Re-matched {$count} calendar events for user {$user->display_name}." );
 		}
 	}
 
@@ -2321,7 +2273,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'prm migrate', 'RONDO_Migration_CLI_Command' );
 	WP_CLI::add_command( 'prm vcard', 'RONDO_VCard_CLI_Command' );
 	WP_CLI::add_command( 'prm todos', 'RONDO_Todos_CLI_Command' );
-	WP_CLI::add_command( 'prm calendar', 'RONDO_Calendar_CLI_Command' );
 	WP_CLI::add_command( 'prm event', 'RONDO_Event_CLI_Command' );
 	WP_CLI::add_command( 'prm relationships', 'RONDO_Relationships_CLI_Command' );
 	WP_CLI::add_command( 'rondo tasks', 'RONDO_Tasks_CLI_Command' );
