@@ -13,6 +13,7 @@ namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\IvaApprovalEmailSender;
+use Rondo\Volunteer\IvaReviewNotificationEmailSender;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\RelationshipQualityChecker;
 use Rondo\Volunteer\VolunteerCacheInvalidator;
@@ -507,16 +508,19 @@ class Volunteer extends Base {
 		update_field( 'iva-approved', 0, $person_id );
 		update_post_meta( $person_id, 'iva-approved', 0 );
 
+		$notification = ( new IvaReviewNotificationEmailSender() )->send( $person_id );
+
 		return rest_ensure_response(
 			[
-				'person_id'  => $person_id,
-				'attachment' => [
+				'person_id'    => $person_id,
+				'attachment'   => [
 					'id'  => $attachment_id,
 					'url' => $this->iva_certificate_url( $person_id ),
 				],
-				'datum_iva'  => $datum,
-				'status'     => IvaStatus::status( $person_id ),
-				'expires_at' => IvaStatus::expires_at( $person_id ),
+				'datum_iva'    => $datum,
+				'status'       => IvaStatus::status( $person_id ),
+				'expires_at'   => IvaStatus::expires_at( $person_id ),
+				'notification' => $notification,
 			]
 		);
 	}
