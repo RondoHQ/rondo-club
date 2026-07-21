@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Wine, Check, X, Upload } from 'lucide-react';
 import { prmApi } from '@/api/client';
@@ -29,6 +29,7 @@ export default function VrijwilligersIva() {
   useDocumentTitle('IVA — Vrijwilligers');
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('pending');
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: people = [], isLoading, error } = useQuery({
     queryKey: ['volunteer', 'iva', 'people'],
@@ -56,7 +57,22 @@ export default function VrijwilligersIva() {
     return out;
   }, [people]);
 
-  const active = buckets[tab] || [];
+  const reviewPersonId = Number.parseInt(searchParams.get('review') || '', 10);
+  const reviewPerson = Number.isInteger(reviewPersonId)
+    ? people.find((person) => Number(person.id) === reviewPersonId)
+    : null;
+  const reviewTab = reviewPerson?.status === 'valid'
+    ? 'valid'
+    : reviewPerson?.status === 'expired'
+      ? 'expired'
+      : 'pending';
+  const activeTab = reviewPerson ? reviewTab : tab;
+  const active = reviewPerson ? [reviewPerson] : (buckets[activeTab] || []);
+
+  const showFullList = (nextTab = activeTab) => {
+    setSearchParams({});
+    setTab(nextTab);
+  };
 
   return (
     <div className="space-y-6">
@@ -76,9 +92,9 @@ export default function VrijwilligersIva() {
         {TABS.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => showFullList(t.id)}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id
+              activeTab === t.id
                 ? 'border-bright-cobalt text-bright-cobalt dark:border-electric-cyan dark:text-electric-cyan'
                 : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
             }`}
@@ -87,6 +103,22 @@ export default function VrijwilligersIva() {
           </button>
         ))}
       </nav>
+
+      {reviewPerson && (
+        <div className="card flex flex-wrap items-center justify-between gap-3 border-cyan-200 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+          <p className="text-sm text-cyan-900 dark:text-cyan-100">
+            Directe review voor <strong>{reviewPerson.name || `Persoon ${reviewPerson.id}`}</strong>.
+            {' '}Bekijk hieronder het certificaat en keur het daarna goed.
+          </p>
+          <button
+            type="button"
+            onClick={() => showFullList(reviewTab)}
+            className="text-sm font-medium text-bright-cobalt hover:underline dark:text-electric-cyan"
+          >
+            Toon volledige lijst
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="card p-4 bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
@@ -124,7 +156,7 @@ export default function VrijwilligersIva() {
                 const expired  = person.status === 'expired';
 
                 return (
-                  <tr key={person.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <tr key={person.id} className={reviewPerson ? 'bg-cyan-50/60 dark:bg-cyan-950/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}>
                     <td className="px-4 py-2">
                       <Link to={`/people/${person.id}`} className="text-bright-cobalt dark:text-electric-cyan hover:underline">
                         {person.name || `Persoon ${person.id}`}

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.74.0] - 2026-07-21
+
+### Added
+
+- Na een nieuwe IVA-upload ontvangen alle bevoegde IVA-goedkeurders een e-mail met een directe, beveiligde reviewlink om het certificaat te bekijken en goed te keuren. Gedeelde e-mailadressen krijgen één melding. (feedback #8626)
+
 ## [33.73.8] - 2026-07-21
 
 ### Fixed
