@@ -100,7 +100,9 @@ class MolliePayment {
 		try {
 			$mollie_client = new MollieClient( $api_key );
 			$mollie        = $mollie_client->get();
-			$payment_link  = $mollie->paymentLinks->create( $payload );
+			$payment_link  = MollieClient::with_retry(
+				fn() => $mollie->paymentLinks->create( $payload )
+			);
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie API exception: ' . $e->getMessage() );
 			return new \WP_Error(

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.75.0] - 2026-07-22
+
+### Changed
+
+- De Mollie-integratie probeert een API-verzoek nu automatisch opnieuw als Mollie aangeeft dat de aanvraaglimiet is bereikt (HTTP 429), met oplopende wachttijd. Dit sluit aan op de nieuwe API-rate limits van Mollie; betaallinks aanmaken en webhookverwerking blijven werken tijdens korte pieken.
+- Mollie PHP SDK bijgewerkt van v3.9.0 naar v3.13.1.
+
 ## [33.74.0] - 2026-07-21
 
 ### Added
