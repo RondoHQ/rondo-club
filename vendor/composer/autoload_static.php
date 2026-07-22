@@ -32,25 +32,25 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
     );
 
     public static $prefixLengthsPsr4 = array (
-        's' => 
+        's' =>
         array (
             'setasign\\Fpdi\\' => 14,
         ),
-        'p' => 
+        'p' =>
         array (
             'phpseclib3\\' => 11,
         ),
-        'l' => 
+        'l' =>
         array (
             'lucatume\\WPBrowser\\Opis\\Closure\\' => 32,
             'lucatume\\WPBrowser\\' => 19,
         ),
-        'c' => 
+        'c' =>
         array (
             'chillerlan\\Settings\\' => 20,
             'chillerlan\\QRCode\\' => 18,
         ),
-        'S' => 
+        'S' =>
         array (
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
@@ -71,11 +71,11 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
             'Symfony\\Component\\Console\\' => 26,
             'Symfony\\Component\\BrowserKit\\' => 29,
         ),
-        'R' => 
+        'R' =>
         array (
             'Rondo\\' => 6,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psy\\' => 4,
             'Psr\\Log\\' => 8,
@@ -90,11 +90,11 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
             'PKPass\\' => 7,
             'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 57,
         ),
-        'N' => 
+        'N' =>
         array (
             'Nyholm\\Psr7\\' => 12,
         ),
-        'M' => 
+        'M' =>
         array (
             'Mpdf\\PsrLogAwareTrait\\' => 22,
             'Mpdf\\PsrHttpMessageShim\\' => 24,
@@ -103,15 +103,15 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
             'Mollie\\Api\\' => 11,
             'Masterminds\\' => 12,
         ),
-        'L' => 
+        'L' =>
         array (
             'Lettermint\\' => 11,
         ),
-        'H' => 
+        'H' =>
         array (
             'Hautelook\\Phpass\\' => 17,
         ),
-        'G' => 
+        'G' =>
         array (
             'GuzzleHttp\\Psr7\\' => 16,
             'GuzzleHttp\\Promise\\' => 19,
@@ -121,201 +121,201 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
             'Google\\Auth\\' => 12,
             'Google\\' => 7,
         ),
-        'F' => 
+        'F' =>
         array (
             'Firebase\\JWT\\' => 13,
             'Facebook\\WebDriver\\' => 19,
         ),
-        'D' => 
+        'D' =>
         array (
             'Druidfi\\Mysqldump\\' => 18,
             'Dotenv\\' => 7,
             'DeepCopy\\' => 9,
         ),
-        'C' => 
+        'C' =>
         array (
             'Composer\\CaBundle\\' => 18,
             'Codeception\\Extension\\' => 22,
             'Codeception\\' => 12,
         ),
-        'B' => 
+        'B' =>
         array (
             'Behat\\Gherkin\\' => 14,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'setasign\\Fpdi\\' => 
+        'setasign\\Fpdi\\' =>
         array (
             0 => __DIR__ . '/..' . '/setasign/fpdi/src',
         ),
-        'phpseclib3\\' => 
+        'phpseclib3\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
         ),
-        'lucatume\\WPBrowser\\Opis\\Closure\\' => 
+        'lucatume\\WPBrowser\\Opis\\Closure\\' =>
         array (
             0 => __DIR__ . '/..' . '/lucatume/wp-browser/includes/opis/closure/src',
         ),
-        'lucatume\\WPBrowser\\' => 
+        'lucatume\\WPBrowser\\' =>
         array (
             0 => __DIR__ . '/..' . '/lucatume/wp-browser/src',
             1 => __DIR__ . '/..' . '/lucatume/wp-browser/src/Deprecated',
         ),
-        'chillerlan\\Settings\\' => 
+        'chillerlan\\Settings\\' =>
         array (
             0 => __DIR__ . '/..' . '/chillerlan/php-settings-container/src',
         ),
-        'chillerlan\\QRCode\\' => 
+        'chillerlan\\QRCode\\' =>
         array (
             0 => __DIR__ . '/..' . '/chillerlan/php-qrcode/src',
         ),
-        'Symfony\\Polyfill\\Php80\\' => 
+        'Symfony\\Polyfill\\Php80\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Symfony\\Polyfill\\Mbstring\\' => 
+        'Symfony\\Polyfill\\Mbstring\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
-        'Symfony\\Polyfill\\Intl\\Normalizer\\' => 
+        'Symfony\\Polyfill\\Intl\\Normalizer\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer',
         ),
-        'Symfony\\Polyfill\\Intl\\Grapheme\\' => 
+        'Symfony\\Polyfill\\Intl\\Grapheme\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-grapheme',
         ),
-        'Symfony\\Polyfill\\Ctype\\' => 
+        'Symfony\\Polyfill\\Ctype\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
-        'Symfony\\Contracts\\Service\\' => 
+        'Symfony\\Contracts\\Service\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/service-contracts',
         ),
-        'Symfony\\Contracts\\EventDispatcher\\' => 
+        'Symfony\\Contracts\\EventDispatcher\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/event-dispatcher-contracts',
         ),
-        'Symfony\\Component\\Yaml\\' => 
+        'Symfony\\Component\\Yaml\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/yaml',
         ),
-        'Symfony\\Component\\VarDumper\\' => 
+        'Symfony\\Component\\VarDumper\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/var-dumper',
         ),
-        'Symfony\\Component\\String\\' => 
+        'Symfony\\Component\\String\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/string',
         ),
-        'Symfony\\Component\\Process\\' => 
+        'Symfony\\Component\\Process\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/process',
         ),
-        'Symfony\\Component\\Finder\\' => 
+        'Symfony\\Component\\Finder\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/finder',
         ),
-        'Symfony\\Component\\Filesystem\\' => 
+        'Symfony\\Component\\Filesystem\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/filesystem',
         ),
-        'Symfony\\Component\\EventDispatcher\\' => 
+        'Symfony\\Component\\EventDispatcher\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/event-dispatcher',
         ),
-        'Symfony\\Component\\DomCrawler\\' => 
+        'Symfony\\Component\\DomCrawler\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/dom-crawler',
         ),
-        'Symfony\\Component\\CssSelector\\' => 
+        'Symfony\\Component\\CssSelector\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/css-selector',
         ),
-        'Symfony\\Component\\Console\\' => 
+        'Symfony\\Component\\Console\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/console',
         ),
-        'Symfony\\Component\\BrowserKit\\' => 
+        'Symfony\\Component\\BrowserKit\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/browser-kit',
         ),
-        'Rondo\\' => 
+        'Rondo\\' =>
         array (
             0 => __DIR__ . '/../..' . '/includes',
         ),
-        'Psy\\' => 
+        'Psy\\' =>
         array (
             0 => __DIR__ . '/..' . '/psy/psysh/src',
         ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Http\\Message\\' => 
+        'Psr\\Http\\Message\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Psr\\Http\\Client\\' => 
+        'Psr\\Http\\Client\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-client/src',
         ),
-        'Psr\\EventDispatcher\\' => 
+        'Psr\\EventDispatcher\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/event-dispatcher/src',
         ),
-        'Psr\\Container\\' => 
+        'Psr\\Container\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'Psr\\Cache\\' => 
+        'Psr\\Cache\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
         ),
-        'PhpParser\\' => 
+        'PhpParser\\' =>
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'PhpOption\\' => 
+        'PhpOption\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
         ),
-        'ParagonIE\\ConstantTime\\' => 
+        'ParagonIE\\ConstantTime\\' =>
         array (
             0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
         ),
-        'PKPass\\' => 
+        'PKPass\\' =>
         array (
             0 => __DIR__ . '/..' . '/pkpass/pkpass/src',
         ),
-        'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' => 
+        'PHPCSStandards\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\' =>
         array (
             0 => __DIR__ . '/..' . '/dealerdirect/phpcodesniffer-composer-installer/src',
         ),
-        'Nyholm\\Psr7\\' => 
+        'Nyholm\\Psr7\\' =>
         array (
             0 => __DIR__ . '/..' . '/nyholm/psr7/src',
         ),
-        'Mpdf\\PsrLogAwareTrait\\' => 
+        'Mpdf\\PsrLogAwareTrait\\' =>
         array (
             0 => __DIR__ . '/..' . '/mpdf/psr-log-aware-trait/src',
         ),
-        'Mpdf\\PsrHttpMessageShim\\' => 
+        'Mpdf\\PsrHttpMessageShim\\' =>
         array (
             0 => __DIR__ . '/..' . '/mpdf/psr-http-message-shim/src',
         ),
-        'Mpdf\\' => 
+        'Mpdf\\' =>
         array (
             0 => __DIR__ . '/..' . '/mpdf/mpdf/src',
         ),
-        'Monolog\\' => 
+        'Monolog\\' =>
         array (
             0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
         ),
-        'Mollie\\Api\\' => 
+        'Mollie\\Api\\' =>
         array (
             0 => __DIR__ . '/..' . '/mollie/mollie-api-php/src',
         ),
@@ -323,77 +323,77 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         array (
             0 => __DIR__ . '/..' . '/masterminds/html5/src',
         ),
-        'Lettermint\\' => 
+        'Lettermint\\' =>
         array (
             0 => __DIR__ . '/..' . '/lettermint/lettermint-php/src',
         ),
-        'Hautelook\\Phpass\\' => 
+        'Hautelook\\Phpass\\' =>
         array (
             0 => __DIR__ . '/..' . '/lucatume/wp-browser/includes/Hautelook/Phpass',
         ),
-        'GuzzleHttp\\Psr7\\' => 
+        'GuzzleHttp\\Psr7\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
-        'GuzzleHttp\\Promise\\' => 
+        'GuzzleHttp\\Promise\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
         ),
-        'GuzzleHttp\\' => 
+        'GuzzleHttp\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
         ),
-        'GrahamCampbell\\ResultType\\' => 
+        'GrahamCampbell\\ResultType\\' =>
         array (
             0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
         ),
-        'Google\\Service\\' => 
+        'Google\\Service\\' =>
         array (
             0 => __DIR__ . '/..' . '/google/apiclient-services/src',
         ),
-        'Google\\Auth\\' => 
+        'Google\\Auth\\' =>
         array (
             0 => __DIR__ . '/..' . '/google/auth/src',
         ),
-        'Google\\' => 
+        'Google\\' =>
         array (
             0 => __DIR__ . '/..' . '/google/apiclient/src',
         ),
-        'Firebase\\JWT\\' => 
+        'Firebase\\JWT\\' =>
         array (
             0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
         ),
-        'Facebook\\WebDriver\\' => 
+        'Facebook\\WebDriver\\' =>
         array (
             0 => __DIR__ . '/..' . '/php-webdriver/webdriver/lib',
         ),
-        'Druidfi\\Mysqldump\\' => 
+        'Druidfi\\Mysqldump\\' =>
         array (
             0 => __DIR__ . '/..' . '/druidfi/mysqldump-php/src',
         ),
-        'Dotenv\\' => 
+        'Dotenv\\' =>
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
-        'DeepCopy\\' => 
+        'DeepCopy\\' =>
         array (
             0 => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy',
         ),
-        'Composer\\CaBundle\\' => 
+        'Composer\\CaBundle\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/ca-bundle/src',
         ),
-        'Codeception\\Extension\\' => 
+        'Codeception\\Extension\\' =>
         array (
             0 => __DIR__ . '/..' . '/lucatume/wp-browser/src/Extension',
             1 => __DIR__ . '/..' . '/codeception/codeception/ext',
         ),
-        'Codeception\\' => 
+        'Codeception\\' =>
         array (
             0 => __DIR__ . '/..' . '/codeception/codeception/src/Codeception',
             1 => __DIR__ . '/..' . '/codeception/stub/src',
         ),
-        'Behat\\Gherkin\\' => 
+        'Behat\\Gherkin\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/gherkin/src',
         ),
@@ -33790,19 +33790,14 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'GuzzleHttp\\Handler\\CurlFactoryInterface' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/CurlFactoryInterface.php',
         'GuzzleHttp\\Handler\\CurlHandler' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/CurlHandler.php',
         'GuzzleHttp\\Handler\\CurlMultiHandler' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/CurlMultiHandler.php',
-        'GuzzleHttp\\Handler\\CurlShareHandleState' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/CurlShareHandleState.php',
-        'GuzzleHttp\\Handler\\CurlVersion' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/CurlVersion.php',
         'GuzzleHttp\\Handler\\EasyHandle' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/EasyHandle.php',
         'GuzzleHttp\\Handler\\HeaderProcessor' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/HeaderProcessor.php',
         'GuzzleHttp\\Handler\\MockHandler' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/MockHandler.php',
         'GuzzleHttp\\Handler\\Proxy' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/Proxy.php',
-        'GuzzleHttp\\Handler\\ProxyEnvironment' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/ProxyEnvironment.php',
         'GuzzleHttp\\Handler\\StreamHandler' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/StreamHandler.php',
-        'GuzzleHttp\\Handler\\TlsVersion' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Handler/TlsVersion.php',
         'GuzzleHttp\\MessageFormatter' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/MessageFormatter.php',
         'GuzzleHttp\\MessageFormatterInterface' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/MessageFormatterInterface.php',
         'GuzzleHttp\\Middleware' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Middleware.php',
-        'GuzzleHttp\\Multiplexing' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Multiplexing.php',
         'GuzzleHttp\\Pool' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Pool.php',
         'GuzzleHttp\\PrepareBodyMiddleware' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/PrepareBodyMiddleware.php',
         'GuzzleHttp\\Promise\\AggregateException' => __DIR__ . '/..' . '/guzzlehttp/promises/src/AggregateException.php',
@@ -33841,7 +33836,6 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'GuzzleHttp\\Psr7\\Query' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Query.php',
         'GuzzleHttp\\Psr7\\Request' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Request.php',
         'GuzzleHttp\\Psr7\\Response' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Response.php',
-        'GuzzleHttp\\Psr7\\Rfc3986' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Rfc3986.php',
         'GuzzleHttp\\Psr7\\Rfc7230' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Rfc7230.php',
         'GuzzleHttp\\Psr7\\ServerRequest' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/ServerRequest.php',
         'GuzzleHttp\\Psr7\\Stream' => __DIR__ . '/..' . '/guzzlehttp/psr7/src/Stream.php',
@@ -33857,7 +33851,6 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'GuzzleHttp\\RequestOptions' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/RequestOptions.php',
         'GuzzleHttp\\RetryMiddleware' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/RetryMiddleware.php',
         'GuzzleHttp\\TransferStats' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/TransferStats.php',
-        'GuzzleHttp\\TransportSharing' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/TransportSharing.php',
         'GuzzleHttp\\Utils' => __DIR__ . '/..' . '/guzzlehttp/guzzle/src/Utils.php',
         'Hautelook\\Phpass\\PasswordHash' => __DIR__ . '/..' . '/lucatume/wp-browser/includes/Hautelook/Phpass/PasswordHash.php',
         'Lettermint\\Client\\HttpClient' => __DIR__ . '/..' . '/lettermint/lettermint-php/src/Client/HttpClient.php',
@@ -33908,6 +33901,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Contracts\\Repository' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/Repository.php',
         'Mollie\\Api\\Contracts\\RequestMiddleware' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/RequestMiddleware.php',
         'Mollie\\Api\\Contracts\\Resolvable' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/Resolvable.php',
+        'Mollie\\Api\\Contracts\\ResourceOrigin' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/ResourceOrigin.php',
         'Mollie\\Api\\Contracts\\ResponseMiddleware' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/ResponseMiddleware.php',
         'Mollie\\Api\\Contracts\\RetryStrategyContract' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/RetryStrategyContract.php',
         'Mollie\\Api\\Contracts\\Stringable' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Contracts/Stringable.php',
@@ -33942,6 +33936,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\EndpointCollection\\PaymentLinkPaymentEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/PaymentLinkPaymentEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\PaymentRefundEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/PaymentRefundEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\PaymentRouteEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/PaymentRouteEndpointCollection.php',
+        'Mollie\\Api\\EndpointCollection\\PayoutEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/PayoutEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\PermissionEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/PermissionEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\ProfileEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/ProfileEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\ProfileMethodEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/ProfileMethodEndpointCollection.php',
@@ -33956,6 +33951,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\EndpointCollection\\SubscriptionEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/SubscriptionEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\SubscriptionPaymentEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/SubscriptionPaymentEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\TerminalEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/TerminalEndpointCollection.php',
+        'Mollie\\Api\\EndpointCollection\\TerminalPairingCodeEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/TerminalPairingCodeEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\WalletEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/WalletEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\WebhookEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/WebhookEndpointCollection.php',
         'Mollie\\Api\\EndpointCollection\\WebhookEventEndpointCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/EndpointCollection/WebhookEventEndpointCollection.php',
@@ -33994,6 +33990,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Factories\\CreatePaymentLinkRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreatePaymentLinkRequestFactory.php',
         'Mollie\\Api\\Factories\\CreatePaymentRefundRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreatePaymentRefundRequestFactory.php',
         'Mollie\\Api\\Factories\\CreatePaymentRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreatePaymentRequestFactory.php',
+        'Mollie\\Api\\Factories\\CreatePayoutRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreatePayoutRequestFactory.php',
         'Mollie\\Api\\Factories\\CreateProfileRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreateProfileRequestFactory.php',
         'Mollie\\Api\\Factories\\CreateSalesInvoiceRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreateSalesInvoiceRequestFactory.php',
         'Mollie\\Api\\Factories\\CreateSessionRequestFactory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Factories/CreateSessionRequestFactory.php',
@@ -34103,7 +34100,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Http\\Requests\\ApplePayPaymentSessionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/ApplePayPaymentSessionRequest.php',
         'Mollie\\Api\\Http\\Requests\\CancelPaymentRefundRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CancelPaymentRefundRequest.php',
         'Mollie\\Api\\Http\\Requests\\CancelPaymentRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CancelPaymentRequest.php',
-        'Mollie\\Api\\Http\\Requests\\CancelSessionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CancelSessionRequest.php',
+        'Mollie\\Api\\Http\\Requests\\CancelPayoutRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CancelPayoutRequest.php',
         'Mollie\\Api\\Http\\Requests\\CancelSubscriptionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CancelSubscriptionRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreateClientLinkRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreateClientLinkRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreateConnectBalanceTransferRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreateConnectBalanceTransferRequest.php',
@@ -34115,6 +34112,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Http\\Requests\\CreatePaymentLinkRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreatePaymentLinkRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreatePaymentRefundRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreatePaymentRefundRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreatePaymentRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreatePaymentRequest.php',
+        'Mollie\\Api\\Http\\Requests\\CreatePayoutRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreatePayoutRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreateProfileRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreateProfileRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreateSalesInvoiceRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreateSalesInvoiceRequest.php',
         'Mollie\\Api\\Http\\Requests\\CreateSessionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/CreateSessionRequest.php',
@@ -34165,6 +34163,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Http\\Requests\\GetPaginatedPaymentLinksRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedPaymentLinksRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedPaymentRefundsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedPaymentRefundsRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedPaymentsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedPaymentsRequest.php',
+        'Mollie\\Api\\Http\\Requests\\GetPaginatedPayoutsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedPayoutsRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedProfilesRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedProfilesRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedRefundsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedRefundsRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedSalesInvoicesRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedSalesInvoicesRequest.php',
@@ -34175,6 +34174,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Http\\Requests\\GetPaginatedSettlementsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedSettlementsRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedSubscriptionPaymentsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedSubscriptionPaymentsRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedSubscriptionsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedSubscriptionsRequest.php',
+        'Mollie\\Api\\Http\\Requests\\GetPaginatedTerminalPairingCodesRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedTerminalPairingCodesRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedTerminalsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedTerminalsRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaginatedWebhooksRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaginatedWebhooksRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaymentCaptureRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaymentCaptureRequest.php',
@@ -34182,12 +34182,14 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Http\\Requests\\GetPaymentLinkRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaymentLinkRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaymentRefundRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaymentRefundRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPaymentRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPaymentRequest.php',
+        'Mollie\\Api\\Http\\Requests\\GetPayoutRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPayoutRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetPermissionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetPermissionRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetProfileRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetProfileRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetSalesInvoiceRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetSalesInvoiceRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetSessionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetSessionRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetSettlementRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetSettlementRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetSubscriptionRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetSubscriptionRequest.php',
+        'Mollie\\Api\\Http\\Requests\\GetTerminalPairingCodeRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetTerminalPairingCodeRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetTerminalRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetTerminalRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetWebhookEventRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetWebhookEventRequest.php',
         'Mollie\\Api\\Http\\Requests\\GetWebhookRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/GetWebhookRequest.php',
@@ -34197,8 +34199,10 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Http\\Requests\\ListPermissionsRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/ListPermissionsRequest.php',
         'Mollie\\Api\\Http\\Requests\\PaginatedRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/PaginatedRequest.php',
         'Mollie\\Api\\Http\\Requests\\ReleasePaymentAuthorizationRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/ReleasePaymentAuthorizationRequest.php',
+        'Mollie\\Api\\Http\\Requests\\RequestTerminalPairingCodeRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/RequestTerminalPairingCodeRequest.php',
         'Mollie\\Api\\Http\\Requests\\ResourceHydratableRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/ResourceHydratableRequest.php',
         'Mollie\\Api\\Http\\Requests\\RevokeMandateRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/RevokeMandateRequest.php',
+        'Mollie\\Api\\Http\\Requests\\RevokeTerminalPairingCodeRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/RevokeTerminalPairingCodeRequest.php',
         'Mollie\\Api\\Http\\Requests\\SortablePaginatedRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/SortablePaginatedRequest.php',
         'Mollie\\Api\\Http\\Requests\\TestWebhookRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/TestWebhookRequest.php',
         'Mollie\\Api\\Http\\Requests\\UpdateCustomerRequest' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Http/Requests/UpdateCustomerRequest.php',
@@ -34257,6 +34261,8 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Resources\\PaymentCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/PaymentCollection.php',
         'Mollie\\Api\\Resources\\PaymentLink' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/PaymentLink.php',
         'Mollie\\Api\\Resources\\PaymentLinkCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/PaymentLinkCollection.php',
+        'Mollie\\Api\\Resources\\Payout' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Payout.php',
+        'Mollie\\Api\\Resources\\PayoutCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/PayoutCollection.php',
         'Mollie\\Api\\Resources\\Permission' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Permission.php',
         'Mollie\\Api\\Resources\\PermissionCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/PermissionCollection.php',
         'Mollie\\Api\\Resources\\Profile' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Profile.php',
@@ -34274,13 +34280,14 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Resources\\SalesInvoice' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/SalesInvoice.php',
         'Mollie\\Api\\Resources\\SalesInvoiceCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/SalesInvoiceCollection.php',
         'Mollie\\Api\\Resources\\Session' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Session.php',
-        'Mollie\\Api\\Resources\\SessionCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/SessionCollection.php',
         'Mollie\\Api\\Resources\\Settlement' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Settlement.php',
         'Mollie\\Api\\Resources\\SettlementCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/SettlementCollection.php',
         'Mollie\\Api\\Resources\\Subscription' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Subscription.php',
         'Mollie\\Api\\Resources\\SubscriptionCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/SubscriptionCollection.php',
         'Mollie\\Api\\Resources\\Terminal' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Terminal.php',
         'Mollie\\Api\\Resources\\TerminalCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/TerminalCollection.php',
+        'Mollie\\Api\\Resources\\TerminalPairingCode' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/TerminalPairingCode.php',
+        'Mollie\\Api\\Resources\\TerminalPairingCodeCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/TerminalPairingCodeCollection.php',
         'Mollie\\Api\\Resources\\Webhook' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/Webhook.php',
         'Mollie\\Api\\Resources\\WebhookCollection' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/WebhookCollection.php',
         'Mollie\\Api\\Resources\\WebhookEvent' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Resources/WebhookEvent.php',
@@ -34312,11 +34319,11 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Types\\BusinessCategory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/BusinessCategory.php',
         'Mollie\\Api\\Types\\CapabilityStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/CapabilityStatus.php',
         'Mollie\\Api\\Types\\CaptureMode' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/CaptureMode.php',
-        'Mollie\\Api\\Types\\CheckoutFlow' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/CheckoutFlow.php',
         'Mollie\\Api\\Types\\ClientQuery' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/ClientQuery.php',
         'Mollie\\Api\\Types\\ConnectBalanceTransferCategory' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/ConnectBalanceTransferCategory.php',
         'Mollie\\Api\\Types\\InvoiceStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/InvoiceStatus.php',
         'Mollie\\Api\\Types\\MandateMethod' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/MandateMethod.php',
+        'Mollie\\Api\\Types\\MandateQuery' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/MandateQuery.php',
         'Mollie\\Api\\Types\\MandateStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/MandateStatus.php',
         'Mollie\\Api\\Types\\Method' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/Method.php',
         'Mollie\\Api\\Types\\MethodQuery' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/MethodQuery.php',
@@ -34339,6 +34346,8 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Types\\SessionStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/SessionStatus.php',
         'Mollie\\Api\\Types\\SettlementStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/SettlementStatus.php',
         'Mollie\\Api\\Types\\SubscriptionStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/SubscriptionStatus.php',
+        'Mollie\\Api\\Types\\TerminalPairingCodeQuery' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/TerminalPairingCodeQuery.php',
+        'Mollie\\Api\\Types\\TerminalPairingCodeStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/TerminalPairingCodeStatus.php',
         'Mollie\\Api\\Types\\TerminalStatus' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/TerminalStatus.php',
         'Mollie\\Api\\Types\\TransferPartyType' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/TransferPartyType.php',
         'Mollie\\Api\\Types\\VatMode' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Types/VatMode.php',
@@ -34353,17 +34362,41 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Mollie\\Api\\Utils\\Utility' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Utils/Utility.php',
         'Mollie\\Api\\Webhooks\\Events\\BalanceTransactionCreated' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BalanceTransactionCreated.php',
         'Mollie\\Api\\Webhooks\\Events\\BaseEvent' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BaseEvent.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferBlocked' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferBlocked.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferFailed' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferFailed.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferInitiated' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferInitiated.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferPendingReview' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferPendingReview.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferProcessed' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferProcessed.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferRequested' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferRequested.php',
+        'Mollie\\Api\\Webhooks\\Events\\BusinessAccountTransferReturned' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/BusinessAccountTransferReturned.php',
         'Mollie\\Api\\Webhooks\\Events\\ConnectBalanceTransferFailed' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/ConnectBalanceTransferFailed.php',
         'Mollie\\Api\\Webhooks\\Events\\ConnectBalanceTransferSucceeded' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/ConnectBalanceTransferSucceeded.php',
+        'Mollie\\Api\\Webhooks\\Events\\DisputeCreated' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/DisputeCreated.php',
+        'Mollie\\Api\\Webhooks\\Events\\DisputeResolved' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/DisputeResolved.php',
+        'Mollie\\Api\\Webhooks\\Events\\DisputeUpdated' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/DisputeUpdated.php',
+        'Mollie\\Api\\Webhooks\\Events\\FileAccepted' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/FileAccepted.php',
+        'Mollie\\Api\\Webhooks\\Events\\FileFailed' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/FileFailed.php',
+        'Mollie\\Api\\Webhooks\\Events\\FileRejected' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/FileRejected.php',
         'Mollie\\Api\\Webhooks\\Events\\PaymentLinkPaid' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/PaymentLinkPaid.php',
+        'Mollie\\Api\\Webhooks\\Events\\PayoutCanceled' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/PayoutCanceled.php',
+        'Mollie\\Api\\Webhooks\\Events\\PayoutCompleted' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/PayoutCompleted.php',
+        'Mollie\\Api\\Webhooks\\Events\\PayoutFailed' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/PayoutFailed.php',
+        'Mollie\\Api\\Webhooks\\Events\\PayoutInitiated' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/PayoutInitiated.php',
+        'Mollie\\Api\\Webhooks\\Events\\PayoutProcessingAtBank' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/PayoutProcessingAtBank.php',
         'Mollie\\Api\\Webhooks\\Events\\SalesInvoiceCanceled' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/SalesInvoiceCanceled.php',
         'Mollie\\Api\\Webhooks\\Events\\SalesInvoiceCreated' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/SalesInvoiceCreated.php',
         'Mollie\\Api\\Webhooks\\Events\\SalesInvoiceIssued' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/SalesInvoiceIssued.php',
         'Mollie\\Api\\Webhooks\\Events\\SalesInvoicePaid' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/SalesInvoicePaid.php',
+        'Mollie\\Api\\Webhooks\\Events\\UnmatchedCreditTransferExpired' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/UnmatchedCreditTransferExpired.php',
+        'Mollie\\Api\\Webhooks\\Events\\UnmatchedCreditTransferMatched' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/UnmatchedCreditTransferMatched.php',
+        'Mollie\\Api\\Webhooks\\Events\\UnmatchedCreditTransferReceived' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/UnmatchedCreditTransferReceived.php',
+        'Mollie\\Api\\Webhooks\\Events\\UnmatchedCreditTransferReturned' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/Events/UnmatchedCreditTransferReturned.php',
         'Mollie\\Api\\Webhooks\\SignatureValidator' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/SignatureValidator.php',
+        'Mollie\\Api\\Webhooks\\SnapshotHydrator' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/SnapshotHydrator.php',
         'Mollie\\Api\\Webhooks\\WebhookEntity' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/WebhookEntity.php',
         'Mollie\\Api\\Webhooks\\WebhookEventMapper' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/WebhookEventMapper.php',
         'Mollie\\Api\\Webhooks\\WebhookEventType' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/WebhookEventType.php',
+        'Mollie\\Api\\Webhooks\\WebhookSnapshotOrigin' => __DIR__ . '/..' . '/mollie/mollie-api-php/src/Webhooks/WebhookSnapshotOrigin.php',
         'Monolog\\Attribute\\AsMonologProcessor' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Attribute/AsMonologProcessor.php',
         'Monolog\\Attribute\\WithMonologChannel' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/Attribute/WithMonologChannel.php',
         'Monolog\\DateTimeImmutable' => __DIR__ . '/..' . '/monolog/monolog/src/Monolog/DateTimeImmutable.php',
@@ -36473,9 +36506,9 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Psy\\VersionUpdater\\IntervalChecker' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/IntervalChecker.php',
         'Psy\\VersionUpdater\\NoopChecker' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/NoopChecker.php',
         'Psy\\VersionUpdater\\SelfUpdate' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/SelfUpdate.php',
-        'RONDO_Calendar_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_Demo_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_Event_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
+        'RONDO_Feedback_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_Invoices_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_Migration_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_People_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
@@ -36484,7 +36517,6 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'RONDO_Tasks_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_Todos_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
         'RONDO_VCard_CLI_Command' => __DIR__ . '/../..' . '/includes/class-wp-cli.php',
-        'Rondo\\Calendar\\Matcher' => __DIR__ . '/../..' . '/includes/class-calendar-matcher.php',
         'Rondo\\Collaboration\\CommentTypes' => __DIR__ . '/../..' . '/includes/class-comment-types.php',
         'Rondo\\Collaboration\\MentionNotifications' => __DIR__ . '/../..' . '/includes/class-mention-notifications.php',
         'Rondo\\Collaboration\\Mentions' => __DIR__ . '/../..' . '/includes/class-mentions.php',
@@ -36498,6 +36530,7 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Core\\PhoneNormalizer' => __DIR__ . '/../..' . '/includes/class-phone-normalizer.php',
         'Rondo\\Core\\PostTypes' => __DIR__ . '/../..' . '/includes/class-post-types.php',
         'Rondo\\Core\\RoleFinder' => __DIR__ . '/../..' . '/includes/class-role-finder.php',
+        'Rondo\\Core\\SponsorStatus' => __DIR__ . '/../..' . '/includes/class-sponsor-status.php',
         'Rondo\\Core\\Taxonomies' => __DIR__ . '/../..' . '/includes/class-taxonomies.php',
         'Rondo\\Core\\UserRoles' => __DIR__ . '/../..' . '/includes/class-user-roles.php',
         'Rondo\\Core\\VolunteerStatus' => __DIR__ . '/../..' . '/includes/class-volunteer-status.php',
@@ -36505,12 +36538,15 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\CustomFields\\Validation' => __DIR__ . '/../..' . '/includes/customfields/class-validation.php',
         'Rondo\\Data\\CredentialEncryption' => __DIR__ . '/../..' . '/includes/class-credential-encryption.php',
         'Rondo\\Data\\InverseRelationships' => __DIR__ . '/../..' . '/includes/class-inverse-relationships.php',
+        'Rondo\\Data\\PersonDeletionGuard' => __DIR__ . '/../..' . '/includes/class-person-deletion-guard.php',
         'Rondo\\Data\\TodoMigration' => __DIR__ . '/../..' . '/includes/class-todo-migration.php',
         'Rondo\\Demo\\DemoAnonymizer' => __DIR__ . '/../..' . '/includes/class-demo-anonymizer.php',
         'Rondo\\Demo\\DemoExport' => __DIR__ . '/../..' . '/includes/class-demo-export.php',
         'Rondo\\Demo\\DemoImport' => __DIR__ . '/../..' . '/includes/class-demo-import.php',
         'Rondo\\Demo\\DemoProtection' => __DIR__ . '/../..' . '/includes/class-demo-protection.php',
         'Rondo\\Export\\VCard' => __DIR__ . '/../..' . '/includes/class-vcard-export.php',
+        'Rondo\\Feedback\\ResolutionEmailSender' => __DIR__ . '/../..' . '/includes/class-feedback-resolution-email-sender.php',
+        'Rondo\\Feedback\\StatusService' => __DIR__ . '/../..' . '/includes/class-feedback-status-service.php',
         'Rondo\\Fees\\FamilyGroupingService' => __DIR__ . '/../..' . '/includes/class-family-grouping-service.php',
         'Rondo\\Fees\\FeeCache' => __DIR__ . '/../..' . '/includes/class-fee-cache.php',
         'Rondo\\Fees\\FeeCacheInvalidator' => __DIR__ . '/../..' . '/includes/class-fee-cache-invalidator.php',
@@ -36580,9 +36616,14 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Rondo\\Users\\LoginResolver' => __DIR__ . '/../..' . '/includes/class-login-resolver.php',
         'Rondo\\Users\\UserProvisioning' => __DIR__ . '/../..' . '/includes/class-user-provisioning.php',
         'Rondo\\VOG\\VOGEmail' => __DIR__ . '/../..' . '/includes/class-vog-email.php',
+        'Rondo\\Volunteer\\IvaApprovalEmailSender' => __DIR__ . '/../..' . '/includes/class-iva-approval-email-sender.php',
+        'Rondo\\Volunteer\\IvaReviewNotificationEmailSender' => __DIR__ . '/../..' . '/includes/class-iva-review-notification-email-sender.php',
         'Rondo\\Volunteer\\IvaStatus' => __DIR__ . '/../..' . '/includes/class-iva-status.php',
         'Rondo\\Volunteer\\PublicTaakuitlegPage' => __DIR__ . '/../..' . '/includes/class-public-taakuitleg-page.php',
         'Rondo\\Volunteer\\RelationshipQualityChecker' => __DIR__ . '/../..' . '/includes/class-relationship-quality-checker.php',
+        'Rondo\\Volunteer\\ShiftCancellationService' => __DIR__ . '/../..' . '/includes/class-shift-cancellation-service.php',
+        'Rondo\\Volunteer\\ShiftDayCopier' => __DIR__ . '/../..' . '/includes/class-shift-day-copier.php',
+        'Rondo\\Volunteer\\ShiftEmailScheduler' => __DIR__ . '/../..' . '/includes/class-shift-email-scheduler.php',
         'Rondo\\Volunteer\\ShiftScheduler' => __DIR__ . '/../..' . '/includes/class-shift-scheduler.php',
         'Rondo\\Volunteer\\ShiftTemplateExpander' => __DIR__ . '/../..' . '/includes/class-shift-template-expander.php',
         'Rondo\\Volunteer\\VolunteerCacheInvalidator' => __DIR__ . '/../..' . '/includes/class-volunteer-cache-invalidator.php',
@@ -37179,7 +37220,6 @@ class ComposerStaticInit3152fd3c79af851002f166eb76487b33
         'Symfony\\Component\\Yaml\\Exception\\RuntimeException' => __DIR__ . '/..' . '/symfony/yaml/Exception/RuntimeException.php',
         'Symfony\\Component\\Yaml\\Inline' => __DIR__ . '/..' . '/symfony/yaml/Inline.php',
         'Symfony\\Component\\Yaml\\Parser' => __DIR__ . '/..' . '/symfony/yaml/Parser.php',
-        'Symfony\\Component\\Yaml\\ParserState' => __DIR__ . '/..' . '/symfony/yaml/ParserState.php',
         'Symfony\\Component\\Yaml\\Tag\\TaggedValue' => __DIR__ . '/..' . '/symfony/yaml/Tag/TaggedValue.php',
         'Symfony\\Component\\Yaml\\Unescaper' => __DIR__ . '/..' . '/symfony/yaml/Unescaper.php',
         'Symfony\\Component\\Yaml\\Yaml' => __DIR__ . '/..' . '/symfony/yaml/Yaml.php',
