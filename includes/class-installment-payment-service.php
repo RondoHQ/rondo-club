@@ -104,7 +104,9 @@ class InstallmentPaymentService {
 		try {
 			$mollie_client = new MollieClient( $api_key );
 			$mollie        = $mollie_client->get();
-			$payment_link  = $mollie->paymentLinks->create( $payload );
+			$payment_link  = MollieClient::with_retry(
+				fn() => $mollie->paymentLinks->create( $payload )
+			);
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie API exception (installment ' . $installment_number . '): ' . $e->getMessage() );
 			return new \WP_Error( 'mollie_api_error', $e->getMessage() );

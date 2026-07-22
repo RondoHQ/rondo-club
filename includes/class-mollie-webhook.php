@@ -166,7 +166,9 @@ class MollieWebhook {
 
 		try {
 			$mollie_client = new MollieClient( $api_key );
-			$payment_link  = $mollie_client->get()->paymentLinks->get( $payment_link_id );
+			$payment_link  = MollieClient::with_retry(
+				fn() => $mollie_client->get()->paymentLinks->get( $payment_link_id )
+			);
 		} catch ( \Mollie\Api\Exceptions\ApiException $e ) {
 			error_log( 'Mollie webhook: API exception for payment link ' . $payment_link_id . ': ' . $e->getMessage() );
 			return rest_ensure_response( [ 'ok' => true ] );
@@ -390,7 +392,9 @@ class MollieWebhook {
 
 			try {
 				$client = new MollieClient( $key );
-				$client->get()->paymentLinks->get( $payment_link_id );
+				MollieClient::with_retry(
+					fn() => $client->get()->paymentLinks->get( $payment_link_id )
+				);
 
 				// If we reach here, this account owns the payment link.
 				return [
