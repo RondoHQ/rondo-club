@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.75.1] - 2026-07-29
+
+### Removed
+
+- Het ongebruikte filter **Betaalde vrijwilliger** is verwijderd van de pagina **Vrijstellingen**. (feedback #9263)
+
 ## [33.75.0] - 2026-07-22
 
 ### Changed
