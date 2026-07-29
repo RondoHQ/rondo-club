@@ -33,9 +33,8 @@ jobs:
         with:
           php-version: '8.2'
           coverage: none
-      - uses: ramsey/composer-install@a35c6ebd3d08125aaf8852dff361e686a1a67947 # v3 + Node 24 fix
-        with:
-          composer-options: --prefer-dist
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction
       - run: composer lint
 
   deploy:
