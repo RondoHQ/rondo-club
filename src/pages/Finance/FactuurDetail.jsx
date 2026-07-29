@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil, Copy, CalendarClock } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle, XCircle, RefreshCw, Download, FileText, Receipt, User, UserCheck, CreditCard, ExternalLink, QrCode, Trash2, Pencil, Copy, CalendarClock, Ban } from 'lucide-react';
 import { useInvoice, useSendInvoice, useUpdateInvoiceStatus, useResendInvoice, useGenerateInvoicePdf, useRegeneratePaymentLink, useResetPaymentState, useDeleteInvoice, useToggleInstallments, useUpdateMembershipInvoiceDiscount, useAddDraftInvoiceLineItem, useUpdateDraftInvoice, useScheduleInvoice } from '@/hooks/useInvoices';
 import { useCreatePaymentLink, useFinanceSettings } from '@/hooks/useFinanceSettings';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -18,6 +18,7 @@ const statusColors = {
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  cancelled: 'bg-gray-100 text-gray-500 line-through dark:bg-gray-800 dark:text-gray-400',
 };
 
 // Status display labels
@@ -26,6 +27,7 @@ const statusLabels = {
   sent: 'Verstuurd',
   paid: 'Betaald',
   overdue: 'Achterstallig',
+  cancelled: 'Vervallen',
 };
 
 // Installment status badge colors
@@ -301,6 +303,32 @@ export default function FactuurDetail() {
       setSuccessMessage('Factuur gemarkeerd als onbetaald.');
     } catch (err) {
       setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het markeren als onbetaald.');
+    }
+  };
+
+  const handleMarkCancelled = async () => {
+    if (!window.confirm('Weet je zeker dat je deze factuur wilt laten vervallen? De factuur hoeft dan niet meer betaald te worden en bestaande betaallinks worden gedeactiveerd.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await updateInvoiceStatus.mutateAsync({ id, status: 'cancelled' });
+      setSuccessMessage('Factuur gemarkeerd als vervallen.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het laten vervallen van de factuur.');
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!window.confirm('Weet je zeker dat je deze vervallen factuur wilt heractiveren? De status wordt teruggezet naar "Verstuurd". Maak daarna zo nodig een nieuwe betaallink aan.')) {
+      return;
+    }
+    setErrorMessage('');
+    try {
+      await updateInvoiceStatus.mutateAsync({ id, status: 'sent' });
+      setSuccessMessage('Factuur geheractiveerd.');
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Er is een fout opgetreden bij het heractiveren van de factuur.');
     }
   };
 
@@ -972,6 +1000,33 @@ export default function FactuurDetail() {
         </div>
       )}
 
+      {/* Vervallen (cancelled) info */}
+      {invoice.status === 'cancelled' && invoice.cancelled_at && (
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <Ban className="w-5 h-5" />
+            Vervallen
+          </h2>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Deze factuur is vervallen en hoeft niet meer betaald te worden. Betaallinks zijn gedeactiveerd.
+            </p>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervallen op</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {format(new Date(invoice.cancelled_at), 'd MMM yyyy HH:mm')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Vervallen door</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {invoice.cancelled_by?.name || 'Onbekend'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Read-only finance users get the PDF and nothing else. */}
       {!canEditFinancieel && invoice.pdf_path && (
         <div className="card p-6">
@@ -1189,6 +1244,18 @@ export default function FactuurDetail() {
                 Markeer als betaald
               </button>
               <button
+                onClick={handleMarkCancelled}
+                disabled={isPending}
+                className="btn-tertiary gap-2"
+              >
+                {updateInvoiceStatus.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <Ban className="w-4 h-4" />
+                )}
+                Laat vervallen
+              </button>
+              <button
                 onClick={handleResend}
                 disabled={isPending}
                 className="btn-tertiary gap-2"
@@ -1226,7 +1293,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Payment link button (for any unpaid invoice without a link) */}
-          {invoice.status !== 'paid' && !invoice.payment_link && (
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && !invoice.payment_link && (
             <button
               onClick={handleCreatePaymentLink}
               disabled={isPending}
@@ -1242,7 +1309,7 @@ export default function FactuurDetail() {
           )}
 
           {/* Regenerate payment link button (for any unpaid invoice WITH an existing link) */}
-          {invoice.status !== 'paid' && invoice.payment_link && (
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.payment_link && (
             <button
               onClick={handleRegeneratePaymentLink}
               disabled={isPending}
@@ -1255,6 +1322,34 @@ export default function FactuurDetail() {
               )}
               Betaallink opnieuw aanmaken
             </button>
+          )}
+
+          {/* Cancelled status actions */}
+          {invoice.status === 'cancelled' && (
+            <>
+              <button
+                onClick={handleReactivate}
+                disabled={isPending}
+                className="btn-secondary gap-2"
+              >
+                {updateInvoiceStatus.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                Heractiveer factuur
+              </button>
+              {invoice.pdf_path && (
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={isPending}
+                  className="btn-tertiary gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </button>
+              )}
+            </>
           )}
 
           {/* Paid status actions */}

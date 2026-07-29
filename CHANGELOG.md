@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.78.0] - 2026-07-29
+
+### Added
+
+- Facturen kunnen nu als **Vervallen** worden gemarkeerd wanneer ze niet meer betaald hoeven te worden (bijvoorbeeld bij kwijtschelding), in plaats van ze onterecht als betaald te markeren. Verstuurde en achterstallige facturen krijgen hiervoor een knop "Laat vervallen" op de factuurpagina; bestaande Mollie-betaallinks worden daarbij gedeactiveerd en de publieke betaalpagina toont een melding dat de factuur vervallen is. Een vervallen factuur kan worden geheractiveerd, telt niet meer mee als openstaand, ontvangt geen herinneringen meer en toont wie de factuur wanneer heeft laten vervallen. (feedback #8658)
+
 ## [33.77.0] - 2026-07-29
 
 ### Added
