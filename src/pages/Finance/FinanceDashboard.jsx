@@ -21,6 +21,7 @@ function FacturenStatusCard({ byStatus, href }) {
     { key: 'sent', label: 'Verstuurd', count: byStatus.sent || 0 },
     { key: 'paid', label: 'Betaald', count: byStatus.paid || 0 },
     { key: 'overdue', label: 'Achterstallig', count: byStatus.overdue || 0 },
+    { key: 'cancelled', label: 'Vervallen', count: byStatus.cancelled || 0 },
   ].filter((item) => item.count > 0);
 
   const content = (
@@ -168,8 +169,8 @@ export default function FinanceDashboard() {
   }, {
     count: 0,
     amount: 0,
-    byStatus: { draft: 0, sent: 0, paid: 0, overdue: 0 },
-    amountByStatus: { draft: 0, sent: 0, paid: 0, overdue: 0 },
+    byStatus: { draft: 0, sent: 0, paid: 0, overdue: 0, cancelled: 0 },
+    amountByStatus: { draft: 0, sent: 0, paid: 0, overdue: 0, cancelled: 0 },
   });
 
   const members = feeList?.members ?? [];
