@@ -119,6 +119,20 @@ npm run lint     # ESLint (zero warnings policy)
 npm run preview  # Preview production build
 ```
 
+### Production deployment
+
+Every commit that reaches `main` is deployed automatically after the JavaScript
+and PHP checks pass. GitHub Actions builds `dist/`, installs production Composer
+dependencies, creates a retained release artifact, deploys it over SSH, clears
+WordPress and SiteGround caches, and verifies the live theme version and URL.
+
+The **Roll back production** workflow can rebuild and deploy any full commit SHA
+that is already contained in `main`.
+
+`bin/deploy.sh` remains available for emergencies. It accepts exported
+deployment variables directly and falls back to the local `.env` file when
+required values are missing.
+
 ### Project Structure
 
 ```
