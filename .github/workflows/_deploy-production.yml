@@ -1,0 +1,144 @@
+name: Build and deploy production
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Full commit SHA from main to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rondo-club-production
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    name: Build production release
+    runs-on: ubuntu-latest
+    outputs:
+      commit_sha: ${{ steps.validate.outputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Validate deployment commit
+        id: validate
+        env:
+          REQUESTED_REF: ${{ inputs.ref }}
+        run: |
+          if [[ ! "$REQUESTED_REF" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Deployment ref must be a full lowercase commit SHA."
+            exit 1
+          fi
+
+          RESOLVED_SHA="$(git rev-parse HEAD)"
+          if [ "$RESOLVED_SHA" != "$REQUESTED_REF" ]; then
+            echo "Checked-out commit does not match requested ref."
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$RESOLVED_SHA" origin/main; then
+            echo "Only commits contained in main may be deployed."
+            exit 1
+          fi
+
+          echo "commit_sha=$RESOLVED_SHA" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Install and build frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install production PHP dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: Package release
+        run: |
+          RELEASE_DIR="$RUNNER_TEMP/rondo-club-release"
+          mkdir -p "$RELEASE_DIR"
+          git archive --format=tar HEAD | tar -xf - -C "$RELEASE_DIR"
+          cp -R dist vendor "$RELEASE_DIR/"
+          tar -czf "$RUNNER_TEMP/rondo-club-release.tar.gz" -C "$RELEASE_DIR" .
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rondo-club-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/rondo-club-release.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy-production:
+    name: Deploy production
+    needs: build-release
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_PRODUCTION_URL }}
+    steps:
+      - name: Check out deployment tooling
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          path: deployer
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: rondo-club-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/download
+
+      - name: Prepare release and SSH credentials
+        env:
+          DEPLOY_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/rondo_deploy_key"
+          printf '%s\n' "$DEPLOY_PRIVATE_KEY" > "$RUNNER_TEMP/rondo_deploy_key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/rondo_known_hosts"
+          mkdir -p "$RUNNER_TEMP/release"
+          tar -xzf "$RUNNER_TEMP/download/rondo-club-release.tar.gz" -C "$RUNNER_TEMP/release"
+
+      - name: Deploy and verify
+        env:
+          DEPLOY_SSH_HOST: ${{ vars.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_PORT: ${{ vars.DEPLOY_SSH_PORT }}
+          DEPLOY_SSH_USER: ${{ vars.DEPLOY_SSH_USER }}
+          DEPLOY_REMOTE_WP_PATH: ${{ vars.DEPLOY_REMOTE_WP_PATH }}
+          DEPLOY_REMOTE_THEME_PATH: ${{ vars.DEPLOY_REMOTE_THEME_PATH }}
+          DEPLOY_PRODUCTION_URL: ${{ vars.DEPLOY_PRODUCTION_URL }}
+          DEPLOY_SSH_IDENTITY_FILE: ${{ runner.temp }}/rondo_deploy_key
+          DEPLOY_SSH_KNOWN_HOSTS_FILE: ${{ runner.temp }}/rondo_known_hosts
+          DEPLOY_COMMIT_SHA: ${{ needs.build-release.outputs.commit_sha }}
+        run: |
+          bash deployer/bin/deploy.sh \
+            --source-dir "$RUNNER_TEMP/release" \
+            --skip-build \
+            --prune
+
+      - name: Deployment summary
+        env:
+          DEPLOYED_SHA: ${{ needs.build-release.outputs.commit_sha }}
+          DEPLOYED_URL: ${{ vars.DEPLOY_PRODUCTION_URL }}
+        run: |
+          {
+            echo "## Production deployment"
+            echo ""
+            echo "- Commit: \`$DEPLOYED_SHA\`"
+            echo "- URL: $DEPLOYED_URL"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,30 +1,35 @@
-name: CI
+name: CI and deploy
 
 on:
   push:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   javascript:
-    name: JavaScript lint
+    name: JavaScript lint and build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 20
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run build
 
   php:
     name: PHP coding standards
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
         with:
           php-version: '8.2'
           coverage: none
@@ -32,3 +37,16 @@ jobs:
         with:
           composer-options: --prefer-dist
       - run: composer lint
+
+  deploy:
+    name: Deploy successful main commit
+    needs:
+      - javascript
+      - php
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_deploy-production.yml
+    with:
+      ref: ${{ github.sha }}
+    secrets: inherit

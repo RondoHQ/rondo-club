@@ -395,24 +395,32 @@ git push
 
 **WHEN you're in a worktree, do not EVER push to production**
 
-**ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally. Deploy after every phase execution, before presenting verification checklists.
+**ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally.
 
-Use the deployment script in `bin/deploy.sh`:
+Production deployment is automatic:
+
+1. Commit and push the milestone.
+2. A commit on `main` runs `.github/workflows/ci.yml`.
+3. JavaScript lint/build and PHP coding standards must pass.
+4. GitHub Actions builds a production release, deploys it over SSH, clears
+   WordPress and SiteGround caches, and verifies the live version and URL.
+5. Wait for the **CI and deploy** workflow to complete successfully before
+   presenting verification or UAT steps.
+
+Feature and worktree branches do not deploy. When a pull request is used, merge
+it into `main` and wait for the resulting `main` workflow.
+
+`bin/deploy.sh` is a break-glass fallback only. It reads exported deployment
+variables first and uses `.env` only when required values are absent:
 
 ```bash
-# Standard deploy (excludes node_modules)
-bin/deploy.sh
-
-# Deploy including node_modules (after npm install/update)
-bin/deploy.sh --with-node-modules
+bin/deploy.sh --prune
 ```
 
-The script reads server credentials from `.env` (see `.env.example` for required variables). It:
-1. Syncs `dist/` folder with `--delete` to remove stale build artifacts
-2. Syncs remaining theme files (excluding `.git`, `node_modules`, `dist`)
-3. Clears WordPress and SiteGround caches
+Use the **Roll back production** GitHub workflow with a full earlier commit SHA
+from `main` to restore a previous release.
 
-**Production URL:** See `DEPLOY_PRODUCTION_URL` in `.env`
+**Production URL:** See the GitHub `production` environment or local `.env`.
 
 ### Rondo Club Sites
 
