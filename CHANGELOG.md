@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [33.77.0] - 2026-07-29
+## [33.78.0] - 2026-07-29
 
 ### Added
 
 - Facturen kunnen nu als **Vervallen** worden gemarkeerd wanneer ze niet meer betaald hoeven te worden (bijvoorbeeld bij kwijtschelding), in plaats van ze onterecht als betaald te markeren. Verstuurde en achterstallige facturen krijgen hiervoor een knop "Laat vervallen" op de factuurpagina; bestaande Mollie-betaallinks worden daarbij gedeactiveerd en de publieke betaalpagina toont een melding dat de factuur vervallen is. Een vervallen factuur kan worden geheractiveerd, telt niet meer mee als openstaand, ontvangt geen herinneringen meer en toont wie de factuur wanneer heeft laten vervallen. (feedback #8658)
+
+## [33.77.0] - 2026-07-29
+
+### Added
+
+- Automatische verificatie van IVA-certificaten: officiële NOC*NSF-certificaten (e-learning "Voor elkaar") worden bij upload uitgelezen. Als de naam op het certificaat overeenkomt met het lid en de behaaldatum maximaal 2 jaar oud is, wordt het certificaat direct goedgekeurd — zonder handmatige beoordeling door de kantinebeheerder. De datum op het certificaat vervangt daarbij de handmatig ingevoerde datum. Niet-herkende bestanden volgen het bestaande beoordelingsproces.
+
+## [33.76.3] - 2026-07-29
+
+### Changed
+
+- De productie-uitrol gebruikt de Node 24-native v8 van GitHub's download-artefactactie, zodat de deployment zonder runtime-verouderingswaarschuwingen wordt uitgevoerd.
 
 ## [33.76.2] - 2026-07-29
 
