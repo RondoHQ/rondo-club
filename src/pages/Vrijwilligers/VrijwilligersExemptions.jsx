@@ -12,6 +12,8 @@ const REASON_LABELS = {
   handmatig: 'Handmatige vrijstelling',
 };
 
+const FILTER_REASONS = ['commissie', 'staff', 'handmatig'];
+
 const REASON_BADGE_COLORS = {
   commissie: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300',
   staff: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
@@ -58,7 +60,7 @@ export default function VrijwilligersExemptions() {
 
   const counts = useMemo(() => {
     const c = { all: exemptPersons.length };
-    for (const reason of Object.keys(REASON_LABELS)) {
+    for (const reason of FILTER_REASONS) {
       c[reason] = exemptPersons.filter((p) => p.reason === reason).length;
     }
     return c;
@@ -90,7 +92,7 @@ export default function VrijwilligersExemptions() {
           >
             Alle ({counts.all})
           </button>
-          {Object.entries(REASON_LABELS).map(([reason, label]) => (
+          {FILTER_REASONS.map((reason) => (
             <button
               key={reason}
               onClick={() => setFilterReason(reason)}
@@ -100,7 +102,7 @@ export default function VrijwilligersExemptions() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
-              {label} ({counts[reason] || 0})
+              {REASON_LABELS[reason]} ({counts[reason] || 0})
             </button>
           ))}
         </div>
@@ -169,8 +171,8 @@ export default function VrijwilligersExemptions() {
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Vrijstellingen komen uit vier auto-routes (commissielid, trainer/leider, betaalde vrijwilliger) plus de
-        handmatige vlag op personen. Pas staf-rollen aan via{' '}
+        Vrijstellingen komen uit actieve commissierollen, trainer-/leiderrollen en handmatige vrijstellingen.
+        Pas staf-rollen aan via{' '}
         <Link to="/settings/admin/capabilities" className="underline">Instellingen → Capabilities</Link>.
       </p>
     </div>
