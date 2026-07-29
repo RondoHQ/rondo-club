@@ -31,12 +31,18 @@ export default function ProfileIva() {
 
   const uploadMutation = useMutation({
     mutationFn: ({ file, datumIva }) => prmApi.uploadMyIva(file, datumIva),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['iva', 'me'] });
       setFile(null);
       setDatum('');
       if (fileRef.current) fileRef.current.value = '';
-      setFeedback({ kind: 'success', message: 'Certificaat geüpload. De kantinebeheerder beoordeelt het binnenkort.' });
+      const autoVerified = res?.data?.auto_verified;
+      setFeedback({
+        kind: 'success',
+        message: autoVerified
+          ? 'Certificaat geüpload en automatisch geverifieerd — je IVA is direct geldig.'
+          : 'Certificaat geüpload. De kantinebeheerder beoordeelt het binnenkort.',
+      });
     },
     onError: (err) => {
       const msg = err?.response?.data?.message || err?.message || 'Upload mislukt.';
@@ -143,7 +149,7 @@ export default function ProfileIva() {
       <section className="card p-5">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100">Upload nieuw certificaat</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          PDF, JPG of PNG; max 10 MB. Na upload beoordeelt de kantinebeheerder het certificaat — daarna verschijnt het als &ldquo;Geldig&rdquo;.
+          PDF, JPG of PNG; max 10 MB. Officiële NOC*NSF PDF-certificaten worden automatisch gecontroleerd en direct goedgekeurd; anders beoordeelt de kantinebeheerder het certificaat.
         </p>
 
         <form
