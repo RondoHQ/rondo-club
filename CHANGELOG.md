@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.76.1] - 2026-07-29
+
+### Changed
+
+- Productiedeployments worden na geslaagde lint- en buildcontroles automatisch door GitHub Actions uitgevoerd wanneer een commit `main` bereikt. GitHub bouwt een reproduceerbaar release-artefact, bewaart dit 30 dagen, controleert de uitrol en ondersteunt handmatig terugrollen naar een eerdere commit op `main`.
+- De lokale deploytool accepteert nu rechtstreeks omgevingsvariabelen en vooraf gebouwde releases; `.env` blijft alleen beschikbaar als noodoplossing voor lokale deployments.
+
 ## [33.76.0] - 2026-07-29
 
 ### Added

@@ -1,0 +1,20 @@
+name: Roll back production
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Full SHA of an earlier commit on main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    name: Rebuild and deploy selected commit
+    uses: ./.github/workflows/_deploy-production.yml
+    with:
+      ref: ${{ inputs.commit_sha }}
+    secrets: inherit
