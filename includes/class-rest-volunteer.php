@@ -497,6 +497,18 @@ class Volunteer extends Base {
 			$datum = gmdate( 'Y-m-d' );
 		}
 
+		// Officiële IVA-certificaten (PDF, e-learning "Voor elkaar") hebben een
+		// leesbare tekstlaag: naam + behaaldatum. Als de naam matcht met dit lid
+		// en de datum recent is, keuren we automatisch goed — anders valt de
+		// upload terug op de bestaande handmatige beoordeling.
+		$auto_approved = false;
+		$parsed        = $checked['type'] === 'application/pdf' ? IvaCertificateParser::parse( $path ) : null;
+		if ( $parsed !== null ) {
+			// De datum op het certificaat is betrouwbaarder dan handmatige invoer.
+			$datum         = $parsed['datum'];
+			$auto_approved = IvaCertificateParser::should_auto_approve( $parsed, $person_id );
+		}
+
 		// Schrijf via ACF zodat zowel de admin-form als de relationships-pipeline
 		// het correct ophalen.
 		$old_attachment_id = $this->iva_attachment_id( $person_id );
@@ -505,22 +517,23 @@ class Volunteer extends Base {
 			$this->delete_private_attachment( $old_attachment_id );
 		}
 		update_field( 'datum-iva', $datum, $person_id );
-		update_field( 'iva-approved', 0, $person_id );
-		update_post_meta( $person_id, 'iva-approved', 0 );
+		update_field( 'iva-approved', $auto_approved ? 1 : 0, $person_id );
+		update_post_meta( $person_id, 'iva-approved', $auto_approved ? 1 : 0 );
 
-		$notification = ( new IvaReviewNotificationEmailSender() )->send( $person_id );
+		$notification = $auto_approved ? null : ( new IvaReviewNotificationEmailSender() )->send( $person_id );
 
 		return rest_ensure_response(
 			[
-				'person_id'    => $person_id,
-				'attachment'   => [
+				'person_id'     => $person_id,
+				'attachment'    => [
 					'id'  => $attachment_id,
 					'url' => $this->iva_certificate_url( $person_id ),
 				],
-				'datum_iva'    => $datum,
-				'status'       => IvaStatus::status( $person_id ),
-				'expires_at'   => IvaStatus::expires_at( $person_id ),
-				'notification' => $notification,
+				'datum_iva'     => $datum,
+				'auto_verified' => $auto_approved,
+				'status'        => IvaStatus::status( $person_id ),
+				'expires_at'    => IvaStatus::expires_at( $person_id ),
+				'notification'  => $notification,
 			]
 		);
 	}
