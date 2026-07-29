@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.77.0] - 2026-07-29
+
+### Added
+
+- Automatische verificatie van IVA-certificaten: officiële NOC*NSF-certificaten (e-learning "Voor elkaar") worden bij upload uitgelezen. Als de naam op het certificaat overeenkomt met het lid en de behaaldatum maximaal 2 jaar oud is, wordt het certificaat direct goedgekeurd — zonder handmatige beoordeling door de kantinebeheerder. De datum op het certificaat vervangt daarbij de handmatig ingevoerde datum. Niet-herkende bestanden volgen het bestaande beoordelingsproces.
+
 ## [33.76.3] - 2026-07-29
 
 ### Changed

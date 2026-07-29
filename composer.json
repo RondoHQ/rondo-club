@@ -10,7 +10,8 @@
         "lettermint/lettermint-php": "^1.0",
         "mollie/mollie-api-php": "^3.9",
         "mpdf/mpdf": "^8.2",
-        "pkpass/pkpass": "^2.4"
+        "pkpass/pkpass": "^2.4",
+        "smalot/pdfparser": "^2.12"
     },
     "autoload": {
         "psr-4": {
