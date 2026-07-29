@@ -131,4 +131,65 @@ class MolliePayment {
 		// 12. Return checkout URL
 		return $checkout_url;
 	}
+
+	/**
+	 * Archive all Mollie payment links for an invoice so they become unpayable.
+	 *
+	 * Covers both the full-invoice payment link (`_mollie_payment_link_id`) and any
+	 * per-installment payment links (`_installment_{N}_mollie_payment_id`). Used when
+	 * an invoice is cancelled (vervallen) so members can no longer pay via old links.
+	 *
+	 * Non-blocking: archiving failures are ignored — a link may already be archived,
+	 * paid, or the API key may be missing. The `_mollie_pid_*` reverse-lookup keys are
+	 * kept so a payment that slips through before archiving still routes via the webhook.
+	 *
+	 * @param int $invoice_id Invoice post ID.
+	 */
+	public function archive_payment_links( int $invoice_id ): void {
+		$link_ids = [];
+
+		$full_link_id = (string) get_post_meta( $invoice_id, '_mollie_payment_link_id', true );
+		if ( $full_link_id !== '' ) {
+			$link_ids[] = $full_link_id;
+		}
+
+		$installment_count = (int) get_post_meta( $invoice_id, '_installment_count', true );
+		$check_up_to       = max( $installment_count, 8 );
+		for ( $n = 1; $n <= $check_up_to; $n++ ) {
+			$installment_link_id = (string) get_post_meta( $invoice_id, '_installment_' . $n . '_mollie_payment_id', true );
+			if ( $installment_link_id !== '' ) {
+				$link_ids[] = $installment_link_id;
+			}
+		}
+
+		if ( empty( $link_ids ) ) {
+			return;
+		}
+
+		$mollie_cfg = FinanceServices::mollie();
+		$account_id = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
+		if ( $account_id === '' ) {
+			$invoice_type = (string) get_post_meta( $invoice_id, 'invoice_type', true );
+			$account_id   = $mollie_cfg->get_default_mollie_account_id( $invoice_type ?: 'manual' );
+		}
+
+		$api_key = $mollie_cfg->get_mollie_api_key_for_account( $account_id );
+		if ( $api_key === '' ) {
+			return;
+		}
+
+		try {
+			$mollie = ( new MollieClient( $api_key ) )->get();
+		} catch ( \Throwable $e ) {
+			return;
+		}
+
+		foreach ( $link_ids as $link_id ) {
+			try {
+				$mollie->paymentLinks->delete( $link_id );
+			} catch ( \Throwable $e ) {
+				// Non-blocking — link may already be archived or paid.
+			}
+		}
+	}
 }

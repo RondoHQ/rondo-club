@@ -118,7 +118,7 @@ class Invoices extends Base {
 						'status'       => [
 							'default'           => '',
 							'validate_callback' => function ( $param ) {
-								return empty( $param ) || in_array( $param, [ 'draft', 'sent', 'paid', 'overdue' ], true );
+								return empty( $param ) || in_array( $param, [ 'draft', 'sent', 'paid', 'overdue', 'cancelled' ], true );
 							},
 						],
 						'person_id'    => [
@@ -489,7 +489,7 @@ class Invoices extends Base {
 		// Query all invoices for this person (all non-trash statuses)
 		$args = [
 			'post_type'      => 'rondo_invoice',
-			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
 			'posts_per_page' => -1,
 			'meta_query'     => [
 				[
@@ -531,7 +531,7 @@ class Invoices extends Base {
 		// Query all invoices (all non-trash statuses, all persons)
 		$args = [
 			'post_type'      => 'rondo_invoice',
-			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+			'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
 			'posts_per_page' => -1,
 		];
 
@@ -760,7 +760,7 @@ class Invoices extends Base {
 		if ( ! empty( $status ) ) {
 			$args['post_status'] = 'rondo_' . $status;
 		} else {
-			$args['post_status'] = [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ];
+			$args['post_status'] = [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ];
 		}
 
 		// Initialize meta_query — filters are composed via AND relation
@@ -1023,14 +1023,23 @@ class Invoices extends Base {
 			);
 		}
 
-		if ( ! in_array( $status, [ 'draft', 'sent', 'paid', 'overdue' ], true ) ) {
+		if ( ! in_array( $status, [ 'draft', 'sent', 'paid', 'overdue', 'cancelled' ], true ) ) {
 			return new \WP_Error(
 				'rest_invalid_param',
 				__( 'Invalid status.', 'rondo' ),
 				[
 					'status' => 400,
-					'params' => [ 'status' => 'Must be "draft", "sent", "paid", or "overdue"' ],
+					'params' => [ 'status' => 'Must be "draft", "sent", "paid", "overdue", or "cancelled"' ],
 				]
+			);
+		}
+
+		// Paid invoices cannot be cancelled — mark them unpaid first.
+		if ( $status === 'cancelled' && $invoice->post_status === 'rondo_paid' ) {
+			return new \WP_Error(
+				'invoice_paid',
+				__( 'Betaalde facturen kunnen niet vervallen. Markeer de factuur eerst als onbetaald.', 'rondo' ),
+				[ 'status' => 400 ]
 			);
 		}
 
@@ -1049,8 +1058,8 @@ class Invoices extends Base {
 		update_field( 'status', $status, $invoice_id );
 
 			// If transitioning to "sent", set sent_date and calculate due_date.
-			// Skip when reverting from paid → sent (marking unpaid) to preserve original dates.
-			$is_reverting_from_paid = ( $invoice->post_status === 'rondo_paid' && $status === 'sent' );
+			// Skip when reverting from paid/cancelled → sent to preserve original dates.
+			$is_reverting_from_paid = ( in_array( $invoice->post_status, [ 'rondo_paid', 'rondo_cancelled' ], true ) && $status === 'sent' );
 		if ( $status === 'sent' && ! $is_reverting_from_paid ) {
 			$sent_date = current_time( 'Ymd' );
 			update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
@@ -1086,6 +1095,29 @@ class Invoices extends Base {
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 			$this->clear_qr_code( $invoice_id );
+		}
+
+			// If transitioning to cancelled (vervallen), store audit trail and disable payment routes.
+		if ( $status === 'cancelled' ) {
+			update_post_meta( $invoice_id, '_cancelled_at', current_time( 'mysql' ) );
+			$current_user_id = get_current_user_id();
+			if ( $current_user_id > 0 ) {
+				update_post_meta( $invoice_id, '_cancelled_by', $current_user_id );
+			}
+
+			// Archive Mollie payment links (full + installments) so the invoice can no longer be paid.
+			( new MolliePayment() )->archive_payment_links( $invoice_id );
+
+			// Remove payment artifacts (link/QR/provider IDs). The _payment_token is kept so the
+			// public payment page can show a "vervallen" message instead of a broken-link error.
+			update_field( 'payment_link', '', $invoice_id );
+			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
+			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
+			$this->clear_qr_code( $invoice_id );
+		} elseif ( $invoice->post_status === 'rondo_cancelled' ) {
+			// Leaving cancelled — clear the cancellation audit trail.
+			delete_post_meta( $invoice_id, '_cancelled_at' );
+			delete_post_meta( $invoice_id, '_cancelled_by' );
 		}
 
 			// If transitioning from paid to sent/overdue (marking as unpaid), store audit trail.
@@ -1737,6 +1769,13 @@ class Invoices extends Base {
 			return new \WP_Error(
 				'invoice_paid',
 				__( 'Betaalde facturen kunnen geen nieuwe betaallink krijgen.', 'rondo' ),
+				[ 'status' => 400 ]
+			);
+		}
+		if ( $status === 'cancelled' ) {
+			return new \WP_Error(
+				'invoice_cancelled',
+				__( 'Vervallen facturen kunnen geen nieuwe betaallink krijgen.', 'rondo' ),
 				[ 'status' => 400 ]
 			);
 		}
@@ -2675,6 +2714,10 @@ class Invoices extends Base {
 		// Manual "unpaid" audit trail.
 		$invoice['manually_marked_unpaid_at'] = (string) get_post_meta( $post->ID, '_manually_marked_unpaid_at', true ) ?: null;
 		$invoice['manually_marked_unpaid_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_manually_marked_unpaid_by', true ) );
+
+		// Cancellation (vervallen) audit trail.
+		$invoice['cancelled_at'] = (string) get_post_meta( $post->ID, '_cancelled_at', true ) ?: null;
+		$invoice['cancelled_by'] = $this->get_user_summary_by_id( (int) get_post_meta( $post->ID, '_cancelled_by', true ) );
 
 		return $invoice;
 	}

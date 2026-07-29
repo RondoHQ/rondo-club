@@ -14,12 +14,14 @@ function StatusBadge({ status }) {
     sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    cancelled: 'bg-gray-100 text-gray-500 line-through dark:bg-gray-800 dark:text-gray-400',
   };
   const labels = {
     draft: 'Concept',
     sent: 'Verstuurd',
     paid: 'Betaald',
     overdue: 'Achterstallig',
+    cancelled: 'Vervallen',
   };
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${styles[status] || styles.draft}`}>
@@ -343,6 +345,7 @@ export function NogTeFactureren() {
           { value: 'sent', label: 'Verstuurd' },
           { value: 'paid', label: 'Betaald' },
           { value: 'overdue', label: 'Achterstallig' },
+          { value: 'cancelled', label: 'Vervallen' },
         ],
         // Custom filterFn to handle null invoice_status (represented as 'none')
         filterFn: (row, _id, value) => {
