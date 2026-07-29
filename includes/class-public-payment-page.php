@@ -99,6 +99,12 @@ class PublicPaymentPage {
 			exit;
 		}
 
+		// Cancelled (vervallen) invoices no longer need to be paid — block both GET and POST.
+		if ( get_post_status( $invoice_id ) === 'rondo_cancelled' ) {
+			$this->render_error( 'Deze factuur is vervallen en hoeft niet meer betaald te worden.' );
+			exit;
+		}
+
 		// Show success page if Mollie redirected back with ?betaald=1.
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['betaald'] ) && $_GET['betaald'] === '1' ) {

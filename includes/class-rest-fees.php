@@ -659,7 +659,7 @@ class Fees extends Base {
 				[
 					'post_type'      => 'rondo_invoice',
 					'posts_per_page' => -1,
-					'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+					'post_status'    => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
 					'no_found_rows'  => true,
 					'fields'         => 'ids',
 					'meta_query'     => [

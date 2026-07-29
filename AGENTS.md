@@ -46,6 +46,31 @@ written for the removed user-approval system and still reference `UserRoles::APP
 `AgeGroupAccessTest` is green and guards person-visibility access control; keep it that way. Do not
 treat a red suite as "expected" for the files you touch.
 
+## Fetching feedback items
+
+Users file feature requests and bug reports as `rondo_feedback` posts, referenced by URLs like
+`https://rondo.svawc.nl/feedback/8658`. In remote/cloud sessions there is no SSH access, but the
+environment provides `RONDO_API_URL`, `RONDO_API_USER`, and `RONDO_API_PASSWORD` (a WordPress
+application password). Fetch a feedback item with:
+
+```bash
+curl -sS -u "$RONDO_API_USER:$RONDO_API_PASSWORD" "$RONDO_API_URL/wp-json/rondo/v1/feedback/<id>"
+```
+
+The response contains `title`, `content`, `author`, and `meta` (feedback_type, status, priority,
+`url_context` — the app page the user was on, `use_case`, plus steps/expected/actual for bugs).
+Comments live at `/wp-json/rondo/v1/feedback/<id>/comments`. When you start work on an item, record
+your branch, and when your work is ready for review, update the status (allowed: `new`, `approved`,
+`in_progress`, `in_review`, `resolved`, `declined`, `needs_info`; resolving requires
+`resolution_summary`):
+
+```bash
+curl -sS -X POST -u "$RONDO_API_USER:$RONDO_API_PASSWORD" \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"in_review","agent_branch":"claude/feedback-<id>-xxxxx","pr_url":"<pr-url>"}' \
+  "$RONDO_API_URL/wp-json/rondo/v1/feedback/<id>"
+```
+
 ## Development Setup
 
 1. Set `WP_DEBUG = true` in `wp-config.php` for development mode

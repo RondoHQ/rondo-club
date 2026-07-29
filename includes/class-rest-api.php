@@ -1079,7 +1079,7 @@ class Api extends Base {
 				[
 					'post_type'      => 'rondo_invoice',
 					'posts_per_page' => 10,
-					'post_status'    => [ 'publish', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'draft' ],
+					'post_status'    => [ 'publish', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled', 'draft' ],
 					'meta_query'     => [
 						[
 							'key'     => 'invoice_number',

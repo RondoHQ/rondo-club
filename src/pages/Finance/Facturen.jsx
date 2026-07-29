@@ -22,6 +22,7 @@ const statusColors = {
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   overdue: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   overdue_warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  cancelled: 'bg-gray-100 text-gray-500 line-through dark:bg-gray-800 dark:text-gray-400',
 };
 
 const statusLabels = {
@@ -30,6 +31,7 @@ const statusLabels = {
   partially_paid: 'Deels betaald',
   paid: 'Betaald',
   overdue: 'Achterstallig',
+  cancelled: 'Vervallen',
 };
 
 const typeLabels = {
@@ -67,7 +69,7 @@ function StatusBadge({ status, reminderCount = 0, paidInstallments = 0, installm
   }
 
   // Derive partially paid status when some (but not all) installments are paid.
-  if (status !== 'paid' && paidInstallments > 0 && paidInstallments < installmentCount) {
+  if (status !== 'paid' && status !== 'cancelled' && paidInstallments > 0 && paidInstallments < installmentCount) {
     colorKey = 'partially_paid';
   } else if (status === 'overdue' && reminderCount > 0) {
     if (reminderCount >= 2) {
@@ -94,7 +96,7 @@ function getInvoiceStatusLabel(invoice) {
   if (invoice.status === 'draft' && invoice.scheduled_send_date) {
     return `Ingepland · ${format(parseYmd(invoice.scheduled_send_date), 'd MMM yyyy')}`;
   }
-  if (invoice.status !== 'paid' && invoice.paid_installments > 0 && invoice.paid_installments < invoice.installment_count) {
+  if (invoice.status !== 'paid' && invoice.status !== 'cancelled' && invoice.paid_installments > 0 && invoice.paid_installments < invoice.installment_count) {
     return `Deels betaald (${invoice.paid_installments}/${invoice.installment_count})`;
   }
   if (invoice.status === 'overdue' && invoice.reminder_count > 0) {
@@ -443,7 +445,8 @@ export default function Facturen() {
         getFilterLabel: (value) => (value === STATUS_FILTER_UNPAID ? 'Alle niet betaalde' : (statusLabels[value] || value)),
         filterFn: (row, colId, value) => {
           if (!value) return true;
-          if (value === STATUS_FILTER_UNPAID) return row.getValue(colId) !== 'paid';
+          // Cancelled invoices no longer need payment, so exclude them from "unpaid".
+          if (value === STATUS_FILTER_UNPAID) return row.getValue(colId) !== 'paid' && row.getValue(colId) !== 'cancelled';
           return row.getValue(colId) === value;
         },
         filterOptions: [
@@ -452,6 +455,7 @@ export default function Facturen() {
           { value: 'sent', label: 'Verstuurd' },
           { value: 'paid', label: 'Betaald' },
           { value: 'overdue', label: 'Achterstallig' },
+          { value: 'cancelled', label: 'Vervallen' },
         ],
         size: 120,
       }),

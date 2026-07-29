@@ -164,7 +164,7 @@ class DemoExport {
 		$this->build_ref_map_for_type( 'commissie', [ 'publish', 'draft', 'private' ] );
 		$this->build_ref_map_for_type( 'discipline_case', 'any' );
 		$this->build_ref_map_for_type( 'rondo_todo', [ 'rondo_open', 'rondo_awaiting', 'rondo_completed' ], 'todo' );
-		$this->build_ref_map_for_type( 'rondo_invoice', [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ], 'invoice' );
+		$this->build_ref_map_for_type( 'rondo_invoice', [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ], 'invoice' );
 
 		WP_CLI::log(
 			sprintf(
@@ -1000,7 +1000,7 @@ class DemoExport {
 			[
 				'post_type'   => 'rondo_invoice',
 				'numberposts' => -1,
-				'post_status' => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue' ],
+				'post_status' => [ 'rondo_draft', 'rondo_sent', 'rondo_paid', 'rondo_overdue', 'rondo_cancelled' ],
 				'orderby'     => 'ID',
 				'order'       => 'ASC',
 			]

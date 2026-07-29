@@ -690,6 +690,19 @@ class PostTypes {
 				'label_count'               => _n_noop( 'Verlopen <span class="count">(%s)</span>', 'Verlopen <span class="count">(%s)</span>', 'rondo' ),
 			]
 		);
+
+		register_post_status(
+			'rondo_cancelled',
+			[
+				'label'                     => _x( 'Vervallen', 'Invoice status', 'rondo' ),
+				'public'                    => true,
+				'exclude_from_search'       => false,
+				'show_in_admin_all_list'    => true,
+				'show_in_admin_status_list' => true,
+				// translators: %s is the number of cancelled invoices.
+				'label_count'               => _n_noop( 'Vervallen <span class="count">(%s)</span>', 'Vervallen <span class="count">(%s)</span>', 'rondo' ),
+			]
+		);
 	}
 
 	/**
