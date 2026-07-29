@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.76.3] - 2026-07-29
+
+### Changed
+
+- De productie-uitrol gebruikt de Node 24-native v8 van GitHub's download-artefactactie, zodat de deployment zonder runtime-verouderingswaarschuwingen wordt uitgevoerd.
+
 ## [33.76.2] - 2026-07-29
 
 ### Changed
