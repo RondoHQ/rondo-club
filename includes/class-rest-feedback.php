@@ -8,6 +8,7 @@
 
 namespace Rondo\REST;
 
+use Rondo\Feedback\NewFeedbackEmailSender;
 use Rondo\Feedback\StatusService;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -436,6 +437,10 @@ class Feedback extends Base {
 				update_field( 'use_case', sanitize_textarea_field( $use_case ), $post_id );
 			}
 		}
+
+		// Notify the site administrator after all feedback fields are available.
+		// Delivery failure must not prevent the feedback item from being created.
+		( new NewFeedbackEmailSender() )->send( (int) $post_id );
 
 		// Return formatted feedback
 		$post = get_post( $post_id );

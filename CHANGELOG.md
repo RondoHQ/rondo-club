@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.76.0] - 2026-07-29
+
+### Added
+
+- Het ingestelde WordPress-administratieadres ontvangt bij ieder nieuw feedbackitem een eenmalige, opgemaakte e-mail met de indiener, het type, project, prioriteit, beschrijving en een directe link naar de feedback. Een fout bij het verzenden blokkeert het opslaan van de feedback niet.
+
 ## [33.75.1] - 2026-07-29
 
 ### Removed
