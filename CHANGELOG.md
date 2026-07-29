@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.76.2] - 2026-07-29
+
+### Changed
+
+- GitHub Actions gebruikt nu Node 24-compatibele artefactacties. De PHP-controle installeert Composer-afhankelijkheden rechtstreeks, zodat automatische deployments geen verouderde Node 20-actions meer aanroepen.
+
 ## [33.76.1] - 2026-07-29
 
 ### Changed
