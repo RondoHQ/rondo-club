@@ -13,6 +13,7 @@ namespace Rondo\REST;
 
 use Rondo\Fees\SeasonKey;
 use Rondo\Volunteer\IvaApprovalEmailSender;
+use Rondo\Volunteer\IvaCertificateParser;
 use Rondo\Volunteer\IvaReviewNotificationEmailSender;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\RelationshipQualityChecker;

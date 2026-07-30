@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.78.1] - 2026-07-30
+
+### Fixed
+
+- Het uploaden van een IVA-certificaat werkte sinds 29 juli niet meer: elke upload liep vast op een serverfout. De automatische certificaatcontrole verwees naar de verkeerde namespace, waardoor de upload afbrak nadat het bestand al was opgeslagen maar vóórdat het aan het lid werd gekoppeld. Leden kregen daardoor een foutmelding en de kantinebeheerder ontving geen beoordelingsverzoek. Uploads werken weer, inclusief de automatische goedkeuring.
+
 ## [33.78.0] - 2026-07-29
 
 ### Added
