@@ -38,17 +38,16 @@ class SearchDashboardTest extends RondoTestCase {
 		// Create fresh access control instance for testing
 		$this->access_control = new RONDO_Access_Control();
 
-		// Initialize REST server and ensure routes are registered
-		global $wp_rest_server;
-		$wp_rest_server = new WP_REST_Server();
-		$this->server   = $wp_rest_server;
-
-		// Instantiate REST API classes to register routes (bypasses rondo_is_rest_request() check)
-		new \RONDO_REST_API();
-		new \RONDO_REST_Todos();
-
-		// Trigger REST API initialization to register routes
-		do_action( 'rest_api_init' );
+		// Reminders and anniversaries were extracted out of the Api controller
+		// into their own class; without it their routes simply do not exist and
+		// every request here answers 404.
+		$this->server = $this->bootRestControllers(
+			[
+				\Rondo\REST\Api::class,
+				\Rondo\REST\Todos::class,
+				\Rondo\REST\Reminders::class,
+			]
+		);
 	}
 
 	/**
@@ -469,18 +468,20 @@ class SearchDashboardTest extends RondoTestCase {
 	 * @return int Post ID
 	 */
 	private function createTodo( int $person_id, string $content, int $user_id, bool $completed = false, string $due_date = '' ): int {
+		// Todos carry their state in post_status (rondo_open / rondo_awaiting /
+		// rondo_completed) and relate to people through the `related_persons`
+		// array. The older single `related_person` + `is_completed` shape this
+		// helper used is not what the endpoints query any more.
 		$post_id = self::factory()->post->create(
 			[
 				'post_type'   => 'rondo_todo',
-				'post_status' => 'publish',
+				'post_status' => $completed ? 'rondo_completed' : 'rondo_open',
 				'post_title'  => $content,
 				'post_author' => $user_id,
 			]
 		);
 
-		update_field( 'related_person', $person_id, $post_id );
-		update_field( 'is_completed', $completed, $post_id );
-		update_field( 'visibility', 'private', $post_id );
+		update_field( 'related_persons', [ $person_id ], $post_id );
 
 		if ( $due_date ) {
 			update_field( 'due_date', $due_date, $post_id );
@@ -543,8 +544,9 @@ class SearchDashboardTest extends RondoTestCase {
 		// Create completed todo
 		$completed_todo_id = $this->createTodo( $person_id, 'Send email', $alice_id, true );
 
-		// Get all todos including completed (use string 'true' as that's what the REST API expects)
-		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'completed' => 'true' ] );
+		// The endpoint selects on a `status` param (open / awaiting / completed /
+		// all), not the old boolean `completed` flag.
+		$response = $this->doRestRequest( 'GET', '/rondo/v1/todos', [ 'status' => 'all' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
