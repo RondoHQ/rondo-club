@@ -1103,6 +1103,7 @@ class UserSettings extends Base {
 			'has_extra_roles'               => $has_extra_roles,
 			'is_kader'                      => $is_kader,
 			'can_edit_people'               => \Rondo\Core\AccessControl::can_edit_people(),
+			'can_edit_person_contact'       => \Rondo\Core\AccessControl::can_edit_person_contact(),
 			'can_manage_sponsors'           => \Rondo\Core\AccessControl::can_manage_sponsors(),
 			'can_access_fairplay'           => current_user_can( 'fairplay' ),
 			'can_access_vog'                => current_user_can( 'vog' ),

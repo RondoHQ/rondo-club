@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.78.5] - 2026-07-30
+
+### Added
+
+- **Vrijwilligerscoördinatoren kunnen contactgegevens en foto's van leden corrigeren.** Coördinatoren lopen doorlopend tegen verkeerde telefoonnummers en e-mailadressen aan en moesten daarvoor tot nu toe de ledenadministratie inschakelen. Ze mogen nu e-mailadressen, telefoonnummers, adressen en de profielfoto aanpassen — precies de velden die ook terugsynchroniseren naar Sportlink. Alle overige velden blijven onbewerkbaar, en nieuwe leden aanmaken of leden verwijderen kan een coördinator nog steeds niet. Oud-leden blijven volledig alleen-lezen.
+
+### Changed
+
+- De veldbegrenzing voor sponsorbeheerders en vrijwilligerscoördinatoren wordt nu door één controle afgehandeld in plaats van twee losse. Een rol die beide bevoegdheden heeft, kan daardoor zowel de sponsorvelden als de contactgegevens bewerken; met twee aparte controles blokkeerden die elkaar volledig. Ook worden kernvelden van een profiel (zoals de status en de titel) nu expliciet beschermd tegen wijziging door rollen die alleen bepaalde velden mogen bewerken.
+
 ## [33.78.4] - 2026-07-30
 
 ### Changed
