@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.80.2] - 2026-07-30
+
+### Changed
+
+- De PHP-testsuite draait nu automatisch mee bij elke wijziging, naast de bestaande controles op codestijl en de frontend-build. De suite was niet uit te voeren en daardoor jarenlang niet gedraaid; hij is nu volledig groen (389 tests) en een falende test blokkeert voortaan een uitrol naar productie. Alleen intern van belang: aan de applicatie zelf verandert niets.
+
 ## [33.80.1] - 2026-07-30
 
 ### Fixed

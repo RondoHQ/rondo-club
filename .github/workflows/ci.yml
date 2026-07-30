@@ -37,11 +37,94 @@ jobs:
         run: composer install --prefer-dist --no-interaction
       - run: composer lint
 
+  tests:
+    name: PHP tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        # SQLite is not usable here: the codebase compares meta with
+        # 'type' => 'DATETIME', which SQLite cannot evaluate, so the shift
+        # calendar silently returns nothing and its tests fail for reasons
+        # unrelated to the code.
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: rondo
+          MYSQL_DATABASE: rondo_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prondo --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      # Keep in step with production; the suite runs the theme against the same
+      # WordPress it is deployed on.
+      WP_VERSION: 7.0.2
+      WP_ROOT_FOLDER: ${{ github.workspace }}/../wp-test
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Check for an ACF Pro license
+        id: acf
+        env:
+          ACF_PRO_LICENSE_KEY: ${{ secrets.ACF_PRO_LICENSE_KEY }}
+        run: |
+          if [ -z "$ACF_PRO_LICENSE_KEY" ]; then
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+            echo '::warning title=PHP tests skipped::ACF_PRO_LICENSE_KEY is not set, so the theme cannot be booted and the test suite did not run. Add the repository secret to enable it.'
+          else
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up WordPress with the theme symlinked in
+        if: steps.acf.outputs.available == 'true'
+        env:
+          ACF_PRO_LICENSE_KEY: ${{ secrets.ACF_PRO_LICENSE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$WP_ROOT_FOLDER"
+          curl -sSL "https://wordpress.org/wordpress-${WP_VERSION}.tar.gz" \
+            | tar -xz --strip-components=1 -C "$WP_ROOT_FOLDER"
+
+          mkdir -p "$WP_ROOT_FOLDER/wp-content/plugins" "$WP_ROOT_FOLDER/wp-content/themes"
+
+          # ACF Pro is a paid plugin and cannot live in the repository. Fetch the
+          # licensed build the club already pays for.
+          curl -sSL -o /tmp/acf-pro.zip \
+            "https://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${ACF_PRO_LICENSE_KEY}"
+          unzip -q /tmp/acf-pro.zip -d "$WP_ROOT_FOLDER/wp-content/plugins"
+          test -f "$WP_ROOT_FOLDER/wp-content/plugins/advanced-custom-fields-pro/acf.php"
+
+          # The suite runs the checkout itself, not a copy of it.
+          ln -sfn "$GITHUB_WORKSPACE" "$WP_ROOT_FOLDER/wp-content/themes/rondo-club"
+
+      - name: Write the test environment
+        if: steps.acf.outputs.available == 'true'
+        run: |
+          set -euo pipefail
+          cat > tests/.env <<ENV
+          WP_ROOT_FOLDER=$WP_ROOT_FOLDER
+          TEST_DB_URL=mysql://root:rondo@127.0.0.1:3306/rondo_tests
+          WP_DOMAIN=rondo.test
+          ENV
+
+      - name: Run the test suite
+        if: steps.acf.outputs.available == 'true'
+        run: composer test
+
   deploy:
     name: Deploy successful main commit
     needs:
       - javascript
       - php
+      - tests
     if: >-
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/main'
