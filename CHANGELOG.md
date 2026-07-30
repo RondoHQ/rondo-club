@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.78.2] - 2026-07-30
+
+### Changed
+
+- Het uploaden van een IVA-certificaat is robuuster gemaakt. Het certificaat wordt nu uitgelezen vóórdat er iets wordt opgeslagen, en als het koppelen aan het profiel onverhoopt misgaat worden het bestand en de bijlage automatisch opgeruimd in plaats van als losse restanten achter te blijven. Een mislukte notificatiemail aan de kantinebeheerder laat een geslaagde upload niet langer als fout terugmelden.
+
 ## [33.78.1] - 2026-07-30
 
 ### Fixed

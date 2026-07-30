@@ -469,6 +469,28 @@ class Volunteer extends Base {
 			return $directory;
 		}
 
+		// Officiële IVA-certificaten (PDF, e-learning "Voor elkaar") hebben een
+		// leesbare tekstlaag: naam + behaaldatum. Als de naam matcht met dit lid
+		// en de datum recent is, keuren we automatisch goed — anders valt de
+		// upload terug op de bestaande handmatige beoordeling.
+		//
+		// Dit gebeurt bewust vóór de eerste schrijfactie: gaat het parsen stuk,
+		// dan is er nog niets om op te ruimen en ruimt PHP het tmp-bestand zelf op.
+		$parsed = $checked['type'] === 'application/pdf' ? IvaCertificateParser::parse( $file['tmp_name'] ) : null;
+
+		// Datum: gebruik wat het lid invult, anders vandaag. De datum op het
+		// certificaat is betrouwbaarder dan handmatige invoer.
+		$datum = (string) $request->get_param( 'datum_iva' );
+		if ( $datum === '' || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $datum ) ) {
+			$datum = gmdate( 'Y-m-d' );
+		}
+
+		$auto_approved = false;
+		if ( $parsed !== null ) {
+			$datum         = $parsed['datum'];
+			$auto_approved = IvaCertificateParser::should_auto_approve( $parsed, $person_id );
+		}
+
 		$filename = wp_unique_filename( $directory, 'iva-' . wp_generate_password( 32, false, false ) . '.' . $checked['ext'] );
 		$path     = trailingslashit( $directory ) . $filename;
 		if ( ! move_uploaded_file( $file['tmp_name'], $path ) ) {
@@ -492,36 +514,49 @@ class Volunteer extends Base {
 		update_post_meta( $attachment_id, self::PRIVATE_PATH_META, $path );
 		update_post_meta( $attachment_id, self::ORIGINAL_NAME_META, sanitize_file_name( $file['name'] ) );
 
-		// Datum: gebruik wat het lid invult, anders vandaag.
-		$datum = (string) $request->get_param( 'datum_iva' );
-		if ( $datum === '' || ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $datum ) ) {
-			$datum = gmdate( 'Y-m-d' );
-		}
-
-		// Officiële IVA-certificaten (PDF, e-learning "Voor elkaar") hebben een
-		// leesbare tekstlaag: naam + behaaldatum. Als de naam matcht met dit lid
-		// en de datum recent is, keuren we automatisch goed — anders valt de
-		// upload terug op de bestaande handmatige beoordeling.
-		$auto_approved = false;
-		$parsed        = $checked['type'] === 'application/pdf' ? IvaCertificateParser::parse( $path ) : null;
-		if ( $parsed !== null ) {
-			// De datum op het certificaat is betrouwbaarder dan handmatige invoer.
-			$datum         = $parsed['datum'];
-			$auto_approved = IvaCertificateParser::should_auto_approve( $parsed, $person_id );
-		}
-
+		// Vanaf hier bestaan zowel het bestand als de attachment. Alles wat
+		// hierna misgaat moet die twee opruimen, anders blijft er een wees
+		// achter die aan geen enkel lid gekoppeld is — precies wat er in
+		// 33.78.0 zestien keer gebeurde.
+		//
 		// Schrijf via ACF zodat zowel de admin-form als de relationships-pipeline
 		// het correct ophalen.
-		$old_attachment_id = $this->iva_attachment_id( $person_id );
-		update_field( 'iva-certificaat', $attachment_id, $person_id );
-		if ( $old_attachment_id > 0 && $old_attachment_id !== $attachment_id ) {
-			$this->delete_private_attachment( $old_attachment_id );
+		try {
+			$old_attachment_id = $this->iva_attachment_id( $person_id );
+			update_field( 'iva-certificaat', $attachment_id, $person_id );
+			if ( $old_attachment_id > 0 && $old_attachment_id !== $attachment_id ) {
+				$this->delete_private_attachment( $old_attachment_id );
+			}
+			update_field( 'datum-iva', $datum, $person_id );
+			update_field( 'iva-approved', $auto_approved ? 1 : 0, $person_id );
+			update_post_meta( $person_id, 'iva-approved', $auto_approved ? 1 : 0 );
+		} catch ( \Throwable $e ) {
+			$this->delete_private_attachment( $attachment_id );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( 'IVA upload: koppelen aan persoon ' . $person_id . ' mislukt: ' . $e->getMessage() );
+			return new \WP_Error(
+				'iva_save_failed',
+				'Het certificaat kon niet aan je profiel worden gekoppeld. Probeer het opnieuw.',
+				[ 'status' => 500 ]
+			);
 		}
-		update_field( 'datum-iva', $datum, $person_id );
-		update_field( 'iva-approved', $auto_approved ? 1 : 0, $person_id );
-		update_post_meta( $person_id, 'iva-approved', $auto_approved ? 1 : 0 );
 
-		$notification = $auto_approved ? null : ( new IvaReviewNotificationEmailSender() )->send( $person_id );
+		// De upload is op dit punt geslaagd en opgeslagen; een mislukte
+		// notificatiemail mag dat niet alsnog als fout terugmelden.
+		$notification = null;
+		if ( ! $auto_approved ) {
+			try {
+				$notification = ( new IvaReviewNotificationEmailSender() )->send( $person_id );
+			} catch ( \Throwable $e ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( 'IVA upload: beoordelingsmail voor persoon ' . $person_id . ' mislukt: ' . $e->getMessage() );
+				$notification = [
+					'status' => 'error',
+					'sent'   => 0,
+					'failed' => 0,
+				];
+			}
+		}
 
 		return rest_ensure_response(
 			[
