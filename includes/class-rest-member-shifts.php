@@ -76,6 +76,61 @@ class MemberShifts extends Base {
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
 		add_filter( 'rest_prepare_dienst_shift', [ $this, 'add_assignee_display_names' ], 10, 2 );
+		add_filter( 'rest_pre_insert_dienst_shift', [ $this, 'prevent_direct_assignee_writes' ], 10, 2 );
+	}
+
+	/**
+	 * Force assignment changes through the dedicated endpoints.
+	 *
+	 * `assigned_persons` is REST-writable, and writing it directly skips every
+	 * rule that makes an assignment safe: capacity, certificates, the write lock,
+	 * the signup timestamp the member needs in order to cancel, the confirmation
+	 * mail, and the `vol` status flip. It also trips the template expander's
+	 * manual-edit detection, permanently detaching a rolled-out shift from its
+	 * sjabloon.
+	 *
+	 * Compares against stored values rather than rejecting the field's presence,
+	 * so a client that round-trips an unchanged array keeps working. Both sides
+	 * are normalised to int arrays first: ACF relationship fields arrive as
+	 * strings over REST, and `['5'] !== [5]` would refuse an unchanged payload.
+	 *
+	 * @param \stdClass|\WP_Error $prepared_post Prepared post object.
+	 * @param \WP_REST_Request    $request       REST request.
+	 * @return \stdClass|\WP_Error
+	 */
+	public function prevent_direct_assignee_writes( $prepared_post, \WP_REST_Request $request ) {
+		if ( is_wp_error( $prepared_post ) || empty( $prepared_post->ID ) ) {
+			return $prepared_post;
+		}
+
+		$acf       = $request->get_param( 'acf' );
+		$meta      = $request->get_param( 'meta' );
+		$submitted = null;
+
+		if ( is_array( $acf ) && array_key_exists( 'assigned_persons', $acf ) ) {
+			$submitted = $acf['assigned_persons'];
+		} elseif ( is_array( $meta ) && array_key_exists( 'assigned_persons', $meta ) ) {
+			$submitted = $meta['assigned_persons'];
+		}
+
+		if ( $submitted === null ) {
+			return $prepared_post;
+		}
+
+		$normalise = static function ( $value ): array {
+			return array_values( array_filter( array_map( 'intval', (array) $value ) ) );
+		};
+
+		$stored = $normalise( get_post_meta( (int) $prepared_post->ID, 'assigned_persons', true ) );
+		if ( $normalise( $submitted ) === $stored ) {
+			return $prepared_post;
+		}
+
+		return new \WP_Error(
+			'rondo_use_assignee_endpoint',
+			'Aanmeldingen wijzig je via de aanmeldingen van de inschrijftaak, niet door het veld rechtstreeks op te slaan.',
+			[ 'status' => 403 ]
+		);
 	}
 
 	/**
@@ -316,6 +371,53 @@ class MemberShifts extends Base {
 						'required'          => false,
 						'default'           => '',
 						'sanitize_callback' => 'sanitize_textarea_field',
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/(?P<id>\d+)/assignees',
+			[
+				'methods'             => \WP_REST_Server::CREATABLE,
+				'callback'            => [ $this, 'add_assignee' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'id'            => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'person_id'     => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'force_overlap' => [
+						'required' => false,
+						'default'  => false,
+					],
+				],
+			]
+		);
+
+		register_rest_route(
+			'rondo/v1',
+			'/shifts/(?P<id>\d+)/assignable-people',
+			[
+				'methods'             => \WP_REST_Server::READABLE,
+				'callback'            => [ $this, 'get_assignable_people' ],
+				'permission_callback' => [ $this, 'check_vrijwilligers_permission' ],
+				'args'                => [
+					'id'     => [
+						'required'          => true,
+						'sanitize_callback' => 'absint',
+					],
+					'search' => [
+						'required'          => true,
+						'sanitize_callback' => 'sanitize_text_field',
+						'validate_callback' => static function ( $param ) {
+							return is_string( $param ) && mb_strlen( trim( $param ) ) >= 2;
+						},
 					],
 				],
 			]
@@ -865,20 +967,9 @@ class MemberShifts extends Base {
 			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
 		}
 
-		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
-		$blocks         = $this->signup_blocks( $person_id );
-		if ( $dienst_type_id > 0 ) {
-			if ( get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
-				return new \WP_Error( 'vog_required', 'Voor deze inschrijftaak is een geldige VOG vereist.', [ 'status' => 403 ] );
-			}
-			$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
-			if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
-				return new \WP_Error( 'iva_required', 'Voor deze inschrijftaak is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
-			}
-			$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
-			if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
-				return new \WP_Error( 'pool_membership_required', 'Deze inschrijftaak is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.', [ 'status' => 403 ] );
-			}
+		$certificate_error = $this->assert_person_may_take_shift( $person_id, $shift_id );
+		if ( is_wp_error( $certificate_error ) ) {
+			return $certificate_error;
 		}
 
 		// Overlap check (warning, not block, unless force=false explicitly opted out).
@@ -1023,6 +1114,258 @@ class MemberShifts extends Base {
 	}
 
 	/**
+	 * Let a volunteer coordinator put someone on a shift.
+	 *
+	 * The member-facing rules are not relaxed: certificates, pool membership and
+	 * capacity all still apply, because a coordinator arranging a dienst in the
+	 * kantine is recording an agreement, not overriding policy. What they do get
+	 * is the ability to act for a member who has no account, no e-mail, or only
+	 * a phone.
+	 *
+	 * Deliberately mirrors signup(): eligibility outside the lock, the
+	 * read-modify-write inside it.
+	 */
+	public function add_assignee( \WP_REST_Request $request ) {
+		$shift_id  = (int) $request->get_param( 'id' );
+		$person_id = (int) $request->get_param( 'person_id' );
+		$force     = filter_var( $request->get_param( 'force_overlap' ), FILTER_VALIDATE_BOOLEAN );
+
+		$shift = get_post( $shift_id );
+		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
+		}
+
+		$person = get_post( $person_id );
+		if ( ! $person || $person->post_type !== 'person' || $person->post_status !== 'publish' ) {
+			return new \WP_Error( 'invalid_person', 'Persoon bestaat niet.', [ 'status' => 404 ] );
+		}
+
+		$status = (string) get_post_meta( $shift_id, 'status', true );
+		if ( ! in_array( $status, [ 'open', 'vol' ], true ) ) {
+			return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
+		}
+
+		$start_at = $this->shift_start_timestamp( $shift_id );
+		if ( $start_at === null || $start_at <= time() ) {
+			return new \WP_Error(
+				'shift_already_started',
+				'Een inschrijftaak die al begonnen is kan niet meer worden ingevuld.',
+				[ 'status' => 409 ]
+			);
+		}
+
+		if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
+			return new \WP_Error( 'not_eligible', 'Deze persoon is geen actief lid meer.', [ 'status' => 403 ] );
+		}
+
+		$blocked = $this->assert_person_may_take_shift( $person_id, $shift_id );
+		if ( is_wp_error( $blocked ) ) {
+			return $blocked;
+		}
+
+		if ( ! $force ) {
+			$overlap = $this->find_overlapping_shift( $person_id, $shift_id );
+			if ( $overlap !== null ) {
+				return new \WP_Error(
+					'overlap_warning',
+					sprintf( 'Deze persoon is al ingedeeld op een overlappende inschrijftaak (%s).', $overlap['title'] ),
+					[
+						'status'        => 409,
+						'shift_id'      => $shift_id,
+						'overlap_shift' => $overlap,
+						'can_force'     => true,
+					]
+				);
+			}
+		}
+
+		return $this->with_shift_write_lock(
+			$shift_id,
+			function () use ( $person_id, $shift_id ) {
+				$status = (string) get_post_meta( $shift_id, 'status', true );
+				if ( ! in_array( $status, [ 'open', 'vol' ], true ) ) {
+					return new \WP_Error( 'shift_closed', 'Deze inschrijftaak staat niet meer open.', [ 'status' => 409 ] );
+				}
+
+				$assigned = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+				$capacity = (int) get_post_meta( $shift_id, 'capacity', true );
+
+				if ( in_array( $person_id, $assigned, true ) ) {
+					return rest_ensure_response(
+						[
+							'shift_id'         => $shift_id,
+							'person_id'        => $person_id,
+							'already_assigned' => true,
+							'assigned_count'   => count( $assigned ),
+							'capacity'         => $capacity,
+							'status'           => $status,
+						]
+					);
+				}
+
+				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
+					return new \WP_Error( 'shift_full', 'Deze inschrijftaak is vol. Verhoog eerst de capaciteit.', [ 'status' => 409 ] );
+				}
+
+				$assigned[] = $person_id;
+				$assigned   = array_values( array_unique( $assigned ) );
+				$user_id    = get_current_user_id();
+
+				update_post_meta( $shift_id, 'assigned_persons', $assigned );
+				// The member keeps the same cancellation rights as a self-signup:
+				// nobody should be stuck in a dienst somebody else planned for them.
+				update_post_meta( $shift_id, '_shift_signup_at_' . $person_id, time() );
+				// Survives cancellation, unlike the signup timestamp, so the audit
+				// trail of who arranged this outlives the assignment itself.
+				update_post_meta( $shift_id, '_shift_assigned_by_' . $person_id, $user_id );
+				update_post_meta( $shift_id, '_shift_assigned_at_' . $person_id, time() );
+				GuardianAccountService::mark_shift_signup( $shift_id, $person_id, $user_id );
+				ShiftEmailScheduler::queue_signup_confirmation( $person_id, $shift_id );
+
+				$new_status = $status;
+				if ( $capacity > 0 && count( $assigned ) >= $capacity ) {
+					$new_status = 'vol';
+					update_post_meta( $shift_id, 'status', 'vol' );
+				}
+
+				VolunteerObligationCalculator::invalidate_cache();
+
+				do_action( 'rondo_shift_assignee_added', $shift_id, $person_id, $user_id );
+
+				return rest_ensure_response(
+					[
+						'shift_id'       => $shift_id,
+						'person_id'      => $person_id,
+						'assigned'       => true,
+						'assigned_count' => count( $assigned ),
+						'capacity'       => $capacity,
+						'status'         => $new_status,
+						'notification'   => [
+							'queued' => $this->person_has_email( $person_id ),
+							'reason' => $this->person_has_email( $person_id ) ? null : 'no_email',
+						],
+					]
+				);
+			}
+		);
+	}
+
+	/**
+	 * Candidates a coordinator may put on this shift, with the reason each one
+	 * cannot be added when that applies.
+	 *
+	 * Blocked people are returned rather than filtered out: a coordinator who
+	 * cannot find Jan concludes the search is broken, where a greyed-out Jan with
+	 * "geen geldige IVA" tells them what to do next.
+	 *
+	 * Names come from GuardianAccountService so a youth account held by a parent
+	 * still reads as the child it belongs to.
+	 */
+	public function get_assignable_people( \WP_REST_Request $request ) {
+		$shift_id = (int) $request->get_param( 'id' );
+		$search   = trim( (string) $request->get_param( 'search' ) );
+
+		$shift = get_post( $shift_id );
+		if ( ! $shift || $shift->post_type !== 'dienst_shift' ) {
+			return new \WP_Error( 'invalid_shift', 'Inschrijftaak bestaat niet.', [ 'status' => 404 ] );
+		}
+
+		$assigned   = array_map( 'intval', (array) get_post_meta( $shift_id, 'assigned_persons', true ) );
+		$candidates = $this->search_person_ids( $search );
+
+		$people = [];
+		foreach ( $candidates as $person_id ) {
+			if ( (bool) get_field( 'former_member', $person_id ) ) {
+				continue;
+			}
+
+			$name = $this->sanitize_text( GuardianAccountService::display_name_for_person( $person_id ) );
+			if ( $name === '' ) {
+				continue;
+			}
+
+			$block_reason = null;
+			if ( ! ( new VolunteerEligibilityService() )->may_volunteer( $person_id ) ) {
+				$block_reason = 'geen actief lid';
+			} else {
+				$blocked = $this->assert_person_may_take_shift( $person_id, $shift_id );
+				if ( is_wp_error( $blocked ) ) {
+					$block_reason = $blocked->get_error_message();
+				}
+			}
+
+			$people[] = [
+				'id'               => $person_id,
+				'name'             => $name,
+				'leeftijdsgroep'   => (string) get_field( 'leeftijdsgroep', $person_id ),
+				'already_assigned' => in_array( $person_id, $assigned, true ),
+				'blocked'          => $block_reason !== null,
+				'block_reason'     => $block_reason,
+			];
+		}
+
+		usort( $people, static fn( array $a, array $b ): int => strnatcasecmp( $a['name'], $b['name'] ) );
+
+		return rest_ensure_response( [ 'people' => array_slice( $people, 0, 25 ) ] );
+	}
+
+	/**
+	 * Person IDs matching a name search, club-wide.
+	 *
+	 * One WP_Query cannot OR a meta LIKE against a title search, so this runs the
+	 * same shape of separate passes that global_search() uses, then merges.
+	 *
+	 * @return int[]
+	 */
+	private function search_person_ids( string $search ): array {
+		$ids = [];
+
+		foreach ( [ 'first_name', 'last_name' ] as $meta_key ) {
+			$ids = array_merge(
+				$ids,
+				get_posts(
+					[
+						'post_type'      => 'person',
+						'post_status'    => 'publish',
+						'posts_per_page' => 25,
+						'fields'         => 'ids',
+						'no_found_rows'  => true,
+						'meta_query'     => [
+							[
+								'key'     => $meta_key,
+								'value'   => $search,
+								'compare' => 'LIKE',
+							],
+						],
+					]
+				)
+			);
+		}
+
+		$ids = array_merge(
+			$ids,
+			get_posts(
+				[
+					'post_type'      => 'person',
+					'post_status'    => 'publish',
+					'posts_per_page' => 25,
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					's'              => $search,
+				]
+			)
+		);
+
+		return array_values( array_unique( array_map( 'intval', $ids ) ) );
+	}
+
+	/** Does this person have somewhere to send the confirmation? */
+	private function person_has_email( int $person_id ): bool {
+		return trim( (string) get_field( 'email_1', $person_id ) ) !== ''
+			|| trim( (string) get_field( 'email_2', $person_id ) ) !== '';
+	}
+
+	/**
 	 * Let a volunteer manager remove an assignee after the member deadline.
 	 */
 	public function remove_assignee( \WP_REST_Request $request ) {
@@ -1048,6 +1391,8 @@ class MemberShifts extends Base {
 
 				update_post_meta( $shift_id, 'assigned_persons', array_values( array_diff( $assigned, [ $person_id ] ) ) );
 				delete_post_meta( $shift_id, '_shift_signup_at_' . $person_id );
+				delete_post_meta( $shift_id, '_shift_assigned_by_' . $person_id );
+				delete_post_meta( $shift_id, '_shift_assigned_at_' . $person_id );
 				GuardianAccountService::unmark_shift_signup( $shift_id, $person_id );
 				ShiftEmailScheduler::discard_signup_confirmation( $person_id, $shift_id );
 				if ( (string) get_post_meta( $shift_id, 'status', true ) === 'vol' ) {
@@ -1105,6 +1450,41 @@ class MemberShifts extends Base {
 		} catch ( \Exception $exception ) {
 			return null;
 		}
+	}
+
+	/**
+	 * Certificate and pool requirements for one person on one shift.
+	 *
+	 * Shared by self-service signup and coordinator assignment so the two can
+	 * never drift: a coordinator must not be able to place someone on a shift
+	 * the member could not have claimed themselves. Both callers refuse; neither
+	 * has an override.
+	 *
+	 * @return true|\WP_Error True when the person may take the shift.
+	 */
+	private function assert_person_may_take_shift( int $person_id, int $shift_id ) {
+		$dienst_type_id = (int) get_post_meta( $shift_id, 'dienst_type_id', true );
+		if ( $dienst_type_id <= 0 ) {
+			return true;
+		}
+
+		$blocks = $this->signup_blocks( $person_id );
+
+		if ( get_post_meta( $dienst_type_id, 'vog_required', true ) && in_array( 'vog', $blocks, true ) ) {
+			return new \WP_Error( 'vog_required', 'Voor deze inschrijftaak is een geldige VOG vereist.', [ 'status' => 403 ] );
+		}
+
+		$iva_waived = (bool) get_post_meta( $shift_id, 'iva_waived', true );
+		if ( ! $iva_waived && get_post_meta( $dienst_type_id, 'iva_required', true ) && in_array( 'iva', $blocks, true ) ) {
+			return new \WP_Error( 'iva_required', 'Voor deze inschrijftaak is een geldig IVA-certificaat vereist.', [ 'status' => 403 ] );
+		}
+
+		$required_pool = (int) get_post_meta( $dienst_type_id, 'required_pool', true );
+		if ( $required_pool > 0 && ! $this->person_is_pool_member( $person_id, $required_pool ) ) {
+			return new \WP_Error( 'pool_membership_required', 'Deze inschrijftaak is alleen beschikbaar voor leden van de bijbehorende vrijwilligerspool.', [ 'status' => 403 ] );
+		}
+
+		return true;
 	}
 
 	/**

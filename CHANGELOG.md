@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.79.0] - 2026-07-30
+
+### Added
+
+- **Vrijwilligerscoördinatoren kunnen zelf iemand indelen op een inschrijftaak.** Tot nu toe kon alleen het lid zich zelf aanmelden via `/vrijwillig`, waardoor leden zonder account, zonder e-mailadres of met alleen een telefoon buiten het systeem vielen. Op de pagina van een inschrijftaak zit nu "Iemand indelen": zoek op naam, kies de persoon, klaar. De ingedeelde persoon krijgt dezelfde bevestigingsmail met agenda-uitnodiging als bij een eigen aanmelding en kan zich daarna ook gewoon zelf afmelden. Bij de zoekresultaten is direct te zien wie er niet ingedeeld kan worden en waarom — bijvoorbeeld een ontbrekende VOG of IVA. Die eisen gelden namelijk onverkort: een coördinator legt een afspraak vast en zet het beleid niet buiten werking. Overlapt de inschrijftaak met een andere aanmelding van dezelfde persoon, dan volgt eerst een waarschuwing. Bij elke indeling wordt vastgelegd wie het gedaan heeft en wanneer.
+
+### Changed
+
+- Aanmeldingen van een inschrijftaak kunnen niet langer rechtstreeks als veld worden opgeslagen; dat liep om alle controles heen (capaciteit, certificaten, de bevestigingsmail, en de mogelijkheid voor het lid om zich af te melden) en koppelde een uitgerolde inschrijftaak los van zijn sjabloon.
+
 ## [33.78.5] - 2026-07-30
 
 ### Added
