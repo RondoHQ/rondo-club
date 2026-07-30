@@ -9,6 +9,9 @@
 **Date:** 2026-07-30
 **Baseline:** `main` @ `2c228546` (v33.78.0)
 **Implementation:** PR 1 built on `feat/person-field-sensitivity-and-notes-scope` (v33.78.3)
+**Sibling PRD:** [`dienst-signup-windows.md`](dienst-signup-windows.md) — season-wide planning and
+the November signup window. One interaction: the assignee endpoint specified here must **not**
+enforce that signup window, so a coordinator can still plan February's diensten in September.
 
 ---
 
