@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.78.4] - 2026-07-30
+
+### Changed
+
+- **Vrijwilligerscoördinatoren zien voortaan alle leden.** Diensten worden bemenst vanuit de hele vereniging, terwijl een coördinator met een leeftijdsgroep-beperking juist het grootste deel van de mensen die zij moeten inroosteren niet kon zien. De `vrijwilligers`-bevoegdheid werkt nu net als de andere beheerbevoegdheden: geen leeftijdsgroep-filter meer. Dit geldt alleen voor het inzien van leden — bewerken blijft ongewijzigd, en de financiële, ondersteunings- en sponsorvelden blijven afgeschermd (zie 33.78.3). Een neveneffect: de kaderlijst toont voor deze rollen nu de hele vereniging in plaats van alleen de eigen leeftijdsgroepen.
+- De lijst met beheerbevoegdheden in Instellingen → Beheer → Capabilities komt nu van de server in plaats van uit een handmatig bijgehouden kopie in de frontend. Die kopie liep achter, waardoor het scherm de leeftijdsgroep-instelling van een rol niet altijd opruimde wanneer die rol een beheerbevoegdheid kreeg.
+
 ## [33.78.3] - 2026-07-30
 
 ### Changed
