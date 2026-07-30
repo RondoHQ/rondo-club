@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.80.0] - 2026-07-30
+
+### Added
+
+- **Het hele seizoen wordt nu vooruit ingepland en is in één keer zichtbaar.** Tot nu toe rolde de planning steeds maar drie maanden vooruit: inschrijftaken van na die periode bestonden simpelweg nog niet, waardoor coördinatoren het voorjaar niet konden voorbereiden en leden niet konden zien wat eraan kwam. De nachtelijke uitrol loopt nu tot en met 30 juni, en de kalender toont standaard het volledige clubjaar van augustus tot en met juni.
+- **Inschrijven gaat per seizoenshelft open.** Inschrijftaken van juli tot en met december staan meteen open; die van januari tot en met juni gaan open op een datum die het bestuur zelf instelt — standaard 1 november. Leden zien de inschrijftaken van de tweede helft wél al staan, met de datum erbij ("Vanaf 1 november"), zodat duidelijk is dat ze eraan komen en wanneer ze te claimen zijn. Dagen die nog niet open zijn, kleuren grijs in plaats van rood: er valt immers nog niets te doen. De datum stel je in bij Instellingen → Club onder "Tweede seizoenshelft opent op".
+- Coördinatoren kunnen wél het hele seizoen vooruit iemand indelen — het inschrijfvenster geldt alleen voor leden die zichzelf aanmelden, niet voor het plannen zelf.
+
 ## [33.79.0] - 2026-07-30
 
 ### Added

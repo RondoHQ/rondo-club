@@ -754,6 +754,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
   // Club Configuration state (admin only)
   const [clubName, setClubName] = useState(config.clubName || '');
   const [volunteerSignupInfo, setVolunteerSignupInfo] = useState(config.volunteerSignupInfo || '');
+  const [secondHalfOpens, setSecondHalfOpens] = useState('11-01');
   const [savingClubConfig, setSavingClubConfig] = useState(false);
   const [clubConfigSaved, setClubConfigSaved] = useState(false);
   const [clubLogoId, setClubLogoId] = useState(0);
@@ -771,6 +772,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
     if (!clubConfig) return;
     setClubName(clubConfig.club_name || '');
     setVolunteerSignupInfo(clubConfig.volunteer_signup_info || '');
+    setSecondHalfOpens(clubConfig.volunteer_second_half_opens || '11-01');
   }, [clubConfig]);
 
   useEffect(() => {
@@ -805,6 +807,7 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
       const response = await prmApi.updateClubConfig({
         club_name: clubName,
         volunteer_signup_info: volunteerSignupInfo,
+        volunteer_second_half_opens: secondHalfOpens,
       });
       // Update window.rondoConfig with saved values
       window.rondoConfig.clubName = response.data.club_name;
@@ -902,6 +905,25 @@ function AppearanceTab({ clubConfig, setClubConfig, clubConfigLoading }) {
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Wordt als informatieblok direct onder de introductie op <code>/vrijwillig</code> getoond. Laat leeg om het blok te verbergen.
+              </p>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="second-half-opens">Tweede seizoenshelft opent op</label>
+              <input
+                id="second-half-opens"
+                type="text"
+                inputMode="numeric"
+                value={secondHalfOpens}
+                onChange={(e) => setSecondHalfOpens(e.target.value)}
+                className="input max-w-[10rem]"
+                placeholder="11-01"
+                pattern="\\d{2}-\\d{2}"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Maand en dag (MM-DD) waarop inschrijftaken van januari tot en met juni opengaan voor
+                aanmelding. Geldt elk seizoen opnieuw, dus dit hoef je niet jaarlijks aan te passen.
+                Leden zien die inschrijftaken al wel staan, met de datum erbij.
               </p>
             </div>
 
