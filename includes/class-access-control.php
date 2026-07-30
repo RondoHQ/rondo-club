@@ -92,6 +92,39 @@ class AccessControl {
 	];
 
 	/**
+	 * ACF fields that require a capability of their own, whoever is asking.
+	 *
+	 * Person access has two independent axes: *which people* you may see
+	 * (age groups / household, see can_view_person()) and *which fields* you may
+	 * read. Before this constant existed only the second tier of the first axis
+	 * redacted anything, so every management role read the club's finance flags
+	 * regardless of whether finance was any of their business.
+	 *
+	 * Keys are group names; values are field names, `*`-suffixed for a prefix
+	 * match. Access is decided per group by can_read_sensitive_group().
+	 *
+	 * Deliberately absent: `wacht_op_overschrijving`. It reads like a finance
+	 * field but is a KNVB transfer flag — membership administration, and the
+	 * ledenadministratie list renders it as a badge.
+	 */
+	private const SENSITIVE_ACF_FIELD_GROUPS = [
+		'finance' => [
+			'financiele-blokkade',
+			'nikki-contributie-status',
+			'_nikki_*',
+		],
+		'support' => [
+			'freescout-id',
+			'onboarding-email-lid-sent',
+			'onboarding-email-vrijwilliger-sent',
+		],
+		'sponsor' => [
+			'sponsit_contact_id',
+			'sponsit_person_id',
+		],
+	];
+
+	/**
 	 * Memoised per-user visible person IDs. Keyed by user ID.
 	 *
 	 * @var array<int, int[]>
@@ -590,6 +623,133 @@ class AccessControl {
 	}
 
 	/**
+	 * May this user read the fields in one sensitive group?
+	 *
+	 * Keyed on capability *predicates*, not raw capabilities:
+	 * - finance follows can_view_finances(), so a role carrying only the write
+	 *   capability is not locked out of the fields it may change.
+	 * - support covers FreeScout and onboarding timestamps. `rondo_bestuur` does
+	 *   not hold `manage_options`, and the membership desk chases onboarding
+	 *   mails, so ledenadministratie qualifies alongside administrators.
+	 *
+	 * @param string   $group   Group key from SENSITIVE_ACF_FIELD_GROUPS.
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool
+	 */
+	private static function can_read_sensitive_group( string $group, $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return true;
+		}
+
+		switch ( $group ) {
+			case 'finance':
+				return UserRoles::can_view_finances( $user_id );
+			case 'support':
+				return user_can( $user_id, UserRoles::LEDENADMINISTRATIE_CAPABILITY );
+			case 'sponsor':
+				return user_can( $user_id, UserRoles::SPONSORBEHEER_CAPABILITY );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Remove the sensitive fields this user has no capability for.
+	 *
+	 * Applies to every caller at every tier — a management user who may see the
+	 * whole club still only reads the finance flags if finance is their job.
+	 * Call this at every site that assembles a person ACF payload.
+	 *
+	 * @param array    $acf     Person ACF payload.
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return array Payload without the groups this user may not read.
+	 */
+	public static function filter_sensitive_acf( array $acf, $user_id = null ) {
+		foreach ( self::SENSITIVE_ACF_FIELD_GROUPS as $group => $fields ) {
+			if ( self::can_read_sensitive_group( $group, $user_id ) ) {
+				continue;
+			}
+
+			foreach ( $fields as $field ) {
+				if ( ! str_ends_with( $field, '*' ) ) {
+					unset( $acf[ $field ] );
+					continue;
+				}
+
+				$prefix = substr( $field, 0, -1 );
+				foreach ( array_keys( $acf ) as $key ) {
+					if ( str_starts_with( (string) $key, $prefix ) ) {
+						unset( $acf[ $key ] );
+					}
+				}
+			}
+		}
+
+		return $acf;
+	}
+
+	/**
+	 * Is this field hidden from the user, whatever spelling it arrives in?
+	 *
+	 * Redacting a field from the response body is only half the job: a list
+	 * endpoint that still accepts `?financiele_blokkade=1`, or sorts by it,
+	 * leaks the same flag through result membership and result order. Query
+	 * parameters spell fields with underscores where ACF uses hyphens, so both
+	 * are normalised before comparing.
+	 *
+	 * @param string   $field   ACF field name or the query-parameter spelling of one.
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool True when this user may not read the field.
+	 */
+	public static function acf_field_is_hidden( string $field, $user_id = null ) {
+		$needle = str_replace( '-', '_', $field );
+
+		foreach ( self::SENSITIVE_ACF_FIELD_GROUPS as $group => $fields ) {
+			foreach ( $fields as $sensitive_field ) {
+				$candidate = str_replace( '-', '_', $sensitive_field );
+				$matches   = str_ends_with( $candidate, '*' )
+					? str_starts_with( $needle, substr( $candidate, 0, -1 ) )
+					: $candidate === $needle;
+
+				if ( $matches ) {
+					return ! self::can_read_sensitive_group( $group, $user_id );
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * May this user read and write notes, activities and the person timeline?
+	 *
+	 * Notes are free prose: the field-level redaction above cannot reach what
+	 * someone typed into them, and in practice they carry exactly the finance
+	 * and membership matters those capabilities exist to gate. So notes are
+	 * their own surface rather than a side effect of person visibility.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return bool
+	 */
+	public static function can_access_person_notes( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return user_can( $user_id, 'manage_options' )
+			|| user_can( $user_id, UserRoles::LEDENADMINISTRATIE_CAPABILITY )
+			|| UserRoles::can_view_finances( $user_id );
+	}
+
+	/**
 	 * Check if the current user has age-group restrictions.
 	 *
 	 * @return bool True if the user is restricted to specific age groups.
@@ -903,9 +1063,15 @@ class AccessControl {
 			}
 
 			// A scoped member reads an allowlisted subset — never the financial flags.
+			// Everyone else still loses the sensitive groups their capabilities do
+			// not cover. `rest_prepare_person` fires per item, so this covers
+			// collection responses as well as the single-item route.
 			$data = $response->get_data();
-			if ( isset( $data['acf'] ) && is_array( $data['acf'] ) && self::is_scoped_member() ) {
-				$data['acf'] = self::filter_member_visible_acf( $data['acf'] );
+			if ( isset( $data['acf'] ) && is_array( $data['acf'] ) ) {
+				if ( self::is_scoped_member() ) {
+					$data['acf'] = self::filter_member_visible_acf( $data['acf'] );
+				}
+				$data['acf'] = self::filter_sensitive_acf( $data['acf'] );
 				$response->set_data( $data );
 			}
 		}
