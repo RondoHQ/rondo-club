@@ -85,4 +85,48 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 		$this->assertWPError( $past_response );
 		$this->assertSame( 'rondo_expansion_date_in_past', $past_response->get_error_code() );
 	}
+
+	/**
+	 * The nightly window runs to the end of the season, not three months out.
+	 * A rolling quarter meant coordinators could not plan the spring and members
+	 * could not see it coming.
+	 */
+	public function test_default_window_runs_to_the_end_of_the_season(): void {
+		$this->assertSame(
+			'2027-06-30',
+			ShiftTemplateExpander::default_window_end( '2026-09-15' ),
+			'mid-season should expand to that season end'
+		);
+		$this->assertSame(
+			'2027-06-30',
+			ShiftTemplateExpander::default_window_end( '2027-02-01' ),
+			'the second half belongs to the same season'
+		);
+	}
+
+	/**
+	 * Without the floor, late June would expand almost nothing and leave the club
+	 * with an empty calendar exactly while next season is being set up.
+	 */
+	public function test_default_window_keeps_a_minimum_horizon_at_season_end(): void {
+		$end = ShiftTemplateExpander::default_window_end( '2027-06-20' );
+
+		$this->assertGreaterThan( '2027-06-30', $end );
+		$this->assertSame(
+			gmdate( 'Y-m-d', strtotime( '2027-06-20 +' . ShiftTemplateExpander::WINDOW_DAYS . ' days' ) ),
+			$end
+		);
+	}
+
+	/** Expanding the same range twice must not duplicate anything. */
+	public function test_expansion_is_idempotent_over_a_season(): void {
+		$from = current_datetime()->format( 'Y-m-d' );
+		$to   = current_datetime()->modify( '+120 days' )->format( 'Y-m-d' );
+
+		$first  = ShiftTemplateExpander::expand_range( $from, $to );
+		$second = ShiftTemplateExpander::expand_range( $from, $to );
+
+		$this->assertGreaterThan( 0, $first, 'precondition: the first run creates shifts' );
+		$this->assertSame( 0, $second, 'a second run over the same range creates nothing' );
+	}
 }

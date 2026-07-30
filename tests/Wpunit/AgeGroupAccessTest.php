@@ -288,4 +288,59 @@ class AgeGroupAccessTest extends RondoTestCase {
 		$result = AccessControl::get_permitted_age_groups( 0 );
 		$this->assertNull( $result );
 	}
+
+	/**
+	 * Volunteer coordinators bypass age-group filtering.
+	 *
+	 * Diensten are staffed from the whole club: a coördinator scoped to one age
+	 * group cannot see most of the people they are meant to roster. Configured
+	 * age groups for the role are ignored, exactly as for the other management
+	 * capabilities.
+	 */
+	public function test_returns_null_for_vrijwilligers_user(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_vrijwilligers' ] );
+
+		update_option(
+			'rondo_age_group_access',
+			[
+				'rondo_vrijwilligers' => [ 'Onder 11' ],
+			]
+		);
+
+		$this->assertNull(
+			AccessControl::get_permitted_age_groups( $user_id ),
+			'A volunteer coordinator should see every member'
+		);
+		$this->assertFalse(
+			AccessControl::is_scoped_member( $user_id ),
+			'A volunteer coordinator is not a household-scoped member'
+		);
+	}
+
+	/**
+	 * The bypass is a *view* bypass. Coordinators may see every member; editing
+	 * people remains a separate decision, and this assertion is the guard rail
+	 * that keeps the two from being conflated later.
+	 */
+	public function test_vrijwilligers_bypass_grants_no_edit_rights(): void {
+		$user_id = self::factory()->user->create( [ 'role' => 'rondo_vrijwilligers' ] );
+
+		$this->assertFalse(
+			AccessControl::can_edit_people( $user_id ),
+			'Seeing every member must not imply editing them'
+		);
+	}
+
+	/**
+	 * The admin capability matrix clears a role's age-group config once the role
+	 * gains a bypass capability. It reads the list from here rather than keeping
+	 * its own copy, which is what let the two drift before.
+	 */
+	public function test_management_capabilities_are_published_for_the_admin_ui(): void {
+		$caps = AccessControl::get_management_capabilities();
+
+		$this->assertContains( 'vrijwilligers', $caps );
+		$this->assertContains( 'manage_options', $caps );
+		$this->assertContains( 'financieel_read', $caps );
+	}
 }

@@ -303,12 +303,36 @@ class ShiftTemplateExpander {
 	}
 
 	/**
-	 * Expand the standard window: starting today, WINDOW_DAYS ahead.
+	 * Expand the standard window: from today to the end of the season.
+	 *
+	 * A rolling three-month window meant coordinators could not plan or even see
+	 * the second half of the season, and volunteers could not see what was
+	 * coming. Expanding to season end makes the whole club year real; the
+	 * expansion is idempotent, so after the first run each night creates almost
+	 * nothing.
 	 */
 	public function expand_default_window(): int {
 		$from = gmdate( 'Y-m-d' );
-		$to   = gmdate( 'Y-m-d', strtotime( '+' . self::WINDOW_DAYS . ' days' ) );
-		return self::expand_range( $from, $to );
+		return self::expand_range( $from, self::default_window_end( $from ) );
+	}
+
+	/**
+	 * End of the expansion window: the season's last day, never closer than
+	 * WINDOW_DAYS.
+	 *
+	 * The floor matters in June: without it the last weeks of a season would
+	 * expand almost nothing, leaving the club with an empty calendar exactly
+	 * while next season's templates are being set up.
+	 *
+	 * @param string|null $today Y-m-d, defaults to today.
+	 */
+	public static function default_window_end( ?string $today = null ): string {
+		$today       = $today ?: gmdate( 'Y-m-d' );
+		$season      = \Rondo\Fees\SeasonKey::current( $today );
+		$season_end  = substr( $season, 5, 4 ) . '-06-30';
+		$minimum_end = gmdate( 'Y-m-d', strtotime( $today . ' +' . self::WINDOW_DAYS . ' days' ) );
+
+		return max( $season_end, $minimum_end );
 	}
 
 	/**

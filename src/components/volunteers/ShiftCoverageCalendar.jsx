@@ -19,8 +19,17 @@ const WEEKDAYS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
 function dayStatusLabel(day) {
   if (!day) return 'geen inschrijftaken';
+  if (day.state === 'locked') return 'nog niet open voor inschrijven';
   if (day.state === 'full') return `alle ${day.shift_count} inschrijftaken ingevuld`;
   return `${day.spots_remaining} ${day.spots_remaining === 1 ? 'plek' : 'plekken'} open`;
+}
+
+// A locked day is neither green nor red: nobody can act on it yet, so painting
+// it red would read as "sign up here".
+function dayStateTextClass(state) {
+  if (state === 'locked') return 'text-gray-500 dark:text-gray-400';
+  if (state === 'full') return 'text-emerald-700 dark:text-emerald-300';
+  return 'text-red-700 dark:text-red-300';
 }
 
 function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
@@ -52,7 +61,9 @@ function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
             ? 'border-emerald-300 bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-100'
             : day?.state === 'open'
               ? 'border-red-300 bg-red-100 text-red-900 hover:bg-red-200 dark:border-red-700 dark:bg-red-900/40 dark:text-red-100'
-              : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400';
+              : day?.state === 'locked'
+                ? 'border-gray-300 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-700/60 dark:text-gray-300'
+                : 'border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400';
 
           return (
             <button
@@ -71,7 +82,7 @@ function Month({ month, from, to, daysByDate, selectedDate, onSelectDate }) {
               {format(date, 'd')}
               {day && (
                 <span className="absolute bottom-0.5 right-1 text-[9px] font-semibold" aria-hidden="true">
-                  {day.state === 'full' ? '✓' : day.spots_remaining}
+                  {day.state === 'full' ? '✓' : day.state === 'locked' ? '🔒' : day.spots_remaining}
                 </span>
               )}
             </button>
@@ -101,7 +112,7 @@ function DatePopover({ anchor, day, onClose, renderDayActions, renderShift }) {
           <h3 id={titleId} className="font-semibold capitalize text-gray-900 dark:text-gray-100">
             {format(parseISO(day.date), 'EEEE d MMMM')}
           </h3>
-          <p className={`mt-0.5 text-xs font-medium ${day.state === 'full' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+          <p className={`mt-0.5 text-xs font-medium ${dayStateTextClass(day.state)}`}>
             {dayStatusLabel(day)}
           </p>
         </div>
@@ -227,7 +238,7 @@ export default function ShiftCoverageCalendar({
                 <h3 className="font-semibold capitalize text-gray-900 dark:text-gray-100">
                   {format(parseISO(selectedDay.date), 'EEEE d MMMM')}
                 </h3>
-                <span className={`text-xs font-medium ${selectedDay.state === 'full' ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
+                <span className={`text-xs font-medium ${dayStateTextClass(selectedDay.state)}`}>
                   {dayStatusLabel(selectedDay)}
                 </span>
               </div>
