@@ -162,6 +162,9 @@ export default function PersonDetail() {
   const isSponsorPerson = hasSponsorRole(person?.acf);
   const isDualRoleSponsor = isSponsorPerson && (person?.acf?.person_type || 'member') !== 'contact';
   let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson && !isDualRoleSponsor);
+  // Volunteer coordinators may correct contact details and photos on any person,
+  // but nothing else — the server enforces the same field boundary.
+  let canEditContact = canEditPeople || (currentUser?.can_edit_person_contact ?? false);
   let canEditSponsorFields = canEditAllPeople || (canManageSponsors && isSponsorPerson);
   const canSyncFromSportlink = (currentUser?.is_admin ?? window.rondoConfig?.isAdmin ?? false) || canAccessToegangscontrole;
 
@@ -1204,6 +1207,7 @@ export default function PersonDetail() {
   // here just keeps users from trying.
   if (isFormerMember) {
     canEditPeople = false;
+    canEditContact = false;
     canEditSponsorFields = false;
   }
 
@@ -1339,7 +1343,7 @@ export default function PersonDetail() {
               </div>
             )}
             {/* Upload overlay */}
-            {canEditPeople && (
+            {canEditContact && (
               <>
                 <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center cursor-pointer"
                      onClick={() => fileInputRef.current?.click()}
@@ -1615,7 +1619,7 @@ export default function PersonDetail() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-brand-gradient">Contactgegevens</h2>
-                {canEditPeople && (
+                {canEditContact && (
                   <button
                     onClick={() => setShowContactModal(true)}
                     className="btn-tertiary text-sm"
@@ -1654,7 +1658,7 @@ export default function PersonDetail() {
               </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                Nog geen contactgegevens.{canEditPeople && <> <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button></>}
+                Nog geen contactgegevens.{canEditContact && <> <button onClick={() => setShowContactModal(true)} className="text-electric-cyan hover:underline">Toevoegen</button></>}
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
@@ -1679,7 +1683,7 @@ export default function PersonDetail() {
               <div className="card p-6">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-semibold text-brand-gradient">Adressen</h2>
-                  {canEditPeople && (
+                  {canEditContact && (
                     <button
                       onClick={() => {
                         setEditingAddress(null);
@@ -1722,7 +1726,7 @@ export default function PersonDetail() {
                               ))}
                             </a>
                           </div>
-                          {canEditPeople && (
+                          {canEditContact && (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                               <button
                                 onClick={() => {
@@ -1750,7 +1754,7 @@ export default function PersonDetail() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-4">
-                    Nog geen adressen.{canEditPeople && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
+                    Nog geen adressen.{canEditContact && <> <button onClick={() => { setEditingAddress(null); setEditingAddressIndex(null); setShowAddressModal(true); }} className="text-electric-cyan hover:underline">Toevoegen</button></>}
                   </p>
                 )}
               </div>

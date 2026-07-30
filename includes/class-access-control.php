@@ -197,6 +197,46 @@ class AccessControl {
 	}
 
 	/**
+	 * Person fields a volunteer coordinator may write.
+	 *
+	 * Exactly the set that `rondo-sync` pushes back to Sportlink — the six contact
+	 * fields plus the addresses repeater, whose Home row is reverse-synced. That is
+	 * not a coincidence: a coordinator correcting a phone number is correcting the
+	 * club's record of it, and anything outside this set belongs to a different
+	 * owner (membership administration, finance, or Sportlink itself).
+	 */
+	public const CONTACT_WRITE_FIELDS = [
+		'email_1',
+		'email_2',
+		'mobile_1',
+		'mobile_2',
+		'telephone_1',
+		'telephone_2',
+		'addresses',
+	];
+
+	/**
+	 * May this user correct contact details on a person?
+	 *
+	 * Deliberately not folded into can_edit_people(): that method means "full
+	 * people manager" and is read by the sponsor scope guard and the frontend, so
+	 * widening it would hand coordinators every field on every member. The field
+	 * boundary itself is enforced by REST\People::enforce_person_field_scope().
+	 *
+	 * @param int|null $user_id User ID (optional, defaults to current user).
+	 * @return bool
+	 */
+	public static function can_edit_person_contact( $user_id = null ) {
+		$user_id = $user_id ?? get_current_user_id();
+
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		return self::can_edit_people( $user_id ) || user_can( $user_id, UserRoles::VRIJWILLIGERS_CAPABILITY );
+	}
+
+	/**
 	 * Check if a user may manage sponsor records.
 	 *
 	 * @param int|null $user_id User ID (optional, defaults to current user).
@@ -229,8 +269,17 @@ class AccessControl {
 			return true;
 		}
 
+		if ( get_post_type( $person_id ) !== 'person' ) {
+			return false;
+		}
+
+		// Volunteer coordinators reach every person, but only for the contact
+		// fields — enforced field-by-field in enforce_person_field_scope().
+		if ( self::can_edit_person_contact( $user_id ) ) {
+			return true;
+		}
+
 		return self::can_manage_sponsors( $user_id )
-			&& get_post_type( $person_id ) === 'person'
 			&& SponsorStatus::is_sponsor( (int) $person_id );
 	}
 

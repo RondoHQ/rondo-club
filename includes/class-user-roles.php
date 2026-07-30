@@ -33,7 +33,7 @@ class UserRoles {
 	 * installs must also receive; add_role() does not touch existing roles.
 	 */
 	const ROLES_VERSION_OPTION = 'rondo_roles_version';
-	const ROLES_VERSION        = 4;
+	const ROLES_VERSION        = 5;
 
 	/** Generic WordPress write capabilities removed from non-admin Rondo roles. */
 	private const LEGACY_GENERIC_WRITE_CAPS = [
@@ -278,6 +278,7 @@ class UserRoles {
 	 * Version 2: every role holding `financieel` also gets `financieel_read`.
 	 * Version 3: generic post/media access is replaced by dedicated CPT caps.
 	 * Version 4: the Sponsorbeheerder role and `sponsorbeheer` capability are added.
+	 * Version 5: `vrijwilligers` roles gain person edit primitives for contact fields.
 	 */
 	public function maybe_upgrade_roles() {
 		$installed_version = (int) get_option( self::ROLES_VERSION_OPTION, 0 );
@@ -427,6 +428,12 @@ class UserRoles {
 				foreach ( [ 'dienst_type', 'shift_template', 'dienst_shift', 'taakuitleg' ] as $post_type ) {
 					$desired = array_merge( $desired, self::cpt_capabilities( $post_type, 'manage' ) );
 				}
+
+				// Coordinators run into wrong phone numbers and e-mail addresses
+				// constantly. `edit` — not `manage` — so they can correct a record
+				// but never create or delete one. Which *fields* they may write is
+				// narrowed separately by AccessControl::CONTACT_WRITE_FIELDS.
+				$desired = array_merge( $desired, self::cpt_capabilities( 'person', 'edit' ) );
 			}
 
 			if (
@@ -460,14 +467,41 @@ class UserRoles {
 			return [];
 		}
 
+		$read = array_values(
+			array_filter(
+				[
+					$map['read'] ?? null,
+					$map['read_post'] ?? null,
+					$map['read_private_posts'] ?? null,
+				]
+			)
+		);
+
 		if ( $level === 'read' ) {
+			return $read;
+		}
+
+		// `edit` sits between read and manage: change existing records, but never
+		// create or delete them. Volunteer coordinators correct contact details on
+		// members whose records belong to Sportlink — creating or deleting a person
+		// is a different decision with a different owner.
+		if ( $level === 'edit' ) {
 			return array_values(
-				array_filter(
-					[
-						$map['read'] ?? null,
-						$map['read_post'] ?? null,
-						$map['read_private_posts'] ?? null,
-					]
+				array_unique(
+					array_merge(
+						$read,
+						array_values(
+							array_filter(
+								[
+									$map['edit_post'] ?? null,
+									$map['edit_posts'] ?? null,
+									$map['edit_others_posts'] ?? null,
+									$map['edit_published_posts'] ?? null,
+									$map['edit_private_posts'] ?? null,
+								]
+							)
+						)
+					)
 				)
 			);
 		}

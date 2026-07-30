@@ -108,15 +108,32 @@ setting has an obvious, boring home.
 | **5** | Edge cases | §9. |
 | **6** | Greyed out, or hidden? | **Greyed out with a badge**, per the request — but it forces a third day-state in the calendar (§8), which is the real cost and the reason to decide deliberately. |
 
-### 4.2 Open questions for Joost
+### 4.2 Decided (Joost, 2026-07-30)
+
+| # | Question | Decision |
+|---|---|---|
+| **W1** | How far ahead should the cron expand? | **To season end**, computed per run, with `WINDOW_DAYS` surviving as a floor so late-June runs still roll into the new season. The manual rollout endpoint is unchanged. §5.1 covers volume and guard rails. |
+| **W2** | Club-wide opening date, or per dienst type? | **Club-wide.** One date for every dienst type. A per-type override stays additive if it is ever wanted. |
+| **W4** | Does the gate apply to a future season's diensten? | **Yes.** Anything beyond the current season is closed, with its own computed opening date, so a June rollout cannot accidentally open next season's bardiensten. |
+| **W5** | What is the club year for the views? | **August → June.** Not `SeasonKey`'s Jul→Jun and not the Sep→Jun of the original request. See the caveat below — this is the one decision that puts a view boundary and a domain boundary slightly out of step, deliberately. |
+
+**W5 caveat, written down so it is not rediscovered as a bug.** `SeasonKey` remains the single
+definition of *which season a date belongs to* — 1 July – 30 June — and every window, obligation and
+credit calculation keeps using it. August→June is a **display default for the calendars only**:
+
+- Default calendar range becomes 1 August → 30 June of the season containing today (334 days).
+- A dienst in **July** still belongs to its season for every rule, but falls outside the default
+  view. It is reachable by passing explicit `from`/`to`, and `expand_range()` still creates it.
+- Practical effect: if the club ever plans a July toernooi-dienst, it will not appear on the default
+  beheer calendar. Accepted; the alternative (moving the season boundary) would desynchronise
+  volunteer obligations from the fee season, which is a far worse trade.
+- `CALENDAR_MAX_DAYS` is set to **370** rather than 334, so an explicit July→June request still fits.
+
+### 4.3 Still open
 
 | # | Question | Default I'd ship |
 |---|---|---|
-| **W1** | **How far ahead should the cron actually expand?** Options: (a) always to season end, (b) rolling 93 days *plus* season-end once the season starts, (c) a configurable horizon. Season-end expansion in July creates ~11 months of shifts in one run — for a club with a dozen weekly templates that is several hundred posts. | **(a) to season end**, computed per run, with the manual rollout endpoint unchanged. It is the only option where the beheer view is reliably complete, and the volume is bounded and one-off per season. §5 covers the volume estimate and the guard rails. |
-| **W2** | **Does the second half open for *everyone* at once, or per dienst type?** Kantine may want to open bardiensten in November but keep schoonmaak open all year. | **Everyone at once.** One club-wide date, no per-type override. Per-type windows are a real want but should wait for evidence; adding them later is additive (a `signup_opens_at` override on `dienst_type`). |
 | **W3** | **What happens to the 93-day `AVAILABLE_WINDOW_DAYS` flat list?** With a season horizon it becomes an arbitrary third window that disagrees with both the calendar and the gate. | **Retire the constant** and let `/shifts/available` return everything currently signup-open. If that list gets long, cap it by season rather than by an unrelated day count. |
-| **W4** | **Should the gate apply to next season's diensten?** Once the expander reaches season end, a July rollout of the *next* season could appear while the current one is still running. | **Gate anything beyond the current season entirely** — not signup-open, same badge, "opens" date computed for that season. Prevents a June rollout accidentally opening next season's bardiensten. |
-| **W5** | **Is "Sep→Jun" or "Jul→Jun" the club year for the beheer view?** The request says Sep→Jun; `SeasonKey` says Jul→Jun. Pre-season diensten in July/August (toernooien, klussendagen) do exist at some clubs. | **Use the full `SeasonKey` season (Jul→Jun)** and let the calendar simply show empty months if nothing is planned. Introducing a second, September-based year boundary would be the same mistake as Q1. |
 
 Assumptions made without asking:
 
@@ -182,9 +199,9 @@ means "tot het einde van het seizoen".
 
 ### 6.1 Calendar range
 
-`MemberShifts::CALENDAR_MAX_DAYS` 190 → **370**, and `calendar_range()`'s default `to` becomes the
-current season's end rather than "+6 months". A season is 365 days; 370 leaves room for the July
-edge without inviting unbounded ranges.
+`MemberShifts::CALENDAR_MAX_DAYS` 190 → **370**, and `calendar_range()`'s default range becomes the
+club year of the season containing today: **1 August → 30 June** (W5). 370 leaves room for an
+explicit July→June request without inviting unbounded ranges.
 
 Cost check: `get_shift_calendar()` caps at `posts_per_page => 1000` and does per-shift meta reads.
 A full season for a 15-template club (~780 shifts) fits under that cap but roughly triples today's

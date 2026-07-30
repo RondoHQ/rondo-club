@@ -178,8 +178,16 @@ abstract class Base {
 		}
 
 		// Check the record-specific people-editing scope. Sponsor managers may
-		// edit sponsors, but never members or ordinary contacts.
+		// edit sponsors, but never members or ordinary contacts. Volunteer
+		// coordinators reach every person for contact details and photos.
 		if ( ! \Rondo\Core\AccessControl::can_edit_person( $person_id ) ) {
+			return false;
+		}
+
+		// Former members are read-only end-to-end for non-admins. The ACF writes
+		// are stopped by People::block_former_member_edits(), which this route
+		// never passes through, so the same rule is applied here.
+		if ( ! current_user_can( 'manage_options' ) && get_field( 'former_member', $person_id ) ) {
 			return false;
 		}
 
