@@ -10,38 +10,28 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      injectRegister: null, // We'll inject meta tags via PHP in Plan 02
-      manifest: {
-        name: 'Rondo Club',
-        short_name: 'Rondo Club',
-        description: 'Club data management',
-        theme_color: '#0891b2',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'any',
-        start_url: '/dashboard',
-        scope: '/',
-        categories: ['sports'],
-        icons: [
-          {
-            src: '../public/icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '../public/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: '../public/icons/icon-512x512-maskable.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
+      // Registration happens in src/components/ReloadPrompt.jsx; the meta tags
+      // and the manifest link are injected by PHP (functions.php) because
+      // WordPress renders the shell, not an index.html the plugin can transform.
+      injectRegister: null,
+
+      // The manifest is served by WordPress at /manifest.webmanifest so its name
+      // can follow the site title per deployment. See rondo_render_manifest().
+      manifest: false,
+
+      // The worker lives in the theme's dist/ directory, so its default scope
+      // would be that directory and it could never control the app at /. The
+      // theme's .htaccess sends `Service-Worker-Allowed: /` to permit this.
+      scope: '/',
+
       workbox: {
+        // vite-plugin-pwa defaults navigateFallback to 'index.html'. That default
+        // is wrong twice over here: WordPress renders the shell (there is no
+        // index.html in the build, so createHandlerBoundToURL would throw and
+        // kill the worker on startup), and a NavigationRoute would answer every
+        // navigation from cache. The navigation route is defined under
+        // runtimeCaching below instead.
+        navigateFallback: undefined,
         // Keep the install burst small: only precache the app shell. Lazy page
         // chunks are cached when they are actually visited instead of making
         // every new user download the complete application up front.
@@ -80,13 +70,24 @@ export default defineConfig({
               },
             },
           },
-        ],
-        // Offline fallback page (must include base path)
-        navigateFallback: '/wp-content/themes/rondo-club/dist/offline.html',
-        navigateFallbackDenylist: [
-          /^\/wp-json\//,   // Don't use offline page for API requests
-          /^\/wp-admin\//,  // Don't use offline page for admin
-          /^\/wp-login/,    // Don't use offline page for login
+          {
+            // WordPress renders the app shell per request — nonce, window.rondoConfig,
+            // dashboard preload — so navigations MUST hit the network. Do not use
+            // workbox's navigateFallback here: it binds a NavigationRoute to the
+            // precached offline page and answers every navigation from cache,
+            // online or not, which replaces the entire app with "je bent offline".
+            // precacheFallback only kicks in when the network request actually fails.
+            urlPattern: ({ request, url }) => request.mode === 'navigate'
+              && !url.pathname.startsWith('/wp-admin')
+              && !url.pathname.startsWith('/wp-login')
+              && !url.pathname.startsWith('/wp-json'),
+            handler: 'NetworkOnly',
+            options: {
+              precacheFallback: {
+                fallbackURL: '/wp-content/themes/rondo-club/dist/offline.html',
+              },
+            },
+          },
         ],
       },
       // Include offline.html in build

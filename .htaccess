@@ -1,0 +1,15 @@
+# Rondo Club theme — service worker headers.
+#
+# The service worker is built into dist/, so its default scope would be that
+# directory and it could never control the app at /. Service-Worker-Allowed
+# lifts that restriction; vite.config.js registers it with scope "/".
+#
+# The no-cache header keeps update checks honest. Browsers already cap service
+# worker script caching at 24h, but SiteGround serves everything under the theme
+# with max-age=31536000, which would otherwise delay every deploy by a day.
+<IfModule mod_headers.c>
+	<Files "sw.js">
+		Header set Service-Worker-Allowed "/"
+		Header set Cache-Control "no-cache, max-age=0"
+	</Files>
+</IfModule>

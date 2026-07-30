@@ -1,5 +1,6 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { RefreshCw, X, CheckCircle } from 'lucide-react';
+import { getAppName } from '@/constants/app';
 
 /**
  * ReloadPrompt - Shows notifications for PWA updates and offline readiness
@@ -13,6 +14,7 @@ import { RefreshCw, X, CheckCircle } from 'lucide-react';
  */
 export function ReloadPrompt() {
   const intervalMS = 60 * 60 * 1000; // Check every hour
+  const appName = getAppName();
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -73,7 +75,7 @@ export function ReloadPrompt() {
               Klaar voor offline gebruik
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Rondo Club werkt nu ook zonder internet
+              {appName} werkt nu ook zonder internet
             </p>
           </div>
           <button
@@ -98,7 +100,7 @@ export function ReloadPrompt() {
                 Update beschikbaar
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Een nieuwe versie van Rondo Club is beschikbaar
+                Een nieuwe versie van {appName} is beschikbaar
               </p>
             </div>
           </div>
