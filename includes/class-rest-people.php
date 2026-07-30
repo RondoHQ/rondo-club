@@ -1463,6 +1463,17 @@ class People extends Base {
 			$include_former = '1';
 		}
 
+		// Filtering or sorting on a field the caller may not read would hand them
+		// its value through result membership and result order. Drop both silently:
+		// erroring would confirm the field exists just as loudly.
+		if ( \Rondo\Core\AccessControl::acf_field_is_hidden( 'financiele_blokkade' ) ) {
+			$financiele_blokkade = null;
+		}
+		if ( strpos( (string) $orderby, 'custom_' ) === 0
+			&& \Rondo\Core\AccessControl::acf_field_is_hidden( substr( $orderby, 7 ) ) ) {
+			$orderby = 'first_name';
+		}
+
 		// Double-check access control (permission_callback should have caught this,
 		// but custom $wpdb queries bypass pre_get_posts hooks, so we verify explicitly)
 		if ( ! is_user_logged_in() ) {
@@ -2038,7 +2049,8 @@ class People extends Base {
 		$total = (int) $wpdb->get_var( $prepared_count_sql );
 
 		// Format results
-		$people = [];
+		$is_scoped_member = \Rondo\Core\AccessControl::is_scoped_member();
+		$people           = [];
 		foreach ( $results as $row ) {
 			$person = [
 				'id'            => (int) $row->ID,
@@ -2053,26 +2065,36 @@ class People extends Base {
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];
 
-			// Add ACF fields for custom field columns
+			// Add ACF fields for custom field columns.
+			// This endpoint builds its response by hand and never passes through
+			// `rest_prepare_person`, so it has to apply the same redaction the
+			// core routes get from AccessControl::filter_rest_single_access().
 			if ( function_exists( 'get_fields' ) ) {
 				$acf_fields = get_fields( $row->ID );
 				if ( $acf_fields ) {
-					$person['acf'] = $acf_fields;
+					if ( $is_scoped_member ) {
+						$acf_fields = \Rondo\Core\AccessControl::filter_member_visible_acf( $acf_fields );
+					}
+					$person['acf'] = \Rondo\Core\AccessControl::filter_sensitive_acf( $acf_fields );
 				}
 			}
 
-			// Add VOG-related post meta fields to acf array for frontend consistency
-			$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
-			$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
-			$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
-			if ( $vog_email_sent ) {
-				$person['acf']['vog_email_sent_date'] = $vog_email_sent;
-			}
-			if ( $vog_justis ) {
-				$person['acf']['vog_justis_submitted_date'] = $vog_justis;
-			}
-			if ( $vog_reminder ) {
-				$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
+			// Add VOG-related post meta fields to acf array for frontend consistency.
+			// These are VOG-workflow timestamps, not member-facing data, so they stay
+			// out of a scoped member's allowlisted payload.
+			if ( ! $is_scoped_member ) {
+				$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
+				$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
+				$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
+				if ( $vog_email_sent ) {
+					$person['acf']['vog_email_sent_date'] = $vog_email_sent;
+				}
+				if ( $vog_justis ) {
+					$person['acf']['vog_justis_submitted_date'] = $vog_justis;
+				}
+				if ( $vog_reminder ) {
+					$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
+				}
 			}
 
 			$people[] = $person;

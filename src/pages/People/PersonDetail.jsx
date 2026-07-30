@@ -157,6 +157,7 @@ export default function PersonDetail() {
   const canAccessClothing = currentUser?.can_access_clothing ?? false;
   const canAccessToegangscontrole = currentUser?.can_access_toegangscontrole ?? false;
   const canEditAllPeople = currentUser?.can_edit_people ?? false;
+  const canAccessPersonNotes = currentUser?.can_access_person_notes ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
   const isSponsorPerson = hasSponsorRole(person?.acf);
   const isDualRoleSponsor = isSponsorPerson && (person?.acf?.person_type || 'member') !== 'contact';
@@ -1969,6 +1970,13 @@ export default function PersonDetail() {
                 </div>
               )}
             </div>
+
+            {!canAccessPersonNotes && (
+              <p className="mb-4 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-400">
+                Notities en activiteiten zijn alleen zichtbaar voor de ledenadministratie en de
+                penningmeester. Je ziet hier je eigen taken bij deze persoon.
+              </p>
+            )}
 
             <TimelineView
               timeline={timeline || []}

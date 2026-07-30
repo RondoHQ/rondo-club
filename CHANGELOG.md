@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.78.3] - 2026-07-30
+
+### Changed
+
+- **Financiële en interne velden op een persoon zijn niet langer voor iedereen zichtbaar.** Wie een lid mag zien, zag tot nu toe automatisch álle velden van dat lid — ook de financiële blokkade, de contributiesaldi, het FreeScout-nummer en de Sponsit-koppelingen. Vanaf nu horen die velden bij een eigen bevoegdheid: financiële gegevens zijn zichtbaar voor de penningmeester (en wie financiën mag inzien), FreeScout en onboardingmomenten voor de ledenadministratie en beheerders, en de Sponsit-velden voor sponsorbeheerders. Dit geldt overal waar persoonsgegevens worden opgehaald, inclusief de ledenlijst. Filteren of sorteren op een veld dat je niet mag zien werkt niet langer — anders was de waarde alsnog af te leiden uit de zoekresultaten. Het KNVB-veld "wacht op overschrijving" blijft voor iedereen zichtbaar: dat is ledenadministratie, geen financiën.
+- **Notities en activiteiten bij een persoon zijn voorbehouden aan de ledenadministratie en financiën.** Notities bevatten vrije tekst en dus regelmatig financiële of vertrouwelijke informatie, die niet per veld af te schermen is. Ze zijn daarom nu een eigen bevoegdheid in plaats van iets dat je er automatisch bij krijgt zodra je een lid mag inzien. Voor onder anderen FairPlay-, VOG- en vrijwilligersrollen vervallen notities en activiteiten hiermee. De tijdlijn blijft voor iedereen bereikbaar en toont je eigen taken bij die persoon; alleen de notities, activiteiten en gelogde e-mails verdwijnen eruit. Bestaande notities blijven gewoon bewaard.
+
 ## [33.78.2] - 2026-07-30
 
 ### Changed
