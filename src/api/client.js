@@ -426,6 +426,9 @@ export const prmApi = {
   cancelShift: (shiftId) => api.post(`/rondo/v1/shifts/${shiftId}/cancel`),
   cancelDienstShift: (shiftId, data = {}) => api.post(`/rondo/v1/shifts/${shiftId}/cancellation`, data),
   removeShiftAssignee: (shiftId, personId) => api.delete(`/rondo/v1/shifts/${shiftId}/assignees/${personId}`),
+  addShiftAssignee: (shiftId, data) => api.post(`/rondo/v1/shifts/${shiftId}/assignees`, data),
+  getAssignablePeople: (shiftId, search) =>
+    api.get(`/rondo/v1/shifts/${shiftId}/assignable-people`, { params: { search } }),
   copyShiftDay: (sourceDate, targetDate) => api.post('/rondo/v1/shifts/copy-day', {
     source_date: sourceDate,
     target_date: targetDate,

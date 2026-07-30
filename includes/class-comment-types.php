@@ -172,7 +172,7 @@ class CommentTypes {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_notes' ],
-					'permission_callback' => [ $this, 'check_person_access' ],
+					'permission_callback' => [ $this, 'check_person_notes_access' ],
 					'args'                => [
 						'person_id' => [
 							'validate_callback' => function ( $param ) {
@@ -184,7 +184,7 @@ class CommentTypes {
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_note' ],
-					'permission_callback' => [ $this, 'check_person_access' ],
+					'permission_callback' => [ $this, 'check_person_notes_access' ],
 				],
 			]
 		);
@@ -214,12 +214,12 @@ class CommentTypes {
 				[
 					'methods'             => \WP_REST_Server::READABLE,
 					'callback'            => [ $this, 'get_activities' ],
-					'permission_callback' => [ $this, 'check_person_access' ],
+					'permission_callback' => [ $this, 'check_person_notes_access' ],
 				],
 				[
 					'methods'             => \WP_REST_Server::CREATABLE,
 					'callback'            => [ $this, 'create_activity' ],
-					'permission_callback' => [ $this, 'check_person_access' ],
+					'permission_callback' => [ $this, 'check_person_notes_access' ],
 				],
 			]
 		);
@@ -265,6 +265,31 @@ class CommentTypes {
 		$access_control = new \Rondo\Core\AccessControl();
 
 		return $access_control->user_can_access_post( $person_id );
+	}
+
+	/**
+	 * Check if user can read and write this person's notes and activities.
+	 *
+	 * Two independent gates, both required:
+	 *
+	 * 1. `can_access_person_notes()` — notes are free prose and routinely carry
+	 *    finance and membership matters, which no field-level redaction can
+	 *    reach. They are a capability surface of their own, not something you
+	 *    inherit merely by being able to view a person.
+	 * 2. The ordinary person-visibility rule still applies on top, so the two
+	 *    checks stay composable if either changes.
+	 *
+	 * The timeline route deliberately uses the plainer check_person_access():
+	 * it also carries todos, which have their own author/assignee visibility,
+	 * and someone without notes access should still reach their own tasks. See
+	 * get_timeline().
+	 */
+	public function check_person_notes_access( $request ) {
+		if ( ! \Rondo\Core\AccessControl::can_access_person_notes() ) {
+			return false;
+		}
+
+		return $this->check_person_access( $request );
 	}
 
 	/**
@@ -493,23 +518,29 @@ class CommentTypes {
 		$person_id       = $request->get_param( 'person_id' );
 		$current_user_id = get_current_user_id();
 
-		$comments = get_comments(
-			[
-				'post_id'  => $person_id,
-				'type__in' => [ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL ],
-				'status'   => 'approve',
-				'orderby'  => 'comment_date',
-				'order'    => 'DESC',
-			]
-		);
-
 		$timeline = [];
 
-		// Filter notes by visibility and format all comments
-		$filtered_comments = $this->filter_notes_by_visibility( $comments );
-		foreach ( $filtered_comments as $comment ) {
-			$type       = self::TYPE_MAP[ $comment->comment_type ] ?? 'note';
-			$timeline[] = $this->format_comment( $comment, $type );
+		// Notes, activities and logged e-mails are prose and follow the notes
+		// capability. Todos below do not: they carry their own author/assignee
+		// visibility, so a user without notes access still gets their own tasks
+		// for this person rather than an empty screen.
+		if ( \Rondo\Core\AccessControl::can_access_person_notes() ) {
+			$comments = get_comments(
+				[
+					'post_id'  => $person_id,
+					'type__in' => [ self::TYPE_NOTE, self::TYPE_ACTIVITY, self::TYPE_EMAIL ],
+					'status'   => 'approve',
+					'orderby'  => 'comment_date',
+					'order'    => 'DESC',
+				]
+			);
+
+			// Filter notes by visibility and format all comments
+			$filtered_comments = $this->filter_notes_by_visibility( $comments );
+			foreach ( $filtered_comments as $comment ) {
+				$type       = self::TYPE_MAP[ $comment->comment_type ] ?? 'note';
+				$timeline[] = $this->format_comment( $comment, $type );
+			}
 		}
 
 		// Also fetch todos from the rondo_todo CPT

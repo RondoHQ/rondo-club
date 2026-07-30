@@ -524,8 +524,13 @@ class Capabilities extends Base {
 
 		return new \WP_REST_Response(
 			[
-				'roles'             => $roles,
-				'capability_labels' => $capability_labels,
+				'roles'                   => $roles,
+				'capability_labels'       => $capability_labels,
+				// Granting one of these makes a role's age-group restriction
+				// meaningless, so the UI clears it. Served from the PHP constant
+				// rather than duplicated in the frontend, where the copy silently
+				// went stale every time the list changed.
+				'management_capabilities' => \Rondo\Core\AccessControl::get_management_capabilities(),
 			]
 		);
 	}

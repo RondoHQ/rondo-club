@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CalendarClock, Save, Trash2, ExternalLink, UserX, Link2, Unlink } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Save, Trash2, ExternalLink, UserX, UserPlus, Link2, Unlink } from 'lucide-react';
 import { prmApi, wpApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
@@ -54,6 +54,10 @@ export default function VrijwilligersDienstForm() {
   const [cancellationOpen, setCancellationOpen] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
   const [canRetryNotifications, setCanRetryNotifications] = useState(false);
+  const [addPersonOpen, setAddPersonOpen] = useState(false);
+  const [personSearch, setPersonSearch] = useState('');
+  const [pendingPersonId, setPendingPersonId] = useState(null);
+  const [overlapPrompt, setOverlapPrompt] = useState(null);
 
   const { data: types = [], isLoading: typesLoading } = useQuery({
     queryKey: ['volunteer', 'dienst-types'],
@@ -137,6 +141,15 @@ export default function VrijwilligersDienstForm() {
     [assignedPeople, existing]
   );
 
+  const trimmedSearch = personSearch.trim();
+  const { data: assignableData, isFetching: assignableLoading } = useQuery({
+    queryKey: ['volunteer', 'assignable-people', id, trimmedSearch],
+    queryFn: async () => (await prmApi.getAssignablePeople(id, trimmedSearch)).data,
+    enabled: addPersonOpen && trimmedSearch.length >= 2,
+    staleTime: 30 * 1000,
+  });
+  const assignablePeople = assignableData?.people || [];
+
   const isCancelled = form.status === 'geannuleerd';
   const cancellation = existing?.cancellation || null;
   const templateLink = existing?.template_link || null;
@@ -201,6 +214,34 @@ export default function VrijwilligersDienstForm() {
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
       await refreshShiftCalendars(queryClient);
+    },
+  });
+
+  const addAssigneeMutation = useMutation({
+    mutationFn: ({ personId, forceOverlap = false }) =>
+      prmApi.addShiftAssignee(id, { person_id: personId, force_overlap: forceOverlap }),
+    onSuccess: async (response) => {
+      const data = response?.data || {};
+      setAddPersonOpen(false);
+      setOverlapPrompt(null);
+      if (data.notification && data.notification.queued === false) {
+        setFeedback({
+          kind: 'warning',
+          message: 'Toegevoegd, maar deze persoon heeft geen e-mailadres — laat het diegene zelf even weten.',
+        });
+      } else {
+        setFeedback({ kind: 'success', message: 'Persoon toegevoegd. Die krijgt een bevestigingsmail.' });
+      }
+      queryClient.invalidateQueries({ queryKey: ['volunteer', 'dienst-shift', id] });
+      await refreshShiftCalendars(queryClient);
+    },
+    onError: (err) => {
+      const data = err?.response?.data;
+      if (data?.code === 'overlap_warning' && data?.data?.can_force) {
+        setOverlapPrompt({ personId: pendingPersonId, message: data.message });
+        return;
+      }
+      setFeedback({ kind: 'error', message: data?.message || err?.message || 'Toevoegen mislukt.' });
     },
   });
 
@@ -511,6 +552,121 @@ export default function VrijwilligersDienstForm() {
               </button>
               <button type="button" className="inline-flex items-center gap-2 rounded bg-red-700 px-3 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50" onClick={() => cancellationMutation.mutate()} disabled={cancellationMutation.isLoading}>
                 {cancellationMutation.isLoading ? 'Annuleren…' : 'Bevestig annulering'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEdit && !isCancelled && (
+        <section className="card p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">Iemand indelen</h2>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                Voor leden zonder account of e-mail, of als iemand het je persoonlijk laat weten.
+                De persoon krijgt een bevestiging en kan zich daarna gewoon zelf afmelden.
+              </p>
+            </div>
+            {!addPersonOpen && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFeedback(null);
+                  setAddPersonOpen(true);
+                }}
+                className="btn-tertiary inline-flex shrink-0 items-center gap-1.5 text-sm"
+              >
+                <UserPlus className="h-4 w-4" /> Toevoegen
+              </button>
+            )}
+          </div>
+
+          {addPersonOpen && (
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200">Zoek een lid</span>
+                <input
+                  type="search"
+                  autoFocus
+                  value={personSearch}
+                  onChange={(event) => setPersonSearch(event.target.value)}
+                  placeholder="Naam, minimaal 2 letters"
+                  className={INPUT_CLS}
+                />
+              </label>
+
+              {trimmedSearch.length >= 2 && (
+                assignableLoading ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Zoeken…</p>
+                ) : assignablePeople.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Geen leden gevonden.</p>
+                ) : (
+                  <ul className="divide-y divide-gray-100 rounded-md border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+                    {assignablePeople.map((person) => (
+                      <li key={person.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                        <div className="min-w-0">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{person.name}</span>
+                          {person.leeftijdsgroep && (
+                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">{person.leeftijdsgroep}</span>
+                          )}
+                          {person.blocked && (
+                            <span className="block text-xs text-amber-700 dark:text-amber-300">{person.block_reason}</span>
+                          )}
+                        </div>
+                        {person.already_assigned ? (
+                          <span className="shrink-0 text-xs text-gray-400">Al ingedeeld</span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={person.blocked || addAssigneeMutation.isPending}
+                            onClick={() => {
+                              setFeedback(null);
+                              setPendingPersonId(person.id);
+                              addAssigneeMutation.mutate({ personId: person.id });
+                            }}
+                            className="btn-tertiary shrink-0 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Indelen
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAddPersonOpen(false);
+                  setPersonSearch('');
+                }}
+                className="text-xs text-gray-500 hover:underline dark:text-gray-400"
+              >
+                Annuleren
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {overlapPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="overlap-title">
+          <div className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl dark:bg-gray-800">
+            <h2 id="overlap-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">Overlappende inschrijftaak</h2>
+            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">{overlapPrompt.message}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" className="btn-tertiary" onClick={() => setOverlapPrompt(null)}>
+                Annuleren
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={addAssigneeMutation.isPending}
+                onClick={() => addAssigneeMutation.mutate({ personId: overlapPrompt.personId, forceOverlap: true })}
+              >
+                Toch indelen
               </button>
             </div>
           </div>

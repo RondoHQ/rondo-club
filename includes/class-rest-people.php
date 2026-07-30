@@ -44,7 +44,7 @@ class People extends Base {
 		// former-member records. The only allowed non-admin write is the
 		// former_member toggle itself — flip it off first, then edit.
 		add_filter( 'rest_pre_insert_person', [ $this, 'block_former_member_edits' ], 10, 2 );
-		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_sponsor_manager_scope' ], 15, 2 );
+		add_filter( 'rest_pre_insert_person', [ $this, 'enforce_person_field_scope' ], 15, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_sponsor_pass_variant' ], 18, 2 );
 		add_filter( 'rest_pre_insert_person', [ $this, 'validate_person_identity' ], 20, 2 );
 
@@ -1030,22 +1030,36 @@ class People extends Base {
 	}
 
 	/**
-	 * Keep sponsor-only managers inside their sponsor-role boundary.
+	 * Keep partial people-editors inside the fields their capability owns.
 	 *
-	 * Core REST create permissions are capability-based and do not yet have a
-	 * post ID. This pre-insert guard therefore requires new records to be explicit
-	 * contact+sponsor records. On a dual-role member, only sponsor-owned fields
-	 * may be changed. Full people managers are unaffected.
+	 * Two capabilities grant person edit without granting full people management,
+	 * and a role can hold both:
+	 *
+	 * - `sponsorbeheer` owns the sponsor fields, and may create contact+sponsor
+	 *   records outright.
+	 * - `vrijwilligers` owns the contact fields on any person.
+	 *
+	 * The allowed set is therefore the **union** of what the caller's capabilities
+	 * grant. Enforcing them as two independent guards would deadlock: each would
+	 * refuse what the other allows, and a user holding both could edit nothing.
+	 *
+	 * Core REST create permissions are capability-based and have no post ID yet,
+	 * so record creation is handled separately and stays sponsor-only.
 	 *
 	 * @param stdClass        $prepared_post Sanitized post data ready for insert.
 	 * @param WP_REST_Request $request       Originating REST request.
 	 * @return stdClass|WP_Error
 	 */
-	public function enforce_sponsor_manager_scope( $prepared_post, $request ) {
-		if ( is_wp_error( $prepared_post )
-			|| ! \Rondo\Core\AccessControl::can_manage_sponsors()
-			|| \Rondo\Core\AccessControl::can_edit_people() ) {
+	public function enforce_person_field_scope( $prepared_post, $request ) {
+		if ( is_wp_error( $prepared_post ) || \Rondo\Core\AccessControl::can_edit_people() ) {
 			return $prepared_post;
+		}
+
+		$may_manage_sponsors = \Rondo\Core\AccessControl::can_manage_sponsors();
+		$may_edit_contact    = \Rondo\Core\AccessControl::can_edit_person_contact();
+
+		if ( ! $may_manage_sponsors && ! $may_edit_contact ) {
+			return $prepared_post; // No partial editing capability — core caps already decided.
 		}
 
 		$acf     = $request->get_param( 'acf' );
@@ -1053,50 +1067,154 @@ class People extends Base {
 		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 
 		if ( $post_id === 0 ) {
-			$requested_type       = sanitize_key( (string) ( $acf['person_type'] ?? '' ) );
-			$requested_is_sponsor = SponsorStatus::value_is_true( $acf['is_sponsor'] ?? false );
-			if ( $requested_type === 'contact' && $requested_is_sponsor ) {
-				return $prepared_post;
-			}
-		} elseif ( SponsorStatus::is_sponsor( $post_id ) ) {
-			$current_type = sanitize_key( (string) get_post_meta( $post_id, 'person_type', true ) );
-			if ( array_key_exists( 'is_sponsor', $acf ) && ! SponsorStatus::value_is_true( $acf['is_sponsor'] ) ) {
-				return $this->sponsor_manager_scope_error();
-			}
-			if ( array_key_exists( 'person_type', $acf )
-				&& sanitize_key( (string) $acf['person_type'] ) !== $current_type ) {
-				return $this->sponsor_manager_scope_error();
-			}
-
-			if ( SponsorStatus::is_dual_role( $post_id ) ) {
-				$allowed_fields = [ 'company_name', 'is_sponsor', 'sponsor_pass_variant' ];
-				$blocked_fields = array_diff( array_keys( $acf ), $allowed_fields );
-				if ( ! empty( $blocked_fields ) ) {
-					return $this->sponsor_manager_scope_error( $blocked_fields );
+			// Creation: only sponsor managers may mint a record, and only an
+			// explicit contact+sponsor one. Contact editors never create people.
+			if ( $may_manage_sponsors ) {
+				$requested_type       = sanitize_key( (string) ( $acf['person_type'] ?? '' ) );
+				$requested_is_sponsor = SponsorStatus::value_is_true( $acf['is_sponsor'] ?? false );
+				if ( $requested_type === 'contact' && $requested_is_sponsor ) {
+					return $prepared_post;
 				}
 			}
 
+			return $this->person_field_scope_error();
+		}
+
+		// A record's own identity fields stay with its owner: a sponsor manager
+		// may not un-sponsor a record or change its type.
+		$is_sponsor_record = SponsorStatus::is_sponsor( $post_id );
+		if ( $may_manage_sponsors && $is_sponsor_record ) {
+			$current_type = sanitize_key( (string) get_post_meta( $post_id, 'person_type', true ) );
+			if ( array_key_exists( 'is_sponsor', $acf ) && ! SponsorStatus::value_is_true( $acf['is_sponsor'] ) ) {
+				return $this->person_field_scope_error();
+			}
+			if ( array_key_exists( 'person_type', $acf )
+				&& sanitize_key( (string) $acf['person_type'] ) !== $current_type ) {
+				return $this->person_field_scope_error();
+			}
+		}
+
+		$allowed_fields = $this->allowed_person_fields( $post_id, $may_manage_sponsors, $may_edit_contact );
+
+		if ( $allowed_fields === null ) {
+			return $this->person_field_scope_error();
+		}
+
+		if ( $allowed_fields === self::ALL_FIELDS_ALLOWED ) {
 			return $prepared_post;
 		}
 
-		return $this->sponsor_manager_scope_error();
+		// Judge the request on what it *changes*, not on what it sends: person
+		// writes in this app round-trip the whole ACF object, so an untouched
+		// field arriving unchanged must not be read as an attempted edit.
+		$blocked_fields = array_values(
+			array_diff( $this->changed_acf_keys( $post_id, $acf ), $allowed_fields )
+		);
+
+		if ( ! empty( $blocked_fields ) ) {
+			return $this->person_field_scope_error( $blocked_fields );
+		}
+
+		// With `edit_post` granted, core post fields are otherwise wide open —
+		// `status: draft` alone would hide a member from every list in the app.
+		$blocked_core = $this->changed_core_post_fields( $prepared_post, $post_id );
+		if ( ! empty( $blocked_core ) ) {
+			return $this->person_field_scope_error( $blocked_core );
+		}
+
+		return $prepared_post;
+	}
+
+	/** Sentinel: every field may be written (a sponsor-only record, for its manager). */
+	private const ALL_FIELDS_ALLOWED = [ '*' ];
+
+	/**
+	 * The union of person fields the caller's capabilities may write.
+	 *
+	 * @param int  $post_id             Person being edited.
+	 * @param bool $may_manage_sponsors Caller holds `sponsorbeheer`.
+	 * @param bool $may_edit_contact    Caller holds `vrijwilligers`.
+	 * @return string[]|null Allowed field names, ALL_FIELDS_ALLOWED, or null when
+	 *                       the record is out of scope entirely.
+	 */
+	private function allowed_person_fields( int $post_id, bool $may_manage_sponsors, bool $may_edit_contact ) {
+		$allowed = [];
+
+		if ( $may_manage_sponsors && SponsorStatus::is_sponsor( $post_id ) ) {
+			// A sponsor-only record is wholly the sponsor manager's — they created
+			// it. A dual-role member is not: there the sponsor fields are the grant.
+			if ( ! SponsorStatus::is_dual_role( $post_id ) ) {
+				return self::ALL_FIELDS_ALLOWED;
+			}
+
+			$allowed = array_merge( $allowed, [ 'company_name', 'is_sponsor', 'sponsor_pass_variant' ] );
+		}
+
+		if ( $may_edit_contact ) {
+			$allowed = array_merge( $allowed, \Rondo\Core\AccessControl::CONTACT_WRITE_FIELDS );
+		}
+
+		return empty( $allowed ) ? null : array_values( array_unique( $allowed ) );
 	}
 
 	/**
-	 * Build the sponsor-manager scope error.
+	 * ACF keys whose submitted value differs from what is stored.
 	 *
-	 * @param array $blocked_fields Fields outside the sponsor-owned allowlist.
+	 * @param int   $post_id Person post ID.
+	 * @param array $acf     Submitted ACF payload.
+	 * @return string[]
+	 */
+	private function changed_acf_keys( int $post_id, array $acf ): array {
+		$current = get_fields( $post_id ) ?: [];
+		$changed = [];
+
+		foreach ( $acf as $key => $new_value ) {
+			if ( maybe_serialize( $new_value ) !== maybe_serialize( $current[ $key ] ?? null ) ) {
+				$changed[] = $key;
+			}
+		}
+
+		return $changed;
+	}
+
+	/**
+	 * Core post fields the request would change. Partial editors may change none.
+	 *
+	 * @param stdClass $prepared_post Prepared post object.
+	 * @param int      $post_id       Existing person post ID.
+	 * @return string[]
+	 */
+	private function changed_core_post_fields( $prepared_post, int $post_id ): array {
+		$existing = get_post( $post_id );
+		if ( ! $existing ) {
+			return [];
+		}
+
+		$blocked = [];
+		foreach ( [ 'post_status', 'post_title', 'post_author', 'post_name', 'post_type' ] as $field ) {
+			if ( isset( $prepared_post->$field ) && (string) $prepared_post->$field !== (string) $existing->$field ) {
+				$blocked[] = $field;
+			}
+		}
+
+		return $blocked;
+	}
+
+	/**
+	 * Build the person field-scope error.
+	 *
+	 * @param array $blocked_fields Fields outside the caller's allowlist.
 	 * @return WP_Error
 	 */
-	private function sponsor_manager_scope_error( array $blocked_fields = [] ) {
+	private function person_field_scope_error( array $blocked_fields = [] ) {
 		$data = [ 'status' => 403 ];
 		if ( ! empty( $blocked_fields ) ) {
 			$data['blocked_fields'] = array_values( $blocked_fields );
 		}
 
 		return new \WP_Error(
-			'rondo_sponsor_manager_scope',
-			__( 'Sponsorbeheerders mogen uitsluitend sponsorvelden beheren.', 'rondo' ),
+			'rondo_person_field_scope',
+			__( 'Je mag alleen de velden bewerken die bij jouw rol horen.', 'rondo' ),
 			$data
 		);
 	}
@@ -1461,6 +1579,17 @@ class People extends Base {
 		// sees every cancellation in the season window, not just the not-yet-expired ones.
 		if ( $lid_tot_season === '1' ) {
 			$include_former = '1';
+		}
+
+		// Filtering or sorting on a field the caller may not read would hand them
+		// its value through result membership and result order. Drop both silently:
+		// erroring would confirm the field exists just as loudly.
+		if ( \Rondo\Core\AccessControl::acf_field_is_hidden( 'financiele_blokkade' ) ) {
+			$financiele_blokkade = null;
+		}
+		if ( strpos( (string) $orderby, 'custom_' ) === 0
+			&& \Rondo\Core\AccessControl::acf_field_is_hidden( substr( $orderby, 7 ) ) ) {
+			$orderby = 'first_name';
 		}
 
 		// Double-check access control (permission_callback should have caught this,
@@ -2038,7 +2167,8 @@ class People extends Base {
 		$total = (int) $wpdb->get_var( $prepared_count_sql );
 
 		// Format results
-		$people = [];
+		$is_scoped_member = \Rondo\Core\AccessControl::is_scoped_member();
+		$people           = [];
 		foreach ( $results as $row ) {
 			$person = [
 				'id'            => (int) $row->ID,
@@ -2053,26 +2183,36 @@ class People extends Base {
 				'thumbnail'     => $this->sanitize_url( get_the_post_thumbnail_url( $row->ID, 'thumbnail' ) ),
 			];
 
-			// Add ACF fields for custom field columns
+			// Add ACF fields for custom field columns.
+			// This endpoint builds its response by hand and never passes through
+			// `rest_prepare_person`, so it has to apply the same redaction the
+			// core routes get from AccessControl::filter_rest_single_access().
 			if ( function_exists( 'get_fields' ) ) {
 				$acf_fields = get_fields( $row->ID );
 				if ( $acf_fields ) {
-					$person['acf'] = $acf_fields;
+					if ( $is_scoped_member ) {
+						$acf_fields = \Rondo\Core\AccessControl::filter_member_visible_acf( $acf_fields );
+					}
+					$person['acf'] = \Rondo\Core\AccessControl::filter_sensitive_acf( $acf_fields );
 				}
 			}
 
-			// Add VOG-related post meta fields to acf array for frontend consistency
-			$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
-			$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
-			$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
-			if ( $vog_email_sent ) {
-				$person['acf']['vog_email_sent_date'] = $vog_email_sent;
-			}
-			if ( $vog_justis ) {
-				$person['acf']['vog_justis_submitted_date'] = $vog_justis;
-			}
-			if ( $vog_reminder ) {
-				$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
+			// Add VOG-related post meta fields to acf array for frontend consistency.
+			// These are VOG-workflow timestamps, not member-facing data, so they stay
+			// out of a scoped member's allowlisted payload.
+			if ( ! $is_scoped_member ) {
+				$vog_email_sent = get_post_meta( $row->ID, 'vog_email_sent_date', true );
+				$vog_justis     = get_post_meta( $row->ID, 'vog_justis_submitted_date', true );
+				$vog_reminder   = get_post_meta( $row->ID, 'vog_reminder_sent_date', true );
+				if ( $vog_email_sent ) {
+					$person['acf']['vog_email_sent_date'] = $vog_email_sent;
+				}
+				if ( $vog_justis ) {
+					$person['acf']['vog_justis_submitted_date'] = $vog_justis;
+				}
+				if ( $vog_reminder ) {
+					$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
+				}
 			}
 
 			$people[] = $person;

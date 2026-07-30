@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.80.0] - 2026-07-30
+
+### Added
+
+- **Het hele seizoen wordt nu vooruit ingepland en is in één keer zichtbaar.** Tot nu toe rolde de planning steeds maar drie maanden vooruit: inschrijftaken van na die periode bestonden simpelweg nog niet, waardoor coördinatoren het voorjaar niet konden voorbereiden en leden niet konden zien wat eraan kwam. De nachtelijke uitrol loopt nu tot en met 30 juni, en de kalender toont standaard het volledige clubjaar van augustus tot en met juni.
+- **Inschrijven gaat per seizoenshelft open.** Inschrijftaken van juli tot en met december staan meteen open; die van januari tot en met juni gaan open op een datum die het bestuur zelf instelt — standaard 1 november. Leden zien de inschrijftaken van de tweede helft wél al staan, met de datum erbij ("Vanaf 1 november"), zodat duidelijk is dat ze eraan komen en wanneer ze te claimen zijn. Dagen die nog niet open zijn, kleuren grijs in plaats van rood: er valt immers nog niets te doen. De datum stel je in bij Instellingen → Club onder "Tweede seizoenshelft opent op".
+- Coördinatoren kunnen wél het hele seizoen vooruit iemand indelen — het inschrijfvenster geldt alleen voor leden die zichzelf aanmelden, niet voor het plannen zelf.
+
+## [33.79.0] - 2026-07-30
+
+### Added
+
+- **Vrijwilligerscoördinatoren kunnen zelf iemand indelen op een inschrijftaak.** Tot nu toe kon alleen het lid zich zelf aanmelden via `/vrijwillig`, waardoor leden zonder account, zonder e-mailadres of met alleen een telefoon buiten het systeem vielen. Op de pagina van een inschrijftaak zit nu "Iemand indelen": zoek op naam, kies de persoon, klaar. De ingedeelde persoon krijgt dezelfde bevestigingsmail met agenda-uitnodiging als bij een eigen aanmelding en kan zich daarna ook gewoon zelf afmelden. Bij de zoekresultaten is direct te zien wie er niet ingedeeld kan worden en waarom — bijvoorbeeld een ontbrekende VOG of IVA. Die eisen gelden namelijk onverkort: een coördinator legt een afspraak vast en zet het beleid niet buiten werking. Overlapt de inschrijftaak met een andere aanmelding van dezelfde persoon, dan volgt eerst een waarschuwing. Bij elke indeling wordt vastgelegd wie het gedaan heeft en wanneer.
+
+### Changed
+
+- Aanmeldingen van een inschrijftaak kunnen niet langer rechtstreeks als veld worden opgeslagen; dat liep om alle controles heen (capaciteit, certificaten, de bevestigingsmail, en de mogelijkheid voor het lid om zich af te melden) en koppelde een uitgerolde inschrijftaak los van zijn sjabloon.
+
+## [33.78.5] - 2026-07-30
+
+### Added
+
+- **Vrijwilligerscoördinatoren kunnen contactgegevens en foto's van leden corrigeren.** Coördinatoren lopen doorlopend tegen verkeerde telefoonnummers en e-mailadressen aan en moesten daarvoor tot nu toe de ledenadministratie inschakelen. Ze mogen nu e-mailadressen, telefoonnummers, adressen en de profielfoto aanpassen — precies de velden die ook terugsynchroniseren naar Sportlink. Alle overige velden blijven onbewerkbaar, en nieuwe leden aanmaken of leden verwijderen kan een coördinator nog steeds niet. Oud-leden blijven volledig alleen-lezen.
+
+### Changed
+
+- De veldbegrenzing voor sponsorbeheerders en vrijwilligerscoördinatoren wordt nu door één controle afgehandeld in plaats van twee losse. Een rol die beide bevoegdheden heeft, kan daardoor zowel de sponsorvelden als de contactgegevens bewerken; met twee aparte controles blokkeerden die elkaar volledig. Ook worden kernvelden van een profiel (zoals de status en de titel) nu expliciet beschermd tegen wijziging door rollen die alleen bepaalde velden mogen bewerken.
+
+## [33.78.4] - 2026-07-30
+
+### Changed
+
+- **Vrijwilligerscoördinatoren zien voortaan alle leden.** Diensten worden bemenst vanuit de hele vereniging, terwijl een coördinator met een leeftijdsgroep-beperking juist het grootste deel van de mensen die zij moeten inroosteren niet kon zien. De `vrijwilligers`-bevoegdheid werkt nu net als de andere beheerbevoegdheden: geen leeftijdsgroep-filter meer. Dit geldt alleen voor het inzien van leden — bewerken blijft ongewijzigd, en de financiële, ondersteunings- en sponsorvelden blijven afgeschermd (zie 33.78.3). Een neveneffect: de kaderlijst toont voor deze rollen nu de hele vereniging in plaats van alleen de eigen leeftijdsgroepen.
+- De lijst met beheerbevoegdheden in Instellingen → Beheer → Capabilities komt nu van de server in plaats van uit een handmatig bijgehouden kopie in de frontend. Die kopie liep achter, waardoor het scherm de leeftijdsgroep-instelling van een rol niet altijd opruimde wanneer die rol een beheerbevoegdheid kreeg.
+
+## [33.78.3] - 2026-07-30
+
+### Changed
+
+- **Financiële en interne velden op een persoon zijn niet langer voor iedereen zichtbaar.** Wie een lid mag zien, zag tot nu toe automatisch álle velden van dat lid — ook de financiële blokkade, de contributiesaldi, het FreeScout-nummer en de Sponsit-koppelingen. Vanaf nu horen die velden bij een eigen bevoegdheid: financiële gegevens zijn zichtbaar voor de penningmeester (en wie financiën mag inzien), FreeScout en onboardingmomenten voor de ledenadministratie en beheerders, en de Sponsit-velden voor sponsorbeheerders. Dit geldt overal waar persoonsgegevens worden opgehaald, inclusief de ledenlijst. Filteren of sorteren op een veld dat je niet mag zien werkt niet langer — anders was de waarde alsnog af te leiden uit de zoekresultaten. Het KNVB-veld "wacht op overschrijving" blijft voor iedereen zichtbaar: dat is ledenadministratie, geen financiën.
+- **Notities en activiteiten bij een persoon zijn voorbehouden aan de ledenadministratie en financiën.** Notities bevatten vrije tekst en dus regelmatig financiële of vertrouwelijke informatie, die niet per veld af te schermen is. Ze zijn daarom nu een eigen bevoegdheid in plaats van iets dat je er automatisch bij krijgt zodra je een lid mag inzien. Voor onder anderen FairPlay-, VOG- en vrijwilligersrollen vervallen notities en activiteiten hiermee. De tijdlijn blijft voor iedereen bereikbaar en toont je eigen taken bij die persoon; alleen de notities, activiteiten en gelogde e-mails verdwijnen eruit. Bestaande notities blijven gewoon bewaard.
+
 ## [33.78.2] - 2026-07-30
 
 ### Changed
