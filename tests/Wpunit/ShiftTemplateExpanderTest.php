@@ -120,6 +120,10 @@ class ShiftTemplateExpanderTest extends RondoTestCase {
 
 	/** Expanding the same range twice must not duplicate anything. */
 	public function test_expansion_is_idempotent_over_a_season(): void {
+		// The other tests in this class create their own template; this one needs
+		// one too, or the "first run creates something" precondition is vacuous.
+		$this->create_template( current_datetime()->modify( '+7 days' )->format( 'Y-m-d' ) );
+
 		$from = current_datetime()->format( 'Y-m-d' );
 		$to   = current_datetime()->modify( '+120 days' )->format( 'Y-m-d' );
 
