@@ -3,6 +3,7 @@
 namespace Tests\Wpunit;
 
 use Rondo\Core\AccessControl;
+use Rondo\REST\People;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 
@@ -22,7 +23,15 @@ class PersonContactScopeTest extends RondoTestCase {
 	protected function set_up(): void {
 		parent::set_up();
 
-		do_action( 'rest_api_init' );
+		$this->bootRestControllers( [ People::class ] );
+
+		// ACF Pro emits a REST schema for the person select fields whose `type`
+		// keyword WordPress 7.0 rejects as non-built-in, so any write carrying
+		// one of those fields trips _doing_it_wrong(). Upstream ACF issue,
+		// silent in production because that only speaks up under WP_DEBUG, and
+		// unrelated to what these tests assert. Ignored rather than expected:
+		// it fires only for payloads that happen to include such a field.
+		$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
 
 		$this->person_id = $this->createPerson(
 			[ 'post_title' => 'Jan Jansen' ],
@@ -146,6 +155,7 @@ class PersonContactScopeTest extends RondoTestCase {
 		// A dual-role record: a member who is also a sponsor.
 		update_field( 'is_sponsor', true, $this->person_id );
 		update_field( 'person_type', 'member', $this->person_id );
+		update_field( 'sponsor_pass_variant', 'awc_sponsor', $this->person_id );
 
 		$this->as_role( $role_slug );
 
@@ -162,6 +172,7 @@ class PersonContactScopeTest extends RondoTestCase {
 	public function test_sponsor_manager_scope_is_unchanged(): void {
 		update_field( 'is_sponsor', true, $this->person_id );
 		update_field( 'person_type', 'member', $this->person_id );
+		update_field( 'sponsor_pass_variant', 'awc_sponsor', $this->person_id );
 
 		$this->as_role( 'rondo_sponsorbeheerder' );
 

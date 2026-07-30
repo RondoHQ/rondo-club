@@ -157,11 +157,18 @@ class ShiftCalendarTest extends RondoTestCase {
 		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
 		wp_set_current_user( $manager_id );
 		$request = $this->calendar_request( 'manage' );
-		$request->set_param( 'to', current_datetime()->modify( '+191 days' )->format( 'Y-m-d' ) );
+		// The ceiling has to clear a full club year (1 Aug - 30 Jun) plus the
+		// July edge, so it sits at 370 days rather than the original 190.
+		$request->set_param( 'to', current_datetime()->modify( '+371 days' )->format( 'Y-m-d' ) );
 		$this->assertSame( 'calendar_range_too_large', $this->controller->get_shift_calendar( $request )->get_error_code() );
 	}
 
-	public function test_default_calendar_range_is_six_months_for_managers_and_members(): void {
+	/**
+	 * The default range is the club year, not a rolling six months: coordinators
+	 * plan the whole season and members are shown what is coming, even when part
+	 * of it is not open for signup yet.
+	 */
+	public function test_default_calendar_range_covers_the_club_year(): void {
 		$today = current_datetime()->setTime( 0, 0, 0 );
 
 		$manager_id = $this->createRondoUser( [ 'role' => 'rondo_vrijwilligers' ] );
@@ -170,11 +177,10 @@ class ShiftCalendarTest extends RondoTestCase {
 		$manager_request->set_param( 'view', 'manage' );
 		$manager_data = $this->controller->get_shift_calendar( $manager_request )->get_data();
 
+		$season_end = substr( \Rondo\Fees\SeasonKey::current( $today->format( 'Y-m-d' ) ), 5, 4 ) . '-06-30';
+
 		$this->assertSame( $today->format( 'Y-m-d' ), $manager_data['from'] );
-		$this->assertSame(
-			$today->modify( 'first day of this month' )->modify( '+6 months -1 day' )->format( 'Y-m-d' ),
-			$manager_data['to']
-		);
+		$this->assertSame( $season_end, $manager_data['to'] );
 
 		$user_id   = $this->createRondoUser();
 		$person_id = $this->createPerson( [ 'post_title' => 'Kalenderlid' ] );
@@ -184,10 +190,7 @@ class ShiftCalendarTest extends RondoTestCase {
 		$member_request->set_param( 'view', 'signup' );
 		$member_data = $this->controller->get_shift_calendar( $member_request )->get_data();
 
-		$this->assertSame(
-			$today->modify( 'first day of this month' )->modify( '+6 months -1 day' )->format( 'Y-m-d' ),
-			$member_data['to']
-		);
+		$this->assertSame( $season_end, $member_data['to'] );
 	}
 
 	public function test_direct_signup_rejects_former_members_and_missing_pool_membership(): void {

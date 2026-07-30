@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\REST\MemberShifts;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
 
@@ -21,7 +22,14 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 	protected function set_up(): void {
 		parent::set_up();
 
-		do_action( 'rest_api_init' );
+		$this->bootRestControllers( [ MemberShifts::class ] );
+
+		// ACF Pro emits a REST schema for the shift select fields whose `type`
+		// keyword WordPress 7.0 rejects as non-built-in. Upstream ACF issue,
+		// silent in production because _doing_it_wrong() only speaks up under
+		// WP_DEBUG. Ignored rather than expected: it fires only for requests
+		// that touch one of those fields.
+		$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
 
 		$this->dienst_type_id = self::factory()->post->create(
 			[
@@ -237,8 +245,10 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 	}
 
 	/**
-	 * ACF relationship fields arrive as strings over REST. Comparing raw values
-	 * would refuse an unchanged round-trip, breaking every ordinary shift edit.
+	 * ACF relationship fields arrive as strings over REST, and the shift editor
+	 * round-trips the whole ACF object — several fields of which ACF marks
+	 * required. Comparing raw values would refuse that unchanged round-trip and
+	 * break every ordinary shift edit.
 	 */
 	public function test_unchanged_assigned_persons_may_ride_along_as_strings(): void {
 		$this->as_coordinator();
@@ -248,6 +258,13 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 		$request->set_param(
 			'acf',
 			[
+				// What the editor actually sends back, required fields included.
+				'dienst_type_id'   => $this->dienst_type_id,
+				'start_datetime'   => (string) get_post_meta( $this->shift_id, 'start_datetime', true ),
+				'end_datetime'     => (string) get_post_meta( $this->shift_id, 'end_datetime', true ),
+				'status'           => 'open',
+				'capacity'         => 2,
+				// Unchanged, but string-typed as an ACF relationship field is over REST.
 				'assigned_persons' => [ (string) $this->person_id ],
 				'notes'            => 'Bijgewerkte notitie',
 			]
