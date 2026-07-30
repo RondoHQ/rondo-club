@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\Collaboration\CommentTypes;
 use Rondo\Core\AccessControl;
 use Tests\Support\RondoTestCase;
 use WP_REST_Request;
@@ -24,7 +25,7 @@ class PersonNotesAccessTest extends RondoTestCase {
 	protected function set_up(): void {
 		parent::set_up();
 
-		do_action( 'rest_api_init' );
+		$this->bootRestControllers( [ CommentTypes::class ] );
 		$this->person_id = $this->createPerson( [ 'post_title' => 'Jan Jansen' ] );
 	}
 
