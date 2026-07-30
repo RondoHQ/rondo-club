@@ -31,20 +31,26 @@ composer test    # Codeception wpunit suite
 
 ### Running the PHP test suite
 
-`composer test` needs a local WordPress whose `wp-content/themes/` contains a `rondo-club`
-directory. `tests/.env` points `WP_ROOT_FOLDER` at a Local site; symlink the theme in once:
+**The suite is green: 389 tests, 0 failures. Keep it that way — a red suite is a regression, not
+the status quo.** It also runs in CI on every push and pull request.
+
+`composer test` needs a WordPress install with the theme symlinked in, ACF Pro, and MySQL (not
+SQLite — it cannot evaluate the `DATETIME` meta comparisons this codebase uses). Full setup, and
+the conventions for writing tests, are in **[docs/testing.md](docs/testing.md)**.
 
 ```bash
-source tests/.env
-ln -sfn "$PWD" "$WP_ROOT_FOLDER/wp-content/themes/rondo-club"
+docker start rondo-test-db && composer test
+vendor/bin/codecept run Wpunit AgeGroupAccessTest   # one file
 ```
 
-Run a single file with `vendor/bin/codecept run Wpunit AgeGroupAccessTest`.
+Two things that will otherwise waste an afternoon:
 
-**Most of the suite is stale.** 118 of 153 tests error or fail against current code — they were
-written for the removed user-approval system and still reference `UserRoles::APPROVAL_META_KEY`.
-`AgeGroupAccessTest` is green and guards person-visibility access control; keep it that way. Do not
-treat a red suite as "expected" for the files you touch.
+- **REST routes must be booted in the test.** The theme only instantiates its controllers on real
+  REST requests, so routes do not exist and every dispatch answers 404 — indistinguishable from a
+  permission check working. Use `$this->bootRestControllers( [ Controller::class ] )`.
+- **ACF Pro trips a `_doing_it_wrong()` notice** on person and shift select fields under WP 7.0.
+  Silence it per class with `$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' )`, never
+  with `setExpectedIncorrectUsage()`.
 
 ## Fetching feedback items
 
