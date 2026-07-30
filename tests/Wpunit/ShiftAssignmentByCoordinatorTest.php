@@ -235,8 +235,21 @@ class ShiftAssignmentByCoordinatorTest extends RondoTestCase {
 	public function test_writing_assigned_persons_directly_is_refused(): void {
 		$this->as_coordinator();
 
+		// ACF marks several shift fields required, so a payload carrying only
+		// assigned_persons is rejected by schema validation before the guard is
+		// reached. Send what the editor sends, so the 403 proves the guard fired.
 		$request = new WP_REST_Request( 'POST', '/wp/v2/dienst-shifts/' . $this->shift_id );
-		$request->set_param( 'acf', [ 'assigned_persons' => [ $this->person_id ] ] );
+		$request->set_param(
+			'acf',
+			[
+				'dienst_type_id'   => $this->dienst_type_id,
+				'start_datetime'   => (string) get_post_meta( $this->shift_id, 'start_datetime', true ),
+				'end_datetime'     => (string) get_post_meta( $this->shift_id, 'end_datetime', true ),
+				'status'           => 'open',
+				'capacity'         => 2,
+				'assigned_persons' => [ $this->person_id ],
+			]
+		);
 		$response = rest_get_server()->dispatch( $request );
 
 		$this->assertSame( 403, $response->get_status() );

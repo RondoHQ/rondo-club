@@ -109,12 +109,10 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_add_member_to_workspace(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$member_id = $this->createUniqueUser( 'member' );
-		update_user_meta( $member_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		// Add member
 		$result = RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
@@ -128,12 +126,10 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_remove_member_from_workspace(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
 		$member_id = $this->createUniqueUser( 'member' );
-		update_user_meta( $member_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		// Add then remove
 		RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
@@ -150,7 +146,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_role_assignment_admin(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -166,7 +161,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_role_assignment_member(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -182,7 +176,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_role_assignment_viewer(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -198,7 +191,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_update_role(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -220,7 +212,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_is_admin_returns_true_for_admin_role(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -239,7 +230,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_can_edit_for_different_roles(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -258,7 +248,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_get_user_permission_returns_owner_for_author(): void {
 		$author_id = $this->createUniqueUser( 'author' );
-		update_user_meta( $author_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$person_id = $this->createPerson( [ 'post_author' => $author_id ] );
 
@@ -271,7 +260,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_get_user_permission_returns_workspace_role(): void {
 		$owner_id = $this->createUniqueUser( 'ws_owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -284,9 +272,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 		$member_id = $this->createUniqueUser( 'perm_member' );
 		$viewer_id = $this->createUniqueUser( 'perm_viewer' );
 
-		update_user_meta( $admin_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
-		update_user_meta( $member_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
-		update_user_meta( $viewer_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		RONDO_Workspace_Members::add( $workspace_id, $admin_id, 'admin' );
 		RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
@@ -299,15 +284,12 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_get_user_permission_returns_share_permission(): void {
 		$owner_id = $this->createUniqueUser( 'share_owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
 
 		$edit_user_id = $this->createUniqueUser( 'share_edit' );
 		$view_user_id = $this->createUniqueUser( 'share_view' );
 
-		update_user_meta( $edit_user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
-		update_user_meta( $view_user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		// Share with different permissions
 		RONDO_Visibility::add_share( $person_id, $edit_user_id, 'edit', $owner_id );
@@ -319,12 +301,10 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_get_user_permission_returns_false_for_no_access(): void {
 		$owner_id = $this->createUniqueUser( 'owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
 
 		$other_user_id = $this->createUniqueUser( 'other' );
-		update_user_meta( $other_user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$this->assertFalse(
 			$this->access_control->get_user_permission( $person_id, $other_user_id ),
@@ -334,7 +314,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_owner_cannot_be_removed_from_workspace(): void {
 		$owner_id = $this->createUniqueUser( 'protected_owner' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
 
@@ -347,7 +326,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_owner_auto_added_as_admin(): void {
 		$owner_id = $this->createUniqueUser( 'auto_admin' );
-		update_user_meta( $owner_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		// Create workspace - this triggers save_post_workspace hook
 		// which should auto-add owner as admin
@@ -382,7 +360,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 		);
 
 		// Approve user
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$this->assertTrue(
 			RONDO_User_Roles::is_user_approved( $user_id ),
@@ -421,7 +398,6 @@ class WorkspacePermissionsTest extends RondoTestCase {
 
 	public function test_approved_user_can_access_own_posts(): void {
 		$user_id = $this->createUniqueUser( 'approved' );
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 
@@ -455,13 +431,11 @@ class WorkspacePermissionsTest extends RondoTestCase {
 			'Administrator should have manage_options capability'
 		);
 
-		// Remove the approval meta to ensure admin is approved without it
-		delete_user_meta( $admin_id, RONDO_User_Roles::APPROVAL_META_KEY );
-
-		// Admin should be approved even without the approval meta
+		// The approval system is gone; is_user_approved() is now simply "is a
+		// real user", kept for back-compat with callers that still ask.
 		$this->assertTrue(
 			RONDO_User_Roles::is_user_approved( $admin_id ),
-			'Administrator should always be approved (via manage_options check)'
+			'Administrator should be treated as a valid user'
 		);
 	}
 
@@ -502,29 +476,24 @@ class WorkspacePermissionsTest extends RondoTestCase {
 		$this->assertEquals( 'rest_forbidden', $result->get_error_code() );
 	}
 
-	public function test_approval_transition_removes_access(): void {
+	/**
+	 * Access no longer hinges on an approval flag — the flag is gone. What still
+	 * decides whether a plain member reaches a person record is whether it is in
+	 * their own household, which is what this now asserts.
+	 */
+	public function test_member_without_a_linked_person_reaches_no_person_records(): void {
 		$user_id = $this->createUniqueUser( 'transition' );
 
-		// First approve
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
-		$this->assertTrue( RONDO_User_Roles::is_user_approved( $user_id ) );
-
 		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
-		$this->assertTrue( $this->access_control->user_can_access_post( $person_id, $user_id ) );
 
-		// Now deny
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '0' );
-
-		$this->assertFalse( RONDO_User_Roles::is_user_approved( $user_id ), 'User should be unapproved' );
 		$this->assertFalse(
 			$this->access_control->user_can_access_post( $person_id, $user_id ),
-			'Denied user should lose access'
+			'A member with no linked person has no household, so no person records'
 		);
 	}
 
 	public function test_rest_query_works_for_approved_user(): void {
 		$user_id = $this->createUniqueUser( 'rest_approved' );
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 
 		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 

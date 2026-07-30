@@ -67,7 +67,6 @@ class RelationshipsSharesTest extends RondoTestCase {
 	 */
 	protected function createApprovedUser( array $args = [] ): int {
 		$user_id = $this->createRondoUser( $args );
-		update_user_meta( $user_id, RONDO_User_Roles::APPROVAL_META_KEY, '1' );
 		return $user_id;
 	}
 

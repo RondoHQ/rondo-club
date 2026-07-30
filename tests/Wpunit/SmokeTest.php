@@ -22,8 +22,10 @@ class SmokeTest extends RondoTestCase {
 	}
 
 	public function test_rondo_theme_is_active(): void {
+		// The theme directory was renamed from `stadion` to `rondo-club`; the
+		// suite loads it under that name (see codeception.yml `theme:`).
 		$theme = wp_get_theme();
-		$this->assertEquals( 'stadion', $theme->get_stylesheet() );
+		$this->assertEquals( 'rondo-club', $theme->get_stylesheet() );
 	}
 
 	public function test_person_post_type_is_registered(): void {
