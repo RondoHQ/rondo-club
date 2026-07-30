@@ -802,10 +802,11 @@ class Api extends Base {
 		// Query 1: First name matches (highest priority)
 		$first_name_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'first_name',
 						'value'   => $query,
@@ -837,10 +838,11 @@ class Api extends Base {
 		// Query 2: Infix matches (score: 50)
 		$infix_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'infix',
 						'value'   => $query,
@@ -862,10 +864,11 @@ class Api extends Base {
 		// Query 3: Last name matches (lower priority)
 		$last_name_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
+				'meta_query'       => [
 					[
 						'key'     => 'last_name',
 						'value'   => $query,
@@ -887,10 +890,11 @@ class Api extends Base {
 		// Query 4: General WordPress search (catches title, content)
 		$general_matches = get_posts(
 			[
-				'post_type'      => 'person',
-				's'              => $query,
-				'posts_per_page' => 20,
-				'post_status'    => 'publish',
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				's'                => $query,
+				'posts_per_page'   => 20,
+				'post_status'      => 'publish',
 			]
 		);
 
@@ -910,10 +914,11 @@ class Api extends Base {
 
 			$custom_field_matches = get_posts(
 				[
-					'post_type'      => 'person',
-					'posts_per_page' => 20,
-					'post_status'    => 'publish',
-					'meta_query'     => $custom_meta_query,
+					'post_type'        => 'person',
+					'suppress_filters' => false,
+					'posts_per_page'   => 20,
+					'post_status'      => 'publish',
+					'meta_query'       => $custom_meta_query,
 				]
 			);
 
@@ -930,10 +935,11 @@ class Api extends Base {
 			// Query 6: KNVB ID matches (score: 70)
 			$knvb_matches = get_posts(
 				[
-					'post_type'      => 'person',
-					'posts_per_page' => 20,
-					'post_status'    => 'publish',
-					'meta_query'     => [
+					'post_type'        => 'person',
+					'suppress_filters' => false,
+					'posts_per_page'   => 20,
+					'post_status'      => 'publish',
+					'meta_query'       => [
 						'relation' => 'OR',
 						[
 							'key'     => 'knvb-id',
@@ -1179,6 +1185,7 @@ class Api extends Base {
 		$recent_people = get_posts(
 			[
 				'post_type'              => 'person',
+				'suppress_filters'       => false,
 				'posts_per_page'         => 5,
 				'post_status'            => 'publish',
 				'orderby'                => 'modified',
@@ -1438,7 +1445,18 @@ class Api extends Base {
 	private function get_dashboard_counts() {
 		global $wpdb;
 
+		// Raw SQL bypasses every query filter, so the person scope has to be
+		// applied by hand — otherwise a member who may see nobody is still told
+		// how many people the club has.
+		$visible_person_ids = \Rondo\Core\AccessControl::visible_person_ids_or_null();
+		$person_scope_sql   = '';
+		if ( $visible_person_ids !== null ) {
+			$ids              = implode( ',', array_map( 'absint', $visible_person_ids ?: [ 0 ] ) );
+			$person_scope_sql = " AND ( p.post_type <> 'person' OR p.ID IN ($ids) )";
+		}
+
 		return $wpdb->get_row(
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- IDs are absint-cast above.
 			"SELECT
 				SUM(CASE WHEN p.post_type = 'person'
 					AND (fm.meta_value IS NULL OR fm.meta_value = '' OR fm.meta_value = '0')
@@ -1455,7 +1473,7 @@ class Api extends Base {
 			LEFT JOIN {$wpdb->postmeta} hv ON p.ID = hv.post_id AND hv.meta_key = 'huidig-vrijwilliger'
 			LEFT JOIN {$wpdb->postmeta} fs ON p.ID = fs.post_id AND fs.meta_key = 'status'
 			WHERE p.post_status = 'publish'
-			AND p.post_type IN ('person', 'rondo_feedback')"
+			AND p.post_type IN ('person', 'rondo_feedback')" . $person_scope_sql
 		);
 	}
 
@@ -1682,6 +1700,7 @@ class Api extends Base {
 			[
 				'post__in'               => $person_ids,
 				'post_type'              => 'person',
+				'suppress_filters'       => false,
 				'post_status'            => 'publish',
 				'posts_per_page'         => count( $person_ids ),
 				'orderby'                => 'post__in',
@@ -1999,10 +2018,11 @@ class Api extends Base {
 
 		return get_posts(
 			[
-				'post_type'      => 'person',
-				'post_status'    => 'publish',
-				'posts_per_page' => $limit,
-				'meta_query'     => [
+				'post_type'        => 'person',
+				'suppress_filters' => false,
+				'post_status'      => 'publish',
+				'posts_per_page'   => $limit,
+				'meta_query'       => [
 					'relation' => 'OR',
 					[
 						'key'     => 'email_1',

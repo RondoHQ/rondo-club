@@ -879,6 +879,86 @@ class AccessControl {
 	}
 
 	/**
+	 * Narrow person query arguments to what this user may see.
+	 *
+	 * `filter_queries()` cannot do this for every caller: it hooks `pre_get_posts`
+	 * but bails when `suppress_filters` is set, and WordPress' own `get_posts()`
+	 * sets that flag by **default**. So any endpoint assembling person results with
+	 * `get_posts()` is unscoped unless it says otherwise — which is how search and
+	 * the dashboard came to hand a plain member the whole club.
+	 *
+	 * Use this for person queries whose results are returned to the requesting
+	 * user. Internal/system queries that deliberately bypass scoping (sync, cron,
+	 * eligibility calculations) should keep `suppress_filters => true` and not
+	 * call this.
+	 *
+	 * @param array    $args    WP_Query/get_posts arguments.
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return array Arguments narrowed to the user's person scope.
+	 */
+	public static function scope_person_query_args( array $args, $user_id = null ): array {
+		$scope = self::person_scope( $user_id );
+
+		if ( $scope === null ) {
+			return $args;
+		}
+
+		if ( isset( $scope['post__in'] ) ) {
+			$args['post__in'] = self::narrow_post_in( (array) ( $args['post__in'] ?? [] ), $scope['post__in'] );
+			return $args;
+		}
+
+		$meta_query         = $args['meta_query'] ?? [];
+		$meta_query[]       = [
+			'key'     => 'leeftijdsgroep',
+			'value'   => $scope['age_groups'],
+			'compare' => 'IN',
+		];
+		$args['meta_query'] = $meta_query;
+
+		return $args;
+	}
+
+	/**
+	 * The person IDs this user may see, or null when unrestricted.
+	 *
+	 * For callers that cannot express the rule as query arguments — raw SQL, for
+	 * instance — and need the identifiers themselves.
+	 *
+	 * @param int|null $user_id User ID, defaults to the current user.
+	 * @return int[]|null
+	 */
+	public static function visible_person_ids_or_null( $user_id = null ) {
+		$scope = self::person_scope( $user_id );
+
+		if ( $scope === null ) {
+			return null;
+		}
+
+		if ( isset( $scope['post__in'] ) ) {
+			return $scope['post__in'];
+		}
+
+		return get_posts(
+			[
+				'post_type'        => 'person',
+				'post_status'      => 'publish',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+				'meta_query'       => [
+					[
+						'key'     => 'leeftijdsgroep',
+						'value'   => $scope['age_groups'],
+						'compare' => 'IN',
+					],
+				],
+			]
+		) ?: [ 0 ];
+	}
+
+	/**
 	 * Intersect an existing post__in with the allowed set, so a caller-supplied
 	 * `include` can narrow further but never widen. `[0]` means "no results".
 	 *

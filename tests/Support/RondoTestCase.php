@@ -26,7 +26,7 @@ abstract class RondoTestCase extends WPTestCase {
 	 *
 	 * @var string[]
 	 */
-	private array $ignoredIncorrectUsage = [];
+	private array $ignored_incorrect_usage = [];
 
 	/**
 	 * Ignore one known `_doing_it_wrong()` notice without going deaf to the rest.
@@ -38,16 +38,16 @@ abstract class RondoTestCase extends WPTestCase {
 	 * the test as it should.
 	 */
 	protected function ignoreIncorrectUsage( string $function_name ): void {
-		$this->ignoredIncorrectUsage[] = $function_name;
+		$this->ignored_incorrect_usage[] = $function_name;
 	}
 
 	public function assert_post_conditions() {
-		if ( $this->ignoredIncorrectUsage ) {
+		if ( $this->ignored_incorrect_usage ) {
 			// wp-browser proxies this property through __get/__set, so it has to be
 			// read out, modified and written back — unsetting a key in place is
 			// silently discarded.
 			$caught = $this->caught_doing_it_wrong;
-			foreach ( $this->ignoredIncorrectUsage as $function_name ) {
+			foreach ( $this->ignored_incorrect_usage as $function_name ) {
 				unset( $caught[ $function_name ] );
 			}
 			$this->caught_doing_it_wrong = $caught;
