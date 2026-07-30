@@ -2,33 +2,26 @@
 
 namespace Tests\Wpunit;
 
-use Tests\Support\RondoTestCase;
-use RONDO_Workspace_Members;
-use RONDO_Visibility;
 use RONDO_Access_Control;
 use RONDO_User_Roles;
+use Tests\Support\RondoTestCase;
 
 /**
- * Test workspace membership and user approval blocking.
+ * What survives of the old workspace/approval test suite.
  *
- * Verifies:
- * - Workspace member CRUD operations
- * - Role-based permissions (admin/member/viewer)
- * - User approval gates all access
- * - Owner protection
+ * Workspaces (`RONDO_Workspace_Members`), the visibility taxonomy
+ * (`RONDO_Visibility`) and the per-post permission levels
+ * (`AccessControl::get_user_permission()`, `get_accessible_post_ids()`) were all
+ * removed from the product. The 21 tests covering them could not pass — they
+ * could not even load the classes — and have been dropped rather than left red.
+ *
+ * Access is now decided by capability plus person visibility; see
+ * `AgeGroupAccessTest`, `PersonVisibilityTest` and `PersonFieldSensitivityTest`.
+ * These two kept their meaning through that change.
  */
 class WorkspacePermissionsTest extends RondoTestCase {
 
-	/**
-	 * @var RONDO_Access_Control
-	 */
 	private RONDO_Access_Control $access_control;
-
-	/**
-	 * Unique test run identifier for creating unique usernames.
-	 *
-	 * @var string
-	 */
 	private string $test_id;
 
 	protected function set_up(): void {
@@ -38,501 +31,36 @@ class WorkspacePermissionsTest extends RondoTestCase {
 	}
 
 	/**
-	 * Helper to create a workspace post.
-	 *
-	 * @param array $args Post arguments.
-	 * @return int Workspace post ID.
+	 * `is_user_approved()` outlived the approval system it was named for: it now
+	 * answers "is this a real user", and administrators must pass it.
 	 */
-	protected function createWorkspace( array $args = [] ): int {
-		$defaults = [
-			'post_type'   => 'workspace',
-			'post_status' => 'publish',
-			'post_author' => get_current_user_id() ?: 1,
-			'post_title'  => 'Test Workspace ' . $this->test_id,
-		];
-
-		return self::factory()->post->create( array_merge( $defaults, $args ) );
-	}
-
-	/**
-	 * Create a unique Rondo user for this test.
-	 *
-	 * @param string $suffix User suffix for readability.
-	 * @return int User ID.
-	 */
-	protected function createUniqueUser( string $suffix = 'user' ): int {
-		$login = $suffix . '_' . $this->test_id;
-		return $this->createRondoUser( [ 'user_login' => $login ] );
-	}
-
-	/**
-	 * Helper to create a workspace_access term for a workspace.
-	 *
-	 * @param int $workspace_id Workspace post ID.
-	 * @return int Term ID.
-	 */
-	protected function createWorkspaceAccessTerm( int $workspace_id ): int {
-		$term_slug = 'workspace-' . $workspace_id;
-		$term      = wp_insert_term(
-			$term_slug,
-			'workspace_access',
-			[
-				'slug' => $term_slug,
-			]
-		);
-
-		if ( is_wp_error( $term ) ) {
-			// Term might already exist
-			$existing = get_term_by( 'slug', $term_slug, 'workspace_access' );
-			return $existing ? $existing->term_id : 0;
-		}
-
-		return $term['term_id'];
-	}
-
-	/**
-	 * Helper to assign a post to a workspace.
-	 *
-	 * @param int $post_id Post ID.
-	 * @param int $workspace_id Workspace post ID.
-	 */
-	protected function assignPostToWorkspace( int $post_id, int $workspace_id ): void {
-		$term_id = $this->createWorkspaceAccessTerm( $workspace_id );
-		wp_set_object_terms( $post_id, [ $term_id ], 'workspace_access' );
-		update_field( '_assigned_workspaces', [ $term_id ], $post_id );
-		RONDO_Visibility::set_visibility( $post_id, RONDO_Visibility::VISIBILITY_WORKSPACE );
-	}
-
-	// =========================================================================
-	// Task 1: Workspace Membership Tests
-	// =========================================================================
-
-	public function test_add_member_to_workspace(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$member_id = $this->createUniqueUser( 'member' );
-
-		// Add member
-		$result = RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
-
-		$this->assertTrue( $result, 'Adding member should succeed' );
-		$this->assertTrue(
-			RONDO_Workspace_Members::is_member( $workspace_id, $member_id ),
-			'User should be a member after adding'
-		);
-	}
-
-	public function test_remove_member_from_workspace(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$member_id = $this->createUniqueUser( 'member' );
-
-		// Add then remove
-		RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
-		$this->assertTrue( RONDO_Workspace_Members::is_member( $workspace_id, $member_id ) );
-
-		$result = RONDO_Workspace_Members::remove( $workspace_id, $member_id );
-
-		$this->assertTrue( $result, 'Removing member should succeed' );
-		$this->assertFalse(
-			RONDO_Workspace_Members::is_member( $workspace_id, $member_id ),
-			'User should not be a member after removal'
-		);
-	}
-
-	public function test_role_assignment_admin(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$user_id = $this->createUniqueUser( 'admin_user' );
-		RONDO_Workspace_Members::add( $workspace_id, $user_id, 'admin' );
-
-		$this->assertEquals(
-			'admin',
-			RONDO_Workspace_Members::get_user_role( $workspace_id, $user_id ),
-			'User should have admin role'
-		);
-	}
-
-	public function test_role_assignment_member(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$user_id = $this->createUniqueUser( 'member_user' );
-		RONDO_Workspace_Members::add( $workspace_id, $user_id, 'member' );
-
-		$this->assertEquals(
-			'member',
-			RONDO_Workspace_Members::get_user_role( $workspace_id, $user_id ),
-			'User should have member role'
-		);
-	}
-
-	public function test_role_assignment_viewer(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$user_id = $this->createUniqueUser( 'viewer_user' );
-		RONDO_Workspace_Members::add( $workspace_id, $user_id, 'viewer' );
-
-		$this->assertEquals(
-			'viewer',
-			RONDO_Workspace_Members::get_user_role( $workspace_id, $user_id ),
-			'User should have viewer role'
-		);
-	}
-
-	public function test_update_role(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$user_id = $this->createUniqueUser( 'role_change' );
-		RONDO_Workspace_Members::add( $workspace_id, $user_id, 'viewer' );
-
-		$this->assertEquals( 'viewer', RONDO_Workspace_Members::get_user_role( $workspace_id, $user_id ) );
-
-		// Update role
-		$result = RONDO_Workspace_Members::update_role( $workspace_id, $user_id, 'admin' );
-
-		$this->assertTrue( $result, 'Role update should succeed' );
-		$this->assertEquals(
-			'admin',
-			RONDO_Workspace_Members::get_user_role( $workspace_id, $user_id ),
-			'User role should be updated to admin'
-		);
-	}
-
-	public function test_is_admin_returns_true_for_admin_role(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$admin_id  = $this->createUniqueUser( 'ws_admin' );
-		$member_id = $this->createUniqueUser( 'ws_member' );
-		$viewer_id = $this->createUniqueUser( 'ws_viewer' );
-
-		RONDO_Workspace_Members::add( $workspace_id, $admin_id, 'admin' );
-		RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
-		RONDO_Workspace_Members::add( $workspace_id, $viewer_id, 'viewer' );
-
-		$this->assertTrue( RONDO_Workspace_Members::is_admin( $workspace_id, $admin_id ), 'Admin should return true' );
-		$this->assertFalse( RONDO_Workspace_Members::is_admin( $workspace_id, $member_id ), 'Member should return false' );
-		$this->assertFalse( RONDO_Workspace_Members::is_admin( $workspace_id, $viewer_id ), 'Viewer should return false' );
-	}
-
-	public function test_can_edit_for_different_roles(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		$admin_id  = $this->createUniqueUser( 'edit_admin' );
-		$member_id = $this->createUniqueUser( 'edit_member' );
-		$viewer_id = $this->createUniqueUser( 'edit_viewer' );
-
-		RONDO_Workspace_Members::add( $workspace_id, $admin_id, 'admin' );
-		RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
-		RONDO_Workspace_Members::add( $workspace_id, $viewer_id, 'viewer' );
-
-		$this->assertTrue( RONDO_Workspace_Members::can_edit( $workspace_id, $admin_id ), 'Admin can edit' );
-		$this->assertTrue( RONDO_Workspace_Members::can_edit( $workspace_id, $member_id ), 'Member can edit' );
-		$this->assertFalse( RONDO_Workspace_Members::can_edit( $workspace_id, $viewer_id ), 'Viewer cannot edit' );
-	}
-
-	public function test_get_user_permission_returns_owner_for_author(): void {
-		$author_id = $this->createUniqueUser( 'author' );
-
-		$person_id = $this->createPerson( [ 'post_author' => $author_id ] );
-
-		$this->assertEquals(
-			'owner',
-			$this->access_control->get_user_permission( $person_id, $author_id ),
-			'Author should have owner permission'
-		);
-	}
-
-	public function test_get_user_permission_returns_workspace_role(): void {
-		$owner_id = $this->createUniqueUser( 'ws_owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		// Create person owned by workspace owner with workspace visibility
-		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
-		$this->assignPostToWorkspace( $person_id, $workspace_id );
-
-		// Add users with different roles
-		$admin_id  = $this->createUniqueUser( 'perm_admin' );
-		$member_id = $this->createUniqueUser( 'perm_member' );
-		$viewer_id = $this->createUniqueUser( 'perm_viewer' );
-
-
-		RONDO_Workspace_Members::add( $workspace_id, $admin_id, 'admin' );
-		RONDO_Workspace_Members::add( $workspace_id, $member_id, 'member' );
-		RONDO_Workspace_Members::add( $workspace_id, $viewer_id, 'viewer' );
-
-		$this->assertEquals( 'admin', $this->access_control->get_user_permission( $person_id, $admin_id ) );
-		$this->assertEquals( 'member', $this->access_control->get_user_permission( $person_id, $member_id ) );
-		$this->assertEquals( 'viewer', $this->access_control->get_user_permission( $person_id, $viewer_id ) );
-	}
-
-	public function test_get_user_permission_returns_share_permission(): void {
-		$owner_id = $this->createUniqueUser( 'share_owner' );
-
-		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
-
-		$edit_user_id = $this->createUniqueUser( 'share_edit' );
-		$view_user_id = $this->createUniqueUser( 'share_view' );
-
-
-		// Share with different permissions
-		RONDO_Visibility::add_share( $person_id, $edit_user_id, 'edit', $owner_id );
-		RONDO_Visibility::add_share( $person_id, $view_user_id, 'view', $owner_id );
-
-		$this->assertEquals( 'edit', $this->access_control->get_user_permission( $person_id, $edit_user_id ) );
-		$this->assertEquals( 'view', $this->access_control->get_user_permission( $person_id, $view_user_id ) );
-	}
-
-	public function test_get_user_permission_returns_false_for_no_access(): void {
-		$owner_id = $this->createUniqueUser( 'owner' );
-
-		$person_id = $this->createPerson( [ 'post_author' => $owner_id ] );
-
-		$other_user_id = $this->createUniqueUser( 'other' );
-
-		$this->assertFalse(
-			$this->access_control->get_user_permission( $person_id, $other_user_id ),
-			'User with no access should return false'
-		);
-	}
-
-	public function test_owner_cannot_be_removed_from_workspace(): void {
-		$owner_id = $this->createUniqueUser( 'protected_owner' );
-
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		// Owner should be added automatically (via save_post hook)
-		// Try to remove owner
-		$result = RONDO_Workspace_Members::remove( $workspace_id, $owner_id );
-
-		$this->assertFalse( $result, 'Removing owner should fail' );
-	}
-
-	public function test_owner_auto_added_as_admin(): void {
-		$owner_id = $this->createUniqueUser( 'auto_admin' );
-
-		// Create workspace - this triggers save_post_workspace hook
-		// which should auto-add owner as admin
-		$workspace_id = $this->createWorkspace( [ 'post_author' => $owner_id ] );
-
-		// Manually add owner as admin to simulate what the hook does
-		// (the hook runs on save_post which might not trigger in factory)
-		RONDO_Workspace_Members::add( $workspace_id, $owner_id, 'admin' );
-
-		$this->assertTrue(
-			RONDO_Workspace_Members::is_member( $workspace_id, $owner_id ),
-			'Owner should be a member'
-		);
-		$this->assertEquals(
-			'admin',
-			RONDO_Workspace_Members::get_user_role( $workspace_id, $owner_id ),
-			'Owner should have admin role'
-		);
-	}
-
-	// =========================================================================
-	// Task 2: User Approval Blocking Tests
-	// =========================================================================
-
-	public function test_unapproved_user_status(): void {
-		$user_id = $this->createUniqueUser( 'unapproved' );
-
-		// Default should be unapproved
-		$this->assertFalse(
-			RONDO_User_Roles::is_user_approved( $user_id ),
-			'New Rondo user should be unapproved by default'
-		);
-
-		// Approve user
-
-		$this->assertTrue(
-			RONDO_User_Roles::is_user_approved( $user_id ),
-			'User should be approved after setting meta'
-		);
-	}
-
-	public function test_unapproved_user_cannot_access_own_posts(): void {
-		$user_id = $this->createUniqueUser( 'blocked' );
-		// Don't approve the user
-
-		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
-
-		$this->assertFalse(
-			$this->access_control->user_can_access_post( $person_id, $user_id ),
-			'Unapproved user should not access their own posts'
-		);
-	}
-
-	public function test_unapproved_user_gets_empty_accessible_ids(): void {
-		$user_id = $this->createUniqueUser( 'empty_ids' );
-		// Don't approve
-
-		$this->createPerson( [ 'post_author' => $user_id ] );
-		$this->createPerson( [ 'post_author' => $user_id ] );
-
-		// Since user is unapproved, access control will block them before checking owned posts
-		// We need to test at the filter level
-		$result = $this->access_control->user_can_access_post(
-			$this->createPerson( [ 'post_author' => $user_id ] ),
-			$user_id
-		);
-
-		$this->assertFalse( $result, 'Unapproved user should not access any posts' );
-	}
-
-	public function test_approved_user_can_access_own_posts(): void {
-		$user_id = $this->createUniqueUser( 'approved' );
-
-		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
-
-		$this->assertTrue(
-			$this->access_control->user_can_access_post( $person_id, $user_id ),
-			'Approved user should access their own posts'
-		);
-	}
-
 	public function test_admin_always_approved(): void {
-		// Create a user first
 		$admin_id = self::factory()->user->create( [ 'user_login' => 'test_admin_' . $this->test_id ] );
 
-		// The user_register hook forces rondo_user role, so manually set admin role
+		// The user_register hook forces the rondo_user role, so set admin explicitly.
 		$admin = new \WP_User( $admin_id );
 		$admin->set_role( 'administrator' );
-
-		// Clear user cache to ensure fresh data
 		clean_user_cache( $admin_id );
-		$admin = get_user_by( 'id', $admin_id );
 
-		// Verify user has administrator role
-		$this->assertTrue(
-			in_array( 'administrator', $admin->roles, true ),
-			'User should have administrator role'
-		);
-
-		// Verify user can manage_options
-		$this->assertTrue(
-			user_can( $admin_id, 'manage_options' ),
-			'Administrator should have manage_options capability'
-		);
-
-		// The approval system is gone; is_user_approved() is now simply "is a
-		// real user", kept for back-compat with callers that still ask.
+		$this->assertTrue( user_can( $admin_id, 'manage_options' ), 'Administrator should have manage_options' );
 		$this->assertTrue(
 			RONDO_User_Roles::is_user_approved( $admin_id ),
 			'Administrator should be treated as a valid user'
 		);
 	}
 
-	public function test_rest_query_returns_empty_for_unapproved(): void {
-		$user_id = $this->createUniqueUser( 'rest_blocked' );
-		// Don't approve
-
-		// Create a post for this user
-		$this->createPerson( [ 'post_author' => $user_id ] );
-
-		// Simulate REST query filter
-		wp_set_current_user( $user_id );
-
-		$args = [
-			'post_type' => 'person',
-		];
-
-		$filtered = $this->access_control->filter_rest_query( $args, new \WP_REST_Request() );
-
-		$this->assertEquals( [ 0 ], $filtered['post__in'], 'Unapproved user REST query should return empty' );
-	}
-
-	public function test_rest_single_access_returns_error_for_unapproved(): void {
-		$user_id = $this->createUniqueUser( 'rest_single' );
-		// Don't approve
-
-		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
-		$post      = get_post( $person_id );
-
-		wp_set_current_user( $user_id );
-
-		$response = new \WP_REST_Response();
-		$request  = new \WP_REST_Request();
-
-		$result = $this->access_control->filter_rest_single_access( $response, $post, $request );
-
-		$this->assertInstanceOf( \WP_Error::class, $result, 'Unapproved user should get WP_Error' );
-		$this->assertEquals( 'rest_forbidden', $result->get_error_code() );
-	}
-
 	/**
-	 * Access no longer hinges on an approval flag — the flag is gone. What still
-	 * decides whether a plain member reaches a person record is whether it is in
-	 * their own household, which is what this now asserts.
+	 * Access no longer hinges on authorship or an approval flag. What decides
+	 * whether a plain member reaches a person record is whether it is in their
+	 * own household — and a member with no linked person has none.
 	 */
 	public function test_member_without_a_linked_person_reaches_no_person_records(): void {
-		$user_id = $this->createUniqueUser( 'transition' );
-
+		$user_id   = $this->createRondoUser( [ 'user_login' => 'transition_' . $this->test_id ] );
 		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
 
 		$this->assertFalse(
 			$this->access_control->user_can_access_post( $person_id, $user_id ),
-			'A member with no linked person has no household, so no person records'
-		);
-	}
-
-	public function test_rest_query_works_for_approved_user(): void {
-		$user_id = $this->createUniqueUser( 'rest_approved' );
-
-		$person_id = $this->createPerson( [ 'post_author' => $user_id ] );
-
-		// Verify the post exists with correct attributes
-		$post = get_post( $person_id );
-		$this->assertNotNull( $post, 'Person post should exist' );
-		$this->assertEquals( 'publish', $post->post_status, 'Person should be published' );
-		$this->assertEquals( $user_id, (int) $post->post_author, 'Person should have correct author' );
-
-		wp_set_current_user( $user_id );
-
-		// Verify user is approved and current user is correct
-		$this->assertTrue( RONDO_User_Roles::is_user_approved( $user_id ), 'User should be approved' );
-		$this->assertEquals( $user_id, get_current_user_id(), 'Current user should be set' );
-
-		// Test direct user_can_access_post which should work
-		$this->assertTrue(
-			$this->access_control->user_can_access_post( $person_id, $user_id ),
-			'Approved user should be able to access their own post'
-		);
-
-		// The get_accessible_post_ids uses direct SQL which works in transaction
-		// Just verify that user_can_access_post works (which uses get_post, not SQL)
-		// This is sufficient to test the approval mechanism
-
-		// Now test the REST filter indirectly - unapproved should fail, approved should not
-		// We've already tested that unapproved returns [0] in another test
-		// Here we just verify the approved path doesn't hit the unapproved block
-		$args = [
-			'post_type' => 'person',
-		];
-
-		$filtered = $this->access_control->filter_rest_query( $args, new \WP_REST_Request() );
-
-		// The filter should NOT return [0] which would indicate blocked
-		$this->assertNotEquals(
-			[ 0 ],
-			$filtered['post__in'],
-			'Approved user REST query should not return blocked indicator'
+			'Authoring a person record does not put it in your household'
 		);
 	}
 }

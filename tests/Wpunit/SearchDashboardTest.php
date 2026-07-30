@@ -82,7 +82,9 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test basic search returns matching person.
 	 */
 	public function test_search_returns_matching_person(): void {
-		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
+		// Membership administration is entitled to the whole club. A plain member
+		// sees only their own household, which would make this a scoping test.
+		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create persons
@@ -115,46 +117,58 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test search isolation - user A cannot see user B's contacts.
+	 * Search is scoped to what the caller may see.
+	 *
+	 * Authorship stopped deciding this: a person record belongs to the club, not
+	 * to whoever typed it in. A plain member reaches only their own household, so
+	 * search must return nothing for people outside it — including records they
+	 * created themselves.
 	 */
-	public function test_search_isolation_between_users(): void {
+	public function test_search_is_scoped_to_the_callers_people(): void {
 		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
 		$bob_id   = $this->createRondoUser( [ 'user_login' => 'bob' ] );
 
-		// Create person for Alice
 		$alice_john = $this->createPerson(
 			[
 				'post_author' => $alice_id,
 				'post_title'  => 'Johns Contact',
 			]
 		);
-
-		// Create person for Bob
-		$bob_john = $this->createPerson(
+		$bob_john   = $this->createPerson(
 			[
 				'post_author' => $bob_id,
 				'post_title'  => 'Johns Other Contact',
 			]
 		);
 
-		// Set current user to Alice and search
 		wp_set_current_user( $alice_id );
 		$response = $this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'John' ] );
 
 		$this->assertEquals( 200, $response->get_status() );
 
-		$data       = $response->get_data();
-		$result_ids = array_column( $data['people'], 'id' );
+		$result_ids = array_column( $response->get_data()['people'], 'id' );
 
-		$this->assertContains( $alice_john, $result_ids, 'Alice should see her own Johns Contact' );
-		$this->assertNotContains( $bob_john, $result_ids, 'Alice should NOT see Bobs Johns Other Contact' );
+		$this->assertNotContains( $bob_john, $result_ids, 'A member must not find another member\'s people' );
+		$this->assertNotContains( $alice_john, $result_ids, 'Authoring a record does not put it in your household' );
+
+		// The membership desk, entitled to the whole club, finds both.
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] ) );
+		$admin_ids = array_column(
+			$this->doRestRequest( 'GET', '/rondo/v1/search', [ 'q' => 'John' ] )->get_data()['people'],
+			'id'
+		);
+
+		$this->assertContains( $alice_john, $admin_ids );
+		$this->assertContains( $bob_john, $admin_ids );
 	}
 
 	/**
 	 * Test search across custom post types (person and team).
 	 */
 	public function test_search_across_post_types(): void {
-		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
+		// Membership administration is entitled to the whole club. A plain member
+		// sees only their own household, which would make this a scoping test.
+		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create person
@@ -236,7 +250,9 @@ class SearchDashboardTest extends RondoTestCase {
 	 * Test dashboard summary returns correct counts.
 	 */
 	public function test_dashboard_returns_correct_counts(): void {
-		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
+		// Membership administration is entitled to the whole club. A plain member
+		// sees only their own household, which would make this a scoping test.
+		$alice_id = self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] );
 		wp_set_current_user( $alice_id );
 
 		// Create 3 persons
@@ -285,45 +301,38 @@ class SearchDashboardTest extends RondoTestCase {
 	}
 
 	/**
-	 * Test dashboard isolation - user A only sees their own data in counts.
+	 * Dashboard counts are scoped too.
+	 *
+	 * A count is a disclosure: telling a member the club has 739 people is telling
+	 * them something they may not see. The dashboard builds its numbers in raw
+	 * SQL, which no query filter reaches, so the scope is applied by hand there.
 	 */
-	public function test_dashboard_isolation_between_users(): void {
-		$alice_id = $this->createRondoUser( [ 'user_login' => 'alice' ] );
-		$bob_id   = $this->createRondoUser( [ 'user_login' => 'bob' ] );
+	public function test_dashboard_counts_are_scoped_to_the_caller(): void {
+		$author_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 
-		// Create 5 contacts for Alice
 		for ( $i = 1; $i <= 5; $i++ ) {
 			$this->createPerson(
 				[
-					'post_author' => $alice_id,
-					'post_title'  => "Alice Person $i",
+					'post_author' => $author_id,
+					'post_title'  => "Club Person $i",
 				]
 			);
 		}
 
-		// Create 3 contacts for Bob
-		for ( $i = 1; $i <= 3; $i++ ) {
-			$this->createPerson(
-				[
-					'post_author' => $bob_id,
-					'post_title'  => "Bob Person $i",
-				]
-			);
-		}
+		wp_set_current_user( $this->createRondoUser( [ 'user_login' => 'scoped_member' ] ) );
+		$member_data = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' )->get_data();
 
-		// Get Alice's dashboard
-		wp_set_current_user( $alice_id );
-		$alice_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
-		$alice_data     = $alice_response->get_data();
+		$this->assertEquals(
+			0,
+			$member_data['stats']['total_people'],
+			'A member who may see nobody should be told of nobody'
+		);
+		$this->assertSame( [], $member_data['recent_people'], 'and shown no names' );
 
-		$this->assertEquals( 5, $alice_data['stats']['total_people'], 'Alice should see 5 people' );
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'rondo_ledenadministratie' ] ) );
+		$desk_data = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' )->get_data();
 
-		// Get Bob's dashboard
-		wp_set_current_user( $bob_id );
-		$bob_response = $this->doRestRequest( 'GET', '/rondo/v1/dashboard' );
-		$bob_data     = $bob_response->get_data();
-
-		$this->assertEquals( 3, $bob_data['stats']['total_people'], 'Bob should see 3 people' );
+		$this->assertEquals( 5, $desk_data['stats']['total_people'], 'Membership administration sees the club' );
 	}
 
 	/**

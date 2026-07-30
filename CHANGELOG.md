@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.80.1] - 2026-07-30
+
+### Fixed
+
+- **Zoeken en het dashboard toonden leden aan iedereen die was ingelogd.** Wie geen enkel lid mag inzien, kreeg via de zoekfunctie toch alle namen te zien, en op het dashboard zowel het totale ledenaantal als de laatst toegevoegde leden met naam en toenaam. De oorzaak: deze schermen stellen hun resultaten zelf samen met een WordPress-functie die de afscherming standaard uitschakelt, waardoor de bestaande beperking per leeftijdsgroep of huishouden werd overgeslagen. Zoekresultaten, "recent toegevoegd", "recent contact" en de dashboardtellingen houden zich nu wél aan die beperking. Voor de ledenadministratie, het bestuur en andere rollen die de hele vereniging mogen zien verandert er niets.
+
 ## [33.80.0] - 2026-07-30
 
 ### Added
