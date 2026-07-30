@@ -156,6 +156,7 @@ export default function Settings() {
   // Capability matrix state (admin only)
   const [capabilityMatrix, setCapabilityMatrix] = useState({});
   const [capabilityLabels, setCapabilityLabels] = useState({});
+  const [managementCaps, setManagementCaps] = useState([]);
   const [capabilityMatrixLoading, setCapabilityMatrixLoading] = useState(false);
   const [capabilityMatrixSaving, setCapabilityMatrixSaving] = useState(false);
   const [capabilityMatrixMessage, setCapabilityMatrixMessage] = useState('');
@@ -254,6 +255,7 @@ export default function Settings() {
       ]);
       setCapabilityMatrix(matrixRes.data?.roles || {});
       setCapabilityLabels(matrixRes.data?.capability_labels || {});
+      setManagementCaps(matrixRes.data?.management_capabilities || []);
       setAgeGroupAccess(ageGroupRes.data?.roles || {});
       setAvailableAgeGroups(ageGroupRes.data?.available_age_groups || []);
     } catch (error) {
@@ -370,6 +372,7 @@ export default function Settings() {
       const matrixResponse = await prmApi.updateCapabilityMatrix({ roles: capabilityMatrix });
       setCapabilityMatrix(matrixResponse.data?.roles || capabilityMatrix);
       setCapabilityLabels(matrixResponse.data?.capability_labels || capabilityLabels);
+      setManagementCaps(matrixResponse.data?.management_capabilities || managementCaps);
 
       // Save age-group access config alongside
       const ageGroupResponse = await prmApi.updateAgeGroupAccess({ roles: ageGroupAccess });
@@ -585,6 +588,7 @@ export default function Settings() {
             capabilityMatrix={capabilityMatrix}
             setCapabilityMatrix={setCapabilityMatrix}
             capabilityLabels={capabilityLabels}
+            managementCaps={managementCaps}
             capabilityMatrixLoading={capabilityMatrixLoading}
             capabilityMatrixSaving={capabilityMatrixSaving}
             capabilityMatrixMessage={capabilityMatrixMessage}
@@ -2095,6 +2099,7 @@ function AdminTabWithSubtabs({
   capabilityMatrix,
   setCapabilityMatrix,
   capabilityLabels,
+  managementCaps,
   capabilityMatrixLoading,
   capabilityMatrixSaving,
   capabilityMatrixMessage,
@@ -2180,6 +2185,7 @@ function AdminTabWithSubtabs({
             matrixState={capabilityMatrix}
             setMatrixState={setCapabilityMatrix}
             capabilityLabels={capabilityLabels}
+            managementCaps={managementCaps}
             loading={capabilityMatrixLoading}
             saving={capabilityMatrixSaving}
             message={capabilityMatrixMessage}
@@ -3312,7 +3318,7 @@ function FunctiesTab({
 }
 
 // Capabilities Tab Component - Role × Capability matrix
-function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
+function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, managementCaps = [], loading, saving, message, handleSave, ageGroupAccess, setAgeGroupAccess, availableAgeGroups, ageGroupAccessLoading, refetchData }) {
   const roleEntries = Object.entries(matrixState);
   const [openDropdownRole, setOpenDropdownRole] = useState(null);
   const [newRoleName, setNewRoleName] = useState('');
@@ -3333,9 +3339,6 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openDropdownRole]);
 
-  // Management capabilities that bypass age-group filtering (mirrors AGE_GROUP_BYPASS_CAPS in PHP)
-  const MANAGEMENT_CAPS = ['manage_options', 'fairplay', 'vog', 'financieel', 'financieel_read', 'toegangscontrole', 'manage_clothing', 'ledenadministratie', 'sponsorbeheer'];
-
   const handleCheckboxChange = (roleSlug, capSlug, checked) => {
     setMatrixState(prev => ({
       ...prev,
@@ -3348,8 +3351,10 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
       },
     }));
 
-    // If adding a management capability, auto-clear age-group restriction for that role
-    if (checked && MANAGEMENT_CAPS.includes(capSlug)) {
+    // If adding a management capability, auto-clear age-group restriction for that role.
+    // The list comes from the server (AccessControl::AGE_GROUP_BYPASS_CAPS) — a copy
+    // maintained here went stale every time that constant changed.
+    if (checked && managementCaps.includes(capSlug)) {
       setAgeGroupAccess(prev => {
         const next = { ...prev };
         delete next[roleSlug];
@@ -3360,7 +3365,7 @@ function CapabilitiesTab({ matrixState, setMatrixState, capabilityLabels, loadin
 
   // Check if a role has any management capability (bypasses age-group filtering)
   const roleHasManagementCap = (roleData) => {
-    return MANAGEMENT_CAPS.some(cap => roleData.capabilities?.[cap]);
+    return managementCaps.some(cap => roleData.capabilities?.[cap]);
   };
 
   // Handle age-group checkbox toggle for a role

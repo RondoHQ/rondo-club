@@ -40,6 +40,15 @@ class AccessControl {
 	 * scoping a read-only penningmeester to one age group hides the members their
 	 * invoices belong to. It is a view bypass only — it grants no edit rights, so it
 	 * is deliberately absent from can_edit_people().
+	 *
+	 * `vrijwilligers` is here for the same shape of reason: diensten are staffed
+	 * from the whole club, so a coördinator scoped to one age group cannot see most
+	 * of the people they are meant to roster. Also a view bypass only — it is
+	 * likewise absent from can_edit_people(), and the fields it may read are
+	 * narrowed independently by SENSITIVE_ACF_FIELD_GROUPS.
+	 *
+	 * Exposed through get_management_capabilities() so the capability-matrix UI can
+	 * ask rather than keep its own copy.
 	 */
 	private const AGE_GROUP_BYPASS_CAPS = [
 		'manage_options',
@@ -51,7 +60,18 @@ class AccessControl {
 		'manage_clothing',
 		'ledenadministratie',
 		'sponsorbeheer',
+		'vrijwilligers',
 	];
+
+	/**
+	 * The bypass list, for callers that must reason about it (the admin
+	 * capability matrix clears a role's age-group config when it gains one).
+	 *
+	 * @return string[]
+	 */
+	public static function get_management_capabilities(): array {
+		return self::AGE_GROUP_BYPASS_CAPS;
+	}
 
 	/**
 	 * A child stops being visible to their parent at this age — by then they are an
