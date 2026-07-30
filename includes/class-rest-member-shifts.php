@@ -26,6 +26,7 @@ use Rondo\Fees\SeasonKey;
 use Rondo\Users\GuardianAccountService;
 use Rondo\Volunteer\IvaStatus;
 use Rondo\Volunteer\ShiftCancellationService;
+use Rondo\Volunteer\ShiftSignupWindow;
 use Rondo\Volunteer\ShiftEmailScheduler;
 use Rondo\Volunteer\VolunteerEligibilityService;
 use Rondo\Volunteer\VolunteerExemptionResolver;
@@ -44,7 +45,7 @@ class MemberShifts extends Base {
 	const AVAILABLE_WINDOW_DAYS = 93;
 
 	/** Longest calendar range accepted by the API. */
-	const CALENDAR_MAX_DAYS = 190;
+	const CALENDAR_MAX_DAYS = 370;
 
 	/** Members may cancel until this many days before a shift starts. */
 	const CANCEL_DEADLINE_DAYS = 21;
@@ -707,7 +708,9 @@ class MemberShifts extends Base {
 			$fellow_volunteers = $this->format_fellow_volunteer_contacts( $summary['assigned_person_ids'], $person_id );
 
 			$summary['is_signed_up']                = in_array( $person_id, $summary['assigned_person_ids'], true );
-			$summary['can_signup']                  = ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+			$opens_at                               = ShiftSignupWindow::opens_at( $shift->ID );
+			$summary['signup_opens_at']             = $opens_at ? $opens_at->format( 'Y-m-d' ) : null;
+			$summary['can_signup']                  = $opens_at === null && ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
 			$summary['fellow_volunteers']           = array_column( $fellow_volunteers, 'name' );
 			$summary['can_cancel']                  = $summary['is_signed_up'] && $this->can_member_cancel( $shift->ID, $person_id );
 			$cancel_deadline                        = $this->cancel_deadline_timestamp( $shift->ID );
@@ -826,7 +829,9 @@ class MemberShifts extends Base {
 			if ( $view === 'signup' ) {
 				$fellow_volunteers                      = $this->format_fellow_volunteer_contacts( $assigned_ids, $person_id );
 				$summary['is_signed_up']                = in_array( $person_id, $assigned_ids, true );
-				$summary['can_signup']                  = $summary['status'] === 'open' && ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
+				$opens_at                               = ShiftSignupWindow::opens_at( $shift->ID );
+				$summary['signup_opens_at']             = $opens_at ? $opens_at->format( 'Y-m-d' ) : null;
+				$summary['can_signup']                  = $opens_at === null && $summary['status'] === 'open' && ! $summary['is_signed_up'] && $summary['spots_remaining'] !== 0;
 				$summary['fellow_volunteers']           = array_column( $fellow_volunteers, 'name' );
 				$summary['can_cancel']                  = $summary['is_signed_up'] && $this->can_member_cancel( $shift->ID, $person_id );
 				$cancel_deadline                        = $this->cancel_deadline_timestamp( $shift->ID );
@@ -838,7 +843,7 @@ class MemberShifts extends Base {
 			if ( ! isset( $days[ $date ] ) ) {
 				$days[ $date ] = [
 					'date'            => $date,
-					'state'           => 'full',
+					'state'           => 'locked',
 					'shift_count'     => 0,
 					'capacity'        => 0,
 					'assigned_count'  => 0,
@@ -852,8 +857,17 @@ class MemberShifts extends Base {
 			$days[ $date ]['assigned_count']  += min( $required_capacity, (int) $summary['assigned_count'] );
 			$days[ $date ]['spots_remaining'] += max( 0, $required_capacity - (int) $summary['assigned_count'] );
 			$days[ $date ]['shifts'][]         = $summary;
-			if ( ! $is_filled ) {
-				$days[ $date ]['state'] = 'open';
+
+			// A day is `locked` only while every dienst on it is still closed for
+			// signup — otherwise the calendar would paint an unclaimable day red
+			// and invite members to act on it.
+			$is_locked = $view === 'signup' && ! empty( $summary['signup_opens_at'] );
+			if ( ! $is_locked ) {
+				if ( ! $is_filled ) {
+					$days[ $date ]['state'] = 'open';
+				} elseif ( $days[ $date ]['state'] === 'locked' ) {
+					$days[ $date ]['state'] = 'full';
+				}
 			}
 		}
 
@@ -880,7 +894,7 @@ class MemberShifts extends Base {
 		$timezone = wp_timezone();
 		$today    = current_datetime()->setTime( 0, 0, 0 );
 		$from     = $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ?: $today;
-		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $from->modify( 'first day of this month' )->modify( '+6 months -1 day' );
+		$to       = $this->parse_calendar_date( (string) $request->get_param( 'to' ), $timezone ) ?: $this->default_calendar_end( $from );
 
 		if ( $request->get_param( 'from' ) && ! $this->parse_calendar_date( (string) $request->get_param( 'from' ), $timezone ) ) {
 			return new \WP_Error( 'invalid_calendar_from', 'De begindatum is ongeldig.', [ 'status' => 400 ] );
@@ -900,6 +914,22 @@ class MemberShifts extends Base {
 		}
 
 		return [ $from, $to ];
+	}
+
+	/**
+	 * End of the default calendar range: the club year of the season containing
+	 * $from, which runs to 30 June.
+	 *
+	 * The club year is presented as August-June while `SeasonKey` defines the
+	 * season as July-June. Only the *view* differs: a July dienst still belongs
+	 * to its season for every rule, it simply falls outside the default range and
+	 * needs an explicit `from` to reach.
+	 */
+	private function default_calendar_end( \DateTimeImmutable $from ): \DateTimeImmutable {
+		$season   = \Rondo\Fees\SeasonKey::current( $from->format( 'Y-m-d' ) );
+		$end_year = (int) substr( $season, 5, 4 );
+
+		return $from->setDate( $end_year, 6, 30 );
 	}
 
 	private function parse_calendar_date( string $value, \DateTimeZone $timezone ): ?\DateTimeImmutable {
@@ -970,6 +1000,24 @@ class MemberShifts extends Base {
 		$certificate_error = $this->assert_person_may_take_shift( $person_id, $shift_id );
 		if ( is_wp_error( $certificate_error ) ) {
 			return $certificate_error;
+		}
+
+		// The season is planned in full but opened in halves, so the autumn does
+		// not fill up with people who wanted a spring dienst. Coordinators are
+		// not gated by this — see add_assignee().
+		$opens_at = ShiftSignupWindow::opens_at( $shift_id );
+		if ( $opens_at !== null ) {
+			return new \WP_Error(
+				'signup_not_open_yet',
+				sprintf(
+					'Inschrijven voor deze inschrijftaak kan vanaf %s.',
+					wp_date( 'j F', $opens_at->getTimestamp() )
+				),
+				[
+					'status'   => 409,
+					'opens_at' => $opens_at->format( 'Y-m-d' ),
+				]
+			);
 		}
 
 		// Overlap check (warning, not block, unless force=false explicitly opted out).
