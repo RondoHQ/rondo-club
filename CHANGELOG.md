@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dynamische velddefinities staan in een versiegebonden WordPress-optie met vaste identiteiten en opslagkeys. Deactiveren verwijdert geen waarden.
 - CI en de volledige PHP-testsuite draaien zonder externe veldplugin. De documentatie beschrijft de native registry, opslag, veldworkflow, uitrol en terugval.
 
+### Fixed
+
+- Oud-leden tellen niet mee voor gezinskorting; een wijziging van de oud-lidstatus vernieuwt ook de contributiecaches en kortingsposities van het actieve huishouden.
+
 ### Removed
 
 - Het publieke `acf`-responseveld, ondersteuning voor `acf`-writes, alle runtime-helper- en hookafhankelijkheden, plugininstallatie/licentiecode, en de map `acf-json/`. Oude writes krijgen een gerichte HTTP 400 met `fields` als vervanging.
