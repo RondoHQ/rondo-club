@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.1] - 2026-07-31
+
+### Changed
+
+- Het migratieplan voor het verwijderen van ACF kiest nu voor een tijdelijk dubbel REST-contract: `acf` en het nieuwe `fields` kunnen naast elkaar bestaan terwijl de app en synchronisatie overstappen. Daarna verdwijnt eerst het publieke `acf`-contract en pas vervolgens de interne pluginafhankelijkheid, met omschakelingen per posttype en afzonderlijke terugvalmogelijkheden.
+
 ## [33.82.0] - 2026-07-31
 
 ### Added
