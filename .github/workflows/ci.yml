@@ -123,21 +123,27 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$ACF_ZIP")"
-          # ACF Pro is a paid plugin and cannot live in the repository. Fetch the
-          # licensed build the club already pays for.
+
+          # ACF Pro is a paid plugin and cannot live in the repository, so fetch
+          # the licensed build the club already pays for.
           #
-          # Ask for the pinned version first. Not every licence is entitled to
-          # an arbitrary version — an expired one only serves builds up to its
-          # expiry — and that answers 404, so fall back to the latest build.
-          # Either way the extraction step asserts what actually arrived, so a
-          # fallback cannot silently test against the wrong ACF.
-          base="https://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${ACF_PRO_LICENSE_KEY}"
-          if curl -sSLf -o "$ACF_ZIP" "${base}&t=${ACF_VERSION}"; then
-            echo "Downloaded ACF Pro pinned to ${ACF_VERSION}."
-          else
-            echo "::warning title=ACF version pin unavailable::The licence would not serve ACF Pro ${ACF_VERSION}; fell back to the latest build. The version assertion below decides whether that is acceptable."
-            curl -sSLf -o "$ACF_ZIP" "$base"
+          # This is the v2 route. The old index.php?a=download endpoint is gone
+          # and now answers a bare nginx 404 for every key, valid or not — which
+          # reads exactly like a rejected licence and is why this job could not
+          # obtain ACF at all when the secret was first added.
+          #
+          # No -f here: on failure the body is a JSON error worth printing, and
+          # -f would throw it away. It never contains the key.
+          code=$(curl -sSL -o "$ACF_ZIP" -w '%{http_code}' \
+            "https://connect.advancedcustomfields.com/v2/plugins/download?p=pro&t=${ACF_VERSION}&k=${ACF_PRO_LICENSE_KEY}")
+
+          if [ "$code" != "200" ] || [ "$(head -c2 "$ACF_ZIP")" != "PK" ]; then
+            echo "::error title=ACF Pro download failed::HTTP ${code} from the ACF connect API. Response below."
+            head -c 500 "$ACF_ZIP"
+            echo
+            exit 1
           fi
+          echo "Downloaded ACF Pro ${ACF_VERSION} ($(wc -c < "$ACF_ZIP") bytes)."
 
       - name: Set up WordPress with the theme symlinked in
         if: steps.acf.outputs.available == 'true'
