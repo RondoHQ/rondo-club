@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.81.1] - 2026-07-31
+
+### Fixed
+
+- **Aanhalingstekens in feedbacktitels komen niet langer als code in je mailbox aan.** Een feedbackitem met een apostrof of aanhalingsteken in de titel leverde een mail op met een onderwerp als "Je feedback is opgelost: Kopje &#8216;betaalde vrijwilliger&#8217; verwijderen". De titel wordt bij het opmaken voorzien van echte krulaanhalingstekens, maar die werden daarna niet teruggelezen naar gewone tekst. Dat gebeurt nu wel — zowel in de mail dat je feedback is opgelost als in de melding aan de beheerder dat er nieuwe feedback binnen is.
+
 ## [33.81.0] - 2026-07-30
 
 ### Added

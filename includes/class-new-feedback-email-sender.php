@@ -38,7 +38,7 @@ class NewFeedbackEmailSender {
 			return [ 'status' => 'no_recipient' ];
 		}
 
-		$title        = trim( wp_strip_all_tags( get_the_title( $feedback_id ) ) );
+		$title        = EmailTemplate::decode_title( get_the_title( $feedback_id ) );
 		$title        = $title !== '' ? $title : sprintf( 'Feedback #%d', $feedback_id );
 		$subject      = sprintf( 'Nieuwe feedback #%1$d: %2$s', $feedback_id, $title );
 		$feedback_url = home_url( '/feedback/' . $feedback_id );
