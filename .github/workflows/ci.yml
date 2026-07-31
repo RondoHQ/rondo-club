@@ -68,8 +68,10 @@ jobs:
       WP_ROOT_FOLDER: ${{ github.workspace }}/../wp-test
       # Version lives in the cache key, not the filename — GitHub does not allow
       # one env entry to reference another, and duplicating it here would rot.
-      WP_TARBALL: ${{ runner.temp }}/wordpress.tar.gz
-      ACF_ZIP: ${{ runner.temp }}/acf-pro.zip
+      # These sit under github.workspace rather than runner.temp: the runner
+      # context is not available to a job-level env block, only inside steps.
+      WP_TARBALL: ${{ github.workspace }}/../downloads/wordpress.tar.gz
+      ACF_ZIP: ${{ github.workspace }}/../downloads/acf-pro.zip
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
@@ -103,6 +105,7 @@ jobs:
         if: steps.acf.outputs.available == 'true' && steps.wp-cache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
+          mkdir -p "$(dirname "$WP_TARBALL")"
           curl -sSLf -o "$WP_TARBALL" "https://wordpress.org/wordpress-${WP_VERSION}.tar.gz"
 
       - name: Restore the ACF Pro zip
@@ -119,6 +122,7 @@ jobs:
           ACF_PRO_LICENSE_KEY: ${{ secrets.ACF_PRO_LICENSE_KEY }}
         run: |
           set -euo pipefail
+          mkdir -p "$(dirname "$ACF_ZIP")"
           # ACF Pro is a paid plugin and cannot live in the repository. Fetch the
           # licensed build the club already pays for, at the pinned version.
           curl -sSLf -o "$ACF_ZIP" \
