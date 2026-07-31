@@ -224,7 +224,7 @@ export default function VrijwilligersIva() {
           <Link to="/profile/iva" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
             /profile/iva
           </Link>
-          . Certificaten zijn 5 jaar geldig na
+          . Naast het IVA-certificaat van NOC*NSF is een certificaat Sociale Hygiëne ook geldig — keur die dus net zo goed. Certificaten zijn 5 jaar geldig na
           <code className="mx-1 text-xs">datum-iva</code>; daarna verloopt de goedkeuring automatisch.
         </div>
       </div>

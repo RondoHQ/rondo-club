@@ -93,7 +93,7 @@ export default function ProfileIva() {
               >
                 NOC*NSF
               </a>
-              ; 5 jaar geldig.
+              ; 5 jaar geldig. Heb je al een certificaat Sociale Hygiëne? Dat accepteren we ook.
             </p>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function ProfileIva() {
       <section className="card p-5">
         <h2 className="font-semibold text-gray-900 dark:text-gray-100">Upload nieuw certificaat</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          PDF, JPG of PNG; max 10 MB. Officiële NOC*NSF PDF-certificaten worden automatisch gecontroleerd en direct goedgekeurd; anders beoordeelt de kantinebeheerder het certificaat.
+          PDF, JPG of PNG; max 10 MB. Een certificaat Sociale Hygiëne mag je hier ook uploaden. Officiële NOC*NSF PDF-certificaten worden automatisch gecontroleerd en direct goedgekeurd; anders beoordeelt de kantinebeheerder het certificaat.
         </p>
 
         <form

@@ -226,7 +226,7 @@ function BlockBanners({ blockReasons }) {
               <Link to="/profile/iva" className="text-bright-cobalt dark:text-electric-cyan hover:underline">
                 hier uploaden
               </Link>
-              .
+              . Heb je al een certificaat Sociale Hygiëne? Dat is ook goed — upload dat dan.
             </p>
           </div>
         </div>
