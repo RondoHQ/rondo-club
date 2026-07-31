@@ -39,10 +39,10 @@ class UserProvisioningEmailTest extends RondoTestCase {
 
 	private function person( string $first, string $last, ?string $email ): int {
 		$person_id = $this->createPerson( [ 'post_title' => "$first $last" ] );
-		update_field( 'first_name', $first, $person_id );
-		update_field( 'last_name', $last, $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'first_name', $first );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'last_name', $last );
 		if ( $email !== null ) {
-			update_field( 'email_1', $email, $person_id );
+			\Rondo\Fields\Fields::update_for_post( $person_id, 'email_1', $email );
 		}
 		return $person_id;
 	}

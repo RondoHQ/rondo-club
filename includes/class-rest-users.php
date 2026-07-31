@@ -199,9 +199,9 @@ class Users extends Base {
 			if ( $linked_person_id ) {
 				$person = get_post( $linked_person_id );
 				if ( $person && $person->post_type === 'person' ) {
-					$first              = get_field( 'first_name', $linked_person_id ) ?: '';
-					$infix              = get_field( 'infix', $linked_person_id ) ?: '';
-					$last               = get_field( 'last_name', $linked_person_id ) ?: '';
+					$first              = \Rondo\Fields\Fields::get_for_post( $linked_person_id, 'first_name' ) ?: '';
+					$infix              = \Rondo\Fields\Fields::get_for_post( $linked_person_id, 'infix' ) ?: '';
+					$last               = \Rondo\Fields\Fields::get_for_post( $linked_person_id, 'last_name' ) ?: '';
 					$linked_person_name = implode( ' ', array_filter( [ $first, $infix, $last ] ) );
 				}
 			}
@@ -253,7 +253,7 @@ class Users extends Base {
 			$result[] = [
 				'id'      => (int) $person_id,
 				'name'    => get_the_title( $person_id ),
-				'email'   => (string) ( get_field( 'email_1', $person_id ) ?: get_field( 'email_2', $person_id ) ),
+				'email'   => (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) ?: \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) ),
 				'knvb_id' => (string) get_post_meta( $person_id, 'knvb-id', true ),
 			];
 		}
@@ -311,20 +311,20 @@ class Users extends Base {
 
 		$result = [];
 		foreach ( $people as $person_id ) {
-			if ( get_field( 'former_member', $person_id ) === true ) {
+			if ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true ) {
 				continue;
 			}
 
-			$email = get_field( 'email_1', $person_id );
+			$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' );
 			if ( ! is_email( $email ) ) {
-				$email = get_field( 'email_2', $person_id );
+				$email = \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' );
 			}
 			if ( ! is_email( $email ) ) {
 				continue;
 			}
 
-			$first     = get_field( 'first_name', $person_id ) ?: '';
-			$last      = get_field( 'last_name', $person_id ) ?: '';
+			$first     = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+			$last      = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 			$thumbnail = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
 
 			$result[] = [

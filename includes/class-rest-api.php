@@ -14,10 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Api extends Base {
 
 	/**
-	 * ACF fields the Kaderlijst renders. The endpoint returns nothing else — a
+	 * canonical fields the Kaderlijst renders. The endpoint returns nothing else — a
 	 * scoped viewer never sees a kaderlid's financial flags or private meta.
 	 */
-	private const KADERLIJST_ACF_FIELDS = [
+	private const KADERLIJST_FIELDS = [
 		'first_name',
 		'infix',
 		'last_name',
@@ -91,7 +91,7 @@ class Api extends Base {
 	 * row. The team is deliberately optional — the old list showed teamless
 	 * coordinator functies too, and they are re-derived from the role text client-side.
 	 *
-	 * ACF stores repeater rows as flat meta (`work_history_{N}_job_title`,
+	 * native field stores repeater rows as flat meta (`work_history_{N}_job_title`,
 	 * `work_history_{N}_end_date`) and date_pickers as `Ymd` (a few legacy rows are
 	 * `Y-m-d`), so the end date is normalised with REPLACE before comparison.
 	 *
@@ -212,7 +212,7 @@ class Api extends Base {
 	 * @return int[]
 	 */
 	private function current_team_ids_for_person( int $person_id ): array {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 
 		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
 			return [];
@@ -275,10 +275,10 @@ class Api extends Base {
 
 	/**
 	 * Build the trimmed person payload for the given IDs, in the wp/v2 shape the
-	 * Kaderlijst already consumes (`{ id, acf }`).
+	 * Kaderlijst already consumes (`{ id, fields }`).
 	 *
 	 * @param int[] $person_ids Person post IDs.
-	 * @return array<int, array{id:int, acf:array}>
+	 * @return array<int, array{id:int, fields:array}>
 	 */
 	private function build_kaderlijst_people( array $person_ids ): array {
 		$people = [];
@@ -288,23 +288,17 @@ class Api extends Base {
 				continue;
 			}
 
-			if ( get_field( 'former_member', $person_id ) ) {
+			if ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
 				continue;
 			}
 
-			$acf = [];
-			foreach ( self::KADERLIJST_ACF_FIELDS as $field ) {
-				$acf[ $field ] = get_field( $field, $person_id );
-			}
-
 			$canonical_names = [];
-			foreach ( self::KADERLIJST_ACF_FIELDS as $legacy_name ) {
+			foreach ( self::KADERLIJST_FIELDS as $legacy_name ) {
 				$canonical_names[] = \Rondo\Fields\Registry::resolve( 'person', $legacy_name )['canonical_name'];
 			}
 
 			$people[] = [
 				'id'     => $person_id,
-				'acf'    => $acf,
 				'fields' => array_intersect_key(
 					\Rondo\Fields\RestFields::for_post( 'person', $person_id ),
 					array_flip( $canonical_names )
@@ -317,7 +311,6 @@ class Api extends Base {
 
 	public function __construct() {
 		add_action( 'rest_api_init', [ $this, 'register_routes' ] );
-		add_action( 'rest_api_init', [ $this, 'register_acf_fields' ] );
 		// NOTE: save_post_person hook for volunteer start date cache invalidation
 		// moved to Rondo\REST\Reminders constructor
 
@@ -670,48 +663,6 @@ class Api extends Base {
 	}
 
 	/**
-	 * Register ACF fields to REST API
-	 */
-	public function register_acf_fields() {
-		// Expose ACF fields in REST API for taxonomy terms
-		add_filter( 'rest_prepare_relationship_type', [ $this, 'add_acf_to_relationship_type' ], 10, 3 );
-
-		// Allow updating ACF fields via REST API
-		add_action( 'rest_insert_relationship_type', [ $this, 'update_relationship_type_acf' ], 10, 3 );
-
-		// NOTE: VOG response filters (rest_prepare_person, rest_prepare_discipline_case)
-		// moved to Rondo\REST\Vog::register_response_filters()
-	}
-
-	/**
-	 * Add ACF fields to relationship_type REST response
-	 */
-	public function add_acf_to_relationship_type( $response, $term, $request ) {
-		$acf_data = get_fields( 'relationship_type_' . $term->term_id );
-		if ( $acf_data ) {
-			$response->data['acf'] = $acf_data;
-		}
-		return $response;
-	}
-
-	/**
-	 * Update ACF fields when relationship_type is updated via REST API
-	 */
-	public function update_relationship_type_acf( $term, $request, $creating ) {
-		$acf_data = $request->get_param( 'acf' );
-		if ( is_array( $acf_data ) && array_key_exists( 'inverse_relationship_type', $acf_data ) ) {
-			// This taxonomy owns exactly one writable domain field. Never pass
-			// arbitrary request keys to ACF: doing so allows callers to mutate any
-			// term-meta-backed field that happens to be registered by another plugin.
-			update_field(
-				'inverse_relationship_type',
-				absint( $acf_data['inverse_relationship_type'] ),
-				'relationship_type_' . $term->term_id
-			);
-		}
-	}
-
-	/**
 	 * Restore default relationship type configurations
 	 */
 	public function restore_relationship_type_defaults( $request ) {
@@ -831,7 +782,7 @@ class Api extends Base {
 		);
 
 		foreach ( $first_name_matches as $person ) {
-			$first_name  = strtolower( get_field( 'first_name', $person->ID ) ?: '' );
+			$first_name  = strtolower( \Rondo\Fields\Fields::get_for_post( $person->ID, 'first_name' ) ?: '' );
 			$query_lower = strtolower( $query );
 
 			// Score: exact = 100, starts with = 80, contains = 60
@@ -994,7 +945,7 @@ class Api extends Base {
 
 		// Apply former member penalty to prioritize current members
 		foreach ( $people_results as $person_id => &$item ) {
-			if ( get_field( 'former_member', $person_id ) ) {
+			if ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
 				$item['score'] -= 50;
 			}
 		}
@@ -1116,14 +1067,14 @@ class Api extends Base {
 
 			$invoice_results = [];
 			foreach ( $invoice_posts as $invoice ) {
-				$invoice_number = get_field( 'invoice_number', $invoice->ID );
-				$person_id      = get_field( 'person', $invoice->ID );
+				$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice->ID, 'invoice_number' );
+				$person_id      = \Rondo\Fields\Fields::get_for_post( $invoice->ID, 'person' );
 				$person_name    = null;
 
 				if ( ! empty( $person_id ) ) {
-					$first_name  = get_field( 'first_name', $person_id ) ?: '';
-					$infix       = get_field( 'infix', $person_id ) ?: '';
-					$last_name   = get_field( 'last_name', $person_id ) ?: '';
+					$first_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+					$infix       = \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '';
+					$last_name   = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 					$name_parts  = array_filter( [ $first_name, $infix, $last_name ] );
 					$person_name = implode( ' ', $name_parts ) ?: null;
 				}
@@ -1132,8 +1083,8 @@ class Api extends Base {
 					'id'             => $invoice->ID,
 					'invoice_number' => $invoice_number,
 					'person_name'    => $person_name,
-					'total_amount'   => (float) get_field( 'total_amount', $invoice->ID ),
-					'status'         => get_field( 'status', $invoice->ID ),
+					'total_amount'   => (float) \Rondo\Fields\Fields::get_for_post( $invoice->ID, 'total_amount' ),
+					'status'         => \Rondo\Fields\Fields::get_for_post( $invoice->ID, 'status' ),
 				];
 			}
 
@@ -1402,13 +1353,6 @@ class Api extends Base {
 			];
 		}
 
-		// Add ACF fields if available
-		if ( function_exists( 'get_fields' ) ) {
-			$acf_fields = get_fields( $post->ID );
-			if ( $acf_fields ) {
-				$response['acf'] = $acf_fields;
-			}
-		}
 		$response['fields'] = \Rondo\Fields\RestFields::for_post( $post->post_type, $post->ID );
 
 		return rest_ensure_response( $response );
@@ -1601,7 +1545,7 @@ class Api extends Base {
 				continue;
 			}
 
-			$person_ids = get_field( 'related_persons', $todo->ID ) ?: [];
+			$person_ids = \Rondo\Fields\Fields::get_for_post( $todo->ID, 'related_persons' ) ?: [];
 			if ( ! is_array( $person_ids ) ) {
 				$person_ids = $person_ids ? [ $person_ids ] : [];
 			}
@@ -1634,8 +1578,8 @@ class Api extends Base {
 				'assigned_user_id' => $assigned_user > 0 ? $assigned_user : null,
 				'created'          => $todo->post_date,
 				'status'           => $status_map[ $todo->post_status ] ?? 'open',
-				'due_date'         => get_field( 'due_date', $todo->ID ) ?: null,
-				'awaiting_since'   => get_field( 'awaiting_since', $todo->ID ) ?: null,
+				'due_date'         => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'due_date' ) ?: null,
+				'awaiting_since'   => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'awaiting_since' ) ?: null,
 			];
 
 			if ( count( $formatted ) >= $limit ) {
@@ -1763,7 +1707,7 @@ class Api extends Base {
 			]
 		);
 
-		// Also check with serialized format (ACF stores as serialized array)
+		// Also check with serialized format (native field stores as serialized array)
 		$entities_serialized = get_posts(
 			[
 				'post_type'      => [ 'team', 'commissie' ],
@@ -1800,7 +1744,7 @@ class Api extends Base {
 				'id'        => $entity->ID,
 				'type'      => $entity->post_type,
 				'name'      => $this->sanitize_text( $entity->post_title ),
-				'website'   => $this->sanitize_url( get_field( 'website', $entity->ID ) ),
+				'website'   => $this->sanitize_url( \Rondo\Fields\Fields::get_for_post( $entity->ID, 'website' ) ),
 				'thumbnail' => $this->sanitize_url( $thumbnail_url ),
 			];
 		}
@@ -2000,7 +1944,7 @@ class Api extends Base {
 
 		// After a successful Sportlink sync, trigger capability sync for the linked WP user.
 		// The Sportlink sync may have updated work_history; we re-apply role mappings now.
-		// Look up the person by KNVB ID via ACF field meta, then sync via person ID.
+		// Look up the person by KNVB ID via canonical field meta, then sync via person ID.
 		$person_id = $this->find_person_id_by_knvb_id( $knvb_id );
 		if ( $person_id ) {
 			$deduped_count = $this->dedupe_person_work_history_entries( $person_id );
@@ -2055,13 +1999,13 @@ class Api extends Base {
 	}
 
 	/**
-	 * Find a person post ID by their KNVB ID stored in ACF meta.
+	 * Find a person post ID by their KNVB ID stored in native field meta.
 	 *
 	 * @param string $knvb_id The KNVB member ID.
 	 * @return int|null Person post ID, or null if not found.
 	 */
 	private function find_person_id_by_knvb_id( string $knvb_id ): ?int {
-		// ACF stores the field key as meta for the 'knvb-id' field.
+		// native field stores the field key as meta for the 'knvb-id' field.
 		// The raw post meta key is 'knvb-id'.
 		$posts = get_posts(
 			[
@@ -2084,7 +2028,7 @@ class Api extends Base {
 	/**
 	 * Normalize one work history row into a stable dedupe key.
 	 *
-	 * @param array $row Raw ACF work_history row.
+	 * @param array $row Raw native field work_history row.
 	 * @return string Stable serialized key.
 	 */
 	private function get_work_history_dedupe_key( array $row ): string {
@@ -2117,7 +2061,7 @@ class Api extends Base {
 	 * @return int Number of removed duplicate rows.
 	 */
 	private function dedupe_person_work_history_entries( int $person_id ): int {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) || empty( $work_history ) ) {
 			return 0;
 		}
@@ -2143,7 +2087,7 @@ class Api extends Base {
 		}
 
 		if ( $removed_count > 0 ) {
-			update_field( 'work_history', $deduped, $person_id );
+			\Rondo\Fields\Fields::update_for_post( $person_id, 'work_history', $deduped );
 		}
 
 		return $removed_count;
@@ -2176,7 +2120,7 @@ class Api extends Base {
 	 * Sync capabilities for all provisioned users (admin only).
 	 *
 	 * Body-less endpoint: the server derives functies from each user's linked
-	 * person's work_history ACF field (is_current entries). Used by the
+	 * person's work_history canonical field (is_current entries). Used by the
 	 * on-demand "Sync now" button in the Settings Functies tab.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
@@ -2192,7 +2136,7 @@ class Api extends Base {
 	/**
 	 * Sync capabilities for the WordPress user linked to a single person (admin only).
 	 *
-	 * Derives functies from the person's current work_history ACF field and
+	 * Derives functies from the person's current work_history canonical field and
 	 * applies the FunctieCapabilityMap. Used by the per-person "Sync rollen"
 	 * button in AccountCard. Returns { status: 'no_user' } if the person has
 	 * no linked WordPress account.

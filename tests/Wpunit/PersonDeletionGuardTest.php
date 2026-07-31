@@ -34,7 +34,7 @@ class PersonDeletionGuardTest extends RondoTestCase {
 		$related_id = $this->createPerson( [ 'post_title' => 'Gerelateerd lid' ] );
 		$person_id  = $this->personWithRelationship( $related_id );
 
-		update_field( 'relationships', [], $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'relationships', [] );
 
 		$this->assertInstanceOf( \WP_Post::class, wp_delete_post( $person_id, true ) );
 		$this->assertNull( get_post( $person_id ) );

@@ -27,13 +27,6 @@ class ShiftSignupWindowEnforcementTest extends RondoTestCase {
 
 		$this->bootRestControllers( [ MemberShifts::class ] );
 
-		// ACF Pro emits a REST schema for the shift select fields whose `type`
-		// keyword WordPress 7.0 rejects as non-built-in. Upstream ACF issue,
-		// silent in production because _doing_it_wrong() only speaks up under
-		// WP_DEBUG. Ignored rather than expected: it fires only for requests
-		// that touch one of those fields.
-		$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
-
 		$this->person_id = $this->createPerson(
 			[ 'post_title' => 'Jan Jansen' ],
 			[

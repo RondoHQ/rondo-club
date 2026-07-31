@@ -3,7 +3,7 @@ import { wpApi, prmApi } from '@/api/client';
 
 /**
  * Create a new commissie/organization.
- * Handles payload building with all required ACF fields.
+ * Handles payload building with all required canonical fields.
  *
  * @param {Object} options - Hook options
  * @param {Function} options.onSuccess - Called with created commissie data after successful creation

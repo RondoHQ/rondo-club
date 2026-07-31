@@ -30,7 +30,7 @@ class FamilyGroupingService {
 	/**
 	 * Person fee context collaborator (Phase 218).
 	 *
-	 * Provides `is_former_member_in_season()` — reads ACF fields and
+	 * Provides `is_former_member_in_season()` — reads canonical fields and
 	 * compares timestamps. Before Phase 218 this was reached via a
 	 * MembershipFees god-class reference; now it's on an explicit typed
 	 * service with zero dependencies.
@@ -147,7 +147,7 @@ class FamilyGroupingService {
 	 */
 	public function get_family_key( int $person_id ): ?string {
 		// Get addresses from person
-		$addresses = get_field( 'addresses', $person_id ) ?: [];
+		$addresses = \Rondo\Fields\Fields::get_for_post( $person_id, 'addresses' ) ?: [];
 
 		if ( empty( $addresses ) ) {
 			return null;
@@ -215,7 +215,7 @@ class FamilyGroupingService {
 
 		foreach ( $query->posts as $person_id ) {
 			// Skip former members not eligible for this season's fee list
-			$is_former = (bool) get_field( 'former_member', $person_id );
+			$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 			if ( $is_former && ! $this->person_context->is_former_member_in_season( $person_id, $season ) ) {
 				continue; // Skip former members not in this season
 			}
@@ -390,7 +390,7 @@ class FamilyGroupingService {
 			$pid = (int) $pid;
 
 			// Skip former members not in season
-			$is_former = ( get_field( 'former_member', $pid ) === true );
+			$is_former = ( \Rondo\Fields\Fields::get_for_post( $pid, 'former_member' ) === true );
 			if ( $is_former && ! $this->person_context->is_former_member_in_season( $pid, $season ) ) {
 				continue;
 			}

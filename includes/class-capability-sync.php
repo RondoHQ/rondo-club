@@ -162,10 +162,10 @@ class CapabilitySync {
 	 *
 	 * If $knvb_functies_map is provided, reads functies from it for users whose linked
 	 * person has a KNVB ID; otherwise falls back to deriving functies from the linked
-	 * person's work_history ACF field (is_current entries only).
+	 * person's work_history canonical field (is_current entries only).
 	 *
 	 * @param array $knvb_functies_map Optional map of knvb_id => string[] functies.
-	 *                                  Pass empty array to derive from ACF work_history.
+	 *                                  Pass empty array to derive from native field work_history.
 	 * @return array Aggregated result: { total, synced, skipped, errors, details }.
 	 */
 	public function sync_all( array $knvb_functies_map = [] ): array {
@@ -292,7 +292,7 @@ class CapabilitySync {
 	}
 
 	/**
-	 * Derive functies and commissie IDs from a user's linked person's work_history ACF field.
+	 * Derive functies and commissie IDs from a user's linked person's work_history canonical field.
 	 *
 	 * Reads the `work_history` repeater field on the linked person post and
 	 * returns job_title values and team (commissie) IDs for entries where is_current is truthy.
@@ -309,7 +309,7 @@ class CapabilitySync {
 			];
 		}
 
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return [
 				'functies'      => [],

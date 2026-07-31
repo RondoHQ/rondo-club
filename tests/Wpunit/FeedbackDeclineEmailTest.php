@@ -58,7 +58,7 @@ class FeedbackDeclineEmailTest extends RondoTestCase {
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'feedback_decline_reason_required', $result->get_error_code() );
-		$this->assertSame( 'approved', get_field( 'status', $feedback_id ) );
+		$this->assertSame( 'approved', \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' ) );
 		$this->assertCount( 0, $this->sent_mail );
 	}
 
@@ -100,7 +100,7 @@ class FeedbackDeclineEmailTest extends RondoTestCase {
 				'post_title'  => $title,
 			]
 		);
-		update_field( 'status', 'approved', $feedback_id );
+		\Rondo\Fields\Fields::update_for_post( $feedback_id, 'status', 'approved' );
 
 		return $feedback_id;
 	}

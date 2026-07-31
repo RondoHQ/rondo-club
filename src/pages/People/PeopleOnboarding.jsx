@@ -25,16 +25,16 @@ const STATUS_LABELS = {
 };
 
 function getSinceDate(person, tab) {
-  const acf = person.fields || {};
+  const fields = person.fields || {};
   if (tab === TAB_VRIJWILLIGER) {
-    return acf['vrijwilliger_sinds'] || null;
+    return fields['vrijwilliger_sinds'] || null;
   }
-  return acf['lid_sinds'] || null;
+  return fields['lid_sinds'] || null;
 }
 
 function getEmail(person) {
-  const acf = person.fields || {};
-  return acf.email_1 || acf.email_2 || '';
+  const fields = person.fields || {};
+  return fields.email_1 || fields.email_2 || '';
 }
 
 function getDisplayName(person) {

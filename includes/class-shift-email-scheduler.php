@@ -454,7 +454,7 @@ class ShiftEmailScheduler {
 
 	private function get_person_email( int $person_id ): ?string {
 		foreach ( [ 'email_1', 'email_2' ] as $field_name ) {
-			$email = (string) get_field( $field_name, $person_id );
+			$email = (string) \Rondo\Fields\Fields::get_for_post( $person_id, $field_name );
 			if ( is_email( $email ) ) {
 				return $email;
 			}

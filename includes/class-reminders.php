@@ -687,7 +687,7 @@ class Reminders {
 		$updated_count = 0;
 
 		foreach ( $people as $person ) {
-			$work_history = get_field( 'work_history', $person->ID ) ?: [];
+			$work_history = \Rondo\Fields\Fields::get_for_post( $person->ID, 'work_history' ) ?: [];
 
 			if ( empty( $work_history ) ) {
 				continue;
@@ -709,7 +709,7 @@ class Reminders {
 			}
 
 			if ( $needs_update ) {
-				update_field( 'work_history', $work_history, $person->ID );
+				\Rondo\Fields\Fields::update_for_post( $person->ID, 'work_history', $work_history );
 				++$updated_count;
 			}
 		}

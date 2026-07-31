@@ -3,7 +3,7 @@
  * Fee Cache Invalidation
  *
  * Automatically invalidates cached membership fees when relevant fields change.
- * Hooks into ACF update_value filters and REST API updates.
+ * Hooks into native field update_value filters and REST API updates.
  *
  * @package Rondo\Fees
  */
@@ -59,20 +59,7 @@ class FeeCacheInvalidator {
 		$this->fee_cache       = FeeServices::fee_cache();
 		$this->family_grouping = FeeServices::family_grouping();
 
-		// Age group changes affect fee category
-		add_filter( 'acf/update_value/name=leeftijdsgroep', [ $this, 'invalidate_person_cache' ], 10, 3 );
-
-		// Address changes affect family grouping (invalidate entire family)
-		add_filter( 'acf/update_value/name=addresses', [ $this, 'invalidate_family_cache' ], 10, 3 );
-
-		// Team changes affect senior vs recreant categorization
-		add_filter( 'acf/update_value/name=work_history', [ $this, 'invalidate_person_cache' ], 10, 3 );
-
-		// lid-sinds changes affect pro-rata calculation (PRO-04)
-		add_filter( 'acf/update_value/name=lid-sinds', [ $this, 'invalidate_person_cache' ], 10, 3 );
-
-		// former_member changes affect fee eligibility
-		add_filter( 'acf/update_value/name=former_member', [ $this, 'invalidate_person_cache' ], 10, 3 );
+		add_action( 'rondo_fields_updated', [ $this, 'invalidate_native_field' ], 10, 5 );
 
 		// REST API updates
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
@@ -89,10 +76,18 @@ class FeeCacheInvalidator {
 		add_action( 'rondo_recalculate_all_fees', [ $this, 'recalculate_all_fees_background' ] );
 	}
 
+	public function invalidate_native_field( int $post_id, string $canonical_name, $value, $old_value, array $field ): void {
+		if ( $canonical_name === 'addresses' ) {
+			$this->invalidate_family_cache( $value, $post_id, $field );
+		} elseif ( in_array( $canonical_name, [ 'leeftijdsgroep', 'work_history', 'lid_sinds', 'former_member' ], true ) ) {
+			$this->invalidate_person_cache( $value, $post_id, $field );
+		}
+	}
+
 	/**
-	 * Resolve a post ID from an int or ACF object, returning null if not a person post.
+	 * Resolve a post ID from an int or native field object, returning null if not a person post.
 	 *
-	 * @param mixed $post_id Raw post ID (int or ACF object with ->ID).
+	 * @param mixed $post_id Raw post ID (int or native field object with ->ID).
 	 * @return int|null Resolved integer post ID, or null if not a person post.
 	 */
 	private function resolve_person_post_id( $post_id ): ?int {
@@ -112,7 +107,7 @@ class FeeCacheInvalidator {
 	 *
 	 * @param mixed $value   The new field value.
 	 * @param mixed $post_id The post ID.
-	 * @param array $field   The ACF field array.
+	 * @param array $field   The canonical field array.
 	 * @return mixed The unmodified value (filter passthrough).
 	 */
 	public function invalidate_person_cache( $value, $post_id, $field ) {
@@ -135,7 +130,7 @@ class FeeCacheInvalidator {
 	 *
 	 * @param mixed $value   The new field value.
 	 * @param mixed $post_id The post ID.
-	 * @param array $field   The ACF field array.
+	 * @param array $field   The canonical field array.
 	 * @return mixed The unmodified value (filter passthrough).
 	 */
 	public function invalidate_family_cache( $value, $post_id, $field ) {

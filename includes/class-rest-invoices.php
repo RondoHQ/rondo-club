@@ -505,7 +505,7 @@ class Invoices extends Base {
 
 		// Extract discipline case IDs from line items
 		foreach ( $query->posts as $invoice ) {
-			$line_items = get_field( 'line_items', $invoice->ID );
+			$line_items = \Rondo\Fields\Fields::get_for_post( $invoice->ID, 'line_items' );
 
 			if ( $line_items && is_array( $line_items ) ) {
 				foreach ( $line_items as $item ) {
@@ -540,7 +540,7 @@ class Invoices extends Base {
 
 		// Extract discipline case IDs from line items across all invoices
 		foreach ( $query->posts as $invoice ) {
-			$line_items = get_field( 'line_items', $invoice->ID );
+			$line_items = \Rondo\Fields\Fields::get_for_post( $invoice->ID, 'line_items' );
 
 			if ( $line_items && is_array( $line_items ) ) {
 				foreach ( $line_items as $item ) {
@@ -604,7 +604,7 @@ class Invoices extends Base {
 				continue;
 			}
 
-			$person_id = (int) get_field( 'person', $case_id );
+			$person_id = (int) \Rondo\Fields\Fields::get_for_post( $case_id, 'person' );
 
 			if ( empty( $person_id ) ) {
 				continue; // Skip cases without a person
@@ -634,9 +634,9 @@ class Invoices extends Base {
 			$line_items = [];
 
 			foreach ( $person_cases as $case ) {
-				$acf         = get_fields( $case->ID );
-				$description = ! empty( $acf['match_description'] ) ? $acf['match_description'] : ( $acf['sanction_description'] ?? '' );
-				$amount      = (float) ( $acf['administrative_fee'] ?? 0 );
+				$fields      = \Rondo\Fields\Fields::all_for_post( $case->ID );
+				$description = ! empty( $fields['match_description'] ) ? $fields['match_description'] : ( $fields['sanction_description'] ?? '' );
+				$amount      = (float) ( $fields['administrative_fee'] ?? 0 );
 
 				$line_items[] = [
 					'discipline_case_id' => $case->ID,
@@ -684,8 +684,8 @@ class Invoices extends Base {
 			return false;
 		}
 
-		$home_team = get_field( 'home_team', $case_id );
-		$away_team = get_field( 'away_team', $case_id );
+		$home_team = \Rondo\Fields\Fields::get_for_post( $case_id, 'home_team' );
+		$away_team = \Rondo\Fields\Fields::get_for_post( $case_id, 'away_team' );
 
 		$team_id = 0;
 		if ( is_numeric( $home_team ) && (int) $home_team > 0 ) {
@@ -699,7 +699,7 @@ class Invoices extends Base {
 		}
 
 		// Fallback: match by team_name text when home/away team IDs are missing.
-		$team_name = get_field( 'team_name', $case_id );
+		$team_name = \Rondo\Fields\Fields::get_for_post( $case_id, 'team_name' );
 		if ( ! is_string( $team_name ) || trim( $team_name ) === '' ) {
 			return false;
 		}
@@ -881,8 +881,8 @@ class Invoices extends Base {
 			);
 		}
 
-		update_field( 'invoice_number', $invoice_number, $post_id );
-		update_field( 'status', 'draft', $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'invoice_number', $invoice_number );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'status', 'draft' );
 		$this->persist_invoice_payload( $post_id, $payload );
 
 		$invoice = get_post( $post_id );
@@ -915,7 +915,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		$payload      = $this->prepare_invoice_payload( $request, $invoice_type ?: 'manual' );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
@@ -971,11 +971,11 @@ class Invoices extends Base {
 		delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 
 		// Reset linked discipline cases (is_charged back to empty)
-		$line_items = get_field( 'line_items', $invoice_id );
+		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
 				if ( ! empty( $item['discipline_case'] ) ) {
-					update_field( 'is_charged', '', (int) $item['discipline_case'] );
+					\Rondo\Fields\Fields::update_for_post( (int) $item['discipline_case'], 'is_charged', '' );
 				}
 			}
 		}
@@ -1054,15 +1054,15 @@ class Invoices extends Base {
 			]
 		);
 
-		// Update ACF status field
-		update_field( 'status', $status, $invoice_id );
+		// Update native field status field
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', $status );
 
 			// If transitioning to "sent", set sent_date and calculate due_date.
 			// Skip when reverting from paid/cancelled → sent to preserve original dates.
 			$is_reverting_from_paid = ( in_array( $invoice->post_status, [ 'rondo_paid', 'rondo_cancelled' ], true ) && $status === 'sent' );
 		if ( $status === 'sent' && ! $is_reverting_from_paid ) {
 			$sent_date = current_time( 'Ymd' );
-			update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'sent_date', $sent_date );
 			$sender_user_id = get_current_user_id();
 			if ( $sender_user_id > 0 ) {
 				if ( ! get_post_meta( $invoice_id, '_invoice_sent_by_user_id', true ) ) {
@@ -1075,7 +1075,7 @@ class Invoices extends Base {
 			$finance_config    = new FinanceConfig();
 			$payment_term_days = $finance_config->get_payment_term_days();
 			$due_date          = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
-			update_field( 'field_invoice_due_date', $due_date, $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'due_date', $due_date );
 		}
 
 			// If transitioning to paid, store audit trail for manual payment marking.
@@ -1091,7 +1091,7 @@ class Invoices extends Base {
 			delete_post_meta( $invoice_id, '_manually_marked_unpaid_by' );
 
 			// Remove payment artifacts (link/QR/provider IDs).
-			update_field( 'payment_link', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', '' );
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 			$this->clear_qr_code( $invoice_id );
@@ -1110,7 +1110,7 @@ class Invoices extends Base {
 
 			// Remove payment artifacts (link/QR/provider IDs). The _payment_token is kept so the
 			// public payment page can show a "vervallen" message instead of a broken-link error.
-			update_field( 'payment_link', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', '' );
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
 			$this->clear_qr_code( $invoice_id );
@@ -1185,7 +1185,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$line_items = get_field( 'line_items', $invoice_id );
+		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( ! is_array( $line_items ) ) {
 			$line_items = [];
 		}
@@ -1202,8 +1202,8 @@ class Invoices extends Base {
 		}
 		$new_total = round( $new_total, 2 );
 
-		update_field( 'line_items', $line_items, $invoice_id );
-		update_field( 'total_amount', $new_total, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'line_items', $line_items );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'total_amount', $new_total );
 
 		// Existing PDF can have stale totals after manual correction.
 		$this->clear_pdf( $invoice_id );
@@ -1261,7 +1261,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$pdf_path = get_field( 'pdf_path', $invoice_id );
+		$pdf_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'pdf_path' );
 		if ( empty( $pdf_path ) ) {
 			return new \WP_Error(
 				'rest_no_pdf',
@@ -1282,7 +1282,7 @@ class Invoices extends Base {
 		}
 
 		// Get invoice number for filename
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		$filename       = 'factuur-' . $invoice_number . '.pdf';
 
 		// Serve PDF file directly
@@ -1311,7 +1311,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$qr_path = get_field( 'qr_code_path', $invoice_id );
+		$qr_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 		if ( empty( $qr_path ) ) {
 			return new \WP_Error(
 				'rest_no_qr',
@@ -1331,7 +1331,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		$filename       = 'qr-' . $invoice_number . '.png';
 
 		header( 'Content-Type: image/png' );
@@ -1386,11 +1386,11 @@ class Invoices extends Base {
 			// Credit invoices should not create payment links; they represent a financial adjustment.
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
 			delete_post_meta( $invoice_id, '_rabobank_payment_request_id' );
-			update_field( 'payment_link', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', '' );
 			$this->clear_qr_code( $invoice_id );
 		} elseif ( $invoice_type === 'membership' ) {
 			// Membership invoices: QR points to /betaling/{token} plan selection page.
-			$payment_url = get_field( 'payment_link', $invoice_id );
+			$payment_url = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
 			if ( ! empty( $payment_url ) ) {
 				$qr_result = \Rondo\Finance\QrCodeGenerator::generate( $payment_url, $invoice_id );
 				if ( is_wp_error( $qr_result ) ) {
@@ -1460,7 +1460,7 @@ class Invoices extends Base {
 			$email_options['template'] = $finance_config->get_credit_email_template();
 		}
 
-		$invoice_type = get_field( 'invoice_type', $invoice_id );
+		$invoice_type = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		if ( $invoice_type === 'membership' && empty( $email_options['template'] ) ) {
 			$email_options['template'] = $finance_config->get_membership_email_template();
 		}
@@ -1490,8 +1490,8 @@ class Invoices extends Base {
 			]
 		);
 
-		// Update ACF status field
-		update_field( 'status', 'sent', $invoice_id );
+		// Update native field status field
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'sent' );
 
 		// Clear any pending scheduled-send date now that the invoice is sent.
 		delete_post_meta( $invoice_id, '_scheduled_send_date' );
@@ -1499,7 +1499,7 @@ class Invoices extends Base {
 
 		// Set sent_date
 		$sent_date = current_time( 'Ymd' );
-		update_field( 'field_invoice_sent_date', $sent_date, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'sent_date', $sent_date );
 
 		// Persist who sent the invoice.
 		if ( $sender_user_id > 0 ) {
@@ -1510,7 +1510,7 @@ class Invoices extends Base {
 		}
 
 		// Calculate and set due_date
-		$due_date_override = (string) get_field( 'due_date', $invoice_id );
+		$due_date_override = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'due_date' );
 		if ( preg_match( '/^\d{8}$/', $due_date_override ) ) {
 			$due_date = $due_date_override;
 		} else {
@@ -1518,14 +1518,14 @@ class Invoices extends Base {
 			$payment_term_days = $config->get_payment_term_days();
 			$due_date          = date( 'Ymd', strtotime( "+{$payment_term_days} days" ) );
 		}
-		update_field( 'field_invoice_due_date', $due_date, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'due_date', $due_date );
 
 		// Mark linked discipline cases as charged via Rondo
-		$line_items = get_field( 'line_items', $invoice_id );
+		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
 				if ( ! empty( $item['discipline_case'] ) ) {
-					update_field( 'is_charged', 'rondo', (int) $item['discipline_case'] );
+					\Rondo\Fields\Fields::update_for_post( (int) $item['discipline_case'], 'is_charged', 'rondo' );
 				}
 			}
 		}
@@ -1674,7 +1674,7 @@ class Invoices extends Base {
 
 		// Select email template based on invoice kind (credit first) then invoice type
 		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
-		$invoice_type = get_field( 'invoice_type', $invoice_id );
+		$invoice_type = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		$config       = new FinanceConfig();
 
 		if ( $invoice_kind === 'credit' && empty( $email_options['template'] ) ) {
@@ -1685,7 +1685,7 @@ class Invoices extends Base {
 		}
 
 		// Ensure payment link and QR code exist before resending
-		$existing_payment_link = get_field( 'payment_link', $invoice_id );
+		$existing_payment_link = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
 		if ( empty( $existing_payment_link ) ) {
 			$active_provider = FinanceServices::mollie()->get_active_payment_provider();
 			if ( $active_provider === 'mollie' ) {
@@ -1764,7 +1764,7 @@ class Invoices extends Base {
 		}
 
 		// Only unpaid invoices can have payment links regenerated
-		$status = get_field( 'status', $invoice_id );
+		$status = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'status' );
 		if ( $status === 'paid' ) {
 			return new \WP_Error(
 				'invoice_paid',
@@ -1785,7 +1785,7 @@ class Invoices extends Base {
 		if ( $active_provider === 'mollie' ) {
 			// Clear Mollie payment link ID to bypass idempotency and force a new payment link
 			delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
-			update_field( 'payment_link', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', '' );
 
 			$mollie_payment = new MolliePayment();
 			$result         = $mollie_payment->create_payment_link( $invoice_id );
@@ -1847,7 +1847,7 @@ class Invoices extends Base {
 			update_post_meta( $invoice_id, '_disable_installments', '1' );
 			// Clear betaling page token — send_invoice() creates a direct Mollie link instead.
 			delete_post_meta( $invoice_id, '_payment_token' );
-			update_field( 'payment_link', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', '' );
 		} else {
 			delete_post_meta( $invoice_id, '_disable_installments' );
 			// Generate betaling page token so member can choose a payment plan.
@@ -1881,7 +1881,7 @@ class Invoices extends Base {
 			return new \WP_Error( 'not_found', __( 'Factuur niet gevonden.', 'rondo' ), [ 'status' => 404 ] );
 		}
 
-		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		if ( $invoice_type !== 'membership' ) {
 			return new \WP_Error(
 				'invalid_invoice_type',
@@ -1890,7 +1890,7 @@ class Invoices extends Base {
 			);
 		}
 
-		$status = (string) get_field( 'status', $invoice_id );
+		$status = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'status' );
 		if ( ! in_array( $status, [ 'sent', 'overdue' ], true ) ) {
 			return new \WP_Error(
 				'invoice_status_invalid',
@@ -1943,7 +1943,7 @@ class Invoices extends Base {
 			}
 		}
 
-		$line_items = get_field( 'line_items', $invoice_id );
+		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( ! is_array( $line_items ) || empty( $line_items ) ) {
 			return new \WP_Error( 'missing_line_items', __( 'Factuurregels ontbreken.', 'rondo' ), [ 'status' => 400 ] );
 		}
@@ -2037,8 +2037,8 @@ class Invoices extends Base {
 		}
 		$new_total = round( $new_total, 2 );
 
-		update_field( 'line_items', $updated_line_items, $invoice_id );
-		update_field( 'total_amount', $new_total, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'line_items', $updated_line_items );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'total_amount', $new_total );
 
 		// Existing PDF contains outdated totals; force explicit regeneration.
 		$this->clear_pdf( $invoice_id );
@@ -2120,7 +2120,7 @@ class Invoices extends Base {
 
 		// Clear Mollie payment data
 		delete_post_meta( $invoice_id, '_mollie_payment_link_id' );
-		update_field( 'payment_link', '', $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', '' );
 
 		// Clear Mollie payment detail meta (stored by webhook on payment confirmation)
 		delete_post_meta( $invoice_id, '_mollie_payment_method' );
@@ -2148,8 +2148,8 @@ class Invoices extends Base {
 		$this->clear_pdf( $invoice_id );
 
 		// Clear sending dates
-		update_field( 'sent_date', '', $invoice_id );
-		update_field( 'due_date', '', $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'sent_date', '' );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'due_date', '' );
 		delete_post_meta( $invoice_id, 'sent_date' );
 		delete_post_meta( $invoice_id, 'due_date' );
 		delete_post_meta( $invoice_id, '_invoice_sent_by_user_id' );
@@ -2162,14 +2162,14 @@ class Invoices extends Base {
 				'post_status' => 'rondo_draft',
 			]
 		);
-		update_field( 'status', 'draft', $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'draft' );
 
 		// Reset discipline cases doorbelast back to "Nee"
-		$line_items = get_field( 'line_items', $invoice_id );
+		$line_items = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
 		if ( $line_items && is_array( $line_items ) ) {
 			foreach ( $line_items as $item ) {
 				if ( ! empty( $item['discipline_case'] ) ) {
-					update_field( 'is_charged', '', (int) $item['discipline_case'] );
+					\Rondo\Fields\Fields::update_for_post( (int) $item['discipline_case'], 'is_charged', '' );
 				}
 			}
 		}
@@ -2211,7 +2211,7 @@ class Invoices extends Base {
 						'post_status' => 'rondo_overdue',
 					]
 				);
-				update_field( 'status', 'overdue', $invoice->ID );
+				\Rondo\Fields\Fields::update_for_post( $invoice->ID, 'status', 'overdue' );
 			}
 		}
 	}
@@ -2223,8 +2223,8 @@ class Invoices extends Base {
 	 * @return array Formatted invoice data.
 	 */
 	private function format_invoice( $post ) {
-		$status               = get_field( 'status', $post->ID );
-		$raw_payment_link     = get_field( 'payment_link', $post->ID ) ?: null;
+		$status               = \Rondo\Fields\Fields::get_for_post( $post->ID, 'status' );
+		$raw_payment_link     = \Rondo\Fields\Fields::get_for_post( $post->ID, 'payment_link' ) ?: null;
 		$payment_link         = ( $status === 'paid' ) ? null : $raw_payment_link;
 		$reminder_1_sent_at   = (string) get_post_meta( $post->ID, '_invoice_reminder_1_sent_at', true ) ?: null;
 		$reminder_2_sent_at   = (string) get_post_meta( $post->ID, '_invoice_reminder_2_sent_at', true ) ?: null;
@@ -2251,7 +2251,7 @@ class Invoices extends Base {
 
 		return [
 			'id'                  => $post->ID,
-			'invoice_number'      => get_field( 'invoice_number', $post->ID ),
+			'invoice_number'      => \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_number' ),
 			'person'              => $this->get_invoice_person_summary( $post->ID ),
 			'customer_name'       => (string) get_post_meta( $post->ID, '_customer_name', true ),
 			'customer_attention'  => (string) get_post_meta( $post->ID, '_customer_attention', true ),
@@ -2259,7 +2259,7 @@ class Invoices extends Base {
 			'customer_cc_email'   => (string) get_post_meta( $post->ID, '_customer_cc_email', true ),
 			'customer_address'    => (string) get_post_meta( $post->ID, '_customer_address', true ),
 			'invoice_kind'        => get_post_meta( $post->ID, '_invoice_kind', true ) ?: 'normal',
-			'total_amount'        => (float) get_field( 'total_amount', $post->ID ),
+			'total_amount'        => (float) \Rondo\Fields\Fields::get_for_post( $post->ID, 'total_amount' ),
 			'status'              => $status,
 			'post_status'         => $post->post_status,
 			'sent_date'           => get_post_meta( $post->ID, 'sent_date', true ) ?: null,
@@ -2268,7 +2268,7 @@ class Invoices extends Base {
 			'payment_link'        => $payment_link,
 			'payment_account'     => $this->get_invoice_payment_account( $post->ID ),
 			'created'             => $post->post_date,
-			'invoice_type'        => get_field( 'invoice_type', $post->ID ) ?: null,
+			'invoice_type'        => \Rondo\Fields\Fields::get_for_post( $post->ID, 'invoice_type' ) ?: null,
 			'installment_plan'    => get_post_meta( $post->ID, '_installment_plan', true ) ?: null,
 			'installment_count'   => (int) get_post_meta( $post->ID, '_installment_count', true ) ?: null,
 			'paid_installments'   => $this->count_paid_installments( $post->ID ),
@@ -2333,14 +2333,14 @@ class Invoices extends Base {
 	 * @param int $invoice_id The invoice post ID.
 	 */
 	private function clear_qr_code( $invoice_id ) {
-		$qr_path = get_field( 'qr_code_path', $invoice_id );
+		$qr_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 		if ( ! empty( $qr_path ) ) {
 			$upload_dir = wp_upload_dir();
 			$full_path  = $upload_dir['basedir'] . '/' . $qr_path;
 			if ( file_exists( $full_path ) ) {
 				unlink( $full_path );
 			}
-			update_field( 'qr_code_path', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'qr_code_path', '' );
 		}
 	}
 
@@ -2353,14 +2353,14 @@ class Invoices extends Base {
 	 * @param int $invoice_id The invoice post ID.
 	 */
 	private function clear_pdf( $invoice_id ) {
-		$pdf_path = get_field( 'pdf_path', $invoice_id );
+		$pdf_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'pdf_path' );
 		if ( ! empty( $pdf_path ) ) {
 			$upload_dir = wp_upload_dir();
 			$full_path  = $upload_dir['basedir'] . '/' . $pdf_path;
 			if ( file_exists( $full_path ) ) {
 				unlink( $full_path );
 			}
-			update_field( 'pdf_path', '', $invoice_id );
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'pdf_path', '' );
 		}
 	}
 
@@ -2536,11 +2536,11 @@ class Invoices extends Base {
 	 * @return void
 	 */
 	private function persist_invoice_payload( int $invoice_id, array $payload ): void {
-		update_field( 'person', $payload['person_id'], $invoice_id );
-		update_field( 'invoice_type', $payload['invoice_type'], $invoice_id );
-		update_field( 'total_amount', $payload['total_amount'], $invoice_id );
-		update_field( 'line_items', $payload['line_items'], $invoice_id );
-		update_field( 'field_invoice_due_date', $payload['due_date_override'], $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'person', $payload['person_id'] );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'invoice_type', $payload['invoice_type'] );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'total_amount', $payload['total_amount'] );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'line_items', $payload['line_items'] );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'due_date', $payload['due_date_override'] );
 
 		update_post_meta( $invoice_id, '_invoice_kind', $payload['invoice_kind'] );
 		update_post_meta( $invoice_id, '_customer_name', $payload['customer_name'] );
@@ -2589,7 +2589,7 @@ class Invoices extends Base {
 	 * @return array<string, string>
 	 */
 	private function get_invoice_payment_account( int $invoice_id ): array {
-		$invoice_type    = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type    = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		$account_id      = (string) get_post_meta( $invoice_id, '_payment_account_id', true );
 		$internal_name   = (string) get_post_meta( $invoice_id, '_payment_account_internal_name', true );
 		$account_holder  = (string) get_post_meta( $invoice_id, '_payment_account_account_holder', true );
@@ -2630,7 +2630,7 @@ class Invoices extends Base {
 		$invoice = $this->format_invoice( $post );
 
 		// Add line items with discipline case details
-		$line_items      = get_field( 'line_items', $post->ID );
+		$line_items      = \Rondo\Fields\Fields::get_for_post( $post->ID, 'line_items' );
 		$formatted_items = [];
 
 		if ( $line_items && is_array( $line_items ) ) {
@@ -2646,10 +2646,10 @@ class Invoices extends Base {
 					if ( $case && $case->post_type === 'discipline_case' ) {
 						$formatted_item['discipline_case'] = [
 							'id'                   => $case->ID,
-							'dossier_id'           => get_field( 'dossier_id', $case->ID ) ?: '',
-							'match_description'    => get_field( 'match_description', $case->ID ) ?: '',
-							'charge_description'   => get_field( 'charge_description', $case->ID ) ?: '',
-							'sanction_description' => get_field( 'sanction_description', $case->ID ) ?: '',
+							'dossier_id'           => \Rondo\Fields\Fields::get_for_post( $case->ID, 'dossier_id' ) ?: '',
+							'match_description'    => \Rondo\Fields\Fields::get_for_post( $case->ID, 'match_description' ) ?: '',
+							'charge_description'   => \Rondo\Fields\Fields::get_for_post( $case->ID, 'charge_description' ) ?: '',
+							'sanction_description' => \Rondo\Fields\Fields::get_for_post( $case->ID, 'sanction_description' ) ?: '',
 						];
 					} else {
 						$formatted_item['discipline_case'] = null;
@@ -2663,8 +2663,8 @@ class Invoices extends Base {
 		}
 
 		$invoice['line_items']          = $formatted_items;
-		$invoice['pdf_path']            = get_field( 'pdf_path', $post->ID ) ?: null;
-		$invoice['qr_code_path']        = get_field( 'qr_code_path', $post->ID ) ?: null;
+		$invoice['pdf_path']            = \Rondo\Fields\Fields::get_for_post( $post->ID, 'pdf_path' ) ?: null;
+		$invoice['qr_code_path']        = \Rondo\Fields\Fields::get_for_post( $post->ID, 'qr_code_path' ) ?: null;
 		$invoice['email_subject']       = (string) get_post_meta( $post->ID, '_email_subject', true );
 		$invoice['email_body_override'] = (string) get_post_meta( $post->ID, '_email_body_override', true );
 		$invoice['payment_adjusted_at'] = (string) get_post_meta( $post->ID, '_credit_payment_adjustment_recorded_at', true ) ?: null;
@@ -2729,7 +2729,7 @@ class Invoices extends Base {
 	 * @return array|null Person summary data or null if no valid person linked.
 	 */
 	private function get_invoice_person_summary( $invoice_id ) {
-		$person_id = get_field( 'person', $invoice_id );
+		$person_id = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
 
 		if ( empty( $person_id ) ) {
 			return null;
@@ -2755,7 +2755,7 @@ class Invoices extends Base {
 	 */
 	protected function format_invoice_person_summary( $person ) {
 		$summary      = $this->format_person_summary( $person );
-		$company_name = trim( (string) get_field( 'company_name', $person->ID ) );
+		$company_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $person->ID, 'company_name' ) );
 
 		if ( $company_name === '' ) {
 			return $summary;
@@ -2765,9 +2765,9 @@ class Invoices extends Base {
 			' ',
 			array_filter(
 				[
-					get_field( 'first_name', $person->ID ),
-					get_field( 'infix', $person->ID ),
-					get_field( 'last_name', $person->ID ),
+					\Rondo\Fields\Fields::get_for_post( $person->ID, 'first_name' ),
+					\Rondo\Fields\Fields::get_for_post( $person->ID, 'infix' ),
+					\Rondo\Fields\Fields::get_for_post( $person->ID, 'last_name' ),
 				]
 			)
 		);

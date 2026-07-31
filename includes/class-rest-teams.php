@@ -183,7 +183,7 @@ class Teams extends Base {
 
 		// Loop through all people and check their work history
 		foreach ( $people as $person ) {
-			$work_history = get_field( 'work_history', $person->ID ) ?: [];
+			$work_history = \Rondo\Fields\Fields::get_for_post( $person->ID, 'work_history' ) ?: [];
 
 			if ( empty( $work_history ) ) {
 				continue;
@@ -379,7 +379,7 @@ class Teams extends Base {
 	/**
 	 * Get current member counts for all teams and commissies in a single query.
 	 *
-	 * Uses ACF repeater meta key patterns (work_history_X_team) and joins
+	 * Uses native field repeater meta key patterns (work_history_X_team) and joins
 	 * with corresponding end_date and job_title entries to determine current
 	 * membership and player/staff classification.
 	 * Results are cached in a static variable for the duration of the request.

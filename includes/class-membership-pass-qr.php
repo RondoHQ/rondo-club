@@ -60,7 +60,7 @@ class MembershipPassQr {
 			'jti'    => wp_generate_uuid4(),
 		];
 
-		$knvb_id = get_field( 'knvb-id', $person_id );
+		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 		if ( ! empty( $knvb_id ) ) {
 			$payload['knvb_id'] = (string) $knvb_id;
 		}
@@ -140,8 +140,8 @@ class MembershipPassQr {
 	 * @return array
 	 */
 	public function get_person_status( int $person_id, string $season ): array {
-		$is_former = (bool) get_field( 'former_member', $person_id );
-		$lid_tot   = get_field( 'lid-tot', $person_id );
+		$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
+		$lid_tot   = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_tot' );
 		$today     = gmdate( 'Y-m-d' );
 
 		$status = 'active';
@@ -170,13 +170,13 @@ class MembershipPassQr {
 	 * @return array
 	 */
 	private function get_person_summary( int $person_id, array $status, string $season ): array {
-		$first_name = (string) ( get_field( 'first_name', $person_id ) ?: '' );
-		$infix      = (string) ( get_field( 'infix', $person_id ) ?: '' );
-		$last_name  = (string) ( get_field( 'last_name', $person_id ) ?: '' );
+		$first_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '' );
+		$infix      = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '' );
+		$last_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '' );
 		$full_name  = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-		$full_name  = $full_name !== '' ? $full_name : trim( (string) get_field( 'company_name', $person_id ) );
+		$full_name  = $full_name !== '' ? $full_name : trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 
-		$knvb_id = get_field( 'knvb-id', $person_id );
+		$knvb_id = \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 
 		return [
 			'id'              => $person_id,
@@ -289,7 +289,7 @@ class MembershipPassQr {
 	 * @return string
 	 */
 	private function get_current_team_name( int $person_id ): string {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return '';
 		}

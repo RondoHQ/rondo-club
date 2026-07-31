@@ -54,7 +54,7 @@ final class Formatter {
 	}
 
 	/**
-	 * Format one stored/ACF-formatted value for the canonical wire.
+	 * Format one stored value for the canonical wire.
 	 *
 	 * @param array<string,mixed> $definition Field definition.
 	 * @param mixed               $value Value.
@@ -63,6 +63,9 @@ final class Formatter {
 	private static function format_value( array $definition, $value ) {
 		$type = $definition['type'];
 
+		if ( $type === 'select' && ! empty( $definition['multiple'] ) ) {
+			return is_array( $value ) ? array_values( array_map( 'strval', $value ) ) : [];
+		}
 		if ( in_array( $type, [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) && ! is_array( $value ) ) {
 			return [];
 		}
@@ -98,6 +101,16 @@ final class Formatter {
 			}
 			return $rows;
 		}
+		if ( $type === 'gallery' ) {
+			return array_values(
+				array_filter(
+					array_map(
+						static fn( $attachment ) => self::format_attachment( $definition, $attachment ),
+						$value
+					)
+				)
+			);
+		}
 
 		switch ( $type ) {
 			case 'date_picker':
@@ -116,19 +129,27 @@ final class Formatter {
 				return is_numeric( $value ) ? ( (float) $value === (float) (int) $value ? (int) $value : (float) $value ) : null;
 			case 'post_object':
 			case 'taxonomy':
+				if ( ! empty( $definition['multiple'] ) ) {
+					return is_array( $value )
+						? array_values( array_filter( array_map( [ self::class, 'object_id' ], $value ) ) )
+						: [];
+				}
 				return self::object_id( $value );
 			case 'relationship':
 				if ( ! is_array( $value ) ) {
 					return [];
 				}
 				return array_values( array_filter( array_map( [ self::class, 'object_id' ], $value ) ) );
+			case 'file':
+			case 'image':
+				return self::format_attachment( $definition, $value );
 			default:
 				return $value;
 		}
 	}
 
 	/**
-	 * Sanitize one canonical value for native/ACF-compatible storage.
+	 * Sanitize one canonical value for native storage.
 	 *
 	 * @param array<string,mixed> $definition Field definition.
 	 * @param mixed               $value Value.
@@ -141,10 +162,11 @@ final class Formatter {
 			throw new InvalidArgumentException( "{$path} is read-only." );
 		}
 
+		if ( ! empty( $definition['required'] ) && ( $value === null || $value === '' || $value === [] ) ) {
+			throw new InvalidArgumentException( "{$path} is required." );
+		}
+
 		if ( $value === null ) {
-			if ( ! empty( $definition['required'] ) ) {
-				throw new InvalidArgumentException( "{$path} is required." );
-			}
 			return in_array( $type, [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) ? [] : '';
 		}
 
@@ -152,6 +174,7 @@ final class Formatter {
 			if ( ! is_array( $value ) || ! array_is_list( $value ) ) {
 				throw new InvalidArgumentException( "{$path} must be an array." );
 			}
+			self::validate_count( $definition, count( $value ), $path );
 			$rows = [];
 			foreach ( $value as $index => $row ) {
 				if ( ! is_array( $row ) ) {
@@ -165,6 +188,13 @@ final class Formatter {
 				$rows[] = $normalized_row;
 			}
 			return $rows;
+		}
+		if ( $type === 'gallery' ) {
+			if ( ! is_array( $value ) ) {
+				throw new InvalidArgumentException( "{$path} must be an array of attachment IDs." );
+			}
+			self::validate_count( $definition, count( $value ), $path );
+			return array_values( array_filter( array_map( [ self::class, 'object_id' ], $value ) ) );
 		}
 
 		switch ( $type ) {
@@ -197,9 +227,25 @@ final class Formatter {
 				if ( $value !== '' && ! is_numeric( $value ) ) {
 					throw new InvalidArgumentException( "{$path} must be numeric." );
 				}
-				return $value === '' ? '' : (float) $value;
+				if ( $value === '' ) {
+					return '';
+				}
+				$number = (float) $value;
+				if ( isset( $definition['min'] ) && $definition['min'] !== '' && $number < (float) $definition['min'] ) {
+					throw new InvalidArgumentException( "{$path} is below the minimum." );
+				}
+				if ( isset( $definition['max'] ) && $definition['max'] !== '' && $number > (float) $definition['max'] ) {
+					throw new InvalidArgumentException( "{$path} exceeds the maximum." );
+				}
+				return $number;
 			case 'post_object':
 			case 'taxonomy':
+				if ( ! empty( $definition['multiple'] ) ) {
+					if ( ! is_array( $value ) ) {
+						throw new InvalidArgumentException( "{$path} must be an array of IDs." );
+					}
+					return array_values( array_map( 'absint', $value ) );
+				}
 				if ( ! is_numeric( $value ) || (int) $value < 0 ) {
 					throw new InvalidArgumentException( "{$path} must be an ID." );
 				}
@@ -208,8 +254,30 @@ final class Formatter {
 				if ( ! is_array( $value ) ) {
 					throw new InvalidArgumentException( "{$path} must be an array of IDs." );
 				}
-				return array_values( array_map( 'absint', $value ) );
+				self::validate_count( $definition, count( $value ), $path );
+				return array_values( array_filter( array_map( 'absint', $value ) ) );
+			case 'file':
+			case 'image':
+				$attachment_id = self::object_id( $value );
+				if ( ! $attachment_id ) {
+					throw new InvalidArgumentException( "{$path} must be an attachment ID." );
+				}
+				return $attachment_id;
 			case 'select':
+				if ( ! empty( $definition['multiple'] ) ) {
+					if ( ! is_array( $value ) ) {
+						throw new InvalidArgumentException( "{$path} must be an array." );
+					}
+					$choices = [];
+					foreach ( $value as $choice ) {
+						if ( isset( $definition['choices'] ) && ! array_key_exists( (string) $choice, $definition['choices'] ) ) {
+							throw new InvalidArgumentException( "{$path} contains an unknown choice." );
+						}
+						$choices[] = sanitize_text_field( (string) $choice );
+					}
+					return $choices;
+				}
+				// no break
 			case 'radio':
 				if ( $value === '' && ! empty( $definition['allow_null'] ) ) {
 					return '';
@@ -225,12 +293,31 @@ final class Formatter {
 				return array_values( array_map( 'sanitize_text_field', $value ) );
 			case 'url':
 				return esc_url_raw( (string) $value );
+			case 'email':
+				$email = sanitize_email( (string) $value );
+				if ( $value !== '' && $email === '' ) {
+					throw new InvalidArgumentException( "{$path} must be a valid email address." );
+				}
+				return $email;
 			case 'textarea':
 				return sanitize_textarea_field( (string) $value );
 			case 'wysiwyg':
 				return wp_kses_post( (string) $value );
 			default:
-				return is_string( $value ) ? sanitize_text_field( $value ) : $value;
+				$sanitized = is_string( $value ) ? sanitize_text_field( $value ) : $value;
+				if ( is_string( $sanitized ) && ! empty( $definition['maxlength'] ) && mb_strlen( $sanitized ) > (int) $definition['maxlength'] ) {
+					throw new InvalidArgumentException( "{$path} exceeds the maximum length." );
+				}
+				return $sanitized;
+		}
+	}
+
+	private static function validate_count( array $definition, int $count, string $path ): void {
+		if ( ! empty( $definition['min'] ) && $count < (int) $definition['min'] ) {
+			throw new InvalidArgumentException( "{$path} has too few items." );
+		}
+		if ( ! empty( $definition['max'] ) && $count > (int) $definition['max'] ) {
+			throw new InvalidArgumentException( "{$path} has too many items." );
 		}
 	}
 
@@ -254,6 +341,75 @@ final class Formatter {
 
 	private static function site_timezone(): DateTimeZone {
 		return function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+	}
+
+	/** @param mixed $value @return array<string,mixed>|int|string|null */
+	private static function format_attachment( array $definition, $value ) {
+		$attachment_id = self::object_id( $value );
+		if ( ! $attachment_id ) {
+			return null;
+		}
+
+		$return_format = $definition['return_format'] ?? 'array';
+		if ( $return_format === 'id' ) {
+			return $attachment_id;
+		}
+		$url = wp_get_attachment_url( $attachment_id );
+		if ( $return_format === 'url' ) {
+			return $url ?: '';
+		}
+
+		$post = get_post( $attachment_id );
+		if ( ! $post || $post->post_type !== 'attachment' ) {
+			return null;
+		}
+		$metadata  = wp_get_attachment_metadata( $attachment_id );
+		$mime_type = (string) get_post_mime_type( $attachment_id );
+		$type_bits = array_pad( explode( '/', $mime_type, 2 ), 2, '' );
+
+		return [
+			'ID'          => $attachment_id,
+			'id'          => $attachment_id,
+			'title'       => $post->post_title,
+			'filename'    => wp_basename( (string) get_attached_file( $attachment_id ) ),
+			'filesize'    => is_file( (string) get_attached_file( $attachment_id ) ) ? filesize( (string) get_attached_file( $attachment_id ) ) : 0,
+			'url'         => $url ?: '',
+			'link'        => get_attachment_link( $attachment_id ),
+			'alt'         => (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ),
+			'author'      => (string) $post->post_author,
+			'description' => $post->post_content,
+			'caption'     => $post->post_excerpt,
+			'name'        => $post->post_name,
+			'status'      => $post->post_status,
+			'uploaded_to' => (int) $post->post_parent,
+			'date'        => $post->post_date,
+			'modified'    => $post->post_modified,
+			'menu_order'  => (int) $post->menu_order,
+			'mime_type'   => $mime_type,
+			'type'        => $type_bits[0],
+			'subtype'     => $type_bits[1],
+			'icon'        => wp_mime_type_icon( $attachment_id ),
+			'width'       => is_array( $metadata ) ? (int) ( $metadata['width'] ?? 0 ) : 0,
+			'height'      => is_array( $metadata ) ? (int) ( $metadata['height'] ?? 0 ) : 0,
+			'sizes'       => self::attachment_sizes( $attachment_id, is_array( $metadata ) ? $metadata : [] ),
+		];
+	}
+
+	/** @return array<string,array<string,mixed>> */
+	private static function attachment_sizes( int $attachment_id, array $metadata ): array {
+		$sizes = [];
+		foreach ( $metadata['sizes'] ?? [] as $name => $details ) {
+			$source = wp_get_attachment_image_src( $attachment_id, $name );
+			if ( ! $source ) {
+				continue;
+			}
+			$sizes[ $name ] = [
+				'url'    => $source[0],
+				'width'  => (int) $source[1],
+				'height' => (int) $source[2],
+			];
+		}
+		return $sizes;
 	}
 
 	/** @param mixed $value */

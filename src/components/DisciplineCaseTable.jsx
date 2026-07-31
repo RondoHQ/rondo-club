@@ -8,12 +8,12 @@ import SortableHeader from '@/components/SortableHeader';
 import { getDoorbelastLabel, isDoorbelastException, isDoorbelastNVT } from '@/utils/disciplineCases';
 
 /**
- * Parse ACF date format to Date object
+ * Parse native field date format to Date object
  * Handles both YYYYMMDD format (e.g., "20241015") and YYYY-MM-DD format (e.g., "2025-08-23")
- * @param {string} dateStr - ACF date string
+ * @param {string} dateStr - native field date string
  * @returns {Date} Parsed date or epoch start if invalid
  */
-function parseAcfDate(dateStr) {
+function parseFieldDate(dateStr) {
   if (!dateStr) return new Date(0);
 
   // Handle YYYY-MM-DD format (10 characters with dashes)
@@ -34,12 +34,12 @@ function parseAcfDate(dateStr) {
 }
 
 /**
- * Format ACF date to display format
+ * Format native field date to display format
  * Handles both YYYYMMDD format (e.g., "20260118") and YYYY-MM-DD format (e.g., "2025-08-23")
- * @param {string} dateStr - ACF date string
+ * @param {string} dateStr - native field date string
  * @returns {string} Formatted date or '-' if invalid
  */
-function formatAcfDate(dateStr) {
+function formatFieldDate(dateStr) {
   if (!dateStr) return '-';
 
   // Handle YYYY-MM-DD format (10 characters with dashes)
@@ -51,7 +51,7 @@ function formatAcfDate(dateStr) {
 
   // Handle YYYYMMDD format (8 characters, no dashes)
   if (dateStr.length === 8) {
-    const date = parseAcfDate(dateStr);
+    const date = parseFieldDate(dateStr);
     return format(date, 'd-M-yyyy');
   }
 
@@ -84,7 +84,7 @@ export default function DisciplineCaseTable({
   isCreatingInvoice = false,
   canCreateInvoice = false,
   isColVisible = () => true,
-  formatTeamName = (acf) => acf?.team_name || '-',
+  formatTeamName = (fields) => fields?.team_name || '-',
 }) {
   const [expandedId, setExpandedId] = useState(null);
   const [sortField, setSortField] = useState('match_date');
@@ -162,29 +162,29 @@ export default function DisciplineCaseTable({
     if (!cases) return [];
     return [...cases].sort((a, b) => {
       let cmp = 0;
-      const acfA = a.fields || {};
-      const acfB = b.fields || {};
+      const fieldsA = a.fields || {};
+      const fieldsB = b.fields || {};
 
       switch (sortField) {
         case 'person': {
-          const personA = personMap.get(acfA.person);
-          const personB = personMap.get(acfB.person);
+          const personA = personMap.get(fieldsA.person);
+          const personB = personMap.get(fieldsB.person);
           const nameA = personA ? getPersonName(personA) : '';
           const nameB = personB ? getPersonName(personB) : '';
           cmp = nameA.localeCompare(nameB);
           break;
         }
         case 'match_date': {
-          const dateA = parseAcfDate(acfA.match_date);
-          const dateB = parseAcfDate(acfB.match_date);
+          const dateA = parseFieldDate(fieldsA.match_date);
+          const dateB = parseFieldDate(fieldsB.match_date);
           cmp = dateA - dateB;
           break;
         }
         case 'team_name':
-          cmp = formatTeamName(acfA).localeCompare(formatTeamName(acfB));
+          cmp = formatTeamName(fieldsA).localeCompare(formatTeamName(fieldsB));
           break;
         case 'sanction':
-          cmp = (acfA.sanction_description || '').localeCompare(acfB.sanction_description || '');
+          cmp = (fieldsA.sanction_description || '').localeCompare(fieldsB.sanction_description || '');
           break;
         case 'card': {
           // Sort by card type: red > yellow > none
@@ -192,23 +192,23 @@ export default function DisciplineCaseTable({
             if (!codes) return 0;
             return codes.endsWith('-1') ? 1 : 2; // yellow = 1, red = 2
           };
-          cmp = getCardValue(acfA.charge_codes) - getCardValue(acfB.charge_codes);
+          cmp = getCardValue(fieldsA.charge_codes) - getCardValue(fieldsB.charge_codes);
           break;
         }
         case 'charged':
           // n.v.t. -> uitzondering -> nee -> doorbelast
           {
-            const chargedRank = (acf) => {
-              if (isDoorbelastNVT(acf)) return -1;
-              if (isDoorbelastException(acf)) return 0;
-              if (!acf.is_charged) return 1;
+            const chargedRank = (fields) => {
+              if (isDoorbelastNVT(fields)) return -1;
+              if (isDoorbelastException(fields)) return 0;
+              if (!fields.is_charged) return 1;
               return 2;
             };
-            cmp = chargedRank(acfA) - chargedRank(acfB);
+            cmp = chargedRank(fieldsA) - chargedRank(fieldsB);
           }
           break;
         case 'fee':
-          cmp = (parseFloat(acfA.administrative_fee) || 0) - (parseFloat(acfB.administrative_fee) || 0);
+          cmp = (parseFloat(fieldsA.administrative_fee) || 0) - (parseFloat(fieldsB.administrative_fee) || 0);
           break;
         default:
           cmp = 0;
@@ -363,9 +363,9 @@ export default function DisciplineCaseTable({
           {sortedCases.map((dc, index) => {
             const isExpanded = expandedId === dc.id;
             const person = personMap.get(dc.fields?.person);
-            const acf = dc.fields || {};
+            const fields = dc.fields || {};
             const isInvoiced = invoicedSet.has(dc.id);
-            const isException = isDoorbelastException(acf);
+            const isException = isDoorbelastException(fields);
             const isSelected = selectedCaseIds.has(dc.id);
 
             return (
@@ -386,7 +386,7 @@ export default function DisciplineCaseTable({
                         <div className="flex items-center justify-center" title="Doorbelast uitzondering">
                           <span className="text-xs text-gray-400">-</span>
                         </div>
-                      ) : isDoorbelastNVT(acf) ? (
+                      ) : isDoorbelastNVT(fields) ? (
                         <div />
                       ) : (
                         <input
@@ -426,32 +426,32 @@ export default function DisciplineCaseTable({
                   {isColVisible('wedstrijd') && (
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 dark:text-gray-100">
-                        {acf.match_description || '-'}
+                        {fields.match_description || '-'}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatAcfDate(acf.match_date)}
+                        {formatFieldDate(fields.match_date)}
                       </div>
                     </td>
                   )}
                   {isColVisible('team') && (
                     <td className="px-4 py-3">
                       <span className="text-sm text-gray-900 dark:text-gray-100">
-                        {formatTeamName(acf)}
+                        {formatTeamName(fields)}
                       </span>
                     </td>
                   )}
                   {isColVisible('sanctie') && (
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
-                        {acf.sanction_description || '-'}
+                        {fields.sanction_description || '-'}
                       </div>
                     </td>
                   )}
                   {isColVisible('kaart') && (
                     <td className="px-4 py-3 text-center">
                       <span className="text-lg">
-                        {acf.charge_codes ? (
-                          acf.charge_codes.endsWith('-1') ? '🟨' : '🟥'
+                        {fields.charge_codes ? (
+                          fields.charge_codes.endsWith('-1') ? '🟨' : '🟥'
                         ) : (
                           <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
                         )}
@@ -461,14 +461,14 @@ export default function DisciplineCaseTable({
                   {isColVisible('doorbelast') && (
                     <td className="px-4 py-3 text-center">
                       <span className="text-sm text-gray-900 dark:text-gray-100">
-                        {getDoorbelastLabel(acf)}
+                        {getDoorbelastLabel(fields)}
                       </span>
                     </td>
                   )}
                   {isColVisible('boete') && (
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {formatCurrency(parseFloat(acf.administrative_fee) || 0, 2)}
+                        {formatCurrency(parseFloat(fields.administrative_fee) || 0, 2)}
                       </span>
                     </td>
                   )}
@@ -502,12 +502,12 @@ export default function DisciplineCaseTable({
                             Tenlastelegging
                           </h4>
                           <p className="text-gray-600 dark:text-gray-400">
-                            {acf.charge_description ||
+                            {fields.charge_description ||
                               'Geen tenlastelegging beschikbaar'}
                           </p>
-                          {acf.charge_codes && (
+                          {fields.charge_codes && (
                             <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              Code: {acf.charge_codes}
+                              Code: {fields.charge_codes}
                             </p>
                           )}
                         </div>
@@ -516,7 +516,7 @@ export default function DisciplineCaseTable({
                             Sanctie (volledig)
                           </h4>
                           <p className="text-gray-600 dark:text-gray-400">
-                            {acf.sanction_description || 'Geen sanctie beschikbaar'}
+                            {fields.sanction_description || 'Geen sanctie beschikbaar'}
                           </p>
                         </div>
                         <div>
@@ -524,7 +524,7 @@ export default function DisciplineCaseTable({
                             Team
                           </h4>
                           <p className="text-gray-600 dark:text-gray-400">
-                            {formatTeamName(acf)}
+                            {formatTeamName(fields)}
                           </p>
                         </div>
                         <div>
@@ -532,13 +532,13 @@ export default function DisciplineCaseTable({
                             Details
                           </h4>
                           <p className="text-gray-600 dark:text-gray-400">
-                            Dossier: {acf.dossier_id || '-'}
+                            Dossier: {fields.dossier_id || '-'}
                           </p>
                           <p className="text-gray-600 dark:text-gray-400">
-                            Verwerkingsdatum: {formatAcfDate(acf.processing_date)}
+                            Verwerkingsdatum: {formatFieldDate(fields.processing_date)}
                           </p>
                           <p className="text-gray-600 dark:text-gray-400">
-                            Doorbelast: {getDoorbelastLabel(acf)}
+                            Doorbelast: {getDoorbelastLabel(fields)}
                           </p>
                         </div>
                       </div>

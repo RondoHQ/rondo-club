@@ -96,9 +96,9 @@ class TodoMigration {
 		foreach ( $todos as $todo_id ) {
 			++$stats['total'];
 
-			$is_completed            = get_field( 'is_completed', $todo_id );
-			$awaiting_response       = get_field( 'awaiting_response', $todo_id );
-			$awaiting_response_since = get_field( 'awaiting_response_since', $todo_id );
+			$is_completed            = \Rondo\Fields\Fields::get_for_post( $todo_id, 'is_completed' );
+			$awaiting_response       = \Rondo\Fields\Fields::get_for_post( $todo_id, 'awaiting_response' );
+			$awaiting_response_since = \Rondo\Fields\Fields::get_for_post( $todo_id, 'awaiting_response_since' );
 
 			// Determine new status
 			if ( $is_completed && $awaiting_response ) {
@@ -124,13 +124,13 @@ class TodoMigration {
 
 				// Rename awaiting_response_since to awaiting_since if migrating to awaiting
 				if ( $new_status === 'rondo_awaiting' && $awaiting_response_since ) {
-					update_field( 'awaiting_since', $awaiting_response_since, $todo_id );
+					\Rondo\Fields\Fields::update_for_post( $todo_id, 'awaiting_since', $awaiting_response_since );
 				}
 
 				// Clean up old meta fields
-				delete_field( 'is_completed', $todo_id );
-				delete_field( 'awaiting_response', $todo_id );
-				delete_field( 'awaiting_response_since', $todo_id );
+				\Rondo\Fields\Fields::delete_for_post( $todo_id, 'is_completed' );
+				\Rondo\Fields\Fields::delete_for_post( $todo_id, 'awaiting_response' );
+				\Rondo\Fields\Fields::delete_for_post( $todo_id, 'awaiting_response_since' );
 			}
 		}
 

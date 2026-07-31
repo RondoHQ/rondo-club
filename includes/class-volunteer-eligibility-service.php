@@ -56,7 +56,7 @@ class VolunteerEligibilityService {
 	 * Transient key prefix. Bumped via `invalidate_cache()` on any person save.
 	 * The full result of `get_eligibility_view()` is cached for CACHE_TTL_SECONDS
 	 * so a dashboard refresh costs one O(1) transient read instead of an
-	 * O(N²) full scan with thousands of ACF calls.
+	 * O(N²) full scan with thousands of native field calls.
 	 */
 	const CACHE_PREFIX      = 'rondo_eligibility_view_';
 	const CACHE_TTL_SECONDS = 5 * MINUTE_IN_SECONDS;
@@ -287,7 +287,7 @@ class VolunteerEligibilityService {
 	 * staf-rol, betaalde vrijwilliger, handmatige vrijstelling).
 	 */
 	public static function is_active_member( int $person_id ): bool {
-		// Direct post_meta — get_field() bootstraps the full ACF field
+		// Direct post meta avoids constructing the full logical field payload.
 		// definition tree, which is much slower in hot loops with thousands
 		// of persons.
 		$former = get_post_meta( $person_id, 'former_member', true );
@@ -327,12 +327,12 @@ class VolunteerEligibilityService {
 	 * entry? Honorary leden hebben geen spelactiviteit en horen niet als
 	 * data-gap te verschijnen.
 	 *
-	 * Reads work_history via get_field() (ACF repeater) — acceptably priced
+	 * Reads work_history through the native field API — acceptably priced
 	 * because callers only invoke this for the small set of personen zonder
 	 * leeftijdsgroep, niet voor de volledige ledenpopulatie.
 	 */
 	public static function has_active_honorary_role( int $person_id ): bool {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
 			return false;
 		}
@@ -556,7 +556,7 @@ class VolunteerEligibilityService {
 	 *   - null when no leeftijdsgroep is set or unparseable
 	 */
 	public function age_group_number( int $person_id ): ?int {
-		// Direct post_meta — leeftijdsgroep is a simple string, no ACF formatting needed.
+		// Direct post_meta — leeftijdsgroep is a simple string, no native field formatting needed.
 		$raw = get_post_meta( $person_id, 'leeftijdsgroep', true );
 		if ( ! is_string( $raw ) || trim( $raw ) === '' ) {
 			return null;
@@ -673,7 +673,7 @@ class VolunteerEligibilityService {
 	 * @return int[] Parent person IDs.
 	 */
 	public function find_parents( int $person_id ): array {
-		$rels = get_field( 'relationships', $person_id );
+		$rels = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 		if ( empty( $rels ) || ! is_array( $rels ) ) {
 			return [];
 		}
@@ -704,7 +704,7 @@ class VolunteerEligibilityService {
 	 * te filteren: een ouder heeft terecht geen Sportlink-spelactiviteit.
 	 */
 	public function is_parent( int $person_id ): bool {
-		$rels = get_field( 'relationships', $person_id );
+		$rels = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 		if ( empty( $rels ) || ! is_array( $rels ) ) {
 			return false;
 		}
@@ -723,7 +723,7 @@ class VolunteerEligibilityService {
 	 * @return int[] Child person IDs.
 	 */
 	public function find_youth_children( int $person_id ): array {
-		$rels = get_field( 'relationships', $person_id );
+		$rels = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 		if ( empty( $rels ) || ! is_array( $rels ) ) {
 			return [];
 		}
@@ -753,7 +753,7 @@ class VolunteerEligibilityService {
 	 * Format: "POSTALCODE-HOUSENUMBER" (e.g. "1234AB-12A"). Null when address incomplete.
 	 */
 	public function address_key( int $person_id ): ?string {
-		$addresses = get_field( 'addresses', $person_id );
+		$addresses = \Rondo\Fields\Fields::get_for_post( $person_id, 'addresses' );
 		if ( empty( $addresses ) || ! is_array( $addresses ) ) {
 			return null;
 		}
@@ -889,7 +889,7 @@ class VolunteerEligibilityService {
 	}
 
 	/**
-	 * Quick adult-check from a raw leeftijdsgroep string (no get_field, no ACF).
+	 * Quick adult-check from a raw leeftijdsgroep string (no get_field, no native field).
 	 * Mirrors age_group_number() classification.
 	 */
 	private function is_adult_age_string( string $lg ): bool {

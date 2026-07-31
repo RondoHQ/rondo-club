@@ -13,7 +13,7 @@
     <exclude-pattern>node_modules/*</exclude-pattern>
     <exclude-pattern>dist/*</exclude-pattern>
     <exclude-pattern>tests/Support/_generated/*</exclude-pattern>
-    <!-- Machine-generated from reviewed ACF JSON; lint the generator instead. -->
+    <!-- Large declarative registry maintained as reviewed PHP configuration. -->
     <exclude-pattern>includes/config/field-registry.php</exclude-pattern>
 
     <!-- Show progress and sniff codes -->

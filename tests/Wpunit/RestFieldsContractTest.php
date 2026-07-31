@@ -13,13 +13,12 @@ class RestFieldsContractTest extends RondoTestCase {
 
 	protected function set_up(): void {
 		parent::set_up();
-		$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
 		$this->admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $this->admin_id );
 		$this->bootRestControllers( [ RestFields::class ] );
 	}
 
-	public function test_get_emits_canonical_fields_beside_acf(): void {
+	public function test_get_emits_only_the_canonical_fields_contract(): void {
 		$person_id = $this->createPerson(
 			[],
 			[
@@ -34,7 +33,7 @@ class RestFieldsContractTest extends RondoTestCase {
 		$data     = $response->get_data();
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertArrayHasKey( 'acf', $data );
+		$this->assertArrayNotHasKey( 'acf', $data );
 		$this->assertArrayHasKey( 'fields', $data );
 		$this->assertSame( '1234567', $data['fields']['knvb_id'] );
 		$this->assertSame( '2026-07-31', $data['fields']['datum_vog'] );
@@ -42,7 +41,7 @@ class RestFieldsContractTest extends RondoTestCase {
 		$this->assertArrayNotHasKey( 'knvb-id', $data['fields'] );
 	}
 
-	public function test_fields_write_is_partial_and_visible_through_acf(): void {
+	public function test_fields_write_is_partial_and_visible_on_read(): void {
 		$person_id = $this->createPerson(
 			[],
 			[
@@ -64,10 +63,9 @@ class RestFieldsContractTest extends RondoTestCase {
 		$data     = $response->get_data();
 
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
-		$this->assertSame( 'Piet', get_field( 'first_name', $person_id ) );
-		$this->assertSame( 'Jansen', get_field( 'last_name', $person_id ), 'An omitted field must stay unchanged.' );
+		$this->assertSame( 'Piet', \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
+		$this->assertSame( 'Jansen', \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ), 'An omitted field must stay unchanged.' );
 		$this->assertSame( '20260731', get_post_meta( $person_id, 'datum-vog', true ) );
-		$this->assertSame( 'Piet', $data['acf']['first_name'] );
 		$this->assertSame( 'Piet', $data['fields']['first_name'] );
 	}
 
@@ -107,10 +105,10 @@ class RestFieldsContractTest extends RondoTestCase {
 		$this->assertSame( 200, $clear_response->get_status(), wp_json_encode( $clear_response->get_data() ) );
 		$this->assertSame( '', get_post_meta( $person_id, 'birthdate', true ) );
 		$this->assertSame( '', get_post_meta( $person_id, 'addresses', true ) );
-		$this->assertEmpty( get_field( 'addresses', $person_id ) );
+		$this->assertEmpty( \Rondo\Fields\Fields::get_for_post( $person_id, 'addresses' ) );
 	}
 
-	public function test_mixed_payload_is_rejected_before_either_provider_writes(): void {
+	public function test_removed_acf_payload_is_rejected_before_either_provider_writes(): void {
 		$person_id = $this->createPerson( [], [ 'first_name' => 'Jan' ] );
 		$request   = new \WP_REST_Request( 'POST', '/wp/v2/people/' . $person_id );
 		$request->set_body_params(
@@ -123,8 +121,9 @@ class RestFieldsContractTest extends RondoTestCase {
 		$response = rest_do_request( $request );
 
 		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
-		$this->assertSame( 'ambiguous_field_payload', $response->get_data()['code'] );
-		$this->assertSame( 'Jan', get_field( 'first_name', $person_id ) );
+		$this->assertSame( 'removed_acf_payload', $response->get_data()['code'] );
+		$this->assertStringContainsString( 'fields', $response->get_data()['message'] );
+		$this->assertSame( 'Jan', \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 	}
 
 	public function test_unknown_and_read_only_relationship_fields_return_field_specific_errors(): void {

@@ -75,7 +75,7 @@ Each person object represents a contact record (custom post type `person`).
 
 - `status` (string, required): Post status. Always `"publish"` for demo fixtures.
 
-- `acf` (object, required): All ACF and Sportlink-synced meta fields
+- `fields` (object, required): All canonical Rondo and Sportlink-synced fields
 
   **Basic Information:**
   - `first_name` (string, required): First name
@@ -86,8 +86,8 @@ Each person object represents a contact record (custom post type `person`).
   - `pronouns` (string, nullable): Preferred pronouns (e.g., "they/them", "she/her")
   - `birthdate` (string, required): Date of birth in format `"Y-m-d"` (e.g., `"1985-03-15"`)
   - `former_member` (boolean, required): Whether person is a former member (default: `false`)
-  - `lid-tot` (string, nullable): Date membership ended, format `"Y-m-d"`
-  - `datum-overlijden` (string, nullable): Date of death, format `"Y-m-d"`
+  - `lid_tot` (string, nullable): Date membership ended, format `"Y-m-d"`
+  - `datum_overlijden` (string, nullable): Date of death, format `"Y-m-d"`
 
   **Contact Information:**
   - `contact_info` (array of objects): Contact methods
@@ -106,7 +106,7 @@ Each person object represents a contact record (custom post type `person`).
 
   **Work History:**
   - `work_history` (array of objects): Team/commissie positions
-    - `team` (string, nullable): Reference to team or commissie (e.g., `"team:5"` or `"commissie:2"`)
+    - `team_id` (string, nullable): Reference to team or commissie (e.g., `"team:5"` or `"commissie:2"`)
     - `entity_type` (string): Type of entity, either `"team"` or `"commissie"`
     - `job_title` (string): Position title
     - `description` (string, nullable): Description of role
@@ -116,27 +116,27 @@ Each person object represents a contact record (custom post type `person`).
 
   **Relationships:**
   - `relationships` (array of objects): Relationships to other people
-    - `related_person` (string): Reference to another person (e.g., `"person:5"`)
-    - `relationship_type` (string): Reference to relationship type taxonomy term (e.g., `"relationship_type:parent"`)
+    - `related_person_id` (string): Reference to another person (e.g., `"person:5"`)
+    - `relationship_type_id` (string): Reference to relationship type taxonomy term (e.g., `"relationship_type:parent"`)
     - `relationship_label` (string, nullable): Custom label for this relationship (e.g., "Brother-in-law")
 
   **Sportlink-Synced Fields** (all nullable):
-  - `lid-sinds` (string): Member since date, format `"Y-m-d"`
+  - `lid_sinds` (string): Member since date, format `"Y-m-d"`
   - `leeftijdsgroep` (string): Age class description (e.g., "Onder 10", "Senioren")
-  - `datum-vog` (string): VOG (certificate of conduct) date, format `"Y-m-d"`
-  - `datum-foto` (string): Photo date, format `"Y-m-d"`
-  - `type-lid` (string): Member type
-  - `huidig-vrijwilliger` (string): Current volunteer status, either `"0"` or `"1"`
-  - `financiele-blokkade` (boolean): Financial block flag
+  - `datum_vog` (string): VOG (certificate of conduct) date, format `"Y-m-d"`
+  - `datum_foto` (string): Photo date, format `"Y-m-d"`
+  - `type_lid` (string): Member type
+  - `huidig_vrijwilliger` (string): Current volunteer status, either `"0"` or `"1"`
+  - `financiele_blokkade` (boolean): Financial block flag
   - `relatiecode` (string): KNVB relation code
   - `werkfuncties` (array of objects): Job functions synced from Sportlink
     - Same structure as `work_history` above
-  - `freescout-id` (string): FreeScout customer ID
-  - `factuur-adres` (string): Invoice address
-  - `factuur-email` (string): Invoice email
-  - `factuur-referentie` (string): Invoice reference
+  - `freescout_id` (string): FreeScout customer ID
+  - `factuur_adres` (string): Invoice address
+  - `factuur_email` (string): Invoice email
+  - `factuur_referentie` (string): Invoice reference
 
-- `post_meta` (object, optional): Non-ACF post meta fields
+- `post_meta` (object, optional): Internal post meta outside the public field contract
   - `vog_email_sent_date` (string, nullable): Date VOG email was sent, format `"Y-m-d"`
   - `vog_justis_submitted_date` (string, nullable): Date Justis was submitted, format `"Y-m-d"`
   - `vog_reminder_sent_date` (string, nullable): Date VOG reminder was sent, format `"Y-m-d"`
@@ -165,7 +165,7 @@ Each team object represents a sports team (custom post type `team`). Teams are s
 
 - `parent` (string, nullable): Reference to parent team if hierarchical (e.g., `"team:3"`). Teams support parent-child relationships.
 
-- `acf` (object, required): ACF fields
+- `fields` (object, required): Canonical Rondo fields
   - `website` (string, nullable): Team website URL
   - `contact_info` (array of objects): Contact methods (same structure as person contact_info)
     - `contact_type` (string): One of `"phone"`, `"email"`, `"address"`, `"other"`
@@ -187,7 +187,7 @@ Same structure as teams, but with `_ref` format `"commissie:1"`, `"commissie:2"`
 - `content` (string, nullable): Post content/description
 - `status` (string, required): Post status
 - `parent` (string, nullable): Reference to parent commissie (e.g., `"commissie:2"`)
-- `acf` (object, required): ACF fields
+- `fields` (object, required): Canonical Rondo fields
   - `website` (string, nullable): Website URL
   - `contact_info` (array of objects): Contact methods (same structure as teams)
 
@@ -205,11 +205,11 @@ Each discipline case represents a sports disciplinary action (custom post type `
 
 - `status` (string, required): Post status
 
-- `acf` (object, required): ACF fields
+- `fields` (object, required): Canonical Rondo fields
   - `dossier_id` (string, required): Unique identifier from Sportlink
   - `person` (string, nullable): Reference to linked person (e.g., `"person:42"`)
-  - `match_date` (string, nullable): Date of match/incident in format `"Ymd"` (e.g., `"20240315"`)
-  - `processing_date` (string, nullable): Date case was processed in format `"Ymd"`
+  - `match_date` (string, nullable): Date of match/incident in format `"Y-m-d"` (e.g., `"2024-03-15"`)
+  - `processing_date` (string, nullable): Date case was processed in format `"Y-m-d"`
   - `match_description` (string, nullable): Description of the match
   - `team_name` (string, nullable): Name of the involved team
   - `charge_codes` (string, nullable): Article number of the offense
@@ -241,10 +241,10 @@ Each todo represents a task (custom post type `rondo_todo`).
 
 - `date` (string, required): Post creation date in ISO 8601 format (e.g., `"2026-02-11T10:30:00"`)
 
-- `acf` (object, required): ACF fields
+- `fields` (object, required): Canonical Rondo fields
   - `related_persons` (array of strings, required): References to related people (e.g., `["person:1", "person:5"]`)
   - `notes` (string, nullable): Additional notes (WYSIWYG HTML content)
-  - `awaiting_since` (string, nullable): Timestamp when todo entered awaiting status, format `"Y-m-d H:i:s"`
+  - `awaiting_since` (string, nullable): RFC 3339 timestamp with an explicit timezone
   - `due_date` (string, nullable): Due date in format `"Y-m-d"`
 
 ---
@@ -297,7 +297,7 @@ Taxonomy terms that need to exist for the fixture to work. Terms are organized b
   - `_ref` (string, required): Reference ID using slug format (e.g., `"relationship_type:parent"`, `"relationship_type:child"`)
   - `name` (string, required): Term name (e.g., "Parent")
   - `slug` (string, required): Term slug (e.g., "parent")
-  - `acf` (object, optional): ACF fields for the term
+  - `fields` (object, optional): Canonical Rondo fields for the term
     - `inverse_relationship_type` (string, nullable): Reference to the inverse relationship type (e.g., `"relationship_type:child"` for a parent relationship, `"relationship_type:parent"` for a child relationship, `"relationship_type:sibling"` for sibling - same as itself)
 
 - `seizoenen` (array of objects): Season taxonomy terms
@@ -313,7 +313,7 @@ Taxonomy terms that need to exist for the fixture to work. Terms are organized b
       "_ref": "relationship_type:parent",
       "name": "Parent",
       "slug": "parent",
-      "acf": {
+      "fields": {
         "inverse_relationship_type": "relationship_type:child"
       }
     },
@@ -321,7 +321,7 @@ Taxonomy terms that need to exist for the fixture to work. Terms are organized b
       "_ref": "relationship_type:child",
       "name": "Child",
       "slug": "child",
-      "acf": {
+      "fields": {
         "inverse_relationship_type": "relationship_type:parent"
       }
     },
@@ -329,7 +329,7 @@ Taxonomy terms that need to exist for the fixture to work. Terms are organized b
       "_ref": "relationship_type:sibling",
       "name": "Sibling",
       "slug": "sibling",
-      "acf": {
+      "fields": {
         "inverse_relationship_type": "relationship_type:sibling"
       }
     }
@@ -443,12 +443,12 @@ References use the format `"{entity_type}:{sequential_number}"` or `"{entity_typ
 4. When importing relationships, the importer looks up the target's WordPress post ID from the mapping
 
 **Example:**
-- Person A has `work_history[0].team = "team:5"`
+- Person A has `work_history[0].team_id = "team:5"`
 - During import:
   - Team with `_ref: "team:5"` is imported first → creates WordPress post ID 123
   - Mapping stores: `"team:5" => 123`
   - Person A is imported → when processing work_history, `"team:5"` is resolved to `123`
-  - ACF field stores the actual WordPress post ID `123`
+  - Native metadata stores the actual WordPress post ID `123`
 
 ### Reference Scope
 
@@ -541,7 +541,7 @@ Within each entity type, forward references may exist (e.g., Person A references
 ### Export (Phase 171)
 - Query all entities of each type
 - Convert WordPress post IDs to fixture refs
-- Serialize ACF data to the fixture format
+- Serialize canonical field data to the fixture format
 - Handle repeater fields and nested structures
 - Generate sequential reference IDs for each entity type
 - Anonymize data if needed (names, emails, addresses)
@@ -551,7 +551,7 @@ Within each entity type, forward references may exist (e.g., Person A references
 - Create entities in dependency order
 - Build ref → post ID mapping as entities are created
 - Resolve references in a second pass after all entities of a type are imported
-- Handle ACF field updates via `update_field()` function
+- Apply canonical values through `Rondo\Fields\Fields`
 - Create taxonomy terms before importing entities that reference them
 - Store WordPress options for settings
 

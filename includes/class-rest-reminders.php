@@ -576,7 +576,7 @@ class Reminders extends Base {
 	}
 
 	/**
-	 * Format anniversary person summary without expensive ACF calls.
+	 * Format anniversary person summary without expensive native field calls.
 	 *
 	 * @param \WP_Post $person Person post object.
 	 * @return array
@@ -742,7 +742,7 @@ class Reminders extends Base {
 	/**
 	 * Normalize supported date strings to ISO Y-m-d.
 	 *
-	 * Supports ACF date formats Y-m-d and Ymd.
+	 * Supports native field date formats Y-m-d and Ymd.
 	 *
 	 * @param string $raw_date Raw date value.
 	 * @return string|null

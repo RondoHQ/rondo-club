@@ -62,8 +62,8 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {types.map((type) => {
-            const acf = type.fields || {};
-            const color = acf.color || '#6b7280';
+            const fields = type.fields || {};
+            const color = fields.color || '#6b7280';
             return (
               <div key={type.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                 <div className="flex items-start gap-3">
@@ -72,9 +72,9 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
                     <div className="font-medium text-gray-900 dark:text-gray-100">
                       {type.title?.rendered || type.title}
                     </div>
-                    {acf.description && (
+                    {fields.description && (
                       <p className="mt-1 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">
-                        {acf.description}
+                        {fields.description}
                       </p>
                     )}
                   </div>
@@ -87,16 +87,16 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
                   </Link>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1 text-xs">
-                  {acf.vog_required && (
+                  {fields.vog_required && (
                     <span className="rounded bg-cyan-100 px-2 py-0.5 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">VOG</span>
                   )}
-                  {acf.iva_required && (
+                  {fields.iva_required && (
                     <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">IVA</span>
                   )}
-                  {acf.sleutel_involved && (
+                  {fields.sleutel_involved && (
                     <span className="rounded bg-purple-100 px-2 py-0.5 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">Sleutel</span>
                   )}
-                  <span className="ml-auto text-gray-400">Cap. {acf.default_capacity || 1}</span>
+                  <span className="ml-auto text-gray-400">Cap. {fields.default_capacity || 1}</span>
                 </div>
               </div>
             );

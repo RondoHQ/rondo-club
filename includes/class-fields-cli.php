@@ -15,6 +15,47 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** WP-CLI commands supporting the field-contract migration. */
 final class FieldsCli {
+	/** Export the exact native dynamic-definition store for backup/restore. */
+	public function backup_dynamic(): void {
+		$manager = new Manager();
+		\WP_CLI::line( wp_json_encode( $manager->export_store(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
+	}
+
+	/**
+	 * Validate or import a native dynamic-definition backup.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <file>
+	 * : JSON backup created by backup-dynamic.
+	 *
+	 * [--apply]
+	 * : Persist the import. Omit for a dry-run validation.
+	 *
+	 * [--replace]
+	 * : Replace all definitions instead of merging by immutable field ID.
+	 *
+	 * @param string[]            $args Positional arguments.
+	 * @param array<string,mixed> $assoc_args Named arguments.
+	 */
+	public function import_dynamic( array $args, array $assoc_args ): void {
+		$path = $args[0] ?? '';
+		if ( $path === '' || ! is_readable( $path ) ) {
+			\WP_CLI::error( 'Provide a readable dynamic-field backup file.' );
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Explicit CLI input path.
+		$document = json_decode( (string) file_get_contents( $path ), true );
+		if ( ! is_array( $document ) ) {
+			\WP_CLI::error( 'The backup is not valid JSON.' );
+		}
+		$apply   = isset( $assoc_args['apply'] );
+		$replace = isset( $assoc_args['replace'] );
+		$result  = ( new Manager() )->import_store( $document, $replace, $apply );
+		if ( is_wp_error( $result ) ) {
+			\WP_CLI::error( $result->get_error_message() );
+		}
+		\WP_CLI::success( $apply ? 'Dynamic field definitions imported.' : 'Dry-run passed; backup is valid.' );
+	}
 
 	/**
 	 * Export production dynamic definitions and populated-value counts.

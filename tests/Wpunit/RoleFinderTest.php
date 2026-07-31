@@ -20,7 +20,8 @@ class RoleFinderTest extends RondoTestCase {
 	public function test_returns_user_ids_with_matching_current_role(): void {
 		// Create a person with a current "secretaris" role.
 		$person_id = $this->createPerson( [ 'post_title' => 'Jan Secretaris' ] );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
 			'work_history',
 			[
 				[
@@ -29,9 +30,8 @@ class RoleFinderTest extends RondoTestCase {
 					'start_date' => '',
 					'end_date'   => '',
 				],
-			],
-			$person_id
-		);
+			]
+			);
 
 		// Create a user linked to this person.
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
@@ -47,7 +47,8 @@ class RoleFinderTest extends RondoTestCase {
 	 */
 	public function test_case_sensitive_matching(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Piet Penningmeester' ] );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
 			'work_history',
 			[
 				[
@@ -56,9 +57,8 @@ class RoleFinderTest extends RondoTestCase {
 					'start_date' => '',
 					'end_date'   => '',
 				],
-			],
-			$person_id
-		);
+			]
+			);
 
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
@@ -79,7 +79,8 @@ class RoleFinderTest extends RondoTestCase {
 	 */
 	public function test_does_not_match_wedstrijdsecretaris(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Wedstrijdsecretaris' ] );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
 			'work_history',
 			[
 				[
@@ -88,9 +89,8 @@ class RoleFinderTest extends RondoTestCase {
 					'start_date' => '',
 					'end_date'   => '',
 				],
-			],
-			$person_id
-		);
+			]
+			);
 
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
@@ -108,7 +108,8 @@ class RoleFinderTest extends RondoTestCase {
 	 */
 	public function test_expired_work_history_entries_excluded(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Oud Secretaris' ] );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
 			'work_history',
 			[
 				[
@@ -117,9 +118,8 @@ class RoleFinderTest extends RondoTestCase {
 					'start_date' => '2020-01-01',
 					'end_date'   => '2021-12-31', // Expired.
 				],
-			],
-			$person_id
-		);
+			]
+			);
 
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
@@ -152,7 +152,8 @@ class RoleFinderTest extends RondoTestCase {
 	 */
 	public function test_different_keyword_works(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Klaas Geld' ] );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
 			'work_history',
 			[
 				[
@@ -161,9 +162,8 @@ class RoleFinderTest extends RondoTestCase {
 					'start_date' => '',
 					'end_date'   => '',
 				],
-			],
-			$person_id
-		);
+			]
+			);
 
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
@@ -199,7 +199,8 @@ class RoleFinderTest extends RondoTestCase {
 	 */
 	public function test_date_range_current_detection(): void {
 		$person_id = $this->createPerson( [ 'post_title' => 'Active By Dates' ] );
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$person_id,
 			'work_history',
 			[
 				[
@@ -208,9 +209,8 @@ class RoleFinderTest extends RondoTestCase {
 					'start_date' => '2020-01-01',
 					'end_date'   => '2099-12-31', // Far future — still current.
 				],
-			],
-			$person_id
-		);
+			]
+			);
 
 		$user_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );

@@ -28,7 +28,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * GET (render invoice + plan selection) and POST (create Mollie payment + redirect).
  *
  * Token generation (generate_token) is a static utility called by Phase 196
- * bulk invoice creation to generate the token and set the payment_link ACF field
+ * bulk invoice creation to generate the token and set the payment_link canonical field
  * so InvoiceEmailSender can include the URL in emails via {betaallink}.
  */
 class PublicPaymentPage {
@@ -124,11 +124,11 @@ class PublicPaymentPage {
 	}
 
 	/**
-	 * Generate a secure token for an invoice and set the payment_link ACF field.
+	 * Generate a secure token for an invoice and set the payment_link canonical field.
 	 *
 	 * Called by Phase 196 bulk invoice creation when generating membership invoices.
 	 * Sets both _payment_token post meta (for token lookup) and the payment_link
-	 * ACF field (so InvoiceEmailSender can include the URL via {betaallink}).
+	 * canonical field (so InvoiceEmailSender can include the URL via {betaallink}).
 	 *
 	 * @param int $invoice_id Invoice post ID.
 	 * @return string The 64-character hex token.
@@ -136,7 +136,7 @@ class PublicPaymentPage {
 	public static function generate_token( int $invoice_id ): string {
 		$token = bin2hex( random_bytes( self::TOKEN_LENGTH ) );
 		update_post_meta( $invoice_id, self::TOKEN_META_KEY, $token );
-		update_field( 'payment_link', home_url( '/betaling/' . $token ), $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', home_url( '/betaling/' . $token ) );
 		return $token;
 	}
 
@@ -176,9 +176,9 @@ class PublicPaymentPage {
 	 */
 	private function render_page( int $invoice_id, string $token ) {
 		// Read invoice data.
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$total_amount   = (float) get_field( 'total_amount', $invoice_id );
-		$person_id      = get_field( 'person', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+		$total_amount   = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+		$person_id      = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
 		$person_name    = $person_id ? get_the_title( $person_id ) : '';
 
 		// Derive season from invoice creation date.
@@ -329,9 +329,9 @@ class PublicPaymentPage {
 	 * @param int $invoice_id Invoice post ID.
 	 */
 	private function render_success_page( int $invoice_id ) {
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$total_amount   = (float) get_field( 'total_amount', $invoice_id );
-		$person_id      = get_field( 'person', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+		$total_amount   = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+		$person_id      = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
 		$person_name    = $person_id ? get_the_title( $person_id ) : '';
 
 		$invoice_date = get_the_date( 'Y-m-d', $invoice_id );
@@ -565,7 +565,7 @@ class PublicPaymentPage {
 		}
 
 		// Read amounts.
-		$total     = (float) get_field( 'total_amount', $invoice_id );
+		$total     = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
 		$admin_fee = FeeServices::settings()->get_installment_admin_fee( $invoice_season );
 
 		// Store plan meta and write installment breakdown.

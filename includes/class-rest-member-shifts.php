@@ -92,7 +92,7 @@ class MemberShifts extends Base {
 	 *
 	 * Compares against stored values rather than rejecting the field's presence,
 	 * so a client that round-trips an unchanged array keeps working. Both sides
-	 * are normalised to int arrays first: ACF relationship fields arrive as
+	 * are normalised to int arrays first: native field relationship fields arrive as
 	 * strings over REST, and `['5'] !== [5]` would refuse an unchanged payload.
 	 *
 	 * @param \stdClass|\WP_Error $prepared_post Prepared post object.
@@ -104,12 +104,12 @@ class MemberShifts extends Base {
 			return $prepared_post;
 		}
 
-		$acf       = \Rondo\Fields\RestFields::request_payload( $request, 'dienst_shift' );
+		$fields    = \Rondo\Fields\RestFields::request_payload( $request, 'dienst_shift' );
 		$meta      = $request->get_param( 'meta' );
 		$submitted = null;
 
-		if ( array_key_exists( 'assigned_persons', $acf ) ) {
-			$submitted = $acf['assigned_persons'];
+		if ( array_key_exists( 'assigned_persons', $fields ) ) {
+			$submitted = $fields['assigned_persons'];
 		} elseif ( is_array( $meta ) && array_key_exists( 'assigned_persons', $meta ) ) {
 			$submitted = $meta['assigned_persons'];
 		}
@@ -1323,7 +1323,7 @@ class MemberShifts extends Base {
 
 		$people = [];
 		foreach ( $candidates as $person_id ) {
-			if ( (bool) get_field( 'former_member', $person_id ) ) {
+			if ( (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
 				continue;
 			}
 
@@ -1345,7 +1345,7 @@ class MemberShifts extends Base {
 			$people[] = [
 				'id'               => $person_id,
 				'name'             => $name,
-				'leeftijdsgroep'   => (string) get_field( 'leeftijdsgroep', $person_id ),
+				'leeftijdsgroep'   => (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'leeftijdsgroep' ),
 				'already_assigned' => in_array( $person_id, $assigned, true ),
 				'blocked'          => $block_reason !== null,
 				'block_reason'     => $block_reason,
@@ -1409,8 +1409,8 @@ class MemberShifts extends Base {
 
 	/** Does this person have somewhere to send the confirmation? */
 	private function person_has_email( int $person_id ): bool {
-		return trim( (string) get_field( 'email_1', $person_id ) ) !== ''
-			|| trim( (string) get_field( 'email_2', $person_id ) ) !== '';
+		return trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) ) !== ''
+			|| trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) ) !== '';
 	}
 
 	/**
@@ -1542,7 +1542,7 @@ class MemberShifts extends Base {
 	private function signup_blocks( int $person_id ): array {
 		$blocks = [];
 
-		$datum_vog = (string) get_field( 'datum-vog', $person_id );
+		$datum_vog = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_vog' );
 		// VOG validity = 3 years (existing convention from class-rest-vog.php).
 		if ( $datum_vog === '' || strtotime( $datum_vog . ' +3 years' ) < time() ) {
 			$blocks[] = 'vog';
@@ -1604,7 +1604,7 @@ class MemberShifts extends Base {
 	 * Build a wa.me link from a person's primary mobile number.
 	 */
 	private function get_whatsapp_url( int $person_id ): ?string {
-		$mobile = (string) get_field( 'mobile_1', $person_id );
+		$mobile = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'mobile_1' );
 		if ( $mobile === '' ) {
 			return null;
 		}
@@ -1737,7 +1737,7 @@ class MemberShifts extends Base {
 	}
 
 	private function person_is_pool_member( int $person_id, int $commissie_id ): bool {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return false;
 		}

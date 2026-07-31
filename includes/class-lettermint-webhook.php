@@ -303,10 +303,10 @@ class LettermintWebhook {
 		}
 
 		$notes = $this->build_task_notes( $event_name, $recipient, $subject, $message_id, $timestamp, $tag, $event_id, $data, $flow, $person_id );
-		update_field( 'notes', wpautop( esc_html( $notes ) ), $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'notes', wpautop( esc_html( $notes ) ) );
 
 		if ( $person_id > 0 ) {
-			update_field( 'related_persons', [ $person_id ], $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'related_persons', [ $person_id ] );
 		}
 
 		update_post_meta( $post_id, self::META_EVENT_ID, $event_id );
@@ -579,8 +579,8 @@ class LettermintWebhook {
 	 */
 	private function mark_person_email_inactive( int $person_id, string $recipient, string $event_name, string $event_id ): void {
 		// Check if the recipient matches email_1 or email_2.
-		$email_1 = strtolower( trim( (string) get_field( 'email_1', $person_id ) ) );
-		$email_2 = strtolower( trim( (string) get_field( 'email_2', $person_id ) ) );
+		$email_1 = strtolower( trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) ) );
+		$email_2 = strtolower( trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) ) );
 
 		if ( $recipient !== $email_1 && $recipient !== $email_2 ) {
 			return;
@@ -612,8 +612,8 @@ class LettermintWebhook {
 			return $fallback;
 		}
 
-		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
-		$last_name  = trim( (string) get_field( 'last_name', $person_id ) );
+		$first_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
+		$last_name  = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) );
 		$full_name  = trim( $first_name . ' ' . $last_name );
 
 		return $full_name !== '' ? $full_name : $fallback;
@@ -630,7 +630,7 @@ class LettermintWebhook {
 			return 'daar';
 		}
 
-		$first_name = trim( (string) get_field( 'first_name', $person_id ) );
+		$first_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 		return $first_name !== '' ? $first_name : 'daar';
 	}
 

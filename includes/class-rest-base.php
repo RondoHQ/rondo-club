@@ -184,10 +184,10 @@ abstract class Base {
 			return false;
 		}
 
-		// Former members are read-only end-to-end for non-admins. The ACF writes
+		// Former members are read-only end-to-end for non-admins. The native field writes
 		// are stopped by People::block_former_member_edits(), which this route
 		// never passes through, so the same rule is applied here.
-		if ( ! current_user_can( 'manage_options' ) && get_field( 'former_member', $person_id ) ) {
+		if ( ! current_user_can( 'manage_options' ) && \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) ) {
 			return false;
 		}
 
@@ -284,11 +284,11 @@ abstract class Base {
 		return [
 			'id'                  => $post->ID,
 			'name'                => $this->sanitize_text( $post->post_title ),
-			'first_name'          => $this->sanitize_text( get_field( 'first_name', $post->ID ) ),
-			'last_name'           => $this->sanitize_text( get_field( 'last_name', $post->ID ) ),
+			'first_name'          => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'first_name' ) ),
+			'last_name'           => $this->sanitize_text( \Rondo\Fields\Fields::get_for_post( $post->ID, 'last_name' ) ),
 			'thumbnail'           => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-			'former_member'       => ( get_field( 'former_member', $post->ID ) === true ),
-			'huidig_vrijwilliger' => ( get_field( 'huidig-vrijwilliger', $post->ID ) === true ),
+			'former_member'       => ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'former_member' ) === true ),
+			'huidig_vrijwilliger' => ( \Rondo\Fields\Fields::get_for_post( $post->ID, 'huidig_vrijwilliger' ) === true ),
 		];
 	}
 
@@ -305,7 +305,7 @@ abstract class Base {
 			'id'        => $post->ID,
 			'name'      => $this->sanitize_text( $post->post_title ),
 			'thumbnail' => $this->sanitize_url( get_the_post_thumbnail_url( $post->ID, 'thumbnail' ) ),
-			'website'   => $this->sanitize_url( get_field( 'website', $post->ID ) ),
+			'website'   => $this->sanitize_url( \Rondo\Fields\Fields::get_for_post( $post->ID, 'website' ) ),
 		];
 	}
 
@@ -345,7 +345,7 @@ abstract class Base {
 	 */
 	public function get_shares( $request ) {
 		$post_id = $request->get_param( 'id' );
-		$shares  = get_field( '_shared_with', $post_id ) ?: [];
+		$shares  = get_post_meta( $post_id, '_shared_with', true ) ?: [];
 
 		$result = [];
 		foreach ( $shares as $share ) {
@@ -384,12 +384,12 @@ abstract class Base {
 			return new \WP_Error( 'invalid_share', __( 'Cannot share with yourself.', 'rondo' ), [ 'status' => 400 ] );
 		}
 
-		$shares = get_field( '_shared_with', $post_id ) ?: [];
+		$shares = get_post_meta( $post_id, '_shared_with', true ) ?: [];
 
 		foreach ( $shares as $key => $share ) {
 			if ( (int) $share['user_id'] === $user_id ) {
 				$shares[ $key ]['permission'] = $permission;
-				update_field( '_shared_with', $shares, $post_id );
+				update_post_meta( $post_id, '_shared_with', $shares );
 				return rest_ensure_response(
 					[
 						'success' => true,
@@ -403,7 +403,7 @@ abstract class Base {
 			'user_id'    => $user_id,
 			'permission' => $permission,
 		];
-		update_field( '_shared_with', $shares, $post_id );
+		update_post_meta( $post_id, '_shared_with', $shares );
 
 		return rest_ensure_response(
 			[
@@ -423,7 +423,7 @@ abstract class Base {
 		$post_id = $request->get_param( 'id' );
 		$user_id = (int) $request->get_param( 'user_id' );
 
-		$shares = get_field( '_shared_with', $post_id ) ?: [];
+		$shares = get_post_meta( $post_id, '_shared_with', true ) ?: [];
 		$shares = array_filter(
 			$shares,
 			function ( $share ) use ( $user_id ) {
@@ -432,7 +432,7 @@ abstract class Base {
 		);
 		$shares = array_values( $shares );
 
-		update_field( '_shared_with', $shares, $post_id );
+		update_post_meta( $post_id, '_shared_with', $shares );
 
 		return rest_ensure_response(
 			[
@@ -518,16 +518,16 @@ abstract class Base {
 	 * Set or clear the logo for an entity.
 	 *
 	 * @param \WP_REST_Request $request The REST request object.
-	 * @param string           $acf_field_name ACF field name for the logo (e.g. 'company_logo', 'commissie_logo').
+	 * @param string           $field_name Canonical field name for the logo.
 	 * @return \WP_REST_Response|\WP_Error Response with success or error.
 	 */
-	protected function set_entity_logo( $request, string $acf_field_name ) {
+	protected function set_entity_logo( $request, string $field_name ) {
 		$post_id       = $request->get_param( 'id' ) ?: $request->get_param( 'team_id' ) ?: $request->get_param( 'commissie_id' ) ?: 0;
 		$attachment_id = $request->get_param( 'attachment_id' );
 
 		if ( $attachment_id === null || $attachment_id === '' ) {
 			// Clear the logo
-			update_field( $acf_field_name, '', $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, $field_name, '' );
 			return rest_ensure_response(
 				[
 					'success' => true,
@@ -545,7 +545,7 @@ abstract class Base {
 			);
 		}
 
-		update_field( $acf_field_name, $attachment_id, $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, $field_name, $attachment_id );
 
 		return rest_ensure_response(
 			[

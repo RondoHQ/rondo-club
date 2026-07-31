@@ -1,9 +1,6 @@
 <?php
 /**
- * Custom Fields Manager
- *
- * Provides programmatic CRUD operations for ACF custom field definitions.
- * Uses ACF's database persistence API to store field groups and fields.
+ * Native custom field definition store.
  *
  * @package Rondo\CustomFields
  */
@@ -17,71 +14,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/**
- * Manager class for custom field definitions.
- *
- * Creates, reads, updates, and deactivates custom fields for People and Organizations
- * using ACF-native storage patterns. Fields are stored in dedicated field groups
- * per post type.
- */
+/** Stores dynamic definitions in a schema-versioned WordPress option. */
 class Manager {
+	public const SUPPORTED_POST_TYPES = [ 'person', 'team', 'commissie' ];
+	public const OPTION_NAME          = 'rondo_dynamic_field_definitions';
+	public const SCHEMA_VERSION       = 1;
+	private const SUPPORTED_TYPES     = [ 'text', 'textarea', 'number', 'url', 'email', 'select', 'checkbox', 'radio', 'true_false', 'date' ];
 
-	/**
-	 * Supported post types for custom fields.
-	 */
-	const SUPPORTED_POST_TYPES = [ 'person', 'team', 'commissie' ];
-
-	/**
-	 * Map Rondo field types to ACF field types.
-	 *
-	 * Rondo uses simplified type names for the frontend UI,
-	 * while ACF uses different internal type names.
-	 *
-	 * @var array
-	 */
-	private const TYPE_MAP = [
-		'date' => 'date_picker',
-	];
-
-	/**
-	 * Properties that can be updated on existing fields.
-	 * Key, type, and parent are immutable once created.
-	 *
-	 * @var array
-	 */
 	private const UPDATABLE_PROPERTIES = [
-		// Core properties.
 		'label',
 		'instructions',
 		'required',
 		'choices',
 		'default_value',
 		'placeholder',
-		// Number field options.
 		'min',
 		'max',
 		'step',
 		'prepend',
 		'append',
-		// Date field options.
 		'display_format',
 		'return_format',
 		'first_day',
-		// Select field options.
 		'allow_null',
 		'multiple',
 		'ui',
-		// Checkbox field options.
 		'layout',
 		'toggle',
 		'allow_custom',
 		'save_custom',
-		// Text/Textarea options.
 		'maxlength',
-		// True/False options.
 		'ui_on_text',
 		'ui_off_text',
-		// Image field options.
 		'preview_size',
 		'library',
 		'min_width',
@@ -91,490 +55,347 @@ class Manager {
 		'min_size',
 		'max_size',
 		'mime_types',
-		// Color picker field options.
-		'enable_opacity',
-		// Relationship field options.
 		'post_type',
 		'filters',
-		// Field ordering.
 		'menu_order',
-		// Unique validation.
 		'unique',
-		// UI visibility.
 		'editable_in_ui',
 	];
 
-	/**
-	 * Constructor.
-	 */
-	public function __construct() {
-		// No hooks needed - stateless class.
-	}
-
-	/**
-	 * Ensure a field group exists for the given post type.
-	 *
-	 * Creates the field group if it doesn't exist, returns the existing one if it does.
-	 *
-	 * @param string $post_type The post type to create/get field group for.
-	 * @return array|WP_Error Field group array on success, WP_Error on failure.
-	 */
+	/** Return a synthetic group descriptor kept for API compatibility. */
 	public function ensure_field_group( string $post_type ) {
-		// Validate post type.
 		if ( ! $this->is_valid_post_type( $post_type ) ) {
-			return new WP_Error(
-				'invalid_post_type',
-				sprintf( 'Post type "%s" is not supported. Supported types: %s', $post_type, implode( ', ', self::SUPPORTED_POST_TYPES ) )
-			);
+			return new WP_Error( 'invalid_post_type', sprintf( 'Post type "%s" is not supported.', $post_type ) );
 		}
-
-		$group_key = $this->get_group_key( $post_type );
-
-		// Check if group already exists in database.
-		// We must get the post ID directly because acf_get_field_group() returns ID=0
-		// when the group is also loaded from JSON (which takes precedence).
-		$group_post = get_page_by_path( $group_key, OBJECT, 'acf-field-group' );
-		if ( $group_post ) {
-			$existing = acf_get_field_group( $group_post->ID );
-			if ( $existing ) {
-				// Ensure we have the database ID, not 0.
-				$existing['ID'] = $group_post->ID;
-				return $existing;
-			}
-		}
-
-		// Create new field group.
-		$field_group = [
-			'key'                   => $group_key,
-			'title'                 => 'Custom Fields',
-			'fields'                => [],
-			'location'              => [
-				[
-					[
-						'param'    => 'post_type',
-						'operator' => '==',
-						'value'    => $post_type,
-					],
-				],
-			],
-			'menu_order'            => 100, // After built-in groups.
-			'position'              => 'normal',
-			'style'                 => 'default',
-			'label_placement'       => 'top',
-			'instruction_placement' => 'label',
-			'active'                => true,
-			'show_in_rest'          => 1,
+		return [
+			'ID'        => 0,
+			'key'       => 'group_custom_fields_' . $post_type,
+			'title'     => 'Custom Fields',
+			'post_type' => $post_type,
+			'native'    => true,
 		];
-
-		$result = acf_import_field_group( $field_group );
-
-		// Validate the result has an ID (required for field parent).
-		if ( ! $result || ! is_array( $result ) || ! isset( $result['ID'] ) ) {
-			return new WP_Error(
-				'field_group_create_failed',
-				'Failed to create field group in database.'
-			);
-		}
-
-		return $result;
 	}
 
-	/**
-	 * Generate a unique field key from a label.
-	 *
-	 * @param string $label     The field label.
-	 * @param string $post_type The target post type.
-	 * @return string The generated field key.
-	 */
 	public function generate_field_key( string $label, string $post_type ): string {
-		// Sanitize label to slug.
-		$slug = sanitize_title( $label );
-
-		// Create base key namespaced by post type.
-		$base_key = 'field_custom_' . $post_type . '_' . $slug;
-
-		// If key already exists, append unique suffix.
-		if ( acf_get_field( $base_key ) ) {
-			$base_key .= '_' . substr( uniqid(), -6 );
+		$base = 'field_custom_' . $post_type . '_' . sanitize_title( $label );
+		$key  = $base;
+		while ( $this->get_field( $key ) ) {
+			$key = $base . '_' . strtolower( wp_generate_password( 6, false, false ) );
 		}
-
-		return $base_key;
+		return $key;
 	}
 
-	/**
-	 * Create a new custom field.
-	 *
-	 * @param string $post_type    The target post type.
-	 * @param array  $field_config Field configuration array.
-	 *                             Required keys: label, type.
-	 *                             Optional keys: name, instructions, required, choices, default_value, placeholder.
-	 * @return array|WP_Error Created field array on success, WP_Error on failure.
-	 */
+	/** @return array<string,mixed>|WP_Error */
 	public function create_field( string $post_type, array $field_config ) {
-		// Validate post type.
 		if ( ! $this->is_valid_post_type( $post_type ) ) {
-			return new WP_Error(
-				'invalid_post_type',
-				sprintf( 'Post type "%s" is not supported.', $post_type )
-			);
+			return new WP_Error( 'invalid_post_type', sprintf( 'Post type "%s" is not supported.', $post_type ) );
+		}
+		if ( empty( $field_config['label'] ) || empty( $field_config['type'] ) ) {
+			return new WP_Error( 'missing_required', 'Field label and type are required.' );
+		}
+		$field_type = sanitize_key( (string) $field_config['type'] );
+		if ( ! in_array( $field_type, self::SUPPORTED_TYPES, true ) ) {
+			return new WP_Error( 'invalid_field_type', 'The field type is not supported.' );
 		}
 
-		// Validate required config - label.
-		if ( empty( $field_config['label'] ) ) {
-			return new WP_Error(
-				'missing_required',
-				'Field label is required.'
-			);
-		}
-
-		// Validate required config - type.
-		if ( empty( $field_config['type'] ) ) {
-			return new WP_Error(
-				'missing_required',
-				'Field type is required.'
-			);
-		}
-
-		// Ensure field group exists.
-		$group = $this->ensure_field_group( $post_type );
-		if ( is_wp_error( $group ) ) {
-			return $group;
-		}
-
-		// Generate field key.
-		$field_key = $this->generate_field_key( $field_config['label'], $post_type );
-
-		// Generate field name from label if not provided.
-		$field_name     = ! empty( $field_config['name'] )
-			? sanitize_title( $field_config['name'] )
-			: sanitize_title( $field_config['label'] );
-		$canonical_name = ! empty( $field_config['canonical_name'] )
+		$storage_name = ! empty( $field_config['name'] ) ? sanitize_title( $field_config['name'] ) : sanitize_title( $field_config['label'] );
+		$canonical    = ! empty( $field_config['canonical_name'] )
 			? sanitize_key( $field_config['canonical_name'] )
-			: sanitize_key( str_replace( '-', '_', $field_name ) );
-
-		try {
-			Registry::resolve( $post_type, $canonical_name );
-			return new WP_Error( 'field_name_collision', 'The canonical field name is already owned by a static field.' );
-		} catch ( \InvalidArgumentException $error ) {
-			// Expected when the canonical name is available.
+			: sanitize_key( str_replace( '-', '_', $storage_name ) );
+		$collision    = $this->collision( $post_type, $canonical, $storage_name );
+		if ( $collision ) {
+			return $collision;
 		}
 
-		foreach ( $this->get_fields( $post_type, true ) as $existing_field ) {
-			if ( ( $existing_field['canonical_name'] ?? '' ) === $canonical_name ) {
-				return new WP_Error( 'field_name_collision', 'The canonical field name is already owned by another custom field.' );
-			}
-		}
-
-		// Map Rondo type to ACF type.
-		$acf_type = $this->map_type_to_acf( $field_config['type'] );
-
-		// Build field array.
-		$field = [
-			'key'                  => $field_key,
-			'label'                => $field_config['label'],
-			'name'                 => $field_name,
-			'rondo_canonical_name' => $canonical_name,
-			'rondo_storage_key'    => $field_name,
-			'type'                 => $acf_type,
-			'parent'               => $group['ID'], // Must be post ID, not key.
-			'instructions'         => $field_config['instructions'] ?? '',
-			'required'             => $field_config['required'] ?? 0,
+		$fields       = $this->get_fields( $post_type, true );
+		$field        = [
+			'id'             => $this->generate_field_key( (string) $field_config['label'], $post_type ),
+			'key'            => '',
+			'label'          => sanitize_text_field( (string) $field_config['label'] ),
+			'name'           => $storage_name,
+			'storage_key'    => $storage_name,
+			'canonical_name' => $canonical,
+			'type'           => $field_type,
+			'active'         => true,
+			'menu_order'     => count( $fields ) + 1,
+			'instructions'   => '',
+			'required'       => 0,
+			'editable_in_ui' => true,
 		];
-
-		// Add optional properties from UPDATABLE_PROPERTIES.
-		// These include type-specific settings (min, max, choices, etc.)
-		// that ACF handles based on the field type.
-		foreach ( self::UPDATABLE_PROPERTIES as $prop ) {
-			// Skip properties already set in core array.
-			if ( in_array( $prop, [ 'label', 'name', 'instructions', 'required' ], true ) ) {
-				continue;
-			}
-			if ( isset( $field_config[ $prop ] ) ) {
-				$field[ $prop ] = $field_config[ $prop ];
+		$field['key'] = $field['id'];
+		foreach ( self::UPDATABLE_PROPERTIES as $property ) {
+			if ( array_key_exists( $property, $field_config ) ) {
+				$field[ $property ] = $this->sanitize_property( $property, $field_config[ $property ] );
 			}
 		}
-
-		// Enforce Y-m-d format for date fields (ensures consistent sorting and JS parsing).
-		if ( $acf_type === 'date' ) {
-			$field['return_format']  = 'Y-m-d';
-			$field['display_format'] = 'Y-m-d';
-		}
-
-		// Persist to database.
-		$result = acf_update_field( $field );
-
-		if ( ! $result ) {
-			return new WP_Error(
-				'create_failed',
-				'Failed to create field in database.'
-			);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Update an existing field.
-	 *
-	 * Only properties in UPDATABLE_PROPERTIES can be updated.
-	 * The key, type, and parent are immutable once created.
-	 *
-	 * @param string $field_key The field key to update.
-	 * @param array  $updates   Array of properties to update.
-	 * @return array|WP_Error Updated field array on success, WP_Error on failure.
-	 */
-	public function update_field( string $field_key, array $updates ) {
-		// Get existing field.
-		$field = acf_get_field( $field_key );
-
-		if ( ! $field ) {
-			return new WP_Error(
-				'field_not_found',
-				sprintf( 'Field with key "%s" not found.', $field_key )
-			);
-		}
-
-		// Apply allowed updates only.
-		foreach ( self::UPDATABLE_PROPERTIES as $prop ) {
-			if ( isset( $updates[ $prop ] ) ) {
-				$field[ $prop ] = $updates[ $prop ];
-			}
-		}
-
-		// Enforce Y-m-d format for date fields (ensures consistent sorting and JS parsing).
 		if ( $field['type'] === 'date' ) {
-			$field['return_format']  = 'Y-m-d';
 			$field['display_format'] = 'Y-m-d';
+			$field['return_format']  = 'Y-m-d';
 		}
 
-		// Persist to database.
-		$result = acf_update_field( $field );
-
-		if ( ! $result ) {
-			return new WP_Error(
-				'update_failed',
-				'Failed to update field in database.'
-			);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Deactivate a field (soft delete).
-	 *
-	 * Sets the field's active flag to 0. ACF will not render inactive fields,
-	 * but stored values in wp_postmeta are preserved.
-	 *
-	 * @param string $field_key The field key to deactivate.
-	 * @return array|WP_Error Updated field array on success, WP_Error on failure.
-	 */
-	public function deactivate_field( string $field_key ) {
-		// Get existing field.
-		$field = acf_get_field( $field_key );
-
-		if ( ! $field ) {
-			return new WP_Error(
-				'field_not_found',
-				sprintf( 'Field with key "%s" not found.', $field_key )
-			);
-		}
-
-		// Mark as inactive.
-		$field['active'] = 0;
-
-		// Persist to database.
-		$result = acf_update_field( $field );
-
-		if ( ! $result ) {
-			return new WP_Error(
-				'deactivate_failed',
-				'Failed to deactivate field in database.'
-			);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Reactivate a previously deactivated field.
-	 *
-	 * Sets the field's active flag to 1, making it visible again.
-	 *
-	 * @param string $field_key The field key to reactivate.
-	 * @return array|WP_Error Updated field array on success, WP_Error on failure.
-	 */
-	public function reactivate_field( string $field_key ) {
-		// Get existing field.
-		$field = acf_get_field( $field_key );
-
-		if ( ! $field ) {
-			return new WP_Error(
-				'field_not_found',
-				sprintf( 'Field with key "%s" not found.', $field_key )
-			);
-		}
-
-		// Mark as active.
-		$field['active'] = 1;
-
-		// Persist to database.
-		$result = acf_update_field( $field );
-
-		if ( ! $result ) {
-			return new WP_Error(
-				'reactivate_failed',
-				'Failed to reactivate field in database.'
-			);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Get all custom fields for a post type.
-	 *
-	 * @param string $post_type        The post type to get fields for.
-	 * @param bool   $include_inactive Whether to include inactive fields.
-	 * @return array Array of field arrays, empty array if none.
-	 */
-	public function get_fields( string $post_type, bool $include_inactive = false ): array {
-		// Validate post type.
-		if ( ! $this->is_valid_post_type( $post_type ) ) {
-			return [];
-		}
-
-		$group_key = $this->get_group_key( $post_type );
-
-		// Get field group post ID directly from database.
-		// We can't use acf_get_field_group() because it returns ID=0 when
-		// the group is also loaded from JSON (which takes precedence).
-		$group_post = get_page_by_path( $group_key, OBJECT, 'acf-field-group' );
-		if ( ! $group_post ) {
-			return [];
-		}
-
-		// Get all fields in the group by post ID.
-		$fields = acf_get_fields( $group_post->ID );
-
-		// Handle false return (no fields).
-		if ( ! $fields ) {
-			return [];
-		}
-
-		// Filter out inactive fields unless requested.
-		if ( ! $include_inactive ) {
-			$fields = array_filter(
-				$fields,
-				function ( $field ) {
-					// Active is 1 or true, inactive is 0 or false.
-					return ! isset( $field['active'] ) || $field['active'];
-				}
-			);
-			// Re-index array.
-			$fields = array_values( $fields );
-		}
-
-		// Map ACF types back to Rondo types for API responses.
-		$fields = array_map(
-			function ( $field ) {
-				$field['type']           = $this->map_type_from_acf( $field['type'] );
-				$field['canonical_name'] = isset( $field['rondo_canonical_name'] )
-					? (string) $field['rondo_canonical_name']
-					: sanitize_key( str_replace( '-', '_', (string) $field['name'] ) );
-				$field['storage_key']    = isset( $field['rondo_storage_key'] )
-					? (string) $field['rondo_storage_key']
-					: (string) $field['name'];
-				return $field;
-			},
-			$fields
-		);
-
-		return $fields;
-	}
-
-	/**
-	 * Get a single field by key.
-	 *
-	 * @param string $field_key The field key.
-	 * @return array|false Field array on success, false if not found.
-	 */
-	public function get_field( string $field_key ) {
-		$field = acf_get_field( $field_key );
-		if ( $field ) {
-			// Map ACF type back to Rondo type for API response.
-			$field['type']           = $this->map_type_from_acf( $field['type'] );
-			$field['canonical_name'] = isset( $field['rondo_canonical_name'] )
-				? (string) $field['rondo_canonical_name']
-				: sanitize_key( str_replace( '-', '_', (string) $field['name'] ) );
-			$field['storage_key']    = isset( $field['rondo_storage_key'] )
-				? (string) $field['rondo_storage_key']
-				: (string) $field['name'];
-		}
+		$fields[] = $field;
+		$this->put_context( $post_type, $fields );
 		return $field;
 	}
 
-	/**
-	 * Reorder fields by setting menu_order.
-	 *
-	 * @param string $post_type  The post type.
-	 * @param array  $field_keys Array of field keys in desired order.
-	 * @return bool|WP_Error True on success, WP_Error on failure.
-	 */
+	/** @return array<string,mixed>|WP_Error */
+	public function update_field( string $field_key, array $updates ) {
+		$location = $this->locate( $field_key );
+		if ( ! $location ) {
+			return new WP_Error( 'field_not_found', sprintf( 'Field with key "%s" not found.', $field_key ) );
+		}
+		[ $post_type, $index, $fields ] = $location;
+		foreach ( self::UPDATABLE_PROPERTIES as $property ) {
+			if ( array_key_exists( $property, $updates ) ) {
+				$fields[ $index ][ $property ] = $this->sanitize_property( $property, $updates[ $property ] );
+			}
+		}
+		if ( $fields[ $index ]['type'] === 'date' ) {
+			$fields[ $index ]['display_format'] = 'Y-m-d';
+			$fields[ $index ]['return_format']  = 'Y-m-d';
+		}
+		$this->put_context( $post_type, $fields );
+		return $fields[ $index ];
+	}
+
+	/** @return array<string,mixed>|WP_Error */
+	public function deactivate_field( string $field_key ) {
+		return $this->set_active( $field_key, false );
+	}
+
+	/** @return array<string,mixed>|WP_Error */
+	public function reactivate_field( string $field_key ) {
+		return $this->set_active( $field_key, true );
+	}
+
+	/** @return array<int,array<string,mixed>> */
+	public function get_fields( string $post_type, bool $include_inactive = false ): array {
+		if ( ! $this->is_valid_post_type( $post_type ) ) {
+			return [];
+		}
+		$store  = $this->store();
+		$fields = array_values( $store['contexts'][ $post_type ] ?? [] );
+		if ( ! $include_inactive ) {
+			$fields = array_values( array_filter( $fields, static fn( $field ) => ! empty( $field['active'] ) ) );
+		}
+		usort( $fields, static fn( $a, $b ) => (int) ( $a['menu_order'] ?? 0 ) <=> (int) ( $b['menu_order'] ?? 0 ) );
+		return $fields;
+	}
+
+	/** @return array<string,mixed>|false */
+	public function get_field( string $field_key ) {
+		$location = $this->locate( $field_key );
+		return $location ? $location[2][ $location[1] ] : false;
+	}
+
+	/** @return true|WP_Error */
 	public function reorder_fields( string $post_type, array $field_keys ) {
 		if ( ! $this->is_valid_post_type( $post_type ) ) {
 			return new WP_Error( 'invalid_post_type', 'Invalid post type.' );
 		}
-
-		foreach ( $field_keys as $menu_order => $field_key ) {
-			$field = acf_get_field( $field_key );
-			if ( $field ) {
-				$field['menu_order'] = $menu_order + 1; // Start at 1, not 0.
-				acf_update_field( $field );
+		$fields = $this->get_fields( $post_type, true );
+		$known  = array_column( $fields, null, 'key' );
+		foreach ( $field_keys as $index => $key ) {
+			if ( ! isset( $known[ $key ] ) ) {
+				return new WP_Error( 'field_not_found', sprintf( 'Field with key "%s" not found.', $key ) );
 			}
+			$known[ $key ]['menu_order'] = $index + 1;
 		}
-
+		$this->put_context( $post_type, array_values( $known ) );
 		return true;
 	}
 
-	/**
-	 * Check if a post type is supported for custom fields.
-	 *
-	 * @param string $post_type The post type to check.
-	 * @return bool True if supported, false otherwise.
-	 */
+	/** Return a portable backup document. */
+	public function export_store(): array {
+		return $this->store();
+	}
+
+	/** @return true|WP_Error */
+	public function import_store( array $document, bool $replace = false, bool $apply = true ) {
+		if ( (int) ( $document['schema_version'] ?? 0 ) !== self::SCHEMA_VERSION || ! is_array( $document['contexts'] ?? null ) ) {
+			return new WP_Error( 'invalid_definition_backup', 'Unsupported dynamic-field definition backup.' );
+		}
+		$next     = $replace ? $this->empty_store() : $this->store();
+		$seen_ids = [];
+		foreach ( self::SUPPORTED_POST_TYPES as $post_type ) {
+			foreach ( $next['contexts'][ $post_type ] as $field ) {
+				$seen_ids[ (string) $field['key'] ] = $post_type;
+			}
+		}
+		foreach ( self::SUPPORTED_POST_TYPES as $post_type ) {
+			$static = Registry::all()['contexts'][ $post_type ]['fields'] ?? [];
+			$known  = array_column( $next['contexts'][ $post_type ], null, 'key' );
+			foreach ( $document['contexts'][ $post_type ] ?? [] as $field ) {
+				if (
+					! is_array( $field )
+					|| empty( $field['id'] )
+					|| empty( $field['key'] )
+					|| $field['id'] !== $field['key']
+					|| empty( $field['storage_key'] )
+					|| empty( $field['canonical_name'] )
+					|| ! in_array( $field['type'] ?? '', self::SUPPORTED_TYPES, true )
+				) {
+					return new WP_Error( 'invalid_definition_backup', "Invalid {$post_type} field definition." );
+				}
+				$key       = (string) $field['key'];
+				$canonical = (string) $field['canonical_name'];
+				$storage   = (string) $field['storage_key'];
+				if ( isset( $seen_ids[ $key ] ) && $seen_ids[ $key ] !== $post_type ) {
+					return new WP_Error( 'field_name_collision', 'A field identity is already used in another context.' );
+				}
+				foreach ( $static as $definition ) {
+					if ( $definition['canonical_name'] === $canonical || $definition['storage_name'] === $storage ) {
+						return new WP_Error( 'field_name_collision', "Imported field {$post_type}.{$canonical} collides with a static field." );
+					}
+				}
+				foreach ( $known as $known_key => $definition ) {
+					if ( $known_key !== $key && ( $definition['canonical_name'] === $canonical || $definition['storage_key'] === $storage ) ) {
+						return new WP_Error( 'field_name_collision', "Imported field {$post_type}.{$canonical} collides with another dynamic field." );
+					}
+				}
+				$field['name']    = $storage;
+				$field['active']  = ! empty( $field['active'] );
+				$known[ $key ]    = $field;
+				$seen_ids[ $key ] = $post_type;
+			}
+			$next['contexts'][ $post_type ] = array_values( $known );
+		}
+		if ( $apply ) {
+			update_option( self::OPTION_NAME, $next, false );
+			Registry::reset();
+		}
+		return true;
+	}
+
+	/** @return array<string,mixed>|WP_Error */
+	private function set_active( string $field_key, bool $active ) {
+		$location = $this->locate( $field_key );
+		if ( ! $location ) {
+			return new WP_Error( 'field_not_found', sprintf( 'Field with key "%s" not found.', $field_key ) );
+		}
+		[ $post_type, $index, $fields ] = $location;
+		$fields[ $index ]['active']     = $active;
+		$this->put_context( $post_type, $fields );
+		return $fields[ $index ];
+	}
+
+	/** @return array{0:string,1:int,2:array}|null */
+	private function locate( string $field_key ): ?array {
+		foreach ( self::SUPPORTED_POST_TYPES as $post_type ) {
+			$fields = $this->get_fields( $post_type, true );
+			foreach ( $fields as $index => $field ) {
+				if ( ( $field['key'] ?? '' ) === $field_key || ( $field['id'] ?? '' ) === $field_key ) {
+					return [ $post_type, $index, $fields ];
+				}
+			}
+		}
+		return null;
+	}
+
+	private function collision( string $post_type, string $canonical, string $storage_name ): ?WP_Error {
+		$static = Registry::all()['contexts'][ $post_type ]['fields'] ?? [];
+		foreach ( $static as $definition ) {
+			if ( $definition['canonical_name'] === $canonical || $definition['storage_name'] === $storage_name ) {
+				return new WP_Error( 'field_name_collision', 'The canonical or storage field name is already owned by a static field.' );
+			}
+		}
+		foreach ( $this->get_fields( $post_type, true ) as $definition ) {
+			if ( $definition['canonical_name'] === $canonical || $definition['storage_key'] === $storage_name ) {
+				return new WP_Error( 'field_name_collision', 'The canonical or storage field name is already owned by another custom field.' );
+			}
+		}
+		return null;
+	}
+
+	private function put_context( string $post_type, array $fields ): void {
+		$store                           = $this->store();
+		$store['contexts'][ $post_type ] = array_values( $fields );
+		update_option( self::OPTION_NAME, $store, false );
+		Registry::reset();
+	}
+
+	/** @return array<string,mixed> */
+	private function store(): array {
+		$value = get_option( self::OPTION_NAME, null );
+		if ( $value === null ) {
+			$value = $this->import_legacy_database_definitions();
+			update_option( self::OPTION_NAME, $value, false );
+		}
+		if ( ! is_array( $value ) || (int) ( $value['schema_version'] ?? 0 ) !== self::SCHEMA_VERSION ) {
+			return $this->empty_store();
+		}
+		return $value;
+	}
+
+	/** Import legacy acf-field posts without loading or calling the plugin. */
+	private function import_legacy_database_definitions(): array {
+		$store = $this->empty_store();
+		foreach ( self::SUPPORTED_POST_TYPES as $post_type ) {
+			$group = get_page_by_path( 'group_custom_fields_' . $post_type, OBJECT, 'acf-field-group' );
+			if ( ! $group ) {
+				continue;
+			}
+			$posts = get_posts(
+				[
+					'post_type'      => 'acf-field',
+					'post_parent'    => $group->ID,
+					'post_status'    => 'any',
+					'posts_per_page' => -1,
+					'orderby'        => 'menu_order ID',
+					'order'          => 'ASC',
+				]
+			);
+			foreach ( $posts as $post ) {
+				$config    = maybe_unserialize( $post->post_content );
+				$config    = is_array( $config ) ? $config : [];
+				$storage   = (string) ( $config['rondo_storage_key'] ?? $post->post_excerpt );
+				$canonical = (string) ( $config['rondo_canonical_name'] ?? sanitize_key( str_replace( '-', '_', $storage ) ) );
+				$field     = array_merge(
+					$config,
+					[
+						'id'             => $post->post_name,
+						'key'            => $post->post_name,
+						'label'          => $post->post_title,
+						'name'           => $storage,
+						'storage_key'    => $storage,
+						'canonical_name' => $canonical,
+						'type'           => ( $config['type'] ?? 'text' ) === 'date_picker' ? 'date' : ( $config['type'] ?? 'text' ),
+						'active'         => ! isset( $config['active'] ) || (bool) $config['active'],
+						'menu_order'     => (int) $post->menu_order,
+					]
+				);
+				unset( $field['rondo_storage_key'], $field['rondo_canonical_name'], $field['parent'], $field['ID'] );
+				$store['contexts'][ $post_type ][] = $field;
+			}
+		}
+		return $store;
+	}
+
+	private function empty_store(): array {
+		return [
+			'schema_version' => self::SCHEMA_VERSION,
+			'contexts'       => array_fill_keys( self::SUPPORTED_POST_TYPES, [] ),
+		];
+	}
+
+	/** @param mixed $value @return mixed */
+	private function sanitize_property( string $property, $value ) {
+		if ( in_array( $property, [ 'required', 'allow_null', 'multiple', 'ui', 'toggle', 'allow_custom', 'save_custom', 'unique', 'editable_in_ui' ], true ) ) {
+			return (bool) $value;
+		}
+		if ( in_array( $property, [ 'menu_order', 'maxlength', 'first_day' ], true ) ) {
+			return (int) $value;
+		}
+		if ( in_array( $property, [ 'min', 'max', 'step', 'min_width', 'max_width', 'min_height', 'max_height', 'min_size', 'max_size' ], true ) ) {
+			return is_numeric( $value ) ? (float) $value : '';
+		}
+		if ( in_array( $property, [ 'choices', 'post_type', 'filters' ], true ) ) {
+			return is_array( $value ) ? $value : [];
+		}
+		return is_string( $value ) ? sanitize_text_field( $value ) : $value;
+	}
+
 	private function is_valid_post_type( string $post_type ): bool {
 		return in_array( $post_type, self::SUPPORTED_POST_TYPES, true );
-	}
-
-	/**
-	 * Get the field group key for a post type.
-	 *
-	 * @param string $post_type The post type.
-	 * @return string The field group key.
-	 */
-	private function get_group_key( string $post_type ): string {
-		return 'group_custom_fields_' . $post_type;
-	}
-
-	/**
-	 * Map a Rondo field type to the corresponding ACF field type.
-	 *
-	 * @param string $type The Rondo field type.
-	 * @return string The ACF field type.
-	 */
-	private function map_type_to_acf( string $type ): string {
-		return self::TYPE_MAP[ $type ] ?? $type;
-	}
-
-	/**
-	 * Map an ACF field type back to Rondo field type for API responses.
-	 *
-	 * @param string $acf_type The ACF field type.
-	 * @return string The Rondo field type.
-	 */
-	private function map_type_from_acf( string $acf_type ): string {
-		$reverse_map = array_flip( self::TYPE_MAP );
-		return $reverse_map[ $acf_type ] ?? $acf_type;
 	}
 }

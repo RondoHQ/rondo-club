@@ -100,7 +100,7 @@ class RelationshipQualityChecker {
 
 		foreach ( $persons as $person_id ) {
 			$person_id = (int) $person_id;
-			$rels      = get_field( 'relationships', $person_id );
+			$rels      = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 			if ( ! is_array( $rels ) ) {
 				continue;
 			}
@@ -231,11 +231,11 @@ class RelationshipQualityChecker {
 	}
 
 	/**
-	 * Best-effort age in years. Prefers `birthdate` ACF field; falls back to
+	 * Best-effort age in years. Prefers `birthdate` canonical field; falls back to
 	 * parsing the integer in "Onder N" leeftijdsgroep (using N as approx age).
 	 */
 	private function resolve_age_years( int $person_id ): ?float {
-		// Direct post_meta — both fields are simple strings, no ACF formatting needed.
+		// Direct post_meta — both fields are simple strings, no native field formatting needed.
 		$birthdate = get_post_meta( $person_id, 'birthdate', true );
 		if ( is_string( $birthdate ) && $birthdate !== '' ) {
 			$ts = strtotime( $birthdate );

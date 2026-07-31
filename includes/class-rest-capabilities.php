@@ -327,7 +327,7 @@ class Capabilities extends Base {
 
 		$all_werkfuncties = [];
 		foreach ( $people as $person_id ) {
-			$work_history = get_field( 'work_history', $person_id ) ?: [];
+			$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [];
 			foreach ( $work_history as $position ) {
 				if ( ! empty( $position['job_title'] ) && is_string( $position['job_title'] ) ) {
 					$job_title = trim( $position['job_title'] );

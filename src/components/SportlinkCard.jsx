@@ -7,17 +7,17 @@ import { isValidDate } from '@/utils/formatters';
  * Sportlink info card for person detail page
  * Shows Sportlink sync fields (lid-sinds, lid-tot, vrijwilliger-sinds, leeftijdsgroep, type-lid, datum-foto, isparent, team)
  */
-export default function SportlinkCard({ acfData, metaData, primaryTeam }) {
+export default function SportlinkCard({ fieldData, metaData, primaryTeam }) {
   // Get Sportlink field values
-  const knvbId = acfData?.['knvb_id'];
-  const lidSinds = acfData?.['lid_sinds'];
-  const vrijwilligerSinds = metaData?.['vrijwilliger_sinds'] || acfData?.['vrijwilliger_sinds'];
-  const lidTot = acfData?.['lid_tot'];
-  const leeftijdsgroep = acfData?.leeftijdsgroep;
-  const spelactiviteit = acfData?.spelactiviteit;
-  const typeLid = acfData?.['type_lid'];
-  const datumFoto = acfData?.['datum_foto'];
-  const isParent = acfData?.isparent;
+  const knvbId = fieldData?.['knvb_id'];
+  const lidSinds = fieldData?.['lid_sinds'];
+  const vrijwilligerSinds = metaData?.['vrijwilliger_sinds'] || fieldData?.['vrijwilliger_sinds'];
+  const lidTot = fieldData?.['lid_tot'];
+  const leeftijdsgroep = fieldData?.leeftijdsgroep;
+  const spelactiviteit = fieldData?.spelactiviteit;
+  const typeLid = fieldData?.['type_lid'];
+  const datumFoto = fieldData?.['datum_foto'];
+  const isParent = fieldData?.isparent;
   const teamName = primaryTeam?.name || '';
   const teamId = primaryTeam?.id || null;
 

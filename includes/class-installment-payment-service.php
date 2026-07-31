@@ -40,7 +40,7 @@ class InstallmentPaymentService {
 	 * (payment link ID, checkout URL, reverse-lookup meta) back on the invoice.
 	 *
 	 * For the `full` plan (no installment meta written by write_installment_meta),
-	 * the amount falls back to the ACF total_amount field.
+	 * the amount falls back to the native field total_amount field.
 	 *
 	 * @param int $invoice_id         Invoice post ID.
 	 * @param int $installment_number Which installment to create (1-based).
@@ -58,7 +58,7 @@ class InstallmentPaymentService {
 			return new \WP_Error( 'mollie_not_configured', 'Voor deze contributiefactuur is geen Mollie API-sleutel geconfigureerd.' );
 		}
 
-		// Read plan meta (raw WP meta, not ACF).
+		// Read plan meta (raw WP meta, not native field).
 		$plan  = get_post_meta( $invoice_id, '_installment_plan', true );
 		$count = (int) get_post_meta( $invoice_id, '_installment_count', true );
 		$count = max( 1, $count ); // Floor at 1.
@@ -66,18 +66,18 @@ class InstallmentPaymentService {
 
 		// Calculate amount.
 		// For multi-installment plans, use stored per-installment amounts.
-		// For the full plan, use ACF total_amount (no admin fee for full plan).
+		// For the full plan, use native field total_amount (no admin fee for full plan).
 		$installment_amount = get_post_meta( $invoice_id, '_installment_' . $installment_number . '_amount', true );
 		if ( $installment_amount !== '' && $installment_amount !== false ) {
 			$admin_fee = (float) get_post_meta( $invoice_id, '_installment_' . $installment_number . '_admin_fee', true );
 			$amount    = (float) $installment_amount + $admin_fee;
 		} else {
 			// Full plan — no admin fee, use total amount directly.
-			$amount = (float) get_field( 'total_amount', $invoice_id );
+			$amount = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
 		}
 
 		// Build description.
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		if ( $plan === 'full' ) {
 			$description = 'Factuur ' . $invoice_number;
 		} else {

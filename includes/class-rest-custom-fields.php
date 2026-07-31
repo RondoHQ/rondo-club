@@ -322,11 +322,8 @@ class CustomFields extends WP_REST_Controller {
 
 				// Include localized on/off labels for true_false fields.
 				if ( $field['type'] === 'true_false' ) {
-					$acf_field = acf_get_field( $field['id'] );
-					if ( $acf_field ) {
-						$entry['ui_on_text']  = $acf_field['ui_on_text'] ?? '';
-						$entry['ui_off_text'] = $acf_field['ui_off_text'] ?? '';
-					}
+					$entry['ui_on_text']  = $definition['ui_on_text'] ?? '';
+					$entry['ui_off_text'] = $definition['ui_off_text'] ?? '';
 				}
 
 				$metadata[] = $entry;
@@ -409,7 +406,7 @@ class CustomFields extends WP_REST_Controller {
 			}
 		}
 
-		// Map relation_post_types back to post_type for ACF.
+		// Map relation_post_types back to post_type for native field.
 		if ( isset( $field_config['relation_post_types'] ) ) {
 			$field_config['post_type'] = $field_config['relation_post_types'];
 			unset( $field_config['relation_post_types'] );
@@ -515,7 +512,7 @@ class CustomFields extends WP_REST_Controller {
 			}
 		}
 
-		// Map relation_post_types back to post_type for ACF.
+		// Map relation_post_types back to post_type for native field.
 		if ( isset( $updates['relation_post_types'] ) ) {
 			$updates['post_type'] = $updates['relation_post_types'];
 			unset( $updates['relation_post_types'] );
@@ -616,7 +613,7 @@ class CustomFields extends WP_REST_Controller {
 			'type'                => [
 				'type'        => 'string',
 				'required'    => true,
-				'description' => 'ACF field type (text, textarea, number, url, email, select, checkbox, radio, true_false, date)',
+				'description' => 'canonical field type (text, textarea, number, url, email, select, checkbox, radio, true_false, date)',
 			],
 			// Core optional parameters.
 			'name'                => [

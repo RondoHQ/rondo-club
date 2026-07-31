@@ -32,18 +32,18 @@ class PersonVisibilityTest extends RondoTestCase {
 		return $person_id;
 	}
 
-	/** ACF date_picker stores Ymd. */
+	/** Compatible date metadata uses Ymd. */
 	private function years_ago( int $years ): string {
 		return gmdate( 'Ymd', strtotime( "-{$years} years" ) );
 	}
 
 	private function add_child( int $parent_id, int $child_id ): void {
-		$rels   = get_field( 'relationships', $parent_id ) ?: [];
+		$rels   = \Rondo\Fields\Fields::get_for_post( $parent_id, 'relationships' ) ?: [];
 		$rels[] = [
 			'related_person'    => $child_id,
 			'relationship_type' => self::TYPE_CHILD,
 		];
-		update_field( 'relationships', $rels, $parent_id );
+		\Rondo\Fields\Fields::update_for_post( $parent_id, 'relationships', $rels );
 		AccessControl::flush_visible_person_ids_cache();
 	}
 
@@ -181,7 +181,7 @@ class PersonVisibilityTest extends RondoTestCase {
 	// ------------------------------------------------------------ field scope
 
 	public function test_financial_flags_are_stripped_for_scoped_members(): void {
-		$acf = [
+		$fields = [
 			'first_name'              => 'Jan',
 			'email_1'                 => 'jan@example.com',
 			'financiele-blokkade'     => true,
@@ -189,7 +189,7 @@ class PersonVisibilityTest extends RondoTestCase {
 			'freescout-id'            => 41822,
 		];
 
-		$filtered = AccessControl::filter_member_visible_acf( $acf );
+		$filtered = AccessControl::filter_member_visible_fields( $fields );
 
 		$this->assertSame( 'Jan', $filtered['first_name'] );
 		$this->assertSame( 'jan@example.com', $filtered['email_1'] );
@@ -198,8 +198,8 @@ class PersonVisibilityTest extends RondoTestCase {
 		$this->assertArrayNotHasKey( 'freescout-id', $filtered );
 	}
 
-	public function test_an_unknown_future_acf_field_is_private_by_default(): void {
-		$filtered = AccessControl::filter_member_visible_acf( [ 'some_new_sensitive_field' => 'secret' ] );
+	public function test_an_unknown_future_field_is_private_by_default(): void {
+		$filtered = AccessControl::filter_member_visible_fields( [ 'some_new_sensitive_field' => 'secret' ] );
 
 		$this->assertSame( [], $filtered, 'The allowlist must fail closed for fields added later' );
 	}
@@ -244,30 +244,30 @@ class PersonVisibilityTest extends RondoTestCase {
 
 	public function test_rest_single_strips_financial_flags_for_a_member(): void {
 		$me = $this->person( 'Ik' );
-		update_field( 'financiele-blokkade', true, $me );
-		update_field( 'email_1', 'ik@example.com', $me );
+		\Rondo\Fields\Fields::update_for_post( $me, 'financiele_blokkade', true );
+		\Rondo\Fields\Fields::update_for_post( $me, 'email_1', 'ik@example.com' );
 
-		$user_id = $this->member_linked_to( $me, 'member_rest_acf' );
+		$user_id = $this->member_linked_to( $me, 'member_rest_fields' );
 		wp_set_current_user( $user_id );
 
 		$response = rest_do_request( new \WP_REST_Request( 'GET', "/wp/v2/people/{$me}" ) );
-		$acf      = $response->get_data()['acf'] ?? [];
+		$fields   = $response->get_data()['fields'] ?? [];
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertArrayHasKey( 'email_1', $acf );
-		$this->assertArrayNotHasKey( 'financiele-blokkade', $acf, 'A member must not read their own payment block' );
+		$this->assertArrayHasKey( 'email_1', $fields );
+		$this->assertArrayNotHasKey( 'financiele_blokkade', $fields, 'A member must not read their own payment block' );
 	}
 
 	public function test_rest_single_keeps_the_full_payload_for_an_administrator(): void {
 		$someone = $this->person( 'Iemand' );
-		update_field( 'financiele-blokkade', true, $someone );
+		\Rondo\Fields\Fields::update_for_post( $someone, 'financiele_blokkade', true );
 
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
 
 		$response = rest_do_request( new \WP_REST_Request( 'GET', "/wp/v2/people/{$someone}" ) );
-		$acf      = $response->get_data()['acf'] ?? [];
+		$fields   = $response->get_data()['fields'] ?? [];
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertArrayHasKey( 'financiele-blokkade', $acf, 'Management must still see everything' );
+		$this->assertArrayHasKey( 'financiele_blokkade', $fields, 'Management must still see everything' );
 	}
 }

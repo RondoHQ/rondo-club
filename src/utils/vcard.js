@@ -98,7 +98,7 @@ export function generateVCard(person, options = {}) {
   }
 
   const { teamMap = {} } = options;
-  const acf = person.fields || {};
+  const fields = person.fields || {};
   const lines = [];
   
   // BEGIN:VCARD
@@ -106,9 +106,9 @@ export function generateVCard(person, options = {}) {
   lines.push('VERSION:3.0');
   
   // Name fields
-  const firstName = acf.first_name || '';
-  const infix = acf.infix || '';
-  const lastName = acf.last_name || '';
+  const firstName = fields.first_name || '';
+  const infix = fields.infix || '';
+  const lastName = fields.last_name || '';
   const fullName = person.name || [firstName, infix, lastName].filter(Boolean).join(' ') || 'Unknown';
 
   // FN (Full Name) - required
@@ -118,45 +118,45 @@ export function generateVCard(person, options = {}) {
   lines.push(`N:${escapeVCardValue(lastName)};${escapeVCardValue(firstName)};${escapeVCardValue(infix)};;`);
   
   // Nickname
-  if (acf.nickname) {
-    lines.push(`NICKNAME:${escapeVCardValue(acf.nickname)}`);
+  if (fields.nickname) {
+    lines.push(`NICKNAME:${escapeVCardValue(fields.nickname)}`);
   }
   
   // Contact information from fixed fields
-  if (acf.email_1) {
-    lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardValue(acf.email_1)}`);
+  if (fields.email_1) {
+    lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardValue(fields.email_1)}`);
   }
-  if (acf.email_2) {
-    lines.push(`EMAIL;TYPE=INTERNET,HOME:${escapeVCardValue(acf.email_2)}`);
+  if (fields.email_2) {
+    lines.push(`EMAIL;TYPE=INTERNET,HOME:${escapeVCardValue(fields.email_2)}`);
   }
-  if (acf.mobile_1) {
-    const formattedPhone = formatPhone(acf.mobile_1);
+  if (fields.mobile_1) {
+    const formattedPhone = formatPhone(fields.mobile_1);
     if (formattedPhone) {
       lines.push(`TEL;TYPE=CELL:${formattedPhone}`);
     }
   }
-  if (acf.mobile_2) {
-    const formattedPhone = formatPhone(acf.mobile_2);
+  if (fields.mobile_2) {
+    const formattedPhone = formatPhone(fields.mobile_2);
     if (formattedPhone) {
       lines.push(`TEL;TYPE=CELL,HOME:${formattedPhone}`);
     }
   }
-  if (acf.telephone_1) {
-    const formattedPhone = formatPhone(acf.telephone_1);
+  if (fields.telephone_1) {
+    const formattedPhone = formatPhone(fields.telephone_1);
     if (formattedPhone) {
       lines.push(`TEL;TYPE=VOICE:${formattedPhone}`);
     }
   }
-  if (acf.telephone_2) {
-    const formattedPhone = formatPhone(acf.telephone_2);
+  if (fields.telephone_2) {
+    const formattedPhone = formatPhone(fields.telephone_2);
     if (formattedPhone) {
       lines.push(`TEL;TYPE=VOICE,HOME:${formattedPhone}`);
     }
   }
   
   // Addresses (structured format)
-  if (acf.addresses && Array.isArray(acf.addresses)) {
-    acf.addresses.forEach(address => {
+  if (fields.addresses && Array.isArray(fields.addresses)) {
+    fields.addresses.forEach(address => {
       // ADR;TYPE=HOME:POBox;Extended;Street;City;State;PostalCode;Country
       const addrType = address.address_label ? `ADR;TYPE=${address.address_label.toUpperCase()}` : 'ADR;TYPE=HOME';
       const street = escapeVCardValue([address.street_name, address.house_number, address.house_number_addition].filter(Boolean).join(' '));
@@ -173,7 +173,7 @@ export function generateVCard(person, options = {}) {
   }
   
   // Organization and title from work history
-  const { title, org } = getCurrentJob(acf.work_history, teamMap);
+  const { title, org } = getCurrentJob(fields.work_history, teamMap);
   if (org) {
     lines.push(`ORG:${escapeVCardValue(org)}`);
   }
@@ -182,8 +182,8 @@ export function generateVCard(person, options = {}) {
   }
   
   // Birthday from person birthdate field
-  if (acf.birthdate) {
-    const bday = formatVCardDate(acf.birthdate);
+  if (fields.birthdate) {
+    const bday = formatVCardDate(fields.birthdate);
     if (bday) {
       lines.push(`BDAY:${bday}`);
     }

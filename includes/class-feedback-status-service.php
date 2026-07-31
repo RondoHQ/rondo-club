@@ -32,7 +32,7 @@ class StatusService {
 			return new \WP_Error( 'invalid_feedback_status', 'Invalid feedback status.' );
 		}
 
-		$current_status    = (string) ( get_field( 'status', $feedback_id ) ?: 'new' );
+		$current_status    = (string) ( \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' ) ?: 'new' );
 		$provided_summary  = trim( sanitize_textarea_field( $resolution_summary ) );
 		$stored_summary    = trim( (string) get_post_meta( $feedback_id, self::META_RESOLUTION_SUMMARY, true ) );
 		$effective_summary = $provided_summary !== '' ? $provided_summary : $stored_summary;
@@ -75,7 +75,7 @@ class StatusService {
 			return $result;
 		}
 
-		update_field( 'status', $new_status, $feedback_id );
+		\Rondo\Fields\Fields::update_for_post( $feedback_id, 'status', $new_status );
 		if ( $new_status === 'resolved' ) {
 			update_post_meta( $feedback_id, '_feedback_resolved_at', current_time( 'mysql', true ) );
 			$result['resolution_email'] = ( new ResolutionEmailSender() )->send( $feedback_id );

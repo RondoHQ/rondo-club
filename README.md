@@ -18,7 +18,7 @@
 
 ---
 
-Rondo Club replaces spreadsheets and scattered admin tools with a modern single-page application for managing your sports club. It runs as a WordPress theme — install it, activate ACF Pro, and your club board has a real web app for member management.
+Rondo Club replaces spreadsheets and scattered admin tools with a modern single-page application for managing your sports club. It runs as a self-contained WordPress theme with a native metadata and REST field layer.
 
 ## Features
 
@@ -41,7 +41,6 @@ Rondo Club replaces spreadsheets and scattered admin tools with a modern single-
 
 - WordPress 6.0+
 - PHP 8.0+
-- [Advanced Custom Fields Pro](https://www.advancedcustomfields.com/pro/)
 - Node.js 18+ (for development only)
 
 ## Quick Start
@@ -68,7 +67,7 @@ For production, `npm run build` generates optimized assets in `dist/`.
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React 18, React Router 6, TanStack Query, Tailwind CSS v4 |
-| **Backend** | WordPress, PHP 8.0+, ACF Pro |
+| **Backend** | WordPress, PHP 8.0+, native post/term metadata |
 | **Build** | Vite 5.0 |
 | **Payments** | Mollie (Payment Links API) |
 | **Sync** | [Rondo Sync](https://github.com/RondoHQ/rondo-sync) (Sportlink integration) |
@@ -139,7 +138,7 @@ required values are missing.
 rondo-club/
 ├── functions.php       # Theme init, class loading, asset enqueuing
 ├── includes/           # ~50 PHP classes (REST controllers, post types, etc.)
-├── acf-json/           # ACF field group definitions (version controlled)
+├── includes/config/    # Versioned native field registry
 ├── src/
 │   ├── main.jsx        # React entry point
 │   ├── router.jsx      # Routes with lazy loading
@@ -155,7 +154,7 @@ rondo-club/
 
 The theme exposes two REST API namespaces:
 
-- **`/wp/v2/`** — Standard WordPress REST for people, teams, committees (with ACF fields)
+- **`/wp/v2/`** — Standard WordPress REST for people, teams, and committees, with canonical domain values under `fields`
 - **`/rondo/v1/`** — Custom endpoints for dashboard, search, timeline, reminders, payments
 
 Full API reference: [developer.rondo.club/api](https://developer.rondo.club/api/)

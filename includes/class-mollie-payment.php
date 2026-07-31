@@ -49,7 +49,7 @@ class MolliePayment {
 		// 2. Idempotency check
 		$existing_link_id = get_post_meta( $invoice_id, '_mollie_payment_link_id', true );
 		if ( ! empty( $existing_link_id ) ) {
-			$existing_url = get_field( 'payment_link', $invoice_id );
+			$existing_url = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
 			if ( ! empty( $existing_url ) ) {
 				return $existing_url;
 			}
@@ -68,8 +68,8 @@ class MolliePayment {
 		}
 
 		// 4. Load invoice data
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$total_amount   = get_field( 'total_amount', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+		$total_amount   = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
 
 		// 5. Format amount — always use number_format() with 4 args to avoid locale issues.
 		$amount_string = number_format( (float) $total_amount, 2, '.', '' );
@@ -125,7 +125,7 @@ class MolliePayment {
 		}
 
 		// 11. Store results
-		update_field( 'payment_link', $checkout_url, $invoice_id );
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'payment_link', $checkout_url );
 		update_post_meta( $invoice_id, '_mollie_payment_link_id', $payment_link->id );
 
 		// 12. Return checkout URL
