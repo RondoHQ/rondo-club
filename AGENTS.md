@@ -347,6 +347,8 @@ Use `parseAcfDate()` from `src/utils/formatters.js` — it handles both `YYYYMMD
 
 Update the version of the theme in style.css and package.json after every milestone, following the semantic versioning system.
 
+Planning-only changes confined to `docs/prd/` are not theme milestones. Do not bump the theme version for those changes.
+
 ## Rule 2: Update the Changelog
 
 After each milestone, add a changelog entry in in [Keep a Changelog](https://keepachangelog.com/) format:
@@ -357,6 +359,8 @@ After each milestone, add a changelog entry in in [Keep a Changelog](https://kee
 * ⁠*Removed*: Removed features
 
 You will find the changelog in /CHANGELOG.md
+
+Planning-only changes confined to `docs/prd/` do not need a changelog entry.
 
 ### Rule 3: Don't Repeat Yourself (DRY)
 
@@ -429,6 +433,8 @@ git push
 **ALWAYS deploy to production BEFORE asking for verification or UAT.** The user tests on production, not locally.
 
 Production deployment is automatic:
+
+Pushes whose changes are confined to `docs/prd/` are ignored by the CI/deploy workflow and do not deploy to production.
 
 1. Commit and push the milestone.
 2. A commit on `main` runs `.github/workflows/ci.yml`.
