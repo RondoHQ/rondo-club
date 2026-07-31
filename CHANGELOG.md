@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.81.2] - 2026-07-31
+
+### Changed
+
+- **Een certificaat Sociale Hygiëne telt net zo goed als een IVA-certificaat.** Dat was altijd al zo, maar nergens stond het, dus wie er al een had ging alsnog de e-learning van NOC*NSF doen. Op je eigen certificaatpagina, in de melding dat je nog niet achter de bar kunt, en in de welkomstmail staat nu dat we het ook accepteren. Op de beoordeelpagina staat het er voor de bestuurslid kantine bij, zodat zo'n certificaat niet per ongeluk wordt afgekeurd.
+
 ## [33.81.1] - 2026-07-31
 
 ### Fixed
