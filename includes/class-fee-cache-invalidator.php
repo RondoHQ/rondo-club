@@ -71,8 +71,8 @@ class FeeCacheInvalidator {
 		// lid-sinds changes affect pro-rata calculation (PRO-04)
 		add_filter( 'acf/update_value/name=lid-sinds', [ $this, 'invalidate_person_cache' ], 10, 3 );
 
-		// former_member changes affect fee eligibility
-		add_filter( 'acf/update_value/name=former_member', [ $this, 'invalidate_person_cache' ], 10, 3 );
+		// Former-member changes affect the family discount for the whole household.
+		add_filter( 'acf/update_value/name=former_member', [ $this, 'invalidate_family_membership_cache' ], 10, 3 );
 
 		// REST API updates
 		add_action( 'rest_after_insert_person', [ $this, 'invalidate_person_cache_rest' ], 10, 2 );
@@ -128,6 +128,54 @@ class FeeCacheInvalidator {
 	}
 
 	/**
+	 * Clear one person's fee cache and stored family-discount position.
+	 *
+	 * @param int $post_id Person post ID.
+	 */
+	private function clear_person_family_cache( int $post_id ): void {
+		$this->fee_cache->clear_fee_cache( $post_id );
+		delete_post_meta( $post_id, '_family_discount_rate' );
+		delete_post_meta( $post_id, '_family_discount_position' );
+	}
+
+	/**
+	 * Invalidate the household when a person's former-member status changes.
+	 *
+	 * ACF calls update_value filters before persisting the new value. Clear all
+	 * currently related caches here, but defer recalculation until the next cache
+	 * miss so it uses the new former-member state.
+	 *
+	 * @param mixed $value   The new field value.
+	 * @param mixed $post_id The post ID.
+	 * @param array $field   The ACF field array.
+	 * @return mixed The unmodified value (filter passthrough).
+	 */
+	public function invalidate_family_membership_cache( $value, $post_id, $field ) {
+		$post_id = $this->resolve_person_post_id( $post_id );
+
+		if ( $post_id === null ) {
+			return $value;
+		}
+
+		$family_key = $this->family_grouping->get_family_key( $post_id );
+		$this->clear_person_family_cache( $post_id );
+
+		if ( $family_key === null ) {
+			return $value;
+		}
+
+		$families = $this->family_grouping->build_family_groups()['families'];
+		foreach ( $families[ $family_key ] ?? [] as $member_id ) {
+			$member_id = (int) $member_id;
+			if ( $member_id !== $post_id ) {
+				$this->clear_person_family_cache( $member_id );
+			}
+		}
+
+		return $value;
+	}
+
+	/**
 	 * Invalidate fee cache for entire family when address changes
 	 *
 	 * Address changes affect family grouping, which impacts discounts for all
@@ -146,14 +194,10 @@ class FeeCacheInvalidator {
 		}
 
 		// Clear this person's cache first
-		$this->fee_cache->clear_fee_cache( $post_id );
+		$this->clear_person_family_cache( $post_id );
 
 		// Get family key BEFORE the address update (using current saved value)
 		$old_family_key = $this->family_grouping->get_family_key( $post_id );
-
-		// Clear family discount meta for this person (will be recalculated on next cache miss)
-		delete_post_meta( $post_id, '_family_discount_rate' );
-		delete_post_meta( $post_id, '_family_discount_position' );
 
 		// If person was in a family, invalidate all members and recalculate positions in one pass
 		if ( $old_family_key !== null ) {
@@ -181,9 +225,7 @@ class FeeCacheInvalidator {
 
 		foreach ( $families[ $family_key ] as $member_id ) {
 			if ( (int) $member_id !== $exclude_id ) {
-				$this->fee_cache->clear_fee_cache( (int) $member_id );
-				delete_post_meta( $member_id, '_family_discount_rate' );
-				delete_post_meta( $member_id, '_family_discount_position' );
+				$this->clear_person_family_cache( (int) $member_id );
 			}
 		}
 
