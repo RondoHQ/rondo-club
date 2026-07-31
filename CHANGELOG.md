@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.81.3] - 2026-07-31
+
+### Fixed
+
+- **Eén geüpload IVA-certificaat levert nog maar één mail per beoordelaar op.** Wie op "Certificaat uploaden" drukte, zag de knop niet uitgeschakeld raken en ook geen "Bezig met uploaden…" verschijnen, dus werd er nog een keer geklikt. Elke klik was een volledige upload, en elke upload mailde alle tien beoordelaars: in het logboek staat één lid met vier uploads binnen vier seconden, goed voor veertig mails. De knop doet nu wat hij hoort te doen, en de melding wordt daarnaast aan de serverkant tien minuten lang niet herhaald voor hetzelfde lid.
+
 ## [33.81.2] - 2026-07-31
 
 ### Changed
