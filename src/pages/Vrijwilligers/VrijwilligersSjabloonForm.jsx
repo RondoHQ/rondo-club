@@ -61,7 +61,7 @@ export default function VrijwilligersSjabloonForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const acf = existing.acf || {};
+    const acf = existing.fields || {};
     setForm({
       title: existing.title?.rendered || existing.title || '',
       dienst_type_id: Number(acf.dienst_type_id) || 0,
@@ -80,7 +80,7 @@ export default function VrijwilligersSjabloonForm() {
     () => types.find((t) => t.id === Number(form.dienst_type_id)),
     [types, form.dienst_type_id]
   );
-  const typeRequiresIva = Boolean(selectedType?.acf?.iva_required);
+  const typeRequiresIva = Boolean(selectedType?.fields?.iva_required);
 
   const defaultTitle = useMemo(() => {
     if (form.title) return form.title;
@@ -179,7 +179,7 @@ export default function VrijwilligersSjabloonForm() {
           saveMutation.mutate({
             title: defaultTitle,
             status: 'publish',
-            acf: {
+            fields: {
               dienst_type_id: Number(form.dienst_type_id),
               day_of_week: String(form.day_of_week),
               start_time: form.start_time,

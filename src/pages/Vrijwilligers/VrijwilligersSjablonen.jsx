@@ -150,10 +150,10 @@ export default function VrijwilligersSjablonen() {
 
   const rows = useMemo(() => {
     return [...templates].sort((a, b) => {
-      const da = Number(a.acf?.day_of_week || 0);
-      const db = Number(b.acf?.day_of_week || 0);
+      const da = Number(a.fields?.day_of_week || 0);
+      const db = Number(b.fields?.day_of_week || 0);
       if (da !== db) return da - db;
-      return (a.acf?.start_time || '').localeCompare(b.acf?.start_time || '');
+      return (a.fields?.start_time || '').localeCompare(b.fields?.start_time || '');
     });
   }, [templates]);
 
@@ -232,7 +232,7 @@ export default function VrijwilligersSjablonen() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {rows.map((tpl) => {
-                const acf = tpl.acf || {};
+                const acf = tpl.fields || {};
                 return (
                   <tr key={tpl.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="px-4 py-2">

@@ -36,7 +36,7 @@ export default function TaakuitlegForm() {
     if (!existing) return;
     setTitle(existing.title?.raw ?? existing.title?.rendered ?? '');
     setBody(existing.content?.raw ?? existing.content?.rendered ?? '');
-    setDienstTypes((existing.acf?.dienst_types || []).map(Number));
+    setDienstTypes((existing.fields?.dienst_types || []).map(Number));
     setSlug(existing.slug || '');
   }, [existing]);
 
@@ -58,7 +58,7 @@ export default function TaakuitlegForm() {
         title: title.trim(),
         content: body,
         status: 'publish',
-        acf: { dienst_types: dienstTypes },
+        fields: { dienst_types: dienstTypes },
       },
       {
         onSuccess: (res) => {

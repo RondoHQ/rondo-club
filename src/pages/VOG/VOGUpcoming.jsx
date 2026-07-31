@@ -9,7 +9,7 @@ import SortableHeader from '@/components/SortableHeader';
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
-  return person.acf?.email_1 || person.acf?.email_2 || null;
+  return person.fields?.email_1 || person.fields?.email_2 || null;
 }
 
 // Calculate days until VOG expires (3 year validity)
@@ -45,7 +45,7 @@ function VOGUpcomingEmptyState() {
 // Row component
 function VOGUpcomingRow({ person, isOdd }) {
   const email = getFirstEmail(person);
-  const vogDate = person.acf?.['datum-vog'];
+  const vogDate = person.fields?.['datum_vog'];
   const days = daysUntilExpiry(vogDate);
 
   return (
@@ -95,7 +95,7 @@ function VOGUpcomingRow({ person, isOdd }) {
 }
 
 export default function VOGUpcoming() {
-  const [orderby, setOrderby] = useState('custom_datum-vog');
+  const [orderby, setOrderby] = useState('field_datum_vog');
   const [order, setOrder] = useState('asc');
   const queryClient = useQueryClient();
 
@@ -187,7 +187,7 @@ export default function VOGUpcoming() {
                 />
                 <SortableHeader
                   label="Datum VOG"
-                  columnId="custom_datum-vog"
+                  columnId="field_datum_vog"
                   sortField={orderby}
                   sortOrder={order}
                   onSort={handleSort}

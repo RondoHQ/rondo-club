@@ -47,7 +47,7 @@ export default function AccountCard({ personId, personData }) {
   const linkedUserRoles = personData?.linked_user_roles;
 
   // Check if person has an email address
-  const hasEmail = !!(personData?.acf?.email_1?.trim());
+  const hasEmail = !!(personData?.fields?.email_1?.trim());
 
   const handleSyncRoles = async () => {
     setSyncingRoles(true);

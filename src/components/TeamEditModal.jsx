@@ -144,7 +144,7 @@ export default function TeamEditModal({
         // Editing - populate with existing data
         reset({
           title: decodeHtml(team.title?.rendered || ''),
-          website: team.acf?.website || '',
+          website: team.fields?.website || '',
         });
         // Set parent team if exists
         setSelectedParentId(team.parent ? String(team.parent) : '');
@@ -163,7 +163,7 @@ export default function TeamEditModal({
   
   // Fetch existing investors directly by their IDs (not limited to first 100)
   // Include IDs in query key to ensure refetch when investors change
-  const investorIds = team?.acf?.investors || [];
+  const investorIds = team?.fields?.investors || [];
   const investorIdsKey = investorIds.join(',');
   const { data: existingInvestors = [], isSuccess: investorsLoaded } = useQuery({
     queryKey: ['team-investors-edit', team?.id, investorIdsKey],

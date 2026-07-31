@@ -21,17 +21,17 @@ import FloatingHorizontalScrollbar from '@/components/FloatingHorizontalScrollba
 
 // Helper function to get first email from fixed fields
 function getFirstEmail(person) {
-  return person.acf?.email_1 || person.acf?.email_2 || null;
+  return person.fields?.email_1 || person.fields?.email_2 || null;
 }
 
 // Helper function to get first phone from fixed fields
 function getFirstPhone(person) {
-  return person.acf?.mobile_1 || person.acf?.telephone_1 || person.acf?.mobile_2 || person.acf?.telephone_2 || null;
+  return person.fields?.mobile_1 || person.fields?.telephone_1 || person.fields?.mobile_2 || person.fields?.telephone_2 || null;
 }
 
 // Primary address is the first row of the ACF `addresses` repeater.
 function getPrimaryAddress(person) {
-  const addresses = person.acf?.addresses;
+  const addresses = person.fields?.addresses;
   return Array.isArray(addresses) && addresses.length > 0 ? addresses[0] : null;
 }
 
@@ -50,18 +50,18 @@ function formatBirthdateDisplay(birthdate) {
 }
 
 function getMembershipTypeLabel(person) {
-  const acf = person.acf || {};
+  const acf = person.fields || {};
   const sponsorSuffix = hasSponsorRole(acf) ? ' + sponsor' : '';
 
   if (acf.person_type === 'contact') return `Contact${sponsorSuffix}`;
 
-  const sportlinkType = String(acf['type-lid'] || '').trim().toLowerCase();
+  const sportlinkType = String(acf['type_lid'] || '').trim().toLowerCase();
   if (sportlinkType.includes('verenigingslid')) return `Verenigingslid${sponsorSuffix}`;
   if (sportlinkType.includes('bondslid')) return `Bondslid${sponsorSuffix}`;
   if (sportlinkType.includes('ouder')) return `Ouder${sponsorSuffix}`;
 
   const isParent = acf.isparent === true || acf.isparent === 1 || acf.isparent === '1';
-  if (isParent || !acf['knvb-id']) return `Ouder${sponsorSuffix}`;
+  if (isParent || !acf['knvb_id']) return `Ouder${sponsorSuffix}`;
 
   return `Bondslid${sponsorSuffix}`;
 }
@@ -70,16 +70,16 @@ function getMembershipTypeLabel(person) {
 function getCurrentTeamId(person) {
   if (person?.team_id) return person.team_id;
 
-  const workHistory = person.acf?.work_history || [];
+  const workHistory = person.fields?.work_history || [];
   if (workHistory.length === 0) return null;
 
   // First, try to find current position
-  const currentJob = workHistory.find(job => job.is_current && job.team);
+  const currentJob = workHistory.find(job => job.is_current && job.team_id);
   if (currentJob) return currentJob.team;
 
   // Otherwise, get the most recent (by start_date)
   const jobsWithTeam = workHistory
-    .filter(job => job.team)
+    .filter(job => job.team_id)
     .sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date) : new Date(0);
       const dateB = b.start_date ? new Date(b.start_date) : new Date(0);
@@ -98,18 +98,18 @@ const COLUMN_SORT_FIELDS = {
   birthdate: 'birthdate',
   modified: 'modified',
   // Sportlink field mappings
-  'knvb-id': 'custom_knvb-id',
-  'type-lid': 'custom_type-lid',
-  'leeftijdsgroep': 'custom_leeftijdsgroep',
-  'lid-sinds': 'custom_lid-sinds',
-  'lid-tot': 'custom_lid-tot',
-  'vrijwilliger-sinds': 'custom_vrijwilliger-sinds',
-  'datum-foto': 'custom_datum-foto',
-  'datum-vog': 'custom_datum-vog',
-  'isparent': 'custom_isparent',
-  'huidig-vrijwilliger': 'custom_huidig-vrijwilliger',
-  'financiele-blokkade': 'custom_financiele-blokkade',
-  'freescout-id': 'custom_freescout-id',
+  knvb_id: 'field_knvb_id',
+  type_lid: 'field_type_lid',
+  leeftijdsgroep: 'field_leeftijdsgroep',
+  lid_sinds: 'field_lid_sinds',
+  lid_tot: 'field_lid_tot',
+  vrijwilliger_sinds: 'field_vrijwilliger_sinds',
+  datum_foto: 'field_datum_foto',
+  datum_vog: 'field_datum_vog',
+  isparent: 'field_isparent',
+  huidig_vrijwilliger: 'field_huidig_vrijwilliger',
+  financiele_blokkade: 'field_financiele_blokkade',
+  freescout_id: 'field_freescout_id',
 };
 
 const UNSORTABLE_CORE_COLUMNS = new Set(['email', 'phone', 'address', 'postal_code', 'city', 'country']);
@@ -120,10 +120,10 @@ function getColumnSortField(colId, column) {
 
   if (COLUMN_SORT_FIELDS[colId]) return COLUMN_SORT_FIELDS[colId];
 
-  // Dynamic custom fields use `custom_{field_name}` orderby in backend.
+  // Dynamic fields use the canonical public identifier in the backend.
   if (column?.custom) {
     if (!SORTABLE_CUSTOM_TYPES.has(column.type)) return null;
-    return `custom_${colId}`;
+    return `field_${column.canonical_name || colId}`;
   }
 
   return null;
@@ -176,17 +176,17 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               Oud-lid
             </span>
           )}
-          {person.acf?.person_type === 'contact' && (
+          {person.fields?.person_type === 'contact' && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
               Contact
             </span>
           )}
-          {hasSponsorRole(person.acf) && (
+          {hasSponsorRole(person.fields) && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300">
               Sponsor
             </span>
           )}
-          {person.acf?.wacht_op_overschrijving && (
+          {person.fields?.wacht_op_overschrijving && (
             <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               Wacht op overschrijving
             </span>
@@ -205,7 +205,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
           maxWidth: `${width}px`,
         } : {};
 
-        if (colId === 'type-lid') {
+        if (colId === 'type_lid') {
           return (
             <td
               key={colId}
@@ -226,7 +226,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
               style={style}
             >
-              <CustomFieldColumn field={customField} value={person.acf?.[customField.name]} />
+              <CustomFieldColumn field={customField} value={person.fields?.[(customField.canonical_name || customField.name)]} />
             </td>
           );
         }
@@ -263,7 +263,7 @@ function PersonListRow({ person, teamName, visibleColumns, columnMap, columnWidt
               className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
               style={style}
             >
-              {formatBirthdateDisplay(person.acf?.birthdate)}
+              {formatBirthdateDisplay(person.fields?.birthdate)}
             </td>
           );
         }
@@ -792,7 +792,7 @@ export default function PeopleList() {
     if (sortField === 'first_name' || sortField === 'last_name' || sortField === 'modified' || sortField === 'birthdate') {
       return sortField;
     }
-    if (sortField.startsWith('custom_')) return sortField;
+    if (sortField.startsWith('field_')) return sortField;
     return 'first_name';
   }, [sortField]);
 
@@ -858,11 +858,24 @@ export default function PeopleList() {
   const customFieldsMap = useMemo(() => {
     const map = {};
     customFields.forEach(field => {
-      // Custom fields in available_columns use their name as the ID
-      map[field.name] = field;
+      map[field.canonical_name || field.name] = field;
     });
     return map;
   }, [customFields]);
+
+  // Preserve bookmarked legacy sort links, then immediately replace the URL
+  // with the canonical identifier so newly copied links never extend the alias.
+  useEffect(() => {
+    if (!sortField.startsWith('custom_') || customFields.length === 0) return;
+    const storageName = sortField.slice('custom_'.length);
+    const field = customFields.find((definition) => (
+      definition.storage_key === storageName || definition.name === storageName
+    ));
+    if (!field) return;
+    const canonicalName = field.canonical_name || field.name;
+    const canonicalSort = COLUMN_SORT_FIELDS[canonicalName] || `field_${canonicalName}`;
+    updateSearchParams({ sort: canonicalSort }, { resetPage: false });
+  }, [customFields, sortField, updateSearchParams]);
 
   // Create column map from preferences
   const columnMap = useMemo(() => {
@@ -883,8 +896,8 @@ export default function PeopleList() {
   //   lid_sinds_season → lid-sinds, type-lid
   const visibleColumns = useMemo(() => {
     let forced = [];
-    if (lidTotSeason === '1') forced = ['lid-sinds', 'lid-tot'];
-    else if (lidSindsSeason === '1') forced = ['lid-sinds', 'type-lid'];
+    if (lidTotSeason === '1') forced = ['lid_sinds', 'lid_tot'];
+    else if (lidSindsSeason === '1') forced = ['lid_sinds', 'type_lid'];
 
     if (!preferences?.visible_columns || !preferences?.column_order) {
       // Fallback to default columns if preferences not loaded
@@ -1322,7 +1335,7 @@ export default function PeopleList() {
         const address = getPrimaryAddress(person);
         return [
           person.name || [person.first_name, person.infix, person.last_name].filter(Boolean).join(' ') || person.company_name || '',
-          person.acf?.company_name || person.company_name || '',
+          person.fields?.company_name || person.company_name || '',
           person.first_name || '',
           person.infix || '',
           person.last_name || '',

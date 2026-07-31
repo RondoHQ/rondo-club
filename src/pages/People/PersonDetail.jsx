@@ -30,7 +30,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, formatPersonName, getTeamName, sanitizePersonAcf, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
+import { decodeHtml, formatPersonName, getTeamName, sanitizePersonFields, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -159,8 +159,8 @@ export default function PersonDetail() {
   const canEditAllPeople = currentUser?.can_edit_people ?? false;
   const canAccessPersonNotes = currentUser?.can_access_person_notes ?? false;
   const canManageSponsors = currentUser?.can_manage_sponsors ?? false;
-  const isSponsorPerson = hasSponsorRole(person?.acf);
-  const isDualRoleSponsor = isSponsorPerson && (person?.acf?.person_type || 'member') !== 'contact';
+  const isSponsorPerson = hasSponsorRole(person?.fields);
+  const isDualRoleSponsor = isSponsorPerson && (person?.fields?.person_type || 'member') !== 'contact';
   let canEditPeople = canEditAllPeople || (canManageSponsors && isSponsorPerson && !isDualRoleSponsor);
   // Volunteer coordinators may correct contact details and photos on any person,
   // but nothing else — the server enforces the same field boundary.
@@ -232,16 +232,16 @@ export default function PersonDetail() {
   const [showMobileTodos, setShowMobileTodos] = useState(false);
 
   useEffect(() => {
-    setCompanyNameDraft(person?.acf?.company_name || '');
-  }, [person?.acf?.company_name]);
+    setCompanyNameDraft(person?.fields?.company_name || '');
+  }, [person?.fields?.company_name]);
 
   // Update document title with person's name - MUST be called before early returns
   // to ensure consistent hook calls on every render
   useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Lid');
 
   // Get birthdate from ACF field
-  const birthDate = person?.acf?.birthdate && isValidDate(person.acf.birthdate)
-    ? new Date(person.acf.birthdate)
+  const birthDate = person?.fields?.birthdate && isValidDate(person.fields.birthdate)
+    ? new Date(person.fields.birthdate)
     : null;
 
   // Deceased status (is_deceased always returns false now - death date feature removed)
@@ -266,7 +266,7 @@ export default function PersonDetail() {
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   };
 
-  const lidTotDate = parseSafeDate(person?.acf?.['lid-tot']);
+  const lidTotDate = parseSafeDate(person?.fields?.['lid_tot']);
   const hasValidLidTot = !!lidTotDate;
   const formattedLidTot = lidTotDate ? format(lidTotDate, 'd MMMM yyyy') : null;
 
@@ -274,12 +274,12 @@ export default function PersonDetail() {
   const handleSaveContacts = async (contactFields) => {
     setIsSavingContacts(true);
     try {
-      const acfData = sanitizePersonAcf(person.acf, contactFields);
+      const acfData = sanitizePersonFields(person.fields, contactFields);
 
       await updatePerson.mutateAsync({
         id,
         data: {
-          acf: acfData,
+          fields: acfData,
         },
       });
 
@@ -294,8 +294,8 @@ export default function PersonDetail() {
   const handlePersonTypeChange = async (personType) => {
     setIsSavingPersonType(true);
     try {
-      const acfData = sanitizePersonAcf(person.acf, { person_type: personType });
-      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      const acfData = sanitizePersonFields(person.fields, { person_type: personType });
+      await updatePerson.mutateAsync({ id, data: { fields: acfData } });
     } catch {
       alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
@@ -310,9 +310,9 @@ export default function PersonDetail() {
         ? { is_sponsor: true, sponsor_pass_variant: sponsorPassVariant }
         : { is_sponsor: false, sponsor_pass_variant: null };
       const acfData = canEditAllPeople
-        ? sanitizePersonAcf(person.acf, sponsorFields)
+        ? sanitizePersonFields(person.fields, sponsorFields)
         : sponsorFields;
-      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      await updatePerson.mutateAsync({ id, data: { fields: acfData } });
       window.location.reload();
     } catch {
       alert('Sponsorrol kon niet worden opgeslagen. Probeer het opnieuw.');
@@ -334,18 +334,18 @@ export default function PersonDetail() {
 
   const handleCompanyNameSave = async () => {
     const companyName = companyNameDraft.trim();
-    if (companyName === (person.acf?.company_name || '')) return;
-    if (!companyName && !person.acf?.first_name) {
+    if (companyName === (person.fields?.company_name || '')) return;
+    if (!companyName && !person.fields?.first_name) {
       alert('Vul een bedrijfsnaam of voornaam in.');
-      setCompanyNameDraft(person.acf?.company_name || '');
+      setCompanyNameDraft(person.fields?.company_name || '');
       return;
     }
 
     try {
-      await updatePerson.mutateAsync({ id, data: { acf: { company_name: companyName } } });
+      await updatePerson.mutateAsync({ id, data: { fields: { company_name: companyName } } });
     } catch {
       alert('Bedrijfsnaam kon niet worden opgeslagen. Probeer het opnieuw.');
-      setCompanyNameDraft(person.acf?.company_name || '');
+      setCompanyNameDraft(person.fields?.company_name || '');
     }
   };
 
@@ -353,11 +353,11 @@ export default function PersonDetail() {
   const handleSaveRelationship = async (data) => {
     setIsSavingRelationship(true);
     try {
-      const relationships = [...(person.acf?.relationships || [])];
+      const relationships = [...(person.fields?.relationships || [])];
       
       const relationshipItem = {
-        related_person: data.related_person || null,
-        relationship_type: data.relationship_type || null,
+        related_person_id: data.related_person_id || null,
+        relationship_type_id: data.relationship_type_id || null,
         relationship_label: data.relationship_label || '',
       };
 
@@ -367,14 +367,14 @@ export default function PersonDetail() {
         relationships.push(relationshipItem);
       }
 
-      const acfData = sanitizePersonAcf(person.acf, {
+      const acfData = sanitizePersonFields(person.fields, {
         relationships: relationships,
       });
 
       await updatePerson.mutateAsync({
         id,
         data: {
-          acf: acfData,
+          fields: acfData,
         },
       });
       
@@ -395,13 +395,13 @@ export default function PersonDetail() {
       return;
     }
     
-    const relationshipToDelete = person.acf?.relationships?.[index];
+    const relationshipToDelete = person.fields?.relationships?.[index];
     if (!relationshipToDelete) {
       return;
     }
     
-    const relatedPersonId = relationshipToDelete.related_person;
-    const relationshipTypeId = relationshipToDelete.relationship_type;
+    const relatedPersonId = relationshipToDelete.related_person_id;
+    const relationshipTypeId = relationshipToDelete.relationship_type_id;
     
     // Ask if inverse should be deleted
     let deleteInverse = true; // Default to true since backend automatically deletes it
@@ -425,21 +425,21 @@ export default function PersonDetail() {
         });
         
         const currentType = typeMap[relationshipTypeId];
-        const inverseTypeId = currentType?.acf?.inverse_relationship_type;
+        const inverseTypeId = currentType?.fields?.inverse_relationship_type;
         
         if (inverseTypeId) {
           // Find the inverse relationship to save it
-          const relatedPersonRelationships = relatedPerson.data.acf?.relationships || [];
+          const relatedPersonRelationships = relatedPerson.data.fields?.relationships || [];
           const inverseRel = relatedPersonRelationships.find(rel => {
-            const relPersonId = typeof rel.related_person === 'object' ? rel.related_person?.ID : rel.related_person;
-            const relTypeId = typeof rel.relationship_type === 'object' ? rel.relationship_type?.term_id : rel.relationship_type;
+            const relPersonId = typeof rel.related_person_id === 'object' ? rel.related_person_id?.ID : rel.related_person_id;
+            const relTypeId = typeof rel.relationship_type_id === 'object' ? rel.relationship_type_id?.term_id : rel.relationship_type_id;
             return relPersonId === parseInt(id) && relTypeId === inverseTypeId;
           });
           
           if (inverseRel) {
             inverseToRestore = {
-              related_person: parseInt(id),
-              relationship_type: inverseTypeId,
+              related_person_id: parseInt(id),
+              relationship_type_id: inverseTypeId,
               relationship_label: inverseRel.relationship_label || '',
             };
           }
@@ -450,17 +450,17 @@ export default function PersonDetail() {
     }
     
     // Delete the relationship from current person
-    const updatedRelationships = [...(person.acf?.relationships || [])];
+    const updatedRelationships = [...(person.fields?.relationships || [])];
     updatedRelationships.splice(index, 1);
     
-    const acfData = sanitizePersonAcf(person.acf, {
+    const acfData = sanitizePersonFields(person.fields, {
       relationships: updatedRelationships,
     });
     
     await updatePerson.mutateAsync({
       id,
       data: {
-        acf: acfData,
+        fields: acfData,
       },
     });
     
@@ -472,24 +472,24 @@ export default function PersonDetail() {
       try {
         // Fetch the related person again to get current state
         const relatedPerson = await wpApi.getPerson(relatedPersonId, { _embed: true });
-        const relatedPersonRelationships = relatedPerson.data.acf?.relationships || [];
+        const relatedPersonRelationships = relatedPerson.data.fields?.relationships || [];
         
         // Check if inverse was already deleted (it should be)
         const inverseExists = relatedPersonRelationships.some(rel => {
-          const relPersonId = typeof rel.related_person === 'object' ? rel.related_person?.ID : rel.related_person;
-          const relTypeId = typeof rel.relationship_type === 'object' ? rel.relationship_type?.term_id : rel.relationship_type;
-          return relPersonId === inverseToRestore.related_person && relTypeId === inverseToRestore.relationship_type;
+          const relPersonId = typeof rel.related_person_id === 'object' ? rel.related_person_id?.ID : rel.related_person_id;
+          const relTypeId = typeof rel.relationship_type_id === 'object' ? rel.relationship_type_id?.term_id : rel.relationship_type_id;
+          return relPersonId === inverseToRestore.related_person_id && relTypeId === inverseToRestore.relationship_type_id;
         });
         
         // If inverse doesn't exist, re-add it
         if (!inverseExists) {
           const updatedRelatedRelationships = [...relatedPersonRelationships, inverseToRestore];
-          const relatedPersonAcfData = sanitizePersonAcf(relatedPerson.data.acf, {
+          const relatedPersonAcfData = sanitizePersonFields(relatedPerson.data.fields, {
             relationships: updatedRelatedRelationships,
           });
           
           await wpApi.updatePerson(relatedPersonId, {
-            acf: relatedPersonAcfData,
+            fields: relatedPersonAcfData,
           });
         }
       } catch {
@@ -509,14 +509,14 @@ export default function PersonDetail() {
   const handleSaveAddress = async (data) => {
     setIsSavingAddress(true);
     try {
-      const addresses = [...(person.acf?.addresses || [])];
+      const addresses = [...(person.fields?.addresses || [])];
       if (editingAddressIndex !== null) {
         addresses[editingAddressIndex] = data;
       } else {
         addresses.push(data);
       }
-      const acfData = sanitizePersonAcf(person.acf, { addresses });
-      await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+      const acfData = sanitizePersonFields(person.fields, { addresses });
+      await updatePerson.mutateAsync({ id, data: { fields: acfData } });
       setShowAddressModal(false);
       setEditingAddress(null);
       setEditingAddressIndex(null);
@@ -530,10 +530,10 @@ export default function PersonDetail() {
   // Handle deleting an address
   const handleDeleteAddress = async (index) => {
     if (!window.confirm('Weet je zeker dat je dit adres wilt verwijderen?')) return;
-    const addresses = [...(person.acf?.addresses || [])];
+    const addresses = [...(person.fields?.addresses || [])];
     addresses.splice(index, 1);
-    const acfData = sanitizePersonAcf(person.acf, { addresses });
-    await updatePerson.mutateAsync({ id, data: { acf: acfData } });
+    const acfData = sanitizePersonFields(person.fields, { addresses });
+    await updatePerson.mutateAsync({ id, data: { fields: acfData } });
   };
 
   // Handle deleting a note
@@ -712,8 +712,8 @@ export default function PersonDetail() {
       .filter(dc => selectedCaseIds.has(dc.id))
       .map(dc => ({
         discipline_case_id: dc.id,
-        description: dc.acf?.match_description || dc.acf?.sanction_description || '',
-        amount: parseFloat(dc.acf?.administrative_fee) || 0,
+        description: dc.fields?.match_description || dc.fields?.sanction_description || '',
+        amount: parseFloat(dc.fields?.administrative_fee) || 0,
       }));
 
     try {
@@ -828,7 +828,7 @@ export default function PersonDetail() {
 
   // Handle Sportlink sync
   const handleSyncFromSportlink = async () => {
-    const knvbId = person?.acf?.['knvb-id'];
+    const knvbId = person?.fields?.['knvb_id'];
     if (!knvbId || isSyncing) return;
 
     setIsSyncing(true);
@@ -868,23 +868,23 @@ export default function PersonDetail() {
   // Build a map of entity ID to type from work history for efficient lookup
   const entityTypeMap = useMemo(() => {
     const map = new Map();
-    if (!person?.acf?.work_history) return map;
-    person.acf.work_history.forEach(job => {
-      if (job.team && job.entity_type && !map.has(job.team)) {
-        map.set(job.team, job.entity_type);
+    if (!person?.fields?.work_history) return map;
+    person.fields.work_history.forEach(job => {
+      if (job.team_id && job.entity_type && !map.has(job.team_id)) {
+        map.set(job.team_id, job.entity_type);
       }
     });
     return map;
-  }, [person?.acf?.work_history]);
+  }, [person?.fields?.work_history]);
 
   // Get unique entity IDs from work history
   const entityIds = useMemo(() => {
-    if (!person?.acf?.work_history) return [];
-    const ids = person.acf.work_history
-      .map(job => job.team)
+    if (!person?.fields?.work_history) return [];
+    const ids = person.fields.work_history
+      .map(job => job.team_id)
       .filter(Boolean);
     return [...new Set(ids)];
-  }, [person?.acf?.work_history]);
+  }, [person?.fields?.work_history]);
 
   const entityQueries = useQueries({
     queries: entityIds.map(entityId => ({
@@ -941,11 +941,11 @@ export default function PersonDetail() {
 
   // Sort relationships by age (descending - oldest first)
   const sortedRelationships = useMemo(() => {
-    if (!person?.acf?.relationships) return [];
+    if (!person?.fields?.relationships) return [];
     
-    return [...person.acf.relationships].sort((a, b) => {
-      const ageA = personAgeMap[a.related_person] ?? -1;
-      const ageB = personAgeMap[b.related_person] ?? -1;
+    return [...person.fields.relationships].sort((a, b) => {
+      const ageA = personAgeMap[a.related_person_id] ?? -1;
+      const ageB = personAgeMap[b.related_person_id] ?? -1;
       
       // Sort descending (oldest first)
       // If age is -1 (no birthday), put at the end
@@ -955,7 +955,7 @@ export default function PersonDetail() {
       
       return ageB - ageA;
     });
-  }, [person?.acf?.relationships, personAgeMap]);
+  }, [person?.fields?.relationships, personAgeMap]);
 
   // Create a map of entity ID to entity data (name, logo, type)
   const entityMap = {};
@@ -979,9 +979,9 @@ export default function PersonDetail() {
   // Current jobs come first, then sorted by start_date descending
   // Preserve original index for edit/delete operations
   const sortedWorkHistory = useMemo(() => {
-    if (!person?.acf?.work_history) return [];
+    if (!person?.fields?.work_history) return [];
     
-    return [...person.acf.work_history]
+    return [...person.fields.work_history]
       .map((job, originalIndex) => ({ ...job, originalIndex }))
       .sort((a, b) => {
         // Current jobs come first
@@ -995,7 +995,7 @@ export default function PersonDetail() {
         // Most recent first (descending)
         return dateB - dateA;
       });
-  }, [person?.acf?.work_history]);
+  }, [person?.fields?.work_history]);
 
   // Get current position(s) for header display
   const currentPositions = useMemo(() => {
@@ -1022,7 +1022,7 @@ export default function PersonDetail() {
     const groups = new Map();
 
     positionsToShow.forEach(job => {
-      const linkedTeam = job.team && teamMap[job.team];
+      const linkedTeam = job.team_id && teamMap[job.team_id];
       const isVerenigingsbreed = linkedTeam?.name === 'Verenigingsbreed';
 
       // Three buckets:
@@ -1032,9 +1032,9 @@ export default function PersonDetail() {
       // - Verenigingsbreed / no team at all → null group (sorted first)
       let groupKey, groupData;
       if (linkedTeam && !isVerenigingsbreed) {
-        groupKey = `id:${job.team}`;
+        groupKey = `id:${job.team_id}`;
         groupData = {
-          teamId: job.team,
+          teamId: job.team_id,
           team: linkedTeam,
           teamName: linkedTeam.name,
           teamType: linkedTeam.type,
@@ -1195,7 +1195,7 @@ export default function PersonDetail() {
     return null;
   }
   
-  const acf = person.acf || {};
+  const acf = person.fields || {};
   const personalName = formatPersonName(acf.first_name, acf.infix, acf.last_name);
   const isFormerMember = acf.former_member === true;
   const isCurrentParent = person.is_current_parent === true;
@@ -1234,19 +1234,19 @@ export default function PersonDetail() {
     }
 
     // Add Sportlink if there's a KNVB ID
-    if (acf['knvb-id']) {
+    if (acf['knvb_id']) {
       links.push({
         contact_type: 'sportlink',
-        contact_value: `https://club.sportlink.com/member/member-details/${acf['knvb-id']}/general`,
+        contact_value: `https://club.sportlink.com/member/member-details/${acf['knvb_id']}/general`,
       });
     }
 
     // Add FreeScout if there's a FreeScout ID AND a configured URL
     const freescoutUrl = window.rondoConfig?.freescoutUrl;
-    if (acf['freescout-id'] && freescoutUrl) {
+    if (acf['freescout_id'] && freescoutUrl) {
       links.push({
         contact_type: 'freescout',
-        contact_value: `${freescoutUrl}/customers/${acf['freescout-id']}`,
+        contact_value: `${freescoutUrl}/customers/${acf['freescout_id']}`,
       });
     }
 
@@ -1281,7 +1281,7 @@ export default function PersonDetail() {
           <span className="hidden md:inline">Terug</span>
         </button>
         <div className="flex gap-2">
-          {canSyncFromSportlink && acf['knvb-id'] && (
+          {canSyncFromSportlink && acf['knvb_id'] && (
             <button
               onClick={handleSyncFromSportlink}
               disabled={isSyncing}
@@ -1325,7 +1325,7 @@ export default function PersonDetail() {
       )}
 
       {/* Profile header */}
-      <div className={`card p-6 relative ${acf['financiele-blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
+      <div className={`card p-6 relative ${acf['financiele_blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative group">
@@ -1387,7 +1387,7 @@ export default function PersonDetail() {
                   Sponsor
                 </span>
               )}
-              {!acf.former_member && hasValidLidTot && new Date(acf['lid-tot']) > new Date() && (
+              {!acf.former_member && hasValidLidTot && new Date(acf['lid_tot']) > new Date() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Afmelding in de toekomst
                 </span>
@@ -1397,7 +1397,7 @@ export default function PersonDetail() {
                   Wacht op overschrijving
                 </span>
               )}
-              {acf['huidig-vrijwilliger'] && (
+              {acf['huidig_vrijwilliger'] && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan text-white dark:bg-electric-cyan dark:text-white">
                   Vrijwilliger
                 </span>
@@ -1486,7 +1486,7 @@ export default function PersonDetail() {
             {acf.nickname && (
               <p className="text-gray-500 dark:text-gray-400">&quot;{acf.nickname}&quot;</p>
             )}
-            {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade'] || acf['lid-tot']) && (
+            {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele_blokkade'] || acf['lid_tot']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
                 {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
                 {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
@@ -1494,7 +1494,7 @@ export default function PersonDetail() {
                 {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
                 {age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
                 {age !== null && !formattedBirthdate && <span>{age} jaar</span>}
-                {acf['financiele-blokkade'] && (
+                {acf['financiele_blokkade'] && (
                   <>
                     {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
                     <span className="text-red-600 dark:text-red-400 font-medium">Financiële blokkade</span>
@@ -1502,7 +1502,7 @@ export default function PersonDetail() {
                 )}
                 {hasValidLidTot && (
                   <>
-                    {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele-blokkade']) && <span>&nbsp;—&nbsp;</span>}
+                    {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele_blokkade']) && <span>&nbsp;—&nbsp;</span>}
                     <span>Lid tot: {formattedLidTot}</span>
                   </>
                 )}
@@ -1764,12 +1764,12 @@ export default function PersonDetail() {
             <CustomFieldsSection
               postType="person"
               postId={parseInt(id)}
-              acfData={person?.acf}
+              acfData={person?.fields}
               onUpdate={canEditPeople ? (newAcfValues) => {
-                const acfData = sanitizePersonAcf(person.acf, newAcfValues);
+                const acfData = sanitizePersonFields(person.fields, newAcfValues);
                 updatePerson.mutateAsync({
                   id,
-                  data: { acf: acfData },
+                  data: { fields: acfData },
                 });
               } : undefined}
               isUpdating={updatePerson.isPending}
@@ -1780,7 +1780,7 @@ export default function PersonDetail() {
             {/* Column 2: Sportlink, Account, Relaties, VOG */}
             <div className="space-y-6">
             {/* Sportlink Card */}
-            <SportlinkCard acfData={person?.acf} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
+            <SportlinkCard acfData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
             {/* Keep the card available for editable people so the first relationship can be added. */}
             {(canEditPeople || sortedRelationships?.length > 0) && (
@@ -1805,15 +1805,15 @@ export default function PersonDetail() {
               </div>
               <div className="space-y-2">
                 {sortedRelationships.map((rel, index) => {
-                  const originalIndex = person?.acf?.relationships?.findIndex(
-                    r => r.related_person === rel.related_person && 
-                         r.relationship_type === rel.relationship_type
+                  const originalIndex = person?.fields?.relationships?.findIndex(
+                    r => r.related_person_id === rel.related_person_id &&
+                         r.relationship_type_id === rel.relationship_type_id
                   ) ?? index;
                   
                   return (
                     <div key={index} className="flex items-center p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700 group">
                       <Link
-                        to={`/people/${rel.related_person}`}
+                        to={`/people/${rel.related_person_id}`}
                         className="flex items-center flex-1 min-w-0"
                       >
                         <PersonAvatar
@@ -1824,8 +1824,8 @@ export default function PersonDetail() {
                         />
                         <div>
                           <p className="text-sm font-medium">
-                            {decodeHtml(rel.person_name) || `Person #${rel.related_person}`}
-                            {personDeceasedMap[rel.related_person] && (
+                            {decodeHtml(rel.person_name) || `Person #${rel.related_person_id}`}
+                            {personDeceasedMap[rel.related_person_id] && (
                               <span className="text-gray-400 ml-1" title="Overleden">†</span>
                             )}
                           </p>
@@ -1836,7 +1836,7 @@ export default function PersonDetail() {
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                           <button
                             onClick={() => {
-                              const relData = person?.acf?.relationships?.[originalIndex];
+                              const relData = person?.fields?.relationships?.[originalIndex];
                               setEditingRelationship(relData);
                               setEditingRelationshipIndex(originalIndex);
                               setShowRelationshipModal(true);
@@ -1864,7 +1864,7 @@ export default function PersonDetail() {
 
             {/* VOG Card */}
             <VOGCard
-              acfData={person?.acf}
+              acfData={person?.fields}
               personId={parseInt(id)}
               onUpdateField={(fieldName, value) => {
                 updatePerson.mutateAsync({
@@ -2002,7 +2002,7 @@ export default function PersonDetail() {
             {sortedWorkHistory?.length > 0 ? (
               <div className="space-y-4">
                 {sortedWorkHistory.map((job) => {
-                  const teamData = job.team ? teamMap[job.team] : null;
+                  const teamData = job.team_id ? teamMap[job.team_id] : null;
                   const originalIndex = job.originalIndex;
                   const startDate = parseAcfDate(job.start_date);
                   const endDate = parseAcfDate(job.end_date);
@@ -2022,15 +2022,15 @@ export default function PersonDetail() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium">{job.job_title}</p>
-                        {job.team && teamData && (
+                        {job.team_id && teamData && (
                           <Link
-                            to={`/${teamData.type === 'commissie' ? 'commissies' : 'teams'}/${job.team}`}
+                            to={`/${teamData.type === 'commissie' ? 'commissies' : 'teams'}/${job.team_id}`}
                             className="text-sm text-electric-cyan hover:underline"
                           >
                             {teamData.name}
                           </Link>
                         )}
-                        {!job.team && job.team_name_text && (
+                        {!job.team_id && job.team_name_text && (
                           <p className="text-sm text-gray-700 dark:text-gray-300">
                             {job.team_name_text}
                           </p>

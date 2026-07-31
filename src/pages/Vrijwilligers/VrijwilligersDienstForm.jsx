@@ -73,7 +73,7 @@ export default function VrijwilligersDienstForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const acf = existing.acf || {};
+    const acf = existing.fields || {};
     const start = splitDateTime(acf.start_datetime || '');
     const end = splitDateTime(acf.end_datetime || '');
     setForm({
@@ -93,7 +93,7 @@ export default function VrijwilligersDienstForm() {
     () => types.find((t) => t.id === Number(form.dienst_type_id)),
     [types, form.dienst_type_id]
   );
-  const typeRequiresIva = Boolean(selectedType?.acf?.iva_required);
+  const typeRequiresIva = Boolean(selectedType?.fields?.iva_required);
 
   const defaultTitle = useMemo(() => {
     if (form.title) return form.title;
@@ -110,7 +110,7 @@ export default function VrijwilligersDienstForm() {
   }, [form, types]);
 
   const assignedIds = useMemo(() => {
-    const acf = existing?.acf || {};
+    const acf = existing?.fields || {};
     const raw = acf.assigned_persons;
     if (Array.isArray(raw)) return raw.map(Number).filter(Boolean);
     return [];
@@ -301,7 +301,7 @@ export default function VrijwilligersDienstForm() {
           saveMutation.mutate({
             title: defaultTitle,
             status: 'publish',
-            acf: {
+            fields: {
               dienst_type_id: Number(form.dienst_type_id),
               start_datetime: toStoredDateTime(form.date, form.start_time),
               end_datetime: toStoredDateTime(form.date, form.end_time),

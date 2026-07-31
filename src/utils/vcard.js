@@ -98,7 +98,7 @@ export function generateVCard(person, options = {}) {
   }
 
   const { teamMap = {} } = options;
-  const acf = person.acf || {};
+  const acf = person.fields || {};
   const lines = [];
   
   // BEGIN:VCARD

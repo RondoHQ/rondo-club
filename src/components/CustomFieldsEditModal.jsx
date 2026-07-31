@@ -14,22 +14,22 @@ const buildDefaultValues = (fieldDefs, currentValues) => {
   const defaults = {};
 
   fieldDefs.forEach((field) => {
-    const currentValue = currentValues?.[field.name];
+    const currentValue = currentValues?.[(field.canonical_name || field.name)];
 
     switch (field.type) {
       case 'checkbox':
         // Checkbox stores array of selected values
-        defaults[field.name] = Array.isArray(currentValue) ? currentValue : [];
+        defaults[(field.canonical_name || field.name)] = Array.isArray(currentValue) ? currentValue : [];
         break;
 
       case 'true_false':
         // True/false stores 0 or 1
-        defaults[field.name] = currentValue ? 1 : 0;
+        defaults[(field.canonical_name || field.name)] = currentValue ? 1 : 0;
         break;
 
       case 'link':
         // Link stores object with url and title
-        defaults[field.name] = {
+        defaults[(field.canonical_name || field.name)] = {
           url: currentValue?.url || '',
           title: currentValue?.title || '',
           target: currentValue?.target || '_blank',
@@ -39,18 +39,18 @@ const buildDefaultValues = (fieldDefs, currentValues) => {
       case 'relationship':
         // Relationship can be array of IDs or objects
         if (Array.isArray(currentValue)) {
-          defaults[field.name] = currentValue.map((item) => {
+          defaults[(field.canonical_name || field.name)] = currentValue.map((item) => {
             if (typeof item === 'object' && item !== null) {
               return item.ID;
             }
             return item;
           });
         } else if (typeof currentValue === 'object' && currentValue !== null) {
-          defaults[field.name] = [currentValue.ID];
+          defaults[(field.canonical_name || field.name)] = [currentValue.ID];
         } else if (typeof currentValue === 'number') {
-          defaults[field.name] = [currentValue];
+          defaults[(field.canonical_name || field.name)] = [currentValue];
         } else {
-          defaults[field.name] = [];
+          defaults[(field.canonical_name || field.name)] = [];
         }
         break;
 
@@ -59,14 +59,14 @@ const buildDefaultValues = (fieldDefs, currentValues) => {
         // Store the current value as-is (ID, URL, or object)
         // We'll handle upload separately
         if (typeof currentValue === 'object' && currentValue !== null) {
-          defaults[field.name] = currentValue.ID || currentValue.id || currentValue;
+          defaults[(field.canonical_name || field.name)] = currentValue.ID || currentValue.id || currentValue;
         } else {
-          defaults[field.name] = currentValue || null;
+          defaults[(field.canonical_name || field.name)] = currentValue || null;
         }
         break;
 
       default:
-        defaults[field.name] = currentValue ?? '';
+        defaults[(field.canonical_name || field.name)] = currentValue ?? '';
     }
   });
 
@@ -531,35 +531,35 @@ export default function CustomFieldsEditModal({
     const processedData = {};
 
     fieldDefs.forEach((field) => {
-      let value = data[field.name];
+      let value = data[(field.canonical_name || field.name)];
 
       // Handle special types
       switch (field.type) {
         case 'link':
           // Only submit if URL is provided
           if (value?.url) {
-            processedData[field.name] = value;
+            processedData[(field.canonical_name || field.name)] = value;
           } else {
-            processedData[field.name] = null;
+            processedData[(field.canonical_name || field.name)] = null;
           }
           break;
 
         case 'true_false':
-          processedData[field.name] = value ? 1 : 0;
+          processedData[(field.canonical_name || field.name)] = value ? 1 : 0;
           break;
 
         case 'number':
-          processedData[field.name] = value === '' ? null : Number(value);
+          processedData[(field.canonical_name || field.name)] = value === '' ? null : Number(value);
           break;
 
         case 'image':
         case 'file':
           // Store the ID or null
-          processedData[field.name] = value || null;
+          processedData[(field.canonical_name || field.name)] = value || null;
           break;
 
         default:
-          processedData[field.name] = value;
+          processedData[(field.canonical_name || field.name)] = value;
       }
     });
 
@@ -569,7 +569,7 @@ export default function CustomFieldsEditModal({
   const renderFieldInput = (field) => {
     // Check if field is editable (treat missing property as true for backward compatibility)
     if (field.editable_in_ui === false) {
-      const currentValue = watch(field.name);
+      const currentValue = watch((field.canonical_name || field.name));
       return (
         <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-2">
@@ -593,7 +593,7 @@ export default function CustomFieldsEditModal({
         return (
           <input
             type={field.type}
-            {...register(field.name)}
+            {...register((field.canonical_name || field.name))}
             placeholder={field.placeholder}
             className={inputClass}
           />
@@ -602,7 +602,7 @@ export default function CustomFieldsEditModal({
       case 'textarea':
         return (
           <textarea
-            {...register(field.name)}
+            {...register((field.canonical_name || field.name))}
             rows={field.rows || 4}
             placeholder={field.placeholder}
             className={inputClass}
@@ -617,7 +617,7 @@ export default function CustomFieldsEditModal({
             )}
             <input
               type="number"
-              {...register(field.name)}
+              {...register((field.canonical_name || field.name))}
               min={field.min}
               max={field.max}
               step={field.step}
@@ -633,14 +633,14 @@ export default function CustomFieldsEditModal({
         return (
           <input
             type="date"
-            {...register(field.name)}
+            {...register((field.canonical_name || field.name))}
             className={inputClass}
           />
         );
 
       case 'select':
         return (
-          <select {...register(field.name)} className={inputClass}>
+          <select {...register((field.canonical_name || field.name))} className={inputClass}>
             {field.allow_null && <option value="">Selecteer...</option>}
             {Object.entries(field.choices || {}).map(([value, label]) => (
               <option key={value} value={value}>
@@ -653,7 +653,7 @@ export default function CustomFieldsEditModal({
       case 'checkbox':
         return (
           <Controller
-            name={field.name}
+            name={(field.canonical_name || field.name)}
             control={control}
             render={({ field: { value = [], onChange } }) => (
               <div className={`space-y-2 ${field.layout === 'horizontal' ? 'flex flex-wrap gap-4' : ''}`}>
@@ -682,7 +682,7 @@ export default function CustomFieldsEditModal({
       case 'true_false':
         return (
           <Controller
-            name={field.name}
+            name={(field.canonical_name || field.name)}
             control={control}
             render={({ field: { value, onChange } }) => (
               <label className="flex items-center gap-3 cursor-pointer">
@@ -710,7 +710,7 @@ export default function CustomFieldsEditModal({
       case 'image':
         return (
           <Controller
-            name={field.name}
+            name={(field.canonical_name || field.name)}
             control={control}
             render={({ field: { value, onChange } }) => (
               <MediaInput value={value} onChange={onChange} type="image" />
@@ -721,7 +721,7 @@ export default function CustomFieldsEditModal({
       case 'file':
         return (
           <Controller
-            name={field.name}
+            name={(field.canonical_name || field.name)}
             control={control}
             render={({ field: { value, onChange } }) => (
               <MediaInput value={value} onChange={onChange} type="file" />
@@ -734,13 +734,13 @@ export default function CustomFieldsEditModal({
           <div className="space-y-2">
             <input
               type="url"
-              {...register(`${field.name}.url`)}
+              {...register(`${(field.canonical_name || field.name)}.url`)}
               placeholder="URL"
               className={inputClass}
             />
             <input
               type="text"
-              {...register(`${field.name}.title`)}
+              {...register(`${(field.canonical_name || field.name)}.title`)}
               placeholder="Linktekst (optioneel)"
               className={inputClass}
             />
@@ -750,7 +750,7 @@ export default function CustomFieldsEditModal({
       case 'color_picker':
         return (
           <Controller
-            name={field.name}
+            name={(field.canonical_name || field.name)}
             control={control}
             render={({ field: { value, onChange } }) => (
               <ColorPickerInput value={value} onChange={onChange} />
@@ -761,7 +761,7 @@ export default function CustomFieldsEditModal({
       case 'relationship':
         return (
           <Controller
-            name={field.name}
+            name={(field.canonical_name || field.name)}
             control={control}
             render={({ field: { value, onChange } }) => (
               <RelationshipInput
@@ -778,7 +778,7 @@ export default function CustomFieldsEditModal({
         return (
           <input
             type="text"
-            {...register(field.name)}
+            {...register((field.canonical_name || field.name))}
             className={inputClass}
           />
         );

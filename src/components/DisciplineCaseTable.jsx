@@ -105,7 +105,7 @@ export default function DisciplineCaseTable({
   const uninvoicedCaseIds = useMemo(() => {
     if (!cases || !canCreateInvoice) return [];
     return cases
-      .filter(dc => !invoicedSet.has(dc.id) && !isDoorbelastNVT(dc.acf || {}) && !isDoorbelastException(dc.acf || {}))
+      .filter(dc => !invoicedSet.has(dc.id) && !isDoorbelastNVT(dc.fields || {}) && !isDoorbelastException(dc.fields || {}))
       .map(dc => dc.id);
   }, [cases, invoicedSet, canCreateInvoice]);
 
@@ -114,7 +114,7 @@ export default function DisciplineCaseTable({
     if (!cases || selectedCaseIds.size === 0) return 0;
     return cases
       .filter(dc => selectedCaseIds.has(dc.id))
-      .reduce((sum, dc) => sum + (parseFloat(dc.acf?.administrative_fee) || 0), 0);
+      .reduce((sum, dc) => sum + (parseFloat(dc.fields?.administrative_fee) || 0), 0);
   }, [cases, selectedCaseIds]);
 
   // Count distinct persons among selected cases
@@ -123,7 +123,7 @@ export default function DisciplineCaseTable({
     const personIds = new Set(
       cases
         .filter(dc => selectedCaseIds.has(dc.id))
-        .map(dc => dc.acf?.person)
+        .map(dc => dc.fields?.person)
         .filter(Boolean)
     );
     return personIds.size;
@@ -162,8 +162,8 @@ export default function DisciplineCaseTable({
     if (!cases) return [];
     return [...cases].sort((a, b) => {
       let cmp = 0;
-      const acfA = a.acf || {};
-      const acfB = b.acf || {};
+      const acfA = a.fields || {};
+      const acfB = b.fields || {};
 
       switch (sortField) {
         case 'person': {
@@ -362,8 +362,8 @@ export default function DisciplineCaseTable({
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {sortedCases.map((dc, index) => {
             const isExpanded = expandedId === dc.id;
-            const person = personMap.get(dc.acf?.person);
-            const acf = dc.acf || {};
+            const person = personMap.get(dc.fields?.person);
+            const acf = dc.fields || {};
             const isInvoiced = invoicedSet.has(dc.id);
             const isException = isDoorbelastException(acf);
             const isSelected = selectedCaseIds.has(dc.id);
@@ -402,7 +402,7 @@ export default function DisciplineCaseTable({
                     <td className="px-4 py-3 whitespace-nowrap">
                       {person ? (
                         <Link
-                          to={`/people/${dc.acf?.person}`}
+                          to={`/people/${dc.fields?.person}`}
                           onClick={(e) => e.stopPropagation()}
                           className="flex items-center gap-2 hover:text-electric-cyan"
                         >

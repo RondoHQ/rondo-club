@@ -470,7 +470,7 @@ export default function CustomFieldsSection({ postType, postId, acfData, onUpdat
                 {field.label}
               </div>
               <div className="w-2/3 text-sm">
-                {renderFieldValue(field, acfData?.[field.name])}
+                {renderFieldValue(field, acfData?.[(field.canonical_name || field.name)])}
               </div>
             </div>
           ))}

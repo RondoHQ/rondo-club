@@ -30,10 +30,10 @@ function transformPerson(person) {
     ...person,
     id: person.id,
     name: decodedName,
-    first_name: person.acf?.first_name || '',
-    infix: person.acf?.infix || '',
-    last_name: person.acf?.last_name || '',
-    company_name: person.acf?.company_name || '',
+    first_name: person.fields?.first_name || '',
+    infix: person.fields?.infix || '',
+    last_name: person.fields?.last_name || '',
+    company_name: person.fields?.company_name || '',
     is_deceased: person.is_deceased || false,
     birth_year: person.birth_year || null,
     modified: person.modified || null,
@@ -269,7 +269,7 @@ export function useCreatePerson({ onSuccess } = {}) {
       const payload = {
         title: formatPersonName(data.first_name, data.infix, data.last_name) || data.company_name,
         status: 'publish',
-        acf: {
+        fields: {
           first_name: data.first_name,
           infix: data.infix || '',
           last_name: data.last_name,
@@ -313,10 +313,10 @@ export function useUpdatePerson() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
 
       // If relationships were updated, invalidate cache for related people
-      if (data?.acf?.relationships) {
-        const relationships = Array.isArray(data.acf.relationships) ? data.acf.relationships : [];
+      if (data?.fields?.relationships) {
+        const relationships = Array.isArray(data.fields.relationships) ? data.fields.relationships : [];
         relationships.forEach(rel => {
-          const relatedPersonId = rel.related_person;
+          const relatedPersonId = rel.related_person_id;
           if (relatedPersonId) {
             queryClient.invalidateQueries({ queryKey: peopleKeys.detail(relatedPersonId) });
           }
@@ -341,8 +341,8 @@ export function useAddEmailToPerson() {
       const response = await wpApi.getPerson(personId, { _embed: true });
       const person = response.data;
 
-      const email1 = (person.acf?.email_1 || '').toLowerCase();
-      const email2 = (person.acf?.email_2 || '').toLowerCase();
+      const email1 = (person.fields?.email_1 || '').toLowerCase();
+      const email2 = (person.fields?.email_2 || '').toLowerCase();
       const normalizedEmail = email.toLowerCase();
 
       // Check if email already exists (case-insensitive)
@@ -355,11 +355,11 @@ export function useAddEmailToPerson() {
       if (!updateField) {
         // Both slots full, overwrite email_2
         await wpApi.updatePerson(personId, {
-          acf: { email_2: normalizedEmail },
+          fields: { email_2: normalizedEmail },
         });
       } else {
         await wpApi.updatePerson(personId, {
-          acf: { [updateField]: normalizedEmail },
+          fields: { [updateField]: normalizedEmail },
         });
       }
 

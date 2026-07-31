@@ -25,15 +25,15 @@ const STATUS_LABELS = {
 };
 
 function getSinceDate(person, tab) {
-  const acf = person.acf || {};
+  const acf = person.fields || {};
   if (tab === TAB_VRIJWILLIGER) {
-    return acf['vrijwilliger-sinds'] || null;
+    return acf['vrijwilliger_sinds'] || null;
   }
-  return acf['lid-sinds'] || null;
+  return acf['lid_sinds'] || null;
 }
 
 function getEmail(person) {
-  const acf = person.acf || {};
+  const acf = person.fields || {};
   return acf.email_1 || acf.email_2 || '';
 }
 

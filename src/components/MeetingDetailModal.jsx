@@ -76,7 +76,7 @@ export default function MeetingDetailModal({ isOpen, onClose, meeting }) {
                   ...att,
                   matched: true,
                   person_id: createdPerson.id,
-                  person_name: createdPerson.title?.rendered || createdPerson.acf?.company_name || [createdPerson.acf?.first_name, createdPerson.acf?.infix, createdPerson.acf?.last_name].filter(Boolean).join(' '),
+                  person_name: createdPerson.title?.rendered || createdPerson.fields?.company_name || [createdPerson.fields?.first_name, createdPerson.fields?.infix, createdPerson.fields?.last_name].filter(Boolean).join(' '),
                   thumbnail: createdPerson._embedded?.['wp:featuredmedia']?.[0]?.source_url || null,
                 }
               : att

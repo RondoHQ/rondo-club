@@ -2,6 +2,7 @@
 
 namespace Tests\Wpunit;
 
+use Rondo\CustomFields\Manager;
 use Rondo\Fields\Formatter;
 use Rondo\Fields\RestFields;
 use Tests\Support\RondoTestCase;
@@ -178,5 +179,27 @@ class RestFieldsContractTest extends RondoTestCase {
 		$this->assertMatchesRegularExpression( '/^2026-10-25T02:30:00\+(?:01|02):00$/', $wire['end_datetime'] );
 		$this->assertSame( '2026-03-29 03:30:00', $storage['start_datetime'] );
 		$this->assertSame( '2026-10-25 02:30:00', $storage['end_datetime'] );
+	}
+
+	public function test_active_dynamic_field_round_trips_with_immutable_canonical_name(): void {
+		$manager = new Manager();
+		$field   = $manager->create_field(
+			'person',
+			[
+				'label' => 'Favoriete kleur',
+				'name'  => 'favoriete-kleur',
+				'type'  => 'text',
+			]
+		);
+		$this->assertNotWPError( $field );
+
+		$person_id = $this->createPerson();
+		$request   = new \WP_REST_Request( 'POST', '/wp/v2/people/' . $person_id );
+		$request->set_body_params( [ 'fields' => [ 'favoriete_kleur' => 'blauw' ] ] );
+		$response = rest_do_request( $request );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'blauw', get_post_meta( $person_id, 'favoriete-kleur', true ) );
+		$this->assertSame( 'blauw', $response->get_data()['fields']['favoriete_kleur'] );
 	}
 }
