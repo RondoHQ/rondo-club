@@ -13,6 +13,8 @@
     <exclude-pattern>node_modules/*</exclude-pattern>
     <exclude-pattern>dist/*</exclude-pattern>
     <exclude-pattern>tests/Support/_generated/*</exclude-pattern>
+    <!-- Machine-generated from reviewed ACF JSON; lint the generator instead. -->
+    <exclude-pattern>includes/config/field-registry.php</exclude-pattern>
 
     <!-- Show progress and sniff codes -->
     <arg value="ps"/>
@@ -204,6 +206,28 @@
     -->
     <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
         <exclude-pattern>bin/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Field-contract exceptions are internal validation values, not rendered
+        output. Escaping them at construction would corrupt canonical paths.
+    -->
+    <rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+        <exclude-pattern>bin/generate-field-registry.php</exclude-pattern>
+        <exclude-pattern>includes/class-field-formatter.php</exclude-pattern>
+        <exclude-pattern>includes/class-field-registry.php</exclude-pattern>
+        <exclude-pattern>includes/class-fields.php</exclude-pattern>
+    </rule>
+
+    <!-- The registry compiler intentionally emits deterministic PHP source. -->
+    <rule ref="WordPress.PHP.DevelopmentFunctions.error_log_var_export">
+        <exclude-pattern>bin/generate-field-registry.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_mkdir">
+        <exclude-pattern>bin/generate-field-registry.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_fwrite">
+        <exclude-pattern>bin/generate-field-registry.php</exclude-pattern>
     </rule>
 
     <!--

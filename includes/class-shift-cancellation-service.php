@@ -144,8 +144,8 @@ class ShiftCancellationService {
 			return new \WP_Error( 'cancelled_shift_readonly', 'Een geannuleerde inschrijftaak kan niet meer worden bewerkt.', [ 'status' => 409 ] );
 		}
 
-		$acf              = $request->get_param( 'acf' );
-		$requested_status = is_array( $acf ) ? (string) ( $acf['status'] ?? '' ) : '';
+		$acf              = \Rondo\Fields\RestFields::request_payload( $request, 'dienst_shift' );
+		$requested_status = (string) ( $acf['status'] ?? '' );
 		if ( $requested_status !== 'geannuleerd' ) {
 			return $prepared_post;
 		}
