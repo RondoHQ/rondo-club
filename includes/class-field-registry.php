@@ -8,6 +8,7 @@
 namespace Rondo\Fields;
 
 use InvalidArgumentException;
+use Rondo\CustomFields\Manager;
 use RuntimeException;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -92,7 +93,25 @@ final class Registry {
 		if ( ! isset( $contexts[ $context ] ) ) {
 			throw new InvalidArgumentException( "Unknown field context: {$context}" );
 		}
-		return $contexts[ $context ]['fields'];
+		$fields = $contexts[ $context ]['fields'];
+		if ( ! in_array( $context, Manager::SUPPORTED_POST_TYPES, true ) || ! function_exists( 'acf_get_fields' ) ) {
+			return $fields;
+		}
+
+		$manager = new Manager();
+		foreach ( $manager->get_fields( $context, false ) as $dynamic ) {
+			$canonical_name = (string) $dynamic['canonical_name'];
+			if ( isset( $fields[ $canonical_name ] ) ) {
+				throw new RuntimeException( "Dynamic field {$context}.{$canonical_name} collides with a static field." );
+			}
+			$definition                   = $dynamic;
+			$definition['canonical_name'] = $canonical_name;
+			$definition['storage_name']   = (string) $dynamic['storage_key'];
+			$definition['dynamic']        = true;
+			$fields[ $canonical_name ]    = $definition;
+		}
+
+		return $fields;
 	}
 
 	/**

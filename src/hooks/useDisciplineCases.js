@@ -61,7 +61,7 @@ export function usePersonDisciplineCases(personId, { enabled = true } = {}) {
       const response = await wpApi.getDisciplineCases(params);
 
       // Client-side filter (ACF post_object returns integer)
-      return response.data.filter(dc => dc.acf?.person === parseInt(personId, 10));
+      return response.data.filter(dc => dc.fields?.person === parseInt(personId, 10));
     },
     enabled: !!personId && enabled,
   });

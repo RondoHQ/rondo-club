@@ -79,7 +79,7 @@ export default function CommissieEditModal({
         // Editing - populate with existing data
         reset({
           title: decodeHtml(commissie.title?.rendered || ''),
-          website: commissie.acf?.website || '',
+          website: commissie.fields?.website || '',
         });
         setSelectedParentId(commissie.parent ? String(commissie.parent) : '');
       } else {

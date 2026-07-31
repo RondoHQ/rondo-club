@@ -65,7 +65,7 @@ export const wpApi = {
   getEntity: (id) => api.get(`/rondo/v1/entity/${id}`),
 
   // Taxonomies
-  getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100, _fields: 'id,name,slug,acf' } }),
+  getRelationshipTypes: () => api.get('/wp/v2/relationship_type', { params: { per_page: 100, _fields: 'id,name,slug,fields' } }),
   createRelationshipType: (data) => api.post('/wp/v2/relationship_type', data),
   updateRelationshipType: (id, data) => api.post(`/wp/v2/relationship_type/${id}`, data),
   deleteRelationshipType: (id) => api.delete(`/wp/v2/relationship_type/${id}?force=true`),

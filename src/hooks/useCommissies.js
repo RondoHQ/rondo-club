@@ -18,7 +18,7 @@ export function useCreateCommissie({ onSuccess } = {}) {
         title: data.title,
         status: 'publish',
         parent: data.parentId || 0,
-        acf: {
+        fields: {
           website: data.website,
         },
       };

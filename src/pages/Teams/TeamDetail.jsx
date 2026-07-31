@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useVolunteerRoleSettings } from '@/hooks/useVolunteerRoleSettings';
-import { getTeamName, decodeHtml, sanitizeTeamAcf } from '@/utils/formatters';
+import { getTeamName, decodeHtml, sanitizeTeamFields } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -55,16 +55,26 @@ export default function TeamDetail() {
     },
   });
   
-  // Get investor details from embedded data (already included in team response)
-  const investorIds = useMemo(() => team?.acf?.investors || [], [team?.acf?.investors]);
+  const investorIds = useMemo(() => team?.fields?.investors || [], [team?.fields?.investors]);
 
-  // Extract featured_media IDs from embedded posts for thumbnail fetching
-  const embeddedPosts = useMemo(() => team?._embedded?.['acf:post'] || [], [team?._embedded]);
+  // Resolve related entities explicitly; the canonical fields contract does not
+  // depend on ACF's private embedded-post relation namespace.
+  const { data: investorPosts = [] } = useQuery({
+    queryKey: ['team-investors', investorIds.join(',')],
+    queryFn: async () => Promise.all(
+      investorIds.map(async (investorId) => {
+        const response = await prmApi.getEntity(investorId);
+        return response.data;
+      })
+    ),
+    enabled: investorIds.length > 0,
+  });
+
   const mediaIds = useMemo(() => {
-    return embeddedPosts
+    return investorPosts
       .filter(p => investorIds.includes(p.id) && p.featured_media)
       .map(p => p.featured_media);
-  }, [embeddedPosts, investorIds]);
+  }, [investorPosts, investorIds]);
 
   // Fetch thumbnails for investors (embedded posts don't include nested media)
   const { data: mediaItems = [] } = useQuery({
@@ -80,20 +90,20 @@ export default function TeamDetail() {
 
   // Build investor details with thumbnails
   const investorDetails = useMemo(() => {
-    if (!investorIds.length || !embeddedPosts.length) return [];
+    if (!investorIds.length || !investorPosts.length) return [];
 
     // Create a map of media ID to source URL
     const mediaMap = new Map(mediaItems.map(m => [m.id, m.source_url]));
 
     // Map investors in the order they appear in investorIds
     return investorIds.map(investorId => {
-      const post = embeddedPosts.find(p => p.id === investorId);
+      const post = investorPosts.find(p => p.id === investorId);
       if (!post) return null;
 
       const isPerson = post.type === 'person';
       const thumbnail = post.featured_media
         ? mediaMap.get(post.featured_media)
-        : post.acf?.photo_gallery?.[0]?.url;
+        : post.fields?.photo_gallery?.[0]?.url;
 
       return {
         id: post.id,
@@ -104,7 +114,7 @@ export default function TeamDetail() {
         thumbnail,
       };
     }).filter(Boolean);
-  }, [investorIds, embeddedPosts, mediaItems]);
+  }, [investorIds, investorPosts, mediaItems]);
   
   // Fetch teams that this team has invested in
   const { data: investments = [] } = useQuery({
@@ -165,7 +175,7 @@ export default function TeamDetail() {
     return null;
   }
   
-  const acf = team.acf || {};
+  const acf = team.fields || {};
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -343,10 +353,10 @@ export default function TeamDetail() {
             <CustomFieldsSection
               postType="team"
               postId={parseInt(id)}
-              acfData={team?.acf}
+              acfData={team?.fields}
               onUpdate={(newAcfValues) => {
-                const acfData = sanitizeTeamAcf(team?.acf, newAcfValues);
-                updateTeam.mutateAsync({ acf: acfData });
+                const acfData = sanitizeTeamFields(team?.fields, newAcfValues);
+                updateTeam.mutateAsync({ fields: acfData });
               }}
               isUpdating={updateTeam.isPending}
             />

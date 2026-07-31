@@ -180,8 +180,8 @@ export default function FinanceDashboard() {
   const invoicedCaseIdSet = new Set(invoicedCaseIds);
   const uninvoicedDisciplineCases = disciplineCases.filter((disciplineCase) => {
     if (invoicedCaseIdSet.has(disciplineCase.id)) return false;
-    if (isDoorbelastNVT(disciplineCase.acf || {})) return false;
-    if (isDoorbelastException(disciplineCase.acf || {})) return false;
+    if (isDoorbelastNVT(disciplineCase.fields || {})) return false;
+    if (isDoorbelastException(disciplineCase.fields || {})) return false;
     return true;
   });
   const nikkiMembers = members.filter((m) => m.nikki_total !== null);

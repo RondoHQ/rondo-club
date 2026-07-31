@@ -31,20 +31,20 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
         _name: team.title?.rendered || team.title || '',
       };
       listViewFields.forEach(field => {
-        initialValues[field.name] = team.acf?.[field.name] ?? '';
+        initialValues[(field.canonical_name || field.name)] = team.fields?.[(field.canonical_name || field.name)] ?? '';
       });
       setEditedFields(initialValues);
     } else {
       setEditedFields({});
     }
-  }, [isEditing, team.acf, team.title, listViewFields]);
+  }, [isEditing, team.fields, team.title, listViewFields]);
 
   const handleFieldChange = (fieldName, value) => {
     setEditedFields(prev => ({ ...prev, [fieldName]: value }));
   };
 
   const handleSave = () => {
-    onSaveRow(team.id, editedFields, team.acf);
+    onSaveRow(team.id, editedFields, team.fields);
   };
 
   const handleKeyDown = (e) => {
@@ -103,12 +103,12 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
       )}
       {isColVisible('speeldag') && (
         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {getSpeeldag(team.acf?.activiteit)}
+          {getSpeeldag(team.fields?.activiteit)}
         </td>
       )}
       {isColVisible('gender') && (
         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-          {getGenderLabel(team.acf?.gender)}
+          {getGenderLabel(team.fields?.gender)}
         </td>
       )}
       {listViewFields.map(field => (
@@ -116,14 +116,14 @@ function OrganizationListRow({ team, listViewFields, isSelected, onToggleSelecti
           {isEditing ? (
             <InlineFieldInput
               field={field}
-              value={editedFields[field.name]}
+              value={editedFields[(field.canonical_name || field.name)]}
               onChange={handleFieldChange}
               onKeyDown={handleKeyDown}
               disabled={isUpdating}
             />
           ) : (
             <span className="cursor-pointer">
-              <CustomFieldColumn field={field} value={team.acf?.[field.name]} />
+              <CustomFieldColumn field={field} value={team.fields?.[(field.canonical_name || field.name)]} />
             </span>
           )}
         </td>
@@ -203,7 +203,7 @@ function OrganizationListView({ teams, listViewFields, selectedIds, onToggleSele
             {listViewFields.map(field => (
               <SortableHeader
                 key={field.key}
-                columnId={`custom_${field.name}`}
+                columnId={`custom_${(field.canonical_name || field.name)}`}
                 label={field.label}
                 sortField={sortField}
                 sortOrder={sortOrder}
@@ -248,7 +248,7 @@ export default function TeamsList() {
   const [editingRowId, setEditingRowId] = useState(null);
   const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
-  const { isVisible, toggle } = useColumnVisibility('teams');
+  const { isVisible, toggle, migrateAliases } = useColumnVisibility('teams');
 
   const queryClient = useQueryClient();
 
@@ -256,24 +256,10 @@ export default function TeamsList() {
     await queryClient.invalidateQueries({ queryKey: ['teams'] });
   };
 
-  const arrayTypeAcfFields = ['contact_info', 'investors'];
-
   const updateRowMutation = useMutation({
-    mutationFn: async ({ teamId, editedFields, existingAcf }) => {
+    mutationFn: async ({ teamId, editedFields }) => {
       const { _name, ...customFields } = editedFields;
-
-      const mergedAcf = {
-        ...existingAcf,
-        ...customFields
-      };
-
-      arrayTypeAcfFields.forEach(fieldName => {
-        if (mergedAcf[fieldName] === null || mergedAcf[fieldName] === undefined) {
-          mergedAcf[fieldName] = [];
-        }
-      });
-
-      const updatePayload = { acf: mergedAcf };
+      const updatePayload = { fields: customFields };
 
       if (_name !== undefined) {
         updatePayload.title = _name;
@@ -288,14 +274,14 @@ export default function TeamsList() {
     },
   });
 
-  const handleSaveRow = async (teamId, editedFields, existingAcf) => {
+  const handleSaveRow = async (teamId, editedFields) => {
     const processedFields = { ...editedFields };
     listViewFields.forEach(field => {
-      if (field.type === 'number' && processedFields[field.name] === '') {
-        processedFields[field.name] = null;
+      if (field.type === 'number' && processedFields[(field.canonical_name || field.name)] === '') {
+        processedFields[(field.canonical_name || field.name)] = null;
       }
     });
-    await updateRowMutation.mutateAsync({ teamId, editedFields: processedFields, existingAcf });
+    await updateRowMutation.mutateAsync({ teamId, editedFields: processedFields });
   };
 
   const handleStartEdit = (teamId) => setEditingRowId(teamId);
@@ -322,6 +308,14 @@ export default function TeamsList() {
       .filter(f => f.show_in_list_view)
       .sort((a, b) => (a.list_view_order || 999) - (b.list_view_order || 999));
   }, [customFields]);
+
+  useEffect(() => {
+    migrateAliases(Object.fromEntries(
+      customFields
+        .filter((field) => field.storage_key && field.canonical_name && field.storage_key !== field.canonical_name)
+        .map((field) => [`custom_${field.storage_key}`, `custom_${field.canonical_name}`])
+    ));
+  }, [customFields, migrateAliases]);
 
   const hasActiveFilters = !!(teamFilter || speeldagFilter || genderFilter || playerCountFilter || staffCountFilter);
   const activeFilterCount = [teamFilter, speeldagFilter, genderFilter, playerCountFilter, staffCountFilter].filter(Boolean).length;
@@ -355,12 +349,12 @@ export default function TeamsList() {
 
   const speeldagOptions = useMemo(() => {
     if (!teams) return [];
-    return [...new Set(teams.map(t => getSpeeldag(t.acf?.activiteit)).filter(Boolean))].sort();
+    return [...new Set(teams.map(t => getSpeeldag(t.fields?.activiteit)).filter(Boolean))].sort();
   }, [teams]);
 
   const genderOptions = useMemo(() => {
     if (!teams) return [];
-    return [...new Set(teams.map(t => getGenderLabel(t.acf?.gender)).filter(Boolean))].sort();
+    return [...new Set(teams.map(t => getGenderLabel(t.fields?.gender)).filter(Boolean))].sort();
   }, [teams]);
 
   // Column definitions for the filter toolbar
@@ -421,8 +415,8 @@ export default function TeamsList() {
       const needle = teamFilter.toLowerCase();
       filtered = filtered.filter(t => getTeamName(t).toLowerCase().includes(needle));
     }
-    if (speeldagFilter) filtered = filtered.filter(t => getSpeeldag(t.acf?.activiteit) === speeldagFilter);
-    if (genderFilter) filtered = filtered.filter(t => getGenderLabel(t.acf?.gender) === genderFilter);
+    if (speeldagFilter) filtered = filtered.filter(t => getSpeeldag(t.fields?.activiteit) === speeldagFilter);
+    if (genderFilter) filtered = filtered.filter(t => getGenderLabel(t.fields?.gender) === genderFilter);
     if (playerCountFilter === 'heeft') filtered = filtered.filter(t => (t.player_count ?? 0) > 0);
     else if (playerCountFilter === 'geen') filtered = filtered.filter(t => (t.player_count ?? 0) === 0);
     if (staffCountFilter === 'heeft') filtered = filtered.filter(t => (t.staff_count ?? 0) > 0);
@@ -441,11 +435,11 @@ export default function TeamsList() {
         valueA = (a.title?.rendered || a.title || '').toLowerCase();
         valueB = (b.title?.rendered || b.title || '').toLowerCase();
       } else if (sortField === 'speeldag') {
-        valueA = getSpeeldag(a.acf?.activiteit).toLowerCase();
-        valueB = getSpeeldag(b.acf?.activiteit).toLowerCase();
+        valueA = getSpeeldag(a.fields?.activiteit).toLowerCase();
+        valueB = getSpeeldag(b.fields?.activiteit).toLowerCase();
       } else if (sortField === 'gender') {
-        valueA = getGenderLabel(a.acf?.gender).toLowerCase();
-        valueB = getGenderLabel(b.acf?.gender).toLowerCase();
+        valueA = getGenderLabel(a.fields?.gender).toLowerCase();
+        valueB = getGenderLabel(b.fields?.gender).toLowerCase();
       } else if (sortField === 'player_count') {
         valueA = a.player_count ?? 0;
         valueB = b.player_count ?? 0;
@@ -457,8 +451,8 @@ export default function TeamsList() {
       } else if (sortField.startsWith('custom_')) {
         const fieldName = sortField.replace('custom_', '');
         const fieldMeta = listViewFields.find(f => f.name === fieldName);
-        valueA = a.acf?.[fieldName];
-        valueB = b.acf?.[fieldName];
+        valueA = a.fields?.[fieldName];
+        valueB = b.fields?.[fieldName];
 
         if (fieldMeta?.type === 'number') {
           valueA = parseFloat(valueA) || 0;

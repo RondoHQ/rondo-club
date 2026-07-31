@@ -17,7 +17,7 @@ export default function PersonEditModal({
   initialSponsor = false
 }) {
   const isEditing = !!person;
-  const isSponsor = initialSponsor || Boolean(person?.acf?.is_sponsor);
+  const isSponsor = initialSponsor || Boolean(person?.fields?.is_sponsor);
   const isOnline = useOnlineStatus();
   
   // vCard import state
@@ -77,18 +77,18 @@ export default function PersonEditModal({
       if (person) {
         // Editing - populate with existing data from fixed fields
         reset({
-          first_name: person.acf?.first_name || '',
-          infix: person.acf?.infix || '',
-          last_name: person.acf?.last_name || '',
-          nickname: person.acf?.nickname || '',
-          company_name: person.acf?.company_name || '',
-          person_type: person.acf?.person_type || 'member',
-          sponsor_pass_variant: person.acf?.sponsor_pass_variant || '',
-          gender: person.acf?.gender || '',
-          pronouns: person.acf?.pronouns || '',
-          email: person.acf?.email_1 || '',
-          phone: person.acf?.mobile_1 || person.acf?.telephone_1 || '',
-          phone_type: person.acf?.mobile_1 ? 'mobile' : 'phone',
+          first_name: person.fields?.first_name || '',
+          infix: person.fields?.infix || '',
+          last_name: person.fields?.last_name || '',
+          nickname: person.fields?.nickname || '',
+          company_name: person.fields?.company_name || '',
+          person_type: person.fields?.person_type || 'member',
+          sponsor_pass_variant: person.fields?.sponsor_pass_variant || '',
+          gender: person.fields?.gender || '',
+          pronouns: person.fields?.pronouns || '',
+          email: person.fields?.email_1 || '',
+          phone: person.fields?.mobile_1 || person.fields?.telephone_1 || '',
+          phone_type: person.fields?.mobile_1 ? 'mobile' : 'phone',
           birthday: '', // Birthday is stored separately
         });
       } else if (prefillData) {

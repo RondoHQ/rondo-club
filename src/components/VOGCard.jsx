@@ -73,14 +73,14 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
   }
 
   // Check if person is a current volunteer (auto-calculated field)
-  const isVolunteer = acfData?.['huidig-vrijwilliger'] === true || acfData?.['huidig-vrijwilliger'] === '1';
+  const isVolunteer = acfData?.['huidig_vrijwilliger'] === true || acfData?.['huidig_vrijwilliger'] === '1';
 
   // If not a volunteer, don't show the card
   if (!isVolunteer) {
     return null;
   }
 
-  const vogDate = acfData?.vog_datum || acfData?.['datum-vog'];
+  const vogDate = acfData?.vog_datum || acfData?.['datum_vog'];
   const vogStatus = calculateVogStatus(vogDate);
 
   // VOG process tracking fields
@@ -138,7 +138,7 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
           icon={CalendarDays}
           label="Datum VOG:"
           value={vogDate}
-          fieldName="datum-vog"
+          fieldName="datum_vog"
           onUpdateField={onUpdateField}
           isUpdating={isUpdating}
           personId={personId}

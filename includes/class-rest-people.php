@@ -9,6 +9,7 @@ namespace Rondo\REST;
 
 use Rondo\CustomFields\Manager;
 use Rondo\Core\SponsorStatus;
+use Rondo\Fields\Registry;
 use Rondo\Passes\PublicMembershipPassPage;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -1477,59 +1478,81 @@ class People extends Base {
 	}
 
 	/**
-	 * Validate orderby parameter - accepts built-in fields or custom_ prefixed fields.
+	 * Validate a canonical orderby parameter or a bounded legacy alias.
 	 *
 	 * @param string $param The orderby value to validate.
 	 * @return bool True if valid, false otherwise.
 	 */
 	public function validate_orderby_param( $param ) {
-		// Check built-in fields first.
+		return $this->resolve_orderby_definition( (string) $param ) !== null;
+	}
+
+	/**
+	 * Resolve an order identifier to its canonical public name and storage metadata.
+	 *
+	 * The public source of truth is `field_{canonical_name}`. During the compatibility
+	 * window, `custom_{storage_name}` is accepted and normalized through the registry.
+	 *
+	 * @return array{identifier:string,storage_name:?string,type:?string}|null
+	 */
+	private function resolve_orderby_definition( string $param ): ?array {
 		$built_in_fields = [
 			'first_name',
 			'last_name',
 			'modified',
 			'birthdate',
 			'organization',
-			// Sportlink fields (ACF fields, not from Manager)
-			'custom_knvb-id',
-			'custom_type-lid',
-			'custom_leeftijdsgroep',
-			'custom_lid-sinds',
-			'custom_vrijwilliger-sinds',
-			'custom_datum-foto',
-			'custom_datum-vog',
-			'custom_isparent',
-			'custom_huidig-vrijwilliger',
-			'custom_financiele-blokkade',
-			'custom_freescout-id',
 		];
 		if ( in_array( $param, $built_in_fields, true ) ) {
-			return true;
+			return [
+				'identifier'   => $param,
+				'storage_name' => null,
+				'type'         => null,
+			];
 		}
 
-		// Check for custom field (must start with 'custom_').
-		if ( strpos( $param, 'custom_' ) !== 0 ) {
-			return false;
+		$is_canonical = strpos( $param, 'field_' ) === 0;
+		$is_legacy    = strpos( $param, 'custom_' ) === 0;
+		if ( ! $is_canonical && ! $is_legacy ) {
+			return null;
 		}
 
-		// Extract field name (remove 'custom_' prefix).
-		$field_name = substr( $param, 7 );
+		$identifier     = substr( $param, 6 + ( $is_legacy ? 1 : 0 ) );
+		$sortable_types = [ 'text', 'textarea', 'number', 'date', 'date_picker', 'select', 'email', 'url', 'true_false' ];
 
-		// Get all active custom fields for person entity.
+		try {
+			$definition = Registry::resolve( 'person', $identifier );
+			if ( ! in_array( $definition['type'], $sortable_types, true ) ) {
+				return null;
+			}
+
+			return [
+				'identifier'   => 'field_' . $definition['canonical_name'],
+				'storage_name' => $definition['storage_name'],
+				'type'         => $definition['type'],
+			];
+		} catch ( \InvalidArgumentException $error ) {
+			// Dynamic definitions join the native registry in Phase F. Until then,
+			// their immutable ACF field name is the compatibility storage key.
+		}
+
 		$manager = new Manager();
 		$fields  = $manager->get_fields( 'person', false );
-
-		// Find field by name and validate it's sortable.
 		foreach ( $fields as $field ) {
-			if ( $field['name'] === $field_name ) {
-				// Only allow sortable field types.
-				$sortable_types = [ 'text', 'textarea', 'number', 'date', 'select', 'email', 'url', 'true_false' ];
-				return in_array( $field['type'], $sortable_types, true );
+			$canonical_name = isset( $field['rondo_canonical_name'] )
+				? (string) $field['rondo_canonical_name']
+				: str_replace( '-', '_', (string) $field['name'] );
+			$matches        = $is_canonical ? $canonical_name === $identifier : $field['name'] === $identifier;
+			if ( $matches && in_array( $field['type'], $sortable_types, true ) ) {
+				return [
+					'identifier'   => 'field_' . $canonical_name,
+					'storage_name' => (string) $field['name'],
+					'type'         => (string) $field['type'],
+				];
 			}
 		}
 
-		// Field not found or inactive.
-		return false;
+		return null;
 	}
 
 	/**
@@ -1545,15 +1568,20 @@ class People extends Base {
 		global $wpdb;
 
 		// Extract validated parameters
-		$page            = (int) $request->get_param( 'page' );
-		$per_page        = (int) $request->get_param( 'per_page' );
-		$ownership       = $request->get_param( 'ownership' );
-		$modified_days   = $request->get_param( 'modified_days' );
-		$birth_year_from = $request->get_param( 'birth_year_from' );
-		$birth_year_to   = $request->get_param( 'birth_year_to' );
-		$birth_month     = $request->get_param( 'birth_month' );
-		$orderby         = $request->get_param( 'orderby' );
-		$order           = strtoupper( $request->get_param( 'order' ) );
+		$page             = (int) $request->get_param( 'page' );
+		$per_page         = (int) $request->get_param( 'per_page' );
+		$ownership        = $request->get_param( 'ownership' );
+		$modified_days    = $request->get_param( 'modified_days' );
+		$birth_year_from  = $request->get_param( 'birth_year_from' );
+		$birth_year_to    = $request->get_param( 'birth_year_to' );
+		$birth_month      = $request->get_param( 'birth_month' );
+		$orderby          = (string) $request->get_param( 'orderby' );
+		$order_definition = $this->resolve_orderby_definition( $orderby );
+		if ( $order_definition === null ) {
+			$order_definition = $this->resolve_orderby_definition( 'first_name' );
+		}
+		$orderby = $order_definition['identifier'];
+		$order   = strtoupper( $request->get_param( 'order' ) );
 
 		// Custom field filter parameters
 		$huidig_vrijwilliger       = $request->get_param( 'huidig_vrijwilliger' );
@@ -1595,9 +1623,10 @@ class People extends Base {
 		if ( \Rondo\Core\AccessControl::acf_field_is_hidden( 'financiele_blokkade' ) ) {
 			$financiele_blokkade = null;
 		}
-		if ( strpos( (string) $orderby, 'custom_' ) === 0
-			&& \Rondo\Core\AccessControl::acf_field_is_hidden( substr( $orderby, 7 ) ) ) {
-			$orderby = 'first_name';
+		if ( $order_definition['storage_name'] !== null
+			&& \Rondo\Core\AccessControl::acf_field_is_hidden( $order_definition['storage_name'] ) ) {
+			$order_definition = $this->resolve_orderby_definition( 'first_name' );
+			$orderby          = 'first_name';
 		}
 
 		// Double-check access control (permission_callback should have caught this,
@@ -2002,7 +2031,7 @@ class People extends Base {
 					CAST(REPLACE($birthdate_value_sql, '-', '') AS UNSIGNED) $order,
 					fn.meta_value ASC";
 				break;
-			case 'custom_datum-vog':
+			case 'field_datum_vog':
 				// ACF date field - not a custom field from Manager, so handle explicitly
 				// Check if 'dv' alias already exists from VOG filtering (lines 1114-1149)
 				// to avoid duplicate JOINs on the same table
@@ -2018,51 +2047,51 @@ class People extends Base {
 				}
 				$order_clause = "ORDER BY COALESCE(dv.meta_value, '') $order, fn.meta_value ASC";
 				break;
-			case 'custom_lid-sinds':
-			case 'custom_lid-tot':
-			case 'custom_vrijwilliger-sinds':
-			case 'custom_datum-foto':
+			case 'field_lid_sinds':
+			case 'field_lid_tot':
+			case 'field_vrijwilliger_sinds':
+			case 'field_datum_foto':
 				// ACF date fields (not from Manager)
-				$field_name     = substr( $orderby, 7 ); // Remove 'custom_' prefix
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY STR_TO_DATE(cf.meta_value, '%%Y-%%m-%%d') $order, fn.meta_value ASC";
 				break;
-			case 'custom_isparent':
-			case 'custom_huidig-vrijwilliger':
-			case 'custom_financiele-blokkade':
+			case 'field_isparent':
+			case 'field_huidig_vrijwilliger':
+			case 'field_financiele_blokkade':
 				// Boolean ACF fields
-				$field_name     = substr( $orderby, 7 );
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY CAST(COALESCE(cf.meta_value, '0') AS UNSIGNED) $order, fn.meta_value ASC";
 				break;
-			case 'custom_freescout-id':
+			case 'field_freescout_id':
 				// Numeric ACF field
-				$field_name     = substr( $orderby, 7 );
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY CAST(cf.meta_value AS DECIMAL(10,2)) $order, fn.meta_value ASC";
 				break;
-			case 'custom_knvb-id':
-			case 'custom_type-lid':
+			case 'field_knvb_id':
+			case 'field_type_lid':
 				// Text ACF fields
-				$field_name     = substr( $orderby, 7 );
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
 				);
 				$order_clause   = "ORDER BY COALESCE(cf.meta_value, '') $order, fn.meta_value ASC";
 				break;
-			case 'custom_leeftijdsgroep':
+			case 'field_leeftijdsgroep':
 				// ACF field with custom age group sorting logic
-				$field_name     = substr( $orderby, 7 );
+				$field_name     = $order_definition['storage_name'];
 				$join_clauses[] = $wpdb->prepare(
 					"LEFT JOIN {$wpdb->postmeta} cf ON p.ID = cf.post_id AND cf.meta_key = %s",
 					$field_name
@@ -2081,21 +2110,9 @@ class People extends Base {
 					fn.meta_value ASC";
 				break;
 			default:
-				// Check if this is a custom field (starts with 'custom_')
-				if ( strpos( $orderby, 'custom_' ) === 0 ) {
-					$field_name = substr( $orderby, 7 );
-
-					// Get the field definition to determine type-appropriate sorting
-					$manager    = new Manager();
-					$fields     = $manager->get_fields( 'person', false );
-					$field_type = null;
-
-					foreach ( $fields as $field ) {
-						if ( $field['name'] === $field_name ) {
-							$field_type = $field['type'];
-							break;
-						}
-					}
+				if ( strpos( $orderby, 'field_' ) === 0 && $order_definition['storage_name'] !== null ) {
+					$field_name = $order_definition['storage_name'];
+					$field_type = $order_definition['type'];
 
 					// Add LEFT JOIN for the custom field meta
 					$join_clauses[] = $wpdb->prepare(

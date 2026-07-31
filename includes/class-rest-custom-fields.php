@@ -249,11 +249,13 @@ class CustomFields extends WP_REST_Controller {
 		$metadata = array_map(
 			function ( $field ) {
 				$display_props = [
-					'key'          => $field['key'],
-					'name'         => $field['name'],
-					'label'        => $field['label'],
-					'type'         => $field['type'],
-					'instructions' => $field['instructions'] ?? '',
+					'key'            => $field['key'],
+					'name'           => $field['name'],
+					'canonical_name' => $field['canonical_name'],
+					'storage_key'    => $field['storage_key'],
+					'label'          => $field['label'],
+					'type'           => $field['type'],
+					'instructions'   => $field['instructions'] ?? '',
 				];
 
 				// Add type-specific display properties.
@@ -305,9 +307,12 @@ class CustomFields extends WP_REST_Controller {
 		if ( $post_type === 'person' ) {
 			$sportlink_fields = \Rondo\REST\UserSettings::get_sportlink_fields();
 			foreach ( $sportlink_fields as $field ) {
-				$entry = [
+				$definition = \Rondo\Fields\Registry::resolve( 'person', $field['id'] );
+				$entry      = [
 					'key'            => $field['id'],
 					'name'           => $field['id'],
+					'canonical_name' => $definition['canonical_name'],
+					'storage_key'    => $definition['storage_name'],
 					'label'          => $field['label'],
 					'type'           => $field['type'],
 					'instructions'   => '',

@@ -62,7 +62,7 @@ function DienstTypesPopover({ anchor, isLoading, onClose, types }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {types.map((type) => {
-            const acf = type.acf || {};
+            const acf = type.fields || {};
             const color = acf.color || '#6b7280';
             return (
               <div key={type.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">

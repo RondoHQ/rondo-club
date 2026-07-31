@@ -84,7 +84,7 @@ export default function DisciplineCasesList() {
 
   const personIds = useMemo(() => {
     if (!cases) return [];
-    const ids = cases.map((dc) => dc.acf?.person).filter(Boolean);
+    const ids = cases.map((dc) => dc.fields?.person).filter(Boolean);
     return [...new Set(ids)];
   }, [cases]);
 
@@ -106,9 +106,9 @@ export default function DisciplineCasesList() {
     const map = new Map();
     if (personsData) {
       personsData.forEach((person) => {
-        const firstName = person.acf?.first_name || '';
-        const infix = person.acf?.infix || '';
-        const lastName = person.acf?.last_name || '';
+        const firstName = person.fields?.first_name || '';
+        const infix = person.fields?.infix || '';
+        const lastName = person.fields?.last_name || '';
         const fullName = person.title?.rendered || [firstName, infix, lastName].filter(Boolean).join(' ');
 
         const thumbnail = person._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
@@ -140,7 +140,7 @@ export default function DisciplineCasesList() {
     const map = new Map();
     if (teamsData) {
       teamsData.forEach(team => {
-        const speeldag = getSpeeldag(team.acf?.activiteit);
+        const speeldag = getSpeeldag(team.fields?.activiteit);
         if (speeldag) map.set(team.id, speeldag);
       });
     }
@@ -166,9 +166,9 @@ export default function DisciplineCasesList() {
     // Build unique display names per raw team_name
     const displayMap = new Map();
     cases.forEach(dc => {
-      const raw = dc.acf?.team_name;
+      const raw = dc.fields?.team_name;
       if (raw && !displayMap.has(raw)) {
-        displayMap.set(raw, formatTeamName(dc.acf));
+        displayMap.set(raw, formatTeamName(dc.fields));
       }
     });
     return [...displayMap.entries()]
@@ -246,7 +246,7 @@ export default function DisciplineCasesList() {
   const filteredCases = useMemo(() => {
     if (!cases) return [];
     return cases.filter(dc => {
-      const acf = dc.acf || {};
+      const acf = dc.fields || {};
 
       if (persoonFilter.trim() !== '') {
         const person = personMap.get(acf.person);
@@ -357,7 +357,7 @@ export default function DisciplineCasesList() {
       'Boete',
     ];
     const rows = filteredCases.map((disciplineCase) => {
-      const acf = disciplineCase.acf || {};
+      const acf = disciplineCase.fields || {};
       const chargeCodes = (acf.charge_codes || '').trim();
       const person = personMap.get(acf.person);
       return [

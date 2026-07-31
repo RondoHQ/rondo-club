@@ -116,9 +116,9 @@ export default function FinancesCard({ personId }) {
     }
 
     return disciplineCases.reduce((acc, dc) => {
-      const fee = parseFloat(dc.acf?.administrative_fee) || 0;
+      const fee = parseFloat(dc.fields?.administrative_fee) || 0;
       if (fee > 0) {
-        const key = (dc.acf?.is_charged && !isDoorbelastException(dc.acf)) ? 'doorbelast' : 'notDoorbelast';
+        const key = (dc.fields?.is_charged && !isDoorbelastException(dc.fields)) ? 'doorbelast' : 'notDoorbelast';
         acc[key] += fee;
       }
       return acc;

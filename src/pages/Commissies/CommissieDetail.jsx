@@ -4,7 +4,7 @@ import { ArrowLeft, Building2, Globe, Users, GitBranch, Share2, Info, Pencil, Ch
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { wpApi, prmApi } from '@/api/client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { getCommissieName, sanitizeCommissieAcf } from '@/utils/formatters';
+import { getCommissieName, sanitizeCommissieFields } from '@/utils/formatters';
 import ShareModal from '@/components/ShareModal';
 import CustomFieldsSection from '@/components/CustomFieldsSection';
 import PullToRefreshWrapper from '@/components/PullToRefreshWrapper';
@@ -334,7 +334,7 @@ export default function CommissieDetail() {
     return null;
   }
   
-  const acf = commissie.acf || {};
+  const acf = commissie.fields || {};
   const memberEmails = [...new Set(
     (employees?.current || [])
       .map((person) => person.email?.trim().toLowerCase())
@@ -396,8 +396,8 @@ export default function CommissieDetail() {
         acf={acf}
         isSaving={updateCommissie.isPending}
         onSave={(values) => {
-          const acfData = sanitizeCommissieAcf(commissie?.acf, values);
-          return updateCommissie.mutateAsync({ acf: acfData });
+          const acfData = sanitizeCommissieFields(commissie?.fields, values);
+          return updateCommissie.mutateAsync({ fields: acfData });
         }}
       />
 
@@ -502,10 +502,10 @@ export default function CommissieDetail() {
       <CustomFieldsSection
         postType="commissie"
         postId={parseInt(id)}
-        acfData={commissie?.acf}
+        acfData={commissie?.fields}
         onUpdate={(newAcfValues) => {
-          const acfData = sanitizeCommissieAcf(commissie?.acf, newAcfValues);
-          updateCommissie.mutateAsync({ acf: acfData });
+          const acfData = sanitizeCommissieFields(commissie?.fields, newAcfValues);
+          updateCommissie.mutateAsync({ fields: acfData });
         }}
         isUpdating={updateCommissie.isPending}
       />

@@ -10,6 +10,7 @@
 
 namespace Rondo\CustomFields;
 
+use Rondo\Fields\Registry;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -51,7 +52,6 @@ class Manager {
 	private const UPDATABLE_PROPERTIES = [
 		// Core properties.
 		'label',
-		'name',
 		'instructions',
 		'required',
 		'choices',
@@ -245,22 +245,40 @@ class Manager {
 		$field_key = $this->generate_field_key( $field_config['label'], $post_type );
 
 		// Generate field name from label if not provided.
-		$field_name = ! empty( $field_config['name'] )
+		$field_name     = ! empty( $field_config['name'] )
 			? sanitize_title( $field_config['name'] )
 			: sanitize_title( $field_config['label'] );
+		$canonical_name = ! empty( $field_config['canonical_name'] )
+			? sanitize_key( $field_config['canonical_name'] )
+			: sanitize_key( str_replace( '-', '_', $field_name ) );
+
+		try {
+			Registry::resolve( $post_type, $canonical_name );
+			return new WP_Error( 'field_name_collision', 'The canonical field name is already owned by a static field.' );
+		} catch ( \InvalidArgumentException $error ) {
+			// Expected when the canonical name is available.
+		}
+
+		foreach ( $this->get_fields( $post_type, true ) as $existing_field ) {
+			if ( ( $existing_field['canonical_name'] ?? '' ) === $canonical_name ) {
+				return new WP_Error( 'field_name_collision', 'The canonical field name is already owned by another custom field.' );
+			}
+		}
 
 		// Map Rondo type to ACF type.
 		$acf_type = $this->map_type_to_acf( $field_config['type'] );
 
 		// Build field array.
 		$field = [
-			'key'          => $field_key,
-			'label'        => $field_config['label'],
-			'name'         => $field_name,
-			'type'         => $acf_type,
-			'parent'       => $group['ID'], // Must be post ID, not key.
-			'instructions' => $field_config['instructions'] ?? '',
-			'required'     => $field_config['required'] ?? 0,
+			'key'                  => $field_key,
+			'label'                => $field_config['label'],
+			'name'                 => $field_name,
+			'rondo_canonical_name' => $canonical_name,
+			'rondo_storage_key'    => $field_name,
+			'type'                 => $acf_type,
+			'parent'               => $group['ID'], // Must be post ID, not key.
+			'instructions'         => $field_config['instructions'] ?? '',
+			'required'             => $field_config['required'] ?? 0,
 		];
 
 		// Add optional properties from UPDATABLE_PROPERTIES.
@@ -460,7 +478,13 @@ class Manager {
 		// Map ACF types back to Rondo types for API responses.
 		$fields = array_map(
 			function ( $field ) {
-				$field['type'] = $this->map_type_from_acf( $field['type'] );
+				$field['type']           = $this->map_type_from_acf( $field['type'] );
+				$field['canonical_name'] = isset( $field['rondo_canonical_name'] )
+					? (string) $field['rondo_canonical_name']
+					: sanitize_key( str_replace( '-', '_', (string) $field['name'] ) );
+				$field['storage_key']    = isset( $field['rondo_storage_key'] )
+					? (string) $field['rondo_storage_key']
+					: (string) $field['name'];
 				return $field;
 			},
 			$fields
@@ -479,7 +503,13 @@ class Manager {
 		$field = acf_get_field( $field_key );
 		if ( $field ) {
 			// Map ACF type back to Rondo type for API response.
-			$field['type'] = $this->map_type_from_acf( $field['type'] );
+			$field['type']           = $this->map_type_from_acf( $field['type'] );
+			$field['canonical_name'] = isset( $field['rondo_canonical_name'] )
+				? (string) $field['rondo_canonical_name']
+				: sanitize_key( str_replace( '-', '_', (string) $field['name'] ) );
+			$field['storage_key']    = isset( $field['rondo_storage_key'] )
+				? (string) $field['rondo_storage_key']
+				: (string) $field['name'];
 		}
 		return $field;
 	}

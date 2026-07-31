@@ -42,7 +42,7 @@ final class FieldsCli {
 			$definitions = [];
 			foreach ( $manager->get_fields( $post_type, true ) as $field ) {
 				$storage_name   = (string) $field['name'];
-				$canonical_name = sanitize_key( str_replace( '-', '_', $storage_name ) );
+				$canonical_name = (string) $field['canonical_name'];
 				$populated      = (int) $wpdb->get_var(
 					$wpdb->prepare(
 						"SELECT COUNT(DISTINCT pm.post_id)
@@ -166,6 +166,72 @@ final class FieldsCli {
 		);
 	}
 
+	/**
+	 * Dry-run or apply migration of known persisted user field identifiers.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Persist changes. Without this flag the command is read-only.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp rondo fields migrate-persisted
+	 *     wp rondo fields migrate-persisted --apply
+	 *
+	 * @when after_wp_load
+	 * @param string[]            $args Positional arguments.
+	 * @param array<string,mixed> $assoc_args Named arguments.
+	 */
+	public function migrate_persisted( array $args, array $assoc_args ): void {
+		global $wpdb;
+
+		$apply      = isset( $assoc_args['apply'] );
+		$legacy_map = $this->legacy_identifier_map();
+		$changes    = [];
+		$users      = [];
+		foreach (
+			[
+				'rondo_people_list_preferences',
+				'rondo_people_list_column_order',
+				'rondo_people_list_column_widths',
+			] as $meta_key
+		) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT user_id, meta_value FROM {$wpdb->usermeta} WHERE meta_key = %s",
+					$meta_key
+				),
+				ARRAY_A
+			);
+			foreach ( $rows as $row ) {
+				$before = maybe_unserialize( $row['meta_value'] );
+				$after  = $this->migrate_identifiers( $before, $legacy_map );
+				if ( $after === $before ) {
+					continue;
+				}
+				$user_id              = (int) $row['user_id'];
+				$users[ $user_id ]    = true;
+				$changes[ $meta_key ] = ( $changes[ $meta_key ] ?? 0 ) + 1;
+				if ( $apply ) {
+					update_user_meta( $user_id, $meta_key, $after );
+					update_user_meta( $user_id, 'rondo_people_list_pref_version', 3 );
+				}
+			}
+		}
+
+		\WP_CLI::line(
+			wp_json_encode(
+				[
+					'mode'            => $apply ? 'apply' : 'dry-run',
+					'changed_users'   => count( $users ),
+					'changed_records' => $changes,
+				],
+				JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+			)
+		);
+	}
+
 	/** @return array<string,mixed> */
 	private function definition_config( array $field ): array {
 		$keys   = [
@@ -210,6 +276,12 @@ final class FieldsCli {
 				$map[ $definition['storage_name'] ] = $definition['canonical_name'];
 			}
 		}
+		$manager = new Manager();
+		foreach ( $manager->get_fields( 'person', true ) as $field ) {
+			if ( $field['storage_key'] !== $field['canonical_name'] ) {
+				$map[ $field['storage_key'] ] = $field['canonical_name'];
+			}
+		}
 		return $map + $this->legacy_sort_map();
 	}
 
@@ -221,7 +293,33 @@ final class FieldsCli {
 				$map[ 'custom_' . $definition['storage_name'] ] = 'field_' . $definition['canonical_name'];
 			}
 		}
+		$manager = new Manager();
+		foreach ( $manager->get_fields( 'person', true ) as $field ) {
+			$map[ 'custom_' . $field['storage_key'] ] = 'field_' . $field['canonical_name'];
+		}
 		return $map;
+	}
+
+	/**
+	 * Recursively migrate exact identifier values and associative keys.
+	 *
+	 * @param mixed                $value Value to migrate.
+	 * @param array<string,string> $legacy_map Known identifier map.
+	 * @return mixed
+	 */
+	private function migrate_identifiers( $value, array $legacy_map ) {
+		if ( is_array( $value ) || is_object( $value ) ) {
+			$migrated = [];
+			foreach ( (array) $value as $key => $child ) {
+				$migrated_key              = is_string( $key ) ? ( $legacy_map[ $key ] ?? $key ) : $key;
+				$migrated[ $migrated_key ] = $this->migrate_identifiers( $child, $legacy_map );
+			}
+			return $migrated;
+		}
+		if ( is_string( $value ) && isset( $legacy_map[ $value ] ) ) {
+			return $legacy_map[ $value ];
+		}
+		return $value;
 	}
 
 	/**

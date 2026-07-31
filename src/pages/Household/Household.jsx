@@ -46,7 +46,7 @@ function Detail({ icon: Icon, label, value }) {
 }
 
 function PersonCard({ person, isSelf }) {
-  const acf = person.acf || {};
+  const acf = person.fields || {};
   const name = formatPersonName(acf.first_name, acf.infix, acf.last_name) || 'Onbekend';
 
   return (
@@ -65,9 +65,9 @@ function PersonCard({ person, isSelf }) {
         <Detail icon={MapPin} label="Adres" value={firstAddress(acf.addresses)} />
         <Detail icon={Calendar} label="Geboortedatum" value={formatAcfDate(acf.birthdate)} />
         <Detail icon={Users} label="Leeftijdsgroep" value={acf.leeftijdsgroep} />
-        <Detail icon={IdCard} label="KNVB-ID" value={acf['knvb-id']} />
-        <Detail icon={Calendar} label="Lid sinds" value={formatAcfDate(acf['lid-sinds'])} />
-        <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatAcfDate(acf['datum-vog'])} />
+        <Detail icon={IdCard} label="KNVB-ID" value={acf['knvb_id']} />
+        <Detail icon={Calendar} label="Lid sinds" value={formatAcfDate(acf['lid_sinds'])} />
+        <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatAcfDate(acf['datum_vog'])} />
       </div>
     </div>
   );

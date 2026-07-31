@@ -37,5 +37,24 @@ export function useColumnVisibility(storageKey) {
     [storageKey],
   );
 
-  return { isVisible, toggle };
+  const migrateAliases = useCallback((aliases) => {
+    if (!aliases || Object.keys(aliases).length === 0) return;
+    setColVis((previous) => {
+      const next = {};
+      let changed = false;
+      Object.entries(previous).forEach(([identifier, value]) => {
+        const canonical = aliases[identifier] || identifier;
+        next[canonical] = value;
+        changed ||= canonical !== identifier;
+      });
+      if (changed && storageKey) {
+        try {
+          localStorage.setItem(`rondo-col-${storageKey}`, JSON.stringify(next));
+        } catch { /* storage not available */ }
+      }
+      return changed ? next : previous;
+    });
+  }, [storageKey]);
+
+  return { isVisible, toggle, migrateAliases };
 }

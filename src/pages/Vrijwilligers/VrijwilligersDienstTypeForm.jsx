@@ -50,7 +50,7 @@ export default function VrijwilligersDienstTypeForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const acf = existing.acf || {};
+    const acf = existing.fields || {};
     setForm({
       title: existing.title?.raw ?? existing.title?.rendered ?? '',
       description: acf.description || '',
@@ -136,7 +136,7 @@ export default function VrijwilligersDienstTypeForm() {
           saveMutation.mutate({
             title: form.title.trim(),
             status: 'publish',
-            acf: {
+            fields: {
               description: form.description,
               vog_required: Boolean(form.vog_required),
               iva_required: Boolean(form.iva_required),
