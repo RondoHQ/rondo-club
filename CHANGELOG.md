@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.4] - 2026-07-31
+
+### Fixed
+
+- Het dashboard werkt de takenwidget en het aantal open taken direct bij nadat een taak is afgerond, heropend of gewijzigd, ook wanneer de server een persistente WordPress-objectcache gebruikt.
+
 ## [33.82.3] - 2026-07-31
 
 ### Changed
