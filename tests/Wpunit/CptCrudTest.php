@@ -23,10 +23,7 @@ class CptCrudTest extends RondoTestCase {
 	protected function set_up(): void {
 		parent::set_up();
 
-		global $wp_rest_server;
-		$this->server   = rest_get_server();
-		$wp_rest_server = $this->server;
-		new People();
+		$this->server = $this->bootRestControllers( [ People::class ] );
 
 		AccessControl::flush_visible_person_ids_cache();
 		delete_option( 'rondo_age_group_access' );
@@ -55,7 +52,7 @@ class CptCrudTest extends RondoTestCase {
 		$this->assertContains( $response->get_status(), [ 401, 403, 404 ], $message ?: 'Request should be denied.' );
 	}
 
-	public function test_administrator_can_crud_person_with_acf(): void {
+	public function test_administrator_can_crud_person_with_fields(): void {
 		$admin_id = $this->user( 'administrator' );
 		wp_set_current_user( $admin_id );
 
@@ -65,7 +62,7 @@ class CptCrudTest extends RondoTestCase {
 			[
 				'title'  => 'CRUD Person',
 				'status' => 'publish',
-				'acf'    => [
+				'fields' => [
 					'first_name' => 'CRUD',
 					'last_name'  => 'Person',
 				],
@@ -76,15 +73,15 @@ class CptCrudTest extends RondoTestCase {
 
 		$read = $this->request( 'GET', '/wp/v2/people/' . $person_id );
 		$this->assertSame( 200, $read->get_status() );
-		$this->assertSame( 'CRUD', $read->get_data()['acf']['first_name'] );
+		$this->assertSame( 'CRUD', $read->get_data()['fields']['first_name'] );
 
 		$update = $this->request(
 			'PATCH',
 			'/wp/v2/people/' . $person_id,
-			[ 'acf' => [ 'first_name' => 'Updated' ] ]
+			[ 'fields' => [ 'first_name' => 'Updated' ] ]
 		);
 		$this->assertSame( 200, $update->get_status() );
-		$this->assertSame( 'Updated', get_field( 'first_name', $person_id ) );
+		$this->assertSame( 'Updated', \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 
 		$delete = $this->request( 'DELETE', '/wp/v2/people/' . $person_id, [ 'force' => true ] );
 		$this->assertSame( 200, $delete->get_status() );
@@ -273,7 +270,7 @@ class CptCrudTest extends RondoTestCase {
 			[
 				'title'  => 'Forged contact',
 				'status' => 'publish',
-				'acf'    => [
+				'fields' => [
 					'first_name'  => 'Forged',
 					'person_type' => 'contact',
 				],
@@ -287,7 +284,7 @@ class CptCrudTest extends RondoTestCase {
 			[
 				'title'  => 'Sponsor zonder pasvariant',
 				'status' => 'publish',
-				'acf'    => [
+				'fields' => [
 					'company_name' => 'Sponsor BV',
 					'person_type'  => 'contact',
 					'is_sponsor'   => true,
@@ -303,7 +300,7 @@ class CptCrudTest extends RondoTestCase {
 			[
 				'title'  => 'Businessclublid',
 				'status' => 'publish',
-				'acf'    => [
+				'fields' => [
 					'first_name'           => 'Businessclub',
 					'last_name'            => 'Lid',
 					'person_type'          => 'contact',
@@ -317,7 +314,7 @@ class CptCrudTest extends RondoTestCase {
 
 		$this->assertSame(
 			200,
-			$this->request( 'PATCH', '/wp/v2/people/' . $sponsor_id, [ 'acf' => [ 'company_name' => 'Sponsor BV' ] ] )->get_status()
+			$this->request( 'PATCH', '/wp/v2/people/' . $sponsor_id, [ 'fields' => [ 'company_name' => 'Sponsor BV' ] ] )->get_status()
 		);
 		$this->assertDenied( $this->request( 'PATCH', '/wp/v2/people/' . $member_id, [ 'title' => 'Compromised' ] ) );
 		$this->assertDenied( $this->request( 'DELETE', '/wp/v2/people/' . $member_id, [ 'force' => true ] ) );
@@ -342,11 +339,11 @@ class CptCrudTest extends RondoTestCase {
 		$response = $this->request(
 			'PATCH',
 			'/wp/v2/people/' . $sponsor_id,
-			[ 'acf' => [ 'person_type' => 'member' ] ]
+			[ 'fields' => [ 'person_type' => 'member' ] ]
 		);
 
 		$this->assertDenied( $response );
-		$this->assertSame( 'contact', get_field( 'person_type', $sponsor_id ) );
+		$this->assertSame( 'contact', \Rondo\Fields\Fields::get_for_post( $sponsor_id, 'person_type' ) );
 	}
 
 	public function test_sponsor_manager_can_only_edit_sponsor_fields_on_dual_role_member(): void {
@@ -366,18 +363,18 @@ class CptCrudTest extends RondoTestCase {
 			$this->request(
 				'PATCH',
 				'/wp/v2/people/' . $person_id,
-				[ 'acf' => [ 'sponsor_pass_variant' => 'awc_sponsor' ] ]
+				[ 'fields' => [ 'sponsor_pass_variant' => 'awc_sponsor' ] ]
 			)->get_status()
 		);
 		$this->assertDenied(
 			$this->request(
 				'PATCH',
 				'/wp/v2/people/' . $person_id,
-				[ 'acf' => [ 'first_name' => 'Gewijzigd' ] ]
+				[ 'fields' => [ 'first_name' => 'Gewijzigd' ] ]
 			)
 		);
 		$this->assertDenied( $this->request( 'DELETE', '/wp/v2/people/' . $person_id, [ 'force' => true ] ) );
-		$this->assertSame( 'Bestaand', get_field( 'first_name', $person_id ) );
+		$this->assertSame( 'Bestaand', \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
 	}
 
 	public function test_household_endpoint_stays_personal_for_administrators(): void {

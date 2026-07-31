@@ -58,12 +58,12 @@ class InvoiceEmailSender {
 	public static function get_person_email_addresses( int $person_id ): array {
 		$emails = [];
 
-		$email_1 = trim( (string) get_field( 'email_1', $person_id ) );
+		$email_1 = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) );
 		if ( is_email( $email_1 ) ) {
 			$emails[] = $email_1;
 		}
 
-		$email_2 = trim( (string) get_field( 'email_2', $person_id ) );
+		$email_2 = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) );
 		if ( is_email( $email_2 ) && $email_2 !== $email_1 ) {
 			$emails[] = $email_2;
 		}
@@ -78,7 +78,7 @@ class InvoiceEmailSender {
 	 * @return bool
 	 */
 	public static function is_minor( int $person_id ): bool {
-		$birthdate = (string) get_field( 'birthdate', $person_id );
+		$birthdate = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'birthdate' );
 		if ( trim( $birthdate ) === '' ) {
 			return false;
 		}
@@ -108,7 +108,7 @@ class InvoiceEmailSender {
 	 * @return array<int, int>
 	 */
 	public static function get_parent_person_ids( int $person_id ): array {
-		$relationships = get_field( 'relationships', $person_id );
+		$relationships = \Rondo\Fields\Fields::get_for_post( $person_id, 'relationships' );
 		if ( empty( $relationships ) || ! is_array( $relationships ) ) {
 			return [];
 		}
@@ -161,12 +161,12 @@ class InvoiceEmailSender {
 		}
 
 		// Gather invoice data
-		$invoice_number = get_field( 'invoice_number', $invoice_id );
-		$person_id      = get_field( 'person', $invoice_id );
-		$total_amount   = (float) get_field( 'total_amount', $invoice_id );
-		$line_items     = get_field( 'line_items', $invoice_id );
-		$payment_link   = get_field( 'payment_link', $invoice_id );
-		$pdf_path       = get_field( 'pdf_path', $invoice_id );
+		$invoice_number = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
+		$person_id      = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
+		$total_amount   = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+		$line_items     = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'line_items' );
+		$payment_link   = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
+		$pdf_path       = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'pdf_path' );
 
 		$person            = $person_id ? get_post( $person_id ) : null;
 		$first_name        = '';
@@ -176,8 +176,8 @@ class InvoiceEmailSender {
 		$recipient_emails  = [];
 
 		if ( $person && $person->post_type === 'person' ) {
-			$first_name  = (string) ( get_field( 'first_name', $person_id ) ?: get_field( 'company_name', $person_id ) );
-			$person_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
+			$first_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
+			$person_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) ?: $person->post_title );
 
 			$recipient_emails = self::resolve_invoice_recipient_emails( (int) $person_id );
 		}
@@ -208,7 +208,7 @@ class InvoiceEmailSender {
 
 		// Get finance configuration
 		$config       = new FinanceConfig();
-		$invoice_type = (string) get_field( 'invoice_type', $invoice_id );
+		$invoice_type = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' );
 		$invoice_kind = get_post_meta( $invoice_id, '_invoice_kind', true ) ?: 'normal';
 		$is_credit    = $invoice_kind === 'credit';
 		$template     = (string) ( $options['template'] ?? '' );
@@ -236,8 +236,8 @@ class InvoiceEmailSender {
 
 				if ( ! empty( $item['discipline_case'] ) ) {
 					$case_id          = $item['discipline_case'];
-					$match_date       = get_field( 'match_date', $case_id );
-					$match_desc       = esc_html( get_field( 'match_description', $case_id ) ?: '-' );
+					$match_date       = \Rondo\Fields\Fields::get_for_post( $case_id, 'match_date' );
+					$match_desc       = esc_html( \Rondo\Fields\Fields::get_for_post( $case_id, 'match_description' ) ?: '-' );
 					$amount           = (float) ( $item['amount'] ?? 0 );
 					$formatted_amount = '&euro; ' . number_format( $amount, 2, ',', '.' );
 
@@ -251,12 +251,12 @@ class InvoiceEmailSender {
 					}
 
 					// Derive card type from charge_codes field
-					$charge_codes = get_field( 'charge_codes', $case_id );
+					$charge_codes = \Rondo\Fields\Fields::get_for_post( $case_id, 'charge_codes' );
 					$card_text    = '-';
 					if ( ! empty( $charge_codes ) ) {
 						$card_text = str_ends_with( $charge_codes, '-1' ) ? 'Geel' : 'Rood';
 						// Append schorsing for uitsluiting sanctions
-						$sanction_desc = get_field( 'sanction_description', $case_id );
+						$sanction_desc = \Rondo\Fields\Fields::get_for_post( $case_id, 'sanction_description' );
 						if ( ! empty( $sanction_desc ) && strcasecmp( $sanction_desc, 'uitsluiting' ) === 0 ) {
 							$card_text .= ' en schorsing';
 						}
@@ -308,7 +308,7 @@ class InvoiceEmailSender {
 		// Build inline QR code HTML via public URL (CID images are blocked by most email clients)
 		$qr_code_html = '';
 		$upload_dir   = wp_upload_dir();
-		$qr_code_path = get_field( 'qr_code_path', $invoice_id );
+		$qr_code_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 
 		if ( ! empty( $qr_code_path ) ) {
 			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;

@@ -545,7 +545,7 @@ class CommentTypes {
 
 		// Also fetch todos from the rondo_todo CPT
 		// Access control is automatic via RONDO_Access_Control hooks on WP_Query
-		// @todo: LIKE query on serialized ACF data is inefficient. Consider custom meta table or relationship taxonomy.
+		// @todo: LIKE query on serialized native field data is inefficient. Consider custom meta table or relationship taxonomy.
 		$todos = get_posts(
 			[
 				'post_type'      => 'rondo_todo',
@@ -562,8 +562,8 @@ class CommentTypes {
 		);
 
 		foreach ( $todos as $todo ) {
-			// Get all related persons for this todo (ACF returns array or false)
-			$related_person_ids = get_field( 'related_persons', $todo->ID ) ?: [];
+			// Get all related persons for this todo (native field returns array or false)
+			$related_person_ids = \Rondo\Fields\Fields::get_for_post( $todo->ID, 'related_persons' ) ?: [];
 
 			// Build persons array with details
 			$persons = [];
@@ -586,11 +586,11 @@ class CommentTypes {
 				'person_name'    => get_the_title( $person_id ),
 				// New multi-person format
 				'persons'        => $persons,
-				'notes'          => get_field( 'notes', $todo->ID ) ?: null,
+				'notes'          => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'notes' ) ?: null,
 				'status'         => self::STATUS_MAP[ $todo->post_status ] ?? 'open',
 				'is_completed'   => $todo->post_status === 'rondo_completed',
-				'due_date'       => get_field( 'due_date', $todo->ID ) ?: null,
-				'awaiting_since' => get_field( 'awaiting_since', $todo->ID ) ?: null,
+				'due_date'       => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'due_date' ) ?: null,
+				'awaiting_since' => \Rondo\Fields\Fields::get_for_post( $todo->ID, 'awaiting_since' ) ?: null,
 			];
 		}
 

@@ -331,7 +331,7 @@ export default function FieldFormPanel({
       submitData.library = formData.library;
     }
 
-    // Link type needs no special handling - stored as native ACF link
+    // Link type needs no special handling - stored as native native field link
 
     if (formData.type === 'color_picker') {
       if (formData.default_color) {

@@ -172,7 +172,7 @@ class InstallmentEmailSender {
 		string $heading_type = 'installment'
 	): true|\WP_Error {
 		// Resolve person from invoice.
-		$person_id = get_field( 'person', $invoice_id );
+		$person_id = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
 		$person    = $person_id ? get_post( $person_id ) : null;
 
 		if ( ! $person || $person->post_type !== 'person' ) {
@@ -183,8 +183,8 @@ class InstallmentEmailSender {
 		}
 
 		// Build person name.
-		$first_name  = (string) ( get_field( 'first_name', $person_id ) ?: get_field( 'company_name', $person_id ) );
-		$person_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
+		$first_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
+		$person_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) ?: $person->post_title );
 
 		// Resolve all invoice recipients (person emails + parents if minor).
 		$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
@@ -234,7 +234,7 @@ class InstallmentEmailSender {
 		$betaalknop = EmailTemplate::render_cta_button( $checkout_url, 'Betaal nu' );
 
 		// Get invoice number and org info.
-		$invoice_number = (string) get_field( 'invoice_number', $invoice_id );
+		$invoice_number = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 		$config         = new FinanceConfig();
 		$org_name       = $config->get_display_name();
 		$contact_email  = $config->get_contact_email();

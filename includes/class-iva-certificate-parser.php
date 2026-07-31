@@ -137,9 +137,9 @@ class IvaCertificateParser {
 			return false;
 		}
 
-		$first    = (string) get_field( 'first_name', $person_id );
-		$last     = (string) get_field( 'last_name', $person_id );
-		$nickname = (string) get_field( 'nickname', $person_id );
+		$first    = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' );
+		$last     = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' );
+		$nickname = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'nickname' );
 
 		$candidates = [
 			get_the_title( $person_id ),

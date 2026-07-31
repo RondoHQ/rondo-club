@@ -45,7 +45,7 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 				'post_title'  => 'Makkelijker plannen',
 			]
 		);
-		update_field( 'status', 'approved', $feedback_id );
+		\Rondo\Fields\Fields::update_for_post( $feedback_id, 'status', 'approved' );
 
 		$admin_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
 		wp_set_current_user( $admin_id );
@@ -135,13 +135,13 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 				'post_status' => 'publish',
 			]
 		);
-		update_field( 'status', 'approved', $feedback_id );
+		\Rondo\Fields\Fields::update_for_post( $feedback_id, 'status', 'approved' );
 
 		$result = ( new StatusService() )->update( $feedback_id, 'resolved' );
 
 		$this->assertWPError( $result );
 		$this->assertSame( 'feedback_resolution_summary_required', $result->get_error_code() );
-		$this->assertSame( 'approved', get_field( 'status', $feedback_id ) );
+		$this->assertSame( 'approved', \Rondo\Fields\Fields::get_for_post( $feedback_id, 'status' ) );
 		$this->assertCount( 0, $this->sent_mail );
 	}
 

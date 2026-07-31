@@ -94,7 +94,7 @@ final class Registry {
 			throw new InvalidArgumentException( "Unknown field context: {$context}" );
 		}
 		$fields = $contexts[ $context ]['fields'];
-		if ( ! in_array( $context, Manager::SUPPORTED_POST_TYPES, true ) || ! function_exists( 'acf_get_fields' ) ) {
+		if ( ! in_array( $context, Manager::SUPPORTED_POST_TYPES, true ) ) {
 			return $fields;
 		}
 
@@ -107,6 +107,7 @@ final class Registry {
 			$definition                   = $dynamic;
 			$definition['canonical_name'] = $canonical_name;
 			$definition['storage_name']   = (string) $dynamic['storage_key'];
+			$definition['type']           = $dynamic['type'] === 'date' ? 'date_picker' : $dynamic['type'];
 			$definition['dynamic']        = true;
 			$fields[ $canonical_name ]    = $definition;
 		}
@@ -166,7 +167,7 @@ final class Registry {
 	}
 
 	/**
-	 * Convert an ACF/storage-shaped payload to canonical names.
+	 * Convert an native field/storage-shaped payload to canonical names.
 	 *
 	 * @param array<string,mixed> $payload Legacy payload.
 	 * @return array<string,mixed>

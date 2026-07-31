@@ -63,15 +63,7 @@ jobs:
       # Keep in step with production; the suite runs the theme against the same
       # WordPress it is deployed on.
       WP_VERSION: 7.0.2
-      # Likewise pinned to production (wp plugin get advanced-custom-fields-pro).
-      # Pinning also makes the download cacheable and stops a silent ACF release
-      # from changing what the suite ran against between two identical commits.
-      ACF_VERSION: 6.8.6
       WP_ROOT_FOLDER: ${{ github.workspace }}/../wp-test
-      # WP_TARBALL and ACF_ZIP are resolved in a step below, not here: they must
-      # not contain a "/../" segment because actions/cache rejects such paths
-      # outright, and runner.temp — which is clean — cannot be read from a
-      # job-level env block.
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
@@ -81,134 +73,43 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --prefer-dist --no-interaction
 
-      - name: Check for an ACF Pro license
-        id: acf
-        env:
-          ACF_PRO_LICENSE_KEY: ${{ secrets.ACF_PRO_LICENSE_KEY }}
-        run: |
-          if [ -z "$ACF_PRO_LICENSE_KEY" ]; then
-            echo 'available=false' >> "$GITHUB_OUTPUT"
-            echo '::warning title=PHP tests skipped::ACF_PRO_LICENSE_KEY is not set, so the theme cannot be booted and the test suite did not run. Add the repository secret to enable it.'
-          else
-            echo 'available=true' >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Resolve download paths
-        if: steps.acf.outputs.available == 'true'
-        run: |
-          set -euo pipefail
-          # RUNNER_TEMP is an absolute, already-normalised path, so the cache
-          # action will accept it.
-          echo "WP_TARBALL=$RUNNER_TEMP/wordpress.tar.gz" >> "$GITHUB_ENV"
-          echo "ACF_ZIP=$RUNNER_TEMP/acf-pro.zip" >> "$GITHUB_ENV"
+        run: echo "WP_TARBALL=$RUNNER_TEMP/wordpress.tar.gz" >> "$GITHUB_ENV"
 
       - name: Restore the WordPress tarball
         id: wp-cache
-        if: steps.acf.outputs.available == 'true'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ env.WP_TARBALL }}
           key: wordpress-${{ env.WP_VERSION }}
 
       - name: Download WordPress
-        if: steps.acf.outputs.available == 'true' && steps.wp-cache.outputs.cache-hit != 'true'
+        if: steps.wp-cache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$WP_TARBALL")"
           curl -sSLf -o "$WP_TARBALL" "https://wordpress.org/wordpress-${WP_VERSION}.tar.gz"
 
-      - name: Restore the ACF Pro zip
-        id: acf-cache
-        if: steps.acf.outputs.available == 'true'
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ${{ env.ACF_ZIP }}
-          key: acf-pro-${{ env.ACF_VERSION }}
-
-      - name: Download ACF Pro
-        if: steps.acf.outputs.available == 'true' && steps.acf-cache.outputs.cache-hit != 'true'
-        env:
-          ACF_PRO_LICENSE_KEY: ${{ secrets.ACF_PRO_LICENSE_KEY }}
-        run: |
-          set -euo pipefail
-          mkdir -p "$(dirname "$ACF_ZIP")"
-
-          # ACF Pro is a paid plugin and cannot live in the repository, so fetch
-          # the licensed build the club already pays for.
-          #
-          # This is the v2 route. The old index.php?a=download endpoint is gone
-          # and now answers a bare nginx 404 for every key, valid or not — which
-          # reads exactly like a rejected licence and is why this job could not
-          # obtain ACF at all when the secret was first added.
-          #
-          # No -f here: on failure the body is a JSON error worth printing, and
-          # -f would throw it away. It never contains the key.
-          code=$(curl -sSL -o "$ACF_ZIP" -w '%{http_code}' \
-            "https://connect.advancedcustomfields.com/v2/plugins/download?p=pro&t=${ACF_VERSION}&k=${ACF_PRO_LICENSE_KEY}")
-
-          if [ "$code" != "200" ] || [ "$(head -c2 "$ACF_ZIP")" != "PK" ]; then
-            echo "::error title=ACF Pro download failed::HTTP ${code} from the ACF connect API. Response below."
-            head -c 500 "$ACF_ZIP"
-            echo
-            exit 1
-          fi
-          echo "Downloaded ACF Pro ${ACF_VERSION} ($(wc -c < "$ACF_ZIP") bytes)."
-
       - name: Set up WordPress with the theme symlinked in
-        if: steps.acf.outputs.available == 'true'
         run: |
           set -euo pipefail
           mkdir -p "$WP_ROOT_FOLDER"
-          # Normalise away the "/../" segment. WordPress resolves theme roots to
-          # real paths, and comparing those against an unnormalised root is how
-          # a symlinked theme goes missing. The documented local setup uses a
-          # clean path, so keep CI on the same footing.
           WP_ROOT_FOLDER="$(cd "$WP_ROOT_FOLDER" && pwd -P)"
           echo "WP_ROOT_FOLDER=$WP_ROOT_FOLDER" >> "$GITHUB_ENV"
-          echo "Using WP root: $WP_ROOT_FOLDER"
-
           tar -xzf "$WP_TARBALL" --strip-components=1 -C "$WP_ROOT_FOLDER"
-
           mkdir -p "$WP_ROOT_FOLDER/wp-content/plugins" "$WP_ROOT_FOLDER/wp-content/themes"
-
-          unzip -q "$ACF_ZIP" -d "$WP_ROOT_FOLDER/wp-content/plugins"
-          acf_php="$WP_ROOT_FOLDER/wp-content/plugins/advanced-custom-fields-pro/acf.php"
-          test -f "$acf_php"
-
-          # A cached zip is only as good as its key. If ACF ever ignores the
-          # pinned t= parameter, or a cache entry outlives a version bump, the
-          # suite would quietly run against a different ACF than production —
-          # so check rather than assume.
-          installed=$(sed -n 's/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*//p' "$acf_php" | head -1)
-          if [ "$installed" != "$ACF_VERSION" ]; then
-            echo "::error title=ACF version mismatch::Expected ACF Pro ${ACF_VERSION} but got ${installed}. Bump ACF_VERSION in this workflow to match production."
-            exit 1
-          fi
-          echo "ACF Pro ${installed} ready."
-
-          # The suite runs the checkout itself, not a copy of it.
           ln -sfn "$GITHUB_WORKSPACE" "$WP_ROOT_FOLDER/wp-content/themes/rondo-club"
-
-          # The suite has never run here before, so prove the theme is where
-          # WordPress will look for it rather than finding out from a bare
-          # "failed to switch theme".
-          ls -la "$WP_ROOT_FOLDER/wp-content/themes/"
           test -f "$WP_ROOT_FOLDER/wp-content/themes/rondo-club/style.css"
-          echo "Theme header:"
-          head -8 "$WP_ROOT_FOLDER/wp-content/themes/rondo-club/style.css"
 
       - name: Write the test environment
-        if: steps.acf.outputs.available == 'true'
         run: |
-          set -euo pipefail
           cat > tests/.env <<ENV
           WP_ROOT_FOLDER=$WP_ROOT_FOLDER
           TEST_DB_URL=mysql://root:rondo@127.0.0.1:3306/rondo_tests
           WP_DOMAIN=rondo.test
           ENV
 
-      - name: Run the test suite
-        if: steps.acf.outputs.available == 'true'
+      - name: Run the test suite without field plugins
         run: composer test
 
   deploy:

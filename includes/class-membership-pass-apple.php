@@ -47,7 +47,7 @@ class MembershipPassApple {
 			return new \WP_Error( 'membership_pass_person_not_found', 'Persoon niet gevonden.' );
 		}
 
-		$knvb_id     = (string) get_field( 'knvb-id', $person_id );
+		$knvb_id     = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'knvb_id' );
 		$member_tier = PublicMembershipPassPage::get_person_member_tier( $person_id );
 		if ( $member_tier === '' ) {
 			return new \WP_Error( 'membership_pass_ineligible_member', 'Dit lidtype komt niet in aanmerking voor een ledenpas.' );
@@ -76,7 +76,7 @@ class MembershipPassApple {
 		$details           = $this->get_pass_work_details( $person_id, (string) ( $options['work'] ?? '' ) );
 		$team_name         = $details['teams'] !== '' ? $details['teams'] : '-';
 		$functions         = $details['functions'] !== '' ? $details['functions'] : '-';
-		$company_name      = trim( (string) get_field( 'company_name', $person_id ) );
+		$company_name      = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 		$organization_name = $this->get_organization_name();
 		$card_title        = $this->get_card_title( $organization_name, $member_tier, $sponsor_pass_variant );
 		$card_fields       = $this->get_card_fields( $member_tier, $team_name, $functions, $company_name, $knvb_id, $season );
@@ -250,12 +250,12 @@ class MembershipPassApple {
 	 * @return string
 	 */
 	private function get_person_full_name( int $person_id ): string {
-		$first_name = (string) get_field( 'first_name', $person_id );
-		$infix      = (string) get_field( 'infix', $person_id );
-		$last_name  = (string) get_field( 'last_name', $person_id );
+		$first_name = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' );
+		$infix      = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' );
+		$last_name  = (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' );
 
 		$name = trim( preg_replace( '/\s+/', ' ', $first_name . ' ' . $infix . ' ' . $last_name ) );
-		return $name !== '' ? $name : trim( (string) get_field( 'company_name', $person_id ) );
+		return $name !== '' ? $name : trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
 	}
 
 	/**
@@ -324,7 +324,7 @@ class MembershipPassApple {
 	 * @return array<int,array{key:string,label:string,team:string,function:string}>
 	 */
 	private function build_current_work_entries( int $person_id ): array {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return [];
 		}

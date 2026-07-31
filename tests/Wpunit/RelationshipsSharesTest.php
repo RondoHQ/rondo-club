@@ -173,7 +173,7 @@ class RelationshipsSharesTest extends RondoTestCase {
 				'is_current' => true,
 			],
 		];
-		update_field( 'work_history', $work_history, $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'work_history', $work_history );
 
 		// GET /rondo/v1/teams/{id}/people
 		$response = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/people' );
@@ -212,7 +212,8 @@ class RelationshipsSharesTest extends RondoTestCase {
 				'post_title'  => 'Current Employee',
 			]
 		);
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$current_person_id,
 			'work_history',
 			[
 				[
@@ -222,9 +223,8 @@ class RelationshipsSharesTest extends RondoTestCase {
 					'end_date'   => '',
 					'is_current' => true,
 				],
-			],
-			$current_person_id
-		);
+			]
+			);
 
 		// Create former employee (has end_date in the past)
 		$former_person_id = $this->createPerson(
@@ -233,7 +233,8 @@ class RelationshipsSharesTest extends RondoTestCase {
 				'post_title'  => 'Former Employee',
 			]
 		);
-		update_field(
+		\Rondo\Fields\Fields::update_for_post(
+			$former_person_id,
 			'work_history',
 			[
 				[
@@ -243,9 +244,8 @@ class RelationshipsSharesTest extends RondoTestCase {
 					'end_date'   => '2022-12-31',
 					'is_current' => false,
 				],
-			],
-			$former_person_id
-		);
+			]
+			);
 
 		$response = $this->restRequest( 'GET', '/rondo/v1/teams/' . $team_id . '/people' );
 		$data     = $response->get_data();

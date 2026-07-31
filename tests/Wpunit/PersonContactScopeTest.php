@@ -25,14 +25,6 @@ class PersonContactScopeTest extends RondoTestCase {
 
 		$this->bootRestControllers( [ People::class ] );
 
-		// ACF Pro emits a REST schema for the person select fields whose `type`
-		// keyword WordPress 7.0 rejects as non-built-in, so any write carrying
-		// one of those fields trips _doing_it_wrong(). Upstream ACF issue,
-		// silent in production because that only speaks up under WP_DEBUG, and
-		// unrelated to what these tests assert. Ignored rather than expected:
-		// it fires only for payloads that happen to include such a field.
-		$this->ignoreIncorrectUsage( 'rest_handle_multi_type_schema' );
-
 		$this->person_id = $this->createPerson(
 			[ 'post_title' => 'Jan Jansen' ],
 			[
@@ -65,7 +57,7 @@ class PersonContactScopeTest extends RondoTestCase {
 
 		$response = $this->update_person(
 			[
-				'acf' => [
+				'fields' => [
 					'email_1'  => 'nieuw@example.com',
 					'mobile_1' => '0698765432',
 				],
@@ -73,22 +65,22 @@ class PersonContactScopeTest extends RondoTestCase {
 		);
 
 		$this->assertSame( 200, $response->get_status(), 'contact fields must be writable' );
-		$this->assertSame( 'nieuw@example.com', get_field( 'email_1', $this->person_id ) );
+		$this->assertSame( 'nieuw@example.com', \Rondo\Fields\Fields::get_for_post( $this->person_id, 'email_1' ) );
 	}
 
 	public function test_coordinator_may_not_touch_other_fields(): void {
 		$this->as_role( 'rondo_vrijwilligers' );
 
-		$response = $this->update_person( [ 'acf' => [ 'type-lid' => 'Erelid' ] ] );
+		$response = $this->update_person( [ 'fields' => [ 'type_lid' => 'Erelid' ] ] );
 
 		$this->assertSame( 403, $response->get_status() );
 		$this->assertSame( 'rondo_person_field_scope', $response->as_error()->get_error_code() );
-		$this->assertContains( 'type-lid', $response->as_error()->get_error_data()['blocked_fields'] );
-		$this->assertSame( 'Senior', get_field( 'type-lid', $this->person_id ), 'value must be untouched' );
+		$this->assertContains( 'type_lid', $response->as_error()->get_error_data()['blocked_fields'] );
+		$this->assertSame( 'Senior', \Rondo\Fields\Fields::get_for_post( $this->person_id, 'type_lid' ), 'value must be untouched' );
 	}
 
 	/**
-	 * Person writes in this app round-trip the whole ACF object, so the guard
+	 * Person writes may contain unchanged fields, so the guard
 	 * judges what changed rather than what was sent. Without this, editing a
 	 * phone number would fail because the payload also carries type-lid.
 	 */
@@ -97,9 +89,9 @@ class PersonContactScopeTest extends RondoTestCase {
 
 		$response = $this->update_person(
 			[
-				'acf' => [
+				'fields' => [
 					'email_1'     => 'nieuw@example.com',
-					'type-lid'    => 'Senior',      // unchanged
+					'type_lid'    => 'Senior',      // unchanged
 					'first_name'  => 'Jan',         // unchanged
 					'person_type' => 'member',      // unchanged
 				],
@@ -126,7 +118,7 @@ class PersonContactScopeTest extends RondoTestCase {
 
 		$create = new WP_REST_Request( 'POST', '/wp/v2/people' );
 		$create->set_param( 'title', 'Nieuw persoon' );
-		$create->set_param( 'acf', [ 'first_name' => 'Nieuw' ] );
+		$create->set_param( 'fields', [ 'first_name' => 'Nieuw' ] );
 		$this->assertSame( 403, rest_get_server()->dispatch( $create )->get_status() );
 
 		$delete = new WP_REST_Request( 'DELETE', '/wp/v2/people/' . $this->person_id );
@@ -153,14 +145,14 @@ class PersonContactScopeTest extends RondoTestCase {
 		\Rondo\Core\UserRoles::sync_role_capabilities( $role_slug );
 
 		// A dual-role record: a member who is also a sponsor.
-		update_field( 'is_sponsor', true, $this->person_id );
-		update_field( 'person_type', 'member', $this->person_id );
-		update_field( 'sponsor_pass_variant', 'awc_sponsor', $this->person_id );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'is_sponsor', true );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'person_type', 'member' );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'sponsor_pass_variant', 'awc_sponsor' );
 
 		$this->as_role( $role_slug );
 
-		$contact = $this->update_person( [ 'acf' => [ 'mobile_1' => '0611111111' ] ] );
-		$sponsor = $this->update_person( [ 'acf' => [ 'company_name' => 'Jansen BV' ] ] );
+		$contact = $this->update_person( [ 'fields' => [ 'mobile_1' => '0611111111' ] ] );
+		$sponsor = $this->update_person( [ 'fields' => [ 'company_name' => 'Jansen BV' ] ] );
 
 		remove_role( $role_slug );
 
@@ -170,19 +162,19 @@ class PersonContactScopeTest extends RondoTestCase {
 
 	/** Sponsor managers keep exactly the boundary they had before the refactor. */
 	public function test_sponsor_manager_scope_is_unchanged(): void {
-		update_field( 'is_sponsor', true, $this->person_id );
-		update_field( 'person_type', 'member', $this->person_id );
-		update_field( 'sponsor_pass_variant', 'awc_sponsor', $this->person_id );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'is_sponsor', true );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'person_type', 'member' );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'sponsor_pass_variant', 'awc_sponsor' );
 
 		$this->as_role( 'rondo_sponsorbeheerder' );
 
 		$this->assertSame(
 			200,
-			$this->update_person( [ 'acf' => [ 'company_name' => 'Jansen BV' ] ] )->get_status()
+			$this->update_person( [ 'fields' => [ 'company_name' => 'Jansen BV' ] ] )->get_status()
 		);
 		$this->assertSame(
 			403,
-			$this->update_person( [ 'acf' => [ 'mobile_1' => '0622222222' ] ] )->get_status(),
+			$this->update_person( [ 'fields' => [ 'mobile_1' => '0622222222' ] ] )->get_status(),
 			'a sponsor manager without vrijwilligers may not touch contact fields'
 		);
 	}
@@ -192,15 +184,15 @@ class PersonContactScopeTest extends RondoTestCase {
 
 		$this->assertSame(
 			403,
-			$this->update_person( [ 'acf' => [ 'company_name' => 'Jansen BV' ] ] )->get_status()
+			$this->update_person( [ 'fields' => [ 'company_name' => 'Jansen BV' ] ] )->get_status()
 		);
 	}
 
 	public function test_former_members_stay_read_only_for_coordinators(): void {
-		update_field( 'former_member', true, $this->person_id );
+		\Rondo\Fields\Fields::update_for_post( $this->person_id, 'former_member', true );
 		$this->as_role( 'rondo_vrijwilligers' );
 
-		$response = $this->update_person( [ 'acf' => [ 'email_1' => 'oud@example.com' ] ] );
+		$response = $this->update_person( [ 'fields' => [ 'email_1' => 'oud@example.com' ] ] );
 
 		$this->assertSame( 403, $response->get_status() );
 		$this->assertSame( 'rondo_former_member_readonly', $response->as_error()->get_error_code() );

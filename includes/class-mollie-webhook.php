@@ -200,8 +200,8 @@ class MollieWebhook {
 			]
 		);
 
-		// Update ACF status field.
-		update_field( 'status', 'paid', $invoice_id );
+		// Update native field status field.
+		\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'paid' );
 
 		return rest_ensure_response( [ 'ok' => true ] );
 	}
@@ -254,8 +254,8 @@ class MollieWebhook {
 					'post_status' => 'rondo_paid',
 				]
 			);
-			// Update ACF status field.
-			update_field( 'status', 'paid', $invoice_id );
+			// Update native field status field.
+			\Rondo\Fields\Fields::update_for_post( $invoice_id, 'status', 'paid' );
 			return rest_ensure_response( [ 'ok' => true ] );
 		}
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * Auto-generate post titles from ACF fields
+ * Auto-generate post titles from canonical fields
  */
 
 namespace Rondo\Core;
@@ -12,19 +12,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AutoTitle {
 
 	public function __construct() {
-		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
+		add_action( 'rondo_fields_saved_post', [ $this, 'auto_generate_person_title' ], 20 );
 
-		// Generate title for REST API person creation/update (priority 20 = same as acf/save_post)
+		// Generate titles after a logical native field save.
 		add_action( 'rest_after_insert_person', [ $this, 'auto_generate_person_title_rest' ], 20, 2 );
 
-		// Hide title field in admin for person CPT
-		add_filter( 'acf/prepare_field/name=_post_title', [ $this, 'hide_title_field' ] );
-
-		// Lowercase email addresses on save (fixed fields + legacy repeater)
-		add_filter( 'acf/update_value/name=email_1', [ $this, 'maybe_lowercase_email' ], 10, 4 );
-		add_filter( 'acf/update_value/name=email_2', [ $this, 'maybe_lowercase_email' ], 10, 4 );
-		add_filter( 'acf/update_value/key=field_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
-		add_filter( 'acf/update_value/key=field_company_contact_value', [ $this, 'maybe_lowercase_email' ], 10, 4 );
+		add_filter( 'rondo_fields_validate_value', [ $this, 'normalize_native_value' ], 10, 4 );
 
 		// Inject title into REST API requests for person creation (runs very early)
 		add_filter( 'rest_pre_dispatch', [ $this, 'inject_title_for_person_creation' ], 10, 3 );
@@ -68,13 +61,23 @@ class AutoTitle {
 			return;
 		}
 
-		// Unhook to prevent infinite loop
-		remove_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
-
 		$this->update_person_title( $post_id );
+	}
 
-		// Re-hook
-		add_action( 'acf/save_post', [ $this, 'auto_generate_person_title' ], 20 );
+	/** Normalize email values in scalar and contact-info fields. */
+	public function normalize_native_value( $value, $post_id, array $definition, $old_value ) {
+		if ( in_array( $definition['canonical_name'], [ 'email_1', 'email_2' ], true ) ) {
+			return $this->maybe_lowercase_email( $value, $post_id, $definition, $old_value );
+		}
+		if ( $definition['canonical_name'] === 'contact_info' && is_array( $value ) ) {
+			foreach ( $value as &$row ) {
+				if ( is_array( $row ) && ( $row['contact_type'] ?? '' ) === 'email' && isset( $row['contact_value'] ) ) {
+					$row['contact_value'] = strtolower( trim( (string) $row['contact_value'] ) );
+				}
+			}
+			unset( $row );
+		}
+		return $value;
 	}
 
 	/**
@@ -106,7 +109,7 @@ class AutoTitle {
 	}
 
 	/**
-	 * Build and save the person title from ACF name fields.
+	 * Build and save the person title from native field name fields.
 	 *
 	 * @param int $post_id Person post ID.
 	 */
@@ -115,15 +118,15 @@ class AutoTitle {
 			' ',
 			array_filter(
 				[
-					get_field( 'first_name', $post_id ),
-					get_field( 'infix', $post_id ),
-					get_field( 'last_name', $post_id ),
+					\Rondo\Fields\Fields::get_for_post( $post_id, 'first_name' ),
+					\Rondo\Fields\Fields::get_for_post( $post_id, 'infix' ),
+					\Rondo\Fields\Fields::get_for_post( $post_id, 'last_name' ),
 				]
 			)
 		);
 
 		if ( empty( $full_name ) ) {
-			$full_name = trim( (string) get_field( 'company_name', $post_id ) );
+			$full_name = trim( (string) \Rondo\Fields\Fields::get_for_post( $post_id, 'company_name' ) );
 		}
 
 		if ( empty( $full_name ) ) {

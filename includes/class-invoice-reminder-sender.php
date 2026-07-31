@@ -130,7 +130,7 @@ class InvoiceReminderSender {
 	 * @return bool True when the invoice_type field equals 'membership'.
 	 */
 	private static function is_membership_invoice( int $invoice_id ): bool {
-		return (string) get_field( 'invoice_type', $invoice_id ) === 'membership';
+		return (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_type' ) === 'membership';
 	}
 
 	/**
@@ -153,13 +153,13 @@ class InvoiceReminderSender {
 		string $heading_type = 'invoice_reminder_1'
 	): true|\WP_Error {
 		// Resolve person from invoice, or fall back to customer fields for manual invoices.
-		$person_id = get_field( 'person', $invoice_id );
+		$person_id = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'person' );
 		$person    = $person_id ? get_post( $person_id ) : null;
 
 		if ( $person && $person->post_type === 'person' ) {
 			// Build person name.
-			$first_name  = (string) ( get_field( 'first_name', $person_id ) ?: get_field( 'company_name', $person_id ) );
-			$person_name = (string) ( get_field( 'company_name', $person_id ) ?: $person->post_title );
+			$first_name  = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) );
+			$person_name = (string) ( \Rondo\Fields\Fields::get_for_post( $person_id, 'company_name' ) ?: $person->post_title );
 
 			// Resolve all invoice recipients (person emails + parents if minor).
 			$recipient_emails = InvoiceEmailSender::resolve_invoice_recipient_emails( (int) $person_id );
@@ -182,8 +182,8 @@ class InvoiceReminderSender {
 			);
 		}
 
-		// Read payment_link ACF field — this is the /betaling/{token} URL.
-		$payment_link = (string) get_field( 'payment_link', $invoice_id );
+		// Read payment_link canonical field — this is the /betaling/{token} URL.
+		$payment_link = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'payment_link' );
 
 		if ( empty( $payment_link ) ) {
 			return new \WP_Error(
@@ -200,14 +200,14 @@ class InvoiceReminderSender {
 		$betaalknop   = EmailTemplate::render_cta_button( $payment_link, 'Open betaallink', $accent_color );
 
 		// Read invoice fields.
-		$total_amount   = (float) get_field( 'total_amount', $invoice_id );
-		$invoice_number = (string) get_field( 'invoice_number', $invoice_id );
+		$total_amount   = (float) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'total_amount' );
+		$invoice_number = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'invoice_number' );
 
 		// Format total_amount in Dutch currency.
 		$totaal_bedrag = '&euro; ' . number_format( $total_amount, 2, ',', '.' );
 
-		// Read sent_date ACF field (stored as Ymd string) and format as Dutch long date.
-		$sent_date    = (string) get_field( 'sent_date', $invoice_id );
+		// Read sent_date canonical field (stored as Ymd string) and format as Dutch long date.
+		$sent_date    = (string) \Rondo\Fields\Fields::get_for_post( $invoice_id, 'sent_date' );
 		$factuurdatum = '';
 		$days_since   = 0;
 
@@ -234,7 +234,7 @@ class InvoiceReminderSender {
 		// Build inline QR code HTML via public URL.
 		$qr_code_html = '';
 		$upload_dir   = wp_upload_dir();
-		$qr_code_path = get_field( 'qr_code_path', $invoice_id );
+		$qr_code_path = \Rondo\Fields\Fields::get_for_post( $invoice_id, 'qr_code_path' );
 
 		if ( ! empty( $qr_code_path ) ) {
 			$qr_full_path = $upload_dir['basedir'] . '/' . $qr_code_path;

@@ -64,7 +64,7 @@ function DateField({ icon: Icon, label, value, fieldName, onUpdateField, isUpdat
  * VOG status card for person detail page
  * Shows VOG information only for current volunteers
  */
-export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }) {
+export default function VOGCard({ fieldData, personId, onUpdateField, isUpdating }) {
   const { data: currentUser } = useCurrentUser();
 
   // Hide card if user doesn't have VOG capability
@@ -73,20 +73,20 @@ export default function VOGCard({ acfData, personId, onUpdateField, isUpdating }
   }
 
   // Check if person is a current volunteer (auto-calculated field)
-  const isVolunteer = acfData?.['huidig_vrijwilliger'] === true || acfData?.['huidig_vrijwilliger'] === '1';
+  const isVolunteer = fieldData?.['huidig_vrijwilliger'] === true || fieldData?.['huidig_vrijwilliger'] === '1';
 
   // If not a volunteer, don't show the card
   if (!isVolunteer) {
     return null;
   }
 
-  const vogDate = acfData?.vog_datum || acfData?.['datum_vog'];
+  const vogDate = fieldData?.vog_datum || fieldData?.['datum_vog'];
   const vogStatus = calculateVogStatus(vogDate);
 
   // VOG process tracking fields
-  const emailSentDate = acfData?.vog_email_sent_date;
-  const justisSubmittedDate = acfData?.vog_justis_submitted_date;
-  const reminderSentDate = acfData?.vog_reminder_sent_date;
+  const emailSentDate = fieldData?.vog_email_sent_date;
+  const justisSubmittedDate = fieldData?.vog_justis_submitted_date;
+  const reminderSentDate = fieldData?.vog_reminder_sent_date;
   const hasValidVogDate = !!(vogDate && isValidDate(vogDate));
 
   // Determine which icon to show

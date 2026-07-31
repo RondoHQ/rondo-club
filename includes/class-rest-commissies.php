@@ -155,7 +155,7 @@ class Commissies extends Base {
 
 		// Loop through all people and check their work history
 		foreach ( $people as $person ) {
-			$work_history = get_field( 'work_history', $person->ID ) ?: [];
+			$work_history = \Rondo\Fields\Fields::get_for_post( $person->ID, 'work_history' ) ?: [];
 
 			if ( empty( $work_history ) ) {
 				continue;
@@ -226,7 +226,7 @@ class Commissies extends Base {
 	 */
 	private function get_primary_email( int $person_id ): string {
 		foreach ( [ 'email_1', 'email_2' ] as $field_name ) {
-			$email = sanitize_email( (string) get_field( $field_name, $person_id ) );
+			$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( $person_id, $field_name ) );
 			if ( is_email( $email ) ) {
 				return $email;
 			}

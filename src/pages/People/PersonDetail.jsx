@@ -30,7 +30,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { wpApi, prmApi } from '@/api/client';
-import { decodeHtml, formatPersonName, getTeamName, sanitizePersonFields, isValidDate, parseAcfDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
+import { decodeHtml, formatPersonName, getTeamName, sanitizePersonFields, isValidDate, parseFieldDate, getGenderSymbol, formatPhoneForTel, formatPhoneForDisplay, hasSponsorRole } from '@/utils/formatters';
 import { downloadVCard } from '@/utils/vcard';
 import { getSocialIcon, getSocialIconColor, sortSocialLinks } from '@/utils/socialIcons';
 import TodoItem from '@/components/TodoItem.jsx';
@@ -239,7 +239,7 @@ export default function PersonDetail() {
   // to ensure consistent hook calls on every render
   useDocumentTitle(person?.name || person?.title?.rendered || person?.title || 'Lid');
 
-  // Get birthdate from ACF field
+  // Get birthdate from canonical field
   const birthDate = person?.fields?.birthdate && isValidDate(person.fields.birthdate)
     ? new Date(person.fields.birthdate)
     : null;
@@ -274,12 +274,12 @@ export default function PersonDetail() {
   const handleSaveContacts = async (contactFields) => {
     setIsSavingContacts(true);
     try {
-      const acfData = sanitizePersonFields(person.fields, contactFields);
+      const fieldData = sanitizePersonFields(person.fields, contactFields);
 
       await updatePerson.mutateAsync({
         id,
         data: {
-          fields: acfData,
+          fields: fieldData,
         },
       });
 
@@ -294,8 +294,8 @@ export default function PersonDetail() {
   const handlePersonTypeChange = async (personType) => {
     setIsSavingPersonType(true);
     try {
-      const acfData = sanitizePersonFields(person.fields, { person_type: personType });
-      await updatePerson.mutateAsync({ id, data: { fields: acfData } });
+      const fieldData = sanitizePersonFields(person.fields, { person_type: personType });
+      await updatePerson.mutateAsync({ id, data: { fields: fieldData } });
     } catch {
       alert('Persoonstype kon niet worden opgeslagen. Probeer het opnieuw.');
     } finally {
@@ -309,10 +309,10 @@ export default function PersonDetail() {
       const sponsorFields = sponsorPassVariant
         ? { is_sponsor: true, sponsor_pass_variant: sponsorPassVariant }
         : { is_sponsor: false, sponsor_pass_variant: null };
-      const acfData = canEditAllPeople
+      const fieldData = canEditAllPeople
         ? sanitizePersonFields(person.fields, sponsorFields)
         : sponsorFields;
-      await updatePerson.mutateAsync({ id, data: { fields: acfData } });
+      await updatePerson.mutateAsync({ id, data: { fields: fieldData } });
       window.location.reload();
     } catch {
       alert('Sponsorrol kon niet worden opgeslagen. Probeer het opnieuw.');
@@ -367,14 +367,14 @@ export default function PersonDetail() {
         relationships.push(relationshipItem);
       }
 
-      const acfData = sanitizePersonFields(person.fields, {
+      const fieldData = sanitizePersonFields(person.fields, {
         relationships: relationships,
       });
 
       await updatePerson.mutateAsync({
         id,
         data: {
-          fields: acfData,
+          fields: fieldData,
         },
       });
       
@@ -453,14 +453,14 @@ export default function PersonDetail() {
     const updatedRelationships = [...(person.fields?.relationships || [])];
     updatedRelationships.splice(index, 1);
     
-    const acfData = sanitizePersonFields(person.fields, {
+    const fieldData = sanitizePersonFields(person.fields, {
       relationships: updatedRelationships,
     });
     
     await updatePerson.mutateAsync({
       id,
       data: {
-        fields: acfData,
+        fields: fieldData,
       },
     });
     
@@ -484,12 +484,12 @@ export default function PersonDetail() {
         // If inverse doesn't exist, re-add it
         if (!inverseExists) {
           const updatedRelatedRelationships = [...relatedPersonRelationships, inverseToRestore];
-          const relatedPersonAcfData = sanitizePersonFields(relatedPerson.data.fields, {
+          const relatedPersonFieldData = sanitizePersonFields(relatedPerson.data.fields, {
             relationships: updatedRelatedRelationships,
           });
           
           await wpApi.updatePerson(relatedPersonId, {
-            fields: relatedPersonAcfData,
+            fields: relatedPersonFieldData,
           });
         }
       } catch {
@@ -515,8 +515,8 @@ export default function PersonDetail() {
       } else {
         addresses.push(data);
       }
-      const acfData = sanitizePersonFields(person.fields, { addresses });
-      await updatePerson.mutateAsync({ id, data: { fields: acfData } });
+      const fieldData = sanitizePersonFields(person.fields, { addresses });
+      await updatePerson.mutateAsync({ id, data: { fields: fieldData } });
       setShowAddressModal(false);
       setEditingAddress(null);
       setEditingAddressIndex(null);
@@ -532,8 +532,8 @@ export default function PersonDetail() {
     if (!window.confirm('Weet je zeker dat je dit adres wilt verwijderen?')) return;
     const addresses = [...(person.fields?.addresses || [])];
     addresses.splice(index, 1);
-    const acfData = sanitizePersonFields(person.fields, { addresses });
-    await updatePerson.mutateAsync({ id, data: { fields: acfData } });
+    const fieldData = sanitizePersonFields(person.fields, { addresses });
+    await updatePerson.mutateAsync({ id, data: { fields: fieldData } });
   };
 
   // Handle deleting a note
@@ -1195,9 +1195,9 @@ export default function PersonDetail() {
     return null;
   }
   
-  const acf = person.fields || {};
-  const personalName = formatPersonName(acf.first_name, acf.infix, acf.last_name);
-  const isFormerMember = acf.former_member === true;
+  const fields = person.fields || {};
+  const personalName = formatPersonName(fields.first_name, fields.infix, fields.last_name);
+  const isFormerMember = fields.former_member === true;
   const isCurrentParent = person.is_current_parent === true;
 
   // Former members are read-only — Sportlink rejects writes for their
@@ -1213,12 +1213,12 @@ export default function PersonDetail() {
 
   // Build contact display items from fixed fields
   const contactItems = [
-    acf.email_1 && { type: 'email', label: 'Email', value: acf.email_1 },
-    acf.email_2 && { type: 'email', label: 'Email (2e)', value: acf.email_2 },
-    acf.mobile_1 && { type: 'mobile', label: 'Mobiel', value: acf.mobile_1 },
-    acf.mobile_2 && { type: 'mobile', label: 'Mobiel (2e)', value: acf.mobile_2 },
-    acf.telephone_1 && { type: 'phone', label: 'Telefoon', value: acf.telephone_1 },
-    acf.telephone_2 && { type: 'phone', label: 'Telefoon (2e)', value: acf.telephone_2 },
+    fields.email_1 && { type: 'email', label: 'Email', value: fields.email_1 },
+    fields.email_2 && { type: 'email', label: 'Email (2e)', value: fields.email_2 },
+    fields.mobile_1 && { type: 'mobile', label: 'Mobiel', value: fields.mobile_1 },
+    fields.mobile_2 && { type: 'mobile', label: 'Mobiel (2e)', value: fields.mobile_2 },
+    fields.telephone_1 && { type: 'phone', label: 'Telefoon', value: fields.telephone_1 },
+    fields.telephone_2 && { type: 'phone', label: 'Telefoon (2e)', value: fields.telephone_2 },
   ].filter(Boolean);
 
   // Build external links for header display (WhatsApp, Sportlink, FreeScout, Membership Pass)
@@ -1226,27 +1226,27 @@ export default function PersonDetail() {
     const links = [];
 
     // Add WhatsApp if there's a mobile number
-    if (acf.mobile_1) {
+    if (fields.mobile_1) {
       links.push({
         contact_type: 'whatsapp',
-        contact_value: `https://wa.me/${formatPhoneForTel(acf.mobile_1)}`,
+        contact_value: `https://wa.me/${formatPhoneForTel(fields.mobile_1)}`,
       });
     }
 
     // Add Sportlink if there's a KNVB ID
-    if (acf['knvb_id']) {
+    if (fields['knvb_id']) {
       links.push({
         contact_type: 'sportlink',
-        contact_value: `https://club.sportlink.com/member/member-details/${acf['knvb_id']}/general`,
+        contact_value: `https://club.sportlink.com/member/member-details/${fields['knvb_id']}/general`,
       });
     }
 
     // Add FreeScout if there's a FreeScout ID AND a configured URL
     const freescoutUrl = window.rondoConfig?.freescoutUrl;
-    if (acf['freescout_id'] && freescoutUrl) {
+    if (fields['freescout_id'] && freescoutUrl) {
       links.push({
         contact_type: 'freescout',
-        contact_value: `${freescoutUrl}/customers/${acf['freescout_id']}`,
+        contact_value: `${freescoutUrl}/customers/${fields['freescout_id']}`,
       });
     }
 
@@ -1281,7 +1281,7 @@ export default function PersonDetail() {
           <span className="hidden md:inline">Terug</span>
         </button>
         <div className="flex gap-2">
-          {canSyncFromSportlink && acf['knvb_id'] && (
+          {canSyncFromSportlink && fields['knvb_id'] && (
             <button
               onClick={handleSyncFromSportlink}
               disabled={isSyncing}
@@ -1325,7 +1325,7 @@ export default function PersonDetail() {
       )}
 
       {/* Profile header */}
-      <div className={`card p-6 relative ${acf['financiele_blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : acf.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
+      <div className={`card p-6 relative ${fields['financiele_blokkade'] ? 'bg-red-50 dark:bg-red-950/30' : fields.former_member ? 'bg-gray-50 dark:bg-gray-900/30' : ''}`}>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="relative group">
@@ -1338,7 +1338,7 @@ export default function PersonDetail() {
             ) : (
               <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-medium text-gray-500 dark:text-gray-300">
-                  {person.name?.[0] || acf.company_name?.[0] || '?'}
+                  {person.name?.[0] || fields.company_name?.[0] || '?'}
                 </span>
               </div>
             )}
@@ -1372,12 +1372,12 @@ export default function PersonDetail() {
                 {person.name}
                 {isDeceased && <span className="ml-1 text-gray-500 dark:text-gray-400">&#8224;</span>}
               </h1>
-              {acf.former_member && (
+              {fields.former_member && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">
                   {isCurrentParent ? 'Oud-lid · ouder/verzorger' : 'Oud-lid'}
                 </span>
               )}
-              {acf.person_type === 'contact' && (
+              {fields.person_type === 'contact' && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300">
                   Contact
                 </span>
@@ -1387,24 +1387,24 @@ export default function PersonDetail() {
                   Sponsor
                 </span>
               )}
-              {!acf.former_member && hasValidLidTot && new Date(acf['lid_tot']) > new Date() && (
+              {!fields.former_member && hasValidLidTot && new Date(fields['lid_tot']) > new Date() && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Afmelding in de toekomst
                 </span>
               )}
-              {acf.wacht_op_overschrijving && (
+              {fields.wacht_op_overschrijving && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                   Wacht op overschrijving
                 </span>
               )}
-              {acf['huidig_vrijwilliger'] && (
+              {fields['huidig_vrijwilliger'] && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-electric-cyan text-white dark:bg-electric-cyan dark:text-white">
                   Vrijwilliger
                 </span>
               )}
             </div>
-            {acf.company_name && personalName && (
-              <p className="text-base text-gray-600 dark:text-gray-300">{acf.company_name}</p>
+            {fields.company_name && personalName && (
+              <p className="text-base text-gray-600 dark:text-gray-300">{fields.company_name}</p>
             )}
             {(canEditAllPeople || canEditSponsorFields) && (
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -1412,7 +1412,7 @@ export default function PersonDetail() {
                   <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <span>Persoonstype</span>
                     <select
-                      value={acf.person_type || 'member'}
+                      value={fields.person_type || 'member'}
                       onChange={(event) => handlePersonTypeChange(event.target.value)}
                       className="input py-1 text-sm w-auto"
                       disabled={isSavingPersonType}
@@ -1426,7 +1426,7 @@ export default function PersonDetail() {
                   <label className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                     <span>Sponsorrol</span>
                     <select
-                      value={isSponsorPerson ? (acf.sponsor_pass_variant || '') : ''}
+                      value={isSponsorPerson ? (fields.sponsor_pass_variant || '') : ''}
                       onChange={(event) => handleSponsorRoleChange(event.target.value)}
                       className="input py-1 text-sm w-auto"
                       disabled={isSavingSponsorPassVariant}
@@ -1483,26 +1483,26 @@ export default function PersonDetail() {
                 ))}
               </p>
             )}
-            {acf.nickname && (
-              <p className="text-gray-500 dark:text-gray-400">&quot;{acf.nickname}&quot;</p>
+            {fields.nickname && (
+              <p className="text-gray-500 dark:text-gray-400">&quot;{fields.nickname}&quot;</p>
             )}
-            {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele_blokkade'] || acf['lid_tot']) && (
+            {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || fields['financiele_blokkade'] || fields['lid_tot']) && (
               <p className="text-gray-500 dark:text-gray-400 text-sm inline-flex items-center flex-wrap">
-                {getGenderSymbol(acf.gender) && <span>{getGenderSymbol(acf.gender)}</span>}
-                {getGenderSymbol(acf.gender) && acf.pronouns && <span>&nbsp;—&nbsp;</span>}
-                {acf.pronouns && <span>{acf.pronouns}</span>}
-                {(getGenderSymbol(acf.gender) || acf.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
+                {getGenderSymbol(fields.gender) && <span>{getGenderSymbol(fields.gender)}</span>}
+                {getGenderSymbol(fields.gender) && fields.pronouns && <span>&nbsp;—&nbsp;</span>}
+                {fields.pronouns && <span>{fields.pronouns}</span>}
+                {(getGenderSymbol(fields.gender) || fields.pronouns) && age !== null && <span>&nbsp;—&nbsp;</span>}
                 {age !== null && formattedBirthdate && <span>{age} jaar ({formattedBirthdate})</span>}
                 {age !== null && !formattedBirthdate && <span>{age} jaar</span>}
-                {acf['financiele_blokkade'] && (
+                {fields['financiele_blokkade'] && (
                   <>
-                    {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
+                    {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null) && <span>&nbsp;—&nbsp;</span>}
                     <span className="text-red-600 dark:text-red-400 font-medium">Financiële blokkade</span>
                   </>
                 )}
                 {hasValidLidTot && (
                   <>
-                    {(getGenderSymbol(acf.gender) || acf.pronouns || age !== null || acf['financiele_blokkade']) && <span>&nbsp;—&nbsp;</span>}
+                    {(getGenderSymbol(fields.gender) || fields.pronouns || age !== null || fields['financiele_blokkade']) && <span>&nbsp;—&nbsp;</span>}
                     <span>Lid tot: {formattedLidTot}</span>
                   </>
                 )}
@@ -1662,10 +1662,10 @@ export default function PersonDetail() {
               </p>
             )}
             {/* View in Google Contacts link - only for synced contacts with email */}
-            {person.google_contact_id && acf.email_1 && (
+            {person.google_contact_id && fields.email_1 && (
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <a
-                  href={`https://contacts.google.com/${acf.email_1}`}
+                  href={`https://contacts.google.com/${fields.email_1}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-electric-cyan dark:hover:text-electric-cyan"
@@ -1697,9 +1697,9 @@ export default function PersonDetail() {
                     </button>
                   )}
                 </div>
-                {acf.addresses?.length > 0 ? (
+                {fields.addresses?.length > 0 ? (
                   <div className="space-y-3">
-                    {acf.addresses.map((address, index) => {
+                    {fields.addresses.map((address, index) => {
                       const addressLines = [
                         [address.street_name, address.house_number, address.house_number_addition].filter(Boolean).join(' '),
                         [address.city, address.state, address.postal_code].filter(Boolean).join(', '),
@@ -1730,7 +1730,7 @@ export default function PersonDetail() {
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
                               <button
                                 onClick={() => {
-                                  setEditingAddress(acf.addresses[index]);
+                                  setEditingAddress(fields.addresses[index]);
                                   setEditingAddressIndex(index);
                                   setShowAddressModal(true);
                                 }}
@@ -1764,12 +1764,12 @@ export default function PersonDetail() {
             <CustomFieldsSection
               postType="person"
               postId={parseInt(id)}
-              acfData={person?.fields}
-              onUpdate={canEditPeople ? (newAcfValues) => {
-                const acfData = sanitizePersonFields(person.fields, newAcfValues);
+              fieldData={person?.fields}
+              onUpdate={canEditPeople ? (newFieldValues) => {
+                const fieldData = sanitizePersonFields(person.fields, newFieldValues);
                 updatePerson.mutateAsync({
                   id,
-                  data: { fields: acfData },
+                  data: { fields: fieldData },
                 });
               } : undefined}
               isUpdating={updatePerson.isPending}
@@ -1780,7 +1780,7 @@ export default function PersonDetail() {
             {/* Column 2: Sportlink, Account, Relaties, VOG */}
             <div className="space-y-6">
             {/* Sportlink Card */}
-            <SportlinkCard acfData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
+            <SportlinkCard fieldData={person?.fields} metaData={person?.meta} primaryTeam={sportlinkPrimaryTeam} />
 
             {/* Keep the card available for editable people so the first relationship can be added. */}
             {(canEditPeople || sortedRelationships?.length > 0) && (
@@ -1864,7 +1864,7 @@ export default function PersonDetail() {
 
             {/* VOG Card */}
             <VOGCard
-              acfData={person?.fields}
+              fieldData={person?.fields}
               personId={parseInt(id)}
               onUpdateField={(fieldName, value) => {
                 updatePerson.mutateAsync({
@@ -2004,8 +2004,8 @@ export default function PersonDetail() {
                 {sortedWorkHistory.map((job) => {
                   const teamData = job.team_id ? teamMap[job.team_id] : null;
                   const originalIndex = job.originalIndex;
-                  const startDate = parseAcfDate(job.start_date);
-                  const endDate = parseAcfDate(job.end_date);
+                  const startDate = parseFieldDate(job.start_date);
+                  const endDate = parseFieldDate(job.end_date);
 
                   return (
                     <div key={originalIndex} className="flex items-start">
@@ -2333,12 +2333,12 @@ export default function PersonDetail() {
               onClose={() => setShowContactModal(false)}
               onSubmit={handleSaveContacts}
               isLoading={isSavingContacts}
-              email1={acf.email_1 || ''}
-              email2={acf.email_2 || ''}
-              mobile1={acf.mobile_1 || ''}
-              mobile2={acf.mobile_2 || ''}
-              telephone1={acf.telephone_1 || ''}
-              telephone2={acf.telephone_2 || ''}
+              email1={fields.email_1 || ''}
+              email2={fields.email_2 || ''}
+              mobile1={fields.mobile_1 || ''}
+              mobile2={fields.mobile_2 || ''}
+              telephone1={fields.telephone_1 || ''}
+              telephone2={fields.telephone_2 || ''}
             />
           )}
 

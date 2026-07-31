@@ -153,7 +153,7 @@ class SecurityAuthorizationTest extends RondoTestCase {
 		$user_id      = $this->createRondoUser( [ 'user_login' => 'security_shift_member' ] );
 		$person_id    = $this->createPerson( [ 'post_title' => 'Shift Member' ] );
 		$colleague_id = $this->createPerson( [ 'post_title' => 'Helpful Colleague' ] );
-		update_field( 'mobile_1', '+31 6 1234 5678', $colleague_id );
+		\Rondo\Fields\Fields::update_for_post( $colleague_id, 'mobile_1', '+31 6 1234 5678' );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
 		wp_set_current_user( $user_id );
 

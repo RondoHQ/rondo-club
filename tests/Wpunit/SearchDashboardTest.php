@@ -490,10 +490,10 @@ class SearchDashboardTest extends RondoTestCase {
 			]
 		);
 
-		update_field( 'related_persons', [ $person_id ], $post_id );
+		\Rondo\Fields\Fields::update_for_post( $post_id, 'related_persons', [ $person_id ] );
 
 		if ( $due_date ) {
-			update_field( 'due_date', $due_date, $post_id );
+			\Rondo\Fields\Fields::update_for_post( $post_id, 'due_date', $due_date );
 		}
 
 		return $post_id;

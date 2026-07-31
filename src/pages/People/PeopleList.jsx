@@ -29,7 +29,7 @@ function getFirstPhone(person) {
   return person.fields?.mobile_1 || person.fields?.telephone_1 || person.fields?.mobile_2 || person.fields?.telephone_2 || null;
 }
 
-// Primary address is the first row of the ACF `addresses` repeater.
+// Primary address is the first row of the native field `addresses` repeater.
 function getPrimaryAddress(person) {
   const addresses = person.fields?.addresses;
   return Array.isArray(addresses) && addresses.length > 0 ? addresses[0] : null;
@@ -50,18 +50,18 @@ function formatBirthdateDisplay(birthdate) {
 }
 
 function getMembershipTypeLabel(person) {
-  const acf = person.fields || {};
-  const sponsorSuffix = hasSponsorRole(acf) ? ' + sponsor' : '';
+  const fields = person.fields || {};
+  const sponsorSuffix = hasSponsorRole(fields) ? ' + sponsor' : '';
 
-  if (acf.person_type === 'contact') return `Contact${sponsorSuffix}`;
+  if (fields.person_type === 'contact') return `Contact${sponsorSuffix}`;
 
-  const sportlinkType = String(acf['type_lid'] || '').trim().toLowerCase();
+  const sportlinkType = String(fields['type_lid'] || '').trim().toLowerCase();
   if (sportlinkType.includes('verenigingslid')) return `Verenigingslid${sponsorSuffix}`;
   if (sportlinkType.includes('bondslid')) return `Bondslid${sponsorSuffix}`;
   if (sportlinkType.includes('ouder')) return `Ouder${sponsorSuffix}`;
 
-  const isParent = acf.isparent === true || acf.isparent === 1 || acf.isparent === '1';
-  if (isParent || !acf['knvb_id']) return `Ouder${sponsorSuffix}`;
+  const isParent = fields.isparent === true || fields.isparent === 1 || fields.isparent === '1';
+  if (isParent || !fields['knvb_id']) return `Ouder${sponsorSuffix}`;
 
   return `Bondslid${sponsorSuffix}`;
 }

@@ -31,6 +31,14 @@
 
 These counts are migration baselines, not completion evidence. The Phase C exit gate requires the corresponding production-consumer searches to reach zero outside compatibility code and explicit legacy tests.
 
+## Repository completion evidence
+
+- React, theme tooling, rondo-sync pipelines, and rondo-sync maintenance tools contain no production `.acf`, `acf:`, or `_fields=acf` consumer.
+- rondo-sync upgrades `free_field_mappings.target_scope = 'acf'` to `fields` by rebuilding the SQLite constraint and preserving every mapping row; a regression test covers the deployed legacy schema.
+- People-list user preferences, order, and associative widths migrate through the registry-backed version 3 reader. The browser migration preserves old `stadion_column_widths` and `rondo-col-*` visibility values while generating canonical identifiers afterward.
+- Demo fixtures and import/export code use the canonical `fields` envelope, canonical nested names, and canonical date/time wire formats.
+- The remaining literal `acf` references in production code are bounded server compatibility guards that strip the retired response key and reject old writes, plus the one-time importer for legacy definition post types.
+
 ## Production read-only evidence commands
 
 Run from the production WordPress installation before changing dynamic definitions or persisted settings:

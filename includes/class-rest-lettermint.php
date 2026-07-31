@@ -586,7 +586,7 @@ class Lettermint extends Base {
 		}
 
 		$person_id       = 0;
-		$related_persons = get_field( 'related_persons', $todo_id );
+		$related_persons = \Rondo\Fields\Fields::get_for_post( $todo_id, 'related_persons' );
 		if ( is_array( $related_persons ) && ! empty( $related_persons ) ) {
 			$person_id = (int) $related_persons[0];
 		}
@@ -617,8 +617,8 @@ class Lettermint extends Base {
 
 		$person_name = '';
 		if ( $person_id > 0 ) {
-			$first_name  = trim( (string) get_field( 'first_name', $person_id ) );
-			$last_name   = trim( (string) get_field( 'last_name', $person_id ) );
+			$first_name  = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) );
+			$last_name   = trim( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) );
 			$person_name = trim( $first_name . ' ' . $last_name );
 		}
 		if ( $person_name === '' ) {
@@ -1017,12 +1017,12 @@ class Lettermint extends Base {
 	 * @return string
 	 */
 	private function get_person_email_address( int $person_id ): string {
-		$email = sanitize_email( (string) get_field( 'email_1', $person_id ) );
+		$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_1' ) );
 		if ( is_email( $email ) ) {
 			return $email;
 		}
 
-		$email = sanitize_email( (string) get_field( 'email_2', $person_id ) );
+		$email = sanitize_email( (string) \Rondo\Fields\Fields::get_for_post( $person_id, 'email_2' ) );
 		if ( is_email( $email ) ) {
 			return $email;
 		}

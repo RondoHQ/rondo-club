@@ -1,6 +1,6 @@
 <?php
 /**
- * Canonical `fields` REST compatibility provider.
+ * Canonical `fields` REST provider.
  *
  * @package Rondo\Fields
  */
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Exposes canonical fields beside ACF while persistence remains ACF-backed.
+ * Exposes canonical fields backed by native WordPress metadata.
  */
 final class RestFields {
 
@@ -26,26 +26,27 @@ final class RestFields {
 			return;
 		}
 		add_action( 'rest_api_init', [ $this, 'register' ], 20 );
-		// Run after ACF's request initializer. That callback historically returns
-		// null instead of preserving an earlier short-circuit response.
 		add_filter( 'rest_pre_dispatch', [ $this, 'guard_payload' ], 99, 3 );
 	}
 
 	/** Serialize a post for hand-built Rondo endpoints. */
 	public static function for_post( string $context, int $post_id ): array {
 		$serializer = new self( false );
-		return $serializer->read( $context, $post_id, $post_id );
+		return $serializer->read( $context, $post_id );
 	}
 
 	/** Serialize a taxonomy term for hand-built Rondo endpoints. */
 	public static function for_term( string $taxonomy, int $term_id ): array {
 		$serializer = new self( false );
-		return $serializer->read( $taxonomy, $taxonomy . '_' . $term_id, $term_id );
+		return $serializer->read( $taxonomy, $term_id );
 	}
 
 	/** Register one `fields` attribute per REST-enabled object context. */
 	public function register(): void {
+		global $wp_rest_additional_fields;
+
 		foreach ( Registry::contexts() as $context ) {
+			unset( $wp_rest_additional_fields[ $context ]['acf'] );
 			register_rest_field(
 				$context,
 				'fields',
@@ -59,31 +60,38 @@ final class RestFields {
 					'schema'          => $this->schema_for( $context ),
 				]
 			);
+			add_filter( 'rest_prepare_' . $context, [ $this, 'remove_legacy_attribute' ], PHP_INT_MAX );
 		}
 	}
 
+	/** Remove the retired response attribute at the final prepare stage. */
+	public function remove_legacy_attribute( $response ) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+		$data = $response->get_data();
+		unset( $data['acf'] );
+		$response->set_data( $data );
+		return $response;
+	}
+
 	/**
-	 * Return a request's domain payload using legacy storage names.
+	 * Return a request's normalized canonical domain payload.
 	 *
-	 * Compatibility-stage domain validators call this once so `acf` and
-	 * `fields` traverse the same permission and business-rule code paths.
-	 * Invalid canonical values are left for the provider's field-specific 400.
+	 * Domain validators call this once so permission and business-rule code uses
+	 * the same names as the public contract. Invalid values are left for the
+	 * provider's field-specific 400 response.
 	 *
 	 * @return array<string,mixed>
 	 */
 	public static function request_payload( WP_REST_Request $request, string $context ): array {
-		$acf = $request->get_param( 'acf' );
-		if ( is_array( $acf ) ) {
-			return $acf;
-		}
-
 		$fields = $request->get_param( 'fields' );
 		if ( ! is_array( $fields ) ) {
 			return [];
 		}
 
 		try {
-			return Registry::to_storage( $context, Formatter::for_storage( $context, $fields ) );
+			return Formatter::for_storage( $context, $fields );
 		} catch ( InvalidArgumentException $error ) {
 			return $fields;
 		}
@@ -100,21 +108,16 @@ final class RestFields {
 			return $result;
 		}
 
-		$acf    = $request->get_param( 'acf' );
-		$fields = $request->get_param( 'fields' );
-		if ( is_array( $acf ) && is_array( $fields ) ) {
-			self::log_contract_event( 'ambiguous_field_payload', $request );
+		$legacy_payload = $request->get_param( 'acf' );
+		if ( $legacy_payload !== null ) {
+			self::log_contract_event( 'removed_acf_payload', $request );
 			return $server->error_to_response(
 				new WP_Error(
-					'ambiguous_field_payload',
-					__( 'Send either "acf" or "fields", never both.', 'rondo' ),
+					'removed_acf_payload',
+					__( 'The "acf" request attribute was removed. Send canonical values under "fields".', 'rondo' ),
 					[ 'status' => 400 ]
 				)
 			);
-		}
-
-		if ( is_array( $acf ) ) {
-			self::log_contract_event( 'deprecated_acf_write', $request );
 		}
 
 		return $result;
@@ -123,37 +126,34 @@ final class RestFields {
 	/** @param array<string,mixed>|object $object */
 	private function read_post( string $context, $object ): array {
 		$post_id = $this->object_id( $object );
-		return $this->read( $context, $post_id, $post_id );
+		return $this->read( $context, $post_id );
 	}
 
 	/** @param array<string,mixed>|object $object */
 	private function read_term( string $context, $object ): array {
 		$term_id = $this->object_id( $object );
-		return $this->read( $context, $context . '_' . $term_id, $term_id );
+		return $this->read( $context, $term_id );
 	}
 
 	/**
-	 * Read every registered field through ACF and format the canonical response.
-	 *
-	 * @param int|string $target ACF object identifier.
+	 * Read every registered field and format the canonical response.
 	 */
-	private function read( string $context, $target, int $object_id ): array {
+	private function read( string $context, int $object_id ): array {
 		$legacy = [];
 		foreach ( Registry::fields_for( $context ) as $definition ) {
 			if ( $definition['storage_name'] === null ) {
 				continue;
 			}
-			$identifier                            = $definition['key'] ?? $definition['storage_name'];
-			$legacy[ $definition['storage_name'] ] = ( $definition['backend'] ?? 'acf' ) === 'meta'
-				? get_post_meta( $object_id, $definition['storage_name'], true )
-				: get_field( $identifier, $target );
+			$legacy[ $definition['storage_name'] ] = Registry::context_kind( $context ) === 'term'
+				? NativeFieldStorage::read_term( $object_id, $definition )
+				: NativeFieldStorage::read_post( $object_id, $definition );
 		}
 
 		if ( $context === 'person' ) {
 			if ( AccessControl::is_scoped_member() ) {
-				$legacy = AccessControl::filter_member_visible_acf( $legacy );
+				$legacy = AccessControl::filter_member_visible_fields( $legacy );
 			}
-			$legacy = AccessControl::filter_sensitive_acf( $legacy );
+			$legacy = AccessControl::filter_sensitive_fields( $legacy );
 		}
 
 		try {
@@ -173,23 +173,22 @@ final class RestFields {
 	/** @param array<string,mixed>|object $object */
 	private function write_post( string $context, $value, $object ) {
 		$post_id = $this->object_id( $object );
-		return $this->write( $context, $value, $post_id, $post_id );
+		return $this->write( $context, $value, $post_id );
 	}
 
 	/** @param array<string,mixed>|object $object */
 	private function write_term( string $context, $value, $object ) {
 		$term_id = $this->object_id( $object );
-		return $this->write( $context, $value, $context . '_' . $term_id, $term_id );
+		return $this->write( $context, $value, $term_id );
 	}
 
 	/**
-	 * Apply a partial canonical write through existing ACF update hooks.
+	 * Apply a partial canonical write through native metadata.
 	 *
-	 * @param mixed      $value Payload.
-	 * @param int|string $target ACF target.
+	 * @param mixed $value Payload.
 	 * @return true|WP_Error
 	 */
-	private function write( string $context, $value, $target, int $object_id ) {
+	private function write( string $context, $value, int $object_id ) {
 		if ( ! is_array( $value ) ) {
 			return $this->invalid_field_error( 'fields', 'The fields payload must be an object.' );
 		}
@@ -205,26 +204,15 @@ final class RestFields {
 			return $this->invalid_field_error( $field, $error->getMessage() );
 		}
 
-		foreach ( $storage as $storage_name => $field_value ) {
-			$definition = Registry::resolve( $context, $storage_name );
-			$identifier = $definition['key'] ?? $storage_name;
-			if ( ( $definition['backend'] ?? 'acf' ) === 'meta' && Registry::context_kind( $context ) === 'post' ) {
-				if ( $field_value === '' || $field_value === null ) {
-					delete_post_meta( $object_id, $storage_name );
-				} else {
-					update_post_meta( $object_id, $storage_name, $field_value );
-				}
-			} else {
-				update_field( $identifier, $field_value, $target );
+		if ( Registry::context_kind( $context ) === 'term' ) {
+			foreach ( $storage as $storage_name => $field_value ) {
+				NativeFieldStorage::write_term( $object_id, Registry::resolve( $context, $storage_name ), $field_value );
 			}
-		}
-
-		// update_field() runs update-value filters. The logical REST update also
-		// needs the post-save domain services (titles, inverse relationships,
-		// volunteer status and cache invalidation) exactly once per payload.
-		if ( Registry::context_kind( $context ) === 'post' && $object_id > 0 ) {
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Third-party ACF hook name.
-			do_action( 'acf/save_post', $object_id );
+		} else {
+			$result = Fields::update_many_for_post( $object_id, $storage );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
 		}
 
 		return true;
@@ -266,7 +254,7 @@ final class RestFields {
 	private function schema_for( string $context ): array {
 		$properties = [];
 		foreach ( Registry::fields_for( $context ) as $name => $definition ) {
-			$type                = $this->json_type( $definition['type'] );
+			$type                = $this->json_type( $definition );
 			$properties[ $name ] = [
 				'description' => $definition['instructions'] ?? $definition['label'] ?? $name,
 				'type'        => empty( $definition['required'] ) && ! in_array( $type, [ 'array', 'boolean' ], true )
@@ -283,8 +271,9 @@ final class RestFields {
 		];
 	}
 
-	private function json_type( string $type ): string {
-		if ( in_array( $type, [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) ) {
+	private function json_type( array $definition ): string {
+		$type = $definition['type'];
+		if ( in_array( $type, [ 'repeater', 'relationship', 'gallery', 'checkbox' ], true ) || ! empty( $definition['multiple'] ) ) {
 			return 'array';
 		}
 		if ( $type === 'true_false' ) {
@@ -295,6 +284,10 @@ final class RestFields {
 		}
 		if ( in_array( $type, [ 'post_object', 'taxonomy' ], true ) ) {
 			return 'integer';
+		}
+		if ( in_array( $type, [ 'file', 'image' ], true ) ) {
+			$return_format = $definition['return_format'] ?? 'array';
+			return $return_format === 'array' ? 'object' : ( $return_format === 'id' ? 'integer' : 'string' );
 		}
 		return 'string';
 	}

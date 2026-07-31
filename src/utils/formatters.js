@@ -20,13 +20,13 @@ export function formatCurrency(amount, decimals = 2) {
 }
 
 /**
- * Whether an ACF person payload has the independent sponsor role.
+ * Whether an native field person payload has the independent sponsor role.
  *
- * @param {Object} acf Person ACF values.
+ * @param {Object} fields Person native field values.
  * @returns {boolean}
  */
-export function hasSponsorRole(acf = {}) {
-  return acf.is_sponsor === true || acf.is_sponsor === 1 || acf.is_sponsor === '1';
+export function hasSponsorRole(fields = {}) {
+  return fields.is_sponsor === true || fields.is_sponsor === 1 || fields.is_sponsor === '1';
 }
 
 /**
@@ -264,7 +264,7 @@ export function sanitizeCommissieFields(currentFields, overrides = {}) {
   const repeaterFields = ['contact_info'];
 
   // Fields that are select/enum and should be null instead of empty string
-  // (ACF auto-generates a REST enum schema that rejects "" — see CLAUDE.md pitfall)
+  // (native field auto-generates a REST enum schema that rejects "" — see CLAUDE.md pitfall)
   const enumFields = ['uren_periode'];
 
   // Fields that expect number|null — convert empty strings to null, string numbers to numbers
@@ -301,18 +301,18 @@ export function sanitizeCommissieFields(currentFields, overrides = {}) {
 }
 
 /**
- * Parse a date value coming from ACF or the REST API.
+ * Parse a date value coming from native field or the REST API.
  *
  * Handles two formats both seen in practice:
  *  - ISO 8601 / "YYYY-MM-DD" / full datetime — passed straight to `new Date()`
- *  - "YYYYMMDD" — ACF's internal date_picker storage format, which `new Date()`
+ *  - "YYYYMMDD" — native field's internal date_picker storage format, which `new Date()`
  *    does NOT parse natively (returns Invalid Date). Common on work_history
  *    entries written by the rondo-sync pipeline.
  *
  * @param {string|null|undefined} dateString
  * @returns {Date|null} Parsed Date, or null if input is missing/invalid
  */
-export function parseAcfDate(dateString) {
+export function parseFieldDate(dateString) {
   if (!dateString || typeof dateString !== 'string') return null;
   const trimmed = dateString.trim();
   let date;
@@ -331,7 +331,7 @@ export function parseAcfDate(dateString) {
  * @returns {boolean} True if valid date
  */
 export function isValidDate(dateString) {
-  return parseAcfDate(dateString) !== null;
+  return parseFieldDate(dateString) !== null;
 }
 
 /**
@@ -357,19 +357,19 @@ export function getGenderSymbol(gender) {
 }
 
 /**
- * Calculate VOG (Certificate of Conduct) status based on ACF data
+ * Calculate VOG (Certificate of Conduct) status based on native field data
  *
- * @param {Object} acf - ACF data object containing volunteer status and VOG date
+ * @param {Object} fields - native field data object containing volunteer status and VOG date
  * @returns {Object|null} Status object with status, label, and color, or null if not applicable
  */
-export function getVogStatus(acf) {
+export function getVogStatus(fields) {
   // Only show VOG status for current volunteers.
-  const isVolunteer = acf?.['huidig_vrijwilliger'] === true || acf?.['huidig_vrijwilliger'] === '1';
+  const isVolunteer = fields?.['huidig_vrijwilliger'] === true || fields?.['huidig_vrijwilliger'] === '1';
   if (!isVolunteer) {
     return null;
   }
 
-  const vogDate = acf?.['datum_vog'] || acf?.vog_datum;
+  const vogDate = fields?.['datum_vog'] || fields?.vog_datum;
   if (!vogDate) {
     return { status: 'missing', label: 'Geen VOG', color: 'red' };
   }

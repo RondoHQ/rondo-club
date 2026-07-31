@@ -13,7 +13,7 @@ class RestErrorLoggingTest extends RondoTestCase {
 	}
 
 	public function test_validation_and_server_errors_are_logged(): void {
-		$this->assertTrue( rondo_should_log_rest_error( new \WP_Error( 'rest_invalid_param', 'Invalid ACF value' ) ) );
+		$this->assertTrue( rondo_should_log_rest_error( new \WP_Error( 'rest_invalid_param', 'Invalid field value' ) ) );
 		$this->assertTrue( rondo_should_log_rest_error( new \WP_Error( 'internal_server_error', 'Unexpected failure' ) ) );
 	}
 }

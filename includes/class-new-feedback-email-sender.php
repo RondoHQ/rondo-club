@@ -46,9 +46,9 @@ class NewFeedbackEmailSender {
 		$author_name  = $author ? trim( (string) $author->display_name ) : '';
 		$author_name  = $author_name !== '' ? $author_name : 'Onbekende gebruiker';
 		$author_email = UserProvisioning::contact_email( (int) $feedback->post_author );
-		$type         = (string) ( get_field( 'feedback_type', $feedback_id ) ?: '' );
+		$type         = (string) ( \Rondo\Fields\Fields::get_for_post( $feedback_id, 'feedback_type' ) ?: '' );
 		$project      = (string) ( get_post_meta( $feedback_id, '_feedback_project', true ) ?: 'rondo-club' );
-		$priority     = (string) ( get_field( 'priority', $feedback_id ) ?: 'medium' );
+		$priority     = (string) ( \Rondo\Fields\Fields::get_for_post( $feedback_id, 'priority' ) ?: 'medium' );
 		$content      = trim( wp_strip_all_tags( (string) $feedback->post_content ) );
 
 		$type_labels     = [

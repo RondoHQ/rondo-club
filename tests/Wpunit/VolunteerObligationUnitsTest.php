@@ -40,19 +40,19 @@ class VolunteerObligationUnitsTest extends RondoTestCase {
 	 * Wire a parent↔child relationship in both directions, as the CPT stores it.
 	 */
 	private function link_parent_child( int $parent_id, int $child_id ): void {
-		$parent_rels   = get_field( 'relationships', $parent_id ) ?: [];
+		$parent_rels   = \Rondo\Fields\Fields::get_for_post( $parent_id, 'relationships' ) ?: [];
 		$parent_rels[] = [
 			'related_person'    => $child_id,
 			'relationship_type' => self::TYPE_CHILD,
 		];
-		update_field( 'relationships', $parent_rels, $parent_id );
+		\Rondo\Fields\Fields::update_for_post( $parent_id, 'relationships', $parent_rels );
 
-		$child_rels   = get_field( 'relationships', $child_id ) ?: [];
+		$child_rels   = \Rondo\Fields\Fields::get_for_post( $child_id, 'relationships' ) ?: [];
 		$child_rels[] = [
 			'related_person'    => $parent_id,
 			'relationship_type' => self::TYPE_PARENT,
 		];
-		update_field( 'relationships', $child_rels, $child_id );
+		\Rondo\Fields\Fields::update_for_post( $child_id, 'relationships', $child_rels );
 	}
 
 	/** @return string[] */

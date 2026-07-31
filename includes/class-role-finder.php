@@ -3,7 +3,7 @@
  * Role Finder helper.
  *
  * Finds WordPress users whose linked person currently holds a specific job title
- * (e.g. "secretaris", "penningmeester") by inspecting ACF work_history fields.
+ * (e.g. "secretaris", "penningmeester") by inspecting native field work_history fields.
  * Falls back to administrator user IDs when no matching users are found.
  *
  * @package Rondo\Core
@@ -73,7 +73,7 @@ class RoleFinder {
 	 * @return bool
 	 */
 	private static function person_has_current_role( int $person_id, string $keyword ): bool {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( ! is_array( $work_history ) ) {
 			return false;
 		}

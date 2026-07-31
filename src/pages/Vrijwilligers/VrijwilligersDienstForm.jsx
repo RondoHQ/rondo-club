@@ -73,19 +73,19 @@ export default function VrijwilligersDienstForm() {
 
   useEffect(() => {
     if (!existing) return;
-    const acf = existing.fields || {};
-    const start = splitDateTime(acf.start_datetime || '');
-    const end = splitDateTime(acf.end_datetime || '');
+    const fields = existing.fields || {};
+    const start = splitDateTime(fields.start_datetime || '');
+    const end = splitDateTime(fields.end_datetime || '');
     setForm({
       title: existing.title?.rendered || existing.title || '',
-      dienst_type_id: Number(acf.dienst_type_id) || 0,
+      dienst_type_id: Number(fields.dienst_type_id) || 0,
       date: start.date || end.date,
       start_time: start.time,
       end_time: end.time,
-      capacity: acf.capacity ? Number(acf.capacity) : 1,
-      status: acf.status || 'open',
-      iva_waived: Boolean(acf.iva_waived),
-      notes: acf.notes || '',
+      capacity: fields.capacity ? Number(fields.capacity) : 1,
+      status: fields.status || 'open',
+      iva_waived: Boolean(fields.iva_waived),
+      notes: fields.notes || '',
     });
   }, [existing]);
 
@@ -110,8 +110,8 @@ export default function VrijwilligersDienstForm() {
   }, [form, types]);
 
   const assignedIds = useMemo(() => {
-    const acf = existing?.fields || {};
-    const raw = acf.assigned_persons;
+    const fields = existing?.fields || {};
+    const raw = fields.assigned_persons;
     if (Array.isArray(raw)) return raw.map(Number).filter(Boolean);
     return [];
   }, [existing]);

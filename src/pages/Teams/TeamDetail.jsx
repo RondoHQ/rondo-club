@@ -58,7 +58,7 @@ export default function TeamDetail() {
   const investorIds = useMemo(() => team?.fields?.investors || [], [team?.fields?.investors]);
 
   // Resolve related entities explicitly; the canonical fields contract does not
-  // depend on ACF's private embedded-post relation namespace.
+  // depend on native field's private embedded-post relation namespace.
   const { data: investorPosts = [] } = useQuery({
     queryKey: ['team-investors', investorIds.join(',')],
     queryFn: async () => Promise.all(
@@ -175,7 +175,7 @@ export default function TeamDetail() {
     return null;
   }
   
-  const acf = team.fields || {};
+  const fields = team.fields || {};
 
   return (
     <PullToRefreshWrapper onRefresh={handleRefresh}>
@@ -210,20 +210,20 @@ export default function TeamDetail() {
             )}
             <h1 className="text-2xl font-bold text-brand-gradient">{getTeamName(team)}</h1>
             {/* Subtitle: Activiteit - Gender */}
-            {(acf.activiteit || acf.gender) && (
+            {(fields.activiteit || fields.gender) && (
               <p className="text-gray-500 dark:text-gray-400">
-                {[acf.activiteit, acf.gender].filter(Boolean).join(' - ')}
+                {[fields.activiteit, fields.gender].filter(Boolean).join(' - ')}
               </p>
             )}
-            {acf.website && (
+            {fields.website && (
               <a 
-                href={acf.website} 
+                href={fields.website}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-electric-cyan dark:text-electric-cyan hover:underline flex items-center mt-1"
               >
                 <Globe className="w-4 h-4 mr-1" />
-                {acf.website}
+                {fields.website}
               </a>
             )}
           </div>
@@ -353,10 +353,10 @@ export default function TeamDetail() {
             <CustomFieldsSection
               postType="team"
               postId={parseInt(id)}
-              acfData={team?.fields}
-              onUpdate={(newAcfValues) => {
-                const acfData = sanitizeTeamFields(team?.fields, newAcfValues);
-                updateTeam.mutateAsync({ fields: acfData });
+              fieldData={team?.fields}
+              onUpdate={(newFieldValues) => {
+                const fieldData = sanitizeTeamFields(team?.fields, newFieldValues);
+                updateTeam.mutateAsync({ fields: fieldData });
               }}
               isUpdating={updateTeam.isPending}
             />
@@ -458,11 +458,11 @@ export default function TeamDetail() {
       )}
       
       {/* Contact info */}
-      {acf.contact_info?.length > 0 && (
+      {fields.contact_info?.length > 0 && (
         <div className="card p-6">
           <h2 className="font-semibold text-brand-gradient mb-4">Contactgegevens</h2>
           <div className="space-y-3">
-            {acf.contact_info.map((contact, index) => (
+            {fields.contact_info.map((contact, index) => (
               <div key={index}>
                 <span className="text-sm text-gray-500 dark:text-gray-400">
                   {contact.contact_label || contact.contact_type}:

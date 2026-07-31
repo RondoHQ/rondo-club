@@ -77,7 +77,7 @@ class UserSettings extends Base {
 	];
 
 	/**
-	 * Sportlink fields (ACF fields from the person field group synced from Sportlink).
+	 * Sportlink fields (canonical fields from the person field group synced from Sportlink).
 	 */
 	private const SPORTLINK_FIELDS = [
 		[
@@ -968,8 +968,8 @@ class UserSettings extends Base {
 		if ( $person_id ) {
 			$person = get_post( $person_id );
 			if ( $person && $person->post_type === 'person' && $person->post_status === 'publish' ) {
-				$first_name = get_field( 'first_name', $person_id ) ?: '';
-				$last_name  = get_field( 'last_name', $person_id ) ?: '';
+				$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+				$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 				$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 
 				$response['person'] = [
@@ -1039,8 +1039,8 @@ class UserSettings extends Base {
 		update_user_meta( $user_id, 'rondo_linked_person_id', (int) $person_id );
 		update_post_meta( (int) $person_id, \Rondo\Users\UserProvisioning::META_USER_ID, $user_id );
 
-		$first_name = get_field( 'first_name', $person_id ) ?: '';
-		$last_name  = get_field( 'last_name', $person_id ) ?: '';
+		$first_name = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+		$last_name  = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 		$thumbnail  = get_the_post_thumbnail_url( $person_id, 'thumbnail' );
 
 		return rest_ensure_response(
@@ -1127,13 +1127,13 @@ class UserSettings extends Base {
 		if ( $person_id ) {
 			$person = get_post( $person_id );
 			if ( $person && $person->post_type === 'person' ) {
-				$first               = get_field( 'first_name', $person_id ) ?: '';
-				$infix               = get_field( 'infix', $person_id ) ?: '';
-				$last                = get_field( 'last_name', $person_id ) ?: '';
+				$first               = \Rondo\Fields\Fields::get_for_post( $person_id, 'first_name' ) ?: '';
+				$infix               = \Rondo\Fields\Fields::get_for_post( $person_id, 'infix' ) ?: '';
+				$last                = \Rondo\Fields\Fields::get_for_post( $person_id, 'last_name' ) ?: '';
 				$linked_person_name  = implode( ' ', array_filter( [ $first, $infix, $last ] ) ) ?: null;
 				$linked_person_photo = get_the_post_thumbnail_url( $person_id, 'thumbnail' ) ?: null;
 
-				$work_history = get_field( 'work_history', $person_id ) ?: [];
+				$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' ) ?: [];
 				foreach ( $work_history as $job ) {
 					if ( ! empty( $job['is_current'] ) && ! empty( $job['job_title'] ) ) {
 						$active_functies[] = $job['job_title'];

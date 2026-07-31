@@ -969,7 +969,7 @@ class Fees extends Base {
 		}
 
 		// Check if person is a former member not in the requested season
-		$is_former = ( get_field( 'former_member', $person_id ) === true );
+		$is_former = ( \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' ) === true );
 		if ( $is_former && ! FeeServices::person_context()->is_former_member_in_season( $person_id, $season ) ) {
 			return rest_ensure_response(
 				[
@@ -1015,9 +1015,9 @@ class Fees extends Base {
 			$family_size = count( $group_members );
 			foreach ( $group_members as $member_id ) {
 				if ( (int) $member_id !== $person_id ) {
-					$first_name = get_field( 'first_name', $member_id ) ?: '';
-					$infix      = get_field( 'infix', $member_id ) ?: '';
-					$last_name  = get_field( 'last_name', $member_id ) ?: '';
+					$first_name = \Rondo\Fields\Fields::get_for_post( $member_id, 'first_name' ) ?: '';
+					$infix      = \Rondo\Fields\Fields::get_for_post( $member_id, 'infix' ) ?: '';
+					$last_name  = \Rondo\Fields\Fields::get_for_post( $member_id, 'last_name' ) ?: '';
 					$name       = implode( ' ', array_filter( [ $first_name, $infix, $last_name ] ) );
 					if ( empty( $name ) ) {
 						$name = get_the_title( $member_id );
@@ -1036,7 +1036,7 @@ class Fees extends Base {
 		$nikki_saldo = get_post_meta( $person_id, '_nikki_' . $nikki_year . '_saldo', true );
 
 		// Get financiele-blokkade field
-		$financiele_blokkade = get_field( 'financiele-blokkade', $person_id );
+		$financiele_blokkade = \Rondo\Fields\Fields::get_for_post( $person_id, 'financiele_blokkade' );
 
 		// Get billing method for this season
 		$billing_method = FeeServices::settings()->get_billing_method( $season );

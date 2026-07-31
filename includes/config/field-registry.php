@@ -1,8 +1,8 @@
 <?php
 /**
- * Generated native field registry.
+ * Native Rondo field registry.
  *
- * Do not edit manually; run php bin/generate-field-registry.php.
+ * This PHP configuration is the source of truth for static field definitions.
  */
 
 return array (
@@ -2751,7 +2751,7 @@ Bedankt voor je inzet bij {dienst}. We horen graag hoe de inschrijftaak is verlo
       'kind' => 'post',
     ),
   ),
-  'generated_from' => 'acf-json/*.json',
+  'schema_version' => 1,
   'reserved_exceptions' => 
   array (
     'dienst_shift' => 

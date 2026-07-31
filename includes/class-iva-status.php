@@ -45,7 +45,7 @@ class IvaStatus {
 	 */
 	public static function status( int $person_id ): string {
 		$datum    = self::datum_iva( $person_id );
-		$cert     = get_field( 'iva-certificaat', $person_id );
+		$cert     = \Rondo\Fields\Fields::get_for_post( $person_id, 'iva_certificaat' );
 		$approved = self::is_approved( $person_id );
 
 		if ( empty( $datum ) && empty( $cert ) ) {
@@ -120,11 +120,11 @@ class IvaStatus {
 	 * Read the datum-iva, tolerating string / null / DateTime values.
 	 */
 	private static function datum_iva( int $person_id ): string {
-		$raw = get_field( 'datum-iva', $person_id );
+		$raw = \Rondo\Fields\Fields::get_for_post( $person_id, 'datum_iva' );
 		if ( is_string( $raw ) ) {
 			return trim( $raw );
 		}
-		// Some ACF return formats give back DateTime — coerce to Y-m-d.
+		// Some native field return formats give back DateTime — coerce to Y-m-d.
 		if ( $raw instanceof \DateTimeInterface ) {
 			return $raw->format( 'Y-m-d' );
 		}
@@ -133,10 +133,10 @@ class IvaStatus {
 	}
 
 	/**
-	 * Read the iva-approved flag, tolerating ACF/post_meta truthy inconsistency.
+	 * Read the iva-approved flag, tolerating native field/post_meta truthy inconsistency.
 	 */
 	public static function is_approved( int $person_id ): bool {
-		$value = get_field( 'iva-approved', $person_id );
+		$value = \Rondo\Fields\Fields::get_for_post( $person_id, 'iva_approved' );
 		if ( $value === null ) {
 			$value = get_post_meta( $person_id, 'iva-approved', true );
 		}

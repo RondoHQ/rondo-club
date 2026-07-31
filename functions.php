@@ -174,35 +174,6 @@ define( 'RONDO_PLUGIN_DIR', RONDO_THEME_DIR . '/includes' );
 define( 'RONDO_PLUGIN_URL', RONDO_THEME_URL . '/includes' );
 
 /**
- * Check for required dependencies
- */
-function rondo_check_dependencies() {
-	$missing = [];
-
-	// Check for ACF Pro
-	if ( ! class_exists( 'ACF' ) ) {
-		$missing[] = 'Advanced Custom Fields Pro';
-	}
-
-	if ( ! empty( $missing ) ) {
-		add_action(
-			'admin_notices',
-			function () use ( $missing ) {
-				$message = sprintf(
-					// translators: %s is a comma-separated list of plugin names.
-					__( 'Rondo Club requires the following plugins: %s', 'rondo' ),
-					implode( ', ', $missing )
-				);
-				echo '<div class="notice notice-error"><p>' . esc_html( $message ) . '</p></div>';
-			}
-		);
-		return false;
-	}
-
-	return true;
-}
-
-/**
  * Backward compatibility class aliases.
  *
  * Only aliases that are still referenced in production code or tests are kept.
@@ -285,13 +256,10 @@ function rondo_init() {
 		return;
 	}
 
-	if ( ! rondo_check_dependencies() ) {
-		return;
-	}
-
 	// Core classes - always needed for WordPress integration
 	new PostTypes();
 	new Taxonomies();
+	new \Rondo\Fields\FieldSchema();
 	new AccessControl();
 	new PersonDeletionGuard();
 	new UserRoles();
@@ -425,8 +393,7 @@ function rondo_init() {
 
 	$initialized = true;
 }
-// Initialize early for REST API requests, but also check on plugins_loaded
-// in case ACF Pro isn't loaded yet (plugins load after themes)
+// Initialize early for REST requests and once more after plugins load.
 add_action( 'after_setup_theme', 'rondo_init', 5 );
 add_action( 'plugins_loaded', 'rondo_init', 5 );
 
@@ -1260,26 +1227,6 @@ function rondo_theme_cleanup_head() {
 add_action( 'init', 'rondo_theme_cleanup_head' );
 
 /**
- * Load ACF JSON from theme directory
- */
-function rondo_acf_json_load_point( $paths ) {
-	$paths[] = RONDO_THEME_DIR . '/acf-json';
-	return $paths;
-}
-add_filter( 'acf/settings/load_json', 'rondo_acf_json_load_point' );
-
-/**
- * Save ACF JSON to theme directory (for development)
- */
-function rondo_acf_json_save_point( $path ) {
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-		$path = RONDO_THEME_DIR . '/acf-json';
-	}
-	return $path;
-}
-add_filter( 'acf/settings/save_json', 'rondo_acf_json_save_point' );
-
-/**
  * Reset VOG tracking fields when datum-vog is updated
  *
  * When a new VOG date is set, clear the email sent and Justis submitted
@@ -1291,16 +1238,14 @@ add_filter( 'acf/settings/save_json', 'rondo_acf_json_save_point' );
  * @param mixed  $original The original value.
  * @return mixed The value (unchanged).
  */
-function rondo_reset_vog_tracking_on_datum_update( $value, $post_id, $field, $original ) {
-	// Only process if datum-vog is actually changing to a new value
-	if ( $value !== $original && ! empty( $value ) ) {
+function rondo_reset_vog_tracking_on_datum_update( $post_id, $canonical_name, $value, $original ) {
+	if ( $canonical_name === 'datum_vog' && $value !== $original && ! empty( $value ) ) {
 		delete_post_meta( $post_id, 'vog_email_sent_date' );
 		delete_post_meta( $post_id, 'vog_justis_submitted_date' );
 		delete_post_meta( $post_id, 'vog_reminder_sent_date' );
 	}
-	return $value;
 }
-add_filter( 'acf/update_value/name=datum-vog', 'rondo_reset_vog_tracking_on_datum_update', 10, 4 );
+add_action( 'rondo_fields_updated', 'rondo_reset_vog_tracking_on_datum_update', 10, 4 );
 
 /**
  * Custom login page styling

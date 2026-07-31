@@ -105,7 +105,7 @@ function MediaInput({ value, onChange, type = 'image', onRemove }) {
       const response = await wpApi.uploadMedia(file);
       const media = response.data;
 
-      // Store the ID - ACF will handle the rest
+      // Store the ID - native field will handle the rest
       onChange(media.id);
 
       // Update preview

@@ -24,9 +24,13 @@ class PhoneNormalizer {
 	];
 
 	public function __construct() {
-		foreach ( self::PHONE_FIELDS as $field_name ) {
-			add_filter( "acf/update_value/name={$field_name}", [ $this, 'normalize_phone_number' ], 10, 4 );
-		}
+		add_filter( 'rondo_fields_validate_value', [ $this, 'normalize_native_field' ], 10, 4 );
+	}
+
+	public function normalize_native_field( $value, $post_id, array $field, $old_value ) {
+		return in_array( $field['canonical_name'], self::PHONE_FIELDS, true )
+			? $this->normalize_phone_number( $value, $post_id, $field, $old_value )
+			: $value;
 	}
 
 	/**

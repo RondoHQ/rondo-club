@@ -136,7 +136,7 @@ class ShiftCalendarTest extends RondoTestCase {
 		$user_id   = $this->createRondoUser();
 		$person_id = $this->createPerson( [ 'post_title' => 'Lid met VOG' ] );
 		update_user_meta( $user_id, 'rondo_linked_person_id', $person_id );
-		update_field( 'datum-vog', current_datetime()->format( 'Ymd' ), $person_id );
+		\Rondo\Fields\Fields::update_for_post( $person_id, 'datum_vog', current_datetime()->format( 'Ymd' ) );
 		wp_set_current_user( $user_id );
 
 		$vog_type = $this->dienst_type( 'Toegankelijke VOG-dienst', [ 'vog_required' => 1 ] );

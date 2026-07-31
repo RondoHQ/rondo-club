@@ -174,7 +174,7 @@ export default function RelationshipTypes() {
         name: name,
       };
 
-      // Include ACF field if inverse is set
+      // Include canonical field if inverse is set
       if (inverseId) {
         data.fields = {
           inverse_relationship_type: parseInt(inverseId, 10),
@@ -198,7 +198,7 @@ export default function RelationshipTypes() {
         name: name,
       };
 
-      // Include ACF field if inverse is set
+      // Include canonical field if inverse is set
       if (inverseId) {
         data.fields = {
           inverse_relationship_type: parseInt(inverseId, 10),
@@ -261,7 +261,7 @@ export default function RelationshipTypes() {
   const handleEdit = (type) => {
     setEditingId(type.id);
     setEditingName(type.name);
-    // Handle ACF field - could be ID directly or nested object
+    // Handle canonical field - could be ID directly or nested object
     const inverseId = type.fields?.inverse_relationship_type;
     setEditingInverse(
       inverseId
@@ -418,7 +418,7 @@ export default function RelationshipTypes() {
           ) : (
             relationshipTypes.map((type) => {
               const isEditing = editingId === type.id;
-              // Handle ACF field - could be ID directly or nested object
+              // Handle canonical field - could be ID directly or nested object
               const inverseId = type.fields?.inverse_relationship_type;
               const inverseIdValue = typeof inverseId === 'object' && inverseId?.ID
                 ? inverseId.ID

@@ -10,11 +10,11 @@
  * Four auto-routes + one manual route:
  *   1. Active commissie member          (any commissie counts)
  *   2. Active staff role (trainer etc.) (configurable list, OPTION_STAFF_ROLES)
- *   3. Betaalde vrijwilliger             (ACF betaalde_vrijwilliger flag)
- *   4. Handmatige vrijstelling           (ACF vrijgesteld_handmatig + optional seizoen)
+ *   3. Betaalde vrijwilliger             (native field betaalde_vrijwilliger flag)
+ *   4. Handmatige vrijstelling           (native field vrijgesteld_handmatig + optional seizoen)
  *
  * The Sportlink `huidig-vrijwilliger` flag is intentionally NOT consulted —
- * we trust the explicit sources (commissie, work_history, ACF flags) because
+ * we trust the explicit sources (commissie, work_history, native field flags) because
  * the Sportlink semantics are ambiguous.
  *
  * @package Rondo\Volunteer
@@ -109,7 +109,7 @@ class VolunteerExemptionResolver {
 	 * actual commissie participation, not VOG scope.
 	 */
 	public static function has_active_commissie( int $person_id ): bool {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
 			return false;
 		}
@@ -144,7 +144,7 @@ class VolunteerExemptionResolver {
 	 * board can refine it without code changes.
 	 */
 	public static function has_active_staff_role( int $person_id ): bool {
-		$work_history = get_field( 'work_history', $person_id );
+		$work_history = \Rondo\Fields\Fields::get_for_post( $person_id, 'work_history' );
 		if ( empty( $work_history ) || ! is_array( $work_history ) ) {
 			return false;
 		}
@@ -232,7 +232,7 @@ class VolunteerExemptionResolver {
 	}
 
 	/**
-	 * ACF/post_meta stores booleans inconsistently (0/1, '0'/'1', true/false, ''/'1').
+	 * native field/post_meta stores booleans inconsistently (0/1, '0'/'1', true/false, ''/'1').
 	 */
 	private static function truthy( $value ): bool {
 		if ( is_bool( $value ) ) {

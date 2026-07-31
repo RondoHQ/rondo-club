@@ -4,15 +4,15 @@ import { Users, Mail, Phone, Smartphone, MapPin, Calendar, IdCard, ShieldCheck }
 import { prmApi } from '@/api/client';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { formatPersonName, parseAcfDate } from '@/utils/formatters';
+import { formatPersonName, parseFieldDate } from '@/utils/formatters';
 import { format } from '@/utils/dateFormat';
 import { ContentLoadingSpinner } from '@/components/LoadingSpinner';
 
 /**
- * Format an ACF date_picker value (stored as YYYYMMDD) for display.
+ * Format an native field date_picker value (stored as YYYYMMDD) for display.
  */
-function formatAcfDate(value) {
-  const date = parseAcfDate(value);
+function formatFieldDate(value) {
+  const date = parseFieldDate(value);
   if (!date || Number.isNaN(date.getTime())) return null;
   return format(date, 'd MMMM yyyy');
 }
@@ -46,8 +46,8 @@ function Detail({ icon: Icon, label, value }) {
 }
 
 function PersonCard({ person, isSelf }) {
-  const acf = person.fields || {};
-  const name = formatPersonName(acf.first_name, acf.infix, acf.last_name) || 'Onbekend';
+  const fields = person.fields || {};
+  const name = formatPersonName(fields.first_name, fields.infix, fields.last_name) || 'Onbekend';
 
   return (
     <div className="card p-5">
@@ -59,15 +59,15 @@ function PersonCard({ person, isSelf }) {
       </div>
 
       <div className="grid gap-x-8 sm:grid-cols-2">
-        <Detail icon={Mail} label="E-mail" value={acf.email_1} />
-        <Detail icon={Smartphone} label="Mobiel" value={acf.mobile_1} />
-        <Detail icon={Phone} label="Telefoon" value={acf.telephone_1} />
-        <Detail icon={MapPin} label="Adres" value={firstAddress(acf.addresses)} />
-        <Detail icon={Calendar} label="Geboortedatum" value={formatAcfDate(acf.birthdate)} />
-        <Detail icon={Users} label="Leeftijdsgroep" value={acf.leeftijdsgroep} />
-        <Detail icon={IdCard} label="KNVB-ID" value={acf['knvb_id']} />
-        <Detail icon={Calendar} label="Lid sinds" value={formatAcfDate(acf['lid_sinds'])} />
-        <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatAcfDate(acf['datum_vog'])} />
+        <Detail icon={Mail} label="E-mail" value={fields.email_1} />
+        <Detail icon={Smartphone} label="Mobiel" value={fields.mobile_1} />
+        <Detail icon={Phone} label="Telefoon" value={fields.telephone_1} />
+        <Detail icon={MapPin} label="Adres" value={firstAddress(fields.addresses)} />
+        <Detail icon={Calendar} label="Geboortedatum" value={formatFieldDate(fields.birthdate)} />
+        <Detail icon={Users} label="Leeftijdsgroep" value={fields.leeftijdsgroep} />
+        <Detail icon={IdCard} label="KNVB-ID" value={fields['knvb_id']} />
+        <Detail icon={Calendar} label="Lid sinds" value={formatFieldDate(fields['lid_sinds'])} />
+        <Detail icon={ShieldCheck} label="VOG afgegeven" value={formatFieldDate(fields['datum_vog'])} />
       </div>
     </div>
   );

@@ -148,11 +148,11 @@ export default function DisciplineCasesList() {
   }, [teamsData]);
 
   // Format team name: use home_team/away_team ID to resolve speeldag for numeric names
-  const formatTeamName = useCallback((acf) => {
-    const name = acf?.team_name;
+  const formatTeamName = useCallback((fields) => {
+    const name = fields?.team_name;
     if (!name) return '-';
     if (/^\d+$/.test(name.trim())) {
-      const teamId = parseInt(acf.home_team || acf.away_team, 10);
+      const teamId = parseInt(fields.home_team || fields.away_team, 10);
       if (teamId && teamSpeeldagMap.has(teamId)) {
         return `${teamSpeeldagMap.get(teamId)} ${name.trim()}`;
       }
@@ -246,39 +246,39 @@ export default function DisciplineCasesList() {
   const filteredCases = useMemo(() => {
     if (!cases) return [];
     return cases.filter(dc => {
-      const acf = dc.fields || {};
+      const fields = dc.fields || {};
 
       if (persoonFilter.trim() !== '') {
-        const person = personMap.get(acf.person);
+        const person = personMap.get(fields.person);
         const personName = (person ? (person.name || '') : '').toLowerCase();
         if (!personName.includes(persoonFilter.toLowerCase().trim())) return false;
       }
 
       if (teamFilter !== '') {
-        if ((acf.team_name || '') !== teamFilter) return false;
+        if ((fields.team_name || '') !== teamFilter) return false;
       }
 
       if (excludeTeamFilter !== '') {
-        if ((acf.team_name || '') === excludeTeamFilter) return false;
+        if ((fields.team_name || '') === excludeTeamFilter) return false;
       }
 
       if (doorbelastFilter !== '') {
-        const isNVT = isDoorbelastNVT(acf);
-        const isException = isDoorbelastException(acf);
+        const isNVT = isDoorbelastNVT(fields);
+        const isException = isDoorbelastException(fields);
         if (doorbelastFilter === 'exception' && !isException) return false;
         if (doorbelastFilter === 'nvt' && !isNVT) return false;
-        if (doorbelastFilter === 'none' && (acf.is_charged || isNVT || isException)) return false;
-        if (doorbelastFilter === 'sportlink' && acf.is_charged !== 'sportlink') return false;
-        if (doorbelastFilter === 'rondo' && acf.is_charged !== 'rondo') return false;
+        if (doorbelastFilter === 'none' && (fields.is_charged || isNVT || isException)) return false;
+        if (doorbelastFilter === 'sportlink' && fields.is_charged !== 'sportlink') return false;
+        if (doorbelastFilter === 'rondo' && fields.is_charged !== 'rondo') return false;
       }
 
       if (sanctieFilter.trim() !== '') {
-        const sanctionText = (acf.sanction_description || '').toLowerCase();
+        const sanctionText = (fields.sanction_description || '').toLowerCase();
         if (!sanctionText.includes(sanctieFilter.toLowerCase().trim())) return false;
       }
 
       if (kaartFilter !== '') {
-        const codes = (acf.charge_codes || '').trim();
+        const codes = (fields.charge_codes || '').trim();
         const isGeel = codes ? codes.endsWith('-1') : false;
         const isRood = codes ? !codes.endsWith('-1') : false;
         if (kaartFilter === 'geel' && !isGeel) return false;
@@ -287,7 +287,7 @@ export default function DisciplineCasesList() {
       }
 
       if (boeteFilter !== '') {
-        const fee = parseFloat(acf.administrative_fee) || 0;
+        const fee = parseFloat(fields.administrative_fee) || 0;
         if (boeteFilter === 'heeft' && !(fee > 0)) return false;
         if (boeteFilter === 'geen' && fee > 0) return false;
       }
@@ -357,21 +357,21 @@ export default function DisciplineCasesList() {
       'Boete',
     ];
     const rows = filteredCases.map((disciplineCase) => {
-      const acf = disciplineCase.fields || {};
-      const chargeCodes = (acf.charge_codes || '').trim();
-      const person = personMap.get(acf.person);
+      const fields = disciplineCase.fields || {};
+      const chargeCodes = (fields.charge_codes || '').trim();
+      const person = personMap.get(fields.person);
       return [
-        acf.dossier_id || '',
+        fields.dossier_id || '',
         person?.name || '',
-        acf.match_description || '',
-        acf.match_date ? format(parseYmd(acf.match_date), 'dd-MM-yyyy') : '',
-        formatTeamName(acf),
+        fields.match_description || '',
+        fields.match_date ? format(parseYmd(fields.match_date), 'dd-MM-yyyy') : '',
+        formatTeamName(fields),
         chargeCodes ? (chargeCodes.endsWith('-1') ? 'Geel' : 'Rood') : '',
         chargeCodes,
-        acf.charge_description || '',
-        acf.sanction_description || '',
-        getDoorbelastLabel(acf),
-        parseFloat(acf.administrative_fee) || 0,
+        fields.charge_description || '',
+        fields.sanction_description || '',
+        getDoorbelastLabel(fields),
+        parseFloat(fields.administrative_fee) || 0,
       ];
     });
     const csv = buildCsv([headers, ...rows]);

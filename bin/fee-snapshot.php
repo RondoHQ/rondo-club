@@ -63,14 +63,14 @@ foreach ( $query->posts as $person_id ) {
 	}
 
 	// Former members: include only those who qualify for the current season.
-	$is_former = (bool) get_field( 'former_member', $person_id );
+	$is_former = (bool) \Rondo\Fields\Fields::get_for_post( $person_id, 'former_member' );
 	if ( $is_former && ! $person_context->is_former_member_in_season( $person_id, $season ) ) {
 		continue;
 	}
 
 	// Use calculate_full_fee so family discount + pro-rata are included,
 	// matching the numbers real invoices and forecasts use.
-	$registration_date = get_field( 'lid-sinds', $person_id );
+	$registration_date = \Rondo\Fields\Fields::get_for_post( $person_id, 'lid_sinds' );
 	if ( ! empty( $registration_date ) && ! is_string( $registration_date ) ) {
 		$registration_date = (string) $registration_date;
 	}

@@ -12,57 +12,89 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Stable internal API whose backend can move from ACF to native meta per context.
+ * Stable internal API backed by native WordPress metadata.
  */
 final class Fields {
+	/** Return all registered values keyed by canonical name. */
+	public static function all_for_post( int $post_id ): array {
+		$context = self::post_context( $post_id );
+		$storage = [];
+		foreach ( Registry::fields_for( $context ) as $definition ) {
+			if ( $definition['storage_name'] !== null ) {
+				$storage[ $definition['storage_name'] ] = NativeFieldStorage::read_post( $post_id, $definition );
+			}
+		}
+		return Registry::canonicalize( $context, $storage );
+	}
 
 	/** @return mixed */
 	public static function get_for_post( int $post_id, string $canonical_name ) {
 		$context    = self::post_context( $post_id );
 		$definition = Registry::resolve( $context, $canonical_name );
-		if ( ( $definition['backend'] ?? 'acf' ) === 'meta' ) {
-			return get_post_meta( $post_id, $definition['storage_name'], true );
-		}
-		return get_field( $definition['key'] ?? $definition['storage_name'], $post_id );
+		return NativeFieldStorage::read_post( $post_id, $definition );
 	}
 
 	/** @param mixed $value */
 	public static function update_for_post( int $post_id, string $canonical_name, $value ): bool {
-		$context    = self::post_context( $post_id );
-		$definition = Registry::resolve( $context, $canonical_name );
-		if ( ( $definition['backend'] ?? 'acf' ) === 'meta' ) {
-			return update_post_meta( $post_id, $definition['storage_name'], $value ) !== false;
+		return self::update_many_for_post( $post_id, [ $canonical_name => $value ] ) === true;
+	}
+
+	/**
+	 * Atomically apply a logical field update and fire domain services once.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public static function update_many_for_post( int $post_id, array $values ) {
+		$context = self::post_context( $post_id );
+		$changes = [];
+		foreach ( $values as $identifier => $value ) {
+			$definition            = Registry::resolve( $context, (string) $identifier );
+			$definition['context'] = $context;
+			$old_value             = NativeFieldStorage::read_post( $post_id, $definition );
+			$new_value             = apply_filters( 'rondo_fields_validate_value', $value, $post_id, $definition, $old_value );
+			if ( is_wp_error( $new_value ) ) {
+				return $new_value;
+			}
+			if ( maybe_serialize( $old_value ) === maybe_serialize( $new_value ) ) {
+				continue;
+			}
+			$changes[] = [ $definition, $old_value, $new_value ];
 		}
-		return (bool) update_field( $definition['key'] ?? $definition['storage_name'], $value, $post_id );
+
+		foreach ( $changes as [ $definition, $old_value, $new_value ] ) {
+			NativeFieldStorage::write_post( $post_id, $definition, $new_value );
+			do_action( 'rondo_fields_updated', $post_id, $definition['canonical_name'], $new_value, $old_value, $definition );
+		}
+		if ( $changes ) {
+			do_action( 'rondo_fields_saved_post', $post_id, $changes );
+		}
+		return true;
 	}
 
 	public static function delete_for_post( int $post_id, string $canonical_name ): bool {
 		$context    = self::post_context( $post_id );
 		$definition = Registry::resolve( $context, $canonical_name );
-		if ( ( $definition['backend'] ?? 'acf' ) === 'meta' ) {
-			return delete_post_meta( $post_id, $definition['storage_name'] );
-		}
-		return (bool) delete_field( $definition['key'] ?? $definition['storage_name'], $post_id );
+		return NativeFieldStorage::delete_post( $post_id, $definition );
 	}
 
 	/** @return mixed */
 	public static function get_for_term( string $taxonomy, int $term_id, string $canonical_name ) {
 		self::assert_term_context( $taxonomy );
 		$definition = Registry::resolve( $taxonomy, $canonical_name );
-		return get_field( $definition['key'] ?? $definition['storage_name'], $taxonomy . '_' . $term_id );
+		return NativeFieldStorage::read_term( $term_id, $definition );
 	}
 
 	/** @param mixed $value */
 	public static function update_for_term( string $taxonomy, int $term_id, string $canonical_name, $value ): bool {
 		self::assert_term_context( $taxonomy );
 		$definition = Registry::resolve( $taxonomy, $canonical_name );
-		return (bool) update_field( $definition['key'] ?? $definition['storage_name'], $value, $taxonomy . '_' . $term_id );
+		return NativeFieldStorage::write_term( $term_id, $definition, $value );
 	}
 
 	public static function delete_for_term( string $taxonomy, int $term_id, string $canonical_name ): bool {
 		self::assert_term_context( $taxonomy );
 		$definition = Registry::resolve( $taxonomy, $canonical_name );
-		return (bool) delete_field( $definition['key'] ?? $definition['storage_name'], $taxonomy . '_' . $term_id );
+		return NativeFieldStorage::delete_term( $term_id, $definition );
 	}
 
 	private static function post_context( int $post_id ): string {
