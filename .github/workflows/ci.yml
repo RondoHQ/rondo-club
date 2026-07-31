@@ -150,6 +150,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$WP_ROOT_FOLDER"
+          # Normalise away the "/../" segment. WordPress resolves theme roots to
+          # real paths, and comparing those against an unnormalised root is how
+          # a symlinked theme goes missing. The documented local setup uses a
+          # clean path, so keep CI on the same footing.
+          WP_ROOT_FOLDER="$(cd "$WP_ROOT_FOLDER" && pwd -P)"
+          echo "WP_ROOT_FOLDER=$WP_ROOT_FOLDER" >> "$GITHUB_ENV"
+          echo "Using WP root: $WP_ROOT_FOLDER"
+
           tar -xzf "$WP_TARBALL" --strip-components=1 -C "$WP_ROOT_FOLDER"
 
           mkdir -p "$WP_ROOT_FOLDER/wp-content/plugins" "$WP_ROOT_FOLDER/wp-content/themes"
@@ -171,6 +179,14 @@ jobs:
 
           # The suite runs the checkout itself, not a copy of it.
           ln -sfn "$GITHUB_WORKSPACE" "$WP_ROOT_FOLDER/wp-content/themes/rondo-club"
+
+          # The suite has never run here before, so prove the theme is where
+          # WordPress will look for it rather than finding out from a bare
+          # "failed to switch theme".
+          ls -la "$WP_ROOT_FOLDER/wp-content/themes/"
+          test -f "$WP_ROOT_FOLDER/wp-content/themes/rondo-club/style.css"
+          echo "Theme header:"
+          head -8 "$WP_ROOT_FOLDER/wp-content/themes/rondo-club/style.css"
 
       - name: Write the test environment
         if: steps.acf.outputs.available == 'true'
