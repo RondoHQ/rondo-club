@@ -45,7 +45,7 @@ class ResolutionEmailSender {
 
 		$author          = get_userdata( (int) $feedback->post_author );
 		$display_name    = $author ? trim( (string) ( $author->first_name ?: $author->display_name ) ) : '';
-		$title           = trim( wp_strip_all_tags( get_the_title( $feedback_id ) ) );
+		$title           = EmailTemplate::decode_title( get_the_title( $feedback_id ) );
 		$subject         = $title !== '' ? sprintf( 'Je feedback is opgelost: %s', $title ) : 'Je feedback is opgelost';
 		$feedback_url    = home_url( '/feedback/' . $feedback_id );
 		$greeting        = $display_name !== '' ? sprintf( 'Hoi %s,', $display_name ) : 'Hoi,';

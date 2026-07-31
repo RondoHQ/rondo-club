@@ -102,6 +102,32 @@ class FeedbackResolutionEmailTest extends RondoTestCase {
 		$this->assertSame( [ 'family@example.com' ], $this->sent_mail[0]['to'] );
 	}
 
+	public function test_quotes_in_the_title_reach_the_subject_as_characters_not_entities(): void {
+		$reporter_id = self::factory()->user->create(
+			[
+				'user_login' => 'quoted_title_reporter',
+				'user_email' => 'quoted@example.com',
+			]
+		);
+		$feedback_id = self::factory()->post->create(
+			[
+				'post_type'   => 'rondo_feedback',
+				'post_status' => 'publish',
+				'post_author' => $reporter_id,
+				'post_title'  => "Kopje 'betaalde vrijwilliger' verwijderen",
+			]
+		);
+		update_post_meta( $feedback_id, StatusService::META_RESOLUTION_SUMMARY, self::RESOLUTION_SUMMARY );
+
+		$result = ( new ResolutionEmailSender() )->send( $feedback_id );
+
+		$this->assertSame( 'sent', $result['status'] );
+		$this->assertStringNotContainsString( '&#8216;', $this->sent_mail[0]['subject'] );
+		$this->assertStringNotContainsString( '&#8217;', $this->sent_mail[0]['subject'] );
+		$this->assertStringNotContainsString( '&amp;', $this->sent_mail[0]['message'] );
+		$this->assertStringStartsWith( 'Je feedback is opgelost: Kopje ', $this->sent_mail[0]['subject'] );
+	}
+
 	public function test_feedback_cannot_be_resolved_without_a_resolution_summary(): void {
 		$feedback_id = self::factory()->post->create(
 			[
