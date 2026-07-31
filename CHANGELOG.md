@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [33.82.0] - 2026-07-31
+
+### Added
+
+- **Wie feedback instuurt die we niet gaan doen, hoort dat nu met uitleg.** Afgewezen feedback verdween stilletjes uit beeld: de inzender zag hooguit een status veranderen en kreeg nooit te horen waarom. Bij het afwijzen vraagt Rondo nu om een Nederlandse toelichting, en die gaat als mail naar de inzender — met de titel van zijn feedback, de uitleg onder "Waarom we dit niet doen", en de uitnodiging om gerust nieuwe feedback te sturen. Net als bij opgeloste feedback krijgt niemand die mail twee keer.
+
+### Changed
+
+- Het venster voor het oplossen van feedback doet nu ook het afwijzen, zodat beide om dezelfde soort uitleg vragen en er niets uiteen kan lopen.
+- `wp rondo feedback set-status ... declined` accepteert `--reason` voor diezelfde toelichting.
+
 ## [33.81.3] - 2026-07-31
 
 ### Fixed
