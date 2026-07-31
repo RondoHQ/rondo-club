@@ -19,11 +19,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 class IvaReviewNotificationEmailSender {
 
 	/**
+	 * When the last review request for a person went out.
+	 */
+	public const META_NOTIFIED_AT = '_iva_review_notified_at';
+
+	/**
+	 * How long to suppress a repeat review request for the same person.
+	 *
+	 * Each upload creates its own attachment, so a resubmit cannot be
+	 * recognised by certificate identity — only by how quickly it follows the
+	 * previous one. Ten minutes is far longer than any double submit and far
+	 * shorter than a genuine second attempt after an approver asked for a
+	 * better scan.
+	 */
+	public const THROTTLE_SECONDS = 600;
+
+	/**
 	 * Send one review request per unique, deliverable approver address.
 	 *
 	 * @return array{status: string, sent: int, failed: int}
 	 */
 	public function send( int $person_id ): array {
+		if ( $this->is_throttled( $person_id ) ) {
+			return [
+				'status' => 'throttled',
+				'sent'   => 0,
+				'failed' => 0,
+			];
+		}
+
 		$recipients = $this->get_recipient_emails();
 		if ( empty( $recipients ) ) {
 			return [
@@ -55,6 +79,11 @@ class IvaReviewNotificationEmailSender {
 			]
 		);
 
+		// Stamp before sending: ten recipients take a few seconds to work
+		// through, and the resubmits this guards against arrive inside that
+		// window. Stamping afterwards would let them all pass the check first.
+		update_post_meta( $person_id, self::META_NOTIFIED_AT, time() );
+
 		$sent   = 0;
 		$failed = 0;
 		foreach ( $recipients as $email ) {
@@ -66,6 +95,11 @@ class IvaReviewNotificationEmailSender {
 			}
 		}
 
+		// Nothing went out, so do not let the stamp suppress a real retry.
+		if ( $sent === 0 ) {
+			delete_post_meta( $person_id, self::META_NOTIFIED_AT );
+		}
+
 		do_action( 'rondo_iva_review_notification_sent', $person_id, $sent, $failed );
 
 		return [
@@ -73,6 +107,18 @@ class IvaReviewNotificationEmailSender {
 			'sent'   => $sent,
 			'failed' => $failed,
 		];
+	}
+
+	/**
+	 * Whether a review request for this person went out too recently.
+	 */
+	private function is_throttled( int $person_id ): bool {
+		$last = (int) get_post_meta( $person_id, self::META_NOTIFIED_AT, true );
+		if ( $last <= 0 ) {
+			return false;
+		}
+
+		return ( time() - $last ) < self::THROTTLE_SECONDS;
 	}
 
 	/**

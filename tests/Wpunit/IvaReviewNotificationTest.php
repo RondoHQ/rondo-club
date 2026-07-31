@@ -75,6 +75,78 @@ class IvaReviewNotificationTest extends RondoTestCase {
 		$this->assertNotEmpty( $review_logs );
 	}
 
+	public function test_a_resubmitted_upload_does_not_notify_the_approvers_again(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Jorrit Rutten' ] );
+		$this->create_approver( 'approver-throttle@example.invalid', 'throttle@example.com' );
+
+		$sender = new IvaReviewNotificationEmailSender();
+
+		$this->assertSame( 'sent', $sender->send( $person_id )['status'] );
+
+		// Reproduces the reported behaviour: four uploads inside four seconds,
+		// each of which used to mail every approver.
+		$repeats = [ $sender->send( $person_id ), $sender->send( $person_id ), $sender->send( $person_id ) ];
+		foreach ( $repeats as $repeat ) {
+			$this->assertSame( 'throttled', $repeat['status'] );
+			$this->assertSame( 0, $repeat['sent'] );
+		}
+
+		$this->assertSame(
+			1,
+			$this->messages_to( 'throttle@example.com' ),
+			'A resubmit within the throttle window must not send another mail.'
+		);
+	}
+
+	public function test_a_later_upload_notifies_the_approvers_again(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Hans Velvis' ] );
+		$this->create_approver( 'approver-later@example.invalid', 'later@example.com' );
+
+		$sender = new IvaReviewNotificationEmailSender();
+		$this->assertSame( 'sent', $sender->send( $person_id )['status'] );
+
+		// An approver asked for a better scan and the member uploads again the
+		// next day — that has to reach them.
+		update_post_meta(
+			$person_id,
+			IvaReviewNotificationEmailSender::META_NOTIFIED_AT,
+			time() - ( IvaReviewNotificationEmailSender::THROTTLE_SECONDS + 60 )
+		);
+
+		$this->assertSame( 'sent', $sender->send( $person_id )['status'] );
+		$this->assertSame( 2, $this->messages_to( 'later@example.com' ) );
+	}
+
+	public function test_a_failed_send_does_not_suppress_the_next_attempt(): void {
+		$person_id = $this->createPerson( [ 'post_title' => 'Bart Schraven' ] );
+		$this->create_approver( 'approver-failed@example.invalid', 'failed@example.com' );
+
+		// Priority 20 so this runs after the recorder in set_up() and has the
+		// final say over what wp_mail() returns.
+		$fail   = fn() => false;
+		add_filter( 'pre_wp_mail', $fail, 20 );
+		$result = ( new IvaReviewNotificationEmailSender() )->send( $person_id );
+		remove_filter( 'pre_wp_mail', $fail, 20 );
+
+		$this->assertSame( 'send_failed', $result['status'] );
+		$this->assertSame(
+			'',
+			get_post_meta( $person_id, IvaReviewNotificationEmailSender::META_NOTIFIED_AT, true ),
+			'A send that reached nobody must not leave a stamp that blocks the retry.'
+		);
+
+		$this->assertSame( 'sent', ( new IvaReviewNotificationEmailSender() )->send( $person_id )['status'] );
+	}
+
+	private function messages_to( string $email ): int {
+		return count(
+			array_filter(
+				$this->sent_mail,
+				fn( array $mail ): bool => in_array( $email, (array) $mail['to'], true )
+			)
+		);
+	}
+
 	private function create_approver( string $user_email, string $contact_email ): int {
 		$user_id = self::factory()->user->create( [ 'user_email' => $user_email ] );
 		$user    = get_userdata( $user_id );
