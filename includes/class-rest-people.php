@@ -556,8 +556,17 @@ class People extends Base {
 				$acf[ $field ] = get_field( $field, $post->ID );
 			}
 			$people[] = [
-				'id'  => $post->ID,
-				'acf' => $acf,
+				'id'     => $post->ID,
+				'acf'    => $acf,
+				'fields' => array_intersect_key(
+					\Rondo\Fields\RestFields::for_post( 'person', $post->ID ),
+					array_flip(
+						array_map(
+							fn( $name ) => \Rondo\Fields\Registry::resolve( 'person', $name )['canonical_name'],
+							$fields
+						)
+					)
+				),
 			];
 		}
 
@@ -901,8 +910,8 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$acf = $request->get_param( 'acf' );
-		if ( ! is_array( $acf ) || empty( $acf ) ) {
+		$acf = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
+		if ( empty( $acf ) ) {
 			// Non-ACF write (e.g., title-only edit) on a former member is
 			// also blocked — there's nothing legitimate to change here.
 			return $this->former_member_readonly_error();
@@ -945,8 +954,8 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$acf = $request->get_param( 'acf' );
-		if ( ! is_array( $acf ) ) {
+		$acf = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
+		if ( empty( $acf ) ) {
 			return $prepared_post;
 		}
 
@@ -986,8 +995,8 @@ class People extends Base {
 			return $prepared_post;
 		}
 
-		$acf = $request->get_param( 'acf' );
-		if ( ! is_array( $acf ) ) {
+		$acf = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
+		if ( empty( $acf ) ) {
 			return $prepared_post;
 		}
 
@@ -1062,8 +1071,7 @@ class People extends Base {
 			return $prepared_post; // No partial editing capability — core caps already decided.
 		}
 
-		$acf     = $request->get_param( 'acf' );
-		$acf     = is_array( $acf ) ? $acf : [];
+		$acf     = \Rondo\Fields\RestFields::request_payload( $request, 'person' );
 		$post_id = ! empty( $prepared_post->ID ) ? (int) $prepared_post->ID : 0;
 
 		if ( $post_id === 0 ) {
@@ -2214,6 +2222,8 @@ class People extends Base {
 					$person['acf']['vog_reminder_sent_date'] = $vog_reminder;
 				}
 			}
+
+			$person['fields'] = \Rondo\Fields\RestFields::for_post( 'person', (int) $row->ID );
 
 			$people[] = $person;
 		}

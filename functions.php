@@ -126,6 +126,7 @@ use Rondo\Data\PersonDeletionGuard;
 use Rondo\Data\TodoMigration;
 use Rondo\CustomFields\Manager as CustomFieldsManager;
 use Rondo\CustomFields\Validation as CustomFieldsValidation;
+use Rondo\Fields\RestFields;
 use Rondo\REST\CustomFields as RESTCustomFields;
 use Rondo\REST\UserSettings as RESTUserSettings;
 use Rondo\REST\Users as RESTUsers;
@@ -343,6 +344,7 @@ function rondo_init() {
 
 	// REST API classes - only for REST requests
 	if ( $is_rest ) {
+		new RestFields();
 		new Api();
 		new People();
 		new Teams();
@@ -550,6 +552,7 @@ add_action( 'rest_api_init', 'rondo_migrate_options' );
 // Load WP-CLI commands if WP-CLI is available
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	require_once RONDO_PLUGIN_DIR . '/class-wp-cli.php';
+	\WP_CLI::add_command( 'rondo fields', \Rondo\Fields\FieldsCli::class );
 	new TodoMigration();
 
 	// Class alias for backward compatibility

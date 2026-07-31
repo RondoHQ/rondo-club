@@ -104,11 +104,11 @@ class MemberShifts extends Base {
 			return $prepared_post;
 		}
 
-		$acf       = $request->get_param( 'acf' );
+		$acf       = \Rondo\Fields\RestFields::request_payload( $request, 'dienst_shift' );
 		$meta      = $request->get_param( 'meta' );
 		$submitted = null;
 
-		if ( is_array( $acf ) && array_key_exists( 'assigned_persons', $acf ) ) {
+		if ( array_key_exists( 'assigned_persons', $acf ) ) {
 			$submitted = $acf['assigned_persons'];
 		} elseif ( is_array( $meta ) && array_key_exists( 'assigned_persons', $meta ) ) {
 			$submitted = $meta['assigned_persons'];

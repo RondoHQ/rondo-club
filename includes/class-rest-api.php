@@ -297,9 +297,18 @@ class Api extends Base {
 				$acf[ $field ] = get_field( $field, $person_id );
 			}
 
+			$canonical_names = [];
+			foreach ( self::KADERLIJST_ACF_FIELDS as $legacy_name ) {
+				$canonical_names[] = \Rondo\Fields\Registry::resolve( 'person', $legacy_name )['canonical_name'];
+			}
+
 			$people[] = [
-				'id'  => $person_id,
-				'acf' => $acf,
+				'id'     => $person_id,
+				'acf'    => $acf,
+				'fields' => array_intersect_key(
+					\Rondo\Fields\RestFields::for_post( 'person', $person_id ),
+					array_flip( $canonical_names )
+				),
 			];
 		}
 
@@ -690,10 +699,15 @@ class Api extends Base {
 	 */
 	public function update_relationship_type_acf( $term, $request, $creating ) {
 		$acf_data = $request->get_param( 'acf' );
-		if ( is_array( $acf_data ) ) {
-			foreach ( $acf_data as $field_name => $value ) {
-				update_field( $field_name, $value, 'relationship_type_' . $term->term_id );
-			}
+		if ( is_array( $acf_data ) && array_key_exists( 'inverse_relationship_type', $acf_data ) ) {
+			// This taxonomy owns exactly one writable domain field. Never pass
+			// arbitrary request keys to ACF: doing so allows callers to mutate any
+			// term-meta-backed field that happens to be registered by another plugin.
+			update_field(
+				'inverse_relationship_type',
+				absint( $acf_data['inverse_relationship_type'] ),
+				'relationship_type_' . $term->term_id
+			);
 		}
 	}
 
@@ -1395,6 +1409,7 @@ class Api extends Base {
 				$response['acf'] = $acf_fields;
 			}
 		}
+		$response['fields'] = \Rondo\Fields\RestFields::for_post( $post->post_type, $post->ID );
 
 		return rest_ensure_response( $response );
 	}

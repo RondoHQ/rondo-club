@@ -454,6 +454,10 @@ class Vog extends Base {
 		}
 
 		$data['acf']['is_charged'] = 'exception';
+		if ( ! isset( $data['fields'] ) || ! is_array( $data['fields'] ) ) {
+			$data['fields'] = [];
+		}
+		$data['fields']['is_charged'] = 'exception';
 		$response->set_data( $data );
 		return $response;
 	}
