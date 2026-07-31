@@ -124,9 +124,20 @@ jobs:
           set -euo pipefail
           mkdir -p "$(dirname "$ACF_ZIP")"
           # ACF Pro is a paid plugin and cannot live in the repository. Fetch the
-          # licensed build the club already pays for, at the pinned version.
-          curl -sSLf -o "$ACF_ZIP" \
-            "https://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${ACF_PRO_LICENSE_KEY}&t=${ACF_VERSION}"
+          # licensed build the club already pays for.
+          #
+          # Ask for the pinned version first. Not every licence is entitled to
+          # an arbitrary version — an expired one only serves builds up to its
+          # expiry — and that answers 404, so fall back to the latest build.
+          # Either way the extraction step asserts what actually arrived, so a
+          # fallback cannot silently test against the wrong ACF.
+          base="https://connect.advancedcustomfields.com/index.php?p=pro&a=download&k=${ACF_PRO_LICENSE_KEY}"
+          if curl -sSLf -o "$ACF_ZIP" "${base}&t=${ACF_VERSION}"; then
+            echo "Downloaded ACF Pro pinned to ${ACF_VERSION}."
+          else
+            echo "::warning title=ACF version pin unavailable::The licence would not serve ACF Pro ${ACF_VERSION}; fell back to the latest build. The version assertion below decides whether that is acceptable."
+            curl -sSLf -o "$ACF_ZIP" "$base"
+          fi
 
       - name: Set up WordPress with the theme symlinked in
         if: steps.acf.outputs.available == 'true'
