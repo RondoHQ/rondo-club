@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# Run a WP-CLI command against the Rondo Club production site.
+#
+# Wraps the SSH + credential loading into a single command so it can be covered
+# by one Claude Code permission rule instead of one rule per command shape.
+#
+# Usage:
+#   bin/wp-prod post list --post_type=rondo_feedback --format=json
+#   bin/wp-prod post meta get 9267 status
+#   bin/wp-prod user get 1 --fields=ID,display_name
+#
+# Destructive subcommands are refused outright — this is a read/update helper,
+# not a general remote shell. Removing data on production stays a manual job.
+
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [ $# -eq 0 ]; then
+	echo "Usage: bin/wp-prod <wp-cli command and args>" >&2
+	exit 1
+fi
+
+# Refuse destructive operations. Matched against the leading words of the
+# command so that e.g. "db drop" is caught but "db export" is not.
+joined="$*"
+case "$joined" in
+	"db drop"*|"db reset"*|"db clean"*|"db import"*|\
+	"site empty"*|"site delete"*|\
+	"post delete"*|"user delete"*|"term delete"*|"comment delete"*|\
+	"plugin delete"*|"plugin uninstall"*|"theme delete"*|\
+	"option delete"*|"transient delete"*|\
+	"search-replace"*)
+		echo "Refused: '$joined' is destructive. Run it manually if you really mean it." >&2
+		exit 2
+		;;
+esac
+
+ENV_FILE="$PROJECT_ROOT/.env"
+if [ ! -f "$ENV_FILE" ]; then
+	echo "Error: .env not found at $ENV_FILE" >&2
+	exit 1
+fi
+
+set -a
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+set +a
+
+: "${DEPLOY_SSH_HOST:?DEPLOY_SSH_HOST not set in .env}"
+: "${DEPLOY_SSH_USER:?DEPLOY_SSH_USER not set in .env}"
+: "${DEPLOY_SSH_PORT:?DEPLOY_SSH_PORT not set in .env}"
+: "${DEPLOY_REMOTE_WP_PATH:?DEPLOY_REMOTE_WP_PATH not set in .env}"
+
+# Quote each argument so values containing spaces survive the trip.
+remote_args=""
+for arg in "$@"; do
+	remote_args+=" $(printf '%q' "$arg")"
+done
+
+exec ssh -o BatchMode=yes -o ConnectTimeout=25 \
+	-p "$DEPLOY_SSH_PORT" \
+	"$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" \
+	"cd $DEPLOY_REMOTE_WP_PATH && wp$remote_args"
